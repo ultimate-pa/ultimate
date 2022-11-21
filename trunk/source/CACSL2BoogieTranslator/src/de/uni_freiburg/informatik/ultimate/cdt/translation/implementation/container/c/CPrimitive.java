@@ -74,13 +74,11 @@ public class CPrimitive extends CType {
 		/* unsigned long long, unsigned long long int */
 		ULONGLONG(CPrimitiveCategory.INTTYPE),
 		/**
-		 * signed __int128 from Section 6.9 of GNU C
-		 * see https://gcc.gnu.org/onlinedocs/gcc/_005f_005fint128.html
+		 * signed __int128 from Section 6.9 of GNU C see https://gcc.gnu.org/onlinedocs/gcc/_005f_005fint128.html
 		 */
 		INT128(CPrimitiveCategory.INTTYPE),
 		/**
-		 * unsigned __int128 from Section 6.9 of GNU C
-		 * see https://gcc.gnu.org/onlinedocs/gcc/_005f_005fint128.html
+		 * unsigned __int128 from Section 6.9 of GNU C see https://gcc.gnu.org/onlinedocs/gcc/_005f_005fint128.html
 		 */
 		UINT128(CPrimitiveCategory.INTTYPE),
 		/* _Bool */
@@ -88,6 +86,8 @@ public class CPrimitive extends CType {
 		/* Floating Types */
 		/* float */
 		FLOAT(CPrimitiveCategory.FLOATTYPE),
+		/* Float 128 https://gcc.gnu.org/onlinedocs/gcc/Floating-Types.html */
+		FLOAT128(CPrimitiveCategory.FLOATTYPE),
 		/* _Complex float */
 		COMPLEX_FLOAT(CPrimitiveCategory.FLOATTYPE),
 		/* double */
@@ -247,6 +247,12 @@ public class CPrimitive extends CType {
 				mType = CPrimitives.INT128;
 			}
 			break;
+		case IASTSimpleDeclSpecifier.t_float128:
+			mType = CPrimitives.FLOAT128;
+			if (sds.isComplex()) {
+				throw new UnsupportedOperationException("Complex 128bit float is not supported yet.");
+			}
+			break;
 		case IASTSimpleDeclSpecifier.t_void:
 			mType = CPrimitives.VOID;
 			break;
@@ -268,6 +274,7 @@ public class CPrimitive extends CType {
 		case FLOAT:
 		case DOUBLE:
 		case LONGDOUBLE:
+		case FLOAT128:
 			generalType = CPrimitiveCategory.FLOATTYPE;
 			// throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support
 			// floats");

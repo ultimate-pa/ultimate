@@ -245,7 +245,8 @@ public class TypeHandler implements ITypeHandler {
 			return (new TypesResult(cPrimitive2AstType(loc, cvar), node.isConst(), false, cvar));
 		}
 		case IASTSimpleDeclSpecifier.t_double:
-		case IASTSimpleDeclSpecifier.t_float: {
+		case IASTSimpleDeclSpecifier.t_float:
+		case IASTSimpleDeclSpecifier.t_float128: {
 			// floating point number are not supported by Ultimate,
 			// somehow we treat it here as REALs
 			final CPrimitive cvar = new CPrimitive(node);

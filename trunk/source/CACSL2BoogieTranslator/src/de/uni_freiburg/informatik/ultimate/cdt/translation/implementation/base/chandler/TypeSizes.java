@@ -80,6 +80,7 @@ public class TypeSizes {
 	private final int mSizeOfLongDoubleType;
 	private final int mSizeOfPointerType;
 	private final int mSizeOfInt128Type;
+	private final int mSizeOfFloat128Type;
 
 	// for pointer arithmetic on a void pointer -- c standard disallows that, but
 	// gcc does not..
@@ -119,6 +120,8 @@ public class TypeSizes {
 		// larger
 		// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fint128.html
 		mSizeOfInt128Type = 16;
+		// Hardcoded to 16 bytes https://gcc.gnu.org/onlinedocs/gcc/Floating-Types.html
+		mSizeOfFloat128Type = 16;
 
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.VOID, mSizeOfVoidType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.BOOL, mSizeOfBoolType);
@@ -137,6 +140,7 @@ public class TypeSizes {
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UINT128, mSizeOfInt128Type);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.DOUBLE, mSizeOfDoubleType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT, mSizeOfFloatType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT128, mSizeOfFloat128Type);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGDOUBLE, mSizeOfLongDoubleType);
 
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_DOUBLE, mSizeOfDoubleType * 2);
@@ -165,6 +169,7 @@ public class TypeSizes {
 		mSizeOfPointerType = prerunTypeSizes.mSizeOfPointerType;
 		mSignednessOfChar = prerunTypeSizes.mSignednessOfChar;
 		mSizeOfInt128Type = prerunTypeSizes.mSizeOfInt128Type;
+		mSizeOfFloat128Type = prerunTypeSizes.mSizeOfFloat128Type;
 	}
 
 	public boolean useFixedTypeSizes() {
@@ -210,6 +215,7 @@ public class TypeSizes {
 		case COMPLEX_DOUBLE:
 		case COMPLEX_LONGDOUBLE:
 		case FLOAT:
+		case FLOAT128:
 		case DOUBLE:
 		case LONGDOUBLE:
 			// case CHAR16:
@@ -296,6 +302,14 @@ public class TypeSizes {
 				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
 			}
 		}
+			break;
+		case FLOAT128:
+			final int sizeof = getSize(cPrimitive);
+			if (sizeof == 16) {
+				result = new FloatingPointSize(sizeof, 113, 15);
+			} else {
+				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
+			}
 			break;
 		default:
 			throw new IllegalArgumentException("not real floating type " + cPrimitive);
