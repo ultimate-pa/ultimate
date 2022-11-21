@@ -2843,13 +2843,12 @@ public class CHandler {
 
 		final CDeclaration cDec = declResult.getDeclaration();
 		final boolean onHeap = cDec.isOnHeap();
+		final DeclarationInformation declarationInformation = getDeclarationInfo(storageClass);
 		final String bId = mNameHandler.getUniqueIdentifier(node, cDec.getName(), mSymbolTable.getCScopeId(hook),
-				onHeap, cDec.getType());
+				onHeap, cDec.getType(), declarationInformation);
 		if (onHeap) {
 			addBoogieIdsOfHeapVars(bId);
 		}
-
-		final DeclarationInformation declarationInformation = getDeclarationInfo(storageClass);
 
 		// this is only to have a minimal symbolTableEntry (containing boogieID) for
 		// translation of the initializer

@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 import java.util.HashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
@@ -44,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 
 public class CACSL2BoogieBacktranslatorMapping implements ICACSL2BoogieBacktranslatorMapping {
-	private final Map<String, Pair<String, CType>> mInVar2CVar;
-	private final Map<String, Pair<String, CType>> mVar2CVar;
+	private final Map<Pair<String, DeclarationInformation>, Pair<String, CType>> mInVar2CVar;
+	private final Map<Pair<String, DeclarationInformation>, Pair<String, CType>> mVar2CVar;
 	private final Map<String, SFO.AUXVAR> mTempVar2Obj;
 	private final Map<String, String> mFunctionId2Operator;
 
@@ -57,13 +58,15 @@ public class CACSL2BoogieBacktranslatorMapping implements ICACSL2BoogieBacktrans
 	}
 
 	@Override
-	public void putVar(final String boogieId, final String cId, final CType cType) {
-		mVar2CVar.put(boogieId, new Pair<>(cId, cType));
+	public void putVar(final String boogieId, final String cId, final CType cType,
+			final DeclarationInformation decInfo) {
+		mVar2CVar.put(new Pair<>(boogieId, decInfo), new Pair<>(cId, cType));
 	}
 
 	@Override
-	public void putInVar(final String boogieId, final String cId, final CType cType) {
-		mInVar2CVar.put(boogieId, new Pair<>(cId, cType));
+	public void putInVar(final String boogieId, final String cId, final CType cType,
+			final DeclarationInformation decInfo) {
+		mInVar2CVar.put(new Pair<>(boogieId, decInfo), new Pair<>(cId, cType));
 	}
 
 	@Override
@@ -76,12 +79,20 @@ public class CACSL2BoogieBacktranslatorMapping implements ICACSL2BoogieBacktrans
 		return mTempVar2Obj.containsKey(boogieId);
 	}
 
-	Map<String, Pair<String, CType>> getInVar2CVar() {
-		return mInVar2CVar;
+	boolean hasInVar(final String boogieId, final DeclarationInformation decInfo) {
+		return mInVar2CVar.containsKey(new Pair<>(boogieId, decInfo));
 	}
 
-	Map<String, Pair<String, CType>> getVar2CVar() {
-		return mVar2CVar;
+	Pair<String, CType> getInVar(final String boogieId, final DeclarationInformation decInfo) {
+		return mInVar2CVar.get(new Pair<>(boogieId, decInfo));
+	}
+
+	boolean hasVar(final String boogieId, final DeclarationInformation decInfo) {
+		return mVar2CVar.containsKey(new Pair<>(boogieId, decInfo));
+	}
+
+	Pair<String, CType> getVar(final String boogieId, final DeclarationInformation decInfo) {
+		return mVar2CVar.get(new Pair<>(boogieId, decInfo));
 	}
 
 	Map<String, AUXVAR> getTempVar2Obj() {

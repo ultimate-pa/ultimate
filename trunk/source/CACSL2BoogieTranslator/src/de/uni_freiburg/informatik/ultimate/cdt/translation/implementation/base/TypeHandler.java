@@ -343,7 +343,7 @@ public class TypeHandler implements ITypeHandler {
 		// values of enum have type int
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final String enumId = mNameHandler.getUniqueIdentifier(node, node.getName().toString(),
-				mSymboltable.getCScopeId(node), false, intType);
+				mSymboltable.getCScopeId(node), false, intType, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		final int nrFields = node.getEnumerators().length;
 		final String[] fNames = new String[nrFields];
 		Expression valueOfPrecedingEnumConstant = null;

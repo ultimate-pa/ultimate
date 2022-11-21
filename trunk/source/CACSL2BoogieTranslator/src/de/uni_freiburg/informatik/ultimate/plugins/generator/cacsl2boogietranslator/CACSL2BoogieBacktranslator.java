@@ -1322,12 +1322,12 @@ public class CACSL2BoogieBacktranslator
 		final TranslatedVariable result;
 		if (boogieId.equals(SFO.RES)) {
 			result = new TranslatedVariable(expr, "\\result", null, VariableType.RESULT);
-		} else if (mMapping.getVar2CVar().containsKey(boogieId)) {
-			final Pair<String, CType> pair = mMapping.getVar2CVar().get(boogieId);
+		} else if (mMapping.hasVar(boogieId, expr.getDeclarationInformation())) {
+			final Pair<String, CType> pair = mMapping.getVar(boogieId, expr.getDeclarationInformation());
 			result = new TranslatedVariable(expr, pair.getFirst(), pair.getSecond(), VariableType.NORMAL);
-		} else if (mMapping.getInVar2CVar().containsKey(boogieId)) {
+		} else if (mMapping.hasInVar(boogieId, expr.getDeclarationInformation())) {
 			// invars can only occur in expressions as part of synthetic expressions, and then they represent oldvars
-			final Pair<String, CType> pair = mMapping.getInVar2CVar().get(boogieId);
+			final Pair<String, CType> pair = mMapping.getInVar(boogieId, expr.getDeclarationInformation());
 			result = new TranslatedVariable(expr, pair.getFirst(), pair.getSecond(), VariableType.INVAR);
 		} else if (mMapping.getTempVar2Obj().containsKey(boogieId)) {
 			final SFO.AUXVAR purpose = mMapping.getTempVar2Obj().get(boogieId);
