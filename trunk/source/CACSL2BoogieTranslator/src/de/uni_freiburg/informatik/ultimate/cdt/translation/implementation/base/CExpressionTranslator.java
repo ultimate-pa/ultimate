@@ -1056,6 +1056,7 @@ public class CExpressionTranslator {
 
 		if (!mSettings.checkSignedIntegerBounds() || !resultType.isIntegerType() || mTypeSizes.isUnsigned(resultType)) {
 			// nothing to do
+			return;
 		}
 		final Pair<Expression, Expression> inBoundsCheck;
 		// TODO Frank 2022-11-21: Why are left shifts handled here and all other binary operations in
