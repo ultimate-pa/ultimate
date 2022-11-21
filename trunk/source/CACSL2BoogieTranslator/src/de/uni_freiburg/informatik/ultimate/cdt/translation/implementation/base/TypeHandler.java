@@ -356,6 +356,8 @@ public class TypeHandler implements ITypeHandler {
 			fNames[i] = e.getName().toString();
 			if (e.getValue() != null) {
 				final ExpressionResult rex = (ExpressionResult) main.dispatch(e.getValue());
+				// TODO Frank 2022-11-22: rex might contain statements (e.g. overflow-assertions), but they are ignored
+				// here! We should probably crash instead. But we could try to remove trivial assertions additionally.
 				fValues[i] = rex.getLrValue().getValue();
 			} else {
 				fValues[i] = null;
