@@ -969,7 +969,9 @@ public class StandardFunctionHandler {
 
 		// assume ctr < len;
 		final var assumeInRange = new AssumeStatement(loc,
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, ctr.getExp(), len.getLrValue().getValue()));
+				mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_lessThan,
+						ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents(), len.getLrValue().getValue(),
+						mTypeSizes.getSizeT()));
 		body.add(assumeInRange);
 
 		// havoc aux;
@@ -996,9 +998,11 @@ public class StandardFunctionHandler {
 
 		// ctr := ctr + 1
 		final var incrementCtr = StatementFactory.constructAssignmentStatement(loc, ctr.getLhs(),
-				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, ctr.getExp(),
+				mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_plus,
+						ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents(),
 						mTypeSizes.constructLiteralForIntegerType(loc,
-								mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE)));
+								mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE),
+						mExpressionTranslation.getCTypeOfPointerComponents()));
 		body.add(incrementCtr);
 
 		final var loop = new WhileStatement(loc, new WildcardExpression(loc), new LoopInvariantSpecification[0],
