@@ -787,8 +787,8 @@ public class TypeHandler implements ITypeHandler {
 		} else if (cType instanceof CEnum) {
 			return getBoogieTypeForCType(new CPrimitive(CPrimitives.INT));
 		} else if (cType instanceof CArray) {
-			final BoogieType[] indexTypes =
-					new BoogieType[] { getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents()) };
+			final BoogieType[] indexTypes = new BoogieType[] {
+					getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents()) };
 			final BoogieType valueType = getBoogieTypeForCType(((CArray) cType).getValueType());
 			return BoogieType.createArrayType(0, indexTypes, valueType);
 		} else if (cType instanceof CFunction) {
@@ -867,36 +867,46 @@ public class TypeHandler implements ITypeHandler {
 	private Expression constructEnumValue(final ILocation loc, final Expression specifiedValue,
 			final Expression valueOfPrecedingEnumConstant, final IASTEnumerationSpecifier node) {
 		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
+		final Expression value;
 		if (specifiedValue != null) {
 			// case where the value of the enumeration constant is explicitly defined by an
 			// integer constant expression
 			if (specifiedValue instanceof IntegerLiteral) {
-				return specifiedValue;
-			}
-			final BigInteger expressionIntegerValue =
-					mTypeSizes.extractIntegerValue(specifiedValue, typeOfEnumIdentifiers, node);
-			if (expressionIntegerValue != null) {
-				return mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
+				value = specifiedValue;
+			} else {
+				final BigInteger expressionIntegerValue =
+						mTypeSizes.extractIntegerValue(specifiedValue, typeOfEnumIdentifiers, node);
+				if (expressionIntegerValue == null) {
+					throw new AssertionError("not an integer constant: " + specifiedValue);
+				}
+				value = mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
 						BigInteger.valueOf(expressionIntegerValue.intValue()));
 			}
+
+			// }
+		} else {
+			// case where the value of the enumeration constant is not explicitly defined by
+			// an integer constant expression and hence the value of the preceding
+			// enumeration constant in the list defines the value of this enumeration
+			// constant (see C11 6.7.2.2.3)
+			if (valueOfPrecedingEnumConstant == null) {
+				// case where this is the first enumeration constant in the list
+				final Expression zero =
+						mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers, BigInteger.ZERO);
+				value = zero;
+			} else {
+				final BigInteger bi =
+						mTypeSizes.extractIntegerValue(valueOfPrecedingEnumConstant, typeOfEnumIdentifiers, node);
+				if (bi == null) {
+					throw new AssertionError("not an integer constant: " + specifiedValue);
+				}
+				final int valueOfPrecedingEnumConstantAsInt = bi.intValue();
+				final int valueAsInt = valueOfPrecedingEnumConstantAsInt + 1;
+				value = mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
+						BigInteger.valueOf(valueAsInt));
+			}
 		}
-		// case where the value of the enumeration constant is not explicitly defined by
-		// an integer constant expression and hence the value of the preceding
-		// enumeration constant in the list defines the value of this enumeration
-		// constant (see C11 6.7.2.2.3)
-		if (valueOfPrecedingEnumConstant == null) {
-			// case where this is the first enumeration constant in the list
-			final Expression zero =
-					mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers, BigInteger.ZERO);
-			return zero;
-		}
-		final BigInteger bi = mTypeSizes.extractIntegerValue(valueOfPrecedingEnumConstant, typeOfEnumIdentifiers, node);
-		if (bi == null) {
-			throw new AssertionError("not an integer constant: " + specifiedValue);
-		}
-		final int valueOfPrecedingEnumConstantAsInt = bi.intValue();
-		final int valueAsInt = valueOfPrecedingEnumConstantAsInt + 1;
-		return mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers, BigInteger.valueOf(valueAsInt));
+		return value;
 	}
 
 	/**
