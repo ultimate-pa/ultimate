@@ -39,6 +39,8 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.AtomicTraceElementBuilder;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
@@ -211,10 +213,10 @@ public class GraphMLViolationWitnessGenerator<TE, E> extends GraphMLBaseWitnessG
 
 		for (int idx = 0; idx < progExecLength;) {
 			final int oldIdx = idx;
+
 			final AtomicTraceElement<TE> currentATE = origPe.getTraceElement(idx);
-			trace.add(currentATE);
-			partialProgramStateMapping.put(newIdx, origPe.getProgramState(idx));
-			newIdx++;
+			final AtomicTraceElementBuilder<TE> builder = AtomicTraceElementBuilder.from(currentATE);
+
 			for (int j = idx + 1; j < progExecLength; ++j) {
 				final AtomicTraceElement<TE> nextATE = origPe.getTraceElement(j);
 				if (mStringProvider.getStartLineNumberFromStep(currentATE.getTraceElement()) != mStringProvider
@@ -222,7 +224,12 @@ public class GraphMLViolationWitnessGenerator<TE, E> extends GraphMLBaseWitnessG
 					idx = j;
 					break;
 				}
+
+				update(builder, currentATE, nextATE);
 			}
+			partialProgramStateMapping.put(newIdx, origPe.getProgramState(idx));
+			newIdx++;
+			trace.add(builder.build());
 
 			if (oldIdx == idx) {
 				break;
@@ -230,6 +237,28 @@ public class GraphMLViolationWitnessGenerator<TE, E> extends GraphMLBaseWitnessG
 		}
 
 		return new ReducedProgramExecution<>(origPe, trace, partialProgramStateMapping);
+	}
+
+	private void update(final AtomicTraceElementBuilder<TE> builder, final AtomicTraceElement<TE> currentATE,
+			final AtomicTraceElement<TE> nextATE) {
+		builder.setElement(nextATE.getTraceElement());
+		builder.setStep(nextATE.getStep());
+		for (final var si : nextATE.getStepInfo()) {
+			if (si != StepInfo.NONE) {
+				builder.addStepInfo(si);
+			}
+		}
+		builder.setRelevanceInformation(nextATE.getRelevanceInformation());
+		builder.setProcedures(currentATE.getPrecedingProcedure(), nextATE.getSucceedingProcedure());
+		if (nextATE.hasThreadId()) {
+			builder.setThreadId(nextATE.getThreadId());
+		}
+		if (nextATE.hasStepInfo(StepInfo.FORK)) {
+			builder.setForkedThreadId(nextATE.getForkedThreadId());
+		}
+		if (nextATE.hasAnyStepInfo(StepInfo.JOIN)) {
+			builder.setJoinedThreadId(nextATE.getJoinedThreadId());
+		}
 	}
 
 	private static final class ReducedProgramExecution<TE, E> implements IProgramExecution<TE, E> {
