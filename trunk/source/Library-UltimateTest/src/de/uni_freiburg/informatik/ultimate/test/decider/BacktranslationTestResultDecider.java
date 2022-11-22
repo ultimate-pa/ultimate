@@ -213,6 +213,8 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 				+ toolchainFileNameWithoutEnding + "_" + settingsFileNameWithoutEnding));
 		candidates.add(getDesiredCounterExampleCandidate(inputDir,
 				inputFileNameWithoutEnding + "_" + settingsFileNameWithoutEnding));
+		candidates.add(getDesiredCounterExampleCandidate(inputDir,
+				inputFileNameWithoutEnding + "_" + toolchainFileNameWithoutEnding));
 		candidates.add(getDesiredCounterExampleCandidate(inputDir, inputFileNameWithoutEnding));
 
 		log.info("Considering desired error paths:");
