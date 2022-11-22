@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
@@ -60,13 +61,13 @@ public class CACSL2BoogieBacktranslatorMapping implements ICACSL2BoogieBacktrans
 	@Override
 	public void putVar(final String boogieId, final String cId, final CType cType,
 			final DeclarationInformation decInfo) {
-		mVar2CVar.put(new Pair<>(boogieId, decInfo), new Pair<>(cId, cType));
+		mVar2CVar.put(new Pair<>(boogieId, normalize(decInfo)), new Pair<>(cId, cType));
 	}
 
 	@Override
 	public void putInVar(final String boogieId, final String cId, final CType cType,
 			final DeclarationInformation decInfo) {
-		mInVar2CVar.put(new Pair<>(boogieId, decInfo), new Pair<>(cId, cType));
+		mInVar2CVar.put(new Pair<>(boogieId, normalize(decInfo)), new Pair<>(cId, cType));
 	}
 
 	@Override
@@ -80,19 +81,19 @@ public class CACSL2BoogieBacktranslatorMapping implements ICACSL2BoogieBacktrans
 	}
 
 	boolean hasInVar(final String boogieId, final DeclarationInformation decInfo) {
-		return mInVar2CVar.containsKey(new Pair<>(boogieId, decInfo));
+		return mInVar2CVar.containsKey(new Pair<>(boogieId, normalize(decInfo)));
 	}
 
 	Pair<String, CType> getInVar(final String boogieId, final DeclarationInformation decInfo) {
-		return mInVar2CVar.get(new Pair<>(boogieId, decInfo));
+		return mInVar2CVar.get(new Pair<>(boogieId, normalize(decInfo)));
 	}
 
 	boolean hasVar(final String boogieId, final DeclarationInformation decInfo) {
-		return mVar2CVar.containsKey(new Pair<>(boogieId, decInfo));
+		return mVar2CVar.containsKey(new Pair<>(boogieId, normalize(decInfo)));
 	}
 
 	Pair<String, CType> getVar(final String boogieId, final DeclarationInformation decInfo) {
-		return mVar2CVar.get(new Pair<>(boogieId, decInfo));
+		return mVar2CVar.get(new Pair<>(boogieId, normalize(decInfo)));
 	}
 
 	Map<String, AUXVAR> getTempVar2Obj() {
@@ -101,5 +102,25 @@ public class CACSL2BoogieBacktranslatorMapping implements ICACSL2BoogieBacktrans
 
 	private void putFunction(final String boogieId, final String cId) {
 		mFunctionId2Operator.put(boogieId, cId);
+	}
+
+	// Normalizes DeclarationInformation so that parameters of procedure implementations are identified with the
+	// corresponding parameters in the procedure's declaration.
+	private DeclarationInformation normalize(final DeclarationInformation decInfo) {
+		switch (decInfo.getStorageClass()) {
+		case IMPLEMENTATION_INPARAM:
+			return new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, decInfo.getProcedure());
+		case IMPLEMENTATION_OUTPARAM:
+			return new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, decInfo.getProcedure());
+		case GLOBAL:
+		case IMPLEMENTATION:
+		case LOCAL:
+		case PROC_FUNC:
+		case PROC_FUNC_INPARAM:
+		case PROC_FUNC_OUTPARAM:
+		case QUANTIFIED:
+			return decInfo;
+		}
+		throw new IllegalArgumentException("unknown storage class: " + decInfo.getStorageClass());
 	}
 }
