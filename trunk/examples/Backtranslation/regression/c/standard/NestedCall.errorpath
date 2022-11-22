@@ -3,7 +3,7 @@
        VAL         [a=6, a++=5]
 [L11]  CALL, EXPR  f(a++)
 [L4]   EXPR        ++b
-[L4]              return ++b;
+[L4]               return ++b;
 [L11]  RET, EXPR   f(a++)
        VAL         [a=6, a++=5, f(a++)=6]
 [L11]  CALL, EXPR  f(f(a++))
