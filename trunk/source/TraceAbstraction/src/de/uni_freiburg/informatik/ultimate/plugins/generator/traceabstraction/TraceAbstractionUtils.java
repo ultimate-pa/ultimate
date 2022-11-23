@@ -235,9 +235,12 @@ public final class TraceAbstractionUtils {
 		return sb.toString();
 	}
 
-	public static <L> HoareTripleCheckerCache extractHoareTriplesfromAutomaton(
-			final NestedWordAutomaton<L, IPredicate> infeasibilityProof) {
+	public static <L> HoareTripleCheckerCache
+			extractHoareTriplesfromAutomaton(final NestedWordAutomaton<L, IPredicate> infeasibilityProof) {
 		final HoareTripleCheckerCache htcc = new HoareTripleCheckerCache();
+		if (infeasibilityProof == null) {
+			return htcc;
+		}
 		for (final IPredicate state : infeasibilityProof.getStates()) {
 			for (final OutgoingInternalTransition<L, IPredicate> succ : infeasibilityProof.internalSuccessors(state)) {
 				htcc.putInternal(state, (IInternalAction) succ.getLetter(), succ.getSucc(), Validity.VALID);
