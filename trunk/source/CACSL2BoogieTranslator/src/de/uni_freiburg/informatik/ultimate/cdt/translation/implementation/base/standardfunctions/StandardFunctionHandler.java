@@ -762,6 +762,8 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONG)));
 		fill(map, "llabs",
 				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONGLONG)));
+		fill(map, "imaxabs",
+				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONGLONG)));
 		fill(map, "div", die);
 		fill(map, "ldiv", die);
 		fill(map, "lldiv", die);
