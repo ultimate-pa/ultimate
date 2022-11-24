@@ -987,7 +987,7 @@ public class CfgBuilder {
 
 				mLogger.debug(mother + " has no sucessors any more or " + child + "has no predecessors any more.");
 				mLogger.debug(child + " gets absorbed by " + mother);
-				mergeLocNodes(child, mother);
+				mergeLocNodes(child, mother, true);
 				return true;
 			}
 			if (allowMultiplicationOfEdges) {
@@ -1150,30 +1150,33 @@ public class CfgBuilder {
 				throw new AssertionError("Label " + labelName + " occurred twice");
 			}
 			final StringDebugIdentifier tmpLabelIdentifier = new StringDebugIdentifier(labelName);
+			mLastLabelName = tmpLabelIdentifier;
+			// mlocSuffix = 0;
+
+			// Is there already a LocNode that represents this label?
+			// (This can be the case if this label was destination of a goto statement.)
+			// If not construct the LocNode.
+			// If yes, add the Location Object to the existing LocNode.
+			final BoogieIcfgLocation locNode = getLocNodeForLabel(tmpLabelIdentifier, st);
 			if (mCurrent instanceof BoogieIcfgLocation) {
-				// from now on this label is represented by mCurrent
-
-				final BoogieIcfgLocation oldNodeForLabel = mLabel2LocNodes.get(tmpLabelIdentifier);
-				if (oldNodeForLabel != null) {
-					mergeLocNodes(oldNodeForLabel, (BoogieIcfgLocation) mCurrent);
-				}
-				mLabel2LocNodes.put(tmpLabelIdentifier, (BoogieIcfgLocation) mCurrent);
+				// We replace mCurrent by the new node
+				// In this case we do not copy the node's annotations.
+				// TODO Matthias 20221124: This is a workaround for the problem that we cannot
+				// output the correct loop invariant for two successive loops. The
+				// UnstructureCode of the BoogiePreprocessor will add a label at the end of the
+				// preceding loop and at the beginning the successive loop. If we merge the
+				// annotations, the loop entry of the successive loops will have the line
+				// numbers of both loops.
+				final boolean mergeAnnotations = (LoopExitAnnotation.getAnnotation(mCurrent) == null
+						|| LoopEntryAnnotation.getAnnotation(st) == null);
+				mergeLocNodes((BoogieIcfgLocation) mCurrent, locNode, mergeAnnotations);
 			} else {
-				mLastLabelName = tmpLabelIdentifier;
-				// mlocSuffix = 0;
-
-				// Is there already a LocNode that represents this label?
-				// (This can be the case if this label was destination of a goto statement.)
-				// If not construct the LocNode.
-				// If yes, add the Location Object to the existing LocNode.
-				final BoogieIcfgLocation locNode = getLocNodeForLabel(tmpLabelIdentifier, st);
-
 				if (mCurrent instanceof CodeBlock) {
 					((IcfgEdge) mCurrent).setTarget(locNode);
 					locNode.addIncoming((CodeBlock) mCurrent);
 				}
-				mCurrent = locNode;
 			}
+			mCurrent = locNode;
 
 			// Mark the current location as loop location if necessary.
 			final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(st);
@@ -1434,7 +1437,7 @@ public class CfgBuilder {
 					mLogger.debug("Constructed TransEdge " + transEdge + "as predecessr of " + mIcfg.mFinalNode);
 				}
 			} else if (mCurrent instanceof BoogieIcfgLocation) {
-				mergeLocNodes((BoogieIcfgLocation) mCurrent, finalNode);
+				mergeLocNodes((BoogieIcfgLocation) mCurrent, finalNode, true);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Replacing " + mCurrent + " by " + finalNode);
 				}
@@ -1560,7 +1563,8 @@ public class CfgBuilder {
 		 * @param newLocNode
 		 *            LocNode that absorbes the oldLocNode.
 		 */
-		private void mergeLocNodes(final BoogieIcfgLocation oldLocNode, final BoogieIcfgLocation newLocNode) {
+		private void mergeLocNodes(final BoogieIcfgLocation oldLocNode, final BoogieIcfgLocation newLocNode,
+				final boolean copyAnnotations) {
 			// oldLocNode must not represent an error location
 			assert !oldLocNode.isErrorLocation();
 			if (oldLocNode == newLocNode) {
@@ -1595,7 +1599,9 @@ public class CfgBuilder {
 				// if the old location was a loop location, the new one is also
 				mIcfg.getLoopLocations().add(newLocNode);
 			}
-			ModelUtils.copyAnnotations(oldLocNode, newLocNode);
+			if (copyAnnotations) {
+				ModelUtils.copyAnnotations(oldLocNode, newLocNode);
+			}
 		}
 	}
 
