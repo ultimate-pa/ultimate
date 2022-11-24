@@ -762,6 +762,8 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONG)));
 		fill(map, "llabs",
 				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONGLONG)));
+		fill(map, "imaxabs",
+				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONGLONG)));
 		fill(map, "div", die);
 		fill(map, "ldiv", die);
 		fill(map, "lldiv", die);
@@ -1035,9 +1037,14 @@ public class StandardFunctionHandler {
 			final int firstArgumentToConsider) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+
+		// TODO we should probably dispatch all parameters, in case they have side effects
+
 		for (int i = firstArgumentToConsider; i < arguments.length; i++) {
 			final ExpressionResult arg =
 					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]);
+			builder.addAllExceptLrValue(arg);
+
 			final CType type = ((CPointer) arg.getCType()).getPointsToType();
 			final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
 			builder.addDeclaration(auxvar.getVarDec());

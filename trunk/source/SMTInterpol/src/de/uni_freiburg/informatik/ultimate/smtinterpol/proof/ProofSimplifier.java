@@ -2955,12 +2955,31 @@ public class ProofSimplifier extends TermTransformer {
 	}
 
 	/**
+	 * Convert a trivial EQ lemma to minimal proof. A trivial EQ lemma is an EQ
+	 * lemma where the LA part is missing, since it normalizes to an obvious
+	 * inconsistency (integer variable equals proper fraction).
+	 *
+	 * @param clause the clause to check
+	 * @return the proof.
+	 */
+	private Term convertEQTrivialLemma(final ProofLiteral[] clause) {
+		assert clause.length == 1;
+		assert !clause[0].getPolarity();
+		assert isApplication("=", clause[0].getAtom());
+		final ApplicationTerm eqTerm = (ApplicationTerm) clause[0].getAtom();
+		return proveTrivialDisequality(eqTerm.getParameters()[0], eqTerm.getParameters()[1]);
+	}
+
+	/**
 	 * Convert an EQ lemma to minimal proof.
 	 *
 	 * @param clause the clause to check
 	 * @return the proof.
 	 */
 	private Term convertEQLemma(final ProofLiteral[] clause) {
+		if (clause.length == 1) {
+			return convertEQTrivialLemma(clause);
+		}
 		assert clause.length == 2;
 		final int posNr = clause[0].getPolarity() ? 0 : 1;
 		final int negNr = 1 - posNr;
@@ -3237,8 +3256,7 @@ public class ProofSimplifier extends TermTransformer {
 			if (storeArgs[0] == arrayRight) {
 				// this is a step from a to (store a storeIndex v). Check if storeIndex is okay.
 				final Term storeIdx = ((ApplicationTerm) arrayLeft).getParameters()[1];
-				if (disequalities.contains(new SymmetricPair<>(weakIdx, storeIdx))
-						|| proveTrivialDisequality(weakIdx, storeIdx) != null) {
+				if (disequalities.contains(new SymmetricPair<>(weakIdx, storeIdx))) {
 					final Term storeVal = ((ApplicationTerm) arrayLeft).getParameters()[2];
 					final Theory theory = arrayLeft.getTheory();
 					neededDisequalities.add(theory.term(SMTLIBConstants.EQUALS, storeIdx, weakIdx));
@@ -4660,15 +4678,9 @@ public class ProofSimplifier extends TermTransformer {
 			assert isApplication("=", eq);
 			final Term[] eqParam = ((ApplicationTerm) eq).getParameters();
 			final Term clauseEq = allDisequalities.get(new SymmetricPair<>(eqParam[0], eqParam[1]));
-			if (clauseEq != null) {
-				if (clauseEq != eq) {
-					// need symmetry
-					proof = res(eq, proof, mProofRules.symm(eqParam[1], eqParam[0]));
-				}
-			} else {
-				final Term proofEq = proveTrivialDisequality(eqParam[0], eqParam[1]);
-				assert proofEq != null;
-				proof = res(eq, proof, proofEq);
+			if (clauseEq != eq) {
+				// need symmetry
+				proof = res(eq, proof, mProofRules.symm(eqParam[1], eqParam[0]));
 			}
 		}
 		return proof;

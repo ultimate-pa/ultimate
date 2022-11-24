@@ -619,6 +619,9 @@ public class FunctionHandler {
 
 		final Procedure calleeProcDecl = calleeProcInfo.getDeclaration();
 		final CFunction calleeProcCType = calleeProcInfo.getCType();
+		if (calleeProcCType != null && calleeProcCType.isExtern()) {
+			mLogger.warn("Unknown extern function " + calleeName);
+		}
 		assert calleeProcDecl != null;
 		if (calleeProcCType != null && calleeProcCType.hasVarArgs()) {
 			if (calleeProcCType.isExtern()) {

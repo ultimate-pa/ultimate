@@ -217,6 +217,16 @@ public class TraceCheckReasonUnknown {
 			// broken SMT solver connection can have various reasons such as misconfiguration or solver crashes
 			reason = Reason.SOLVER_CRASH_OTHER;
 			exceptionCategory = ExceptionHandlingCategory.KNOWN_DEPENDING;
+		} else if (message.startsWith(
+				"External (MP /opt/bin/mathsat -theory.fp.to_bv_overflow_mode=1 -theory.fp.minmax_zero_mode=4 -theory.bv.div_by_zero_mode=1 -unsat_core_generation=3")
+				&& message.endsWith("with exit command (exit)) Received EOF on stdin. No stderr output.")) {
+			// MathSAT crashed, probably with Segmentation fault
+			reason = Reason.SOLVER_CRASH_OTHER;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else if (message.equals("Invalid model")) {
+			// MathSAT crashed, probably after a get-value command
+			reason = Reason.SOLVER_CRASH_OTHER;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
 		} else if (message.endsWith("Received EOF on stdin. No stderr output.")) {
 			// problem with Z3
 			reason = Reason.SOLVER_CRASH_OTHER;
