@@ -111,8 +111,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureExitDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureFinalDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.StringDebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
@@ -165,6 +167,7 @@ public class CfgBuilder {
 	private final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> mJoins = new ArrayList<>();
 
 	private final RCFGBacktranslator mRcfgBacktranslator;
+	private final BlockEncodingBacktranslator mRemoveAssumeTrueBacktranslator;
 
 	private final CodeBlockSize mCodeBlockSize;
 
@@ -217,6 +220,7 @@ public class CfgBuilder {
 		final RCFGBacktranslator backtranslator = new RCFGBacktranslator(mLogger);
 		backtranslator.setTerm2Expression(mBoogie2Smt.getTerm2Expression());
 		mRcfgBacktranslator = backtranslator;
+		mRemoveAssumeTrueBacktranslator = new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
 
 		final ConcurrencyInformation ci = new ConcurrencyInformation(mForks, Collections.emptyMap(), mJoins);
 		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2Smt, ci);
@@ -304,7 +308,62 @@ public class CfgBuilder {
 					"Large block encoding incomplete: Is there illegal control flow (e.g. loops) within an atomic block?");
 		}
 
+		if (mRemoveAssumeTrueStmt) {
+			removeAssumeTrueStmts(icfg);
+		}
+
 		return icfg;
+	}
+
+	private void removeAssumeTrueStmts(final BoogieIcfgContainer icfg) {
+		final var startEdges = BoogieIcfgContainer.extractStartEdges(icfg);
+		final var worklist = new ArrayDeque<>(startEdges);
+		final var obsolete = new HashSet<IcfgEdge>();
+		while (!worklist.isEmpty()) {
+			final var edge = (CodeBlock) worklist.pop();
+
+			final var pre = edge.getSource();
+			final var middle = edge.getTarget();
+			if (!isAssumeTrueEdge(edge) || obsolete.contains(edge) || pre == middle) {
+				continue;
+			}
+
+			final var succs = edge.getTarget().getOutgoingEdges();
+			final boolean simplifyCodeBlocks = false;
+			for (final var succ : succs) {
+				// TODO just make a copy of succ (in a simpler way)
+				final SequentialComposition comp = mCbf.constructSequentialComposition(
+						(BoogieIcfgLocation) edge.getSource(), (BoogieIcfgLocation) edge.getTarget(), false, false,
+						List.of((CodeBlock) succ), XNF_CONVERSION_TECHNIQUE, SimplificationTechnique.NONE);
+				ModelUtils.copyAnnotations(edge, comp);
+				ModelUtils.copyAnnotations(succ, comp);
+
+				// inform backtranslator
+				mRemoveAssumeTrueBacktranslator.mapEdges(comp, edge);
+				mRemoveAssumeTrueBacktranslator.mapEdges(comp, succ);
+
+				// remove succ from CFG
+				succ.getSource().removeOutgoing(succ);
+				succ.getTarget().removeIncoming(succ);
+				obsolete.add(succ);
+			}
+
+			// remove edge from CFG
+			pre.removeOutgoing(edge);
+			middle.removeIncoming(edge);
+			obsolete.add(edge);
+
+			if (middle.getIncomingEdges().isEmpty()) {
+				ModelUtils.copyAnnotations(middle, pre);
+				// TODO actually remove middle location from icfg ?
+			}
+
+		}
+	}
+
+	private static boolean isAssumeTrueEdge(final IcfgEdge edge) {
+		final var tf = edge.getTransformula();
+		return tf.getAssignedVars().isEmpty() && SmtUtils.isTrueLiteral(tf.getFormula());
 	}
 
 	private Stream<BoogieIcfgLocation> getAllLocations() {
@@ -491,10 +550,14 @@ public class CfgBuilder {
 		return mRcfgBacktranslator;
 	}
 
+	public List<ITranslator<IIcfgTransition<IcfgLocation>, BoogieASTNode, Term, Expression, IcfgLocation, String>>
+			getBacktranslators() {
+		return List.of(mRcfgBacktranslator, (ITranslator) mRemoveAssumeTrueBacktranslator);
+	}
+
 	/**
-	 * Check it this statement is a plain <code>assume true</code> statement, i.e. whether
-	 * * it has an empty list of attributes or no attributes at all, and
-	 * * it is not annotated with an LTLStepAnnotation. 
+	 * Check it this statement is a plain <code>assume true</code> statement, i.e. whether * it has an empty list of
+	 * attributes or no attributes at all, and * it is not annotated with an LTLStepAnnotation.
 	 */
 	private static boolean isPlainAssumeTrueStatement(final Statement st) {
 		if (st instanceof AssumeStatement) {
@@ -688,7 +751,7 @@ public class CfgBuilder {
 
 				// Rationale: <code>assume true</ code> statements can be omitted, unless they
 				// carry attributes or indicate an overapproximation.
-				if (mRemoveAssumeTrueStmt && isPlainAssumeTrueStatement(st) && !isOverapproximation(st)) {
+				if (false && mRemoveAssumeTrueStmt && isPlainAssumeTrueStatement(st) && !isOverapproximation(st)) {
 					mRemovedAssumeTrueStatements++;
 					continue;
 				}

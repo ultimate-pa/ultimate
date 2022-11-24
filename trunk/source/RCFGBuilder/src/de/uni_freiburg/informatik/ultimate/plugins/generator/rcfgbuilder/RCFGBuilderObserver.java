@@ -89,7 +89,9 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 			if (IcfgUtils.hasUnreachableProgramPoints(mGraphroot)) {
 				throw new AssertionError("ICFG has unreachable program points");
 			}
-			mServices.getBacktranslationService().addTranslator(recCFGBuilder.getBacktranslator());
+			for (final var translator : recCFGBuilder.getBacktranslators()) {
+				mServices.getBacktranslationService().addTranslator(translator);
+			}
 		} catch (final SMTLIBException e) {
 			final String message = e.getMessage();
 			if ("Cannot create quantifier in quantifier-free logic".equals(message)
