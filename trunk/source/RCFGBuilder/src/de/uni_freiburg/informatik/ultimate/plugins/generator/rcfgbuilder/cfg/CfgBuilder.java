@@ -949,6 +949,12 @@ public class CfgBuilder {
 					return false;
 				}
 			}
+			final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(child);
+			if (lea != null && lea.getLoopEntryType() == LoopEntryType.WHILE) {
+				mLogger.debug("Will not remove LocNode %s which is marked as loop head (location: %s)", mCurrent,
+						child);
+				return false;
+			}
 
 			mLogger.debug("Removed GotoEdge from" + mother + " to " + child);
 			if (mother == child) {
