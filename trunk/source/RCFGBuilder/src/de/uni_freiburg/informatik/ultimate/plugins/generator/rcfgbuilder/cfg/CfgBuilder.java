@@ -949,12 +949,6 @@ public class CfgBuilder {
 					return false;
 				}
 			}
-			final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(child);
-			if (lea != null && lea.getLoopEntryType() == LoopEntryType.WHILE) {
-				mLogger.debug("Will not remove LocNode %s which is marked as loop head (location: %s)", mCurrent,
-						child);
-				return false;
-			}
 
 			mLogger.debug("Removed GotoEdge from" + mother + " to " + child);
 			if (mother == child) {
@@ -985,9 +979,14 @@ public class CfgBuilder {
 					ModelUtils.copyAnnotations(gotoEdge, out, LoopExitAnnotation.class);
 				}
 
-				mLogger.debug(mother + " has no sucessors any more or " + child + "has no predecessors any more.");
-				mLogger.debug(child + " gets absorbed by " + mother);
-				mergeLocNodes(child, mother, true);
+				final boolean childIsLoopEntry = (LoopEntryAnnotation.getAnnotation(mother) != null);
+				if (childIsLoopEntry) {
+					mergeLocNodes(mother, child, false);
+					mLogger.debug(mother + " gets absorbed by " + child);
+				} else {
+					mergeLocNodes(child, mother, true);
+					mLogger.debug(child + " gets absorbed by " + mother);
+				}
 				return true;
 			}
 			if (allowMultiplicationOfEdges) {
@@ -1167,9 +1166,9 @@ public class CfgBuilder {
 				// preceding loop and at the beginning the successive loop. If we merge the
 				// annotations, the loop entry of the successive loops will have the line
 				// numbers of both loops.
-				final boolean mergeAnnotations = (LoopExitAnnotation.getAnnotation(mCurrent) == null
+				final boolean mergeAllAnnotations = (LoopExitAnnotation.getAnnotation(mCurrent) == null
 						|| LoopEntryAnnotation.getAnnotation(st) == null);
-				mergeLocNodes((BoogieIcfgLocation) mCurrent, locNode, mergeAnnotations);
+				mergeLocNodes((BoogieIcfgLocation) mCurrent, locNode, mergeAllAnnotations);
 			} else {
 				if (mCurrent instanceof CodeBlock) {
 					((IcfgEdge) mCurrent).setTarget(locNode);
@@ -1553,18 +1552,21 @@ public class CfgBuilder {
 		}
 
 		/**
-		 * Merge one LocNode into another. The oldLocNode will be merged into the newLocNode. The newLocNode gets
-		 * connected to all incoming/outgoing transitions of the oldLocNode. The oldLocNode looses connections to all
-		 * incoming/outgoing transitions. If the oldLocNode was representative for a Label the new location will from
-		 * now on be the representative of this Label.
+		 * Merge one LocNode into another. The oldLocNode will be merged into the
+		 * newLocNode. The newLocNode gets connected to all incoming/outgoing
+		 * transitions of the oldLocNode. The oldLocNode looses connections to all
+		 * incoming/outgoing transitions. If the oldLocNode was representative for a
+		 * Label the new location will from now on be the representative of this Label.
 		 *
-		 * @param oldLocNode
-		 *            LocNode that gets merged into the newLocNode. Must not represent an error location.
-		 * @param newLocNode
-		 *            LocNode that absorbes the oldLocNode.
+		 * @param oldLocNode         LocNode that gets merged into the newLocNode. Must
+		 *                           not represent an error location.
+		 * @param newLocNode         LocNode that absorbes the oldLocNode.
+		 * @param copyAllAnnotations If `true` then we copy all annotations from the old
+		 *                           node to the new node, if `false` we copy all
+		 *                           annotations by the {@link ILocation}.
 		 */
 		private void mergeLocNodes(final BoogieIcfgLocation oldLocNode, final BoogieIcfgLocation newLocNode,
-				final boolean copyAnnotations) {
+				final boolean copyAllAnnotations) {
 			// oldLocNode must not represent an error location
 			assert !oldLocNode.isErrorLocation();
 			if (oldLocNode == newLocNode) {
@@ -1599,8 +1601,10 @@ public class CfgBuilder {
 				// if the old location was a loop location, the new one is also
 				mIcfg.getLoopLocations().add(newLocNode);
 			}
-			if (copyAnnotations) {
+			if (copyAllAnnotations) {
 				ModelUtils.copyAnnotations(oldLocNode, newLocNode);
+			} else {
+				ModelUtils.copyAnnotationsExcept(oldLocNode, newLocNode, ILocation.class);
 			}
 		}
 	}
