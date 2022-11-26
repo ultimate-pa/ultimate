@@ -564,7 +564,8 @@ public class CCProofGenerator {
 			Term rhs = equality.getSecond().getFlatTerm();
 			// to make cc equalities different from la equalities, ensure that rhs is not a
 			// constant.
-			if (rhs.getSort().isNumericSort() && rhs instanceof ConstantTerm) {
+			if (rhs.getSort().isNumericSort() && rhs instanceof ConstantTerm
+					&& ((ConstantTerm) rhs).getValue().equals(Rational.ZERO)) {
 				final Term constantTerm = rhs;
 				rhs = lhs;
 				lhs = constantTerm;
