@@ -409,7 +409,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		if (to < from) {
 			throw new IllegalArgumentException("The last index must not be smaller than the first.");
 		}
-		if (to >= length()) {
+		if (to > length()) {
 			throw new IllegalArgumentException("The last index must be strictly smaller than the word length.");
 		}
 
