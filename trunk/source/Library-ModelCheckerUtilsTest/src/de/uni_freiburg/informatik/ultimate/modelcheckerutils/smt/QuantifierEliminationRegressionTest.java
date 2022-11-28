@@ -581,6 +581,28 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, formulaAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void hiddenWeakArrayEquality07ArrayInIndex() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k1", "k2"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b1", "b2"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= b1 (store a (select a k1) 23)) (= (store a k2 42) b2)))";
+		final String expectedResultAsString = "(let ((.cse0 (select b2 k2))) (and (= .cse0 42) (let ((.cse1 (select b2 k1)) (.cse2 (= k1 k2)) (.cse3 (select b1 k1))) (or (and (or (= .cse1 k1) .cse2) (= (store (store b1 k1 .cse1) k2 .cse0) b2) (= 23 .cse3)) (and (= 23 (select b1 .cse3)) (or (= .cse1 .cse3) .cse2) (= b2 (store (store b1 .cse3 (select b2 .cse3)) k2 .cse0)))))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void hiddenWeakArrayEquality08SomeBug() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "mem"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int (Array Int Int))) (b2 (Array Int Int)) (b3 Int) (b1 (Array Int Int))) (let ((.cse0 (select (select a k) 0))) (and (not (= .cse0 k)) (= (store (store a .cse0 b1) k (store (select (store a .cse0 b2) k) 4 b3)) mem))))";
+		final String expectedResultAsString = "(let ((.cse0 (select mem k))) (let ((.cse1 (select .cse0 0))) (and (exists ((v_DerPreprocessor_1 (Array Int Int)) (v_DerPreprocessor_2 (Array Int Int))) (and (= (select .cse0 4) (select v_DerPreprocessor_2 4)) (= (select mem .cse1) (select (store (store (store (store mem .cse1 v_DerPreprocessor_1) k v_DerPreprocessor_2) .cse1 v_DerPreprocessor_1) k v_DerPreprocessor_2) .cse1)))) (not (= k .cse1)))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	/**
 	 * TODO: Bug. Some array variable is not eliminated.
 	 */

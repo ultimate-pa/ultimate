@@ -32,6 +32,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -42,9 +43,9 @@ public class PredicateWithHistory extends SPredicate {
 	private final Map<Integer, Term> mHistory;
 
 	protected PredicateWithHistory(final IcfgLocation programPoint, final int serialNumber, final String[] procedures,
-			final Term formula, final Set<IProgramVar> vars, final Term closedFormula,
+			final Term formula, final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final Term closedFormula,
 			final Map<Integer, Term> history) {
-		super(programPoint, serialNumber, procedures, formula, vars, closedFormula);
+		super(programPoint, serialNumber, procedures, formula, vars, funs, closedFormula);
 		mHistory = history;
 	}
 

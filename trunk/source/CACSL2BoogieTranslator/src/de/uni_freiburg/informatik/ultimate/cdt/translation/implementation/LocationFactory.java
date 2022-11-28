@@ -39,7 +39,6 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
@@ -69,19 +68,11 @@ public class LocationFactory {
 	}
 
 	public static CACSLLocation createIgnoreCLocation() {
-		return new CLocation(null, true, null);
+		return createIgnoreCLocation(null);
 	}
 
 	public CACSLLocation createACSLLocation(final ACSLNode acslNode) {
 		return new ACSLLocation(acslNode, false);
-	}
-
-	public CACSLLocation createACSLLocation(final ACSLNode acslNode, final Check type) {
-		return new ACSLLocation(acslNode, false);
-	}
-
-	public CACSLLocation createCLocation(final IASTNode cNode, final Check type) {
-		return new CLocation(cNode, false, mLineDirectiveMapping);
 	}
 
 	public static CACSLLocation createLocation(final CACSLLocation loc) {
@@ -90,19 +81,8 @@ public class LocationFactory {
 			return new ACSLLocation(realLoc.getNode(), realLoc.ignoreDuringBacktranslation());
 		} else if (loc instanceof CLocation) {
 			final CLocation realLoc = (CLocation) loc;
-			return new CLocation(realLoc.getNode(), realLoc.ignoreDuringBacktranslation(), realLoc.getLineDirectiveMapping());
-		} else {
-			throw new UnsupportedOperationException();
-		}
-	}
-
-	public static CACSLLocation createLocation(final CACSLLocation loc, final Check type) {
-		if (loc instanceof ACSLLocation) {
-			final ACSLLocation realLoc = (ACSLLocation) loc;
-			return new ACSLLocation(realLoc.getNode(), realLoc.ignoreDuringBacktranslation());
-		} else if (loc instanceof CLocation) {
-			final CLocation realLoc = (CLocation) loc;
-			return new CLocation(realLoc.getNode(), realLoc.ignoreDuringBacktranslation(), realLoc.getLineDirectiveMapping());
+			return new CLocation(realLoc.getNode(), realLoc.ignoreDuringBacktranslation(),
+					realLoc.getLineDirectiveMapping());
 		} else {
 			throw new UnsupportedOperationException();
 		}

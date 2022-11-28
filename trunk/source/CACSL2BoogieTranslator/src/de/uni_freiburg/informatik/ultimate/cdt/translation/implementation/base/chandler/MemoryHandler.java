@@ -127,7 +127,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValueForArrays;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -149,15 +148,13 @@ public class MemoryHandler {
 		ULTIMATE_ALLOC_STACK("#Ultimate.allocOnStack"),
 
 		/**
-		 * This method allow us to allocate memory without costly array updates. The
-		 * classical memory allocation in the Hoenicke-Lindenmann memory model returns
-		 * nodeterministically chosen fresh valid pointers but requires an update of the
-		 * #valid array and the #length array. If we have many of these array updates
-		 * (hundreds, thousands) this affects the performance of our tool. This method
-		 * allows us to assume (via ensures clauses) that and how much memory is valid.
-		 * This method requires that the fresh pointer is passed as an input. Since we
-		 * know all memory that is allocated initially we use a counter in this
-		 * translation to construct fresh pointers.
+		 * This method allow us to allocate memory without costly array updates. The classical memory allocation in the
+		 * Hoenicke-Lindenmann memory model returns nodeterministically chosen fresh valid pointers but requires an
+		 * update of the #valid array and the #length array. If we have many of these array updates (hundreds,
+		 * thousands) this affects the performance of our tool. This method allows us to assume (via ensures clauses)
+		 * that and how much memory is valid. This method requires that the fresh pointer is passed as an input. Since
+		 * we know all memory that is allocated initially we use a counter in this translation to construct fresh
+		 * pointers.
 		 */
 		ULTIMATE_ALLOC_INIT("#Ultimate.allocInit"),
 
@@ -392,7 +389,6 @@ public class MemoryHandler {
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final TranslationSettings mSettings;
 
-
 	/**
 	 * See {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}
 	 */
@@ -468,6 +464,17 @@ public class MemoryHandler {
 
 	public Expression calculateSizeOf(final ILocation loc, final CType cType, final IASTNode hook) {
 		return mTypeSizeAndOffsetComputer.constructBytesizeExpression(loc, cType, hook);
+	}
+
+	// TODO: This handling is quite imprecise and does not even consider cType
+	public ExpressionResult handleAlignOf(final ILocation loc, final CType cType, final CType resultType) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addOverapprox(new Overapprox("alignof", loc));
+		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
+		builder.addDeclaration(auxvar.getVarDec());
+		builder.addAuxVar(auxvar);
+		builder.setLrValue(new RValue(auxvar.getExp(), resultType));
+		return builder.build();
 	}
 
 	/**
@@ -861,8 +868,9 @@ public class MemoryHandler {
 
 		final MemoryModelDeclarations alloc = memArea.getMemoryModelDeclaration();
 		requireMemoryModelFeature(alloc);
+		final Expression wrappedSize = mExpressionTranslation.applyWraparound(loc, mTypeSizes.getSizeT(), size);
 		final CallStatement result = StatementFactory.constructCallStatement(loc, false,
-				new VariableLHS[] { returnedValue }, alloc.getName(), new Expression[] { size });
+				new VariableLHS[] { returnedValue }, alloc.getName(), new Expression[] { wrappedSize });
 
 		mProcedureManager.registerProcedure(alloc.getName());
 		return result;
@@ -885,23 +893,17 @@ public class MemoryHandler {
 	/**
 	 * Call for procedure that can allocate memory during the initialization. See
 	 * {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}.
-	 * @param cType type of the object for which we allocate memory (unlike
-	 *              {@link MemoryHandler#getUltimateMemAllocCall} which takes a
-	 *              pointer to the object for which allocate.
+	 *
+	 * @param cType
+	 *            type of the object for which we allocate memory (unlike {@link MemoryHandler#getUltimateMemAllocCall}
+	 *            which takes a pointer to the object for which allocate.
 	 */
 	public Pair<RValue, CallStatement> getUltimateMemAllocInitCall(final ILocation actualLoc, final CType cType,
 			final IASTNode hook) {
 		final BigInteger ptrBase = BigInteger.valueOf(mFixedAddressCounter);
-		final RValue addressRValue;
-		{
-			final Expression addressExpression = mExpressionTranslation.constructPointerForIntegerValues(actualLoc,
-					ptrBase, BigInteger.ZERO);
-			if (cType instanceof CArray) {
-				addressRValue = new RValueForArrays(addressExpression, cType);
-			} else {
-				addressRValue = new RValue(addressExpression, cType);
-			}
-		}
+		final Expression addressExpression =
+				mExpressionTranslation.constructPointerForIntegerValues(actualLoc, ptrBase, BigInteger.ZERO);
+		final RValue addressRValue = new RValue(addressExpression, cType);
 		final RValue ptrBaseRValue = new RValue(
 				mTypeSizes.constructLiteralForIntegerType(actualLoc,
 						mExpressionTranslation.getCTypeOfPointerComponents(), ptrBase),
@@ -1831,7 +1833,7 @@ public class MemoryHandler {
 			return CPrimitives.UCHAR;
 		}
 		for (final CPrimitives primitive : new CPrimitives[] { CPrimitives.UCHAR, CPrimitives.USHORT, CPrimitives.UINT,
-				CPrimitives.ULONG, CPrimitives.ULONGLONG }) {
+				CPrimitives.ULONG, CPrimitives.ULONGLONG, CPrimitives.UINT128 }) {
 			if (mTypeSizes.getSize(primitive) == byteSize) {
 				return primitive;
 			}
@@ -2197,12 +2199,10 @@ public class MemoryHandler {
 			if (heapDataArray == other) {
 				conjuncts.add(
 						constructHeapArrayUpdateForWriteEnsures(loc, values, indices, other, useSelectInsteadOfStore));
+			} else if (useSelectInsteadOfStore) {
+				// do nothing (no need to havoc an uninitialized memory cell)
 			} else {
-				if (useSelectInsteadOfStore) {
-					// do nothing (no need to havoc an uninitialized memory cell)
-				} else {
-					conjuncts.add(constructHeapArrayHardlyModifiedForWriteEnsures(loc, indices, other));
-				}
+				conjuncts.add(constructHeapArrayHardlyModifiedForWriteEnsures(loc, indices, other));
 			}
 
 		}
@@ -2780,13 +2780,12 @@ public class MemoryHandler {
 	}
 
 	/**
-	 * Generate declaration of the procedure that we use to allocate memory initially.
-	 * The signature is the following.
-	 * <code>procedure ~Ultimate.allocInit(~size:int, ~ptrBase:int) returns ();</code>
-	 * See {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}.
+	 * Generate declaration of the procedure that we use to allocate memory initially. The signature is the following.
+	 * <code>procedure ~Ultimate.allocInit(~size:int, ~ptrBase:int) returns ();</code> See
+	 * {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}.
 	 */
-	private void declareAllocInit(final CHandler main, final ITypeHandler typeHandler,
-			final ILocation tuLoc, final IASTNode hook) {
+	private void declareAllocInit(final CHandler main, final ITypeHandler typeHandler, final ILocation tuLoc,
+			final IASTNode hook) {
 		final String procedureIdentifier = MemoryModelDeclarations.ULTIMATE_ALLOC_INIT.getName();
 		final String pointerBaseIdentifier = "ptrBase";
 		final ASTType intType = typeHandler.cType2AstType(tuLoc, mExpressionTranslation.getCTypeOfPointerComponents());
@@ -2795,17 +2794,17 @@ public class MemoryHandler {
 		// #length
 		final Expression length = getLengthArray(tuLoc);
 		// ~size
-		final IdentifierExpression size = ExpressionFactory.constructIdentifierExpression(tuLoc,
-				mTypeHandler.getBoogieTypeForSizeT(), SIZE,
-				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
+		final IdentifierExpression size =
+				ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogieTypeForSizeT(), SIZE,
+						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
 		final IdentifierExpression ptrBase = ExpressionFactory.constructIdentifierExpression(tuLoc,
 				mTypeHandler.getBoogieTypeForPointerComponents(), pointerBaseIdentifier,
 				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
 		{
-			final Procedure allocDeclaration = new Procedure(tuLoc, new Attribute[0], procedureIdentifier, new String[0],
-					new VarList[] { new VarList(tuLoc, new String[] { SIZE, pointerBaseIdentifier }, intType) },
-					new VarList[0] ,
-					new Specification[0], null);
+			final Procedure allocDeclaration =
+					new Procedure(tuLoc, new Attribute[0], procedureIdentifier, new String[0],
+							new VarList[] { new VarList(tuLoc, new String[] { SIZE, pointerBaseIdentifier }, intType) },
+							new VarList[0], new Specification[0], null);
 			mProcedureManager.beginCustomProcedure(main, tuLoc, procedureIdentifier, allocDeclaration);
 		}
 
@@ -2813,22 +2812,19 @@ public class MemoryHandler {
 		// ensures #valid[ptrBase] == true;
 		final Expression bLTrue = mBooleanArrayHelper.constructTrue();
 		specs.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
-				ensuresArrayHasValue(tuLoc, bLTrue, ptrBase, valid),
-				Collections.emptySet()));
+				ensuresArrayHasValue(tuLoc, bLTrue, ptrBase, valid), Collections.emptySet()));
 		// ensures #length[ptrBase] == size;
 		specs.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
-				ensuresArrayHasValue(tuLoc, size, ptrBase, length),
-				Collections.emptySet()));
+				ensuresArrayHasValue(tuLoc, size, ptrBase, length), Collections.emptySet()));
 		if (false) {
-		// Omit #StackHeapBarrier here until we know that it is needed.
-		// #StackHeapBarrier < res!base
-		specs.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
-				mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
-						IASTBinaryExpression.op_lessThan, getStackHeapBarrier(tuLoc),
-						mExpressionTranslation.getCTypeOfPointerComponents(),
-						ptrBase,
-						mExpressionTranslation.getCTypeOfPointerComponents()),
-				Collections.emptySet()));
+			// Omit #StackHeapBarrier here until we know that it is needed.
+			// #StackHeapBarrier < res!base
+			specs.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
+					mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
+							IASTBinaryExpression.op_lessThan, getStackHeapBarrier(tuLoc),
+							mExpressionTranslation.getCTypeOfPointerComponents(), ptrBase,
+							mExpressionTranslation.getCTypeOfPointerComponents()),
+					Collections.emptySet()));
 		}
 		mProcedureManager.addSpecificationsToCurrentProcedure(specs);
 		mProcedureManager.endCustomProcedure(main, procedureIdentifier);
@@ -3129,20 +3125,20 @@ public class MemoryHandler {
 		final Expression rwLockArray = constructRwLockArrayIdentifierExpression(tuLoc);
 
 		declareProcedureWithPointerParam(main, typeHandler, tuLoc,
-				MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_READLOCK.getName(), (inputPtr,
-						res) -> new Specification[] {
-								// old(#pthreadsRwLock)[#ptr] >= 0
-								mProcedureManager.constructEnsuresSpecification(tuLoc, true,
-										constructOldRwLockComparisonExpression(tuLoc, inputPtr,
-												IASTBinaryExpression.op_greaterEqual),
-										Collections.emptySet()),
-								// #pthreadsRwLock == old(#pthreadsRwLock)[#ptr := old(#pthreadsRwLock)[#ptr]+1]
-								mProcedureManager.constructEnsuresSpecification(tuLoc, true,
-										constructRwLockReadLockUpdate(tuLoc, inputPtr),
-										Collections.singleton(
-												(VariableLHS) CTranslationUtil.convertExpressionToLHS(rwLockArray))),
-								// we assume that function is always successful and returns 0
-								ensuresSuccess(tuLoc, res) });
+				MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_READLOCK.getName(),
+				(inputPtr, res) -> new Specification[] {
+						// old(#pthreadsRwLock)[#ptr] >= 0
+						mProcedureManager.constructEnsuresSpecification(tuLoc, true,
+								constructOldRwLockComparisonExpression(tuLoc, inputPtr,
+										IASTBinaryExpression.op_greaterEqual),
+								Collections.emptySet()),
+						// #pthreadsRwLock == old(#pthreadsRwLock)[#ptr := old(#pthreadsRwLock)[#ptr]+1]
+						mProcedureManager.constructEnsuresSpecification(tuLoc, true,
+								constructRwLockReadLockUpdate(tuLoc, inputPtr),
+								Collections
+										.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(rwLockArray))),
+						// we assume that function is always successful and returns 0
+						ensuresSuccess(tuLoc, res) });
 		return new ArrayList<>();
 	}
 

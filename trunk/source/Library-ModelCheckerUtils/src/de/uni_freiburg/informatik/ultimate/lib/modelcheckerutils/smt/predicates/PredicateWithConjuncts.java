@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
@@ -126,6 +127,11 @@ public class PredicateWithConjuncts implements IPredicate {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public Set<IProgramFunction> getFuns() {
+		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
+		throw new UnsupportedOperationException();
+	}
 	@Override
 	public String toString() {
 		return mSerial + "#" + mConjuncts.toString();

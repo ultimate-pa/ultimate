@@ -1,3 +1,4 @@
+//#Safe
 /*
  * Date: 2019-06-08
  * Author: luca.bruder@gmx.de

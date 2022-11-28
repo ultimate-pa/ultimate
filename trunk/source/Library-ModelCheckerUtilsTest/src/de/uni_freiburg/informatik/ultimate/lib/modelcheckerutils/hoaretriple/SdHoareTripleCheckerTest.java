@@ -55,18 +55,6 @@ public class SdHoareTripleCheckerTest extends AbstractHoareTripleCheckerTest {
 	}
 
 	@Override
-	protected Validity constsButDisjointVerdict() {
-		// TODO Remove override once SdHoareTripleChecker supports this
-		return Validity.UNKNOWN;
-	}
-
-	@Override
-	protected Validity constsButDisjointToFalseVerdict() {
-		// TODO Remove override once SdHoareTripleChecker supports this
-		return Validity.UNKNOWN;
-	}
-
-	@Override
 	protected Validity preImplPostButAssignsVerdict() {
 		return Validity.UNKNOWN;
 	}
@@ -98,6 +86,11 @@ public class SdHoareTripleCheckerTest extends AbstractHoareTripleCheckerTest {
 
 	@Override
 	protected Validity callCallerModifiableOldVerdict() {
+		return Validity.UNKNOWN;
+	}
+
+	@Override
+	protected Validity constsWeakenedCallVerdict() {
 		return Validity.UNKNOWN;
 	}
 

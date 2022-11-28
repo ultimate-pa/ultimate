@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -63,6 +64,11 @@ public class DebugPredicate implements IPredicate {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public Set<IProgramFunction> getFuns() {
+		throw new UnsupportedOperationException();
+	}
+
 	public String getDebugMessage() {
 		return mDebugMessage;
 	}
@@ -76,5 +82,6 @@ public class DebugPredicate implements IPredicate {
 	public int hashCode() {
 		return mSerialNumber;
 	}
+
 
 }

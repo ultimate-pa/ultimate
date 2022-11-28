@@ -23,6 +23,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  org.junit,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
+ de.uni_freiburg.informatik.ultimate.smtinterpol,
  javax.activation
 Import-Package: org.junit,
  org.junit.experimental.categories,

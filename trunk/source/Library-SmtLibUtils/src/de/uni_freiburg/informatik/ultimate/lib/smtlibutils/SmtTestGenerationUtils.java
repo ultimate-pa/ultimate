@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
+package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,8 +34,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -43,6 +41,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 
+/**
+ * Contains methods that support the generation of code for our JUnit test files
+ * like, e.g., {@link QuantifierEliminationRegressionTest}.
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
 public final class SmtTestGenerationUtils {
 
 	private SmtTestGenerationUtils() {
@@ -50,70 +55,10 @@ public final class SmtTestGenerationUtils {
 	}
 
 	/**
-	 * @deprecated Superseded by {@link SmtTestGenerationUtils#generateStringForTestfile2}.
-	 */
-	@Deprecated
-	public static String generateStringForTestfile(final Term term) {
-		final StringBuilder result = new StringBuilder();
-		result.append(System.lineSeparator());
-		final Set<Sort> sorts = new HashSet<>();
-		final TermVariable[] freeVars = term.getFreeVars();
-		for (final TermVariable tv : freeVars) {
-			sorts.add(tv.getSort());
-		}
-		final Map<Sort, String> sortVarMapping = new HashMap<>();
-		int counter = 0;
-		for (final Sort sort : sorts) {
-			final String declaration;
-			if (SmtSortUtils.isIntSort(sort)) {
-				final String varName = "intSort";
-				sortVarMapping.put(sort, varName);
-				declaration = String.format("final Sort %s = SmtSortUtils.getIntSort(mMgdScript);", varName);
-			} else if (SmtSortUtils.isArraySort(sort)) {
-				if (isIntIntArray(sort)) {
-					final String varName = "intintArraySort";
-					sortVarMapping.put(sort, varName);
-					declaration = String.format("final Sort %s = SmtSortUtils.getArraySort(mScript, intSort, intSort);",
-							varName);
-				} else if (isIntIntIntArray(sort)) {
-					final String varName = "intintintArraySort";
-					sortVarMapping.put(sort, varName);
-					declaration = String.format(
-							"final Sort %s = SmtSortUtils.getArraySort(mScript, intSort, SmtSortUtils.getArraySort(mScript, intSort, intSort));",
-							varName);
-				} else {
-					final String varName = "arraySort" + counter;
-					counter++;
-					sortVarMapping.put(sort, varName);
-					declaration = String.format("final Sort %s = SmtSortUtils.getArraySort(...); // %s", varName, sort);
-				}
-			} else {
-				final String varName = "otherSort" + counter;
-				counter++;
-				sortVarMapping.put(sort, varName);
-				declaration = String.format("final Sort %s = // %s", varName, sort);
-			}
-			result.append(declaration);
-			result.append(System.lineSeparator());
-		}
-		for (final TermVariable tv : freeVars) {
-			final String declaration = String.format("mScript.declareFun(\"%s\", new Sort[0], %s);", tv.getName(),
-					sortVarMapping.get(tv.getSort()));
-			result.append(declaration);
-			result.append(System.lineSeparator());
-		}
-		result.append(String.format("final String formulaAsString = \"%s\";", term.toStringDirect()));
-		result.append(System.lineSeparator());
-		result.append("final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);");
-		return result.toString();
-	}
-
-
-	/**
 	 * Hack for generating tests for quantifier elimination. Probably usable for
 	 * SMT-based tests in general.
 	 */
-	public static String generateStringForTestfile2(final Term term) {
+	public static String generateStringForTestfile(final Term term) {
 		final TermVariable[] freeVars = term.getFreeVars();
 		final Set<FunctionSymbol> funSyms = SmtUtils.extractNonTheoryFunctionSymbols(term);
 		// collect sorts
@@ -146,6 +91,8 @@ public final class SmtTestGenerationUtils {
 				} else {
 					constructionString = "arraySort" + counter;
 				}
+			} else if (SmtSortUtils.isBitvecSort(sort)) {
+				constructionString = "QuantifierEliminationTest::getBitvectorSort" + SmtSortUtils.getBitvectorLength(sort);
 			} else {
 				constructionString = "otherSort" + counter;
 			}

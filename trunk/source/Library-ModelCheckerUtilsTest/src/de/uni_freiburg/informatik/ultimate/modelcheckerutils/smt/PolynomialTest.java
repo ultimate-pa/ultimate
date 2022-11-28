@@ -69,7 +69,8 @@ public class PolynomialTest {
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
 		mLogger = mServices.getLoggingService().getLogger("lol");
-		mScript = UltimateMocks.createZ3Script(LogLevel.INFO);
+		final String solverCommand = "z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in";
+		mScript = UltimateMocks.createSolver(solverCommand, LogLevel.INFO);
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
 		mRealSort = SmtSortUtils.getRealSort(mMgdScript);

@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttran
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -67,7 +66,7 @@ public class TermTransferrer extends TermTransformer {
 	protected final Map<Term, Term> mTransferMapping;
 
 	public TermTransferrer(final Script oldScript, final Script newScript) {
-		this(oldScript, newScript, Collections.emptyMap(), false);
+		this(oldScript, newScript, new HashMap<>(), false);
 	}
 
 	/**

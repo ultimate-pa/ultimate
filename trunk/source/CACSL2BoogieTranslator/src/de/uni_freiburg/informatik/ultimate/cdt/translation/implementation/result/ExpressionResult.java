@@ -52,30 +52,11 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
  * @author Matthias Heizmann
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
-public class ExpressionResult extends Result {
-	/**
-	 * Statement list.
-	 */
-	private final List<Statement> mStmt;
+public class ExpressionResult extends ResultWithSideEffects {
 	/**
 	 * the LRValue may contain the contents of a memory cell or its address or both
 	 */
 	private final LRValue mLrVal;
-	/**
-	 * Declaration list. Some translations need to declare some temporary variables, which we do here.
-	 */
-	private final List<Declaration> mDecl; // FIXME: could we also use the more special type VariableDeclaration here??
-
-	/**
-	 * A list of overapproximation flags.
-	 */
-	private final List<Overapprox> mOverappr;
-
-	/**
-	 * Auxiliary variables occurring in this result. The variable declaration of the var is mapped to the exact location
-	 * for that it was constructed.
-	 */
-	private final Set<AuxVarInfo> mAuxVars;
 
 	/**
 	 * We store off-heap unions as Boogie structs. When we write a field of an off-heap union, we must havoc all the
@@ -99,12 +80,8 @@ public class ExpressionResult extends Result {
 	public ExpressionResult(final List<Statement> stmt, final LRValue lrVal, final List<Declaration> decl,
 			final Set<AuxVarInfo> auxVars, final List<Overapprox> overapproxList,
 			final List<ExpressionResult> uField2CType) {
-		super(null);
-		mStmt = stmt;
+		super(null, stmt, decl, auxVars, overapproxList);
 		mLrVal = lrVal;
-		mDecl = decl;
-		mAuxVars = auxVars;
-		mOverappr = overapproxList;
 		mOtherUnionFields = uField2CType;
 	}
 
@@ -142,28 +119,12 @@ public class ExpressionResult extends Result {
 		return mLrVal.getCType();
 	}
 
-	public List<Statement> getStatements() {
-		return Collections.unmodifiableList(mStmt);
-	}
-
-	public List<Declaration> getDeclarations() {
-		return Collections.unmodifiableList(mDecl);
-	}
-
-	public List<Overapprox> getOverapprs() {
-		return Collections.unmodifiableList(mOverappr);
-	}
-
-	public Set<AuxVarInfo> getAuxVars() {
-		return Collections.unmodifiableSet(mAuxVars);
+	public boolean hasLRValue() {
+		return mLrVal != null;
 	}
 
 	public List<ExpressionResult> getNeighbourUnionFields() {
 		return Collections.unmodifiableList(mOtherUnionFields);
-	}
-
-	public boolean hasLRValue() {
-		return mLrVal != null;
 	}
 
 	@Override
@@ -174,28 +135,8 @@ public class ExpressionResult extends Result {
 		return sb.toString();
 	}
 
-	/**
-	 * Returns true if the only content of this ExpressionResult is its LRValue
-	 *
-	 * @return
-	 */
+	@Override
 	public boolean hasNoSideEffects() {
-		if (!mStmt.isEmpty()) {
-			return false;
-		}
-		if (!mDecl.isEmpty()) {
-			return false;
-		}
-		if (!mAuxVars.isEmpty()) {
-			return false;
-		}
-		if (!mOverappr.isEmpty()) {
-			return false;
-		}
-		if (!mOtherUnionFields.isEmpty()) {
-			return false;
-		}
-		return true;
+		return super.hasNoSideEffects() && mOtherUnionFields.isEmpty();
 	}
-
 }

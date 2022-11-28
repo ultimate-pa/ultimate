@@ -210,11 +210,16 @@ public class CorrectnessWitnessExtractor {
 		final Set<MatchedASTNode> candidateNodes = matchLines(edges);
 
 		boolean printlabel = false;
-		final Set<DecoratedWitnessEdge> incomingEdges = getIncomingSet(edges);
-		if (candidateNodes.stream().allMatch(a -> !a.isIncoming()) && !incomingEdges.isEmpty()) {
-			mLogger.warn(
-					"Could not match AST node to invariant before witness lines " + toStringCollection(incomingEdges));
-			printlabel = true;
+		if (!mCheckOnlyLoopInvariants) {
+			// While trying to match loop invariants, we should ignore incoming edges
+			// because if the incoming edge comes from a preceding loop, we will match the
+			// the invariant to the wrong loop.
+			final Set<DecoratedWitnessEdge> incomingEdges = getIncomingSet(edges);
+			if (candidateNodes.stream().allMatch(a -> !a.isIncoming()) && !incomingEdges.isEmpty()) {
+				mLogger.warn(
+						"Could not match AST node to invariant before witness lines " + toStringCollection(incomingEdges));
+				printlabel = true;
+			}
 		}
 
 		final Set<DecoratedWitnessEdge> outgoingEdges = getOutgoingSet(edges);
@@ -252,8 +257,14 @@ public class CorrectnessWitnessExtractor {
 
 	private Map<IASTNode, ExtractedWitnessInvariant> extractLoopInvariants(final DecoratedWitnessNode dwnode,
 			final Set<MatchedASTNode> candidateNodes) {
-		final Set<MatchedASTNode> loopHeads =
-				candidateNodes.stream().filter(a -> a.isLoopHead()).collect(Collectors.toSet());
+		final Set<MatchedASTNode> loopHeads;
+		if (mCheckOnlyLoopInvariants) {
+			loopHeads = new HashSet<>(candidateNodes);
+		} else {
+			// TODO 20221126 Matthias: This filter excludes all outgoing edges of a loop
+			// head which makes it more difficult to find a match.
+			loopHeads = candidateNodes.stream().filter(a -> a.isLoopHead()).collect(Collectors.toSet());
+		}
 		candidateNodes.removeAll(loopHeads);
 
 		final Map<IASTNode, ExtractedWitnessInvariant> down = tryMatchLoopInvariantsDownwards(dwnode, loopHeads);

@@ -463,7 +463,7 @@ public class ExpressionResultTransformer {
 		}
 		final int bound = boundBigInteger.intValue();
 		final AuxVarInfo newArrayAuxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, arrayType, SFO.AUXVAR.ARRAYCOPY);
-		final LRValue resultValue = new RValueForArrays(newArrayAuxvar.getExp(), arrayType);
+		final LRValue resultValue = new RValue(newArrayAuxvar.getExp(), arrayType);
 		ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addDeclaration(newArrayAuxvar.getVarDec());
 		builder.addAuxVar(newArrayAuxvar);
@@ -514,15 +514,14 @@ public class ExpressionResultTransformer {
 	 * Other types are not supported. If the expression was obtained by a conversion from bool to int, we try to get rid
 	 * of the former conversion instead of applying a new one.
 	 */
-	private static RValue toBoolean(final ILocation loc, final RValue rVal,
-			final ExpressionTranslation expressionTranslation) {
+	private RValue toBoolean(final ILocation loc, final RValue rVal) {
 		assert !rVal.isBoogieBool();
 		final CType underlyingType = CEnum.replaceEnumWithInt(rVal.getCType().getUnderlyingType());
-		final Expression zero = expressionTranslation.constructZero(loc, underlyingType);
+		final Expression zero = mExprTrans.constructZero(loc, underlyingType);
 
 		final Expression resultEx;
 		if (underlyingType instanceof CPrimitive) {
-			resultEx = expressionTranslation.constructBinaryEqualityExpression(loc, IASTBinaryExpression.op_notequals,
+			resultEx = mExprTrans.constructBinaryEqualityExpression(loc, IASTBinaryExpression.op_notequals,
 					rVal.getValue(), rVal.getCType(), zero, underlyingType);
 		} else if (underlyingType instanceof CPointer) {
 			resultEx = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, rVal.getValue(),
@@ -544,8 +543,17 @@ public class ExpressionResultTransformer {
 		if (old.getLrValue().isBoogieBool()) {
 			return old;
 		}
-		return new ExpressionResultBuilder(old).setOrResetLrValue(toBoolean(loc, (RValue) old.getLrValue(), mExprTrans))
-				.build();
+		return new ExpressionResultBuilder(old).setOrResetLrValue(toBoolean(loc, (RValue) old.getLrValue())).build();
+	}
+
+	private RValue toInteger(final ILocation loc, final RValue rVal) {
+		assert rVal.isBoogieBool();
+		final Expression one =
+				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ONE);
+		final Expression zero =
+				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
+		return new RValue(ExpressionFactory.constructIfThenElseExpression(loc, rVal.getValue(), one, zero),
+				rVal.getCType(), false);
 	}
 
 	/**
@@ -553,11 +561,11 @@ public class ExpressionResultTransformer {
 	 *
 	 */
 	public ExpressionResult rexBoolToInt(final ExpressionResult old, final ILocation loc) {
-		if (old.getLrValue() == null) {
+		if (old.getLrValue() == null || !old.getLrValue().isBoogieBool()) {
 			/*
 			 * This ExpressionResult does not have a value (for example it may be the translation of a call to a void
-			 * function). Void values like this are allowed for example in something like <code>0 ? foo() : 0</code>
-			 * where foo is void. Do nothing here.
+			 * function) or its value is not a bool. Void values like this are allowed for example in something like
+			 * <code>0 ? foo() : 0</code> where foo is void. Do nothing here.
 			 */
 			return old;
 		}
@@ -565,11 +573,7 @@ public class ExpressionResultTransformer {
 		if (!(old.getLrValue() instanceof RValue)) {
 			throw new UnsupportedOperationException("only RValue can switch");
 		}
-		if (old.getLrValue().isBoogieBool()) {
-			return new ExpressionResultBuilder(old)
-					.setOrResetLrValue(RValue.boolToInt(loc, (RValue) old.getLrValue(), mTypeSizes)).build();
-		}
-		return old;
+		return new ExpressionResultBuilder(old).setOrResetLrValue(toInteger(loc, (RValue) old.getLrValue())).build();
 	}
 
 	public ExpressionResult makeRepresentationReadyForConversionAndRexBoolToInt(final ExpressionResult expr,

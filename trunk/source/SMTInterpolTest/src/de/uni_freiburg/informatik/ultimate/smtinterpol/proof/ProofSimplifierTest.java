@@ -149,9 +149,9 @@ public class ProofSimplifierTest {
 		}
 		eqs[len - 1] = (swapFlags & (1 << (len - 1))) != 0 ? mTheory.term("=", terms[0], terms[len - 1])
 				: mTheory.term("=", terms[len - 1], terms[0]);
-		final Term[] orParams = new Term[len - 1];
-		for (int i = 0; i < len - 1; i++) {
-			orParams[i] = mSmtInterpol.term("not", eqs[i]);
+		final Term[] orParams = new Term[len];
+		for (int i = 0; i < len; i++) {
+			orParams[i] = i == len - 1 ? eqs[i] : mSmtInterpol.term("not", eqs[i]);
 		}
 		return (Term[]) shuffle(orParams);
 	}

@@ -528,8 +528,8 @@ public class InitializationHandler {
 		 * note that the off-heap case is decided locally for each array inside the variable's type while the on-heap
 		 * case this is decided once per variable (passed via field usingConstOnHeapArrayInitialization)
 		 */
-		final boolean useConstOffHeapArrayInitialization =
-				!onHeap && outermostInNestedArray && useConstArrayInitializationForOffHeapArrays(cArrayType, initInfo);
+		final boolean useConstOffHeapArrayInitialization = !onHeap && outermostInNestedArray
+				&& useConstArrayInitializationForOffHeapArrays(cArrayType, initInfo, hook);
 		if (useConstOffHeapArrayInitialization) {
 			// in the "sophisticated" off heap case: make a default initialization of all array cells first
 			final ExpressionResult defaultInit =
@@ -775,7 +775,7 @@ public class InitializationHandler {
 			 * In the off-heap case, sophisticated initialization for arrays (e.g. with constant arrays) is only
 			 * applicable if the value type is simple, i.e., not a struct or union type.
 			 */
-			if (useConstArrayInitializationForOffHeapArrays((CArray) cType, null)
+			if (useConstArrayInitializationForOffHeapArrays((CArray) cType, null, hook)
 					&& !(CTranslationUtil.getValueTypeOfNestedArray((CArray) cType) instanceof CStructOrUnion)) {
 				return makeSophisticatedOffHeapDefaultInitializationForArray(loc, (CArray) cType, lhsToInitIfAny,
 						nondet);
@@ -1013,13 +1013,13 @@ public class InitializationHandler {
 	 * @return true iff sophisticated initialization should be applied
 	 */
 	private boolean useConstArrayInitializationForOffHeapArrays(// final InitializerInfo initInfoIfAny,
-			final CArray cType, final InitializerInfo initInfo) {
+			final CArray cType, final InitializerInfo initInfo, final IASTNode hook) {
 		if (!mUseConstantArrays) {
 			// make sure that const arrays are only used when the corresponding setting is switched on
 			return false;
 		}
 
-		final float numberOfCells = CTranslationUtil.countNumberOfPrimitiveElementInType(cType);
+		final float numberOfCells = CTranslationUtil.countNumberOfPrimitiveElementInType(cType, mTypeSizes, hook);
 		if (numberOfCells < MINIMAL_NUMBER_CELLS_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
 			return false;
 		}
@@ -1049,7 +1049,7 @@ public class InitializationHandler {
 			return false;
 		}
 
-		final float numberOfCells = CTranslationUtil.countNumberOfPrimitiveElementInType(cType);
+		final float numberOfCells = CTranslationUtil.countNumberOfPrimitiveElementInType(cType, mTypeSizes, hook);
 		if (numberOfCells < MINIMAL_NUMBER_CELLS_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
 			return false;
 		}

@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public abstract class ExpressionTranslation {
 
@@ -201,6 +202,8 @@ public abstract class ExpressionTranslation {
 				constructLiteralForFloatingType(loc, fpl.getCPrimitive(), fpl.getDecimalRepresenation());
 		return new RValue(expr, fpl.getCPrimitive());
 	}
+
+	public abstract Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value);
 
 	public abstract Expression constructLiteralForFloatingType(ILocation loc, CPrimitive type, BigDecimal value);
 
@@ -418,7 +421,8 @@ public abstract class ExpressionTranslation {
 	 */
 	@Deprecated
 	public Result abstractAssginWithBitwiseOp(final ExpressionResultTransformer exprResultTransformer,
-			final IDispatcher main, final LocationFactory locationFactory, final IASTBinaryExpression node) {
+			final IDispatcher main, final LocationFactory locationFactory, final IASTBinaryExpression node,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -561,7 +565,15 @@ public abstract class ExpressionTranslation {
 	public abstract ExpressionResult constructBuiltinFesetround(final ILocation loc, final RValue arg,
 			AuxVarInfoBuilder auxVarInfoBuilder);
 
-	public abstract Expression applyNutzTransformationWraparound(ILocation loc, TypeSizes typeSizes,
-			CPrimitive cPrimitive, Expression operand);
+	public abstract Expression applyWraparound(ILocation loc, CPrimitive cPrimitive, Expression operand);
+
+	public abstract Pair<Expression, Expression> constructOverflowCheckForArithmeticExpression(ILocation loc,
+			int operation, CPrimitive resultType, Expression lhsOperand, Expression rhsOperand);
+
+	public abstract Pair<Expression, Expression> constructOverflowCheckForUnaryExpression(ILocation loc, int operation,
+			CPrimitive resultType, Expression operand);
+
+	public abstract Pair<Expression, Expression> constructOverflowCheckForBinaryBitwiseIntegerExpression(ILocation loc,
+			int operation, CPrimitive resultType, Expression lhsOperand, Expression rhsOperand, IASTNode hook);
 
 }

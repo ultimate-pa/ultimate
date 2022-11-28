@@ -23,9 +23,11 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.LitInfo;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitesimalNumber;
@@ -74,17 +76,76 @@ public class EQInterpolator {
 	 * Compute the interpolants for a Nelson-Oppen equality clause. This is a theory lemma of the form equality implies
 	 * equality, where one equality is congruence closure and one is linear arithmetic.
 	 *
-	 * @param ccEq
-	 *            the congruence closure equality atom
+	 * @param trivialDiseq
+	 *            the trivial disequality (a CC atom of the form s+k*a = s+k*b + k2.
 	 * @param laEq
 	 *            the linear arithmetic equality atom
 	 * @param sign
 	 *            the sign of l1 in the conflict clause. This is -1 if l1 implies l2, and +1 if l2 implies l1.
 	 */
+	public Term[] computeInterpolantsTrivialEq(Term trivialDiseq) {
+		assert mInterpolator.isNegatedTerm(trivialDiseq);
+		final Term equality = mInterpolator.getAtom(trivialDiseq);
+		assert ((ApplicationTerm) equality).getFunction().getName() == SMTLIBConstants.EQUALS;
+		final Term[] eqParams = ((ApplicationTerm) equality).getParameters();
+		final LitInfo ccOccInfo = mInterpolator.getAtomOccurenceInfo(equality);
+
+		final Term[] interpolants = new Term[mInterpolator.mNumInterpolants];
+		Rational factorK = null;
+		for (int p = 0; p < mInterpolator.mNumInterpolants; p++) {
+			Term interpolant;
+			if (ccOccInfo.isAorShared(p)) {
+				interpolant = mInterpolator.mTheory.mFalse; // literal in A.
+			} else if (ccOccInfo.isBorShared(p)) {
+				interpolant = mInterpolator.mTheory.mTrue; // literal in B.
+			} else {
+				// literal is mixed
+				if (factorK == null) {
+					// compute the factor of a/b if not already done.
+					final SMTAffineTerm affine = new SMTAffineTerm();
+					affine.add(Rational.ONE, eqParams[0]);
+					affine.add(Rational.MONE, eqParams[1]);
+					factorK = affine.getGcd();
+					assert !affine.getConstant().div(factorK).isIntegral();
+				}
+				final SMTAffineTerm side = new SMTAffineTerm();
+				side.add(Rational.ONE, ccOccInfo.mLhsOccur.isALocal(p) ? eqParams[0] : eqParams[1]);
+				final SMTAffineTerm shared = new SMTAffineTerm();
+				for (final Map.Entry<Term, Rational> entry : side.getSummands().entrySet()) {
+					if (!entry.getValue().div(factorK).isIntegral()) {
+						shared.add(entry.getValue(), entry.getKey());
+					}
+				}
+				shared.add(side.getConstant());
+				shared.add(Rational.MONE, ccOccInfo.getMixedVar());
+				final Sort sort = eqParams[0].getSort();
+				final Theory theory = mInterpolator.mTheory;
+				interpolant = theory.term(SMTLIBConstants.EQUALS, theory.term("mod", shared.toTerm(sort), factorK.toTerm(sort)),
+						Rational.ZERO.toTerm(sort));
+			}
+			interpolants[p] = interpolant;
+		}
+		return interpolants;
+	}
+
+	/**
+	 * Compute the interpolants for a Nelson-Oppen equality clause. This is a theory
+	 * lemma of the form equality implies equality, where one equality is congruence
+	 * closure and one is linear arithmetic.
+	 *
+	 * @param ccEq the congruence closure equality atom
+	 * @param laEq the linear arithmetic equality atom
+	 * @param sign the sign of l1 in the conflict clause. This is -1 if l1 implies
+	 *             l2, and +1 if l2 implies l1.
+	 */
 	public Term[] computeInterpolants(InterpolatorClauseInfo lemmaTermInfo) {
 		Term[] interpolants = null;
 
 		final Term[] eqParams = lemmaTermInfo.getLiterals();
+		assert eqParams.length <= 2;
+		if (eqParams.length == 1) {
+			return computeInterpolantsTrivialEq(eqParams[0]);
+		}
 		final Term atom0 = mInterpolator.getAtom(eqParams[0]);
 		final Term atom1 = mInterpolator.getAtom(eqParams[1]);
 		final InterpolatorAtomInfo termInfo0 = mInterpolator.getAtomTermInfo(atom0);

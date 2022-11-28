@@ -51,6 +51,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -203,7 +205,8 @@ public class BitabsTranslation {
 	// But to be more precise, this requires additional aux-variables.
 	// TODO: We could use more precise assumptions, if the expression has a signed type
 	public Result abstractAssign(final ExpressionResultTransformer exprResultTransformer, final IDispatcher main,
-			final LocationFactory locationFactory, final IASTBinaryExpression node) {
+			final LocationFactory locationFactory, final IASTBinaryExpression node,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
 		final ILocation loc = locationFactory.createCLocation(node);
 		final ExpressionResult leftOperand = (ExpressionResult) main.dispatch(node.getOperand1());
 
@@ -227,7 +230,13 @@ public class BitabsTranslation {
 
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
+		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, lType, SFO.AUXVAR.NONDET);
+		builder.addDeclaration(auxvarinfo.getVarDec());
+		builder.addAuxVar(auxvarinfo);
+		final IdentifierExpression auxvar = auxvarinfo.getExp();
+
 		// for declare the auxiliary vars.
+		final VariableLHS auxvarLhs = auxvarinfo.getLhs();
 		if (node.getOperand2() instanceof IASTBinaryExpression) {
 			// for the general bitwise assignment case, we build up assume statements.
 			final IASTBinaryExpression binary = (IASTBinaryExpression) node.getOperand2();
@@ -268,32 +277,31 @@ public class BitabsTranslation {
 						new CPrimitive[] { lType, lType }, new Expression[] { left, right });
 
 				final Expression lessThanEqualBoth = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, idLeft, left),
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, idLeft, right));
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, left),
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, right));
 
 				// If a >= 0 and b >= 0, then a & b <= a and a & b <= b
 				final Expression maximum =
 						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, lessThanEqualBoth);
 				// If a >= b or b >= 0, then a & b >= 0
 				final Expression nonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
-						bothNegative, ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, idLeft, zero));
+						bothNegative, ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, zero));
 				// If a < 0 or b < 0, then a & b > a + b
 				final Expression greaterSum = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
-						bothNonNegative, ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, idLeft, sum));
+						bothNonNegative, ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, auxvar, sum));
 
 				// 0 & a = a & 0 = 0
 				// a & a = a
 				final Statement ifInner = StatementFactory.constructIfStatement(loc, leftEqualsRight,
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, left) },
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, function),
+						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, left) },
+						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, function),
 								new AssumeStatement(loc, maximum), new AssumeStatement(loc, nonNegative),
 								new AssumeStatement(loc, greaterSum) });
 				final Statement ifOuter = StatementFactory.constructIfStatement(loc, oneEqualsZero,
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, zero) },
+						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, zero) },
 						new Statement[] { ifInner });
 
 				builder.addStatement(ifOuter);
-				return builder.build();
 
 			}
 			if (binary.getOperator() == IASTBinaryExpression.op_binaryOr) {
@@ -304,36 +312,35 @@ public class BitabsTranslation {
 
 				// If a >= 0 and b >= 0, then a | b >= a and a | b >= b
 				final Expression greaterEqualBoth = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, idLeft, left),
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, idLeft, right));
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, left),
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, right));
 				final Expression minimum =
 						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, greaterEqualBoth);
 				// Otherwise a | b < 0
 				final Expression negative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
-						bothNonNegative, ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, idLeft, zero));
+						bothNonNegative, ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, auxvar, zero));
 				// If a >= 0 or b >= 0, then a | b <= a + b
 				final Expression leqSum = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative,
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, idLeft, sum));
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, sum));
 
 				// 0 | a = a | 0 = a
 				// a | a = a
 				final Statement ifInner = StatementFactory.constructIfStatement(loc, rightEqualsZero,
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, left) },
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, function),
+						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, left) },
+						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, function),
 								new AssumeStatement(loc, minimum), new AssumeStatement(loc, negative),
 								new AssumeStatement(loc, leqSum) });
 				final Statement ifOuter = StatementFactory.constructIfStatement(loc, leftEqualsZeroOrRight,
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, right) },
+						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, right) },
 						new Statement[] { ifInner });
 
 				builder.addStatement(ifOuter);
-				return builder.build();
 			}
 			if (binary.getOperator() == IASTBinaryExpression.op_binaryXor) {
 				final Expression function = declareAndApplyFunction(loc, "bitwiseXor", lType,
 						new CPrimitive[] { lType, lType }, new Expression[] { left, right });
 
-				final Expression positive = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, idLeft, zero);
+				final Expression positive = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, auxvar, zero);
 				final Expression onePositive = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
 						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, left, zero),
 						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, right, zero));
@@ -345,24 +352,23 @@ public class BitabsTranslation {
 						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, onePositive, positive);
 				// If a >= 0 or b >= 0, then a ^ b <= a + b
 				final Expression leqSum = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative,
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, idLeft, sum));
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, sum));
 
 				// 0 ^ a = a ^ 0 = a
 				// a ^ a = 0
 				final Statement ifInner = StatementFactory.constructIfStatement(loc, leftEqualsRight,
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, zero) },
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, function),
+						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, zero) },
+						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, function),
 								new AssumeStatement(loc, positiveCase1), new AssumeStatement(loc, positiveCase2),
 								new AssumeStatement(loc, leqSum) });
 				final Statement ifMiddle = StatementFactory.constructIfStatement(loc, rightEqualsZero,
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, left) },
+						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, left) },
 						new Statement[] { ifInner });
 				final Statement ifOuter = StatementFactory.constructIfStatement(loc, leftEqualsZero,
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, idLhsLeft, right) },
+						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, right) },
 						new Statement[] { ifMiddle });
 
 				builder.addStatement(ifOuter);
-				return builder.build();
 			}
 		}
 		if (node.getOperand2() instanceof IASTUnaryExpression) {
@@ -373,19 +379,18 @@ public class BitabsTranslation {
 			final Expression expr = res.getLrValue().getValue();
 			final Expression function = declareAndApplyFunction(loc, "bitwiseComplement", lType,
 					new CPrimitive[] { lType }, new Expression[] { expr });
-			builder.addStatement(StatementFactory.constructAssignmentStatement(loc, idLhsLeft, function));
+			builder.addStatement(StatementFactory.constructAssignmentStatement(loc, auxvarLhs, function));
 			// ~a != a
 			builder.addStatement(new AssumeStatement(loc,
-					ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, idLeft, expr)));
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, auxvar, expr)));
 			// If a < 0, then ~a > 0
 			builder.addStatement(new AssumeStatement(loc,
 					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
 							ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, expr, zero),
-							ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, idLeft, zero))));
-			return builder.build();
+							ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, auxvar, zero))));
 
 		}
-		throw new UnsupportedOperationException("Only the bitwise operators &, |, ^, ~ are supported.");
+		return builder.addStatement(StatementFactory.constructAssignmentStatement(loc, idLhsLeft, auxvar)).build();
 	}
 
 	private Expression declareAndApplyFunction(final ILocation loc, final String functionName,

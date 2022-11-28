@@ -268,6 +268,7 @@ public class AtomicTraceElement<TE> {
 			mThreadId = old.mThreadId;
 			mRelevanceInformation = old.mRelevanceInformation;
 			mForkedThreadId = old.mForkedThreadId;
+			mJoinedThreadId = old.mJoinedThreadId;
 		}
 
 		/**

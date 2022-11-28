@@ -537,7 +537,8 @@ public class CTranslationUtil {
 		return hook;
 	}
 
-	public static long countNumberOfPrimitiveElementInType(final CType cTypeRaw) {
+	public static long countNumberOfPrimitiveElementInType(final CType cTypeRaw, final TypeSizes typeSizes,
+			final IASTNode hook) {
 		final CType cType = cTypeRaw.getUnderlyingType();
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
 			return 1;
@@ -550,13 +551,13 @@ public class CTranslationUtil {
 			final CStructOrUnion cStruct = (CStructOrUnion) cType;
 			long sum = 0;
 			for (final CType fieldType : cStruct.getFieldTypes()) {
-				sum += countNumberOfPrimitiveElementInType(fieldType);
+				sum += countNumberOfPrimitiveElementInType(fieldType, typeSizes, hook);
 			}
 			return sum;
 		} else if (cType instanceof CArray) {
 			final CArray cArray = (CArray) cType;
-			final long innerCount = countNumberOfPrimitiveElementInType(cArray.getValueType());
-			final BigInteger boundBig = extractIntegerValue(cArray.getBound().getValue());
+			final long innerCount = countNumberOfPrimitiveElementInType(cArray.getValueType(), typeSizes, hook);
+			final BigInteger boundBig = typeSizes.extractIntegerValue(cArray.getBound(), hook);
 			final long bound = boundBig.longValueExact();
 			return innerCount * bound;
 		} else {

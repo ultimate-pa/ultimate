@@ -213,15 +213,14 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValueForArrays;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultWithSideEffects;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.StringLiteralResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -442,8 +441,8 @@ public class CHandler {
 				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
 		mStandardFunctionHandler = new StandardFunctionHandler(mLogger, functionTable, mAuxVarInfoBuilder, mNameHandler,
 				mExpressionTranslation, mMemoryHandler, mTypeSizeComputer, mProcedureManager, mReporter, mTypeSizes,
-				mSymbolTable, mSettings, mExprResultTransformer, mLocationFactory, mTypeHandler,
-				mCExpressionTranslator);
+				mSymbolTable, mSettings, mExprResultTransformer, mLocationFactory, mTypeHandler, mCExpressionTranslator,
+				mDataRaceChecker);
 
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctionToIndex, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, mProcedureManager,
@@ -537,7 +536,7 @@ public class CHandler {
 		mStandardFunctionHandler = new StandardFunctionHandler(mLogger, prerunCHandler.mFunctionTable,
 				mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation, mMemoryHandler, mTypeSizeComputer,
 				procedureManager, mReporter, mTypeSizes, mSymbolTable, mSettings, mExprResultTransformer,
-				mLocationFactory, mTypeHandler, mCExpressionTranslator);
+				mLocationFactory, mTypeHandler, mCExpressionTranslator, mDataRaceChecker);
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctionToIndex, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
@@ -710,7 +709,7 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTArraySubscriptExpression node) {
-		return mArrayHandler.handleArraySubscriptExpression(main, mMemoryHandler, mStructHandler, node);
+		return mArrayHandler.handleArraySubscriptExpression(main, node);
 	}
 
 	public Result visit(final IDispatcher main, final IASTASMDeclaration node) {
@@ -737,9 +736,10 @@ public class CHandler {
 			// abstractAssginWithBitwiseOp (when working with addresses)! Is there a better way to check this?
 			// And how should we integrate this deprecated method?
 			if (!(leftOperand.getLrValue() instanceof HeapLValue) && !(rightOperand.getLrValue() instanceof HeapLValue)
-					&& mExpressionTranslation.shouldAbstractAssignWithBitwiseOp(node)) {
+					&& mExpressionTranslation.shouldAbstractAssignWithBitwiseOp(node)
+					&& leftOperand.getLrValue().getCType() instanceof CPrimitive) {
 				return mExpressionTranslation.abstractAssginWithBitwiseOp(mExprResultTransformer, main,
-						mLocationFactory, node);
+						mLocationFactory, node, mAuxVarInfoBuilder);
 			}
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 			builder.addAllExceptLrValue(leftOperand);
@@ -957,23 +957,25 @@ public class CHandler {
 		final CType newCType = declResult.getDeclaration().getType();
 		mCurrentDeclaredTypes.pop();
 
-		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getOperand());
+		final ExpressionResult expr = (ExpressionResult) main.dispatch(node.getOperand());
+		ExpressionResult exprWithType = new ExpressionResultBuilder().addAllSideEffects(declResult)
+				.addAllExceptLrValue(expr).setLrValue(expr.getLrValue()).build();
 
-		if (!expr.hasLRValue()) {
+		if (!exprWithType.hasLRValue()) {
 			// creates a void expression for null RValues
 			final Expression newExpression = ExpressionFactory.createVoidDummyExpression(loc);
 			final RValue rVal = new RValue(newExpression, new CPrimitive(CPrimitives.VOID));
-			expr = new ExpressionResultBuilder().addAllExceptLrValue(expr).setLrValue(rVal).build();
+			exprWithType = new ExpressionResultBuilder().addAllExceptLrValue(exprWithType).setLrValue(rVal).build();
 		}
-		expr = mExprResultTransformer.makeRepresentationReadyForConversion(expr, loc, newCType, node);
-		checkUnsupportedPointerCast(expr, loc, newCType);
+		exprWithType = mExprResultTransformer.makeRepresentationReadyForConversion(exprWithType, loc, newCType, node);
+		checkUnsupportedPointerCast(exprWithType, loc, newCType);
 
 		if (mSettings.isAdaptMemoryModelResolutionOnPointerCasts() && mIsPrerun) {
-			checkIfNecessaryMemoryModelAdaption(node, loc, newCType, expr);
+			checkIfNecessaryMemoryModelAdaption(node, loc, newCType, exprWithType);
 		}
 
-		expr = mExprResultTransformer.rexBoolToInt(expr, loc);
-		return mExprResultTransformer.performImplicitConversion(expr, newCType, loc);
+		exprWithType = mExprResultTransformer.rexBoolToInt(exprWithType, loc);
+		return mExprResultTransformer.performImplicitConversion(exprWithType, newCType, loc);
 	}
 
 	private void checkIfNecessaryMemoryModelAdaption(final IASTCastExpression node, final ILocation loc,
@@ -1006,6 +1008,13 @@ public class CHandler {
 			mLogger.debug("saw a pointer cast to a type that we could not get a type size for, not adapting memory "
 					+ "model");
 			return;
+		} catch (final IllegalArgumentException e) {
+			if ("cannot determine size of incomplete type".equals(e.getMessage())) {
+				mLogger.debug("saw a pointer cast to a type that we could not get a type size for, not adapting memory "
+						+ "model");
+				return;
+			}
+			throw e;
 		}
 		final BigInteger operandTypeByteSize =
 				mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), node);
@@ -1154,6 +1163,7 @@ public class CHandler {
 		// Adapt the name for multiparse input
 		final String declName;
 		final CType cType;
+		ResultWithSideEffects sideEffects = null;
 		if (node instanceof IASTArrayDeclarator) {
 			final IASTArrayDeclarator arrDecl = (IASTArrayDeclarator) node;
 
@@ -1173,8 +1183,8 @@ public class CHandler {
 					// e.g., a[23] or a[n+1]
 					final ExpressionResult dispatched = (ExpressionResult) main.dispatch(am.getConstantExpression());
 					final ExpressionResult switched = mExprResultTransformer.switchToRValue(dispatched, loc, node);
-					final ExpressionResult converted = mExpressionTranslation.convertIntToInt(loc, switched,
-							mExpressionTranslation.getCTypeOfPointerComponents());
+					final ExpressionResult converted =
+							mExpressionTranslation.convertIntToInt(loc, switched, mTypeSizes.getSizeT());
 					expressionResults.add(converted);
 					sizeFactor = (RValue) converted.getLrValue();
 				} else if (am.getConstantExpression() == null
@@ -1210,7 +1220,7 @@ public class CHandler {
 					// CArray.INCOMPLETE_ARRY_MAGIC_NUMBER.
 					// If we work with an unsigned type for pointer components we have to rethink
 					// the use of the magic number.
-					final CPrimitive arrayIndexCtype = mExpressionTranslation.getCTypeOfPointerComponents();
+					final CPrimitive arrayIndexCtype = mTypeSizes.getSizeT();
 					final Expression sizeExpression = mTypeSizes.constructLiteralForIntegerType(loc, arrayIndexCtype,
 							BigInteger.valueOf(intSizeFactor));
 					sizeFactor = new RValue(sizeExpression, arrayIndexCtype, false, false);
@@ -1223,12 +1233,9 @@ public class CHandler {
 			final ExpressionResult allResults = new ExpressionResultBuilder()
 					.addAllExceptLrValue(expressionResults.toArray(new ExpressionResult[expressionResults.size()]))
 					.build();
-			if (!allResults.getDeclarations().isEmpty() || !allResults.getStatements().isEmpty()
-					|| !allResults.getAuxVars().isEmpty()) {
-				throw new AssertionError("passing these results is not yet implemented");
-			}
 			cType = arrayType;
 			declName = getNonFunctionDeclaratorName(node);
+			sideEffects = allResults;
 		} else if (node instanceof IASTStandardFunctionDeclarator) {
 			// functions as well as function pointers can have
 			// IASTStandardFunctionDeclarator
@@ -1237,6 +1244,10 @@ public class CHandler {
 			CDeclaration[] paramsParsed = new CDeclaration[paramDecls.length];
 			for (int i = 0; i < paramDecls.length; i++) {
 				final DeclaratorResult decl = (DeclaratorResult) main.dispatch(paramDecls[i]);
+				if (!decl.hasNoSideEffects()) {
+					// TODO but this should be possible
+					throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
+				}
 				if (decl.getDeclaration().getName() == "" && decl.getDeclaration().getType() instanceof CPrimitive
 						&& ((CPrimitive) decl.getDeclaration().getType()).getType().equals(CPrimitives.VOID)) {
 					assert paramDecls.length == 1;
@@ -1304,6 +1315,10 @@ public class CHandler {
 		if (node.getNestedDeclarator() != null) {
 			mCurrentDeclaredTypes.push(TypesResult.create(resType, cType));
 			DeclaratorResult result = (DeclaratorResult) main.dispatch(node.getNestedDeclarator());
+			if (!result.hasNoSideEffects()) {
+				// TODO but this should be possible
+				throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
+			}
 			mCurrentDeclaredTypes.pop();
 			if (node.getInitializer() != null) {
 				final CDeclaration cdec = result.getDeclaration();
@@ -1312,8 +1327,12 @@ public class CHandler {
 			}
 			return result;
 		}
-		return new DeclaratorResult(new CDeclaration(cType, declName, node.getInitializer(), null, isOnHeap,
-				CStorageClass.UNSPECIFIED, bitfieldSize));
+		final var decl = new CDeclaration(cType, declName, node.getInitializer(), null, isOnHeap,
+				CStorageClass.UNSPECIFIED, bitfieldSize);
+		if (sideEffects != null) {
+			return new DeclaratorResult(decl, sideEffects);
+		}
+		return new DeclaratorResult(decl);
 	}
 
 	private boolean isOnHeap(final IASTDeclarator node) {
@@ -1453,8 +1472,7 @@ public class CHandler {
 				return standardFunction;
 			}
 		}
-		final Check check = new Check(Check.Spec.PRE_CONDITION);
-		final ILocation loc = mLocationFactory.createCLocation(node, check);
+		final ILocation loc = mLocationFactory.createCLocation(node);
 		return mFunctionHandler.handleFunctionCallExpression(main, loc, functionName, node.getArguments());
 	}
 
@@ -1469,6 +1487,10 @@ public class CHandler {
 
 		mCurrentDeclaredTypes.push(resType);
 		final DeclaratorResult declResult = (DeclaratorResult) main.dispatch(node.getDeclarator());
+		if (!declResult.hasNoSideEffects()) {
+			throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
+		}
+
 		mCurrentDeclaredTypes.pop();
 		assert declResult.getDeclaration().getType() instanceof CFunction;
 		return mFunctionHandler.handleFunctionDefinition(main, mMemoryHandler, node, declResult.getDeclaration(),
@@ -1688,6 +1710,9 @@ public class CHandler {
 		final TypesResult declSpecifierResult = (TypesResult) main.dispatch(typeId.getDeclSpecifier());
 		mCurrentDeclaredTypes.push(declSpecifierResult);
 		final DeclaratorResult declaratorResult = (DeclaratorResult) main.dispatch(typeId.getAbstractDeclarator());
+		if (!declaratorResult.hasNoSideEffects()) {
+			throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
+		}
 		mCurrentDeclaredTypes.pop();
 
 		final CDeclaration cDeclaration = declaratorResult.getDeclaration();
@@ -1946,7 +1971,7 @@ public class CHandler {
 
 		} else {
 			auxvar = mAuxVarInfoBuilder.constructGlobalAuxVarInfo(actualLoc, pointerType, SFO.AUXVAR.STRINGLITERAL);
-			addressRValue = new RValueForArrays(auxvar.getExp(), arrayType);
+			addressRValue = new RValue(auxvar.getExp(), arrayType);
 			// the declaration of the variable that corresponds to a string literal has to
 			// be made global
 			mStaticObjectsHandler.addGlobalVarDeclarationWithoutCDeclaration(auxvar.getVarDec());
@@ -2046,11 +2071,11 @@ public class CHandler {
 	/**
 	 * Visit the SimpleDeclaration (which may be quite complex in fact..). The return value here may have different
 	 * uses:
-	 * <li>for global variables and declarations inside of struct definitions, it is a ResultDeclaration (containing the
+	 * <li>for global variables and declarations inside of struct definitions, it is a DeclarationResult (containing the
 	 * Boogie Declaration of the variable)
-	 * <li>for local variables that have an initializer, a ResultExpression is returned which contains (Boogie)
+	 * <li>for local variables that have an initializer, an ExpressionResult is returned which contains (Boogie)
 	 * statements and declarations that make the initialization according to the initializer
-	 * <li>for local variables without an initializer, a havoc statement is inserted into the ResultExpression instead
+	 * <li>for local variables without an initializer, a havoc statement is inserted into the ExpressionResult instead
 	 * The declarations themselves of the local variables (and f.i. typedefs) are stored in the symbolTable and inserted
 	 * into the Boogie code at the next endScope()
 	 * <p>
@@ -2123,6 +2148,7 @@ public class CHandler {
 		final List<Result> intermediateResults = new ArrayList<>();
 		for (final IASTDeclarator declarator : node.getDeclarators()) {
 			final DeclaratorResult declResult = (DeclaratorResult) main.dispatch(declarator);
+
 			final CDeclaration cDec = declResult.getDeclaration();
 			cDec.setStorageClass(storageClass);
 
@@ -2134,12 +2160,16 @@ public class CHandler {
 			}
 
 			if (cDec.getType() instanceof CFunction && storageClass != CStorageClass.TYPEDEF) {
+				if (!declResult.hasNoSideEffects()) {
+					throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
+				}
+
 				// update functionHandler.procedures instead of symbol table
 				mFunctionHandler.handleFunctionDeclarator(main, mLocationFactory.createCLocation(declarator), mContract,
 						cDec, declarator);
 				continue;
 			}
-			intermediateResults.add(handleIASTDeclarator(main, loc, node, declResult, declarator, cDec, storageClass));
+			intermediateResults.add(handleIASTDeclarator(main, loc, node, declResult, declarator, storageClass));
 		}
 		mCurrentDeclaredTypes.pop();
 
@@ -2384,16 +2414,14 @@ public class CHandler {
 		case IASTTypeIdExpression.op_sizeof: {
 			final TypesResult rt = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
 			mCurrentDeclaredTypes.push(rt);
-			// main.dispatch(node.getTypeId().getAbstractDeclarator());
 			final DeclaratorResult dr = (DeclaratorResult) main.dispatch(node.getTypeId().getAbstractDeclarator());
 			mCurrentDeclaredTypes.pop();
 			// TypesResult checked = checkForPointer(main,
-			// node.getTypeId().getAbstractDeclarator().getPointerOperators(),
-			// rt, false);
+			// node.getTypeId().getAbstractDeclarator().getPointerOperators(), rt, false);
 
-			return new ExpressionResult(
-					new RValue(mMemoryHandler.calculateSizeOf(loc, dr.getDeclaration().getType(), node),
-							mTypeSizeComputer.getSizeT()));
+			final var rVal = new RValue(mMemoryHandler.calculateSizeOf(loc, dr.getDeclaration().getType(), node),
+					mTypeSizeComputer.getSizeT());
+			return new ExpressionResultBuilder().addAllSideEffects(dr).setLrValue(rVal).build();
 		}
 		case IASTTypeIdExpression.op_typeof: {
 			final TypesResult rt = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
@@ -2405,7 +2433,13 @@ public class CHandler {
 			return dr;
 		}
 		case IASTTypeIdExpression.op_alignof:
-			throw new UnsupportedSyntaxException(loc, "__alignof__ is not supported");
+			final TypesResult rt = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
+			mCurrentDeclaredTypes.push(rt);
+			final DeclaratorResult dr = (DeclaratorResult) main.dispatch(node.getTypeId().getAbstractDeclarator());
+			mCurrentDeclaredTypes.pop();
+			final ExpressionResultBuilder builder = new ExpressionResultBuilder(
+					mMemoryHandler.handleAlignOf(loc, dr.getDeclaration().getType(), mTypeSizeComputer.getSizeT()));
+			return builder.addAllSideEffects(dr).build();
 		default:
 			break;
 		}
@@ -2560,7 +2594,7 @@ public class CHandler {
 			// circumvents Boogie type checking during preprocessing
 			newValue = ExpressionFactory.replaceBoogieType(oldValue, mTypeHandler.getBoogiePointerType());
 			moveArrayAndStructIdsOnHeap(loc, rightLrVal.getUnderlyingType(), oldValue, Collections.emptySet(), hook);
-		} else if (rightLrVal instanceof RValueForArrays) {
+		} else if (rightLrVal instanceof RValue) {
 			newValue = rightLrVal.getValue();
 		} else {
 			newValue = ((HeapLValue) rightLrVal).getAddress();
@@ -2664,6 +2698,11 @@ public class CHandler {
 			// the value of an assignment statement expression is the right hand side of the
 			// assignment
 			builder.setLrValue(rightHandSideValueWithConversionsApplied);
+			for (final Overapprox oa : rhsConverted.getOverapprs()) {
+				for (final Statement stm : builder.getStatements()) {
+					oa.annotate(stm);
+				}
+			}
 
 			if (mDataRaceChecker != null) {
 				mDataRaceChecker.checkOnWrite(builder, loc, leftHandSide);
@@ -2807,17 +2846,16 @@ public class CHandler {
 	}
 
 	private Result handleIASTDeclarator(final IDispatcher main, final ILocation loc, final IASTSimpleDeclaration node,
-			final DeclaratorResult declResult, final IASTDeclarator hook, final CDeclaration cDec,
-			final CStorageClass storageClass) {
+			final DeclaratorResult declResult, final IASTDeclarator hook, final CStorageClass storageClass) {
 
+		final CDeclaration cDec = declResult.getDeclaration();
 		final boolean onHeap = cDec.isOnHeap();
+		final DeclarationInformation declarationInformation = getDeclarationInfo(storageClass);
 		final String bId = mNameHandler.getUniqueIdentifier(node, cDec.getName(), mSymbolTable.getCScopeId(hook),
-				onHeap, cDec.getType());
+				onHeap, cDec.getType(), declarationInformation);
 		if (onHeap) {
 			addBoogieIdsOfHeapVars(bId);
 		}
-
-		final DeclarationInformation declarationInformation = getDeclarationInfo(storageClass);
 
 		// this is only to have a minimal symbolTableEntry (containing boogieID) for
 		// translation of the initializer
@@ -2856,14 +2894,15 @@ public class CHandler {
 			}
 			// TODO: add a sizeof-constant for the type??
 			mStaticObjectsHandler.addGlobalTypeDeclaration((TypeDeclaration) boogieDec, cDec);
-			result = new SkipResult();
+
+			result = skipOrSideEffects(declResult);
 		} else if (storageClass == CStorageClass.STATIC && !mProcedureManager.isGlobalScope()) {
 			// we have a local static variable -> special treatment
 			// global static variables are treated like normal global variables..
 			boogieDec = new VariableDeclaration(loc, new Attribute[0],
 					new VarList[] { new VarList(loc, new String[] { bId }, translatedType) });
 			mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDec, cDec);
-			result = new SkipResult();
+			result = skipOrSideEffects(declResult);
 		} else {
 			final BoogieType boogieType =
 					mTypeHandler.getBoogieTypeForBoogieASTType(mTypeHandler.cType2AstType(loc, cDec.getType()));
@@ -2888,6 +2927,7 @@ public class CHandler {
 				// memoryHandler.addVariableToBeMallocedAndFreed(...))
 
 				final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+				erb.addAllSideEffects(declResult);
 
 				final VariableLHS lhs =
 						ExpressionFactory.constructVariableLHS(loc, boogieType, bId, declarationInformation);
@@ -2918,6 +2958,7 @@ public class CHandler {
 				final VariableLHS lhs =
 						ExpressionFactory.constructVariableLHS(loc, boogieType, bId, declarationInformation);
 				final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+				erb.addAllSideEffects(declResult);
 				final ExpressionResult initRex =
 						mInitHandler.initialize(loc, lhs, cDec.getType(), cDec.getInitializer(), hook);
 
@@ -2929,6 +2970,10 @@ public class CHandler {
 				erb.addAllExceptLrValueAndHavocAux(initRex);
 				result = erb.build();
 			} else {
+				if (!declResult.hasNoSideEffects()) {
+					throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
+				}
+
 				// in case of global variables, the result is the declaration, initialization is
 				// done in the postProcessor in case this simpleDeclaration is part of a struct
 				// definition, we also need the Declarations as a result
@@ -2945,6 +2990,13 @@ public class CHandler {
 		mSymbolTable.storeCSymbol(hook, cDec.getName(),
 				new SymbolTableValue(bId, boogieDec, cDec, declarationInformation, hook, false));
 		return result;
+	}
+
+	private Result skipOrSideEffects(final ResultWithSideEffects result) {
+		if (result.hasNoSideEffects()) {
+			return new SkipResult();
+		}
+		return new ExpressionResultBuilder().addAllSideEffects(result).build();
 	}
 
 	private DeclarationInformation getDeclarationInfo(final CStorageClass storageClass) {
@@ -3109,7 +3161,7 @@ public class CHandler {
 				builder.addDeclaration(auxVar.getVarDec());
 				builder.addAuxVar(auxVar);
 
-				final RValue tmpVarRVal = new RValueForArrays(auxVar.getExp(), er.getLrValue().getCType());
+				final RValue tmpVarRVal = new RValue(auxVar.getExp(), er.getLrValue().getCType());
 
 				final Overapprox overapp = new Overapprox(
 						"field of union updated " + "--> havoccing other fields (CHandler.makeAssignment(..))", loc);
