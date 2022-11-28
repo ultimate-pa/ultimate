@@ -604,4 +604,13 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		return nestingRelationEntry == INTERNAL_POSITION || nestingRelationEntry == PLUS_INFINITY
 				|| nestingRelationEntry == MINUS_INFINITY;
 	}
+
+	public boolean hasEmptyNestingRelation() {
+		for (int i = 0; i < mWord.length; i++) {
+			if (!isInternalPosition(i)) {
+				return false;
+			}
+		}
+		return true;
+	}
 }
