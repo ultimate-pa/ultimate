@@ -121,7 +121,9 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		final IDerHelper<?>[] helpers;
 		if (mExpensiveEliminations) {
 			helpers = new IDerHelper[] { new DerHelperMcsbr(IntricateOperations.AUXILIARY_VARIABLES),
-					new DerHelperMcsbr(IntricateOperations.CASE_DISTINCTION) };
+//					20221121 Matthias: Omit cases that require case distinction temporarily
+//					new DerHelperMcsbr(IntricateOperations.CASE_DISTINCTION)
+					};
 		} else {
 			helpers = new IDerHelper[] { new DerHelperSbr(),
 					new DerHelperMcsbr(IntricateOperations.ADDITIONAL_DUAL_JUNCTS) };

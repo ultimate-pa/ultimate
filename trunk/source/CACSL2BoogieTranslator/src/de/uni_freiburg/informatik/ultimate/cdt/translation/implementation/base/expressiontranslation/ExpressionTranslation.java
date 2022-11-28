@@ -201,6 +201,8 @@ public abstract class ExpressionTranslation {
 		return new RValue(expr, fpl.getCPrimitive());
 	}
 
+	public abstract Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value);
+
 	public abstract Expression constructLiteralForFloatingType(ILocation loc, CPrimitive type, BigDecimal value);
 
 	public FunctionDeclarations getFunctionDeclarations() {

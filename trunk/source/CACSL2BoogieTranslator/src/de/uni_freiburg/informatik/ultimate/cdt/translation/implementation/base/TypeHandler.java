@@ -245,7 +245,8 @@ public class TypeHandler implements ITypeHandler {
 			return (new TypesResult(cPrimitive2AstType(loc, cvar), node.isConst(), false, cvar));
 		}
 		case IASTSimpleDeclSpecifier.t_double:
-		case IASTSimpleDeclSpecifier.t_float: {
+		case IASTSimpleDeclSpecifier.t_float:
+		case IASTSimpleDeclSpecifier.t_float128: {
 			// floating point number are not supported by Ultimate,
 			// somehow we treat it here as REALs
 			final CPrimitive cvar = new CPrimitive(node);
@@ -342,7 +343,7 @@ public class TypeHandler implements ITypeHandler {
 		// values of enum have type int
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final String enumId = mNameHandler.getUniqueIdentifier(node, node.getName().toString(),
-				mSymboltable.getCScopeId(node), false, intType);
+				mSymboltable.getCScopeId(node), false, intType, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		final int nrFields = node.getEnumerators().length;
 		final String[] fNames = new String[nrFields];
 		Expression valueOfPrecedingEnumConstant = null;
@@ -355,6 +356,8 @@ public class TypeHandler implements ITypeHandler {
 			fNames[i] = e.getName().toString();
 			if (e.getValue() != null) {
 				final ExpressionResult rex = (ExpressionResult) main.dispatch(e.getValue());
+				// TODO Frank 2022-11-22: rex might contain statements (e.g. overflow-assertions), but they are ignored
+				// here! We should probably crash instead. But we could try to remove trivial assertions additionally.
 				fValues[i] = rex.getLrValue().getValue();
 			} else {
 				fValues[i] = null;

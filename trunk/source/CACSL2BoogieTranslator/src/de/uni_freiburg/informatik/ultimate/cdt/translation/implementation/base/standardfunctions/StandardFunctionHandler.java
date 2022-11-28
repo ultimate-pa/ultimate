@@ -561,7 +561,7 @@ public class StandardFunctionHandler {
 		fill(map, "fdimf", this::handleBinaryFloatFunction);
 		fill(map, "fdiml", this::handleBinaryFloatFunction);
 
-		/** SV-COMP and modelling functions **/
+		/** SV-COMP and modeling functions **/
 		fill(map, "__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
 		fill(map, "__VERIFIER_error", this::handleErrorFunction);
 		fill(map, "reach_error", this::handleErrorFunction);
@@ -586,6 +586,10 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.INT)));
 		fill(map, "__VERIFIER_nondet_long",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
+		fill(map, "__VERIFIER_nondet_longlong",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONGLONG)));
+		fill(map, "__VERIFIER_nondet_int128",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.INT128)));
 		fill(map, "__VERIFIER_nondet_loff_t",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
 		fill(map, "__VERIFIER_nondet_short",
@@ -600,6 +604,10 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT)));
 		fill(map, "__VERIFIER_nondet_ulong",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "__VERIFIER_nondet_ulonglong",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONGLONG)));
+		fill(map, "__VERIFIER_nondet_uint128",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT128)));
 		fill(map, "__VERIFIER_nondet_ushort",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.USHORT)));
 
@@ -754,6 +762,8 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONG)));
 		fill(map, "llabs",
 				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONGLONG)));
+		fill(map, "imaxabs",
+				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONGLONG)));
 		fill(map, "div", die);
 		fill(map, "ldiv", die);
 		fill(map, "lldiv", die);
@@ -834,6 +844,7 @@ public class StandardFunctionHandler {
 
 	private ExpressionResult getNondetStringOrNull(final ILocation loc, final IASTNode hook) {
 		final var charType = new CPrimitive(CPrimitives.CHAR);
+		final var sizeT = mTypeSizes.getSizeT();
 		final var resultType = new CPointer(charType);
 		final var builder = new ExpressionResultBuilder();
 
@@ -847,19 +858,22 @@ public class StandardFunctionHandler {
 				mExpressionTranslation.constructNullPointer(loc));
 
 		// alternative option: return a nondeterministic string of nondeterministic length
-		final AuxVarInfo len = mAuxVarInfoBuilder.constructAuxVarInfo(loc, mTypeSizes.getSizeT(), SFO.AUXVAR.NONDET);
+		final AuxVarInfo len = mAuxVarInfoBuilder.constructAuxVarInfo(loc, sizeT, SFO.AUXVAR.NONDET);
 		builder.addDeclaration(len.getVarDec());
 		builder.addAuxVar(len);
 
 		// allocate memory for a string and end it with a null-char as terminator
 		final var body = new ArrayList<Statement>();
 		body.add(new HavocStatement(loc, new VariableLHS[] { len.getLhs() }));
-		body.add(new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, len.getExp(),
-				mTypeSizes.constructLiteralForIntegerType(loc, mTypeSizes.getSizeT(), BigInteger.ZERO))));
+		body.add(new AssumeStatement(loc,
+				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_greaterThan,
+						len.getExp(), sizeT, mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ZERO),
+						sizeT)));
 		body.add(mMemoryHandler.getUltimateMemAllocCall(len.getExp(), retvar.getLhs(), loc, MemoryArea.HEAP));
 		final var nullChar = mTypeSizes.constructLiteralForIntegerType(loc, charType, BigInteger.ZERO);
-		final var lenMinusOne = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, len.getExp(),
-				mTypeSizes.constructLiteralForIntegerType(loc, charType, BigInteger.ONE));
+		final var lenMinusOne = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
+				IASTBinaryExpression.op_minus, len.getExp(), sizeT,
+				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ONE), sizeT);
 		final var lastChar = MemoryHandler.constructPointerFromBaseAndOffset(
 				MemoryHandler.getPointerBaseAddress(retvar.getExp(), loc), lenMinusOne, loc);
 		body.addAll(mMemoryHandler.getWriteCall(loc,
@@ -878,7 +892,8 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 1, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final ExpressionResult argResult = (ExpressionResult) main.dispatch(arguments[0]);
+		final ExpressionResult argResult =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		builder.addAllExceptLrValue(argResult);
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.ABS);
 		builder.addDeclaration(auxvar.getVarDec());
@@ -921,7 +936,8 @@ public class StandardFunctionHandler {
 		builder.addAllExceptLrValue(ptr);
 
 		// second argument is len
-		final var len = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
+		final var len = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc, arguments[1],
+				mExpressionTranslation.getCTypeOfPointerComponents());
 		builder.addAllExceptLrValue(len);
 
 		// dispatch remaining arguments (except for string literals)
@@ -956,7 +972,9 @@ public class StandardFunctionHandler {
 
 		// assume ctr < len;
 		final var assumeInRange = new AssumeStatement(loc,
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, ctr.getExp(), len.getLrValue().getValue()));
+				mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_lessThan,
+						ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents(), len.getLrValue().getValue(),
+						mExpressionTranslation.getCTypeOfPointerComponents()));
 		body.add(assumeInRange);
 
 		// havoc aux;
@@ -983,9 +1001,11 @@ public class StandardFunctionHandler {
 
 		// ctr := ctr + 1
 		final var incrementCtr = StatementFactory.constructAssignmentStatement(loc, ctr.getLhs(),
-				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, ctr.getExp(),
+				mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_plus,
+						ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents(),
 						mTypeSizes.constructLiteralForIntegerType(loc,
-								mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE)));
+								mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE),
+						mExpressionTranslation.getCTypeOfPointerComponents()));
 		body.add(incrementCtr);
 
 		final var loop = new WhileStatement(loc, new WildcardExpression(loc), new LoopInvariantSpecification[0],
@@ -995,7 +1015,6 @@ public class StandardFunctionHandler {
 		final var ret =
 				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.CHAR), SFO.AUXVAR.RETURNED);
 		builder.addAuxVar(ret);
-		builder.addOverapprox(overAppFlag);
 		builder.addDeclaration(ret.getVarDec());
 		builder.setLrValue(new LocalLValue(ret.getLhs(), new CPrimitive(CPrimitives.CHAR), null));
 
@@ -1018,9 +1037,14 @@ public class StandardFunctionHandler {
 			final int firstArgumentToConsider) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+
+		// TODO we should probably dispatch all parameters, in case they have side effects
+
 		for (int i = firstArgumentToConsider; i < arguments.length; i++) {
 			final ExpressionResult arg =
 					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]);
+			builder.addAllExceptLrValue(arg);
+
 			final CType type = ((CPointer) arg.getCType()).getPointsToType();
 			final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
 			builder.addDeclaration(auxvar.getVarDec());
@@ -1030,8 +1054,7 @@ public class StandardFunctionHandler {
 			final var lValue =
 					LRValueFactory.constructHeapLValue(mTypeHandler, arg.getLrValue().getValue(), type, null);
 			mExpressionTranslation.addAssumeValueInRangeStatements(loc, auxvar.getExp(), type, builder);
-			final List<Statement> writes = mMemoryHandler.getWriteCall(loc, lValue, auxvar.getExp(),
-					new CPrimitive(CPrimitive.CPrimitives.INT), false, node);
+			final List<Statement> writes = mMemoryHandler.getWriteCall(loc, lValue, auxvar.getExp(), type, false, node);
 			builder.addStatements(writes);
 
 			if (mDataRaceChecker != null) {

@@ -99,6 +99,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
+	public Expression constructLiteralForIntegerType(final ILocation loc, final CPrimitive type,
+			final BigInteger value) {
+		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, false, mTypeSizes, type, value);
+	}
+
+	@Override
 	public Expression constructLiteralForFloatingType(final ILocation loc, final CPrimitive type,
 			final BigDecimal value) {
 		return ExpressionFactory.createRealLiteral(loc, value.toString());

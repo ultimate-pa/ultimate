@@ -619,6 +619,9 @@ public class FunctionHandler {
 
 		final Procedure calleeProcDecl = calleeProcInfo.getDeclaration();
 		final CFunction calleeProcCType = calleeProcInfo.getCType();
+		if (calleeProcCType != null && calleeProcCType.isExtern()) {
+			mLogger.warn("Unknown extern function " + calleeName);
+		}
 		assert calleeProcDecl != null;
 		if (calleeProcCType != null && calleeProcCType.hasVarArgs()) {
 			if (calleeProcCType.isExtern()) {
@@ -816,14 +819,13 @@ public class FunctionHandler {
 				currentParamType = mTypeHandler.cType2AstType(loc, currentParamDec.getType().getUnderlyingType());
 			}
 
-			final String currentParamId =
-					mNameHandler.getInParamIdentifier(currentParamDec.getName(), currentParamDec.getType());
+			final DeclarationInformation declInformation =
+					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procInfo.getProcedureName());
+			final String currentParamId = mNameHandler.getInParamIdentifier(currentParamDec.getName(),
+					currentParamDec.getType(), declInformation);
 			in[i] = new VarList(loc, new String[] { currentParamId }, currentParamType);
 
 			if (updateSymbolTable) {
-				final DeclarationInformation declInformation =
-						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procInfo.getProcedureName());
-
 				mSymboltable.storeCSymbol(hook, currentParamDec.getName(),
 						new SymbolTableValue(currentParamId, null, currentParamDec, declInformation, null, false));
 			}
@@ -896,11 +898,10 @@ public class FunctionHandler {
 				}
 
 				// Copy of inparam that is writeable
-				final String inparamAuxVarName =
-						mNameHandler.getUniqueIdentifier(parent, inparamCId, 0, isOnHeap, cvar);
-
 				final DeclarationInformation inparamAuxVarDeclInfo = new DeclarationInformation(StorageClass.LOCAL,
 						mProcedureManager.getCurrentProcedureInfo().getProcedureName());
+				final String inparamAuxVarName =
+						mNameHandler.getUniqueIdentifier(parent, inparamCId, 0, isOnHeap, cvar, inparamAuxVarDeclInfo);
 				final BoogieType inParamAuxVarType = mTypeHandler.getBoogieTypeForBoogieASTType(type);
 
 				if (isOnHeap || cvar instanceof CArray) {

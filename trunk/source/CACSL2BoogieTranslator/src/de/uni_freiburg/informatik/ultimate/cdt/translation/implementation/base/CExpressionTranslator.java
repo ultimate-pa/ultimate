@@ -228,7 +228,7 @@ public class CExpressionTranslator {
 			assert typeOfResult.equals(right.getLrValue().getCType());
 			final CPrimitive primitiveTypeOfResult = (CPrimitive) typeOfResult.getUnderlyingType();
 
-			addIntegerBoundsCheck(loc, builder, primitiveTypeOfResult, op, hook, left.getLrValue().getValue(),
+			addIntegerBoundsCheck(loc, builder, primitiveTypeOfResult, op, hook, null, left.getLrValue().getValue(),
 					right.getLrValue().getValue());
 			expr = mExpressionTranslation.constructArithmeticExpression(loc, op, left.getLrValue().getValue(),
 					primitiveTypeOfResult, right.getLrValue().getValue(), primitiveTypeOfResult);
@@ -381,7 +381,7 @@ public class CExpressionTranslator {
 			final CPrimitive resultType = (CPrimitive) operand.getLrValue().getCType();
 			final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(operand);
 			if (op == IASTUnaryExpression.op_minus && resultType.isIntegerType()) {
-				addIntegerBoundsCheck(loc, result, resultType, op, hook, operand.getLrValue().getValue());
+				addIntegerBoundsCheck(loc, result, resultType, op, hook, null, operand.getLrValue().getValue());
 			}
 			final Expression bwexpr = mExpressionTranslation.constructUnaryExpression(loc, op,
 					operand.getLrValue().getValue(), resultType);
@@ -426,9 +426,10 @@ public class CExpressionTranslator {
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftLeftAssign:
 		case IASTBinaryExpression.op_shiftRightAssign: {
-			if (op == IASTBinaryExpression.op_shiftLeft) {
+			if (op == IASTBinaryExpression.op_shiftLeft || op == IASTBinaryExpression.op_shiftLeftAssign) {
 				addIntegerBoundsCheck(loc, result, (CPrimitive) rval.getCType(), op, hook,
-						leftPromoted.getLrValue().getValue(), rightConverted.getLrValue().getValue());
+						(CPrimitive) rightConverted.getCType(), leftPromoted.getLrValue().getValue(),
+						rightConverted.getLrValue().getValue());
 			}
 			result.setLrValue(rval);
 			return result.build();
@@ -471,7 +472,7 @@ public class CExpressionTranslator {
 		case IASTBinaryExpression.op_divide:
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_divideAssign: {
-			addIntegerBoundsCheck(loc, result, typeOfResult, op, hook, left.getLrValue().getValue(),
+			addIntegerBoundsCheck(loc, result, typeOfResult, op, hook, null, left.getLrValue().getValue(),
 					right.getLrValue().getValue());
 			break;
 		}
@@ -943,7 +944,7 @@ public class CExpressionTranslator {
 			} else {
 				one = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
 			}
-			addIntegerBoundsCheck(loc, result, cPrimitive, op, hook, value, one);
+			addIntegerBoundsCheck(loc, result, cPrimitive, op, hook, null, value, one);
 			valueIncremented =
 					mExpressionTranslation.constructArithmeticExpression(loc, op, value, cPrimitive, one, cPrimitive);
 		} else {
@@ -1045,22 +1046,61 @@ public class CExpressionTranslator {
 	 * arithmetic operation in this check because we possibly have to adjust the data type used in boogie. E.g., if we
 	 * use 32bit bitvectors in Boogie we are unable to express an overflow check for a 32bit integer addition in C.
 	 * Instead, we have to use a 33bit bit bitvector in Boogie.
+	 *
+	 * @param rhsTypeForLeftshift
+	 *            In case the operation is a left-shift, we use this parameter to pass the type of the right-hand side
+	 *            (which is not necessarily similar to the result type)
 	 */
-	private ExpressionResultBuilder addIntegerBoundsCheck(final ILocation loc, final ExpressionResultBuilder erb,
-			final CPrimitive resultType, final int operation, final IASTNode hook, final Expression... operands) {
+	private void addIntegerBoundsCheck(final ILocation loc, final ExpressionResultBuilder erb,
+			final CPrimitive resultType, final int operation, final IASTNode hook, final CPrimitive rhsTypeForLeftshift,
+			final Expression... operands) {
 
 		if (!mSettings.checkSignedIntegerBounds() || !resultType.isIntegerType() || mTypeSizes.isUnsigned(resultType)) {
 			// nothing to do
-			return erb;
+			return;
 		}
 		final Pair<Expression, Expression> inBoundsCheck;
+		// TODO Frank 2022-11-21: Why are left shifts handled here and all other binary operations in
+		// mExpressionTranslation.constructOverflowCheckForBinaryBitwiseIntegerExpression? Should we move this code
+		// there?
 		if (operation == IASTBinaryExpression.op_shiftLeft || operation == IASTBinaryExpression.op_shiftLeftAssign) {
 			// 2017-11-18 Matthias: For this shift there are more possibilities of undefined
-			// behavior
-			// I don't know where we should check them and if we should call them
-			// "signed integer overflows" (probably not)
+			// behavior. I don't know if it is ok to call all of them "signed integer
+			// overflows" (probably not)
+
+			// TODO Frank 2022-11-21: It is probably better to move the value extraction anywhere else, s.t. not only
+			// the overflow-check profits from it!
+			final Expression left = tryToExtractValue(operands[0], resultType, hook, loc);
+			final Expression right = tryToExtractValue(operands[1], resultType, hook, loc);
+			Expression lhsNonNegative;
+			{
+				final Expression zero =
+						mExpressionTranslation.constructLiteralForIntegerType(loc, resultType, BigInteger.ZERO);
+				lhsNonNegative = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+						IASTBinaryExpression.op_lessEqual, zero, resultType, left, resultType);
+			}
+			Expression rhsNonNegative;
+			{
+				final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, rhsTypeForLeftshift,
+						BigInteger.ZERO);
+				rhsNonNegative = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+						IASTBinaryExpression.op_lessEqual, zero, rhsTypeForLeftshift, right, rhsTypeForLeftshift);
+			}
+			Expression rhsSmallerBitWidth;
+			{
+				final BigInteger bitwidthOfLhsAsBigInt =
+						BigInteger.valueOf(8 * mTypeSizes.getSize(resultType.getType()));
+				final Expression bitwidthOfLhsAsExpr = mExpressionTranslation.constructLiteralForIntegerType(loc,
+						rhsTypeForLeftshift, bitwidthOfLhsAsBigInt);
+				rhsSmallerBitWidth = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+						IASTBinaryExpression.op_lessThan, right, resultType, bitwidthOfLhsAsExpr, resultType);
+			}
+			addOverflowAssertion(loc,
+					ExpressionFactory.and(loc, List.of(lhsNonNegative, rhsNonNegative, rhsSmallerBitWidth)), erb);
+			// TODO 20221121 Matthias: If types of LHS and RHS differ, we have to
+			// extend/reduce the RHS
 			inBoundsCheck = mExpressionTranslation.constructOverflowCheckForBinaryBitwiseIntegerExpression(loc,
-					operation, resultType, operands[0], operands[1], hook);
+					operation, resultType, left, right, hook);
 		} else if (operands.length == 1) {
 			inBoundsCheck = mExpressionTranslation.constructOverflowCheckForUnaryExpression(loc, operation, resultType,
 					operands[0]);
@@ -1071,21 +1111,28 @@ public class CExpressionTranslator {
 		} else {
 			throw new AssertionError("no such operation");
 		}
+		addOverflowAssertion(loc, inBoundsCheck.getFirst(), erb);
+		addOverflowAssertion(loc, inBoundsCheck.getSecond(), erb);
+	}
 
-		final Check check = new Check(Spec.INTEGER_OVERFLOW);
-		final Expression biggerMinInt = inBoundsCheck.getFirst();
-		final Expression smallerMaxInt = inBoundsCheck.getSecond();
-		if (!ExpressionFactory.isTrueLiteral(smallerMaxInt)) {
-			final AssertStatement smallerMaxIntStmt = new AssertStatement(loc, smallerMaxInt);
-			check.annotate(smallerMaxIntStmt);
-			erb.addStatement(smallerMaxIntStmt);
+	private Expression tryToExtractValue(final Expression expr, final CPrimitive type, final IASTNode hook,
+			final ILocation loc) {
+		final BigInteger value = mTypeSizes.extractIntegerValue(expr, type, hook);
+		if (value == null) {
+			return expr;
 		}
-		if (!ExpressionFactory.isTrueLiteral(biggerMinInt)) {
-			final AssertStatement biggerMinIntStmt = new AssertStatement(loc, biggerMinInt);
-			check.annotate(biggerMinIntStmt);
-			erb.addStatement(biggerMinIntStmt);
+		return mExpressionTranslation.constructLiteralForIntegerType(loc, type, value);
+	}
+
+	private static void addOverflowAssertion(final ILocation loc, final Expression condition,
+			final ExpressionResultBuilder erb) {
+		if (ExpressionFactory.isTrueLiteral(condition)) {
+			// Avoid the creation of "assert true" statement
+			return;
 		}
-		return erb;
+		final AssertStatement assertSt = new AssertStatement(loc, condition);
+		new Check(Spec.INTEGER_OVERFLOW).annotate(assertSt);
+		erb.addStatement(assertSt);
 	}
 
 	/**

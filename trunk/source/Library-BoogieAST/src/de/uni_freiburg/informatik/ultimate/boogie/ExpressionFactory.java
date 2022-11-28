@@ -448,13 +448,33 @@ public class ExpressionFactory {
 				(BoogieType) operand.getType(), new TypeErrorReporter(loc));
 
 		if (operand instanceof BitvecLiteral) {
-			final BigInteger biValue = new BigInteger(((BitvecLiteral) operand).getValue());
-			final BigInteger two = BigInteger.valueOf(2);
-			final BigInteger dividedByLow = biValue.divide(two.pow(low));
-			final BigInteger biresult = dividedByLow.mod(two.pow(high));
-			return new BitvecLiteral(loc, type, biresult.toString(), high - low);
+			return constructBitvectorAccessExpressionResult(loc, (BitvecLiteral) operand, high, low, type);
 		}
 		return new BitVectorAccessExpression(loc, type, operand, high, low);
+	}
+
+	/**
+	 * Result of BitvectorAccessExpression for the special case that the operand
+	 * is a literal.
+	 *
+	 * @param high
+	 *            exclusive
+	 * @param low
+	 *            inclusive
+	 */
+	public static Expression constructBitvectorAccessExpressionResult(final ILocation loc, final BitvecLiteral operand,
+			final int high, final int low, final BoogieType type) {
+		final BigInteger biresult = constructBitvectorAccessExpressionResult(new BigInteger(operand.getValue()), high,
+				low);
+		return new BitvecLiteral(loc, type, biresult.toString(), high - low);
+	}
+
+	public static BigInteger constructBitvectorAccessExpressionResult(final BigInteger value, final int high,
+			final int low) {
+		final BigInteger two = BigInteger.valueOf(2);
+		final BigInteger dividedByLow = value.divide(two.pow(low));
+		final BigInteger biresult = dividedByLow.mod(two.pow(high));
+		return biresult;
 	}
 
 	public static Expression and(final ILocation loc, final List<Expression> exprs) {

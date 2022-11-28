@@ -32,19 +32,9 @@ import java.util.LinkedHashMap;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
@@ -55,8 +45,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.Signedness;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BitvectorConstantOperationResult;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 
 /**
  * Provides the information if we want to use fixed sizes for types. If yes an object of this class also provides the
@@ -78,8 +66,11 @@ public class TypeSizes {
 	private final int mSizeOfDoubleType;
 	private final int mSizeOfLongDoubleType;
 	private final int mSizeOfPointerType;
+	private final int mSizeOfInt128Type;
+	private final int mSizeOfFloat128Type;
 
-	// for pointer arithmetic on a void pointer -- c standard disallows that, but gcc does not..
+	// for pointer arithmetic on a void pointer -- c standard disallows that, but
+	// gcc does not..
 	private final int mSizeOfVoidType;
 
 	/**
@@ -90,12 +81,14 @@ public class TypeSizes {
 	private final LinkedHashMap<CPrimitive.CPrimitives, Integer> mCPrimitiveToTypeSizeConstant;
 
 	private final FlatSymbolTable mSymboltable;
+	private final ValueExtraction mValueExtraction;
 
 	private final TranslationSettings mSettings;
 
 	public TypeSizes(final IPreferenceProvider ups, final TranslationSettings settings,
 			final FlatSymbolTable symbolTable) {
 		mSymboltable = symbolTable;
+		mValueExtraction = new ValueExtraction(mSymboltable);
 		mUseFixedTypeSizes = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
 		mSettings = settings;
 		mCPrimitiveToTypeSizeConstant = new LinkedHashMap<>();
@@ -112,6 +105,12 @@ public class TypeSizes {
 		mSizeOfLongDoubleType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE);
 		mSizeOfPointerType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_POINTER);
 		mSignednessOfChar = ups.getEnum(CACSLPreferenceInitializer.LABEL_SIGNEDNESS_CHAR, Signedness.class);
+		// Hardcoded to 16 bytes. According to the GNU C is could probably also be
+		// larger
+		// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fint128.html
+		mSizeOfInt128Type = 16;
+		// Hardcoded to 16 bytes https://gcc.gnu.org/onlinedocs/gcc/Floating-Types.html
+		mSizeOfFloat128Type = 16;
 
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.VOID, mSizeOfVoidType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.BOOL, mSizeOfBoolType);
@@ -126,17 +125,22 @@ public class TypeSizes {
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONG, mSizeOfLongType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGLONG, mSizeOfLongLongType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONGLONG, mSizeOfLongLongType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.INT128, mSizeOfInt128Type);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UINT128, mSizeOfInt128Type);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.DOUBLE, mSizeOfDoubleType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT, mSizeOfFloatType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT128, mSizeOfFloat128Type);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGDOUBLE, mSizeOfLongDoubleType);
 
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_DOUBLE, mSizeOfDoubleType * 2);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_FLOAT, mSizeOfFloatType * 2);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_LONGDOUBLE, mSizeOfLongDoubleType * 2);
+
 	}
 
 	public TypeSizes(final TypeSizes prerunTypeSizes, final FlatSymbolTable symbolTable) {
 		mSymboltable = symbolTable;
+		mValueExtraction = new ValueExtraction(mSymboltable);
 
 		mUseFixedTypeSizes = prerunTypeSizes.mUseFixedTypeSizes;
 		mSettings = prerunTypeSizes.mSettings;
@@ -154,6 +158,8 @@ public class TypeSizes {
 		mSizeOfLongDoubleType = prerunTypeSizes.mSizeOfLongDoubleType;
 		mSizeOfPointerType = prerunTypeSizes.mSizeOfPointerType;
 		mSignednessOfChar = prerunTypeSizes.mSignednessOfChar;
+		mSizeOfInt128Type = prerunTypeSizes.mSizeOfInt128Type;
+		mSizeOfFloat128Type = prerunTypeSizes.mSizeOfFloat128Type;
 	}
 
 	public boolean useFixedTypeSizes() {
@@ -184,6 +190,7 @@ public class TypeSizes {
 		case ULONG:
 		case ULONGLONG:
 		case USHORT:
+		case UINT128:
 			return true;
 		case CHAR:
 			return mSignednessOfChar == Signedness.UNSIGNED;
@@ -192,11 +199,13 @@ public class TypeSizes {
 		case LONGLONG:
 		case SCHAR:
 		case SHORT:
+		case INT128:
 			return false;
 		case COMPLEX_FLOAT:
 		case COMPLEX_DOUBLE:
 		case COMPLEX_LONGDOUBLE:
 		case FLOAT:
+		case FLOAT128:
 		case DOUBLE:
 		case LONGDOUBLE:
 			// case CHAR16:
@@ -254,40 +263,32 @@ public class TypeSizes {
 	 * @return FloatingPointSize of a float, double, or long double.
 	 */
 	public FloatingPointSize getFloatingPointSize(final CPrimitives cPrimitive) {
-		final FloatingPointSize result;
+		final int sizeof = getSize(cPrimitive);
 		switch (cPrimitive) {
-		case FLOAT: {
-			final int sizeof = getSize(cPrimitive);
-			if (sizeof == 4) {
-				result = new FloatingPointSize(sizeof, 24, 8);
-			} else {
+		case FLOAT:
+			if (sizeof != 4) {
 				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
 			}
-		}
-			break;
-		case DOUBLE: {
-			final int sizeof = getSize(cPrimitive);
-			if (sizeof == 8) {
-				result = new FloatingPointSize(sizeof, 53, 11);
-			} else {
+			return new FloatingPointSize(sizeof, 24, 8);
+		case DOUBLE:
+			if (sizeof != 8) {
 				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
 			}
-		}
-			break;
-		case LONGDOUBLE: {
-			final int sizeof = getSize(cPrimitive);
+			return new FloatingPointSize(sizeof, 53, 11);
+		case LONGDOUBLE:
 			// 12 because of 80bit long doubles on linux x86
-			if (sizeof == 12 || sizeof == 16) {
-				result = new FloatingPointSize(sizeof, 113, 15);
-			} else {
+			if (sizeof != 12 && sizeof != 16) {
 				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
 			}
-		}
-			break;
+			return new FloatingPointSize(sizeof, 113, 15);
+		case FLOAT128:
+			if (sizeof != 16) {
+				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
+			}
+			return new FloatingPointSize(sizeof, 113, 15);
 		default:
 			throw new IllegalArgumentException("not real floating type " + cPrimitive);
 		}
-		return result;
 	}
 
 	public CPrimitive getCorrespondingUnsignedType(final CPrimitive type) {
@@ -313,6 +314,8 @@ public class TypeSizes {
 			return new CPrimitive(CPrimitives.UCHAR);
 		case SHORT:
 			return new CPrimitive(CPrimitives.USHORT);
+		case INT128:
+			return new CPrimitive(CPrimitives.UINT128);
 		default:
 			throw new IllegalArgumentException("unsupported type " + this);
 		}
@@ -348,199 +351,42 @@ public class TypeSizes {
 	}
 
 	public BigInteger extractIntegerValue(final Expression expr, final CType cType, final IASTNode hook) {
+		final BigInteger tmp = mValueExtraction.extractIntegerValue(expr, hook);
+		if (tmp == null) {
+			return null;
+		}
+
+		if (!(cType instanceof CPrimitive)) {
+			throw new AssertionError("Expected only CPrimitive but got " + cType);
+		}
+		final CPrimitive cPrimitive = (CPrimitive) cType;
 		if (mSettings.isBitvectorTranslation()) {
-			return extractIntegerValueBitvector(expr, cType, hook);
+			if (isUnsigned(cPrimitive)) {
+				// my return as is
+				if (getMinValueOfPrimitiveType(cPrimitive).compareTo(tmp) > 0) {
+					throw new AssertionError("Value too small for type " + cType);
+				}
+				if (getMaxValueOfPrimitiveType(cPrimitive).compareTo(tmp) < 0) {
+					throw new AssertionError("Value too large for type " + cType);
+				}
+				return tmp;
+			}
+			// is signed
+			final Integer bytesize = getSize(cPrimitive.getType());
+			final int bitsize = bytesize * 8;
+			final BitvectorConstant bc = new BitvectorConstant(tmp, BigInteger.valueOf(bitsize));
+			return bc.toSignedInt();
 		}
-		return extractIntegerValueInteger(expr, cType, hook);
-	}
-
-	private BigInteger extractIntegerValueInteger(final Expression expr, final CType cType, final IASTNode hook) {
-		if (cType.isIntegerType()) {
-			if (expr instanceof IntegerLiteral) {
-				final BigInteger value = new BigInteger(((IntegerLiteral) expr).getValue());
-				if (isUnsigned((CPrimitive) cType)) {
-					final BigInteger maxValue = getMaxValueOfPrimitiveType((CPrimitive) cType);
-					final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
-					return value.mod(maxValuePlusOne);
-				}
-				return value;
-			}
-			if (expr instanceof IdentifierExpression) {
-				// An IdentifierExpression may be an alias for an integer value, this is stored in the symbol table.
-				final String bId = ((IdentifierExpression) expr).getIdentifier();
-				final String cId = mSymboltable.getCIdForBoogieId(bId);
-				final SymbolTableValue stv = mSymboltable.findCSymbol(hook, cId);
-				if (stv == null) {
-					return null;
-				}
-				if (stv.hasConstantValue()) {
-					return extractIntegerValue(stv.getConstantValue(), cType, hook);
-				}
-			}
-			if (expr instanceof BinaryExpression) {
-				final BinaryExpression binExpr = (BinaryExpression) expr;
-				final BigInteger leftValue = extractIntegerValue(binExpr.getLeft(), cType, hook);
-				final BigInteger rightValue = extractIntegerValue(binExpr.getRight(), cType, hook);
-
-				if (leftValue == null || rightValue == null) {
-					return null;
-				}
-
-				switch (binExpr.getOperator()) {
-				case ARITHDIV:
-					return leftValue.divide(rightValue);
-				case ARITHMINUS:
-					return leftValue.subtract(rightValue);
-				case ARITHMOD:
-					return leftValue.mod(rightValue);
-				case ARITHMUL:
-					return leftValue.multiply(rightValue);
-				case ARITHPLUS:
-					return leftValue.add(rightValue);
-				default:
-					return null;
-				}
-			}
-			if (expr instanceof IfThenElseExpression) {
-				final IfThenElseExpression ifThenElseExpr = (IfThenElseExpression) expr;
-				final Boolean condValue = extractBooleanValue(ifThenElseExpr.getCondition(), cType, hook);
-				if (condValue != null) {
-					if (extractBooleanValue(ifThenElseExpr.getCondition(), cType, hook)) {
-						return extractIntegerValue(ifThenElseExpr.getThenPart(), cType, hook);
-					}
-					return extractIntegerValue(ifThenElseExpr.getElsePart(), cType, hook);
-				}
-				return null;
-			}
-			return null;
+		// integer translation
+		if (isUnsigned(cPrimitive)) {
+			// TODO 20221119 Matthias: Because of the Nutz transformation we do
+			// do a modulo operation. It don't think this should be necessary,
+			// but it won't hurt and I don't have the time to check.
+			final BigInteger maxValue = getMaxValueOfPrimitiveType((CPrimitive) cType);
+			final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
+			return tmp.mod(maxValuePlusOne);
 		}
-		return null;
-	}
-
-	/**
-	 * Takes an expression and returns its boolean value, if possible. Returns null otherwise.
-	 */
-	private Boolean extractBooleanValue(final Expression expr, final CType cType, final IASTNode hook) {
-		if (expr instanceof BooleanLiteral) {
-			return Boolean.valueOf((((BooleanLiteral) expr).getValue()));
-		}
-
-		if (expr instanceof BinaryExpression) {
-			final BinaryExpression binExpr = (BinaryExpression) expr;
-			if (binExpr.getOperator() == Operator.LOGICAND || binExpr.getOperator() == Operator.LOGICOR) {
-				final Boolean leftValue = extractBooleanValue(binExpr.getLeft(), cType, hook);
-				final Boolean rightValue = extractBooleanValue(binExpr.getRight(), cType, hook);
-				if (leftValue == null || rightValue == null) {
-					return null;
-				}
-				if (binExpr.getOperator() == Operator.LOGICAND) {
-					return leftValue && rightValue;
-				}
-				return leftValue || rightValue;
-			}
-
-			final BigInteger leftValue = extractIntegerValue(binExpr.getLeft(), cType, hook);
-			final BigInteger rightValue = extractIntegerValue(binExpr.getRight(), cType, hook);
-			if (leftValue == null || rightValue == null) {
-				return null;
-			}
-			switch (binExpr.getOperator()) {
-			case COMPEQ:
-				return leftValue.compareTo(rightValue) == 0;
-			case COMPNEQ:
-				return leftValue.compareTo(rightValue) != 0;
-			case COMPLT:
-				return leftValue.compareTo(rightValue) < 0;
-			case COMPGT:
-				return leftValue.compareTo(rightValue) > 0;
-			case COMPLEQ:
-				return leftValue.compareTo(rightValue) <= 0;
-			case COMPGEQ:
-				return leftValue.compareTo(rightValue) >= 0;
-			default:
-				return null;
-			}
-		}
-		return null;
-	}
-
-	private BigInteger extractIntegerValueBitvector(final Expression expr, CType cType, final IASTNode hook) {
-		if (cType.isIntegerType()) {
-			cType = CEnum.replaceEnumWithInt(cType);
-			if (expr instanceof BitvecLiteral) {
-				final BigInteger value = new BigInteger(((BitvecLiteral) expr).getValue());
-				if (isUnsigned((CPrimitive) cType)) {
-					if (value.signum() < 0) {
-						throw new UnsupportedOperationException("negative value");
-					}
-					return value;
-				}
-				return value;
-			} else if (expr instanceof IdentifierExpression) {
-				// An IdentifierExpression may be an alias for an integer value, this is stored in the symbol table.
-				final String bId = ((IdentifierExpression) expr).getIdentifier();
-				final String cId = mSymboltable.getCIdForBoogieId(bId);
-				final SymbolTableValue stv = mSymboltable.findCSymbol(hook, cId);
-				if (stv != null && stv.hasConstantValue()) {
-					return extractIntegerValue(stv.getConstantValue(), cType, hook);
-				}
-			} else if (expr instanceof FunctionApplication) {
-				final FunctionApplication funApp = (FunctionApplication) expr;
-				final Expression[] args = funApp.getArguments();
-
-				final BvOp sbo =
-						getBitvectorSmtFunctionNameFromCFunctionName(funApp.getIdentifier());
-				if (sbo == null) {
-					return null;
-				}
-				if (sbo.isBoolean()) {
-					throw new UnsupportedOperationException("Unexpected boolean bitvector op");
-				}
-
-				switch (sbo) {
-				case zero_extend:
-				case extract:
-					// TODO: Add support for these
-					return null;
-				default:
-
-					final int index = getBitvectorIndexFromCFunctionName(funApp.getIdentifier());
-					if (index == -1) {
-						return null;
-					}
-					final BitvectorConstant[] operands = new BitvectorConstant[sbo.getArity()];
-					for (int i = 0; i < args.length; ++i) {
-						final BigInteger arg = extractIntegerValue(args[i], cType, hook);
-						if (arg == null) {
-							return null;
-						}
-						operands[i] = new BitvectorConstant(arg, BigInteger.valueOf(index));
-					}
-					final BitvectorConstantOperationResult result = BitvectorConstant.apply(sbo, operands);
-					assert !result.isBoolean();
-					return result.getBvResult().toSignedInt();
-				}
-			}
-			return null;
-		}
-		return null;
-	}
-
-	private static BvOp getBitvectorSmtFunctionNameFromCFunctionName(final String name) {
-		final String funName = name.substring(1).replaceAll("\\d+", "");
-		try {
-			return BitvectorConstant.BvOp.valueOf(funName);
-		} catch (final IllegalArgumentException iae) {
-			return null;
-		}
-	}
-
-	private static int getBitvectorIndexFromCFunctionName(final String name) {
-		try {
-			return Integer.parseInt(name.substring(1).replaceAll("[^0-9]", ""));
-		} catch (final NumberFormatException ex) {
-			return -1;
-		}
+		return tmp;
 	}
 
 	/**

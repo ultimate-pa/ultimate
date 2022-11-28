@@ -1833,7 +1833,7 @@ public class MemoryHandler {
 			return CPrimitives.UCHAR;
 		}
 		for (final CPrimitives primitive : new CPrimitives[] { CPrimitives.UCHAR, CPrimitives.USHORT, CPrimitives.UINT,
-				CPrimitives.ULONG, CPrimitives.ULONGLONG }) {
+				CPrimitives.ULONG, CPrimitives.ULONGLONG, CPrimitives.UINT128 }) {
 			if (mTypeSizes.getSize(primitive) == byteSize) {
 				return primitive;
 			}
