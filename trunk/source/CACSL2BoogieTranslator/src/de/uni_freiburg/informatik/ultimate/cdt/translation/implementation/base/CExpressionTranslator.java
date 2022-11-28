@@ -89,6 +89,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public class CExpressionTranslator {
+	private static final boolean SEPARATE_ASSERTIONS_FOR_OVERFLOW_AND_UNDERFLOW = false;
 
 	private final TranslationSettings mSettings;
 
@@ -1077,8 +1078,14 @@ public class CExpressionTranslator {
 		} else {
 			throw new AssertionError("no such operation");
 		}
-		addOverflowAssertion(loc, inBoundsCheck.getFirst(), erb);
-		addOverflowAssertion(loc, inBoundsCheck.getSecond(), erb);
+		if (SEPARATE_ASSERTIONS_FOR_OVERFLOW_AND_UNDERFLOW) {
+			// TODO: We need another Spec for underflow
+			addOverflowAssertion(loc, inBoundsCheck.getFirst(), erb);
+			addOverflowAssertion(loc, inBoundsCheck.getSecond(), erb);
+		} else {
+			addOverflowAssertion(loc,
+					ExpressionFactory.and(loc, List.of(inBoundsCheck.getFirst(), inBoundsCheck.getSecond())), erb);
+		}
 	}
 
 	private Expression tryToExtractValue(final Expression expr, final CPrimitive type, final IASTNode hook,
