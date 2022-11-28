@@ -322,83 +322,92 @@ public class CExpressionTranslator {
 	 * results from handling the operands. Requires that the {@link LRValue} of operands is an {@link RValue} (i.e.,
 	 * switchToRValueIfNecessary was applied if needed).
 	 */
-	public ExpressionResult handleUnaryArithmeticOperators(final ILocation loc, final int op, ExpressionResult operand,
-			final IASTNode hook) {
+	public ExpressionResult handleUnaryArithmeticOperators(final ILocation loc, final int op,
+			final ExpressionResult operand, final IASTNode hook) {
 		assert operand.getLrValue() instanceof RValue : "no RValue";
 		final CType inputType = operand.getLrValue().getCType().getUnderlyingType();
 
 		switch (op) {
-		case IASTUnaryExpression.op_not: {
-			if (!inputType.isScalarType()) {
-				throw new IllegalArgumentException("scalar type required");
-			}
-			final Expression negated;
-			if (operand.getLrValue().isBoogieBool()) {
-				// in Boogie already represented by bool, we only negate
-				negated = ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG,
-						operand.getLrValue().getValue());
-			} else {
-				final Expression rhsOfComparison;
-				if (inputType instanceof CPointer) {
-					rhsOfComparison = mExpressionTranslation.constructNullPointer(loc);
-				} else if (inputType instanceof CEnum) {
-					final CPrimitive intType = new CPrimitive(CPrimitives.INT);
-					rhsOfComparison = mExpressionTranslation.constructZero(loc, intType);
-				} else if (inputType instanceof CPrimitive) {
-					rhsOfComparison = mExpressionTranslation.constructZero(loc, inputType);
-				} else {
-					throw new AssertionError("illegal case");
-				}
-				negated = mExpressionTranslation.constructBinaryEqualityExpression(loc, IASTBinaryExpression.op_equals,
-						operand.getLrValue().getValue(), inputType, rhsOfComparison, inputType);
-
-			}
-			final ExpressionResultBuilder builder = new ExpressionResultBuilder().addAllExceptLrValue(operand);
-			// C11 6.5.3.3.5 The result has type int.
-			final CPrimitive resultType = new CPrimitive(CPrimitives.INT);
-			// type of Operator.COMPEQ expression is bool
-			final boolean isBoogieBool = true;
-			final RValue rval = new RValue(negated, resultType, isBoogieBool);
-			return builder.setLrValue(rval).build();
-		}
-		case IASTUnaryExpression.op_plus: {
-			if (!inputType.isArithmeticType()) {
-				throw new UnsupportedOperationException("arithmetic type required");
-			}
-			if (inputType.isArithmeticType()) {
-				operand = mExprResultTransformer.rexBoolToInt(operand, loc);
-				operand = mExprResultTransformer.doIntegerPromotion(loc, operand);
-			}
-			return operand;
-		}
+		case IASTUnaryExpression.op_not:
+			return handleUnaryNot(loc, operand, inputType);
+		case IASTUnaryExpression.op_plus:
+			return inputType.isArithmeticType() ? doIntegerPromotion(loc, operand) : operand;
 		case IASTUnaryExpression.op_minus:
-			if (!inputType.isArithmeticType()) {
-				throw new UnsupportedOperationException("arithmetic type required");
-			}
-			operand = mExprResultTransformer.rexBoolToInt(operand, loc);
-			operand = mExprResultTransformer.doIntegerPromotion(loc, operand);
-			final CPrimitive resultType = (CPrimitive) operand.getLrValue().getCType();
-			final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(operand);
-			if (resultType.isIntegerType()) {
-				addIntegerBoundsCheck(loc, result, resultType, op, hook, null, operand.getLrValue().getValue());
-			}
-			final Expression bwexpr = mExpressionTranslation.constructUnaryMinusExpression(loc,
-					operand.getLrValue().getValue(), resultType);
-			final RValue rval = new RValue(bwexpr, resultType, false);
-			return result.setLrValue(rval).build();
+			return handleUnaryMinus(loc, operand, hook, inputType);
 		case IASTUnaryExpression.op_tilde:
-			if (!inputType.isArithmeticType()) {
-				throw new UnsupportedOperationException("arithmetic type required");
-			}
-			operand = mExprResultTransformer.rexBoolToInt(operand, loc);
-			operand = mExprResultTransformer.doIntegerPromotion(loc, operand);
-			final LRValue value = operand.getLrValue();
-			final ExpressionResult exprResult = mExpressionTranslation.handleUnaryComplement(loc, value.getValue(),
-					(CPrimitive) value.getCType(), mAuxVarInfoBuilder);
-			return new ExpressionResultBuilder(exprResult).addAllExceptLrValue(operand).build();
+			return handleUnaryComplement(loc, operand, inputType);
 		default:
 			throw new IllegalArgumentException("not a unary arithmetic operator " + op);
 		}
+	}
+
+	private ExpressionResult doIntegerPromotion(final ILocation loc, final ExpressionResult exprResult) {
+		return mExprResultTransformer.doIntegerPromotion(loc, mExprResultTransformer.rexBoolToInt(exprResult, loc));
+	}
+
+	private ExpressionResult handleUnaryNot(final ILocation loc, final ExpressionResult operand,
+			final CType inputType) {
+		if (!inputType.isScalarType()) {
+			throw new IllegalArgumentException("scalar type required");
+		}
+		final Expression negated;
+		if (operand.getLrValue().isBoogieBool()) {
+			// in Boogie already represented by bool, we only negate
+			negated = ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG,
+					operand.getLrValue().getValue());
+		} else {
+			final Expression rhsOfComparison;
+			if (inputType instanceof CPointer) {
+				rhsOfComparison = mExpressionTranslation.constructNullPointer(loc);
+			} else if (inputType instanceof CEnum) {
+				final CPrimitive intType = new CPrimitive(CPrimitives.INT);
+				rhsOfComparison = mExpressionTranslation.constructZero(loc, intType);
+			} else if (inputType instanceof CPrimitive) {
+				rhsOfComparison = mExpressionTranslation.constructZero(loc, inputType);
+			} else {
+				throw new AssertionError("illegal case");
+			}
+			negated = mExpressionTranslation.constructBinaryEqualityExpression(loc, IASTBinaryExpression.op_equals,
+					operand.getLrValue().getValue(), inputType, rhsOfComparison, inputType);
+
+		}
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder().addAllExceptLrValue(operand);
+		// C11 6.5.3.3.5 The result has type int.
+		final CPrimitive resultType = new CPrimitive(CPrimitives.INT);
+		// type of Operator.COMPEQ expression is bool
+		final boolean isBoogieBool = true;
+		final RValue rval = new RValue(negated, resultType, isBoogieBool);
+		return builder.setLrValue(rval).build();
+	}
+
+	private ExpressionResult handleUnaryMinus(final ILocation loc, final ExpressionResult operand, final IASTNode hook,
+			final CType inputType) {
+		if (!inputType.isArithmeticType()) {
+			throw new UnsupportedOperationException("arithmetic type required");
+		}
+		final ExpressionResult operandPromoted = doIntegerPromotion(loc, operand);
+		final CPrimitive resultType = (CPrimitive) operandPromoted.getLrValue().getCType();
+		final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(operandPromoted);
+		if (resultType.isIntegerType()) {
+			addIntegerBoundsCheck(loc, result, resultType, IASTUnaryExpression.op_minus, hook, null,
+					operandPromoted.getLrValue().getValue());
+		}
+		final Expression bwexpr = mExpressionTranslation.constructUnaryMinusExpression(loc,
+				operandPromoted.getLrValue().getValue(), resultType);
+		final RValue rval = new RValue(bwexpr, resultType, false);
+		return result.setLrValue(rval).build();
+	}
+
+	private ExpressionResult handleUnaryComplement(final ILocation loc, final ExpressionResult operand,
+			final CType inputType) {
+		if (!inputType.isArithmeticType()) {
+			throw new UnsupportedOperationException("arithmetic type required");
+		}
+		final ExpressionResult newOperand = doIntegerPromotion(loc, operand);
+		final LRValue value = newOperand.getLrValue();
+		final ExpressionResult exprResult = mExpressionTranslation.handleUnaryComplement(loc, value.getValue(),
+				(CPrimitive) value.getCType(), mAuxVarInfoBuilder);
+		return new ExpressionResultBuilder(exprResult).addAllExceptLrValue(newOperand).build();
 	}
 
 	/**
