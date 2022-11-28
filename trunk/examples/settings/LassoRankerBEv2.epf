@@ -8,7 +8,7 @@
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Add\ additional\ assume\ for\ each\ assert=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ unsat\ core\ track\ benchmark\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SingleStatement
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=OneNontrivialStatement
 file_export_version=3.0
 
 

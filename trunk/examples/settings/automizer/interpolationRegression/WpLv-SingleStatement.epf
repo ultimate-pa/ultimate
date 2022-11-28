@@ -8,7 +8,7 @@ file_export_version=3.0
 file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SingleStatement
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=OneNontrivialStatement
 
 #Wed Jan 15 21:36:24 CET 2014
 file_export_version=3.0

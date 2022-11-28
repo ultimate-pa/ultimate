@@ -4,7 +4,7 @@
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SingleStatement
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=OneNontrivialStatement
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.1.25
 file_export_version=3.0
 

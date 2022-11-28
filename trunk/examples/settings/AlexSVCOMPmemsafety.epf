@@ -25,7 +25,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Interpolating\ solver=Z3
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Preserve\ Goto-Edges\ in\ RCFG=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SingleStatement
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=OneNontrivialStatement
 #Wed Nov 06 11:30:46 CET 2013
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=0.0.1
