@@ -33,6 +33,7 @@ import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -117,7 +118,7 @@ public abstract class ExpressionTranslation {
 		return constructBinaryComparisonIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
 	}
 
-	public final Expression constructBinaryBitwiseExpression(final ILocation loc, final int nodeOperator,
+	public final ExpressionResult handleBinaryBitwiseExpression(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2,
 			final IASTNode hook, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		// TODO: Check that types coincide
@@ -125,16 +126,16 @@ public abstract class ExpressionTranslation {
 				|| type2.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
 			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
 		}
-		return constructBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, hook,
+		return handleBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, hook,
 				auxVarInfoBuilder);
 	}
 
-	public final Expression constructUnaryExpression(final ILocation loc, final int nodeOperator, final Expression exp,
+	public final Expression constructUnaryMinusExpression(final ILocation loc, final Expression exp,
 			final CPrimitive type) {
 		if (type.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
-			return constructUnaryFloatingPointExpression(loc, nodeOperator, exp, type);
+			return constructUnaryFloatingPointExpression(loc, IASTUnaryExpression.op_minus, exp, type);
 		}
-		return constructUnaryIntegerExpression(loc, nodeOperator, exp, type);
+		return constructUnaryMinusIntegerExpression(loc, exp, type);
 	}
 
 	public final Expression constructArithmeticExpression(final ILocation loc, final int nodeOperator,
@@ -157,14 +158,21 @@ public abstract class ExpressionTranslation {
 		}
 	}
 
+	protected static ExpressionResult constructExpressionResult(final Expression expr, final CType type) {
+		return new ExpressionResult(new RValue(expr, type, false, false));
+	}
+
 	public abstract Expression constructBinaryComparisonIntegerExpression(ILocation loc, int nodeOperator,
 			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 
-	public abstract Expression constructBinaryBitwiseIntegerExpression(ILocation loc, int nodeOperator, Expression exp1,
-			CPrimitive type1, Expression exp2, CPrimitive type2, IASTNode hook, AuxVarInfoBuilder auxVarInfoBuilder);
+	public abstract ExpressionResult handleBinaryBitwiseIntegerExpression(ILocation loc, int nodeOperator,
+			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2, IASTNode hook,
+			AuxVarInfoBuilder auxVarInfoBuilder);
 
-	public abstract Expression constructUnaryIntegerExpression(ILocation loc, int nodeOperator, Expression exp,
-			CPrimitive type);
+	public abstract Expression constructUnaryMinusIntegerExpression(ILocation loc, Expression exp, CPrimitive type);
+
+	public abstract ExpressionResult handleUnaryComplement(ILocation loc, Expression exp, CPrimitive type,
+			final AuxVarInfoBuilder auxVarInfoBuilder);
 
 	public abstract Expression constructArithmeticIntegerExpression(ILocation loc, int nodeOperator, Expression exp1,
 			CPrimitive type1, Expression exp2, CPrimitive type2);

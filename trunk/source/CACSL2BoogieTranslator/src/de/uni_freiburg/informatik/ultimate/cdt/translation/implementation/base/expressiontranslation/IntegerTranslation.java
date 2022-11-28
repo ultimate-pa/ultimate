@@ -33,7 +33,6 @@ import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
-import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -85,12 +84,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	private static final boolean OVERAPPROXIMATE_INT_POINTER_CONVERSION = true;
 
-	private final BitabsTranslation mBitabsTranslation;
-
 	public IntegerTranslation(final TypeSizes typeSizeConstants, final TranslationSettings settings,
 			final ITypeHandler typeHandler, final FlatSymbolTable symboltable) {
 		super(typeSizeConstants, settings, typeHandler, symboltable);
-		mBitabsTranslation = new BitabsTranslation(mTypeSizes, mTypeHandler, mFunctionDeclarations);
 	}
 
 	@Override
@@ -170,46 +166,96 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructBinaryBitwiseIntegerExpression(final ILocation loc, final int op, final Expression left,
-			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook,
-			final AuxVarInfoBuilder auxVarInfoBuilder) {
+	public ExpressionResult handleBinaryBitwiseIntegerExpression(final ILocation loc, final int op,
+			final Expression left, final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight,
+			final IASTNode hook, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryAndAssign:
-			BitabsTranslationNew.abstractAnd(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
-			return mBitabsTranslation.abstractAnd(loc, left, typeLeft, right, typeRight);
+			return BitabsTranslationNew.abstractAnd(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_binaryOr:
 		case IASTBinaryExpression.op_binaryOrAssign:
-			BitabsTranslationNew.abstractOr(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
-			return mBitabsTranslation.abstractOr(loc, left, typeLeft, right, typeRight);
+			return BitabsTranslationNew.abstractOr(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_binaryXor:
 		case IASTBinaryExpression.op_binaryXorAssign:
-			BitabsTranslationNew.abstractXor(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
-			return mBitabsTranslation.abstractXor(loc, left, typeLeft, right, typeRight);
+			return BitabsTranslationNew.abstractXor(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign:
-			return mBitabsTranslation.abstractShiftLeft(loc, left, typeLeft, right, typeRight, hook);
+			return constructExpressionResult(constructLeftShiftExpression(loc, left, typeLeft, right, typeRight, hook),
+					typeLeft);
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftRightAssign:
-			return mBitabsTranslation.abstractShiftRight(loc, left, typeLeft, right, typeRight, hook);
+			return constructExpressionResult(constructRightShiftExpression(loc, left, typeLeft, right, typeRight, hook),
+					typeLeft);
 		default:
-			final String msg = "Unknown or unsupported bitwise expression";
-			throw new UnsupportedSyntaxException(loc, msg);
+			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported bitwise expression");
 		}
 	}
 
-	@Override
-	public Expression constructUnaryIntegerExpression(final ILocation loc, final int op, final Expression expr,
-			final CPrimitive type) {
-		switch (op) {
-		case IASTUnaryExpression.op_tilde:
-			return mBitabsTranslation.abstractCompl(loc, expr, type);
-		case IASTUnaryExpression.op_minus:
-			return constructUnaryIntExprMinus(loc, expr, type);
-		default:
-			final String msg = "Unknown or unsupported bitwise expression";
-			throw new UnsupportedSyntaxException(loc, msg);
+	private Expression constructShiftWithLiteralOptimization(final ILocation loc, final Expression left,
+			final CPrimitive typeRight, final BigInteger integerLiteralValue, final Operator op1) {
+		// 2017-11-18 Matthias: this could be done analogously in the
+		// bitprecise translation
+		final int exponent;
+		try {
+			exponent = integerLiteralValue.intValueExact();
+		} catch (final ArithmeticException ae) {
+			throw new UnsupportedOperationException("RHS of shift is larger than C standard allows " + ae);
 		}
+		final BigInteger shiftFactorBigInt = BigInteger.valueOf(2).pow(exponent);
+		final Expression shiftFactorExpr = mTypeSizes.constructLiteralForIntegerType(loc, typeRight, shiftFactorBigInt);
+		return ExpressionFactory.newBinaryExpression(loc, op1, left, shiftFactorExpr);
+	}
+
+	private Expression declareAndApplyFunction(final ILocation loc, final String functionName,
+			final CPrimitive resultType, final CPrimitive[] paramTypes, final Expression[] expressions) {
+		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + functionName;
+		final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
+				new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
+		mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, new Attribute[] { attribute }, false,
+				resultType, paramTypes);
+		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, expressions,
+				mTypeHandler.getBoogieTypeForCType(resultType));
+	}
+
+	// TODO: We should rather return an ExpressionResult here because
+	// - We could introduce an aux-var instead of the function
+	// - We could add additional assumptions for that
+	private Expression constructLeftShiftExpression(final ILocation loc, final Expression left,
+			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook) {
+		final BigInteger shiftLeftLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
+		if (shiftLeftLiteralValue != null) {
+			return constructShiftWithLiteralOptimization(loc, left, typeRight, shiftLeftLiteralValue,
+					Operator.ARITHMUL);
+		}
+		return declareAndApplyFunction(loc, "shiftLeft", typeLeft, new CPrimitive[] { typeLeft, typeRight },
+				new Expression[] { left, right });
+	}
+
+	// TODO: We should rather return an ExpressionResult here because
+	// - We could introduce an aux-var instead of the function
+	// - We could add additional assumptions for that
+	private Expression constructRightShiftExpression(final ILocation loc, final Expression left,
+			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook) {
+		final BigInteger shiftRightLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
+		if (shiftRightLiteralValue != null) {
+			return constructShiftWithLiteralOptimization(loc, left, typeRight, shiftRightLiteralValue,
+					Operator.ARITHDIV);
+		}
+		return declareAndApplyFunction(loc, "shiftRight", typeLeft, new CPrimitive[] { typeLeft, typeRight },
+				new Expression[] { left, right });
+	}
+
+	@Override
+	public Expression constructUnaryMinusIntegerExpression(final ILocation loc, final Expression expr,
+			final CPrimitive type) {
+		return constructUnaryIntExprMinus(loc, expr, type);
+	}
+
+	@Override
+	public ExpressionResult handleUnaryComplement(final ILocation loc, final Expression exp, final CPrimitive type,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
+		return BitabsTranslationNew.abstractCompl(loc, exp, type, auxVarInfoBuilder);
 	}
 
 	private static Expression constructUnaryIntExprMinus(final ILocation loc, final Expression expr,
@@ -937,9 +983,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final int operation, final CPrimitive resultType, final Expression operand) {
 		assert resultType.isIntegerType()
 				&& !mTypeSizes.isUnsigned(resultType) : "Overflow check only for signed integer types";
-		assert operation == IASTUnaryExpression.op_minus;
-
-		final Expression operationResult = constructUnaryExpression(loc, operation, operand, resultType);
+		final Expression operationResult = constructUnaryMinusExpression(loc, operand, resultType);
 		return constructOverflowCheck(loc, resultType, operationResult);
 	}
 
@@ -949,8 +993,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final IASTNode hook) {
 		assert operation == IASTBinaryExpression.op_shiftLeft || operation == IASTBinaryExpression.op_shiftLeftAssign;
 
-		final Expression operationResult = constructBinaryBitwiseIntegerExpression(loc, operation, lhsOperand,
-				resultType, rhsOperand, resultType, hook, null);
+		final Expression operationResult =
+				constructLeftShiftExpression(loc, lhsOperand, resultType, rhsOperand, resultType, hook);
 		return constructOverflowCheck(loc, resultType, operationResult);
 	}
 

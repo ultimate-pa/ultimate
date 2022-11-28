@@ -372,7 +372,6 @@ public class CExpressionTranslator {
 			return operand;
 		}
 		case IASTUnaryExpression.op_minus:
-		case IASTUnaryExpression.op_tilde:
 			if (!inputType.isArithmeticType()) {
 				throw new UnsupportedOperationException("arithmetic type required");
 			}
@@ -380,13 +379,23 @@ public class CExpressionTranslator {
 			operand = mExprResultTransformer.doIntegerPromotion(loc, operand);
 			final CPrimitive resultType = (CPrimitive) operand.getLrValue().getCType();
 			final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(operand);
-			if (op == IASTUnaryExpression.op_minus && resultType.isIntegerType()) {
+			if (resultType.isIntegerType()) {
 				addIntegerBoundsCheck(loc, result, resultType, op, hook, null, operand.getLrValue().getValue());
 			}
-			final Expression bwexpr = mExpressionTranslation.constructUnaryExpression(loc, op,
+			final Expression bwexpr = mExpressionTranslation.constructUnaryMinusExpression(loc,
 					operand.getLrValue().getValue(), resultType);
 			final RValue rval = new RValue(bwexpr, resultType, false);
 			return result.setLrValue(rval).build();
+		case IASTUnaryExpression.op_tilde:
+			if (!inputType.isArithmeticType()) {
+				throw new UnsupportedOperationException("arithmetic type required");
+			}
+			operand = mExprResultTransformer.rexBoolToInt(operand, loc);
+			operand = mExprResultTransformer.doIntegerPromotion(loc, operand);
+			final LRValue value = operand.getLrValue();
+			final ExpressionResult exprResult = mExpressionTranslation.handleUnaryComplement(loc, value.getValue(),
+					(CPrimitive) value.getCType(), mAuxVarInfoBuilder);
+			return new ExpressionResultBuilder(exprResult).addAllExceptLrValue(operand).build();
 		default:
 			throw new IllegalArgumentException("not a unary arithmetic operator " + op);
 		}
@@ -414,12 +423,10 @@ public class CExpressionTranslator {
 		final ExpressionResult rightConverted =
 				mExprResultTransformer.performImplicitConversion(right, typeOfResult, loc);
 
-		final Expression expr =
-				mExpressionTranslation.constructBinaryBitwiseExpression(loc, op, leftPromoted.getLrValue().getValue(),
+		final ExpressionResult result =
+				mExpressionTranslation.handleBinaryBitwiseExpression(loc, op, leftPromoted.getLrValue().getValue(),
 						typeOfResult, rightConverted.getLrValue().getValue(), typeOfResult, hook, mAuxVarInfoBuilder);
-		final RValue rval = new RValue(expr, typeOfResult, false, false);
-		final ExpressionResultBuilder result =
-				new ExpressionResultBuilder().addAllExceptLrValue(leftPromoted, rightConverted);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder(result);
 
 		switch (op) {
 		case IASTBinaryExpression.op_shiftLeft:
@@ -427,12 +434,10 @@ public class CExpressionTranslator {
 		case IASTBinaryExpression.op_shiftLeftAssign:
 		case IASTBinaryExpression.op_shiftRightAssign: {
 			if (op == IASTBinaryExpression.op_shiftLeft || op == IASTBinaryExpression.op_shiftLeftAssign) {
-				addIntegerBoundsCheck(loc, result, (CPrimitive) rval.getCType(), op, hook,
-						(CPrimitive) rightConverted.getCType(), leftPromoted.getLrValue().getValue(),
-						rightConverted.getLrValue().getValue());
+				addIntegerBoundsCheck(loc, builder, typeOfResult, op, hook, (CPrimitive) rightConverted.getCType(),
+						leftPromoted.getLrValue().getValue(), rightConverted.getLrValue().getValue());
 			}
-			result.setLrValue(rval);
-			return result.build();
+			return builder.addAllExceptLrValue(left, right).build();
 		}
 		default:
 			throw new AssertionError("no bitshift " + op);
@@ -572,10 +577,9 @@ public class CExpressionTranslator {
 		right = newOps.getSecond();
 		final CPrimitive typeOfResult = (CPrimitive) left.getLrValue().getCType().getUnderlyingType();
 		assert typeOfResult.equals(left.getLrValue().getCType().getUnderlyingType());
-		final Expression expr =
-				mExpressionTranslation.constructBinaryBitwiseExpression(loc, op, left.getLrValue().getValue(),
+		final ExpressionResult result =
+				mExpressionTranslation.handleBinaryBitwiseExpression(loc, op, left.getLrValue().getValue(),
 						typeOfResult, right.getLrValue().getValue(), typeOfResult, hook, mAuxVarInfoBuilder);
-		final RValue rval = new RValue(expr, typeOfResult, false, false);
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryXor:
@@ -583,7 +587,7 @@ public class CExpressionTranslator {
 		case IASTBinaryExpression.op_binaryAndAssign:
 		case IASTBinaryExpression.op_binaryXorAssign:
 		case IASTBinaryExpression.op_binaryOrAssign: {
-			return new ExpressionResultBuilder().addAllExceptLrValue(left, right).setLrValue(rval).build();
+			return new ExpressionResultBuilder(result).addAllExceptLrValue(left, right).build();
 		}
 		default:
 			throw new AssertionError("no bitwise arithmetic operation " + op);
@@ -1102,6 +1106,7 @@ public class CExpressionTranslator {
 			inBoundsCheck = mExpressionTranslation.constructOverflowCheckForBinaryBitwiseIntegerExpression(loc,
 					operation, resultType, left, right, hook);
 		} else if (operands.length == 1) {
+			assert operation == IASTUnaryExpression.op_minus;
 			inBoundsCheck = mExpressionTranslation.constructOverflowCheckForUnaryExpression(loc, operation, resultType,
 					operands[0]);
 
