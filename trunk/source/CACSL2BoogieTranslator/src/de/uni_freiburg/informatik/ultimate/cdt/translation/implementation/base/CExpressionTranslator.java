@@ -1063,14 +1063,8 @@ public class CExpressionTranslator {
 		// mExpressionTranslation.constructOverflowCheckForBinaryBitwiseIntegerExpression? Should we move this code
 		// there?
 		if (operation == IASTBinaryExpression.op_shiftLeft || operation == IASTBinaryExpression.op_shiftLeftAssign) {
-			// 2017-11-18 Matthias: For this shift there are more possibilities of undefined
-			// behavior. I don't know if it is ok to call all of them "signed integer
-			// overflows" (probably not)
-
-			// TODO Frank 2022-11-21: It is probably better to move the value extraction anywhere else, s.t. not only
-			// the overflow-check profits from it!
 			final Expression left = tryToExtractValue(operands[0], resultType, hook, loc);
-			final Expression right = tryToExtractValue(operands[1], resultType, hook, loc);
+			final Expression right = tryToExtractValue(operands[1], rhsTypeForLeftshift, hook, loc);
 			Expression lhsNonNegative;
 			{
 				final Expression zero =
@@ -1102,11 +1096,12 @@ public class CExpressionTranslator {
 					operation, resultType, left, right, hook);
 		} else if (operands.length == 1) {
 			inBoundsCheck = mExpressionTranslation.constructOverflowCheckForUnaryExpression(loc, operation, resultType,
-					operands[0]);
+					tryToExtractValue(operands[0], resultType, hook, loc));
 
 		} else if (operands.length == 2) {
 			inBoundsCheck = mExpressionTranslation.constructOverflowCheckForArithmeticExpression(loc, operation,
-					resultType, operands[0], operands[1]);
+					resultType, tryToExtractValue(operands[0], resultType, hook, loc),
+					tryToExtractValue(operands[1], resultType, hook, loc));
 		} else {
 			throw new AssertionError("no such operation");
 		}
