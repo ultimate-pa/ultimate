@@ -172,13 +172,13 @@ public class IntegerTranslation extends ExpressionTranslation {
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryAndAssign:
-			return BitabsTranslationNew.abstractAnd(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
+			return BitabsTranslation.abstractAnd(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_binaryOr:
 		case IASTBinaryExpression.op_binaryOrAssign:
-			return BitabsTranslationNew.abstractOr(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
+			return BitabsTranslation.abstractOr(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_binaryXor:
 		case IASTBinaryExpression.op_binaryXorAssign:
-			return BitabsTranslationNew.abstractXor(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
+			return BitabsTranslation.abstractXor(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign:
 			return constructExpressionResult(constructLeftShiftExpression(loc, left, typeLeft, right, typeRight, hook),
@@ -255,7 +255,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public ExpressionResult handleUnaryComplement(final ILocation loc, final Expression exp, final CPrimitive type,
 			final AuxVarInfoBuilder auxVarInfoBuilder) {
-		return BitabsTranslationNew.abstractCompl(loc, exp, type, auxVarInfoBuilder);
+		return BitabsTranslation.abstractCompl(loc, exp, type, auxVarInfoBuilder);
 	}
 
 	private static Expression constructUnaryIntExprMinus(final ILocation loc, final Expression expr,
