@@ -165,16 +165,20 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	public Expression constructBinaryBitwiseIntegerExpression(final ILocation loc, final int op, final Expression left,
-			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook) {
+			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryAndAssign:
+			BitabsTranslationNew.abstractAnd(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 			return mBitabsTranslation.abstractAnd(loc, left, typeLeft, right, typeRight);
 		case IASTBinaryExpression.op_binaryOr:
 		case IASTBinaryExpression.op_binaryOrAssign:
+			BitabsTranslationNew.abstractOr(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 			return mBitabsTranslation.abstractOr(loc, left, typeLeft, right, typeRight);
 		case IASTBinaryExpression.op_binaryXor:
 		case IASTBinaryExpression.op_binaryXorAssign:
+			BitabsTranslationNew.abstractXor(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 			return mBitabsTranslation.abstractXor(loc, left, typeLeft, right, typeRight);
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign:
@@ -940,7 +944,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		assert operation == IASTBinaryExpression.op_shiftLeft || operation == IASTBinaryExpression.op_shiftLeftAssign;
 
 		final Expression operationResult = constructBinaryBitwiseIntegerExpression(loc, operation, lhsOperand,
-				resultType, rhsOperand, resultType, hook);
+				resultType, rhsOperand, resultType, hook, null);
 		return constructOverflowCheck(loc, resultType, operationResult);
 	}
 

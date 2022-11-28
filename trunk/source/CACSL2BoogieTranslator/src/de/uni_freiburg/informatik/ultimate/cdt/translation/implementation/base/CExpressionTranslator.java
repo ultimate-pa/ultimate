@@ -416,7 +416,7 @@ public class CExpressionTranslator {
 
 		final Expression expr =
 				mExpressionTranslation.constructBinaryBitwiseExpression(loc, op, leftPromoted.getLrValue().getValue(),
-						typeOfResult, rightConverted.getLrValue().getValue(), typeOfResult, hook);
+						typeOfResult, rightConverted.getLrValue().getValue(), typeOfResult, hook, mAuxVarInfoBuilder);
 		final RValue rval = new RValue(expr, typeOfResult, false, false);
 		final ExpressionResultBuilder result =
 				new ExpressionResultBuilder().addAllExceptLrValue(leftPromoted, rightConverted);
@@ -571,8 +571,9 @@ public class CExpressionTranslator {
 		right = newOps.getSecond();
 		final CPrimitive typeOfResult = (CPrimitive) left.getLrValue().getCType().getUnderlyingType();
 		assert typeOfResult.equals(left.getLrValue().getCType().getUnderlyingType());
-		final Expression expr = mExpressionTranslation.constructBinaryBitwiseExpression(loc, op,
-				left.getLrValue().getValue(), typeOfResult, right.getLrValue().getValue(), typeOfResult, hook);
+		final Expression expr =
+				mExpressionTranslation.constructBinaryBitwiseExpression(loc, op, left.getLrValue().getValue(),
+						typeOfResult, right.getLrValue().getValue(), typeOfResult, hook, mAuxVarInfoBuilder);
 		final RValue rval = new RValue(expr, typeOfResult, false, false);
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
@@ -836,7 +837,8 @@ public class CExpressionTranslator {
 			// default case: the types of the operands (should) match --> we choose one of them as the result CType
 			resultCType = opPositive.getLrValue().getCType();
 		}
-		return constructResultForConditionalOperator(loc, opCondition, opPositive, opNegative, resultCType, secondArgIsVoid, thirdArgIsVoid);
+		return constructResultForConditionalOperator(loc, opCondition, opPositive, opNegative, resultCType,
+				secondArgIsVoid, thirdArgIsVoid);
 	}
 
 	/**
@@ -861,9 +863,9 @@ public class CExpressionTranslator {
 			if (resultCType.isVoidType()) {
 				// result type is void the value is not assigned
 			} else {
-				final Expression ite = ExpressionFactory.constructIfThenElseExpression(loc,
-						opCondition.getLrValue().getValue(), opPositive.getLrValue().getValue(),
-						opNegative.getLrValue().getValue());
+				final Expression ite =
+						ExpressionFactory.constructIfThenElseExpression(loc, opCondition.getLrValue().getValue(),
+								opPositive.getLrValue().getValue(), opNegative.getLrValue().getValue());
 				resultBuilder.setLrValue(new RValue(ite, resultCType));
 			}
 		} else {

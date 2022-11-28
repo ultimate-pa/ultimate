@@ -119,13 +119,14 @@ public abstract class ExpressionTranslation {
 
 	public final Expression constructBinaryBitwiseExpression(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2,
-			final IASTNode hook) {
+			final IASTNode hook, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		// TODO: Check that types coincide
 		if (type1.getGeneralType() == CPrimitiveCategory.FLOATTYPE
 				|| type2.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
 			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
 		}
-		return constructBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, hook);
+		return constructBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, hook,
+				auxVarInfoBuilder);
 	}
 
 	public final Expression constructUnaryExpression(final ILocation loc, final int nodeOperator, final Expression exp,
@@ -160,7 +161,7 @@ public abstract class ExpressionTranslation {
 			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 
 	public abstract Expression constructBinaryBitwiseIntegerExpression(ILocation loc, int nodeOperator, Expression exp1,
-			CPrimitive type1, Expression exp2, CPrimitive type2, IASTNode hook);
+			CPrimitive type1, Expression exp2, CPrimitive type2, IASTNode hook, AuxVarInfoBuilder auxVarInfoBuilder);
 
 	public abstract Expression constructUnaryIntegerExpression(ILocation loc, int nodeOperator, Expression exp,
 			CPrimitive type);

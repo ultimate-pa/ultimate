@@ -319,7 +319,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	@Override
 	public Expression constructBinaryBitwiseIntegerExpression(final ILocation loc, final int op, final Expression left,
-			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook) {
+			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
 		if (!mFunctionDeclarations.checkParameters(typeLeft, typeRight)) {
 			throw new IllegalArgumentException("incompatible types " + typeLeft + " " + typeRight);
 		}
@@ -429,7 +430,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		return BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop, new Expression[] { exp1, exp2 });
 	}
 
-
 	private String generateBoogieFunctionNameForOrdinaryBitvecOp(final BvOp bvop, final int bitsize) {
 		return SFO.AUXILIARY_FUNCTION_PREFIX + bvop + bitsize;
 	}
@@ -475,9 +475,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 		final int[] indices = null;
 		final Attribute[] attributes = generateAttributes(loc, false, smtFunctionName.toString(), indices);
-		mFunctionDeclarations.declareFunction(loc, boogieFunctionName, attributes,
-				new PrimitiveType(loc, "bool"), constructBitvectorAstType(loc, bitsize),
-				constructBitvectorAstType(loc, bitsize));
+		mFunctionDeclarations.declareFunction(loc, boogieFunctionName, attributes, new PrimitiveType(loc, "bool"),
+				constructBitvectorAstType(loc, bitsize), constructBitvectorAstType(loc, bitsize));
 	}
 
 	public void declareBitvectorFunctionBvNeg(final ILocation loc, final int bitsize) {
@@ -508,7 +507,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final ASTType resultType = new PrimitiveType(loc, "bv" + resultBiglength);
 		mFunctionDeclarations.declareFunction(loc, boogieFunctionName, attributes, resultType, operandType);
 	}
-
 
 	private ASTType constructBitvectorAstType(final ILocation loc, final int bitlength) {
 		final ASTType operandType = new PrimitiveType(loc, "bv" + bitlength);
@@ -753,7 +751,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final BigInteger bitmaskNumber = BigInteger.valueOf(2).pow(remainingWith).subtract(BigInteger.ONE);
 		final Expression bitmask = mTypeSizes.constructLiteralForIntegerType(loc, cType, bitmaskNumber);
 		final Expression result = constructBinaryBitwiseExpression(loc, IASTBinaryExpression.op_binaryAnd, value, cType,
-				bitmask, cType, hook);
+				bitmask, cType, hook, null);
 		return result;
 	}
 
@@ -1511,23 +1509,21 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		} else {
 			throw new AssertionError("Not applicable to operation " + operation);
 		}
-		final Expression extendedLhsOperand = extend(loc, lhsOperand, ExtendOperation.sign_extend, inputBitsize,
-				requiredBitsize);
-		final Expression extendedRhsOperand = extend(loc, rhsOperand, ExtendOperation.sign_extend, inputBitsize,
-				requiredBitsize);
+		final Expression extendedLhsOperand =
+				extend(loc, lhsOperand, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
+		final Expression extendedRhsOperand =
+				extend(loc, rhsOperand, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
 		declareBitvectorFunctionForArithmeticOperation(loc, bvop, requiredBitsize);
 		final Expression opResult = BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop,
 				new Expression[] { extendedLhsOperand, extendedRhsOperand });
 		declareBitvectorFunctionForComparisonOperation(loc, BvOp.bvsle, requiredBitsize);
 		final BigInteger minValueAsInt = mTypeSizes.getMinValueOfPrimitiveType(resultType);
-		final Expression minValueAsExpr = ExpressionFactory.createBitvecLiteral(loc, minValueAsInt,
-				requiredBitsize);
+		final Expression minValueAsExpr = ExpressionFactory.createBitvecLiteral(loc, minValueAsInt, requiredBitsize);
 		final Expression biggerMinInt = BitvectorFactory.constructBinaryBitvectorOperation(loc, BvOp.bvsle,
 				new Expression[] { minValueAsExpr, opResult });
 
 		final BigInteger maxValueAsInt = mTypeSizes.getMaxValueOfPrimitiveType(resultType);
-		final Expression maxValueAsExpr = ExpressionFactory.createBitvecLiteral(loc, maxValueAsInt,
-				requiredBitsize);
+		final Expression maxValueAsExpr = ExpressionFactory.createBitvecLiteral(loc, maxValueAsInt, requiredBitsize);
 		final Expression smallerMaxInt = BitvectorFactory.constructBinaryBitvectorOperation(loc, BvOp.bvsle,
 				new Expression[] { opResult, maxValueAsExpr });
 		return new Pair<>(biggerMinInt, smallerMaxInt);
@@ -1539,21 +1535,21 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		if (operation == IASTUnaryExpression.op_minus) {
 			final int inputBitsize = computeBitsize(resultType);
 			final int requiredBitsize = inputBitsize + 1;
-			final Expression extendedOperand = extend(loc, operand, ExtendOperation.sign_extend, inputBitsize,
-					requiredBitsize);
+			final Expression extendedOperand =
+					extend(loc, operand, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
 			declareBitvectorFunctionBvNeg(loc, requiredBitsize);
 			final Expression opResult = BitvectorFactory.constructUnaryOperation(loc, BvOp.bvneg, extendedOperand);
 
 			declareBitvectorFunctionForComparisonOperation(loc, BvOp.bvsle, requiredBitsize);
 			final BigInteger minValueAsInt = mTypeSizes.getMinValueOfPrimitiveType(resultType);
-			final Expression minValueAsExpr = ExpressionFactory.createBitvecLiteral(loc, minValueAsInt,
-					requiredBitsize);
+			final Expression minValueAsExpr =
+					ExpressionFactory.createBitvecLiteral(loc, minValueAsInt, requiredBitsize);
 			final Expression biggerMinInt = BitvectorFactory.constructBinaryBitvectorOperation(loc, BvOp.bvsle,
 					new Expression[] { minValueAsExpr, opResult });
 
 			final BigInteger maxValueAsInt = mTypeSizes.getMaxValueOfPrimitiveType(resultType);
-			final Expression maxValueAsExpr = ExpressionFactory.createBitvecLiteral(loc, maxValueAsInt,
-					requiredBitsize);
+			final Expression maxValueAsExpr =
+					ExpressionFactory.createBitvecLiteral(loc, maxValueAsInt, requiredBitsize);
 			final Expression smallerMaxInt = BitvectorFactory.constructBinaryBitvectorOperation(loc, BvOp.bvsle,
 					new Expression[] { opResult, maxValueAsExpr });
 			return new Pair<>(biggerMinInt, smallerMaxInt);
