@@ -63,15 +63,14 @@ public class BitabsTranslationNew {
 	public static ExpressionResult abstractAnd(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		// 0 & a = a & 0 = 0
-		if (left instanceof IntegerLiteral && ((IntegerLiteral) left).getValue().equals("0")) {
+		if (isZero(left)) {
 			return new ExpressionResult(new RValue(left, typeLeft));
 		}
-		if (right instanceof IntegerLiteral && ((IntegerLiteral) right).getValue().equals("0")) {
+		if (isZero(right)) {
 			return new ExpressionResult(new RValue(right, typeRight));
 		}
 		// a & a = a
-		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral
-				&& ((IntegerLiteral) left).getValue().equals(((IntegerLiteral) right).getValue())) {
+		if (areEqualLiterals(left, right)) {
 			return new ExpressionResult(new RValue(left, typeLeft));
 		}
 		// TODO: Should we evaluate all combinations of constants?
@@ -124,15 +123,14 @@ public class BitabsTranslationNew {
 	public static ExpressionResult abstractOr(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		// 0 | a = a | 0 = a
-		if (left instanceof IntegerLiteral && ((IntegerLiteral) left).getValue().equals("0")) {
+		if (isZero(left)) {
 			return new ExpressionResult(new RValue(right, typeRight));
 		}
-		if (right instanceof IntegerLiteral && ((IntegerLiteral) right).getValue().equals("0")) {
+		if (isZero(right)) {
 			return new ExpressionResult(new RValue(left, typeLeft));
 		}
 		// a | a = a
-		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral
-				&& ((IntegerLiteral) left).getValue().equals(((IntegerLiteral) right).getValue())) {
+		if (areEqualLiterals(left, right)) {
 			return new ExpressionResult(new RValue(left, typeLeft));
 		}
 
@@ -183,16 +181,15 @@ public class BitabsTranslationNew {
 	public static ExpressionResult abstractXor(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		// 0 ^ a = a ^ 0 = 0
-		if (left instanceof IntegerLiteral && ((IntegerLiteral) left).getValue().equals("0")) {
+		if (isZero(left)) {
 			return new ExpressionResult(new RValue(right, typeRight));
 		}
-		if (right instanceof IntegerLiteral && ((IntegerLiteral) right).getValue().equals("0")) {
+		if (isZero(right)) {
 			return new ExpressionResult(new RValue(left, typeLeft));
 		}
 		// a ^ a = 0
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
-		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral
-				&& ((IntegerLiteral) left).getValue().equals(((IntegerLiteral) right).getValue())) {
+		if (areEqualLiterals(left, right)) {
 			return new ExpressionResult(new RValue(zero, typeLeft));
 		}
 
@@ -249,6 +246,15 @@ public class BitabsTranslationNew {
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, auxvar, zero));
 		final List<Expression> assumptions = List.of(neq, signum);
 		return buildExpressionResult(loc, "bitwiseComplement", type, auxvarinfo, List.of(), assumptions);
+	}
+
+	private static boolean isZero(final Expression expr) {
+		return expr instanceof IntegerLiteral && "0".equals(((IntegerLiteral) expr).getValue());
+	}
+
+	private static boolean areEqualLiterals(final Expression left, final Expression right) {
+		return left instanceof IntegerLiteral && right instanceof IntegerLiteral
+				&& ((IntegerLiteral) left).getValue().equals(((IntegerLiteral) right).getValue());
 	}
 
 	private static ExpressionResult buildExpressionResult(final ILocation loc, final String functionName,
