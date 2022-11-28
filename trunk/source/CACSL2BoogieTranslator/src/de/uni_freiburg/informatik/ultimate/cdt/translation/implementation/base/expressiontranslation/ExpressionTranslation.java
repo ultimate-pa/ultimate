@@ -556,6 +556,38 @@ public abstract class ExpressionTranslation {
 		return attributes;
 	}
 
+	/**
+	 * This method returns additional overflow check for the left shift operation (See C11 in Section 6.5.7 on bitwise
+	 * shift operators). It should be used in {@link constructOverflowCheckForLeftShiftExpression}!<br>
+	 * Those are:
+	 * <li>RHS is not negative
+	 * <li>RHS is strictly small than the width of the left operand (after promotions)
+	 * <li>LHS is not negative
+	 */
+	protected Expression constructAdditionalOverflowChecksForLeftShift(final ILocation loc, final Expression lhs,
+			final CPrimitive lhsType, final Expression rhs, final CPrimitive rhsType) {
+		Expression lhsNonNegative;
+		{
+			final Expression zero = constructLiteralForIntegerType(loc, lhsType, BigInteger.ZERO);
+			lhsNonNegative = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, zero, lhsType,
+					lhs, lhsType);
+		}
+		Expression rhsNonNegative;
+		{
+			final Expression zero = constructLiteralForIntegerType(loc, rhsType, BigInteger.ZERO);
+			rhsNonNegative = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, zero, rhsType,
+					rhs, rhsType);
+		}
+		Expression rhsSmallerBitWidth;
+		{
+			final BigInteger bitwidthOfLhsAsBigInt = BigInteger.valueOf(8 * mTypeSizes.getSize(lhsType.getType()));
+			final Expression bitwidthOfLhsAsExpr = constructLiteralForIntegerType(loc, rhsType, bitwidthOfLhsAsBigInt);
+			rhsSmallerBitWidth = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan, rhs,
+					lhsType, bitwidthOfLhsAsExpr, lhsType);
+		}
+		return ExpressionFactory.and(loc, List.of(lhsNonNegative, rhsNonNegative, rhsSmallerBitWidth));
+	}
+
 	public abstract Expression transformBitvectorToFloat(ILocation loc, Expression bitvector, CPrimitives floatType);
 
 	public abstract Expression transformFloatToBitvector(ILocation loc, Expression value, CPrimitives cprimitive);
@@ -573,7 +605,8 @@ public abstract class ExpressionTranslation {
 	public abstract Pair<Expression, Expression> constructOverflowCheckForUnaryExpression(ILocation loc, int operation,
 			CPrimitive resultType, Expression operand);
 
-	public abstract Pair<Expression, Expression> constructOverflowCheckForBinaryBitwiseIntegerExpression(ILocation loc,
-			int operation, CPrimitive resultType, Expression lhsOperand, Expression rhsOperand, IASTNode hook);
+	public abstract Pair<Expression, Expression> constructOverflowCheckForLeftShiftExpression(ILocation loc,
+			int operation, Expression lhsOperand, CPrimitive lhsType, Expression rhsOperand, CPrimitive rhsType,
+			IASTNode hook);
 
 }

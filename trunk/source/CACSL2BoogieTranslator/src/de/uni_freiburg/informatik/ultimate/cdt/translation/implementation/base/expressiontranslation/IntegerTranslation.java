@@ -990,14 +990,17 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Pair<Expression, Expression> constructOverflowCheckForBinaryBitwiseIntegerExpression(final ILocation loc,
-			final int operation, final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand,
-			final IASTNode hook) {
+	public Pair<Expression, Expression> constructOverflowCheckForLeftShiftExpression(final ILocation loc,
+			final int operation, final Expression lhsOperand, final CPrimitive lhsType, final Expression rhsOperand,
+			final CPrimitive rhsType, final IASTNode hook) {
 		assert operation == IASTBinaryExpression.op_shiftLeft || operation == IASTBinaryExpression.op_shiftLeftAssign;
 
-		final Expression operationResult = constructBinaryBitwiseIntegerExpression(loc, operation, lhsOperand,
-				resultType, rhsOperand, resultType, hook);
-		return constructOverflowCheck(loc, resultType, operationResult);
+		final Expression operationResult =
+				constructBinaryBitwiseIntegerExpression(loc, operation, lhsOperand, lhsType, rhsOperand, rhsType, hook);
+		final Expression additional =
+				constructAdditionalOverflowChecksForLeftShift(loc, lhsOperand, lhsType, rhsOperand, rhsType);
+		final Pair<Expression, Expression> pair = constructOverflowCheck(loc, lhsType, operationResult);
+		return new Pair<>(pair.getFirst(), ExpressionFactory.and(loc, List.of(pair.getSecond(), additional)));
 	}
 
 	private Pair<Expression, Expression> constructOverflowCheck(final ILocation loc, final CPrimitive resultType,
