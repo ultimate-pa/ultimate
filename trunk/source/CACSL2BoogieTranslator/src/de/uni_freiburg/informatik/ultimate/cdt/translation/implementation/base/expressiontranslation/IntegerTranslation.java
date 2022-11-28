@@ -166,7 +166,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public ExpressionResult handleBinaryBitwiseIntegerExpression(final ILocation loc, final int op,
+	protected ExpressionResult handleBinaryBitwiseIntegerExpression(final ILocation loc, final int op,
 			final Expression left, final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight,
 			final IASTNode hook, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		switch (op) {
@@ -247,7 +247,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructUnaryMinusIntegerExpression(final ILocation loc, final Expression expr,
+	protected Expression constructUnaryMinusIntegerExpression(final ILocation loc, final Expression expr,
 			final CPrimitive type) {
 		return constructUnaryIntExprMinus(loc, expr, type);
 	}
@@ -724,7 +724,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructUnaryFloatingPointExpression(final ILocation loc, final int nodeOperator,
+	protected Expression constructUnaryFloatingPointExpression(final ILocation loc, final int nodeOperator,
 			final Expression exp, final CPrimitive type) {
 		if (mSettings.overapproximateFloatingPointOperations()) {
 			final String functionName = "someUnary" + type.toString() + "operation";
@@ -743,7 +743,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructArithmeticFloatingPointExpression(final ILocation loc, final int nodeOperator,
+	protected Expression constructArithmeticFloatingPointExpression(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
 		if (mSettings.overapproximateFloatingPointOperations()) {
 			final String functionName = "someBinaryArithmetic" + type1.toString() + "operation";
@@ -793,7 +793,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructBinaryEqualityExpressionFloating(final ILocation loc, final int nodeOperator,
+	protected Expression constructBinaryEqualityExpressionFloating(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
 		final String prefixedFunctionName = declareBinaryFloatComparisonOverApprox(loc, (CPrimitive) type1);
 		if (mSettings.overapproximateFloatingPointOperations()) {
@@ -804,7 +804,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructBinaryEqualityExpressionInteger(final ILocation loc, final int nodeOperator,
+	protected Expression constructBinaryEqualityExpressionInteger(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
 		Expression leftExpr = exp1;
 		Expression rightExpr = exp2;

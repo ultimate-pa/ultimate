@@ -165,11 +165,11 @@ public abstract class ExpressionTranslation {
 	public abstract Expression constructBinaryComparisonIntegerExpression(ILocation loc, int nodeOperator,
 			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 
-	public abstract ExpressionResult handleBinaryBitwiseIntegerExpression(ILocation loc, int nodeOperator,
+	protected abstract ExpressionResult handleBinaryBitwiseIntegerExpression(ILocation loc, int nodeOperator,
 			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2, IASTNode hook,
 			AuxVarInfoBuilder auxVarInfoBuilder);
 
-	public abstract Expression constructUnaryMinusIntegerExpression(ILocation loc, Expression exp, CPrimitive type);
+	protected abstract Expression constructUnaryMinusIntegerExpression(ILocation loc, Expression exp, CPrimitive type);
 
 	public abstract ExpressionResult handleUnaryComplement(ILocation loc, Expression exp, CPrimitive type,
 			final AuxVarInfoBuilder auxVarInfoBuilder);
@@ -180,10 +180,10 @@ public abstract class ExpressionTranslation {
 	public abstract Expression constructBinaryComparisonFloatingPointExpression(ILocation loc, int nodeOperator,
 			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 
-	public abstract Expression constructUnaryFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp,
+	protected abstract Expression constructUnaryFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp,
 			CPrimitive type);
 
-	public abstract Expression constructArithmeticFloatingPointExpression(ILocation loc, int nodeOperator,
+	protected abstract Expression constructArithmeticFloatingPointExpression(ILocation loc, int nodeOperator,
 			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 
 	public final Expression constructBinaryEqualityExpression(final ILocation loc, final int nodeOperator,
@@ -194,10 +194,10 @@ public abstract class ExpressionTranslation {
 		return constructBinaryEqualityExpressionInteger(loc, nodeOperator, exp1, type1, exp2, type2);
 	}
 
-	public abstract Expression constructBinaryEqualityExpressionFloating(ILocation loc, int nodeOperator,
+	protected abstract Expression constructBinaryEqualityExpressionFloating(ILocation loc, int nodeOperator,
 			Expression exp1, CType type1, Expression exp2, CType type2);
 
-	public abstract Expression constructBinaryEqualityExpressionInteger(ILocation loc, int nodeOperator,
+	protected abstract Expression constructBinaryEqualityExpressionInteger(ILocation loc, int nodeOperator,
 			Expression exp1, CType type1, Expression exp2, CType type2);
 
 	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
