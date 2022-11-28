@@ -204,8 +204,13 @@ public class CfgBuilder {
 
 		final CodeBlockSize userDefineCodeBlockSize =
 				prefs.getEnum(RcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE, CodeBlockSize.class);
-		if (userDefineCodeBlockSize != CodeBlockSize.SingleStatement && fgInfo.hasSomeForkEdge()) {
-			mCodeBlockSize = CodeBlockSize.SingleStatement;
+		if (userDefineCodeBlockSize == CodeBlockSize.SingleStatement) {
+			mLogger.warn("Setting " + CodeBlockSize.SingleStatement + " is deprecated and superseded by "
+					+ CodeBlockSize.OneNontrivialStatement);
+		}
+		if ((userDefineCodeBlockSize == CodeBlockSize.LoopFreeBlock
+				|| userDefineCodeBlockSize == CodeBlockSize.SequenceOfStatements) && fgInfo.hasSomeForkEdge()) {
+			mCodeBlockSize = CodeBlockSize.OneNontrivialStatement;
 			mLogger.warn("User set CodeBlockSize to " + userDefineCodeBlockSize
 					+ " but program contains fork statements. Overwriting the user preferences and setting CodeBlockSize to "
 					+ mCodeBlockSize);
@@ -279,6 +284,7 @@ public class CfgBuilder {
 			new LargeBlockEncoding(InternalLbeMode.ALL);
 			break;
 		case SequenceOfStatements: // handled in ProcedureCfgBuilder
+		case OneNontrivialStatement:
 		case SingleStatement:
 			new LargeBlockEncoding(InternalLbeMode.ONLY_ATOMIC_BLOCK);
 			break;
@@ -1189,12 +1195,25 @@ public class CfgBuilder {
 			if (mCurrent instanceof BoogieIcfgLocation) {
 				startNewStatementSequenceAndAddStatement(st, origin);
 			} else if (mCurrent instanceof CodeBlock) {
-				if (mCodeBlockSize == CodeBlockSize.SequenceOfStatements
-						|| mCodeBlockSize == CodeBlockSize.LoopFreeBlock) {
+				switch (mCodeBlockSize) {
+				case LoopFreeBlock:
+				case SequenceOfStatements:
 					addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
-				} else {
+					break;
+				case OneNontrivialStatement:
+					if (((StatementSequence) mCurrent).isTrivial() || StatementSequence.isAssumeTrueStatement(st)) {
+						addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
+					} else {
+						endCurrentStatementSequence(st);
+						startNewStatementSequenceAndAddStatement(st, origin);
+					}
+					break;
+				case SingleStatement:
 					endCurrentStatementSequence(st);
 					startNewStatementSequenceAndAddStatement(st, origin);
+					break;
+				default:
+					throw new AssertionError("Unknown value: " + mCodeBlockSize);
 				}
 			} else {
 				// mcurrent must either be LocNode or TransEdge
