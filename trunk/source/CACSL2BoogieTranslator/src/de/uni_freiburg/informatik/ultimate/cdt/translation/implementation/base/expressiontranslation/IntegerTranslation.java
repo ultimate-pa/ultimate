@@ -112,13 +112,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 		if (!type1.equals(type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " and " + type2);
 		}
-		Expression leftExpr = exp1;
-		Expression rightExpr = exp2;
-		if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(type1)) {
-			assert mTypeSizes.isUnsigned(type2);
-			leftExpr = applyWraparound(loc, type1, leftExpr);
-			rightExpr = applyWraparound(loc, type2, rightExpr);
-		}
 		BinaryExpression.Operator op;
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_equals:
@@ -142,7 +135,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 		default:
 			throw new AssertionError("Unknown BinaryExpression operator " + nodeOperator);
 		}
-
+		final Expression leftExpr = applyWraparoundIfNecessary(loc, type1, exp1);
+		final Expression rightExpr = applyWraparoundIfNecessary(loc, type2, exp2);
 		return ExpressionFactory.newBinaryExpression(loc, op, leftExpr, rightExpr);
 	}
 
@@ -165,42 +159,38 @@ public class IntegerTranslation extends ExpressionTranslation {
 				ExpressionFactory.createIntegerLiteral(loc, divisor.toString()));
 	}
 
+	private Expression applyWraparoundIfNecessary(final ILocation loc, final CPrimitive cPrimitive,
+			final Expression operand) {
+		if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(cPrimitive)) {
+			return applyWraparound(loc, cPrimitive, operand);
+		}
+		return operand;
+	}
+
 	@Override
 	protected ExpressionResult handleBinaryBitwiseIntegerExpression(final ILocation loc, final int op,
 			final Expression left, final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight,
 			final IASTNode hook, final AuxVarInfoBuilder auxVarInfoBuilder) {
-		Expression leftExpr = left;
-		Expression rightExpr = right;
+		final Expression leftExpr = applyWraparoundIfNecessary(loc, typeLeft, left);
+		final Expression rightExpr = applyWraparoundIfNecessary(loc, typeRight, right);
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryAndAssign:
-			if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(typeLeft)) {
-				leftExpr = applyWraparound(loc, typeLeft, left);
-				rightExpr = applyWraparound(loc, typeRight, right);
-			}
 			return BitabsTranslation.abstractAnd(loc, leftExpr, typeLeft, rightExpr, typeRight, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_binaryOr:
 		case IASTBinaryExpression.op_binaryOrAssign:
-			if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(typeLeft)) {
-				leftExpr = applyWraparound(loc, typeLeft, left);
-				rightExpr = applyWraparound(loc, typeRight, right);
-			}
 			return BitabsTranslation.abstractOr(loc, leftExpr, typeLeft, rightExpr, typeRight, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_binaryXor:
 		case IASTBinaryExpression.op_binaryXorAssign:
-			if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(typeLeft)) {
-				leftExpr = applyWraparound(loc, typeLeft, left);
-				rightExpr = applyWraparound(loc, typeRight, right);
-			}
 			return BitabsTranslation.abstractXor(loc, leftExpr, typeLeft, rightExpr, typeRight, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign:
-			return constructExpressionResult(constructLeftShiftExpression(loc, left, typeLeft, right, typeRight, hook),
-					typeLeft);
+			return constructExpressionResult(
+					constructLeftShiftExpression(loc, leftExpr, typeLeft, rightExpr, typeRight, hook), typeLeft);
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftRightAssign:
-			return constructExpressionResult(constructRightShiftExpression(loc, left, typeLeft, right, typeRight, hook),
-					typeLeft);
+			return constructExpressionResult(
+					constructRightShiftExpression(loc, leftExpr, typeLeft, rightExpr, typeRight, hook), typeLeft);
 		default:
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported bitwise expression");
 		}
@@ -820,17 +810,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	protected Expression constructBinaryEqualityExpressionInteger(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
-		Expression leftExpr = exp1;
-		Expression rightExpr = exp2;
-		if (type1 instanceof CPrimitive && type2 instanceof CPrimitive) {
-			final CPrimitive primitive1 = (CPrimitive) type1;
-			final CPrimitive primitive2 = (CPrimitive) type2;
-			if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(primitive1)) {
-				assert mTypeSizes.isUnsigned(primitive2);
-				leftExpr = applyWraparound(loc, primitive1, leftExpr);
-				rightExpr = applyWraparound(loc, primitive2, rightExpr);
-			}
-		}
+		final Expression leftExpr = applyWraparoundIfNecessary(loc, (CPrimitive) type1, exp1);
+		final Expression rightExpr = applyWraparoundIfNecessary(loc, (CPrimitive) type2, exp2);
 		return constructEquality(loc, nodeOperator, leftExpr, rightExpr);
 	}
 
