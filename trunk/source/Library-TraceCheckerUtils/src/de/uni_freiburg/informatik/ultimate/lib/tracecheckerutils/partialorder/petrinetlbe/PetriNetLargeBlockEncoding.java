@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.Un
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -140,7 +139,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			mResult = lipton.getResult();
 			mStatistics = new PetriNetLargeBlockEncodingStatisticsGenerator(lipton.getStatistics(),
 					moverCheck.getStatistics());
-		} catch (final AutomataOperationCanceledException | ToolchainCanceledException ce) {
+		} catch (final AutomataOperationCanceledException ce) {
 			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(petriNet));
 			ce.addRunningTaskInfo(runningTaskInfo);
 			throw ce;
