@@ -61,7 +61,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class BitabsTranslation {
 	public static ExpressionResult abstractAnd(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
+			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder,
+			final boolean isUnsigned) {
 		// 0 & a = a & 0 = 0
 		if (isZero(left)) {
 			return new ExpressionResult(new RValue(left, typeLeft));
@@ -83,14 +84,18 @@ public class BitabsTranslation {
 		final Expression rightEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, right, zero);
 		final Expression leftEqualsRight = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, left, right);
 
-		final Expression leftNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, left, zero);
-		final Expression rightNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right, zero);
+		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
+		final Expression leftNegative =
+				isUnsigned ? falseLiteral : ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, left, zero);
+		final Expression rightNegative =
+				isUnsigned ? falseLiteral : ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right, zero);
 
 		final Expression oneNegative =
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftNegative, rightNegative);
-		final Expression bothNonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, left, zero),
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, right, zero));
+		final Expression bothNonNegative = isUnsigned ? ExpressionFactory.createBooleanLiteral(loc, true)
+				: ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, left, zero),
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, right, zero));
 		final Expression bothNegative =
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftNegative, rightNegative);
 
@@ -121,7 +126,8 @@ public class BitabsTranslation {
 	}
 
 	public static ExpressionResult abstractOr(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
+			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder,
+			final boolean isUnsigned) {
 		// 0 | a = a | 0 = a
 		if (isZero(left)) {
 			return new ExpressionResult(new RValue(right, typeRight));
@@ -145,14 +151,18 @@ public class BitabsTranslation {
 		final Expression rightEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, right, zero);
 		final Expression leftEqualsRight = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, left, right);
 
-		final Expression leftNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, left, zero);
-		final Expression rightNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right, zero);
+		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
+		final Expression leftNegative =
+				isUnsigned ? falseLiteral : ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, left, zero);
+		final Expression rightNegative =
+				isUnsigned ? falseLiteral : ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right, zero);
 
 		final Expression oneNegative =
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftNegative, rightNegative);
-		final Expression bothNonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, left, zero),
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, right, zero));
+		final Expression bothNonNegative = isUnsigned ? ExpressionFactory.createBooleanLiteral(loc, true)
+				: ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, left, zero),
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, right, zero));
 
 		final Expression sum = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right);
 		final Expression leftEqualsZeroOrRight =
@@ -179,7 +189,8 @@ public class BitabsTranslation {
 	}
 
 	public static ExpressionResult abstractXor(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
+			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder,
+			final boolean isUnsigned) {
 		// 0 ^ a = a ^ 0 = 0
 		if (isZero(left)) {
 			return new ExpressionResult(new RValue(right, typeRight));
@@ -201,8 +212,11 @@ public class BitabsTranslation {
 		final Expression rightEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, right, zero);
 		final Expression leftEqualsRight = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, left, right);
 
-		final Expression leftNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, left, zero);
-		final Expression rightNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right, zero);
+		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
+		final Expression leftNegative =
+				isUnsigned ? falseLiteral : ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, left, zero);
+		final Expression rightNegative =
+				isUnsigned ? falseLiteral : ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right, zero);
 
 		final Expression oneNegative =
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftNegative, rightNegative);
@@ -210,9 +224,10 @@ public class BitabsTranslation {
 		final Expression sum = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right);
 
 		final Expression positive = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, auxvar, zero);
-		final Expression onePositive = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, left, zero),
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, right, zero));
+		final Expression onePositive = isUnsigned ? ExpressionFactory.createBooleanLiteral(loc, true)
+				: ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, left, zero),
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, right, zero));
 
 		// If a and b have the same sign (i.e. both are positive or both are negative), then a ^ b > 0
 		final Expression positiveCase1 =
@@ -231,20 +246,29 @@ public class BitabsTranslation {
 	}
 
 	public static ExpressionResult abstractCompl(final ILocation loc, final Expression expr, final CPrimitive type,
-			final AuxVarInfoBuilder auxVarInfoBuilder) {
-		// TODO: We could add another assumption for signed integer
+			final AuxVarInfoBuilder auxVarInfoBuilder, final boolean isUnsigned) {
 		// TODO: Should we evaluate this for constants?
 		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
 		final IdentifierExpression auxvar = auxvarinfo.getExp();
 
-		// ~a != a
-		final Expression neq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, auxvar, expr);
-		// If a < 0, then ~a > 0
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
-		final Expression signum = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, expr, zero),
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, auxvar, zero));
-		final List<Expression> assumptions = List.of(neq, signum);
+		final List<Expression> assumptions;
+		if (isUnsigned) {
+			// ~a != a
+			final Expression neq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, auxvar, expr);
+			final Expression nonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, zero);
+			assumptions = List.of(neq, nonNegative);
+		} else {
+			// If a < 0, then ~a > 0
+			final Expression positive = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, expr, zero),
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, auxvar, zero));
+			// If a >= 0, then ~a < 0
+			final Expression negative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, expr, zero),
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, auxvar, zero));
+			assumptions = List.of(positive, negative);
+		}
 		return buildExpressionResult(loc, "bitwiseComplement", type, auxvarinfo, List.of(), assumptions);
 	}
 
