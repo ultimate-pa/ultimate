@@ -29,8 +29,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BinaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
@@ -69,11 +71,9 @@ public class BitabsTranslation {
 		if (isZero(right)) {
 			return new ExpressionResult(new RValue(right, type));
 		}
-		// a & a = a
-		if (areEqualLiterals(left, right)) {
-			return new ExpressionResult(new RValue(left, type));
+		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral) {
+			return handleConstants((IntegerLiteral) left, (IntegerLiteral) right, BigInteger::and, loc, type);
 		}
-		// TODO: Should we evaluate all combinations of constants?
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
 		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
@@ -133,12 +133,9 @@ public class BitabsTranslation {
 		if (isZero(right)) {
 			return new ExpressionResult(new RValue(left, type));
 		}
-		// a | a = a
-		if (areEqualLiterals(left, right)) {
-			return new ExpressionResult(new RValue(left, type));
+		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral) {
+			return handleConstants((IntegerLiteral) left, (IntegerLiteral) right, BigInteger::or, loc, type);
 		}
-
-		// TODO: Should we evaluate all combinations of constants?
 
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
@@ -195,13 +192,11 @@ public class BitabsTranslation {
 		if (isZero(right)) {
 			return new ExpressionResult(new RValue(left, type));
 		}
-		// a ^ a = 0
-		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
-		if (areEqualLiterals(left, right)) {
-			return new ExpressionResult(new RValue(zero, type));
+		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral) {
+			return handleConstants((IntegerLiteral) left, (IntegerLiteral) right, BigInteger::xor, loc, type);
 		}
 
-		// TODO: Should we evaluate all combinations of constants?
+		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
 		final IdentifierExpression auxvar = auxvarinfo.getExp();
 
@@ -273,9 +268,13 @@ public class BitabsTranslation {
 		return expr instanceof IntegerLiteral && "0".equals(((IntegerLiteral) expr).getValue());
 	}
 
-	private static boolean areEqualLiterals(final Expression left, final Expression right) {
-		return left instanceof IntegerLiteral && right instanceof IntegerLiteral
-				&& ((IntegerLiteral) left).getValue().equals(((IntegerLiteral) right).getValue());
+	private static ExpressionResult handleConstants(final IntegerLiteral left, final IntegerLiteral right,
+			final BinaryOperator<BigInteger> operator, final ILocation loc, final CPrimitive type) {
+		// TODO: Can we rely on the semantics for the BigInteger-operator?
+		final BigInteger leftValue = new BigInteger(left.getValue());
+		final BigInteger rightValue = new BigInteger(right.getValue());
+		final BigInteger result = operator.apply(leftValue, rightValue);
+		return new ExpressionResult(new RValue(new IntegerLiteral(loc, BoogieType.TYPE_INT, result.toString()), type));
 	}
 
 	private static ExpressionResult buildExpressionResult(final ILocation loc, final String functionName,
