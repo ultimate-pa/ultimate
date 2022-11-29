@@ -114,7 +114,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	 */
 	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final BoundedPetriNet<L, IPredicate> petriNet, final IndependenceSettings independenceSettings,
-			final ICompositionFactory<L> compositionFactory, final BasicPredicateFactory predicateFactory,
+			ICompositionFactory<L> compositionFactory, final BasicPredicateFactory predicateFactory,
 			final IIndependenceCache<?, L> independenceCache, final Class<L> clazz)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger = services.getLoggingService().getLogger(getClass());
@@ -124,6 +124,9 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 
 		final IIndependenceRelation<Set<IPredicate>, L> moverCheck =
 				createIndependenceRelation(independenceSettings, predicateFactory);
+		if (mIndependenceCache != null) {
+			compositionFactory = new CompositionFactoryWithCacheUpdate<>(compositionFactory, mIndependenceCache);
+		}
 
 		mLogger.info("Starting large block encoding on Petri net that " + petriNet.sizeInformation());
 
@@ -133,7 +136,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 				new InfeasPostScriptChecker<>(mServices, mManagedScript);
 		try {
 			final LiptonReduction<L, IPredicate> lipton = new LiptonReduction<>(automataServices, petriNet,
-					compositionFactory, placeFactory, moverCheck, postScriptChecker, mIndependenceCache);
+					compositionFactory, placeFactory, moverCheck, postScriptChecker);
 			mResult = lipton.getResult();
 			mStatistics = new PetriNetLargeBlockEncodingStatisticsGenerator(lipton.getStatistics(),
 					moverCheck.getStatistics());

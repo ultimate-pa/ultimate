@@ -26,12 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
@@ -55,16 +53,13 @@ public abstract class ReductionRule<L, P> {
 	protected final CoenabledRelation<L, P> mCoenabledRelation;
 
 	protected final LiptonReductionStatisticsGenerator mStatistics;
-	private final IIndependenceCache<?, L> mIndependenceCache;
 
 	public ReductionRule(final AutomataLibraryServices services, final LiptonReductionStatisticsGenerator statistics,
-			final BoundedPetriNet<L, P> net, final CoenabledRelation<L, P> coenabledRelation,
-			final IIndependenceCache<?, L> independenceCache) {
+			final BoundedPetriNet<L, P> net, final CoenabledRelation<L, P> coenabledRelation) {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mNet = net;
 		mCoenabledRelation = coenabledRelation;
 		mStatistics = statistics;
-		mIndependenceCache = independenceCache;
 	}
 
 	/**
@@ -81,12 +76,6 @@ public abstract class ReductionRule<L, P> {
 		return applyInternal(mNet);
 		// TODO fixed-point iteration
 		// TODO return data about application
-	}
-
-	protected void transferMoverProperties(final L composition, final List<L> components) {
-		if (mIndependenceCache != null) {
-			mIndependenceCache.mergeIndependencies(components, composition);
-		}
 	}
 
 	protected void addPlace(final P place, final boolean isInitial, final boolean isAccepting) {

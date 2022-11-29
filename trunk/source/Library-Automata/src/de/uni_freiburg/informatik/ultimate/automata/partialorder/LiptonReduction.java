@@ -34,7 +34,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
@@ -71,7 +70,6 @@ public class LiptonReduction<L, P> {
 	private final IPostScriptChecker<L, P> mStuckPlaceChecker;
 	private final ICopyPlaceFactory<P> mPlaceFactory;
 	private final IIndependenceRelation<Set<P>, L> mMoverCheck;
-	private final IIndependenceCache<?, L> mIndependenceCache;
 
 	private final BoundedPetriNet<L, P> mPetriNet;
 
@@ -102,7 +100,7 @@ public class LiptonReduction<L, P> {
 	public LiptonReduction(final AutomataLibraryServices services, final BoundedPetriNet<L, P> petriNet,
 			final ICompositionFactory<L> compositionFactory, final ICopyPlaceFactory<P> placeFactory,
 			final IIndependenceRelation<Set<P>, L> independenceRelation,
-			final IPostScriptChecker<L, P> stuckPlaceChecker, final IIndependenceCache<?, L> cache)
+			final IPostScriptChecker<L, P> stuckPlaceChecker)
 			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(LiptonReduction.class);
@@ -110,7 +108,6 @@ public class LiptonReduction<L, P> {
 		mPlaceFactory = placeFactory;
 		mMoverCheck = independenceRelation;
 		mStuckPlaceChecker = stuckPlaceChecker;
-		mIndependenceCache = cache;
 
 		mPetriNet = CopySubnet.copy(mServices, petriNet, new HashSet<>(petriNet.getTransitions()),
 				new HashSet<>(petriNet.getAlphabet()), true);
@@ -172,7 +169,7 @@ public class LiptonReduction<L, P> {
 	@Deprecated(since = "2021-09-15")
 	private boolean synthesizeLockRuleWrapper(final BoundedPetriNet<L, P> petriNet) {
 		final SynthesizeLockRule<L, P> rule = new SynthesizeLockRule<>(mServices, mStatistics, petriNet,
-				mCoEnabledRelation, mIndependenceCache, mMoverCheck, mPlaceFactory, true);
+				mCoEnabledRelation, mMoverCheck, mPlaceFactory, true);
 		return rule.apply();
 	}
 
@@ -182,7 +179,7 @@ public class LiptonReduction<L, P> {
 	@Deprecated(since = "2021-09-14")
 	private boolean choiceRuleWrapper(final BoundedPetriNet<L, P> petriNet) {
 		final ChoiceRule<L, P> rule = new ChoiceRule<>(mServices, mStatistics, petriNet, mCoEnabledRelation,
-				mRetromorphism, mCompositionFactory, mIndependenceCache);
+				mRetromorphism, mCompositionFactory);
 		return rule.apply();
 	}
 
@@ -191,9 +188,8 @@ public class LiptonReduction<L, P> {
 	 */
 	@Deprecated(since = "2022-10-07")
 	private boolean sequenceRuleWrapper(final BoundedPetriNet<L, P> petriNet) {
-		final SequenceRule<L, P> rule =
-				new SequenceRule<>(mServices, mStatistics, petriNet, mCoEnabledRelation, mRetromorphism, mMoverCheck,
-						mCompositionFactory, mPlaceFactory, mIndependenceCache, mStuckPlaceChecker, mBranchingProcess);
+		final SequenceRule<L, P> rule = new SequenceRule<>(mServices, mStatistics, petriNet, mCoEnabledRelation,
+				mRetromorphism, mMoverCheck, mCompositionFactory, mPlaceFactory, mStuckPlaceChecker, mBranchingProcess);
 		return rule.apply();
 	}
 

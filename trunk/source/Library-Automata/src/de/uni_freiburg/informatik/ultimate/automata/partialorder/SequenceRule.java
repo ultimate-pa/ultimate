@@ -43,7 +43,6 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -75,9 +74,8 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 			final BoundedPetriNet<L, P> net, final CoenabledRelation<L, P> coenabledRelation,
 			final ModifiableRetroMorphism<L, P> retromorphism, final IIndependenceRelation<Set<P>, L> independence,
 			final ICompositionFactory<L> compositionFactory, final ICopyPlaceFactory<P> placeFactory,
-			final IIndependenceCache<?, L> independenceCache, final IPostScriptChecker<L, P> postScriptChecker,
-			final BranchingProcess<L, P> completeFinitePrefix) {
-		super(services, statistics, net, coenabledRelation, independenceCache);
+			final IPostScriptChecker<L, P> postScriptChecker, final BranchingProcess<L, P> completeFinitePrefix) {
+		super(services, statistics, net, coenabledRelation);
 		mRetromorphism = retromorphism;
 		mIndependence = independence;
 		mCompositionFactory = compositionFactory;
@@ -715,7 +713,6 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 
 		updateCoenabled(executed);
 		mRetromorphism.addTransition(transition, Set.of(comp.getFirst()), Set.of(comp.getSecond()));
-		transferMoverProperties(label, List.of(comp.getFirstLabel(), comp.getSecondLabel()));
 
 		return executed;
 	}

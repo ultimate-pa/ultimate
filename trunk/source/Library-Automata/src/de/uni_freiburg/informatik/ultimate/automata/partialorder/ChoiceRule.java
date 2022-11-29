@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
@@ -76,9 +75,8 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 	 */
 	public ChoiceRule(final AutomataLibraryServices services, final LiptonReductionStatisticsGenerator statistics,
 			final BoundedPetriNet<L, P> net, final CoenabledRelation<L, P> coenabledRelation,
-			final ModifiableRetroMorphism<L, P> retromorphism, final ICompositionFactory<L> compositionFactory,
-			final IIndependenceCache<?, L> independenceCache) {
-		super(services, statistics, net, coenabledRelation, independenceCache);
+			final ModifiableRetroMorphism<L, P> retromorphism, final ICompositionFactory<L> compositionFactory) {
+		super(services, statistics, net, coenabledRelation);
 		mRetromorphism = retromorphism;
 		mCompositionFactory = compositionFactory;
 	}
@@ -110,10 +108,6 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 				mCoenabledRelation.removeElement(component);
 				mRetromorphism.deleteTransition(component);
 			}
-
-			// add mover information for composition
-			transferMoverProperties(composedLetter,
-					components.stream().map(Transition::getSymbol).collect(Collectors.toList()));
 
 			mStatistics.reportComposition(LiptonReductionStatisticsDefinitions.ChoiceCompositions);
 		}
