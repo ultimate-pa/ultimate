@@ -80,11 +80,17 @@ public class InfeasPostScriptChecker<L extends IIcfgTransition<?>, P> implements
 	}
 
 	/**
-	 * Checks whether the execution might get stuck in the given place. We are caching the result to avoid rerunning the
-	 * SMT solver. The cached results are still correct after applying the sequence rule in LiptonReduction even if the
-	 * composition of two transitions was discarded due two duplicate pre-/post-conditions. This is because there will
-	 * always be other non-discarded executable transitions as otherwise mightGetStuck would have returned true for the
-	 * place where composition happened and therefore the transitions would not have been composed.
+	 * Checks whether the execution might get stuck in the given place.
+	 *
+	 * TODO Dominik 20221129: I don't understand the explanation below.
+	 *
+	 * We are caching the result to avoid rerunning the SMT solver. The cached results are still correct after applying
+	 * the sequence rule in LiptonReduction even if the composition of two transitions was discarded due two duplicate
+	 * pre-/post-conditions. This is because there will always be other non-discarded executable transitions as
+	 * otherwise mightGetStuck would have returned true for the place where composition happened and therefore the
+	 * transitions would not have been composed.
+	 *
+	 * TODO Dominik 20221129: I also don't understand why caching is safe even in cases where nothing is discarded
 	 *
 	 * @deprecated Use {@link #isPostScript(IPetriNet, Set)} as soon as caching is sorted out
 	 */

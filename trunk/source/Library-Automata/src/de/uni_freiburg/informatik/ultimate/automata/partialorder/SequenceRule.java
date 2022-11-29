@@ -484,6 +484,7 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 			return true;
 		}
 
+		// TODO we should check this before the previous condition, right?
 		if (!mPostScriptChecker.mightGetStuck(petriNet, comp.getPivot())) {
 			mLogger.debug("  first transition %s is NOT needed because pivot place %s cannot get stuck",
 					comp.getFirst(), comp.getPivot());
