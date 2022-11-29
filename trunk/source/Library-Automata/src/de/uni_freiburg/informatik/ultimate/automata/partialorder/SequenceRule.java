@@ -722,11 +722,14 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 
 	private void updateCoenabled(final ExecutedComposition<L, P> composition) {
 		final var composed = composition.getComposedTransition();
-		for (final var t : mCoenabledRelation.getImage(composition.getFirst())) {
-			if (coenabledTest(t, composition.getFirst(), composition.getSecond())) {
-				mCoenabledRelation.addPair(composed, t);
-			}
-		}
+		mCoenabledRelation.addAllPairs(composed,
+				DataStructureUtils.intersection(mCoenabledRelation.getImage(composition.getFirst()),
+						mCoenabledRelation.getImage(composition.getSecond())));
+		// for (final var t : mCoenabledRelation.getImage(composition.getFirst())) {
+		// if (coenabledTest(t, composition.getFirst(), composition.getSecond())) {
+		// mCoenabledRelation.addPair(composed, t);
+		// }
+		// }
 	}
 
 	// Checks a necessary condition for the transition t to be coenabled with the composition of t1 and t2.
