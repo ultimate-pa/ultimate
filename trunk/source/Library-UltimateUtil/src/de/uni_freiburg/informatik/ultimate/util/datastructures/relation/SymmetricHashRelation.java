@@ -75,7 +75,7 @@ public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 	public boolean addAllPairs(final E domainElem, final Collection<E> rangeElems) {
 		final boolean wasModified = super.addAllPairs(domainElem, rangeElems);
 		for (final E rangeElem : rangeElems) {
-			addPair(rangeElem, domainElem);
+			super.addPair(rangeElem, domainElem);
 		}
 		return wasModified;
 	}
