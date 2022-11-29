@@ -221,10 +221,6 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		return (IIndependenceCache<S, L>) mIndependenceCache;
 	}
 
-	public IIndependenceCache<?, L> getIndependenceCache() {
-		return mIndependenceCache;
-	}
-
 	private static Boolean isFalseState(final IPredicate state) {
 		// We assume here that all inconsistent interpolant predicates are syntactically equal to "false".
 		return SmtUtils.isFalseLiteral(state.getFormula());

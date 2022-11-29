@@ -31,6 +31,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.DefaultIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
@@ -60,7 +61,7 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 		extends CegarLoopForPetriNet<L> {
 
 	private final ICompositionFactoryWithBacktranslator<L> mCompositionFactory;
-	private IIndependenceCache<?, L> mIndependenceCache;
+	private final IIndependenceCache<?, L> mIndependenceCache = new DefaultIndependenceCache<>();
 
 	/**
 	 * Construct the CEGAR loop.
@@ -100,7 +101,6 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 				mIcfg.getCfgSmtToolkit(), cfg, mPref.lbeIndependenceSettings(), mCompositionFactory, mPredicateFactory,
 				mIndependenceCache, mTransitionClazz);
 		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
-		mIndependenceCache = lbe.getIndependenceCache();
 		getServices().getBacktranslationService().addTranslator(mCompositionFactory.getBacktranslator());
 
 		final long end_time = System.currentTimeMillis();
