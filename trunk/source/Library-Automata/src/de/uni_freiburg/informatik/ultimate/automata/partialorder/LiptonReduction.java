@@ -29,19 +29,22 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.CopySubnet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -72,10 +75,9 @@ public class LiptonReduction<L, P> {
 	private final IIndependenceRelation<Set<P>, L> mMoverCheck;
 
 	private final BoundedPetriNet<L, P> mPetriNet;
-
-	private BranchingProcess<L, P> mBranchingProcess;
+	private final BranchingProcess<L, P> mBranchingProcess;
 	private final ModifiableRetroMorphism<L, P> mRetromorphism;
-	private CoenabledRelation<L, P> mCoEnabledRelation;
+	private final CoenabledRelation<L, P> mCoEnabledRelation;
 
 	private final LiptonReductionStatisticsGenerator mStatistics = new LiptonReductionStatisticsGenerator();
 
@@ -94,13 +96,16 @@ public class LiptonReduction<L, P> {
 	 *            The independence relation used for mover checks.
 	 * @param stuckPlaceChecker
 	 *            An {@link IPostScriptChecker}.
+	 * @param finitePrefix
+	 *            A complete finite prefix of the given net, if available. May be null, in which case the instance
+	 *            starts its own computation of a finite prefix.
 	 * @throws AutomataOperationCanceledException
 	 * @throws PetriNetNot1SafeException
 	 */
 	public LiptonReduction(final AutomataLibraryServices services, final BoundedPetriNet<L, P> petriNet,
 			final ICompositionFactory<L> compositionFactory, final ICopyPlaceFactory<P> placeFactory,
 			final IIndependenceRelation<Set<P>, L> independenceRelation,
-			final IPostScriptChecker<L, P> stuckPlaceChecker)
+			final IPostScriptChecker<L, P> stuckPlaceChecker, final BranchingProcess<L, P> finitePrefix)
 			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(LiptonReduction.class);
@@ -109,23 +114,57 @@ public class LiptonReduction<L, P> {
 		mMoverCheck = independenceRelation;
 		mStuckPlaceChecker = stuckPlaceChecker;
 
+		// Copy the Petri net once, so the original is not modified.
+		final var copy2Originals = new HashMap<Transition<L, P>, Transition<L, P>>();
 		mPetriNet = CopySubnet.copy(mServices, petriNet, new HashSet<>(petriNet.getTransitions()),
-				new HashSet<>(petriNet.getAlphabet()), true);
-		mRetromorphism = new ModifiableRetroMorphism<>(mPetriNet);
+				new HashSet<>(petriNet.getAlphabet()), true, copy2Originals);
+
+		// Collect information used by reduction rules.
+		mBranchingProcess = getFinitePrefix(finitePrefix);
+		mCoEnabledRelation = CoenabledRelation.fromBranchingProcess(mBranchingProcess);
+		if (finitePrefix == null) {
+			mRetromorphism = new ModifiableRetroMorphism<>(mPetriNet);
+		} else {
+			// Build a retromorphism that maps back to transitions corresponding to the events in mBranchingProcess.
+			mRetromorphism = getRetromorphism(petriNet, copy2Originals);
+		}
 
 		performReduction();
 	}
 
-	private void performReduction() throws PetriNetNot1SafeException, AutomataOperationCanceledException {
+	private BranchingProcess<L, P> getFinitePrefix(final BranchingProcess<L, P> finitePrefix)
+			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
+		if (finitePrefix != null) {
+			return finitePrefix;
+		}
+
+		try {
+			// TODO Why call FinitePrefix and not PetriNetUnfolder directly?
+			return new FinitePrefix<>(mServices, mPetriNet).getResult();
+		} catch (final AutomataOperationCanceledException ce) {
+			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(mPetriNet));
+			ce.addRunningTaskInfo(runningTaskInfo);
+			throw ce;
+		}
+	}
+
+	private ModifiableRetroMorphism<L, P> getRetromorphism(final IPetriNet<L, P> originalNet,
+			final Map<Transition<L, P>, Transition<L, P>> copyMap) {
+		final var retro = new ModifiableRetroMorphism<>(originalNet);
+		for (final var entry : copyMap.entrySet()) {
+			retro.addTransition(entry.getValue(), retro.getFirstTransitions(entry.getKey()),
+					retro.getLastTransitions(entry.getKey()));
+			retro.deleteTransition(entry.getKey());
+		}
+		return retro;
+	}
+
+	private void performReduction() {
 		mStatistics.start(LiptonReductionStatisticsDefinitions.ReductionTime);
 		mStatistics.collectInitialStatistics(mPetriNet);
 		mLogger.info("Starting Lipton reduction on Petri net that " + mPetriNet.sizeInformation());
 
 		try {
-			// TODO Why call FinitePrefix and not PetriNetUnfolder directly?
-			mBranchingProcess = new FinitePrefix<>(mServices, mPetriNet).getResult();
-			mCoEnabledRelation = CoenabledRelation.fromBranchingProcess(mBranchingProcess);
-
 			final int coEnabledRelationSize = mCoEnabledRelation.size();
 			mLogger.info("Number of co-enabled transitions " + coEnabledRelationSize);
 			mStatistics.setCoEnabledTransitionPairs(coEnabledRelationSize);
@@ -144,10 +183,6 @@ public class LiptonReduction<L, P> {
 
 			mLogger.info("Total number of compositions: "
 					+ mStatistics.getValue(LiptonReductionStatisticsDefinitions.TotalNumberOfCompositions));
-		} catch (final AutomataOperationCanceledException | ToolchainCanceledException ce) {
-			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(mPetriNet));
-			ce.addRunningTaskInfo(runningTaskInfo);
-			throw ce;
 		} finally {
 			mStatistics.stop(LiptonReductionStatisticsDefinitions.ReductionTime);
 		}

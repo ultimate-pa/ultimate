@@ -136,7 +136,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 				new InfeasPostScriptChecker<>(mServices, mManagedScript);
 		try {
 			final LiptonReduction<L, IPredicate> lipton = new LiptonReduction<>(automataServices, petriNet,
-					compositionFactory, placeFactory, moverCheck, postScriptChecker);
+					compositionFactory, placeFactory, moverCheck, postScriptChecker, null);
 			mResult = lipton.getResult();
 			mStatistics = new PetriNetLargeBlockEncodingStatisticsGenerator(lipton.getStatistics(),
 					moverCheck.getStatistics());
