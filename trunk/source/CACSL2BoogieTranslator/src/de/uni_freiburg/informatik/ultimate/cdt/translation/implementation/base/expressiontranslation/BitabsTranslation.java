@@ -60,24 +60,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public class BitabsTranslation {
-	public static ExpressionResult abstractAnd(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final boolean isUnsigned) {
+	public static ExpressionResult abstractAnd(final ILocation loc, final Expression left, final Expression right,
+			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder, final boolean isUnsigned) {
 		// 0 & a = a & 0 = 0
 		if (isZero(left)) {
-			return new ExpressionResult(new RValue(left, typeLeft));
+			return new ExpressionResult(new RValue(left, type));
 		}
 		if (isZero(right)) {
-			return new ExpressionResult(new RValue(right, typeRight));
+			return new ExpressionResult(new RValue(right, type));
 		}
 		// a & a = a
 		if (areEqualLiterals(left, right)) {
-			return new ExpressionResult(new RValue(left, typeLeft));
+			return new ExpressionResult(new RValue(left, type));
 		}
 		// TODO: Should we evaluate all combinations of constants?
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
-		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
 		final IdentifierExpression auxvar = auxvarinfo.getExp();
 
 		final Expression leftEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, left, zero);
@@ -122,29 +121,28 @@ public class BitabsTranslation {
 		final List<Pair<Expression, Expression>> exactCases =
 				List.of(new Pair<>(oneEqualsZero, zero), new Pair<>(leftEqualsRight, left));
 		final List<Expression> assumptions = List.of(maximum, nonNegative, greaterSum);
-		return buildExpressionResult(loc, "bitwiseAnd", typeLeft, auxvarinfo, exactCases, assumptions);
+		return buildExpressionResult(loc, "bitwiseAnd", type, auxvarinfo, exactCases, assumptions);
 	}
 
-	public static ExpressionResult abstractOr(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final boolean isUnsigned) {
+	public static ExpressionResult abstractOr(final ILocation loc, final Expression left, final Expression right,
+			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder, final boolean isUnsigned) {
 		// 0 | a = a | 0 = a
 		if (isZero(left)) {
-			return new ExpressionResult(new RValue(right, typeRight));
+			return new ExpressionResult(new RValue(right, type));
 		}
 		if (isZero(right)) {
-			return new ExpressionResult(new RValue(left, typeLeft));
+			return new ExpressionResult(new RValue(left, type));
 		}
 		// a | a = a
 		if (areEqualLiterals(left, right)) {
-			return new ExpressionResult(new RValue(left, typeLeft));
+			return new ExpressionResult(new RValue(left, type));
 		}
 
 		// TODO: Should we evaluate all combinations of constants?
 
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
-		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
 		final IdentifierExpression auxvar = auxvarinfo.getExp();
 
 		final Expression leftEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, left, zero);
@@ -185,27 +183,26 @@ public class BitabsTranslation {
 		final List<Pair<Expression, Expression>> exactCases =
 				List.of(new Pair<>(leftEqualsZeroOrRight, right), new Pair<>(rightEqualsZero, left));
 		final List<Expression> assumptions = List.of(minimum, negative, leqSum);
-		return buildExpressionResult(loc, "bitwiseOr", typeLeft, auxvarinfo, exactCases, assumptions);
+		return buildExpressionResult(loc, "bitwiseOr", type, auxvarinfo, exactCases, assumptions);
 	}
 
-	public static ExpressionResult abstractXor(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final boolean isUnsigned) {
+	public static ExpressionResult abstractXor(final ILocation loc, final Expression left, final Expression right,
+			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder, final boolean isUnsigned) {
 		// 0 ^ a = a ^ 0 = 0
 		if (isZero(left)) {
-			return new ExpressionResult(new RValue(right, typeRight));
+			return new ExpressionResult(new RValue(right, type));
 		}
 		if (isZero(right)) {
-			return new ExpressionResult(new RValue(left, typeLeft));
+			return new ExpressionResult(new RValue(left, type));
 		}
 		// a ^ a = 0
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 		if (areEqualLiterals(left, right)) {
-			return new ExpressionResult(new RValue(zero, typeLeft));
+			return new ExpressionResult(new RValue(zero, type));
 		}
 
 		// TODO: Should we evaluate all combinations of constants?
-		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
 		final IdentifierExpression auxvar = auxvarinfo.getExp();
 
 		final Expression leftEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, left, zero);
@@ -242,7 +239,7 @@ public class BitabsTranslation {
 		final List<Pair<Expression, Expression>> exactCases = List.of(new Pair<>(leftEqualsZero, right),
 				new Pair<>(rightEqualsZero, left), new Pair<>(leftEqualsRight, zero));
 		final List<Expression> assumptions = List.of(positiveCase1, positiveCase2, leqSum);
-		return buildExpressionResult(loc, "bitwiseOr", typeLeft, auxvarinfo, exactCases, assumptions);
+		return buildExpressionResult(loc, "bitwiseOr", type, auxvarinfo, exactCases, assumptions);
 	}
 
 	public static ExpressionResult abstractCompl(final ILocation loc, final Expression expr, final CPrimitive type,

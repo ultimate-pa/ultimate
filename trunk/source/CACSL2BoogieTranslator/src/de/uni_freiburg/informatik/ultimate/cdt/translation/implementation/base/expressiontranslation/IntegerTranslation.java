@@ -176,15 +176,15 @@ public class IntegerTranslation extends ExpressionTranslation {
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryAndAssign:
-			return BitabsTranslation.abstractAnd(loc, leftExpr, typeLeft, rightExpr, typeRight, auxVarInfoBuilder,
+			return BitabsTranslation.abstractAnd(loc, leftExpr, rightExpr, typeLeft, auxVarInfoBuilder,
 					mTypeSizes.isUnsigned(typeLeft));
 		case IASTBinaryExpression.op_binaryOr:
 		case IASTBinaryExpression.op_binaryOrAssign:
-			return BitabsTranslation.abstractOr(loc, leftExpr, typeLeft, rightExpr, typeRight, auxVarInfoBuilder,
+			return BitabsTranslation.abstractOr(loc, leftExpr, rightExpr, typeLeft, auxVarInfoBuilder,
 					mTypeSizes.isUnsigned(typeLeft));
 		case IASTBinaryExpression.op_binaryXor:
 		case IASTBinaryExpression.op_binaryXorAssign:
-			return BitabsTranslation.abstractXor(loc, leftExpr, typeLeft, rightExpr, typeRight, auxVarInfoBuilder,
+			return BitabsTranslation.abstractXor(loc, leftExpr, rightExpr, typeLeft, auxVarInfoBuilder,
 					mTypeSizes.isUnsigned(typeLeft));
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign:
