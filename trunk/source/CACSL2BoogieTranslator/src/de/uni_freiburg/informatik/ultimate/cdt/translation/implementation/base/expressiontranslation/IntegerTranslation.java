@@ -169,16 +169,30 @@ public class IntegerTranslation extends ExpressionTranslation {
 	protected ExpressionResult handleBinaryBitwiseIntegerExpression(final ILocation loc, final int op,
 			final Expression left, final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight,
 			final IASTNode hook, final AuxVarInfoBuilder auxVarInfoBuilder) {
+		Expression leftExpr = left;
+		Expression rightExpr = right;
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryAndAssign:
-			return BitabsTranslation.abstractAnd(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
+			if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(typeLeft)) {
+				leftExpr = applyWraparound(loc, typeLeft, left);
+				rightExpr = applyWraparound(loc, typeRight, right);
+			}
+			return BitabsTranslation.abstractAnd(loc, leftExpr, typeLeft, rightExpr, typeRight, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_binaryOr:
 		case IASTBinaryExpression.op_binaryOrAssign:
-			return BitabsTranslation.abstractOr(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
+			if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(typeLeft)) {
+				leftExpr = applyWraparound(loc, typeLeft, left);
+				rightExpr = applyWraparound(loc, typeRight, right);
+			}
+			return BitabsTranslation.abstractOr(loc, leftExpr, typeLeft, rightExpr, typeRight, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_binaryXor:
 		case IASTBinaryExpression.op_binaryXorAssign:
-			return BitabsTranslation.abstractXor(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
+			if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(typeLeft)) {
+				leftExpr = applyWraparound(loc, typeLeft, left);
+				rightExpr = applyWraparound(loc, typeRight, right);
+			}
+			return BitabsTranslation.abstractXor(loc, leftExpr, typeLeft, rightExpr, typeRight, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign:
 			return constructExpressionResult(constructLeftShiftExpression(loc, left, typeLeft, right, typeRight, hook),
