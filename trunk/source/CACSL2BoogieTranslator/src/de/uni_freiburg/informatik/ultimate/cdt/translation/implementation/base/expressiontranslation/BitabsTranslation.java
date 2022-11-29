@@ -56,12 +56,21 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
+ * This class is used to overapproximate bitwise operations for the integer translation.
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  * @author Cyrus Liu (yliu195@stevens.edu)
  *
  */
 public class BitabsTranslation {
+	/**
+	 * Overapproximates the bitwise {@code and}. Uses the following rules to increase the precision:
+	 * <li>0 & a = a & 0 = 0
+	 * <li>a & a = a
+	 * <li>If a >= 0 and b >= 0, then a & b <= a and a & b <= b
+	 * <li>If a >= b or b >= 0, then a & b >= 0
+	 * <li>If a < 0 or b < 0, then a & b > a + b
+	 */
 	public static ExpressionResult abstractAnd(final ILocation loc, final Expression left, final Expression right,
 			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder, final boolean isUnsigned) {
 		// 0 & a = a & 0 = 0
@@ -124,6 +133,14 @@ public class BitabsTranslation {
 		return buildExpressionResult(loc, "bitwiseAnd", type, auxvarinfo, exactCases, assumptions);
 	}
 
+	/**
+	 * Overapproximates the bitwise {@code or}. Uses the following rules to increase the precision:
+	 * <li>0 | a = a | 0 = a
+	 * <li>a | a = a
+	 * <li>If a >= 0 and b >= 0, then a | b >= a and a | b >= b
+	 * <li>If a < 0 or b < 0, then a | b < 0
+	 * <li>If a >= 0 or b >= 0, then a | b <= a + b
+	 */
 	public static ExpressionResult abstractOr(final ILocation loc, final Expression left, final Expression right,
 			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder, final boolean isUnsigned) {
 		// 0 | a = a | 0 = a
@@ -183,6 +200,13 @@ public class BitabsTranslation {
 		return buildExpressionResult(loc, "bitwiseOr", type, auxvarinfo, exactCases, assumptions);
 	}
 
+	/**
+	 * Overapproximates the bitwise {@code xor}. Uses the following rules to increase the precision:
+	 * <li>0 ^ a = a ^ 0 = 0
+	 * <li>a ^ a = 0
+	 * <li>If a and b have the same sign (i.e. both are positive or both are negative), then a ^ b > 0
+	 * <li>If a >= 0 or b >= 0, then a ^ b <= a + b
+	 */
 	public static ExpressionResult abstractXor(final ILocation loc, final Expression left, final Expression right,
 			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder, final boolean isUnsigned) {
 		// 0 ^ a = a ^ 0 = 0
@@ -237,9 +261,14 @@ public class BitabsTranslation {
 		return buildExpressionResult(loc, "bitwiseOr", type, auxvarinfo, exactCases, assumptions);
 	}
 
+	/**
+	 * Overapproximates the bitwise {@code not}. Uses the following rules to increase the precision:
+	 * <li>~a != a
+	 * <li>If a < 0, then ~a > 0
+	 * <li>If a >= 0, then ~a < 0 (if a is a signed integer)
+	 */
 	public static ExpressionResult abstractCompl(final ILocation loc, final Expression expr, final CPrimitive type,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final boolean isUnsigned) {
-		// TODO: Should we evaluate this for constants?
 		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
 		final IdentifierExpression auxvar = auxvarinfo.getExp();
 
