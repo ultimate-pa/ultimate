@@ -134,9 +134,9 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 		if (!mPrefs.applyOneShotLbe()) {
 			return petriNetProvider;
 		}
-		return new PetriLbeInitialAbstractionProvider<>(petriNetProvider, mServices, mTransitionClazz,
-				mPrefs.lbeIndependenceSettings(),
-				(ICompositionFactoryWithBacktranslator<L>) new IcfgCompositionFactory(mServices, icfg.getCfgSmtToolkit()),
+		return new PetriLbeInitialAbstractionProvider<>(petriNetProvider, mServices, mPrefs.lbeIndependenceSettings(),
+				(ICompositionFactoryWithBacktranslator<L>) new IcfgCompositionFactory(mServices,
+						icfg.getCfgSmtToolkit()),
 				predicateFactory, Activator.PLUGIN_ID);
 	}
 

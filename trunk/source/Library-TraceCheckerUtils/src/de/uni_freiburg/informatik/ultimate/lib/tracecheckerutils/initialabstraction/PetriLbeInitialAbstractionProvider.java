@@ -56,7 +56,6 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	private final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> mUnderlying;
 	private final ICompositionFactoryWithBacktranslator<L> mCompositionFactory;
 	private final BasicPredicateFactory mPredicateFactory;
-	private final Class<L> mTransitionClazz;
 	private final IndependenceSettings mIndependenceSettings;
 	private final String mPluginId;
 
@@ -78,12 +77,11 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	 */
 	public PetriLbeInitialAbstractionProvider(
 			final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> underlying,
-			final IUltimateServiceProvider services, final Class<L> transitionClazz,
-			final IndependenceSettings independenceSettings, final ICompositionFactoryWithBacktranslator<L> compositionFactory,
+			final IUltimateServiceProvider services, final IndependenceSettings independenceSettings,
+			final ICompositionFactoryWithBacktranslator<L> compositionFactory,
 			final BasicPredicateFactory predicateFactory, final String pluginId) {
 		mUnderlying = underlying;
 		mServices = services;
-		mTransitionClazz = transitionClazz;
 		mIndependenceSettings = independenceSettings;
 		mCompositionFactory = compositionFactory;
 		mPredicateFactory = predicateFactory;
@@ -96,7 +94,7 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		final BoundedPetriNet<L, IPredicate> net = mUnderlying.getInitialAbstraction(icfg, errorLocs);
 
 		final PetriNetLargeBlockEncoding<L> lbe = new PetriNetLargeBlockEncoding<>(mServices, icfg.getCfgSmtToolkit(),
-				net, mIndependenceSettings, mCompositionFactory, mPredicateFactory, null, mTransitionClazz);
+				net, mIndependenceSettings, mCompositionFactory, mPredicateFactory, null);
 		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 
 		mServices.getBacktranslationService().addTranslator(mCompositionFactory.getBacktranslator());

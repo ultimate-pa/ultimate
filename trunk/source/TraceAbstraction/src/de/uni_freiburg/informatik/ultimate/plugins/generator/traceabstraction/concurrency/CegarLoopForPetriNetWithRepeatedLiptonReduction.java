@@ -97,9 +97,9 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 	protected BoundedPetriNet<L, IPredicate> applyLargeBlockEncoding(final BoundedPetriNet<L, IPredicate> cfg)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		final long start_time = System.currentTimeMillis();
-		final PetriNetLargeBlockEncoding<L> lbe = new PetriNetLargeBlockEncoding<>(getServices(),
-				mIcfg.getCfgSmtToolkit(), cfg, mPref.lbeIndependenceSettings(), mCompositionFactory, mPredicateFactory,
-				mIndependenceCache, mTransitionClazz);
+		final PetriNetLargeBlockEncoding<L> lbe =
+				new PetriNetLargeBlockEncoding<>(getServices(), mIcfg.getCfgSmtToolkit(), cfg,
+						mPref.lbeIndependenceSettings(), mCompositionFactory, mPredicateFactory, mIndependenceCache);
 		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 		getServices().getBacktranslationService().addTranslator(mCompositionFactory.getBacktranslator());
 

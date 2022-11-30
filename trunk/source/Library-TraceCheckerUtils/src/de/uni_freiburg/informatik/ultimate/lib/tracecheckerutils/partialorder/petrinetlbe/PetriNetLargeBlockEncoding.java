@@ -104,7 +104,6 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	 *            A composition factory for the letters of the Petri net.
 	 * @param predicateFactory
 	 *            A predicate factory for predicates of the control flow graph.
-	 * @param clazz
 	 *
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled.
@@ -114,7 +113,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final BoundedPetriNet<L, IPredicate> petriNet, final IndependenceSettings independenceSettings,
 			ICompositionFactory<L> compositionFactory, final BasicPredicateFactory predicateFactory,
-			final IIndependenceCache<?, L> independenceCache, final Class<L> clazz)
+			final IIndependenceCache<?, L> independenceCache)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mServices = services;

@@ -313,9 +313,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		if (!mPrefs.applyOneShotLbe()) {
 			return netProvider;
 		}
-		return new PetriLbeInitialAbstractionProvider<>(netProvider, services, mTransitionClazz,
-				mPrefs.lbeIndependenceSettings(), mCreateCompositionFactory.get(), predicateFactory,
-				Activator.PLUGIN_ID);
+		return new PetriLbeInitialAbstractionProvider<>(netProvider, services, mPrefs.lbeIndependenceSettings(),
+				mCreateCompositionFactory.get(), predicateFactory, Activator.PLUGIN_ID);
 	}
 
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> createPartialOrderAbstraction(
