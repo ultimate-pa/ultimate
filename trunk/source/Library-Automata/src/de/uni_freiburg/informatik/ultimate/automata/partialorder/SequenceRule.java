@@ -117,6 +117,10 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 					.map(c -> evaluateComposition(c, net)).filter(c -> c != null)
 					// collect
 					.collect(Collectors.toList());
+			if (compositions.isEmpty()) {
+				// nothing to do for this place
+				continue;
+			}
 
 			// figure out which transitions need to be copied and which need to be deleted
 			final var copyAndDelete = classifyTransitions(net, pivot, compositions);
@@ -767,7 +771,7 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 				compositions.stream().collect(Collectors.toMap(c -> new Pair<>(c.getFirst(), c.getSecond()), c -> c));
 
 		final List<Marking<P>> markings = new ArrayList<>(oldRun.getStateSequence());
-		final List<Transition<L, P>> transitions = IntStream.range(0, oldRun.getLength())
+		final List<Transition<L, P>> transitions = IntStream.range(0, oldRun.getLength() - 1)
 				.mapToObj(oldRun::getTransition).collect(Collectors.toCollection(ArrayList::new));
 
 		int i = 0;
@@ -810,28 +814,29 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 
 			final var secondTransition = transitions.get(j);
 			final var composition = map.get(new Pair<>(transition, secondTransition));
-			assert composition != null;
 
-			final var composed = composition.getComposedTransition();
-
-			if (composition.getCompositionType() == CompositionType.RIGHT_MOVER) {
-				transitions.set(j, composed);
+			if (composition == null) {
+				// This can occur for partial compositions at the pivot place.
+				// In this case, the original transitions that are not fully composed should be preserved.
+				// Hence no adaptation is necessary.
+			} else if (composition.getCompositionType() == CompositionType.RIGHT_MOVER) {
+				transitions.set(j, composition.getComposedTransition());
 				transitions.remove(i);
 
-				// adjust markings: remove marking at i+1, and for all markings up to j remove successors of t1
-				markings.remove(i + 1);
-				for (int k = i; k <= j; ++k) {
-					markings.set(k, removeAll(markings.get(k), transition.getSuccessors()));
+				// adjust markings: for all markings up to j remove successors of t1; and remove marking at i+1
+				for (int k = i + 1; k <= j; ++k) {
+					markings.set(k, undoTransition(markings.get(k), transition));
 				}
+				markings.remove(i + 1);
 			} else {
-				transitions.set(i, composed);
+				transitions.set(i, composition.getComposedTransition());
 				transitions.remove(j);
 
-				// adjust markings: remove marking j+1, and for all markings up to j add successors of t2
-				markings.remove(j + 1);
-				for (int k = i + 1; k < j; ++k) {
-					markings.set(k, addAll(markings.get(k), secondTransition.getSuccessors()));
+				// adjust markings: for all markings up to j add successors of t2; and remove marking j+1
+				for (int k = i + 1; k <= j; ++k) {
+					markings.set(k, fireTransition(markings.get(k), secondTransition));
 				}
+				markings.remove(j);
 			}
 
 			// anything between (old) i and j cannot be a predecessor of pivot, otherwise pivot would have two tokens
@@ -843,26 +848,43 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 		return new PetriNetRun<>(markings, word, transitions);
 	}
 
+	private Marking<P> fireTransition(final Marking<P> marking, final Transition<L, P> transition) {
+		try {
+			return marking.fireTransition(transition);
+		} catch (final PetriNetNot1SafeException e) {
+			throw new AssertionError("failed to fire transition, perhaps due to illegal composition", e);
+		}
+	}
+
+	private Marking<P> undoTransition(final Marking<P> marking, final Transition<L, P> transition) {
+		final Set<P> predecessors = transition.getPredecessors();
+		final Set<P> successors = transition.getSuccessors();
+		final Stream<P> places =
+				Stream.concat(marking.stream().filter(x -> !successors.contains(x)), predecessors.stream());
+
+		final Set<P> resultSet;
+		try {
+			// Using DataStructureUtils is more memory-efficient than HashSet,
+			// and avoiding HashSet copies should be faster.
+			resultSet = DataStructureUtils.asSet(places);
+		} catch (final IllegalArgumentException e) {
+			// thrown if the "places" stream contains duplicate elements
+			// see https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Set.html#unmodifiable
+			final List<P> unsafePlaces = marking.stream().filter(x -> !successors.contains(x))
+					.filter(predecessors::contains).collect(Collectors.toList());
+			throw new AssertionError("failed to undo transition, perhaps due to illegal composition",
+					new PetriNetNot1SafeException(getClass(), unsafePlaces));
+		}
+
+		return new Marking<>(ImmutableSet.of(resultSet));
+	}
+
 	private Marking<P> replace(final Marking<P> oldMarking, final P oldPlace, final P newPlace) {
 		final var newMarking = oldMarking.stream().collect(Collectors.toCollection(HashSet::new));
 		final var removed = newMarking.remove(oldPlace);
 		assert removed;
 		final var added = newMarking.add(newPlace);
 		assert added;
-		return new Marking<>(ImmutableSet.of(newMarking));
-	}
-
-	private Marking<P> removeAll(final Marking<P> oldMarking, final Set<P> oldPlaces) {
-		final var newMarking = oldMarking.stream().collect(Collectors.toCollection(HashSet::new));
-		newMarking.removeAll(oldPlaces);
-		assert oldMarking.size() - newMarking.size() == oldPlaces.size();
-		return new Marking<>(ImmutableSet.of(newMarking));
-	}
-
-	private Marking<P> addAll(final Marking<P> oldMarking, final Set<P> newPlaces) {
-		final var newMarking = oldMarking.stream().collect(Collectors.toCollection(HashSet::new));
-		newMarking.addAll(newPlaces);
-		assert newMarking.size() - oldMarking.size() == newPlaces.size();
 		return new Marking<>(ImmutableSet.of(newMarking));
 	}
 
