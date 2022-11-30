@@ -188,7 +188,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					createPetriAbstraction(services, predicateFactory, true, root, errorLocs), root, csToolkit,
 					predicateFactory, mPrefs, errorLocs, services, mTransitionClazz, stateFactoryForRefinement);
 		case REPEATED_LIPTON_PN:
-			requireNoReuse("Petri net-based analysis");
+			requireNoReuse("Petri net-based analysis with repeated Lipton reduction");
 			requireNoWitnesses(witnessAutomaton, "Petri net-based analysis");
 			return new CegarLoopForPetriNetWithRepeatedLiptonReduction<>(name,
 					createPetriAbstraction(services, predicateFactory, true, root, errorLocs), root, csToolkit,
