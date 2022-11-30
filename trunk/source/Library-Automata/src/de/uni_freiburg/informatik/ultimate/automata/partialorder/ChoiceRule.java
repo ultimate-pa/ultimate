@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
@@ -75,8 +76,9 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 	 */
 	public ChoiceRule(final AutomataLibraryServices services, final LiptonReductionStatisticsGenerator statistics,
 			final BoundedPetriNet<L, P> net, final CoenabledRelation<L, P> coenabledRelation,
-			final ModifiableRetroMorphism<L, P> retromorphism, final ICompositionFactory<L> compositionFactory) {
-		super(services, statistics, net, coenabledRelation);
+			final ModifiableRetroMorphism<L, P> retromorphism, final ICompositionFactory<L> compositionFactory,
+			final PetriNetRun<L, P> run) {
+		super(services, statistics, net, coenabledRelation, run);
 		mRetromorphism = retromorphism;
 		mCompositionFactory = compositionFactory;
 	}
@@ -107,6 +109,15 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 				removeTransition(component);
 				mCoenabledRelation.removeElement(component);
 				mRetromorphism.deleteTransition(component);
+			}
+
+			if (mRun != null) {
+				mRun = adaptRun(mRun, components, composed);
+				try {
+					assert mRun.isRunOf(net);
+				} catch (final PetriNetNot1SafeException e) {
+					throw new AssertionError("Petri net has become unsafe");
+				}
 			}
 
 			mStatistics.reportComposition(LiptonReductionStatisticsDefinitions.ChoiceCompositions);
@@ -160,13 +171,6 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 		}
 
 		final Word<L> word = new Word<>((L[]) letters.toArray());
-		final var run = new PetriNetRun<>(oldRun.getStateSequence(), word, transitions);
-
-		// try {
-		// assert run.isRunOf(mPetriNet);
-		// } catch (final PetriNetNot1SafeException e) {
-		// throw new AssertionError("Petri net has become unsafe");
-		// }
-		return run;
+		return new PetriNetRun<>(oldRun.getStateSequence(), word, transitions);
 	}
 }

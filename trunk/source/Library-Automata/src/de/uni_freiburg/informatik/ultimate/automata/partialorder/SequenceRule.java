@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
@@ -74,8 +75,9 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 			final BoundedPetriNet<L, P> net, final CoenabledRelation<L, P> coenabledRelation,
 			final ModifiableRetroMorphism<L, P> retromorphism, final IIndependenceRelation<Set<P>, L> independence,
 			final ICompositionFactory<L> compositionFactory, final ICopyPlaceFactory<P> placeFactory,
-			final IPostScriptChecker<L, P> postScriptChecker, final BranchingProcess<L, P> completeFinitePrefix) {
-		super(services, statistics, net, coenabledRelation);
+			final IPostScriptChecker<L, P> postScriptChecker, final BranchingProcess<L, P> completeFinitePrefix,
+			final PetriNetRun<L, P> run) {
+		super(services, statistics, net, coenabledRelation, run);
 		mRetromorphism = retromorphism;
 		mIndependence = independence;
 		mCompositionFactory = compositionFactory;
@@ -143,7 +145,15 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 			deleteAll(deleteTransitions);
 			allDeleted.addAll(deleteTransitions);
 
-			// TODO adapt run
+			// adapt run
+			if (mRun != null) {
+				mRun = adaptRun(mRun, pivot, mPivotCopy, executedCompositions, transition2Copy);
+				try {
+					assert mRun.isRunOf(net) : "Run adaptation failed";
+				} catch (final PetriNetNot1SafeException e) {
+					throw new AssertionError("Petri net has become unsafe");
+				}
+			}
 
 			changes = changes || !executedCompositions.isEmpty() || !copyTransitions.isEmpty()
 					|| !deleteTransitions.isEmpty();
@@ -264,6 +274,9 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 		return new Pair<>(copyTransitions, obsoleteTransitions);
 	}
 
+	// TODO refactor this
+	private P mPivotCopy;
+
 	private Map<Transition<L, P>, Transition<L, P>> copyTransitions(final IPetriNet<L, P> net, final P pivot,
 			final Collection<Transition<L, P>> transitions) {
 		P pivotCopyNonAccepting = null;
@@ -291,6 +304,7 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 			final Set<P> post = new HashSet<>(t.getSuccessors());
 			post.remove(pivot);
 			post.add(pivotCopy);
+			mPivotCopy = pivotCopy;
 
 			final Transition<L, P> newTransition =
 					addTransition(t.getSymbol(), t.getPredecessors(), ImmutableSet.of(post));
@@ -747,7 +761,7 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 	// TODO Unclear if efficiency is an issue -- if so, can algorithm be made linear using LinkedList and ListIterator?
 
 	private PetriNetRun<L, P> adaptRun(final PetriNetRun<L, P> oldRun, final P pivot, final P pivotCopy,
-			final Set<ExecutedComposition<L, P>> compositions,
+			final Collection<ExecutedComposition<L, P>> compositions,
 			final Map<Transition<L, P>, Transition<L, P>> oldToCopy) {
 		final var map =
 				compositions.stream().collect(Collectors.toMap(c -> new Pair<>(c.getFirst(), c.getSecond()), c -> c));
@@ -826,14 +840,7 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 		}
 
 		final var word = new Word<>((L[]) transitions.stream().map(Transition::getSymbol).toArray());
-		final var run = new PetriNetRun<>(markings, word, transitions);
-
-		// try {
-		// assert run.isRunOf(mPetriNet);
-		// } catch (final PetriNetNot1SafeException e) {
-		// throw new AssertionError("Petri net has become unsafe");
-		// }
-		return run;
+		return new PetriNetRun<>(markings, word, transitions);
 	}
 
 	private Marking<P> replace(final Marking<P> oldMarking, final P oldPlace, final P newPlace) {

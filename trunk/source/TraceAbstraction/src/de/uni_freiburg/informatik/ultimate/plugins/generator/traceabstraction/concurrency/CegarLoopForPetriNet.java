@@ -151,7 +151,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	protected BranchingProcess<L, IPredicate> mFinitePrefixOfAbstraction;
 
-	private final CounterexampleCache<L> mCounterexampleCache;
+	protected final CounterexampleCache<L> mCounterexampleCache;
 
 	public CegarLoopForPetriNet(final DebugIdentifier name, final BoundedPetriNet<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
@@ -607,7 +607,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		return mPetriClStatisticsGenerator;
 	}
 
-	private static final class CounterexampleCache<L extends IIcfgTransition<?>> {
+	protected static final class CounterexampleCache<L extends IIcfgTransition<?>> {
 		private PetriNetRun<L, IPredicate> mCounterexample;
 
 		public PetriNetRun<L, IPredicate> getCounterexample() {

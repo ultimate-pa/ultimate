@@ -100,9 +100,14 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 		final long start_time = System.currentTimeMillis();
 		final PetriNetLargeBlockEncoding<L> lbe = new PetriNetLargeBlockEncoding<>(getServices(),
 				mIcfg.getCfgSmtToolkit(), cfg, mPref.lbeIndependenceSettings(), mCompositionFactory, mPredicateFactory,
-				mIndependenceCache, mFinitePrefixOfAbstraction);
+				mIndependenceCache, mFinitePrefixOfAbstraction, mCounterexampleCache.getCounterexample());
 		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 		getServices().getBacktranslationService().addTranslator(mCompositionFactory.getBacktranslator());
+
+		final var adaptedRun = lbe.getAdaptedRun();
+		if (adaptedRun != null) {
+			mCounterexampleCache.setCounterexample(adaptedRun);
+		}
 
 		final long end_time = System.currentTimeMillis();
 		final long difference = end_time - start_time;

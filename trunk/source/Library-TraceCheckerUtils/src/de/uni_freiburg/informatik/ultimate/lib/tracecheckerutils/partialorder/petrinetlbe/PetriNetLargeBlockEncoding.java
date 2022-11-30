@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.Di
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
@@ -81,6 +82,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	private IIndependenceCache<?, L> mIndependenceCache;
 
 	private final BoundedPetriNet<L, IPredicate> mResult;
+	private PetriNetRun<L, IPredicate> mRun;
 
 	private final PetriNetLargeBlockEncodingStatisticsGenerator mStatistics;
 
@@ -114,7 +116,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			final IIndependenceCache<?, L> independenceCache)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		this(services, cfgSmtToolkit, petriNet, independenceSettings, compositionFactory, predicateFactory,
-				independenceCache, null);
+				independenceCache, null, null);
 	}
 
 	/**
@@ -137,6 +139,9 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	 *            A cache for independence queries to be used by the independence relation. May be null.
 	 * @param finitePrefix
 	 *            A complete finite prefix of the given net, to be re-used by the large block encoding. May be null.
+	 * @param run
+	 *            An (optional) run of the given net. If a run is given, you can retrieve an adapted run of the reduced
+	 *            net by calling #getAdaptedRun.
 	 *
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled.
@@ -146,8 +151,8 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final BoundedPetriNet<L, IPredicate> petriNet, final IndependenceSettings independenceSettings,
 			ICompositionFactory<L> compositionFactory, final BasicPredicateFactory predicateFactory,
-			final IIndependenceCache<?, L> independenceCache, final BranchingProcess<L, IPredicate> finitePrefix)
-			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+			final IIndependenceCache<?, L> independenceCache, final BranchingProcess<L, IPredicate> finitePrefix,
+			final PetriNetRun<L, IPredicate> run) throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mServices = services;
 		mManagedScript = cfgSmtToolkit.getManagedScript();
@@ -167,8 +172,9 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 				new InfeasPostScriptChecker<>(mServices, mManagedScript);
 		try {
 			final LiptonReduction<L, IPredicate> lipton = new LiptonReduction<>(automataServices, petriNet,
-					compositionFactory, placeFactory, moverCheck, postScriptChecker, finitePrefix);
+					compositionFactory, placeFactory, moverCheck, postScriptChecker, finitePrefix, run);
 			mResult = lipton.getResult();
+			mRun = lipton.getAdaptedRun();
 			mStatistics = new PetriNetLargeBlockEncodingStatisticsGenerator(lipton.getStatistics(),
 					moverCheck.getStatistics());
 		} catch (final AutomataOperationCanceledException ce) {
@@ -277,6 +283,10 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 
 	public BoundedPetriNet<L, IPredicate> getResult() {
 		return mResult;
+	}
+
+	public PetriNetRun<L, IPredicate> getAdaptedRun() {
+		return mRun;
 	}
 
 	public PetriNetLargeBlockEncodingBenchmarks getStatistics() {

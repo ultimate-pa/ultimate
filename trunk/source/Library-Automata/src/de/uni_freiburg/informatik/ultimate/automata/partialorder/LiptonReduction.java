@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.CopySubnet;
@@ -75,6 +76,8 @@ public class LiptonReduction<L, P> {
 	private final IIndependenceRelation<Set<P>, L> mMoverCheck;
 
 	private final BoundedPetriNet<L, P> mPetriNet;
+	private PetriNetRun<L, P> mRun;
+
 	private final BranchingProcess<L, P> mBranchingProcess;
 	private final ModifiableRetroMorphism<L, P> mRetromorphism;
 	private final CoenabledRelation<L, P> mCoEnabledRelation;
@@ -105,14 +108,19 @@ public class LiptonReduction<L, P> {
 	public LiptonReduction(final AutomataLibraryServices services, final BoundedPetriNet<L, P> petriNet,
 			final ICompositionFactory<L> compositionFactory, final ICopyPlaceFactory<P> placeFactory,
 			final IIndependenceRelation<Set<P>, L> independenceRelation,
-			final IPostScriptChecker<L, P> stuckPlaceChecker, final BranchingProcess<L, P> finitePrefix)
-			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
+			final IPostScriptChecker<L, P> stuckPlaceChecker, final BranchingProcess<L, P> finitePrefix,
+			final PetriNetRun<L, P> run) throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(LiptonReduction.class);
 		mCompositionFactory = compositionFactory;
 		mPlaceFactory = placeFactory;
 		mMoverCheck = independenceRelation;
 		mStuckPlaceChecker = stuckPlaceChecker;
+
+		mRun = run;
+		if (run != null) {
+			assert run.isRunOf(petriNet) : "Given run does not belong to given net";
+		}
 
 		// Copy the Petri net once, so the original is not modified.
 		final var copy2Originals = new HashMap<Transition<L, P>, Transition<L, P>>();
@@ -204,8 +212,10 @@ public class LiptonReduction<L, P> {
 	@Deprecated(since = "2021-09-15")
 	private boolean synthesizeLockRuleWrapper(final BoundedPetriNet<L, P> petriNet) {
 		final SynthesizeLockRule<L, P> rule = new SynthesizeLockRule<>(mServices, mStatistics, petriNet,
-				mCoEnabledRelation, mMoverCheck, mPlaceFactory, true);
-		return rule.apply();
+				mCoEnabledRelation, mMoverCheck, mPlaceFactory, true, mRun);
+		final boolean result = rule.apply();
+		mRun = rule.getAdaptedRun();
+		return result;
 	}
 
 	/**
@@ -214,8 +224,10 @@ public class LiptonReduction<L, P> {
 	@Deprecated(since = "2021-09-14")
 	private boolean choiceRuleWrapper(final BoundedPetriNet<L, P> petriNet) {
 		final ChoiceRule<L, P> rule = new ChoiceRule<>(mServices, mStatistics, petriNet, mCoEnabledRelation,
-				mRetromorphism, mCompositionFactory);
-		return rule.apply();
+				mRetromorphism, mCompositionFactory, mRun);
+		final boolean result = rule.apply();
+		mRun = rule.getAdaptedRun();
+		return result;
 	}
 
 	/**
@@ -223,15 +235,22 @@ public class LiptonReduction<L, P> {
 	 */
 	@Deprecated(since = "2022-10-07")
 	private boolean sequenceRuleWrapper(final BoundedPetriNet<L, P> petriNet) {
-		final SequenceRule<L, P> rule = new SequenceRule<>(mServices, mStatistics, petriNet, mCoEnabledRelation,
-				mRetromorphism, mMoverCheck, mCompositionFactory, mPlaceFactory, mStuckPlaceChecker, mBranchingProcess);
-		return rule.apply();
+		final SequenceRule<L, P> rule =
+				new SequenceRule<>(mServices, mStatistics, petriNet, mCoEnabledRelation, mRetromorphism, mMoverCheck,
+						mCompositionFactory, mPlaceFactory, mStuckPlaceChecker, mBranchingProcess, mRun);
+		final boolean result = rule.apply();
+		mRun = rule.getAdaptedRun();
+		return result;
 	}
 
 	// ***************************************************** OUTPUT ****************************************************
 
 	public BoundedPetriNet<L, P> getResult() {
 		return mPetriNet;
+	}
+
+	public PetriNetRun<L, P> getAdaptedRun() {
+		return mRun;
 	}
 
 	public LiptonReductionStatisticsGenerator getStatistics() {

@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -63,8 +64,8 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 	public SynthesizeLockRule(final AutomataLibraryServices services,
 			final LiptonReductionStatisticsGenerator statistics, final BoundedPetriNet<L, P> net,
 			final CoenabledRelation<L, P> coenabledRelation, final IIndependenceRelation<Set<P>, L> independence,
-			final ICopyPlaceFactory<P> placeFactory, final boolean requireLoop) {
-		super(services, statistics, net, coenabledRelation);
+			final ICopyPlaceFactory<P> placeFactory, final boolean requireLoop, final PetriNetRun<L, P> run) {
+		super(services, statistics, net, coenabledRelation, run);
 		mIndependence = independence;
 		mPlaceFactory = placeFactory;
 		mRequireLoop = requireLoop;
