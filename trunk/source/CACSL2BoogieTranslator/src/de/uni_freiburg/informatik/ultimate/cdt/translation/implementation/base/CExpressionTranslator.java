@@ -577,7 +577,8 @@ public class CExpressionTranslator {
 		case IASTBinaryExpression.op_binaryAndAssign:
 		case IASTBinaryExpression.op_binaryXorAssign:
 		case IASTBinaryExpression.op_binaryOrAssign: {
-			return new ExpressionResultBuilder(result).addAllExceptLrValue(left, right).build();
+			return new ExpressionResultBuilder().addAllExceptLrValue(left, right).addAllIncludingLrValue(result)
+					.build();
 		}
 		default:
 			throw new AssertionError("no bitwise arithmetic operation " + op);
