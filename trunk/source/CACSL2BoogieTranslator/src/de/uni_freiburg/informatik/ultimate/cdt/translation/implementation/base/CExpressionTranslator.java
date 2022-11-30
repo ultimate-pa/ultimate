@@ -416,7 +416,8 @@ public class CExpressionTranslator {
 		final ExpressionResult result =
 				mExpressionTranslation.handleBinaryBitwiseExpression(loc, op, leftPromoted.getLrValue().getValue(),
 						typeOfResult, rightConverted.getLrValue().getValue(), typeOfResult, hook, mAuxVarInfoBuilder);
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder(result);
+		final ExpressionResultBuilder builder =
+				new ExpressionResultBuilder().addAllExceptLrValue(leftPromoted, rightConverted);
 
 		switch (op) {
 		case IASTBinaryExpression.op_shiftLeft:
@@ -427,7 +428,7 @@ public class CExpressionTranslator {
 				addIntegerBoundsCheck(loc, builder, typeOfResult, op, hook, (CPrimitive) rightConverted.getCType(),
 						leftPromoted.getLrValue().getValue(), rightConverted.getLrValue().getValue());
 			}
-			return builder.addAllExceptLrValue(left, right).build();
+			return builder.addAllIncludingLrValue(result).build();
 		}
 		default:
 			throw new AssertionError("no bitshift " + op);
