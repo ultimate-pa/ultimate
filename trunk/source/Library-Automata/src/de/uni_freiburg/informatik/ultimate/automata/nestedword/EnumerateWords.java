@@ -26,16 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
-import java.lang.reflect.Array;
-import java.util.ArrayDeque;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.util.BFSIterator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -50,88 +48,49 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public final class EnumerateWords {
-	public static <L> Iterable<Word<L>> enumerate(final INwaOutgoingTransitionProvider<L, ?> automaton,
-			final Class<L> clazz) {
-		return () -> new WordIterator<>(automaton, clazz);
+	public static <L> Iterable<Word<L>> enumerate(final INwaOutgoingTransitionProvider<L, ?> automaton) {
+		return () -> new WordIterator<>(automaton);
 	}
 
-	public static <L> Stream<Word<L>> stream(final INwaOutgoingTransitionProvider<L, ?> automaton,
-			final Class<L> clazz) {
-		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(new WordIterator<>(automaton, clazz),
+	public static <L> Stream<Word<L>> stream(final INwaOutgoingTransitionProvider<L, ?> automaton) {
+		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(new WordIterator<>(automaton),
 				Spliterator.ORDERED | Spliterator.IMMUTABLE), false);
 	}
 
-	private static class WordIterator<L, S> implements Iterator<Word<L>> {
+	private static class WordIterator<L, S> extends BFSIterator<S, OutgoingInternalTransition<L, S>, Word<L>> {
 		private final INwaOutgoingTransitionProvider<L, S> mAutomaton;
-		private final Class<L> mClazz;
-		private final ArrayDeque<Pair<S, ImmutableList<L>>> mQueue = new ArrayDeque<>();
 
-		private Word<L> mNextWord;
-
-		public WordIterator(final INwaOutgoingTransitionProvider<L, S> automaton, final Class<L> clazz) {
+		public WordIterator(final INwaOutgoingTransitionProvider<L, S> automaton) {
+			super(automaton.getInitialStates());
 			assert NestedWordAutomataUtils.isFiniteAutomaton(automaton) : "only finite automata are supported";
-
 			mAutomaton = automaton;
-			mClazz = clazz;
-			for (final S init : mAutomaton.getInitialStates()) {
-				mQueue.offer(new Pair<>(init, ImmutableList.empty()));
-			}
 		}
 
 		@Override
-		public boolean hasNext() {
-			if (mNextWord != null) {
-				return true;
-			}
-			if (mQueue.isEmpty()) {
-				return false;
-			}
-
-			searchNextWord();
-			return mNextWord != null;
+		protected Iterable<OutgoingInternalTransition<L, S>> getOutgoing(final S state) {
+			return mAutomaton.internalSuccessors(state);
 		}
 
 		@Override
-		public Word<L> next() {
-			if (mNextWord == null) {
-				searchNextWord();
-			}
-			if (mNextWord == null) {
-				throw new NoSuchElementException();
-			}
-
-			final Word<L> result = mNextWord;
-			mNextWord = null;
-			return result;
+		protected S getSuccessor(final S state, final OutgoingInternalTransition<L, S> transition) {
+			return transition.getSucc();
 		}
 
-		private void searchNextWord() {
-			assert mNextWord == null;
-
-			while (!mQueue.isEmpty()) {
-				final var candidate = mQueue.poll();
-				final var state = candidate.getFirst();
-				final var word = candidate.getSecond();
-
-				for (final var outgoing : mAutomaton.internalSuccessors(state)) {
-					mQueue.offer(new Pair<>(outgoing.getSucc(), new ImmutableList<>(outgoing.getLetter(), word)));
-				}
-				if (mAutomaton.isFinal(state)) {
-					mNextWord = makeWord(word);
-					return;
-				}
-			}
+		@Override
+		protected boolean isTarget(final S state) {
+			return mAutomaton.isFinal(state);
 		}
 
-		private Word<L> makeWord(final ImmutableList<L> letters) {
-			final L[] array = (L[]) Array.newInstance(mClazz, letters.size());
-			int i = letters.size() - 1;
-			for (final var letter : letters) {
-				array[i] = letter;
+		@Override
+		protected Word<L> finish(final ImmutableList<Pair<S, OutgoingInternalTransition<L, S>>> stack,
+				final S finalState) {
+			final L[] letters = (L[]) new Object[stack.size()];
+			int i = stack.size() - 1;
+			for (final var frame : stack) {
+				letters[i] = frame.getSecond().getLetter();
 				i--;
 			}
-			return new Word<>(array);
+			return new Word<>(letters);
 		}
 	}
-
 }

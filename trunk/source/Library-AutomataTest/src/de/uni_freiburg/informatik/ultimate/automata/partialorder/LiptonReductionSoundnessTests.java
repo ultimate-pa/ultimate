@@ -86,7 +86,7 @@ public class LiptonReductionSoundnessTests extends LiptonReductionTestsBase {
 			throws PetriNetNot1SafeException {
 		final var originalAut =
 				new LazyPetriNet2FiniteAutomaton<>(mAutomataServices, new StringPetriFactory(), original, null);
-		return EnumerateWords.stream(originalAut, String.class).limit(WORD_LIMIT)
+		return EnumerateWords.stream(originalAut).limit(WORD_LIMIT)
 				.filter(w -> !hasRepresentative(reduction, w, independence)).findAny();
 	}
 
@@ -94,8 +94,7 @@ public class LiptonReductionSoundnessTests extends LiptonReductionTestsBase {
 			final IPetriNet<String, String> original) throws AutomataLibraryException {
 		final var reductionAut =
 				new LazyPetriNet2FiniteAutomaton<>(mAutomataServices, new StringPetriFactory(), reduction, null);
-		return EnumerateWords.stream(reductionAut, String.class).limit(WORD_LIMIT).filter(w -> !isAccepted(original, w))
-				.findAny();
+		return EnumerateWords.stream(reductionAut).limit(WORD_LIMIT).filter(w -> !isAccepted(original, w)).findAny();
 	}
 
 	private boolean hasRepresentative(final IPetriNet<String, String> reduction, final Word<String> w,
@@ -107,8 +106,7 @@ public class LiptonReductionSoundnessTests extends LiptonReductionTestsBase {
 		final String flattenedW = flatten(w);
 		try {
 			return EnumerateWords
-					.stream(new LazyPetriNet2FiniteAutomaton<>(mAutomataServices, new StringPetriFactory(), net, null),
-							String.class)
+					.stream(new LazyPetriNet2FiniteAutomaton<>(mAutomataServices, new StringPetriFactory(), net, null))
 					.takeWhile(v -> v.length() <= flattenedW.length()).anyMatch(v -> flatten(v).equals(flattenedW));
 		} catch (final AutomataLibraryException e) {
 			throw new RuntimeException(e);
