@@ -45,12 +45,11 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
@@ -66,9 +65,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 /**
  * Performs a Large Block Encoding on Petri nets. This operation performs Lipton reduction ({@link LiptonReduction}) and
  * instantiates the parameters in a way suitable (and sound) for Trace abstraction.
- *
- * Furthermore, it implements backtranslation of {@link IProgramExecution}s containing fused transitions as created by
- * Lipton reductions.
  *
  * @author Elisabeth Schanno
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
@@ -94,16 +90,53 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	 * @param services
 	 *            A {@link IUltimateServiceProvider} instance.
 	 * @param cfgSmtToolkit
-	 *            A {@link CfgSmtToolkit} instance that has to contain all procedures and variables that may occur in
-	 *            this {@link IIcfg}.
+	 *            A {@link CfgSmtToolkit} instance that contains all procedures and variables that occur in the given
+	 *            Petri net.
 	 * @param petriNet
 	 *            The Petri net on which the large block encoding should be performed.
-	 * @param petriNetLbeSettings
+	 * @param independenceSettings
 	 *            Determines the independence relation to be used.
 	 * @param compositionFactory
 	 *            A composition factory for the letters of the Petri net.
 	 * @param predicateFactory
 	 *            A predicate factory for predicates of the control flow graph.
+	 * @param independenceCache
+	 *            A cache for independence queries to be used by the independence relation. May be null.
+	 *
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled.
+	 * @throws PetriNetNot1SafeException
+	 *             if Petri net is not 1-safe.
+	 */
+	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
+			final BoundedPetriNet<L, IPredicate> petriNet, final IndependenceSettings independenceSettings,
+			final ICompositionFactory<L> compositionFactory, final BasicPredicateFactory predicateFactory,
+			final IIndependenceCache<?, L> independenceCache)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		this(services, cfgSmtToolkit, petriNet, independenceSettings, compositionFactory, predicateFactory,
+				independenceCache, null);
+	}
+
+	/**
+	 * Performs Large Block Encoding on the given Petri net.
+	 *
+	 * @param services
+	 *            A {@link IUltimateServiceProvider} instance.
+	 * @param cfgSmtToolkit
+	 *            A {@link CfgSmtToolkit} instance that contains all procedures and variables that occur in the given
+	 *            Petri net.
+	 * @param petriNet
+	 *            The Petri net on which the large block encoding should be performed.
+	 * @param independenceSettings
+	 *            Determines the independence relation to be used.
+	 * @param compositionFactory
+	 *            A composition factory for the letters of the Petri net.
+	 * @param predicateFactory
+	 *            A predicate factory for predicates of the control flow graph.
+	 * @param independenceCache
+	 *            A cache for independence queries to be used by the independence relation. May be null.
+	 * @param finitePrefix
+	 *            A complete finite prefix of the given net, to be re-used by the large block encoding. May be null.
 	 *
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled.
@@ -113,7 +146,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final BoundedPetriNet<L, IPredicate> petriNet, final IndependenceSettings independenceSettings,
 			ICompositionFactory<L> compositionFactory, final BasicPredicateFactory predicateFactory,
-			final IIndependenceCache<?, L> independenceCache)
+			final IIndependenceCache<?, L> independenceCache, final BranchingProcess<L, IPredicate> finitePrefix)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mServices = services;
@@ -134,7 +167,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 				new InfeasPostScriptChecker<>(mServices, mManagedScript);
 		try {
 			final LiptonReduction<L, IPredicate> lipton = new LiptonReduction<>(automataServices, petriNet,
-					compositionFactory, placeFactory, moverCheck, postScriptChecker, null);
+					compositionFactory, placeFactory, moverCheck, postScriptChecker, finitePrefix);
 			mResult = lipton.getResult();
 			mStatistics = new PetriNetLargeBlockEncodingStatisticsGenerator(lipton.getStatistics(),
 					moverCheck.getStatistics());
