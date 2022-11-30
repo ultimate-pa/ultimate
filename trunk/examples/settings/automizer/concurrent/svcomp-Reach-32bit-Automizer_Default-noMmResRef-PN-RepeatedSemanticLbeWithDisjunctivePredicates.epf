@@ -48,9 +48,8 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=LoopsAndPotentialCycles
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Automaton\ type\ used\ in\ concurrency\ analysis=PETRI_NET
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Automaton\ type\ used\ in\ concurrency\ analysis=REPEATED_LIPTON_PN
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Large\ block\ encoding\ in\ concurrent\ analysis=SEMANTIC_BASED_MOVER_CHECK_WITH_PREDICATES_DISJUNCTIVE
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Apply\ repeated\ Lipton\ Reduction=true
 
 
 #Thu Oct 29 23:01:13 CET 2015
