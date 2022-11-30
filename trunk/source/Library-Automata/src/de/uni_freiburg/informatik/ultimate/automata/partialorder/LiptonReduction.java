@@ -33,6 +33,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -117,15 +119,16 @@ public class LiptonReduction<L, P> {
 		mMoverCheck = independenceRelation;
 		mStuckPlaceChecker = stuckPlaceChecker;
 
-		mRun = run;
-		if (run != null) {
-			assert run.isRunOf(petriNet) : "Given run does not belong to given net";
-		}
-
 		// Copy the Petri net once, so the original is not modified.
 		final var copy2Originals = new HashMap<Transition<L, P>, Transition<L, P>>();
 		mPetriNet = CopySubnet.copy(mServices, petriNet, new HashSet<>(petriNet.getTransitions()),
 				new HashSet<>(petriNet.getAlphabet()), true, copy2Originals);
+
+		if (run != null) {
+			assert run.isRunOf(petriNet) : "Given run does not belong to given net";
+			mRun = adaptRunToCopy(run, copy2Originals);
+			assert mRun.isRunOf(mPetriNet) : "Adaptation of run top copied net failed";
+		}
 
 		// Collect information used by reduction rules.
 		mBranchingProcess = getFinitePrefix(finitePrefix);
@@ -138,6 +141,14 @@ public class LiptonReduction<L, P> {
 		}
 
 		performReduction();
+	}
+
+	private PetriNetRun<L, P> adaptRunToCopy(final PetriNetRun<L, P> run,
+			final HashMap<Transition<L, P>, Transition<L, P>> copy2Originals) {
+		final var markings = IntStream.range(0, run.getLength()).mapToObj(run::getMarking).collect(Collectors.toList());
+		final var transitions = IntStream.range(0, run.getLength() - 1).mapToObj(run::getTransition)
+				.map(copy2Originals::get).collect(Collectors.toList());
+		return new PetriNetRun<>(markings, run.getWord(), transitions);
 	}
 
 	private BranchingProcess<L, P> getFinitePrefix(final BranchingProcess<L, P> finitePrefix)
