@@ -32,7 +32,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/AllErrorsAtOnce=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Interpolating\ solver=Z3
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Preserve\ Goto-Edges\ in\ RCFG=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=OneNontrivialStatement
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SingleStatement
 #Fri Feb 21 11:44:54 CET 2014
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=IGNORE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main

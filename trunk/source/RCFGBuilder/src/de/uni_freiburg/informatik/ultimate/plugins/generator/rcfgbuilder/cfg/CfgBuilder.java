@@ -204,10 +204,6 @@ public class CfgBuilder {
 
 		final CodeBlockSize userDefineCodeBlockSize =
 				prefs.getEnum(RcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE, CodeBlockSize.class);
-		if (userDefineCodeBlockSize == CodeBlockSize.SingleStatement) {
-			mLogger.warn("Setting " + CodeBlockSize.SingleStatement + " is deprecated and superseded by "
-					+ CodeBlockSize.OneNontrivialStatement);
-		}
 		if ((userDefineCodeBlockSize == CodeBlockSize.LoopFreeBlock
 				|| userDefineCodeBlockSize == CodeBlockSize.SequenceOfStatements) && fgInfo.hasSomeForkEdge()) {
 			mCodeBlockSize = CodeBlockSize.OneNontrivialStatement;
@@ -500,7 +496,7 @@ public class CfgBuilder {
 	/**
 	 * Check it this statement is a plain <code>assume true</code> statement, i.e. whether
 	 * * it has an empty list of attributes or no attributes at all, and
-	 * * it is not annotated with an LTLStepAnnotation. 
+	 * * it is not annotated with an LTLStepAnnotation.
 	 */
 	private static boolean isPlainAssumeTrueStatement(final Statement st) {
 		if (st instanceof AssumeStatement) {
