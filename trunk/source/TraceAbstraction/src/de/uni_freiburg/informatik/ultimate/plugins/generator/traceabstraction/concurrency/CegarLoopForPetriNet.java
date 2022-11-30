@@ -149,6 +149,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	private Set<IPredicate> mProgramPointPlaces;
 
+	protected BranchingProcess<L, IPredicate> mFinitePrefixOfAbstraction;
+
 	private final CounterexampleCache<L> mCounterexampleCache;
 
 	public CegarLoopForPetriNet(final DebugIdentifier name, final BoundedPetriNet<L, IPredicate> initialAbstraction,
@@ -185,9 +187,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			} finally {
 				mPetriClStatisticsGenerator.stop(PetriCegarLoopStatisticsDefinitions.EmptinessCheckTime.toString());
 			}
-			final BranchingProcess<L, IPredicate> finPrefix = unf.getFinitePrefix();
-			mCoRelationQueries +=
-					finPrefix.getCoRelation().getQueryCounterYes() + finPrefix.getCoRelation().getQueryCounterNo();
+			mFinitePrefixOfAbstraction = unf.getFinitePrefix();
+			mCoRelationQueries += mFinitePrefixOfAbstraction.getCoRelation().getQueryCounterYes()
+					+ mFinitePrefixOfAbstraction.getCoRelation().getQueryCounterNo();
 			mCounterexample = unf.getAcceptingRun();
 		}
 		if (mCounterexample == null) {
@@ -264,12 +266,14 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			}
 			if (USE_ON_DEMAND_RESULT) {
 				mAbstraction = enhancementResult.getSecond().getResult();
+				mFinitePrefixOfAbstraction = enhancementResult.getSecond().getFinitePrefixOfDifference().getResult();
 			} else {
 				final Difference<L, IPredicate, ?> diff = new Difference<>(new AutomataLibraryServices(getServices()),
 						mPredicateFactoryInterpolantAutomata, mAbstraction, dia, LoopSyncMethod.HEURISTIC,
 						enhancementResult.getSecond(), true);
 				mLogger.info(diff.getAutomataOperationStatistics());
 				mAbstraction = diff.getResult();
+				mFinitePrefixOfAbstraction = null;
 			}
 			mCegarLoopBenchmark.reportInterpolantAutomatonStates(dia.size());
 		} finally {
@@ -299,6 +303,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 				super.writeAutomatonToFile(mAbstraction, filename);
 			}
 			mAbstraction = minimizationResult.getFirst();
+			mFinitePrefixOfAbstraction = null;
 		}
 		if (mRemoveRedundantFlow) {
 			final Triple<BoundedPetriNet<L, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> minimizationResult =
@@ -311,6 +316,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 				super.writeAutomatonToFile(mAbstraction, filename);
 			}
 			mAbstraction = minimizationResult.getFirst();
+			mFinitePrefixOfAbstraction = null;
 		}
 
 		if (mPref.unfoldingToNet()) {
@@ -338,6 +344,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 							unf.getFinitePrefix(), true);
 			assert fp2pn.checkResult(mPredicateFactoryResultChecking) : fp2pn.getClass().getSimpleName() + " failed";
 			mAbstraction = fp2pn.getResult();
+			mFinitePrefixOfAbstraction = null;
+
 			final Set<IPredicate> oldProgramPointPlaces = mProgramPointPlaces;
 			mProgramPointPlaces = fp2pn.getOldToNewPlaces().projectToRange(oldProgramPointPlaces);
 			final int flowAfterwards = mAbstraction.size();
@@ -371,6 +379,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 				final IPetriNet<L, IPredicate> res = PetriNetUtils.mergePlaces(new AutomataLibraryServices(mServices),
 						abstractionAsNet, placeMap);
 				mAbstraction = (BoundedPetriNet<L, IPredicate>) res;
+				mFinitePrefixOfAbstraction = null;
+
 				mProgramPointPlaces = mProgramPointPlaces.stream().map(placeMap::get).collect(Collectors.toSet());
 				mLogger.info(mProgramPointPlaces.size() + " programPoint places, "
 						+ (mAbstraction.getPlaces().size() - mProgramPointPlaces.size()) + " predicate places.");
@@ -485,8 +495,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 				}
 				final long start = System.nanoTime();
 				try {
-					dpod = new DifferencePairwiseOnDemand<>(new AutomataLibraryServices(getServices()),
-							(IPetriNet<L, IPredicate>) mAbstraction, raw, universalSubtrahendLoopers);
+					dpod = new DifferencePairwiseOnDemand<>(new AutomataLibraryServices(getServices()), mAbstraction,
+							raw, universalSubtrahendLoopers);
 				} catch (final AutomataOperationCanceledException tce) {
 					final String taskDescription = generateOnDemandEnhancementCanceledMessage(interpolAutomaton,
 							universalSubtrahendLoopers, mAbstraction.getAlphabet(), mIteration);

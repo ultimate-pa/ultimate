@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2021 Dennis Wölfing
- * Copyright (C) 2021 University of Freiburg
+ * Copyright (C) 2021-2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2021-2022 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -97,9 +98,9 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 	protected BoundedPetriNet<L, IPredicate> applyLargeBlockEncoding(final BoundedPetriNet<L, IPredicate> cfg)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		final long start_time = System.currentTimeMillis();
-		final PetriNetLargeBlockEncoding<L> lbe =
-				new PetriNetLargeBlockEncoding<>(getServices(), mIcfg.getCfgSmtToolkit(), cfg,
-						mPref.lbeIndependenceSettings(), mCompositionFactory, mPredicateFactory, mIndependenceCache);
+		final PetriNetLargeBlockEncoding<L> lbe = new PetriNetLargeBlockEncoding<>(getServices(),
+				mIcfg.getCfgSmtToolkit(), cfg, mPref.lbeIndependenceSettings(), mCompositionFactory, mPredicateFactory,
+				mIndependenceCache, mFinitePrefixOfAbstraction);
 		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 		getServices().getBacktranslationService().addTranslator(mCompositionFactory.getBacktranslator());
 
