@@ -261,38 +261,6 @@ public class BitabsTranslation {
 		return buildExpressionResult(loc, "bitwiseOr", type, auxvarinfo, exactCases, assumptions);
 	}
 
-	/**
-	 * Overapproximates the bitwise {@code not}. Uses the following rules to increase the precision:
-	 * <li>~a != a
-	 * <li>If a < 0, then ~a > 0
-	 * <li>If a >= 0, then ~a < 0 (if a is a signed integer)
-	 */
-	public static ExpressionResult abstractCompl(final ILocation loc, final Expression expr, final CPrimitive type,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final boolean isUnsigned) {
-		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
-		final IdentifierExpression auxvar = auxvarinfo.getExp();
-
-		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
-		final List<Expression> assumptions;
-		if (isUnsigned) {
-			// ~a != a
-			final Expression neq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, auxvar, expr);
-			final Expression nonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, zero);
-			assumptions = List.of(neq, nonNegative);
-		} else {
-			// If a < 0, then ~a > 0
-			final Expression positive = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
-					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, expr, zero),
-					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, auxvar, zero));
-			// If a >= 0, then ~a < 0
-			final Expression negative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
-					ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, expr, zero),
-					ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, auxvar, zero));
-			assumptions = List.of(positive, negative);
-		}
-		return buildExpressionResult(loc, "bitwiseComplement", type, auxvarinfo, List.of(), assumptions);
-	}
-
 	private static boolean isZero(final Expression expr) {
 		return expr instanceof IntegerLiteral && "0".equals(((IntegerLiteral) expr).getValue());
 	}

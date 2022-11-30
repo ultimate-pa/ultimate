@@ -33,6 +33,7 @@ import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -254,16 +255,25 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	protected Expression constructUnaryMinusIntegerExpression(final ILocation loc, final Expression expr,
+	protected Expression constructUnaryIntegerExpression(final ILocation loc, final int op, final Expression expr,
 			final CPrimitive type) {
-		return constructUnaryIntExprMinus(loc, expr, type);
+		switch (op) {
+		case IASTUnaryExpression.op_tilde:
+			return constructUnaryIntExprComplement(loc, expr, type);
+		case IASTUnaryExpression.op_minus:
+			return constructUnaryIntExprMinus(loc, expr, type);
+		default:
+			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported bitwise expression");
+		}
 	}
 
-	@Override
-	public ExpressionResult handleUnaryComplement(final ILocation loc, final Expression exp, final CPrimitive type,
-			final AuxVarInfoBuilder auxVarInfoBuilder) {
-		return BitabsTranslation.abstractCompl(loc, applyWraparoundIfNecessary(loc, type, exp), type, auxVarInfoBuilder,
-				mTypeSizes.isUnsigned(type));
+	private Expression constructUnaryIntExprComplement(final ILocation loc, final Expression expr,
+			final CPrimitive type) {
+		// Transform ~x to -1-x or MAX_VALUE-x (for unsigned, we could also return the same)
+		final String subtrahendValue =
+				mTypeSizes.isUnsigned(type) ? mTypeSizes.getMaxValueOfPrimitiveType(type).toString() : "-1";
+		final Expression subtrahend = ExpressionFactory.createIntegerLiteral(loc, subtrahendValue);
+		return ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, subtrahend, expr);
 	}
 
 	private static Expression constructUnaryIntExprMinus(final ILocation loc, final Expression expr,
@@ -982,7 +992,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final int operation, final CPrimitive resultType, final Expression operand) {
 		assert resultType.isIntegerType()
 				&& !mTypeSizes.isUnsigned(resultType) : "Overflow check only for signed integer types";
-		final Expression operationResult = constructUnaryMinusExpression(loc, operand, resultType);
+		assert operation == IASTUnaryExpression.op_minus;
+
+		final Expression operationResult = constructUnaryExpression(loc, operation, operand, resultType);
 		return constructOverflowCheck(loc, resultType, operationResult);
 	}
 

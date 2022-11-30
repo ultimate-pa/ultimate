@@ -914,8 +914,8 @@ public class StandardFunctionHandler {
 		final Expression positive = mExpressionTranslation.constructBinaryComparisonExpression(loc,
 				IASTBinaryExpression.op_greaterThan, auxvar.getExp(), resultType,
 				mTypeSizes.constructLiteralForIntegerType(loc, resultType, BigInteger.ZERO), resultType);
-		final Expression negated =
-				mExpressionTranslation.constructUnaryMinusExpression(loc, auxvar.getExp(), resultType);
+		final Expression negated = mExpressionTranslation.constructUnaryExpression(loc, IASTUnaryExpression.op_minus,
+				auxvar.getExp(), resultType);
 		final Expression iteExpression =
 				ExpressionFactory.constructIfThenElseExpression(loc, positive, auxvar.getExp(), negated);
 		return builder.setLrValue(new RValue(iteExpression, resultType)).build();

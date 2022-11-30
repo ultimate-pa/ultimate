@@ -333,9 +333,20 @@ public class CExpressionTranslator {
 		case IASTUnaryExpression.op_plus:
 			return inputType.isArithmeticType() ? doIntegerPromotion(loc, operand) : operand;
 		case IASTUnaryExpression.op_minus:
-			return handleUnaryMinus(loc, operand, hook, inputType);
 		case IASTUnaryExpression.op_tilde:
-			return handleUnaryComplement(loc, operand, inputType);
+			if (!inputType.isArithmeticType()) {
+				throw new UnsupportedOperationException("arithmetic type required");
+			}
+			final ExpressionResult operandPromoted = doIntegerPromotion(loc, operand);
+			final CPrimitive resultType = (CPrimitive) operandPromoted.getLrValue().getCType();
+			final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(operandPromoted);
+			if (op == IASTUnaryExpression.op_minus && resultType.isIntegerType()) {
+				addIntegerBoundsCheck(loc, result, resultType, op, hook, null, operand.getLrValue().getValue());
+			}
+			final Expression bwexpr = mExpressionTranslation.constructUnaryExpression(loc, op,
+					operandPromoted.getLrValue().getValue(), resultType);
+			final RValue rval = new RValue(bwexpr, resultType, false);
+			return result.setLrValue(rval).build();
 		default:
 			throw new IllegalArgumentException("not a unary arithmetic operator " + op);
 		}
@@ -378,36 +389,6 @@ public class CExpressionTranslator {
 		final boolean isBoogieBool = true;
 		final RValue rval = new RValue(negated, resultType, isBoogieBool);
 		return builder.setLrValue(rval).build();
-	}
-
-	private ExpressionResult handleUnaryMinus(final ILocation loc, final ExpressionResult operand, final IASTNode hook,
-			final CType inputType) {
-		if (!inputType.isArithmeticType()) {
-			throw new UnsupportedOperationException("arithmetic type required");
-		}
-		final ExpressionResult operandPromoted = doIntegerPromotion(loc, operand);
-		final CPrimitive resultType = (CPrimitive) operandPromoted.getLrValue().getCType();
-		final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(operandPromoted);
-		if (resultType.isIntegerType()) {
-			addIntegerBoundsCheck(loc, result, resultType, IASTUnaryExpression.op_minus, hook, null,
-					operandPromoted.getLrValue().getValue());
-		}
-		final Expression bwexpr = mExpressionTranslation.constructUnaryMinusExpression(loc,
-				operandPromoted.getLrValue().getValue(), resultType);
-		final RValue rval = new RValue(bwexpr, resultType, false);
-		return result.setLrValue(rval).build();
-	}
-
-	private ExpressionResult handleUnaryComplement(final ILocation loc, final ExpressionResult operand,
-			final CType inputType) {
-		if (!inputType.isArithmeticType()) {
-			throw new UnsupportedOperationException("arithmetic type required");
-		}
-		final ExpressionResult newOperand = doIntegerPromotion(loc, operand);
-		final LRValue value = newOperand.getLrValue();
-		final ExpressionResult exprResult = mExpressionTranslation.handleUnaryComplement(loc, value.getValue(),
-				(CPrimitive) value.getCType(), mAuxVarInfoBuilder);
-		return new ExpressionResultBuilder(exprResult).addAllExceptLrValue(newOperand).build();
 	}
 
 	/**

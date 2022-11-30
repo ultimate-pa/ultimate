@@ -33,7 +33,6 @@ import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
-import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -130,12 +129,12 @@ public abstract class ExpressionTranslation {
 				auxVarInfoBuilder);
 	}
 
-	public final Expression constructUnaryMinusExpression(final ILocation loc, final Expression exp,
+	public final Expression constructUnaryExpression(final ILocation loc, final int nodeOperator, final Expression exp,
 			final CPrimitive type) {
 		if (type.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
-			return constructUnaryFloatingPointExpression(loc, IASTUnaryExpression.op_minus, exp, type);
+			return constructUnaryFloatingPointExpression(loc, nodeOperator, exp, type);
 		}
-		return constructUnaryMinusIntegerExpression(loc, exp, type);
+		return constructUnaryIntegerExpression(loc, nodeOperator, exp, type);
 	}
 
 	public final Expression constructArithmeticExpression(final ILocation loc, final int nodeOperator,
@@ -169,10 +168,8 @@ public abstract class ExpressionTranslation {
 			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2, IASTNode hook,
 			AuxVarInfoBuilder auxVarInfoBuilder);
 
-	protected abstract Expression constructUnaryMinusIntegerExpression(ILocation loc, Expression exp, CPrimitive type);
-
-	public abstract ExpressionResult handleUnaryComplement(ILocation loc, Expression exp, CPrimitive type,
-			final AuxVarInfoBuilder auxVarInfoBuilder);
+	protected abstract Expression constructUnaryIntegerExpression(ILocation loc, int nodeOperator, Expression exp,
+			CPrimitive type);
 
 	public abstract Expression constructArithmeticIntegerExpression(ILocation loc, int nodeOperator, Expression exp1,
 			CPrimitive type1, Expression exp2, CPrimitive type2);
