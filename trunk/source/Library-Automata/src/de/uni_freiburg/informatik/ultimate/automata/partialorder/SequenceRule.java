@@ -149,7 +149,7 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 			if (mRun != null) {
 				mRun = adaptRun(mRun, pivot, mPivotCopy, executedCompositions, transition2Copy);
 				try {
-					assert mRun.isRunOf(net) : "Run adaptation failed";
+					assert mRun.isRunOf(net) : "Adapted run is not a run of the modified net";
 				} catch (final PetriNetNot1SafeException e) {
 					throw new AssertionError("Petri net has become unsafe");
 				}
