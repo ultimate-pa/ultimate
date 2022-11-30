@@ -824,8 +824,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	protected Expression constructBinaryEqualityExpressionInteger(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
-		final Expression leftExpr = applyWraparoundIfNecessary(loc, (CPrimitive) type1, exp1);
-		final Expression rightExpr = applyWraparoundIfNecessary(loc, (CPrimitive) type2, exp2);
+		Expression leftExpr = exp1;
+		Expression rightExpr = exp2;
+		if (type1 instanceof CPrimitive && type2 instanceof CPrimitive) {
+			leftExpr = applyWraparoundIfNecessary(loc, (CPrimitive) type1, exp1);
+			rightExpr = applyWraparoundIfNecessary(loc, (CPrimitive) type2, exp2);
+		}
 		return constructEquality(loc, nodeOperator, leftExpr, rightExpr);
 	}
 
