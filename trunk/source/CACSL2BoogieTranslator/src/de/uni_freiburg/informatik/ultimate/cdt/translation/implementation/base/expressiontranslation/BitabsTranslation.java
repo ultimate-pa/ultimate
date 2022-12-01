@@ -395,7 +395,6 @@ public class BitabsTranslation {
 		return ExpressionFactory.newBinaryExpression(loc, op1, left, shiftFactorExpr);
 	}
 
-	// TODO: This is duplicate code, the same method exists in IntegerTranslation
 	private Expression applyWraparoundIfNecessary(final ILocation loc, final Expression expr, final CPrimitive type) {
 		if (!mTypeSizes.isUnsigned(type)) {
 			return expr;
