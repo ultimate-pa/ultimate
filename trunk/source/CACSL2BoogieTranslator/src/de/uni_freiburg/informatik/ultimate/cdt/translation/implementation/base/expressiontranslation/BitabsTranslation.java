@@ -350,54 +350,66 @@ public class BitabsTranslation {
 
 	/**
 	 * Overapproximates the bitwise left-shift. Uses the following rules to increase the precision:
-	 * <li>If b=0, then a<<b = a
+	 * <li>If a=0 or b=0, then a<<b = a
 	 * <li>Otherwise a<<b > a
 	 * <li>In general a<<b = a * 2**b, therefore we return this expression if b is a constant.
 	 */
 	public ExpressionResult abstractLeftShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
-		return abstractShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder, true);
+		if (isZero(left)) {
+			return new ExpressionResult(new RValue(left, typeLeft));
+		}
+		if (right instanceof IntegerLiteral) {
+			final BigInteger shiftValue = new BigInteger(((IntegerLiteral) right).getValue());
+			final Expression value =
+					constructShiftWithLiteralOptimization(loc, left, typeRight, shiftValue, Operator.ARITHMUL);
+			return new ExpressionResult(new RValue(value, typeLeft));
+		}
+		final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
+		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, typeLeft);
+		final Expression leftEqualsZero =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, leftWrapped, zero);
+		final Expression rightEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
+				applyWraparoundIfNecessary(loc, right, typeRight), zero);
+		final Expression leftOrRightEqualsZero =
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftEqualsZero, rightEqualsZero);
+		final Expression greaterLeft = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT,
+				applyWraparoundIfNecessary(loc, auxVar.getExp(), typeLeft), leftWrapped);
+		return buildExpressionResult(loc, "shiftLeft", typeLeft, auxVar,
+				List.of(new Pair<>(leftOrRightEqualsZero, left)), List.of(greaterLeft));
 	}
 
 	/**
 	 * Overapproximates the bitwise right-shift. Uses the following rules to increase the precision:
-	 * <li>If b=0, then a>>b = a
+	 * <li>If a=0 or b=0, then a>>b = a
 	 * <li>Otherwise a>>b < a
 	 * <li>In general a>>b = a / 2**b, therefore we return this expression if b is a constant.
 	 */
 	public ExpressionResult abstractRightShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
-		return abstractShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder, false);
-	}
-
-	private ExpressionResult abstractShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final boolean leftShift) {
-		final Expression value;
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		if (isZero(left) || isZero(right)) {
+			return new ExpressionResult(new RValue(left, typeLeft));
+		}
 		if (right instanceof IntegerLiteral) {
 			final BigInteger shiftValue = new BigInteger(((IntegerLiteral) right).getValue());
-			value = constructShiftWithLiteralOptimization(loc, left, typeRight, shiftValue,
-					leftShift ? Operator.ARITHMUL : Operator.ARITHDIV);
-		} else {
-			final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
-			builder.addDeclaration(auxVar.getVarDec());
-			builder.addAuxVar(auxVar);
-			value = auxVar.getExp();
-			final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
-			final Expression rightEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
-					applyWraparoundIfNecessary(loc, right, typeRight), zero);
-			final Statement assignLeft = StatementFactory.constructAssignmentStatement(loc, auxVar.getLhs(), left);
-			final Statement compareLeft = new AssumeStatement(loc,
-					ExpressionFactory.newBinaryExpression(loc, leftShift ? Operator.COMPGT : Operator.COMPLT,
-							applyWraparoundIfNecessary(loc, value, typeLeft),
-							applyWraparoundIfNecessary(loc, left, typeLeft)));
-			new Overapprox(leftShift ? "shiftLeft" : "shiftRight", loc).annotate(compareLeft);
-			final Statement ifStmt = StatementFactory.constructIfStatement(loc, rightEqualsZero,
-					new Statement[] { assignLeft }, new Statement[] { compareLeft });
-			builder.addStatement(ifStmt);
+			final Expression value =
+					constructShiftWithLiteralOptimization(loc, left, typeRight, shiftValue, Operator.ARITHDIV);
+			return new ExpressionResult(new RValue(value, typeLeft));
 		}
-		return builder.setLrValue(new RValue(value, typeLeft)).build();
+		final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
+		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, typeLeft);
+		final Expression leftEqualsZero =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, leftWrapped, zero);
+		final Expression rightEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
+				applyWraparoundIfNecessary(loc, right, typeRight), zero);
+		final Expression leftOrRightEqualsZero =
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftEqualsZero, rightEqualsZero);
+		final Expression smallerLeft = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT,
+				applyWraparoundIfNecessary(loc, auxVar.getExp(), typeLeft), leftWrapped);
+		return buildExpressionResult(loc, "shiftRight", typeLeft, auxVar,
+				List.of(new Pair<>(leftOrRightEqualsZero, left)), List.of(smallerLeft));
 	}
 
 	private Expression constructShiftWithLiteralOptimization(final ILocation loc, final Expression left,
