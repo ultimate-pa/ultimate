@@ -183,13 +183,28 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return mBitabsTranslation.abstractXor(loc, left, right, typeLeft, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign:
-			return mBitabsTranslation.abstractLeftShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
+			return handleLeftShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftRightAssign:
 			return mBitabsTranslation.abstractRightShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 		default:
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported bitwise expression");
 		}
+	}
+
+	private ExpressionResult handleLeftShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
+			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
+		final ExpressionResult result =
+				mBitabsTranslation.abstractLeftShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
+		if (!mSettings.checkSignedIntegerBounds()) {
+			return result;
+		}
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder(result);
+		addOverflowAssertion(loc, constructOverflowCheckForLeftShift(loc, left, typeLeft, typeRight, right), builder);
+		final Expression expr = result.getLrValue().getValue();
+		addOverflowAssertion(loc, constructBiggerMinIntExpression(loc, typeLeft, expr), builder);
+		addOverflowAssertion(loc, constructSmallerMaxIntExpression(loc, typeLeft, expr), builder);
+		return builder.build();
 	}
 
 	@Override
@@ -970,12 +985,5 @@ public class IntegerTranslation extends ExpressionTranslation {
 		return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, expression,
 				ExpressionFactory.createIntegerLiteral(loc,
 						mTypeSizes.getMinValueOfPrimitiveType(primType).toString()));
-	}
-
-	@Override
-	protected Pair<Expression, Expression> constructOverflowCheckForLeftShift(final ILocation loc,
-			final CPrimitive resultType, final Expression newExpression, final Expression oldExprLeft,
-			final Expression oldExprRight) {
-		return constructOverflowCheck(loc, resultType, newExpression);
 	}
 }

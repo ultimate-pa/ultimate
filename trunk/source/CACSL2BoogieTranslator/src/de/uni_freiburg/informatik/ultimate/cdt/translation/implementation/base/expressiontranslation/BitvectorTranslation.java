@@ -366,9 +366,19 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	protected ExpressionResult handleBinaryBitwiseIntegerExpression(final ILocation loc, final int op,
 			final Expression left, final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight,
 			final AuxVarInfoBuilder auxVarInfoBuilder) {
-		final Expression expression =
+		final Expression resultExpr =
 				constructBinaryBitwiseIntegerExpression(loc, op, left, typeLeft, right, typeRight);
-		return new ExpressionResult(new RValue(expression, typeLeft, false, false));
+		final ExpressionResult result = new ExpressionResult(new RValue(resultExpr, typeLeft, false, false));
+		if (op == IASTBinaryExpression.op_shiftLeft || op == IASTBinaryExpression.op_shiftLeftAssign) {
+			final ExpressionResultBuilder builder = new ExpressionResultBuilder(result);
+			addOverflowAssertion(loc, constructOverflowCheckForLeftShift(loc, left, typeLeft, typeRight, right),
+					builder);
+			final Pair<Expression, Expression> minMax = constructMinMaxCheckForLeftShift(loc, typeLeft, left, right);
+			addOverflowAssertion(loc, minMax.getFirst(), builder);
+			addOverflowAssertion(loc, minMax.getSecond(), builder);
+			return builder.build();
+		}
+		return result;
 	}
 
 	@Override
@@ -1564,13 +1574,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 	}
 
-	// TODO: The BitvectorTranslation currently needs access to the parameters of the left-shift, whereas the
-	// IntegerTranslation only to the resulting expression (since it creates an aux-var).
-	// How can we fix this?
-	@Override
-	protected Pair<Expression, Expression> constructOverflowCheckForLeftShift(final ILocation loc,
-			final CPrimitive resultType, final Expression newExpression, final Expression oldExprLeft,
-			final Expression oldExprRight) {
+	private Pair<Expression, Expression> constructMinMaxCheckForLeftShift(final ILocation loc,
+			final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand) {
 		// See C11 in Section 6.5.7 on bitwise shift operators.
 		// We assume that we already checked in advance that
 		// * RHS is not negative
@@ -1582,9 +1587,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		// Since we check in advance that LHS and RHS are not negative it does not
 		// matter whether we take sign_extend or zero_extend
 		final Expression extendedLhsOperand =
-				extend(loc, oldExprLeft, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
+				extend(loc, lhsOperand, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
 		final Expression extendedRhsOperand =
-				extend(loc, oldExprRight, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
+				extend(loc, rhsOperand, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
 		declareBitvectorFunctionForArithmeticOperation(loc, bvop, requiredBitsize);
 		final Expression opResult = BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop,
 				new Expression[] { extendedLhsOperand, extendedRhsOperand });
