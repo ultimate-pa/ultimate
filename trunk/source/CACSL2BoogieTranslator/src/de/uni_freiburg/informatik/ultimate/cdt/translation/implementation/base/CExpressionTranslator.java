@@ -228,7 +228,8 @@ public class CExpressionTranslator {
 			assert typeOfResult.equals(right.getLrValue().getCType());
 			final CPrimitive primitiveTypeOfResult = (CPrimitive) typeOfResult.getUnderlyingType();
 
-			addIntegerBoundsCheck(loc, builder, primitiveTypeOfResult, op, hook, left.getLrValue().getValue(), right.getLrValue().getValue());
+			addIntegerBoundsCheck(loc, builder, primitiveTypeOfResult, op, hook, left.getLrValue().getValue(),
+					right.getLrValue().getValue());
 			expr = mExpressionTranslation.constructArithmeticExpression(loc, op, left.getLrValue().getValue(),
 					primitiveTypeOfResult, right.getLrValue().getValue(), primitiveTypeOfResult);
 		} else if (lType instanceof CPointer && rType.isArithmeticType()) {
@@ -412,9 +413,12 @@ public class CExpressionTranslator {
 		final ExpressionResult rightConverted =
 				mExprResultTransformer.performImplicitConversion(right, typeOfResult, loc);
 
-		final ExpressionResult result =
-				mExpressionTranslation.handleBinaryBitwiseExpression(loc, op, leftPromoted.getLrValue().getValue(),
-						typeOfResult, rightConverted.getLrValue().getValue(), typeOfResult, hook, mAuxVarInfoBuilder);
+		final Expression leftValue = tryToExtractValue(leftPromoted.getLrValue().getValue(), typeOfResult, hook, loc);
+		final Expression rightValue =
+				tryToExtractValue(rightConverted.getLrValue().getValue(), typeOfResult, hook, loc);
+
+		final ExpressionResult result = mExpressionTranslation.handleBinaryBitwiseExpression(loc, op, leftValue,
+				typeOfResult, rightValue, typeOfResult, hook, mAuxVarInfoBuilder);
 		final ExpressionResultBuilder builder =
 				new ExpressionResultBuilder().addAllExceptLrValue(leftPromoted, rightConverted);
 
@@ -463,7 +467,8 @@ public class CExpressionTranslator {
 		case IASTBinaryExpression.op_divide:
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_divideAssign: {
-			addIntegerBoundsCheck(loc, result, typeOfResult, op, hook, left.getLrValue().getValue(), right.getLrValue().getValue());
+			addIntegerBoundsCheck(loc, result, typeOfResult, op, hook, left.getLrValue().getValue(),
+					right.getLrValue().getValue());
 			break;
 		}
 		case IASTBinaryExpression.op_modulo:
@@ -1044,6 +1049,7 @@ public class CExpressionTranslator {
 			// nothing to do
 			return;
 		}
+		// TODO: We should use the value extraction earlier, s.t. we pass the extracted value to ExpressionTranslation
 		final Pair<Expression, Expression> inBoundsCheck;
 		if (operands.length == 1) {
 			assert operation == IASTUnaryExpression.op_minus;
