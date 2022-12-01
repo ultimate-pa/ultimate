@@ -139,7 +139,11 @@ public class BitabsTranslation {
 			// If a < 0 or b < 0, then a & b > a + b
 			final Expression greaterSum = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, bothNonNegative,
 					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, auxvar, sum));
-			assumptions = List.of(smallerLeftImplication, smallerRightImplication, nonNegative, greaterSum);
+			final BigInteger minValue = mTypeSizes.getMinValueOfPrimitiveType(type);
+			final Expression greaterMinValue = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar,
+					ExpressionFactory.createIntegerLiteral(loc, minValue.toString()));
+			assumptions =
+					List.of(smallerLeftImplication, smallerRightImplication, nonNegative, greaterSum, greaterMinValue);
 		}
 
 		// 0 & a = a & 0 = 0
@@ -228,7 +232,11 @@ public class BitabsTranslation {
 			// If a < 0 or b < 0, then a | b < 0
 			final Expression negative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, bothNonNegative,
 					ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, auxvar, zero));
-			assumptions = List.of(greaterRightImplication, greaterLeftImplication, leqSumImplication, negative);
+			final BigInteger maxValue = mTypeSizes.getMaxValueOfPrimitiveType(type);
+			final Expression smallerMaxValue = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar,
+					ExpressionFactory.createIntegerLiteral(loc, maxValue.toString()));
+			assumptions = List.of(greaterRightImplication, greaterLeftImplication, leqSumImplication, negative,
+					smallerMaxValue);
 		}
 
 		// 0 | a = a | 0 = a
@@ -311,7 +319,14 @@ public class BitabsTranslation {
 			// If a >= 0 or b >= 0, then a ^ b <= a + b
 			final Expression leqSumImplication =
 					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, leqSum);
-			assumptions = List.of(positiveCase1, positiveCase2, negativeCase1, negativeCase2, leqSumImplication);
+			final BigInteger minValue = mTypeSizes.getMinValueOfPrimitiveType(type);
+			final Expression greaterMinValue = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar,
+					ExpressionFactory.createIntegerLiteral(loc, minValue.toString()));
+			final BigInteger maxValue = mTypeSizes.getMaxValueOfPrimitiveType(type);
+			final Expression smallerMaxValue = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar,
+					ExpressionFactory.createIntegerLiteral(loc, maxValue.toString()));
+			assumptions = List.of(positiveCase1, positiveCase2, negativeCase1, negativeCase2, leqSumImplication,
+					greaterMinValue, smallerMaxValue);
 		}
 
 		// 0 ^ a = a ^ 0 = a
