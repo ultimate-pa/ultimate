@@ -67,7 +67,8 @@ public class BitabsTranslation {
 	 * Overapproximates the bitwise {@code and}. Uses the following rules to increase the precision:
 	 * <li>0 & a = a & 0 = 0
 	 * <li>a & a = a
-	 * <li>If a >= 0 and b >= 0, then a & b <= a and a & b <= b
+	 * <li>If a >= 0 or b < 0, then a & b <= a
+	 * <li>If a < 0 or b >= 0, then a & b <= b
 	 * <li>If a >= b or b >= 0, then a & b >= 0
 	 * <li>If a < 0 or b < 0, then a & b > a + b
 	 */
@@ -97,9 +98,6 @@ public class BitabsTranslation {
 				isUnsigned ? falseLiteral : ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, left, zero);
 		final Expression rightNegative =
 				isUnsigned ? falseLiteral : ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right, zero);
-
-		final Expression oneNegative =
-				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftNegative, rightNegative);
 		final Expression bothNonNegative = isUnsigned ? ExpressionFactory.createBooleanLiteral(loc, true)
 				: ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
 						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, left, zero),
@@ -111,16 +109,22 @@ public class BitabsTranslation {
 		final Expression oneEqualsZero =
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftEqualsZero, rightEqualsZero);
 
-		final Expression lessThanEqualBoth = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, left),
+		// If a >= 0 or b < 0, then a & b <= a
+		final Expression rightNonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, right, zero);
+		final Expression smallerLeft = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftNegative, rightNonNegative),
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, left));
+
+		// If a < 0 or b >= 0, then a & b <= b
+		final Expression leftNonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, left, zero);
+		final Expression smallerRight = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftNonNegative, rightNegative),
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, right));
 
-		// If a >= 0 and b >= 0, then a & b <= a and a & b <= b
-		final Expression maximum =
-				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, lessThanEqualBoth);
 		// If a >= b or b >= 0, then a & b >= 0
 		final Expression nonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, bothNegative,
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, zero));
+
 		// If a < 0 or b < 0, then a & b > a + b
 		final Expression greaterSum = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, bothNonNegative,
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, auxvar, sum));
@@ -129,7 +133,7 @@ public class BitabsTranslation {
 		// a & a = a
 		final List<Pair<Expression, Expression>> exactCases =
 				List.of(new Pair<>(oneEqualsZero, zero), new Pair<>(leftEqualsRight, left));
-		final List<Expression> assumptions = List.of(maximum, nonNegative, greaterSum);
+		final List<Expression> assumptions = List.of(smallerLeft, smallerRight, nonNegative, greaterSum);
 		return buildExpressionResult(loc, "bitwiseAnd", type, auxvarinfo, exactCases, assumptions);
 	}
 
@@ -137,9 +141,10 @@ public class BitabsTranslation {
 	 * Overapproximates the bitwise {@code or}. Uses the following rules to increase the precision:
 	 * <li>0 | a = a | 0 = a
 	 * <li>a | a = a
-	 * <li>If a >= 0 and b >= 0, then a | b >= a and a | b >= b
-	 * <li>If a < 0 or b < 0, then a | b < 0
+	 * <li>If a >= 0 or b < 0, then a | b >= b
+	 * <li>If a < 0 or b >= 0, then a & b >= a
 	 * <li>If a >= 0 or b >= 0, then a | b <= a + b
+	 * <li>If a < 0 or b < 0, then a | b < 0
 	 */
 	public static ExpressionResult abstractOr(final ILocation loc, final Expression left, final Expression right,
 			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder, final boolean isUnsigned) {
@@ -179,24 +184,32 @@ public class BitabsTranslation {
 		final Expression sum = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right);
 		final Expression leftEqualsZeroOrRight =
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftEqualsZero, leftEqualsRight);
-		// If a >= 0 and b >= 0, then a | b >= a and a | b >= b
-		final Expression greaterEqualBoth = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, left),
+
+		// If a >= 0 or b < 0, then a | b >= b
+		final Expression rightNonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, right, zero);
+		final Expression greaterRight = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftNegative, rightNonNegative),
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, right));
-		final Expression minimum =
-				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, greaterEqualBoth);
-		// Otherwise a | b < 0
-		final Expression negative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, bothNonNegative,
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, auxvar, zero));
+
+		// If a < 0 or b >= 0, then a & b >= a
+		final Expression leftNonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, left, zero);
+		final Expression greaterLeft = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftNonNegative, rightNegative),
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, left));
+
 		// If a >= 0 or b >= 0, then a | b <= a + b
 		final Expression leqSum = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative,
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, sum));
+
+		// If a < 0 or b < 0, then a | b < 0
+		final Expression negative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, bothNonNegative,
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, auxvar, zero));
 
 		// 0 | a = a | 0 = a
 		// a | a = a
 		final List<Pair<Expression, Expression>> exactCases =
 				List.of(new Pair<>(leftEqualsZeroOrRight, right), new Pair<>(rightEqualsZero, left));
-		final List<Expression> assumptions = List.of(minimum, negative, leqSum);
+		final List<Expression> assumptions = List.of(greaterRight, greaterLeft, leqSum, negative);
 		return buildExpressionResult(loc, "bitwiseOr", type, auxvarinfo, exactCases, assumptions);
 	}
 
