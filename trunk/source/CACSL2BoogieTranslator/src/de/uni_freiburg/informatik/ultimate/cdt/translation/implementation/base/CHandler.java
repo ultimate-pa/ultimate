@@ -2676,7 +2676,7 @@ public class CHandler {
 				final int bitfieldWidth = hlv.getBitfieldInformation().getNumberOfBits();
 				rhsWithBitfieldTreatment = mExpressionTranslation.eraseBits(loc,
 						rightHandSideValueWithConversionsApplied.getValue(),
-						(CPrimitive) CEnum.replaceEnumWithInt(hlv.getCType().getUnderlyingType()), bitfieldWidth, hook);
+						(CPrimitive) CEnum.replaceEnumWithInt(hlv.getCType().getUnderlyingType()), bitfieldWidth);
 			} else {
 				rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 			}
@@ -2718,7 +2718,7 @@ public class CHandler {
 			final int bitfieldWidth = lValue.getBitfieldInformation().getNumberOfBits();
 			rhsWithBitfieldTreatment = mExpressionTranslation.eraseBits(loc,
 					rightHandSideValueWithConversionsApplied.getValue(),
-					(CPrimitive) CEnum.replaceEnumWithInt(lValue.getCType().getUnderlyingType()), bitfieldWidth, hook);
+					(CPrimitive) CEnum.replaceEnumWithInt(lValue.getCType().getUnderlyingType()), bitfieldWidth);
 		} else {
 			rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 		}

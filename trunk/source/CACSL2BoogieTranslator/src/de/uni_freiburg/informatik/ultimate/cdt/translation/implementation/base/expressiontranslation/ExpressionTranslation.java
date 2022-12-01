@@ -32,7 +32,6 @@ import java.math.BigInteger;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -122,14 +121,13 @@ public abstract class ExpressionTranslation {
 
 	public final ExpressionResult handleBinaryBitwiseExpression(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2,
-			final IASTNode hook, final AuxVarInfoBuilder auxVarInfoBuilder) {
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
 		// TODO: Check that types coincide
 		if (type1.getGeneralType() == CPrimitiveCategory.FLOATTYPE
 				|| type2.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
 			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
 		}
-		return handleBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, hook,
-				auxVarInfoBuilder);
+		return handleBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, auxVarInfoBuilder);
 	}
 
 	public final Expression constructUnaryExpression(final ILocation loc, final int nodeOperator, final Expression exp,
@@ -168,8 +166,7 @@ public abstract class ExpressionTranslation {
 			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 
 	protected abstract ExpressionResult handleBinaryBitwiseIntegerExpression(ILocation loc, int nodeOperator,
-			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2, IASTNode hook,
-			AuxVarInfoBuilder auxVarInfoBuilder);
+			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2, AuxVarInfoBuilder auxVarInfoBuilder);
 
 	protected abstract Expression constructUnaryIntegerExpression(ILocation loc, int nodeOperator, Expression exp,
 			CPrimitive type);
@@ -409,7 +406,7 @@ public abstract class ExpressionTranslation {
 	 * the bits. low-1, low-2, ..., 0. If inputWidth and remainingWith are different the result is always positive.
 	 */
 	public abstract Expression eraseBits(final ILocation loc, final Expression value, final CPrimitive cType,
-			final int remainingWith, final IASTNode hook);
+			final int remainingWith);
 
 	public abstract Expression concatBits(ILocation loc, List<Expression> dataChunks, int size);
 

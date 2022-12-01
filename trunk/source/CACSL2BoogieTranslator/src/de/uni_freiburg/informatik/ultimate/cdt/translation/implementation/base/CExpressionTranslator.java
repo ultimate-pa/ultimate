@@ -418,7 +418,7 @@ public class CExpressionTranslator {
 				tryToExtractValue(rightConverted.getLrValue().getValue(), typeOfResult, hook, loc);
 
 		final ExpressionResult result = mExpressionTranslation.handleBinaryBitwiseExpression(loc, op, leftValue,
-				typeOfResult, rightValue, typeOfResult, hook, mAuxVarInfoBuilder);
+				typeOfResult, rightValue, typeOfResult, mAuxVarInfoBuilder);
 		final ExpressionResultBuilder builder =
 				new ExpressionResultBuilder().addAllExceptLrValue(leftPromoted, rightConverted);
 
@@ -569,7 +569,7 @@ public class CExpressionTranslator {
 		assert typeOfResult.equals(left.getLrValue().getCType().getUnderlyingType());
 		final ExpressionResult result =
 				mExpressionTranslation.handleBinaryBitwiseExpression(loc, op, left.getLrValue().getValue(),
-						typeOfResult, right.getLrValue().getValue(), typeOfResult, hook, mAuxVarInfoBuilder);
+						typeOfResult, right.getLrValue().getValue(), typeOfResult, mAuxVarInfoBuilder);
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryXor:

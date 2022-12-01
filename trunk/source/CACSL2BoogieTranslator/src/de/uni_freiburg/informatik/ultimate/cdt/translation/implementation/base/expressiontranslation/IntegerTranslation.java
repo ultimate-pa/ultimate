@@ -32,7 +32,6 @@ import java.math.BigInteger;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -173,7 +172,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	protected ExpressionResult handleBinaryBitwiseIntegerExpression(final ILocation loc, final int op,
 			final Expression left, final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight,
-			final IASTNode hook, final AuxVarInfoBuilder auxVarInfoBuilder) {
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryAndAssign:
@@ -901,7 +900,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	public Expression eraseBits(final ILocation loc, final Expression value, final CPrimitive cType,
-			final int remainingWith, final IASTNode hook) {
+			final int remainingWith) {
 		return applyEucledeanModulo(loc, value, BigInteger.valueOf(2).pow(remainingWith));
 	}
 
