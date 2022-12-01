@@ -218,6 +218,7 @@ public class BitabsTranslation {
 	 * <li>0 ^ a = a ^ 0 = 0
 	 * <li>a ^ a = 0
 	 * <li>If a and b have the same sign (i.e. both are positive or both are negative), then a ^ b > 0
+	 * <li>Otherwise a ^ b < 0
 	 * <li>If a >= 0 or b >= 0, then a ^ b <= a + b
 	 */
 	public static ExpressionResult abstractXor(final ILocation loc, final Expression left, final Expression right,
@@ -242,10 +243,15 @@ public class BitabsTranslation {
 		final Expression leftEqualsRight = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, left, right);
 
 		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
+		final Expression trueLiteral = ExpressionFactory.createBooleanLiteral(loc, true);
 		final Expression leftNegative =
 				isUnsigned ? falseLiteral : ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, left, zero);
 		final Expression rightNegative =
 				isUnsigned ? falseLiteral : ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right, zero);
+		final Expression leftNonNegative =
+				isUnsigned ? trueLiteral : ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, left, zero);
+		final Expression rightNonNegative =
+				isUnsigned ? trueLiteral : ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, right, zero);
 
 		final Expression oneNegative =
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftNegative, rightNegative);
@@ -253,16 +259,20 @@ public class BitabsTranslation {
 		final Expression sum = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right);
 
 		final Expression positive = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, auxvar, zero);
-		final Expression onePositive = isUnsigned ? ExpressionFactory.createBooleanLiteral(loc, true)
+		final Expression onePositive = isUnsigned ? trueLiteral
 				: ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
 						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, left, zero),
 						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, right, zero));
+		final Expression negative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, auxvar, zero);
 
 		// If a and b have the same sign (i.e. both are positive or both are negative), then a ^ b > 0
 		final Expression positiveCase1 =
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, positive);
 		final Expression positiveCase2 =
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, onePositive, positive);
+		// Otherwise a ^ b < 0
+		final Expression negativeCase1 = ExpressionFactory.or(loc, List.of(leftNegative, rightNonNegative, negative));
+		final Expression negativeCase2 = ExpressionFactory.or(loc, List.of(leftNonNegative, rightNegative, negative));
 		// If a >= 0 or b >= 0, then a ^ b <= a + b
 		final Expression leqSum = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative,
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, sum));
@@ -270,7 +280,8 @@ public class BitabsTranslation {
 		// a ^ a = 0
 		final List<Pair<Expression, Expression>> exactCases = List.of(new Pair<>(leftEqualsZero, right),
 				new Pair<>(rightEqualsZero, left), new Pair<>(leftEqualsRight, zero));
-		final List<Expression> assumptions = List.of(positiveCase1, positiveCase2, leqSum);
+		final List<Expression> assumptions =
+				List.of(positiveCase1, positiveCase2, negativeCase1, negativeCase2, leqSum);
 		return buildExpressionResult(loc, "bitwiseOr", type, auxvarinfo, exactCases, assumptions);
 	}
 
