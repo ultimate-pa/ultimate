@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
@@ -200,10 +201,11 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return result;
 		}
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder(result);
-		addOverflowAssertion(loc, constructOverflowCheckForLeftShift(loc, left, typeLeft, typeRight, right), builder);
+		CExpressionTranslator.addOverflowAssertion(loc,
+				constructOverflowCheckForLeftShift(loc, left, typeLeft, typeRight, right), builder);
 		final Expression expr = result.getLrValue().getValue();
-		addOverflowAssertion(loc, constructBiggerMinIntExpression(loc, typeLeft, expr), builder);
-		addOverflowAssertion(loc, constructSmallerMaxIntExpression(loc, typeLeft, expr), builder);
+		CExpressionTranslator.addOverflowAssertion(loc, constructBiggerMinIntExpression(loc, typeLeft, expr), builder);
+		CExpressionTranslator.addOverflowAssertion(loc, constructSmallerMaxIntExpression(loc, typeLeft, expr), builder);
 		return builder.build();
 	}
 

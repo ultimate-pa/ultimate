@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieTypeConstructor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -371,11 +372,11 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final ExpressionResult result = new ExpressionResult(new RValue(resultExpr, typeLeft, false, false));
 		if (op == IASTBinaryExpression.op_shiftLeft || op == IASTBinaryExpression.op_shiftLeftAssign) {
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder(result);
-			addOverflowAssertion(loc, constructOverflowCheckForLeftShift(loc, left, typeLeft, typeRight, right),
-					builder);
+			CExpressionTranslator.addOverflowAssertion(loc,
+					constructOverflowCheckForLeftShift(loc, left, typeLeft, typeRight, right), builder);
 			final Pair<Expression, Expression> minMax = constructMinMaxCheckForLeftShift(loc, typeLeft, left, right);
-			addOverflowAssertion(loc, minMax.getFirst(), builder);
-			addOverflowAssertion(loc, minMax.getSecond(), builder);
+			CExpressionTranslator.addOverflowAssertion(loc, minMax.getFirst(), builder);
+			CExpressionTranslator.addOverflowAssertion(loc, minMax.getSecond(), builder);
 			return builder.build();
 		}
 		return result;

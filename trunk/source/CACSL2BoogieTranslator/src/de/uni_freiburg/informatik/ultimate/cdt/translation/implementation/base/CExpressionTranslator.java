@@ -1077,10 +1077,11 @@ public class CExpressionTranslator {
 		return mExpressionTranslation.constructLiteralForIntegerType(loc, type, value);
 	}
 
-	private static void addOverflowAssertion(final ILocation loc, final Expression condition,
+	// TODO: Is this the right place for this method?
+	public static void addOverflowAssertion(final ILocation loc, final Expression condition,
 			final ExpressionResultBuilder erb) {
 		if (ExpressionFactory.isTrueLiteral(condition)) {
-			// Avoid the creation of "assert true" statement
+			// Avoid the creation of "assert true" statements
 			return;
 		}
 		final AssertStatement assertSt = new AssertStatement(loc, condition);
