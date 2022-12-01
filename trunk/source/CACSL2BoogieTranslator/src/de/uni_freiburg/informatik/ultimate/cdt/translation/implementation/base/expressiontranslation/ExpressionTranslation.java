@@ -127,7 +127,19 @@ public abstract class ExpressionTranslation {
 				|| type2.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
 			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
 		}
-		return handleBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, auxVarInfoBuilder);
+		final ExpressionResult result =
+				handleBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, auxVarInfoBuilder);
+		if (!mSettings.checkSignedIntegerBounds() || (nodeOperator != IASTBinaryExpression.op_shiftLeft
+				&& nodeOperator != IASTBinaryExpression.op_shiftLeftAssign)) {
+			return result;
+		}
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder(result);
+		addOverflowAssertion(loc, constructAdditionalOverflowCheckForLeftShift(loc, exp1, type1, type2, exp2), builder);
+		final Pair<Expression, Expression> minMax =
+				constructOverflowCheckForLeftShift(loc, type1, result.getLrValue().getValue());
+		addOverflowAssertion(loc, minMax.getFirst(), builder);
+		addOverflowAssertion(loc, minMax.getSecond(), builder);
+		return builder.build();
 	}
 
 	public final Expression constructUnaryExpression(final ILocation loc, final int nodeOperator, final Expression exp,
@@ -544,7 +556,7 @@ public abstract class ExpressionTranslation {
 		return attributes;
 	}
 
-	protected Expression constructOverflowCheckForLeftShift(final ILocation loc, final Expression left,
+	private Expression constructAdditionalOverflowCheckForLeftShift(final ILocation loc, final Expression left,
 			final CPrimitive resultType, final CPrimitive rhsTypeForLeftshift, final Expression right) {
 		Expression lhsNonNegative;
 		{
@@ -569,7 +581,7 @@ public abstract class ExpressionTranslation {
 		return ExpressionFactory.and(loc, List.of(lhsNonNegative, rhsNonNegative, rhsSmallerBitWidth));
 	}
 
-	protected void addOverflowAssertion(final ILocation loc, final Expression condition,
+	private static void addOverflowAssertion(final ILocation loc, final Expression condition,
 			final ExpressionResultBuilder builder) {
 		if (ExpressionFactory.isTrueLiteral(condition)) {
 			// Avoid the creation of "assert true" statements
@@ -596,4 +608,7 @@ public abstract class ExpressionTranslation {
 
 	public abstract Pair<Expression, Expression> constructOverflowCheckForUnaryExpression(ILocation loc, int operation,
 			CPrimitive resultType, Expression operand);
+
+	protected abstract Pair<Expression, Expression> constructOverflowCheckForLeftShift(final ILocation loc,
+			final CPrimitive resultType, final Expression expression);
 }

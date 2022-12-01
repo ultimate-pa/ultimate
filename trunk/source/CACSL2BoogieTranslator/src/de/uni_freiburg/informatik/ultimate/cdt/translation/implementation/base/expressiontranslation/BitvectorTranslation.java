@@ -366,19 +366,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	protected ExpressionResult handleBinaryBitwiseIntegerExpression(final ILocation loc, final int op,
 			final Expression left, final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight,
 			final AuxVarInfoBuilder auxVarInfoBuilder) {
-		final Expression resultExpr =
-				constructBinaryBitwiseIntegerExpression(loc, op, left, typeLeft, right, typeRight);
-		final ExpressionResult result = constructExpressionResult(resultExpr, typeLeft);
-		if (op == IASTBinaryExpression.op_shiftLeft || op == IASTBinaryExpression.op_shiftLeftAssign) {
-			final ExpressionResultBuilder builder = new ExpressionResultBuilder(result);
-			addOverflowAssertion(loc, constructOverflowCheckForLeftShift(loc, left, typeLeft, typeRight, right),
-					builder);
-			final Pair<Expression, Expression> minMax = constructMinMaxCheckForLeftShift(loc, typeLeft, left, right);
-			addOverflowAssertion(loc, minMax.getFirst(), builder);
-			addOverflowAssertion(loc, minMax.getSecond(), builder);
-			return builder.build();
-		}
-		return result;
+		return constructExpressionResult(
+				constructBinaryBitwiseIntegerExpression(loc, op, left, typeLeft, right, typeRight), typeLeft);
 	}
 
 	@Override
@@ -1574,8 +1563,11 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 	}
 
-	private Pair<Expression, Expression> constructMinMaxCheckForLeftShift(final ILocation loc,
-			final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand) {
+	@Override
+	protected Pair<Expression, Expression> constructOverflowCheckForLeftShift(final ILocation loc,
+			final CPrimitive resultType, final Expression expression) {
+		final Expression lhsOperand = ((BinaryExpression) expression).getLeft();
+		final Expression rhsOperand = ((BinaryExpression) expression).getRight();
 		// See C11 in Section 6.5.7 on bitwise shift operators.
 		// We assume that we already checked in advance that
 		// * RHS is not negative
