@@ -445,7 +445,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 		}
 		assert contains(pred) : STATE + pred + NOT_IN_AUTOMATON;
 		assert contains(succ) : STATE + succ + NOT_IN_AUTOMATON;
-		assert getVpAlphabet().getInternalAlphabet().contains(letter);
+		assert getVpAlphabet().getInternalAlphabet().contains(letter) : "Letter not in alphabet: " + letter;
 		mInternalOut.put(pred, letter, succ, IsContained.IsContained);
 	}
 

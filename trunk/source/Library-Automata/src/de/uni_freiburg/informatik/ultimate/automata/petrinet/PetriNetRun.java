@@ -92,7 +92,7 @@ public class PetriNetRun<LETTER, PLACE> implements IRun<LETTER, Marking<PLACE>> 
 	public PetriNetRun(final List<Marking<PLACE>> sequenceOfMarkings, final Word<LETTER> word,
 			final List<Transition<LETTER, PLACE>> transitions) {
 		if (sequenceOfMarkings.size() - 1 != word.length()) {
-			throw new IllegalArgumentException("run consists of word length +1 markings");
+			throw new IllegalArgumentException("run must consist of word length +1 markings");
 		}
 		if (transitions.size() != word.length()) {
 			throw new IllegalArgumentException("number of transitions differs from length of word");
