@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2011-2015 Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2009-2022 University of Freiburg
  *
  * This file is part of the ULTIMATE Automata Library.
  *
@@ -27,6 +28,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -38,9 +41,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -48,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            symbol type
  * @param <PLACE>
@@ -57,7 +63,8 @@ public final class Accepts<LETTER, PLACE>
 		extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 	private final IPetriNetTransitionProvider<LETTER, PLACE> mOperand;
 	private final Word<LETTER> mWord;
-	private final boolean mResult;
+
+	private final PetriNetRun<LETTER, PLACE> mAcceptingRun;
 
 	/**
 	 * Constructor.
@@ -82,7 +89,7 @@ public final class Accepts<LETTER, PLACE>
 			mLogger.info(startMessage());
 		}
 
-		mResult = getResultHelper(0, new Marking<>(ImmutableSet.of(operand.getInitialPlaces())));
+		mAcceptingRun = dfs();
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
@@ -101,34 +108,60 @@ public final class Accepts<LETTER, PLACE>
 
 	@Override
 	public Boolean getResult() {
-		return mResult;
+		return mAcceptingRun != null;
 	}
 
-	private boolean getResultHelper(final int position, final Marking<PLACE> marking)
-			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		if (position >= mWord.length()) {
-			return mOperand.isAccepting(marking);
+	public PetriNetRun<LETTER, PLACE> getAcceptingRun() {
+		return mAcceptingRun;
+	}
+
+	private PetriNetRun<LETTER, PLACE> dfs() throws AutomataOperationCanceledException {
+		final var initialMarking = new Marking<>(ImmutableSet.of(mOperand.getInitialPlaces()));
+		if (mWord.length() == 0) {
+			if (mOperand.isAccepting(initialMarking)) {
+				return new PetriNetRun<>(initialMarking);
+			}
+			return null;
 		}
 
-		if (isCancellationRequested()) {
-			throw new AutomataOperationCanceledException(this.getClass());
-		}
+		final var worklist = new ArrayDeque<DfsRecord<LETTER, PLACE>>();
+		worklist.push(new DfsRecord<>(initialMarking));
 
-		final LETTER symbol = mWord.getSymbol(position);
-		if (!mOperand.getAlphabet().contains(symbol)) {
-			throw new IllegalArgumentException("Symbol " + symbol + " not in alphabet");
-		}
+		while (!worklist.isEmpty()) {
+			if (isCancellationRequested()) {
+				throw new AutomataOperationCanceledException(getClass());
+			}
 
-		final int nextPosition = position + 1;
-		boolean result = false;
-		Marking<PLACE> nextMarking;
-		for (final Transition<LETTER, PLACE> transition : activeTransitionsWithSymbol(marking, symbol)) {
-			nextMarking = marking.fireTransition(transition);
-			if (getResultHelper(nextPosition, nextMarking)) {
-				result = true;
+			final var current = worklist.pop();
+
+			final LETTER symbol = mWord.getSymbol(current.mPosition);
+			if (!mOperand.getAlphabet().contains(symbol)) {
+				throw new IllegalArgumentException("Symbol " + symbol + " not in alphabet");
+			}
+
+			for (final var transition : activeTransitionsWithSymbol(current.getMarking(), symbol)) {
+				final var next = new DfsRecord<>(current, transition);
+				if (next.mPosition >= mWord.length() && mOperand.isAccepting(next.getMarking())) {
+					return buildRun(next);
+				}
+				if (next.mPosition < mWord.length()) {
+					worklist.push(next);
+				}
 			}
 		}
-		return result;
+
+		return null;
+	}
+
+	private PetriNetRun<LETTER, PLACE> buildRun(final DfsRecord<LETTER, PLACE> dfsRecord) {
+		final var markings = new ArrayList<Marking<PLACE>>();
+		final var transitions = new ArrayList<Transition<LETTER, PLACE>>();
+		for (int i = 0; i < dfsRecord.mTransitionStack.size(); ++i) {
+			markings.add(0, dfsRecord.mMarkingStack.get(i));
+			transitions.add(0, dfsRecord.mTransitionStack.get(i));
+		}
+		markings.add(0, dfsRecord.mMarkingStack.get(dfsRecord.mMarkingStack.size() - 1));
+		return new PetriNetRun<>(markings, mWord, transitions);
 	}
 
 	private Set<Transition<LETTER, PLACE>> activeTransitionsWithSymbol(final Marking<PLACE> marking,
@@ -153,12 +186,42 @@ public final class Accepts<LETTER, PLACE>
 				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts<>(mServices,
 						(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult(), nw))
 								.getResult();
-		final boolean correct = mResult == resultAutomata;
+		final boolean correct = getResult() == resultAutomata;
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of accepts");
 		}
 
 		return correct;
+	}
+
+	private static class DfsRecord<L, P> {
+		private final ImmutableList<Marking<P>> mMarkingStack;
+		private final ImmutableList<Transition<L, P>> mTransitionStack;
+		private final int mPosition;
+
+		public DfsRecord(final Marking<P> initial) {
+			mMarkingStack = ImmutableList.singleton(initial);
+			mTransitionStack = ImmutableList.empty();
+			mPosition = 0;
+		}
+
+		public DfsRecord(final DfsRecord<L, P> parent, final Transition<L, P> nextTransition) {
+			assert parent.getMarking().isTransitionEnabled(nextTransition);
+			Marking<P> marking;
+			try {
+				marking = parent.getMarking().fireTransition(nextTransition);
+			} catch (final PetriNetNot1SafeException e) {
+				throw new AssertionError(e);
+			}
+
+			mMarkingStack = new ImmutableList<>(marking, parent.mMarkingStack);
+			mTransitionStack = new ImmutableList<>(nextTransition, parent.mTransitionStack);
+			mPosition = parent.mPosition + 1;
+		}
+
+		Marking<P> getMarking() {
+			return mMarkingStack.getHead();
+		}
 	}
 }
