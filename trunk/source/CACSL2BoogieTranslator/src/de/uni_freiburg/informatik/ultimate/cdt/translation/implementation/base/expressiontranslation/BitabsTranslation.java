@@ -79,6 +79,8 @@ public class BitabsTranslation {
 	 * <li>If a < 0 or b >= 0, then a & b <= b
 	 * <li>If a >= b or b >= 0, then a & b >= 0
 	 * <li>If a < 0 or b < 0, then a & b > a + b
+	 *
+	 * Additionally evaluates the operation precisely for literals.
 	 */
 	public ExpressionResult abstractAnd(final ILocation loc, final Expression left, final Expression right,
 			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder) {
@@ -170,6 +172,8 @@ public class BitabsTranslation {
 	 * <li>If a < 0 or b >= 0, then a & b >= a
 	 * <li>If a >= 0 or b >= 0, then a | b <= a + b
 	 * <li>If a < 0 or b < 0, then a | b < 0
+	 *
+	 * Additionally evaluates the operation precisely for literals.
 	 */
 	public ExpressionResult abstractOr(final ILocation loc, final Expression left, final Expression right,
 			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder) {
@@ -262,6 +266,8 @@ public class BitabsTranslation {
 	 * <li>If a and b have the same sign (i.e. both are positive or both are negative), then a ^ b > 0
 	 * <li>Otherwise a ^ b < 0
 	 * <li>If a >= 0 or b >= 0, then a ^ b <= a + b
+	 *
+	 * Additionally evaluates the operation precisely for literals.
 	 */
 	public ExpressionResult abstractXor(final ILocation loc, final Expression left, final Expression right,
 			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder) {
@@ -342,11 +348,23 @@ public class BitabsTranslation {
 		return buildExpressionResult(loc, "bitwiseOr", type, auxvarinfo, exactCases, assumptions);
 	}
 
+	/**
+	 * Overapproximates the bitwise left-shift. Uses the following rules to increase the precision:
+	 * <li>If b=0, then a<<b = a
+	 * <li>Otherwise a<<b > a
+	 * <li>In general a<<b = a * 2**b, therefore we return this expression if b is a constant.
+	 */
 	public ExpressionResult abstractLeftShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		return abstractShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder, true);
 	}
 
+	/**
+	 * Overapproximates the bitwise right-shift. Uses the following rules to increase the precision:
+	 * <li>If b=0, then a>>b = a
+	 * <li>Otherwise a>>b < a
+	 * <li>In general a>>b = a / 2**b, therefore we return this expression if b is a constant.
+	 */
 	public ExpressionResult abstractRightShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		return abstractShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder, false);
