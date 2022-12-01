@@ -133,10 +133,16 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 			final var executedCompositions = new ArrayList<ExecutedComposition<L, P>>(compositions.size());
 			for (final var comp : compositions) {
 				if (!comp.isExecutable()) {
-					// This means the transitions t1.t2 can never be fired in direct sequence in a one-safe net:
+					// This means the transitions t1 t2 can never be fired in direct sequence in a one-safe net:
 					// Either some place would need to have 2 tokens, or some place would receive 2 tokens.
 					//
 					// TODO What is the best course of action here?
+					//
+					// Actually, this probably means there is no firing sequence where t1 and later t2 is executed.
+					// If there was, we'd know from the other conditions that all transitions in between are coenabled
+					// with t1 resp. with t2. Then we could move them out (to the left resp. right) and get a firing
+					// sequence that contains t1 t2. But we know this cannot exist in a one-safe net.
+					// This would explain why it is ok to just discard the composition.
 					mLogger.debug(" Discarding composition of %s and %s", comp.getFirst(), comp.getSecond());
 					continue;
 				}
@@ -283,28 +289,17 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 
 	private Map<Transition<L, P>, Transition<L, P>> copyTransitions(final IPetriNet<L, P> net, final P pivot,
 			final Collection<Transition<L, P>> transitions) {
-		P pivotCopyNonAccepting = null;
-		// P pivotCopyAccepting = null;
+		P pivotCopy = null;
 
 		final Map<Transition<L, P>, Transition<L, P>> transition2Copy = new HashMap<>();
 		for (final Transition<L, P> t : transitions) {
-			P pivotCopy;
-			// if (hasAcceptingSuccessor(t, petriNet)) {
-			// if (pivotCopyAccepting == null) {
-			// pivotCopyAccepting = mPlaceFactory.copyPlace(entry.getKey());
-			// petriNet.addPlace(pivotCopyAccepting, false, true);
-			// }
-			// pivotCopy = pivotCopyAccepting;
-			// } else {
-			if (pivotCopyNonAccepting == null) {
-				pivotCopyNonAccepting = mPlaceFactory.copyPlace(pivot);
-				addPlace(pivotCopyNonAccepting, false, false);
+			if (pivotCopy == null) {
+				pivotCopy = mPlaceFactory.copyPlace(pivot);
+				addPlace(pivotCopy, net.getInitialPlaces().contains(pivot), net.isAccepting(pivot));
 			}
-			pivotCopy = pivotCopyNonAccepting;
-			// }
 
-			// TODO Should the transition have those other successors? Not just deadPlace?
-			// TODO (if it just has deadPlace, then deadPlace may have to be accepting)
+			// The copy has all the successors of the original, except pivot has been replaced by pivotCopy
+			// (and pivotCopy has no outgoing transitions).
 			final Set<P> post = new HashSet<>(t.getSuccessors());
 			post.remove(pivot);
 			post.add(pivotCopy);
