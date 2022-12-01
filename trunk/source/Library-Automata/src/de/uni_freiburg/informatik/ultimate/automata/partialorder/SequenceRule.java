@@ -501,6 +501,13 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 		if (!mPostScriptChecker.mightGetStuck(petriNet, comp.getPivot())) {
 			mLogger.debug("  first transition %s is NOT needed because pivot place %s cannot get stuck",
 					comp.getFirst(), comp.getPivot());
+			if (mRun != null) {
+				// TODO This is not an ideal solution.
+				// TODO Ideally, we would implement run adaptation support for post-scripts.
+				// TODO Failing that, it would be better to only stop run adaptation if the run is actually affected.
+				mLogger.warn("Run adaptation is not yet supported for post-scripts");
+				mRun = null;
+			}
 			return false;
 		}
 
