@@ -170,10 +170,6 @@ public abstract class ExpressionTranslation {
 		}
 	}
 
-	protected static ExpressionResult constructExpressionResult(final Expression expr, final CType type) {
-		return new ExpressionResult(new RValue(expr, type, false, false));
-	}
-
 	public abstract Expression constructBinaryComparisonIntegerExpression(ILocation loc, int nodeOperator,
 			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 

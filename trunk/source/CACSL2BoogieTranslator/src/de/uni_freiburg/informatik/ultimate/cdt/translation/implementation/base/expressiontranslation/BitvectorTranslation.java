@@ -366,8 +366,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	protected ExpressionResult handleBinaryBitwiseIntegerExpression(final ILocation loc, final int op,
 			final Expression left, final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight,
 			final AuxVarInfoBuilder auxVarInfoBuilder) {
-		return constructExpressionResult(
-				constructBinaryBitwiseIntegerExpression(loc, op, left, typeLeft, right, typeRight), typeLeft);
+		final Expression expression =
+				constructBinaryBitwiseIntegerExpression(loc, op, left, typeLeft, right, typeRight);
+		return new ExpressionResult(new RValue(expression, typeLeft, false, false));
 	}
 
 	@Override
