@@ -156,11 +156,11 @@ public class BitabsTranslation {
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, rightWrapped, zero);
 		final Expression leftEqualsRight =
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, leftWrapped, rightWrapped);
-		final Expression oneEqualsZero =
+		final Expression leftOrRightEqualsZero =
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftEqualsZero, rightEqualsZero);
 
 		final List<Pair<Expression, Expression>> exactCases =
-				List.of(new Pair<>(oneEqualsZero, zero), new Pair<>(leftEqualsRight, left));
+				List.of(new Pair<>(leftOrRightEqualsZero, zero), new Pair<>(leftEqualsRight, left));
 		return buildExpressionResult(loc, "bitwiseAnd", type, auxvarinfo, exactCases, assumptions);
 	}
 
