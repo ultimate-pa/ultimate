@@ -114,6 +114,13 @@ public class IntegerTranslation extends ExpressionTranslation {
 		if (!type1.equals(type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " and " + type2);
 		}
+		Expression leftExpr = exp1;
+		Expression rightExpr = exp2;
+		if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(type1)) {
+			assert mTypeSizes.isUnsigned(type2);
+			leftExpr = applyWraparound(loc, type1, leftExpr);
+			rightExpr = applyWraparound(loc, type2, rightExpr);
+		}
 		BinaryExpression.Operator op;
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_equals:
@@ -137,8 +144,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		default:
 			throw new AssertionError("Unknown BinaryExpression operator " + nodeOperator);
 		}
-		final Expression leftExpr = applyWraparoundIfNecessary(loc, type1, exp1);
-		final Expression rightExpr = applyWraparoundIfNecessary(loc, type2, exp2);
+
 		return ExpressionFactory.newBinaryExpression(loc, op, leftExpr, rightExpr);
 	}
 
@@ -159,14 +165,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final BigInteger divisor) {
 		return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, operand,
 				ExpressionFactory.createIntegerLiteral(loc, divisor.toString()));
-	}
-
-	private Expression applyWraparoundIfNecessary(final ILocation loc, final CPrimitive cPrimitive,
-			final Expression operand) {
-		if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(cPrimitive)) {
-			return applyWraparound(loc, cPrimitive, operand);
-		}
-		return operand;
 	}
 
 	@Override
@@ -767,8 +765,13 @@ public class IntegerTranslation extends ExpressionTranslation {
 		Expression leftExpr = exp1;
 		Expression rightExpr = exp2;
 		if (type1 instanceof CPrimitive && type2 instanceof CPrimitive) {
-			leftExpr = applyWraparoundIfNecessary(loc, (CPrimitive) type1, exp1);
-			rightExpr = applyWraparoundIfNecessary(loc, (CPrimitive) type2, exp2);
+			final CPrimitive primitive1 = (CPrimitive) type1;
+			final CPrimitive primitive2 = (CPrimitive) type2;
+			if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(primitive1)) {
+				assert mTypeSizes.isUnsigned(primitive2);
+				leftExpr = applyWraparound(loc, primitive1, leftExpr);
+				rightExpr = applyWraparound(loc, primitive2, rightExpr);
+			}
 		}
 		return constructEquality(loc, nodeOperator, leftExpr, rightExpr);
 	}
