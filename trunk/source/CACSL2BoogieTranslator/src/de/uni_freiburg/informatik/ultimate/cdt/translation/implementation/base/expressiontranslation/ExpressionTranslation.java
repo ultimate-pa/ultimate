@@ -540,6 +540,7 @@ public abstract class ExpressionTranslation {
 		return attributes;
 	}
 
+	// TODO 20221121 Matthias: If types of LHS and RHS differ, we have to extend/reduce the RHS
 	protected Expression constructOverflowCheckForLeftShift(final ILocation loc, final Expression left,
 			final CPrimitive resultType, final CPrimitive rhsTypeForLeftshift, final Expression right) {
 		Expression lhsNonNegative;
