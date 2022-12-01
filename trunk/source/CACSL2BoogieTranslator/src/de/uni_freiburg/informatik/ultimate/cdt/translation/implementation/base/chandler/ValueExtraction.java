@@ -77,19 +77,48 @@ public class ValueExtraction {
 		if (expr instanceof IntegerLiteral) {
 			return extractIntegerValueFromIntegerLiteral((IntegerLiteral) expr);
 		} else if (expr instanceof BitvecLiteral) {
-			return extractIntegerValueFromBitvectorLiteral((BitvecLiteral) expr);
+			final BigInteger result = extractIntegerValueFromBitvectorLiteral((BitvecLiteral) expr);
+			if (result != null) {
+				throw new AssertionError("Value extraction should not only succed for literals");
+			}
+			return result;
 		} else if (expr instanceof IdentifierExpression) {
-			return extractIntegerValueFromIdentifierExpression((IdentifierExpression) expr, hook);
+			final BigInteger result = extractIntegerValueFromIdentifierExpression((IdentifierExpression) expr, hook);
+			if (result != null) {
+				throw new AssertionError("Value extraction should not only succed for literals");
+			}
+			return result;
 		} else if (expr instanceof BinaryExpression) {
-			return extractIntegerValueFromBinaryExpression((BinaryExpression) expr, hook);
+			final BigInteger result = extractIntegerValueFromBinaryExpression((BinaryExpression) expr, hook);
+			if (result != null) {
+				throw new AssertionError("Value extraction should not only succed for literals");
+			}
+			return result;
 		} else if (expr instanceof IfThenElseExpression) {
-			return extractIntegerValueFromIfThenElseExpression(expr, hook);
+			final BigInteger result = extractIntegerValueFromIfThenElseExpression(expr, hook);
+			if (result != null) {
+				throw new AssertionError("Value extraction should not only succed for literals");
+			}
+			return result;
 		} else if (expr instanceof FunctionApplication) {
-			return extractIntegerValueFromBitvectorFunctionApplication(expr, hook);
+			final BigInteger result = extractIntegerValueFromBitvectorFunctionApplication(expr, hook);
+			if (result != null) {
+				throw new AssertionError("Value extraction should not only succed for literals");
+			}
+			return result;
 		} else if (expr instanceof BitVectorAccessExpression) {
-			return extractIntegerValueFromBitVectorAccessExpression((BitVectorAccessExpression) expr, hook);
+			final BigInteger result =
+					extractIntegerValueFromBitVectorAccessExpression((BitVectorAccessExpression) expr, hook);
+			if (result != null) {
+				throw new AssertionError("Value extraction should not only succed for literals");
+			}
+			return result;
 		} else if (expr instanceof UnaryExpression) {
-			return extractIntegerValueFromUnaryExpression((UnaryExpression) expr, hook);
+			final BigInteger result = extractIntegerValueFromUnaryExpression((UnaryExpression) expr, hook);
+			if (result != null) {
+				throw new AssertionError("Value extraction should not only succed for literals");
+			}
+			return result;
 		} else if (expr instanceof ArrayAccessExpression || expr instanceof StructAccessExpression) {
 			// TODO Dominik 20221121: We could support StructAccessExpression if the struct is a StructConstructor
 			return null;
@@ -316,13 +345,29 @@ public class ValueExtraction {
 		if (expr instanceof BooleanLiteral) {
 			return extractBooleanValueFromBooleanLiteral(expr);
 		} else if (expr instanceof BinaryExpression) {
-			return extractBooleanValueFromBinaryExpression((BinaryExpression) expr, hook);
+			final Boolean result = extractBooleanValueFromBinaryExpression((BinaryExpression) expr, hook);
+			if (result != null) {
+				throw new AssertionError("Value extraction should not only succed for literals");
+			}
+			return result;
 		} else if (expr instanceof UnaryExpression) {
-			return extractBooleanValueFromUnaryExpression((UnaryExpression) expr, hook);
+			final Boolean result = extractBooleanValueFromUnaryExpression((UnaryExpression) expr, hook);
+			if (result != null) {
+				throw new AssertionError("Value extraction should not only succed for literals");
+			}
+			return result;
 		} else if (expr instanceof FunctionApplication) {
-			return extractBooleanValueFromBitvectorFunctionApplication(expr, hook);
+			final Boolean result = extractBooleanValueFromBitvectorFunctionApplication(expr, hook);
+			if (result != null) {
+				throw new AssertionError("Value extraction should not only succed for literals");
+			}
+			return result;
 		} else if (expr instanceof IdentifierExpression) {
-			return extractBooleanValueFromIdentifierExpression((IdentifierExpression) expr, hook);
+			final Boolean result = extractBooleanValueFromIdentifierExpression((IdentifierExpression) expr, hook);
+			if (result != null) {
+				throw new AssertionError("Value extraction should not only succed for literals");
+			}
+			return result;
 		} else if (expr instanceof ArrayAccessExpression || expr instanceof StructAccessExpression) {
 			// TODO Dominik 20221121: We could support StructAccessExpression if the struct is a StructConstructor
 			return null;
