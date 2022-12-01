@@ -40,7 +40,6 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -73,8 +72,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -1063,17 +1060,6 @@ public class ExpressionResultTransformer {
 		}
 		assert nullPointerConstant.getLrValue().getCType().getUnderlyingType() instanceof CPointer;
 		return nullPointerConstant;
-	}
-
-	public void addOverflowAssertion(final ILocation loc, final Expression assertion,
-			final ExpressionResultBuilder builder) {
-		if (ExpressionFactory.isTrueLiteral(assertion)) {
-			// Avoid the creation of "assert true" statements
-			return;
-		}
-		final AssertStatement assertSt = new AssertStatement(loc, assertion);
-		new Check(Spec.INTEGER_OVERFLOW).annotate(assertSt);
-		builder.addStatement(assertSt);
 	}
 
 	@FunctionalInterface
