@@ -252,6 +252,15 @@ public class CHandler {
 	 */
 	private static final boolean POINTER_CAST_IS_UNSUPPORTED_SYNTAX = false;
 
+	/**
+	 * Replace identifiers that refer to a constant (or an enum value) by their
+	 * value if the value is known. If `true` this should make
+	 * {@link TypeSizes#extractIntegerValue} nearly obsolete,
+	 * {@link TypeSizes#extractIntegerValue} should only be able to extract values
+	 * from literals.
+	 */
+	public static final boolean REPLACE_CONSTANT_SYMBOLS_BY_THEIR_VALUE = false;
+
 	private final MemoryHandler mMemoryHandler;
 
 	private final ArrayHandler mArrayHandler;
@@ -1582,6 +1591,12 @@ public class CHandler {
 			useHeap = isHeapVar(bId);
 			intFromPtr = stv.isIntFromPointer();
 			declarationInformation = stv.getDeclarationInformation();
+			if (REPLACE_CONSTANT_SYMBOLS_BY_THEIR_VALUE && stv.hasConstantValue()) {
+				if (useHeap) {
+					throw new AssertionError("I expected that constants are never stored on-heap.");
+				}
+				return new ExpressionResult(new RValue(stv.getConstantValue(), cType));
+			}
 		} else if (mSymbolTable.containsCSymbol(node, cIdMp)) {
 			if (mProcedureManager.hasProcedure(cIdMp)) {
 				mLogger.warn("Possible shadowing of function " + cId);
@@ -1593,6 +1608,12 @@ public class CHandler {
 			useHeap = isHeapVar(bId);
 			intFromPtr = stv.isIntFromPointer();
 			declarationInformation = stv.getDeclarationInformation();
+			if (REPLACE_CONSTANT_SYMBOLS_BY_THEIR_VALUE && stv.hasConstantValue()) {
+				if (useHeap) {
+					throw new AssertionError("I expected that constants are never stored on-heap.");
+				}
+				return new ExpressionResult(new RValue(stv.getConstantValue(), cType));
+			}
 			// } else if (mFunctionHandler.getProcedures().keySet().contains(cId)) {
 		} else if (mProcedureManager.hasProcedure(cIdMp)) {
 			// C11 6.3.2.1.4 says: A function designator is an expression that
