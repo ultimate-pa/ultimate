@@ -34,6 +34,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.BinaryOperator;
 
+import org.eclipse.cdt.core.dom.ast.IASTNode;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -340,6 +342,61 @@ public class BitabsTranslation {
 		final List<Pair<Expression, Expression>> exactCases = List.of(new Pair<>(leftEqualsZero, right),
 				new Pair<>(rightEqualsZero, left), new Pair<>(leftEqualsRight, zero));
 		return buildExpressionResult(loc, "bitwiseOr", type, auxvarinfo, exactCases, assumptions);
+	}
+
+	public ExpressionResult abstractLeftShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
+			final Expression right, final CPrimitive typeRight, final IASTNode hook,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
+		return abstractShift(loc, left, typeLeft, right, typeRight, hook, auxVarInfoBuilder, true);
+	}
+
+	public ExpressionResult abstractRightShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
+			final Expression right, final CPrimitive typeRight, final IASTNode hook,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
+		return abstractShift(loc, left, typeLeft, right, typeRight, hook, auxVarInfoBuilder, false);
+	}
+
+	private ExpressionResult abstractShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
+			final Expression right, final CPrimitive typeRight, final IASTNode hook,
+			final AuxVarInfoBuilder auxVarInfoBuilder, final boolean leftShift) {
+		final Expression value;
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final BigInteger shiftLeftLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
+		if (shiftLeftLiteralValue != null) {
+			value = constructShiftWithLiteralOptimization(loc, left, typeRight, shiftLeftLiteralValue,
+					leftShift ? Operator.ARITHMUL : Operator.ARITHDIV);
+		} else {
+			final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
+			builder.addDeclaration(auxVar.getVarDec());
+			builder.addAuxVar(auxVar);
+			value = auxVar.getExp();
+			final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+			final Expression rightEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
+					applyWraparoundIfNecessary(loc, right, typeRight), zero);
+			final Statement assignLeft = StatementFactory.constructAssignmentStatement(loc, auxVar.getLhs(), left);
+			final Statement compareLeft = new AssumeStatement(loc,
+					ExpressionFactory.newBinaryExpression(loc, leftShift ? Operator.COMPGT : Operator.COMPLT,
+							applyWraparoundIfNecessary(loc, value, typeLeft),
+							applyWraparoundIfNecessary(loc, left, typeLeft)));
+			new Overapprox(leftShift ? "shiftLeft" : "shiftRight", loc).annotate(compareLeft);
+			final Statement ifStmt = StatementFactory.constructIfStatement(loc, rightEqualsZero,
+					new Statement[] { assignLeft }, new Statement[] { compareLeft });
+			builder.addStatement(ifStmt);
+		}
+		return builder.setLrValue(new RValue(value, typeLeft)).build();
+	}
+
+	private Expression constructShiftWithLiteralOptimization(final ILocation loc, final Expression left,
+			final CPrimitive typeRight, final BigInteger integerLiteralValue, final Operator op1) {
+		final int exponent;
+		try {
+			exponent = integerLiteralValue.intValueExact();
+		} catch (final ArithmeticException ae) {
+			throw new UnsupportedOperationException("RHS of shift is larger than C standard allows " + ae);
+		}
+		final BigInteger shiftFactorBigInt = BigInteger.valueOf(2).pow(exponent);
+		final Expression shiftFactorExpr = mTypeSizes.constructLiteralForIntegerType(loc, typeRight, shiftFactorBigInt);
+		return ExpressionFactory.newBinaryExpression(loc, op1, left, shiftFactorExpr);
 	}
 
 	// TODO: This is duplicate code, the same method exists in IntegerTranslation
