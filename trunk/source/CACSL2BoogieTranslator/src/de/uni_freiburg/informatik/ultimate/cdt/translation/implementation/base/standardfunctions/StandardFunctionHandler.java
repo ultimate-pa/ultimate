@@ -896,14 +896,6 @@ public class StandardFunctionHandler {
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		builder.addAllExceptLrValue(argResult);
 		final Expression expr = argResult.getLrValue().getValue();
-		// Construct if x > 0 then x else -x as LrValue for abs(x)
-		final Expression positive = mExpressionTranslation.constructBinaryComparisonExpression(loc,
-				IASTBinaryExpression.op_greaterThan, expr, resultType,
-				mTypeSizes.constructLiteralForIntegerType(loc, resultType, BigInteger.ZERO), resultType);
-		final Expression negated = mExpressionTranslation.constructUnaryIntegerExpression(loc,
-				IASTUnaryExpression.op_minus, expr, resultType);
-		final Expression iteExpression = ExpressionFactory.constructIfThenElseExpression(loc, positive, expr, negated);
-		builder.setLrValue(new RValue(iteExpression, resultType));
 		// abs(MIN_INT) does overflow, so add an assertion for overflow checking
 		if (mSettings.checkSignedIntegerBounds() && resultType.isIntegerType() && !mTypeSizes.isUnsigned(resultType)) {
 			final Expression minInt = mTypeSizes.constructLiteralForIntegerType(loc, resultType,
@@ -914,7 +906,14 @@ public class StandardFunctionHandler {
 			new Check(Spec.INTEGER_OVERFLOW).annotate(biggerMinIntStmt);
 			builder.addStatement(biggerMinIntStmt);
 		}
-		return builder.build();
+		// Construct if x > 0 then x else -x as LrValue for abs(x)
+		final Expression positive = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_greaterThan, expr, resultType,
+				mTypeSizes.constructLiteralForIntegerType(loc, resultType, BigInteger.ZERO), resultType);
+		final Expression negated = mExpressionTranslation.constructUnaryIntegerExpression(loc,
+				IASTUnaryExpression.op_minus, expr, resultType);
+		final Expression iteExpression = ExpressionFactory.constructIfThenElseExpression(loc, positive, expr, negated);
+		return builder.setLrValue(new RValue(iteExpression, resultType)).build();
 	}
 
 	// Overapproximates snprintf as follows:
