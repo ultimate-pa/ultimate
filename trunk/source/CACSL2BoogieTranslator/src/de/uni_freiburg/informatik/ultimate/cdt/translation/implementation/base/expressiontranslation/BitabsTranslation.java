@@ -378,6 +378,7 @@ public class BitabsTranslation {
 
 		final Overapprox overapprox = new Overapprox(functionName, loc);
 		Statement[] resultStatements = new Statement[assumptionsForOverapproximation.size()];
+		// TODO: Is it better to have the one assume with the conjunction instead of multiple assumes?
 		for (int i = 0; i < assumptionsForOverapproximation.size(); i++) {
 			final Statement assume = new AssumeStatement(loc, assumptionsForOverapproximation.get(i));
 			overapprox.annotate(assume);
