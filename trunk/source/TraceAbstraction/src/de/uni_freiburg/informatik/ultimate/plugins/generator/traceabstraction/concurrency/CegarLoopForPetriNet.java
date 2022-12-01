@@ -122,7 +122,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 	 */
 	private static final int DEBUG_DUMP_DRYRUNRESULT_THRESHOLD = 24 * 60 * 60;
 
-	private static final boolean USE_COUNTEREXAMPLE_CACHE = true;
+	protected static final boolean USE_COUNTEREXAMPLE_CACHE = true;
 
 	public int mCoRelationQueries = 0;
 	/**

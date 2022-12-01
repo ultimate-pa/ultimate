@@ -30,11 +30,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.DefaultIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -97,24 +100,74 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 
 	protected BoundedPetriNet<L, IPredicate> applyLargeBlockEncoding(final BoundedPetriNet<L, IPredicate> cfg)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		final long start_time = System.currentTimeMillis();
+		final long startTime = System.currentTimeMillis();
+
+		final var counterexample = getCachedCounterexample();
 		final PetriNetLargeBlockEncoding<L> lbe = new PetriNetLargeBlockEncoding<>(getServices(),
 				mIcfg.getCfgSmtToolkit(), cfg, mPref.lbeIndependenceSettings(), mCompositionFactory, mPredicateFactory,
-				mIndependenceCache, mFinitePrefixOfAbstraction, mCounterexampleCache.getCounterexample());
+				mIndependenceCache, mFinitePrefixOfAbstraction, counterexample);
 		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
-		getServices().getBacktranslationService().addTranslator(mCompositionFactory.getBacktranslator());
+
+		mServices.getBacktranslationService().addTranslator(mCompositionFactory.getBacktranslator());
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_NAME,
+				"PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));
 
 		final var adaptedRun = lbe.getAdaptedRun();
 		if (adaptedRun != null) {
+			assert adaptedRun.isRunOf(lbecfg) : "adaptation produced invalid run!";
 			mCounterexampleCache.setCounterexample(adaptedRun);
+		} else if (counterexample != null) {
+			// This can currently happen, because run adaptation does not support post-scripts.
+			// The code below is a workaround that may succeed in a few cases.
+
+			mLogger.error("Lipton reduction run adaptation of counterexample failed.");
+			if (!lbecfg.getAlphabet().containsAll(counterexample.getWord().asSet())) {
+				throw new AssertionError("Lipton reduction run adaptation failed, and the cached counterexample word"
+						+ " contains letters no longer in the reduced abstraction's alphabet!");
+			}
+
+			final var run = new Accepts<>(new AutomataLibraryServices(mServices), lbecfg, counterexample.getWord())
+					.getAcceptingRun();
+			if (run == null) {
+				throw new AssertionError("Lipton reduction run adaptation failed, "
+						+ "and the cached counterexample word is no longer accepted by reduced abstraction!");
+			}
+			assert run.isRunOf(lbecfg) : "Run returned by Accepts() is not truly a run of the net";
+
+			mLogger.warn("Successfully replayed original counterexample word on reduced net.");
+			mCounterexampleCache.setCounterexample(run);
 		}
 
-		final long end_time = System.currentTimeMillis();
-		final long difference = end_time - start_time;
+		final long endTime = System.currentTimeMillis();
+		final long difference = endTime - startTime;
 		mLogger.info("Time needed for LBE in milliseconds: " + difference);
 
-		getServices().getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_NAME,
-				"PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));
 		return lbecfg;
+	}
+
+	private PetriNetRun<L, IPredicate> getCachedCounterexample()
+			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
+		final var cached = mCounterexampleCache.getCounterexample();
+		if (!USE_COUNTEREXAMPLE_CACHE || cached == null) {
+			return null;
+		}
+		if (cached.isRunOf(mAbstraction)) {
+			return cached;
+		}
+
+		// Depending on which optimizations (RemoveDead, RemoveRedundantFlow, USE_ON_DEMAND_RESULT) are turned on in
+		// CegarLoopForPetriNet, the cached counterexample may (depending on settings) not be a run of the abstraction
+		// (the transitions and markings may not match the Petri net). However, we still expect the counterexample word
+		// to be accepted by the abstraction.
+		// To account for such cases, we simply check acceptance and retrieve the accepting run in the new abstraction.
+		mLogger.warn("Counterexample is not a run of mAbstraction. Replaying acceptance of the word...");
+		final var run =
+				new Accepts<>(new AutomataLibraryServices(mServices), mAbstraction, cached.getWord()).getAcceptingRun();
+		if (run == null) {
+			throw new AssertionError("Cached counterexample (word) is not accepted by current abstraction!");
+		}
+		assert run.isRunOf(mAbstraction) : "Run returned by Accepts is not truly a run of the net";
+
+		return run;
 	}
 }
