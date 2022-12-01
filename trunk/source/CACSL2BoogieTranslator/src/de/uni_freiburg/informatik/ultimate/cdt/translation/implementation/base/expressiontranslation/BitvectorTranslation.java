@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -1567,8 +1568,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	protected Pair<Expression, Expression> constructOverflowCheckForLeftShift(final ILocation loc,
 			final CPrimitive resultType, final Expression expression) {
-		final Expression lhsOperand = ((BinaryExpression) expression).getLeft();
-		final Expression rhsOperand = ((BinaryExpression) expression).getRight();
+		final Expression[] arguments = ((FunctionApplication) expression).getArguments();
+		assert arguments.length == 2;
+		final Expression lhsOperand = arguments[0];
+		final Expression rhsOperand = arguments[1];
 		// See C11 in Section 6.5.7 on bitwise shift operators.
 		// We assume that we already checked in advance that
 		// * RHS is not negative
