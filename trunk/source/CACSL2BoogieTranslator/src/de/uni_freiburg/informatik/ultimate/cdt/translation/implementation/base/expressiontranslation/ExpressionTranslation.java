@@ -136,7 +136,7 @@ public abstract class ExpressionTranslation {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder(result);
 		addOverflowAssertion(loc, constructAdditionalOverflowCheckForLeftShift(loc, exp1, type1, type2, exp2), builder);
 		final Pair<Expression, Expression> minMax =
-				constructOverflowCheckForLeftShift(loc, type1, result.getLrValue().getValue());
+				constructOverflowCheckForLeftShift(loc, type1, result.getLrValue().getValue(), exp1, exp2);
 		addOverflowAssertion(loc, minMax.getFirst(), builder);
 		addOverflowAssertion(loc, minMax.getSecond(), builder);
 		return builder.build();
@@ -606,5 +606,6 @@ public abstract class ExpressionTranslation {
 			CPrimitive resultType, Expression operand);
 
 	protected abstract Pair<Expression, Expression> constructOverflowCheckForLeftShift(final ILocation loc,
-			final CPrimitive resultType, final Expression expression);
+			final CPrimitive resultType, final Expression newExpression, final Expression oldExprLeft,
+			final Expression oldExprRight);
 }

@@ -974,7 +974,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	protected Pair<Expression, Expression> constructOverflowCheckForLeftShift(final ILocation loc,
-			final CPrimitive resultType, final Expression expression) {
-		return constructOverflowCheck(loc, resultType, expression);
+			final CPrimitive resultType, final Expression newExpression, final Expression oldExprLeft,
+			final Expression oldExprRight) {
+		return constructOverflowCheck(loc, resultType, newExpression);
 	}
 }

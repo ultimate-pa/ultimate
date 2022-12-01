@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -1565,13 +1564,13 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 	}
 
+	// TODO: The BitvectorTranslation currently needs access to the parameters of the left-shift, whereas the
+	// IntegerTranslation only to the resulting expression (since it creates an aux-var).
+	// How can we fix this?
 	@Override
 	protected Pair<Expression, Expression> constructOverflowCheckForLeftShift(final ILocation loc,
-			final CPrimitive resultType, final Expression expression) {
-		final Expression[] arguments = ((FunctionApplication) expression).getArguments();
-		assert arguments.length == 2;
-		final Expression lhsOperand = arguments[0];
-		final Expression rhsOperand = arguments[1];
+			final CPrimitive resultType, final Expression newExpression, final Expression oldExprLeft,
+			final Expression oldExprRight) {
 		// See C11 in Section 6.5.7 on bitwise shift operators.
 		// We assume that we already checked in advance that
 		// * RHS is not negative
@@ -1583,9 +1582,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		// Since we check in advance that LHS and RHS are not negative it does not
 		// matter whether we take sign_extend or zero_extend
 		final Expression extendedLhsOperand =
-				extend(loc, lhsOperand, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
+				extend(loc, oldExprLeft, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
 		final Expression extendedRhsOperand =
-				extend(loc, rhsOperand, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
+				extend(loc, oldExprRight, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
 		declareBitvectorFunctionForArithmeticOperation(loc, bvop, requiredBitsize);
 		final Expression opResult = BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop,
 				new Expression[] { extendedLhsOperand, extendedRhsOperand });
