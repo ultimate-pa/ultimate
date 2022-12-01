@@ -34,8 +34,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.BinaryOperator;
 
-import org.eclipse.cdt.core.dom.ast.IASTNode;
-
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -345,25 +343,23 @@ public class BitabsTranslation {
 	}
 
 	public ExpressionResult abstractLeftShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight, final IASTNode hook,
-			final AuxVarInfoBuilder auxVarInfoBuilder) {
-		return abstractShift(loc, left, typeLeft, right, typeRight, hook, auxVarInfoBuilder, true);
+			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
+		return abstractShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder, true);
 	}
 
 	public ExpressionResult abstractRightShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight, final IASTNode hook,
-			final AuxVarInfoBuilder auxVarInfoBuilder) {
-		return abstractShift(loc, left, typeLeft, right, typeRight, hook, auxVarInfoBuilder, false);
+			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
+		return abstractShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder, false);
 	}
 
 	private ExpressionResult abstractShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight, final IASTNode hook,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final boolean leftShift) {
+			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder,
+			final boolean leftShift) {
 		final Expression value;
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final BigInteger shiftLeftLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
-		if (shiftLeftLiteralValue != null) {
-			value = constructShiftWithLiteralOptimization(loc, left, typeRight, shiftLeftLiteralValue,
+		if (right instanceof IntegerLiteral) {
+			final BigInteger shiftValue = new BigInteger(((IntegerLiteral) right).getValue());
+			value = constructShiftWithLiteralOptimization(loc, left, typeRight, shiftValue,
 					leftShift ? Operator.ARITHMUL : Operator.ARITHDIV);
 		} else {
 			final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);

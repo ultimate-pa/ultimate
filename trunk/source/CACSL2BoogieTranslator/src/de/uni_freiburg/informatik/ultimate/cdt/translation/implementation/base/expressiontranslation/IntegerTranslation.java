@@ -186,21 +186,19 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return mBitabsTranslation.abstractXor(loc, left, right, typeLeft, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign:
-			return handleLeftShift(loc, left, typeLeft, right, typeRight, hook, auxVarInfoBuilder);
+			return handleLeftShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftRightAssign:
-			return mBitabsTranslation.abstractRightShift(loc, left, typeLeft, right, typeRight, hook,
-					auxVarInfoBuilder);
+			return mBitabsTranslation.abstractRightShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 		default:
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported bitwise expression");
 		}
 	}
 
 	private ExpressionResult handleLeftShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight, final IASTNode hook,
-			final AuxVarInfoBuilder auxVarInfoBuilder) {
+			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		final ExpressionResult result =
-				mBitabsTranslation.abstractLeftShift(loc, left, typeLeft, right, typeRight, hook, auxVarInfoBuilder);
+				mBitabsTranslation.abstractLeftShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 		if (!mSettings.checkSignedIntegerBounds()) {
 			return result;
 		}
