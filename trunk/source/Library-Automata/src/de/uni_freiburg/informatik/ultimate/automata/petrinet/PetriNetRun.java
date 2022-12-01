@@ -183,10 +183,15 @@ public class PetriNetRun<LETTER, PLACE> implements IRun<LETTER, Marking<PLACE>> 
 		var marking = initialMarking;
 		for (int i = 0; i < mTransitionSequence.size(); ++i) {
 			final var transition = mTransitionSequence.get(i);
+			if (!net.getTransitions().contains(transition)) {
+				return false;
+			}
+
 			final var letter = mWord.getSymbol(i);
 			if (!letter.equals(transition.getSymbol())) {
 				return false;
 			}
+			assert net.getAlphabet().contains(letter) : "Letters of net transitions must be in alphabet";
 
 			if (!marking.isTransitionEnabled(transition)) {
 				return false;
