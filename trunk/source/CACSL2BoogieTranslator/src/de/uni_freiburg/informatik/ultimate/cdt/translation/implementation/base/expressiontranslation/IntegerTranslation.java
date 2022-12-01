@@ -84,10 +84,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class IntegerTranslation extends ExpressionTranslation {
 
 	private static final boolean OVERAPPROXIMATE_INT_POINTER_CONVERSION = true;
+	private final BitabsTranslation mBitabsTranslation;
 
 	public IntegerTranslation(final TypeSizes typeSizeConstants, final TranslationSettings settings,
 			final ITypeHandler typeHandler, final FlatSymbolTable symboltable) {
 		super(typeSizeConstants, settings, typeHandler, symboltable);
+		mBitabsTranslation = new BitabsTranslation(typeSizeConstants);
 	}
 
 	@Override
@@ -172,29 +174,26 @@ public class IntegerTranslation extends ExpressionTranslation {
 	protected ExpressionResult handleBinaryBitwiseIntegerExpression(final ILocation loc, final int op,
 			final Expression left, final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight,
 			final IASTNode hook, final AuxVarInfoBuilder auxVarInfoBuilder) {
-		final Expression leftExpr = applyWraparoundIfNecessary(loc, typeLeft, left);
-		final Expression rightExpr = applyWraparoundIfNecessary(loc, typeRight, right);
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryAndAssign:
-			return BitabsTranslation.abstractAnd(loc, leftExpr, rightExpr, typeLeft, auxVarInfoBuilder,
-					mTypeSizes.isUnsigned(typeLeft));
+			return mBitabsTranslation.abstractAnd(loc, left, right, typeLeft, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_binaryOr:
 		case IASTBinaryExpression.op_binaryOrAssign:
-			return BitabsTranslation.abstractOr(loc, leftExpr, rightExpr, typeLeft, auxVarInfoBuilder,
-					mTypeSizes.isUnsigned(typeLeft));
+			return mBitabsTranslation.abstractOr(loc, left, right, typeLeft, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_binaryXor:
 		case IASTBinaryExpression.op_binaryXorAssign:
-			return BitabsTranslation.abstractXor(loc, leftExpr, rightExpr, typeLeft, auxVarInfoBuilder,
-					mTypeSizes.isUnsigned(typeLeft));
+			return mBitabsTranslation.abstractXor(loc, left, right, typeLeft, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign:
-			return constructExpressionResult(
-					constructLeftShiftExpression(loc, leftExpr, typeLeft, rightExpr, typeRight, hook), typeLeft);
+			// TODO: Do we need a wraparound here?
+			return constructExpressionResult(constructLeftShiftExpression(loc, left, typeLeft, right, typeRight, hook),
+					typeLeft);
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftRightAssign:
-			return constructExpressionResult(
-					constructRightShiftExpression(loc, leftExpr, typeLeft, rightExpr, typeRight, hook), typeLeft);
+			// TODO: Do we need a wraparound here?
+			return constructExpressionResult(constructRightShiftExpression(loc, left, typeLeft, right, typeRight, hook),
+					typeLeft);
 		default:
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported bitwise expression");
 		}
