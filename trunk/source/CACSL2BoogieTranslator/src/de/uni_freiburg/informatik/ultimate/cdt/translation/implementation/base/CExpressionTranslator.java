@@ -424,10 +424,6 @@ public class CExpressionTranslator {
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftLeftAssign:
 		case IASTBinaryExpression.op_shiftRightAssign: {
-			if (op == IASTBinaryExpression.op_shiftLeft || op == IASTBinaryExpression.op_shiftLeftAssign) {
-				addIntegerBoundsCheck(loc, builder, typeOfResult, op, hook, (CPrimitive) rightConverted.getCType(),
-						leftPromoted.getLrValue().getValue(), rightConverted.getLrValue().getValue());
-			}
 			return builder.addAllIncludingLrValue(result).build();
 		}
 		default:
@@ -1056,19 +1052,7 @@ public class CExpressionTranslator {
 			return;
 		}
 		final Pair<Expression, Expression> inBoundsCheck;
-		// TODO Frank 2022-11-21: Why are left shifts handled here and all other binary operations in
-		// mExpressionTranslation.constructOverflowCheckForBinaryBitwiseIntegerExpression? Should we move this code
-		// there?
-		if (operation == IASTBinaryExpression.op_shiftLeft || operation == IASTBinaryExpression.op_shiftLeftAssign) {
-			final Expression left = tryToExtractValue(operands[0], resultType, hook, loc);
-			final Expression right = tryToExtractValue(operands[1], rhsTypeForLeftshift, hook, loc);
-			// TODO 20221121 Matthias: If types of LHS and RHS differ, we have to
-			// extend/reduce the RHS
-			addOverflowAssertion(loc,
-					constructOverflowConditionForLeftShift(loc, left, resultType, rhsTypeForLeftshift, right), erb);
-			inBoundsCheck = mExpressionTranslation.constructOverflowCheckForBinaryBitwiseIntegerExpression(loc,
-					operation, resultType, left, right, hook);
-		} else if (operands.length == 1) {
+		if (operands.length == 1) {
 			assert operation == IASTUnaryExpression.op_minus;
 			inBoundsCheck = mExpressionTranslation.constructOverflowCheckForUnaryExpression(loc, operation, resultType,
 					tryToExtractValue(operands[0], resultType, hook, loc));
@@ -1082,33 +1066,6 @@ public class CExpressionTranslator {
 		}
 		addOverflowAssertion(loc, inBoundsCheck.getFirst(), erb);
 		addOverflowAssertion(loc, inBoundsCheck.getSecond(), erb);
-	}
-
-	private Expression constructOverflowConditionForLeftShift(final ILocation loc, final Expression left,
-			final CPrimitive resultType, final CPrimitive rhsTypeForLeftshift, final Expression right) {
-		Expression lhsNonNegative;
-		{
-			final Expression zero =
-					mExpressionTranslation.constructLiteralForIntegerType(loc, resultType, BigInteger.ZERO);
-			lhsNonNegative = mExpressionTranslation.constructBinaryComparisonExpression(loc,
-					IASTBinaryExpression.op_lessEqual, zero, resultType, left, resultType);
-		}
-		Expression rhsNonNegative;
-		{
-			final Expression zero =
-					mExpressionTranslation.constructLiteralForIntegerType(loc, rhsTypeForLeftshift, BigInteger.ZERO);
-			rhsNonNegative = mExpressionTranslation.constructBinaryComparisonExpression(loc,
-					IASTBinaryExpression.op_lessEqual, zero, rhsTypeForLeftshift, right, rhsTypeForLeftshift);
-		}
-		Expression rhsSmallerBitWidth;
-		{
-			final BigInteger bitwidthOfLhsAsBigInt = BigInteger.valueOf(8 * mTypeSizes.getSize(resultType.getType()));
-			final Expression bitwidthOfLhsAsExpr = mExpressionTranslation.constructLiteralForIntegerType(loc,
-					rhsTypeForLeftshift, bitwidthOfLhsAsBigInt);
-			rhsSmallerBitWidth = mExpressionTranslation.constructBinaryComparisonExpression(loc,
-					IASTBinaryExpression.op_lessThan, right, resultType, bitwidthOfLhsAsExpr, resultType);
-		}
-		return ExpressionFactory.and(loc, List.of(lhsNonNegative, rhsNonNegative, rhsSmallerBitWidth));
 	}
 
 	private Expression tryToExtractValue(final Expression expr, final CPrimitive type, final IASTNode hook,

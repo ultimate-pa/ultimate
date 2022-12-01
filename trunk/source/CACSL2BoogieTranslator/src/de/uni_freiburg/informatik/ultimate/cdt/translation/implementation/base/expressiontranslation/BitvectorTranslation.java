@@ -367,8 +367,20 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	protected ExpressionResult handleBinaryBitwiseIntegerExpression(final ILocation loc, final int op,
 			final Expression left, final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight,
 			final IASTNode hook, final AuxVarInfoBuilder auxVarInfoBuilder) {
-		return constructExpressionResult(
-				constructBinaryBitwiseIntegerExpression(loc, op, left, typeLeft, right, typeRight, hook), typeLeft);
+		final Expression resultExpr =
+				constructBinaryBitwiseIntegerExpression(loc, op, left, typeLeft, right, typeRight, hook);
+		final ExpressionResult result = constructExpressionResult(resultExpr, typeLeft);
+		if (op == IASTBinaryExpression.op_shiftLeft || op == IASTBinaryExpression.op_shiftLeftAssign) {
+			final ExpressionResultBuilder builder = new ExpressionResultBuilder(result);
+			addOverflowAssertion(loc, constructOverflowCheckForLeftShift(loc, left, typeLeft, typeRight, right),
+					builder);
+			final Pair<Expression, Expression> minMax =
+					constructMinMaxCheckForLeftShift(loc, typeLeft, left, right, hook);
+			addOverflowAssertion(loc, minMax.getFirst(), builder);
+			addOverflowAssertion(loc, minMax.getSecond(), builder);
+			return builder.build();
+		}
+		return result;
 	}
 
 	@Override
@@ -1565,35 +1577,29 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 	}
 
-	@Override
-	public Pair<Expression, Expression> constructOverflowCheckForBinaryBitwiseIntegerExpression(final ILocation loc,
-			final int operation, final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand,
+	private Pair<Expression, Expression> constructMinMaxCheckForLeftShift(final ILocation loc,
+			final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand,
 			final IASTNode hook) {
-		if (operation == IASTBinaryExpression.op_shiftLeft || operation == IASTBinaryExpression.op_shiftLeftAssign) {
-			// See C11 in Section 6.5.7 on bitwise shift operators.
-			// We assume that we already checked in advance that
-			// * RHS is not negative
-			// * RHS is strictly small than the width of the left operand (after promotions)
-			// * LHS is not negative
-			final int inputBitsize = computeBitsize(resultType);
-			final int requiredBitsize = 2 * inputBitsize - 1;
-			final BvOp bvop = BvOp.bvshl;
-			// Since we check in advance that LHS and RHS are not negative it does not
-			// matter whether we take sign_extend or zero_extend
-			final Expression extendedLhsOperand =
-					extend(loc, lhsOperand, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
-			final Expression extendedRhsOperand =
-					extend(loc, rhsOperand, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
-			declareBitvectorFunctionForArithmeticOperation(loc, bvop, requiredBitsize);
-			final Expression opResult = BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop,
-					new Expression[] { extendedLhsOperand, extendedRhsOperand });
-			final Expression biggerMinInt = constructBiggerMinIntConstraint(loc, resultType, requiredBitsize, opResult);
-			final Expression smallerMaxInt =
-					constructSmallerMaxIntConstraint(loc, resultType, requiredBitsize, opResult);
-			return new Pair<>(biggerMinInt, smallerMaxInt);
-		} else {
-			throw new AssertionError("Not applicable to operation " + operation);
-		}
+		// See C11 in Section 6.5.7 on bitwise shift operators.
+		// We assume that we already checked in advance that
+		// * RHS is not negative
+		// * RHS is strictly small than the width of the left operand (after promotions)
+		// * LHS is not negative
+		final int inputBitsize = computeBitsize(resultType);
+		final int requiredBitsize = 2 * inputBitsize - 1;
+		final BvOp bvop = BvOp.bvshl;
+		// Since we check in advance that LHS and RHS are not negative it does not
+		// matter whether we take sign_extend or zero_extend
+		final Expression extendedLhsOperand =
+				extend(loc, lhsOperand, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
+		final Expression extendedRhsOperand =
+				extend(loc, rhsOperand, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
+		declareBitvectorFunctionForArithmeticOperation(loc, bvop, requiredBitsize);
+		final Expression opResult = BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop,
+				new Expression[] { extendedLhsOperand, extendedRhsOperand });
+		final Expression biggerMinInt = constructBiggerMinIntConstraint(loc, resultType, requiredBitsize, opResult);
+		final Expression smallerMaxInt = constructSmallerMaxIntConstraint(loc, resultType, requiredBitsize, opResult);
+		return new Pair<>(biggerMinInt, smallerMaxInt);
 	}
 
 }
