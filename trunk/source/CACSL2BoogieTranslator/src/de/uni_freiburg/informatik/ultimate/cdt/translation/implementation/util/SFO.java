@@ -379,8 +379,6 @@ public final class SFO {
 
 		RACE_DETECT("detect~race"),
 
-		ABS("abs"),
-
 		;
 
 		private final String mId;

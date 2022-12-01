@@ -895,30 +895,26 @@ public class StandardFunctionHandler {
 		final ExpressionResult argResult =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		builder.addAllExceptLrValue(argResult);
-		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.ABS);
-		builder.addDeclaration(auxvar.getVarDec());
-		builder.addAuxVar(auxvar);
-		builder.addStatement(
-				StatementFactory.constructAssignmentStatement(loc, auxvar.getLhs(), argResult.getLrValue().getValue()));
+		final Expression expr = argResult.getLrValue().getValue();
+		// Construct if x > 0 then x else -x as LrValue for abs(x)
+		final Expression positive = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_greaterThan, expr, resultType,
+				mTypeSizes.constructLiteralForIntegerType(loc, resultType, BigInteger.ZERO), resultType);
+		final Expression negated = mExpressionTranslation.constructUnaryIntegerExpression(loc,
+				IASTUnaryExpression.op_minus, expr, resultType);
+		final Expression iteExpression = ExpressionFactory.constructIfThenElseExpression(loc, positive, expr, negated);
+		builder.setLrValue(new RValue(iteExpression, resultType));
 		// abs(MIN_INT) does overflow, so add an assertion for overflow checking
 		if (mSettings.checkSignedIntegerBounds() && resultType.isIntegerType() && !mTypeSizes.isUnsigned(resultType)) {
 			final Expression minInt = mTypeSizes.constructLiteralForIntegerType(loc, resultType,
 					mTypeSizes.getMinValueOfPrimitiveType(resultType));
 			final Expression biggerMinInt = mExpressionTranslation.constructBinaryComparisonExpression(loc,
-					IASTBinaryExpression.op_greaterThan, auxvar.getExp(), resultType, minInt, resultType);
+					IASTBinaryExpression.op_greaterThan, expr, resultType, minInt, resultType);
 			final AssertStatement biggerMinIntStmt = new AssertStatement(loc, biggerMinInt);
 			new Check(Spec.INTEGER_OVERFLOW).annotate(biggerMinIntStmt);
 			builder.addStatement(biggerMinIntStmt);
 		}
-		// Construct if x > 0 then x else -x as LrValue for abs(x)
-		final Expression positive = mExpressionTranslation.constructBinaryComparisonExpression(loc,
-				IASTBinaryExpression.op_greaterThan, auxvar.getExp(), resultType,
-				mTypeSizes.constructLiteralForIntegerType(loc, resultType, BigInteger.ZERO), resultType);
-		final Expression negated = mExpressionTranslation.constructUnaryIntegerExpression(loc,
-				IASTUnaryExpression.op_minus, auxvar.getExp(), resultType);
-		final Expression iteExpression =
-				ExpressionFactory.constructIfThenElseExpression(loc, positive, auxvar.getExp(), negated);
-		return builder.setLrValue(new RValue(iteExpression, resultType)).build();
+		return builder.build();
 	}
 
 	// Overapproximates snprintf as follows:
