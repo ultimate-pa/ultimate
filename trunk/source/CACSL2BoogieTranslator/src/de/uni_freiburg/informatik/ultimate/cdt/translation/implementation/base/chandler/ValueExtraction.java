@@ -79,44 +79,44 @@ public class ValueExtraction {
 		} else if (expr instanceof BitvecLiteral) {
 			final BigInteger result = extractIntegerValueFromBitvectorLiteral((BitvecLiteral) expr);
 			if (result != null) {
-				throw new AssertionError("Value extraction should not only succed for literals");
+				throw new AssertionError("Value extraction should only succeed for literals");
 			}
 			return result;
 		} else if (expr instanceof IdentifierExpression) {
 			final BigInteger result = extractIntegerValueFromIdentifierExpression((IdentifierExpression) expr, hook);
 			if (result != null) {
-				throw new AssertionError("Value extraction should not only succed for literals");
+				throw new AssertionError("Value extraction should only succeed for literals");
 			}
 			return result;
 		} else if (expr instanceof BinaryExpression) {
 			final BigInteger result = extractIntegerValueFromBinaryExpression((BinaryExpression) expr, hook);
 			if (result != null) {
-				throw new AssertionError("Value extraction should not only succed for literals");
+				throw new AssertionError("Value extraction should only succeed for literals");
 			}
 			return result;
 		} else if (expr instanceof IfThenElseExpression) {
 			final BigInteger result = extractIntegerValueFromIfThenElseExpression(expr, hook);
 			if (result != null) {
-				throw new AssertionError("Value extraction should not only succed for literals");
+				throw new AssertionError("Value extraction should only succeed for literals");
 			}
 			return result;
 		} else if (expr instanceof FunctionApplication) {
 			final BigInteger result = extractIntegerValueFromBitvectorFunctionApplication(expr, hook);
 			if (result != null) {
-				throw new AssertionError("Value extraction should not only succed for literals");
+				throw new AssertionError("Value extraction should only succeed for literals");
 			}
 			return result;
 		} else if (expr instanceof BitVectorAccessExpression) {
 			final BigInteger result =
 					extractIntegerValueFromBitVectorAccessExpression((BitVectorAccessExpression) expr, hook);
 			if (result != null) {
-				throw new AssertionError("Value extraction should not only succed for literals");
+				throw new AssertionError("Value extraction should only succeed for literals");
 			}
 			return result;
 		} else if (expr instanceof UnaryExpression) {
 			final BigInteger result = extractIntegerValueFromUnaryExpression((UnaryExpression) expr, hook);
 			if (result != null) {
-				throw new AssertionError("Value extraction should not only succed for literals");
+				throw new AssertionError("Value extraction should only succeed for literals");
 			}
 			return result;
 		} else if (expr instanceof ArrayAccessExpression || expr instanceof StructAccessExpression) {
@@ -347,25 +347,25 @@ public class ValueExtraction {
 		} else if (expr instanceof BinaryExpression) {
 			final Boolean result = extractBooleanValueFromBinaryExpression((BinaryExpression) expr, hook);
 			if (result != null) {
-				throw new AssertionError("Value extraction should not only succed for literals");
+				throw new AssertionError("Value extraction should only succeed for literals");
 			}
 			return result;
 		} else if (expr instanceof UnaryExpression) {
 			final Boolean result = extractBooleanValueFromUnaryExpression((UnaryExpression) expr, hook);
 			if (result != null) {
-				throw new AssertionError("Value extraction should not only succed for literals");
+				throw new AssertionError("Value extraction should only succeed for literals");
 			}
 			return result;
 		} else if (expr instanceof FunctionApplication) {
 			final Boolean result = extractBooleanValueFromBitvectorFunctionApplication(expr, hook);
 			if (result != null) {
-				throw new AssertionError("Value extraction should not only succed for literals");
+				throw new AssertionError("Value extraction should only succeed for literals");
 			}
 			return result;
 		} else if (expr instanceof IdentifierExpression) {
 			final Boolean result = extractBooleanValueFromIdentifierExpression((IdentifierExpression) expr, hook);
 			if (result != null) {
-				throw new AssertionError("Value extraction should not only succed for literals");
+				throw new AssertionError("Value extraction should only succeed for literals");
 			}
 			return result;
 		} else if (expr instanceof ArrayAccessExpression || expr instanceof StructAccessExpression) {
