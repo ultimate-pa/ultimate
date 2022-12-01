@@ -252,15 +252,6 @@ public class CHandler {
 	 */
 	private static final boolean POINTER_CAST_IS_UNSUPPORTED_SYNTAX = false;
 
-	/**
-	 * Replace identifiers that refer to a constant (or an enum value) by their
-	 * value if the value is known. If `true` this should make
-	 * {@link TypeSizes#extractIntegerValue} nearly obsolete,
-	 * {@link TypeSizes#extractIntegerValue} should only be able to extract values
-	 * from literals.
-	 */
-	public static final boolean REPLACE_CONSTANT_SYMBOLS_BY_THEIR_VALUE = false;
-
 	private final MemoryHandler mMemoryHandler;
 
 	private final ArrayHandler mArrayHandler;
@@ -1591,7 +1582,7 @@ public class CHandler {
 			useHeap = isHeapVar(bId);
 			intFromPtr = stv.isIntFromPointer();
 			declarationInformation = stv.getDeclarationInformation();
-			if (REPLACE_CONSTANT_SYMBOLS_BY_THEIR_VALUE && stv.hasConstantValue()) {
+			if (stv.hasConstantValue()) {
 				if (useHeap) {
 					throw new AssertionError("I expected that constants are never stored on-heap.");
 				}
@@ -1608,7 +1599,7 @@ public class CHandler {
 			useHeap = isHeapVar(bId);
 			intFromPtr = stv.isIntFromPointer();
 			declarationInformation = stv.getDeclarationInformation();
-			if (REPLACE_CONSTANT_SYMBOLS_BY_THEIR_VALUE && stv.hasConstantValue()) {
+			if (stv.hasConstantValue()) {
 				if (useHeap) {
 					throw new AssertionError("I expected that constants are never stored on-heap.");
 				}
