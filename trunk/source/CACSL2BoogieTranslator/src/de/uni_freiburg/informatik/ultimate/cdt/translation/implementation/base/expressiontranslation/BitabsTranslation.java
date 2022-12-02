@@ -356,28 +356,8 @@ public class BitabsTranslation {
 	 */
 	public ExpressionResult abstractLeftShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
-		if (isZero(left) || isZero(right)) {
-			return new ExpressionResult(new RValue(left, typeLeft));
-		}
-		if (right instanceof IntegerLiteral) {
-			final BigInteger shiftValue = new BigInteger(((IntegerLiteral) right).getValue());
-			final Expression value =
-					constructShiftWithLiteralOptimization(loc, left, typeRight, shiftValue, Operator.ARITHMUL);
-			return new ExpressionResult(new RValue(value, typeLeft));
-		}
-		final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
-		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
-		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, typeLeft);
-		final Expression leftEqualsZero =
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, leftWrapped, zero);
-		final Expression rightEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
-				applyWraparoundIfNecessary(loc, right, typeRight), zero);
-		final Expression leftOrRightEqualsZero =
-				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftEqualsZero, rightEqualsZero);
-		final Expression greaterLeft = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT,
-				applyWraparoundIfNecessary(loc, auxVar.getExp(), typeLeft), leftWrapped);
-		return buildExpressionResult(loc, "shiftLeft", typeLeft, auxVar,
-				List.of(new Pair<>(leftOrRightEqualsZero, left)), List.of(greaterLeft));
+		return abstractShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder, "shiftLeft", Operator.ARITHMUL,
+				Operator.COMPGT);
 	}
 
 	/**
@@ -388,13 +368,20 @@ public class BitabsTranslation {
 	 */
 	public ExpressionResult abstractRightShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
+		return abstractShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder, "shiftRight", Operator.ARITHDIV,
+				Operator.COMPLT);
+	}
+
+	public ExpressionResult abstractShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
+			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder,
+			final String functionName, final Operator shiftOperator, final Operator compOperator) {
 		if (isZero(left) || isZero(right)) {
 			return new ExpressionResult(new RValue(left, typeLeft));
 		}
 		if (right instanceof IntegerLiteral) {
 			final BigInteger shiftValue = new BigInteger(((IntegerLiteral) right).getValue());
 			final Expression value =
-					constructShiftWithLiteralOptimization(loc, left, typeRight, shiftValue, Operator.ARITHDIV);
+					constructShiftWithLiteralOptimization(loc, left, typeRight, shiftValue, shiftOperator);
 			return new ExpressionResult(new RValue(value, typeLeft));
 		}
 		final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
@@ -406,10 +393,10 @@ public class BitabsTranslation {
 				applyWraparoundIfNecessary(loc, right, typeRight), zero);
 		final Expression leftOrRightEqualsZero =
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftEqualsZero, rightEqualsZero);
-		final Expression smallerLeft = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT,
+		final Expression compLeft = ExpressionFactory.newBinaryExpression(loc, compOperator,
 				applyWraparoundIfNecessary(loc, auxVar.getExp(), typeLeft), leftWrapped);
-		return buildExpressionResult(loc, "shiftRight", typeLeft, auxVar,
-				List.of(new Pair<>(leftOrRightEqualsZero, left)), List.of(smallerLeft));
+		return buildExpressionResult(loc, functionName, typeLeft, auxVar,
+				List.of(new Pair<>(leftOrRightEqualsZero, left)), List.of(compLeft));
 	}
 
 	private Expression constructShiftWithLiteralOptimization(final ILocation loc, final Expression left,
