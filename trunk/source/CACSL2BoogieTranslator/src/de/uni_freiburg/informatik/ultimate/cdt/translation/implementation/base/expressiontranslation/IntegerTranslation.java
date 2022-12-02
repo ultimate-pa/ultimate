@@ -197,7 +197,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		final ExpressionResult result =
 				mBitabsTranslation.abstractLeftShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
-		if (!mSettings.checkSignedIntegerBounds()) {
+		if (!mSettings.checkSignedIntegerBounds() || !typeLeft.isIntegerType() || mTypeSizes.isUnsigned(typeLeft)) {
 			return result;
 		}
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder(result);

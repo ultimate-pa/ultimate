@@ -370,6 +370,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final Expression resultExpr =
 				constructBinaryBitwiseIntegerExpression(loc, op, left, typeLeft, right, typeRight);
 		final ExpressionResult result = new ExpressionResult(new RValue(resultExpr, typeLeft, false, false));
+		if (!mSettings.checkSignedIntegerBounds() || !typeLeft.isIntegerType() || mTypeSizes.isUnsigned(typeLeft)) {
+			return result;
+		}
 		if (op == IASTBinaryExpression.op_shiftLeft || op == IASTBinaryExpression.op_shiftLeftAssign) {
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder(result);
 			CExpressionTranslator.addOverflowAssertion(loc,
