@@ -49,7 +49,8 @@ public class LiptonReductionRunAdaptationTests extends LiptonReductionTestsBase 
 	@Override
 	protected void runTest(final Path path, final AutomataTestFileAST ast, final BoundedPetriNet<String, String> input,
 			final BoundedPetriNet<String, String> expected,
-			final IIndependenceRelation<Set<String>, String> independence) throws AutomataLibraryException {
+			final IIndependenceRelation<Set<String>, String> independence, final IPostScriptChecker<String, String> psc)
+			throws AutomataLibraryException {
 
 		for (final var run : asIterable(EnumerateRuns.stream(input).limit(RUN_LIMIT))) {
 
@@ -57,7 +58,7 @@ public class LiptonReductionRunAdaptationTests extends LiptonReductionTestsBase 
 			assert run.isAccepting(input) : "Failed to get an accepting run for the test: " + run;
 
 			final var reduction = new LiptonReduction<>(mAutomataServices, input, CompositionFactory.INSTANCE,
-					new CopyPlaceFactory(), independence, PostScriptChecker.INSTANCE, null, run);
+					new CopyPlaceFactory(), independence, psc, null, run);
 			final BoundedPetriNet<String, String> actual = reduction.getResult();
 			final var adaptedRun = reduction.getAdaptedRun();
 

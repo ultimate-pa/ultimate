@@ -58,7 +58,8 @@ public class LiptonReductionSoundnessTests extends LiptonReductionTestsBase {
 	@Override
 	protected void runTest(final Path path, final AutomataTestFileAST ast, final BoundedPetriNet<String, String> input,
 			final BoundedPetriNet<String, String> expected,
-			final IIndependenceRelation<Set<String>, String> independence) throws AutomataLibraryException {
+			final IIndependenceRelation<Set<String>, String> independence, final IPostScriptChecker<String, String> psc)
+			throws AutomataLibraryException {
 
 		final var expectedCtex = findReductionCounterexample(expected, input, independence);
 		assertThat("FLAWED TEST: Expected net " + expected + " is not a reduction of input " + input
@@ -69,7 +70,7 @@ public class LiptonReductionSoundnessTests extends LiptonReductionTestsBase {
 				+ "example: " + expectedNew.orElse(null), expectedNew.isEmpty());
 
 		final var reduction = new LiptonReduction<>(mAutomataServices, input, CompositionFactory.INSTANCE,
-				new CopyPlaceFactory(), independence, PostScriptChecker.INSTANCE, null, null);
+				new CopyPlaceFactory(), independence, psc, null, null);
 		final BoundedPetriNet<String, String> actual = reduction.getResult();
 
 		final var actualCtex = findReductionCounterexample(actual, input, independence);

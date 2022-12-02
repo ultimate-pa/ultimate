@@ -33,7 +33,9 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -80,8 +82,8 @@ public abstract class LiptonReductionTestsBase implements IMessagePrinter {
 	protected AutomataDefinitionInterpreter mInterpreter;
 
 	protected abstract void runTest(final Path path, AutomataTestFileAST ast, BoundedPetriNet<String, String> input,
-			BoundedPetriNet<String, String> expected, IIndependenceRelation<Set<String>, String> independence)
-			throws AutomataLibraryException;
+			BoundedPetriNet<String, String> expected, IIndependenceRelation<Set<String>, String> independence,
+			IPostScriptChecker<String, String> ps) throws AutomataLibraryException;
 
 	@Before
 	public void setUp() {
@@ -146,7 +148,8 @@ public abstract class LiptonReductionTestsBase implements IMessagePrinter {
 		assert input != null && expected != null : "either input or expected is missing";
 
 		final HashIndependence indep = new HashIndependence(extractCommutativity(path));
-		runTest(path, parsed, input, expected, indep);
+		final PostScriptChecker psc = new PostScriptChecker(extractPostScript(path));
+		runTest(path, parsed, input, expected, indep, psc);
 	}
 
 	@Override
@@ -186,6 +189,33 @@ public abstract class LiptonReductionTestsBase implements IMessagePrinter {
 		}
 
 		mLogger.info("commutativity: " + result.getSetOfPairs());
+		return result;
+	}
+
+	private Set<String> extractPostScript(final Path path) throws IOException {
+		final String prefix = "//@ not-stuck ";
+
+		final Optional<String> psLine;
+		try (final var lines = Files.lines(path)) {
+			psLine = lines.filter(l -> l.startsWith(prefix)).findFirst();
+		}
+
+		if (!psLine.isPresent()) {
+			mLogger.info("no post-script specification found");
+			return Collections.emptySet();
+		}
+
+		final var result = new HashSet<String>();
+
+		final String relDescr = psLine.get().substring(prefix.length());
+		final Pattern placePattern = Pattern.compile("\\s*\"([^\"]+)\"");
+		final Matcher matcher = placePattern.matcher(relDescr);
+		while (matcher.find()) {
+			final String place = matcher.group(1).strip();
+			result.add(place);
+		}
+
+		mLogger.info("post-script (not-stuck places): " + result);
 		return result;
 	}
 
@@ -266,12 +296,21 @@ public abstract class LiptonReductionTestsBase implements IMessagePrinter {
 	}
 
 	protected static final class PostScriptChecker implements IPostScriptChecker<String, String> {
-		public static final PostScriptChecker INSTANCE = new PostScriptChecker();
+		private final Set<String> mNotStuckPlaces;
+
+		public PostScriptChecker(final Set<String> notStuckPlaces) {
+			mNotStuckPlaces = notStuckPlaces;
+		}
+
+		@Override
+		public boolean mightGetStuck(final IPetriNet<String, String> petriNet, final String place) {
+			return !mNotStuckPlaces.contains(place);
+		}
 
 		@Override
 		public boolean isPostScript(final IPetriNet<String, String> net,
 				final Set<Transition<String, String>> transitions) {
-			return false;
+			throw new UnsupportedOperationException();
 		}
 	}
 }
