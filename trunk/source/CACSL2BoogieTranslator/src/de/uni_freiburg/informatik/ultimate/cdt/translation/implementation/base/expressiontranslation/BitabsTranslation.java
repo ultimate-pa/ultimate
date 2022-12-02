@@ -356,7 +356,7 @@ public class BitabsTranslation {
 	 */
 	public ExpressionResult abstractLeftShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
-		if (isZero(left)) {
+		if (isZero(left) || isZero(right)) {
 			return new ExpressionResult(new RValue(left, typeLeft));
 		}
 		if (right instanceof IntegerLiteral) {
