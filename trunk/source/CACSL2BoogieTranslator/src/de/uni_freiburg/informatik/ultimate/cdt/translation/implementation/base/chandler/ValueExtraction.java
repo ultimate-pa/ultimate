@@ -77,11 +77,7 @@ public class ValueExtraction {
 		if (expr instanceof IntegerLiteral) {
 			return extractIntegerValueFromIntegerLiteral((IntegerLiteral) expr);
 		} else if (expr instanceof BitvecLiteral) {
-			final BigInteger result = extractIntegerValueFromBitvectorLiteral((BitvecLiteral) expr);
-			if (result != null) {
-				throw new AssertionError("Value extraction should only succeed for literals");
-			}
-			return result;
+			return extractIntegerValueFromBitvectorLiteral((BitvecLiteral) expr);
 		} else if (expr instanceof IdentifierExpression) {
 			final BigInteger result = extractIntegerValueFromIdentifierExpression((IdentifierExpression) expr, hook);
 			if (result != null) {
