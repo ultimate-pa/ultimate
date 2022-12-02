@@ -263,4 +263,9 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 		}
 		return true;
 	}
+
+	public NestedRun<LETTER, STATE> getSubRun(final int from, final int to) {
+		return new NestedRun<>(mNestedWord.getSubWord(from, to),
+				new ArrayList<>(mStateSequence.subList(from, to + 1)));
+	}
 }
