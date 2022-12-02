@@ -157,9 +157,9 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 
 			// adapt run
 			if (mRun != null) {
-				mRun = adaptRun(mRun, pivot, mPivotCopy, executedCompositions, transition2Copy);
+				mRun = adaptRun(mRun, pivot, mPivotCopy, executedCompositions, transition2Copy, net);
 				try {
-					assert mRun.isRunOf(net) : "Adapted run is not a run of the modified net";
+					assert mRun == null || mRun.isRunOf(net) : "Adapted run is not a run of the modified net";
 				} catch (final PetriNetNot1SafeException e) {
 					throw new AssertionError("Petri net has become unsafe");
 				}
@@ -501,13 +501,6 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 		if (!mPostScriptChecker.mightGetStuck(petriNet, comp.getPivot())) {
 			mLogger.debug("  first transition %s is NOT needed because pivot place %s cannot get stuck",
 					comp.getFirst(), comp.getPivot());
-			if (mRun != null) {
-				// TODO This is not an ideal solution.
-				// TODO Ideally, we would implement run adaptation support for post-scripts.
-				// TODO Failing that, it would be better to only stop run adaptation if the run is actually affected.
-				mLogger.warn("Run adaptation is not yet supported for post-scripts");
-				mRun = null;
-			}
 			return false;
 		}
 
@@ -768,7 +761,7 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 
 	private PetriNetRun<L, P> adaptRun(final PetriNetRun<L, P> oldRun, final P pivot, final P pivotCopy,
 			final Collection<ExecutedComposition<L, P>> compositions,
-			final Map<Transition<L, P>, Transition<L, P>> oldToCopy) {
+			final Map<Transition<L, P>, Transition<L, P>> oldToCopy, final IPetriNet<L, P> net) {
 		final var map =
 				compositions.stream().collect(Collectors.toMap(c -> new Pair<>(c.getFirst(), c.getSecond()), c -> c));
 
@@ -791,15 +784,24 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 				// no successor of pivot is executed, hence pivot has a token in all future markings
 				assert markings.subList(i + 1, markings.size()).stream().allMatch(m -> m.contains(pivot));
 
-				if (!oldToCopy.containsKey(transition)) {
-					// transition was not fused, hence there is nothing to do
-					// TODO or it could have been fused, but because of postScript / mightGetStuck no copy exists
+				if (net.getTransitions().contains(transition)) {
+					// The transition still exists (because it was only partially fused).
+					assert !oldToCopy.containsKey(transition) : "Unexpected: copy of partially fused transition?";
+
+					// Nothing to do in this case, moving on.
 					i++;
 					continue;
 				}
 
+				final var copy = oldToCopy.get(transition);
+				if (copy == null) {
+					// No copy was made due to postScript / mightGetStuck.
+					mLogger.error("Run adaptation not supported for post-scripts");
+					return null;
+				}
+
 				// replace transition by its un-fused copy
-				transitions.set(i, oldToCopy.get(transition));
+				transitions.set(i, copy);
 
 				// replace pivot by pivotCopy in all future markings
 				for (int k = i + 1; k < markings.size(); ++k) {
