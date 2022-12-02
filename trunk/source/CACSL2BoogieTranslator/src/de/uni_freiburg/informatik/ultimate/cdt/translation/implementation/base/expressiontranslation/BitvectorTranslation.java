@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BitvectorFactory;
@@ -59,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieTypeConstructor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -217,7 +217,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructLiteralForIntegerType(final ILocation loc, final CPrimitive type, final BigInteger value) {
+	public Expression constructLiteralForIntegerType(final ILocation loc, final CPrimitive type,
+			final BigInteger value) {
 		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, true, mTypeSizes, type, value);
 	}
 
@@ -322,9 +323,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		return result;
 	}
 
-	@Override
-	public Expression constructBinaryBitwiseIntegerExpression(final ILocation loc, final int op, final Expression left,
-			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook) {
+	private Expression constructBinaryBitwiseIntegerExpression(final ILocation loc, final int op, final Expression left,
+			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight) {
 		if (!mFunctionDeclarations.checkParameters(typeLeft, typeRight)) {
 			throw new IllegalArgumentException("incompatible types " + typeLeft + " " + typeRight);
 		}
@@ -364,7 +364,29 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructUnaryIntegerExpression(final ILocation loc, final int op, final Expression expr,
+	protected ExpressionResult handleBinaryBitwiseIntegerExpression(final ILocation loc, final int op,
+			final Expression left, final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
+		final Expression resultExpr =
+				constructBinaryBitwiseIntegerExpression(loc, op, left, typeLeft, right, typeRight);
+		final ExpressionResult result = new ExpressionResult(new RValue(resultExpr, typeLeft, false, false));
+		if (!mSettings.checkSignedIntegerBounds() || !typeLeft.isIntegerType() || mTypeSizes.isUnsigned(typeLeft)) {
+			return result;
+		}
+		if (op == IASTBinaryExpression.op_shiftLeft || op == IASTBinaryExpression.op_shiftLeftAssign) {
+			final ExpressionResultBuilder builder = new ExpressionResultBuilder(result);
+			CExpressionTranslator.addOverflowAssertion(loc,
+					constructOverflowCheckForLeftShift(loc, left, typeLeft, typeRight, right), builder);
+			final Pair<Expression, Expression> minMax = constructMinMaxCheckForLeftShift(loc, typeLeft, left, right);
+			CExpressionTranslator.addOverflowAssertion(loc, minMax.getFirst(), builder);
+			CExpressionTranslator.addOverflowAssertion(loc, minMax.getSecond(), builder);
+			return builder.build();
+		}
+		return result;
+	}
+
+	@Override
+	protected Expression constructUnaryIntegerExpression(final ILocation loc, final int op, final Expression expr,
 			final CPrimitive type) {
 		final BvOp bvop;
 		switch (op) {
@@ -380,8 +402,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 		final String boogieFunctionName = BitvectorFactory.generateBoogieFunctionName(bvop, computeBitsize(type));
 		declareBitvectorFunction(loc, bvop, boogieFunctionName, false, type, null, type);
-		final Expression func = BitvectorFactory.constructUnaryOperation(loc, bvop, expr);
-		return func;
+		return BitvectorFactory.constructUnaryOperation(loc, bvop, expr);
 	}
 
 	@Override
@@ -434,8 +455,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		return BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop, new Expression[] { exp1, exp2 });
 	}
 
-
-	private String generateBoogieFunctionNameForOrdinaryBitvecOp(final BvOp bvop, final int bitsize) {
+	private static String generateBoogieFunctionNameForOrdinaryBitvecOp(final BvOp bvop, final int bitsize) {
 		return SFO.AUXILIARY_FUNCTION_PREFIX + bvop + bitsize;
 	}
 
@@ -481,9 +501,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 		final int[] indices = null;
 		final Attribute[] attributes = generateAttributes(loc, false, smtFunctionName.toString(), indices);
-		mFunctionDeclarations.declareFunction(loc, boogieFunctionName, attributes,
-				new PrimitiveType(loc, "bool"), constructBitvectorAstType(loc, bitsize),
-				constructBitvectorAstType(loc, bitsize));
+		mFunctionDeclarations.declareFunction(loc, boogieFunctionName, attributes, new PrimitiveType(loc, "bool"),
+				constructBitvectorAstType(loc, bitsize), constructBitvectorAstType(loc, bitsize));
 	}
 
 	public void declareBitvectorFunctionBvNeg(final ILocation loc, final int bitsize) {
@@ -515,10 +534,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		mFunctionDeclarations.declareFunction(loc, boogieFunctionName, attributes, resultType, operandType);
 	}
 
-
-	private ASTType constructBitvectorAstType(final ILocation loc, final int bitlength) {
-		final ASTType operandType = new PrimitiveType(loc, "bv" + bitlength);
-		return operandType;
+	private static ASTType constructBitvectorAstType(final ILocation loc, final int bitlength) {
+		return new PrimitiveType(loc, "bv" + bitlength);
 	}
 
 	private void declareFloatingPointFunction(final ILocation loc, final String smtFunctionName,
@@ -755,12 +772,11 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	@Override
 	public Expression eraseBits(final ILocation loc, final Expression value, final CPrimitive cType,
-			final int remainingWith, final IASTNode hook) {
+			final int remainingWith) {
 		final BigInteger bitmaskNumber = BigInteger.valueOf(2).pow(remainingWith).subtract(BigInteger.ONE);
 		final Expression bitmask = mTypeSizes.constructLiteralForIntegerType(loc, cType, bitmaskNumber);
-		final Expression result = constructBinaryBitwiseExpression(loc, IASTBinaryExpression.op_binaryAnd, value, cType,
-				bitmask, cType, hook);
-		return result;
+		return constructBinaryBitwiseIntegerExpression(loc, IASTBinaryExpression.op_binaryAnd, value, cType, bitmask,
+				cType);
 	}
 
 	@Override
@@ -808,9 +824,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructUnaryFloatingPointExpression(final ILocation loc, final int nodeOperator,
+	protected Expression constructUnaryFloatingPointExpression(final ILocation loc, final int nodeOperator,
 			final Expression exp, final CPrimitive type) {
-		final Expression result;
 		final String smtFunctionName;
 		switch (nodeOperator) {
 		case IASTUnaryExpression.op_minus:
@@ -822,13 +837,12 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 		declareFloatingPointFunction(loc, smtFunctionName, false, false, type, type);
 		final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, type);
-		result = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName, new Expression[] { exp },
+		return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName, new Expression[] { exp },
 				mTypeHandler.getBoogieTypeForCType(type));
-		return result;
 	}
 
 	@Override
-	public Expression constructArithmeticFloatingPointExpression(final ILocation loc, final int nodeOperator,
+	protected Expression constructArithmeticFloatingPointExpression(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
 		if (!mFunctionDeclarations.checkParameters(type1, type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
@@ -875,14 +889,14 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructBinaryEqualityExpressionFloating(final ILocation loc, final int nodeOperator,
+	protected Expression constructBinaryEqualityExpressionFloating(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
 		return constructBinaryComparisonFloatingPointExpression(loc, nodeOperator, exp1, (CPrimitive) type1, exp2,
 				(CPrimitive) type2);
 	}
 
 	@Override
-	public Expression constructBinaryEqualityExpressionInteger(final ILocation loc, final int nodeOperator,
+	protected Expression constructBinaryEqualityExpressionInteger(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
 		if (nodeOperator == IASTBinaryExpression.op_equals) {
 			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, exp1, exp2);
@@ -1005,9 +1019,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			return ExpressionFactory.constructIdentifierExpression(LocationFactory.createIgnoreCLocation(),
 					ROUNDING_MODE_BOOGIE_TYPE, ULTIMATE_VAR_CURRENT_ROUNDING_MODE,
 					DeclarationInformation.DECLARATIONINFO_GLOBAL);
-		} else {
-			return mCurrentRoundingMode;
 		}
+		return mCurrentRoundingMode;
 	}
 
 	@Override
@@ -1357,10 +1370,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				floatingPointSize.getSignificant() - 1 + floatingPointSize.getExponent());
 		final String smtFunctionName = "fp";
 		final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, new CPrimitive(floatType));
-		final Expression result = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+		return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
 				new Expression[] { signBit, exponentBits, significantBits },
 				mTypeHandler.getBoogieTypeForCType(new CPrimitive(floatType)));
-		return result;
 
 	}
 
@@ -1380,9 +1392,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 					generateAttributes(loc, mSettings.overapproximateFloatingPointOperations(), smtFunctionName, null);
 			mFunctionDeclarations.declareFunction(loc, boogieFunctionName, attributes, bvType, params);
 		}
-		final Expression result = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-				new Expression[] { value }, mTypeHandler.getBoogieTypeForCType(new CPrimitive(cprimitive)));
-		return result;
+		return ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName, new Expression[] { value },
+				mTypeHandler.getBoogieTypeForCType(new CPrimitive(cprimitive)));
 	}
 
 	/**
@@ -1450,9 +1461,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final Expression condRTZ = ExpressionFactory.constructIfThenElseExpression(loc, eqRTZ, zero, condRNE);
 
 			return new RValue(condRTZ, intCPrimitive);
-		} else {
-			return new RValue(mCurrentRoundingModeMacroValue, intCPrimitive);
 		}
+		return new RValue(mCurrentRoundingModeMacroValue, intCPrimitive);
 	}
 
 	@Override
@@ -1518,10 +1528,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		} else {
 			throw new AssertionError("Not applicable to operation " + operation);
 		}
-		final Expression extendedLhsOperand = extend(loc, lhsOperand, ExtendOperation.sign_extend, inputBitsize,
-				requiredBitsize);
-		final Expression extendedRhsOperand = extend(loc, rhsOperand, ExtendOperation.sign_extend, inputBitsize,
-				requiredBitsize);
+		final Expression extendedLhsOperand =
+				extend(loc, lhsOperand, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
+		final Expression extendedRhsOperand =
+				extend(loc, rhsOperand, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
 		declareBitvectorFunctionForArithmeticOperation(loc, bvop, requiredBitsize);
 		final Expression opResult = BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop,
 				new Expression[] { extendedLhsOperand, extendedRhsOperand });
@@ -1533,8 +1543,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	private Expression constructSmallerMaxIntConstraint(final ILocation loc, final CPrimitive resultType,
 			final int requiredBitsize, final Expression opResult) {
 		final BigInteger maxValueAsInt = mTypeSizes.getMaxValueOfPrimitiveType(resultType);
-		final Expression maxValueAsExpr = ExpressionFactory.createBitvecLiteral(loc, maxValueAsInt,
-				requiredBitsize);
+		final Expression maxValueAsExpr = ExpressionFactory.createBitvecLiteral(loc, maxValueAsInt, requiredBitsize);
 		final Expression smallerMaxInt = BitvectorFactory.constructBinaryBitvectorOperation(loc, BvOp.bvsle,
 				new Expression[] { opResult, maxValueAsExpr });
 		return smallerMaxInt;
@@ -1544,8 +1553,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final int requiredBitsize, final Expression opResult) {
 		declareBitvectorFunctionForComparisonOperation(loc, BvOp.bvsle, requiredBitsize);
 		final BigInteger minValueAsInt = mTypeSizes.getMinValueOfPrimitiveType(resultType);
-		final Expression minValueAsExpr = ExpressionFactory.createBitvecLiteral(loc, minValueAsInt,
-				requiredBitsize);
+		final Expression minValueAsExpr = ExpressionFactory.createBitvecLiteral(loc, minValueAsInt, requiredBitsize);
 		final Expression biggerMinInt = BitvectorFactory.constructBinaryBitvectorOperation(loc, BvOp.bvsle,
 				new Expression[] { minValueAsExpr, opResult });
 		return biggerMinInt;
@@ -1557,46 +1565,41 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		if (operation == IASTUnaryExpression.op_minus) {
 			final int inputBitsize = computeBitsize(resultType);
 			final int requiredBitsize = inputBitsize + 1;
-			final Expression extendedOperand = extend(loc, operand, ExtendOperation.sign_extend, inputBitsize,
-					requiredBitsize);
+			final Expression extendedOperand =
+					extend(loc, operand, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
 			declareBitvectorFunctionBvNeg(loc, requiredBitsize);
 			final Expression opResult = BitvectorFactory.constructUnaryOperation(loc, BvOp.bvneg, extendedOperand);
 			final Expression biggerMinInt = constructBiggerMinIntConstraint(loc, resultType, requiredBitsize, opResult);
-			final Expression smallerMaxInt = constructSmallerMaxIntConstraint(loc, resultType, requiredBitsize, opResult);
+			final Expression smallerMaxInt =
+					constructSmallerMaxIntConstraint(loc, resultType, requiredBitsize, opResult);
 			return new Pair<>(biggerMinInt, smallerMaxInt);
 		} else {
 			throw new AssertionError("Not applicable to operation " + operation);
 		}
 	}
 
-	@Override
-	public Pair<Expression, Expression> constructOverflowCheckForBinaryBitwiseIntegerExpression(final ILocation loc,
-			final int operation, final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand,
-			final IASTNode hook) {
-		if (operation == IASTBinaryExpression.op_shiftLeft || operation == IASTBinaryExpression.op_shiftLeftAssign) {
-			// See C11 in Section 6.5.7 on bitwise shift operators.
-			// We assume that we already checked in advance that
-			// * RHS is not negative
-			// * RHS is strictly small than the width of the left operand (after promotions)
-			// * LHS is not negative
-			final int inputBitsize = computeBitsize(resultType);
-			final int requiredBitsize = 2 * inputBitsize - 1;
-			final BvOp bvop = BvOp.bvshl;
-			// Since we check in advance that LHS and RHS are not negative it does not
-			// matter whether we take sign_extend or zero_extend
-			final Expression extendedLhsOperand = extend(loc, lhsOperand, ExtendOperation.sign_extend, inputBitsize,
-					requiredBitsize);
-			final Expression extendedRhsOperand = extend(loc, rhsOperand, ExtendOperation.sign_extend, inputBitsize,
-					requiredBitsize);
-			declareBitvectorFunctionForArithmeticOperation(loc, bvop, requiredBitsize);
-			final Expression opResult = BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop,
-					new Expression[] { extendedLhsOperand, extendedRhsOperand });
-			final Expression biggerMinInt = constructBiggerMinIntConstraint(loc, resultType, requiredBitsize, opResult);
-			final Expression smallerMaxInt = constructSmallerMaxIntConstraint(loc, resultType, requiredBitsize, opResult);
-			return new Pair<>(biggerMinInt, smallerMaxInt);
-		} else {
-			throw new AssertionError("Not applicable to operation " + operation);
-		}
+	private Pair<Expression, Expression> constructMinMaxCheckForLeftShift(final ILocation loc,
+			final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand) {
+		// See C11 in Section 6.5.7 on bitwise shift operators.
+		// We assume that we already checked in advance that
+		// * RHS is not negative
+		// * RHS is strictly small than the width of the left operand (after promotions)
+		// * LHS is not negative
+		final int inputBitsize = computeBitsize(resultType);
+		final int requiredBitsize = 2 * inputBitsize - 1;
+		final BvOp bvop = BvOp.bvshl;
+		// Since we check in advance that LHS and RHS are not negative it does not
+		// matter whether we take sign_extend or zero_extend
+		final Expression extendedLhsOperand =
+				extend(loc, lhsOperand, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
+		final Expression extendedRhsOperand =
+				extend(loc, rhsOperand, ExtendOperation.sign_extend, inputBitsize, requiredBitsize);
+		declareBitvectorFunctionForArithmeticOperation(loc, bvop, requiredBitsize);
+		final Expression opResult = BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop,
+				new Expression[] { extendedLhsOperand, extendedRhsOperand });
+		final Expression biggerMinInt = constructBiggerMinIntConstraint(loc, resultType, requiredBitsize, opResult);
+		final Expression smallerMaxInt = constructSmallerMaxIntConstraint(loc, resultType, requiredBitsize, opResult);
+		return new Pair<>(biggerMinInt, smallerMaxInt);
 	}
 
 }
