@@ -32,7 +32,9 @@ import java.util.LinkedHashMap;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -81,14 +83,12 @@ public class TypeSizes {
 	private final LinkedHashMap<CPrimitive.CPrimitives, Integer> mCPrimitiveToTypeSizeConstant;
 
 	private final FlatSymbolTable mSymboltable;
-	private final ValueExtraction mValueExtraction;
 
 	private final TranslationSettings mSettings;
 
 	public TypeSizes(final IPreferenceProvider ups, final TranslationSettings settings,
 			final FlatSymbolTable symbolTable) {
 		mSymboltable = symbolTable;
-		mValueExtraction = new ValueExtraction(mSymboltable);
 		mUseFixedTypeSizes = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
 		mSettings = settings;
 		mCPrimitiveToTypeSizeConstant = new LinkedHashMap<>();
@@ -140,7 +140,6 @@ public class TypeSizes {
 
 	public TypeSizes(final TypeSizes prerunTypeSizes, final FlatSymbolTable symbolTable) {
 		mSymboltable = symbolTable;
-		mValueExtraction = new ValueExtraction(mSymboltable);
 
 		mUseFixedTypeSizes = prerunTypeSizes.mUseFixedTypeSizes;
 		mSettings = prerunTypeSizes.mSettings;
@@ -351,16 +350,21 @@ public class TypeSizes {
 	}
 
 	public BigInteger extractIntegerValue(final Expression expr, final CType cType, final IASTNode hook) {
-		final BigInteger tmp = mValueExtraction.extractIntegerValue(expr, hook);
-		if (tmp == null) {
-			return null;
+		if (expr instanceof IntegerLiteral) {
+			final BigInteger tmp = new BigInteger(((IntegerLiteral) expr).toString());
+			if (!isUnsigned((CPrimitive) cType)) {
+				return tmp;
+			}
+			// TODO 20221119 Matthias: Because of the Nutz transformation we do
+			// do a modulo operation. It don't think this should be necessary,
+			// but it won't hurt and I don't have the time to check.
+			final BigInteger maxValue = getMaxValueOfPrimitiveType((CPrimitive) cType);
+			final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
+			return tmp.mod(maxValuePlusOne);
 		}
-
-		if (!(cType instanceof CPrimitive)) {
-			throw new AssertionError("Expected only CPrimitive but got " + cType);
-		}
-		final CPrimitive cPrimitive = (CPrimitive) cType;
-		if (mSettings.isBitvectorTranslation()) {
+		if (expr instanceof BitvecLiteral) {
+			final BigInteger tmp = new BigInteger(((BitvecLiteral) expr).toString());
+			final CPrimitive cPrimitive = (CPrimitive) cType;
 			if (isUnsigned(cPrimitive)) {
 				// my return as is
 				if (getMinValueOfPrimitiveType(cPrimitive).compareTo(tmp) > 0) {
@@ -371,22 +375,11 @@ public class TypeSizes {
 				}
 				return tmp;
 			}
-			// is signed
-			final Integer bytesize = getSize(cPrimitive.getType());
-			final int bitsize = bytesize * 8;
+			final int bitsize = 8 * getSize(cPrimitive.getType());
 			final BitvectorConstant bc = new BitvectorConstant(tmp, BigInteger.valueOf(bitsize));
 			return bc.toSignedInt();
 		}
-		// integer translation
-		if (isUnsigned(cPrimitive)) {
-			// TODO 20221119 Matthias: Because of the Nutz transformation we do
-			// do a modulo operation. It don't think this should be necessary,
-			// but it won't hurt and I don't have the time to check.
-			final BigInteger maxValue = getMaxValueOfPrimitiveType((CPrimitive) cType);
-			final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
-			return tmp.mod(maxValuePlusOne);
-		}
-		return tmp;
+		return null;
 	}
 
 	/**
