@@ -387,7 +387,7 @@ public class ACSLHandler implements IACSLHandler {
 			final ExpressionResult right =
 					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getRight());
 			final int op = getCASTBinaryExprOperator(node.getOperator());
-			return mCExpressionTranslator.handleMultiplicativeOperation(loc, op, left, right, main.getAcslHook());
+			return mCExpressionTranslator.handleMultiplicativeOperation(loc, op, left, right);
 		}
 		case ARITHMINUS:
 		case ARITHPLUS: {
@@ -489,14 +489,11 @@ public class ACSLHandler implements IACSLHandler {
 
 		switch (node.getOperator()) {
 		case LOGICNEG:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_not, res,
-					main.getAcslHook());
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_not, res);
 		case MINUS:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus, res,
-					main.getAcslHook());
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus, res);
 		case PLUS:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus, res,
-					main.getAcslHook());
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus, res);
 		case POINTER:
 		case ADDROF:
 		case LOGICCOMPLEMENT:

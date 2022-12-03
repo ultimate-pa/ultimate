@@ -764,7 +764,7 @@ public class CHandler {
 		case IASTBinaryExpression.op_divide: {
 			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
-			return mCExpressionTranslator.handleMultiplicativeOperation(loc, node.getOperator(), rl, rr, node);
+			return mCExpressionTranslator.handleMultiplicativeOperation(loc, node.getOperator(), rl, rr);
 		}
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_multiplyAssign:
@@ -772,7 +772,7 @@ public class CHandler {
 			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
-					mCExpressionTranslator.handleMultiplicativeOperation(loc, node.getOperator(), rl, rr, node);
+					mCExpressionTranslator.handleMultiplicativeOperation(loc, node.getOperator(), rl, rr);
 			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
 		}
 		case IASTBinaryExpression.op_plus:
@@ -804,7 +804,7 @@ public class CHandler {
 		case IASTBinaryExpression.op_binaryXor: {
 			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
-			return mCExpressionTranslator.handleBitwiseArithmeticOperation(loc, node.getOperator(), rl, rr, node);
+			return mCExpressionTranslator.handleBitwiseArithmeticOperation(loc, node.getOperator(), rl, rr);
 		}
 		case IASTBinaryExpression.op_binaryAndAssign:
 		case IASTBinaryExpression.op_binaryOrAssign:
@@ -812,14 +812,14 @@ public class CHandler {
 			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
-					mCExpressionTranslator.handleBitwiseArithmeticOperation(loc, node.getOperator(), rl, rr, node);
+					mCExpressionTranslator.handleBitwiseArithmeticOperation(loc, node.getOperator(), rl, rr);
 			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
 		}
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftRight: {
 			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
-			return mCExpressionTranslator.handleBitshiftOperation(loc, node.getOperator(), rl, rr, node);
+			return mCExpressionTranslator.handleBitshiftOperation(loc, node.getOperator(), rl, rr);
 
 		}
 		case IASTBinaryExpression.op_shiftLeftAssign:
@@ -827,7 +827,7 @@ public class CHandler {
 			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
-					mCExpressionTranslator.handleBitshiftOperation(loc, node.getOperator(), rl, rr, node);
+					mCExpressionTranslator.handleBitshiftOperation(loc, node.getOperator(), rl, rr);
 			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
 		}
 		default:
@@ -2460,7 +2460,7 @@ public class CHandler {
 		case IASTUnaryExpression.op_plus:
 		case IASTUnaryExpression.op_tilde: {
 			final ExpressionResult rop = mExprResultTransformer.switchToRValue(operand, loc, node);
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, node.getOperator(), rop, node);
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, node.getOperator(), rop);
 		}
 		case IASTUnaryExpression.op_postFixIncr:
 		case IASTUnaryExpression.op_postFixDecr: {
