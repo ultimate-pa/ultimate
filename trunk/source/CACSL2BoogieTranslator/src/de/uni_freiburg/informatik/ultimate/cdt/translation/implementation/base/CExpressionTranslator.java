@@ -201,6 +201,10 @@ public class CExpressionTranslator {
 	 */
 	public ExpressionResult handleAdditiveOperation(final ILocation loc, final int op, ExpressionResult left,
 			ExpressionResult right, final IASTNode hook) {
+		if (!List.of(IASTBinaryExpression.op_plus, IASTBinaryExpression.op_minus, IASTBinaryExpression.op_plusAssign,
+				IASTBinaryExpression.op_minusAssign).contains(op)) {
+			throw new AssertionError("no additive operation " + op);
+		}
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
 
@@ -287,34 +291,20 @@ public class CExpressionTranslator {
 		final RValue rval = new RValue(expr, typeOfResult, false, false);
 		builder.setLrValue(rval);
 
-		final ExpressionResult intermediateResult;
 		if (left instanceof StringLiteralResult) {
 			/*
 			 * if we had a StringLiteralResult as input, we have to restore the StringLiteralResult from the
 			 * ExpressionResult.
 			 */
-			intermediateResult = new StringLiteralResult(builder.getLrValue(), builder.getOverappr(),
-					((StringLiteralResult) left).getAuxVar(), ((StringLiteralResult) left).getLiteralString(),
-					((StringLiteralResult) left).overApproximatesLongStringLiteral());
 			builder.getDeclarations().forEach(decl -> mStaticObjectsHandler
 					.addGlobalVarDeclarationWithoutCDeclaration((VariableDeclaration) decl));
 			mStaticObjectsHandler.addStatementsForUltimateInit(builder.getStatements());
+			return new StringLiteralResult(builder.getLrValue(), builder.getOverappr(),
+					((StringLiteralResult) left).getAuxVar(), ((StringLiteralResult) left).getLiteralString(),
+					((StringLiteralResult) left).overApproximatesLongStringLiteral());
 
-		} else {
-			intermediateResult = builder.build();
 		}
-
-		switch (op) {
-		case IASTBinaryExpression.op_plus:
-		case IASTBinaryExpression.op_minus:
-		case IASTBinaryExpression.op_plusAssign:
-		case IASTBinaryExpression.op_minusAssign: {
-			return intermediateResult;
-		}
-
-		default:
-			throw new AssertionError("no additive operation " + op);
-		}
+		return builder.build();
 	}
 
 	/**
@@ -402,6 +392,12 @@ public class CExpressionTranslator {
 	 */
 	public ExpressionResult handleBitshiftOperation(final ILocation loc, final int op, final ExpressionResult left,
 			final ExpressionResult right, final IASTNode hook) {
+		if (!List
+				.of(IASTBinaryExpression.op_shiftLeft, IASTBinaryExpression.op_shiftRight,
+						IASTBinaryExpression.op_shiftLeftAssign, IASTBinaryExpression.op_shiftRightAssign)
+				.contains(op)) {
+			throw new AssertionError("no bitshift " + op);
+		}
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
 		final CType lType = left.getLrValue().getCType().getUnderlyingType();
@@ -422,17 +418,7 @@ public class CExpressionTranslator {
 				typeOfResult, rightValue, typeOfResult, mAuxVarInfoBuilder);
 		final ExpressionResultBuilder builder =
 				new ExpressionResultBuilder().addAllExceptLrValue(leftPromoted, rightConverted);
-
-		switch (op) {
-		case IASTBinaryExpression.op_shiftLeft:
-		case IASTBinaryExpression.op_shiftRight:
-		case IASTBinaryExpression.op_shiftLeftAssign:
-		case IASTBinaryExpression.op_shiftRightAssign: {
-			return builder.addAllIncludingLrValue(result).build();
-		}
-		default:
-			throw new AssertionError("no bitshift " + op);
-		}
+		return builder.addAllIncludingLrValue(result).build();
 	}
 
 	/**
@@ -467,16 +453,14 @@ public class CExpressionTranslator {
 		case IASTBinaryExpression.op_multiply:
 		case IASTBinaryExpression.op_divide:
 		case IASTBinaryExpression.op_multiplyAssign:
-		case IASTBinaryExpression.op_divideAssign: {
+		case IASTBinaryExpression.op_divideAssign:
 			addIntegerBoundsCheck(loc, result, typeOfResult, op, hook, left.getLrValue().getValue(),
 					right.getLrValue().getValue());
 			break;
-		}
 		case IASTBinaryExpression.op_modulo:
-		case IASTBinaryExpression.op_moduloAssign: {
+		case IASTBinaryExpression.op_moduloAssign:
 			// no integer bounds check needed
 			break;
-		}
 		default:
 			throw new AssertionError("no multiplicative " + op);
 		}
@@ -484,19 +468,7 @@ public class CExpressionTranslator {
 		final Expression expr = mExpressionTranslation.constructArithmeticExpression(loc, op,
 				left.getLrValue().getValue(), typeOfResult, right.getLrValue().getValue(), typeOfResult);
 		final RValue rval = new RValue(expr, typeOfResult, false, false);
-
-		switch (op) {
-		case IASTBinaryExpression.op_multiply:
-		case IASTBinaryExpression.op_divide:
-		case IASTBinaryExpression.op_modulo:
-		case IASTBinaryExpression.op_multiplyAssign:
-		case IASTBinaryExpression.op_divideAssign:
-		case IASTBinaryExpression.op_moduloAssign: {
-			return result.setLrValue(rval).build();
-		}
-		default:
-			throw new AssertionError("no multiplicative " + op);
-		}
+		return result.setLrValue(rval).build();
 	}
 
 	/**
@@ -555,6 +527,11 @@ public class CExpressionTranslator {
 	 */
 	public ExpressionResult handleBitwiseArithmeticOperation(final ILocation loc, final int op, ExpressionResult left,
 			ExpressionResult right, final IASTNode hook) {
+		if (!List.of(IASTBinaryExpression.op_binaryAnd, IASTBinaryExpression.op_binaryXor,
+				IASTBinaryExpression.op_binaryOr, IASTBinaryExpression.op_binaryAndAssign,
+				IASTBinaryExpression.op_binaryXorAssign, IASTBinaryExpression.op_binaryOrAssign).contains(op)) {
+			throw new AssertionError("no bitwise arithmetic operation " + op);
+		}
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
 		final CType lType = left.getLrValue().getCType().getUnderlyingType();
@@ -571,19 +548,7 @@ public class CExpressionTranslator {
 		final ExpressionResult result =
 				mExpressionTranslation.handleBinaryBitwiseExpression(loc, op, left.getLrValue().getValue(),
 						typeOfResult, right.getLrValue().getValue(), typeOfResult, mAuxVarInfoBuilder);
-		switch (op) {
-		case IASTBinaryExpression.op_binaryAnd:
-		case IASTBinaryExpression.op_binaryXor:
-		case IASTBinaryExpression.op_binaryOr:
-		case IASTBinaryExpression.op_binaryAndAssign:
-		case IASTBinaryExpression.op_binaryXorAssign:
-		case IASTBinaryExpression.op_binaryOrAssign: {
-			return new ExpressionResultBuilder().addAllExceptLrValue(left, right).addAllIncludingLrValue(result)
-					.build();
-		}
-		default:
-			throw new AssertionError("no bitwise arithmetic operation " + op);
-		}
+		return new ExpressionResultBuilder().addAllExceptLrValue(left, right).addAllIncludingLrValue(result).build();
 	}
 
 	/**
