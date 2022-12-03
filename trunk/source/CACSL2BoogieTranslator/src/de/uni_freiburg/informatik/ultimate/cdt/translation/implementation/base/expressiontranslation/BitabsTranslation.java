@@ -85,14 +85,16 @@ public class BitabsTranslation {
 	public ExpressionResult abstractAnd(final ILocation loc, final Expression left, final Expression right,
 			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		// 0 & a = a & 0 = 0
-		if (isZero(left)) {
+		final BigInteger leftValue = mTypeSizes.extractIntegerValue(left, type);
+		if (BigInteger.ZERO.equals(leftValue)) {
 			return new ExpressionResult(new RValue(left, type));
 		}
-		if (isZero(right)) {
+		final BigInteger rightValue = mTypeSizes.extractIntegerValue(left, type);
+		if (BigInteger.ZERO.equals(rightValue)) {
 			return new ExpressionResult(new RValue(right, type));
 		}
-		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral) {
-			return handleConstants((IntegerLiteral) left, (IntegerLiteral) right, BigInteger::and, loc, type);
+		if (leftValue != null && rightValue != null) {
+			return handleConstants(leftValue, rightValue, BigInteger::and, loc, type);
 		}
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
@@ -178,14 +180,16 @@ public class BitabsTranslation {
 	public ExpressionResult abstractOr(final ILocation loc, final Expression left, final Expression right,
 			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		// 0 | a = a | 0 = a
-		if (isZero(left)) {
+		final BigInteger leftValue = mTypeSizes.extractIntegerValue(left, type);
+		if (BigInteger.ZERO.equals(leftValue)) {
 			return new ExpressionResult(new RValue(right, type));
 		}
-		if (isZero(right)) {
+		final BigInteger rightValue = mTypeSizes.extractIntegerValue(left, type);
+		if (BigInteger.ZERO.equals(rightValue)) {
 			return new ExpressionResult(new RValue(left, type));
 		}
-		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral) {
-			return handleConstants((IntegerLiteral) left, (IntegerLiteral) right, BigInteger::or, loc, type);
+		if (leftValue != null && rightValue != null) {
+			return handleConstants(leftValue, rightValue, BigInteger::or, loc, type);
 		}
 
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
@@ -272,14 +276,16 @@ public class BitabsTranslation {
 	public ExpressionResult abstractXor(final ILocation loc, final Expression left, final Expression right,
 			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		// 0 ^ a = a ^ 0 = 0
-		if (isZero(left)) {
+		final BigInteger leftValue = mTypeSizes.extractIntegerValue(left, type);
+		if (BigInteger.ZERO.equals(leftValue)) {
 			return new ExpressionResult(new RValue(right, type));
 		}
-		if (isZero(right)) {
+		final BigInteger rightValue = mTypeSizes.extractIntegerValue(left, type);
+		if (BigInteger.ZERO.equals(rightValue)) {
 			return new ExpressionResult(new RValue(left, type));
 		}
-		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral) {
-			return handleConstants((IntegerLiteral) left, (IntegerLiteral) right, BigInteger::xor, loc, type);
+		if (leftValue != null && rightValue != null) {
+			return handleConstants(leftValue, rightValue, BigInteger::xor, loc, type);
 		}
 
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
@@ -375,13 +381,14 @@ public class BitabsTranslation {
 	public ExpressionResult abstractShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder,
 			final String functionName, final Operator shiftOperator, final Operator compOperator) {
-		if (isZero(left) || isZero(right)) {
+		final BigInteger leftValue = mTypeSizes.extractIntegerValue(left, typeLeft);
+		final BigInteger rightValue = mTypeSizes.extractIntegerValue(left, typeRight);
+		if (BigInteger.ZERO.equals(leftValue) || BigInteger.ZERO.equals(rightValue)) {
 			return new ExpressionResult(new RValue(left, typeLeft));
 		}
-		if (right instanceof IntegerLiteral) {
-			final BigInteger shiftValue = new BigInteger(((IntegerLiteral) right).getValue());
+		if (rightValue != null) {
 			final Expression value =
-					constructShiftWithLiteralOptimization(loc, left, typeRight, shiftValue, shiftOperator);
+					constructShiftWithLiteralOptimization(loc, left, typeRight, rightValue, shiftOperator);
 			return new ExpressionResult(new RValue(value, typeLeft));
 		}
 		final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
@@ -400,7 +407,7 @@ public class BitabsTranslation {
 	}
 
 	private Expression constructShiftWithLiteralOptimization(final ILocation loc, final Expression left,
-			final CPrimitive typeRight, final BigInteger integerLiteralValue, final Operator op1) {
+			final CPrimitive typeRight, final BigInteger integerLiteralValue, final Operator operator) {
 		final int exponent;
 		try {
 			exponent = integerLiteralValue.intValueExact();
@@ -409,7 +416,7 @@ public class BitabsTranslation {
 		}
 		final BigInteger shiftFactorBigInt = BigInteger.valueOf(2).pow(exponent);
 		final Expression shiftFactorExpr = mTypeSizes.constructLiteralForIntegerType(loc, typeRight, shiftFactorBigInt);
-		return ExpressionFactory.newBinaryExpression(loc, op1, left, shiftFactorExpr);
+		return ExpressionFactory.newBinaryExpression(loc, operator, left, shiftFactorExpr);
 	}
 
 	private Expression applyWraparoundIfNecessary(final ILocation loc, final Expression expr, final CPrimitive type) {
@@ -421,15 +428,9 @@ public class BitabsTranslation {
 				ExpressionFactory.createIntegerLiteral(loc, maxValuePlusOne.toString()));
 	}
 
-	private static boolean isZero(final Expression expr) {
-		return expr instanceof IntegerLiteral && "0".equals(((IntegerLiteral) expr).getValue());
-	}
-
-	private static ExpressionResult handleConstants(final IntegerLiteral left, final IntegerLiteral right,
+	private static ExpressionResult handleConstants(final BigInteger leftValue, final BigInteger rightValue,
 			final BinaryOperator<BigInteger> operator, final ILocation loc, final CPrimitive type) {
-		// TODO: Can we rely on the semantics for the BigInteger-operator?
-		final BigInteger leftValue = new BigInteger(left.getValue());
-		final BigInteger rightValue = new BigInteger(right.getValue());
+		// TODO: Can we rely on the semantics for the BigInteger-operator?;
 		final BigInteger result = operator.apply(leftValue, rightValue);
 		return new ExpressionResult(new RValue(new IntegerLiteral(loc, BoogieType.TYPE_INT, result.toString()), type));
 	}
