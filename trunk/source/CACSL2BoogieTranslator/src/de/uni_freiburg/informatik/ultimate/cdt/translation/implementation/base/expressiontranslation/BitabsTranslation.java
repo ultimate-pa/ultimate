@@ -378,7 +378,7 @@ public class BitabsTranslation {
 				Operator.COMPLT);
 	}
 
-	public ExpressionResult abstractShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
+	private ExpressionResult abstractShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder,
 			final String functionName, final Operator shiftOperator, final Operator compOperator) {
 		final BigInteger leftValue = mTypeSizes.extractIntegerValue(left, typeLeft);
