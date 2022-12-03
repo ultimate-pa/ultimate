@@ -343,7 +343,7 @@ public class TypeSizes {
 
 	public BigInteger extractIntegerValue(final Expression expr, final CType cType) {
 		if (expr instanceof IntegerLiteral) {
-			final BigInteger tmp = new BigInteger(((IntegerLiteral) expr).toString());
+			final BigInteger tmp = new BigInteger(((IntegerLiteral) expr).getValue());
 			if (!isUnsigned((CPrimitive) cType)) {
 				return tmp;
 			}
@@ -355,7 +355,7 @@ public class TypeSizes {
 			return tmp.mod(maxValuePlusOne);
 		}
 		if (expr instanceof BitvecLiteral) {
-			final BigInteger tmp = new BigInteger(((BitvecLiteral) expr).toString());
+			final BigInteger tmp = new BigInteger(((BitvecLiteral) expr).getValue());
 			final CPrimitive cPrimitive = (CPrimitive) cType;
 			if (isUnsigned(cPrimitive)) {
 				// my return as is
