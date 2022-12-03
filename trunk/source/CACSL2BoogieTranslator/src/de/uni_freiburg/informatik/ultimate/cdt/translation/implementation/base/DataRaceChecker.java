@@ -323,7 +323,7 @@ public final class DataRaceChecker {
 
 	private int getTypeSize(final ILocation loc, final CType type) {
 		final Expression operandTypeByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, type, null);
-		return mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), null)
+		return mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT())
 				.intValueExact();
 	}
 

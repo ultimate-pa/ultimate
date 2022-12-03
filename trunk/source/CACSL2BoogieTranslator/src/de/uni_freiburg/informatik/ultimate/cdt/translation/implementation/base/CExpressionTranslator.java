@@ -1115,7 +1115,7 @@ public class CExpressionTranslator {
 
 	private Expression tryToExtractValue(final Expression expr, final CPrimitive type, final IASTNode hook,
 			final ILocation loc) {
-		final BigInteger value = mTypeSizes.extractIntegerValue(expr, type, hook);
+		final BigInteger value = mTypeSizes.extractIntegerValue(expr, type);
 		if (value == null) {
 			return expr;
 		}
@@ -1207,7 +1207,7 @@ public class CExpressionTranslator {
 	 * Checks if an {@link RValue} is an Integer of value 0
 	 */
 	private boolean isNullPointerEquivalent(final RValue value, final CType type) {
-		return BigInteger.ZERO.equals(mTypeSizes.extractIntegerValue(value, null));
+		return BigInteger.ZERO.equals(mTypeSizes.extractIntegerValue(value));
 	}
 
 	/**

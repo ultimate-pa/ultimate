@@ -145,7 +145,7 @@ public class BitabsTranslation {
 	// So I removed it for now, until we have a fix.
 	public Expression abstractShiftLeft(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final IASTNode hook) {
-		final BigInteger shiftLeftLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
+		final BigInteger shiftLeftLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight);
 		if (shiftLeftLiteralValue != null) {
 			return constructShiftWithLiteralOptimization(loc, left, typeRight, shiftLeftLiteralValue,
 					Operator.ARITHMUL);
@@ -156,7 +156,7 @@ public class BitabsTranslation {
 
 	public Expression abstractShiftRight(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final IASTNode hook) {
-		final BigInteger shiftRightLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight, hook);
+		final BigInteger shiftRightLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight);
 		if (shiftRightLiteralValue != null) {
 			return constructShiftWithLiteralOptimization(loc, left, typeRight, shiftRightLiteralValue,
 					Operator.ARITHDIV);

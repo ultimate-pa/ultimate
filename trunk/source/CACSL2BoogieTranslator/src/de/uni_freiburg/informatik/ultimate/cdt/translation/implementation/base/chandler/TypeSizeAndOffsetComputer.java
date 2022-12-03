@@ -340,7 +340,7 @@ public class TypeSizeAndOffsetComputer {
 	}
 
 	private SizeTValue extractSizeTValue(final RValue rvalue, final IASTNode hook) {
-		final BigInteger value = mTypeSizes.extractIntegerValue(rvalue, hook);
+		final BigInteger value = mTypeSizes.extractIntegerValue(rvalue);
 		if (value != null) {
 			return new SizeTValue_Integer(value);
 		}

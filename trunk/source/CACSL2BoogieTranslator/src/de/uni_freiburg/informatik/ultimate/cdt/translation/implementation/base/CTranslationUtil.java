@@ -135,7 +135,7 @@ public class CTranslationUtil {
 	public static boolean isVarlengthArray(final CArray cArrayType, final TypeSizes typeSizes, final IASTNode hook) {
 		CArray currentArrayType = cArrayType;
 		while (true) {
-			if (typeSizes.extractIntegerValue(currentArrayType.getBound(), hook) == null) {
+			if (typeSizes.extractIntegerValue(currentArrayType.getBound()) == null) {
 				// found a variable length bound
 				return true;
 			}
@@ -151,7 +151,7 @@ public class CTranslationUtil {
 
 	public static boolean isToplevelVarlengthArray(final CArray cArrayType, final TypeSizes typeSizes,
 			final IASTNode hook) {
-		return typeSizes.extractIntegerValue(cArrayType.getBound(), hook) == null;
+		return typeSizes.extractIntegerValue(cArrayType.getBound()) == null;
 	}
 
 	public static List<Integer> getConstantDimensionsOfArray(final CArray cArrayType, final TypeSizes typeSizes,
@@ -164,7 +164,7 @@ public class CTranslationUtil {
 		final List<Integer> result = new ArrayList<>();
 		while (true) {
 			result.add(Integer
-					.parseUnsignedInt(typeSizes.extractIntegerValue(currentArrayType.getBound(), hook).toString()));
+					.parseUnsignedInt(typeSizes.extractIntegerValue(currentArrayType.getBound()).toString()));
 
 			final CType valueType = currentArrayType.getValueType().getUnderlyingType();
 			if (valueType instanceof CArray) {
@@ -201,7 +201,7 @@ public class CTranslationUtil {
 			final IASTNode hook) {
 		final RValue dimRVal = cArrayType.getBound();
 
-		final BigInteger extracted = typeSizes.extractIntegerValue(dimRVal, hook);
+		final BigInteger extracted = typeSizes.extractIntegerValue(dimRVal);
 		if (extracted == null) {
 			throw new IllegalArgumentException("only call this for non-varlength first dimension types");
 		}
@@ -421,7 +421,7 @@ public class CTranslationUtil {
 	 * </p>
 	 * Warning: This method is not suitable for obtaining the value of C expressions. If you also want to get integer
 	 * values of constants (in the sense of variables that got statically some value assigned) then use
-	 * {@link TypeSizes#extractIntegerValue(Expression, CType, IASTNode)}
+	 * {@link TypeSizes#extractIntegerValue(Expression, CType)}
 	 *
 	 */
 	public static BigInteger extractIntegerValue(final Expression expr) {
@@ -557,7 +557,7 @@ public class CTranslationUtil {
 		} else if (cType instanceof CArray) {
 			final CArray cArray = (CArray) cType;
 			final long innerCount = countNumberOfPrimitiveElementInType(cArray.getValueType(), typeSizes, hook);
-			final BigInteger boundBig = typeSizes.extractIntegerValue(cArray.getBound(), hook);
+			final BigInteger boundBig = typeSizes.extractIntegerValue(cArray.getBound());
 			final long bound = boundBig.longValueExact();
 			return innerCount * bound;
 		} else {

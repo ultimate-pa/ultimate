@@ -1017,7 +1017,7 @@ public class CHandler {
 			throw e;
 		}
 		final BigInteger operandTypeByteSize =
-				mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), node);
+				mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT());
 
 		if (operandTypeByteSize.signum() == 0) {
 			// operand's type has size 0 -- not sure what makes sense to do here, doing
@@ -1038,7 +1038,7 @@ public class CHandler {
 			return;
 		}
 		final BigInteger castTargetByteSize =
-				mTypeSizes.extractIntegerValue(castTargetByteSizeExp, mTypeSizeComputer.getSizeT(), node);
+				mTypeSizes.extractIntegerValue(castTargetByteSizeExp, mTypeSizeComputer.getSizeT());
 
 		// TODO 2022-02-25 Matthias: Currently we omit a change of the memory model if
 		// the bytesize to which we cast is smaller that the bytesize of the operand.
@@ -1749,7 +1749,7 @@ public class CHandler {
 			final RValue rVal = (RValue) converted.getLrValue();
 
 			// used to check if rVal is a constant
-			final BigInteger intVal = mTypeSizes.extractIntegerValue(rVal, node);
+			final BigInteger intVal = mTypeSizes.extractIntegerValue(rVal);
 
 			if (converted.hasNoSideEffects() && intVal != null
 					&& cPrim.getGeneralType() == CPrimitiveCategory.INTTYPE) {

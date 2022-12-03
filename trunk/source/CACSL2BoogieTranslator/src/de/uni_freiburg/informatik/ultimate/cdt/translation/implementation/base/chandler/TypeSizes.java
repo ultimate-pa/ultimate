@@ -30,12 +30,9 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
 
-import org.eclipse.cdt.core.dom.ast.IASTNode;
-
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -82,13 +79,9 @@ public class TypeSizes {
 
 	private final LinkedHashMap<CPrimitive.CPrimitives, Integer> mCPrimitiveToTypeSizeConstant;
 
-	private final FlatSymbolTable mSymboltable;
-
 	private final TranslationSettings mSettings;
 
-	public TypeSizes(final IPreferenceProvider ups, final TranslationSettings settings,
-			final FlatSymbolTable symbolTable) {
-		mSymboltable = symbolTable;
+	public TypeSizes(final IPreferenceProvider ups, final TranslationSettings settings) {
 		mUseFixedTypeSizes = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
 		mSettings = settings;
 		mCPrimitiveToTypeSizeConstant = new LinkedHashMap<>();
@@ -138,9 +131,7 @@ public class TypeSizes {
 
 	}
 
-	public TypeSizes(final TypeSizes prerunTypeSizes, final FlatSymbolTable symbolTable) {
-		mSymboltable = symbolTable;
-
+	public TypeSizes(final TypeSizes prerunTypeSizes) {
 		mUseFixedTypeSizes = prerunTypeSizes.mUseFixedTypeSizes;
 		mSettings = prerunTypeSizes.mSettings;
 		mCPrimitiveToTypeSizeConstant = prerunTypeSizes.mCPrimitiveToTypeSizeConstant;
@@ -343,13 +334,14 @@ public class TypeSizes {
 	 * represents a constant value. Extraction fails, e.g., if rval represents a variable.
 	 *
 	 * @param expr
+	 *
 	 * @return
 	 */
-	public BigInteger extractIntegerValue(final RValue rval, final IASTNode hook) {
-		return extractIntegerValue(rval.getValue(), rval.getCType().getUnderlyingType(), hook);
+	public BigInteger extractIntegerValue(final RValue rval) {
+		return extractIntegerValue(rval.getValue(), rval.getCType().getUnderlyingType());
 	}
 
-	public BigInteger extractIntegerValue(final Expression expr, final CType cType, final IASTNode hook) {
+	public BigInteger extractIntegerValue(final Expression expr, final CType cType) {
 		if (expr instanceof IntegerLiteral) {
 			final BigInteger tmp = new BigInteger(((IntegerLiteral) expr).toString());
 			if (!isUnsigned((CPrimitive) cType)) {

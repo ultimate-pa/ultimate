@@ -1689,7 +1689,7 @@ public class InitializationHandler {
 		final ExpressionResult expressionResultSwitched =
 				mExprResultTransformer.switchToRValue((ExpressionResult) subscriptExpressionResult, loc, hook);
 
-		return mTypeSizes.extractIntegerValue((RValue) expressionResultSwitched.getLrValue(), hook).intValueExact();
+		return mTypeSizes.extractIntegerValue((RValue) expressionResultSwitched.getLrValue()).intValueExact();
 	}
 
 }
