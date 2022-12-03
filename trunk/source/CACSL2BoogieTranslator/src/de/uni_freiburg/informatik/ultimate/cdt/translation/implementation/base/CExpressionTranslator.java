@@ -414,12 +414,9 @@ public class CExpressionTranslator {
 		final ExpressionResult rightConverted =
 				mExprResultTransformer.performImplicitConversion(right, typeOfResult, loc);
 
-		final Expression leftValue = tryToExtractValue(leftPromoted.getLrValue().getValue(), typeOfResult, hook, loc);
-		final Expression rightValue =
-				tryToExtractValue(rightConverted.getLrValue().getValue(), typeOfResult, hook, loc);
-
-		final ExpressionResult result = mExpressionTranslation.handleBinaryBitwiseExpression(loc, op, leftValue,
-				typeOfResult, rightValue, typeOfResult, mAuxVarInfoBuilder);
+		final ExpressionResult result =
+				mExpressionTranslation.handleBinaryBitwiseExpression(loc, op, leftPromoted.getLrValue().getValue(),
+						typeOfResult, rightConverted.getLrValue().getValue(), typeOfResult, mAuxVarInfoBuilder);
 		final ExpressionResultBuilder builder =
 				new ExpressionResultBuilder().addAllExceptLrValue(leftPromoted, rightConverted);
 
@@ -1050,31 +1047,20 @@ public class CExpressionTranslator {
 			// nothing to do
 			return;
 		}
-		// TODO: We should use the value extraction earlier, s.t. we pass the extracted value to ExpressionTranslation
 		final Pair<Expression, Expression> inBoundsCheck;
 		if (operands.length == 1) {
 			assert operation == IASTUnaryExpression.op_minus;
 			inBoundsCheck = mExpressionTranslation.constructOverflowCheckForUnaryExpression(loc, operation, resultType,
-					tryToExtractValue(operands[0], resultType, hook, loc));
+					operands[0]);
 
 		} else if (operands.length == 2) {
 			inBoundsCheck = mExpressionTranslation.constructOverflowCheckForArithmeticExpression(loc, operation,
-					resultType, tryToExtractValue(operands[0], resultType, hook, loc),
-					tryToExtractValue(operands[1], resultType, hook, loc));
+					resultType, operands[0], operands[1]);
 		} else {
 			throw new AssertionError("no such operation");
 		}
 		addOverflowAssertion(loc, inBoundsCheck.getFirst(), erb);
 		addOverflowAssertion(loc, inBoundsCheck.getSecond(), erb);
-	}
-
-	private Expression tryToExtractValue(final Expression expr, final CPrimitive type, final IASTNode hook,
-			final ILocation loc) {
-		final BigInteger value = mTypeSizes.extractIntegerValue(expr, type);
-		if (value == null) {
-			return expr;
-		}
-		return mExpressionTranslation.constructLiteralForIntegerType(loc, type, value);
 	}
 
 	// TODO: Is this the right place for this method?
