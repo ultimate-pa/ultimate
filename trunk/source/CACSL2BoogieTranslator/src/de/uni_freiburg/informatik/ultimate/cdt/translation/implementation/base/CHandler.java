@@ -729,18 +729,6 @@ public class CHandler {
 		// with binary expression, we check bitwise operator first
 		switch (node.getOperator()) {
 		case IASTBinaryExpression.op_assign: {
-			// In this case we only transform with and-rule: r= a&b => r<=b, r<=a, they are
-			// positive, and rhs is a bitwise binary expression.
-
-			// TODO Frank 2022-10-31: Checking for HeapLValue is just a workaround to avoid issues in
-			// abstractAssginWithBitwiseOp (when working with addresses)! Is there a better way to check this?
-			// And how should we integrate this deprecated method?
-			if (!(leftOperand.getLrValue() instanceof HeapLValue) && !(rightOperand.getLrValue() instanceof HeapLValue)
-					&& mExpressionTranslation.shouldAbstractAssignWithBitwiseOp(node)
-					&& leftOperand.getLrValue().getCType() instanceof CPrimitive) {
-				return mExpressionTranslation.abstractAssginWithBitwiseOp(mExprResultTransformer, main,
-						mLocationFactory, node, mAuxVarInfoBuilder);
-			}
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 			builder.addAllExceptLrValue(leftOperand);
 			final CType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
@@ -2700,7 +2688,7 @@ public class CHandler {
 				final int bitfieldWidth = hlv.getBitfieldInformation().getNumberOfBits();
 				rhsWithBitfieldTreatment = mExpressionTranslation.eraseBits(loc,
 						rightHandSideValueWithConversionsApplied.getValue(),
-						(CPrimitive) CEnum.replaceEnumWithInt(hlv.getCType().getUnderlyingType()), bitfieldWidth, hook);
+						(CPrimitive) CEnum.replaceEnumWithInt(hlv.getCType().getUnderlyingType()), bitfieldWidth);
 			} else {
 				rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 			}
@@ -2742,7 +2730,7 @@ public class CHandler {
 			final int bitfieldWidth = lValue.getBitfieldInformation().getNumberOfBits();
 			rhsWithBitfieldTreatment = mExpressionTranslation.eraseBits(loc,
 					rightHandSideValueWithConversionsApplied.getValue(),
-					(CPrimitive) CEnum.replaceEnumWithInt(lValue.getCType().getUnderlyingType()), bitfieldWidth, hook);
+					(CPrimitive) CEnum.replaceEnumWithInt(lValue.getCType().getUnderlyingType()), bitfieldWidth);
 		} else {
 			rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 		}

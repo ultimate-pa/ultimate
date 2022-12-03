@@ -30,238 +30,89 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
 
 import java.math.BigInteger;
-
-import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
-import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.BinaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
+ * This class is used to overapproximate bitwise operations for the integer translation.
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  * @author Cyrus Liu (yliu195@stevens.edu)
  *
  */
 public class BitabsTranslation {
-	private final FunctionDeclarations mFunctionDeclarations;
 	private final TypeSizes mTypeSizes;
-	private final ITypeHandler mTypeHandler;
 
-	public BitabsTranslation(final TypeSizes typeSizes, final ITypeHandler typeHandler,
-			final FunctionDeclarations functionDeclarations) {
+	public BitabsTranslation(final TypeSizes typeSizes) {
 		mTypeSizes = typeSizes;
-		mTypeHandler = typeHandler;
-		mFunctionDeclarations = functionDeclarations;
 	}
 
-	public Expression abstractAnd(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight) {
-		// 0 & a = a & 0 = 0
-		if (left instanceof IntegerLiteral && ((IntegerLiteral) left).getValue().equals("0")) {
-			return left;
-		}
-		if (right instanceof IntegerLiteral && ((IntegerLiteral) right).getValue().equals("0")) {
-			return right;
-		}
-		// a & a = a
-		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral
-				&& ((IntegerLiteral) left).getValue().equals(((IntegerLiteral) right).getValue())) {
-			return left;
-		}
-		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
-
-		final Expression leftEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, left, zero);
-		final Expression rightEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, right, zero);
-		final Expression oneEqualsZero =
-				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftEqualsZero, rightEqualsZero);
-		final Expression leftEqualsRight = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, left, right);
-
-		final Expression function = declareAndApplyFunction(loc, "bitwiseAnd", typeLeft,
-				new CPrimitive[] { typeLeft, typeRight }, new Expression[] { left, right });
-
-		return ExpressionFactory.constructIfThenElseExpression(loc, oneEqualsZero, zero,
-				ExpressionFactory.constructIfThenElseExpression(loc, leftEqualsRight, left, function));
-	}
-
-	public Expression abstractOr(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight) {
-		// 0 | a = a | 0 = a
-		if (left instanceof IntegerLiteral && ((IntegerLiteral) left).getValue().equals("0")) {
-			return right;
-		}
-		if (right instanceof IntegerLiteral && ((IntegerLiteral) right).getValue().equals("0")) {
-			return left;
-		}
-		// a | a = a
-		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral
-				&& ((IntegerLiteral) left).getValue().equals(((IntegerLiteral) right).getValue())) {
-			return left;
-		}
-
-		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
-
-		final Expression leftEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, left, zero);
-		final Expression rightEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, right, zero);
-		final Expression leftEqualsRight = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, left, right);
-		final Expression leftEqualsZeroOrRight =
-				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftEqualsZero, leftEqualsRight);
-
-		final Expression function = declareAndApplyFunction(loc, "bitwiseOr", typeLeft,
-				new CPrimitive[] { typeLeft, typeRight }, new Expression[] { left, right });
-
-		return ExpressionFactory.constructIfThenElseExpression(loc, leftEqualsZeroOrRight, right,
-				ExpressionFactory.constructIfThenElseExpression(loc, rightEqualsZero, left, function));
-	}
-
-	// TODO: Previously there was another optimization here, but this seemed unsound in general.
-	// So I removed it for now, until we have a fix.
-	public Expression abstractShiftLeft(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight, final IASTNode hook) {
-		final BigInteger shiftLeftLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight);
-		if (shiftLeftLiteralValue != null) {
-			return constructShiftWithLiteralOptimization(loc, left, typeRight, shiftLeftLiteralValue,
-					Operator.ARITHMUL);
-		}
-		return declareAndApplyFunction(loc, "shiftLeft", typeLeft, new CPrimitive[] { typeLeft, typeRight },
-				new Expression[] { left, right });
-	}
-
-	public Expression abstractShiftRight(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight, final IASTNode hook) {
-		final BigInteger shiftRightLiteralValue = mTypeSizes.extractIntegerValue(right, typeRight);
-		if (shiftRightLiteralValue != null) {
-			return constructShiftWithLiteralOptimization(loc, left, typeRight, shiftRightLiteralValue,
-					Operator.ARITHDIV);
-		}
-		return declareAndApplyFunction(loc, "shiftRight", typeLeft, new CPrimitive[] { typeLeft, typeRight },
-				new Expression[] { left, right });
-	}
-
-	public Expression abstractXor(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight) {
-		// 0 ^ a = a ^ 0 = 0
-		if (left instanceof IntegerLiteral && ((IntegerLiteral) left).getValue().equals("0")) {
-			return right;
-		}
-		if (right instanceof IntegerLiteral && ((IntegerLiteral) right).getValue().equals("0")) {
-			return left;
-		}
-		// a ^ a = 0
-		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
-		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral
-				&& ((IntegerLiteral) left).getValue().equals(((IntegerLiteral) right).getValue())) {
-			return zero;
-		}
-
-		final Expression leftEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, left, zero);
-		final Expression rightEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, right, zero);
-		final Expression leftEqualsRight = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, left, right);
-
-		final Expression function = declareAndApplyFunction(loc, "bitwiseXor", typeLeft,
-				new CPrimitive[] { typeLeft, typeRight }, new Expression[] { left, right });
-
-		return ExpressionFactory.constructIfThenElseExpression(loc, leftEqualsZero, right,
-				ExpressionFactory.constructIfThenElseExpression(loc, rightEqualsZero, left,
-						ExpressionFactory.constructIfThenElseExpression(loc, leftEqualsRight, zero, function)));
-	}
-
-	/*
-	 * solution: integer eqauls to 0 or 1, complement-logic rule
+	/**
+	 * Overapproximates the bitwise {@code and}. Uses the following rules to increase the precision:
+	 * <li>0 & a = a & 0 = 0
+	 * <li>a & a = a
+	 * <li>If a >= 0 or b < 0, then a & b <= a
+	 * <li>If a < 0 or b >= 0, then a & b <= b
+	 * <li>If a >= b or b >= 0, then a & b >= 0
+	 * <li>If a < 0 or b < 0, then a & b > a + b
+	 *
+	 * Additionally evaluates the operation precisely for literals.
 	 */
-	public Expression abstractCompl(final ILocation loc, final Expression expr, final CPrimitive type) {
-		return declareAndApplyFunction(loc, "bitwiseComplement", type, new CPrimitive[] { type },
-				new Expression[] { expr });
-	}
-
-	// TODO: This is more of a workaround, ideally we should handle everything on statements.
-	// But to be more precise, this requires additional aux-variables.
-	// TODO: We could use more precise assumptions, if the expression has a signed type
-	public Result abstractAssign(final ExpressionResultTransformer exprResultTransformer, final IDispatcher main,
-			final LocationFactory locationFactory, final IASTBinaryExpression node,
-			final AuxVarInfoBuilder auxVarInfoBuilder) {
-		final ILocation loc = locationFactory.createCLocation(node);
-		final ExpressionResult leftOperand = (ExpressionResult) main.dispatch(node.getOperand1());
-
-		// this is an assignment expression, we won't need to translate it as before.
-		// We need to create a new id expression to store the expression here.
-		// leftOperand we supposed to be an idExpression, implicit cast
-		final LRValue leftRvalue = leftOperand.getLrValue();
-		final IdentifierExpression idLeft;
-		if (leftRvalue instanceof HeapLValue) {
-			idLeft = (IdentifierExpression) ((HeapLValue) leftRvalue).getAddress();
-		} else {
-			idLeft = (IdentifierExpression) leftRvalue.getValue();
+	public ExpressionResult abstractAnd(final ILocation loc, final Expression left, final Expression right,
+			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder) {
+		// 0 & a = a & 0 = 0
+		if (isZero(left)) {
+			return new ExpressionResult(new RValue(left, type));
 		}
-
-		// Create the LRValue for the assignment statement.
-		final VariableLHS idLhsLeft =
-				new VariableLHS(loc, idLeft.getType(), idLeft.getIdentifier(), idLeft.getDeclarationInformation());
-
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final CPrimitive lType = (CPrimitive) leftOperand.getLrValue().getCType().getUnderlyingType();
-
+		if (isZero(right)) {
+			return new ExpressionResult(new RValue(right, type));
+		}
+		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral) {
+			return handleConstants((IntegerLiteral) left, (IntegerLiteral) right, BigInteger::and, loc, type);
+		}
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
-		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, lType, SFO.AUXVAR.NONDET);
-		builder.addDeclaration(auxvarinfo.getVarDec());
-		builder.addAuxVar(auxvarinfo);
-		final IdentifierExpression auxvar = auxvarinfo.getExp();
+		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
 
-		// for declare the auxiliary vars.
-		final VariableLHS auxvarLhs = auxvarinfo.getLhs();
-		if (node.getOperand2() instanceof IASTBinaryExpression) {
-			// for the general bitwise assignment case, we build up assume statements.
-			final IASTBinaryExpression binary = (IASTBinaryExpression) node.getOperand2();
-			final ExpressionResult rhsOpr1 = (ExpressionResult) main.dispatch(binary.getOperand1());
-			final ExpressionResult rhsOpr2 = (ExpressionResult) main.dispatch(binary.getOperand2());
+		final Expression auxvar = applyWraparoundIfNecessary(loc, auxvarinfo.getExp(), type);
+		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, type);
+		final Expression rightWrapped = applyWraparoundIfNecessary(loc, right, type);
 
-			// array address expression, getValue() return exceptions.
-			final ExpressionResult rl = exprResultTransformer
-					.makeRepresentationReadyForConversionAndRexBoolToInt(rhsOpr1, loc, lType, node);
-			final ExpressionResult rr = exprResultTransformer
-					.makeRepresentationReadyForConversionAndRexBoolToInt(rhsOpr2, loc, lType, node);
-			builder.addAllExceptLrValue(rl);
-			builder.addAllExceptLrValue(rr);
-			final Expression left = rl.getLrValue().getValue();
-			final Expression right = rr.getLrValue().getValue();
+		final Expression smallerLeft =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, leftWrapped);
+		final Expression smallerRight =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, rightWrapped);
 
-			final Expression leftEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, left, zero);
-			final Expression rightEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, right, zero);
-			final Expression leftEqualsRight = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, left, right);
-
+		final List<Expression> assumptions;
+		if (mTypeSizes.isUnsigned(type)) {
+			assumptions = List.of(smallerLeft, smallerRight);
+		} else {
 			final Expression leftNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, left, zero);
 			final Expression rightNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right, zero);
-
-			final Expression oneNegative =
-					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftNegative, rightNegative);
 			final Expression bothNonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
 					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, left, zero),
 					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, right, zero));
@@ -270,144 +121,286 @@ public class BitabsTranslation {
 
 			final Expression sum = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right);
 
-			if (binary.getOperator() == IASTBinaryExpression.op_binaryAnd) {
-				final Expression oneEqualsZero =
-						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftEqualsZero, rightEqualsZero);
-				final Expression function = declareAndApplyFunction(loc, "bitwiseAnd", lType,
-						new CPrimitive[] { lType, lType }, new Expression[] { left, right });
+			// If a >= 0 or b < 0, then a & b <= a
+			final Expression rightNonNegative =
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, right, zero);
+			final Expression smallerLeftImplication = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
+					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftNegative, rightNonNegative),
+					smallerLeft);
 
-				final Expression lessThanEqualBoth = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, left),
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, right));
+			// If a < 0 or b >= 0, then a & b <= b
+			final Expression leftNonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, left, zero);
+			final Expression smallerRightImplication = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
+					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftNonNegative, rightNegative),
+					smallerRight);
 
-				// If a >= 0 and b >= 0, then a & b <= a and a & b <= b
-				final Expression maximum =
-						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, lessThanEqualBoth);
-				// If a >= b or b >= 0, then a & b >= 0
-				final Expression nonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
-						bothNegative, ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, zero));
-				// If a < 0 or b < 0, then a & b > a + b
-				final Expression greaterSum = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
-						bothNonNegative, ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, auxvar, sum));
+			// If a >= b or b >= 0, then a & b >= 0
+			final Expression nonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, bothNegative,
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, zero));
 
-				// 0 & a = a & 0 = 0
-				// a & a = a
-				final Statement ifInner = StatementFactory.constructIfStatement(loc, leftEqualsRight,
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, left) },
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, function),
-								new AssumeStatement(loc, maximum), new AssumeStatement(loc, nonNegative),
-								new AssumeStatement(loc, greaterSum) });
-				final Statement ifOuter = StatementFactory.constructIfStatement(loc, oneEqualsZero,
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, zero) },
-						new Statement[] { ifInner });
-
-				builder.addStatement(ifOuter);
-
-			}
-			if (binary.getOperator() == IASTBinaryExpression.op_binaryOr) {
-				final Expression leftEqualsZeroOrRight =
-						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftEqualsZero, leftEqualsRight);
-				final Expression function = declareAndApplyFunction(loc, "bitwiseOr", lType,
-						new CPrimitive[] { lType, lType }, new Expression[] { left, right });
-
-				// If a >= 0 and b >= 0, then a | b >= a and a | b >= b
-				final Expression greaterEqualBoth = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, left),
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, right));
-				final Expression minimum =
-						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, greaterEqualBoth);
-				// Otherwise a | b < 0
-				final Expression negative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
-						bothNonNegative, ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, auxvar, zero));
-				// If a >= 0 or b >= 0, then a | b <= a + b
-				final Expression leqSum = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative,
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, sum));
-
-				// 0 | a = a | 0 = a
-				// a | a = a
-				final Statement ifInner = StatementFactory.constructIfStatement(loc, rightEqualsZero,
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, left) },
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, function),
-								new AssumeStatement(loc, minimum), new AssumeStatement(loc, negative),
-								new AssumeStatement(loc, leqSum) });
-				final Statement ifOuter = StatementFactory.constructIfStatement(loc, leftEqualsZeroOrRight,
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, right) },
-						new Statement[] { ifInner });
-
-				builder.addStatement(ifOuter);
-			}
-			if (binary.getOperator() == IASTBinaryExpression.op_binaryXor) {
-				final Expression function = declareAndApplyFunction(loc, "bitwiseXor", lType,
-						new CPrimitive[] { lType, lType }, new Expression[] { left, right });
-
-				final Expression positive = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, auxvar, zero);
-				final Expression onePositive = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, left, zero),
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, right, zero));
-
-				// If a and b have the same sign (i.e. both are positive or both are negative), then a ^ b > 0
-				final Expression positiveCase1 =
-						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, positive);
-				final Expression positiveCase2 =
-						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, onePositive, positive);
-				// If a >= 0 or b >= 0, then a ^ b <= a + b
-				final Expression leqSum = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative,
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, sum));
-
-				// 0 ^ a = a ^ 0 = a
-				// a ^ a = 0
-				final Statement ifInner = StatementFactory.constructIfStatement(loc, leftEqualsRight,
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, zero) },
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, function),
-								new AssumeStatement(loc, positiveCase1), new AssumeStatement(loc, positiveCase2),
-								new AssumeStatement(loc, leqSum) });
-				final Statement ifMiddle = StatementFactory.constructIfStatement(loc, rightEqualsZero,
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, left) },
-						new Statement[] { ifInner });
-				final Statement ifOuter = StatementFactory.constructIfStatement(loc, leftEqualsZero,
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc, auxvarLhs, right) },
-						new Statement[] { ifMiddle });
-
-				builder.addStatement(ifOuter);
-			}
+			// If a < 0 or b < 0, then a & b > a + b
+			final Expression greaterSum = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, bothNonNegative,
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, auxvar, sum));
+			final BigInteger minValue = mTypeSizes.getMinValueOfPrimitiveType(type);
+			final Expression greaterMinValue = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar,
+					ExpressionFactory.createIntegerLiteral(loc, minValue.toString()));
+			assumptions =
+					List.of(smallerLeftImplication, smallerRightImplication, nonNegative, greaterSum, greaterMinValue);
 		}
-		if (node.getOperand2() instanceof IASTUnaryExpression) {
-			final IASTUnaryExpression uIexpr = (IASTUnaryExpression) node.getOperand2();
-			final ExpressionResult res = exprResultTransformer.makeRepresentationReadyForConversionAndRexBoolToInt(
-					(ExpressionResult) main.dispatch(uIexpr.getOperand()), loc, lType, node);
-			builder.addAllExceptLrValue(res);
-			final Expression expr = res.getLrValue().getValue();
-			final Expression function = declareAndApplyFunction(loc, "bitwiseComplement", lType,
-					new CPrimitive[] { lType }, new Expression[] { expr });
-			builder.addStatement(StatementFactory.constructAssignmentStatement(loc, auxvarLhs, function));
-			// ~a != a
-			builder.addStatement(new AssumeStatement(loc,
-					ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, auxvar, expr)));
-			// If a < 0, then ~a > 0
-			builder.addStatement(new AssumeStatement(loc,
-					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
-							ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, expr, zero),
-							ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, auxvar, zero))));
 
-		}
-		return builder.addStatement(StatementFactory.constructAssignmentStatement(loc, idLhsLeft, auxvar)).build();
+		// 0 & a = a & 0 = 0
+		// a & a = a
+		final Expression leftEqualsZero =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, leftWrapped, zero);
+		final Expression rightEqualsZero =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, rightWrapped, zero);
+		final Expression leftEqualsRight =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, leftWrapped, rightWrapped);
+		final Expression leftOrRightEqualsZero =
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftEqualsZero, rightEqualsZero);
+
+		final List<Pair<Expression, Expression>> exactCases =
+				List.of(new Pair<>(leftOrRightEqualsZero, zero), new Pair<>(leftEqualsRight, left));
+		return buildExpressionResult(loc, "bitwiseAnd", type, auxvarinfo, exactCases, assumptions);
 	}
 
-	private Expression declareAndApplyFunction(final ILocation loc, final String functionName,
-			final CPrimitive resultType, final CPrimitive[] paramTypes, final Expression[] expressions) {
-		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + functionName;
-		final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
-				new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-		mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, new Attribute[] { attribute }, false,
-				resultType, paramTypes);
-		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, expressions,
-				mTypeHandler.getBoogieTypeForCType(resultType));
+	/**
+	 * Overapproximates the bitwise {@code or}. Uses the following rules to increase the precision:
+	 * <li>0 | a = a | 0 = a
+	 * <li>a | a = a
+	 * <li>If a >= 0 or b < 0, then a | b >= b
+	 * <li>If a < 0 or b >= 0, then a & b >= a
+	 * <li>If a >= 0 or b >= 0, then a | b <= a + b
+	 * <li>If a < 0 or b < 0, then a | b < 0
+	 *
+	 * Additionally evaluates the operation precisely for literals.
+	 */
+	public ExpressionResult abstractOr(final ILocation loc, final Expression left, final Expression right,
+			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder) {
+		// 0 | a = a | 0 = a
+		if (isZero(left)) {
+			return new ExpressionResult(new RValue(right, type));
+		}
+		if (isZero(right)) {
+			return new ExpressionResult(new RValue(left, type));
+		}
+		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral) {
+			return handleConstants((IntegerLiteral) left, (IntegerLiteral) right, BigInteger::or, loc, type);
+		}
+
+		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+
+		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
+		final Expression auxvar = applyWraparoundIfNecessary(loc, auxvarinfo.getExp(), type);
+		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, type);
+		final Expression rightWrapped = applyWraparoundIfNecessary(loc, right, type);
+
+		final Expression greaterLeft =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, leftWrapped);
+		final Expression greaterRight =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, rightWrapped);
+		final Expression sum = applyWraparoundIfNecessary(loc,
+				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right), type);
+		final Expression leqSum = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, sum);
+
+		final List<Expression> assumptions;
+		if (mTypeSizes.isUnsigned(type)) {
+			assumptions = List.of(greaterLeft, greaterRight, leqSum);
+		} else {
+			final Expression leftNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, left, zero);
+			final Expression rightNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right, zero);
+
+			final Expression oneNegative =
+					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftNegative, rightNegative);
+			final Expression bothNonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND,
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, left, zero),
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, right, zero));
+
+			// If a >= 0 or b < 0, then a | b >= b
+			final Expression rightNonNegative =
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, right, zero);
+			final Expression greaterRightImplication = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
+					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftNegative, rightNonNegative),
+					greaterRight);
+
+			// If a < 0 or b >= 0, then a & b >= a
+			final Expression leftNonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, left, zero);
+			final Expression greaterLeftImplication = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
+					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftNonNegative, rightNegative),
+					greaterLeft);
+
+			// If a >= 0 or b >= 0, then a | b <= a + b
+			final Expression leqSumImplication =
+					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, leqSum);
+
+			// If a < 0 or b < 0, then a | b < 0
+			final Expression negative = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, bothNonNegative,
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, auxvar, zero));
+			final BigInteger maxValue = mTypeSizes.getMaxValueOfPrimitiveType(type);
+			final Expression smallerMaxValue = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar,
+					ExpressionFactory.createIntegerLiteral(loc, maxValue.toString()));
+			assumptions = List.of(greaterRightImplication, greaterLeftImplication, leqSumImplication, negative,
+					smallerMaxValue);
+		}
+
+		// 0 | a = a | 0 = a
+		// a | a = a
+		final Expression leftEqualsZero =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, leftWrapped, zero);
+		final Expression rightEqualsZero =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, rightWrapped, zero);
+		final Expression leftEqualsRight =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, leftWrapped, rightWrapped);
+		final Expression leftEqualsZeroOrRight =
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftEqualsZero, leftEqualsRight);
+
+		final List<Pair<Expression, Expression>> exactCases =
+				List.of(new Pair<>(leftEqualsZeroOrRight, right), new Pair<>(rightEqualsZero, left));
+		return buildExpressionResult(loc, "bitwiseOr", type, auxvarinfo, exactCases, assumptions);
+	}
+
+	/**
+	 * Overapproximates the bitwise {@code xor}. Uses the following rules to increase the precision:
+	 * <li>0 ^ a = a ^ 0 = 0
+	 * <li>a ^ a = 0
+	 * <li>If a and b have the same sign (i.e. both are positive or both are negative), then a ^ b > 0
+	 * <li>Otherwise a ^ b < 0
+	 * <li>If a >= 0 or b >= 0, then a ^ b <= a + b
+	 *
+	 * Additionally evaluates the operation precisely for literals.
+	 */
+	public ExpressionResult abstractXor(final ILocation loc, final Expression left, final Expression right,
+			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder) {
+		// 0 ^ a = a ^ 0 = 0
+		if (isZero(left)) {
+			return new ExpressionResult(new RValue(right, type));
+		}
+		if (isZero(right)) {
+			return new ExpressionResult(new RValue(left, type));
+		}
+		if (left instanceof IntegerLiteral && right instanceof IntegerLiteral) {
+			return handleConstants((IntegerLiteral) left, (IntegerLiteral) right, BigInteger::xor, loc, type);
+		}
+
+		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
+		final Expression auxvar = applyWraparoundIfNecessary(loc, auxvarinfo.getExp(), type);
+		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, type);
+		final Expression rightWrapped = applyWraparoundIfNecessary(loc, right, type);
+
+		final Expression sum = applyWraparoundIfNecessary(loc,
+				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right), type);
+		final Expression leqSum = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, sum);
+
+		List<Expression> assumptions;
+
+		if (mTypeSizes.isUnsigned(type)) {
+			assumptions = List.of(leqSum);
+		} else {
+			final Expression leftNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, left, zero);
+			final Expression rightNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right, zero);
+			final Expression leftNonNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, left, zero);
+			final Expression rightNonNegative =
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, right, zero);
+
+			final Expression oneNegative =
+					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftNegative, rightNegative);
+
+			final Expression onePositive = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, left, zero),
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, right, zero));
+			final Expression negative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, auxvar, zero);
+
+			// If a and b have the same sign (i.e. both are positive or both are negative), then a ^ b > 0
+			final Expression positive = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, auxvar, zero);
+			final Expression positiveCase1 =
+					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, positive);
+			final Expression positiveCase2 =
+					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, onePositive, positive);
+			// Otherwise a ^ b < 0
+			final Expression negativeCase1 =
+					ExpressionFactory.or(loc, List.of(leftNegative, rightNonNegative, negative));
+			final Expression negativeCase2 =
+					ExpressionFactory.or(loc, List.of(leftNonNegative, rightNegative, negative));
+			// If a >= 0 or b >= 0, then a ^ b <= a + b
+			final Expression leqSumImplication =
+					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, leqSum);
+			final BigInteger minValue = mTypeSizes.getMinValueOfPrimitiveType(type);
+			final Expression greaterMinValue = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar,
+					ExpressionFactory.createIntegerLiteral(loc, minValue.toString()));
+			final BigInteger maxValue = mTypeSizes.getMaxValueOfPrimitiveType(type);
+			final Expression smallerMaxValue = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar,
+					ExpressionFactory.createIntegerLiteral(loc, maxValue.toString()));
+			assumptions = List.of(positiveCase1, positiveCase2, negativeCase1, negativeCase2, leqSumImplication,
+					greaterMinValue, smallerMaxValue);
+		}
+
+		// 0 ^ a = a ^ 0 = a
+		// a ^ a = 0
+		final Expression leftEqualsZero =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, leftWrapped, zero);
+		final Expression rightEqualsZero =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, rightWrapped, zero);
+		final Expression leftEqualsRight =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, leftWrapped, rightWrapped);
+		final List<Pair<Expression, Expression>> exactCases = List.of(new Pair<>(leftEqualsZero, right),
+				new Pair<>(rightEqualsZero, left), new Pair<>(leftEqualsRight, zero));
+		return buildExpressionResult(loc, "bitwiseOr", type, auxvarinfo, exactCases, assumptions);
+	}
+
+	/**
+	 * Overapproximates the bitwise left-shift. Uses the following rules to increase the precision:
+	 * <li>If a=0 or b=0, then a<<b = a
+	 * <li>Otherwise a<<b > a
+	 * <li>In general a<<b = a * 2**b, therefore we return this expression if b is a constant.
+	 */
+	public ExpressionResult abstractLeftShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
+			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
+		return abstractShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder, "shiftLeft", Operator.ARITHMUL,
+				Operator.COMPGT);
+	}
+
+	/**
+	 * Overapproximates the bitwise right-shift. Uses the following rules to increase the precision:
+	 * <li>If a=0 or b=0, then a>>b = a
+	 * <li>Otherwise a>>b < a
+	 * <li>In general a>>b = a / 2**b, therefore we return this expression if b is a constant.
+	 */
+	public ExpressionResult abstractRightShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
+			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
+		return abstractShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder, "shiftRight", Operator.ARITHDIV,
+				Operator.COMPLT);
+	}
+
+	public ExpressionResult abstractShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
+			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder,
+			final String functionName, final Operator shiftOperator, final Operator compOperator) {
+		if (isZero(left) || isZero(right)) {
+			return new ExpressionResult(new RValue(left, typeLeft));
+		}
+		if (right instanceof IntegerLiteral) {
+			final BigInteger shiftValue = new BigInteger(((IntegerLiteral) right).getValue());
+			final Expression value =
+					constructShiftWithLiteralOptimization(loc, left, typeRight, shiftValue, shiftOperator);
+			return new ExpressionResult(new RValue(value, typeLeft));
+		}
+		final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
+		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
+		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, typeLeft);
+		final Expression leftEqualsZero =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, leftWrapped, zero);
+		final Expression rightEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
+				applyWraparoundIfNecessary(loc, right, typeRight), zero);
+		final Expression leftOrRightEqualsZero =
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftEqualsZero, rightEqualsZero);
+		final Expression compLeft = ExpressionFactory.newBinaryExpression(loc, compOperator,
+				applyWraparoundIfNecessary(loc, auxVar.getExp(), typeLeft), leftWrapped);
+		return buildExpressionResult(loc, functionName, typeLeft, auxVar,
+				List.of(new Pair<>(leftOrRightEqualsZero, left)), List.of(compLeft));
 	}
 
 	private Expression constructShiftWithLiteralOptimization(final ILocation loc, final Expression left,
 			final CPrimitive typeRight, final BigInteger integerLiteralValue, final Operator op1) {
-		// 2017-11-18 Matthias: this could be done analogously in the
-		// bitprecise translation
 		final int exponent;
 		try {
 			exponent = integerLiteralValue.intValueExact();
@@ -417,5 +410,57 @@ public class BitabsTranslation {
 		final BigInteger shiftFactorBigInt = BigInteger.valueOf(2).pow(exponent);
 		final Expression shiftFactorExpr = mTypeSizes.constructLiteralForIntegerType(loc, typeRight, shiftFactorBigInt);
 		return ExpressionFactory.newBinaryExpression(loc, op1, left, shiftFactorExpr);
+	}
+
+	private Expression applyWraparoundIfNecessary(final ILocation loc, final Expression expr, final CPrimitive type) {
+		if (!mTypeSizes.isUnsigned(type)) {
+			return expr;
+		}
+		final BigInteger maxValuePlusOne = mTypeSizes.getMaxValueOfPrimitiveType(type).add(BigInteger.ONE);
+		return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, expr,
+				ExpressionFactory.createIntegerLiteral(loc, maxValuePlusOne.toString()));
+	}
+
+	private static boolean isZero(final Expression expr) {
+		return expr instanceof IntegerLiteral && "0".equals(((IntegerLiteral) expr).getValue());
+	}
+
+	private static ExpressionResult handleConstants(final IntegerLiteral left, final IntegerLiteral right,
+			final BinaryOperator<BigInteger> operator, final ILocation loc, final CPrimitive type) {
+		// TODO: Can we rely on the semantics for the BigInteger-operator?
+		final BigInteger leftValue = new BigInteger(left.getValue());
+		final BigInteger rightValue = new BigInteger(right.getValue());
+		final BigInteger result = operator.apply(leftValue, rightValue);
+		return new ExpressionResult(new RValue(new IntegerLiteral(loc, BoogieType.TYPE_INT, result.toString()), type));
+	}
+
+	private static ExpressionResult buildExpressionResult(final ILocation loc, final String functionName,
+			final CPrimitive resultType, final AuxVarInfo auxvarinfo,
+			final List<Pair<Expression, Expression>> exactCases,
+			final List<Expression> assumptionsForOverapproximation) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addDeclaration(auxvarinfo.getVarDec());
+		builder.addAuxVar(auxvarinfo);
+		final IdentifierExpression auxvar = auxvarinfo.getExp();
+		builder.setLrValue(new RValue(auxvar, resultType));
+		final VariableLHS auxvarLhs = auxvarinfo.getLhs();
+
+		final Overapprox overapprox = new Overapprox(functionName, loc);
+		Statement[] resultStatements = new Statement[assumptionsForOverapproximation.size()];
+		// TODO: Is it better to have the one assume with the conjunction instead of multiple assumes?
+		for (int i = 0; i < assumptionsForOverapproximation.size(); i++) {
+			final Statement assume = new AssumeStatement(loc, assumptionsForOverapproximation.get(i));
+			overapprox.annotate(assume);
+			resultStatements[i] = assume;
+		}
+		for (int i = exactCases.size() - 1; i >= 0; i--) {
+			final Pair<Expression, Expression> pair = exactCases.get(i);
+			final Statement assignment =
+					StatementFactory.constructAssignmentStatement(loc, auxvarLhs, pair.getSecond());
+			final Statement ifStatement = StatementFactory.constructIfStatement(loc, pair.getFirst(),
+					new Statement[] { assignment }, resultStatements);
+			resultStatements = new Statement[] { ifStatement };
+		}
+		return builder.addStatements(Arrays.asList(resultStatements)).build();
 	}
 }
