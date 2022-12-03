@@ -132,7 +132,7 @@ public class CTranslationUtil {
 		return new LocalLValue(alhs, cellType, null);
 	}
 
-	public static boolean isVarlengthArray(final CArray cArrayType, final TypeSizes typeSizes, final IASTNode hook) {
+	public static boolean isVarlengthArray(final CArray cArrayType, final TypeSizes typeSizes) {
 		CArray currentArrayType = cArrayType;
 		while (true) {
 			if (typeSizes.extractIntegerValue(currentArrayType.getBound()) == null) {
@@ -149,14 +149,12 @@ public class CTranslationUtil {
 		}
 	}
 
-	public static boolean isToplevelVarlengthArray(final CArray cArrayType, final TypeSizes typeSizes,
-			final IASTNode hook) {
+	public static boolean isToplevelVarlengthArray(final CArray cArrayType, final TypeSizes typeSizes) {
 		return typeSizes.extractIntegerValue(cArrayType.getBound()) == null;
 	}
 
-	public static List<Integer> getConstantDimensionsOfArray(final CArray cArrayType, final TypeSizes typeSizes,
-			final IASTNode hook) {
-		if (CTranslationUtil.isVarlengthArray(cArrayType, typeSizes, hook)) {
+	public static List<Integer> getConstantDimensionsOfArray(final CArray cArrayType, final TypeSizes typeSizes) {
+		if (CTranslationUtil.isVarlengthArray(cArrayType, typeSizes)) {
 			throw new IllegalArgumentException("only call this for non-varlength array types");
 		}
 		CArray currentArrayType = cArrayType;
@@ -197,8 +195,7 @@ public class CTranslationUtil {
 				&& (((CStructOrUnion) valueType).isStructOrUnion() == StructOrUnion.UNION);
 	}
 
-	public static int getConstantFirstDimensionOfArray(final CArray cArrayType, final TypeSizes typeSizes,
-			final IASTNode hook) {
+	public static int getConstantFirstDimensionOfArray(final CArray cArrayType, final TypeSizes typeSizes) {
 		final RValue dimRVal = cArrayType.getBound();
 
 		final BigInteger extracted = typeSizes.extractIntegerValue(dimRVal);

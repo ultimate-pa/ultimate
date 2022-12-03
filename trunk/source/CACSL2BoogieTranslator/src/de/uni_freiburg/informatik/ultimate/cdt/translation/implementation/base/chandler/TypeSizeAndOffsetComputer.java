@@ -231,7 +231,7 @@ public class TypeSizeAndOffsetComputer {
 	private SizeTValue constructSizeTValue_Array(final ILocation loc, final CArray cArray, final IASTNode hook) {
 
 		final SizeTValue valueSize = computeSize(loc, cArray.getValueType(), hook);
-		final SizeTValue factor = extractSizeTValue(cArray.getBound(), hook);
+		final SizeTValue factor = extractSizeTValue(cArray.getBound());
 
 		final SizeTValue size = (new SizeTValueAggregator_Multiply()).aggregate(loc,
 				Arrays.asList(new SizeTValue[] { valueSize, factor }));
@@ -339,7 +339,7 @@ public class TypeSizeAndOffsetComputer {
 		return axiom;
 	}
 
-	private SizeTValue extractSizeTValue(final RValue rvalue, final IASTNode hook) {
+	private SizeTValue extractSizeTValue(final RValue rvalue) {
 		final BigInteger value = mTypeSizes.extractIntegerValue(rvalue);
 		if (value != null) {
 			return new SizeTValue_Integer(value);

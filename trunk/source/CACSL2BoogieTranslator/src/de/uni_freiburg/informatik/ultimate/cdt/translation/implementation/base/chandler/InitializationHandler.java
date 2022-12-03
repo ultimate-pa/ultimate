@@ -282,7 +282,7 @@ public class InitializationHandler {
 	public ExpressionResult writeStringLiteral(final ILocation loc, final RValue auxVarRValue,
 			final CStringLiteral stringLiteral, final IASTNode hook) {
 		final CArray auxVarType = (CArray) auxVarRValue.getCType();
-		assert CTranslationUtil.getConstantFirstDimensionOfArray(auxVarType, mTypeSizes, hook) == stringLiteral
+		assert CTranslationUtil.getConstantFirstDimensionOfArray(auxVarType, mTypeSizes) == stringLiteral
 				.getByteValues().size();
 		final HeapLValue hlv =
 				LRValueFactory.constructHeapLValue(mTypeHandler, auxVarRValue.getValue(), auxVarType, null);
@@ -541,10 +541,10 @@ public class InitializationHandler {
 		 * Iterate over all array indices and assign the corresponding array cell; In the sophisticated case, only cells
 		 * explicitly mentioned by the initializer are updated here. Otherwise all cells are updated
 		 */
-		if (CTranslationUtil.isToplevelVarlengthArray(cArrayType, mTypeSizes, hook)) {
+		if (CTranslationUtil.isToplevelVarlengthArray(cArrayType, mTypeSizes)) {
 			throw new UnsupportedOperationException("handling varlength arrays not implemented for this case");
 		}
-		final int bound = CTranslationUtil.getConstantFirstDimensionOfArray(cArrayType, mTypeSizes, hook);
+		final int bound = CTranslationUtil.getConstantFirstDimensionOfArray(cArrayType, mTypeSizes);
 
 		for (int i = 0; i < bound; i++) {
 			final InitializerInfo arrayIndexInitInfo;
@@ -807,7 +807,7 @@ public class InitializationHandler {
 		 */
 		final List<List<Integer>> allIndicesToInitialize =
 				CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(Collections.singletonList(
-						CTranslationUtil.getConstantFirstDimensionOfArray(cArrayType, mTypeSizes, hook)));
+						CTranslationUtil.getConstantFirstDimensionOfArray(cArrayType, mTypeSizes)));
 		for (final List<Integer> arrayIndex : allIndicesToInitialize) {
 			final HeapLValue arrayAccessLhs = constructAddressForArrayAtIndex(loc, baseAddress, arrayIndex, hook);
 
@@ -841,7 +841,7 @@ public class InitializationHandler {
 		}
 
 		final List<List<Integer>> allIndicesToInitialize = CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(
-				CTranslationUtil.getConstantDimensionsOfArray(cArrayType, mTypeSizes, hook));
+				CTranslationUtil.getConstantDimensionsOfArray(cArrayType, mTypeSizes));
 		for (final List<Integer> arrayIndex : allIndicesToInitialize) {
 
 			final LocalLValue arrayAccessLhs =
@@ -1067,7 +1067,7 @@ public class InitializationHandler {
 			final List<Integer> arrayIndex, final IASTNode hook) {
 		final CArray cArrayType = (CArray) arrayBaseAddress.getCType().getUnderlyingType();
 
-		final List<Integer> arrayBounds = CTranslationUtil.getConstantDimensionsOfArray(cArrayType, mTypeSizes, hook);
+		final List<Integer> arrayBounds = CTranslationUtil.getConstantDimensionsOfArray(cArrayType, mTypeSizes);
 
 		Integer product = 0;
 		for (int i = 0; i < arrayIndex.size(); i++) {
@@ -1269,8 +1269,8 @@ public class InitializationHandler {
 		CType cellType = null;
 		if (targetCType instanceof CArray) {
 			cellType = ((CArray) targetCType).getValueType();
-			bound = CTranslationUtil.getConstantFirstDimensionOfArray((CArray) targetCType, mTypeSizes, hook);
-			if (CTranslationUtil.isToplevelVarlengthArray((CArray) targetCType, mTypeSizes, hook)) {
+			bound = CTranslationUtil.getConstantFirstDimensionOfArray((CArray) targetCType, mTypeSizes);
+			if (CTranslationUtil.isToplevelVarlengthArray((CArray) targetCType, mTypeSizes)) {
 				throw new UnsupportedOperationException("varlenght not yet supported here");
 			}
 		} else {
