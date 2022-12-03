@@ -85,14 +85,15 @@ public final class SmtTestGenerationUtils {
 				constructionString = "SmtSortUtils::getIntSort";
 			} else if (SmtSortUtils.isArraySort(sort)) {
 				if (isIntIntArray(sort)) {
-					constructionString = "QuantifierEliminationTest::constructIntIntArray";
+					constructionString = "QuantifierEliminationTest::getArrayIntIntSort";
 				} else if (isIntIntIntArray(sort)) {
-					constructionString = "QuantifierEliminationTest::constructIntIntIntArray";
+					constructionString = "QuantifierEliminationTest::getArrayIntIntIntSort";
 				} else {
 					constructionString = "arraySort" + counter;
 				}
 			} else if (SmtSortUtils.isBitvecSort(sort)) {
-				constructionString = "QuantifierEliminationTest::getBitvectorSort" + SmtSortUtils.getBitvectorLength(sort);
+				constructionString = "QuantifierEliminationTest::getBitvectorSort"
+						+ SmtSortUtils.getBitvectorLength(sort);
 			} else {
 				constructionString = "otherSort" + counter;
 			}
@@ -108,16 +109,15 @@ public final class SmtTestGenerationUtils {
 			sortFunctionSymbol.addTriple(funSym.getParameterSorts(), funSym.getReturnSort(), funSym);
 		}
 		final StringBuilder result = new StringBuilder();
-		result.append(System.lineSeparator());
 
-		result.append("\tfinal FunDecl[] funDecls = new FunDecl[] {");
+		result.append("\t\tfinal FunDecl[] funDecls = new FunDecl[] {");
 		result.append(System.lineSeparator());
 
 		for (final Entry<Sort, HashSet<TermVariable>> entry : sort2TermVariable.entrySet()) {
-			final String idList = entry.getValue().stream().map(x -> ("\"" + x + "\""))
+			final String idList = entry.getValue().stream().map(x -> ("\"" + x.getName() + "\""))
 					.collect(Collectors.joining(", "));
 			final String sortConstructionString = sortVarMapping.get(entry.getKey());
-			final String funDecl = String.format("\t\tnew FunDecl(%s, %s),", sortConstructionString, idList);
+			final String funDecl = String.format("\t\t\tnew FunDecl(%s, %s),", sortConstructionString, idList);
 			result.append(funDecl);
 			result.append(System.lineSeparator());
 		}
@@ -129,7 +129,7 @@ public final class SmtTestGenerationUtils {
 				final String idList = funs.stream().map(x -> ("\"" + x.getName() + "\""))
 						.collect(Collectors.joining(", "));
 				if (Arrays.equals(paramSorts, new Sort[0])) {
-					final String funDecl = String.format("\t\tnew FunDecl(%s, %s),", returnSortConstructionString,
+					final String funDecl = String.format("\t\t\tnew FunDecl(%s, %s),", returnSortConstructionString,
 							idList);
 					result.append(funDecl);
 					result.append(System.lineSeparator());
@@ -139,14 +139,13 @@ public final class SmtTestGenerationUtils {
 			}
 		}
 
-		result.append("\t};");
+		result.append("\t\t};");
 		result.append(System.lineSeparator());
 
-		result.append(String.format("\tfinal String formulaAsString = \"%s\";", term.toStringDirect()));
+		result.append(String.format("\t\tfinal String formulaAsString = \"%s\";", term.toStringDirect()));
 		result.append(System.lineSeparator());
 		return result.toString();
 	}
-
 
 	private static boolean isIntIntArray(final Sort sort) {
 		if (SmtSortUtils.isArraySort(sort)) {
