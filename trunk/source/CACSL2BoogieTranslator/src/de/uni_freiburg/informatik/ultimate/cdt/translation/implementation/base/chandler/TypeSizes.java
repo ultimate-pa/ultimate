@@ -68,6 +68,7 @@ public class TypeSizes {
 		mUseFixedTypeSizes = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
 		mSettings = settings;
 
+		final int sizeOfBoolType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
 		final int sizeOfCharType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR);
 		final int sizeOfShortType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_SHORT);
 		final int sizeOfIntType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_INT);
@@ -83,8 +84,7 @@ public class TypeSizes {
 		// for pointer arithmetic on a void pointer -- c standard disallows that, but
 		// gcc does not..
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.VOID, 1);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.BOOL,
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL));
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.BOOL, sizeOfBoolType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.CHAR, sizeOfCharType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.SCHAR, sizeOfCharType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UCHAR, sizeOfCharType);
@@ -96,19 +96,20 @@ public class TypeSizes {
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONG, sizeOfLongType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGLONG, sizeOfLongLongType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONGLONG, sizeOfLongLongType);
-		// Hardcoded to 16 bytes. According to the GNU C is could probably also be larger
-		// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fint128.html
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.INT128, 16);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UINT128, 16);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.DOUBLE, sizeOfDoubleType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT, sizeOfFloatType);
-		// Hardcoded to 16 bytes https://gcc.gnu.org/onlinedocs/gcc/Floating-Types.html
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT128, 16);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGDOUBLE, sizeOfLongDoubleType);
 
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_DOUBLE, sizeOfDoubleType * 2);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_FLOAT, sizeOfFloatType * 2);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_LONGDOUBLE, sizeOfLongDoubleType * 2);
+
+		// Hardcoded to 16 bytes. According to the GNU C is could probably also be larger
+		// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fint128.html
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.INT128, 16);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UINT128, 16);
+		// Hardcoded to 16 bytes https://gcc.gnu.org/onlinedocs/gcc/Floating-Types.html
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT128, 16);
 	}
 
 	public boolean useFixedTypeSizes() {
