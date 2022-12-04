@@ -215,13 +215,12 @@ public class MainTranslator {
 			final CHandler prerunCHandler, final CTranslationResultReporter reporter,
 			final LocationFactory locationFactory, final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants,
 			final CACSL2BoogieBacktranslatorMapping backtranslatorMapping, final List<DecoratedUnit> nodes,
-			final TypeHandler prerunTypeHandler, final MultiparseSymbolTable mst, final TypeSizes prerunTypeSizes) {
+			final TypeHandler prerunTypeHandler, final MultiparseSymbolTable mst, final TypeSizes typeSizes) {
 		final NameHandler nameHandler = new NameHandler(backtranslatorMapping);
 
 		final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mLogger, mst);
 		final ProcedureManager procedureManager = new ProcedureManager(mLogger, translationSettings);
 		final StaticObjectsHandler staticObjectsHandler = new StaticObjectsHandler(mLogger);
-		final TypeSizes typeSizes = new TypeSizes(prerunTypeSizes);
 		final TypeHandler typeHandler = new TypeHandler(reporter, nameHandler, typeSizes, flatSymbolTable,
 				translationSettings, locationFactory, staticObjectsHandler, prerunTypeHandler);
 		final ExpressionTranslation expressionTranslation =

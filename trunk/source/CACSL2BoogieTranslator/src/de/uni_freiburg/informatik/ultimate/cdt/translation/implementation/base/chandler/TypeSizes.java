@@ -54,24 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
  */
 public class TypeSizes {
 	private final boolean mUseFixedTypeSizes;
-
-	private final int mSizeOfBoolType;
-	private final int mSizeOfCharType;
-	private final int mSizeOfShortType;
-	private final int mSizeOfIntType;
-	private final int mSizeOfLongType;
-	private final int mSizeOfLongLongType;
-	private final int mSizeOfFloatType;
-	private final int mSizeOfDoubleType;
-	private final int mSizeOfLongDoubleType;
 	private final int mSizeOfPointerType;
-	private final int mSizeOfInt128Type;
-	private final int mSizeOfFloat128Type;
-
-	// for pointer arithmetic on a void pointer -- c standard disallows that, but
-	// gcc does not..
-	private final int mSizeOfVoidType;
-
 	/**
 	 * is char (without modifier) schar or uchar?
 	 */
@@ -84,72 +67,48 @@ public class TypeSizes {
 	public TypeSizes(final IPreferenceProvider ups, final TranslationSettings settings) {
 		mUseFixedTypeSizes = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
 		mSettings = settings;
-		mCPrimitiveToTypeSizeConstant = new LinkedHashMap<>();
 
-		mSizeOfVoidType = 1;
-		mSizeOfBoolType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
-		mSizeOfCharType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR);
-		mSizeOfShortType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_SHORT);
-		mSizeOfIntType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_INT);
-		mSizeOfLongType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONG);
-		mSizeOfLongLongType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGLONG);
-		mSizeOfFloatType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_FLOAT);
-		mSizeOfDoubleType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_DOUBLE);
-		mSizeOfLongDoubleType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE);
+		final int sizeOfCharType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR);
+		final int sizeOfShortType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_SHORT);
+		final int sizeOfIntType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_INT);
+		final int sizeOfLongType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONG);
+		final int sizeOfLongLongType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGLONG);
+		final int sizeOfFloatType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_FLOAT);
+		final int sizeOfDoubleType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_DOUBLE);
+		final int sizeOfLongDoubleType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE);
 		mSizeOfPointerType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_POINTER);
 		mSignednessOfChar = ups.getEnum(CACSLPreferenceInitializer.LABEL_SIGNEDNESS_CHAR, Signedness.class);
-		// Hardcoded to 16 bytes. According to the GNU C is could probably also be
-		// larger
+
+		mCPrimitiveToTypeSizeConstant = new LinkedHashMap<>();
+		// for pointer arithmetic on a void pointer -- c standard disallows that, but
+		// gcc does not..
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.VOID, 1);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.BOOL,
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL));
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.CHAR, sizeOfCharType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.SCHAR, sizeOfCharType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UCHAR, sizeOfCharType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.SHORT, sizeOfShortType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.USHORT, sizeOfShortType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.INT, sizeOfIntType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UINT, sizeOfIntType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONG, sizeOfLongType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONG, sizeOfLongType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGLONG, sizeOfLongLongType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONGLONG, sizeOfLongLongType);
+		// Hardcoded to 16 bytes. According to the GNU C is could probably also be larger
 		// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fint128.html
-		mSizeOfInt128Type = 16;
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.INT128, 16);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UINT128, 16);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.DOUBLE, sizeOfDoubleType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT, sizeOfFloatType);
 		// Hardcoded to 16 bytes https://gcc.gnu.org/onlinedocs/gcc/Floating-Types.html
-		mSizeOfFloat128Type = 16;
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT128, 16);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGDOUBLE, sizeOfLongDoubleType);
 
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.VOID, mSizeOfVoidType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.BOOL, mSizeOfBoolType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.CHAR, mSizeOfCharType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.SCHAR, mSizeOfCharType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UCHAR, mSizeOfCharType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.SHORT, mSizeOfShortType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.USHORT, mSizeOfShortType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.INT, mSizeOfIntType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UINT, mSizeOfIntType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONG, mSizeOfLongType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONG, mSizeOfLongType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGLONG, mSizeOfLongLongType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONGLONG, mSizeOfLongLongType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.INT128, mSizeOfInt128Type);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UINT128, mSizeOfInt128Type);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.DOUBLE, mSizeOfDoubleType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT, mSizeOfFloatType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT128, mSizeOfFloat128Type);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGDOUBLE, mSizeOfLongDoubleType);
-
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_DOUBLE, mSizeOfDoubleType * 2);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_FLOAT, mSizeOfFloatType * 2);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_LONGDOUBLE, mSizeOfLongDoubleType * 2);
-
-	}
-
-	public TypeSizes(final TypeSizes prerunTypeSizes) {
-		mUseFixedTypeSizes = prerunTypeSizes.mUseFixedTypeSizes;
-		mSettings = prerunTypeSizes.mSettings;
-		mCPrimitiveToTypeSizeConstant = prerunTypeSizes.mCPrimitiveToTypeSizeConstant;
-
-		mSizeOfVoidType = prerunTypeSizes.mSizeOfVoidType;
-		mSizeOfBoolType = prerunTypeSizes.mSizeOfBoolType;
-		mSizeOfCharType = prerunTypeSizes.mSizeOfCharType;
-		mSizeOfShortType = prerunTypeSizes.mSizeOfShortType;
-		mSizeOfIntType = prerunTypeSizes.mSizeOfIntType;
-		mSizeOfLongType = prerunTypeSizes.mSizeOfLongType;
-		mSizeOfLongLongType = prerunTypeSizes.mSizeOfLongLongType;
-		mSizeOfFloatType = prerunTypeSizes.mSizeOfFloatType;
-		mSizeOfDoubleType = prerunTypeSizes.mSizeOfDoubleType;
-		mSizeOfLongDoubleType = prerunTypeSizes.mSizeOfLongDoubleType;
-		mSizeOfPointerType = prerunTypeSizes.mSizeOfPointerType;
-		mSignednessOfChar = prerunTypeSizes.mSignednessOfChar;
-		mSizeOfInt128Type = prerunTypeSizes.mSizeOfInt128Type;
-		mSizeOfFloat128Type = prerunTypeSizes.mSizeOfFloat128Type;
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_DOUBLE, sizeOfDoubleType * 2);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_FLOAT, sizeOfFloatType * 2);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_LONGDOUBLE, sizeOfLongDoubleType * 2);
 	}
 
 	public boolean useFixedTypeSizes() {
