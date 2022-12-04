@@ -89,7 +89,7 @@ public class BitabsTranslation {
 		if (BigInteger.ZERO.equals(leftValue)) {
 			return new ExpressionResult(new RValue(left, type));
 		}
-		final BigInteger rightValue = mTypeSizes.extractIntegerValue(left, type);
+		final BigInteger rightValue = mTypeSizes.extractIntegerValue(right, type);
 		if (BigInteger.ZERO.equals(rightValue)) {
 			return new ExpressionResult(new RValue(right, type));
 		}
@@ -184,7 +184,7 @@ public class BitabsTranslation {
 		if (BigInteger.ZERO.equals(leftValue)) {
 			return new ExpressionResult(new RValue(right, type));
 		}
-		final BigInteger rightValue = mTypeSizes.extractIntegerValue(left, type);
+		final BigInteger rightValue = mTypeSizes.extractIntegerValue(right, type);
 		if (BigInteger.ZERO.equals(rightValue)) {
 			return new ExpressionResult(new RValue(left, type));
 		}
@@ -280,7 +280,7 @@ public class BitabsTranslation {
 		if (BigInteger.ZERO.equals(leftValue)) {
 			return new ExpressionResult(new RValue(right, type));
 		}
-		final BigInteger rightValue = mTypeSizes.extractIntegerValue(left, type);
+		final BigInteger rightValue = mTypeSizes.extractIntegerValue(right, type);
 		if (BigInteger.ZERO.equals(rightValue)) {
 			return new ExpressionResult(new RValue(left, type));
 		}
@@ -382,7 +382,7 @@ public class BitabsTranslation {
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder,
 			final String functionName, final Operator shiftOperator, final Operator compOperator) {
 		final BigInteger leftValue = mTypeSizes.extractIntegerValue(left, typeLeft);
-		final BigInteger rightValue = mTypeSizes.extractIntegerValue(left, typeRight);
+		final BigInteger rightValue = mTypeSizes.extractIntegerValue(right, typeRight);
 		if (BigInteger.ZERO.equals(leftValue) || BigInteger.ZERO.equals(rightValue)) {
 			return new ExpressionResult(new RValue(left, typeLeft));
 		}
