@@ -414,8 +414,8 @@ public class BitabsTranslation {
 		} catch (final ArithmeticException ae) {
 			throw new UnsupportedOperationException("RHS of shift is larger than C standard allows " + ae);
 		}
-		final BigInteger shiftFactorBigInt = BigInteger.valueOf(2).pow(exponent);
-		final Expression shiftFactorExpr = mTypeSizes.constructLiteralForIntegerType(loc, typeRight, shiftFactorBigInt);
+		final Expression shiftFactorExpr =
+				mTypeSizes.constructLiteralForIntegerType(loc, typeRight, BigInteger.TWO.pow(exponent));
 		return ExpressionFactory.newBinaryExpression(loc, operator, left, shiftFactorExpr);
 	}
 
