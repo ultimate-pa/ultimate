@@ -167,45 +167,26 @@ public class TypeSizes {
 		}
 	}
 
-	private static boolean isComplex(final CPrimitives type) {
-		switch (type) {
-		case COMPLEX_FLOAT:
-		case COMPLEX_DOUBLE:
-		case COMPLEX_LONGDOUBLE:
-			return true;
-		default:
-			return false;
-		}
-	}
-
 	public BigInteger getMaxValueOfPrimitiveType(final CPrimitive cPrimitive) {
 		final int byteSize = getSize(cPrimitive.getType());
-		BigInteger maxValue;
+		int exponent;
 		if (isUnsigned(cPrimitive)) {
-			maxValue = new BigInteger("2").pow(byteSize * 8);
+			exponent = byteSize * 8;
 		} else {
-			maxValue = new BigInteger("2").pow(byteSize * 8 - 1);
+			exponent = byteSize * 8 - 1;
 		}
-		maxValue = maxValue.subtract(BigInteger.ONE);
-		return maxValue;
+		return BigInteger.TWO.pow(exponent).subtract(BigInteger.ONE);
 	}
 
 	public BigInteger getMinValueOfPrimitiveType(final CPrimitive cPrimitive) {
-		final int byteSize = getSize(cPrimitive.getType());
-		BigInteger minValue;
 		if (isUnsigned(cPrimitive)) {
-			minValue = BigInteger.ZERO;
-		} else {
-			minValue = new BigInteger("2").pow(byteSize * 8 - 1).negate();
+			return BigInteger.ZERO;
 		}
-		return minValue;
+		return BigInteger.TWO.pow(getSize(cPrimitive.getType()) * 8 - 1).negate();
 	}
 
 	public BigInteger getMaxValueOfPointer() {
-		final int byteSize = mSizeOfPointerType;
-		BigInteger maxValue = new BigInteger("2").pow(byteSize * 8);
-		maxValue = maxValue.subtract(BigInteger.ONE);
-		return maxValue;
+		return BigInteger.TWO.pow(mSizeOfPointerType * 8).subtract(BigInteger.ONE);
 	}
 
 	/**
