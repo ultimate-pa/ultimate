@@ -322,9 +322,8 @@ public final class DataRaceChecker {
 	}
 
 	private int getTypeSize(final ILocation loc, final CType type) {
-		final Expression operandTypeByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, type, null);
-		return mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT())
-				.intValueExact();
+		final Expression operandTypeByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, type);
+		return mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT()).intValueExact();
 	}
 
 	private LeftHandSide getRaceIndicatorLhs(final ILocation loc, final LocalLValue lval) {

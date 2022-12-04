@@ -462,8 +462,8 @@ public class MemoryHandler {
 		return mMemoryModel;
 	}
 
-	public Expression calculateSizeOf(final ILocation loc, final CType cType, final IASTNode hook) {
-		return mTypeSizeAndOffsetComputer.constructBytesizeExpression(loc, cType, hook);
+	public Expression calculateSizeOf(final ILocation loc, final CType cType) {
+		return mTypeSizeAndOffsetComputer.constructBytesizeExpression(loc, cType);
 	}
 
 	// TODO: This handling is quite imprecise and does not even consider cType
@@ -494,7 +494,7 @@ public class MemoryHandler {
 	 * @return a set of declarations.
 	 */
 	public List<Declaration> declareMemoryModelInfrastructure(final CHandler main, final ILocation tuLoc,
-			final IASTNode hook, final DataRaceChecker dataRaceChecker) {
+			final DataRaceChecker dataRaceChecker) {
 		mRequiredMemoryModelFeatures.finish(mSettings);
 
 		if (!mRequiredMemoryModelFeatures.isMemoryModelInfrastructureRequired()) {
@@ -514,8 +514,8 @@ public class MemoryHandler {
 			for (final HeapDataArray heapDataArray : heapDataArrays) {
 				decl.add(constructMemoryArrayDeclaration(tuLoc, heapDataArray.getName(), heapDataArray.getASTType()));
 				// create and add read and write procedure
-				decl.addAll(constructWriteProcedures(main, tuLoc, heapDataArrays, heapDataArray, hook));
-				decl.addAll(constructReadProcedures(main, tuLoc, heapDataArray, hook));
+				decl.addAll(constructWriteProcedures(main, tuLoc, heapDataArrays, heapDataArray));
+				decl.addAll(constructReadProcedures(main, tuLoc, heapDataArray));
 
 			}
 		}
@@ -546,31 +546,31 @@ public class MemoryHandler {
 			}
 		}
 
-		decl.addAll(declareDeallocation(main, tuLoc, hook));
+		decl.addAll(declareDeallocation(main, tuLoc));
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK)) {
-			decl.addAll(declareMalloc(main, mTypeHandler, tuLoc, hook, MemoryArea.STACK));
+			decl.addAll(declareMalloc(main, mTypeHandler, tuLoc, MemoryArea.STACK));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.ULTIMATE_ALLOC_INIT)) {
-			declareAllocInit(main, mTypeHandler, tuLoc, hook);
+			declareAllocInit(main, mTypeHandler, tuLoc);
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.ULTIMATE_ALLOC_HEAP)) {
-			decl.addAll(declareMalloc(main, mTypeHandler, tuLoc, hook, MemoryArea.HEAP));
+			decl.addAll(declareMalloc(main, mTypeHandler, tuLoc, MemoryArea.HEAP));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.C_MEMSET)) {
-			decl.addAll(declareMemset(main, heapDataArrays, hook));
+			decl.addAll(declareMemset(main, heapDataArrays));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.ULTIMATE_MEMINIT)) {
-			decl.addAll(declareUltimateMeminit(main, heapDataArrays, hook));
+			decl.addAll(declareUltimateMeminit(main, heapDataArrays));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
@@ -578,7 +578,7 @@ public class MemoryHandler {
 			final ConstructMemcpyOrMemmove cmcom = new ConstructMemcpyOrMemmove(this, mProcedureManager,
 					(TypeHandler) mTypeHandler, mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder,
 					mTypeSizes, dataRaceChecker);
-			decl.addAll(cmcom.declareMemcpyOrMemmove(main, heapDataArrays, MemoryModelDeclarations.C_MEMCPY, hook));
+			decl.addAll(cmcom.declareMemcpyOrMemmove(main, heapDataArrays, MemoryModelDeclarations.C_MEMCPY));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
@@ -586,19 +586,19 @@ public class MemoryHandler {
 			final ConstructMemcpyOrMemmove cmcom = new ConstructMemcpyOrMemmove(this, mProcedureManager,
 					(TypeHandler) mTypeHandler, mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder,
 					mTypeSizes, dataRaceChecker);
-			decl.addAll(cmcom.declareMemcpyOrMemmove(main, heapDataArrays, MemoryModelDeclarations.C_MEMMOVE, hook));
+			decl.addAll(cmcom.declareMemcpyOrMemmove(main, heapDataArrays, MemoryModelDeclarations.C_MEMMOVE));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.C_STRCPY)) {
-			decl.addAll(declareStrCpy(main, heapDataArrays, hook));
+			decl.addAll(declareStrCpy(main, heapDataArrays));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.C_REALLOC)) {
 			final ConstructRealloc cr = new ConstructRealloc(this, mProcedureManager, (TypeHandler) mTypeHandler,
 					mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder, mTypeSizes);
-			decl.addAll(cr.declareRealloc(main, heapDataArrays, hook));
+			decl.addAll(cr.declareRealloc(main, heapDataArrays));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
@@ -858,8 +858,8 @@ public class MemoryHandler {
 	}
 
 	public CallStatement getUltimateMemAllocCall(final LocalLValue resultPointer, final ILocation loc,
-			final IASTNode hook, final MemoryArea memArea) {
-		return getUltimateMemAllocCall(calculateSizeOf(loc, resultPointer.getCType(), hook),
+			final MemoryArea memArea) {
+		return getUltimateMemAllocCall(calculateSizeOf(loc, resultPointer.getCType()),
 				(VariableLHS) resultPointer.getLhs(), loc, memArea);
 	}
 
@@ -893,13 +893,11 @@ public class MemoryHandler {
 	/**
 	 * Call for procedure that can allocate memory during the initialization. See
 	 * {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}.
-	 *
 	 * @param cType
 	 *            type of the object for which we allocate memory (unlike {@link MemoryHandler#getUltimateMemAllocCall}
 	 *            which takes a pointer to the object for which allocate.
 	 */
-	public Pair<RValue, CallStatement> getUltimateMemAllocInitCall(final ILocation actualLoc, final CType cType,
-			final IASTNode hook) {
+	public Pair<RValue, CallStatement> getUltimateMemAllocInitCall(final ILocation actualLoc, final CType cType) {
 		final BigInteger ptrBase = BigInteger.valueOf(mFixedAddressCounter);
 		final Expression addressExpression =
 				mExpressionTranslation.constructPointerForIntegerValues(actualLoc, ptrBase, BigInteger.ZERO);
@@ -908,7 +906,7 @@ public class MemoryHandler {
 				mTypeSizes.constructLiteralForIntegerType(actualLoc,
 						mExpressionTranslation.getCTypeOfPointerComponents(), ptrBase),
 				mExpressionTranslation.getCTypeOfPointerComponents());
-		final Expression size = mTypeSizeAndOffsetComputer.constructBytesizeExpression(actualLoc, cType, hook);
+		final Expression size = mTypeSizeAndOffsetComputer.constructBytesizeExpression(actualLoc, cType);
 		final CallStatement ultimateAllocCall = getUltimateMemAllocInitCall(size, ptrBaseRValue, actualLoc);
 		mFixedAddressCounter++;
 		return new Pair<>(addressRValue, ultimateAllocCall);
@@ -928,12 +926,11 @@ public class MemoryHandler {
 	 *         read value.
 	 */
 	// 2015-10
-	public ExpressionResult getReadCall(final Expression address, final CType resultType, final IASTNode hook) {
-		return getReadCall(address, resultType, false, hook);
+	public ExpressionResult getReadCall(final Expression address, final CType resultType) {
+		return getReadCall(address, resultType, false);
 	}
 
-	public ExpressionResult getReadCall(final Expression address, final CType resultType, final boolean unchecked,
-			final IASTNode hook) {
+	public ExpressionResult getReadCall(final Expression address, final CType resultType, final boolean unchecked) {
 		final ILocation loc = address.getLocation();
 		final boolean bitvectorConversionNeeded = false;
 
@@ -983,7 +980,7 @@ public class MemoryHandler {
 
 		final VariableLHS[] lhss = new VariableLHS[] { auxvar.getLhs() };
 		final CallStatement call = StatementFactory.constructCallStatement(loc, false, lhss, readCallProcedureName,
-				new Expression[] { address, calculateSizeOf(loc, resultType, hook) });
+				new Expression[] { address, calculateSizeOf(loc, resultType) });
 		for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
 			overapprItem.annotate(call);
 		}
@@ -1033,46 +1030,46 @@ public class MemoryHandler {
 	 *
 	 * @param hlv
 	 *            the HeapLvalue containing the address to write to
-	 * @param rval
-	 *            the value to write.
 	 * @param isStaticInitialization
 	 *            If the write call is used during static initialization of global variables, we can use the unchecked
 	 *            methods and omit various specifications.
+	 * @param rval
+	 *            the value to write.
 	 *
 	 * @return the required Statements to perform the write.
 	 */
 	public List<Statement> getWriteCall(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final CType valueType, final boolean isStaticInitialization, final IASTNode hook) {
+			final CType valueType, final boolean isStaticInitialization) {
 		final CType realValueType = valueType.getUnderlyingType();
 
 		final HeapWriteMode writeMode =
 				isStaticInitialization ? HeapWriteMode.STORE_UNCHECKED : HeapWriteMode.STORE_CHECKED;
-		return getWriteCall(loc, hlv, value, realValueType, writeMode, hook);
+		return getWriteCall(loc, hlv, value, realValueType, writeMode);
 	}
 
 	private List<Statement> getWriteCall(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final CType valueType, final HeapWriteMode writeMode, final IASTNode hook) {
+			final CType valueType, final HeapWriteMode writeMode) {
 		final CType realValueType = valueType.getUnderlyingType();
 
 		if (realValueType instanceof CPrimitive) {
-			return getWriteCallPrimitive(loc, hlv, value, (CPrimitive) realValueType, writeMode, hook);
+			return getWriteCallPrimitive(loc, hlv, value, (CPrimitive) realValueType, writeMode);
 		} else if (realValueType instanceof CEnum) {
-			return getWriteCallEnum(loc, hlv, value, writeMode, hook);
+			return getWriteCallEnum(loc, hlv, value, writeMode);
 		} else if (realValueType instanceof CPointer) {
-			return getWriteCallPointer(loc, hlv, value, writeMode, hook);
+			return getWriteCallPointer(loc, hlv, value, writeMode);
 		} else if (realValueType instanceof CStructOrUnion) {
-			return getWriteCallStruct(loc, hlv, value, (CStructOrUnion) realValueType, writeMode, hook);
+			return getWriteCallStruct(loc, hlv, value, (CStructOrUnion) realValueType, writeMode);
 		} else if (realValueType instanceof CArray) {
-			return getWriteCallArray(loc, hlv, value, (CArray) realValueType, writeMode, hook);
+			return getWriteCallArray(loc, hlv, value, (CArray) realValueType, writeMode);
 		} else {
 			throw new UnsupportedSyntaxException(loc, "we don't recognize this type: " + realValueType);
 		}
 	}
 
 	/**
-	 * Like {@link #getWriteCall(ILocation, HeapLValue, Expression, CType, boolean, IASTNode)}, but working under the
-	 * assumption that the to-be-written heap cells are uninitialized so far. Thus we can use "select-constraints"
-	 * instead of "store-constraints" for the heap array.
+	 * Like {@link #getWriteCall(ILocation, HeapLValue, Expression, CType, boolean)}, but working under the assumption
+	 * that the to-be-written heap cells are uninitialized so far. Thus we can use "select-constraints" instead of
+	 * "store-constraints" for the heap array.
 	 *
 	 * @param loc
 	 * @param hlv
@@ -1085,7 +1082,7 @@ public class MemoryHandler {
 	public List<Statement> getInitCall(final ILocation loc, final HeapLValue hlv, final Expression value,
 			final CType valueType, final IASTNode hook) {
 		final CType realValueType = valueType.getUnderlyingType();
-		return getWriteCall(loc, hlv, value, realValueType, HeapWriteMode.SELECT, hook);
+		return getWriteCall(loc, hlv, value, realValueType, HeapWriteMode.SELECT);
 	}
 
 	/**
@@ -1126,14 +1123,14 @@ public class MemoryHandler {
 	 * Note that this returns a statement block that is like the given block but with added statement in front
 	 * <b>and</b>in the back!
 	 */
-	public List<Statement> insertMallocs(final List<Statement> block, final IASTNode hook) {
+	public List<Statement> insertMallocs(final List<Statement> block) {
 		final List<Statement> mallocs = new ArrayList<>();
 		for (final LocalLValueILocationPair llvp : mVariablesToBeMalloced.currentScopeKeys()) {
-			mallocs.add(this.getUltimateMemAllocCall(llvp.llv, llvp.loc, hook, MemoryArea.STACK));
+			mallocs.add(this.getUltimateMemAllocCall(llvp.llv, llvp.loc, MemoryArea.STACK));
 		}
 		final List<Statement> frees = new ArrayList<>();
-		for (final LocalLValueILocationPair llvp : mVariablesToBeFreed.currentScopeKeys()) { // frees are inserted in
-			// handleReturnStm
+		for (final LocalLValueILocationPair llvp : mVariablesToBeFreed.currentScopeKeys()) {
+			// frees are inserted in handleReturnStm
 			frees.add(getDeallocCall(llvp.llv, llvp.loc));
 			frees.add(new HavocStatement(llvp.loc, new VariableLHS[] { (VariableLHS) llvp.llv.getLhs() }));
 		}
@@ -1169,11 +1166,10 @@ public class MemoryHandler {
 	 * @param integer
 	 * @param valueType
 	 *            The value type the pointer points to (we need it because we have to multiply with its size)
-	 *
 	 * @return a pointer of the form: {base: ptr.base, offset: ptr.offset + integer * sizeof(valueType)}
 	 */
 	public Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress,
-			final RValue integer, final CType valueType, final IASTNode hook) {
+			final RValue integer, final CType valueType) {
 		if (mTypeSizes.getSize(((CPrimitive) integer.getCType().getUnderlyingType()).getType()) != mTypeSizes
 				.getSize(mExpressionTranslation.getCTypeOfPointerComponents().getType())) {
 			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
@@ -1181,7 +1177,7 @@ public class MemoryHandler {
 		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptrAddress, loc);
 		final Expression pointerOffset = MemoryHandler.getPointerOffset(ptrAddress, loc);
 		final Expression timesSizeOf = multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(),
-				mExpressionTranslation.getCTypeOfPointerComponents(), hook);
+				mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, operator, pointerOffset,
 				mExpressionTranslation.getCTypeOfPointerComponents(), timesSizeOf,
 				mExpressionTranslation.getCTypeOfPointerComponents());
@@ -1190,16 +1186,16 @@ public class MemoryHandler {
 	}
 
 	/**
-	 * Like {@link #doPointerArithmetic(int, ILocation, Expression, RValue, CType, IASTNode)} but additionally the
-	 * integer operand is converted to the same type that we use to represent pointer components. As a consequence we
-	 * have to return an ExpressionResult.
+	 * Like {@link #doPointerArithmetic(int, ILocation, Expression, RValue, CType)} but additionally the integer operand
+	 * is converted to the same type that we use to represent pointer components. As a consequence we have to return an
+	 * ExpressionResult.
 	 */
 	public ExpressionResult doPointerArithmeticWithConversion(final int operator, final ILocation loc,
 			final Expression ptrAddress, final RValue integer, final CType valueType, final IASTNode hook) {
 		final ExpressionResult eres = mExpressionTranslation.convertIntToInt(loc, new ExpressionResult(integer),
 				mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression resultExpression =
-				doPointerArithmetic(operator, loc, ptrAddress, (RValue) eres.getLrValue(), valueType, hook);
+				doPointerArithmetic(operator, loc, ptrAddress, (RValue) eres.getLrValue(), valueType);
 		final RValue newRValue = new RValue(resultExpression, mExpressionTranslation.getCTypeOfPointerComponents());
 		return new ExpressionResultBuilder().addAllExceptLrValue(eres).setLrValue(newRValue).build();
 	}
@@ -1209,13 +1205,14 @@ public class MemoryHandler {
 	 *
 	 * @param integerExpresionType
 	 *            {@link CType} whose translation is the Boogie type of integerExpression and the result.
+	 *
 	 * @return An {@link Expression} that represents <i>integerExpression * sizeof(valueType)</i>
 	 */
 	public Expression multiplyWithSizeOfAnotherType(final ILocation loc, final CType valueType,
-			final Expression integerExpression, final CPrimitive integerExpresionType, final IASTNode hook) {
+			final Expression integerExpression, final CPrimitive integerExpresionType) {
 		final Expression timesSizeOf;
 		timesSizeOf = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_multiply,
-				integerExpression, integerExpresionType, calculateSizeOf(loc, valueType, hook), integerExpresionType);
+				integerExpression, integerExpresionType, calculateSizeOf(loc, valueType), integerExpresionType);
 		return timesSizeOf;
 	}
 
@@ -1285,10 +1282,8 @@ public class MemoryHandler {
 			final StructConstructor sc = (StructConstructor) expr;
 			final Expression[] fieldValues = sc.getFieldValues();
 			if (fieldValues.length == 2) {
-				final BigInteger fst =
-						mTypeSizes.extractIntegerValue(fieldValues[0], new CPrimitive(CPrimitives.LONG));
-				final BigInteger snd =
-						mTypeSizes.extractIntegerValue(fieldValues[1], new CPrimitive(CPrimitives.LONG));
+				final BigInteger fst = mTypeSizes.extractIntegerValue(fieldValues[0], new CPrimitive(CPrimitives.LONG));
+				final BigInteger snd = mTypeSizes.extractIntegerValue(fieldValues[1], new CPrimitive(CPrimitives.LONG));
 				if (BigInteger.ZERO.equals(fst) && BigInteger.ZERO.equals(snd)) {
 					return true;
 				}
@@ -1412,7 +1407,7 @@ public class MemoryHandler {
 	}
 
 	private List<Declaration> declareUltimateMeminit(final CHandler main,
-			final Collection<HeapDataArray> heapDataArrays, final IASTNode hook) {
+			final Collection<HeapDataArray> heapDataArrays) {
 		final ArrayList<Declaration> decls = new ArrayList<>();
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
@@ -1463,7 +1458,7 @@ public class MemoryHandler {
 			final Expression zero = mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
 					new CPrimitive(CPrimitives.UCHAR), BigInteger.ZERO);
 			final List<Statement> loopBody =
-					constructMemsetLoopBody(heapDataArrays, loopCtrAux, inParamPtr, zero, procName, hook);
+					constructMemsetLoopBody(heapDataArrays, loopCtrAux, inParamPtr, zero, procName);
 
 			final IdentifierExpression inParamProductExpr =
 					ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogieTypeForSizeT(),
@@ -1522,8 +1517,7 @@ public class MemoryHandler {
 	 * @param heapDataArrays
 	 * @return
 	 */
-	private List<Declaration> declareStrCpy(final CHandler main, final Collection<HeapDataArray> heapDataArrays,
-			final IASTNode hook) {
+	private List<Declaration> declareStrCpy(final CHandler main, final Collection<HeapDataArray> heapDataArrays) {
 
 		final MemoryModelDeclarations strcpyMmDecl = MemoryModelDeclarations.C_STRCPY;
 		final List<Declaration> strCpyDecl = new ArrayList<>();
@@ -1562,10 +1556,10 @@ public class MemoryHandler {
 		{
 			final Expression currentSrc = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, srcId,
 					new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-					new CPrimitive(CPrimitives.CHAR), hook);
+					new CPrimitive(CPrimitives.CHAR));
 			final Expression currentDest = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, destId,
 					new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-					new CPrimitive(CPrimitives.CHAR), hook);
+					new CPrimitive(CPrimitives.CHAR));
 
 			/*
 			 * do pointer validity checks for current pointers (src/dest + offset) (using #valid and #length)
@@ -1607,8 +1601,7 @@ public class MemoryHandler {
 
 			final Expression srcAcc;
 			{
-				final ExpressionResult srcAccExpRes =
-						this.getReadCall(currentSrc, new CPrimitive(CPrimitives.CHAR), hook);
+				final ExpressionResult srcAccExpRes = this.getReadCall(currentSrc, new CPrimitive(CPrimitives.CHAR));
 				srcAcc = srcAccExpRes.getLrValue().getValue();
 				loopBody.addAll(srcAccExpRes.getStatements());
 				decl.addAll(srcAccExpRes.getDeclarations());
@@ -1623,7 +1616,7 @@ public class MemoryHandler {
 				final List<Statement> writeCall = getWriteCall(
 						ignoreLoc, LRValueFactory.constructHeapLValue(mTypeHandler, currentDest,
 								new CPrimitive(CPrimitives.CHAR), null),
-						srcAcc, new CPrimitive(CPrimitives.CHAR), true, hook);
+						srcAcc, new CPrimitive(CPrimitives.CHAR), true);
 				loopBody.addAll(writeCall);
 			}
 
@@ -1775,7 +1768,7 @@ public class MemoryHandler {
 
 	private ArrayList<Statement> constructMemsetLoopBody(final Collection<HeapDataArray> heapDataArrays,
 			final AuxVarInfo loopCtr, final String ptr, final Expression valueExpr,
-			final String surroundingProcedureName, final IASTNode hook) {
+			final String surroundingProcedureName) {
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final ArrayList<Statement> result = new ArrayList<>();
@@ -1786,7 +1779,7 @@ public class MemoryHandler {
 
 		final Expression currentPtr = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, ptrExpr,
 				new RValue(loopCtr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-				new CPrimitive(CPrimitives.VOID), hook);
+				new CPrimitive(CPrimitives.VOID));
 		for (final HeapDataArray hda : heapDataArrays) {
 			final Expression convertedValue;
 			ExpressionResult exprRes = new ExpressionResult(new RValue(valueExpr, new CPrimitive(CPrimitives.UCHAR)));
@@ -1865,8 +1858,7 @@ public class MemoryHandler {
 	 * @param heapDataArrays
 	 * @return
 	 */
-	private List<Declaration> declareMemset(final CHandler main, final Collection<HeapDataArray> heapDataArrays,
-			final IASTNode hook) {
+	private List<Declaration> declareMemset(final CHandler main, final Collection<HeapDataArray> heapDataArrays) {
 		final ArrayList<Declaration> decls = new ArrayList<>();
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
@@ -1911,7 +1903,7 @@ public class MemoryHandler {
 		final Expression convertedValue = convertedExprRes.getLrValue().getValue();
 
 		final List<Statement> loopBody =
-				constructMemsetLoopBody(heapDataArrays, loopCtrAux, inParamPtr, convertedValue, procName, hook);
+				constructMemsetLoopBody(heapDataArrays, loopCtrAux, inParamPtr, convertedValue, procName);
 
 		final Expression one = mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
 				mTypeSizeAndOffsetComputer.getSizeT(), BigInteger.ONE);
@@ -1978,26 +1970,26 @@ public class MemoryHandler {
 	}
 
 	private List<Declaration> constructWriteProcedures(final CHandler main, final ILocation loc,
-			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray, final IASTNode hook) {
+			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray) {
 		final List<Declaration> result = new ArrayList<>();
 		for (final ReadWriteDefinition rda : mMemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray,
 				mRequiredMemoryModelFeatures)) {
 			final Collection<Procedure> writeDeclaration =
-					constructWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda, hook);
+					constructWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda);
 			result.addAll(writeDeclaration);
 		}
 		return result;
 	}
 
 	private List<Declaration> constructReadProcedures(final CHandler main, final ILocation loc,
-			final HeapDataArray heapDataArray, final IASTNode hook) {
+			final HeapDataArray heapDataArray) {
 		final List<Declaration> result = new ArrayList<>();
 		for (final ReadWriteDefinition rda : mMemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray,
 				mRequiredMemoryModelFeatures)) {
 			if (rda.alsoUncheckedRead()) {
-				result.addAll(constructSingleReadProcedure(main, loc, heapDataArray, rda, true, hook));
+				result.addAll(constructSingleReadProcedure(main, loc, heapDataArray, rda, true));
 			}
-			result.addAll(constructSingleReadProcedure(main, loc, heapDataArray, rda, false, hook));
+			result.addAll(constructSingleReadProcedure(main, loc, heapDataArray, rda, false));
 		}
 		return result;
 	}
@@ -2040,7 +2032,7 @@ public class MemoryHandler {
 	 */
 	private Collection<Procedure> constructWriteProcedure(final CHandler main, final ILocation loc,
 			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray,
-			final ReadWriteDefinition rda, final IASTNode hook) {
+			final ReadWriteDefinition rda) {
 		if (rda.alsoUncheckedWrite()) {
 			constructSingleWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda, HeapWriteMode.STORE_UNCHECKED);
 		}
@@ -2221,7 +2213,7 @@ public class MemoryHandler {
 	 * @return
 	 */
 	private List<Procedure> constructSingleReadProcedure(final CHandler main, final ILocation loc,
-			final HeapDataArray hda, final ReadWriteDefinition rda, final boolean unchecked, final IASTNode hook) {
+			final HeapDataArray hda, final ReadWriteDefinition rda, final boolean unchecked) {
 		// specification for memory reads
 		final String returnValue = "#value";
 		final ASTType valueAstType = rda.getASTType();
@@ -2576,9 +2568,10 @@ public class MemoryHandler {
 	 *
 	 * @param tuLoc
 	 *            the location for the new nodes.
+	 *
 	 * @return declaration and implementation of procedure <code>Ultimate_dealloc</code>
 	 */
-	private List<Declaration> declareDeallocation(final CHandler main, final ILocation tuLoc, final IASTNode hook) {
+	private List<Declaration> declareDeallocation(final CHandler main, final ILocation tuLoc) {
 		final Expression bLFalse = mBooleanArrayHelper.constructFalse();
 		final Expression addr = ExpressionFactory.constructIdentifierExpression(tuLoc,
 				mTypeHandler.getBoogiePointerType(), ADDR, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM,
@@ -2618,13 +2611,13 @@ public class MemoryHandler {
 	 * implementation.
 	 *
 	 * @param typeHandler
-	 *
 	 * @param tuLoc
 	 *            the location for the new nodes.
+	 *
 	 * @return declaration and implementation of procedure <code>~malloc</code>
 	 */
 	private ArrayList<Declaration> declareMalloc(final CHandler main, final ITypeHandler typeHandler,
-			final ILocation tuLoc, final IASTNode hook, final MemoryArea memArea) {
+			final ILocation tuLoc, final MemoryArea memArea) {
 		final MemoryModelDeclarations alloc = memArea.getMemoryModelDeclaration();
 		final ASTType intType = typeHandler.cType2AstType(tuLoc, mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression nr0 = mTypeSizes.constructLiteralForIntegerType(tuLoc,
@@ -2784,8 +2777,7 @@ public class MemoryHandler {
 	 * <code>procedure ~Ultimate.allocInit(~size:int, ~ptrBase:int) returns ();</code> See
 	 * {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}.
 	 */
-	private void declareAllocInit(final CHandler main, final ITypeHandler typeHandler, final ILocation tuLoc,
-			final IASTNode hook) {
+	private void declareAllocInit(final CHandler main, final ITypeHandler typeHandler, final ILocation tuLoc) {
 		final String procedureIdentifier = MemoryModelDeclarations.ULTIMATE_ALLOC_INIT.getName();
 		final String pointerBaseIdentifier = "ptrBase";
 		final ASTType intType = typeHandler.cType2AstType(tuLoc, mExpressionTranslation.getCTypeOfPointerComponents());
@@ -2840,7 +2832,7 @@ public class MemoryHandler {
 	}
 
 	private List<Statement> getWriteCallArray(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final CArray valueType, final HeapWriteMode writeMode, final IASTNode hook) {
+			final CArray valueType, final HeapWriteMode writeMode) {
 
 		if (valueType.getValueType().getUnderlyingType() instanceof CArray) {
 			throw new UnsupportedSyntaxException(loc,
@@ -2863,7 +2855,7 @@ public class MemoryHandler {
 			newStartAddressOffset = MemoryHandler.getPointerOffset(arrayStartAddress, loc);
 		}
 
-		final Expression valueTypeSize = calculateSizeOf(loc, valueType.getValueType(), hook);
+		final Expression valueTypeSize = calculateSizeOf(loc, valueType.getValueType());
 		final int dim = dimBigInteger.intValue();
 		final List<Statement> stmt = new ArrayList<>();
 
@@ -2880,7 +2872,7 @@ public class MemoryHandler {
 					constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc),
 					valueType.getValueType(), null);
 			stmt.addAll(getWriteCall(loc, arrayCellLValue, arrayAccessRVal.getValue(), arrayAccessRVal.getCType(),
-					writeMode, hook));
+					writeMode));
 			// TODO 2015-10-11 Matthias: Why is there an addition of value Type size
 			// and no multiplication? Check this more carefully.
 			arrayEntryAddressOffset =
@@ -2893,7 +2885,7 @@ public class MemoryHandler {
 	}
 
 	private List<Statement> getWriteCallStruct(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final CStructOrUnion valueType, final HeapWriteMode writeMode, final IASTNode hook) {
+			final CStructOrUnion valueType, final HeapWriteMode writeMode) {
 		final List<Statement> stmt = new ArrayList<>();
 		for (final String fieldId : valueType.getFieldIds()) {
 			final Expression startAddress = hlv.getAddress();
@@ -2901,8 +2893,7 @@ public class MemoryHandler {
 			final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
 			final CType fieldType = valueType.getFieldType(fieldId);
 			final StructAccessExpression sae = ExpressionFactory.constructStructAccessExpression(loc, value, fieldId);
-			final Offset fieldOffset =
-					mTypeSizeAndOffsetComputer.constructOffsetForField(loc, valueType, fieldId, hook);
+			final Offset fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, valueType, fieldId);
 			if (fieldOffset.isBitfieldOffset()) {
 				throw new UnsupportedOperationException("Bitfield write");
 			}
@@ -2913,18 +2904,18 @@ public class MemoryHandler {
 					mExpressionTranslation.getCTypeOfPointerComponents());
 			final HeapLValue fieldHlv = LRValueFactory.constructHeapLValue(mTypeHandler,
 					constructPointerFromBaseAndOffset(newStartAddressBase, newOffset, loc), fieldType, null);
-			stmt.addAll(getWriteCall(loc, fieldHlv, sae, fieldType, writeMode, hook));
+			stmt.addAll(getWriteCall(loc, fieldHlv, sae, fieldType, writeMode));
 		}
 		return stmt;
 	}
 
 	private List<Statement> getWriteCallPointer(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final HeapWriteMode writeMode, final IASTNode hook) {
+			final HeapWriteMode writeMode) {
 		mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-		final String writeCallProcedureName = determineWriteProcedureForPointer(writeMode);// mMemoryModel.getWritePointerProcedureName();
+		final String writeCallProcedureName = determineWriteProcedureForPointer(writeMode);
 		return Collections.singletonList(
 				StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
-						new Expression[] { value, hlv.getAddress(), calculateSizeOf(loc, hlv.getCType(), hook) }));
+						new Expression[] { value, hlv.getAddress(), calculateSizeOf(loc, hlv.getCType()) }));
 	}
 
 	private String determineWriteProcedureForPointer(final HeapWriteMode writeMode) throws AssertionError {
@@ -2960,13 +2951,13 @@ public class MemoryHandler {
 	}
 
 	private List<Statement> getWriteCallEnum(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final HeapWriteMode writeMode, final IASTNode hook) {
+			final HeapWriteMode writeMode) {
 		// treat like INT
-		return getWriteCallPrimitive(loc, hlv, value, new CPrimitive(CPrimitives.INT), writeMode, hook);
+		return getWriteCallPrimitive(loc, hlv, value, new CPrimitive(CPrimitives.INT), writeMode);
 	}
 
 	private List<Statement> getWriteCallPrimitive(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final CPrimitive valueType, final HeapWriteMode writeMode, final IASTNode hook) {
+			final CPrimitive valueType, final HeapWriteMode writeMode) {
 		checkFloatOnHeapSupport(loc, valueType);
 		mRequiredMemoryModelFeatures.reportDataOnHeapRequired(valueType.getType());
 
@@ -2974,7 +2965,7 @@ public class MemoryHandler {
 
 		return Collections.singletonList(
 				StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
-						new Expression[] { value, hlv.getAddress(), calculateSizeOf(loc, hlv.getCType(), hook) }));
+						new Expression[] { value, hlv.getAddress(), calculateSizeOf(loc, hlv.getCType()) }));
 	}
 
 	private String determineWriteProcedureForPrimitive(final CPrimitive valueType, final HeapWriteMode writeMode)

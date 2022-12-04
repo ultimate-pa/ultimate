@@ -281,8 +281,7 @@ public class CExpressionTranslator {
 			}
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
 			addBaseEqualityCheck(loc, left.getLrValue().getValue(), right.getLrValue().getValue(), builder);
-			expr = doPointerSubtraction(loc, left.getLrValue().getValue(), right.getLrValue().getValue(), pointsToType,
-					hook);
+			expr = doPointerSubtraction(loc, left.getLrValue().getValue(), right.getLrValue().getValue(), pointsToType);
 
 		} else {
 			throw new UnsupportedOperationException("non-standard case of pointer arithmetic");
@@ -888,7 +887,7 @@ public class CExpressionTranslator {
 			final CPrimitive oneType = mExpressionTranslation.getCTypeOfPointerComponents();
 			final RValue one = new RValue(oneEpr, oneType);
 			valueIncremented =
-					mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType(), hook);
+					mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType());
 			addOffsetInBoundsCheck(loc, valueIncremented, result);
 		} else if (ctype instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) ctype;
@@ -1082,7 +1081,6 @@ public class CExpressionTranslator {
 
 	/**
 	 * Subtract two pointers.
-	 *
 	 * @param pointsToType
 	 *            {@link CType} of the objects to which the pointers point.
 	 * @param leftPtr
@@ -1093,13 +1091,13 @@ public class CExpressionTranslator {
 	 * @return An {@link Expression} that represents the difference of two Pointers according to C11 6.5.6.9.
 	 */
 	private Expression doPointerSubtraction(final ILocation loc, final Expression ptr1, final Expression ptr2,
-			final CType pointsToType, final IASTNode hook) {
+			final CType pointsToType) {
 		final Expression ptr1Offset = ExpressionFactory.constructStructAccessExpression(loc, ptr1, SFO.POINTER_OFFSET);
 		final Expression ptr2Offset = ExpressionFactory.constructStructAccessExpression(loc, ptr2, SFO.POINTER_OFFSET);
 		final Expression offsetDifference = mExpressionTranslation.constructArithmeticExpression(loc,
 				IASTBinaryExpression.op_minus, ptr1Offset, mExpressionTranslation.getCTypeOfPointerComponents(),
 				ptr2Offset, mExpressionTranslation.getCTypeOfPointerComponents());
-		final Expression typesize = mMemoryHandler.calculateSizeOf(loc, pointsToType, hook);
+		final Expression typesize = mMemoryHandler.calculateSizeOf(loc, pointsToType);
 		final CPrimitive typesizeType = mExpressionTranslation.getCTypeOfPointerComponents();
 		final Expression offsetDifferenceDividedByTypesize =
 				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_divide,
