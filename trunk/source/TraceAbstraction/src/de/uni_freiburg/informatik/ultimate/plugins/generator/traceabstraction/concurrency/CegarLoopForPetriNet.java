@@ -108,8 +108,6 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		REMOVE_DEAD, REMOVE_REDUNDANT_FLOW
 	}
 
-	private static final boolean USE_ON_DEMAND_RESULT = false;
-
 	private static final boolean DEBUG_WRITE_NET_HASH_CODES = false;
 
 	/**
@@ -139,6 +137,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 	 * add only transitions that will be needed for the difference.
 	 */
 	private final boolean mEnhanceInterpolantAutomatonOnDemand = true;
+
+	private final boolean mUseOnDemandResult;
+
 	/**
 	 * Remove unreachable nodes of mAbstraction in each iteration.
 	 */
@@ -160,6 +161,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
 				taPrefs.interpolation(), false, Collections.emptySet(), services, transitionClazz,
 				stateFactoryForRefinement);
+		mUseOnDemandResult = mPref.useOnDemandPetriDifference();
 		mPetriClStatisticsGenerator = new PetriCegarLoopStatisticsGenerator(mCegarLoopBenchmark);
 		mCounterexampleCache = new CounterexampleCache<>();
 
@@ -264,7 +266,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 				mArtifactAutomaton = nia;
 			}
-			if (USE_ON_DEMAND_RESULT) {
+			if (mUseOnDemandResult) {
 				mAbstraction = enhancementResult.getSecond().getResult();
 				mFinitePrefixOfAbstraction = enhancementResult.getSecond().getFinitePrefixOfDifference().getResult();
 			} else {

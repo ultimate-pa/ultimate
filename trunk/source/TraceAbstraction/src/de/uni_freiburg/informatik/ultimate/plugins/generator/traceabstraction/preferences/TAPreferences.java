@@ -378,6 +378,10 @@ public final class TAPreferences {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LOOPER_CHECK_PETRI, LooperCheck.class);
 	}
 
+	public boolean useOnDemandPetriDifference() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PETRI_DIFFERENCE_ON_DEMAND);
+	}
+
 	public boolean applyOneShotLbe() {
 		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PETRI_LBE_ONESHOT);
 	}

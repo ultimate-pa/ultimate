@@ -174,6 +174,13 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	/* **************************************** */
 
+	public static final String LABEL_PETRI_DIFFERENCE_ON_DEMAND = "Use on-demand Petri net difference";
+	private static final String DESC_PETRI_DIFFERENCE_ON_DEMAND = "The Petri net CEGAR loop can either use a difference"
+			+ " that is computed on-demand (if this setting is set to true), or it can use this on-demand difference"
+			+ " only as an intermediate step and subsequently apply another difference construction"
+			+ " (if this setting is false).";
+	private static final boolean DEF_PETRI_DIFFERENCE_ON_DEMAND = false;
+
 	public static final String LABEL_LOOPER_CHECK_PETRI = "Looper check in Petri net analysis";
 	private static final LooperCheck DEF_LOOPER_CHECK_PETRI = LooperCheck.SYNTACTIC;
 
@@ -572,6 +579,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						EventOrderEnum.values()),
 				new UltimatePreferenceItem<>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BACKFOLDING, DEF_BACKFOLDING, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_PETRI_DIFFERENCE_ON_DEMAND, DEF_PETRI_DIFFERENCE_ON_DEMAND,
+						DESC_PETRI_DIFFERENCE_ON_DEMAND, PreferenceType.Boolean),
 
 				/* Petri LBE settings */
 
