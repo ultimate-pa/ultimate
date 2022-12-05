@@ -232,8 +232,7 @@ public class CExpressionTranslator {
 			assert typeOfResult.equals(right.getLrValue().getCType());
 			final CPrimitive primitiveTypeOfResult = (CPrimitive) typeOfResult.getUnderlyingType();
 
-			addIntegerBoundsCheck(loc, builder, primitiveTypeOfResult, op, hook, left.getLrValue().getValue(),
-					right.getLrValue().getValue());
+			addIntegerBoundsCheck(loc, builder, primitiveTypeOfResult, op, left.getLrValue().getValue(), right.getLrValue().getValue());
 			expr = mExpressionTranslation.constructArithmeticExpression(loc, op, left.getLrValue().getValue(),
 					primitiveTypeOfResult, right.getLrValue().getValue(), primitiveTypeOfResult);
 		} else if (lType instanceof CPointer && rType.isArithmeticType()) {
@@ -282,8 +281,7 @@ public class CExpressionTranslator {
 			}
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
 			addBaseEqualityCheck(loc, left.getLrValue().getValue(), right.getLrValue().getValue(), builder);
-			expr = doPointerSubtraction(loc, left.getLrValue().getValue(), right.getLrValue().getValue(), pointsToType,
-					hook);
+			expr = doPointerSubtraction(loc, left.getLrValue().getValue(), right.getLrValue().getValue(), pointsToType);
 
 		} else {
 			throw new UnsupportedOperationException("non-standard case of pointer arithmetic");
@@ -312,8 +310,7 @@ public class CExpressionTranslator {
 	 * results from handling the operands. Requires that the {@link LRValue} of operands is an {@link RValue} (i.e.,
 	 * switchToRValueIfNecessary was applied if needed).
 	 */
-	public ExpressionResult handleUnaryArithmeticOperators(final ILocation loc, final int op, ExpressionResult operand,
-			final IASTNode hook) {
+	public ExpressionResult handleUnaryArithmeticOperators(final ILocation loc, final int op, ExpressionResult operand) {
 		assert operand.getLrValue() instanceof RValue : "no RValue";
 		final CType inputType = operand.getLrValue().getCType().getUnderlyingType();
 
@@ -371,7 +368,7 @@ public class CExpressionTranslator {
 			final CPrimitive resultType = (CPrimitive) operand.getLrValue().getCType();
 			final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(operand);
 			if (op == IASTUnaryExpression.op_minus && resultType.isIntegerType()) {
-				addIntegerBoundsCheck(loc, result, resultType, op, hook, operand.getLrValue().getValue());
+				addIntegerBoundsCheck(loc, result, resultType, op, operand.getLrValue().getValue());
 			}
 			final Expression bwexpr = mExpressionTranslation.constructUnaryExpression(loc, op,
 					operand.getLrValue().getValue(), resultType);
@@ -391,7 +388,7 @@ public class CExpressionTranslator {
 	 *
 	 */
 	public ExpressionResult handleBitshiftOperation(final ILocation loc, final int op, final ExpressionResult left,
-			final ExpressionResult right, final IASTNode hook) {
+			final ExpressionResult right) {
 		if (!List
 				.of(IASTBinaryExpression.op_shiftLeft, IASTBinaryExpression.op_shiftRight,
 						IASTBinaryExpression.op_shiftLeftAssign, IASTBinaryExpression.op_shiftRightAssign)
@@ -410,12 +407,9 @@ public class CExpressionTranslator {
 		final ExpressionResult rightConverted =
 				mExprResultTransformer.performImplicitConversion(right, typeOfResult, loc);
 
-		final Expression leftValue = tryToExtractValue(leftPromoted.getLrValue().getValue(), typeOfResult, hook, loc);
-		final Expression rightValue =
-				tryToExtractValue(rightConverted.getLrValue().getValue(), typeOfResult, hook, loc);
-
-		final ExpressionResult result = mExpressionTranslation.handleBinaryBitwiseExpression(loc, op, leftValue,
-				typeOfResult, rightValue, typeOfResult, mAuxVarInfoBuilder);
+		final ExpressionResult result =
+				mExpressionTranslation.handleBinaryBitwiseExpression(loc, op, leftPromoted.getLrValue().getValue(),
+						typeOfResult, rightConverted.getLrValue().getValue(), typeOfResult, mAuxVarInfoBuilder);
 		final ExpressionResultBuilder builder =
 				new ExpressionResultBuilder().addAllExceptLrValue(leftPromoted, rightConverted);
 		return builder.addAllIncludingLrValue(result).build();
@@ -430,7 +424,7 @@ public class CExpressionTranslator {
 	 *
 	 */
 	public ExpressionResult handleMultiplicativeOperation(final ILocation loc, final int op, ExpressionResult left,
-			ExpressionResult right, final IASTNode hook) {
+			ExpressionResult right) {
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
 		final CType lType = left.getLrValue().getCType().getUnderlyingType();
@@ -454,8 +448,7 @@ public class CExpressionTranslator {
 		case IASTBinaryExpression.op_divide:
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_divideAssign:
-			addIntegerBoundsCheck(loc, result, typeOfResult, op, hook, left.getLrValue().getValue(),
-					right.getLrValue().getValue());
+			addIntegerBoundsCheck(loc, result, typeOfResult, op, left.getLrValue().getValue(), right.getLrValue().getValue());
 			break;
 		case IASTBinaryExpression.op_modulo:
 		case IASTBinaryExpression.op_moduloAssign:
@@ -526,7 +519,7 @@ public class CExpressionTranslator {
 	 *
 	 */
 	public ExpressionResult handleBitwiseArithmeticOperation(final ILocation loc, final int op, ExpressionResult left,
-			ExpressionResult right, final IASTNode hook) {
+			ExpressionResult right) {
 		if (!List.of(IASTBinaryExpression.op_binaryAnd, IASTBinaryExpression.op_binaryXor,
 				IASTBinaryExpression.op_binaryOr, IASTBinaryExpression.op_binaryAndAssign,
 				IASTBinaryExpression.op_binaryXorAssign, IASTBinaryExpression.op_binaryOrAssign).contains(op)) {
@@ -894,7 +887,7 @@ public class CExpressionTranslator {
 			final CPrimitive oneType = mExpressionTranslation.getCTypeOfPointerComponents();
 			final RValue one = new RValue(oneEpr, oneType);
 			valueIncremented =
-					mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType(), hook);
+					mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType());
 			addOffsetInBoundsCheck(loc, valueIncremented, result);
 		} else if (ctype instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) ctype;
@@ -905,7 +898,7 @@ public class CExpressionTranslator {
 			} else {
 				one = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
 			}
-			addIntegerBoundsCheck(loc, result, cPrimitive, op, hook, value, one);
+			addIntegerBoundsCheck(loc, result, cPrimitive, op, value, one);
 			valueIncremented =
 					mExpressionTranslation.constructArithmeticExpression(loc, op, value, cPrimitive, one, cPrimitive);
 		} else {
@@ -1009,37 +1002,26 @@ public class CExpressionTranslator {
 	 * Instead, we have to use a 33bit bit bitvector in Boogie.
 	 */
 	private void addIntegerBoundsCheck(final ILocation loc, final ExpressionResultBuilder erb,
-			final CPrimitive resultType, final int operation, final IASTNode hook, final Expression... operands) {
+			final CPrimitive resultType, final int operation, final Expression... operands) {
 
 		if (!mSettings.checkSignedIntegerBounds() || !resultType.isIntegerType() || mTypeSizes.isUnsigned(resultType)) {
 			// nothing to do
 			return;
 		}
-		// TODO: We should use the value extraction earlier, s.t. we pass the extracted value to ExpressionTranslation
 		final Pair<Expression, Expression> inBoundsCheck;
 		if (operands.length == 1) {
 			assert operation == IASTUnaryExpression.op_minus;
 			inBoundsCheck = mExpressionTranslation.constructOverflowCheckForUnaryExpression(loc, operation, resultType,
-					tryToExtractValue(operands[0], resultType, hook, loc));
+					operands[0]);
 
 		} else if (operands.length == 2) {
 			inBoundsCheck = mExpressionTranslation.constructOverflowCheckForArithmeticExpression(loc, operation,
-					resultType, tryToExtractValue(operands[0], resultType, hook, loc),
-					tryToExtractValue(operands[1], resultType, hook, loc));
+					resultType, operands[0], operands[1]);
 		} else {
 			throw new AssertionError("no such operation");
 		}
 		addOverflowAssertion(loc, inBoundsCheck.getFirst(), erb);
 		addOverflowAssertion(loc, inBoundsCheck.getSecond(), erb);
-	}
-
-	private Expression tryToExtractValue(final Expression expr, final CPrimitive type, final IASTNode hook,
-			final ILocation loc) {
-		final BigInteger value = mTypeSizes.extractIntegerValue(expr, type, hook);
-		if (value == null) {
-			return expr;
-		}
-		return mExpressionTranslation.constructLiteralForIntegerType(loc, type, value);
 	}
 
 	// TODO: Is this the right place for this method?
@@ -1099,7 +1081,6 @@ public class CExpressionTranslator {
 
 	/**
 	 * Subtract two pointers.
-	 *
 	 * @param pointsToType
 	 *            {@link CType} of the objects to which the pointers point.
 	 * @param leftPtr
@@ -1110,13 +1091,13 @@ public class CExpressionTranslator {
 	 * @return An {@link Expression} that represents the difference of two Pointers according to C11 6.5.6.9.
 	 */
 	private Expression doPointerSubtraction(final ILocation loc, final Expression ptr1, final Expression ptr2,
-			final CType pointsToType, final IASTNode hook) {
+			final CType pointsToType) {
 		final Expression ptr1Offset = ExpressionFactory.constructStructAccessExpression(loc, ptr1, SFO.POINTER_OFFSET);
 		final Expression ptr2Offset = ExpressionFactory.constructStructAccessExpression(loc, ptr2, SFO.POINTER_OFFSET);
 		final Expression offsetDifference = mExpressionTranslation.constructArithmeticExpression(loc,
 				IASTBinaryExpression.op_minus, ptr1Offset, mExpressionTranslation.getCTypeOfPointerComponents(),
 				ptr2Offset, mExpressionTranslation.getCTypeOfPointerComponents());
-		final Expression typesize = mMemoryHandler.calculateSizeOf(loc, pointsToType, hook);
+		final Expression typesize = mMemoryHandler.calculateSizeOf(loc, pointsToType);
 		final CPrimitive typesizeType = mExpressionTranslation.getCTypeOfPointerComponents();
 		final Expression offsetDifferenceDividedByTypesize =
 				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_divide,
@@ -1128,7 +1109,7 @@ public class CExpressionTranslator {
 	 * Checks if an {@link RValue} is an Integer of value 0
 	 */
 	private boolean isNullPointerEquivalent(final RValue value, final CType type) {
-		return BigInteger.ZERO.equals(mTypeSizes.extractIntegerValue(value, null));
+		return BigInteger.ZERO.equals(mTypeSizes.extractIntegerValue(value));
 	}
 
 	/**

@@ -836,13 +836,13 @@ public class StandardFunctionHandler {
 			builder.addAllExceptLrValue(argRes);
 		}
 
-		final var nondetString = getNondetStringOrNull(loc, node);
+		final var nondetString = getNondetStringOrNull(loc);
 		builder.addAllExceptLrValue(nondetString).setLrValue(nondetString.getLrValue());
 
 		return builder.build();
 	}
 
-	private ExpressionResult getNondetStringOrNull(final ILocation loc, final IASTNode hook) {
+	private ExpressionResult getNondetStringOrNull(final ILocation loc) {
 		final var charType = new CPrimitive(CPrimitives.CHAR);
 		final var sizeT = mTypeSizes.getSizeT();
 		final var resultType = new CPointer(charType);
@@ -877,8 +877,7 @@ public class StandardFunctionHandler {
 		final var lastChar = MemoryHandler.constructPointerFromBaseAndOffset(
 				MemoryHandler.getPointerBaseAddress(retvar.getExp(), loc), lenMinusOne, loc);
 		body.addAll(mMemoryHandler.getWriteCall(loc,
-				LRValueFactory.constructHeapLValue(mTypeHandler, lastChar, charType, null), nullChar, charType, false,
-				hook));
+				LRValueFactory.constructHeapLValue(mTypeHandler, lastChar, charType, null), nullChar, charType, false));
 
 		final var stmt = StatementFactory.constructIfStatement(loc, new WildcardExpression(loc),
 				new Statement[] { setPtrToNull }, body.toArray(Statement[]::new));
@@ -985,7 +984,7 @@ public class StandardFunctionHandler {
 				MemoryHandler.getPointerBaseAddress(ptr.getLrValue().getValue(), loc), newOffset, loc);
 		final var ptrPlusCtrHlv = LRValueFactory.constructHeapLValue(mTypeHandler, ptrPlusCtr, ptr.getCType(), null);
 		final var writeToMem = mMemoryHandler.getWriteCall(loc, ptrPlusCtrHlv, auxvar.getExp(),
-				new CPrimitive(CPrimitives.CHAR), false, node);
+				new CPrimitive(CPrimitives.CHAR), false);
 		for (final var write : writeToMem) {
 			overAppFlag.annotate(write);
 		}
@@ -1049,7 +1048,7 @@ public class StandardFunctionHandler {
 			final var lValue =
 					LRValueFactory.constructHeapLValue(mTypeHandler, arg.getLrValue().getValue(), type, null);
 			mExpressionTranslation.addAssumeValueInRangeStatements(loc, auxvar.getExp(), type, builder);
-			final List<Statement> writes = mMemoryHandler.getWriteCall(loc, lValue, auxvar.getExp(), type, false, node);
+			final List<Statement> writes = mMemoryHandler.getWriteCall(loc, lValue, auxvar.getExp(), type, false);
 			builder.addStatements(writes);
 
 			if (mDataRaceChecker != null) {
@@ -1467,7 +1466,7 @@ public class StandardFunctionHandler {
 						cType, false, null);
 			}
 			final List<Statement> wc =
-					mMemoryHandler.getWriteCall(loc, heapLValue, auxvarinfo.getExp(), cType, false, node);
+					mMemoryHandler.getWriteCall(loc, heapLValue, auxvarinfo.getExp(), cType, false);
 			builder.addStatements(wc);
 		}
 		// we assume that this function is always successful and returns 0
