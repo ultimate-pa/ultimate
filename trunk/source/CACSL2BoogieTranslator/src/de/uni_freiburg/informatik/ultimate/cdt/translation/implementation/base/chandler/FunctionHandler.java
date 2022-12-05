@@ -401,9 +401,11 @@ public class FunctionHandler {
 		// update varags usage
 		if (oldFunType.hasVarArgs() && oldFunType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
 			// if the function body creates a va_list object it uses its varargs
-			final ASTNameCollector vaListFinder = new ASTNameCollector("va_list");
-			node.getBody().accept(vaListFinder);
-			final boolean usesVarArgs = vaListFinder.getNames().length > 0;
+			final ASTNameCollector vaListFinder1 = new ASTNameCollector("va_list");
+			node.getBody().accept(vaListFinder1);
+			final ASTNameCollector vaListFinder2 = new ASTNameCollector("__builtin_va_list");
+			node.getBody().accept(vaListFinder2);
+			final boolean usesVarArgs = vaListFinder1.getNames().length > 0 || vaListFinder2.getNames().length > 0;
 			funType = oldFunType.updateVarArgsUsage(usesVarArgs);
 		} else {
 			funType = oldFunType;
@@ -433,10 +435,12 @@ public class FunctionHandler {
 	 * @param main
 	 * @param functionPointer
 	 * @param arguments
+	 * @param memoryHandler
 	 * @return
 	 */
 	private Result handleFunctionPointerCall(final ILocation loc, final IDispatcher main,
-			final IASTExpression functionPointer, final IASTInitializerClause[] arguments) {
+			final IASTExpression functionPointer, final IASTInitializerClause[] arguments,
+			final MemoryHandler memoryHandler) {
 		assert functionPointer != null : "functionName is null";
 		final ExpressionResult funcNameRex = (ExpressionResult) main.dispatch(functionPointer);
 
@@ -478,7 +482,7 @@ public class FunctionHandler {
 		System.arraycopy(arguments, 0, newArgs, 0, arguments.length);
 		newArgs[newArgs.length - 1] = functionPointer;
 
-		return handleFunctionCallGivenNameAndArguments(main, loc, procName, newArgs, functionPointer);
+		return handleFunctionCallGivenNameAndArguments(main, loc, procName, newArgs, memoryHandler);
 	}
 
 	/**
@@ -486,14 +490,16 @@ public class FunctionHandler {
 	 *
 	 * @param main
 	 *            a reference to the main IDispatcher.
+	 * @param memoryHandler
 	 * @param node
 	 *            the node to translate.
 	 * @return the translation result.
 	 */
 	public Result handleFunctionCallExpression(final IDispatcher main, final ILocation loc,
-			final IASTExpression functionName, final IASTInitializerClause[] arguments) {
+			final IASTExpression functionName, final IASTInitializerClause[] arguments,
+			final MemoryHandler memoryHandler) {
 		if (!(functionName instanceof IASTIdExpression)) {
-			return handleFunctionPointerCall(loc, main, functionName, arguments);
+			return handleFunctionPointerCall(loc, main, functionName, arguments, memoryHandler);
 		}
 
 		final String rawName = ((IASTIdExpression) functionName).getName().toString();
@@ -503,10 +509,10 @@ public class FunctionHandler {
 		final SymbolTableValue nd = mSymboltable.findCSymbol(functionName, methodName);
 		if (nd != null && !(nd.getDeclarationNode().getParent() instanceof IASTFunctionDefinition)) {
 			// A 'real' function in the symbol table has a IASTFunctionDefinition as the parent of the declarator.
-			return handleFunctionPointerCall(loc, main, functionName, arguments);
+			return handleFunctionPointerCall(loc, main, functionName, arguments, memoryHandler);
 		}
 
-		return handleFunctionCallGivenNameAndArguments(main, loc, methodName, arguments, functionName);
+		return handleFunctionCallGivenNameAndArguments(main, loc, methodName, arguments, memoryHandler);
 	}
 
 	/**
@@ -600,7 +606,7 @@ public class FunctionHandler {
 	}
 
 	private Result handleFunctionCallGivenNameAndArguments(final IDispatcher main, final ILocation loc,
-			final String calleeName, final IASTInitializerClause[] arguments, final IASTNode hook) {
+			final String calleeName, final IASTInitializerClause[] arguments, final MemoryHandler memoryHandler) {
 
 		final BoogieProcedureInfo calleeProcInfo;
 		if (!mProcedureManager.hasProcedure(calleeName)) {
@@ -623,11 +629,11 @@ public class FunctionHandler {
 			mLogger.warn("Unknown extern function " + calleeName);
 		}
 		assert calleeProcDecl != null;
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		if (calleeProcCType != null && calleeProcCType.hasVarArgs()) {
 			if (calleeProcCType.isExtern()) {
 				// we can handle calls to extern variadic functions by dispatching all the arguments and assuming a
 				// non-deterministic return value. We do not need to declare the actual function.
-				final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 				if (!calleeProcCType.getResultType().equals(new CPrimitive(CPrimitives.VOID))) {
 					final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
 							calleeProcCType.getResultType(), SFO.AUXVAR.NONDET);
@@ -645,20 +651,12 @@ public class FunctionHandler {
 				}
 				return resultBuilder.build();
 			}
-			if (calleeProcCType.getVarArgsUsage() == VarArgsUsage.USED) {
-				throw new UnsupportedSyntaxException(loc,
-						"encountered a call to a var args function, var args are not supported at the moment: "
-								+ calleeProcInfo.getProcedureName());
-			}
 			if (calleeProcCType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
 				// this should not happen, but just to be sure
 				throw new UnsupportedSyntaxException(loc,
 						"encountered a call to a var args function and varargs usage is unknown: "
 								+ calleeProcInfo.getProcedureName());
 			}
-			// if the varargs are unused, we can just handle the function like any other function, but we need to
-			// dispatch the varargs arguments separately and remove them from the actual call, so that the number of
-			// parameters of the boogie procedure match
 		}
 
 		/*
@@ -672,8 +670,7 @@ public class FunctionHandler {
 		// signature of the call and signature of the declaration match, continue
 		// dispatch the inparams
 		final ArrayList<Expression> translatedParams = new ArrayList<>();
-		final ExpressionResultBuilder functionCallExpressionResultBuilder = new ExpressionResultBuilder();
-		for (int i = 0; i < arguments.length; i++) {
+		for (int i = 0; i < calleeProcCType.getParameterTypes().length; i++) {
 			final IASTInitializerClause inParam = arguments[i];
 			ExpressionResult in = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, inParam);
 
@@ -687,12 +684,6 @@ public class FunctionHandler {
 				calleeProcInfo.updateCFunctionAddParam(new CDeclaration(in.getLrValue().getCType(), SFO.IN_PARAM + i));
 			} else if (calleeProcInfo.getCType() != null) {
 				// we already know the parameters: do implicit casts and bool/int conversion
-				if (i >= calleeProcCType.getParameterTypes().length
-						&& calleeProcCType.getVarArgsUsage() == VarArgsUsage.UNUSED) {
-					// only add the params if they are part of the signature or if the function uses its varargs
-					functionCallExpressionResultBuilder.addAllExceptLrValue(in);
-					continue;
-				}
 				CType expectedParamType =
 						calleeProcInfo.getCType().getParameterTypes()[i].getType().getUnderlyingType();
 				// bool/int conversion
@@ -714,7 +705,17 @@ public class FunctionHandler {
 			}
 
 			translatedParams.add(in.getLrValue().getValue());
-			functionCallExpressionResultBuilder.addAllExceptLrValue(in);
+			resultBuilder.addAllExceptLrValue(in);
+		}
+		if (calleeProcCType != null && calleeProcCType.hasVarArgs()) {
+			final int numberOfVarArgs = arguments.length - calleeProcCType.getParameterTypes().length;
+			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
+					mTypeHandler.constructPointerType(loc), SFO.AUXVAR.VARARGS_POINTER);
+			resultBuilder.addAuxVar(auxvarinfo);
+			resultBuilder.addDeclaration(auxvarinfo.getVarDec());
+			// TODO: Allocate the memory
+			// TODO: Write to the memory
+			translatedParams.add(auxvarinfo.getExp());
 		}
 
 		if (isCalleeSignatureNotYetDetermined) {
@@ -734,7 +735,7 @@ public class FunctionHandler {
 			calleeProcInfo.resetDeclaration(newProc);
 		}
 
-		return makeTheFunctionCallItself(loc, calleeName, functionCallExpressionResultBuilder, translatedParams);
+		return makeTheFunctionCallItself(loc, calleeName, resultBuilder, translatedParams);
 	}
 
 	private static void checkNumberOfArguments(final ILocation loc, final String calleeName,
@@ -807,7 +808,9 @@ public class FunctionHandler {
 	private VarList[] processInParams(final ILocation loc, final CFunction cFun, final BoogieProcedureInfo procInfo,
 			final IASTNode hook, final boolean updateSymbolTable) {
 		final CDeclaration[] paramDecs = cFun.getParameterTypes();
-		final VarList[] in = new VarList[paramDecs.length];
+		final boolean hasVarArgs = procInfo.getCType().hasVarArgs();
+		final int size = hasVarArgs ? paramDecs.length + 1 : paramDecs.length;
+		final VarList[] in = new VarList[size];
 		for (int i = 0; i < paramDecs.length; ++i) {
 			final CDeclaration currentParamDec = paramDecs[i];
 
@@ -829,6 +832,10 @@ public class FunctionHandler {
 				mSymboltable.storeCSymbol(hook, currentParamDec.getName(),
 						new SymbolTableValue(currentParamId, null, currentParamDec, declInformation, null, false));
 			}
+		}
+		if (hasVarArgs) {
+			// TODO: Do not hardcode this name
+			in[paramDecs.length] = new VarList(loc, new String[] { "varArgs" }, mTypeHandler.constructPointerType(loc));
 		}
 		procInfo.updateCFunctionReplaceParams(paramDecs);
 		return in;

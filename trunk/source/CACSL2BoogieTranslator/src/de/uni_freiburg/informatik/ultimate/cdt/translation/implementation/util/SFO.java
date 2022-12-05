@@ -379,6 +379,8 @@ public final class SFO {
 
 		RACE_DETECT("detect~race"),
 
+		VARARGS_POINTER("varargs"),
+
 		;
 
 		private final String mId;

@@ -1470,7 +1470,8 @@ public class CHandler {
 			}
 		}
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		return mFunctionHandler.handleFunctionCallExpression(main, loc, functionName, node.getArguments());
+		return mFunctionHandler.handleFunctionCallExpression(main, loc, functionName, node.getArguments(),
+				mMemoryHandler);
 	}
 
 	public Result visit(final IDispatcher main, final IASTFunctionDefinition node) {
