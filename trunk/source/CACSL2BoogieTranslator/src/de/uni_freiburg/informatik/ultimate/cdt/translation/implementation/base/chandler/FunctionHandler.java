@@ -29,6 +29,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -708,14 +709,31 @@ public class FunctionHandler {
 			resultBuilder.addAllExceptLrValue(in);
 		}
 		if (calleeProcCType != null && calleeProcCType.hasVarArgs()) {
-			final int numberOfVarArgs = arguments.length - calleeProcCType.getParameterTypes().length;
 			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
 					mTypeHandler.constructPointerType(loc), SFO.AUXVAR.VARARGS_POINTER);
 			resultBuilder.addAuxVar(auxvarinfo);
 			resultBuilder.addDeclaration(auxvarinfo.getVarDec());
-			// TODO: Allocate the memory
-			// TODO: Write to the memory
+			int currentOffset = 0;
+			final List<Statement> writes = new ArrayList<>();
+			for (int i = calleeProcCType.getParameterTypes().length; i < arguments.length; i++) {
+				final ExpressionResult param =
+						mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]);
+				resultBuilder.addAllExceptLrValue(param);
+				// TODO: Use the actual size of param
+				currentOffset += 4;
+				// TODO: Write to the memory
+				// memoryHandler.doPointerArithmetic
+				// memoryHandler.getWriteCall
+				// writes.add
+			}
+			final Expression sizeExpression = mExpressionTranslation.constructLiteralForIntegerType(loc,
+					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(currentOffset));
+			// TODO: Stack or Heap?
+			resultBuilder.addStatement(
+					memoryHandler.getUltimateMemAllocCall(sizeExpression, auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
+			resultBuilder.addStatements(writes);
 			translatedParams.add(auxvarinfo.getExp());
+			// TODO: Do we need to free this pointer?
 		}
 
 		if (isCalleeSignatureNotYetDetermined) {
