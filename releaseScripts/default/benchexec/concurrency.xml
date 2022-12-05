@@ -15,9 +15,9 @@
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-CANONICAL.epf</option>
   </rundefinition-->
 
-  <!--rundefinition name="Automizer-PN">
+  <rundefinition name="PetriAutomizer">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf</option>
-  </rundefinition-->
+  </rundefinition>
 
   <!--rundefinition name="GemCutter.None">
     <option name="-s">../../../trunk/examples/settings/gemcutter/None.epf</option>
@@ -39,13 +39,13 @@
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-SemanticLbe.epf</option>
   </rundefinition-->
 
-  <!--rundefinition name="Automizer PN.VariableLBE">
+  <rundefinition name="PetriAutomizer.VariableLBE">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf</option>
-  </rundefinition-->
+  </rundefinition>
 
-  <!--rundefinition name="Automizer PN.SemanticLBE">
+  <rundefinition name="PetriAutomizer.SemanticLBE">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-SemanticLbe.epf</option>
-  </rundefinition-->
+  </rundefinition>
 
 
   <!-- === Sleep Set Reduction (prune only, non-minimal) integrated in TAR === -->
@@ -482,19 +482,24 @@
   <!-- === Lipton Reduction integrated in TAR === -->
   <!-- ========================================== -->
 
-  <!--rundefinition name="Automizer PN.RepeatedVariableLbe">
+  <rundefinition name="PetriAutomizer.RepeatedVariableLbe">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedVariableLbe.epf</option>
-  </rundefinition-->
+  </rundefinition>
 
-  <rundefinition name="Automizer PN.RepeatedSemanticLBE">
+  <rundefinition name="PetriAutomizer.RepeatedSemanticLBE">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedSemanticLbe.epf</option>
   </rundefinition>
 
-  <!--rundefinition name="Automizer PN.RepeatedSemanticLbeWithPredicates">
-    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedSemanticLbeWithPredicates.epf</option>
-  </rundefinition-->
+  <rundefinition name="PetriAutomizer.RepeatedSemanticLBE.OnDemand">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedSemanticLbe.epf</option>
+    <option name="--traceabstraction.use.on-demand.petri.net.difference">true</option>
+  </rundefinition>
 
-  <rundefinition name="Automizer PN.RepeatedSemanticLbeWithDisjunctivePredicates">
+  <rundefinition name="PetriAutomizer.RepeatedSemanticLbeWithPredicates">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedSemanticLbeWithPredicates.epf</option>
+  </rundefinition>
+
+  <rundefinition name="PetriAutomizer.RepeatedSemanticLbeWithDisjunctivePredicates">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedSemanticLbeWithDisjunctivePredicates.epf</option>
   </rundefinition>
 
