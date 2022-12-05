@@ -671,6 +671,7 @@ public class FunctionHandler {
 		// signature of the call and signature of the declaration match, continue
 		// dispatch the inparams
 		final ArrayList<Expression> translatedParams = new ArrayList<>();
+		final List<Statement> statementsAfterCall = new ArrayList<>();
 		for (int i = 0; i < calleeProcCType.getParameterTypes().length; i++) {
 			final IASTInitializerClause inParam = arguments[i];
 			ExpressionResult in = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, inParam);
@@ -733,7 +734,10 @@ public class FunctionHandler {
 					memoryHandler.getUltimateMemAllocCall(sizeExpression, auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
 			resultBuilder.addStatements(writes);
 			translatedParams.add(auxvarinfo.getExp());
-			// TODO: Do we need to free this pointer?
+			// Free the aux-var-pointer
+			// TODO: Use the correct type
+			statementsAfterCall.add(memoryHandler.getDeallocCall(
+					new LocalLValue(auxvarinfo.getLhs(), new CPointer(new CPrimitive(CPrimitives.INT)), null), loc));
 		}
 
 		if (isCalleeSignatureNotYetDetermined) {
@@ -753,7 +757,7 @@ public class FunctionHandler {
 			calleeProcInfo.resetDeclaration(newProc);
 		}
 
-		return makeTheFunctionCallItself(loc, calleeName, resultBuilder, translatedParams);
+		return makeTheFunctionCallItself(loc, calleeName, resultBuilder, translatedParams, statementsAfterCall);
 	}
 
 	private static void checkNumberOfArguments(final ILocation loc, final String calleeName,
@@ -1072,11 +1076,12 @@ public class FunctionHandler {
 	 * @param methodName
 	 * @param functionCallERB
 	 * @param translatedParameters
-	 *
+	 * @param statementAfterCall
 	 * @return
 	 */
 	Result makeTheFunctionCallItself(final ILocation loc, final String methodName,
-			final ExpressionResultBuilder functionCallERB, final List<Expression> translatedParameters) {
+			final ExpressionResultBuilder functionCallERB, final List<Expression> translatedParameters,
+			final List<Statement> statementAfterCall) {
 		final Expression returnedValue;
 		final Statement call;
 		final BoogieProcedureInfo procInfo;
@@ -1145,6 +1150,7 @@ public class FunctionHandler {
 		if (returnedValue != null) {
 			functionCallERB.setLrValue(new RValue(returnedValue, returnCType));
 		}
+		functionCallERB.addStatements(statementAfterCall);
 
 		return functionCallERB.build();
 	}
