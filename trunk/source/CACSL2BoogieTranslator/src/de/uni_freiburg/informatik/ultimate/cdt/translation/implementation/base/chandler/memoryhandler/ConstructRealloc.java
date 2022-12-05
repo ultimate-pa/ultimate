@@ -118,12 +118,9 @@ public final class ConstructRealloc {
 	 *
 	 * @param main
 	 * @param heapDataArrays
-	 * @param hook
 	 * @return
 	 */
-	public List<Declaration> declareRealloc(final CHandler main, final Collection<HeapDataArray> heapDataArrays,
-			final IASTNode hook) {
-
+	public List<Declaration> declareRealloc(final CHandler main, final Collection<HeapDataArray> heapDataArrays) {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final CType voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();

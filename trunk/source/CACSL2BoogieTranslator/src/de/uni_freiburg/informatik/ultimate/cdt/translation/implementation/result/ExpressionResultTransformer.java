@@ -275,11 +275,11 @@ public class ExpressionResultTransformer {
 			final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(expr);
 			final RValue newValue;
 			if (underlyingType instanceof CPrimitive) {
-				final ExpressionResult rex = mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType, hook);
+				final ExpressionResult rex = mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType);
 				newValue = (RValue) rex.getLrValue();
 				erb.addAllExceptLrValue(rex);
 			} else if (underlyingType instanceof CPointer) {
-				final ExpressionResult rex = mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType, hook);
+				final ExpressionResult rex = mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType);
 				newValue = (RValue) rex.getLrValue();
 				erb.addAllExceptLrValue(rex);
 			} else if (underlyingType instanceof CArray) {
@@ -360,21 +360,21 @@ public class ExpressionResultTransformer {
 			final LRValue fieldLRVal;
 			if (underlyingType instanceof CPrimitive) {
 				final ExpressionResult fieldRead = (ExpressionResult) mStructHandler.readFieldInTheStructAtAddress(loc,
-						i, structOnHeapAddress, structType, hook);
+						i, structOnHeapAddress, structType);
 				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.getStatements());
 				newDecl.addAll(fieldRead.getDeclarations());
 				newAuxVars.addAll(fieldRead.getAuxVars());
 			} else if (underlyingType instanceof CPointer) {
 				final ExpressionResult fieldRead = (ExpressionResult) mStructHandler.readFieldInTheStructAtAddress(loc,
-						i, structOnHeapAddress, structType, hook);
+						i, structOnHeapAddress, structType);
 				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.getStatements());
 				newDecl.addAll(fieldRead.getDeclarations());
 				newAuxVars.addAll(fieldRead.getAuxVars());
 			} else if (underlyingType instanceof CArray) {
 				final Expression arrayPointer =
-						mStructHandler.computeStructFieldAddress(loc, i, structOnHeapAddress, structType, hook);
+						mStructHandler.computeStructFieldAddress(loc, i, structOnHeapAddress, structType);
 				final ExpressionResult xres1 = readArrayFromHeap(old, loc, arrayPointer, (CArray) underlyingType, hook);
 				final ExpressionResult xres = xres1;
 
@@ -386,15 +386,14 @@ public class ExpressionResultTransformer {
 			} else if (underlyingType instanceof CEnum) {
 				// like CPrimitive..
 				final ExpressionResult fieldRead = (ExpressionResult) mStructHandler.readFieldInTheStructAtAddress(loc,
-						i, structOnHeapAddress, structType, hook);
+						i, structOnHeapAddress, structType);
 				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.getStatements());
 				newDecl.addAll(fieldRead.getDeclarations());
 				newAuxVars.addAll(fieldRead.getAuxVars());
 			} else if (underlyingType instanceof CStructOrUnion) {
 
-				final Offset innerStructOffset =
-						mTypeSizeAndOffsetComputer.constructOffsetForField(loc, structType, i, hook);
+				final Offset innerStructOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, structType, i);
 				if (innerStructOffset.isBitfieldOffset()) {
 					throw new UnsupportedOperationException("Bitfield read struct from heap");
 				}
@@ -457,7 +456,7 @@ public class ExpressionResultTransformer {
 					"we need to generalize this to nested and/or variable length arrays");
 		}
 
-		final BigInteger boundBigInteger = mTypeSizes.extractIntegerValue(arrayType.getBound(), hook);
+		final BigInteger boundBigInteger = mTypeSizes.extractIntegerValue(arrayType.getBound());
 		if (boundBigInteger == null) {
 			throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
 		}
@@ -470,7 +469,7 @@ public class ExpressionResultTransformer {
 
 		final Expression newStartAddressBase = MemoryHandler.getPointerBaseAddress(address, loc);
 		final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(address, loc);
-		final Expression valueTypeSize = mMemoryHandler.calculateSizeOf(loc, arrayValueType, hook);
+		final Expression valueTypeSize = mMemoryHandler.calculateSizeOf(loc, arrayValueType);
 
 		Expression arrayEntryAddressOffset = newStartAddressOffset;
 
@@ -482,7 +481,7 @@ public class ExpressionResultTransformer {
 			if (arrayValueType instanceof CStructOrUnion) {
 				readRex = readStructFromHeap(old, loc, readAddress, (CStructOrUnion) arrayValueType, hook);
 			} else {
-				readRex = mMemoryHandler.getReadCall(readAddress, arrayType.getValueType(), hook);
+				readRex = mMemoryHandler.getReadCall(readAddress, arrayType.getValueType());
 			}
 			builder.addAllExceptLrValue(readRex);
 			builder.setOrResetLrValue(readRex.getLrValue());

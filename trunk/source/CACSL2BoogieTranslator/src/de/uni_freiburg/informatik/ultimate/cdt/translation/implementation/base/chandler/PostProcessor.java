@@ -786,7 +786,7 @@ public class PostProcessor {
 						final CallStatement ultimateAllocCall;
 						if (MemoryHandler.FIXED_ADDRESSES_FOR_INITIALIZATION) {
 							final Pair<RValue, CallStatement> pair = mMemoryHandler
-									.getUltimateMemAllocInitCall(currentDeclsLoc, en.getValue().getType(), hook);
+									.getUltimateMemAllocInitCall(currentDeclsLoc, en.getValue().getType());
 							final RValue addressRValue = pair.getFirst();
 							ultimateAllocCall = pair.getSecond();
 							final AssignmentStatement pointerAssignment = new AssignmentStatement(currentDeclsLoc,
@@ -794,8 +794,7 @@ public class PostProcessor {
 							staticObjectInitStatements.add(pointerAssignment);
 						} else {
 							final LocalLValue llVal = new LocalLValue(lhs, en.getValue().getType(), null);
-							ultimateAllocCall = mMemoryHandler.getUltimateMemAllocCall(llVal, currentDeclsLoc, hook,
-									MemoryArea.STACK);
+							ultimateAllocCall = mMemoryHandler.getUltimateMemAllocCall(llVal, currentDeclsLoc, MemoryArea.STACK);
 							proceduresCalledByUltimateInit.add(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK.name());
 						}
 						staticObjectInitStatements.add(ultimateAllocCall);

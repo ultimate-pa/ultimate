@@ -1220,7 +1220,7 @@ public class CACSL2BoogieBacktranslator
 		} else if (cType instanceof CNamed) {
 			return translateIntegerLiteral(cType.getUnderlyingType(), lit, hook);
 		} else {
-			final BigInteger extractedValue = mTypeSizes.extractIntegerValue(lit, cType, hook);
+			final BigInteger extractedValue = mTypeSizes.extractIntegerValue(lit, cType);
 			value = String.valueOf(extractedValue);
 		}
 		checkLiteral(cType, lit, value);
@@ -1243,7 +1243,7 @@ public class CACSL2BoogieBacktranslator
 			// translation, but it seems that AExpression is incomplete
 			final CPrimitive primitive = (CPrimitive) cType.getUnderlyingType();
 			if (primitive.isIntegerType()) {
-				value = String.valueOf(mTypeSizes.extractIntegerValue(lit, cType, hook));
+				value = String.valueOf(mTypeSizes.extractIntegerValue(lit, cType));
 			} else if (primitive.isFloatingType()) {
 				value = naiveBitvecLiteralValueExtraction(lit);
 				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION
@@ -1255,7 +1255,7 @@ public class CACSL2BoogieBacktranslator
 				return null;
 			}
 		} else {
-			final BigInteger extractedValue = mTypeSizes.extractIntegerValue(lit, cType, hook);
+			final BigInteger extractedValue = mTypeSizes.extractIntegerValue(lit, cType);
 			value = String.valueOf(extractedValue);
 		}
 		checkLiteral(cType, lit, value);

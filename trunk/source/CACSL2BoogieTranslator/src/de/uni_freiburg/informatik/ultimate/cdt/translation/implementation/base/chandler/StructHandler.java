@@ -32,7 +32,6 @@ import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -134,8 +133,7 @@ public class StructHandler {
 			final Expression newStartAddressBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
 			final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
 
-			final Offset fieldOffset =
-					mTypeSizeAndOffsetComputer.constructOffsetForField(loc, cStructType, field, node);
+			final Offset fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, cStructType, field);
 			if (fieldOffset.isBitfieldOffset()) {
 				throw new UnsupportedOperationException("Bitfield reference");
 			}
@@ -150,8 +148,8 @@ public class StructHandler {
 			newValue = LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cFieldType, bi);
 
 			if (cStructType.isStructOrUnion() == StructOrUnion.UNION) {
-				unionFieldToCType.addAll(computeNeighbourFieldsOfUnionField(main, loc, field, unionFieldToCType,
-						cStructType, fieldOwnerHlv, node));
+				unionFieldToCType.addAll(computeNeighbourFieldsOfUnionField(loc, field, unionFieldToCType, cStructType,
+						fieldOwnerHlv));
 			}
 		} else if (fieldOwner.getLrValue() instanceof RValue) {
 			final RValue rVal = (RValue) fieldOwner.getLrValue();
@@ -165,8 +163,8 @@ public class StructHandler {
 			newValue = new LocalLValue(slhs, cFieldType, bi);
 
 			if (cStructType.isStructOrUnion() == StructOrUnion.UNION) {
-				unionFieldToCType.addAll(computeNeighbourFieldsOfUnionField(main, loc, field, unionFieldToCType,
-						cStructType, lVal, node));
+				unionFieldToCType.addAll(
+						computeNeighbourFieldsOfUnionField(loc, field, unionFieldToCType, cStructType, lVal));
 			}
 		}
 
@@ -181,9 +179,8 @@ public class StructHandler {
 		return null;
 	}
 
-	private List<ExpressionResult> computeNeighbourFieldsOfUnionField(final IDispatcher main, final ILocation loc,
-			final String field, final List<ExpressionResult> unionFieldToCType, final CStructOrUnion foType,
-			final LRValue fieldOwner, final IASTNode hook) {
+	private List<ExpressionResult> computeNeighbourFieldsOfUnionField(final ILocation loc, final String field,
+			final List<ExpressionResult> unionFieldToCType, final CStructOrUnion foType, final LRValue fieldOwner) {
 		assert foType.isStructOrUnion() == StructOrUnion.UNION;
 
 		List<ExpressionResult> result;
@@ -206,7 +203,7 @@ public class StructHandler {
 			} else {
 				assert fieldOwner instanceof HeapLValue;
 				final Offset fieldOffset =
-						mTypeSizeAndOffsetComputer.constructOffsetForField(loc, foType, neighbourField, hook);
+						mTypeSizeAndOffsetComputer.constructOffsetForField(loc, foType, neighbourField);
 				if (fieldOffset.isBitfieldOffset()) {
 					throw new UnsupportedOperationException("Bitfield union neighbor");
 				}
@@ -232,11 +229,11 @@ public class StructHandler {
 	}
 
 	public Result readFieldInTheStructAtAddress(final ILocation loc, final int fieldIndex,
-			final Expression structAddress, final CStructOrUnion structType, final IASTNode hook) {
-		final Expression newPointer = computeStructFieldAddress(loc, fieldIndex, structAddress, structType, hook);
+			final Expression structAddress, final CStructOrUnion structType) {
+		final Expression newPointer = computeStructFieldAddress(loc, fieldIndex, structAddress, structType);
 		final CType resultType = structType.getFieldTypes()[fieldIndex];
 
-		final ExpressionResult call = mMemoryHandler.getReadCall(newPointer, resultType, hook);
+		final ExpressionResult call = mMemoryHandler.getReadCall(newPointer, resultType);
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		resultBuilder.addAllExceptLrValue(call);
 		resultBuilder.setLrValue(new RValue(call.getLrValue().getValue(), resultType));
@@ -244,21 +241,19 @@ public class StructHandler {
 	}
 
 	public Expression computeStructFieldAddress(final ILocation loc, final int fieldIndex, final Expression address,
-			final CStructOrUnion structType, final IASTNode hook) {
+			final CStructOrUnion structType) {
 		final Expression addressBaseOfFieldOwner = MemoryHandler.getPointerBaseAddress(address, loc);
 		final Expression addressOffsetOfFieldOwner = MemoryHandler.getPointerOffset(address, loc);
-		final Expression newOffset =
-				computeStructFieldOffset(loc, fieldIndex, addressOffsetOfFieldOwner, structType, hook);
+		final Expression newOffset = computeStructFieldOffset(loc, fieldIndex, addressOffsetOfFieldOwner, structType);
 		return MemoryHandler.constructPointerFromBaseAndOffset(addressBaseOfFieldOwner, newOffset, loc);
 	}
 
-	Expression computeStructFieldOffset(final ILocation loc, final int fieldIndex,
-			final Expression addressOffsetOfFieldOwner, final CStructOrUnion structType, final IASTNode hook) {
+	private Expression computeStructFieldOffset(final ILocation loc, final int fieldIndex,
+			final Expression addressOffsetOfFieldOwner, final CStructOrUnion structType) {
 		if (structType == null) {
 			throw new IncorrectSyntaxException(loc, "Incorrect or unexpected field owner!");
 		}
-		final Offset fieldOffset =
-				mTypeSizeAndOffsetComputer.constructOffsetForField(loc, structType, fieldIndex, hook);
+		final Offset fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, structType, fieldIndex);
 		if (fieldOffset.isBitfieldOffset()) {
 			throw new UnsupportedOperationException("Bitfield read");
 		}

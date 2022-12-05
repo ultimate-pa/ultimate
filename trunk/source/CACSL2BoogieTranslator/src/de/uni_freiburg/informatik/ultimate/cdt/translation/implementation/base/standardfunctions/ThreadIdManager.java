@@ -237,7 +237,7 @@ public class ThreadIdManager {
 					argThreadIdPointer.getLrValue().getCType(), false, null);
 		}
 		erb.addStatements(
-				mMemoryHandler.getWriteCall(loc, heapLValue, threadId, mMemoryHandler.getThreadIdType(), false, hook));
+				mMemoryHandler.getWriteCall(loc, heapLValue, threadId, mMemoryHandler.getThreadIdType(), false));
 	}
 
 	private Integer getUnambiguousThreadIdCounter(final IASTInitializerClause argument) {

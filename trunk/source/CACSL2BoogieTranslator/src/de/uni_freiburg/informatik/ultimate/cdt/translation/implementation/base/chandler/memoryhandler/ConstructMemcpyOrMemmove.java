@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -86,8 +85,7 @@ public final class ConstructMemcpyOrMemmove {
 	 * @return
 	 */
 	public List<Declaration> declareMemcpyOrMemmove(final CHandler main,
-			final Collection<HeapDataArray> heapDataArrays, final MemoryModelDeclarations memCopyOrMemMove,
-			final IASTNode hook) {
+			final Collection<HeapDataArray> heapDataArrays, final MemoryModelDeclarations memCopyOrMemMove) {
 		assert memCopyOrMemMove == MemoryModelDeclarations.C_MEMCPY
 				|| memCopyOrMemMove == MemoryModelDeclarations.C_MEMMOVE;
 
@@ -122,7 +120,7 @@ public final class ConstructMemcpyOrMemmove {
 			bodyDecl.add(loopCtrAux.getVarDec());
 
 			final ExpressionResult loopBody = constructMemcpyOrMemmoveDataLoopAssignment(loopCtrAux, SFO.MEMCPY_DEST,
-					SFO.MEMCPY_SRC, memCopyOrMemMove.getName(), hook);
+					SFO.MEMCPY_SRC, memCopyOrMemMove.getName());
 			bodyDecl.addAll(loopBody.getDeclarations());
 
 			final IdentifierExpression sizeIdExprBody =
@@ -146,7 +144,7 @@ public final class ConstructMemcpyOrMemmove {
 
 			final ExpressionResult loopBody =
 					constructMemcpyOrMemmovePointerLoopAssignment(heapDataArrays, loopCtrAux, SFO.MEMCPY_DEST,
-							SFO.MEMCPY_SRC, memCopyOrMemMove.getName(), hook);
+							SFO.MEMCPY_SRC, memCopyOrMemMove.getName());
 			bodyDecl.addAll(loopBody.getDeclarations());
 
 			final IdentifierExpression sizeIdExprBody =
@@ -233,7 +231,7 @@ public final class ConstructMemcpyOrMemmove {
 	 * @return
 	 */
 	private ExpressionResult constructMemcpyOrMemmoveDataLoopAssignment(final AuxVarInfo loopCtrAux,
-			final String destPtrName, final String srcPtrName, final String surroundingProcedure, final IASTNode hook) {
+			final String destPtrName, final String srcPtrName, final String surroundingProcedure) {
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
@@ -251,17 +249,17 @@ public final class ConstructMemcpyOrMemmove {
 			final Expression currentSrc = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus,
 					ignoreLoc, srcId,
 					new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-					charCType, hook);
+					charCType);
 			final Expression currentDest = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus,
 					ignoreLoc, destId,
 					new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-					charCType, hook);
+					charCType);
 
 			for (final CPrimitives cPrim : mMemoryHandler.getRequiredMemoryModelFeatures().getDataOnHeapRequired()) {
 				final CType cPrimType = new CPrimitive(cPrim);
 				final Expression srcAcc;
 				{
-					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadCall(currentSrc, cPrimType, true, hook);
+					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadCall(currentSrc, cPrimType, true);
 					srcAcc = srcAccExpRes.getLrValue().getValue();
 					loopBody.addStatements(srcAccExpRes.getStatements());
 					loopBody.addDeclarations(srcAccExpRes.getDeclarations());
@@ -273,8 +271,7 @@ public final class ConstructMemcpyOrMemmove {
 							LRValueFactory.constructHeapLValue(mTypeHandler, currentDest, cPrimType, null),
 							srcAcc,
 							cPrimType,
-							true,
-							hook);
+							true);
 					loopBody.addStatements(writeCall);
 				}
 			}
@@ -289,7 +286,7 @@ public final class ConstructMemcpyOrMemmove {
 
 	private ExpressionResult constructMemcpyOrMemmovePointerLoopAssignment(
 			final Collection<HeapDataArray> heapDataArrays, final AuxVarInfo loopCtrAux, final String destPtrName,
-			final String srcPtrName, final String surroundingProcedure, final IASTNode hook) {
+			final String srcPtrName, final String surroundingProcedure) {
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
@@ -307,18 +304,17 @@ public final class ConstructMemcpyOrMemmove {
 			final Expression currentSrc = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus,
 					ignoreLoc, srcId,
 					new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-					charCType, hook);
+					charCType);
 			final Expression currentDest = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus,
 					ignoreLoc, destId,
 					new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-					charCType, hook);
+					charCType);
 
 			if (mMemoryHandler.getRequiredMemoryModelFeatures().isPointerOnHeapRequired()) {
 				final CType cPointer = new CPointer(new CPrimitive(CPrimitives.VOID));
 				final Expression srcAcc;
 				{
-					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadCall(currentSrc, cPointer, true,
-							hook);
+					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadCall(currentSrc, cPointer, true);
 					srcAcc = srcAccExpRes.getLrValue().getValue();
 					loopBody.addStatements(srcAccExpRes.getStatements());
 					loopBody.addDeclarations(srcAccExpRes.getDeclarations());
@@ -330,8 +326,7 @@ public final class ConstructMemcpyOrMemmove {
 							LRValueFactory.constructHeapLValue(mTypeHandler, currentDest, cPointer, null),
 							srcAcc,
 							cPointer,
-							true,
-							hook);
+							true);
 					loopBody.addStatements(writeCall);
 				}
 			}
