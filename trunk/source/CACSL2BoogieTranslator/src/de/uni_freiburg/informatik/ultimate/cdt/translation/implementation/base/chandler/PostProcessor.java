@@ -629,7 +629,7 @@ public class PostProcessor {
 					dispatchingProcedureName);
 		} else if (fittingFunctions.size() == 1) {
 			final ExpressionResult rex = (ExpressionResult) mFunctionhandler.makeTheFunctionCallItself(loc,
-					fittingFunctions.get(0), new ExpressionResultBuilder(), args, List.of());
+					fittingFunctions.get(0), new ExpressionResultBuilder(), args);
 
 			final boolean voidReturnType = outParam.length == 0;
 
@@ -671,7 +671,7 @@ public class PostProcessor {
 			}
 
 			final ExpressionResult firstElseRex = (ExpressionResult) mFunctionhandler.makeTheFunctionCallItself(loc,
-					fittingFunctions.get(0), new ExpressionResultBuilder(), args, List.of());
+					fittingFunctions.get(0), new ExpressionResultBuilder(), args);
 			for (final Declaration dec : firstElseRex.getDeclarations()) {
 				builder.addDeclaration(dec);
 			}
@@ -689,7 +689,7 @@ public class PostProcessor {
 
 			for (int i = 1; i < fittingFunctions.size(); i++) {
 				final ExpressionResult currentRex = (ExpressionResult) mFunctionhandler.makeTheFunctionCallItself(loc,
-						fittingFunctions.get(i), new ExpressionResultBuilder(), args, List.of());
+						fittingFunctions.get(i), new ExpressionResultBuilder(), args);
 				for (final Declaration dec : currentRex.getDeclarations()) {
 					builder.addDeclaration(dec);
 				}
