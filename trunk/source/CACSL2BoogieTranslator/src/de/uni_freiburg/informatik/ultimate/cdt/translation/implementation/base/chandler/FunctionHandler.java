@@ -719,8 +719,8 @@ public class FunctionHandler {
 				final ExpressionResult param =
 						mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]);
 				resultBuilder.addAllExceptLrValue(param);
-				// TODO: Use the actual size of param
-				currentOffset += 4;
+				// TODO: Is it safe to store the results with a distance of 8 bytes? What about e.g. int128?
+				currentOffset += 8;
 				// TODO: Write to the memory
 				// memoryHandler.doPointerArithmetic
 				// memoryHandler.getWriteCall
@@ -733,7 +733,6 @@ public class FunctionHandler {
 					memoryHandler.getUltimateMemAllocCall(sizeExpression, auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
 			resultBuilder.addStatements(writes);
 			translatedParams.add(auxvarinfo.getExp());
-			// TODO: Do we need to free this pointer?
 		}
 
 		if (isCalleeSignatureNotYetDetermined) {
