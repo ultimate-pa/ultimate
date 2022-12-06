@@ -100,6 +100,8 @@ public class JordanLoopAcceleration {
 	 */
 	private static final boolean REFLEXIVE_TRANSITIVE_CLOSURE = false;
 
+	public static final String UNSUPPORTED_PREFIX = "JordanLoopAcceleration failed";
+
 
 	/**
 	 * Enum that allows us to state which iterations we consider
@@ -131,6 +133,9 @@ public class JordanLoopAcceleration {
 		}
 		final int numberOfAssignedVariables = su.getDeterministicAssignment().size();
 		final int numberOfArrayWrites = su.getDeterministicArrayWrites().size();
+		if (!su.getDeterministicArrayWrites().isEmpty()) {
+			throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Array writes!");
+		}
 		final int numberOfHavocedVariables = su.getHavocedVars().size();
 
 		final Set<Sort> nonIntegerSorts = getNonIntegerSorts(su.getDeterministicAssignment().keySet());
@@ -146,12 +151,12 @@ public class JordanLoopAcceleration {
 			final Set<TermVariable> tvOfHavoced = su.getHavocedVars().stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
 			for (final Entry<IProgramVar, Term> entry : su.getDeterministicAssignment().entrySet()) {
 				if (!DataStructureUtils.haveEmptyIntersection(new HashSet<>(Arrays.asList(entry.getValue().getFreeVars())), tvOfHavoced)) {
-					throw new UnsupportedOperationException("Havoced var is read!");
+					throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Havoced var is read!");
 				}
 			}
 			for (final Triple<IProgramVar, ArrayIndex, Term> entry : su.getDeterministicArrayWrites().entrySet()) {
 				if (!DataStructureUtils.haveEmptyIntersection(new HashSet<>(Arrays.asList(entry.getThird().getFreeVars())), tvOfHavoced)) {
-					throw new UnsupportedOperationException("Havoced var is read!");
+					throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Havoced var is read!");
 				}
 			}
 
@@ -345,7 +350,7 @@ public class JordanLoopAcceleration {
 		if (isStrictlyMonotone(polyIndex, it)) {
 			return;
 		} else {
-			throw new UnsupportedOperationException("Index not moving: " + index);
+			throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Index not moving: " + index);
 		}
 	}
 
@@ -355,7 +360,7 @@ public class JordanLoopAcceleration {
 			for (final Entry<Monomial, Rational> entry : poly.getMonomial2Coefficient().entrySet()) {
 				final Occurrence occ = entry.getKey().isExclusiveVariable(it);
 				if (occ == Occurrence.NON_EXCLUSIVE_OR_SUBTERM) {
-					throw new UnsupportedOperationException("Probably not monotone: " + entry.getKey());
+					throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Probably not monotone: " + entry.getKey());
 				} else if (occ == Occurrence.AS_EXCLUSIVE_VARIABlE) {
 					strictlyMonotone = true;
 				}
@@ -425,7 +430,7 @@ public class JordanLoopAcceleration {
 		final int sizeOfLargestEv0Block = JordanAcceleratedUpdate.computeSizeOfLargestEv0Block(jordanUpdate);
 		if (sizeOfLargestEv0Block > 1) {
 			throw new UnsupportedOperationException(
-					String.format("Consider first %s iterations separately", sizeOfLargestEv0Block));
+					String.format(UNSUPPORTED_PREFIX + " Consider first %s iterations separately", sizeOfLargestEv0Block));
 		}
 
 		final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services);
@@ -437,7 +442,7 @@ public class JordanLoopAcceleration {
 		final TermVariable itFin;
 		if (isAlternatingClosedFormRequired) {
 			if (!su.getDeterministicArrayWrites().isEmpty()) {
-				throw new UnsupportedOperationException("If alternating form is required we do not yet support arrays");
+				throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " If alternating form is required we do not yet support arrays");
 			}
 			itFin = mgdScript.constructFreshTermVariable("itFinHalf", SmtSortUtils.getIntSort(mgdScript.getScript()));
 			transitiveClosure = createLoopAccelerationTermAlternating(logger, services, mgdScript, su, linearUpdate,
@@ -620,7 +625,7 @@ public class JordanLoopAcceleration {
 		for (final IProgramVar array : closedFormIt.getArrayUpdates().keySet()) {
 			final Set<Entry<ArrayIndex, Term>> entries = closedFormIt.getArrayUpdates().get(array).entrySet();
 			if (entries.size() > 1) {
-				throw new UnsupportedOperationException("several updates per array");
+				throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Several updates per array");
 			}
 			final ArrayIndex index;
 			final Term value;
@@ -682,7 +687,7 @@ public class JordanLoopAcceleration {
 		} else {
 			// TODO: Works analogously to two dimensions, but I did not had examples to test
 			// an implementation.
-			throw new UnsupportedOperationException("Dimension not yet supported: " + dimension);
+			throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Dimension not yet supported: " + dimension);
 		}
 	}
 
