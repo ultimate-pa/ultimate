@@ -40,6 +40,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.ASTNameCollector;
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
@@ -168,6 +169,8 @@ public class FunctionHandler {
 
 	private final Set<IASTNode> mVariablesOnHeap;
 
+	private final TypeSizes mTypeSizes;
+
 	/**
 	 *
 	 * @param logger
@@ -188,7 +191,7 @@ public class FunctionHandler {
 			final ITypeHandler typeHandler, final CTranslationResultReporter reporter,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final CHandler chandler, final LocationFactory locFac,
 			final FlatSymbolTable symbolTable, final ExpressionResultTransformer expressionResultTransformer,
-			final Set<IASTNode> variablesOnHeap) {
+			final Set<IASTNode> variablesOnHeap, final TypeSizes typeSizes) {
 		mLogger = logger;
 		mNameHandler = nameHandler;
 		mExpressionTranslation = expressionTranslation;
@@ -202,6 +205,7 @@ public class FunctionHandler {
 		mSymboltable = symbolTable;
 		mExprResultTransformer = expressionResultTransformer;
 		mVariablesOnHeap = variablesOnHeap;
+		mTypeSizes = typeSizes;
 	}
 
 	/**
@@ -652,6 +656,7 @@ public class FunctionHandler {
 				}
 				return resultBuilder.build();
 			}
+			// TODO: What should we do with that?
 			if (calleeProcCType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
 				// this should not happen, but just to be sure
 				throw new UnsupportedSyntaxException(loc,
@@ -713,21 +718,41 @@ public class FunctionHandler {
 					mTypeHandler.constructPointerType(loc), SFO.AUXVAR.VARARGS_POINTER);
 			resultBuilder.addAuxVar(auxvarinfo);
 			resultBuilder.addDeclaration(auxvarinfo.getVarDec());
-			int currentOffset = 0;
-			final List<Statement> writes = new ArrayList<>();
+			final CPrimitive type = mExpressionTranslation.getCTypeOfPointerComponents();
+			int currentOffset = mTypeSizes.getSize(type.getType());
+			final List<Statement> writes =
+					new ArrayList<>(memoryHandler.getWriteCall(loc,
+							new HeapLValue(auxvarinfo.getExp(), new CPointer(type), null), mExpressionTranslation
+									.constructLiteralForIntegerType(loc, type, BigInteger.valueOf(currentOffset)),
+							type, false));
 			for (int i = calleeProcCType.getParameterTypes().length; i < arguments.length; i++) {
-				final ExpressionResult param =
+				final ExpressionResult paramTmp =
 						mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]);
+				final ExpressionResult param;
+				int size;
+				if (paramTmp.getCType().getUnderlyingType() instanceof CPrimitive) {
+					param = mExprResultTransformer.doIntegerPromotion(loc, paramTmp);
+					size = mTypeSizes.getSize(((CPrimitive) param.getCType()).getType());
+				} else {
+					param = paramTmp;
+					size = mTypeSizes.getSizeOfPointer();
+				}
 				resultBuilder.addAllExceptLrValue(param);
-				// TODO: Is it safe to store the results with a distance of 8 bytes? What about e.g. int128?
-				currentOffset += 8;
-				// TODO: Write to the memory
-				// memoryHandler.doPointerArithmetic
-				// memoryHandler.getWriteCall
-				// writes.add
+				final Expression pointerBase = MemoryHandler.getPointerBaseAddress(auxvarinfo.getExp(), loc);
+				final Expression pointerOffset =
+						mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
+								MemoryHandler.getPointerOffset(auxvarinfo.getExp(), loc), type, mExpressionTranslation
+										.constructLiteralForIntegerType(loc, type, BigInteger.valueOf(currentOffset)),
+								type);
+				final Expression address =
+						MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, pointerOffset, loc);
+				final Expression value = param.getLrValue().getValue();
+				writes.addAll(memoryHandler.getWriteCall(loc, new HeapLValue(address, new CPointer(type), null), value,
+						type, false));
+				currentOffset += size;
 			}
-			final Expression sizeExpression = mExpressionTranslation.constructLiteralForIntegerType(loc,
-					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(currentOffset));
+			final Expression sizeExpression =
+					mExpressionTranslation.constructLiteralForIntegerType(loc, type, BigInteger.valueOf(currentOffset));
 			// TODO: Stack or Heap?
 			resultBuilder.addStatement(
 					memoryHandler.getUltimateMemAllocCall(sizeExpression, auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
@@ -963,8 +988,7 @@ public class FunctionHandler {
 					final ExpressionResult assign = mCHandler.makeAssignment(igLoc, hlv, Collections.emptyList(),
 							new ExpressionResultBuilder().setLrValue(new RValue(rhsId, cvar)).build(), paramDec);
 
-					resultBuilder.addStatement(
-							memoryHandler.getUltimateMemAllocCall(llv, igLoc, MemoryArea.STACK));
+					resultBuilder.addStatement(memoryHandler.getUltimateMemAllocCall(llv, igLoc, MemoryArea.STACK));
 					resultBuilder.addAllExceptLrValue(assign);
 				} else {
 					final VariableLHS tempLHS = ExpressionFactory.constructVariableLHS(loc, inParamAuxVarType,
