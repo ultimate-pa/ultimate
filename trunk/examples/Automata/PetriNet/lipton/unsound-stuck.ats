@@ -1,0 +1,39 @@
+//@ not-stuck "p"
+
+/*
+ * An example that showcases a bug with the "mightGetStuck" or "post-script" optimization (as of 2022-12-06).
+ *
+ * The reduction fuses "x:=x+1" with "x:=x-1" -- neither of them has coenabled transitions, so they are movers.
+ * Normally, it would preserve the first fused transition "x:=x+1", and thus also the feasible error trace "x:=0 x:=x+1 x!=0".
+ * However, since place "p" cannot get stuck (in any program state, it is possible to execute the outgoing transition "x:=x-1"),
+ * the first transition is removed instead.
+ * In the resulting net, the place "l2" is not reachable, and so the transition "x!=0" is never enabled.
+ * The reduction has thus removed the only feasible error trace, making it unsound!
+ */
+
+PetriNet initial = (
+  alphabet    = { "x:=0" "x:=x+1" "x:=x-1" "x!=0" },
+  places      = { "l0" "l1" "p" "l2" "l3" "l4" },
+  transitions = {
+    ({ "l0" }     "x:=0"   { "l1" })
+    ({ "l1" }     "x:=x+1" { "p" "l2" })
+    ({ "p" "l2" } "x:=x-1" { "l3" })
+    ({ "l2" }     "x!=0"   { "l4" })
+  },
+  initialMarking = { "l0" },
+  acceptingPlaces = { "l4" }
+);
+
+PetriNet expected = (
+  alphabet    = { "x:=0" "x:=x+1" "x:=x-1" "x!=0" },
+  places      = { "l0" "l1" "p" "l2" "l3" "l4" },
+  transitions = {
+    ({ "l0" }     "x:=0"   { "l1" })
+    ({ "l1" }     "x:=x+1" { "p" "l2" })
+    ({ "p" "l2" } "x:=x-1" { "l3" })
+    ({ "l2" }     "x!=0"   { "l4" })
+  },
+  initialMarking = { "l0" },
+  acceptingPlaces = { "l4" }
+);
+
