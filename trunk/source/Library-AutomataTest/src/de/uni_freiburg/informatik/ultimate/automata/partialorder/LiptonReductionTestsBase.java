@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,6 +44,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.Before;
 
@@ -273,7 +275,14 @@ public abstract class LiptonReductionTestsBase implements IMessagePrinter {
 
 		@Override
 		public String composeParallel(final List<String> letters) {
-			return "(" + letters.stream().collect(Collectors.joining("+")) + ")";
+			return "{" + letters.stream().flatMap(CompositionFactory::unpack).collect(Collectors.joining(",")) + "}";
+		}
+
+		public static Stream<String> unpack(final String letter) {
+			if (letter.startsWith("{") && letter.endsWith("}")) {
+				return Arrays.stream(letter.substring(1, letter.length() - 1).split(","));
+			}
+			return Stream.of(letter);
 		}
 	}
 

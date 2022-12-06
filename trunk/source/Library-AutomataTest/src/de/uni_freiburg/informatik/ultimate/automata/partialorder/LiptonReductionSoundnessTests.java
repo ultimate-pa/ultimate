@@ -50,6 +50,8 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.LazyPetr
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 @RunWith(FactoryTestRunner.class)
 public class LiptonReductionSoundnessTests extends LiptonReductionTestsBase {
@@ -91,11 +93,16 @@ public class LiptonReductionSoundnessTests extends LiptonReductionTestsBase {
 				.filter(w -> !hasRepresentative(reduction, w, independence)).findAny();
 	}
 
-	private Optional<Word<String>> findNewWord(final IPetriNet<String, String> reduction,
+	private Optional<Pair<Word<String>, String>> findNewWord(final IPetriNet<String, String> reduction,
 			final IPetriNet<String, String> original) throws AutomataLibraryException {
 		final var reductionAut =
 				new LazyPetriNet2FiniteAutomaton<>(mAutomataServices, new StringPetriFactory(), reduction, null);
-		return EnumerateWords.stream(reductionAut).limit(WORD_LIMIT).filter(w -> !isAccepted(original, w)).findAny();
+		return EnumerateWords.stream(reductionAut).limit(WORD_LIMIT).flatMap(w -> findNewWord(w, original)).findAny();
+	}
+
+	private Stream<Pair<Word<String>, String>> findNewWord(final Word<String> candidate,
+			final IPetriNet<String, String> original) {
+		return flatten(candidate).stream().filter(w -> !isAccepted(original, w)).map(w -> new Pair<>(candidate, w));
 	}
 
 	private boolean hasRepresentative(final IPetriNet<String, String> reduction, final Word<String> w,
@@ -104,18 +111,31 @@ public class LiptonReductionSoundnessTests extends LiptonReductionTestsBase {
 	}
 
 	private boolean isAccepted(final IPetriNet<String, String> net, final Word<String> w) {
-		final String flattenedW = flatten(w);
+		return isAccepted(net, DataStructureUtils.getOneAndOnly(flatten(w), "word"));
+	}
+
+	private boolean isAccepted(final IPetriNet<String, String> net, final String w) {
 		try {
 			return EnumerateWords
 					.stream(new LazyPetriNet2FiniteAutomaton<>(mAutomataServices, new StringPetriFactory(), net, null))
-					.takeWhile(v -> v.length() <= flattenedW.length()).anyMatch(v -> flatten(v).equals(flattenedW));
+					.takeWhile(v -> v.length() <= w.length()).anyMatch(v -> flatten(v).contains(w));
 		} catch (final AutomataLibraryException e) {
-			throw new RuntimeException(e);
+			throw new IllegalStateException("Failed to check acceptance", e);
 		}
 	}
 
-	private static String flatten(final Word<String> word) {
-		return word.asList().stream().collect(Collectors.joining());
+	private static Set<String> flatten(final Word<String> word) {
+		return flatten(word, 0);
+	}
+
+	private static Set<String> flatten(final Word<String> word, final int position) {
+		assert position <= word.length();
+		if (position == word.length()) {
+			return Set.of("");
+		}
+		final var suffixes = flatten(word, position + 1);
+		return CompositionFactory.unpack(word.getSymbol(position)).flatMap(x -> suffixes.stream().map(s -> x + s))
+				.collect(Collectors.toSet());
 	}
 
 	private static Stream<Word<String>> generateEquivalenceClass(final Word<String> word,
