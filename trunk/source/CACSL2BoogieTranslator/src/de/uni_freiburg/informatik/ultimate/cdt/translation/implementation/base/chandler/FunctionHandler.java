@@ -876,8 +876,9 @@ public class FunctionHandler {
 			}
 		}
 		if (hasVarArgs) {
-			// TODO: Do not hardcode this name
-			in[paramDecs.length] = new VarList(loc, new String[] { "varArgs" }, mTypeHandler.constructPointerType(loc));
+			// Add an additional pointer-argument for the varargs
+			in[paramDecs.length] =
+					new VarList(loc, new String[] { SFO.VARARGS }, mTypeHandler.constructPointerType(loc));
 		}
 		procInfo.updateCFunctionReplaceParams(paramDecs);
 		return in;
