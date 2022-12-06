@@ -159,7 +159,7 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 		final List<Transition<L, P>> transitions = new ArrayList<>();
 		final List<L> letters = new ArrayList<>();
 
-		for (int i = 0; i < oldRun.getLength(); ++i) {
+		for (int i = 0; i < oldRun.getLength() - 1; ++i) {
 			final var transition = oldRun.getTransition(i);
 			if (old.contains(transition)) {
 				transitions.add(composed);
