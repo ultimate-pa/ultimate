@@ -1,6 +1,5 @@
 // Demonstrates why outgoing transitions of successor places of t1 (here 'a') are relevant for the decision
 // on whether t1 alone should be kept even after t1t2 (here 'ab') has been composed.
-// TODO example is not quite right
 
 PetriNet initial = (
   alphabet    = { "a" "b" "c" },
@@ -15,10 +14,10 @@ PetriNet initial = (
 );
 
 PetriNet expected = (
-  alphabet    = { "ab" "a" "c" },
+  alphabet    = { "abc" "a" "c" },
   places      = { "l1" "l2" "l3" "l4" "l5" "p_copy1" },
   transitions = {
-    ({ "l1" "l2" } "ab" { "l2" "l3" "l4" })
+    ({ "l1" "l2" } "abc" { "l4" "l5" })
     ({ "l1" } "a" { "p_copy1" "l3" })
     ({ "l2" "l3" } "c" { "l5" })
   },

@@ -1,5 +1,7 @@
 // Extension of Figure 3 (left) from Dennis Woelfing's project report
-// 20210917 Showcases a bug: The initial net accepts ac, the actual reduced net accepts no words.
+//
+// Dominik 2021-09-17: Showcases a bug -- the initial net accepts ac, the actual reduced net accepts no words.
+// Dominik 2022-12-06: Previously we expected that no reduction was possible. In practice however, some compositions are possible and some unexecutable transitions are removed.
 
 PetriNet initial = (
   alphabet    = { "a" "b" "c" },
@@ -14,12 +16,10 @@ PetriNet initial = (
 );
 
 PetriNet expected = (
-  alphabet    = { "a" "b" "c" },
-  places      = { "l1" "p" "l3" "l4" },
+  alphabet    = { "ac" },
+  places      = { "l1" "p_copy1" "l3" },
   transitions = {
-    ({ "l1" }     "a" { "p" "l4" })
-    ({ "l1" "p" } "b" { "l3" })
-    ({ "l4" }     "c" { "l3" })
+    ({ "l1" }     "ac" { "p_copy1" "l3" })
   },
   initialMarking  = { "l1" },
   acceptingPlaces = { "l3" }
