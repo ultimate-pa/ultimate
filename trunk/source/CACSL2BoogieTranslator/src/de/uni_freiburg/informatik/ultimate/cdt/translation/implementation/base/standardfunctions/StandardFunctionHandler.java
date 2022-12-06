@@ -404,8 +404,6 @@ public class StandardFunctionHandler {
 		 * value
 		 */
 		fill(map, "__builtin_prefetch", skip);
-		fill(map, "__builtin_va_start", skip);
-		fill(map, "__builtin_va_end", skip);
 
 		fill(map, "__builtin_expect", this::handleBuiltinExpect);
 		fill(map, "__builtin_unreachable", (main, node, loc, name) -> handleBuiltinUnreachable(loc));
@@ -560,6 +558,18 @@ public class StandardFunctionHandler {
 		fill(map, "fdim", this::handleBinaryFloatFunction);
 		fill(map, "fdimf", this::handleBinaryFloatFunction);
 		fill(map, "fdiml", this::handleBinaryFloatFunction);
+
+		// 7.16 Variable arguments https://en.cppreference.com/w/c/variadic
+		fill(map, "va_start", this::handleVaStart);
+		fill(map, "__builtin_va_start", this::handleVaStart);
+		// TODO: Do we need to handle this here?
+		fill(map, "va_arg", die);
+		fill(map, "__builtin_va_arg", die);
+		// TODO: Is it safe to do the same as for free?
+		fill(map, "va_end", this::handleFree);
+		fill(map, "__builtin_va_end", this::handleFree);
+		fill(map, "va_copy", die);
+		fill(map, "__builtin_va_copy", die);
 
 		/** SV-COMP and modeling functions **/
 		fill(map, "__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
@@ -883,6 +893,33 @@ public class StandardFunctionHandler {
 				new Statement[] { setPtrToNull }, body.toArray(Statement[]::new));
 		builder.addStatement(stmt);
 
+		return builder.build();
+	}
+
+	private Result handleVaStart(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult arg0 =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(arg0);
+		// TODO: We do not actually use this parameter, this could be unsound.
+		final ExpressionResult arg1 =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(arg1);
+		final Expression dst = arg0.getLrValue().getValue();
+		if (!(dst instanceof IdentifierExpression)) {
+			throw new UnsupportedSyntaxException(loc, "The first argument of " + name + " has to be an identifier.");
+		}
+		// TODO: Is this the correct DeclarationInformation?
+		final DeclarationInformation decl = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+		final LeftHandSide lhs = new VariableLHS(loc, mTypeHandler.getBoogiePointerType(),
+				((IdentifierExpression) dst).getIdentifier(), decl);
+		final IdentifierExpression rhs =
+				new IdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), SFO.VARARGS, decl);
+		// TODO: Is this enough to simply make the assingment or do we actually need to copy this (like memcpy)?
+		builder.addStatement(StatementFactory.constructAssignmentStatement(loc, lhs, rhs));
 		return builder.build();
 	}
 
@@ -1465,8 +1502,7 @@ public class StandardFunctionHandler {
 				heapLValue = LRValueFactory.constructHeapLValue(mTypeHandler, argAddressOfResultPointerLr.getValue(),
 						cType, false, null);
 			}
-			final List<Statement> wc =
-					mMemoryHandler.getWriteCall(loc, heapLValue, auxvarinfo.getExp(), cType, false);
+			final List<Statement> wc = mMemoryHandler.getWriteCall(loc, heapLValue, auxvarinfo.getExp(), cType, false);
 			builder.addStatements(wc);
 		}
 		// we assume that this function is always successful and returns 0
