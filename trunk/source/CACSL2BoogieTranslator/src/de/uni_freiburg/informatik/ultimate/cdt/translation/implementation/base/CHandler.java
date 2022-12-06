@@ -252,15 +252,6 @@ public class CHandler {
 	 */
 	private static final boolean POINTER_CAST_IS_UNSUPPORTED_SYNTAX = false;
 
-	/**
-	 * Replace identifiers that refer to a constant (or an enum value) by their
-	 * value if the value is known. If `true` this should make
-	 * {@link TypeSizes#extractIntegerValue} nearly obsolete,
-	 * {@link TypeSizes#extractIntegerValue} should only be able to extract values
-	 * from literals.
-	 */
-	public static final boolean REPLACE_CONSTANT_SYMBOLS_BY_THEIR_VALUE = false;
-
 	private final MemoryHandler mMemoryHandler;
 
 	private final ArrayHandler mArrayHandler;
@@ -645,7 +636,7 @@ public class CHandler {
 		// constants for initializations
 		mDeclarations.addAll(mTypeSizeComputer.getConstants());
 		mDeclarations.addAll(mTypeSizeComputer.getAxioms());
-		mDeclarations.addAll(mMemoryHandler.declareMemoryModelInfrastructure(this, loc, globalHook, mDataRaceChecker));
+		mDeclarations.addAll(mMemoryHandler.declareMemoryModelInfrastructure(this, loc, mDataRaceChecker));
 		mDeclarations.addAll(mInitHandler.declareInitializationInfrastructure(main, loc));
 		if (mDataRaceChecker != null) {
 			mDeclarations.addAll(mDataRaceChecker.declareRaceCheckingInfrastructure(loc));
@@ -773,7 +764,7 @@ public class CHandler {
 		case IASTBinaryExpression.op_divide: {
 			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
-			return mCExpressionTranslator.handleMultiplicativeOperation(loc, node.getOperator(), rl, rr, node);
+			return mCExpressionTranslator.handleMultiplicativeOperation(loc, node.getOperator(), rl, rr);
 		}
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_multiplyAssign:
@@ -781,7 +772,7 @@ public class CHandler {
 			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
-					mCExpressionTranslator.handleMultiplicativeOperation(loc, node.getOperator(), rl, rr, node);
+					mCExpressionTranslator.handleMultiplicativeOperation(loc, node.getOperator(), rl, rr);
 			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
 		}
 		case IASTBinaryExpression.op_plus:
@@ -813,7 +804,7 @@ public class CHandler {
 		case IASTBinaryExpression.op_binaryXor: {
 			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
-			return mCExpressionTranslator.handleBitwiseArithmeticOperation(loc, node.getOperator(), rl, rr, node);
+			return mCExpressionTranslator.handleBitwiseArithmeticOperation(loc, node.getOperator(), rl, rr);
 		}
 		case IASTBinaryExpression.op_binaryAndAssign:
 		case IASTBinaryExpression.op_binaryOrAssign:
@@ -821,14 +812,14 @@ public class CHandler {
 			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
-					mCExpressionTranslator.handleBitwiseArithmeticOperation(loc, node.getOperator(), rl, rr, node);
+					mCExpressionTranslator.handleBitwiseArithmeticOperation(loc, node.getOperator(), rl, rr);
 			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
 		}
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftRight: {
 			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
-			return mCExpressionTranslator.handleBitshiftOperation(loc, node.getOperator(), rl, rr, node);
+			return mCExpressionTranslator.handleBitshiftOperation(loc, node.getOperator(), rl, rr);
 
 		}
 		case IASTBinaryExpression.op_shiftLeftAssign:
@@ -836,7 +827,7 @@ public class CHandler {
 			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
-					mCExpressionTranslator.handleBitshiftOperation(loc, node.getOperator(), rl, rr, node);
+					mCExpressionTranslator.handleBitshiftOperation(loc, node.getOperator(), rl, rr);
 			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
 		}
 		default:
@@ -968,15 +959,15 @@ public class CHandler {
 		checkUnsupportedPointerCast(exprWithType, loc, newCType);
 
 		if (mSettings.isAdaptMemoryModelResolutionOnPointerCasts() && mIsPrerun) {
-			checkIfNecessaryMemoryModelAdaption(node, loc, newCType, exprWithType);
+			checkIfNecessaryMemoryModelAdaption(loc, newCType, exprWithType);
 		}
 
 		exprWithType = mExprResultTransformer.rexBoolToInt(exprWithType, loc);
 		return mExprResultTransformer.performImplicitConversion(exprWithType, newCType, loc);
 	}
 
-	private void checkIfNecessaryMemoryModelAdaption(final IASTCastExpression node, final ILocation loc,
-			final CType castTargetType, final ExpressionResult operand) {
+	private void checkIfNecessaryMemoryModelAdaption(final ILocation loc, final CType castTargetType,
+			final ExpressionResult operand) {
 		final CType operandType = operand.getLrValue().getCType().getUnderlyingType();
 		if (!(operandType instanceof CArray) && !(operandType instanceof CPointer)
 				|| !(castTargetType instanceof CArray) && !(castTargetType instanceof CPointer)) {
@@ -1000,7 +991,7 @@ public class CHandler {
 
 		final Expression operandTypeByteSizeExp;
 		try {
-			operandTypeByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, operandValueType, node);
+			operandTypeByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, operandValueType);
 		} catch (final UnsupportedOperationException e) {
 			mLogger.debug("saw a pointer cast to a type that we could not get a type size for, not adapting memory "
 					+ "model");
@@ -1014,7 +1005,7 @@ public class CHandler {
 			throw e;
 		}
 		final BigInteger operandTypeByteSize =
-				mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), node);
+				mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT());
 
 		if (operandTypeByteSize.signum() == 0) {
 			// operand's type has size 0 -- not sure what makes sense to do here, doing
@@ -1028,14 +1019,14 @@ public class CHandler {
 
 		final Expression castTargetByteSizeExp;
 		try {
-			castTargetByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, castTargetValueType, node);
+			castTargetByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, castTargetValueType);
 		} catch (final UnsupportedOperationException e) {
 			mLogger.debug("saw a pointer cast to a type that we could not get a type size for, not adapting memory "
 					+ "model");
 			return;
 		}
 		final BigInteger castTargetByteSize =
-				mTypeSizes.extractIntegerValue(castTargetByteSizeExp, mTypeSizeComputer.getSizeT(), node);
+				mTypeSizes.extractIntegerValue(castTargetByteSizeExp, mTypeSizeComputer.getSizeT());
 
 		// TODO 2022-02-25 Matthias: Currently we omit a change of the memory model if
 		// the bytesize to which we cast is smaller that the bytesize of the operand.
@@ -1580,7 +1571,7 @@ public class CHandler {
 			useHeap = isHeapVar(bId);
 			intFromPtr = stv.isIntFromPointer();
 			declarationInformation = stv.getDeclarationInformation();
-			if (REPLACE_CONSTANT_SYMBOLS_BY_THEIR_VALUE && stv.hasConstantValue()) {
+			if (stv.hasConstantValue()) {
 				if (useHeap) {
 					throw new AssertionError("I expected that constants are never stored on-heap.");
 				}
@@ -1597,7 +1588,7 @@ public class CHandler {
 			useHeap = isHeapVar(bId);
 			intFromPtr = stv.isIntFromPointer();
 			declarationInformation = stv.getDeclarationInformation();
-			if (REPLACE_CONSTANT_SYMBOLS_BY_THEIR_VALUE && stv.hasConstantValue()) {
+			if (stv.hasConstantValue()) {
 				if (useHeap) {
 					throw new AssertionError("I expected that constants are never stored on-heap.");
 				}
@@ -1747,7 +1738,7 @@ public class CHandler {
 			final RValue rVal = (RValue) converted.getLrValue();
 
 			// used to check if rVal is a constant
-			final BigInteger intVal = mTypeSizes.extractIntegerValue(rVal, node);
+			final BigInteger intVal = mTypeSizes.extractIntegerValue(rVal);
 
 			if (converted.hasNoSideEffects() && intVal != null
 					&& cPrim.getGeneralType() == CPrimitiveCategory.INTTYPE) {
@@ -1779,7 +1770,7 @@ public class CHandler {
 		 * declarator: (e.g. (int [])): then the size depends on the initializer - otherwise: the size is given by the
 		 * CType
 		 */
-		mTypeSizeComputer.constructBytesizeExpression(loc, cType, node);
+		mTypeSizeComputer.constructBytesizeExpression(loc, cType);
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
@@ -1809,7 +1800,7 @@ public class CHandler {
 		{
 			final LocalLValue llv = new LocalLValue(aux.getLhs(), cType, null);
 			if (mProcedureManager.isGlobalScope()) {
-				final CallStatement malloc = mMemoryHandler.getUltimateMemAllocCall(llv, loc, node, MemoryArea.STACK);
+				final CallStatement malloc = mMemoryHandler.getUltimateMemAllocCall(llv, loc, MemoryArea.STACK);
 				mStaticObjectsHandler.addStatementsForUltimateInit(Collections.singletonList(malloc));
 
 			} else {
@@ -1973,8 +1964,7 @@ public class CHandler {
 		final CallStatement ultimateAllocCall;
 		if (MemoryHandler.FIXED_ADDRESSES_FOR_INITIALIZATION) {
 			auxvar = null;
-			final Pair<RValue, CallStatement> pair =
-					mMemoryHandler.getUltimateMemAllocInitCall(actualLoc, arrayType, node);
+			final Pair<RValue, CallStatement> pair = mMemoryHandler.getUltimateMemAllocInitCall(actualLoc, arrayType);
 
 			addressRValue = pair.getFirst();
 			ultimateAllocCall = pair.getSecond();
@@ -2429,7 +2419,7 @@ public class CHandler {
 			// TypesResult checked = checkForPointer(main,
 			// node.getTypeId().getAbstractDeclarator().getPointerOperators(), rt, false);
 
-			final var rVal = new RValue(mMemoryHandler.calculateSizeOf(loc, dr.getDeclaration().getType(), node),
+			final var rVal = new RValue(mMemoryHandler.calculateSizeOf(loc, dr.getDeclaration().getType()),
 					mTypeSizeComputer.getSizeT());
 			return new ExpressionResultBuilder().addAllSideEffects(dr).setLrValue(rVal).build();
 		}
@@ -2470,7 +2460,7 @@ public class CHandler {
 		case IASTUnaryExpression.op_plus:
 		case IASTUnaryExpression.op_tilde: {
 			final ExpressionResult rop = mExprResultTransformer.switchToRValue(operand, loc, node);
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, node.getOperator(), rop, node);
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, node.getOperator(), rop);
 		}
 		case IASTUnaryExpression.op_postFixIncr:
 		case IASTUnaryExpression.op_postFixDecr: {
@@ -2487,7 +2477,7 @@ public class CHandler {
 		case IASTUnaryExpression.op_sizeof:
 			final CType operandType = operand.getCType().getUnderlyingType();
 			return new ExpressionResult(
-					new RValue(mMemoryHandler.calculateSizeOf(loc, operandType, node), mTypeSizeComputer.getSizeT()),
+					new RValue(mMemoryHandler.calculateSizeOf(loc, operandType), mTypeSizeComputer.getSizeT()),
 					Collections.emptySet());
 		case IASTUnaryExpression.op_star: {
 			return handleIndirectionOperator(operand, loc, node);
@@ -2703,7 +2693,7 @@ public class CHandler {
 				rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 			}
 			builder.addStatements(mMemoryHandler.getWriteCall(loc, hlv, rhsWithBitfieldTreatment,
-					rightHandSideValueWithConversionsApplied.getCType(), false, hook));
+					rightHandSideValueWithConversionsApplied.getCType(), false));
 
 			// the value of an assignment statement expression is the right hand side of the
 			// assignment
@@ -2778,7 +2768,7 @@ public class CHandler {
 	 * information in the symbol table concerning the scope that is to be closed.
 	 */
 	public void updateStmtsAndDeclsAtScopeEnd(final ExpressionResultBuilder exprResultBuilder, final IASTNode hook) {
-		exprResultBuilder.resetStatements(mMemoryHandler.insertMallocs(exprResultBuilder.getStatements(), hook));
+		exprResultBuilder.resetStatements(mMemoryHandler.insertMallocs(exprResultBuilder.getStatements()));
 		for (final SymbolTableValue stv : mSymbolTable.getInnermostCScopeValues(hook)) {
 			// there may be a null declaration in case of foo(void) -- therefore we need to
 			// check the second conjunct
@@ -2957,7 +2947,7 @@ public class CHandler {
 					final LocalLValue llVal = new LocalLValue(lhs, cDec.getType(), null);
 					// old solution: havoc via an auxvar, new solution (below):
 					// just malloc at the right place (much shorter for arrays and structs..)
-					erb.addStatement(mMemoryHandler.getUltimateMemAllocCall(llVal, loc, node, MemoryArea.STACK));
+					erb.addStatement(mMemoryHandler.getUltimateMemAllocCall(llVal, loc, MemoryArea.STACK));
 					mMemoryHandler.addVariableToBeFreed(
 							new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
 				}
@@ -2975,7 +2965,7 @@ public class CHandler {
 				if (onHeap) {
 					final LocalLValue llVal = new LocalLValue(lhs, cDec.getType(), null);
 					mMemoryHandler.addVariableToBeFreed(new LocalLValueILocationPair(llVal, loc));
-					erb.addStatement(mMemoryHandler.getUltimateMemAllocCall(llVal, loc, node, MemoryArea.STACK));
+					erb.addStatement(mMemoryHandler.getUltimateMemAllocCall(llVal, loc, MemoryArea.STACK));
 				}
 				erb.addAllExceptLrValueAndHavocAux(initRex);
 				result = erb.build();
@@ -3153,8 +3143,8 @@ public class CHandler {
 							&& er.getLrValue().getCType() instanceof CPrimitive
 							&& ((CPrimitive) rightHandSideWithConversionsApplied.getCType().getUnderlyingType())
 									.getGeneralType().equals(((CPrimitive) er.getLrValue().getCType()).getGeneralType())
-							&& mMemoryHandler.calculateSizeOf(loc, rightHandSideWithConversionsApplied.getCType(),
-									hook) == mMemoryHandler.calculateSizeOf(loc, er.getLrValue().getCType(), hook)) {
+							&& mMemoryHandler.calculateSizeOf(loc, rightHandSideWithConversionsApplied
+									.getCType()) == mMemoryHandler.calculateSizeOf(loc, er.getLrValue().getCType())) {
 
 				builder.resetLrValue(rVal);
 				final ExpressionResult assignment =

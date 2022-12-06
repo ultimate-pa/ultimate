@@ -159,7 +159,7 @@ public class MainTranslator {
 
 			final NameHandler nameHandler = new NameHandler(backtranslatorMapping);
 			final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mLogger, mst);
-			final TypeSizes typeSizes = new TypeSizes(ups, translationSettings, flatSymbolTable);
+			final TypeSizes typeSizes = new TypeSizes(ups, translationSettings);
 
 			// final ExplorativeVisitor evv = executePreRun(new ExplorativeVisitor(mLogger), nodes);
 
@@ -215,13 +215,12 @@ public class MainTranslator {
 			final CHandler prerunCHandler, final CTranslationResultReporter reporter,
 			final LocationFactory locationFactory, final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants,
 			final CACSL2BoogieBacktranslatorMapping backtranslatorMapping, final List<DecoratedUnit> nodes,
-			final TypeHandler prerunTypeHandler, final MultiparseSymbolTable mst, final TypeSizes prerunTypeSizes) {
+			final TypeHandler prerunTypeHandler, final MultiparseSymbolTable mst, final TypeSizes typeSizes) {
 		final NameHandler nameHandler = new NameHandler(backtranslatorMapping);
 
 		final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mLogger, mst);
 		final ProcedureManager procedureManager = new ProcedureManager(mLogger, translationSettings);
 		final StaticObjectsHandler staticObjectsHandler = new StaticObjectsHandler(mLogger);
-		final TypeSizes typeSizes = new TypeSizes(prerunTypeSizes, flatSymbolTable);
 		final TypeHandler typeHandler = new TypeHandler(reporter, nameHandler, typeSizes, flatSymbolTable,
 				translationSettings, locationFactory, staticObjectsHandler, prerunTypeHandler);
 		final ExpressionTranslation expressionTranslation =
@@ -235,9 +234,8 @@ public class MainTranslator {
 
 		final PreprocessorHandler ppHandler =
 				new PreprocessorHandler(reporter, locationFactory, translationSettings.isSvcompMode());
-		final ACSLHandler acslHandler =
-				new ACSLHandler(witnessInvariants != null, flatSymbolTable, expressionTranslation, typeHandler,
-						procedureManager, locationFactory, mainCHandler);
+		final ACSLHandler acslHandler = new ACSLHandler(witnessInvariants != null, flatSymbolTable,
+				expressionTranslation, typeHandler, procedureManager, locationFactory, mainCHandler);
 		final MainDispatcher mainDispatcher = new MainDispatcher(mLogger, witnessInvariants, locationFactory,
 				typeHandler, mainCHandler, ppHandler, acslHandler);
 

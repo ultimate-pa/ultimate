@@ -964,7 +964,7 @@ public class FunctionHandler {
 							new ExpressionResultBuilder().setLrValue(new RValue(rhsId, cvar)).build(), paramDec);
 
 					resultBuilder.addStatement(
-							memoryHandler.getUltimateMemAllocCall(llv, igLoc, paramDec, MemoryArea.STACK));
+							memoryHandler.getUltimateMemAllocCall(llv, igLoc, MemoryArea.STACK));
 					resultBuilder.addAllExceptLrValue(assign);
 				} else {
 					final VariableLHS tempLHS = ExpressionFactory.constructVariableLHS(loc, inParamAuxVarType,

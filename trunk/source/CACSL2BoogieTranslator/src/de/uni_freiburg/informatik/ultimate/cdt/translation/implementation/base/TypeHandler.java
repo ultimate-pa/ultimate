@@ -878,7 +878,7 @@ public class TypeHandler implements ITypeHandler {
 				value = specifiedValue;
 			} else {
 				final BigInteger expressionIntegerValue =
-						mTypeSizes.extractIntegerValue(specifiedValue, typeOfEnumIdentifiers, node);
+						mTypeSizes.extractIntegerValue(specifiedValue, typeOfEnumIdentifiers);
 				if (expressionIntegerValue == null) {
 					throw new AssertionError("not an integer constant: " + specifiedValue);
 				}
@@ -899,7 +899,7 @@ public class TypeHandler implements ITypeHandler {
 				value = zero;
 			} else {
 				final BigInteger bi =
-						mTypeSizes.extractIntegerValue(valueOfPrecedingEnumConstant, typeOfEnumIdentifiers, node);
+						mTypeSizes.extractIntegerValue(valueOfPrecedingEnumConstant, typeOfEnumIdentifiers);
 				if (bi == null) {
 					throw new AssertionError("not an integer constant: " + specifiedValue);
 				}
