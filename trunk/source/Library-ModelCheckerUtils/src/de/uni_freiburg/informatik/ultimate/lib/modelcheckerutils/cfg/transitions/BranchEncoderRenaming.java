@@ -106,11 +106,9 @@ public final class BranchEncoderRenaming {
 		final TransFormulaBuilder tfb =
 				new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), tf.getNonTheoryConsts().isEmpty(),
 						tf.getNonTheoryConsts(), false, mSubstitution.values(), tf.getAuxVars().isEmpty());
-		for (final TermVariable aux : tf.getAuxVars()) {
-			tfb.addAuxVar(aux);
-		}
 		tfb.setInfeasibility(tf.isInfeasible());
 		tfb.setFormula(Substitution.apply(mgdScript, mSubstitution, tf.getFormula()));
+		tfb.addAuxVarsButRenameToFreshCopies(tf.getAuxVars(), mgdScript);
 		return tfb.finishConstruction(mgdScript);
 	}
 
