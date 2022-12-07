@@ -562,12 +562,8 @@ public class StandardFunctionHandler {
 		// 7.16 Variable arguments https://en.cppreference.com/w/c/variadic
 		fill(map, "va_start", this::handleVaStart);
 		fill(map, "__builtin_va_start", this::handleVaStart);
-		// TODO: Do we need to handle this here?
-		fill(map, "va_arg", die);
-		fill(map, "__builtin_va_arg", die);
-		// TODO: Is it safe to do the same as for free?
-		fill(map, "va_end", this::handleFree);
-		fill(map, "__builtin_va_end", this::handleFree);
+		fill(map, "va_end", this::handleVaEnd);
+		fill(map, "__builtin_va_end", this::handleVaEnd);
 		fill(map, "va_copy", die);
 		fill(map, "__builtin_va_copy", die);
 
@@ -922,6 +918,39 @@ public class StandardFunctionHandler {
 		// TODO: Is this enough to simply make the assignment or do we actually need to copy this (like memcpy)?
 		builder.addStatement(StatementFactory.constructAssignmentStatement(loc, lhs, rhs));
 		return builder.build();
+	}
+
+	private Result handleVaEnd(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+
+		final ExpressionResult pRex =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+
+		final ExpressionResultBuilder resultBuilder =
+				new ExpressionResultBuilder().addAllExceptLrValue(pRex).setLrValue(pRex.getLrValue());
+
+		// Translate va_end(valist) to ULTIMATE.dealloc({ base: valist!offset, offset: 0 }) to ensure the memory to be
+		// freed
+		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+		final Expression pointerWithoutOffset = MemoryHandler.constructPointerFromBaseAndOffset(
+				MemoryHandler.getPointerBaseAddress(pRex.getLrValue().getValue(), loc), zero, loc);
+		final RValue value = new RValue(pointerWithoutOffset, pRex.getCType());
+
+		/*
+		 * Add checks for validity of the to be freed pointer if required.
+		 */
+		resultBuilder.addStatements(mMemoryHandler.getChecksForFreeCall(loc, value));
+
+		/*
+		 * Add a call to our internal deallocation procedure Ultimate.dealloc
+		 */
+		final CallStatement deallocCall = mMemoryHandler.getDeallocCall(value, loc);
+		resultBuilder.addStatement(deallocCall);
+
+		return resultBuilder.build();
 	}
 
 	private Result handleAbs(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
