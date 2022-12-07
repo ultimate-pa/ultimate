@@ -4,13 +4,19 @@
   Date: 2022-12-07
 */
 
-extern int printk(char const * , ...);
+extern int varArgFunction(char const * , ...);
 
-int printk(char const *format, ...) {
-  return 0;
+int varArgFunction(char const *format, ...) {
+  __builtin_va_list v;
+  __builtin_va_start(v, format);
+  
+  int result = __builtin_va_arg(v, int);
+  
+  __builtin_va_end(v);
+  return result;
 }
 
 int main() {
-  int x = printk("%d, %d", 1, 2);
-  //@ assert x == 0;
+  int x = varArgFunction("%d, %d", 1, 2);
+  //@ assert x == 1;
 }
