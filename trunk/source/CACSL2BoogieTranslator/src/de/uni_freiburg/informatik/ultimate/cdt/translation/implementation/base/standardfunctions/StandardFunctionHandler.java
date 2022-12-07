@@ -931,7 +931,7 @@ public class StandardFunctionHandler {
 		final ExpressionResultBuilder resultBuilder =
 				new ExpressionResultBuilder().addAllExceptLrValue(pRex).setLrValue(pRex.getLrValue());
 
-		// Translate va_end(valist) to ULTIMATE.dealloc({ base: valist!offset, offset: 0 }) to ensure the memory to be
+		// Translate va_end(valist) to ULTIMATE.dealloc({ base: valist!base, offset: 0 }) to ensure the memory to be
 		// freed
 		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
