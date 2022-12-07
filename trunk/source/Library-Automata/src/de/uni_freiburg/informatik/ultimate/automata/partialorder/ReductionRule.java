@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -51,19 +53,19 @@ public abstract class ReductionRule<L, P> {
 	protected final ILogger mLogger;
 
 	private final BoundedPetriNet<L, P> mNet;
-	protected PetriNetRun<L, P> mRun;
+	protected Map<PetriNetRun<L, P>, PetriNetRun<L, P>> mRunsToAdapt;
 	protected final CoenabledRelation<L, P> mCoenabledRelation;
 
 	protected final LiptonReductionStatisticsGenerator mStatistics;
 
 	public ReductionRule(final AutomataLibraryServices services, final LiptonReductionStatisticsGenerator statistics,
 			final BoundedPetriNet<L, P> net, final CoenabledRelation<L, P> coenabledRelation,
-			final PetriNetRun<L, P> run) {
+			final Map<PetriNetRun<L, P>, PetriNetRun<L, P>> runsToAdapt) {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mNet = net;
 		mCoenabledRelation = coenabledRelation;
 		mStatistics = statistics;
-		mRun = run;
+		mRunsToAdapt = runsToAdapt;
 	}
 
 	/**
@@ -108,7 +110,7 @@ public abstract class ReductionRule<L, P> {
 		mNet.getAlphabet().retainAll(newAlphabet);
 	}
 
-	public PetriNetRun<L, P> getAdaptedRun() {
-		return mRun;
+	public Map<PetriNetRun<L, P>, PetriNetRun<L, P>> getAdaptedRuns() {
+		return mRunsToAdapt;
 	}
 }

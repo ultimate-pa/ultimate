@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -77,7 +78,7 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 	public ChoiceRule(final AutomataLibraryServices services, final LiptonReductionStatisticsGenerator statistics,
 			final BoundedPetriNet<L, P> net, final CoenabledRelation<L, P> coenabledRelation,
 			final ModifiableRetroMorphism<L, P> retromorphism, final ICompositionFactory<L> compositionFactory,
-			final PetriNetRun<L, P> run) {
+			final Map<PetriNetRun<L, P>, PetriNetRun<L, P>> run) {
 		super(services, statistics, net, coenabledRelation, run);
 		mRetromorphism = retromorphism;
 		mCompositionFactory = compositionFactory;
@@ -111,13 +112,14 @@ public class ChoiceRule<L, P> extends ReductionRule<L, P> {
 				mRetromorphism.deleteTransition(component);
 			}
 
-			if (mRun != null) {
-				mRun = adaptRun(mRun, components, composed);
+			for (final var entry : new HashSet<>(mRunsToAdapt.entrySet())) {
+				final var adapted = adaptRun(entry.getValue(), components, composed);
 				try {
-					assert mRun.isRunOf(net);
+					assert adapted.isRunOf(net) : "Adapted run is not a run of the modified net";
 				} catch (final PetriNetNot1SafeException e) {
 					throw new AssertionError("Petri net has become unsafe");
 				}
+				mRunsToAdapt.put(entry.getKey(), adapted);
 			}
 
 			mStatistics.reportComposition(LiptonReductionStatisticsDefinitions.ChoiceCompositions);

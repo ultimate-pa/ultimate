@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -64,8 +65,10 @@ public class SynthesizeLockRule<L, P> extends ReductionRule<L, P> {
 	public SynthesizeLockRule(final AutomataLibraryServices services,
 			final LiptonReductionStatisticsGenerator statistics, final BoundedPetriNet<L, P> net,
 			final CoenabledRelation<L, P> coenabledRelation, final IIndependenceRelation<Set<P>, L> independence,
-			final ICopyPlaceFactory<P> placeFactory, final boolean requireLoop, final PetriNetRun<L, P> run) {
-		super(services, statistics, net, coenabledRelation, run);
+			final ICopyPlaceFactory<P> placeFactory, final boolean requireLoop,
+			final Map<PetriNetRun<L, P>, PetriNetRun<L, P>> runsToAdapt) {
+		// TODO The rule does not yet support run adaptation.
+		super(services, statistics, net, coenabledRelation, Collections.emptyMap());
 		mIndependence = independence;
 		mPlaceFactory = placeFactory;
 		mRequireLoop = requireLoop;

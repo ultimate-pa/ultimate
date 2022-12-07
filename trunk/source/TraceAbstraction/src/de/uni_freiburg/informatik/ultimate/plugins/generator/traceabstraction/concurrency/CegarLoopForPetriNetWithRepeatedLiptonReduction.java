@@ -105,14 +105,14 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 		final var counterexample = getCachedCounterexample();
 		final PetriNetLargeBlockEncoding<L> lbe = new PetriNetLargeBlockEncoding<>(getServices(),
 				mIcfg.getCfgSmtToolkit(), cfg, mPref.lbeIndependenceSettings(), mCompositionFactory, mPredicateFactory,
-				mIndependenceCache, mFinitePrefixOfAbstraction, counterexample);
+				mIndependenceCache, mFinitePrefixOfAbstraction, Set.of(counterexample));
 		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 
 		mServices.getBacktranslationService().addTranslator(mCompositionFactory.getBacktranslator());
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_NAME,
 				"PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));
 
-		final var adaptedRun = lbe.getAdaptedRun();
+		final var adaptedRun = lbe.getAdaptedRuns().get(counterexample);
 		if (adaptedRun != null) {
 			assert adaptedRun.isRunOf(lbecfg) : "adaptation produced invalid run!";
 			mCounterexampleCache.setCounterexample(adaptedRun);

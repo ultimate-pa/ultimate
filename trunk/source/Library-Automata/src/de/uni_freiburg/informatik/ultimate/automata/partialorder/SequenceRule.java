@@ -76,7 +76,7 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 			final ModifiableRetroMorphism<L, P> retromorphism, final IIndependenceRelation<Set<P>, L> independence,
 			final ICompositionFactory<L> compositionFactory, final ICopyPlaceFactory<P> placeFactory,
 			final IPostScriptChecker<L, P> postScriptChecker, final BranchingProcess<L, P> completeFinitePrefix,
-			final PetriNetRun<L, P> run) {
+			final Map<PetriNetRun<L, P>, PetriNetRun<L, P>> run) {
 		super(services, statistics, net, coenabledRelation, run);
 		mRetromorphism = retromorphism;
 		mIndependence = independence;
@@ -155,13 +155,17 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 			deleteAll(deleteTransitions);
 			allDeleted.addAll(deleteTransitions);
 
-			// adapt run
-			if (mRun != null) {
-				mRun = adaptRun(mRun, pivot, mPivotCopy, executedCompositions, transition2Copy, net);
+			// adapt runs
+			for (final var entry : new HashSet<>(mRunsToAdapt.entrySet())) {
+				final var adapted =
+						adaptRun(entry.getValue(), pivot, mPivotCopy, executedCompositions, transition2Copy, net);
 				try {
-					assert mRun == null || mRun.isRunOf(net) : "Adapted run is not a run of the modified net";
+					assert adapted == null || adapted.isRunOf(net) : "Adapted run is not a run of the modified net";
 				} catch (final PetriNetNot1SafeException e) {
 					throw new AssertionError("Petri net has become unsafe");
+				}
+				if (adapted != null) {
+					mRunsToAdapt.put(entry.getKey(), adapted);
 				}
 			}
 

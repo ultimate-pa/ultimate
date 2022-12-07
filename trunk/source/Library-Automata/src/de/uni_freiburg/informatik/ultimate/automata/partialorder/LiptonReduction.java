@@ -29,6 +29,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -78,7 +79,7 @@ public class LiptonReduction<L, P> {
 	private final IIndependenceRelation<Set<P>, L> mMoverCheck;
 
 	private final BoundedPetriNet<L, P> mPetriNet;
-	private PetriNetRun<L, P> mRun;
+	private Map<PetriNetRun<L, P>, PetriNetRun<L, P>> mRuns;
 
 	private final BranchingProcess<L, P> mBranchingProcess;
 	private final ModifiableRetroMorphism<L, P> mRetromorphism;
@@ -104,6 +105,9 @@ public class LiptonReduction<L, P> {
 	 * @param finitePrefix
 	 *            A complete finite prefix of the given net, if available. May be null, in which case the instance
 	 *            starts its own computation of a finite prefix.
+	 * @param runs
+	 *            A set of accepting runs for the given Petri net. For each run in the set, the reduction will try to
+	 *            find a covering run, which can be retrieved via {@link #getAdaptedRuns()}.
 	 * @throws AutomataOperationCanceledException
 	 * @throws PetriNetNot1SafeException
 	 */
@@ -111,7 +115,7 @@ public class LiptonReduction<L, P> {
 			final ICompositionFactory<L> compositionFactory, final ICopyPlaceFactory<P> placeFactory,
 			final IIndependenceRelation<Set<P>, L> independenceRelation,
 			final IPostScriptChecker<L, P> stuckPlaceChecker, final BranchingProcess<L, P> finitePrefix,
-			final PetriNetRun<L, P> run) throws PetriNetNot1SafeException, AutomataOperationCanceledException {
+			final Set<PetriNetRun<L, P>> runs) throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(LiptonReduction.class);
 		mCompositionFactory = compositionFactory;
@@ -123,12 +127,6 @@ public class LiptonReduction<L, P> {
 		final var original2Copy = new HashMap<Transition<L, P>, Transition<L, P>>();
 		mPetriNet = CopySubnet.copy(mServices, petriNet, new HashSet<>(petriNet.getTransitions()),
 				new HashSet<>(petriNet.getAlphabet()), true, original2Copy);
-
-		if (run != null) {
-			assert run.isRunOf(petriNet) : "Given run does not belong to given net";
-			mRun = adaptRunToCopy(run, original2Copy);
-			assert mRun.isRunOf(mPetriNet) : "Adaptation of run top copied net failed";
-		}
 
 		// Collect information used by reduction rules.
 		if (finitePrefix == null) {
@@ -150,8 +148,28 @@ public class LiptonReduction<L, P> {
 				mCoEnabledRelation.replaceElement(original, copy);
 			}
 		}
+		mRuns = adaptRunsToCopy(runs, petriNet, original2Copy);
 
 		performReduction();
+	}
+
+	private Map<PetriNetRun<L, P>, PetriNetRun<L, P>> adaptRunsToCopy(final Set<PetriNetRun<L, P>> runs,
+			final IPetriNet<L, P> originalNet, final Map<Transition<L, P>, Transition<L, P>> original2Copy)
+			throws PetriNetNot1SafeException {
+		if (runs == null) {
+			return Collections.emptyMap();
+		}
+
+		final var result = new HashMap<PetriNetRun<L, P>, PetriNetRun<L, P>>();
+		for (final var run : runs) {
+			assert run.isRunOf(originalNet) : "Given run does not belong to given net";
+
+			final var adapted = adaptRunToCopy(run, original2Copy);
+			assert adapted.isRunOf(mPetriNet) : "Adaptation of run to copied net failed";
+
+			result.put(run, adapted);
+		}
+		return result;
 	}
 
 	private PetriNetRun<L, P> adaptRunToCopy(final PetriNetRun<L, P> run,
@@ -235,9 +253,9 @@ public class LiptonReduction<L, P> {
 	@Deprecated(since = "2021-09-15")
 	private boolean synthesizeLockRuleWrapper(final BoundedPetriNet<L, P> petriNet) {
 		final SynthesizeLockRule<L, P> rule = new SynthesizeLockRule<>(mServices, mStatistics, petriNet,
-				mCoEnabledRelation, mMoverCheck, mPlaceFactory, true, mRun);
+				mCoEnabledRelation, mMoverCheck, mPlaceFactory, true, mRuns);
 		final boolean result = rule.apply();
-		mRun = rule.getAdaptedRun();
+		mRuns = rule.getAdaptedRuns();
 		return result;
 	}
 
@@ -247,9 +265,9 @@ public class LiptonReduction<L, P> {
 	@Deprecated(since = "2021-09-14")
 	private boolean choiceRuleWrapper(final BoundedPetriNet<L, P> petriNet) {
 		final ChoiceRule<L, P> rule = new ChoiceRule<>(mServices, mStatistics, petriNet, mCoEnabledRelation,
-				mRetromorphism, mCompositionFactory, mRun);
+				mRetromorphism, mCompositionFactory, mRuns);
 		final boolean result = rule.apply();
-		mRun = rule.getAdaptedRun();
+		mRuns = rule.getAdaptedRuns();
 		return result;
 	}
 
@@ -260,9 +278,9 @@ public class LiptonReduction<L, P> {
 	private boolean sequenceRuleWrapper(final BoundedPetriNet<L, P> petriNet) {
 		final SequenceRule<L, P> rule =
 				new SequenceRule<>(mServices, mStatistics, petriNet, mCoEnabledRelation, mRetromorphism, mMoverCheck,
-						mCompositionFactory, mPlaceFactory, mStuckPlaceChecker, mBranchingProcess, mRun);
+						mCompositionFactory, mPlaceFactory, mStuckPlaceChecker, mBranchingProcess, mRuns);
 		final boolean result = rule.apply();
-		mRun = rule.getAdaptedRun();
+		mRuns = rule.getAdaptedRuns();
 		return result;
 	}
 
@@ -272,8 +290,8 @@ public class LiptonReduction<L, P> {
 		return mPetriNet;
 	}
 
-	public PetriNetRun<L, P> getAdaptedRun() {
-		return mRun;
+	public Map<PetriNetRun<L, P>, PetriNetRun<L, P>> getAdaptedRuns() {
+		return mRuns;
 	}
 
 	public LiptonReductionStatisticsGenerator getStatistics() {
