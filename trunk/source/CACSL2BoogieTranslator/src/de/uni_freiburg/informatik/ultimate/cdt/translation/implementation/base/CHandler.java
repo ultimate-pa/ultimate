@@ -785,7 +785,7 @@ public class CHandler {
 			final ExpressionResult rr =
 					mExprResultTransformer.transformDecaySwitchRexBoolToInt(rightOperand, loc, node);
 
-			return mCExpressionTranslator.handleAdditiveOperation(loc, node.getOperator(), rl, rr, node);
+			return mCExpressionTranslator.handleAdditiveOperation(loc, node.getOperator(), rl, rr);
 		}
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_minusAssign: {
@@ -796,7 +796,7 @@ public class CHandler {
 			final ExpressionResult rr =
 					mExprResultTransformer.transformDecaySwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
-					mCExpressionTranslator.handleAdditiveOperation(loc, node.getOperator(), rl, rr, node);
+					mCExpressionTranslator.handleAdditiveOperation(loc, node.getOperator(), rl, rr);
 			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
 		}
 		case IASTBinaryExpression.op_binaryAnd:

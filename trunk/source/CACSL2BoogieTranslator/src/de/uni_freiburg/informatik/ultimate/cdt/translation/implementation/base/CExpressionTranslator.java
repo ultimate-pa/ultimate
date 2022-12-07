@@ -131,13 +131,13 @@ public class CExpressionTranslator {
 
 		// Convert integer with a value of 0 to a Null pointer if necessary
 		if (lType instanceof CPrimitive && rType instanceof CPointer
-				&& isNullPointerEquivalent((RValue) left.getLrValue(), lType)) {
+				&& isNullPointerEquivalent((RValue) left.getLrValue())) {
 			// FIXME: the following is a workaround for the null pointer
 			left = mExprResultTransformer.performImplicitConversion(left,
 					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
 			lType = left.getLrValue().getCType().getUnderlyingType();
 		} else if (lType instanceof CPointer && rType instanceof CPrimitive
-				&& isNullPointerEquivalent((RValue) right.getLrValue(), rType)) {
+				&& isNullPointerEquivalent((RValue) right.getLrValue())) {
 			// FIXME: the following is a workaround for the null pointer
 			right = mExprResultTransformer.performImplicitConversion(right,
 					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
@@ -200,7 +200,7 @@ public class CExpressionTranslator {
 	 *
 	 */
 	public ExpressionResult handleAdditiveOperation(final ILocation loc, final int op, ExpressionResult left,
-			ExpressionResult right, final IASTNode hook) {
+			ExpressionResult right) {
 		if (!List.of(IASTBinaryExpression.op_plus, IASTBinaryExpression.op_minus, IASTBinaryExpression.op_plusAssign,
 				IASTBinaryExpression.op_minusAssign).contains(op)) {
 			throw new AssertionError("no additive operation " + op);
@@ -232,14 +232,15 @@ public class CExpressionTranslator {
 			assert typeOfResult.equals(right.getLrValue().getCType());
 			final CPrimitive primitiveTypeOfResult = (CPrimitive) typeOfResult.getUnderlyingType();
 
-			addIntegerBoundsCheck(loc, builder, primitiveTypeOfResult, op, left.getLrValue().getValue(), right.getLrValue().getValue());
+			addIntegerBoundsCheck(loc, builder, primitiveTypeOfResult, op, left.getLrValue().getValue(),
+					right.getLrValue().getValue());
 			expr = mExpressionTranslation.constructArithmeticExpression(loc, op, left.getLrValue().getValue(),
 					primitiveTypeOfResult, right.getLrValue().getValue(), primitiveTypeOfResult);
 		} else if (lType instanceof CPointer && rType.isArithmeticType()) {
 			typeOfResult = left.getLrValue().getCType();
 			final CType pointsToType = ((CPointer) typeOfResult).getPointsToType();
 			final ExpressionResult re = mMemoryHandler.doPointerArithmeticWithConversion(op, loc,
-					left.getLrValue().getValue(), (RValue) right.getLrValue(), pointsToType, hook);
+					left.getLrValue().getValue(), (RValue) right.getLrValue(), pointsToType);
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
 			builder.addAllExceptLrValue(re);
 			expr = re.getLrValue().getValue();
@@ -251,7 +252,7 @@ public class CExpressionTranslator {
 			typeOfResult = right.getLrValue().getCType();
 			final CType pointsToType = ((CPointer) typeOfResult).getPointsToType();
 			final ExpressionResult re = mMemoryHandler.doPointerArithmeticWithConversion(op, loc,
-					right.getLrValue().getValue(), (RValue) left.getLrValue(), pointsToType, hook);
+					right.getLrValue().getValue(), (RValue) left.getLrValue(), pointsToType);
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
 			builder.addAllExceptLrValue(re);
 			expr = re.getLrValue().getValue();
@@ -310,7 +311,8 @@ public class CExpressionTranslator {
 	 * results from handling the operands. Requires that the {@link LRValue} of operands is an {@link RValue} (i.e.,
 	 * switchToRValueIfNecessary was applied if needed).
 	 */
-	public ExpressionResult handleUnaryArithmeticOperators(final ILocation loc, final int op, ExpressionResult operand) {
+	public ExpressionResult handleUnaryArithmeticOperators(final ILocation loc, final int op,
+			ExpressionResult operand) {
 		assert operand.getLrValue() instanceof RValue : "no RValue";
 		final CType inputType = operand.getLrValue().getCType().getUnderlyingType();
 
@@ -448,7 +450,8 @@ public class CExpressionTranslator {
 		case IASTBinaryExpression.op_divide:
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_divideAssign:
-			addIntegerBoundsCheck(loc, result, typeOfResult, op, left.getLrValue().getValue(), right.getLrValue().getValue());
+			addIntegerBoundsCheck(loc, result, typeOfResult, op, left.getLrValue().getValue(),
+					right.getLrValue().getValue());
 			break;
 		case IASTBinaryExpression.op_modulo:
 		case IASTBinaryExpression.op_moduloAssign:
@@ -584,8 +587,7 @@ public class CExpressionTranslator {
 		}
 
 		// in-/decremented value
-		final Expression valueXcremented =
-				constructXcrementedValue(loc, builder, oType, op, tmpRValue.getValue(), hook);
+		final Expression valueXcremented = constructXcrementedValue(loc, builder, oType, op, tmpRValue.getValue());
 
 		builder.setOrResetLrValue(new RValue(valueXcremented, oType, false, false));
 		final ExpressionResult assign = funMakeAssignment.apply(builder.build());
@@ -628,7 +630,7 @@ public class CExpressionTranslator {
 		final CType oType = exprRes.getLrValue().getCType().getUnderlyingType();
 		// in-/decremented value
 		final Expression valueXcremented =
-				constructXcrementedValue(loc, builder, oType, op, exprRes.getLrValue().getValue(), hook);
+				constructXcrementedValue(loc, builder, oType, op, exprRes.getLrValue().getValue());
 
 		// assign the old value to the temporary variable
 		final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
@@ -876,7 +878,7 @@ public class CExpressionTranslator {
 	 *            note that this method has sideeffects on this object! (add..BoundCheck(..) calls)
 	 */
 	private Expression constructXcrementedValue(final ILocation loc, final ExpressionResultBuilder result,
-			final CType ctype, final int op, final Expression value, final IASTNode hook) {
+			final CType ctype, final int op, final Expression value) {
 		assert op == IASTBinaryExpression.op_plus
 				|| op == IASTBinaryExpression.op_minus : "has to be either minus or plus";
 		final Expression valueIncremented;
@@ -886,8 +888,7 @@ public class CExpressionTranslator {
 					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
 			final CPrimitive oneType = mExpressionTranslation.getCTypeOfPointerComponents();
 			final RValue one = new RValue(oneEpr, oneType);
-			valueIncremented =
-					mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType());
+			valueIncremented = mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType());
 			addOffsetInBoundsCheck(loc, valueIncremented, result);
 		} else if (ctype instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) ctype;
@@ -1081,6 +1082,7 @@ public class CExpressionTranslator {
 
 	/**
 	 * Subtract two pointers.
+	 *
 	 * @param pointsToType
 	 *            {@link CType} of the objects to which the pointers point.
 	 * @param leftPtr
@@ -1108,7 +1110,7 @@ public class CExpressionTranslator {
 	/**
 	 * Checks if an {@link RValue} is an Integer of value 0
 	 */
-	private boolean isNullPointerEquivalent(final RValue value, final CType type) {
+	private boolean isNullPointerEquivalent(final RValue value) {
 		return BigInteger.ZERO.equals(mTypeSizes.extractIntegerValue(value));
 	}
 

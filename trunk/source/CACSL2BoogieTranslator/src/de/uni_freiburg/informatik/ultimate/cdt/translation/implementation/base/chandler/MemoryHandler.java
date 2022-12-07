@@ -76,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
@@ -236,12 +235,12 @@ public class MemoryHandler {
 			} else if (this == MemoryModelDeclarations.ULTIMATE_MEMINIT) {
 				return meminitRequirements(rmmf, settings);
 			} else if (this == MemoryModelDeclarations.C_STRCPY) {
-				return strcpyRequirements(rmmf, settings);
+				return strcpyRequirements(rmmf);
 			} else if (this == MemoryModelDeclarations.C_REALLOC) {
-				return reallocRequirements(rmmf, settings);
+				return reallocRequirements(rmmf);
 			} else if (this == MemoryModelDeclarations.ULTIMATE_ALLOC_STACK
 					|| this == MemoryModelDeclarations.ULTIMATE_ALLOC_HEAP) {
-				return allocRequirements(rmmf, settings);
+				return allocRequirements(rmmf);
 			} else if (this == ULTIMATE_PTHREADS_RWLOCK_READLOCK || this == ULTIMATE_PTHREADS_RWLOCK_WRITELOCK
 					|| this == ULTIMATE_PTHREADS_RWLOCK_UNLOCK) {
 				return rmmf.require(ULTIMATE_PTHREADS_RWLOCK);
@@ -250,16 +249,14 @@ public class MemoryHandler {
 			}
 		}
 
-		private static boolean allocRequirements(final RequiredMemoryModelFeatures rmmf,
-				final TranslationSettings settings) {
+		private static boolean allocRequirements(final RequiredMemoryModelFeatures rmmf) {
 			boolean changedSomething = false;
 			changedSomething |= rmmf.requireMemoryModelInfrastructure();
 			changedSomething |= rmmf.require(MemoryModelDeclarations.ULTIMATE_STACK_HEAP_BARRIER);
 			return changedSomething;
 		}
 
-		private static boolean reallocRequirements(final RequiredMemoryModelFeatures rmmf,
-				final TranslationSettings settings) {
+		private static boolean reallocRequirements(final RequiredMemoryModelFeatures rmmf) {
 			boolean changedSomething = false;
 			changedSomething |= rmmf.requireMemoryModelInfrastructure();
 			changedSomething |= rmmf.require(MemoryModelDeclarations.ULTIMATE_DEALLOC);
@@ -272,8 +269,7 @@ public class MemoryHandler {
 			return changedSomething;
 		}
 
-		private static boolean strcpyRequirements(final RequiredMemoryModelFeatures rmmf,
-				final TranslationSettings settings) {
+		private static boolean strcpyRequirements(final RequiredMemoryModelFeatures rmmf) {
 			boolean changedSomething = false;
 			rmmf.reportDataOnHeapRequired(CPrimitives.CHAR);
 			for (final CPrimitives prim : new HashSet<>(rmmf.mDataOnHeapRequired)) {
@@ -578,7 +574,7 @@ public class MemoryHandler {
 			final ConstructMemcpyOrMemmove cmcom = new ConstructMemcpyOrMemmove(this, mProcedureManager,
 					(TypeHandler) mTypeHandler, mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder,
 					mTypeSizes, dataRaceChecker);
-			decl.addAll(cmcom.declareMemcpyOrMemmove(main, heapDataArrays, MemoryModelDeclarations.C_MEMCPY));
+			decl.addAll(cmcom.declareMemcpyOrMemmove(main, MemoryModelDeclarations.C_MEMCPY));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
@@ -586,7 +582,7 @@ public class MemoryHandler {
 			final ConstructMemcpyOrMemmove cmcom = new ConstructMemcpyOrMemmove(this, mProcedureManager,
 					(TypeHandler) mTypeHandler, mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder,
 					mTypeSizes, dataRaceChecker);
-			decl.addAll(cmcom.declareMemcpyOrMemmove(main, heapDataArrays, MemoryModelDeclarations.C_MEMMOVE));
+			decl.addAll(cmcom.declareMemcpyOrMemmove(main, MemoryModelDeclarations.C_MEMMOVE));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
@@ -597,8 +593,8 @@ public class MemoryHandler {
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.C_REALLOC)) {
 			final ConstructRealloc cr = new ConstructRealloc(this, mProcedureManager, (TypeHandler) mTypeHandler,
-					mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder, mTypeSizes);
-			decl.addAll(cr.declareRealloc(main, heapDataArrays));
+					mTypeSizeAndOffsetComputer, mExpressionTranslation);
+			decl.addAll(cr.declareRealloc(main));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
@@ -893,6 +889,7 @@ public class MemoryHandler {
 	/**
 	 * Call for procedure that can allocate memory during the initialization. See
 	 * {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}.
+	 *
 	 * @param cType
 	 *            type of the object for which we allocate memory (unlike {@link MemoryHandler#getUltimateMemAllocCall}
 	 *            which takes a pointer to the object for which allocate.
@@ -1191,7 +1188,7 @@ public class MemoryHandler {
 	 * ExpressionResult.
 	 */
 	public ExpressionResult doPointerArithmeticWithConversion(final int operator, final ILocation loc,
-			final Expression ptrAddress, final RValue integer, final CType valueType, final IASTNode hook) {
+			final Expression ptrAddress, final RValue integer, final CType valueType) {
 		final ExpressionResult eres = mExpressionTranslation.convertIntToInt(loc, new ExpressionResult(integer),
 				mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression resultExpression =
@@ -1477,7 +1474,7 @@ public class MemoryHandler {
 			}
 
 			stmt.addAll(constructCountingLoop(constructBoundExitCondition(inParamProductExpr, loopCtrAux), loopCtrAux,
-					stepsize, loopBody, procName));
+					stepsize, loopBody));
 		}
 
 		final Body procBody = mProcedureManager.constructBody(ignoreLoc,
@@ -1638,8 +1635,7 @@ public class MemoryHandler {
 
 		final Expression loopCtrIncrement = mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
-		final List<Statement> loop =
-				constructCountingLoop(loopCondition, loopCtrAux, loopCtrIncrement, loopBody, strcpyMmDecl.getName());
+		final List<Statement> loop = constructCountingLoop(loopCondition, loopCtrAux, loopCtrIncrement, loopBody);
 
 		final Body procBody =
 				mProcedureManager.constructBody(ignoreLoc, decl.toArray(new VariableDeclaration[decl.size()]),
@@ -1677,52 +1673,6 @@ public class MemoryHandler {
 	}
 
 	/**
-	 * Construct a requires-clause that states that {@link SFO#MEMCPY_SRC} and {@link SFO#MEMCPY_DEST} do not overlap.
-	 * The clause is marked as {@link Check} for {@link Spec#UNDEFINED_BEHAVIOR}.
-	 *
-	 * @param loc
-	 *            The location of all expressions used in this requires-clause
-	 * @param sizeIdExpr
-	 *            an identifier expression pointing to the size variable that determines the interval of
-	 *            {@link SFO#MEMCPY_SRC} that should not overlap with {@link SFO#MEMCPY_DEST}.
-	 */
-	private RequiresSpecification constructRequiresSourceDestNoOverlap(final ILocation loc,
-			final IdentifierExpression sizeIdExpr) {
-		// memcpy does not allow overlapping:
-		// add requires dest.base != src.base || src.offset + size < dest.offset || dest.offset + size < src.offset
-		final List<Expression> noOverlapExprs = new ArrayList<>(3);
-		final IdentifierExpression srcpointer =
-				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(),
-						SFO.MEMCPY_SRC, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, SFO.MEMCPY));
-		final IdentifierExpression destpointer =
-				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(),
-						SFO.MEMCPY_DEST, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, SFO.MEMCPY));
-		final Expression srcbase = getPointerBaseAddress(srcpointer, loc);
-		final Expression destbase = getPointerBaseAddress(destpointer, loc);
-		final Expression srcoffset = getPointerOffset(srcpointer, loc);
-		final Expression destoffset = getPointerOffset(destpointer, loc);
-
-		// dest.base != src.base
-		noOverlapExprs.add(ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, srcbase, destbase));
-		// src.offset + size < dest.offset
-
-		noOverlapExprs.add(constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan,
-				constructPointerBinaryArithmeticExpression(loc, IASTBinaryExpression.op_plus, srcoffset, sizeIdExpr),
-				destoffset));
-
-		// dest.offset + size < src.offset
-		noOverlapExprs.add(constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan,
-				constructPointerBinaryArithmeticExpression(loc, IASTBinaryExpression.op_plus, destoffset, sizeIdExpr),
-				srcoffset));
-
-		// || over all three
-		final RequiresSpecification noOverlapping =
-				new RequiresSpecification(loc, false, ExpressionFactory.or(loc, noOverlapExprs));
-		new Check(Spec.UNDEFINED_BEHAVIOR).annotate(noOverlapping);
-		return noOverlapping;
-	}
-
-	/**
 	 * Construct loop of the following form, where loopBody is a List of statements and the variables loopConterVariable
 	 * and loopBoundVariable have the translated type of size_t.
 	 *
@@ -1730,13 +1680,12 @@ public class MemoryHandler {
 	 *
 	 * @param condition
 	 *            (may depend on
-	 * @param loopCounterVariableId
 	 * @param loopBody
+	 * @param loopCounterVariableId
 	 * @return
 	 */
-	public ArrayList<Statement> constructCountingLoop(final Expression condition, final AuxVarInfo loopCounterAux,
-			final Expression loopCounterIncrementExpr, final List<Statement> loopBody,
-			final String surroundingProcedure) {
+	public List<Statement> constructCountingLoop(final Expression condition, final AuxVarInfo loopCounterAux,
+			final Expression loopCounterIncrementExpr, final List<Statement> loopBody) {
 		final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final ArrayList<Statement> stmt = new ArrayList<>();
 
@@ -1806,15 +1755,6 @@ public class MemoryHandler {
 					new Expression[] { convertedValue }));
 		}
 		return result;
-	}
-
-	/**
-	 * Returns an CPrimitive which is unsigned, integer and not bool that has the smallest bytesize.
-	 */
-	private CPrimitives getCprimitiveThatFitsBest(final List<ReadWriteDefinition> test) {
-		final int smallestBytesize =
-				test.stream().mapToInt(ReadWriteDefinition::getBytesize).min().orElse(Integer.MAX_VALUE);
-		return getCprimitiveThatFitsBest(smallestBytesize);
 	}
 
 	/**
@@ -1912,7 +1852,7 @@ public class MemoryHandler {
 						inParamAmount, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
 
 		final List<Statement> stmt = constructCountingLoop(
-				constructBoundExitCondition(inParamAmountExprImpl, loopCtrAux), loopCtrAux, one, loopBody, procName);
+				constructBoundExitCondition(inParamAmountExprImpl, loopCtrAux), loopCtrAux, one, loopBody);
 
 		final Body procBody = mProcedureManager.constructBody(ignoreLoc,
 				decl.toArray(new VariableDeclaration[decl.size()]), stmt.toArray(new Statement[stmt.size()]), procName);
@@ -2009,7 +1949,7 @@ public class MemoryHandler {
 		return constructDeclOfPointerIndexedArray(loc, mBooleanArrayHelper.constructBoolReplacementType(), arrayName);
 	}
 
-	private CPrimitive getRwLockCounterType() {
+	private static CPrimitive getRwLockCounterType() {
 		return new CPrimitive(CPrimitives.SCHAR);
 	}
 
@@ -2390,24 +2330,6 @@ public class MemoryHandler {
 			conjuncts.add(ensuresArrayHasValue(loc, values.get(i), indices.get(i), arrayExpr));
 		}
 		return ExpressionFactory.and(loc, conjuncts);
-	}
-
-	/**
-	 *
-	 * @param loc
-	 *            location of translation unit
-	 * @param vars
-	 * @return ModifiesSpecification which says that all variables of the set vars can be modified.
-	 */
-	private static <T> ModifiesSpecification constructModifiesSpecification(final ILocation loc,
-			final Collection<T> vars, final Function<T, VariableLHS> varToLHS) {
-		final VariableLHS[] modifie = new VariableLHS[vars.size()];
-		int i = 0;
-		for (final T variable : vars) {
-			modifie[i] = varToLHS.apply(variable);
-			i++;
-		}
-		return new ModifiesSpecification(loc, false, modifie);
 	}
 
 	/**

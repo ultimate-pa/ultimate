@@ -396,7 +396,7 @@ public class ACSLHandler implements IACSLHandler {
 			final ExpressionResult right =
 					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getRight());
 			final int op = getCASTBinaryExprOperator(node.getOperator());
-			return mCExpressionTranslator.handleAdditiveOperation(loc, op, left, right, main.getAcslHook());
+			return mCExpressionTranslator.handleAdditiveOperation(loc, op, left, right);
 		}
 		case COMPEQ:
 		case COMPNEQ: {
