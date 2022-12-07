@@ -33,12 +33,14 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
+import org.eclipse.cdt.core.dom.ast.ASTNameCollector;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
@@ -167,6 +169,8 @@ public class FunctionHandler {
 
 	private final TypeSizes mTypeSizes;
 
+	private final Set<String> mFunctionsWithUnusedVarargs;
+
 	/**
 	 *
 	 * @param logger
@@ -202,6 +206,7 @@ public class FunctionHandler {
 		mExprResultTransformer = expressionResultTransformer;
 		mVariablesOnHeap = variablesOnHeap;
 		mTypeSizes = typeSizes;
+		mFunctionsWithUnusedVarargs = new HashSet<>();
 	}
 
 	/**
@@ -265,6 +270,15 @@ public class FunctionHandler {
 		mProcedureManager.beginProcedureScope(mCHandler, definedProcInfo);
 
 		final CFunction funType = (CFunction) cDec.getType();
+		// If the function has varargs, but no va_start, then the varargs are not used.
+		// In that case we store the name of the procedure to deallocate the varargs in that case
+		if (funType.hasVarArgs()) {
+			final ASTNameCollector vaListFinder = new ASTNameCollector("__builtin_va_start");
+			node.getBody().accept(vaListFinder);
+			if (vaListFinder.getNames().length == 0) {
+				mFunctionsWithUnusedVarargs.add(definedProcName);
+			}
+		}
 		final CType returnCType = funType.getResultType();
 		definedProcInfo.updateCFunction(funType);
 		final boolean returnTypeIsVoid =
@@ -726,6 +740,11 @@ public class FunctionHandler {
 					mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, currentOffset),
 					auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
 			resultBuilder.addStatements(writes);
+			// If the varargs are not used inside the function, deallocate the pointer directly after writing the values
+			if (mFunctionsWithUnusedVarargs.contains(calleeName)) {
+				resultBuilder
+						.addStatement(memoryHandler.getDeallocCall(new RValue(auxvarinfo.getExp(), pointerType), loc));
+			}
 			translatedParams.add(auxvarinfo.getExp());
 		}
 
