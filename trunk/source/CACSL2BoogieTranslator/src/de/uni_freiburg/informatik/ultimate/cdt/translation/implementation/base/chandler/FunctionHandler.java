@@ -39,11 +39,9 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
-import org.eclipse.cdt.core.dom.ast.ASTNameCollector;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
-import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
@@ -51,7 +49,6 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
 import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
-import org.eclipse.cdt.core.dom.ast.IBinding;
 import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -98,7 +95,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction.VarArgsUsage;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
@@ -268,8 +264,7 @@ public class FunctionHandler {
 
 		mProcedureManager.beginProcedureScope(mCHandler, definedProcInfo);
 
-		final CFunction oldFunType = (CFunction) cDec.getType();
-		final CFunction funType = updateVarArgsUsage(node, oldFunType);
+		final CFunction funType = (CFunction) cDec.getType();
 		final CType returnCType = funType.getResultType();
 		definedProcInfo.updateCFunction(funType);
 		final boolean returnTypeIsVoid =
@@ -399,23 +394,6 @@ public class FunctionHandler {
 		mProcedureManager.endProcedureScope(mCHandler);
 
 		return new Result(impl);
-	}
-
-	private static CFunction updateVarArgsUsage(final IASTFunctionDefinition node, final CFunction oldFunType) {
-		final CFunction funType;
-		// update varags usage
-		if (oldFunType.hasVarArgs() && oldFunType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
-			// if the function body creates a va_list object it uses its varargs
-			final ASTNameCollector vaListFinder1 = new ASTNameCollector("va_list");
-			node.getBody().accept(vaListFinder1);
-			final ASTNameCollector vaListFinder2 = new ASTNameCollector("__builtin_va_list");
-			node.getBody().accept(vaListFinder2);
-			final boolean usesVarArgs = vaListFinder1.getNames().length > 0 || vaListFinder2.getNames().length > 0;
-			funType = oldFunType.updateVarArgsUsage(usesVarArgs);
-		} else {
-			funType = oldFunType;
-		}
-		return funType;
 	}
 
 	/**
@@ -635,6 +613,7 @@ public class FunctionHandler {
 		}
 		assert calleeProcDecl != null;
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		// TODO: Should we also introduce a pointer for varargs of extern functions or is dispatching sufficient?
 		if (calleeProcCType != null && calleeProcCType.hasVarArgs()) {
 			if (calleeProcCType.isExtern()) {
 				// we can handle calls to extern variadic functions by dispatching all the arguments and assuming a
@@ -655,13 +634,6 @@ public class FunctionHandler {
 					resultBuilder.addAllExceptLrValue(argRes);
 				}
 				return resultBuilder.build();
-			}
-			// TODO: What should we do with that?
-			if (calleeProcCType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
-				// this should not happen, but just to be sure
-				throw new UnsupportedSyntaxException(loc,
-						"encountered a call to a var args function and varargs usage is unknown: "
-								+ calleeProcInfo.getProcedureName());
 			}
 		}
 
@@ -735,11 +707,11 @@ public class FunctionHandler {
 				}
 				resultBuilder.addAllExceptLrValue(param);
 				final Expression pointerBase = MemoryHandler.getPointerBaseAddress(auxvarinfo.getExp(), loc);
-				final Expression pointerOffset =
-						mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-								MemoryHandler.getPointerOffset(auxvarinfo.getExp(), loc), pointerType, mExpressionTranslation
-										.constructLiteralForIntegerType(loc, pointerType, BigInteger.valueOf(currentOffset)),
-								pointerType);
+				final Expression pointerOffset = mExpressionTranslation.constructArithmeticExpression(loc,
+						IASTBinaryExpression.op_plus, MemoryHandler.getPointerOffset(auxvarinfo.getExp(), loc),
+						pointerType, mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType,
+								BigInteger.valueOf(currentOffset)),
+						pointerType);
 				final Expression address =
 						MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, pointerOffset, loc);
 				final Expression value = param.getLrValue().getValue();
@@ -747,8 +719,8 @@ public class FunctionHandler {
 						param.getCType(), false));
 				currentOffset += size;
 			}
-			final Expression sizeExpression =
-					mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, BigInteger.valueOf(currentOffset));
+			final Expression sizeExpression = mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType,
+					BigInteger.valueOf(currentOffset));
 			// TODO: Stack or Heap?
 			resultBuilder.addStatement(
 					memoryHandler.getUltimateMemAllocCall(sizeExpression, auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
@@ -1062,25 +1034,7 @@ public class FunctionHandler {
 				new Procedure(loc, attr, procInfo.getProcedureName(), typeParams, in, out, spec, null);
 
 		procInfo.resetDeclaration(newDeclaration);
-
-		// if possible, find the actual definition of this declaration s.t. we can update the varargs usage
-		final CFunction newFuncType;
-		if (node instanceof IASTDeclarator && funcType.hasVarArgs()
-				&& funcType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
-			final IBinding binding = ((IASTDeclarator) node).getName().resolveBinding();
-			final org.eclipse.cdt.internal.core.dom.parser.c.CFunction funBinding =
-					(org.eclipse.cdt.internal.core.dom.parser.c.CFunction) binding;
-			final IASTFunctionDeclarator definitionDeclarator = funBinding.getDefinition();
-			if (definitionDeclarator != null) {
-				final IASTFunctionDefinition def = (IASTFunctionDefinition) funBinding.getDefinition().getParent();
-				newFuncType = updateVarArgsUsage(def, funcType);
-			} else {
-				newFuncType = funcType;
-			}
-		} else {
-			newFuncType = funcType;
-		}
-		procInfo.updateCFunction(newFuncType);
+		procInfo.updateCFunction(funcType);
 		// end scope for retranslation of ACSL specification
 		mCHandler.endScope();
 	}
