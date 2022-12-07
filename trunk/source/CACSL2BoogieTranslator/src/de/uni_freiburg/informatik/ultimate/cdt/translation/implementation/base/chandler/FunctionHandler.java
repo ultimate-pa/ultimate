@@ -704,9 +704,11 @@ public class FunctionHandler {
 			translatedParams.add(in.getLrValue().getValue());
 			resultBuilder.addAllExceptLrValue(in);
 		}
-		// If the function has varargs, create a pointer for all the remaining arguments and pass them to the function
 		if (calleeProcCType != null && calleeProcCType.hasVarArgs()) {
 			final boolean hasUnusedVarargs = mFunctionsWithUnusedVarargs.contains(calleeName);
+			// For varargs we need a special handling:
+			// - If the varargs are not used, we simply dispatch the arguments, without passing them to the function.
+			// - If they are used, we create a pointer for all the remaining arguments and pass them to the function.
 			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
 					mTypeHandler.constructPointerType(loc), SFO.AUXVAR.VARARGS_POINTER);
 			if (!hasUnusedVarargs) {
@@ -735,7 +737,7 @@ public class FunctionHandler {
 				if (hasUnusedVarargs) {
 					continue;
 				}
-				// Write the current parameter to *varargs + currentOffset and increment currentOffset by the typesize
+				// Write the current parameter to *(varargs + currentOffset) and increment currentOffset by the typesize
 				// afterwards
 				final Expression offsetExpr =
 						mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, currentOffset);
