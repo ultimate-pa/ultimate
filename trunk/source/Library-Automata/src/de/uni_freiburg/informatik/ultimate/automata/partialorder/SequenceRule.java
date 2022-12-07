@@ -562,10 +562,13 @@ public class SequenceRule<L, P> extends ReductionRule<L, P> {
 	}
 
 	private boolean isFirstTransitionNeeded2(final Composition<L, P> comp, final IPetriNet<L, P> petriNet) {
-		if (Stream
+		final var coenabledAccepting = Stream
 				.concat(mCoenabledRelation.getImage(comp.getFirst()).stream(),
 						mCoenabledRelation.getImage(comp.getSecond()).stream())
-				.distinct().anyMatch(t -> hasAcceptingSuccessor(t, petriNet))) {
+				.distinct().filter(t -> hasAcceptingSuccessor(t, petriNet)).findAny();
+		if (coenabledAccepting.isPresent()) {
+			mLogger.debug("  first transition %s is needed because coenabled transition %s has accepting successors",
+					comp.getFirst(), coenabledAccepting.get());
 			return true;
 		}
 
