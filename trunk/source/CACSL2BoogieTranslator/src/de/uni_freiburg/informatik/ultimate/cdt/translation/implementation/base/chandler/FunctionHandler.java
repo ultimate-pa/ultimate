@@ -718,13 +718,9 @@ public class FunctionHandler {
 					mTypeHandler.constructPointerType(loc), SFO.AUXVAR.VARARGS_POINTER);
 			resultBuilder.addAuxVar(auxvarinfo);
 			resultBuilder.addDeclaration(auxvarinfo.getVarDec());
-			final CPrimitive type = mExpressionTranslation.getCTypeOfPointerComponents();
-			int currentOffset = mTypeSizes.getSize(type.getType());
-			final List<Statement> writes =
-					new ArrayList<>(memoryHandler.getWriteCall(loc,
-							new HeapLValue(auxvarinfo.getExp(), new CPointer(type), null), mExpressionTranslation
-									.constructLiteralForIntegerType(loc, type, BigInteger.valueOf(currentOffset)),
-							type, false));
+			final CPrimitive pointerType = mExpressionTranslation.getCTypeOfPointerComponents();
+			int currentOffset = 0;
+			final List<Statement> writes = new ArrayList<>();
 			for (int i = calleeProcCType.getParameterTypes().length; i < arguments.length; i++) {
 				final ExpressionResult paramTmp =
 						mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]);
@@ -741,18 +737,18 @@ public class FunctionHandler {
 				final Expression pointerBase = MemoryHandler.getPointerBaseAddress(auxvarinfo.getExp(), loc);
 				final Expression pointerOffset =
 						mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-								MemoryHandler.getPointerOffset(auxvarinfo.getExp(), loc), type, mExpressionTranslation
-										.constructLiteralForIntegerType(loc, type, BigInteger.valueOf(currentOffset)),
-								type);
+								MemoryHandler.getPointerOffset(auxvarinfo.getExp(), loc), pointerType, mExpressionTranslation
+										.constructLiteralForIntegerType(loc, pointerType, BigInteger.valueOf(currentOffset)),
+								pointerType);
 				final Expression address =
 						MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, pointerOffset, loc);
 				final Expression value = param.getLrValue().getValue();
-				writes.addAll(memoryHandler.getWriteCall(loc, new HeapLValue(address, new CPointer(type), null), value,
-						type, false));
+				writes.addAll(memoryHandler.getWriteCall(loc, new HeapLValue(address, param.getCType(), null), value,
+						param.getCType(), false));
 				currentOffset += size;
 			}
 			final Expression sizeExpression =
-					mExpressionTranslation.constructLiteralForIntegerType(loc, type, BigInteger.valueOf(currentOffset));
+					mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, BigInteger.valueOf(currentOffset));
 			// TODO: Stack or Heap?
 			resultBuilder.addStatement(
 					memoryHandler.getUltimateMemAllocCall(sizeExpression, auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
