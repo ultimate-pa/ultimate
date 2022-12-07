@@ -633,7 +633,6 @@ public class FunctionHandler {
 		}
 		assert calleeProcDecl != null;
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		// TODO: Should we also introduce a pointer for varargs of extern functions or is dispatching sufficient?
 		if (calleeProcCType != null && calleeProcCType.hasVarArgs()) {
 			if (calleeProcCType.isExtern()) {
 				// we can handle calls to extern variadic functions by dispatching all the arguments and assuming a
