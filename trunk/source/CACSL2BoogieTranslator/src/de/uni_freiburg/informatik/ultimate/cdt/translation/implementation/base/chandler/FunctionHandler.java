@@ -275,7 +275,13 @@ public class FunctionHandler {
 		if (funType.hasVarArgs()) {
 			final ASTNameCollector vaListFinder = new ASTNameCollector("__builtin_va_start");
 			node.getBody().accept(vaListFinder);
-			if (vaListFinder.getNames().length == 0) {
+			final int numberOfVaStarts = vaListFinder.getNames().length;
+			if (numberOfVaStarts > 1) {
+				// TODO: This requires a different handling of va_start and va_end.
+				// Currently they are simply handled by assignment and deallocation.
+				throw new UnsupportedSyntaxException(loc, definedProcName + " has multiple calls to va_start.");
+			}
+			if (numberOfVaStarts == 0) {
 				mFunctionsWithUnusedVarargs.add(definedProcName);
 			}
 		}
