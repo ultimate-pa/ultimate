@@ -22,6 +22,6 @@ void isSorted(int count,...) {
 }
 
 int main() {
-  isSorted(3, 0,1,3);
-  isSorted(2, 1L,2L);
+  isSorted(3, 0LL,1LL,3LL);
+  isSorted(2, 1LL,2LL);
 }
