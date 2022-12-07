@@ -163,19 +163,6 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 
 	}
 
-	// TODO Support these via other settings
-	/**
-	 * Like SEMANTIC_BASED_MOVER_CHECK, but taking into account the predicates added by Trace Abstraction steps. Only
-	 * useful when repeated Lipton Reduction is enabled.
-	 */
-
-	// SEMANTIC_BASED_MOVER_CHECK_WITH_PREDICATES,
-	/**
-	 * Like SEMANTIC_BASED_MOVER_CHECK_WITH_PREDICATES, but considers independence under individual predicates rather
-	 * than their conjunction. Only useful when repeated Lipton Reduction is enabled.
-	 */
-	// SEMANTIC_BASED_MOVER_CHECK_WITH_PREDICATES_DISJUNCTIVE,
-
 	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
 
 	protected final PredicateFactoryRefinement mStateFactoryForRefinement;
