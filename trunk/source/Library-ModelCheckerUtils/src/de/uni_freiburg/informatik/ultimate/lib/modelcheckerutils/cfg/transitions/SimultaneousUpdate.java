@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Represents a simultaneous variable update that consists of two parts 1.
@@ -139,15 +140,19 @@ public class SimultaneousUpdate {
 								"Cannot find an inVar-based term that is equivalent to %s's outVar %s in TransFormula %s", pv, outVar, tf));
 					}
 					if (SmtSortUtils.isArraySort(pv.getSort())) {
-						final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore
-								.convert(mgdScript.getScript(), renamed);
-						if (mdns.getIndices().size() > 1) {
-							throw new UnsupportedOperationException("Nested stores not yet supported");
+						if (renamed instanceof TermVariable) {
+							deterministicAssignment.put(pv, renamed);
+						} else {
+							final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore
+									.convert(mgdScript.getScript(), renamed);
+							if (mdns.getIndices().size() > 1) {
+								throw new UnsupportedOperationException("Nested stores not yet supported");
+							}
+							if (!pv.getTermVariable().equals(mdns.getArray())) {
+								throw new UnsupportedOperationException("Only self-update supported");
+							}
+							deterministicArrayWrites.put(pv, mdns.getIndices().get(0), mdns.getValues().get(0));
 						}
-						if (!pv.getTermVariable().equals(mdns.getArray())) {
-							throw new UnsupportedOperationException("Only self-update supported");
-						}
-						deterministicArrayWrites.put(pv, mdns.getIndices().get(0), mdns.getValues().get(0));
 					} else {
 						deterministicAssignment.put(pv, renamed);
 					}
@@ -157,7 +162,7 @@ public class SimultaneousUpdate {
 
 		final Set<IProgramVar> readonlyVariables = new HashSet<>();
 		for (final IProgramVar pv : unmodifiedVars) {
-			if (isReadInSomeAssignment(pv, deterministicAssignment)) {
+			if (isReadInSomeAssignment(pv, deterministicAssignment, deterministicArrayWrites)) {
 				readonlyVariables.add(pv);
 			}
 		}
@@ -166,9 +171,17 @@ public class SimultaneousUpdate {
 	}
 
 	private static boolean isReadInSomeAssignment(final IProgramVar pv,
-			final Map<IProgramVar, Term> deterministicAssignment) {
+			final Map<IProgramVar, Term> deterministicAssignment, final NestedMap2<IProgramVar, ArrayIndex, Term> deterministicArrayWrites) {
 		for (final Entry<IProgramVar, Term> entry : deterministicAssignment.entrySet()) {
 			if (Arrays.asList(entry.getValue().getFreeVars()).contains(pv.getTermVariable())) {
+				return true;
+			}
+		}
+		for (final Triple<IProgramVar, ArrayIndex, Term> triple : deterministicArrayWrites.entrySet()) {
+			if (triple.getSecond().getFreeVars().contains(pv.getTermVariable())) {
+				return true;
+			}
+			if (Arrays.asList(triple.getThird().getFreeVars()).contains(pv.getTermVariable())) {
 				return true;
 			}
 		}
