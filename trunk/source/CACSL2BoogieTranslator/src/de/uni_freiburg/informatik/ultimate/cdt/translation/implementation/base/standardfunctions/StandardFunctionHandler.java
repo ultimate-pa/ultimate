@@ -913,11 +913,12 @@ public class StandardFunctionHandler {
 			throw new UnsupportedSyntaxException(loc, "The first argument of " + name + " has to be an identifier.");
 		}
 		// TODO: Is this the correct DeclarationInformation?
-		final DeclarationInformation decl = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-		final LeftHandSide lhs = new VariableLHS(loc, mTypeHandler.getBoogiePointerType(),
-				((IdentifierExpression) dst).getIdentifier(), decl);
-		final IdentifierExpression rhs =
-				new IdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), SFO.VARARGS, decl);
+		final String procedure = mProcedureManager.getCurrentProcedureID();
+		final LeftHandSide lhs =
+				new VariableLHS(loc, mTypeHandler.getBoogiePointerType(), ((IdentifierExpression) dst).getIdentifier(),
+						new DeclarationInformation(StorageClass.LOCAL, procedure));
+		final IdentifierExpression rhs = new IdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), SFO.VARARGS,
+				new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procedure));
 		// TODO: Is this enough to simply make the assignment or do we actually need to copy this (like memcpy)?
 		builder.addStatement(StatementFactory.constructAssignmentStatement(loc, lhs, rhs));
 		return builder.build();
