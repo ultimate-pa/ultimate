@@ -701,10 +701,13 @@ public class FunctionHandler {
 		}
 		// If the function has varargs, create a pointer for all the remaining arguments and pass them to the function
 		if (calleeProcCType != null && calleeProcCType.hasVarArgs()) {
+			final boolean hasUnusedVarargs = mFunctionsWithUnusedVarargs.contains(calleeName);
 			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
 					mTypeHandler.constructPointerType(loc), SFO.AUXVAR.VARARGS_POINTER);
-			resultBuilder.addAuxVar(auxvarinfo);
-			resultBuilder.addDeclaration(auxvarinfo.getVarDec());
+			if (!hasUnusedVarargs) {
+				resultBuilder.addAuxVar(auxvarinfo);
+				resultBuilder.addDeclaration(auxvarinfo.getVarDec());
+			}
 			final CPrimitive pointerType = mExpressionTranslation.getCTypeOfPointerComponents();
 			BigInteger currentOffset = BigInteger.ZERO;
 			final List<Statement> writes = new ArrayList<>();
@@ -723,9 +726,12 @@ public class FunctionHandler {
 					param = paramTmp;
 					size = mTypeSizes.getSizeOfPointer();
 				}
+				resultBuilder.addAllExceptLrValue(param);
+				if (hasUnusedVarargs) {
+					continue;
+				}
 				// Write the current parameter to *varargs + currentOffset and increment currentOffset by the typesize
 				// afterwards
-				resultBuilder.addAllExceptLrValue(param);
 				final Expression offsetExpr =
 						mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, currentOffset);
 				final Expression pointerOffset = mExpressionTranslation.constructArithmeticExpression(loc,
@@ -736,16 +742,13 @@ public class FunctionHandler {
 						param.getLrValue().getValue(), param.getCType(), false));
 				currentOffset = currentOffset.add(BigInteger.valueOf(size));
 			}
-			resultBuilder.addStatement(memoryHandler.getUltimateMemAllocCall(
-					mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, currentOffset),
-					auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
-			resultBuilder.addStatements(writes);
-			// If the varargs are not used inside the function, deallocate the pointer directly after writing the values
-			if (mFunctionsWithUnusedVarargs.contains(calleeName)) {
-				resultBuilder
-						.addStatement(memoryHandler.getDeallocCall(new RValue(auxvarinfo.getExp(), pointerType), loc));
+			if (!hasUnusedVarargs) {
+				resultBuilder.addStatement(memoryHandler.getUltimateMemAllocCall(
+						mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, currentOffset),
+						auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
+				resultBuilder.addStatements(writes);
+				translatedParams.add(auxvarinfo.getExp());
 			}
-			translatedParams.add(auxvarinfo.getExp());
 		}
 
 		if (isCalleeSignatureNotYetDetermined) {
@@ -838,8 +841,9 @@ public class FunctionHandler {
 	private VarList[] processInParams(final ILocation loc, final CFunction cFun, final BoogieProcedureInfo procInfo,
 			final IASTNode hook, final boolean updateSymbolTable) {
 		final CDeclaration[] paramDecs = cFun.getParameterTypes();
-		final boolean hasVarArgs = cFun.hasVarArgs();
-		final int size = hasVarArgs ? paramDecs.length + 1 : paramDecs.length;
+		final boolean hasUsedVarArgs =
+				cFun.hasVarArgs() && !mFunctionsWithUnusedVarargs.contains(procInfo.getProcedureName());
+		final int size = hasUsedVarArgs ? paramDecs.length + 1 : paramDecs.length;
 		final VarList[] in = new VarList[size];
 		for (int i = 0; i < paramDecs.length; ++i) {
 			final CDeclaration currentParamDec = paramDecs[i];
@@ -863,7 +867,7 @@ public class FunctionHandler {
 						new SymbolTableValue(currentParamId, null, currentParamDec, declInformation, null, false));
 			}
 		}
-		if (hasVarArgs) {
+		if (hasUsedVarArgs) {
 			// Add an additional pointer-argument for the varargs
 			in[paramDecs.length] =
 					new VarList(loc, new String[] { SFO.VARARGS }, mTypeHandler.constructPointerType(loc));
