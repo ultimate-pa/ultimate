@@ -702,12 +702,15 @@ public class FunctionHandler {
 				final ExpressionResult param;
 				int size;
 				if (paramTmp.getCType().getUnderlyingType() instanceof CPrimitive) {
+					// All smaller types (char, short) are promoted to int
 					param = mExprResultTransformer.doIntegerPromotion(loc, paramTmp);
 					size = mTypeSizes.getSize(((CPrimitive) param.getCType()).getType());
 				} else {
 					param = paramTmp;
 					size = mTypeSizes.getSizeOfPointer();
 				}
+				// Write the current parameter to *varargs + currentOffset and increment currentOffset by the typesize
+				// afterwards
 				resultBuilder.addAllExceptLrValue(param);
 				final Expression offsetExpr =
 						mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, currentOffset);
@@ -719,7 +722,6 @@ public class FunctionHandler {
 						param.getLrValue().getValue(), param.getCType(), false));
 				currentOffset = currentOffset.add(BigInteger.valueOf(size));
 			}
-			// TODO: Stack or Heap?
 			resultBuilder.addStatement(memoryHandler.getUltimateMemAllocCall(
 					mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, currentOffset),
 					auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
