@@ -918,7 +918,7 @@ public class StandardFunctionHandler {
 				((IdentifierExpression) dst).getIdentifier(), decl);
 		final IdentifierExpression rhs =
 				new IdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), SFO.VARARGS, decl);
-		// TODO: Is this enough to simply make the assingment or do we actually need to copy this (like memcpy)?
+		// TODO: Is this enough to simply make the assignment or do we actually need to copy this (like memcpy)?
 		builder.addStatement(StatementFactory.constructAssignmentStatement(loc, lhs, rhs));
 		return builder.build();
 	}
