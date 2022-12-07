@@ -110,7 +110,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
@@ -281,7 +280,10 @@ public class FunctionHandler {
 				// Currently they are simply handled by assignment and deallocation.
 				throw new UnsupportedSyntaxException(loc, definedProcName + " has multiple calls to va_start.");
 			}
-			if (numberOfVaStarts == 0) {
+			// TODO: Extern function are problematic, since we don't know, if their arguments are used
+			// (the definition might be handled after the call)
+			// Therefore this handling is currently unsound for MemTrack / MemCleanup
+			if (numberOfVaStarts == 0 && !funType.isExtern()) {
 				mFunctionsWithUnusedVarargs.add(definedProcName);
 			}
 		}
@@ -632,30 +634,6 @@ public class FunctionHandler {
 			mLogger.warn("Unknown extern function " + calleeName);
 		}
 		assert calleeProcDecl != null;
-		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		if (calleeProcCType != null && calleeProcCType.hasVarArgs()) {
-			if (calleeProcCType.isExtern()) {
-				// we can handle calls to extern variadic functions by dispatching all the arguments and assuming a
-				// non-deterministic return value. We do not need to declare the actual function.
-				if (!calleeProcCType.getResultType().equals(new CPrimitive(CPrimitives.VOID))) {
-					final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
-							calleeProcCType.getResultType(), SFO.AUXVAR.NONDET);
-					resultBuilder.addDeclaration(auxvarinfo.getVarDec());
-					resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
-					final LRValue returnValue = new RValue(auxvarinfo.getExp(), calleeProcCType.getResultType());
-					resultBuilder.setLrValue(returnValue);
-				}
-
-				// dispatch all arguments
-				for (final IASTInitializerClause arg : arguments) {
-					final ExpressionResult argRes =
-							mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arg);
-					resultBuilder.addAllExceptLrValue(argRes);
-				}
-				return resultBuilder.build();
-			}
-		}
-
 		/*
 		 * If in C a function is declared without input parameters, and no implementation has been given yet, the
 		 * definitive signature is determined by the first call to the function.
@@ -666,6 +644,7 @@ public class FunctionHandler {
 				isCalleeSignatureNotYetDetermined);
 		// signature of the call and signature of the declaration match, continue
 		// dispatch the inparams
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final ArrayList<Expression> translatedParams = new ArrayList<>();
 		for (int i = 0; i < calleeProcCType.getParameterTypes().length; i++) {
 			final IASTInitializerClause inParam = arguments[i];
