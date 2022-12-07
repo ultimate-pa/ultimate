@@ -846,7 +846,7 @@ public class FunctionHandler {
 	private VarList[] processInParams(final ILocation loc, final CFunction cFun, final BoogieProcedureInfo procInfo,
 			final IASTNode hook, final boolean updateSymbolTable) {
 		final CDeclaration[] paramDecs = cFun.getParameterTypes();
-		final boolean hasVarArgs = procInfo.getCType().hasVarArgs();
+		final boolean hasVarArgs = cFun.hasVarArgs();
 		final int size = hasVarArgs ? paramDecs.length + 1 : paramDecs.length;
 		final VarList[] in = new VarList[size];
 		for (int i = 0; i < paramDecs.length; ++i) {
