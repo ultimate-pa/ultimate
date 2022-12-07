@@ -120,60 +120,72 @@ public class LiptonReduction<L, P> {
 		mStuckPlaceChecker = stuckPlaceChecker;
 
 		// Copy the Petri net once, so the original is not modified.
-		final var copy2Originals = new HashMap<Transition<L, P>, Transition<L, P>>();
+		final var original2Copy = new HashMap<Transition<L, P>, Transition<L, P>>();
 		mPetriNet = CopySubnet.copy(mServices, petriNet, new HashSet<>(petriNet.getTransitions()),
-				new HashSet<>(petriNet.getAlphabet()), true, copy2Originals);
+				new HashSet<>(petriNet.getAlphabet()), true, original2Copy);
 
 		if (run != null) {
 			assert run.isRunOf(petriNet) : "Given run does not belong to given net";
-			mRun = adaptRunToCopy(run, copy2Originals);
+			mRun = adaptRunToCopy(run, original2Copy);
 			assert mRun.isRunOf(mPetriNet) : "Adaptation of run top copied net failed";
 		}
 
 		// Collect information used by reduction rules.
-		mBranchingProcess = getFinitePrefix(finitePrefix);
-		mCoEnabledRelation = CoenabledRelation.fromBranchingProcess(mBranchingProcess);
 		if (finitePrefix == null) {
+			mBranchingProcess = computeFinitePrefix(mPetriNet);
+			// Start with the identity retromorphism.
 			mRetromorphism = new ModifiableRetroMorphism<>(mPetriNet);
+			// Compute the coenabled relation directly from the new branching process.
+			mCoEnabledRelation = CoenabledRelation.fromBranchingProcess(mBranchingProcess);
 		} else {
-			// Build a retromorphism that maps back to transitions corresponding to the events in mBranchingProcess.
-			mRetromorphism = getRetromorphism(petriNet, copy2Originals);
+			mBranchingProcess = finitePrefix;
+			// Build a retromorphism that maps back to transitions corresponding to the events in finitePrefix.
+			mRetromorphism = getCopyRetromorphism(petriNet, original2Copy);
+
+			// Compute the coenabled relation from the given branching process, and then adapt it for the copied net.
+			mCoEnabledRelation = CoenabledRelation.fromBranchingProcess(mBranchingProcess);
+			for (final var entry : original2Copy.entrySet()) {
+				final var original = entry.getKey();
+				final var copy = entry.getValue();
+				mCoEnabledRelation.replaceElement(original, copy);
+			}
 		}
 
 		performReduction();
 	}
 
 	private PetriNetRun<L, P> adaptRunToCopy(final PetriNetRun<L, P> run,
-			final HashMap<Transition<L, P>, Transition<L, P>> copy2Originals) {
+			final Map<Transition<L, P>, Transition<L, P>> original2Copy) {
 		final var markings = IntStream.range(0, run.getLength()).mapToObj(run::getMarking).collect(Collectors.toList());
 		final var transitions = IntStream.range(0, run.getLength() - 1).mapToObj(run::getTransition)
-				.map(copy2Originals::get).collect(Collectors.toList());
+				.map(original2Copy::get).collect(Collectors.toList());
 		return new PetriNetRun<>(markings, run.getWord(), transitions);
 	}
 
-	private BranchingProcess<L, P> getFinitePrefix(final BranchingProcess<L, P> finitePrefix)
+	private BranchingProcess<L, P> computeFinitePrefix(final BoundedPetriNet<L, P> net)
 			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
-		if (finitePrefix != null) {
-			return finitePrefix;
-		}
-
 		try {
 			// TODO Why call FinitePrefix and not PetriNetUnfolder directly?
-			return new FinitePrefix<>(mServices, mPetriNet).getResult();
+			return new FinitePrefix<>(mServices, net).getResult();
 		} catch (final AutomataOperationCanceledException ce) {
-			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(mPetriNet));
+			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(net));
 			ce.addRunningTaskInfo(runningTaskInfo);
 			throw ce;
 		}
 	}
 
-	private ModifiableRetroMorphism<L, P> getRetromorphism(final IPetriNet<L, P> originalNet,
-			final Map<Transition<L, P>, Transition<L, P>> copyMap) {
+	private ModifiableRetroMorphism<L, P> getCopyRetromorphism(final IPetriNet<L, P> originalNet,
+			final Map<Transition<L, P>, Transition<L, P>> original2Copy) {
 		final var retro = new ModifiableRetroMorphism<>(originalNet);
-		for (final var entry : copyMap.entrySet()) {
-			retro.addTransition(entry.getValue(), retro.getFirstTransitions(entry.getKey()),
-					retro.getLastTransitions(entry.getKey()));
-			retro.deleteTransition(entry.getKey());
+		for (final var entry : original2Copy.entrySet()) {
+			final var original = entry.getKey();
+			assert originalNet.getTransitions().contains(original) : "Not in the original net: " + original;
+
+			final var copy = entry.getValue();
+			assert mPetriNet.getTransitions().contains(copy) : "Not in the copied net: " + copy;
+
+			retro.copyTransition(original, copy);
+			retro.deleteTransition(original);
 		}
 		return retro;
 	}
