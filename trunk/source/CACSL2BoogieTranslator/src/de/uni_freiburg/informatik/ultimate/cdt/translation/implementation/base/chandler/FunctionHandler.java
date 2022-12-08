@@ -112,7 +112,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
@@ -313,7 +312,7 @@ public class FunctionHandler {
 			boolean checkInParams = true;
 			if (in.length != procDecl.getInParams().length || out.length != procDecl.getOutParams().length
 					|| isInParamVoid(procDecl.getInParams())) {
-				if (procDecl.getInParams().length != 0) {
+				if (procDecl.getInParams().length != 0 && !funType.hasVarArgs()) {
 					final String msg = "Implementation does not match declaration!";
 					throw new IncorrectSyntaxException(loc, msg);
 				}
@@ -635,36 +634,6 @@ public class FunctionHandler {
 		}
 		assert calleeProcDecl != null;
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		if (calleeProcCType != null && calleeProcCType.hasVarArgs()) {
-			if (calleeProcCType.isExtern()) {
-				// we can handle calls to extern variadic functions by dispatching all the arguments and assuming a
-				// non-deterministic return value. We do not need to declare the actual function.
-				if (!calleeProcCType.getResultType().equals(new CPrimitive(CPrimitives.VOID))) {
-					final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
-							calleeProcCType.getResultType(), SFO.AUXVAR.NONDET);
-					resultBuilder.addDeclaration(auxvarinfo.getVarDec());
-					resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
-					final LRValue returnValue = new RValue(auxvarinfo.getExp(), calleeProcCType.getResultType());
-					resultBuilder.setLrValue(returnValue);
-				}
-
-				// dispatch all arguments
-				for (final IASTInitializerClause arg : arguments) {
-					final ExpressionResult argRes =
-							mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arg);
-					resultBuilder.addAllExceptLrValue(argRes);
-				}
-				return resultBuilder.build();
-			}
-			// TODO: What should we do with that?
-			if (calleeProcCType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
-				// this should not happen, but just to be sure
-				throw new UnsupportedSyntaxException(loc,
-						"encountered a call to a var args function and varargs usage is unknown: "
-								+ calleeProcInfo.getProcedureName());
-			}
-		}
-
 		/*
 		 * If in C a function is declared without input parameters, and no implementation has been given yet, the
 		 * definitive signature is determined by the first call to the function.
@@ -676,7 +645,8 @@ public class FunctionHandler {
 		// signature of the call and signature of the declaration match, continue
 		// dispatch the inparams
 		final ArrayList<Expression> translatedParams = new ArrayList<>();
-		for (int i = 0; i < calleeProcCType.getParameterTypes().length; i++) {
+		final List<ExpressionResult> varargs = new ArrayList<>();
+		for (int i = 0; i < arguments.length; i++) {
 			final IASTInitializerClause inParam = arguments[i];
 			ExpressionResult in = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, inParam);
 
@@ -690,6 +660,10 @@ public class FunctionHandler {
 				calleeProcInfo.updateCFunctionAddParam(new CDeclaration(in.getLrValue().getCType(), SFO.IN_PARAM + i));
 			} else if (calleeProcInfo.getCType() != null) {
 				// we already know the parameters: do implicit casts and bool/int conversion
+				if (i >= calleeProcCType.getParameterTypes().length && calleeProcCType.hasVarArgs()) {
+					varargs.add(in);
+					continue;
+				}
 				CType expectedParamType =
 						calleeProcInfo.getCType().getParameterTypes()[i].getType().getUnderlyingType();
 				// bool/int conversion
@@ -714,13 +688,13 @@ public class FunctionHandler {
 			resultBuilder.addAllExceptLrValue(in);
 		}
 		if (calleeProcCType != null && calleeProcCType.hasVarArgs()) {
-			final boolean hasUnusedVarargs = calleeProcCType.getVarArgsUsage() == VarArgsUsage.UNUSED;
+			final boolean hasUsedVarargs = calleeProcCType.getVarArgsUsage() == VarArgsUsage.USED;
 			// For varargs we need a special handling:
 			// - If the varargs are not used, we simply dispatch the arguments, without passing them to the function.
 			// - If they are used, we create a pointer for all the remaining arguments and pass them to the function.
 			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
 					mTypeHandler.constructPointerType(loc), SFO.AUXVAR.VARARGS_POINTER);
-			if (!hasUnusedVarargs) {
+			if (hasUsedVarargs) {
 				resultBuilder.addAuxVar(auxvarinfo);
 				resultBuilder.addDeclaration(auxvarinfo.getVarDec());
 			}
@@ -729,21 +703,19 @@ public class FunctionHandler {
 			final List<Statement> writes = new ArrayList<>();
 			final Expression originalBase = MemoryHandler.getPointerBaseAddress(auxvarinfo.getExp(), loc);
 			final Expression originalOffset = MemoryHandler.getPointerOffset(auxvarinfo.getExp(), loc);
-			for (int i = calleeProcCType.getParameterTypes().length; i < arguments.length; i++) {
-				final ExpressionResult paramTmp =
-						mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]);
+			for (final ExpressionResult va : varargs) {
 				final ExpressionResult param;
 				int size;
-				if (paramTmp.getCType().getUnderlyingType() instanceof CPrimitive) {
+				if (va.getCType().getUnderlyingType() instanceof CPrimitive) {
 					// All smaller types (char, short) are promoted to int
-					param = mExprResultTransformer.doIntegerPromotion(loc, paramTmp);
+					param = mExprResultTransformer.doIntegerPromotion(loc, va);
 					size = mTypeSizes.getSize(((CPrimitive) param.getCType()).getType());
 				} else {
-					param = paramTmp;
+					param = va;
 					size = mTypeSizes.getSizeOfPointer();
 				}
 				resultBuilder.addAllExceptLrValue(param);
-				if (hasUnusedVarargs) {
+				if (!hasUsedVarargs) {
 					continue;
 				}
 				// Write the current parameter to *(varargs + currentOffset) and increment currentOffset by the typesize
@@ -758,7 +730,7 @@ public class FunctionHandler {
 						param.getLrValue().getValue(), param.getCType(), false));
 				currentOffset = currentOffset.add(BigInteger.valueOf(size));
 			}
-			if (!hasUnusedVarargs) {
+			if (hasUsedVarargs) {
 				resultBuilder.addStatement(memoryHandler.getUltimateMemAllocCall(
 						mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, currentOffset),
 						auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
@@ -857,7 +829,7 @@ public class FunctionHandler {
 	private VarList[] processInParams(final ILocation loc, final CFunction cFun, final BoogieProcedureInfo procInfo,
 			final IASTNode hook, final boolean updateSymbolTable) {
 		final CDeclaration[] paramDecs = cFun.getParameterTypes();
-		final boolean hasUsedVarArgs = cFun.hasVarArgs() && cFun.getVarArgsUsage() != VarArgsUsage.UNUSED;
+		final boolean hasUsedVarArgs = cFun.hasVarArgs() && cFun.getVarArgsUsage() == VarArgsUsage.USED;
 		final int size = hasUsedVarArgs ? paramDecs.length + 1 : paramDecs.length;
 		final VarList[] in = new VarList[size];
 		for (int i = 0; i < paramDecs.length; ++i) {
