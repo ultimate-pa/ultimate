@@ -634,7 +634,6 @@ public class FunctionHandler {
 			mLogger.warn("Unknown extern function " + calleeName);
 		}
 		assert calleeProcDecl != null;
-		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		/*
 		 * If in C a function is declared without input parameters, and no implementation has been given yet, the
 		 * definitive signature is determined by the first call to the function.
@@ -646,6 +645,7 @@ public class FunctionHandler {
 		// signature of the call and signature of the declaration match, continue
 		// dispatch the inparams
 		final ArrayList<Expression> translatedParams = new ArrayList<>();
+		final ExpressionResultBuilder functionCallExpressionResultBuilder = new ExpressionResultBuilder();
 		final List<ExpressionResult> varargs = new ArrayList<>();
 		for (int i = 0; i < arguments.length; i++) {
 			final IASTInitializerClause inParam = arguments[i];
@@ -686,7 +686,7 @@ public class FunctionHandler {
 			}
 
 			translatedParams.add(in.getLrValue().getValue());
-			resultBuilder.addAllExceptLrValue(in);
+			functionCallExpressionResultBuilder.addAllExceptLrValue(in);
 		}
 		if (calleeProcCType != null && calleeProcCType.hasVarArgs()) {
 			final boolean hasUsedVarargs = calleeProcCType.getVarArgsUsage() == VarArgsUsage.USED;
@@ -696,8 +696,8 @@ public class FunctionHandler {
 			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
 					mTypeHandler.constructPointerType(loc), SFO.AUXVAR.VARARGS_POINTER);
 			if (hasUsedVarargs) {
-				resultBuilder.addAuxVar(auxvarinfo);
-				resultBuilder.addDeclaration(auxvarinfo.getVarDec());
+				functionCallExpressionResultBuilder.addAuxVar(auxvarinfo);
+				functionCallExpressionResultBuilder.addDeclaration(auxvarinfo.getVarDec());
 			}
 			final CPrimitive pointerType = mExpressionTranslation.getCTypeOfPointerComponents();
 			BigInteger currentOffset = BigInteger.ZERO;
@@ -715,7 +715,7 @@ public class FunctionHandler {
 					param = va;
 					size = mTypeSizes.getSizeOfPointer();
 				}
-				resultBuilder.addAllExceptLrValue(param);
+				functionCallExpressionResultBuilder.addAllExceptLrValue(param);
 				if (!hasUsedVarargs) {
 					continue;
 				}
@@ -732,10 +732,10 @@ public class FunctionHandler {
 				currentOffset = currentOffset.add(BigInteger.valueOf(size));
 			}
 			if (hasUsedVarargs) {
-				resultBuilder.addStatement(memoryHandler.getUltimateMemAllocCall(
+				functionCallExpressionResultBuilder.addStatement(memoryHandler.getUltimateMemAllocCall(
 						mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, currentOffset),
 						auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
-				resultBuilder.addStatements(writes);
+				functionCallExpressionResultBuilder.addStatements(writes);
 				translatedParams.add(auxvarinfo.getExp());
 			}
 		}
@@ -757,7 +757,7 @@ public class FunctionHandler {
 			calleeProcInfo.resetDeclaration(newProc);
 		}
 
-		return makeTheFunctionCallItself(loc, calleeName, resultBuilder, translatedParams);
+		return makeTheFunctionCallItself(loc, calleeName, functionCallExpressionResultBuilder, translatedParams);
 	}
 
 	private static void checkNumberOfArguments(final ILocation loc, final String calleeName,
