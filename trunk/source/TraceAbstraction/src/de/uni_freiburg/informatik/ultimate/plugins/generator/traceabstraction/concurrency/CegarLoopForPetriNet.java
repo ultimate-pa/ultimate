@@ -104,7 +104,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		extends BasicCegarLoop<L, BoundedPetriNet<L, IPredicate>> {
 
 	public enum SizeReduction {
-		REMOVE_DEAD, REMOVE_REDUNDANT_FLOW
+		REMOVE_DEAD, REMOVE_REDUNDANT_FLOW, NONE
 	}
 
 	private static final boolean DEBUG_WRITE_NET_HASH_CODES = false;
@@ -139,12 +139,6 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	private final boolean mUseOnDemandResult;
 
-	/**
-	 * Remove unreachable nodes of mAbstraction in each iteration.
-	 */
-	private final boolean mRemoveDead = false;
-	private final boolean mRemoveRedundantFlow = false;
-
 	private final PetriCegarLoopStatisticsGenerator mPetriClStatisticsGenerator;
 
 	private Set<IPredicate> mProgramPointPlaces;
@@ -168,6 +162,14 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			mLogger.debug(PetriNetUtils.printHashCodesOfInternalDataStructures(mAbstraction));
 		}
 		mProgramPointPlaces = mAbstraction.getPlaces();
+	}
+
+	protected SizeReduction getReductionToApplyAfterDifference() {
+		if (mUseOnDemandResult) {
+			return mPref.getPetriSizeReduction();
+		}
+		// No size reduction is applied, because it is already integrated in the difference.
+		return SizeReduction.NONE;
 	}
 
 	@Override
@@ -287,32 +289,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		mLogger.info(mProgramPointPlaces.size() + " programPoint places, "
 				+ (mAbstraction.getPlaces().size() - mProgramPointPlaces.size()) + " predicate places.");
 
-		if (mRemoveDead) {
-			final Triple<BoundedPetriNet<L, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> minimizationResult =
-					doSizeReduction(mAbstraction, SizeReduction.REMOVE_DEAD);
-			mCegarLoopBenchmark.addAutomataMinimizationData(minimizationResult.getSecond());
-			if (mPref.dumpAutomata()
-					|| minimizationResult.getThird() > DEBUG_DUMP_REMOVEUNREACHABLEINPUT_THRESHOLD * 1_000_000_000L) {
-				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
-						+ "_AbstractionBeforeRemoveDead";
-				super.writeAutomatonToFile(mAbstraction, filename);
-			}
-			mAbstraction = minimizationResult.getFirst();
-			mFinitePrefixOfAbstraction = null;
-		}
-		if (mRemoveRedundantFlow) {
-			final Triple<BoundedPetriNet<L, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> minimizationResult =
-					doSizeReduction(mAbstraction, SizeReduction.REMOVE_REDUNDANT_FLOW);
-			mCegarLoopBenchmark.addAutomataMinimizationData(minimizationResult.getSecond());
-			if (mPref.dumpAutomata()
-					|| minimizationResult.getThird() > DEBUG_DUMP_REMOVEUNREACHABLEINPUT_THRESHOLD * 1_000_000_000L) {
-				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
-						+ "_AbstractionBeforeRemoveRedundantFlow";
-				super.writeAutomatonToFile(mAbstraction, filename);
-			}
-			mAbstraction = minimizationResult.getFirst();
-			mFinitePrefixOfAbstraction = null;
-		}
+		reduceSizeOfAbstraction();
 
 		if (mPref.unfoldingToNet()) {
 			final int flowBefore = mAbstraction.size();
@@ -404,9 +381,27 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		return true;
 	}
 
-	private Triple<BoundedPetriNet<L, IPredicate>, AutomataMinimizationStatisticsGenerator, Long>
-			doSizeReduction(final BoundedPetriNet<L, IPredicate> input, final SizeReduction method)
-					throws AutomataOperationCanceledException, PetriNetNot1SafeException, AssertionError {
+	protected void reduceSizeOfAbstraction() throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		final var sizeReduction = getReductionToApplyAfterDifference();
+		if (sizeReduction == SizeReduction.NONE) {
+			return;
+		}
+		final var minimizationResult = doSizeReduction(mAbstraction, mFinitePrefixOfAbstraction, sizeReduction);
+		mCegarLoopBenchmark.addAutomataMinimizationData(minimizationResult.getSecond());
+		if (mPref.dumpAutomata()
+				|| minimizationResult.getThird() > DEBUG_DUMP_REMOVEUNREACHABLEINPUT_THRESHOLD * 1_000_000_000L) {
+			final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
+					+ "_AbstractionBefore" + sizeReduction;
+			super.writeAutomatonToFile(mAbstraction, filename);
+		}
+		mAbstraction = minimizationResult.getFirst();
+		mFinitePrefixOfAbstraction = null;
+	}
+
+	private Triple<BoundedPetriNet<L, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> doSizeReduction(
+			final BoundedPetriNet<L, IPredicate> input, final BranchingProcess<L, IPredicate> finitePrefix,
+			final SizeReduction method)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException, AssertionError {
 		final long automataMinimizationTime;
 		final long start = System.nanoTime();
 		long statesRemovedByMinimization = 0;
@@ -423,14 +418,13 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			switch (method) {
 			case REMOVE_DEAD:
 				reducedNet = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead<>(
-						new AutomataLibraryServices(getServices()), input, null, true).getResult();
+						new AutomataLibraryServices(getServices()), input, finitePrefix, true).getResult();
 				break;
 			case REMOVE_REDUNDANT_FLOW:
 				final Set<IPredicate> redundancyCandidates = input.getPlaces().stream()
 						.filter(x -> !mProgramPointPlaces.contains(x)).collect(Collectors.toSet());
-				reducedNet =
-						new RemoveRedundantFlow<>(new AutomataLibraryServices(getServices()), input, null, null, null)
-								.getResult();
+				reducedNet = new RemoveRedundantFlow<>(new AutomataLibraryServices(getServices()), input, finitePrefix,
+						null, null).getResult();
 				break;
 			default:
 				throw new AssertionError("unknown value " + method);
@@ -453,9 +447,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 					flowRemovedByMinimization);
 			mPetriClStatisticsGenerator.stop(PetriCegarLoopStatisticsDefinitions.RemoveRedundantFlowTime.toString());
 		}
-		final Triple<BoundedPetriNet<L, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> minimizationResult =
-				new Triple<>(reducedNet, amsg, automataMinimizationTime);
-		return minimizationResult;
+		return new Triple<>(reducedNet, amsg, automataMinimizationTime);
 	}
 
 	protected Pair<INestedWordAutomaton<L, IPredicate>, DifferencePairwiseOnDemand<L, IPredicate, ?>>

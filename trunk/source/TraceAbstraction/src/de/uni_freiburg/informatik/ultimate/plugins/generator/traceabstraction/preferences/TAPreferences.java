@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet.SizeReduction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CoinflipMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuseEnhancement;
@@ -380,6 +381,11 @@ public final class TAPreferences {
 
 	public boolean useOnDemandPetriDifference() {
 		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PETRI_DIFFERENCE_ON_DEMAND);
+	}
+
+	public SizeReduction getPetriSizeReduction() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_PETRI_NET_SIZE_REDUCTION,
+				SizeReduction.class);
 	}
 
 	public boolean applyOneShotLbe() {

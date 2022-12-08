@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter.CegarRestartBehaviour;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet.SizeReduction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.IErrorAutomatonBuilder.ErrorAutomatonType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
@@ -183,6 +184,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_LOOPER_CHECK_PETRI = "Looper check in Petri net analysis";
 	private static final LooperCheck DEF_LOOPER_CHECK_PETRI = LooperCheck.SYNTACTIC;
+
+	public static final String LABEL_PETRI_NET_SIZE_REDUCTION = "Size reduction to apply after Petri net difference";
+	private static final String DESC_PETRI_NET_SIZE_REDUCTION =
+			"This has no effect unless the on-demand Petri net difference is used, because the alternative difference"
+					+ " construction applies size reduction internally.";
+	private static final SizeReduction DEF_PETRI_NET_SIZE_REDUCTION = SizeReduction.REMOVE_DEAD;
 
 	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
 	public static final String LABEL_STOP_AFTER_FIRST_VIOLATION = "Stop after first violation was found";
@@ -581,6 +588,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_BACKFOLDING, DEF_BACKFOLDING, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_PETRI_DIFFERENCE_ON_DEMAND, DEF_PETRI_DIFFERENCE_ON_DEMAND,
 						DESC_PETRI_DIFFERENCE_ON_DEMAND, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_PETRI_NET_SIZE_REDUCTION, DEF_PETRI_NET_SIZE_REDUCTION,
+						DESC_PETRI_NET_SIZE_REDUCTION, PreferenceType.Combo),
 
 				/* Petri LBE settings */
 
