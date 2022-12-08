@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.RequiredMemoryModelFeatures;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 
@@ -123,10 +122,10 @@ public enum MemoryModelDeclarations {
 		boolean changedSomething = false;
 		changedSomething |= rmmf.requireMemoryModelInfrastructure();
 		changedSomething |= rmmf.require(MemoryModelDeclarations.ULTIMATE_DEALLOC);
-		for (final CPrimitives prim : rmmf.mDataOnHeapRequired) {
+		for (final CPrimitives prim : rmmf.getDataOnHeapRequiredUnchecked()) {
 			changedSomething |= rmmf.reportDataOnHeapStoreFunctionRequired(prim);
 		}
-		if (rmmf.mPointerOnHeapRequired) {
+		if (rmmf.isPointerOnHeapRequiredUnchecked()) {
 			changedSomething |= rmmf.reportPointerOnHeapStoreFunctionRequired();
 		}
 		return changedSomething;
@@ -135,10 +134,10 @@ public enum MemoryModelDeclarations {
 	private static boolean strcpyRequirements(final RequiredMemoryModelFeatures rmmf) {
 		boolean changedSomething = false;
 		rmmf.reportDataOnHeapRequired(CPrimitives.CHAR);
-		for (final CPrimitives prim : new HashSet<>(rmmf.mDataOnHeapRequired)) {
+		for (final CPrimitives prim : new HashSet<>(rmmf.getDataOnHeapRequiredUnchecked())) {
 			changedSomething |= rmmf.reportUncheckedWriteRequired(prim);
 		}
-		if (rmmf.mPointerOnHeapRequired) {
+		if (rmmf.isPointerOnHeapRequiredUnchecked()) {
 			changedSomething |= rmmf.reportPointerUncheckedWriteRequired();
 		}
 		return changedSomething;
@@ -149,10 +148,10 @@ public enum MemoryModelDeclarations {
 		boolean changedSomething = false;
 		if (settings.useConstantArrays()) {
 			// TODO: using members instead of getters here to avoid "checkIsFrozen" calls -- not nice..
-			for (final CPrimitives prim : new HashSet<>(rmmf.mDataOnHeapRequired)) {
+			for (final CPrimitives prim : new HashSet<>(rmmf.getDataOnHeapRequiredUnchecked())) {
 				changedSomething |= rmmf.reportDataOnHeapInitFunctionRequired(prim);
 			}
-			if (rmmf.mPointerOnHeapRequired) {
+			if (rmmf.isPointerOnHeapRequiredUnchecked()) {
 				changedSomething |= rmmf.reportPointerOnHeapInitFunctionRequired();
 			}
 		}
@@ -166,16 +165,15 @@ public enum MemoryModelDeclarations {
 	private static boolean memcpyOrMemmoveRequirements(final RequiredMemoryModelFeatures mmf) {
 		boolean changedSomething = false;
 		// TODO: using members instead of getters here to avoid "checkIsFrozen" calls -- not nice..
-		for (final CPrimitives prim : new HashSet<>(mmf.mDataOnHeapRequired)) {
+		for (final CPrimitives prim : new HashSet<>(mmf.getDataOnHeapRequiredUnchecked())) {
 			changedSomething |= mmf.reportUncheckedWriteRequired(prim);
 			changedSomething |= mmf.reportUncheckedReadRequired(prim);
 		}
-		if (mmf.mPointerOnHeapRequired) {
+		if (mmf.isPointerOnHeapRequiredUnchecked()) {
 			changedSomething |= mmf.reportPointerUncheckedWriteRequired();
 			changedSomething |= mmf.reportPointerUncheckedReadRequired();
 		}
 		changedSomething |= mmf.require(ULTIMATE_DATA_RACE_MEMORY);
 		return changedSomething;
 	}
-
 }
