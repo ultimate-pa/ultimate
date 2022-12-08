@@ -268,7 +268,7 @@ public class FunctionHandler {
 		mProcedureManager.beginProcedureScope(mCHandler, definedProcInfo);
 
 		final CFunction oldFunType = (CFunction) cDec.getType();
-		final CFunction funType = updateVarArgsUsage(node, oldFunType);
+		final CFunction funType = updateVarArgsUsage(loc, node, oldFunType, definedProcName);
 		final CType returnCType = funType.getResultType();
 		definedProcInfo.updateCFunction(funType);
 		final boolean returnTypeIsVoid =
@@ -400,7 +400,8 @@ public class FunctionHandler {
 		return new Result(impl);
 	}
 
-	private static CFunction updateVarArgsUsage(final IASTFunctionDefinition node, final CFunction funType) {
+	private static CFunction updateVarArgsUsage(final ILocation loc, final IASTFunctionDefinition node,
+			final CFunction funType, final String funName) {
 		// update varags usage
 		if (funType.hasVarArgs() && funType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
 			// if the function body creates a va_list object it uses its varargs
@@ -410,7 +411,7 @@ public class FunctionHandler {
 			if (numberOfVaStarts > 1) {
 				// TODO: This requires a different handling of va_start and va_end.
 				// Currently they are simply handled by assignment and deallocation.
-				throw new UnsupportedOperationException("The procedure has multiple calls to va_start.");
+				throw new UnsupportedSyntaxException(loc, funName + " has multiple calls to va_start.");
 			}
 			return funType.updateVarArgsUsage(numberOfVaStarts != 0);
 		}
@@ -1056,7 +1057,7 @@ public class FunctionHandler {
 			final IASTFunctionDeclarator definitionDeclarator = funBinding.getDefinition();
 			if (definitionDeclarator != null) {
 				final IASTFunctionDefinition def = (IASTFunctionDefinition) funBinding.getDefinition().getParent();
-				newFuncType = updateVarArgsUsage(def, funcType);
+				newFuncType = updateVarArgsUsage(loc, def, funcType, methodName);
 			} else {
 				newFuncType = funcType;
 			}
