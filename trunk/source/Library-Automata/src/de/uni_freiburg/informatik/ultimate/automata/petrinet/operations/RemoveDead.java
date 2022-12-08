@@ -27,8 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -90,6 +92,7 @@ public class RemoveDead<LETTER, PLACE, CRSF extends IStateFactory<PLACE> & IPetr
 	private Collection<Condition<LETTER, PLACE>> mAcceptingConditions;
 	private final Set<Transition<LETTER, PLACE>> mVitalTransitions;
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
+	private final Map<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> mOriginal2Copy = new HashMap<>();
 
 	public RemoveDead(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
@@ -120,7 +123,7 @@ public class RemoveDead<LETTER, PLACE, CRSF extends IStateFactory<PLACE> & IPetr
 			}
 		}
 		mResult = CopySubnet.copy(services, mOperand, mVitalTransitions, mOperand.getAlphabet(),
-				keepUselessSuccessorPlaces);
+				keepUselessSuccessorPlaces, mOriginal2Copy);
 		printExitMessage();
 	}
 
@@ -178,6 +181,10 @@ public class RemoveDead<LETTER, PLACE, CRSF extends IStateFactory<PLACE> & IPetr
 		assert mFinPre != null : "Finite prefix not computed yet.";
 		return mOperand.getAcceptingPlaces().stream().map(mFinPre::place2cond).flatMap(Collection::stream)
 				.collect(Collectors.toList());
+	}
+
+	public Map<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> getOldToNew() {
+		return mOriginal2Copy;
 	}
 
 	@Override
