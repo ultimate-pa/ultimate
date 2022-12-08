@@ -65,14 +65,15 @@ public class BvToIntTranslation extends TermTransformer {
 	/*
 	 * Translates a formula over bit-vector to a formula over integers. Can translate arrays and quantifiers.
 	 *
-	 * TODO mNutzTransformation not fully implemented yet
 	 */
 	public BvToIntTranslation(final ManagedScript mgdscript, final LinkedHashMap<Term, Term> variableMap,
 			final TranslationConstrainer tc, final TermVariable[] freeVars, final boolean useNutzTransformation) {
 
 		mMgdScript = mgdscript;
 		mScript = mgdscript.getScript();
-		mNutzTransformation = useNutzTransformation;
+
+		mNutzTransformation = true;
+
 		mFreeVars = freeVars;
 		if (variableMap != null) {
 			mVariableMap = variableMap;
@@ -514,7 +515,7 @@ public class BvToIntTranslation extends TermTransformer {
 				}
 				case "extract": {
 					if (mNutzTransformation) {
-						throw new UnsupportedOperationException("not implemented Nutz" + fsym.getName());
+						// TODO not sure if we need to do sth here
 					}
 
 					setResult(translateExtract(appTerm, translatedLHS));
@@ -608,8 +609,7 @@ public class BvToIntTranslation extends TermTransformer {
 					case "concat": {
 						final Term multiplication = mScript.term("*", translatedLHS, maxNumber);
 						if (mNutzTransformation) {
-							throw new UnsupportedOperationException(
-									"Nutz transformation not implented for " + fsym.getName());
+							// TODO not sure if we need to do sth here
 						}
 						setResult(mScript.term("+", multiplication, translatedRHS));
 						return;
@@ -747,13 +747,9 @@ public class BvToIntTranslation extends TermTransformer {
 	private Term translateRelations(final FunctionSymbol fsym, final Term[] args, final Term maxNumberPlusOne,
 			final int width) {
 		Term[] translatedArgs = new Term[args.length];
-		if (mNutzTransformation) {
-			for (int i = 0; i < args.length; i++) {
-				translatedArgs[i] = mScript.term("mod", args[i], maxNumberPlusOne);
-			}
-		} else {
-			translatedArgs = args;
-		}
+		final Term[] utsArgs = args;
+		translatedArgs = args;
+
 		if (fsym.isIntern()) {
 			switch (fsym.getName()) {
 			case "=": {
@@ -764,49 +760,66 @@ public class BvToIntTranslation extends TermTransformer {
 
 			}
 			case "bvult": {
+				if (mNutzTransformation) {
+					for (int i = 0; i < args.length; i++) {
+						translatedArgs[i] = mScript.term("mod", args[i], maxNumberPlusOne);
+					}
+				}
 				return (mScript.term("<", translatedArgs));
 
 			}
 			case "bvule": {
+				if (mNutzTransformation) {
+					for (int i = 0; i < args.length; i++) {
+						translatedArgs[i] = mScript.term("mod", args[i], maxNumberPlusOne);
+					}
+				}
 				return (mScript.term("<=", translatedArgs));
 
 			}
 			case "bvugt": {
+				if (mNutzTransformation) {
+					for (int i = 0; i < args.length; i++) {
+						translatedArgs[i] = mScript.term("mod", args[i], maxNumberPlusOne);
+					}
+				}
 				return (mScript.term(">", translatedArgs));
 
 			}
 			case "bvuge": {
+				if (mNutzTransformation) {
+					for (int i = 0; i < args.length; i++) {
+						translatedArgs[i] = mScript.term("mod", args[i], maxNumberPlusOne);
+					}
+				}
 				return (mScript.term(">=", translatedArgs));
 
 			}
 			case "bvslt": {
-				final Term[] utsArgs = args;
 				for (int i = 0; i < args.length; i++) {
-					utsArgs[i] = uts(width, args[i]);
+					utsArgs[i] = uts(width, args[i], mNutzTransformation);
 				}
+
 				return (mScript.term("<", utsArgs));
 
 			}
 			case "bvsle": {
-				final Term[] utsArgs = args;
 				for (int i = 0; i < args.length; i++) {
-					utsArgs[i] = uts(width, args[i]);
+					utsArgs[i] = uts(width, args[i], mNutzTransformation);
 				}
 				return (mScript.term("<=", utsArgs));
 
 			}
 			case "bvsgt": {
-				final Term[] utsArgs = args;
 				for (int i = 0; i < args.length; i++) {
-					utsArgs[i] = uts(width, args[i]);
+					utsArgs[i] = uts(width, args[i], mNutzTransformation);
 				}
 				return (mScript.term(">", utsArgs));
 
 			}
 			case "bvsge": {
-				final Term[] utsArgs = args;
 				for (int i = 0; i < args.length; i++) {
-					utsArgs[i] = uts(width, args[i]);
+					utsArgs[i] = uts(width, args[i], mNutzTransformation);
 				}
 				return (mScript.term(">=", utsArgs));
 
@@ -817,7 +830,7 @@ public class BvToIntTranslation extends TermTransformer {
 	}
 
 	// unsigned to signed for relations
-	private final Term uts(final int width, final Term term) {
+	private final Term uts(final int width, final Term term, final boolean nutz) {
 		// 2 * (x mod 2^(k - 1) ) - x
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
@@ -825,8 +838,20 @@ public class BvToIntTranslation extends TermTransformer {
 				SmtUtils.rational2Term(mScript, Rational.valueOf(BigInteger.valueOf(2), BigInteger.ONE), intSort);
 		final Term twoPowWidth = SmtUtils.rational2Term(mScript,
 				Rational.valueOf(BigInteger.valueOf(2).pow(width - 1), BigInteger.ONE), intSort);
-		final Term modulo = mScript.term("mod", term, twoPowWidth);
-		return mScript.term("-", mScript.term("*", two, modulo), term);
+
+
+		if (nutz) {
+			final Term nutzPow = SmtUtils.rational2Term(mScript,
+					Rational.valueOf(BigInteger.valueOf(2).pow(width), BigInteger.ONE), intSort);
+			final Term modulo = mScript.term("mod", mScript.term("mod", term, nutzPow), twoPowWidth);
+			// Interesting, replacing mScript.term("mod", term, nutzPow) by term will lead to significant Qelim runtime
+			// increase
+			return mScript.term("-", mScript.term("*", two, modulo), mScript.term("mod", term, nutzPow));
+		} else {
+			final Term modulo = mScript.term("mod", term, twoPowWidth);
+			return mScript.term("-", mScript.term("*", two, modulo), term);
+		}
+
 	}
 
 	// calculates power of two if exponent is a constant, otherwise this is not implemented in the SMT integer theory
