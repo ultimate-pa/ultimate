@@ -123,12 +123,11 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	public int mCoRelationQueries = 0;
 	/**
-	 * Alternative measure to
-	 * {@link CegarLoopStatisticsDefinitions#BiggestAbstraction} which currently
-	 * counts the number of places.
-	 * TODO 20220821 Matthias: Find out whether counting transitions instead of
-	 * places is helpful. An alternative might be to count flow. In the long
-	 * run the most suitable measure should be utilized in the statistics.
+	 * Alternative measure to {@link CegarLoopStatisticsDefinitions#BiggestAbstraction} which currently counts the
+	 * number of places.
+	 *
+	 * TODO 20220821 Matthias: Find out whether counting transitions instead of places is helpful. An alternative might
+	 * be to count flow. In the long run the most suitable measure should be utilized in the statistics.
 	 */
 	public int mBiggestAbstractionTransitions;
 	/**
@@ -346,10 +345,10 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 						uf.addEquivalenceClass(ImmutableSet.of(entry.getValue()));
 					}
 				}
-				final Map<IPredicate, IPredicate> placeMap = PetriNetUtils
-						.mergePlaces(new HashSet<>(abstractionAsNet.getPlaces()), uf);
-				final IPetriNet<L, IPredicate> res = PetriNetUtils.mergePlaces(new AutomataLibraryServices(mServices),
-						abstractionAsNet, placeMap);
+				final Map<IPredicate, IPredicate> placeMap =
+						PetriNetUtils.mergePlaces(new HashSet<>(abstractionAsNet.getPlaces()), uf);
+				final IPetriNet<L, IPredicate> res =
+						PetriNetUtils.mergePlaces(new AutomataLibraryServices(mServices), abstractionAsNet, placeMap);
 				mAbstraction = (BoundedPetriNet<L, IPredicate>) res;
 				mFinitePrefixOfAbstraction = null;
 
