@@ -401,10 +401,9 @@ public class FunctionHandler {
 		return new Result(impl);
 	}
 
-	private static CFunction updateVarArgsUsage(final IASTFunctionDefinition node, final CFunction oldFunType) {
-		final CFunction funType;
+	private static CFunction updateVarArgsUsage(final IASTFunctionDefinition node, final CFunction funType) {
 		// update varags usage
-		if (oldFunType.hasVarArgs() && oldFunType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
+		if (funType.hasVarArgs() && funType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
 			// if the function body creates a va_list object it uses its varargs
 			final ASTNameCollector vaListFinder = new ASTNameCollector("__builtin_va_start");
 			node.getBody().accept(vaListFinder);
@@ -414,9 +413,7 @@ public class FunctionHandler {
 				// Currently they are simply handled by assignment and deallocation.
 				throw new UnsupportedOperationException("The procedure has multiple calls to va_start.");
 			}
-			funType = oldFunType.updateVarArgsUsage(numberOfVaStarts != 0);
-		} else {
-			funType = oldFunType;
+			return funType.updateVarArgsUsage(numberOfVaStarts != 0);
 		}
 		return funType;
 	}
