@@ -883,7 +883,6 @@ public class FunctionHandler {
 	 * @param parent
 	 */
 	private void handleFunctionsInParams(final IDispatcher main, final ILocation loc, final MemoryHandler memoryHandler,
-			// final ArrayList<Declaration> decl, final ArrayList<Statement> stmt,
 			final ExpressionResultBuilder resultBuilder, final IASTFunctionDefinition parent) {
 		final VarList[] inparamVarListArray =
 				mProcedureManager.getCurrentProcedureInfo().getDeclaration().getInParams();
@@ -910,7 +909,6 @@ public class FunctionHandler {
 			assert false : "are we missing a type of function declarator??";
 		}
 
-		assert inparamVarListArray.length == paramDecs.length;
 		for (int i = 0; i < paramDecs.length; ++i) {
 			final VarList inparamVarList = inparamVarListArray[i];
 			final IASTNode paramDec = paramDecs[i];
