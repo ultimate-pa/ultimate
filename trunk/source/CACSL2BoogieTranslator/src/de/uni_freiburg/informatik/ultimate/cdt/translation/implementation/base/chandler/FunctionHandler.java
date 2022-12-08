@@ -1048,25 +1048,24 @@ public class FunctionHandler {
 		procInfo.resetDeclaration(newDeclaration);
 
 		// if possible, find the actual definition of this declaration s.t. we can update the varargs usage
-		final CFunction newFuncType;
+		procInfo.updateCFunction(updateVarArgsForDeclaration(node, funcType, loc, methodName));
+		// end scope for retranslation of ACSL specification
+		mCHandler.endScope();
+	}
+
+	private static CFunction updateVarArgsForDeclaration(final IASTNode node, final CFunction funcType,
+			final ILocation loc, final String methodName) {
 		if (node instanceof IASTDeclarator && funcType.hasVarArgs()
 				&& funcType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
 			final IBinding binding = ((IASTDeclarator) node).getName().resolveBinding();
-			final org.eclipse.cdt.internal.core.dom.parser.c.CFunction funBinding =
-					(org.eclipse.cdt.internal.core.dom.parser.c.CFunction) binding;
-			final IASTFunctionDeclarator definitionDeclarator = funBinding.getDefinition();
+			final IASTFunctionDeclarator definitionDeclarator =
+					((org.eclipse.cdt.internal.core.dom.parser.c.CFunction) binding).getDefinition();
 			if (definitionDeclarator != null) {
-				final IASTFunctionDefinition def = (IASTFunctionDefinition) funBinding.getDefinition().getParent();
-				newFuncType = updateVarArgsUsage(loc, def, funcType, methodName);
-			} else {
-				newFuncType = funcType;
+				return updateVarArgsUsage(loc, (IASTFunctionDefinition) definitionDeclarator.getParent(), funcType,
+						methodName);
 			}
-		} else {
-			newFuncType = funcType;
 		}
-		procInfo.updateCFunction(newFuncType);
-		// end scope for retranslation of ACSL specification
-		mCHandler.endScope();
+		return funcType;
 	}
 
 	/**
