@@ -33,7 +33,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -44,6 +43,7 @@ import org.eclipse.cdt.core.dom.ast.ASTNameCollector;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
@@ -51,6 +51,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
 import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
+import org.eclipse.cdt.core.dom.ast.IBinding;
 import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -97,6 +98,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction.VarArgsUsage;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
@@ -110,6 +112,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
@@ -168,8 +171,6 @@ public class FunctionHandler {
 
 	private final TypeSizes mTypeSizes;
 
-	private final Set<String> mFunctionsWithUnusedVarargs;
-
 	/**
 	 *
 	 * @param logger
@@ -205,7 +206,6 @@ public class FunctionHandler {
 		mExprResultTransformer = expressionResultTransformer;
 		mVariablesOnHeap = variablesOnHeap;
 		mTypeSizes = typeSizes;
-		mFunctionsWithUnusedVarargs = new HashSet<>();
 	}
 
 	/**
@@ -268,25 +268,8 @@ public class FunctionHandler {
 
 		mProcedureManager.beginProcedureScope(mCHandler, definedProcInfo);
 
-		final CFunction funType = (CFunction) cDec.getType();
-		// If the function has varargs, but no va_start, then the varargs are not used.
-		// In that case we store the name of the procedure to deallocate the varargs in that case
-		if (funType.hasVarArgs()) {
-			final ASTNameCollector vaListFinder = new ASTNameCollector("__builtin_va_start");
-			node.getBody().accept(vaListFinder);
-			final int numberOfVaStarts = vaListFinder.getNames().length;
-			if (numberOfVaStarts > 1) {
-				// TODO: This requires a different handling of va_start and va_end.
-				// Currently they are simply handled by assignment and deallocation.
-				throw new UnsupportedSyntaxException(loc, definedProcName + " has multiple calls to va_start.");
-			}
-			// TODO: Extern function are problematic, since we don't know, if their arguments are used
-			// (the definition might be handled after the call)
-			// Therefore this handling is currently unsound for MemTrack / MemCleanup
-			if (numberOfVaStarts == 0 && !funType.isExtern()) {
-				mFunctionsWithUnusedVarargs.add(definedProcName);
-			}
-		}
+		final CFunction oldFunType = (CFunction) cDec.getType();
+		final CFunction funType = updateVarArgsUsage(node, oldFunType);
 		final CType returnCType = funType.getResultType();
 		definedProcInfo.updateCFunction(funType);
 		final boolean returnTypeIsVoid =
@@ -416,6 +399,26 @@ public class FunctionHandler {
 		mProcedureManager.endProcedureScope(mCHandler);
 
 		return new Result(impl);
+	}
+
+	private static CFunction updateVarArgsUsage(final IASTFunctionDefinition node, final CFunction oldFunType) {
+		final CFunction funType;
+		// update varags usage
+		if (oldFunType.hasVarArgs() && oldFunType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
+			// if the function body creates a va_list object it uses its varargs
+			final ASTNameCollector vaListFinder = new ASTNameCollector("__builtin_va_start");
+			node.getBody().accept(vaListFinder);
+			final int numberOfVaStarts = vaListFinder.getNames().length;
+			if (numberOfVaStarts > 1) {
+				// TODO: This requires a different handling of va_start and va_end.
+				// Currently they are simply handled by assignment and deallocation.
+				throw new UnsupportedOperationException("The procedure has multiple calls to va_start.");
+			}
+			funType = oldFunType.updateVarArgsUsage(numberOfVaStarts != 0);
+		} else {
+			funType = oldFunType;
+		}
+		return funType;
 	}
 
 	/**
@@ -634,6 +637,37 @@ public class FunctionHandler {
 			mLogger.warn("Unknown extern function " + calleeName);
 		}
 		assert calleeProcDecl != null;
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		if (calleeProcCType != null && calleeProcCType.hasVarArgs()) {
+			if (calleeProcCType.isExtern()) {
+				// we can handle calls to extern variadic functions by dispatching all the arguments and assuming a
+				// non-deterministic return value. We do not need to declare the actual function.
+				if (!calleeProcCType.getResultType().equals(new CPrimitive(CPrimitives.VOID))) {
+					final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
+							calleeProcCType.getResultType(), SFO.AUXVAR.NONDET);
+					resultBuilder.addDeclaration(auxvarinfo.getVarDec());
+					resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
+					final LRValue returnValue = new RValue(auxvarinfo.getExp(), calleeProcCType.getResultType());
+					resultBuilder.setLrValue(returnValue);
+				}
+
+				// dispatch all arguments
+				for (final IASTInitializerClause arg : arguments) {
+					final ExpressionResult argRes =
+							mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arg);
+					resultBuilder.addAllExceptLrValue(argRes);
+				}
+				return resultBuilder.build();
+			}
+			// TODO: What should we do with that?
+			if (calleeProcCType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
+				// this should not happen, but just to be sure
+				throw new UnsupportedSyntaxException(loc,
+						"encountered a call to a var args function and varargs usage is unknown: "
+								+ calleeProcInfo.getProcedureName());
+			}
+		}
+
 		/*
 		 * If in C a function is declared without input parameters, and no implementation has been given yet, the
 		 * definitive signature is determined by the first call to the function.
@@ -644,7 +678,6 @@ public class FunctionHandler {
 				isCalleeSignatureNotYetDetermined);
 		// signature of the call and signature of the declaration match, continue
 		// dispatch the inparams
-		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final ArrayList<Expression> translatedParams = new ArrayList<>();
 		for (int i = 0; i < calleeProcCType.getParameterTypes().length; i++) {
 			final IASTInitializerClause inParam = arguments[i];
@@ -684,7 +717,7 @@ public class FunctionHandler {
 			resultBuilder.addAllExceptLrValue(in);
 		}
 		if (calleeProcCType != null && calleeProcCType.hasVarArgs()) {
-			final boolean hasUnusedVarargs = mFunctionsWithUnusedVarargs.contains(calleeName);
+			final boolean hasUnusedVarargs = calleeProcCType.getVarArgsUsage() == VarArgsUsage.UNUSED;
 			// For varargs we need a special handling:
 			// - If the varargs are not used, we simply dispatch the arguments, without passing them to the function.
 			// - If they are used, we create a pointer for all the remaining arguments and pass them to the function.
@@ -827,8 +860,7 @@ public class FunctionHandler {
 	private VarList[] processInParams(final ILocation loc, final CFunction cFun, final BoogieProcedureInfo procInfo,
 			final IASTNode hook, final boolean updateSymbolTable) {
 		final CDeclaration[] paramDecs = cFun.getParameterTypes();
-		final boolean hasUsedVarArgs =
-				cFun.hasVarArgs() && !mFunctionsWithUnusedVarargs.contains(procInfo.getProcedureName());
+		final boolean hasUsedVarArgs = cFun.hasVarArgs() && cFun.getVarArgsUsage() != VarArgsUsage.UNUSED;
 		final int size = hasUsedVarArgs ? paramDecs.length + 1 : paramDecs.length;
 		final VarList[] in = new VarList[size];
 		for (int i = 0; i < paramDecs.length; ++i) {
@@ -1044,7 +1076,25 @@ public class FunctionHandler {
 				new Procedure(loc, attr, procInfo.getProcedureName(), typeParams, in, out, spec, null);
 
 		procInfo.resetDeclaration(newDeclaration);
-		procInfo.updateCFunction(funcType);
+
+		// if possible, find the actual definition of this declaration s.t. we can update the varargs usage
+		final CFunction newFuncType;
+		if (node instanceof IASTDeclarator && funcType.hasVarArgs()
+				&& funcType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
+			final IBinding binding = ((IASTDeclarator) node).getName().resolveBinding();
+			final org.eclipse.cdt.internal.core.dom.parser.c.CFunction funBinding =
+					(org.eclipse.cdt.internal.core.dom.parser.c.CFunction) binding;
+			final IASTFunctionDeclarator definitionDeclarator = funBinding.getDefinition();
+			if (definitionDeclarator != null) {
+				final IASTFunctionDefinition def = (IASTFunctionDefinition) funBinding.getDefinition().getParent();
+				newFuncType = updateVarArgsUsage(def, funcType);
+			} else {
+				newFuncType = funcType;
+			}
+		} else {
+			newFuncType = funcType;
+		}
+		procInfo.updateCFunction(newFuncType);
 		// end scope for retranslation of ACSL specification
 		mCHandler.endScope();
 	}
