@@ -137,8 +137,10 @@ public class LiptonReduction<L, P> {
 			mCoEnabledRelation = CoenabledRelation.fromBranchingProcess(mBranchingProcess);
 		} else {
 			mBranchingProcess = finitePrefix;
+
 			// Build a retromorphism that maps back to transitions corresponding to the events in finitePrefix.
-			mRetromorphism = getCopyRetromorphism(petriNet, original2Copy);
+			mRetromorphism = new ModifiableRetroMorphism<>(petriNet);
+			mRetromorphism.renameAndProjectTransitions(original2Copy);
 
 			// Compute the coenabled relation from the given branching process, and then adapt it for the copied net.
 			mCoEnabledRelation = CoenabledRelation.fromBranchingProcess(mBranchingProcess);
@@ -190,22 +192,6 @@ public class LiptonReduction<L, P> {
 			ce.addRunningTaskInfo(runningTaskInfo);
 			throw ce;
 		}
-	}
-
-	private ModifiableRetroMorphism<L, P> getCopyRetromorphism(final IPetriNet<L, P> originalNet,
-			final Map<Transition<L, P>, Transition<L, P>> original2Copy) {
-		final var retro = new ModifiableRetroMorphism<>(originalNet);
-		for (final var entry : original2Copy.entrySet()) {
-			final var original = entry.getKey();
-			assert originalNet.getTransitions().contains(original) : "Not in the original net: " + original;
-
-			final var copy = entry.getValue();
-			assert mPetriNet.getTransitions().contains(copy) : "Not in the copied net: " + copy;
-
-			retro.copyTransition(original, copy);
-			retro.deleteTransition(original);
-		}
-		return retro;
 	}
 
 	private void performReduction() {

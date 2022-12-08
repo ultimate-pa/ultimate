@@ -1,10 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -41,7 +43,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class ModifiableRetroMorphism<L, P> {
 
+	// All the transitions of the original net to which we map back.
 	private final Set<Transition<L, P>> mOriginalTransitions;
+
+	// Maps from transitions of the current net to transitions of the original net.
 	private final HashRelation<Transition<L, P>, Transition<L, P>> mFirstTransitions = new HashRelation<>();
 	private final HashRelation<Transition<L, P>, Transition<L, P>> mLastTransitions = new HashRelation<>();
 
@@ -143,5 +148,19 @@ public class ModifiableRetroMorphism<L, P> {
 
 	private static <D, R> void copyRelationships(final HashRelation<D, R> relation, final D from, final D to) {
 		relation.addAllPairs(to, relation.getImage(from));
+	}
+
+	public void renameAndProjectTransitions(final Map<Transition<L, P>, Transition<L, P>> old2New) {
+		for (final var entry : old2New.entrySet()) {
+			final var original = entry.getKey();
+			final var copy = entry.getValue();
+			copyTransition(original, copy);
+			deleteTransition(original);
+		}
+
+		final var obsolete = DataStructureUtils.difference(mFirstTransitions.getDomain(), old2New.keySet());
+		for (final var trans : obsolete) {
+			deleteTransition(trans);
+		}
 	}
 }
