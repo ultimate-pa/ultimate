@@ -119,7 +119,7 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 		final PetriNetLargeBlockEncoding<L> lbe = new PetriNetLargeBlockEncoding<>(getServices(),
 				mIcfg.getCfgSmtToolkit(), cfg, mPref.lbeIndependenceSettings(), mCompositionFactory, mPredicateFactory,
 				mIndependenceCache, mFinitePrefixOfAbstraction, mFinitePrefixAbstractionRetromorphism,
-				mCoEnabledRelationFromFinitePrefix, Set.of(counterexample));
+				mCoEnabledRelationFromFinitePrefix, counterexample == null ? Set.of() : Set.of(counterexample));
 		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 
 		mServices.getBacktranslationService().addTranslator(mCompositionFactory.getBacktranslator());
