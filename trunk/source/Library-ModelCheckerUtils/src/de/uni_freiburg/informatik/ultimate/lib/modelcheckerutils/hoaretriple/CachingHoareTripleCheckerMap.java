@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.IterableIntersection;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
@@ -183,54 +183,6 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 			return null;
 		default:
 			throw new AssertionError(UNKNOWN_CASE);
-		}
-	}
-
-	public static class IterableIntersection<E> implements Iterable<E> {
-
-		private final Set<E> mIteratorSet;
-		private final Set<E> mFilterSet;
-
-		public IterableIntersection(final Set<E> set1, final Set<E> set2) {
-			super();
-			if (set1.size() <= set2.size()) {
-				mIteratorSet = set1;
-				mFilterSet = set2;
-			} else {
-				mIteratorSet = set1;
-				mFilterSet = set2;
-			}
-		}
-
-		@Override
-		public Iterator<E> iterator() {
-			return new Iterator<E>() {
-				Iterator<E> mIt = mIteratorSet.iterator();
-				E mNext = runIterator();
-
-				@Override
-				public boolean hasNext() {
-					return mNext != null;
-				}
-
-				private E runIterator() {
-					E found = null;
-					while (found == null && mIt.hasNext()) {
-						final E next = mIt.next();
-						if (mFilterSet.contains(next)) {
-							found = next;
-						}
-					}
-					return found;
-				}
-
-				@Override
-				public E next() {
-					final E result = mNext;
-					mNext = runIterator();
-					return result;
-				}
-			};
 		}
 	}
 
