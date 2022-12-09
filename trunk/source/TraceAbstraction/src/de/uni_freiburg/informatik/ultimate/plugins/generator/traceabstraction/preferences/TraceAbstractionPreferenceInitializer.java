@@ -589,7 +589,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_PETRI_DIFFERENCE_ON_DEMAND, DEF_PETRI_DIFFERENCE_ON_DEMAND,
 						DESC_PETRI_DIFFERENCE_ON_DEMAND, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_PETRI_NET_SIZE_REDUCTION, DEF_PETRI_NET_SIZE_REDUCTION,
-						DESC_PETRI_NET_SIZE_REDUCTION, PreferenceType.Combo),
+						DESC_PETRI_NET_SIZE_REDUCTION, PreferenceType.Combo, SizeReduction.values()),
 
 				/* Petri LBE settings */
 
