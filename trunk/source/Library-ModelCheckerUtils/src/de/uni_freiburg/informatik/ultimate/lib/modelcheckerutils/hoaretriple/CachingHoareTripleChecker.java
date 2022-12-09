@@ -43,10 +43,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
- * {@link IHoareTripleChecker} that caches already computed results. Also tries to use these results for more
- * intelligent checks.
+ * {@link IHoareTripleChecker} that caches already computed results. I also
+ * utilizes the cache to do the following checks. Let us assume we want to check
+ * the Hoare triple `{φ} st {ψ}`.
+ * <li>If the cache contains a valid Hoare triple `{φ'} st {ψ'}` such that φ⇒φ'
+ * and ψ'⇒ψ we return VALID.
+ * <li>If the cache contains an invalid Hoare triple `{φ'} st {ψ'}` such that
+ * φ'⇒φ and ψ⇒ψ' we return INVALID.
  *
- * @author Matthias Heizmann
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
