@@ -61,7 +61,7 @@ public class LiptonReductionRunAdaptationTests extends LiptonReductionTestsBase 
 			assert run.isAccepting(input) : "Failed to get an accepting run for the test: " + run;
 
 			final var reduction = new LiptonReduction<>(mAutomataServices, input, CompositionFactory.INSTANCE,
-					new CopyPlaceFactory(), independence, psc, null, Set.of(run));
+					new CopyPlaceFactory(), independence, psc, Set.of(run));
 			final BoundedPetriNet<String, String> actual = reduction.getResult();
 			final var adaptedRun = reduction.getAdaptedRuns().get(run);
 

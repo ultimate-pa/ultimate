@@ -36,8 +36,10 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoenabledRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ICompositionFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.LiptonReduction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ModifiableRetroMorphism;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ConditionTransformingIndependenceRelation;
@@ -118,7 +120,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			final IIndependenceCache<?, L> independenceCache)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		this(services, cfgSmtToolkit, petriNet, independenceSettings, compositionFactory, predicateFactory,
-				independenceCache, null, Collections.emptySet());
+				independenceCache, null, null, null, Collections.emptySet());
 	}
 
 	/**
@@ -154,7 +156,8 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			final BoundedPetriNet<L, IPredicate> petriNet, final IndependenceSettings independenceSettings,
 			ICompositionFactory<L> compositionFactory, final BasicPredicateFactory predicateFactory,
 			final IIndependenceCache<?, L> independenceCache, final BranchingProcess<L, IPredicate> finitePrefix,
-			final Set<PetriNetRun<L, IPredicate>> runsToAdapt)
+			final ModifiableRetroMorphism<L, IPredicate> retromorphism,
+			final CoenabledRelation<L, IPredicate> coenabled, final Set<PetriNetRun<L, IPredicate>> runsToAdapt)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mServices = services;
@@ -174,8 +177,9 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		final InfeasPostScriptChecker<L, IPredicate> postScriptChecker =
 				new InfeasPostScriptChecker<>(mServices, mManagedScript);
 		try {
-			final LiptonReduction<L, IPredicate> lipton = new LiptonReduction<>(automataServices, petriNet,
-					compositionFactory, placeFactory, moverCheck, postScriptChecker, finitePrefix, runsToAdapt);
+			final LiptonReduction<L, IPredicate> lipton =
+					new LiptonReduction<>(automataServices, petriNet, compositionFactory, placeFactory, moverCheck,
+							postScriptChecker, finitePrefix, retromorphism, coenabled, runsToAdapt);
 			mResult = lipton.getResult();
 			mRuns = lipton.getAdaptedRuns();
 			mStatistics = new PetriNetLargeBlockEncodingStatisticsGenerator(lipton.getStatistics(),

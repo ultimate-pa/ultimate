@@ -27,17 +27,23 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.CoenabledRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ModifiableRetroMorphism;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.DefaultIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Accepts;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveRedundantFlow;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -67,6 +73,9 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 	private final ICompositionFactoryWithBacktranslator<L> mCompositionFactory;
 	private final IIndependenceCache<?, L> mIndependenceCache = new DefaultIndependenceCache<>();
 
+	private ModifiableRetroMorphism<L, IPredicate> mFinitePrefixAbstractionRetromorphism;
+	private CoenabledRelation<L, IPredicate> mCoEnabledRelationFromFinitePrefix;
+
 	/**
 	 * Construct the CEGAR loop.
 	 *
@@ -93,6 +102,10 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
+		// reset data from last iteration
+		mFinitePrefixAbstractionRetromorphism = null;
+		mCoEnabledRelationFromFinitePrefix = null;
+
 		final boolean result = super.refineAbstraction();
 		mAbstraction = applyLargeBlockEncoding(mAbstraction);
 		return result;
@@ -105,7 +118,8 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 		final var counterexample = getCachedCounterexample();
 		final PetriNetLargeBlockEncoding<L> lbe = new PetriNetLargeBlockEncoding<>(getServices(),
 				mIcfg.getCfgSmtToolkit(), cfg, mPref.lbeIndependenceSettings(), mCompositionFactory, mPredicateFactory,
-				mIndependenceCache, mFinitePrefixOfAbstraction, Set.of(counterexample));
+				mIndependenceCache, mFinitePrefixOfAbstraction, mFinitePrefixAbstractionRetromorphism,
+				mCoEnabledRelationFromFinitePrefix, Set.of(counterexample));
 		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 
 		mServices.getBacktranslationService().addTranslator(mCompositionFactory.getBacktranslator());
@@ -169,5 +183,47 @@ public class CegarLoopForPetriNetWithRepeatedLiptonReduction<L extends IIcfgTran
 		assert run.isRunOf(mAbstraction) : "Run returned by Accepts is not truly a run of the net";
 
 		return run;
+	}
+
+	@Override
+	protected void reduceSizeOfAbstraction() throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		final var sizeReduction = getReductionToApplyAfterDifference();
+		if (sizeReduction == SizeReduction.NONE) {
+			return;
+		}
+
+		assert mFinitePrefixAbstractionRetromorphism == null : "Composition of retromorphisms not yet supported here";
+		assert mCoEnabledRelationFromFinitePrefix == null : "Unexpected coenabled relation";
+
+		final var originalAbstraction = mAbstraction;
+		final Map<Transition<L, IPredicate>, Transition<L, IPredicate>> old2New;
+		switch (sizeReduction) {
+		case REMOVE_DEAD:
+			final var removeDead = new RemoveDead<>(new AutomataLibraryServices(getServices()), mAbstraction,
+					mFinitePrefixOfAbstraction, true);
+			mAbstraction = removeDead.getResult();
+			old2New = removeDead.getOldToNew();
+			break;
+		case REMOVE_REDUNDANT_FLOW:
+			final var removeRedundantFlow = new RemoveRedundantFlow<>(new AutomataLibraryServices(mServices),
+					mAbstraction, mFinitePrefixOfAbstraction, null, null);
+			mAbstraction = removeRedundantFlow.getResult();
+			old2New = removeRedundantFlow.getOld2projected();
+
+			// Dominik 2022-12-09: I don't know how to adapt the coenabled relation in this case.
+			// Hence clear the finite prefix, and let the Lipton reduction compute a fresh one.
+			mFinitePrefixOfAbstraction = null;
+			break;
+		default:
+			throw new IllegalArgumentException("Unknown size reduction: " + sizeReduction);
+		}
+
+		if (mFinitePrefixOfAbstraction != null) {
+			mCoEnabledRelationFromFinitePrefix = CoenabledRelation.fromBranchingProcess(mFinitePrefixOfAbstraction);
+			mCoEnabledRelationFromFinitePrefix.renameAndProjectTransitions(old2New);
+
+			mFinitePrefixAbstractionRetromorphism = new ModifiableRetroMorphism<>(originalAbstraction);
+			mFinitePrefixAbstractionRetromorphism.renameAndProjectTransitions(old2New);
+		}
 	}
 }

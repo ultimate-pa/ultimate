@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -61,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * post-sets.
  *
  * @author Elisabeth Schanno
+ * @author Dennis Wölfing
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <L>
@@ -86,6 +88,24 @@ public class LiptonReduction<L, P> {
 	private final CoenabledRelation<L, P> mCoEnabledRelation;
 
 	private final LiptonReductionStatisticsGenerator mStatistics = new LiptonReductionStatisticsGenerator();
+
+	public LiptonReduction(final AutomataLibraryServices services, final BoundedPetriNet<L, P> petriNet,
+			final ICompositionFactory<L> compositionFactory, final ICopyPlaceFactory<P> placeFactory,
+			final IIndependenceRelation<Set<P>, L> independenceRelation,
+			final IPostScriptChecker<L, P> stuckPlaceChecker, final Set<PetriNetRun<L, P>> runs)
+			throws PetriNetNot1SafeException, AutomataOperationCanceledException {
+		this(services, petriNet, compositionFactory, placeFactory, independenceRelation, stuckPlaceChecker, null, null,
+				null, runs);
+	}
+
+	public LiptonReduction(final AutomataLibraryServices services, final BoundedPetriNet<L, P> petriNet,
+			final ICompositionFactory<L> compositionFactory, final ICopyPlaceFactory<P> placeFactory,
+			final IIndependenceRelation<Set<P>, L> independenceRelation,
+			final IPostScriptChecker<L, P> stuckPlaceChecker, final BranchingProcess<L, P> finitePrefix,
+			final Set<PetriNetRun<L, P>> runs) throws PetriNetNot1SafeException, AutomataOperationCanceledException {
+		this(services, petriNet, compositionFactory, placeFactory, independenceRelation, stuckPlaceChecker,
+				Objects.requireNonNull(finitePrefix), null, null, runs);
+	}
 
 	/**
 	 * Performs Lipton reduction on the given Petri net.
@@ -115,6 +135,7 @@ public class LiptonReduction<L, P> {
 			final ICompositionFactory<L> compositionFactory, final ICopyPlaceFactory<P> placeFactory,
 			final IIndependenceRelation<Set<P>, L> independenceRelation,
 			final IPostScriptChecker<L, P> stuckPlaceChecker, final BranchingProcess<L, P> finitePrefix,
+			final ModifiableRetroMorphism<L, P> retromorphism, final CoenabledRelation<L, P> coenabled,
 			final Set<PetriNetRun<L, P>> runs) throws PetriNetNot1SafeException, AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(LiptonReduction.class);
@@ -128,6 +149,10 @@ public class LiptonReduction<L, P> {
 		mPetriNet = CopySubnet.copy(mServices, petriNet, new HashSet<>(petriNet.getTransitions()),
 				new HashSet<>(petriNet.getAlphabet()), true, original2Copy);
 
+		assert finitePrefix != null || retromorphism == null : "Retromorphism can only be used with finite prefix";
+		assert finitePrefix != null || coenabled == null : "Coenabled relation should only be given with finite prefix";
+		assert (retromorphism == null) == (coenabled == null) : "Coenabled relation and retromorphism should only be given together";
+
 		// Collect information used by reduction rules.
 		if (finitePrefix == null) {
 			mBranchingProcess = computeFinitePrefix(mPetriNet);
@@ -139,11 +164,12 @@ public class LiptonReduction<L, P> {
 			mBranchingProcess = finitePrefix;
 
 			// Build a retromorphism that maps back to transitions corresponding to the events in finitePrefix.
-			mRetromorphism = new ModifiableRetroMorphism<>(petriNet);
+			mRetromorphism = retromorphism == null ? new ModifiableRetroMorphism<>(petriNet) : retromorphism;
 			mRetromorphism.renameAndProjectTransitions(original2Copy);
 
 			// Compute the coenabled relation from the given branching process, and then adapt it for the copied net.
-			mCoEnabledRelation = CoenabledRelation.fromBranchingProcess(mBranchingProcess);
+			mCoEnabledRelation =
+					coenabled == null ? CoenabledRelation.fromBranchingProcess(mBranchingProcess) : coenabled;
 			mCoEnabledRelation.renameAndProjectTransitions(original2Copy);
 		}
 		mRuns = adaptRunsToCopy(runs, petriNet, original2Copy);

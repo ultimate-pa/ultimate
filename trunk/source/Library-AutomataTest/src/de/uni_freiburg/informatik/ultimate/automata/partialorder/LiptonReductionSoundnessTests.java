@@ -72,7 +72,7 @@ public class LiptonReductionSoundnessTests extends LiptonReductionTestsBase {
 				+ "example: " + expectedNew.orElse(null), expectedNew.isEmpty());
 
 		final var reduction = new LiptonReduction<>(mAutomataServices, input, CompositionFactory.INSTANCE,
-				new CopyPlaceFactory(), independence, psc, null, null);
+				new CopyPlaceFactory(), independence, psc, null);
 		final BoundedPetriNet<String, String> actual = reduction.getResult();
 
 		final var actualCtex = findReductionCounterexample(actual, input, independence);
