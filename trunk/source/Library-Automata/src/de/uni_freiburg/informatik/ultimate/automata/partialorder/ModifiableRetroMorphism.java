@@ -158,7 +158,7 @@ public class ModifiableRetroMorphism<L, P> {
 			deleteTransition(original);
 		}
 
-		final var obsolete = DataStructureUtils.difference(mFirstTransitions.getDomain(), old2New.keySet());
+		final var obsolete = DataStructureUtils.difference(mFirstTransitions.getDomain(), Set.copyOf(old2New.values()));
 		for (final var trans : obsolete) {
 			deleteTransition(trans);
 		}
