@@ -131,7 +131,7 @@ public final class HoareTripleCheckerUtils {
 			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
 			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier) {
 		// TODO: Cache support in ChainingHtc
-		return new CachingHoareTripleCheckerMap(services,
+		return new CachingHoareTripleChecker(services,
 				constructEfficientHoareTripleChecker(services, hoareTripleChecks, csToolkit, predicateUnifier),
 				predicateUnifier);
 	}
@@ -141,7 +141,7 @@ public final class HoareTripleCheckerUtils {
 			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier,
 			final HoareTripleCheckerCache initialCache) {
 		// TODO: Cache support in ChainingHtc
-		return new CachingHoareTripleCheckerMap(services,
+		return new CachingHoareTripleChecker(services,
 				constructEfficientHoareTripleChecker(services, hoareTripleChecks, csToolkit, predicateUnifier),
 				predicateUnifier, initialCache);
 	}

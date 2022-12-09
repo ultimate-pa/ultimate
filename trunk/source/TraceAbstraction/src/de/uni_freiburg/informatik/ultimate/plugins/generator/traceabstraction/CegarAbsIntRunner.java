@@ -70,7 +70,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleCheckerMap;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
@@ -512,10 +511,10 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			return mHtc;
 		}
 
-		private CachingHoareTripleCheckerMap createHoareTripleChecker(final boolean onlyAbsInt) {
+		private CachingHoareTripleChecker createHoareTripleChecker(final boolean onlyAbsInt) {
 			final IHoareTripleChecker htc = new AbsIntHoareTripleChecker<>(mLogger, mServices, mResult.getUsedDomain(),
 					mResult.getUsedVariableProvider(), mPredicateUnifierAbsInt, mCsToolkit, onlyAbsInt);
-			return new CachingHoareTripleCheckerMap(mServices, htc, mPredicateUnifierAbsInt);
+			return new CachingHoareTripleChecker(mServices, htc, mPredicateUnifierAbsInt);
 		}
 
 		public IInterpolatingTraceCheck<LETTER> getInterpolantGenerator() {
@@ -542,7 +541,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 				final List<AbsIntPredicate<STATE>> weakenedPredicates;
 				if (USE_INTERPOLANT_WEAKENER) {
-					final CachingHoareTripleCheckerMap absIntOnlyHtc = createHoareTripleChecker(true);
+					final CachingHoareTripleChecker absIntOnlyHtc = createHoareTripleChecker(true);
 					weakenedPredicates = weakenPredicates(nonUnifiedPredicates, ppTrace, absIntOnlyHtc);
 					assert isInductive(ppTrace, weakenedPredicates,
 							absIntOnlyHtc) : "Sequence of interpolants not inductive (after weakening)!";
