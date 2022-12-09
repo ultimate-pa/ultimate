@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,9 +39,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 /**
- * {@link CachingHoareTripleChecker} that does not directly iterate over covered predicates and covering predicates in
- * order to do an extended cache check (like {@link CachingHoareTripleCheckerIterative}) but also takes the current
- * cache into account. If in doubt which {@link CachingHoareTripleChecker} you should use, use this one.
+ * {@link CachingHoareTripleChecker} that does not directly iterate over covered
+ * predicates and covering predicates in order to do an extended cache check
+ * (like {@link CachingHoareTripleCheckerIterative}) but also takes the current
+ * cache into account. If in doubt which {@link CachingHoareTripleChecker} you
+ * should use, use this one.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -67,7 +70,7 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 
 		final NestedMap2<IPredicate, IPredicate, Validity> pred2succ = binaryCache.get(act);
 		if (pred2succ == null) {
-			// cannot get any information from cache
+			// cache does not store information for our action
 			return null;
 		}
 
@@ -75,76 +78,65 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 		{
 			final Set<IPredicate> strongerThanPre = mPredicateUnifier.getCoverageRelation().getCoveredPredicates(pre);
 			final Set<IPredicate> weakerThanSucc = mPredicateUnifier.getCoverageRelation().getCoveringPredicates(succ);
-			final Validity validity = new PreIterator(strongerThanPre, pred2succ, weakerThanSucc,
-					this::evaluteResultStrongerThanPreAndWeakerThanSucc).iterate();
-			if (validity != null) {
-				switch (validity) {
-				case VALID:
-					throw new AssertionError(CASE_MUST_NOT_OCCUR);
-				case UNKNOWN:
-					someResultWasUnknown = true;
-					break;
-				case INVALID:
-					return validity;
-				case NOT_CHECKED:
-					throw new AssertionError(CASE_MUST_NOT_OCCUR);
-				default:
-					throw new AssertionError(UNKNOWN_CASE);
+
+			final Iterable<IPredicate> preds = new IterableIntersection<>(pred2succ.keySet(), strongerThanPre);
+			for (final IPredicate strongP : preds) {
+				final Map<IPredicate, Validity> succ2Val = pred2succ.get(strongP);
+				final Iterable<IPredicate> succs = new IterableIntersection<>(succ2Val.keySet(), weakerThanSucc);
+				for (final IPredicate weakS : succs) {
+					final Validity validity = evaluteResultStrongerThanPreAndWeakerThanSucc(succ2Val.get(weakS));
+					if (validity == null) {
+						continue;
+					}
+					switch (validity) {
+					case INVALID:
+						return Validity.INVALID;
+					case UNKNOWN:
+						someResultWasUnknown = true;
+						break;
+					case NOT_CHECKED:
+					case VALID:
+						throw new AssertionError(CASE_MUST_NOT_OCCUR);
+					default:
+						throw new AssertionError(UNKNOWN_CASE);
+					}
 				}
 			}
-
 		}
 		{
 			final Set<IPredicate> weakerThanPre = mPredicateUnifier.getCoverageRelation().getCoveringPredicates(pre);
 			final Set<IPredicate> strongerThanSucc = mPredicateUnifier.getCoverageRelation().getCoveredPredicates(succ);
-			final Validity validity = new PreIterator(weakerThanPre, pred2succ, strongerThanSucc,
-					this::evaluteResultWeakerThanPreAndStrongerThanSucc).iterate();
-			if (validity != null) {
-				switch (validity) {
-				case VALID:
-					return validity;
-				case UNKNOWN:
-					someResultWasUnknown = true;
-					break;
-				case INVALID:
-					break;
-				case NOT_CHECKED:
-					throw new AssertionError(CASE_MUST_NOT_OCCUR);
-				default:
-					throw new AssertionError(UNKNOWN_CASE);
+
+			final Iterable<IPredicate> preds = new IterableIntersection<>(pred2succ.keySet(), weakerThanPre);
+			for (final IPredicate weakP : preds) {
+				final Map<IPredicate, Validity> succ2Val = pred2succ.get(weakP);
+				final Iterable<IPredicate> succs = new IterableIntersection<>(succ2Val.keySet(), strongerThanSucc);
+				for (final IPredicate strongS : succs) {
+					final Validity validity = evaluteResultWeakerThanPreAndStrongerThanSucc(succ2Val.get(strongS));
+					if (validity == null) {
+						continue;
+					}
+					switch (validity) {
+					case VALID:
+						return Validity.VALID;
+					case UNKNOWN:
+						someResultWasUnknown = true;
+						break;
+					case NOT_CHECKED:
+					case INVALID:
+						throw new AssertionError(CASE_MUST_NOT_OCCUR);
+					default:
+						throw new AssertionError(UNKNOWN_CASE);
+					}
 				}
 			}
 		}
 		if (UNKNOWN_IF_SOME_EXTENDED_CHECK_IS_UNKNOWN && someResultWasUnknown) {
-			// we pass this result as a warning that the corresponding check might be expensive
+			// we pass this result as a warning that the corresponding check might be
+			// expensive
 			return Validity.UNKNOWN;
 		}
 		return null;
-	}
-
-	private static class PreIterator extends IntersectionIterator<IPredicate, Validity> {
-
-		private final IResultEvaluator mResultEvaluator;
-		private final NestedMap2<IPredicate, IPredicate, Validity> mPre2Succ2Validity;
-		private final Set<IPredicate> mWeakerThenSucc;
-
-		public PreIterator(final Set<IPredicate> set1, final NestedMap2<IPredicate, IPredicate, Validity> map,
-				final Set<IPredicate> weakerThanSucc, final IResultEvaluator resultEvaluator) {
-			super(set1, map.keySet());
-			mPre2Succ2Validity = map;
-			mWeakerThenSucc = weakerThanSucc;
-			mResultEvaluator = resultEvaluator;
-		}
-
-		@Override
-		protected boolean doOneIterationStep(final IPredicate strengthenedPre) {
-			final Validity validity =
-					new SuccIterator(mWeakerThenSucc, mPre2Succ2Validity.get(strengthenedPre), mResultEvaluator)
-							.iterate();
-			mResult = mResultEvaluator.evaluateResult(validity);
-			return mResult != null && mResult != Validity.UNKNOWN;
-		}
-
 	}
 
 	private Validity evaluteResultWeakerThanPreAndStrongerThanSucc(final Validity validity) {
@@ -157,7 +149,8 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 			// it also does not hold for original pre/succ
 			return validity;
 		case UNKNOWN:
-			// we pass this result as a warning that the corresponding check might be expensive
+			// we pass this result as a warning that the corresponding check might be
+			// expensive
 			return validity;
 		case INVALID:
 			// information does not help
@@ -178,10 +171,12 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 			// information does not help
 			return null;
 		case UNKNOWN:
-			// we pass this result as a warning that the corresponding check might be expensive
+			// we pass this result as a warning that the corresponding check might be
+			// expensive
 			return validity;
 		case INVALID:
-			// pass result, if Hoare triple does not hold for stronger pre and for weaker succ,
+			// pass result, if Hoare triple does not hold for stronger pre and for weaker
+			// succ,
 			// it also does not hold for original pre/succ
 			return validity;
 		case NOT_CHECKED:
@@ -191,72 +186,52 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 		}
 	}
 
-	private static class SuccIterator extends IntersectionIterator<IPredicate, Validity> {
+	public static class IterableIntersection<E> implements Iterable<E> {
 
-		private final IResultEvaluator mResultEvaluator;
-		private final Map<IPredicate, Validity> mSucc2Validity;
+		private final Set<E> mIteratorSet;
+		private final Set<E> mFilterSet;
 
-		public SuccIterator(final Set<IPredicate> set1, final Map<IPredicate, Validity> map,
-				final IResultEvaluator resultEvaluator) {
-			super(set1, map.keySet());
-			mSucc2Validity = map;
-			mResultEvaluator = resultEvaluator;
+		public IterableIntersection(final Set<E> set1, final Set<E> set2) {
+			super();
+			if (set1.size() <= set2.size()) {
+				mIteratorSet = set1;
+				mFilterSet = set2;
+			} else {
+				mIteratorSet = set1;
+				mFilterSet = set2;
+			}
 		}
 
 		@Override
-		protected boolean doOneIterationStep(final IPredicate weakerThanSucc) {
-			final Validity validity = mSucc2Validity.get(weakerThanSucc);
-			mResult = mResultEvaluator.evaluateResult(validity);
-			return mResult != null && mResult != Validity.UNKNOWN;
+		public Iterator<E> iterator() {
+			return new Iterator<E>() {
+				Iterator<E> mIt = mIteratorSet.iterator();
+				E mNext = runIterator();
 
-		}
-
-	}
-
-	@FunctionalInterface
-	public interface IResultEvaluator {
-		Validity evaluateResult(Validity validity);
-	}
-
-	/**
-	 * Allows iteration over intersection of two sets. Does the iteration efficiently over the smaller set.
-	 *
-	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
-	 *
-	 * @param <E>
-	 *            type of set elements
-	 */
-	private abstract static class IntersectionIterator<E, R> {
-		private final Set<E> mSmallerSet;
-		private final Set<E> mLargerSet;
-		protected R mResult;
-
-		public IntersectionIterator(final Set<E> set1, final Set<E> set2) {
-			if (set1.size() >= set2.size()) {
-				mSmallerSet = set2;
-				mLargerSet = set1;
-			} else {
-				mSmallerSet = set1;
-				mLargerSet = set2;
-			}
-
-		}
-
-		protected abstract boolean doOneIterationStep(E e);
-
-		protected final R iterate() {
-			for (final E e : mSmallerSet) {
-				if (mLargerSet.contains(e)) {
-					final boolean stop = doOneIterationStep(e);
-					if (stop) {
-						return mResult;
-					}
+				@Override
+				public boolean hasNext() {
+					return mNext != null;
 				}
-			}
-			return mResult;
 
+				private E runIterator() {
+					E found = null;
+					while (found == null && mIt.hasNext()) {
+						final E next = mIt.next();
+						if (mFilterSet.contains(next)) {
+							found = next;
+						}
+					}
+					return found;
+				}
+
+				@Override
+				public E next() {
+					final E result = mNext;
+					mNext = runIterator();
+					return result;
+				}
+			};
 		}
-
 	}
 
 }
