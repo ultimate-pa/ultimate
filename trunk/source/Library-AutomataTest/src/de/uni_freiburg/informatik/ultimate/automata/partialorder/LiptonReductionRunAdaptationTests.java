@@ -31,16 +31,19 @@ import static org.junit.Assert.assertNotNull;
 
 import java.nio.file.Path;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.runner.RunWith;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.EnumerateRuns;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 @RunWith(FactoryTestRunner.class)
 public class LiptonReductionRunAdaptationTests extends LiptonReductionTestsBase {
@@ -65,10 +68,17 @@ public class LiptonReductionRunAdaptationTests extends LiptonReductionTestsBase 
 			assertNotNull("Run could not ne adapted: " + run, adaptedRun);
 			assertThat("Adapted run is not a real run: " + adaptedRun, adaptedRun.isRunOf(actual));
 			assertThat("Adapted run is not accepting: " + adaptedRun, adaptedRun.isAccepting(actual));
-
-			// TODO check covering: adapted run's word should cover original run's word
+			assertThat("Adapted run does not cover original run!\nOriginal: " + run.getWord() + "\nAdapted: "
+					+ adaptedRun.getWord(), covers(run.getWord(), adaptedRun.getWord(), independence));
 		}
 
+	}
+
+	private boolean covers(final Word<String> original, final Word<String> representative,
+			final IIndependenceRelation<Set<String>, String> independence) {
+		final var candidates = CoveringIterator.enumerateCoveringWords(original, independence, String.class)
+				.flatMap(c -> flatten(c).stream()).collect(Collectors.toSet());
+		return DataStructureUtils.haveNonEmptyIntersection(flatten(representative), candidates);
 	}
 
 	private static <X> Iterable<X> asIterable(final Stream<X> stream) {

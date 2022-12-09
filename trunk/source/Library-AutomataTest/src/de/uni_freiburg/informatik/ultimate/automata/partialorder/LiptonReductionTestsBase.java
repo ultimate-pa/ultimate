@@ -50,6 +50,7 @@ import org.junit.Before;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
@@ -159,6 +160,20 @@ public abstract class LiptonReductionTestsBase implements IMessagePrinter {
 			final String longDescr, final String shortDescr, final AtsASTNode node) {
 		// TODO
 		mLogger.warn(longDescr);
+	}
+
+	protected static Set<String> flatten(final Word<String> word) {
+		return flatten(word, 0);
+	}
+
+	protected static Set<String> flatten(final Word<String> word, final int position) {
+		assert position <= word.length();
+		if (position == word.length()) {
+			return Set.of("");
+		}
+		final var suffixes = flatten(word, position + 1);
+		return CompositionFactory.unpack(word.getSymbol(position)).flatMap(x -> suffixes.stream().map(s -> x + s))
+				.collect(Collectors.toSet());
 	}
 
 	private AutomataTestFileAST parse(final Path path) throws FileNotFoundException {

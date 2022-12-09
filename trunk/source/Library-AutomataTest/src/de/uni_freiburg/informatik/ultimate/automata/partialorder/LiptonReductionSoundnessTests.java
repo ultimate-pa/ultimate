@@ -124,20 +124,6 @@ public class LiptonReductionSoundnessTests extends LiptonReductionTestsBase {
 		}
 	}
 
-	private static Set<String> flatten(final Word<String> word) {
-		return flatten(word, 0);
-	}
-
-	private static Set<String> flatten(final Word<String> word, final int position) {
-		assert position <= word.length();
-		if (position == word.length()) {
-			return Set.of("");
-		}
-		final var suffixes = flatten(word, position + 1);
-		return CompositionFactory.unpack(word.getSymbol(position)).flatMap(x -> suffixes.stream().map(s -> x + s))
-				.collect(Collectors.toSet());
-	}
-
 	private static Stream<Word<String>> generateEquivalenceClass(final Word<String> word,
 			final IIndependenceRelation<?, String> independence) {
 		return CoveringIterator.enumerateCoveringWords(word, independence, String.class);
