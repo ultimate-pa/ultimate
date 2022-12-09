@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -40,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.SymmetricHashRelation;
 
 /**
@@ -100,5 +102,17 @@ public final class CoenabledRelation<L, P> extends SymmetricHashRelation<Transit
 			}
 		}
 		return relation;
+	}
+
+	public void renameAndProjectTransitions(final Map<Transition<L, P>, Transition<L, P>> old2New) {
+		for (final var entry : old2New.entrySet()) {
+			final var original = entry.getKey();
+			final var copy = entry.getValue();
+			replaceElement(original, copy);
+		}
+		final var obsolete = DataStructureUtils.difference(getDomain(), Set.copyOf(old2New.values()));
+		for (final var trans : obsolete) {
+			removeElement(trans);
+		}
 	}
 }

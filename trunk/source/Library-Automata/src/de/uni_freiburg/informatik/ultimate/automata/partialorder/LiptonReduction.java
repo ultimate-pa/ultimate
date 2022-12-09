@@ -144,11 +144,7 @@ public class LiptonReduction<L, P> {
 
 			// Compute the coenabled relation from the given branching process, and then adapt it for the copied net.
 			mCoEnabledRelation = CoenabledRelation.fromBranchingProcess(mBranchingProcess);
-			for (final var entry : original2Copy.entrySet()) {
-				final var original = entry.getKey();
-				final var copy = entry.getValue();
-				mCoEnabledRelation.replaceElement(original, copy);
-			}
+			mCoEnabledRelation.renameAndProjectTransitions(original2Copy);
 		}
 		mRuns = adaptRunsToCopy(runs, petriNet, original2Copy);
 
