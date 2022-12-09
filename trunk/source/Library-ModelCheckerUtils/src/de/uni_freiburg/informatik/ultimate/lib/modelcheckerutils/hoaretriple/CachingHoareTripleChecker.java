@@ -242,9 +242,6 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	private Validity evaluteResultWeakerThanPreAndStrongerThanSucc(final Validity validity) {
-		if (validity == null) {
-			return validity;
-		}
 		switch (validity) {
 		case VALID:
 			// pass result, if Hoare triple holds for weaker pre and for stronger succ,
@@ -265,9 +262,6 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	private Validity evaluteResultStrongerThanPreAndWeakerThanSucc(final Validity validity) {
-		if (validity == null) {
-			return validity;
-		}
 		switch (validity) {
 		case VALID:
 			// information does not help
