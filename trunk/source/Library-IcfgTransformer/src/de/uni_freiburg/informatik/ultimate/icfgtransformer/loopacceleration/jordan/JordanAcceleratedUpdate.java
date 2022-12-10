@@ -200,6 +200,10 @@ public class JordanAcceleratedUpdate {
 		}
 	}
 
+	/**
+	 * Construct map that assigns to the default TermVariable its closed from, where each
+	 * variable in the closed form is represented by its default TermVariable.
+	 */
 	static HashMap<TermVariable, Term> constructClosedForm(final ManagedScript mgdScript,
 			final LinearUpdate linearUpdate, final HashMap<Term, Integer> varMatrixIndexMap,
 			final JordanTransformationResult jordanUpdate, final TermVariable it, final TermVariable itHalf,
@@ -208,6 +212,21 @@ public class JordanAcceleratedUpdate {
 		// Compute matrix that represents closed form.
 		final PolynomialTermMatrix closedFormMatrix = PolynomialTermMatrix.computeClosedFormMatrix(mgdScript,
 				jordanUpdate, itc, itKind);
+		final HashMap<TermVariable, Term> closedFormMap = constructClosedForm(mgdScript, closedFormMatrix, linearUpdate,
+				varMatrixIndexMap);
+		return closedFormMap;
+	}
+
+	/**
+	 * Construct map that assigns to the default TermVariable its closed from, where each
+	 * variable in the closed form is represented by its default TermVariable.
+	 */
+	static HashMap<TermVariable, Term> constructClosedForm(final ManagedScript mgdScript,
+			final LinearUpdate linearUpdate, final HashMap<Term, Integer> varMatrixIndexMap,
+			final JordanTransformationResult jordanUpdate, final int k) {
+		// Compute matrix that represents closed form.
+		final PolynomialTermMatrix closedFormMatrix = PolynomialTermMatrix.computeClosedFormMatrix(mgdScript,
+				jordanUpdate, k);
 		final HashMap<TermVariable, Term> closedFormMap = constructClosedForm(mgdScript, closedFormMatrix, linearUpdate,
 				varMatrixIndexMap);
 		return closedFormMap;

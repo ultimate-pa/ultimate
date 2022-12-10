@@ -249,8 +249,7 @@ public class PolynomialTermMatrix {
 	}
 
 	/**
-	 * Method that computes matrix that represents closed form out of the jordan
-	 * decomposition.
+	 * Computes matrix that represents closed form for `itc` iterations.
 	 */
 	public static PolynomialTermMatrix computeClosedFormMatrix(final ManagedScript mgdScript,
 			final JordanTransformationResult jordanUpdate, final IPolynomialTerm itc, final Iterations itKind) {
@@ -263,6 +262,25 @@ public class PolynomialTermMatrix {
 		final PolynomialTermMatrix tmp = multiplication(mgdScript, rationalMatrix2TermMatrix(script, modalUpdate),
 				jordanUpdatePower);
 		closedFormMatrix = multiplication(mgdScript, tmp, rationalMatrix2TermMatrix(script, inverseModalUpdate));
+		return PolynomialTermMatrix.cancelDenominator(mgdScript, closedFormMatrix);
+	}
+
+	/**
+	 * Computes matrix that represents the jordanUpdate that is multiplied k times
+	 * with itself.
+	 */
+	public static PolynomialTermMatrix computeClosedFormMatrix(final ManagedScript mgdScript,
+			final JordanTransformationResult jordanUpdate, final int k) {
+		final Script script = mgdScript.getScript();
+		final RationalMatrix modalUpdate = jordanUpdate.getModal();
+		final RationalMatrix inverseModalUpdate = jordanUpdate.getInverseModal();
+		final QuadraticMatrix powerQm = QuadraticMatrix.power(jordanUpdate.getJnf(), k);
+		final PolynomialTermMatrix jordanUpdatePower = rationalMatrix2TermMatrix(script,
+				new RationalMatrix(BigInteger.ONE, powerQm));
+		final PolynomialTermMatrix tmp = multiplication(mgdScript, rationalMatrix2TermMatrix(script, modalUpdate),
+				jordanUpdatePower);
+		final PolynomialTermMatrix closedFormMatrix = multiplication(mgdScript, tmp,
+				rationalMatrix2TermMatrix(script, inverseModalUpdate));
 		return PolynomialTermMatrix.cancelDenominator(mgdScript, closedFormMatrix);
 	}
 
