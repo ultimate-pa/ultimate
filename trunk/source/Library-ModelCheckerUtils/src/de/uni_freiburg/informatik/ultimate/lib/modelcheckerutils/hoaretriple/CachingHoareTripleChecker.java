@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  */
 public class CachingHoareTripleChecker implements IHoareTripleChecker {
 
-	protected static final boolean UNKNOWN_IF_SOME_EXTENDED_CHECK_IS_UNKNOWN = true;
+	protected static final boolean UNKNOWN_IF_SOME_EXTENDED_CHECK_IS_UNKNOWN = false;
 
 	private static final String UNKNOWN_CASE = "unknown case";
 	private static final String CASE_MUST_NOT_OCCUR = "case must not occur";
