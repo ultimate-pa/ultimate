@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.IterableIntersection;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
@@ -130,7 +131,7 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 			final IPredicate succ) {
 		Validity result = mCache.getReturn(preLin, preHier, act, succ);
 		if (result == null) {
-			result = extendedBinaryCacheCheck(preLin, act, succ, mCache.getReturnCache(preHier));
+			result = extendedReturnCacheCheck(preLin, preHier, act, succ, mCache.getReturnCache());
 			if (result == null) {
 				result = mComputingHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
 				mResultFromSolver.incRe();
@@ -167,6 +168,10 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 		return mCache;
 	}
 
+	/**
+	 * Cache check for internal actions and call actions. Both have only one
+	 * predecessor and one successor.
+	 */
 	private Validity extendedBinaryCacheCheck(final IPredicate pre, final IAction act, final IPredicate succ,
 			final NestedMap3<IAction, IPredicate, IPredicate, Validity> binaryCache) {
 
@@ -229,6 +234,99 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 						throw new AssertionError(CASE_MUST_NOT_OCCUR);
 					default:
 						throw new AssertionError(UNKNOWN_CASE);
+					}
+				}
+			}
+		}
+		if (UNKNOWN_IF_SOME_EXTENDED_CHECK_IS_UNKNOWN && someResultWasUnknown) {
+			// we pass this result as a warning that the corresponding check might be
+			// expensive
+			return Validity.UNKNOWN;
+		}
+		return null;
+	}
+
+	protected Validity extendedReturnCacheCheck(final IPredicate preLin, final IPredicate preHier, final IAction act,
+			final IPredicate succ,
+			final NestedMap4<IAction, IPredicate, IPredicate, IPredicate, Validity> ternaryCache) {
+		final NestedMap3<IPredicate, IPredicate, IPredicate, Validity> preHier2preLin2succ = ternaryCache.get(act);
+		if (preHier2preLin2succ == null) {
+			// cache does not store information for our action
+			return null;
+		}
+		boolean someResultWasUnknown = false;
+		{
+			final Set<IPredicate> strongerThanPreHier = mPredicateUnifier.getCoverageRelation()
+					.getCoveredPredicates(preHier);
+			final Set<IPredicate> strongerThanPreLin = mPredicateUnifier.getCoverageRelation()
+					.getCoveredPredicates(preLin);
+			final Set<IPredicate> weakerThanSucc = mPredicateUnifier.getCoverageRelation().getCoveringPredicates(succ);
+
+			final Iterable<IPredicate> predsHier = new IterableIntersection<>(preHier2preLin2succ.keySet(),
+					strongerThanPreHier);
+			for (final IPredicate strongPreHier : predsHier) {
+				final NestedMap2<IPredicate, IPredicate, Validity> preLin2succ2Val = preHier2preLin2succ
+						.get(strongPreHier);
+				final Iterable<IPredicate> predsLin = new IterableIntersection<>(preLin2succ2Val.keySet(),
+						strongerThanPreLin);
+				for (final IPredicate strongPreLin : predsLin) {
+					final Map<IPredicate, Validity> succ2Val = preLin2succ2Val.get(strongPreLin);
+					final Iterable<IPredicate> succs = new IterableIntersection<>(succ2Val.keySet(), weakerThanSucc);
+					for (final IPredicate weakS : succs) {
+						final Validity validity = evaluteResultStrongerThanPreAndWeakerThanSucc(succ2Val.get(weakS));
+						if (validity == null) {
+							continue;
+						}
+						switch (validity) {
+						case INVALID:
+							return Validity.INVALID;
+						case UNKNOWN:
+							someResultWasUnknown = true;
+							break;
+						case NOT_CHECKED:
+						case VALID:
+							throw new AssertionError(CASE_MUST_NOT_OCCUR);
+						default:
+							throw new AssertionError(UNKNOWN_CASE);
+						}
+					}
+				}
+			}
+		}
+		{
+			final Set<IPredicate> weakerThanPreHier = mPredicateUnifier.getCoverageRelation()
+					.getCoveringPredicates(preHier);
+			final Set<IPredicate> weakerThanPreLin = mPredicateUnifier.getCoverageRelation()
+					.getCoveringPredicates(preLin);
+			final Set<IPredicate> strongerThanSucc = mPredicateUnifier.getCoverageRelation().getCoveredPredicates(succ);
+
+			final Iterable<IPredicate> predsHier = new IterableIntersection<>(preHier2preLin2succ.keySet(),
+					weakerThanPreHier);
+			for (final IPredicate weakPreHier : predsHier) {
+				final NestedMap2<IPredicate, IPredicate, Validity> preLin2succ2Val = preHier2preLin2succ
+						.get(weakPreHier);
+				final Iterable<IPredicate> predsLin = new IterableIntersection<>(preLin2succ2Val.keySet(),
+						weakerThanPreLin);
+				for (final IPredicate weakPreLin : predsLin) {
+					final Map<IPredicate, Validity> succ2Val = preLin2succ2Val.get(weakPreLin);
+					final Iterable<IPredicate> succs = new IterableIntersection<>(succ2Val.keySet(), strongerThanSucc);
+					for (final IPredicate weakS : succs) {
+						final Validity validity = evaluteResultWeakerThanPreAndStrongerThanSucc(succ2Val.get(weakS));
+						if (validity == null) {
+							continue;
+						}
+						switch (validity) {
+						case VALID:
+							return Validity.VALID;
+						case UNKNOWN:
+							someResultWasUnknown = true;
+							break;
+						case NOT_CHECKED:
+						case INVALID:
+							throw new AssertionError(CASE_MUST_NOT_OCCUR);
+						default:
+							throw new AssertionError(UNKNOWN_CASE);
+						}
 					}
 				}
 			}
