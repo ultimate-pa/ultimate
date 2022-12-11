@@ -34,7 +34,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPostScriptChecker;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
@@ -58,6 +61,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  *            The type of the places in the Petri net.
  */
 public class InfeasPostScriptChecker<L extends IIcfgTransition<?>, P> implements IPostScriptChecker<L, P> {
+	// Computing the remainder guard can sometimes be very expensive (in part due to quantifier elimination).
+	// Thus we only allow 1 second to compute it. If the computation times out, we assume that a place could get stuck.
+	//
+	// TODO See if some (existential) quantifier elimination can be avoided, as we pass the result to checkSat anyway
+	private static final long REMAINDER_GUARD_TIMEOUT = 1000L;
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
@@ -110,14 +119,30 @@ public class InfeasPostScriptChecker<L extends IIcfgTransition<?>, P> implements
 	public boolean isPostScript(final IPetriNet<L, P> net, final Set<Transition<L, P>> transitions) {
 		final UnmodifiableTransFormula[] tfs =
 				transitions.stream().map(t -> t.getSymbol().getTransformula()).toArray(UnmodifiableTransFormula[]::new);
-		try {
-			final UnmodifiableTransFormula tf =
-					TransFormulaUtils.constructRemainderGuard(mLogger, mServices, mScript, tfs);
-			final LBool result = Util.checkSat(mScript.getScript(), tf.getFormula());
-			return result == LBool.UNSAT;
-		} catch (final UnsupportedOperationException e) {
-			// May be thrown by constructRemainderGuard if some aux vars cannot be eliminated.
+		final UnmodifiableTransFormula tf = computeRemainderGuardWithTimeout(tfs);
+		if (tf == null) {
 			return false;
+		}
+
+		final LBool result = Util.checkSat(mScript.getScript(), tf.getFormula());
+		return result == LBool.UNSAT;
+	}
+
+	private UnmodifiableTransFormula computeRemainderGuardWithTimeout(final UnmodifiableTransFormula[] tfs) {
+		final IProgressMonitorService pms = mServices.getProgressMonitorService();
+		final IProgressAwareTimer timer = pms.getChildTimer(REMAINDER_GUARD_TIMEOUT);
+		final var childServices = pms.registerChildTimer(mServices, timer);
+
+		try {
+			return TransFormulaUtils.constructRemainderGuard(mLogger, childServices, mScript, tfs);
+		} catch (final UnsupportedOperationException e) {
+			// May be thrown by constructRemainderGuard if some auxiliary variables cannot be eliminated.
+			return null;
+		} catch (final ToolchainCanceledException e) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw e;
+			}
+			return null;
 		}
 	}
 }
