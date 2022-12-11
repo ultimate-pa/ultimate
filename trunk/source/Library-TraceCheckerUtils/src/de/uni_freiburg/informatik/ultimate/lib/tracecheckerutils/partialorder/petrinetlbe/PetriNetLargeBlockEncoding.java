@@ -119,7 +119,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 			final ICompositionFactory<L> compositionFactory, final BasicPredicateFactory predicateFactory,
 			final IIndependenceCache<?, L> independenceCache)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		this(services, cfgSmtToolkit, petriNet, independenceSettings, compositionFactory, predicateFactory,
+		this(services, cfgSmtToolkit, petriNet, independenceSettings, compositionFactory, false, predicateFactory,
 				independenceCache, null, null, null, Collections.emptySet());
 	}
 
@@ -154,8 +154,9 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 	 */
 	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final BoundedPetriNet<L, IPredicate> petriNet, final IndependenceSettings independenceSettings,
-			ICompositionFactory<L> compositionFactory, final BasicPredicateFactory predicateFactory,
-			final IIndependenceCache<?, L> independenceCache, final BranchingProcess<L, IPredicate> finitePrefix,
+			ICompositionFactory<L> compositionFactory, final boolean usePostscriptOptimization,
+			final BasicPredicateFactory predicateFactory, final IIndependenceCache<?, L> independenceCache,
+			final BranchingProcess<L, IPredicate> finitePrefix,
 			final ModifiableRetroMorphism<L, IPredicate> retromorphism,
 			final CoenabledRelation<L, IPredicate> coenabled, final Set<PetriNetRun<L, IPredicate>> runsToAdapt)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
@@ -175,7 +176,7 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		final AutomataLibraryServices automataServices = new AutomataLibraryServices(services);
 		final CopyPredicatePlaceFactory placeFactory = new CopyPredicatePlaceFactory(predicateFactory);
 		final InfeasPostScriptChecker<L, IPredicate> postScriptChecker =
-				new InfeasPostScriptChecker<>(mServices, mManagedScript);
+				usePostscriptOptimization ? new InfeasPostScriptChecker<>(mServices, mManagedScript) : null;
 		try {
 			final LiptonReduction<L, IPredicate> lipton =
 					new LiptonReduction<>(automataServices, petriNet, compositionFactory, placeFactory, moverCheck,

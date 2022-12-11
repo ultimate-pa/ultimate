@@ -467,6 +467,10 @@ public final class TAPreferences {
 		return mLbeIndependenceSettings;
 	}
 
+	public boolean usePostScriptOptimizationInLbe() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PETRI_LBE_POSTSCRIPT);
+	}
+
 	public SimplificationTechnique getSimplificationTechnique() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_SIMPLIFICATION_TECHNIQUE,
 				SimplificationTechnique.class);

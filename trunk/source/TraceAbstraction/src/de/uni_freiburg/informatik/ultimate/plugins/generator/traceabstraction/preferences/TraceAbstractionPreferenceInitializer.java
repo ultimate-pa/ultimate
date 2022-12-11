@@ -111,6 +111,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_PETRI_LBE_ONESHOT = "Apply one-shot large block encoding in concurrent analysis";
 	private static final boolean DEF_PETRI_LBE_ONESHOT = true;
 
+	public static final String LABEL_PETRI_LBE_POSTSCRIPT = "Apply post-script optimization in large block encoding";
+	private static final boolean DEF_PETRI_LBE_POSTSCRIPT = true;
+
 	public static final String LABEL_INDEPENDENCE_PLBE =
 			"Independence relation used for large block encoding in concurrent analysis";
 	private static final IndependenceType DEF_INDEPENDENCE_PLBE = IndependenceType.SEMANTIC;
@@ -594,6 +597,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				/* Petri LBE settings */
 
 				new UltimatePreferenceItem<>(LABEL_PETRI_LBE_ONESHOT, DEF_PETRI_LBE_ONESHOT, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_PETRI_LBE_POSTSCRIPT, DEF_PETRI_LBE_POSTSCRIPT,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_PLBE, DEF_INDEPENDENCE_PLBE, PreferenceType.Combo,
 						IndependenceType.values()),
 				new UltimatePreferenceItem<>(LABEL_COND_LBE, DEF_COND_LBE, PreferenceType.Combo,
