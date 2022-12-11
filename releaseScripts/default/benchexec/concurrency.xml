@@ -19,6 +19,23 @@
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf</option>
   </rundefinition>
 
+  <rundefinition name="PetriAutomizer.OnDemand">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf</option>
+    <option name="--traceabstraction.use.on-demand.petri.net.difference">true</option>
+  </rundefinition>
+
+  <rundefinition name="PetriAutomizer.OnDemand.RemoveDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf</option>
+    <option name="--traceabstraction.use.on-demand.petri.net.difference">true</option>
+    <option name="--traceabstraction.size.reduction.to.apply.after.petri.net.difference">REMOVE_DEAD</option>
+  </rundefinition>
+
+  <rundefinition name="PetriAutomizer.OnDemand.RemoveRedundantFlow">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf</option>
+    <option name="--traceabstraction.use.on-demand.petri.net.difference">true</option>
+    <option name="--traceabstraction.size.reduction.to.apply.after.petri.net.difference">REMOVE_REDUNDANT_FLOW</option>
+  </rundefinition>
+
   <!--rundefinition name="GemCutter.None">
     <option name="-s">../../../trunk/examples/settings/gemcutter/None.epf</option>
   </rundefinition-->
@@ -45,6 +62,17 @@
 
   <rundefinition name="PetriAutomizer.SemanticLBE">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-SemanticLbe.epf</option>
+  </rundefinition>
+
+  <rundefinition name="PetriAutomizer.SemanticLBE.OnDemand">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-SemanticLbe.epf</option>
+    <option name="--traceabstraction.use.on-demand.petri.net.difference">true</option>
+  </rundefinition>
+
+  <rundefinition name="PetriAutomizer.SemanticLBE.OnDemand.RemoveDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-SemanticLbe.epf</option>
+    <option name="--traceabstraction.use.on-demand.petri.net.difference">true</option>
+    <option name="--traceabstraction.size.reduction.to.apply.after.petri.net.difference">REMOVE_DEAD</option>
   </rundefinition>
 
 
@@ -493,6 +521,12 @@
   <rundefinition name="PetriAutomizer.RepeatedSemanticLBE.OnDemand">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedSemanticLbe.epf</option>
     <option name="--traceabstraction.use.on-demand.petri.net.difference">true</option>
+  </rundefinition>
+
+  <rundefinition name="PetriAutomizer.RepeatedSemanticLBE.OnDemand.RemoveDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-RepeatedSemanticLbe.epf</option>
+    <option name="--traceabstraction.use.on-demand.petri.net.difference">true</option>
+    <option name="--traceabstraction.size.reduction.to.apply.after.petri.net.difference">REMOVE_DEAD</option>
   </rundefinition>
 
   <rundefinition name="PetriAutomizer.RepeatedSemanticLbeWithPredicates">
