@@ -704,19 +704,16 @@ public class FunctionHandler {
 			final List<Statement> writes = new ArrayList<>();
 			final Expression originalBase = MemoryHandler.getPointerBaseAddress(auxvarinfo.getExp(), loc);
 			final Expression originalOffset = MemoryHandler.getPointerOffset(auxvarinfo.getExp(), loc);
-			for (final ExpressionResult va : varargs) {
-				final ExpressionResult param;
-				final CType argType = va.getCType().getUnderlyingType();
-				if (argType instanceof CPrimitive) {
+			for (ExpressionResult param : varargs) {
+				if (param.getCType() instanceof CPrimitive) {
 					// All smaller types (char, short) are promoted to int (see 7.6.11.2)
-					param = mExprResultTransformer.doIntegerPromotion(loc, va);
-				} else {
-					param = va;
+					param = mExprResultTransformer.doIntegerPromotion(loc, param);
 				}
 				functionCallExpressionResultBuilder.addAllExceptLrValue(param);
 				if (!hasUsedVarargs) {
 					continue;
 				}
+				final CType argType = param.getCType().getUnderlyingType();
 				// Write the current parameter to *(varargs + currentOffset) and increment currentOffset by the typesize
 				// afterwards
 				final Expression pointerOffset = mExpressionTranslation.constructArithmeticExpression(loc,
