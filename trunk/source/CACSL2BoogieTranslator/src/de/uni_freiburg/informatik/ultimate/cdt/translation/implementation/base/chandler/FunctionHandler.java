@@ -710,7 +710,7 @@ public class FunctionHandler {
 				final ExpressionResult param;
 				int size;
 				if (va.getCType().getUnderlyingType() instanceof CPrimitive) {
-					// All smaller types (char, short) are promoted to int
+					// All smaller types (char, short) are promoted to int (see 7.6.11.2)
 					param = mExprResultTransformer.doIntegerPromotion(loc, va);
 					size = mTypeSizes.getSize(((CPrimitive) param.getCType()).getType());
 				} else {
