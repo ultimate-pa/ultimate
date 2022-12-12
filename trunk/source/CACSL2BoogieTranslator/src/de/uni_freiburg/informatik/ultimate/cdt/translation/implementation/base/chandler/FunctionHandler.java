@@ -694,10 +694,6 @@ public class FunctionHandler {
 			// - If they are used, we create a pointer for all the remaining arguments and pass them to the function.
 			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
 					mTypeHandler.constructPointerType(loc), SFO.AUXVAR.VARARGS_POINTER);
-			if (hasUsedVarargs) {
-				functionCallExpressionResultBuilder.addAuxVar(auxvarinfo);
-				functionCallExpressionResultBuilder.addDeclaration(auxvarinfo.getVarDec());
-			}
 			final CPrimitive pointerType = mExpressionTranslation.getCTypeOfPointerComponents();
 			Expression currentOffset =
 					mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, BigInteger.ZERO);
@@ -727,6 +723,9 @@ public class FunctionHandler {
 								currentOffset, pointerType, memoryHandler.calculateSizeOf(loc, argType), pointerType);
 			}
 			if (hasUsedVarargs) {
+				// Declare and allocate the aux-var and add the writes of the parameters
+				functionCallExpressionResultBuilder.addAuxVar(auxvarinfo);
+				functionCallExpressionResultBuilder.addDeclaration(auxvarinfo.getVarDec());
 				functionCallExpressionResultBuilder.addStatement(memoryHandler.getUltimateMemAllocCall(currentOffset,
 						auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
 				functionCallExpressionResultBuilder.addStatements(writes);
