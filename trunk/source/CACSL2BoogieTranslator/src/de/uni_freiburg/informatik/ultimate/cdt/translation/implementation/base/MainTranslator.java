@@ -183,7 +183,7 @@ public class MainTranslator {
 			final ExpressionTranslation prerunExpressionTranslation =
 					createExpressionTranslation(translationSettings, flatSymbolTable, typeSizes, prerunTypeHandler);
 
-			final CHandler prerunCHandler = new CHandler(mServices, mLogger, backtranslatorMapping, translationSettings,
+			final CHandler prerunCHandler = new CHandler(mLogger, backtranslatorMapping, translationSettings,
 					flatSymbolTable, functionTable, prerunExpressionTranslation, locationFactory, typeSizes,
 					reachableDeclarations, prerunTypeHandler, reporter, nameHandler, prerunStaticObjectsHandler,
 					preRunnerResult.getFunctionToIndex(), preRunnerResult.getVariablesOnHeap());

@@ -224,7 +224,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
@@ -373,10 +372,10 @@ public class CHandler {
 	 * @param set
 	 *
 	 */
-	public CHandler(final IUltimateServiceProvider services, final ILogger logger,
-			final ICACSL2BoogieBacktranslatorMapping backtranslator, final TranslationSettings settings,
-			final FlatSymbolTable symbolTable, final Map<String, IASTNode> functionTable,
-			final ExpressionTranslation exprTrans, final LocationFactory locationFactory, final TypeSizes typeSizes,
+	public CHandler(final ILogger logger, final ICACSL2BoogieBacktranslatorMapping backtranslator,
+			final TranslationSettings settings, final FlatSymbolTable symbolTable,
+			final Map<String, IASTNode> functionTable, final ExpressionTranslation exprTrans,
+			final LocationFactory locationFactory, final TypeSizes typeSizes,
 			final Set<IASTDeclaration> reachableDeclarations, final ITypeHandler typeHandler,
 			final CTranslationResultReporter reporter, final INameHandler nameHandler,
 			final StaticObjectsHandler staticObjectsHandler, final Map<String, Integer> functionToIndex,
