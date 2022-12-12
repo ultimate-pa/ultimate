@@ -661,14 +661,12 @@ public class FunctionHandler {
 			} else if (calleeProcInfo.getCType() != null) {
 				// we already know the parameters: do implicit casts and bool/int conversion
 				if (i >= calleeProcCType.getParameterTypes().length && calleeProcCType.hasVarArgs()) {
-					if (in.getCType().getUnderlyingType().isIntegerType()) {
-						// For varargs all arguments with smaller types (char, short) are promoted to int
-						// (see C standard section 7.6.11.2)
-						in = mExprResultTransformer.doIntegerPromotion(loc, in);
-					}
+					// For varargs all arguments with smaller types (char, short) are promoted to int
+					// (see C standard section 7.6.11.2)
+					final ExpressionResult inPromoted = mExprResultTransformer.promoteToIntegerIfNecessary(loc, in);
 					// Dispatch the arguments and add them to the list to be processed later, if the varargs are used.
-					varargs.add(in);
-					functionCallExpressionResultBuilder.addAllExceptLrValue(in);
+					varargs.add(inPromoted);
+					functionCallExpressionResultBuilder.addAllExceptLrValue(inPromoted);
 					continue;
 				}
 				CType expectedParamType =

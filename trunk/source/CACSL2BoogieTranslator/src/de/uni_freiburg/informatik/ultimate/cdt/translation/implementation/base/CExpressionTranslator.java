@@ -356,7 +356,7 @@ public class CExpressionTranslator {
 			}
 			if (inputType.isArithmeticType()) {
 				operand = mExprResultTransformer.rexBoolToInt(operand, loc);
-				operand = mExprResultTransformer.doIntegerPromotion(loc, operand);
+				operand = mExprResultTransformer.promoteToIntegerIfNecessary(loc, operand);
 			}
 			return operand;
 		}
@@ -366,7 +366,7 @@ public class CExpressionTranslator {
 				throw new UnsupportedOperationException("arithmetic type required");
 			}
 			operand = mExprResultTransformer.rexBoolToInt(operand, loc);
-			operand = mExprResultTransformer.doIntegerPromotion(loc, operand);
+			operand = mExprResultTransformer.promoteToIntegerIfNecessary(loc, operand);
 			final CPrimitive resultType = (CPrimitive) operand.getLrValue().getCType();
 			final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(operand);
 			if (op == IASTUnaryExpression.op_minus && resultType.isIntegerType()) {
@@ -404,7 +404,7 @@ public class CExpressionTranslator {
 		if (!rType.isIntegerType() || !lType.isIntegerType()) {
 			throw new UnsupportedOperationException("operands have to have integer types");
 		}
-		final ExpressionResult leftPromoted = mExprResultTransformer.doIntegerPromotion(loc, left);
+		final ExpressionResult leftPromoted = mExprResultTransformer.promoteToIntegerIfNecessary(loc, left);
 		final CPrimitive typeOfResult = (CPrimitive) leftPromoted.getLrValue().getCType().getUnderlyingType();
 		final ExpressionResult rightConverted =
 				mExprResultTransformer.performImplicitConversion(right, typeOfResult, loc);

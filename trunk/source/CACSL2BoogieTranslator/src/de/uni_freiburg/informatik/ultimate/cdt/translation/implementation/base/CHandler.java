@@ -2206,7 +2206,7 @@ public class CHandler {
 		assert expr.getLrValue().getCType().isIntegerType();
 		// 6.8.4.2-5: "The integer promotions are performed on the controlling
 		// expression."
-		expr = mExprResultTransformer.doIntegerPromotion(loc, expr);
+		expr = mExprResultTransformer.promoteToIntegerIfNecessary(loc, expr);
 
 		resultBuilder.addAllExceptLrValue(expr);
 

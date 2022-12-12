@@ -883,16 +883,8 @@ public class ExpressionResultTransformer {
 	 */
 	public Pair<ExpressionResult, ExpressionResult> usualArithmeticConversions(final ILocation loc,
 			ExpressionResult leftRex, ExpressionResult rightRex) {
-		final CPrimitive leftPrimitive =
-				(CPrimitive) CEnum.replaceEnumWithInt(leftRex.getLrValue().getCType().getUnderlyingType());
-		final CPrimitive rightPrimitive =
-				(CPrimitive) CEnum.replaceEnumWithInt(leftRex.getLrValue().getCType().getUnderlyingType());
-		if (leftPrimitive.isIntegerType()) {
-			leftRex = doIntegerPromotion(loc, leftRex);
-		}
-		if (rightPrimitive.isIntegerType()) {
-			rightRex = doIntegerPromotion(loc, rightRex);
-		}
+		leftRex = promoteToIntegerIfNecessary(loc, leftRex);
+		rightRex = promoteToIntegerIfNecessary(loc, rightRex);
 
 		final CPrimitive resultType = determineResultOfUsualArithmeticConversions(
 				(CPrimitive) leftRex.getLrValue().getCType().getUnderlyingType(),
@@ -944,17 +936,17 @@ public class ExpressionResultTransformer {
 	}
 
 	/**
-	 * Perform the integer promotions a specified in C11 6.3.1.1.2 on the operand.
+	 * Perform the integer promotions a specified in C11 6.3.1.1.2 on the operand. If no integer promotion has to be
+	 * performed (because we don't have a smaller integer type), the operand is returned.
 	 */
-	public final ExpressionResult doIntegerPromotion(final ILocation loc, final ExpressionResult operand) {
+	public final ExpressionResult promoteToIntegerIfNecessary(final ILocation loc, final ExpressionResult operand) {
 		final CType ctype = CEnum.replaceEnumWithInt(operand.getLrValue().getCType().getUnderlyingType());
-		if (!(ctype instanceof CPrimitive)) {
-			throw new IllegalArgumentException("integer promotions not applicable to " + ctype);
-		}
-		final CPrimitive cPrimitive = (CPrimitive) ctype;
-		if (integerPromotionNeeded(cPrimitive)) {
-			final CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
-			return mExprTrans.convertIntToInt(loc, operand, promotedType);
+		if (ctype instanceof CPrimitive) {
+			final CPrimitive cPrimitive = (CPrimitive) ctype;
+			if (integerPromotionNeeded(cPrimitive)) {
+				final CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
+				return mExprTrans.convertIntToInt(loc, operand, promotedType);
+			}
 		}
 		return operand;
 	}
