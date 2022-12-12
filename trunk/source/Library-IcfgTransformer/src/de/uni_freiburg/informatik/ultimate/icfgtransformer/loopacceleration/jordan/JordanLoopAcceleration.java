@@ -416,31 +416,64 @@ public class JordanLoopAcceleration {
 			final boolean quantifyItFinExplicitly, final boolean isAlternatingClosedFormRequired) {
 
 		final int sizeOfLargestEv0Block = JordanAcceleratedUpdate.computeSizeOfLargestEv0Block(jordanUpdate);
-		if (sizeOfLargestEv0Block > 1) {
-			throw new UnsupportedOperationException(
-					String.format(UNSUPPORTED_PREFIX + " Consider first %s iterations separately", sizeOfLargestEv0Block));
-		}
+		assert sizeOfLargestEv0Block >= 0;
 
 		final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services);
 		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(loopTransFormula.getInVars());
 		// The call of `constructXPrimeEqualsX` might add entries to the newInVars.
 		final Term xPrimeEqualsX = constructXPrimeEqualsX(mgdScript, newInVars, loopTransFormula.getOutVars());
 
+		final List<Term> disjuncts = new ArrayList<>();
+		if (sizeOfLargestEv0Block > 1) {
+			// we have to consider the first sizeOfLargestEv0Block-1 iterations separately
+			for (int i = 1; i < sizeOfLargestEv0Block; i++) {
+				final List<Term> guards = new ArrayList<>();
+				for (int j = 1; j <= i; j++) {
+					final Term guard = constructGuardForFixedIteration(mgdScript, su.getHavocedVars(), guardTf, j, linearUpdate, varMatrixIndexMap, jordanUpdate, su, newInVars);
+					guards.add(guard);
+				}
+				final Term guard = SmtUtils.and(mgdScript.getScript(), guards);
+				final HashMap<TermVariable, Term> closedFormMap = JordanAcceleratedUpdate.constructClosedForm(mgdScript,
+						linearUpdate, varMatrixIndexMap, jordanUpdate, i);
+				final ClosedFormOfUpdate closedFormForI = computeClosedFormOfUpdate(mgdScript, su, null, newInVars, closedFormMap);
+				final Term update = constructClosedUpdateConstraint(mgdScript.getScript(), loopTransFormula, su, closedFormForI.getScalarUpdates());
+				if (!closedFormForI.getArrayUpdates().isEmpty()) {
+					throw new UnsupportedOperationException(
+							String.format(UNSUPPORTED_PREFIX + " Consider first %s iterations separately for arrays",
+									sizeOfLargestEv0Block));
+				}
+				final Term disjunct = SmtUtils.and(mgdScript.getScript(), guard, update);
+				disjuncts.add(disjunct);
+			}
+
+		}
+
+		final Term test1 = constructGuardForFixedIteration(mgdScript, su.getHavocedVars(), guardTf, 1, linearUpdate, varMatrixIndexMap, jordanUpdate, su, newInVars);
+		final Term test2 = constructGuardForFixedIteration(mgdScript, su.getHavocedVars(), guardTf, 2, linearUpdate, varMatrixIndexMap, jordanUpdate, su, newInVars);
+		final Term test3 = constructGuardForFixedIteration(mgdScript, su.getHavocedVars(), guardTf, 3, linearUpdate, varMatrixIndexMap, jordanUpdate, su, newInVars);
+
 		final Term transitiveClosure;
 		final TermVariable itFin;
 		if (isAlternatingClosedFormRequired) {
 			if (!su.getDeterministicArrayWrites().isEmpty()) {
-				throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " If alternating form is required we do not yet support arrays");
+				throw new UnsupportedOperationException(
+						UNSUPPORTED_PREFIX + " If alternating form is required we do not yet support arrays");
+			}
+			if (sizeOfLargestEv0Block > 1) {
+				throw new UnsupportedOperationException(String.format(UNSUPPORTED_PREFIX
+						+ " If alternating form is required we cannot yet consider first %s iterations separately",
+						sizeOfLargestEv0Block));
 			}
 			itFin = mgdScript.constructFreshTermVariable("itFinHalf", SmtSortUtils.getIntSort(mgdScript.getScript()));
 			transitiveClosure = createLoopAccelerationTermAlternating(logger, services, mgdScript, su, linearUpdate,
 					varMatrixIndexMap, jordanUpdate, loopTransFormula, guardTf, itFin, newInVars);
 		} else {
 			itFin = mgdScript.constructFreshTermVariable("itFin", SmtSortUtils.getIntSort(mgdScript.getScript()));
+			final int firstIteration = Math.max(sizeOfLargestEv0Block, 1);
 			transitiveClosure = createLoopAccelerationTermSequential(services, mgdScript, su, linearUpdate, varMatrixIndexMap,
-					jordanUpdate, loopTransFormula, guardTf, itFin, newInVars);
+					jordanUpdate, loopTransFormula, guardTf, itFin, newInVars, firstIteration);
 		}
-		final Term accelerationTerm;
+		disjuncts.add(transitiveClosure);
 		if (REFLEXIVE_TRANSITIVE_CLOSURE) {
 			// (and (not (guard)) (x'=x))
 			final Term reflexiveClosure;
@@ -452,10 +485,9 @@ public class JordanLoopAcceleration {
 					reflexiveClosure = Util.and(mgdScript.getScript(), xPrimeEqualsX);
 				}
 			}
-			accelerationTerm = Util.or(mgdScript.getScript(), reflexiveClosure, transitiveClosure);
-		} else {
-			accelerationTerm = transitiveClosure;
+			disjuncts.add(reflexiveClosure);
 		}
+		final Term accelerationTerm = SmtUtils.or(mgdScript.getScript(), disjuncts);
 		final UnmodifiableTransFormula loopAccelerationFormula = buildAccelerationTransFormula(logger, mgdScript,
 				services, loopTransFormula, accelerationTerm, quantifyItFinExplicitly, itFin, newInVars);
 
@@ -523,12 +555,16 @@ public class JordanLoopAcceleration {
 	 * 				(guard(closedForm(x,it)))))
 	 * 		((x' = closedForm(x,itFin)))))))
 	 * </pre>
+	 * @param firstIteration
 	 */
 	private static Term createLoopAccelerationTermSequential(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final SimultaneousUpdate su, final LinearUpdate linearUpdate,
 			final HashMap<Term, Integer> varMatrixIndexMap, final JordanTransformationResult jordanUpdate,
 			final UnmodifiableTransFormula loopTransFormula, final UnmodifiableTransFormula guardTf,
-			final TermVariable itFin, final Map<IProgramVar, TermVariable> inVars) {
+			final TermVariable itFin, final Map<IProgramVar, TermVariable> inVars, final int firstIteration) {
+		if (firstIteration < 1) {
+			throw new IllegalArgumentException("Cannot construct constraint for non-positive iterations");
+		}
 		final Script script = mgdScript.getScript();
 
 		final ClosedFormOfUpdate closedFormItFinTuple;
@@ -540,7 +576,17 @@ public class JordanLoopAcceleration {
 		}
 		final Map<IProgramVar, Term> closedFormItFin = closedFormItFinTuple.getScalarUpdates();
 
-		final List<Term> conjuncts = new ArrayList<Term>();
+		final List<Term> conjuncts = new ArrayList<>();
+		for (int i = 1; i < firstIteration; i++) {
+			// Construct guards for all iterations before our first iteration
+			final Term guard = constructGuardForFixedIteration(mgdScript, su.getHavocedVars(), guardTf, i, linearUpdate,
+					varMatrixIndexMap, jordanUpdate, su, inVars);
+			conjuncts.add(guard);
+		}
+		// We have to handle the guard of our first iteration separately, because this
+		// guard utilizes the closed form from the preceding iteration.
+		conjuncts.add(constructGuardForFixedIteration(mgdScript, su.getHavocedVars(), guardTf, firstIteration,
+				linearUpdate, varMatrixIndexMap, jordanUpdate, su, inVars));
 
 		if (CONCATENATE_WITH_NEGATION_OF_GUARD) {
 			// Construct subformula guard(cf(x,itFin)).
@@ -551,8 +597,9 @@ public class JordanLoopAcceleration {
 			conjuncts.add(notGuardOfCf);
 		}
 
-		// (> itFin 0)
-		final Term firstConjunct = script.term(">", itFin, script.numeral(BigInteger.ZERO));
+		// We presume the final iteration is at least our first iteration.
+		// (>= itFin firstIteration)
+		final Term firstConjunct = script.term(">=", itFin, script.numeral(BigInteger.valueOf(firstIteration)));
 		conjuncts.add(firstConjunct);
 
 		// (forall ((it Int)) (=> (and (<= 1 it) (<= it (- itFin 1)))
@@ -561,7 +608,7 @@ public class JordanLoopAcceleration {
 		final Term fourthConjunct;
 		final Term guardOfClosedFormIt;
 		{
-			final Term leftSideOfImpl = constructIterationRange(script, BigInteger.ONE, it, BigInteger.ONE, itFin);
+			final Term leftSideOfImpl = constructIterationRange(script, BigInteger.valueOf(firstIteration), it, BigInteger.ONE, itFin);
 			final ClosedFormOfUpdate closedFormIt;
 			{
 				final HashMap<TermVariable, Term> closedFormMap = JordanAcceleratedUpdate.constructClosedForm(mgdScript,
@@ -591,7 +638,7 @@ public class JordanLoopAcceleration {
 		final Term xPrimed = constructClosedUpdateConstraint(script, loopTransFormula, su, closedFormItFin);
 		conjuncts.add(xPrimed);
 
-		conjuncts.add(guardTf.getFormula());
+
 //		final Term eq = constructArrayUpdateEquality(script, loopTransFormula.getOutVars(),
 //				applySubstitutionToIndexAndValue(mgdScript,
 //						TransFormulaUtils.constructDefaultvarsToInvarsMap(loopTransFormula),
@@ -695,7 +742,23 @@ public class JordanLoopAcceleration {
 		return Util.and(script, itGreaterLowerBould, itSmallerItFinMinusUbo);
 	}
 
-
+	private static Term constructGuardForFixedIteration(final ManagedScript mgdScript,
+			final Set<IProgramVar> havocedVars, final UnmodifiableTransFormula guardTf, final int k,
+			final LinearUpdate linearUpdate, final HashMap<Term, Integer> varMatrixIndexMap,
+			final JordanTransformationResult jordanUpdate, final SimultaneousUpdate su,
+			final Map<IProgramVar, TermVariable> inVars) {
+		if (k < 1) {
+			throw new IllegalArgumentException();
+		}
+		if (k == 1) {
+			return guardTf.getFormula();
+		}
+		final HashMap<TermVariable, Term> closedFormMap = JordanAcceleratedUpdate.constructClosedForm(mgdScript,
+				linearUpdate, varMatrixIndexMap, jordanUpdate, k-1);
+		final ClosedFormOfUpdate closedFormForK = computeClosedFormOfUpdate(mgdScript, su, null, inVars, closedFormMap);
+		return constructGuardAfterIntermediateIterations(mgdScript, havocedVars, guardTf,
+				closedFormForK.getScalarUpdates());
+	}
 
 	private static Term constructGuardAfterIntermediateIterations(final ManagedScript mgdScript,
 			final Set<IProgramVar> havocedVars, final UnmodifiableTransFormula guardTf,
