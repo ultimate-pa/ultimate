@@ -900,7 +900,8 @@ public class StandardFunctionHandler {
 		final ExpressionResult arg0 =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		builder.addAllExceptLrValue(arg0);
-		// TODO: We do not actually use this parameter, this could be unsound.
+		// The second argument of va_start has to be the rightmost fixed parameter
+		// (according to the C standard section 7.16.1.3.4). Therefore we simply dispatch it here.
 		final ExpressionResult arg1 =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
 		builder.addAllExceptLrValue(arg1);
