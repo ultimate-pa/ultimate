@@ -404,10 +404,12 @@ public class FunctionHandler {
 			final CFunction funType, final String funName) {
 		// update varags usage
 		if (funType.hasVarArgs() && funType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
-			// if the function body creates a va_list object it uses its varargs
-			final ASTNameCollector vaListFinder = new ASTNameCollector("__builtin_va_start");
+			// If the function body writes the varargs to a va_list using va_start it uses its them
+			final ASTNameCollector vaListFinder = new ASTNameCollector("va_start");
 			node.getBody().accept(vaListFinder);
-			final int numberOfVaStarts = vaListFinder.getNames().length;
+			final ASTNameCollector builtinVaListFinder = new ASTNameCollector("__builtin_va_start");
+			node.getBody().accept(builtinVaListFinder);
+			final int numberOfVaStarts = vaListFinder.getNames().length + builtinVaListFinder.getNames().length;
 			if (numberOfVaStarts > 1) {
 				// TODO: This requires a different handling of va_start and va_end.
 				// Currently they are simply handled by assignment and deallocation.
