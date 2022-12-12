@@ -707,7 +707,6 @@ public class FunctionHandler {
 			for (final ExpressionResult va : varargs) {
 				final ExpressionResult param;
 				final CType argType = va.getCType().getUnderlyingType();
-				final Expression size = memoryHandler.calculateSizeOf(loc, argType);
 				if (argType instanceof CPrimitive) {
 					// All smaller types (char, short) are promoted to int (see 7.6.11.2)
 					param = mExprResultTransformer.doIntegerPromotion(loc, va);
@@ -726,8 +725,9 @@ public class FunctionHandler {
 						MemoryHandler.constructPointerFromBaseAndOffset(originalBase, pointerOffset, loc);
 				writes.addAll(memoryHandler.getWriteCall(loc, new HeapLValue(address, argType, null),
 						param.getLrValue().getValue(), argType, false));
-				currentOffset = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
-						IASTBinaryExpression.op_plus, currentOffset, pointerType, size, pointerType);
+				currentOffset =
+						mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_plus,
+								currentOffset, pointerType, memoryHandler.calculateSizeOf(loc, argType), pointerType);
 			}
 			if (hasUsedVarargs) {
 				functionCallExpressionResultBuilder.addStatement(memoryHandler.getUltimateMemAllocCall(currentOffset,
