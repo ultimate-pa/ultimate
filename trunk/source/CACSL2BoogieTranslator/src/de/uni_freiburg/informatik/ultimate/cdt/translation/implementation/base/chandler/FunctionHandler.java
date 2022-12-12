@@ -168,8 +168,6 @@ public class FunctionHandler {
 
 	private final Set<IASTNode> mVariablesOnHeap;
 
-	private final TypeSizes mTypeSizes;
-
 	/**
 	 *
 	 * @param logger
@@ -190,7 +188,7 @@ public class FunctionHandler {
 			final ITypeHandler typeHandler, final CTranslationResultReporter reporter,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final CHandler chandler, final LocationFactory locFac,
 			final FlatSymbolTable symbolTable, final ExpressionResultTransformer expressionResultTransformer,
-			final Set<IASTNode> variablesOnHeap, final TypeSizes typeSizes) {
+			final Set<IASTNode> variablesOnHeap) {
 		mLogger = logger;
 		mNameHandler = nameHandler;
 		mExpressionTranslation = expressionTranslation;
@@ -204,7 +202,6 @@ public class FunctionHandler {
 		mSymboltable = symbolTable;
 		mExprResultTransformer = expressionResultTransformer;
 		mVariablesOnHeap = variablesOnHeap;
-		mTypeSizes = typeSizes;
 	}
 
 	/**
@@ -702,20 +699,20 @@ public class FunctionHandler {
 				functionCallExpressionResultBuilder.addDeclaration(auxvarinfo.getVarDec());
 			}
 			final CPrimitive pointerType = mExpressionTranslation.getCTypeOfPointerComponents();
-			BigInteger currentOffset = BigInteger.ZERO;
+			Expression currentOffset =
+					mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, BigInteger.ZERO);
 			final List<Statement> writes = new ArrayList<>();
 			final Expression originalBase = MemoryHandler.getPointerBaseAddress(auxvarinfo.getExp(), loc);
 			final Expression originalOffset = MemoryHandler.getPointerOffset(auxvarinfo.getExp(), loc);
 			for (final ExpressionResult va : varargs) {
 				final ExpressionResult param;
-				int size;
-				if (va.getCType().getUnderlyingType() instanceof CPrimitive) {
+				final CType argType = va.getCType().getUnderlyingType();
+				final Expression size = memoryHandler.calculateSizeOf(loc, argType);
+				if (argType instanceof CPrimitive) {
 					// All smaller types (char, short) are promoted to int (see 7.6.11.2)
 					param = mExprResultTransformer.doIntegerPromotion(loc, va);
-					size = mTypeSizes.getSize(((CPrimitive) param.getCType()).getType());
 				} else {
 					param = va;
-					size = mTypeSizes.getSizeOfPointer();
 				}
 				functionCallExpressionResultBuilder.addAllExceptLrValue(param);
 				if (!hasUsedVarargs) {
@@ -723,19 +720,17 @@ public class FunctionHandler {
 				}
 				// Write the current parameter to *(varargs + currentOffset) and increment currentOffset by the typesize
 				// afterwards
-				final Expression offsetExpr =
-						mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, currentOffset);
 				final Expression pointerOffset = mExpressionTranslation.constructArithmeticExpression(loc,
-						IASTBinaryExpression.op_plus, originalOffset, pointerType, offsetExpr, pointerType);
+						IASTBinaryExpression.op_plus, originalOffset, pointerType, currentOffset, pointerType);
 				final Expression address =
 						MemoryHandler.constructPointerFromBaseAndOffset(originalBase, pointerOffset, loc);
-				writes.addAll(memoryHandler.getWriteCall(loc, new HeapLValue(address, param.getCType(), null),
-						param.getLrValue().getValue(), param.getCType(), false));
-				currentOffset = currentOffset.add(BigInteger.valueOf(size));
+				writes.addAll(memoryHandler.getWriteCall(loc, new HeapLValue(address, argType, null),
+						param.getLrValue().getValue(), argType, false));
+				currentOffset = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
+						IASTBinaryExpression.op_plus, currentOffset, pointerType, size, pointerType);
 			}
 			if (hasUsedVarargs) {
-				functionCallExpressionResultBuilder.addStatement(memoryHandler.getUltimateMemAllocCall(
-						mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, currentOffset),
+				functionCallExpressionResultBuilder.addStatement(memoryHandler.getUltimateMemAllocCall(currentOffset,
 						auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
 				functionCallExpressionResultBuilder.addStatements(writes);
 				translatedParams.add(auxvarinfo.getExp());

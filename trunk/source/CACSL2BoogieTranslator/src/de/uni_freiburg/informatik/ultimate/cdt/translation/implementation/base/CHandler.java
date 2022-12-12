@@ -431,7 +431,7 @@ public class CHandler {
 						mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer, mDataRaceChecker);
 		mFunctionHandler = new FunctionHandler(mLogger, mNameHandler, mExpressionTranslation, mProcedureManager,
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
-				mExprResultTransformer, mVariablesOnHeap, mTypeSizes);
+				mExprResultTransformer, mVariablesOnHeap);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
 				mExprResultTransformer, mMemoryHandler, mLocationFactory);
 		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mProcedureManager,
@@ -525,7 +525,7 @@ public class CHandler {
 						mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer, mDataRaceChecker);
 		mFunctionHandler = new FunctionHandler(mLogger, mNameHandler, mExpressionTranslation, procedureManager,
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
-				mExprResultTransformer, mVariablesOnHeap, mTypeSizes);
+				mExprResultTransformer, mVariablesOnHeap);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
 				mExprResultTransformer, mMemoryHandler, mLocationFactory);
 		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, procedureManager,
