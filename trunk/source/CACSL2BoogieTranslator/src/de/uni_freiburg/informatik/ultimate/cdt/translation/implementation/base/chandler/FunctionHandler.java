@@ -666,6 +666,7 @@ public class FunctionHandler {
 						// (see C standard section 7.6.11.2)
 						in = mExprResultTransformer.doIntegerPromotion(loc, in);
 					}
+					// Dispatch the arguments and add them to the list to be processed later, if the varargs are used.
 					varargs.add(in);
 					functionCallExpressionResultBuilder.addAllExceptLrValue(in);
 					continue;
@@ -694,9 +695,7 @@ public class FunctionHandler {
 			functionCallExpressionResultBuilder.addAllExceptLrValue(in);
 		}
 		if (calleeProcCType != null && calleeProcCType.getVarArgsUsage() == VarArgsUsage.USED) {
-			// For varargs we need a special handling:
-			// - If the varargs are not used, we simply dispatch the arguments, without passing them to the function.
-			// - If they are used, we create a pointer for all the remaining arguments and pass them to the function.
+			// If the varargs are used, we create a pointer for all the varargs and pass them to the function.
 			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
 					mTypeHandler.constructPointerType(loc), SFO.AUXVAR.VARARGS_POINTER);
 			// Declare the aux-var (it is allocated after the loop when the size is known)
