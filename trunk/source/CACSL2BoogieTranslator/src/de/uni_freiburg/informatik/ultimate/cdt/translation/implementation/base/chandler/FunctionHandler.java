@@ -662,7 +662,8 @@ public class FunctionHandler {
 				// we already know the parameters: do implicit casts and bool/int conversion
 				if (i >= calleeProcCType.getParameterTypes().length && calleeProcCType.hasVarArgs()) {
 					if (in.getCType().getUnderlyingType().isIntegerType()) {
-						// For varargs all arguments with smaller types (char, short) are promoted to int (see 7.6.11.2)
+						// For varargs all arguments with smaller types (char, short) are promoted to int
+						// (see C standard section 7.6.11.2)
 						in = mExprResultTransformer.doIntegerPromotion(loc, in);
 					}
 					varargs.add(in);
