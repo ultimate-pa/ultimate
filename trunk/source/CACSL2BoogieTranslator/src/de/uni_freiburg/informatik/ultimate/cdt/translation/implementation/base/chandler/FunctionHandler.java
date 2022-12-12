@@ -404,7 +404,7 @@ public class FunctionHandler {
 			final CFunction funType, final String funName) {
 		// update varags usage
 		if (funType.hasVarArgs() && funType.getVarArgsUsage() == VarArgsUsage.UNKNOWN) {
-			// If the function body writes the varargs to a va_list using va_start it uses its them
+			// If the function body writes the varargs to a va_list using va_start it uses them
 			final ASTNameCollector vaListFinder = new ASTNameCollector("va_start");
 			node.getBody().accept(vaListFinder);
 			final ASTNameCollector builtinVaListFinder = new ASTNameCollector("__builtin_va_start");
