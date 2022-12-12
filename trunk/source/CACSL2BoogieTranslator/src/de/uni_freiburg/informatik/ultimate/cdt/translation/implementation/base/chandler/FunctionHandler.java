@@ -661,7 +661,12 @@ public class FunctionHandler {
 			} else if (calleeProcInfo.getCType() != null) {
 				// we already know the parameters: do implicit casts and bool/int conversion
 				if (i >= calleeProcCType.getParameterTypes().length && calleeProcCType.hasVarArgs()) {
+					if (in.getCType() instanceof CPrimitive) {
+						// For varargs all arguments with smaller types (char, short) are promoted to int (see 7.6.11.2)
+						in = mExprResultTransformer.doIntegerPromotion(loc, in);
+					}
 					varargs.add(in);
+					functionCallExpressionResultBuilder.addAllExceptLrValue(in);
 					continue;
 				}
 				CType expectedParamType =
@@ -687,28 +692,22 @@ public class FunctionHandler {
 			translatedParams.add(in.getLrValue().getValue());
 			functionCallExpressionResultBuilder.addAllExceptLrValue(in);
 		}
-		if (calleeProcCType != null && calleeProcCType.hasVarArgs()) {
-			final boolean hasUsedVarargs = calleeProcCType.getVarArgsUsage() == VarArgsUsage.USED;
+		if (calleeProcCType != null && calleeProcCType.getVarArgsUsage() == VarArgsUsage.USED) {
 			// For varargs we need a special handling:
 			// - If the varargs are not used, we simply dispatch the arguments, without passing them to the function.
 			// - If they are used, we create a pointer for all the remaining arguments and pass them to the function.
 			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
 					mTypeHandler.constructPointerType(loc), SFO.AUXVAR.VARARGS_POINTER);
+			// Declare the aux-var (it is allocated after the loop when the size is known)
+			functionCallExpressionResultBuilder.addAuxVar(auxvarinfo);
+			functionCallExpressionResultBuilder.addDeclaration(auxvarinfo.getVarDec());
 			final CPrimitive pointerType = mExpressionTranslation.getCTypeOfPointerComponents();
 			Expression currentOffset =
 					mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, BigInteger.ZERO);
 			final List<Statement> writes = new ArrayList<>();
 			final Expression originalBase = MemoryHandler.getPointerBaseAddress(auxvarinfo.getExp(), loc);
 			final Expression originalOffset = MemoryHandler.getPointerOffset(auxvarinfo.getExp(), loc);
-			for (ExpressionResult param : varargs) {
-				if (param.getCType() instanceof CPrimitive) {
-					// All smaller types (char, short) are promoted to int (see 7.6.11.2)
-					param = mExprResultTransformer.doIntegerPromotion(loc, param);
-				}
-				functionCallExpressionResultBuilder.addAllExceptLrValue(param);
-				if (!hasUsedVarargs) {
-					continue;
-				}
+			for (final ExpressionResult param : varargs) {
 				final CType argType = param.getCType().getUnderlyingType();
 				// Write the current parameter to *(varargs + currentOffset) and increment currentOffset by the typesize
 				// afterwards
@@ -722,15 +721,11 @@ public class FunctionHandler {
 						mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_plus,
 								currentOffset, pointerType, memoryHandler.calculateSizeOf(loc, argType), pointerType);
 			}
-			if (hasUsedVarargs) {
-				// Declare and allocate the aux-var and add the writes of the parameters
-				functionCallExpressionResultBuilder.addAuxVar(auxvarinfo);
-				functionCallExpressionResultBuilder.addDeclaration(auxvarinfo.getVarDec());
-				functionCallExpressionResultBuilder.addStatement(memoryHandler.getUltimateMemAllocCall(currentOffset,
-						auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
-				functionCallExpressionResultBuilder.addStatements(writes);
-				translatedParams.add(auxvarinfo.getExp());
-			}
+			// Allocate the aux-var and add the writes of the parameters
+			functionCallExpressionResultBuilder.addStatement(
+					memoryHandler.getUltimateMemAllocCall(currentOffset, auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
+			functionCallExpressionResultBuilder.addStatements(writes);
+			translatedParams.add(auxvarinfo.getExp());
 		}
 
 		if (isCalleeSignatureNotYetDetermined) {
