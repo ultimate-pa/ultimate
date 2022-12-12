@@ -695,15 +695,6 @@ public class CHandler {
 		return new CHandlerTranslationResult(boogieUnit, mSymbolTable.getBoogieCIdentifierMapping());
 	}
 
-	/**
-	 * @deprecated is not supported in this handler! Do not use!
-	 */
-	@Deprecated
-
-	public Result visit(final IDispatcher main, final ACSLNode node) {
-		throw new UnsupportedOperationException("Implementation Error: Use ACSLHandler for: " + node.getClass());
-	}
-
 	public Result visit(final IDispatcher main, final CASTDesignatedInitializer node) {
 		return mInitHandler.handleDesignatedInitializer(main, mLocationFactory, mMemoryHandler, mStructHandler, node);
 	}
