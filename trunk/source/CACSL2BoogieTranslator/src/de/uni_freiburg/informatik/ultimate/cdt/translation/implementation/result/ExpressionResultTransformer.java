@@ -928,7 +928,7 @@ public class ExpressionResultTransformer {
 			}
 		} else if (leftPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE
 				&& rightPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE) {
-			return determineResultOfUsualArithmeticConversions_Integer(leftPrimitive, rightPrimitive);
+			return determineResultOfUsualArithmeticConversionsForInteger(leftPrimitive, rightPrimitive);
 		} else {
 			throw new AssertionError(
 					"unsupported combination of CPrimitives: " + leftPrimitive + " and " + rightPrimitive);
@@ -951,37 +951,28 @@ public class ExpressionResultTransformer {
 		return operand;
 	}
 
-	public CPrimitive determineResultOfUsualArithmeticConversions_Integer(final CPrimitive typeLeft,
+	private CPrimitive determineResultOfUsualArithmeticConversionsForInteger(final CPrimitive typeLeft,
 			final CPrimitive typeRight) {
-
 		if (typeLeft.equals(typeRight)) {
 			return typeLeft;
-		} else if (mTypeSizes.isUnsigned(typeLeft) && mTypeSizes.isUnsigned(typeRight)
-				|| !mTypeSizes.isUnsigned(typeLeft) && !mTypeSizes.isUnsigned(typeRight)) {
-			final Integer sizeLeft = mTypeSizes.getSize(typeLeft.getType());
-			final Integer sizeRight = mTypeSizes.getSize(typeRight.getType());
-
-			if (sizeLeft.compareTo(sizeRight) >= 0) {
-				return typeLeft;
-			}
-			return typeRight;
-		} else {
-			CPrimitive unsignedType;
-			CPrimitive signedType;
-
-			if (mTypeSizes.isUnsigned(typeLeft)) {
-				unsignedType = typeLeft;
-				signedType = typeRight;
-			} else {
-				unsignedType = typeRight;
-				signedType = typeLeft;
-			}
-
-			if (mTypeSizes.getSize(unsignedType.getType()).compareTo(mTypeSizes.getSize(signedType.getType())) >= 0) {
-				return unsignedType;
-			}
-			return signedType;
 		}
+		if (mTypeSizes.isUnsigned(typeLeft) == mTypeSizes.isUnsigned(typeRight)) {
+			return getMaximalType(typeLeft, typeRight);
+		}
+		CPrimitive unsignedType;
+		CPrimitive signedType;
+		if (mTypeSizes.isUnsigned(typeLeft)) {
+			unsignedType = typeLeft;
+			signedType = typeRight;
+		} else {
+			unsignedType = typeRight;
+			signedType = typeLeft;
+		}
+		return getMaximalType(unsignedType, signedType);
+	}
+
+	private CPrimitive getMaximalType(final CPrimitive type1, final CPrimitive type2) {
+		return mTypeSizes.getSize(type1.getType()) >= mTypeSizes.getSize(type2.getType()) ? type1 : type2;
 	}
 
 	private static boolean integerPromotionNeeded(final CPrimitive cPrimitive) {
