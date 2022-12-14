@@ -239,13 +239,13 @@ public class ExpressionResultTransformer {
 	public ExpressionResult switchToRValue(final ExpressionResult expr, final ILocation loc, final IASTNode hook) {
 		final LRValue lrVal = expr.getLrValue();
 
-		final ExpressionResult result;
 		if (lrVal == null) {
 			return expr;
-		} else if (lrVal instanceof RValue) {
-			final ExpressionResult replaced = replaceCFunctionByCPointer(expr);
-			return replaceEnumByInt(replaced);
-		} else if (lrVal instanceof LocalLValue) {
+		}
+		if (lrVal instanceof RValue) {
+			return replaceEnumByInt(replaceCFunctionByCPointer(expr));
+		}
+		if (lrVal instanceof LocalLValue) {
 			final CType underlyingType = lrVal.getCType().getUnderlyingType();
 			mCHandler.moveArrayAndStructIdsOnHeap(loc, underlyingType, lrVal.getValue(), expr.getAuxVars(), hook);
 
@@ -264,8 +264,9 @@ public class ExpressionResultTransformer {
 			if (mDataRaceChecker != null) {
 				mDataRaceChecker.checkOnRead(erb, loc, lrVal);
 			}
-			result = erb.build();
-		} else if (lrVal instanceof HeapLValue) {
+			return erb.build();
+		}
+		if (lrVal instanceof HeapLValue) {
 			final HeapLValue hlv = (HeapLValue) lrVal;
 			CType underlyingType = expr.getLrValue().getCType().getUnderlyingType();
 			if (underlyingType instanceof CEnum) {
@@ -303,11 +304,9 @@ public class ExpressionResultTransformer {
 			if (mDataRaceChecker != null) {
 				mDataRaceChecker.checkOnRead(erb, loc, lrVal);
 			}
-			result = erb.setLrValue(newValue).build();
-		} else {
-			throw new AssertionError("an LRValue that is not null, and no LocalLValue, RValue or HeapLValue???");
+			return erb.setLrValue(newValue).build();
 		}
-		return result;
+		throw new AssertionError("an LRValue that is not null, and no LocalLValue, RValue or HeapLValue???");
 	}
 
 	/**
