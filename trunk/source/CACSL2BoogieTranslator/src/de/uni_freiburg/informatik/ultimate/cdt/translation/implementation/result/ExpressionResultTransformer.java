@@ -881,24 +881,24 @@ public class ExpressionResultTransformer {
 	 * @return A Pair of new {@link ExpressionResult}s, first for left and second for right.
 	 */
 	public Pair<ExpressionResult, ExpressionResult> usualArithmeticConversions(final ILocation loc,
-			ExpressionResult leftRex, ExpressionResult rightRex) {
-		leftRex = promoteToIntegerIfNecessary(loc, leftRex);
-		rightRex = promoteToIntegerIfNecessary(loc, rightRex);
+			final ExpressionResult leftRex, final ExpressionResult rightRex) {
+		final ExpressionResult leftPromoted = promoteToIntegerIfNecessary(loc, leftRex);
+		final ExpressionResult rightPromoted = promoteToIntegerIfNecessary(loc, rightRex);
 
 		final CPrimitive resultType = determineResultOfUsualArithmeticConversions(
-				(CPrimitive) leftRex.getLrValue().getCType().getUnderlyingType(),
-				(CPrimitive) rightRex.getLrValue().getCType().getUnderlyingType());
+				(CPrimitive) leftPromoted.getLrValue().getCType().getUnderlyingType(),
+				(CPrimitive) rightPromoted.getLrValue().getCType().getUnderlyingType());
 
-		leftRex = convertIfNecessary(loc, leftRex, resultType);
-		rightRex = convertIfNecessary(loc, rightRex, resultType);
+		final ExpressionResult resultLeft = convertIfNecessary(loc, leftPromoted, resultType);
+		final ExpressionResult resultRight = convertIfNecessary(loc, rightPromoted, resultType);
 
-		if (!leftRex.getLrValue().getCType().getUnderlyingType().equals(resultType)) {
+		if (!resultLeft.getLrValue().getCType().getUnderlyingType().equals(resultType)) {
 			throw new AssertionError("conversion failed");
 		}
-		if (!rightRex.getLrValue().getCType().getUnderlyingType().equals(resultType)) {
+		if (!resultRight.getLrValue().getCType().getUnderlyingType().equals(resultType)) {
 			throw new AssertionError("conversion failed");
 		}
-		return new Pair<>(leftRex, rightRex);
+		return new Pair<>(resultLeft, resultRight);
 	}
 
 	private CPrimitive determineResultOfUsualArithmeticConversions(final CPrimitive leftPrimitive,
