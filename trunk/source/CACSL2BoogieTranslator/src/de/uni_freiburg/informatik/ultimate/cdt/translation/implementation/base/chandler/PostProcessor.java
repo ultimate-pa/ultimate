@@ -627,8 +627,7 @@ public class PostProcessor {
 					builder.getStatements().toArray(new Statement[builder.getStatements().size()]),
 					dispatchingProcedureName);
 		} else if (fittingFunctions.size() == 1) {
-			final ExpressionResult rex = (ExpressionResult) mFunctionhandler.makeTheFunctionCallItself(loc,
-					fittingFunctions.get(0), new ExpressionResultBuilder(), args);
+			final ExpressionResult rex = mFunctionhandler.createFunctionCall(loc, fittingFunctions.get(0), args);
 
 			final boolean voidReturnType = outParam.length == 0;
 
@@ -669,8 +668,7 @@ public class PostProcessor {
 				funcCallResult = auxvar.getExp();
 			}
 
-			final ExpressionResult firstElseRex = (ExpressionResult) mFunctionhandler.makeTheFunctionCallItself(loc,
-					fittingFunctions.get(0), new ExpressionResultBuilder(), args);
+			final ExpressionResult firstElseRex = mFunctionhandler.createFunctionCall(loc, fittingFunctions.get(0), args);
 			for (final Declaration dec : firstElseRex.getDeclarations()) {
 				builder.addDeclaration(dec);
 			}
@@ -687,8 +685,8 @@ public class PostProcessor {
 			IfStatement currentIfStmt = null;
 
 			for (int i = 1; i < fittingFunctions.size(); i++) {
-				final ExpressionResult currentRex = (ExpressionResult) mFunctionhandler.makeTheFunctionCallItself(loc,
-						fittingFunctions.get(i), new ExpressionResultBuilder(), args);
+				final ExpressionResult currentRex =
+						mFunctionhandler.createFunctionCall(loc, fittingFunctions.get(i), args);
 				for (final Declaration dec : currentRex.getDeclarations()) {
 					builder.addDeclaration(dec);
 				}
@@ -793,7 +791,8 @@ public class PostProcessor {
 							staticObjectInitStatements.add(pointerAssignment);
 						} else {
 							final LocalLValue llVal = new LocalLValue(lhs, en.getValue().getType(), null);
-							ultimateAllocCall = mMemoryHandler.getUltimateMemAllocCall(llVal, currentDeclsLoc, MemoryArea.STACK);
+							ultimateAllocCall =
+									mMemoryHandler.getUltimateMemAllocCall(llVal, currentDeclsLoc, MemoryArea.STACK);
 							proceduresCalledByUltimateInit.add(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK.name());
 						}
 						staticObjectInitStatements.add(ultimateAllocCall);

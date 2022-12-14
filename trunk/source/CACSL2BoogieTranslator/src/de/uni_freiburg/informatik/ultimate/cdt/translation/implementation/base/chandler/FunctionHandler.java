@@ -743,7 +743,7 @@ public class FunctionHandler {
 			calleeProcInfo.resetDeclaration(newProc);
 		}
 
-		return makeTheFunctionCallItself(loc, calleeName, functionCallExpressionResultBuilder, translatedParams);
+		return createFunctionCall(loc, calleeName, functionCallExpressionResultBuilder, translatedParams);
 	}
 
 	private static void checkNumberOfArguments(final ILocation loc, final String calleeName,
@@ -1052,18 +1052,13 @@ public class FunctionHandler {
 		return funcType;
 	}
 
-	/**
-	 * FIXME: change the method name
-	 *
-	 * @param loc
-	 * @param methodName
-	 * @param functionCallERB
-	 * @param translatedParameters
-	 *
-	 * @return
-	 */
-	Result makeTheFunctionCallItself(final ILocation loc, final String methodName,
-			final ExpressionResultBuilder functionCallERB, final List<Expression> translatedParameters) {
+	public ExpressionResult createFunctionCall(final ILocation loc, final String methodName,
+			final List<Expression> parameters) {
+		return createFunctionCall(loc, methodName, new ExpressionResultBuilder(), parameters);
+	}
+
+	private ExpressionResult createFunctionCall(final ILocation loc, final String methodName,
+			final ExpressionResultBuilder builder, final List<Expression> parameters) {
 		final Expression returnedValue;
 		final Statement call;
 		final BoogieProcedureInfo procInfo;
@@ -1075,7 +1070,7 @@ public class FunctionHandler {
 				// void
 				// C has only one return statement -> no need for forall
 				call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], methodName,
-						translatedParameters.toArray(new Expression[translatedParameters.size()]));
+						parameters.toArray(new Expression[parameters.size()]));
 				returnedValue = null;
 			} else if (outParamVarlists.length == 1) {
 				// one return value
@@ -1083,11 +1078,11 @@ public class FunctionHandler {
 				final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, astType, SFO.AUXVAR.RETURNED);
 				returnedValue = auxvar.getExp();
 				final VariableLHS returnedValueAsLhs = auxvar.getLhs();
-				functionCallERB.addAuxVar(auxvar);
-				functionCallERB.addDeclaration(auxvar.getVarDec());
+				builder.addAuxVar(auxvar);
+				builder.addDeclaration(auxvar.getVarDec());
 
 				call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { returnedValueAsLhs },
-						methodName, translatedParameters.toArray(new Expression[translatedParameters.size()]));
+						methodName, parameters.toArray(new Expression[parameters.size()]));
 			} else {
 				final String msg = "Cannot handle multiple out params! (makes no sense in the translation of a C "
 						+ "program) " + loc.toString();
@@ -1107,33 +1102,33 @@ public class FunctionHandler {
 
 			returnedValue = auxvar.getExp();
 
-			functionCallERB.addDeclaration(auxvar.getVarDec());
-			functionCallERB.addAuxVar(auxvar);
+			builder.addDeclaration(auxvar.getVarDec());
+			builder.addAuxVar(auxvar);
 
 			call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { auxvar.getLhs() },
-					methodName, translatedParameters.toArray(new Expression[translatedParameters.size()]));
+					methodName, parameters.toArray(new Expression[parameters.size()]));
 		}
 		if (isSvcompAtomicallyExecutedFunction(methodName)) {
-			functionCallERB.addStatement(new AtomicStatement(loc, new Statement[] { call }));
+			builder.addStatement(new AtomicStatement(loc, new Statement[] { call }));
 		} else {
-			functionCallERB.addStatement(call);
+			builder.addStatement(call);
 		}
 
 		final CType returnCType = mProcedureManager.isCalledBeforeDeclared(procInfo) ? new CPrimitive(CPrimitives.INT)
 				: procInfo.getCType().getResultType();
 
 		if (returnedValue != null) {
-			mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnedValue, returnCType, functionCallERB);
+			mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnedValue, returnCType, builder);
 		}
 
-		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, functionCallERB.getDeclarations(),
-				functionCallERB.getAuxVars());
+		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, builder.getDeclarations(),
+				builder.getAuxVars());
 
 		if (returnedValue != null) {
-			functionCallERB.setLrValue(new RValue(returnedValue, returnCType));
+			builder.setLrValue(new RValue(returnedValue, returnCType));
 		}
 
-		return functionCallERB.build();
+		return builder.build();
 	}
 
 	private static boolean isSvcompAtomicallyExecutedFunction(final String methodName) {
