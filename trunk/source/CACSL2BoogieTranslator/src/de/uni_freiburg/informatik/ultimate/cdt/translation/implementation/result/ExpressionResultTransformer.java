@@ -31,6 +31,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -943,6 +944,11 @@ public class ExpressionResultTransformer {
 		return operand;
 	}
 
+	private static boolean integerPromotionNeeded(final CPrimitive cPrimitive) {
+		return List.of(CPrimitives.CHAR, CPrimitives.SCHAR, CPrimitives.UCHAR, CPrimitives.SHORT, CPrimitives.USHORT)
+				.contains(cPrimitive.getType());
+	}
+
 	private CPrimitive determineResultOfUsualArithmeticConversionsForInteger(final CPrimitive typeLeft,
 			final CPrimitive typeRight) {
 		if (typeLeft.equals(typeRight)) {
@@ -965,14 +971,6 @@ public class ExpressionResultTransformer {
 
 	private CPrimitive getMaximalType(final CPrimitive type1, final CPrimitive type2) {
 		return mTypeSizes.getSize(type1.getType()) >= mTypeSizes.getSize(type2.getType()) ? type1 : type2;
-	}
-
-	private static boolean integerPromotionNeeded(final CPrimitive cPrimitive) {
-		return cPrimitive.getType().equals(CPrimitive.CPrimitives.CHAR)
-				|| cPrimitive.getType().equals(CPrimitive.CPrimitives.SCHAR)
-				|| cPrimitive.getType().equals(CPrimitive.CPrimitives.SHORT)
-				|| cPrimitive.getType().equals(CPrimitive.CPrimitives.UCHAR)
-				|| cPrimitive.getType().equals(CPrimitive.CPrimitives.USHORT);
 	}
 
 	private CPrimitive determineResultOfIntegerPromotion(final CPrimitive cPrimitive) {
