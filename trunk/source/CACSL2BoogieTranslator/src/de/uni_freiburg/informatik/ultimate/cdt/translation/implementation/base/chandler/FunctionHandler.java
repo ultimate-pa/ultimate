@@ -33,6 +33,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -123,6 +124,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * Class that handles translation of functions.
@@ -168,6 +170,10 @@ public class FunctionHandler {
 
 	private final Set<IASTNode> mVariablesOnHeap;
 
+	private final Set<String> mCalledFunctions;
+
+	private final Set<String> mDefinedFunctions;
+
 	/**
 	 *
 	 * @param logger
@@ -202,6 +208,8 @@ public class FunctionHandler {
 		mSymboltable = symbolTable;
 		mExprResultTransformer = expressionResultTransformer;
 		mVariablesOnHeap = variablesOnHeap;
+		mCalledFunctions = new HashSet<>();
+		mDefinedFunctions = new HashSet<>();
 	}
 
 	/**
@@ -259,6 +267,7 @@ public class FunctionHandler {
 
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		final String definedProcName = cDec.getName();
+		mDefinedFunctions.add(definedProcName);
 
 		final BoogieProcedureInfo definedProcInfo = mProcedureManager.getOrConstructProcedureInfo(definedProcName);
 
@@ -507,6 +516,7 @@ public class FunctionHandler {
 		}
 
 		final String rawName = ((IASTIdExpression) functionName).getName().toString();
+		mCalledFunctions.add(rawName);
 		// Resolve the function name (might be prefixed by multiparse)
 		final String methodName = mSymboltable.applyMultiparseRenaming(functionName.getContainingFilename(), rawName);
 
@@ -629,9 +639,6 @@ public class FunctionHandler {
 
 		final Procedure calleeProcDecl = calleeProcInfo.getDeclaration();
 		final CFunction calleeProcCType = calleeProcInfo.getCType();
-		if (calleeProcCType != null && calleeProcCType.isExtern()) {
-			mLogger.warn("Unknown extern function " + calleeName);
-		}
 		assert calleeProcDecl != null;
 		/*
 		 * If in C a function is declared without input parameters, and no implementation has been given yet, the
@@ -1121,8 +1128,7 @@ public class FunctionHandler {
 			mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnedValue, returnCType, builder);
 		}
 
-		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, builder.getDeclarations(),
-				builder.getAuxVars());
+		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, builder.getDeclarations(), builder.getAuxVars());
 
 		if (returnedValue != null) {
 			builder.setLrValue(new RValue(returnedValue, returnCType));
@@ -1138,6 +1144,10 @@ public class FunctionHandler {
 
 	public Set<ProcedureSignature> getFunctionsSignaturesWithFunctionPointers() {
 		return Collections.unmodifiableSet(mFunctionSignaturesThatHaveAFunctionPointer);
+	}
+
+	public Set<String> getCalledFunctionsWithoutDefinition() {
+		return DataStructureUtils.difference(mCalledFunctions, mDefinedFunctions);
 	}
 
 	/**

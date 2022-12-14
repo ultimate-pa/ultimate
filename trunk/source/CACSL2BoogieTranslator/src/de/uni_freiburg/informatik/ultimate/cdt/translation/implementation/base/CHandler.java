@@ -659,6 +659,10 @@ public class CHandler {
 		if (!mIsPrerun) {
 			// handle proc. declaration & resolve their transitive modified globals
 			mDeclarations.addAll(mProcedureManager.computeFinalProcedureDeclarations(mMemoryHandler));
+			for (final String functionName : mFunctionHandler.getCalledFunctionsWithoutDefinition()) {
+				mLogger.warn("The function " + functionName
+						+ " is called, but not defined or handled by StandardFunctionHandler.");
+			}
 		}
 
 		/**
