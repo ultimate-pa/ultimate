@@ -905,33 +905,26 @@ public class ExpressionResultTransformer {
 			final CPrimitive rightPrimitive) {
 		if (leftPrimitive.getGeneralType() == CPrimitiveCategory.FLOATTYPE
 				|| rightPrimitive.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
-			if (leftPrimitive.getType() == CPrimitives.COMPLEX_LONGDOUBLE
-					|| rightPrimitive.getType() == CPrimitives.COMPLEX_LONGDOUBLE) {
+			if (leftPrimitive.isComplexType() || rightPrimitive.isComplexType()) {
 				throw new UnsupportedOperationException("complex types not yet supported");
-			} else if (leftPrimitive.getType() == CPrimitives.COMPLEX_DOUBLE
-					|| rightPrimitive.getType() == CPrimitives.COMPLEX_DOUBLE) {
-				throw new UnsupportedOperationException("complex types not yet supported");
-			} else if (leftPrimitive.getType() == CPrimitives.COMPLEX_FLOAT
-					|| rightPrimitive.getType() == CPrimitives.COMPLEX_FLOAT) {
-				throw new UnsupportedOperationException("complex types not yet supported");
-			} else if (leftPrimitive.getType() == CPrimitives.LONGDOUBLE
+			}
+			if (leftPrimitive.getType() == CPrimitives.LONGDOUBLE
 					|| rightPrimitive.getType() == CPrimitives.LONGDOUBLE) {
 				return new CPrimitive(CPrimitives.LONGDOUBLE);
-			} else if (leftPrimitive.getType() == CPrimitives.DOUBLE
-					|| rightPrimitive.getType() == CPrimitives.DOUBLE) {
-				return new CPrimitive(CPrimitives.DOUBLE);
-			} else if (leftPrimitive.getType() == CPrimitives.FLOAT || rightPrimitive.getType() == CPrimitives.FLOAT) {
-				return new CPrimitive(CPrimitives.FLOAT);
-			} else {
-				throw new AssertionError("unknown FLOATTYPE " + leftPrimitive + ", " + rightPrimitive);
 			}
-		} else if (leftPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE
+			if (leftPrimitive.getType() == CPrimitives.DOUBLE || rightPrimitive.getType() == CPrimitives.DOUBLE) {
+				return new CPrimitive(CPrimitives.DOUBLE);
+			}
+			if (leftPrimitive.getType() == CPrimitives.FLOAT || rightPrimitive.getType() == CPrimitives.FLOAT) {
+				return new CPrimitive(CPrimitives.FLOAT);
+			}
+			throw new AssertionError("unknown FLOATTYPE " + leftPrimitive + ", " + rightPrimitive);
+		}
+		if (leftPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE
 				&& rightPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE) {
 			return determineResultOfUsualArithmeticConversionsForInteger(leftPrimitive, rightPrimitive);
-		} else {
-			throw new AssertionError(
-					"unsupported combination of CPrimitives: " + leftPrimitive + " and " + rightPrimitive);
 		}
+		throw new AssertionError("unsupported combination of CPrimitives: " + leftPrimitive + " and " + rightPrimitive);
 	}
 
 	/**
