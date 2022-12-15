@@ -192,7 +192,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final String DESC_PETRI_NET_SIZE_REDUCTION =
 			"This has no effect unless the on-demand Petri net difference is used, because the alternative difference"
 					+ " construction applies size reduction internally.";
-	private static final SizeReduction DEF_PETRI_NET_SIZE_REDUCTION = SizeReduction.REMOVE_DEAD;
+	private static final SizeReduction DEF_PETRI_NET_SIZE_REDUCTION = SizeReduction.NONE;
 
 	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
 	public static final String LABEL_STOP_AFTER_FIRST_VIOLATION = "Stop after first violation was found";
