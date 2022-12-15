@@ -72,7 +72,7 @@ public class BvToIntTranslation extends TermTransformer {
 		mMgdScript = mgdscript;
 		mScript = mgdscript.getScript();
 
-		mNutzTransformation = true;
+		mNutzTransformation = useNutzTransformation;
 
 		mFreeVars = freeVars;
 		if (variableMap != null) {
