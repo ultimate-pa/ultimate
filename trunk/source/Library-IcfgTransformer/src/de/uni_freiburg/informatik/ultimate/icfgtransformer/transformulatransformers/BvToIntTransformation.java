@@ -87,7 +87,7 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 		// null, false, null, false, null, false);
 		final ModifiableTransFormula newIntTF = new ModifiableTransFormula(tf);
 
-		final LinkedHashMap<Term, Term> varMap = new LinkedHashMap<Term, Term>();
+		final LinkedHashMap<Term, Term> varMap = new LinkedHashMap<>();
 		for (final IProgramVar progVar : TransFormula.collectAllProgramVars(tf)) {
 
 			final IReplacementVarOrConst repVar = mFac.getOrConstuctReplacementVar(progVar.getTermVariable(), true,
@@ -139,13 +139,12 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 			newIntTF.addAuxVars(Collections.singleton(newAuxVar));
 		}
 
-		final TranslationManager mTranslationManager;
-		mTranslationManager =
+		final TranslationManager translationManager =
 				new TranslationManager(mgdScript, ConstraintsForBitwiseOperations.SUM, mUseNutzTransformation);
-		mTranslationManager.setReplacementVarMaps(varMap);
+		translationManager.setReplacementVarMaps(varMap);
 
 		final Triple<Term, Set<TermVariable>, Boolean> translated =
-				mTranslationManager.translateBvtoInt(tf.getFormula());
+				translationManager.translateBvtoInt(tf.getFormula());
 		if (!translated.getSecond().isEmpty() || translated.getThird()) {
 			throw new UnsupportedOperationException();
 		}
