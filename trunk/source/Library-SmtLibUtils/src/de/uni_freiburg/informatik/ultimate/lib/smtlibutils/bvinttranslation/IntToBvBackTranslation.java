@@ -669,16 +669,16 @@ public class IntToBvBackTranslation extends TermTransformer {
 				return;
 			}
 			case "select": {
+				final var index = bringTermToWidth(args[1],
+						Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]), false);
 				if (Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]) != Integer
-						.parseInt(args[1].getSort().getIndices()[0])) {
+						.parseInt(index.getSort().getIndices()[0])) {
 					// TODO why does bringTermToWidth not work?
 					throw new AssertionError(String.format("Cannot access array with %sbit indices via %sbit term.",
 							Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]),
-							Integer.parseInt(args[1].getSort().getIndices()[0])));
+							Integer.parseInt(index.getSort().getIndices()[0])));
 				}
-				setResult(mScript.term("select", args[0],
-						bringTermToWidth(args[1], Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]),
-								false)));
+				setResult(mScript.term("select", args[0], index));
 				return;
 			}
 			case "store": {
