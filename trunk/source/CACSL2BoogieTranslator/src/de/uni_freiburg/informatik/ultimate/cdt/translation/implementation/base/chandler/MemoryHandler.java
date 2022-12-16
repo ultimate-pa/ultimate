@@ -754,96 +754,67 @@ public class MemoryHandler {
 
 	public ExpressionResult getReadCall(final Expression address, final CType resultType, final boolean unchecked) {
 		final ILocation loc = address.getLocation();
-		final boolean bitvectorConversionNeeded = false;
-
-		ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-
-		final String readCallProcedureName;
-		{
-
-			final CType ut = resultType.getUnderlyingType();
-
-			if (ut instanceof CPrimitive) {
-				final CPrimitive cp = (CPrimitive) ut;
-				checkFloatOnHeapSupport(loc, cp);
-				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(cp.getType());
-				readCallProcedureName = determineReadProcedureForPrimitive(cp.getType(), unchecked);
-			} else if (ut instanceof CPointer) {
-				mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-				readCallProcedureName = determineReadProcedureForPointer(unchecked);
-			} else if (ut instanceof CNamed) {
-				throw new AssertionError("we took underlying type");
-			} else if (ut instanceof CArray) {
-				// we assume it is an Array on Heap
-				// assert main.cHandler.isHeapVar(((IdentifierExpression) lrVal.getValue()).getIdentifier());
-				// but it may not only be on heap, because it is addressoffed, but also because it is inside
-				// a struct that is addressoffed..
-				mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-				readCallProcedureName = determineReadProcedureForPointer(unchecked);
-			} else if (ut instanceof CEnum) {
-				// enum is treated like an int
-				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(CPrimitives.INT);
-				readCallProcedureName = determineReadProcedureForPrimitive(CPrimitives.INT, unchecked);
-			} else {
-				throw new UnsupportedOperationException("unsupported type " + ut);
-			}
-		}
-
-		// TODO: bitvectorConversionNeeded switches between two identical branches --> what was the real intention??
-		final ASTType returnedValueAstType;
-		if (bitvectorConversionNeeded) {
-			returnedValueAstType = mTypeHandler.cType2AstType(loc, resultType);
-		} else {
-			returnedValueAstType = mTypeHandler.cType2AstType(loc, resultType);
-		}
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MEMREAD);
 		resultBuilder.addDeclaration(auxvar.getVarDec());
 		resultBuilder.addAuxVar(auxvar);
-
 		final VariableLHS[] lhss = new VariableLHS[] { auxvar.getLhs() };
-		final CallStatement call = StatementFactory.constructCallStatement(loc, false, lhss, readCallProcedureName,
+		final CallStatement call = StatementFactory.constructCallStatement(loc, false, lhss,
+				determineReadProcedure(resultType, unchecked, loc),
 				new Expression[] { address, calculateSizeOf(loc, resultType) });
 		for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
 			overapprItem.annotate(call);
 		}
 		resultBuilder.addStatement(call);
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder);
-
-		// ExpressionResult result;
-		if (bitvectorConversionNeeded) {
-			final IdentifierExpression returnedValueIdExpr = auxvar.getExp();
-
-			resultBuilder.setLrValue(new RValue(returnedValueIdExpr, resultType));
-
-			final ExpressionResult intermediateResult = mExpressionTranslation.convertIntToInt(loc,
-					resultBuilder.build(), (CPrimitive) resultType.getUnderlyingType());
-			resultBuilder = new ExpressionResultBuilder().addAllExceptLrValue(intermediateResult)
-					.setLrValue(intermediateResult.getLrValue());
-
-			final AuxVarInfo bvReturnedValueAux =
-					mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MEMREAD);
-			resultBuilder.addDeclaration(bvReturnedValueAux.getVarDec());
-			resultBuilder.addAuxVar(bvReturnedValueAux);
-
-			final VariableLHS[] bvlhss = new VariableLHS[] { bvReturnedValueAux.getLhs() };
-			final AssignmentStatement as =
-					// mProcedureManager.constructAssignmentStatement(loc, bvlhss, new Expression[] {
-					// result.getLrValue().getValue() });
-					StatementFactory.constructAssignmentStatement(loc, bvlhss,
-							new Expression[] { resultBuilder.getLrValue().getValue() });
-			// stmt.add(as);
-			resultBuilder.addStatement(as);
-			// TODO is it correct to use returnedValueAstType here?
-			// result.setLrValue(new RValue(bvReturnedValueAux.getExp(), resultType));
-			resultBuilder.resetLrValue(new RValue(bvReturnedValueAux.getExp(), resultType));
-		} else {
-			final IdentifierExpression returnedValueIdExpr = ExpressionFactory.constructIdentifierExpression(loc,
-					mTypeHandler.getBoogieTypeForBoogieASTType(returnedValueAstType), auxvar.getExp().getIdentifier(),
-					new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID()));
-			resultBuilder.setLrValue(new RValue(returnedValueIdExpr, resultType));
-		}
-		// return result;
+		resultBuilder.setLrValue(new RValue(auxvar.getExp(), resultType));
 		return resultBuilder.build();
+	}
+
+	private String determineReadProcedure(final CType resultType, final boolean unchecked, final ILocation loc)
+			throws AssertionError {
+		final CType ut = resultType.getUnderlyingType();
+		if (ut instanceof CPrimitive) {
+			final CPrimitive cp = (CPrimitive) ut;
+			checkFloatOnHeapSupport(loc, cp);
+			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(cp.getType());
+			return determineReadProcedureForPrimitive(cp.getType(), unchecked);
+		}
+		if (ut instanceof CPointer) {
+			mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
+			return determineReadProcedureForPointer(unchecked);
+		}
+		if (ut instanceof CArray) {
+			// we assume it is an Array on Heap
+			// assert main.cHandler.isHeapVar(((IdentifierExpression) lrVal.getValue()).getIdentifier());
+			// but it may not only be on heap, because it is addressoffed, but also because it is inside
+			// a struct that is addressoffed..
+			mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
+			return determineReadProcedureForPointer(unchecked);
+		}
+		if (ut instanceof CEnum) {
+			// enum is treated like an int
+			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(CPrimitives.INT);
+			return determineReadProcedureForPrimitive(CPrimitives.INT, unchecked);
+		}
+		throw new UnsupportedOperationException("unsupported type " + ut);
+	}
+
+	private String determineReadProcedureForPointer(final boolean unchecked) {
+		if (unchecked) {
+			mRequiredMemoryModelFeatures.reportPointerUncheckedReadRequired();
+			return mMemoryModel.getUncheckedReadPointerProcedureName();
+		}
+		mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
+		return mMemoryModel.getReadPointerProcedureName();
+	}
+
+	private String determineReadProcedureForPrimitive(final CPrimitives prim, final boolean unchecked) {
+		if (unchecked) {
+			mRequiredMemoryModelFeatures.reportUncheckedReadRequired(prim);
+			return mMemoryModel.getUncheckedReadProcedureName(prim);
+		}
+		return mMemoryModel.getReadProcedureName(prim);
 	}
 
 	/**
@@ -2685,18 +2656,6 @@ public class MemoryHandler {
 		return writeCallProcedureName;
 	}
 
-	private String determineReadProcedureForPointer(final boolean unchecked) {
-		final String readCallProcedureName;
-		if (unchecked) {
-			mRequiredMemoryModelFeatures.reportPointerUncheckedReadRequired();
-			readCallProcedureName = mMemoryModel.getUncheckedReadPointerProcedureName();
-		} else {
-			mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-			readCallProcedureName = mMemoryModel.getReadPointerProcedureName();
-		}
-		return readCallProcedureName;
-	}
-
 	private List<Statement> getWriteCallEnum(final ILocation loc, final HeapLValue hlv, final Expression value,
 			final HeapWriteMode writeMode) {
 		// treat like INT
@@ -2734,17 +2693,6 @@ public class MemoryHandler {
 			throw new AssertionError("todo: add new enum case");
 		}
 		return writeCallProcedureName;
-	}
-
-	private String determineReadProcedureForPrimitive(final CPrimitives prim, final boolean unchecked) {
-		final String readCallProcedureName;
-		if (unchecked) {
-			mRequiredMemoryModelFeatures.reportUncheckedReadRequired(prim);
-			readCallProcedureName = mMemoryModel.getUncheckedReadProcedureName(prim);
-		} else {
-			readCallProcedureName = mMemoryModel.getReadProcedureName(prim);
-		}
-		return readCallProcedureName;
 	}
 
 	private MemoryModelDeclarationInfo constructMemoryModelDeclarationInfo(final MemoryModelDeclarations mmd) {
