@@ -762,9 +762,6 @@ public class MemoryHandler {
 		final CallStatement call = StatementFactory.constructCallStatement(loc, false, lhss,
 				determineReadProcedure(resultType, unchecked, loc),
 				new Expression[] { address, calculateSizeOf(loc, resultType) });
-		for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
-			overapprItem.annotate(call);
-		}
 		resultBuilder.addStatement(call);
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder);
 		resultBuilder.setLrValue(new RValue(auxvar.getExp(), resultType));
