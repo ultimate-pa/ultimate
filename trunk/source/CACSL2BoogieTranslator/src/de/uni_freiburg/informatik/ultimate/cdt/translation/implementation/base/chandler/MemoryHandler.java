@@ -764,6 +764,9 @@ public class MemoryHandler {
 				new Expression[] { address, calculateSizeOf(loc, resultType) });
 		resultBuilder.addStatement(call);
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder);
+		// TODO Frank 2022-12-16: We should add an in-range assumption here, but this could be problematic if we cast
+		// e.g. unsigned to signed pointers and read from them
+		// mExpressionTranslation.addAssumeValueInRangeStatements(loc, auxvar.getExp(), resultType, resultBuilder);
 		resultBuilder.setLrValue(new RValue(auxvar.getExp(), resultType));
 		return resultBuilder.build();
 	}
