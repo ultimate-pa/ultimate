@@ -208,6 +208,8 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			return new McrRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist, this);
 		case ACCELERATED_INTERPOLATION:
 			return new AcceleratedInterpolationRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
+		case ACCELERATED_TRACE_CHECK:
+			return new AcceleratedTraceCheckRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		default:
 			throw new IllegalArgumentException(
 					"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());

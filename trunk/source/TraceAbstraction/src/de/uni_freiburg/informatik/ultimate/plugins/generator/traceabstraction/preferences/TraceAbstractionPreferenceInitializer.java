@@ -885,6 +885,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 * Use accelerated interpolation and some other, nested strategy
 		 */
 		ACCELERATED_INTERPOLATION,
+
+		/**
+		 * Use loop acceleration in combination with the fixed preferences
+		 */
+		ACCELERATED_TRACE_CHECK
 	}
 
 	/**
