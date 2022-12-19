@@ -341,13 +341,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 		if (BigInteger.ONE.equals(rightValue)) {
 			return ExpressionFactory.createIntegerLiteral(loc, SFO.NR0);
 		}
-		/*
-		 * In C the semantics of integer division is "rounding towards zero". In Boogie euclidian division is used. We
-		 * translate a % b into (a < 0 && a%b != 0) ? ( (b < 0) ? (a%b)-b : (a%b)+b) : a%b
-		 */
-		// modulo on bigInteger does not seem to follow the "multiply, add, and get the
-		// result back"-rule, together
-		// with its division..
+		// modulo on bigInteger does not seem to follow the "multiply, add, and get the result back"-rule, together with
+		// its division..
 		if (leftValue != null && rightValue != null) {
 			final String constantResult;
 			if (rightValue.signum() == 0) {
@@ -361,6 +356,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 			}
 			return ExpressionFactory.createIntegerLiteral(loc, constantResult);
 		}
+		/*
+		 * In C the semantics of integer division is "rounding towards zero". In Boogie euclidian division is used. We
+		 * translate a % b into (a < 0 && a%b != 0) ? ( (b < 0) ? (a%b)-b : (a%b)+b) : a%b
+		 */
 		final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right,
 				ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
 		final Expression normalModulo = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, left, right);
