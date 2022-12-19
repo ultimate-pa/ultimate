@@ -741,7 +741,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 
 			final Attribute[] attributes;
-			final ASTType paramASTType = mTypeHandler.cType2AstType(loc, oldType);
 			if (newType.isFloatingType()) {
 				attributes =
 						generateAttributes(loc, mSettings.overapproximateFloatingPointOperations(), "to_real", null);
@@ -751,7 +750,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			} else {
 				throw new AssertionError("unhandled case");
 			}
-			final ASTType[] params = { paramASTType };
+			final ASTType[] params = { mTypeHandler.cType2AstType(loc, oldType) };
 			final ASTType resultASTType = mTypeHandler.cType2AstType(loc, newType);
 
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, params);
@@ -811,10 +810,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final Expression rhsOperand) {
 		assert resultType.isIntegerType()
 				&& !mTypeSizes.isUnsigned(resultType) : "Overflow check only for signed integer types";
-		assert operation == IASTBinaryExpression.op_multiply || operation == IASTBinaryExpression.op_multiplyAssign
-				|| operation == IASTBinaryExpression.op_plus || operation == IASTBinaryExpression.op_plusAssign
-				|| operation == IASTBinaryExpression.op_minus || operation == IASTBinaryExpression.op_minusAssign
-				|| operation == IASTBinaryExpression.op_divide || operation == IASTBinaryExpression.op_divideAssign;
+		assert List.of(IASTBinaryExpression.op_multiply, IASTBinaryExpression.op_multiplyAssign,
+				IASTBinaryExpression.op_plus, IASTBinaryExpression.op_plusAssign, IASTBinaryExpression.op_minus,
+				IASTBinaryExpression.op_minusAssign, IASTBinaryExpression.op_divide,
+				IASTBinaryExpression.op_divideAssign).contains(operation);
 
 		final Expression operationResult =
 				constructArithmeticExpression(loc, operation, lhsOperand, resultType, rhsOperand, resultType);
