@@ -761,7 +761,6 @@ public class ExpressionFactory {
 	 * If true, then (binOp left x) == x for any x
 	 */
 	private static boolean isNeutralLeft(final Operator binOp, final Expression left) {
-		// TODO: Complete
 		switch (binOp) {
 		case ARITHMUL:
 			if (left instanceof IntegerLiteral) {
@@ -778,6 +777,7 @@ public class ExpressionFactory {
 			}
 			return false;
 		case LOGICAND:
+		case LOGICIMPLIES:
 			return left instanceof BooleanLiteral && ((BooleanLiteral) left).getValue();
 		case LOGICOR:
 			return left instanceof BooleanLiteral && !((BooleanLiteral) left).getValue();
@@ -792,7 +792,6 @@ public class ExpressionFactory {
 		case COMPLEQ:
 		case COMPLT:
 		case COMPPO:
-		case LOGICIMPLIES:
 		case LOGICIFF:
 			return false;
 		default:
