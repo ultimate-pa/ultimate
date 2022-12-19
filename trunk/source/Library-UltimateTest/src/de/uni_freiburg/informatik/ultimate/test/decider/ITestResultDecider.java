@@ -128,6 +128,10 @@ public interface ITestResultDecider {
 		/**
 		 * Success should always represent a JUnit test success.
 		 */
-		SUCCESS
+		SUCCESS,
+		/**
+		 * Marks a test as ignored
+		 */
+		IGNORE
 	}
 }
