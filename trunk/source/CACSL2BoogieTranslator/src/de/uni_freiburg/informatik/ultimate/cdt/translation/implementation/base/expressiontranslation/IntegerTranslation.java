@@ -232,13 +232,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	private static Expression constructUnaryIntExprMinus(final ILocation loc, final Expression expr,
 			final CPrimitive type) {
-		if (type.getGeneralType() == CPrimitiveCategory.INTTYPE) {
+		if (type.getGeneralType() == CPrimitiveCategory.INTTYPE
+				|| type.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
 			return ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr);
-		}
-		if (type.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
-			// TODO: having boogie deal with negative real literals would be the nice solution..
-			return ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS,
-					ExpressionFactory.createRealLiteral(loc, "0.0"), expr);
 		}
 		throw new IllegalArgumentException("Unsupported type for unary minus: " + type);
 	}
