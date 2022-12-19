@@ -123,8 +123,10 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 			return mUnknownIsJUnitSuccess;
 		case FAIL:
 			return false;
+		case IGNORE:
+			return false;
 		default:
-			throw new AssertionError("unknown actualResult");
+			throw new AssertionError("unknown actualResult: " + testResult);
 		}
 
 	}
