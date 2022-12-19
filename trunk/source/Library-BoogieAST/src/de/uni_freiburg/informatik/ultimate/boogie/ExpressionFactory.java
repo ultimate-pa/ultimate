@@ -778,15 +778,9 @@ public class ExpressionFactory {
 			}
 			return false;
 		case LOGICAND:
-			if (left instanceof BooleanLiteral) {
-				return ((BooleanLiteral) left).getValue();
-			}
-			return false;
+			return left instanceof BooleanLiteral && ((BooleanLiteral) left).getValue();
 		case LOGICOR:
-			if (left instanceof BooleanLiteral) {
-				return !((BooleanLiteral) left).getValue();
-			}
-			return false;
+			return left instanceof BooleanLiteral && !((BooleanLiteral) left).getValue();
 		case COMPEQ:
 		case COMPNEQ:
 		case ARITHDIV:
