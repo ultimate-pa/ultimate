@@ -257,12 +257,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_divide: {
 			final var pair = applyWraparoundsIfNecessary(loc, leftExp, leftType, rightExp, rightType);
-			return constructArIntExprDiv(loc, pair.getFirst(), pair.getSecond(), leftType, rightType);
+			return constructDivExpression(loc, pair.getFirst(), pair.getSecond(), leftType, rightType);
 		}
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_modulo: {
 			final var pair = applyWraparoundsIfNecessary(loc, leftExp, leftType, rightExp, rightType);
-			return constructArIntExprMod(loc, pair.getFirst(), pair.getSecond(), leftType, rightType);
+			return constructModExpression(loc, pair.getFirst(), pair.getSecond(), leftType, rightType);
 		}
 		default:
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported arithmetic expression");
@@ -280,7 +280,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		return new Pair<>(leftExpr, rightExpr);
 	}
 
-	private Expression constructArIntExprDiv(final ILocation loc, final Expression left, final Expression right,
+	private Expression constructDivExpression(final ILocation loc, final Expression left, final Expression right,
 			final CPrimitive leftType, final CPrimitive rightType) {
 		final BigInteger leftValue = mTypeSizes.extractIntegerValue(left, leftType);
 		final BigInteger rightValue = mTypeSizes.extractIntegerValue(right, rightType);
@@ -308,7 +308,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 				getLeftSmallerZeroAndThereIsRemainder(loc, left, right), roundTowardsZero, normalDivision);
 	}
 
-	private Expression constructArIntExprMod(final ILocation loc, final Expression left, final Expression right,
+	private Expression constructModExpression(final ILocation loc, final Expression left, final Expression right,
 			final CPrimitive leftType, final CPrimitive rightType) {
 		final BigInteger leftValue = mTypeSizes.extractIntegerValue(left, leftType);
 		if (leftValue != null && leftValue.signum() == 0) {
