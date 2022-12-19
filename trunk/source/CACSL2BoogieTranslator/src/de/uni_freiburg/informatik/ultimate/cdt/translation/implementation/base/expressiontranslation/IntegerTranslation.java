@@ -300,52 +300,40 @@ public class IntegerTranslation extends ExpressionTranslation {
 		if ((leftValue != null && leftValue.signum() == 0) || BigInteger.ONE.equals(rightValue)) {
 			return left;
 		}
+		if (leftValue != null && rightValue != null) {
+			return ExpressionFactory.createIntegerLiteral(loc, leftValue.divide(rightValue).toString());
+		}
 		/*
 		 * In C the semantics of integer division is "rounding towards zero". In Boogie euclidian division is used. We
 		 * translate a / b into (a < 0 && a%b != 0) ? ( (b < 0) ? (a/b)+1 : (a/b)-1) : a/b
 		 */
-		if (leftValue != null && rightValue != null) {
-			final String constantResult = leftValue.divide(rightValue).toString();
-			return ExpressionFactory.createIntegerLiteral(loc, constantResult);
-		}
 		final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
 				right, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
 		final Expression normalDivision = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHDIV, left, right);
+		final Expression one = ExpressionFactory.createIntegerLiteral(loc, SFO.NR1);
 		if (leftValue != null) {
-			if (leftValue.signum() == 1) {
+			if (leftValue.signum() > 0) {
 				return normalDivision;
 			}
 			return ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
 					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, normalDivision,
-							ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
+							one),
 					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, normalDivision,
-							ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)));
+							one));
 		}
 		final Expression leftSmallerZeroAndThereIsRemainder = getLeftSmallerZeroAndThereIsRemainder(loc, left, right);
 		if (rightValue == null) {
 			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
 					ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
-									normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
+									normalDivision, one),
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
-									normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1))),
+									normalDivision, one)),
 					normalDivision);
 		}
-		if (rightValue.signum() == 1 || rightValue.signum() == 0) {
-			return ExpressionFactory
-					.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
-									normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
-							normalDivision);
-		}
-		if (rightValue.signum() == -1) {
-			return ExpressionFactory
-					.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
-									normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
-							normalDivision);
-		}
-		throw new UnsupportedOperationException("Is it expected that this is a fall-through switch?");
+		final Operator operator = rightValue.signum() >= 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
+		return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
+				ExpressionFactory.newBinaryExpression(loc, operator, normalDivision, one), normalDivision);
 	}
 
 	private Expression constructArIntExprMod(final ILocation loc, final Expression left, final Expression right,
@@ -367,24 +355,20 @@ public class IntegerTranslation extends ExpressionTranslation {
 		// with its division..
 		if (leftValue != null && rightValue != null) {
 			final String constantResult;
-			if (leftValue.signum() == 1 || leftValue.signum() == 0) {
-				if (rightValue.signum() == 1) {
+			if (leftValue.signum() >= 0) {
+				if (rightValue.signum() > 0) {
 					constantResult = leftValue.mod(rightValue).toString();
-				} else if (rightValue.signum() == -1) {
+				} else if (rightValue.signum() < 0) {
 					constantResult = leftValue.mod(rightValue.negate()).toString();
 				} else {
-					constantResult = "0";
+					constantResult = SFO.NR0;
 				}
-			} else if (leftValue.signum() == -1) {
-				if (rightValue.signum() == 1) {
-					constantResult = leftValue.negate().mod(rightValue).negate().toString();
-				} else if (rightValue.signum() == -1) {
-					constantResult = leftValue.negate().mod(rightValue.negate()).negate().toString();
-				} else {
-					constantResult = "0";
-				}
+			} else if (rightValue.signum() > 0) {
+				constantResult = leftValue.negate().mod(rightValue).negate().toString();
+			} else if (rightValue.signum() < 0) {
+				constantResult = leftValue.negate().mod(rightValue.negate()).negate().toString();
 			} else {
-				throw new UnsupportedOperationException("constant is not assigned");
+				constantResult = SFO.NR0;
 			}
 			return ExpressionFactory.createIntegerLiteral(loc, constantResult);
 		}
@@ -392,7 +376,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 				right, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
 		final Expression normalModulo = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, left, right);
 		if (leftValue != null) {
-			if (leftValue.signum() == 1) {
+			if (leftValue.signum() > 0) {
 				return normalModulo;
 			}
 			return ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
@@ -411,19 +395,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 									normalModulo, right)),
 					normalModulo);
 		}
-		if (rightValue.signum() == 1 || rightValue.signum() == 0) {
-			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, normalModulo,
-							right),
-					normalModulo);
-		}
-		if (rightValue.signum() == -1) {
-			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, normalModulo,
-							right),
-					normalModulo);
-		}
-		throw new UnsupportedOperationException("Is it expected that this is a fall-through switch?");
+		final Operator operator = rightValue.signum() >= 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
+		return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
+				ExpressionFactory.newBinaryExpression(loc, operator, normalModulo, right), normalModulo);
 	}
 
 	private static Expression getLeftSmallerZeroAndThereIsRemainder(final ILocation loc, final Expression exp1,
