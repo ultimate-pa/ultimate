@@ -423,9 +423,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 			} else {
 				oldWrappedIfUnsigned = operand.getLrValue().getValue();
 			}
-			if (mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())
-					|| mTypeSizes.getSize(resultType.getType()).equals(mTypeSizes.getSize(oldType.getType()))
-							&& !mTypeSizes.isUnsigned(oldType)) {
+			if (mTypeSizes.getSize(resultType.getType()) >= mTypeSizes.getSize(oldType.getType())
+					&& !mTypeSizes.isUnsigned(oldType)) {
 				newExpression = oldWrappedIfUnsigned;
 			} else {
 				// According to C11 6.3.1.3.3 the result is implementation-defined
