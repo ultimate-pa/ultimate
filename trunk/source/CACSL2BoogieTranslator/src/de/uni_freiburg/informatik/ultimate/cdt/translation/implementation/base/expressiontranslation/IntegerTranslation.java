@@ -78,6 +78,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public class IntegerTranslation extends ExpressionTranslation {
+	private static final String NOT_IMPLEMENTED = "Operation is not yet implemented in non-bitprecise translation.";
+
 	private final BitabsTranslation mBitabsTranslation;
 
 	public IntegerTranslation(final TypeSizes typeSizeConstants, final TranslationSettings settings,
@@ -276,8 +278,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		case IASTBinaryExpression.op_modulo:
 			return constructArIntExprMod(loc, leftExpr, rightExpr, leftType, rightType);
 		default:
-			final String msg = "Unknown or unsupported arithmetic expression";
-			throw new UnsupportedSyntaxException(loc, msg);
+			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported arithmetic expression");
 		}
 	}
 
@@ -505,20 +506,20 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public Expression extractBits(final ILocation loc, final Expression operand, final int high, final int low) {
 		// we probably also have to provide information if input is signed/unsigned
-		throw new UnsupportedOperationException("not yet implemented in non-bitprecise translation");
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
 	}
 
 	@Override
 	public Expression concatBits(final ILocation loc, final List<Expression> dataChunks, final int size) {
 		// we probably also have to provide information if input is signed/unsigned
-		throw new UnsupportedOperationException("not yet implemented in non-bitprecise translation");
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
 	}
 
 	@Override
 	public Expression signExtend(final ILocation loc, final Expression operand, final int bitsBefore,
 			final int bitsAfter) {
 		// we probably also have to provide information if input is signed/unsigned
-		throw new UnsupportedOperationException("not yet implemented in non-bitprecise translation");
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
 	}
 
 	@Override
@@ -629,8 +630,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			operator = Operator.ARITHPLUS;
 			break;
 		default:
-			final String msg = "Unknown or unsupported arithmetic expression";
-			throw new UnsupportedSyntaxException(loc, msg);
+			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported arithmetic expression");
 		}
 		return ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
 	}
