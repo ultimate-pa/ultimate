@@ -369,7 +369,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
 					roundTowardsZero, normalModulo);
 		}
-		final Operator operator = rightValue.signum() >= 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
+		final Operator operator = rightValue.signum() >= 0 ? Operator.ARITHMINUS : Operator.ARITHPLUS;
 		return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
 				ExpressionFactory.newBinaryExpression(loc, operator, normalModulo, right), normalModulo);
 	}
