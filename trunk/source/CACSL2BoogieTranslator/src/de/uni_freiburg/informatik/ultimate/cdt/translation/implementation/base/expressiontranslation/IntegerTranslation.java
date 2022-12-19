@@ -350,20 +350,14 @@ public class IntegerTranslation extends ExpressionTranslation {
 		// with its division..
 		if (leftValue != null && rightValue != null) {
 			final String constantResult;
-			if (leftValue.signum() >= 0) {
-				if (rightValue.signum() > 0) {
-					constantResult = leftValue.mod(rightValue).toString();
-				} else if (rightValue.signum() < 0) {
-					constantResult = leftValue.mod(rightValue.negate()).toString();
-				} else {
-					constantResult = SFO.NR0;
-				}
-			} else if (rightValue.signum() > 0) {
-				constantResult = leftValue.negate().mod(rightValue).negate().toString();
-			} else if (rightValue.signum() < 0) {
-				constantResult = leftValue.negate().mod(rightValue.negate()).negate().toString();
-			} else {
+			if (rightValue.signum() == 0) {
 				constantResult = SFO.NR0;
+			} else {
+				BigInteger bigIntegerResult = leftValue.abs().mod(rightValue.abs());
+				if (leftValue.signum() < 0 && rightValue.signum() < 0) {
+					bigIntegerResult = bigIntegerResult.negate();
+				}
+				constantResult = bigIntegerResult.toString();
 			}
 			return ExpressionFactory.createIntegerLiteral(loc, constantResult);
 		}
