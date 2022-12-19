@@ -316,14 +316,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 		if (leftValue != null) {
 			return leftValue.signum() > 0 ? normalDivision : roundTowardsZero;
 		}
-		final Expression leftSmallerZeroAndThereIsRemainder = getLeftSmallerZeroAndThereIsRemainder(loc, left, right);
-		if (rightValue == null) {
-			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-					roundTowardsZero, normalDivision);
-		}
-		final Operator operator = rightValue.signum() >= 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
-		return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-				ExpressionFactory.newBinaryExpression(loc, operator, normalDivision, one), normalDivision);
+		return ExpressionFactory.constructIfThenElseExpression(loc,
+				getLeftSmallerZeroAndThereIsRemainder(loc, left, right), roundTowardsZero, normalDivision);
 	}
 
 	private Expression constructArIntExprMod(final ILocation loc, final Expression left, final Expression right,
@@ -364,14 +358,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 		if (leftValue != null) {
 			return leftValue.signum() > 0 ? normalModulo : roundTowardsZero;
 		}
-		final Expression leftSmallerZeroAndThereIsRemainder = getLeftSmallerZeroAndThereIsRemainder(loc, left, right);
-		if (rightValue == null) {
-			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-					roundTowardsZero, normalModulo);
-		}
-		final Operator operator = rightValue.signum() >= 0 ? Operator.ARITHMINUS : Operator.ARITHPLUS;
-		return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-				ExpressionFactory.newBinaryExpression(loc, operator, normalModulo, right), normalModulo);
+		return ExpressionFactory.constructIfThenElseExpression(loc,
+				getLeftSmallerZeroAndThereIsRemainder(loc, left, right), roundTowardsZero, normalModulo);
 	}
 
 	private static Expression getLeftSmallerZeroAndThereIsRemainder(final ILocation loc, final Expression exp1,
