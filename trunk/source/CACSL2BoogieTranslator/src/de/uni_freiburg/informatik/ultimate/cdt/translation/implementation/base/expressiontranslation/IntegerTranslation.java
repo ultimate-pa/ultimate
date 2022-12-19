@@ -310,21 +310,16 @@ public class IntegerTranslation extends ExpressionTranslation {
 				ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
 		final Expression normalDivision = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHDIV, left, right);
 		final Expression one = ExpressionFactory.createIntegerLiteral(loc, SFO.NR1);
+		final Expression roundTowardsZero = ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
+				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, normalDivision, one),
+				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, normalDivision, one));
 		if (leftValue != null) {
-			if (leftValue.signum() > 0) {
-				return normalDivision;
-			}
-			return ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
-					ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, normalDivision, one),
-					ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, normalDivision, one));
+			return leftValue.signum() > 0 ? normalDivision : roundTowardsZero;
 		}
 		final Expression leftSmallerZeroAndThereIsRemainder = getLeftSmallerZeroAndThereIsRemainder(loc, left, right);
 		if (rightValue == null) {
 			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-					ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
-							ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, normalDivision, one),
-							ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, normalDivision, one)),
-					normalDivision);
+					roundTowardsZero, normalDivision);
 		}
 		final Operator operator = rightValue.signum() >= 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
 		return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
@@ -363,21 +358,16 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right,
 				ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
 		final Expression normalModulo = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, left, right);
+		final Expression roundTowardsZero = ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
+				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, normalModulo, right),
+				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, normalModulo, right));
 		if (leftValue != null) {
-			if (leftValue.signum() > 0) {
-				return normalModulo;
-			}
-			return ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
-					ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, normalModulo, right),
-					ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, normalModulo, right));
+			return leftValue.signum() > 0 ? normalModulo : roundTowardsZero;
 		}
 		final Expression leftSmallerZeroAndThereIsRemainder = getLeftSmallerZeroAndThereIsRemainder(loc, left, right);
 		if (rightValue == null) {
 			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-					ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
-							ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, normalModulo, right),
-							ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, normalModulo, right)),
-					normalModulo);
+					roundTowardsZero, normalModulo);
 		}
 		final Operator operator = rightValue.signum() >= 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
 		return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
