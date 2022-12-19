@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
@@ -122,25 +121,25 @@ public class IntegerTranslation extends ExpressionTranslation {
 			leftExpr = applyWraparound(loc, type1, leftExpr);
 			rightExpr = applyWraparound(loc, type2, rightExpr);
 		}
-		BinaryExpression.Operator op;
+		Operator op;
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_equals:
-			op = BinaryExpression.Operator.COMPEQ;
+			op = Operator.COMPEQ;
 			break;
 		case IASTBinaryExpression.op_greaterEqual:
-			op = BinaryExpression.Operator.COMPGEQ;
+			op = Operator.COMPGEQ;
 			break;
 		case IASTBinaryExpression.op_greaterThan:
-			op = BinaryExpression.Operator.COMPGT;
+			op = Operator.COMPGT;
 			break;
 		case IASTBinaryExpression.op_lessEqual:
-			op = BinaryExpression.Operator.COMPLEQ;
+			op = Operator.COMPLEQ;
 			break;
 		case IASTBinaryExpression.op_lessThan:
-			op = BinaryExpression.Operator.COMPLT;
+			op = Operator.COMPLT;
 			break;
 		case IASTBinaryExpression.op_notequals:
-			op = BinaryExpression.Operator.COMPNEQ;
+			op = Operator.COMPNEQ;
 			break;
 		default:
 			throw new AssertionError("Unknown BinaryExpression operator " + nodeOperator);
@@ -164,7 +163,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	private static Expression applyEucledeanModulo(final ILocation loc, final Expression operand,
 			final BigInteger divisor) {
-		return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, operand,
+		return ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, operand,
 				ExpressionFactory.createIntegerLiteral(loc, divisor.toString()));
 	}
 
@@ -307,8 +306,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 		 * In C the semantics of integer division is "rounding towards zero". In Boogie euclidian division is used. We
 		 * translate a / b into (a < 0 && a%b != 0) ? ( (b < 0) ? (a/b)+1 : (a/b)-1) : a/b
 		 */
-		final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-				right, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
+		final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right,
+				ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
 		final Expression normalDivision = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHDIV, left, right);
 		final Expression one = ExpressionFactory.createIntegerLiteral(loc, SFO.NR1);
 		if (leftValue != null) {
@@ -316,19 +315,15 @@ public class IntegerTranslation extends ExpressionTranslation {
 				return normalDivision;
 			}
 			return ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, normalDivision,
-							one),
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, normalDivision,
-							one));
+					ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, normalDivision, one),
+					ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, normalDivision, one));
 		}
 		final Expression leftSmallerZeroAndThereIsRemainder = getLeftSmallerZeroAndThereIsRemainder(loc, left, right);
 		if (rightValue == null) {
 			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
 					ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
-							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
-									normalDivision, one),
-							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
-									normalDivision, one)),
+							ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, normalDivision, one),
+							ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, normalDivision, one)),
 					normalDivision);
 		}
 		final Operator operator = rightValue.signum() >= 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
@@ -372,27 +367,23 @@ public class IntegerTranslation extends ExpressionTranslation {
 			}
 			return ExpressionFactory.createIntegerLiteral(loc, constantResult);
 		}
-		final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-				right, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
+		final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right,
+				ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
 		final Expression normalModulo = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, left, right);
 		if (leftValue != null) {
 			if (leftValue.signum() > 0) {
 				return normalModulo;
 			}
 			return ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, normalModulo,
-							right),
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, normalModulo,
-							right));
+					ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, normalModulo, right),
+					ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, normalModulo, right));
 		}
 		final Expression leftSmallerZeroAndThereIsRemainder = getLeftSmallerZeroAndThereIsRemainder(loc, left, right);
 		if (rightValue == null) {
 			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
 					ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
-							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
-									normalModulo, right),
-							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
-									normalModulo, right)),
+							ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, normalModulo, right),
+							ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, normalModulo, right)),
 					normalModulo);
 		}
 		final Operator operator = rightValue.signum() >= 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
@@ -405,8 +396,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final Expression leftModRight = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, exp1, exp2);
 		final Expression thereIsRemainder = ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, leftModRight,
 				ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
-		final Expression leftSmallerZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-				exp1, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
+		final Expression leftSmallerZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, exp1,
+				ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
 		return ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftSmallerZero, thereIsRemainder);
 	}
 
@@ -441,15 +432,14 @@ public class IntegerTranslation extends ExpressionTranslation {
 			if (mSettings.unsignedTreatment() == UnsignedTreatment.ASSERT) {
 				final BigInteger maxValuePlusOne =
 						mTypeSizes.getMaxValueOfPrimitiveType(resultType).add(BigInteger.ONE);
-				final AssertStatement assertGeq0 = new AssertStatement(loc,
-						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
-								oldWrappedIfNeeded, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0)));
+				final AssertStatement assertGeq0 = new AssertStatement(loc, ExpressionFactory.newBinaryExpression(loc,
+						Operator.COMPGEQ, oldWrappedIfNeeded, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0)));
 				final Check chk1 = new Check(Spec.UINT_OVERFLOW);
 				chk1.annotate(assertGeq0);
 				erb.addStatement(assertGeq0);
 
 				final AssertStatement assertLtMax = new AssertStatement(loc,
-						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, oldWrappedIfNeeded,
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, oldWrappedIfNeeded,
 								ExpressionFactory.createIntegerLiteral(loc, maxValuePlusOne.toString())));
 				final Check chk2 = new Check(Spec.UINT_OVERFLOW);
 				chk2.annotate(assertLtMax);
@@ -599,8 +589,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 				constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, minValue, type, expr, type);
 		final Expression smallerMaxValue =
 				constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, expr, type, maxValue, type);
-		return new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
-				biggerMinInt, smallerMaxValue));
+		return new AssumeStatement(loc,
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, biggerMinInt, smallerMaxValue));
 	}
 
 	@Override
@@ -640,25 +630,25 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 					new Expression[] { exp1, exp2 }, BoogieType.TYPE_BOOL);
 		}
-		BinaryExpression.Operator op;
+		Operator op;
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_equals:
-			op = BinaryExpression.Operator.COMPEQ;
+			op = Operator.COMPEQ;
 			break;
 		case IASTBinaryExpression.op_greaterEqual:
-			op = BinaryExpression.Operator.COMPGEQ;
+			op = Operator.COMPGEQ;
 			break;
 		case IASTBinaryExpression.op_greaterThan:
-			op = BinaryExpression.Operator.COMPGT;
+			op = Operator.COMPGT;
 			break;
 		case IASTBinaryExpression.op_lessEqual:
-			op = BinaryExpression.Operator.COMPLEQ;
+			op = Operator.COMPLEQ;
 			break;
 		case IASTBinaryExpression.op_lessThan:
-			op = BinaryExpression.Operator.COMPLT;
+			op = Operator.COMPLT;
 			break;
 		case IASTBinaryExpression.op_notequals:
-			op = BinaryExpression.Operator.COMPNEQ;
+			op = Operator.COMPNEQ;
 			break;
 		default:
 			throw new AssertionError("Unknown BinaryExpression operator " + nodeOperator);
@@ -707,7 +697,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	private static Expression constructArithmeticExpression(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final Expression exp2) {
-		final BinaryExpression.Operator operator;
+		final Operator operator;
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_minusAssign:
 		case IASTBinaryExpression.op_minus:
@@ -770,10 +760,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 	private static Expression constructEquality(final ILocation loc, final int nodeOperator, final Expression leftExpr,
 			final Expression rightExpr) {
 		if (nodeOperator == IASTBinaryExpression.op_equals) {
-			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, leftExpr, rightExpr);
+			return ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, leftExpr, rightExpr);
 		}
 		if (nodeOperator == IASTBinaryExpression.op_notequals) {
-			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, leftExpr, rightExpr);
+			return ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, leftExpr, rightExpr);
 		}
 		throw new IllegalArgumentException("operator is neither equals nor not equals");
 	}
@@ -945,9 +935,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 	 */
 	private Expression constructSmallerMaxIntExpression(final ILocation loc, final CPrimitive primType,
 			final Expression expression) {
-		return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLEQ, expression,
-				ExpressionFactory.createIntegerLiteral(loc,
-						mTypeSizes.getMaxValueOfPrimitiveType(primType).toString()));
+		return ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, expression, ExpressionFactory
+				.createIntegerLiteral(loc, mTypeSizes.getMaxValueOfPrimitiveType(primType).toString()));
 	}
 
 	/**
@@ -955,8 +944,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	 */
 	private Expression constructBiggerMinIntExpression(final ILocation loc, final CPrimitive primType,
 			final Expression expression) {
-		return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, expression,
-				ExpressionFactory.createIntegerLiteral(loc,
-						mTypeSizes.getMinValueOfPrimitiveType(primType).toString()));
+		return ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, expression, ExpressionFactory
+				.createIntegerLiteral(loc, mTypeSizes.getMinValueOfPrimitiveType(primType).toString()));
 	}
 }
