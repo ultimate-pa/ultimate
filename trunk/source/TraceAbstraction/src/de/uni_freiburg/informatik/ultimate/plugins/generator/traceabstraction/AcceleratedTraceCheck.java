@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -49,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAcceleration;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAcceleration.JordanLoopAccelerationResult;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAcceleration.JordanLoopAccelerationResult.AccelerationStatus;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAccelerationStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -80,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * TraceCheck which applies loop acceleration to some loops in the trace.
@@ -346,6 +349,11 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 				SimplificationTechnique.SIMPLIFY_DDA, transformulas);
 		final JordanLoopAccelerationResult jla = JordanLoopAcceleration.accelerateLoop(mServices, mMgdScript,
 				sequentialComposition, true);
+		final JordanLoopAccelerationStatisticsGenerator stat = jla.getJordanLoopAccelerationStatistics();
+		final StatisticsData stats = new StatisticsData();
+		stats.aggregateBenchmarkData(stat);
+		services.getResultService().reportResult(Activator.PLUGIN_ID,
+				new StatisticsResult<>(Activator.PLUGIN_NAME, "LoopAccelerationStatistics", stats));
 		if (jla.getAccelerationStatus() != AccelerationStatus.SUCCESS) {
 			throw new UnsupportedOperationException(JordanLoopAcceleration.UNSUPPORTED_PREFIX + " "
 					+ jla.getAccelerationStatus() + " " + jla.getErrorMessage());
