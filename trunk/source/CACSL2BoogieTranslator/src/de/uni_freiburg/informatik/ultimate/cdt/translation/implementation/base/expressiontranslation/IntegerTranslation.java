@@ -266,12 +266,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 				rightExpr = applyWraparound(loc, rightType, rightExpr);
 			}
 		}
-		// TODO: add checks for UnaryExpression (otherwise we don't catch negative
-		// constants, here) --> or remove all
-		// the cases
-		// (if-then-else conditions are checked for being constant in RCFGBuilder
-		// anyway, so this is merely a decision
-		// of readability of Boogie code..)
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_minusAssign:
 		case IASTBinaryExpression.op_minus:
