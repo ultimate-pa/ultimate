@@ -62,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckHelper;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
@@ -174,19 +173,19 @@ public class ExpressionFactory {
 	private static Expression computeBinaryExpression(final ILocation loc, final Operator op, final Expression left,
 			final Expression right) {
 		if (left instanceof BooleanLiteral) {
-			return constructBinExprWithLiteralOps_Bool(loc, op, (BooleanLiteral) left, (BooleanLiteral) right);
+			return constructBinExprWithLiteralOpsBool(loc, op, (BooleanLiteral) left, (BooleanLiteral) right);
 		} else if (left instanceof IntegerLiteral) {
-			return constructBinExprWithLiteralOps_Integer(loc, op, (IntegerLiteral) left, (IntegerLiteral) right);
+			return constructBinExprWithLiteralOpsInteger(loc, op, (IntegerLiteral) left, (IntegerLiteral) right);
 		} else if (left instanceof RealLiteral) {
-			return constructBinExprWithLiteralOps_Real(loc, op, (RealLiteral) left, (RealLiteral) right);
+			return constructBinExprWithLiteralOpsReal(loc, op, (RealLiteral) left, (RealLiteral) right);
 		} else if (left instanceof BitvecLiteral) {
-			return constructBinExprWithLiteralOps_Bitvector(loc, op, (BitvecLiteral) left, (BitvecLiteral) right);
+			return constructBinExprWithLiteralOpsBitvector(loc, op, (BitvecLiteral) left, (BitvecLiteral) right);
 		} else {
 			throw new UnsupportedOperationException("Unknown literal: " + left.getClass());
 		}
 	}
 
-	private static BooleanLiteral constructBinExprWithLiteralOps_Bool(final ILocation loc, final Operator operator,
+	private static BooleanLiteral constructBinExprWithLiteralOpsBool(final ILocation loc, final Operator operator,
 			final BooleanLiteral leftLiteral, final BooleanLiteral rightLiteral) {
 		final boolean leftValue = leftLiteral.getValue();
 		final boolean rightValue = rightLiteral.getValue();
@@ -228,7 +227,7 @@ public class ExpressionFactory {
 		return createBooleanLiteral(loc, result);
 	}
 
-	private static Expression constructBinExprWithLiteralOps_Integer(final ILocation loc, final Operator operator,
+	private static Expression constructBinExprWithLiteralOpsInteger(final ILocation loc, final Operator operator,
 			final IntegerLiteral leftLiteral, final IntegerLiteral rightLiteral) {
 		final BigInteger leftValue = new BigInteger(leftLiteral.getValue());
 		final BigInteger rightValue = new BigInteger(rightLiteral.getValue());
@@ -289,7 +288,7 @@ public class ExpressionFactory {
 		}
 	}
 
-	private static Expression constructBinExprWithLiteralOps_Real(final ILocation loc, final Operator operator,
+	private static Expression constructBinExprWithLiteralOpsReal(final ILocation loc, final Operator operator,
 			final RealLiteral leftLiteral, final RealLiteral rightLiteral) {
 
 		final Rational leftValue = toRational(leftLiteral.getValue());
@@ -348,7 +347,7 @@ public class ExpressionFactory {
 		}
 	}
 
-	private static Expression constructBinExprWithLiteralOps_Bitvector(final ILocation loc, final Operator operator,
+	private static Expression constructBinExprWithLiteralOpsBitvector(final ILocation loc, final Operator operator,
 			final BitvecLiteral leftLiteral, final BitvecLiteral rightLiteral) {
 		final BigInteger leftValue = new BigInteger(leftLiteral.getValue());
 		final BigInteger rightValue = new BigInteger(rightLiteral.getValue());
@@ -580,11 +579,6 @@ public class ExpressionFactory {
 		return new ArrayLHS(loc, lhsType, innerLhs, outerMostIndex);
 	}
 
-	public static ArrayLHS constructNestedArrayLHS(final ILocation loc, final IBoogieType type, final LeftHandSide lhs,
-			final Expression[] indices) {
-		return constructNestedArrayLHS(loc, lhs, indices);
-	}
-
 	public static IdentifierExpression constructIdentifierExpression(final ILocation loc, final BoogieType type,
 			final String identifier, final DeclarationInformation declarationInformation) {
 		assert loc != null && type != null && identifier != null && declarationInformation != null;
@@ -670,7 +664,7 @@ public class ExpressionFactory {
 	 * @return the result of value % 2^bitlength
 	 */
 	private static BigInteger constructBitvectorInRange(final BigInteger value, final int bitlength) {
-		return value.mod(new BigInteger("2").pow(bitlength));
+		return value.mod(BigInteger.TWO.pow(bitlength));
 	}
 
 	public static RealLiteral createRealLiteral(final ILocation loc, final String value) {
@@ -940,7 +934,7 @@ public class ExpressionFactory {
 		}
 	}
 
-	public static Rational toRational(final String realLiteralValue) {
+	private static Rational toRational(final String realLiteralValue) {
 		final String[] twoParts = realLiteralValue.split("/");
 		if (twoParts.length == 2) {
 			return Rational.valueOf(new BigInteger(twoParts[0]), new BigInteger(twoParts[1]));
@@ -951,11 +945,7 @@ public class ExpressionFactory {
 		throw new IllegalArgumentException("Not a valid real literal value: " + realLiteralValue);
 	}
 
-	public static Rational toRational(final BigInteger bigInt) {
-		return Rational.valueOf(bigInt, BigInteger.ONE);
-	}
-
-	public static Rational toRational(final BigDecimal bigDec) {
+	private static Rational toRational(final BigDecimal bigDec) {
 		Rational rat;
 		if (bigDec.scale() <= 0) {
 			final BigInteger num = bigDec.toBigInteger();
