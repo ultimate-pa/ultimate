@@ -293,10 +293,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 		}
 	}
 
-	private Expression constructArIntExprDiv(final ILocation loc, final Expression exp1, final Expression exp2,
+	private Expression constructArIntExprDiv(final ILocation loc, final Expression left, final Expression right,
 			final CPrimitive leftType, final CPrimitive rightType) {
-		final BigInteger leftValue = mTypeSizes.extractIntegerValue(exp1, leftType);
-		final BigInteger rightValue = mTypeSizes.extractIntegerValue(exp2, rightType);
+		final BigInteger leftValue = mTypeSizes.extractIntegerValue(left, leftType);
+		final BigInteger rightValue = mTypeSizes.extractIntegerValue(right, rightType);
 		/*
 		 * In C the semantics of integer division is "rounding towards zero". In Boogie euclidian division is used. We
 		 * translate a / b into (a < 0 && a%b != 0) ? ( (b < 0) ? (a/b)+1 : (a/b)-1) : a/b
@@ -306,8 +306,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return ExpressionFactory.createIntegerLiteral(loc, constantResult);
 		}
 		final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-				exp2, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
-		final Expression normalDivision = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHDIV, exp1, exp2);
+				right, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
+		final Expression normalDivision = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHDIV, left, right);
 		if (leftValue != null) {
 			if (leftValue.signum() == 1) {
 				return normalDivision;
@@ -321,7 +321,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			}
 			return ExpressionFactory.createIntegerLiteral(loc, SFO.NR0);
 		}
-		final Expression leftSmallerZeroAndThereIsRemainder = getLeftSmallerZeroAndThereIsRemainder(loc, exp1, exp2);
+		final Expression leftSmallerZeroAndThereIsRemainder = getLeftSmallerZeroAndThereIsRemainder(loc, left, right);
 		if (rightValue == null) {
 			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
 					ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
@@ -348,10 +348,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 		throw new UnsupportedOperationException("Is it expected that this is a fall-through switch?");
 	}
 
-	private Expression constructArIntExprMod(final ILocation loc, final Expression exp1, final Expression exp2,
+	private Expression constructArIntExprMod(final ILocation loc, final Expression left, final Expression right,
 			final CPrimitive leftType, final CPrimitive rightType) {
-		final BigInteger leftValue = mTypeSizes.extractIntegerValue(exp1, leftType);
-		final BigInteger rightValue = mTypeSizes.extractIntegerValue(exp2, rightType);
+		final BigInteger leftValue = mTypeSizes.extractIntegerValue(left, leftType);
+		final BigInteger rightValue = mTypeSizes.extractIntegerValue(right, rightType);
 		/*
 		 * In C the semantics of integer division is "rounding towards zero". In Boogie euclidian division is used. We
 		 * translate a % b into (a < 0 && a%b != 0) ? ( (b < 0) ? (a%b)-b : (a%b)+b) : a%b
@@ -383,8 +383,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return ExpressionFactory.createIntegerLiteral(loc, constantResult);
 		}
 		final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-				exp2, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
-		final Expression normalModulo = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, exp1, exp2);
+				right, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
+		final Expression normalModulo = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, left, right);
 		if (leftValue != null) {
 			if (leftValue.signum() == 1) {
 				return normalModulo;
@@ -392,31 +392,31 @@ public class IntegerTranslation extends ExpressionTranslation {
 			if (leftValue.signum() == -1) {
 				return ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, normalModulo,
-								exp2),
+								right),
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, normalModulo,
-								exp2));
+								right));
 			}
 			return ExpressionFactory.createIntegerLiteral(loc, SFO.NR0);
 		}
-		final Expression leftSmallerZeroAndThereIsRemainder = getLeftSmallerZeroAndThereIsRemainder(loc, exp1, exp2);
+		final Expression leftSmallerZeroAndThereIsRemainder = getLeftSmallerZeroAndThereIsRemainder(loc, left, right);
 		if (rightValue == null) {
 			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
 					ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
-									normalModulo, exp2),
+									normalModulo, right),
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
-									normalModulo, exp2)),
+									normalModulo, right)),
 					normalModulo);
 		}
 		if (rightValue.signum() == 1 || rightValue.signum() == 0) {
 			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
 					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, normalModulo,
-							exp2),
+							right),
 					normalModulo);
 		}
 		if (rightValue.signum() == -1) {
 			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, normalModulo, exp2),
+					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, normalModulo, right),
 					normalModulo);
 		}
 		throw new UnsupportedOperationException("Is it expected that this is a fall-through switch?");
