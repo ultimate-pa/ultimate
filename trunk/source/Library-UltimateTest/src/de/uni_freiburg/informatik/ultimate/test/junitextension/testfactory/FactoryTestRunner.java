@@ -47,7 +47,11 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 
 import org.junit.AfterClass;
+import org.junit.internal.AssumptionViolatedException;
 import org.junit.internal.runners.statements.RunAfters;
+import org.junit.runner.Description;
+import org.junit.runner.notification.Failure;
+import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
@@ -184,6 +188,54 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 			mTests.addAll(super.computeTestMethods());
 		}
 		return mTests;
+	}
+
+	@Override
+	protected void runChild(final FrameworkMethod method, final RunNotifier notifier) {
+		final Description description = describeChild(method);
+		if (isIgnored(method)) {
+			notifier.fireTestIgnored(description);
+		} else {
+			final Statement statement = new Statement() {
+				@Override
+				public void evaluate() throws Throwable {
+					methodBlock(method).evaluate();
+				}
+			};
+			myRunLeaf(method, description, notifier);
+		}
+	}
+
+	protected final void myRunLeaf(final FrameworkMethod method, final Description description,
+			final RunNotifier notifier) {
+		notifier.fireTestStarted(description);
+		try {
+			methodBlock(method).evaluate();
+		} catch (final AssumptionViolatedException e) {
+			notifier.fireTestAssumptionFailed(new Failure(description, e));
+		} catch (final SkipTestException e) {
+			notifier.fireTestIgnored(description);
+		} catch (final Throwable e) {
+			notifier.fireTestFailure(new Failure(description, e));
+		} finally {
+			notifier.fireTestFinished(description);
+		}
+	}
+
+	public static class SkipTestException extends RuntimeException {
+		private static final long serialVersionUID = 1L;
+
+		public SkipTestException() {
+			super();
+		}
+
+		public SkipTestException(final String message) {
+			super(message);
+		}
+
+		public SkipTestException(final String message, final Throwable cause) {
+			super(message, cause);
+		}
 	}
 
 	@Override
