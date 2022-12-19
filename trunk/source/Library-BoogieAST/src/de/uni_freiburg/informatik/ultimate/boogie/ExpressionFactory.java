@@ -132,7 +132,6 @@ public class ExpressionFactory {
 			return constructBinaryExpression(loc, op, left, right);
 		}
 
-		final boolean isCommutative = isCommutative(op);
 		if (!isLeftLiteral && isRightLiteral && isCommutative(op)) {
 			// keep the literal on the left if commutative
 			return newBinaryExpression(loc, op, right, left);
@@ -158,7 +157,7 @@ public class ExpressionFactory {
 
 		if (isLeftLiteral && isRightLiteral) {
 			return computeBinaryExpression(loc, op, left, right);
-		} else if (isLeftLiteral && isCommutative) {
+		} else if (isLeftLiteral && isCommutative(op)) {
 			if (right instanceof BinaryExpression) {
 				// if possible, try to combine constants
 				// if expression is of the form (op c1 (op c2 x)), make (op c3 x) with c3 == (op c1 c2)
@@ -454,8 +453,7 @@ public class ExpressionFactory {
 	}
 
 	/**
-	 * Result of BitvectorAccessExpression for the special case that the operand
-	 * is a literal.
+	 * Result of BitvectorAccessExpression for the special case that the operand is a literal.
 	 *
 	 * @param high
 	 *            exclusive
@@ -464,8 +462,8 @@ public class ExpressionFactory {
 	 */
 	public static Expression constructBitvectorAccessExpressionResult(final ILocation loc, final BitvecLiteral operand,
 			final int high, final int low, final BoogieType type) {
-		final BigInteger biresult = constructBitvectorAccessExpressionResult(new BigInteger(operand.getValue()), high,
-				low);
+		final BigInteger biresult =
+				constructBitvectorAccessExpressionResult(new BigInteger(operand.getValue()), high, low);
 		return new BitvecLiteral(loc, type, biresult.toString(), high - low);
 	}
 
@@ -619,7 +617,6 @@ public class ExpressionFactory {
 		return new BinaryExpression(loc, type, operator, operand1, operand2);
 	}
 
-
 	/**
 	 * Construct a new {@link FunctionApplication} with the given C function identifier and the given Boogie arguments.
 	 *
@@ -636,9 +633,8 @@ public class ExpressionFactory {
 	 */
 	public static Expression constructFunctionApplication(final ILocation loc, final String identifier,
 			final Expression[] arguments, final BoogieType resultBoogieType) {
-	return new FunctionApplication(loc, resultBoogieType, identifier, arguments);
+		return new FunctionApplication(loc, resultBoogieType, identifier, arguments);
 	}
-
 
 	public static StructAccessExpression constructStructAccessExpression(final ILocation loc, final Expression struct,
 			final String fieldName) {
@@ -758,7 +754,6 @@ public class ExpressionFactory {
 	public static Expression constructBooleanWildCardExpression(final ILocation loc) {
 		return new WildcardExpression(loc, BoogieType.TYPE_BOOL);
 	}
-
 
 	/**
 	 * true iff left is neutral if it is the left operand of binOp, false otherwise
@@ -977,6 +972,5 @@ public class ExpressionFactory {
 		}
 		return rat;
 	}
-
 
 }
