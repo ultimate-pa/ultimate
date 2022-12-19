@@ -213,15 +213,15 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final CPrimitive type) {
 		switch (op) {
 		case IASTUnaryExpression.op_tilde:
-			return constructUnaryIntExprComplement(loc, expr, type);
+			return constructUnaryComplementExpression(loc, expr, type);
 		case IASTUnaryExpression.op_minus:
-			return constructUnaryIntExprMinus(loc, expr, type);
+			return constructUnaryMinusExpression(loc, expr, type);
 		default:
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported bitwise expression");
 		}
 	}
 
-	private Expression constructUnaryIntExprComplement(final ILocation loc, final Expression expr,
+	private Expression constructUnaryComplementExpression(final ILocation loc, final Expression expr,
 			final CPrimitive type) {
 		// Transform ~x to -1-x or MAX_VALUE-x (for unsigned, we could also return the same)
 		final String subtrahendValue =
@@ -230,7 +230,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		return ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, subtrahend, expr);
 	}
 
-	private static Expression constructUnaryIntExprMinus(final ILocation loc, final Expression expr,
+	private static Expression constructUnaryMinusExpression(final ILocation loc, final Expression expr,
 			final CPrimitive type) {
 		if (type.getGeneralType() == CPrimitiveCategory.INTTYPE
 				|| type.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
@@ -581,7 +581,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { exp },
 					mTypeHandler.getBoogieTypeForCType(type));
 		}
-		return constructUnaryIntExprMinus(loc, exp, type);
+		return constructUnaryMinusExpression(loc, exp, type);
 	}
 
 	@Override
