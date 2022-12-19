@@ -823,7 +823,9 @@ public class ExpressionFactory {
 		case LOGICOR:
 			return isNeutralLeft(binOp, right);
 		case ARITHDIV:
+			return isNeutralLeft(Operator.ARITHMUL, right);
 		case ARITHMINUS:
+			return isNeutralLeft(Operator.ARITHPLUS, right);
 		case ARITHMOD:
 		case BITVECCONCAT:
 		case COMPGEQ:
