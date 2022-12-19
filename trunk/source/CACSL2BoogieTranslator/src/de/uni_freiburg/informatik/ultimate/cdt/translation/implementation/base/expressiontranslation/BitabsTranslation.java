@@ -84,17 +84,18 @@ public class BitabsTranslation {
 	 */
 	public ExpressionResult abstractAnd(final ILocation loc, final Expression left, final Expression right,
 			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder) {
-		// 0 & a = a & 0 = 0
 		final BigInteger leftValue = mTypeSizes.extractIntegerValue(left, type);
-		if (BigInteger.ZERO.equals(leftValue)) {
-			return new ExpressionResult(new RValue(left, type));
-		}
 		final BigInteger rightValue = mTypeSizes.extractIntegerValue(right, type);
-		if (BigInteger.ZERO.equals(rightValue)) {
-			return new ExpressionResult(new RValue(right, type));
-		}
 		if (leftValue != null && rightValue != null) {
 			return handleConstants(leftValue, rightValue, BigInteger::and, loc, type);
+		}
+		final Expression exactResultLeft = tryToHandleAndExactlyForOneConstant(loc, right, leftValue, type);
+		if (exactResultLeft != null) {
+			return new ExpressionResult(new RValue(exactResultLeft, type));
+		}
+		final Expression exactResultRight = tryToHandleAndExactlyForOneConstant(loc, left, rightValue, type);
+		if (exactResultRight != null) {
+			return new ExpressionResult(new RValue(exactResultRight, type));
 		}
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
@@ -166,6 +167,42 @@ public class BitabsTranslation {
 		return buildExpressionResult(loc, "bitwiseAnd", type, auxvarinfo, exactCases, assumptions);
 	}
 
+	private static boolean endsWithOnes(final BigInteger value) {
+		return value.signum() > 0 && value.and(value.add(BigInteger.ONE)).signum() == 0;
+	}
+
+	private Expression tryToHandleAndExactlyForOneConstant(final ILocation loc, final Expression expr,
+			final BigInteger constantValue, final CPrimitive type) {
+		if (constantValue == null) {
+			return null;
+		}
+		// a & 0 = 0
+		if (constantValue.signum() == 0) {
+			return ExpressionFactory.createIntegerLiteral(loc, "0");
+		}
+		// If b only consists of ones, then a & b = a
+		final BigInteger onlyOnes =
+				mTypeSizes.isUnsigned(type) ? mTypeSizes.getMaxValueOfPrimitiveType(type) : BigInteger.ONE.negate();
+		if (onlyOnes.equals(constantValue)) {
+			return expr;
+		}
+		// If b starts with zeros and only ends with ones, then a & b = a % (b+1)
+		if (endsWithOnes(constantValue)) {
+			final Expression divisorPlusOne =
+					ExpressionFactory.createIntegerLiteral(loc, constantValue.add(BigInteger.ONE).toString());
+			return ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, expr, divisorPlusOne);
+		}
+		// If b starts with ones and only ends with zeros, then a & b = a - a % (b+1)
+		final BigInteger negated = onlyOnes.subtract(constantValue);
+		if (endsWithOnes(negated)) {
+			final Expression divisorPlusOne =
+					ExpressionFactory.createIntegerLiteral(loc, negated.add(BigInteger.ONE).toString());
+			final Expression mod = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, expr, divisorPlusOne);
+			return ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, expr, mod);
+		}
+		return null;
+	}
+
 	/**
 	 * Overapproximates the bitwise {@code or}. Uses the following rules to increase the precision:
 	 * <li>0 | a = a | 0 = a
@@ -179,17 +216,25 @@ public class BitabsTranslation {
 	 */
 	public ExpressionResult abstractOr(final ILocation loc, final Expression left, final Expression right,
 			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder) {
-		// 0 | a = a | 0 = a
 		final BigInteger leftValue = mTypeSizes.extractIntegerValue(left, type);
-		if (BigInteger.ZERO.equals(leftValue)) {
-			return new ExpressionResult(new RValue(right, type));
-		}
 		final BigInteger rightValue = mTypeSizes.extractIntegerValue(right, type);
-		if (BigInteger.ZERO.equals(rightValue)) {
-			return new ExpressionResult(new RValue(left, type));
-		}
 		if (leftValue != null && rightValue != null) {
 			return handleConstants(leftValue, rightValue, BigInteger::or, loc, type);
+		}
+		// Use the equality a | b = a + b - (a & b) here and check if a & b can be handled exactly here
+		// TODO: This expression could be simplified, if this was handled separately, but this would require more code
+		// duplication.
+		final Expression exactResultAndLeft = tryToHandleAndExactlyForOneConstant(loc, right, leftValue, type);
+		if (exactResultAndLeft != null) {
+			final Expression sum = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right);
+			return new ExpressionResult(new RValue(
+					ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, sum, exactResultAndLeft), type));
+		}
+		final Expression exactResultAndRight = tryToHandleAndExactlyForOneConstant(loc, left, rightValue, type);
+		if (exactResultAndRight != null) {
+			final Expression sum = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right);
+			return new ExpressionResult(new RValue(
+					ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, sum, exactResultAndRight), type));
 		}
 
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
@@ -275,17 +320,29 @@ public class BitabsTranslation {
 	 */
 	public ExpressionResult abstractXor(final ILocation loc, final Expression left, final Expression right,
 			final CPrimitive type, final AuxVarInfoBuilder auxVarInfoBuilder) {
-		// 0 ^ a = a ^ 0 = 0
 		final BigInteger leftValue = mTypeSizes.extractIntegerValue(left, type);
-		if (BigInteger.ZERO.equals(leftValue)) {
-			return new ExpressionResult(new RValue(right, type));
-		}
 		final BigInteger rightValue = mTypeSizes.extractIntegerValue(right, type);
-		if (BigInteger.ZERO.equals(rightValue)) {
-			return new ExpressionResult(new RValue(left, type));
-		}
 		if (leftValue != null && rightValue != null) {
 			return handleConstants(leftValue, rightValue, BigInteger::xor, loc, type);
+		}
+		// Use the equality a ^ b = a + b - 2 * (a & b) here and check if a & b can be handled exactly here
+		// TODO: This expression could be simplified, if this was handled separately, but this would require more code
+		// duplication.
+		final Expression exactResultAndLeft = tryToHandleAndExactlyForOneConstant(loc, right, leftValue, type);
+		if (exactResultAndLeft != null) {
+			final Expression sum = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right);
+			final Expression multiplied = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMUL,
+					ExpressionFactory.createIntegerLiteral(loc, "2"), exactResultAndLeft);
+			return new ExpressionResult(
+					new RValue(ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, sum, multiplied), type));
+		}
+		final Expression exactResultAndRight = tryToHandleAndExactlyForOneConstant(loc, left, rightValue, type);
+		if (exactResultAndRight != null) {
+			final Expression sum = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right);
+			final Expression multiplied = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMUL,
+					ExpressionFactory.createIntegerLiteral(loc, "2"), exactResultAndRight);
+			return new ExpressionResult(
+					new RValue(ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, sum, multiplied), type));
 		}
 
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
