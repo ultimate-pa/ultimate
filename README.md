@@ -21,6 +21,8 @@ The main active developers of Ultimate are:
 * Dominik Klumpp (@maul-esel)
 * Frank Schüssele (@schuessf)
 
+You can find an extensive list of past and current contributors [on our website](https://ultimate.informatik.uni-freiburg.de/#developers).
+
 ## Verification Tools (SV-COMP)
 
 Among other plugins and libraries, Ultimate contains 4 program verification tools with which we participate in [SV-COMP](sv-comp.sosy-lab.org/): Automizer, Taipan, Kojak and GemCutter.
