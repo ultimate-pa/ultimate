@@ -267,22 +267,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 				rightExpr = applyWraparound(loc, rightType, rightExpr);
 			}
 		}
-		final boolean bothAreIntegerLiterals =
-				leftExpr instanceof IntegerLiteral && rightExpr instanceof IntegerLiteral;
-		BigInteger leftValue = null;
-		BigInteger rightValue = null;
 		// TODO: add checks for UnaryExpression (otherwise we don't catch negative
 		// constants, here) --> or remove all
 		// the cases
 		// (if-then-else conditions are checked for being constant in RCFGBuilder
 		// anyway, so this is merely a decision
 		// of readability of Boogie code..)
-		if (leftExpr instanceof IntegerLiteral) {
-			leftValue = new BigInteger(((IntegerLiteral) leftExpr).getValue());
-		}
-		if (rightExpr instanceof IntegerLiteral) {
-			rightValue = new BigInteger(((IntegerLiteral) rightExpr).getValue());
-		}
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_minusAssign:
 		case IASTBinaryExpression.op_minus:
@@ -293,30 +283,32 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return constructArithmeticExpression(loc, nodeOperator, leftExp, rightExp);
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_divide:
-			return constructArIntExprDiv(loc, leftExpr, rightExpr, bothAreIntegerLiterals, leftValue, rightValue);
+			return constructArIntExprDiv(loc, leftExpr, rightExpr, leftType, rightType);
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_modulo:
-			return constructArIntExprMod(loc, leftExpr, rightExpr, bothAreIntegerLiterals, leftValue, rightValue);
+			return constructArIntExprMod(loc, leftExpr, rightExpr, leftType, rightType);
 		default:
 			final String msg = "Unknown or unsupported arithmetic expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 	}
 
-	private static Expression constructArIntExprDiv(final ILocation loc, final Expression exp1, final Expression exp2,
-			final boolean bothAreIntegerLiterals, final BigInteger leftValue, final BigInteger rightValue) {
+	private Expression constructArIntExprDiv(final ILocation loc, final Expression exp1, final Expression exp2,
+			final CPrimitive leftType, final CPrimitive rightType) {
+		final BigInteger leftValue = mTypeSizes.extractIntegerValue(exp1, leftType);
+		final BigInteger rightValue = mTypeSizes.extractIntegerValue(exp2, rightType);
 		/*
 		 * In C the semantics of integer division is "rounding towards zero". In Boogie euclidian division is used. We
 		 * translate a / b into (a < 0 && a%b != 0) ? ( (b < 0) ? (a/b)+1 : (a/b)-1) : a/b
 		 */
-		if (bothAreIntegerLiterals) {
+		if (leftValue != null && rightValue != null) {
 			final String constantResult = leftValue.divide(rightValue).toString();
 			return ExpressionFactory.createIntegerLiteral(loc, constantResult);
 		}
 		final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
 				exp2, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
 		final Expression normalDivision = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHDIV, exp1, exp2);
-		if (exp1 instanceof IntegerLiteral) {
+		if (leftValue != null) {
 			if (leftValue.signum() == 1) {
 				return normalDivision;
 			}
@@ -330,7 +322,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return ExpressionFactory.createIntegerLiteral(loc, SFO.NR0);
 		}
 		final Expression leftSmallerZeroAndThereIsRemainder = getLeftSmallerZeroAndThereIsRemainder(loc, exp1, exp2);
-		if (!(exp2 instanceof IntegerLiteral)) {
+		if (rightValue == null) {
 			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
 					ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
@@ -356,8 +348,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 		throw new UnsupportedOperationException("Is it expected that this is a fall-through switch?");
 	}
 
-	private static Expression constructArIntExprMod(final ILocation loc, final Expression exp1, final Expression exp2,
-			final boolean bothAreIntegerLiterals, final BigInteger leftValue, final BigInteger rightValue) {
+	private Expression constructArIntExprMod(final ILocation loc, final Expression exp1, final Expression exp2,
+			final CPrimitive leftType, final CPrimitive rightType) {
+		final BigInteger leftValue = mTypeSizes.extractIntegerValue(exp1, leftType);
+		final BigInteger rightValue = mTypeSizes.extractIntegerValue(exp2, rightType);
 		/*
 		 * In C the semantics of integer division is "rounding towards zero". In Boogie euclidian division is used. We
 		 * translate a % b into (a < 0 && a%b != 0) ? ( (b < 0) ? (a%b)-b : (a%b)+b) : a%b
@@ -365,7 +359,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		// modulo on bigInteger does not seem to follow the "multiply, add, and get the
 		// result back"-rule, together
 		// with its division..
-		if (bothAreIntegerLiterals) {
+		if (leftValue != null && rightValue != null) {
 			final String constantResult;
 			if (leftValue.signum() == 1 || leftValue.signum() == 0) {
 				if (rightValue.signum() == 1) {
@@ -391,7 +385,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
 				exp2, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
 		final Expression normalModulo = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, exp1, exp2);
-		if (exp1 instanceof IntegerLiteral) {
+		if (leftValue != null) {
 			if (leftValue.signum() == 1) {
 				return normalModulo;
 			}
@@ -405,7 +399,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return ExpressionFactory.createIntegerLiteral(loc, SFO.NR0);
 		}
 		final Expression leftSmallerZeroAndThereIsRemainder = getLeftSmallerZeroAndThereIsRemainder(loc, exp1, exp2);
-		if (!(exp2 instanceof IntegerLiteral)) {
+		if (rightValue == null) {
 			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
 					ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
