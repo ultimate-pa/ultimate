@@ -25,7 +25,7 @@ You can find an extensive list of past and current contributors [on our website]
 
 ## Verification Tools (SV-COMP)
 
-Among other plugins and libraries, Ultimate contains 4 program verification tools with which we participate in [SV-COMP](sv-comp.sosy-lab.org/): Automizer, Taipan, Kojak and GemCutter.
+Among other plugins and libraries, Ultimate contains several program verification tools with which we participate in the [International Competition on Software Verification (SV-COMP)](sv-comp.sosy-lab.org/). In this competition, various fully-automatic verifiers and bug finding tools from academia and industry compete, to see which tool can successfully analyse the most programs wrt. a give. We currently compete with 4 tools: Automizer, Taipan, Kojak and GemCutter.
 
 ### Ultimate Automizer
 Contact: Matthias Heizmann
