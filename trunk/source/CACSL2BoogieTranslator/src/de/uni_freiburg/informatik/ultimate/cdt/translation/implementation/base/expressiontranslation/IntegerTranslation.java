@@ -250,19 +250,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 		assert leftType.getGeneralType() == CPrimitiveCategory.INTTYPE;
 		assert rightType.getGeneralType() == CPrimitiveCategory.INTTYPE;
 
-		Expression leftExpr = leftExp;
-		Expression rightExpr = rightExp;
-		if (leftType.isIntegerType() && mTypeSizes.isUnsigned(leftType)) {
-			assert rightType.isIntegerType() && mTypeSizes.isUnsigned(rightType) : "incompatible types";
-			if (nodeOperator == IASTBinaryExpression.op_divide || nodeOperator == IASTBinaryExpression.op_divideAssign
-					|| nodeOperator == IASTBinaryExpression.op_modulo
-					|| nodeOperator == IASTBinaryExpression.op_moduloAssign) {
-				// apply wraparound to ensure that Nutz transformation is sound
-				// (see examples/programs/regression/c/NutzTransformation02.c)
-				leftExpr = applyWraparound(loc, leftType, leftExpr);
-				rightExpr = applyWraparound(loc, rightType, rightExpr);
-			}
-		}
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_minusAssign:
 		case IASTBinaryExpression.op_minus:
@@ -272,14 +259,29 @@ public class IntegerTranslation extends ExpressionTranslation {
 		case IASTBinaryExpression.op_plus:
 			return constructArithmeticExpression(loc, nodeOperator, leftExp, rightExp);
 		case IASTBinaryExpression.op_divideAssign:
-		case IASTBinaryExpression.op_divide:
-			return constructArIntExprDiv(loc, leftExpr, rightExpr, leftType, rightType);
+		case IASTBinaryExpression.op_divide: {
+			final var pair = applyWraparoundsIfNecessary(loc, leftExp, leftType, rightExp, rightType);
+			return constructArIntExprDiv(loc, pair.getFirst(), pair.getSecond(), leftType, rightType);
+		}
 		case IASTBinaryExpression.op_moduloAssign:
-		case IASTBinaryExpression.op_modulo:
-			return constructArIntExprMod(loc, leftExpr, rightExpr, leftType, rightType);
+		case IASTBinaryExpression.op_modulo: {
+			final var pair = applyWraparoundsIfNecessary(loc, leftExp, leftType, rightExp, rightType);
+			return constructArIntExprMod(loc, pair.getFirst(), pair.getSecond(), leftType, rightType);
+		}
 		default:
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported arithmetic expression");
 		}
+	}
+
+	private Pair<Expression, Expression> applyWraparoundsIfNecessary(final ILocation loc, final Expression leftExpr,
+			final CPrimitive leftType, final Expression rightExpr, final CPrimitive rightType) {
+		if (leftType.isIntegerType() && mTypeSizes.isUnsigned(leftType)) {
+			assert rightType.isIntegerType() && mTypeSizes.isUnsigned(rightType) : "incompatible types";
+			// apply wraparound to ensure that Nutz transformation is sound
+			// (see examples/programs/regression/c/NutzTransformation02.c)
+			return new Pair<>(applyWraparound(loc, leftType, leftExpr), applyWraparound(loc, rightType, rightExpr));
+		}
+		return new Pair<>(leftExpr, rightExpr);
 	}
 
 	private Expression constructArIntExprDiv(final ILocation loc, final Expression left, final Expression right,
