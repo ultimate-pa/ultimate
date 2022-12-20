@@ -900,9 +900,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 	}
 
-	@Override
-	protected String declareConversionFunction(final ILocation loc, final CPrimitive oldType,
-			final CPrimitive newType) {
+	private String declareConversionFunction(final ILocation loc, final CPrimitive oldType, final CPrimitive newType) {
 
 		final String functionName = "convert" + oldType.toString() + "To" + newType.toString();
 		final String prefixedFunctionName = "~" + functionName;

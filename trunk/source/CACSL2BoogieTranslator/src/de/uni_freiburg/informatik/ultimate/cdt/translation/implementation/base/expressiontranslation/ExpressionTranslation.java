@@ -230,8 +230,6 @@ public abstract class ExpressionTranslation {
 		return mPointerIntegerConversion.convertPointerToInt(loc, rexp, newType);
 	}
 
-	abstract protected String declareConversionFunction(ILocation loc, CPrimitive oldType, CPrimitive newType);
-
 	public final ExpressionResult convertIntToPointer(final ILocation loc, final ExpressionResult rexp,
 			final CPointer newType) {
 		return mPointerIntegerConversion.convertIntToPointer(loc, rexp, newType);
