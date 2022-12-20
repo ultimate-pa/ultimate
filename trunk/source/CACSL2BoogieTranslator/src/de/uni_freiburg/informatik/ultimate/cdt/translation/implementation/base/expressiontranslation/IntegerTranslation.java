@@ -450,24 +450,16 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType cType,
 			final ExpressionResultBuilder expressionResultBuilder) {
-		final AssumeStatement stmt = constructAssumeInRangeStatementOrNull(loc, expr, cType);
-		if (stmt != null) {
-			expressionResultBuilder.addStatement(stmt);
-		}
-	}
-
-	private AssumeStatement constructAssumeInRangeStatementOrNull(final ILocation loc, final Expression expr,
-			final CType type) {
-		if (!mSettings.assumeNondeterministicValuesInRange() || !type.getUnderlyingType().isIntegerType()) {
+		if (!mSettings.assumeNondeterministicValuesInRange() || !cType.getUnderlyingType().isIntegerType()) {
 			// only integer types can be out of range
-			return null;
+			return;
 		}
-		final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(type.getUnderlyingType());
+		final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType.getUnderlyingType());
 		if (mTypeSizes.isUnsigned(cPrimitive)) {
 			// only signed types can be out of range
-			return null;
+			return;
 		}
-		return constructAssumeInRangeStatement(mTypeSizes, loc, expr, cPrimitive);
+		expressionResultBuilder.addStatement(constructAssumeInRangeStatement(mTypeSizes, loc, expr, cPrimitive));
 	}
 
 	/**
