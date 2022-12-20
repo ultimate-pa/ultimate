@@ -117,6 +117,11 @@ public class IntegerTranslation extends ExpressionTranslation {
 			leftExpr = applyWraparound(loc, type1, leftExpr);
 			rightExpr = applyWraparound(loc, type2, rightExpr);
 		}
+		return constructBinaryComparison(loc, nodeOperator, leftExpr, rightExpr);
+	}
+
+	private static Expression constructBinaryComparison(final ILocation loc, final int nodeOperator,
+			final Expression leftExpr, final Expression rightExpr) {
 		Operator op;
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_equals:
@@ -140,7 +145,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 		default:
 			throw new AssertionError("Unknown BinaryExpression operator " + nodeOperator);
 		}
-
 		return ExpressionFactory.newBinaryExpression(loc, op, leftExpr, rightExpr);
 	}
 
@@ -517,31 +521,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 					new Expression[] { exp1, exp2 }, BoogieType.TYPE_BOOL);
 		}
-		Operator op;
-		switch (nodeOperator) {
-		case IASTBinaryExpression.op_equals:
-			op = Operator.COMPEQ;
-			break;
-		case IASTBinaryExpression.op_greaterEqual:
-			op = Operator.COMPGEQ;
-			break;
-		case IASTBinaryExpression.op_greaterThan:
-			op = Operator.COMPGT;
-			break;
-		case IASTBinaryExpression.op_lessEqual:
-			op = Operator.COMPLEQ;
-			break;
-		case IASTBinaryExpression.op_lessThan:
-			op = Operator.COMPLT;
-			break;
-		case IASTBinaryExpression.op_notequals:
-			op = Operator.COMPNEQ;
-			break;
-		default:
-			throw new AssertionError("Unknown BinaryExpression operator " + nodeOperator);
-		}
-
-		return ExpressionFactory.newBinaryExpression(loc, op, exp1, exp2);
+		return constructBinaryComparison(loc, nodeOperator, exp1, exp2);
 	}
 
 	@Override
