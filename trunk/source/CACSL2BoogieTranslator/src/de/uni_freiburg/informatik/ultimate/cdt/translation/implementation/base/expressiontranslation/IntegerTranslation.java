@@ -612,6 +612,21 @@ public class IntegerTranslation extends ExpressionTranslation {
 		return ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
 	}
 
+	private String declareBinaryFloatComparisonOverApprox(final ILocation loc, final CPrimitive type) {
+		final String functionName = "someBinary" + type.toString() + "ComparisonOperation";
+		final String prefixedFunctionName = "~" + functionName;
+		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
+					new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
+			final Attribute[] attributes = { attribute };
+			final ASTType paramAstType = mTypeHandler.cType2AstType(loc, type);
+			final ASTType resultAstType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL);
+			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultAstType, paramAstType,
+					paramAstType);
+		}
+		return prefixedFunctionName;
+	}
+
 	@Override
 	protected Expression constructBinaryEqualityExpressionFloating(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {

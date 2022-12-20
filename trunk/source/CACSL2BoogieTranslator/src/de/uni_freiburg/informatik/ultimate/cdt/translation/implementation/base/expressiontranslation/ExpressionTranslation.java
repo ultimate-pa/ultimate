@@ -40,8 +40,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
@@ -62,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3.FloatingPointLiteral;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
@@ -233,63 +230,7 @@ public abstract class ExpressionTranslation {
 		return mPointerIntegerConversion.convertPointerToInt(loc, rexp, newType);
 	}
 
-	protected String declareConversionFunctionOverApprox(final ILocation loc, final CPrimitive oldType,
-			final CPrimitive newType) {
-		final String functionName = "convert" + oldType.toString() + "To" + newType.toString();
-		final String prefixedFunctionName = "~" + functionName;
-		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
-					new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-			final Attribute[] attributes = { attribute };
-			final ASTType resultASTType = mTypeHandler.cType2AstType(loc, newType);
-			final ASTType paramASTType = mTypeHandler.cType2AstType(loc, oldType);
-			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
-		}
-		return prefixedFunctionName;
-	}
-
 	abstract protected String declareConversionFunction(ILocation loc, CPrimitive oldType, CPrimitive newType);
-
-	protected String declareBinaryFloatComparisonOverApprox(final ILocation loc, final CPrimitive type) {
-		final String functionName = "someBinary" + type.toString() + "ComparisonOperation";
-		final String prefixedFunctionName = "~" + functionName;
-		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
-					new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-			final Attribute[] attributes = { attribute };
-			final ASTType paramAstType = mTypeHandler.cType2AstType(loc, type);
-			final ASTType resultAstType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL);
-			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultAstType, paramAstType,
-					paramAstType);
-		}
-		return prefixedFunctionName;
-	}
-
-	private String declareBinaryArithmeticFloatOperation(final ILocation loc, final CPrimitive type) {
-		final String functionName = "someBinaryArithmetic" + type.toString() + "operation";
-		final String prefixedFunctionName = "~" + functionName;
-		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
-					new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-			final Attribute[] attributes = { attribute };
-			final ASTType astType = mTypeHandler.cType2AstType(loc, type);
-			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType, astType);
-		}
-		return prefixedFunctionName;
-	}
-
-	private String declareUnaryFloatOperation(final ILocation loc, final CPrimitive type) {
-		final String functionName = "someUnary" + type.toString() + "operation";
-		final String prefixedFunctionName = "~" + functionName;
-		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
-					new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-			final Attribute[] attributes = { attribute };
-			final ASTType astType = mTypeHandler.cType2AstType(loc, type);
-			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType);
-		}
-		return prefixedFunctionName;
-	}
 
 	public final ExpressionResult convertIntToPointer(final ILocation loc, final ExpressionResult rexp,
 			final CPointer newType) {
