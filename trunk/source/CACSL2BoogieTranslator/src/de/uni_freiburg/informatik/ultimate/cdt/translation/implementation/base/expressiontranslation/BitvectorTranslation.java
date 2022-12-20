@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
@@ -722,12 +721,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public CPrimitive getCTypeOfPointerComponents() {
 		return new CPrimitive(CPrimitives.ULONG);
-	}
-
-	@Override
-	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType ctype,
-			final List<Statement> stmt) {
-		// do nothing. not needed for bitvectors
 	}
 
 	@Override

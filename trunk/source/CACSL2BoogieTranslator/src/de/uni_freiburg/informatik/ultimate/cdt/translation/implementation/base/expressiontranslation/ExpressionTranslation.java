@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
@@ -344,9 +343,6 @@ public abstract class ExpressionTranslation {
 		final RValue rValue = new RValue(resultExpression, new CPrimitive(CPrimitives.BOOL), false, false);
 		return new ExpressionResultBuilder().addAllExceptLrValue(expr).setLrValue(rValue).build();
 	}
-
-	public abstract void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype,
-			List<Statement> stmt);
 
 	public abstract void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype,
 			ExpressionResultBuilder expressionResultBuilder);

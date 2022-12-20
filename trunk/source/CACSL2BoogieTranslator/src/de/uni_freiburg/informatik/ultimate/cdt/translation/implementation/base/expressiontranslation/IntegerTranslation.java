@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
@@ -446,15 +445,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public CPrimitive getCTypeOfPointerComponents() {
 		return new CPrimitive(CPrimitives.LONG);
-	}
-
-	@Override
-	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType cType,
-			final List<Statement> stmts) {
-		final AssumeStatement stmt = constructAssumeInRangeStatementOrNull(loc, expr, cType);
-		if (stmt != null) {
-			stmts.add(stmt);
-		}
 	}
 
 	@Override
