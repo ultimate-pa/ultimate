@@ -637,7 +637,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public ExpressionResult convertFloatToInt_NonBool(final ILocation loc, final ExpressionResult rexp,
+	protected ExpressionResult convertFloatToIntNonBool(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
 		final String prefixedFunctionName =
 				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
@@ -1073,7 +1073,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final RValue rval = new RValue(expr, resultType);
 			final ExpressionResult exprResult = new ExpressionResultBuilder().setLrValue(rval).build();
 
-			return (RValue) convertFloatToInt_NonBool(loc, exprResult, new CPrimitive(CPrimitives.LONG)).getLrValue();
+			return (RValue) convertFloatToIntNonBool(loc, exprResult, new CPrimitive(CPrimitives.LONG)).getLrValue();
 		} else if ("llround".equals(floatFunction.getFunctionName())) {
 			checkIsFloatPrimitive(argument);
 			final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
@@ -1088,7 +1088,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final RValue rval = new RValue(expr, resultType);
 			final ExpressionResult exprResult = new ExpressionResultBuilder().setLrValue(rval).build();
 
-			return (RValue) convertFloatToInt_NonBool(loc, exprResult, new CPrimitive(CPrimitives.LONGLONG))
+			return (RValue) convertFloatToIntNonBool(loc, exprResult, new CPrimitive(CPrimitives.LONGLONG))
 					.getLrValue();
 		} else if ("floor".equals(floatFunction.getFunctionName())) {
 			checkIsFloatPrimitive(argument);

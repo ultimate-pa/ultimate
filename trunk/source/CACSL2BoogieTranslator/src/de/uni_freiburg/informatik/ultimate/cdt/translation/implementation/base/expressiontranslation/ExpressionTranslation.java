@@ -302,7 +302,7 @@ public abstract class ExpressionTranslation {
 		if (newType.getType() == CPrimitives.BOOL) {
 			return convertToBool(loc, rexp);
 		}
-		return convertFloatToInt_NonBool(loc, rexp, newType);
+		return convertFloatToIntNonBool(loc, rexp, newType);
 	}
 
 	public abstract ExpressionResult convertFloatToFloat(final ILocation loc, final ExpressionResult rexp,
@@ -311,7 +311,7 @@ public abstract class ExpressionTranslation {
 	public abstract ExpressionResult convertIntToFloat(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType);
 
-	public abstract ExpressionResult convertFloatToInt_NonBool(ILocation loc, ExpressionResult rexp,
+	protected abstract ExpressionResult convertFloatToIntNonBool(ILocation loc, ExpressionResult rexp,
 			CPrimitive newType);
 
 	public abstract void declareFloatingPointConstructors(final ILocation loc, final CPrimitive type);

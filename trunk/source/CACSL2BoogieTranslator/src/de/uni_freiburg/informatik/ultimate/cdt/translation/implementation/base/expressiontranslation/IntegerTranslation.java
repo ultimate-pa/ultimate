@@ -711,7 +711,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public ExpressionResult convertFloatToInt_NonBool(final ILocation loc, final ExpressionResult rexp,
+	protected ExpressionResult convertFloatToIntNonBool(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
 		return doFloatIntAndIntFloatConversion(loc, rexp, newType);
 	}
