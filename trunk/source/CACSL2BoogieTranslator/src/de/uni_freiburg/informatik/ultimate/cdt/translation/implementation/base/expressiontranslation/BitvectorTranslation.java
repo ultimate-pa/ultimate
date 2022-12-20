@@ -84,6 +84,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class BitvectorTranslation extends ExpressionTranslation {
+	public static final String ROUNDING_MODE_BOOGIE_TYPE_IDENTIFIER = "FloatRoundingMode";
+	public static final String ROUNDING_MODE_SMT_TYPE_IDENTIFIER = "RoundingMode";
+
+	public static final BoogieType ROUNDING_MODE_BOOGIE_TYPE = BoogieType.createConstructedType(
+			new BoogieTypeConstructor(ROUNDING_MODE_BOOGIE_TYPE_IDENTIFIER, false, 0, new int[0]));
+	public static final ASTType ROUNDING_MODE_BOOGIE_AST_TYPE =
+			ROUNDING_MODE_BOOGIE_TYPE.toASTType(LocationFactory.createIgnoreCLocation());
+
+	public static final String ULTIMATE_VAR_CURRENT_ROUNDING_MODE = "currentRoundingMode";
+
+	public static final String ULTIMATE_PROC_SET_CURRENT_ROUNDING_MODE = "ULTIMATE.setCurrentRoundingMode";
+
+	public static final String SMT_LIB_NAN = "NaN";
+	public static final String SMT_LIB_PLUS_INF = "+oo";
+	public static final String SMT_LIB_MINUS_INF = "-oo";
+	public static final String SMT_LIB_PLUS_ZERO = "+zero";
+	public static final String SMT_LIB_MINUS_ZERO = "-zero";
 
 	/**
 	 * Describes the SMT constants we use to represent the rounding mode of floating point operations.
@@ -131,7 +148,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		private final IdentifierExpression mBoogieExpr;
 		private final VarList mVarlist;
 
-		private SmtRoundingMode(final String smtIdentifier) {
+		SmtRoundingMode(final String smtIdentifier) {
 			mSmtIdentifier = smtIdentifier;
 			final CACSLLocation loc = LocationFactory.createIgnoreCLocation();
 			final String boogieId = SFO.AUXILIARY_FUNCTION_PREFIX + smtIdentifier;
@@ -163,24 +180,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	// holds the current rounding mode ONLY when fesetround is disabled
 	private final IdentifierExpression mCurrentRoundingMode;
 
-	public static final String ROUNDING_MODE_BOOGIE_TYPE_IDENTIFIER = "FloatRoundingMode";
-	public static final String ROUNDING_MODE_SMT_TYPE_IDENTIFIER = "RoundingMode";
-
-	public static final BoogieType ROUNDING_MODE_BOOGIE_TYPE = BoogieType.createConstructedType(
-			new BoogieTypeConstructor(ROUNDING_MODE_BOOGIE_TYPE_IDENTIFIER, false, 0, new int[0]));
-	public static final ASTType ROUNDING_MODE_BOOGIE_AST_TYPE =
-			ROUNDING_MODE_BOOGIE_TYPE.toASTType(LocationFactory.createIgnoreCLocation());
-
-	public static final String ULTIMATE_VAR_CURRENT_ROUNDING_MODE = "currentRoundingMode";
-
-	public static final String ULTIMATE_PROC_SET_CURRENT_ROUNDING_MODE = "ULTIMATE.setCurrentRoundingMode";
-
-	public static final String SMT_LIB_NAN = "NaN";
-	public static final String SMT_LIB_PLUS_INF = "+oo";
-	public static final String SMT_LIB_MINUS_INF = "-oo";
-	public static final String SMT_LIB_PLUS_ZERO = "+zero";
-	public static final String SMT_LIB_MINUS_ZERO = "-zero";
-
 	public BitvectorTranslation(final TypeSizes typeSizeConstants, final TranslationSettings translationSettings,
 			final FlatSymbolTable symboltable, final ITypeHandler typeHandler) {
 		super(typeSizeConstants, translationSettings, typeHandler, symboltable);
@@ -204,7 +203,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 	}
 
-	public int computeBitsize(final CPrimitive cType) {
+	private int computeBitsize(final CPrimitive cType) {
 		final Integer bytesize = mTypeSizes.getSize(cType.getType());
 		return bytesize * 8;
 	}
@@ -347,15 +346,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			break;
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftRightAssign:
-			if (mTypeSizes.isUnsigned(typeLeft)) {
-				bvop = BvOp.bvlshr;
-			} else {
-				bvop = BvOp.bvashr;
-			}
+			bvop = mTypeSizes.isUnsigned(typeLeft) ? BvOp.bvlshr : BvOp.bvashr;
 			break;
 		default:
-			final String msg = "Unknown or unsupported bitwise expression";
-			throw new UnsupportedSyntaxException(loc, msg);
+			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported bitwise expression");
 		}
 		final String boogieFunctionName = BitvectorFactory.generateBoogieFunctionName(bvop, computeBitsize(typeLeft));
 		declareBitvectorFunction(loc, bvop, boogieFunctionName, false, typeLeft, null, typeLeft, typeRight);
@@ -396,8 +390,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			bvop = BvOp.bvneg;
 			break;
 		default:
-			final String msg = "Unknown or unsupported unary expression";
-			throw new UnsupportedSyntaxException(loc, msg);
+			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported unary expression");
 		}
 		final String boogieFunctionName = BitvectorFactory.generateBoogieFunctionName(bvop, computeBitsize(type));
 		declareBitvectorFunction(loc, bvop, boogieFunctionName, false, type, null, type);
@@ -445,8 +438,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			bvop = BvOp.bvadd;
 			break;
 		default:
-			final String msg = "Unknown or unsupported arithmetic expression";
-			throw new UnsupportedSyntaxException(loc, msg);
+			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported arithmetic expression");
 		}
 		final int bitsize = computeBitsize(type1);
 		final String boogieFunctionName = generateBoogieFunctionNameForOrdinaryBitvecOp(bvop, bitsize);
@@ -470,7 +462,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				paramCType);
 	}
 
-	public void declareBitvectorFunctionForArithmeticOperation(final ILocation loc, final BvOp smtFunctionName,
+	private void declareBitvectorFunctionForArithmeticOperation(final ILocation loc, final BvOp smtFunctionName,
 			final int bitsize) {
 		assert smtFunctionName == BvOp.bvadd || smtFunctionName == BvOp.bvand || smtFunctionName == BvOp.bvmul
 				|| smtFunctionName == BvOp.bvor || smtFunctionName == BvOp.bvsdiv || smtFunctionName == BvOp.bvsmod
@@ -488,7 +480,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				constructBitvectorAstType(loc, bitsize));
 	}
 
-	public void declareBitvectorFunctionForComparisonOperation(final ILocation loc, final BvOp smtFunctionName,
+	private void declareBitvectorFunctionForComparisonOperation(final ILocation loc, final BvOp smtFunctionName,
 			final int bitsize) {
 		assert smtFunctionName == BvOp.bvule || smtFunctionName == BvOp.bvult || smtFunctionName == BvOp.bvuge
 				|| smtFunctionName == BvOp.bvugt || smtFunctionName == BvOp.bvsle || smtFunctionName == BvOp.bvslt
@@ -504,7 +496,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				constructBitvectorAstType(loc, bitsize), constructBitvectorAstType(loc, bitsize));
 	}
 
-	public void declareBitvectorFunctionBvNeg(final ILocation loc, final int bitsize) {
+	private void declareBitvectorFunctionBvNeg(final ILocation loc, final int bitsize) {
 		final BvOp smtFunctionName = BvOp.bvneg;
 		final String boogieFunctionName = generateBoogieFunctionNameForOrdinaryBitvecOp(smtFunctionName, bitsize);
 		if (mFunctionDeclarations.getDeclaredFunctions().containsKey(boogieFunctionName)) {
@@ -517,7 +509,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				constructBitvectorAstType(loc, bitsize), constructBitvectorAstType(loc, bitsize));
 	}
 
-	public void declareExtendFunction(final ILocation loc, final ExtendOperation extendOperation,
+	private void declareExtendFunction(final ILocation loc, final ExtendOperation extendOperation,
 			final int operandBitlength, final int resultBiglength) {
 		final String boogieFunctionName = BitvectorFactory.generateBoogieFunctionNameForExtend(extendOperation,
 				operandBitlength, resultBiglength);
@@ -825,8 +817,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			smtFunctionName = "fp.neg";
 			break;
 		default:
-			final String msg = "Unknown or unsupported unary expression";
-			throw new UnsupportedSyntaxException(loc, msg);
+			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported unary expression");
 		}
 		declareFloatingPointFunction(loc, smtFunctionName, false, false, type, type);
 		final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, type);
@@ -865,8 +856,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			smtFunctionName = "fp.add";
 			break;
 		default:
-			final String msg = "Unknown or unsupported arithmetic expression";
-			throw new UnsupportedSyntaxException(loc, msg);
+			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported arithmetic expression");
 		}
 		if (isRounded) {
 			declareFloatingPointFunction(loc, smtFunctionName, false, isRounded, type1, type1, type2);
@@ -1564,9 +1554,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final Expression smallerMaxInt =
 					constructSmallerMaxIntConstraint(loc, resultType, requiredBitsize, opResult);
 			return new Pair<>(biggerMinInt, smallerMaxInt);
-		} else {
-			throw new AssertionError("Not applicable to operation " + operation);
 		}
+		throw new AssertionError("Not applicable to operation " + operation);
 	}
 
 	private Pair<Expression, Expression> constructMinMaxCheckForLeftShift(final ILocation loc,
