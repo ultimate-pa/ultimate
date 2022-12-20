@@ -321,8 +321,18 @@ public class JordanLoopAcceleration {
 		for (final IProgramVar pv : su.getDeterministicAssignment().keySet()) {
 			closedFormForProgramVar.put(pv, closedFormWithInvarsMap.get(pv.getTermVariable()));
 		}
+		// Mapping in which that maps default TermVariables to their closed form (where
+		// variables are represented by inVars). Since array indices may also contain
+		// read-only variables we have to add from the inVars mapping.
+		final HashMap<TermVariable, Term> substitutionMapping = new HashMap<>(closedFormWithInvarsMap);
+		for (final IProgramVar pv : su.getReadonlyVars()) {
+			final Term oldValue = substitutionMapping.put(pv.getTermVariable(), inVars.get(pv));
+			if (oldValue != null) {
+				throw new AssertionError(String.format("Contradiction: %s is readonly and modified", pv));
+			}
+		}
 		final NestedMap2<IProgramVar, ArrayIndex, Term> array2Index2values = applySubstitutionToIndexAndValue(mgdScript,
-				closedFormWithInvarsMap, su.getDeterministicArrayWrites());
+				substitutionMapping, su.getDeterministicArrayWrites());
 		checkIndices(mgdScript, array2Index2values, it);
 		return new ClosedFormOfUpdate(closedFormForProgramVar, array2Index2values);
 	}
