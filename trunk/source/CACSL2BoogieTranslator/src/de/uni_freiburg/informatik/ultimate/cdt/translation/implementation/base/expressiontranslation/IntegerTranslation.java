@@ -357,7 +357,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public ExpressionResult convertIntToInt_NonBool(final ILocation loc, final ExpressionResult operand,
+	protected ExpressionResult convertIntToIntNonBool(final ILocation loc, final ExpressionResult operand,
 			final CPrimitive resultType) {
 		if (resultType.isIntegerType()) {
 			return convertToIntegerType(loc, operand, resultType);

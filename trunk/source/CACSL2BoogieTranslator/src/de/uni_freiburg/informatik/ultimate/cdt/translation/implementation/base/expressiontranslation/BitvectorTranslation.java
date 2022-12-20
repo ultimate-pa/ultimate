@@ -607,7 +607,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public ExpressionResult convertIntToInt_NonBool(final ILocation loc, final ExpressionResult operand,
+	protected ExpressionResult convertIntToIntNonBool(final ILocation loc, final ExpressionResult operand,
 			final CPrimitive resultType) {
 		if (resultType == null) {
 			throw new UnsupportedOperationException("non-primitive types not supported yet " + resultType);

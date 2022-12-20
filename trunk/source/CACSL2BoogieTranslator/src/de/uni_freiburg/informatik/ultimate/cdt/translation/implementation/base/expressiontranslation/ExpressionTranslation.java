@@ -211,7 +211,7 @@ public abstract class ExpressionTranslation {
 	 *
 	 * @return
 	 */
-	public abstract ExpressionResult convertIntToInt_NonBool(ILocation loc, ExpressionResult operand,
+	protected abstract ExpressionResult convertIntToIntNonBool(ILocation loc, ExpressionResult operand,
 			CPrimitive resultType);
 
 	public final ExpressionResult convertIntToInt(final ILocation loc, final ExpressionResult rexp,
@@ -219,7 +219,7 @@ public abstract class ExpressionTranslation {
 		if (newType.getType() == CPrimitives.BOOL) {
 			return convertToBool(loc, rexp);
 		}
-		return convertIntToInt_NonBool(loc, rexp, newType);
+		return convertIntToIntNonBool(loc, rexp, newType);
 	}
 
 	/**
