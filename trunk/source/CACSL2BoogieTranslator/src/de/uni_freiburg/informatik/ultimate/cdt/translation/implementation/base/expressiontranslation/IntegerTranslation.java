@@ -326,7 +326,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 				constantResult = SFO.NR0;
 			} else {
 				BigInteger bigIntegerResult = leftValue.abs().mod(rightValue.abs());
-				if (leftValue.signum() < 0 && rightValue.signum() < 0) {
+				if (leftValue.signum() < 0) {
 					bigIntegerResult = bigIntegerResult.negate();
 				}
 				constantResult = bigIntegerResult.toString();
