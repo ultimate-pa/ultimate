@@ -110,14 +110,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 		if (!type1.equals(type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " and " + type2);
 		}
-		Expression leftExpr = exp1;
-		Expression rightExpr = exp2;
-		if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(type1)) {
-			assert mTypeSizes.isUnsigned(type2);
-			leftExpr = applyWraparound(loc, type1, leftExpr);
-			rightExpr = applyWraparound(loc, type2, rightExpr);
-		}
-		return constructBinaryComparison(loc, nodeOperator, leftExpr, rightExpr);
+		final Pair<Expression, Expression> wrapped = applyWraparoundsIfNecessary(loc, exp1, type1, exp2, type2);
+		return constructBinaryComparison(loc, nodeOperator, wrapped.getFirst(), wrapped.getSecond());
 	}
 
 	private static Expression constructBinaryComparison(final ILocation loc, final int nodeOperator,
@@ -272,15 +266,14 @@ public class IntegerTranslation extends ExpressionTranslation {
 		}
 	}
 
-	private Pair<Expression, Expression> applyWraparoundsIfNecessary(final ILocation loc, final Expression leftExpr,
-			final CPrimitive leftType, final Expression rightExpr, final CPrimitive rightType) {
-		if (leftType.isIntegerType() && mTypeSizes.isUnsigned(leftType)) {
-			assert rightType.isIntegerType() && mTypeSizes.isUnsigned(rightType) : "incompatible types";
-			// apply wraparound to ensure that Nutz transformation is sound
-			// (see examples/programs/regression/c/NutzTransformation02.c)
-			return new Pair<>(applyWraparound(loc, leftType, leftExpr), applyWraparound(loc, rightType, rightExpr));
+	private Pair<Expression, Expression> applyWraparoundsIfNecessary(final ILocation loc, final Expression left,
+			final CPrimitive leftType, final Expression right, final CPrimitive rightType) {
+		if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(leftType)) {
+			assert mTypeSizes.isUnsigned(rightType) : "incompatible types";
+			// Apply wraparound to ensure that Nutz transformation is sound
+			return new Pair<>(applyWraparound(loc, leftType, left), applyWraparound(loc, rightType, right));
 		}
-		return new Pair<>(leftExpr, rightExpr);
+		return new Pair<>(left, right);
 	}
 
 	private Expression constructDivExpression(final ILocation loc, final Expression left, final Expression right,
@@ -624,13 +617,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 		Expression leftExpr = exp1;
 		Expression rightExpr = exp2;
 		if (type1 instanceof CPrimitive && type2 instanceof CPrimitive) {
-			final CPrimitive primitive1 = (CPrimitive) type1;
-			final CPrimitive primitive2 = (CPrimitive) type2;
-			if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(primitive1)) {
-				assert mTypeSizes.isUnsigned(primitive2);
-				leftExpr = applyWraparound(loc, primitive1, leftExpr);
-				rightExpr = applyWraparound(loc, primitive2, rightExpr);
-			}
+			final Pair<Expression, Expression> wrapped =
+					applyWraparoundsIfNecessary(loc, exp1, (CPrimitive) type1, exp2, (CPrimitive) type2);
+			leftExpr = wrapped.getFirst();
+			rightExpr = wrapped.getSecond();
 		}
 		return constructEquality(loc, nodeOperator, leftExpr, rightExpr);
 	}
