@@ -325,11 +325,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 			if (rightValue.signum() == 0) {
 				constantResult = SFO.NR0;
 			} else {
-				BigInteger bigIntegerResult = leftValue.abs().mod(rightValue.abs());
-				if (leftValue.signum() < 0) {
-					bigIntegerResult = bigIntegerResult.negate();
-				}
-				constantResult = bigIntegerResult.toString();
+				final BigInteger bigIntegerResult = leftValue.abs().mod(rightValue.abs());
+				constantResult = (leftValue.signum() >= 0 ? bigIntegerResult : bigIntegerResult.negate()).toString();
 			}
 			return ExpressionFactory.createIntegerLiteral(loc, constantResult);
 		}
