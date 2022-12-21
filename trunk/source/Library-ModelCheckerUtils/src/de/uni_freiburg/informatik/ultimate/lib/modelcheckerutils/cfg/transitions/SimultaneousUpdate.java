@@ -98,6 +98,10 @@ public class SimultaneousUpdate {
 		 * A reasons that does not fall in one of the category above.
 		 */
 		OTHER,
+		/**
+		 * The conjunct is an array equality but we cannot find a suitable RHS.
+		 */
+		NORHSARRAY,
 	};
 
 	private final Map<IProgramVar, Term> mDeterministicAssignment;
@@ -291,6 +295,10 @@ public class SimultaneousUpdate {
 					assert ber != null : "Must succeed for equality";
 					SolvedBinaryRelation sbr = ber.solveForSubject(mgdScript.getScript(), outVar);
 					if (sbr == null) {
+						if (SmtSortUtils.isArraySort(outVar.getSort())) {
+							updateImpediments.add(ExtractionImpediments.NORHSARRAY);
+							continue;
+						}
 						final PolynomialRelation polyRel = PolynomialRelation.convert(mgdScript.getScript(), appTerm);
 						assert polyRel != null : "Must succeed for equality";
 						sbr = polyRel.solveForSubject(mgdScript.getScript(), outVar);
