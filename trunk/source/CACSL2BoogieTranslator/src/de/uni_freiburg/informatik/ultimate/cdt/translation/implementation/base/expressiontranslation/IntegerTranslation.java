@@ -359,66 +359,58 @@ public class IntegerTranslation extends ExpressionTranslation {
 	protected ExpressionResult convertIntToIntNonBool(final ILocation loc, final ExpressionResult operand,
 			final CPrimitive resultType) {
 		if (resultType.isIntegerType()) {
-			return convertToIntegerType(loc, operand, resultType);
+			final Expression result = convertToIntegerType(loc, operand.getLrValue().getValue(), resultType,
+					(CPrimitive) operand.getLrValue().getCType().getUnderlyingType());
+			return new ExpressionResult(new RValue(result, resultType));
 		}
 		throw new UnsupportedOperationException("not yet supported: conversion to " + resultType);
 	}
 
-	private ExpressionResult convertToIntegerType(final ILocation loc, final ExpressionResult operand,
+	private Expression convertToIntegerType(final ILocation loc, final Expression operand, final CPrimitive oldType,
 			final CPrimitive resultType) {
 		assert resultType.isIntegerType();
-		final CPrimitive oldType = (CPrimitive) operand.getLrValue().getCType().getUnderlyingType();
 		if (!oldType.isIntegerType()) {
 			throw new UnsupportedOperationException("not yet supported: conversion from " + oldType);
 		}
-		final Expression newExpression;
-		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(operand);
 		if (mTypeSizes.isUnsigned(resultType)) {
 			if (mTypeSizes.isUnsigned(oldType)
 					&& mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())) {
 				// required for sound Nutz transformation
 				// (see examples/programs/regression/c/NutzTransformation03.c)
-				newExpression = applyWraparound(loc, oldType, operand.getLrValue().getValue());
-			} else {
-				newExpression = operand.getLrValue().getValue();
+				return applyWraparound(loc, oldType, operand);
 			}
-		} else {
-			assert !mTypeSizes.isUnsigned(resultType);
-			final Expression oldWrappedIfUnsigned;
-			if (mTypeSizes.isUnsigned(oldType)) {
-				// required for sound Nutz transformation
-				// (see examples/programs/regression/c/NutzTransformation01.c)
-				oldWrappedIfUnsigned = applyWraparound(loc, oldType, operand.getLrValue().getValue());
-			} else {
-				oldWrappedIfUnsigned = operand.getLrValue().getValue();
-			}
-			if (mTypeSizes.getSize(resultType.getType()) >= mTypeSizes.getSize(oldType.getType())
-					&& !mTypeSizes.isUnsigned(oldType)) {
-				newExpression = oldWrappedIfUnsigned;
-			} else {
-				// According to C11 6.3.1.3.3 the result is implementation-defined
-				// it the value cannot be represented by the new type
-				// We have chosen an implementation that is similar to
-				// taking the lowest bits in a two's complement representation:
-				// First we take the value modulo the cardinality of the
-				// data range (which is 2*(MAX_VALUE+1) for signed )
-				// If the number is strictly larger than MAX_VALUE we
-				// subtract the cardinality of the data range.
-				final CPrimitive correspondingUnsignedType = mTypeSizes.getCorrespondingUnsignedType(resultType);
-				final Expression wrapped = applyWraparound(loc, correspondingUnsignedType, oldWrappedIfUnsigned);
-				final Expression maxValue = mTypeSizes.constructLiteralForIntegerType(loc, oldType,
-						mTypeSizes.getMaxValueOfPrimitiveType(resultType));
-				final Expression condition =
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, wrapped, maxValue);
-				final Expression range = mTypeSizes.constructLiteralForIntegerType(loc, oldType,
-						mTypeSizes.getMaxValueOfPrimitiveType(correspondingUnsignedType).add(BigInteger.ONE));
-				newExpression = ExpressionFactory.constructIfThenElseExpression(loc, condition, wrapped,
-						ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, wrapped, range));
-			}
-
+			return operand;
 		}
-		final RValue newRValue = new RValue(newExpression, resultType, false, false);
-		return erb.setLrValue(newRValue).build();
+		assert !mTypeSizes.isUnsigned(resultType);
+		final Expression oldWrappedIfUnsigned;
+		if (mTypeSizes.isUnsigned(oldType)) {
+			// required for sound Nutz transformation
+			// (see examples/programs/regression/c/NutzTransformation01.c)
+			oldWrappedIfUnsigned = applyWraparound(loc, oldType, operand);
+		} else {
+			oldWrappedIfUnsigned = operand;
+		}
+		if (mTypeSizes.getSize(resultType.getType()) >= mTypeSizes.getSize(oldType.getType())
+				&& !mTypeSizes.isUnsigned(oldType)) {
+			return oldWrappedIfUnsigned;
+		}
+		// According to C11 6.3.1.3.3 the result is implementation-defined
+		// it the value cannot be represented by the new type
+		// We have chosen an implementation that is similar to
+		// taking the lowest bits in a two's complement representation:
+		// First we take the value modulo the cardinality of the
+		// data range (which is 2*(MAX_VALUE+1) for signed )
+		// If the number is strictly larger than MAX_VALUE we
+		// subtract the cardinality of the data range.
+		final CPrimitive correspondingUnsignedType = mTypeSizes.getCorrespondingUnsignedType(resultType);
+		final Expression wrapped = applyWraparound(loc, correspondingUnsignedType, oldWrappedIfUnsigned);
+		final Expression maxValue = mTypeSizes.constructLiteralForIntegerType(loc, oldType,
+				mTypeSizes.getMaxValueOfPrimitiveType(resultType));
+		final Expression condition = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, wrapped, maxValue);
+		final Expression range = mTypeSizes.constructLiteralForIntegerType(loc, oldType,
+				mTypeSizes.getMaxValueOfPrimitiveType(correspondingUnsignedType).add(BigInteger.ONE));
+		return ExpressionFactory.constructIfThenElseExpression(loc, condition, wrapped,
+				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, wrapped, range));
 	}
 
 	@Override
