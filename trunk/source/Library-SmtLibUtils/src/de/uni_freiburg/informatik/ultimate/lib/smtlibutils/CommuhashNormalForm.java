@@ -119,7 +119,7 @@ public class CommuhashNormalForm {
 		 */
 		private Term constructlocallySimplifiedTermWithSortedParams(final String funcname, final BigInteger[] indices,
 				final Sort resultSort, final Term[] params) {
-			final Term[] sortedParams = CommuhashUtils.sortByHashCode(params);
+			final Term[] sortedParams = params;
 			final Term simplified = SmtUtils.termWithLocalSimplification(mScript, funcname,
 					SmtUtils.toStringArray(indices), resultSort, sortedParams);
 			return simplified;
