@@ -368,6 +368,27 @@ public class IntegerTranslation extends ExpressionTranslation {
 		throw new UnsupportedOperationException("not yet supported: conversion to " + resultType);
 	}
 
+	// TODO: This is currently only used for the conversion to unsigned, but not for arithmetic expressions.
+	// Is this wanted or should this method (along with UnsignedTreatment) removed at all?
+	// Also there is not overflow check for unsigned in the bitvector translation.
+	private void addUnsignedOverflowCheckIfNeeded(final ILocation loc, final Expression expr, final CPrimitive type,
+			final ExpressionResultBuilder erb) {
+		if (mSettings.unsignedTreatment() != UnsignedTreatment.ASSERT) {
+			return;
+		}
+		final Check check = new Check(Spec.UINT_OVERFLOW);
+		final BigInteger maxValuePlusOne = mTypeSizes.getMaxValueOfPrimitiveType(type).add(BigInteger.ONE);
+		final AssertStatement assertGeq0 = new AssertStatement(loc, ExpressionFactory.newBinaryExpression(loc,
+				Operator.COMPGEQ, expr, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0)));
+		check.annotate(assertGeq0);
+		erb.addStatement(assertGeq0);
+
+		final AssertStatement assertLtMax = new AssertStatement(loc, ExpressionFactory.newBinaryExpression(loc,
+				Operator.COMPLT, expr, ExpressionFactory.createIntegerLiteral(loc, maxValuePlusOne.toString())));
+		check.annotate(assertLtMax);
+		erb.addStatement(assertLtMax);
+	}
+
 	private ExpressionResult convertToIntegerType(final ILocation loc, final ExpressionResult operand,
 			final CPrimitive resultType) {
 		assert resultType.isIntegerType();
@@ -378,34 +399,15 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final Expression newExpression;
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(operand);
 		if (mTypeSizes.isUnsigned(resultType)) {
-			final Expression oldWrappedIfNeeded;
 			if (mTypeSizes.isUnsigned(oldType)
 					&& mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())) {
 				// required for sound Nutz transformation
 				// (see examples/programs/regression/c/NutzTransformation03.c)
-				oldWrappedIfNeeded = applyWraparound(loc, oldType, operand.getLrValue().getValue());
+				newExpression = applyWraparound(loc, oldType, operand.getLrValue().getValue());
 			} else {
-				oldWrappedIfNeeded = operand.getLrValue().getValue();
+				newExpression = operand.getLrValue().getValue();
 			}
-			if (mSettings.unsignedTreatment() == UnsignedTreatment.ASSERT) {
-				final BigInteger maxValuePlusOne =
-						mTypeSizes.getMaxValueOfPrimitiveType(resultType).add(BigInteger.ONE);
-				final AssertStatement assertGeq0 = new AssertStatement(loc, ExpressionFactory.newBinaryExpression(loc,
-						Operator.COMPGEQ, oldWrappedIfNeeded, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0)));
-				final Check chk1 = new Check(Spec.UINT_OVERFLOW);
-				chk1.annotate(assertGeq0);
-				erb.addStatement(assertGeq0);
-
-				final AssertStatement assertLtMax = new AssertStatement(loc,
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, oldWrappedIfNeeded,
-								ExpressionFactory.createIntegerLiteral(loc, maxValuePlusOne.toString())));
-				final Check chk2 = new Check(Spec.UINT_OVERFLOW);
-				chk2.annotate(assertLtMax);
-				erb.addStatement(assertLtMax);
-			} else {
-				// do nothing
-			}
-			newExpression = oldWrappedIfNeeded;
+			addUnsignedOverflowCheckIfNeeded(loc, newExpression, resultType, erb);
 		} else {
 			assert !mTypeSizes.isUnsigned(resultType);
 			final Expression oldWrappedIfUnsigned;
