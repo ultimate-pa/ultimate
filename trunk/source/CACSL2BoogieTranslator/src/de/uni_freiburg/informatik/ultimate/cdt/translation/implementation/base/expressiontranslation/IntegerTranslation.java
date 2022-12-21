@@ -286,19 +286,22 @@ public class IntegerTranslation extends ExpressionTranslation {
 		if (leftValue != null && rightValue != null) {
 			return ExpressionFactory.createIntegerLiteral(loc, leftValue.divide(rightValue).toString());
 		}
+		final Expression normalDivision = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHDIV, left, right);
+		if (mTypeSizes.isUnsigned(leftType) || (leftValue != null && leftValue.signum() > 0)) {
+			return normalDivision;
+		}
 		/*
 		 * In C the semantics of integer division is "rounding towards zero". In Boogie euclidian division is used. We
 		 * translate a / b into (a < 0 && a%b != 0) ? ( (b < 0) ? (a/b)+1 : (a/b)-1) : a/b
 		 */
 		final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right,
 				ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
-		final Expression normalDivision = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHDIV, left, right);
 		final Expression one = ExpressionFactory.createIntegerLiteral(loc, SFO.NR1);
 		final Expression roundTowardsZero = ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
 				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, normalDivision, one),
 				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, normalDivision, one));
 		if (leftValue != null) {
-			return leftValue.signum() > 0 ? normalDivision : roundTowardsZero;
+			return roundTowardsZero;
 		}
 		return ExpressionFactory.constructIfThenElseExpression(loc,
 				getLeftSmallerZeroAndThereIsRemainder(loc, left, right), roundTowardsZero, normalDivision);
@@ -326,18 +329,21 @@ public class IntegerTranslation extends ExpressionTranslation {
 			}
 			return ExpressionFactory.createIntegerLiteral(loc, constantResult);
 		}
+		final Expression normalModulo = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, left, right);
+		if (mTypeSizes.isUnsigned(leftType) || (leftValue != null && leftValue.signum() > 0)) {
+			return normalModulo;
+		}
 		/*
 		 * In C the semantics of integer division is "rounding towards zero". In Boogie euclidian division is used. We
 		 * translate a % b into (a < 0 && a%b != 0) ? ( (b < 0) ? (a%b)-b : (a%b)+b) : a%b
 		 */
 		final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right,
 				ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
-		final Expression normalModulo = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, left, right);
 		final Expression roundTowardsZero = ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
 				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, normalModulo, right),
 				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, normalModulo, right));
 		if (leftValue != null) {
-			return leftValue.signum() > 0 ? normalModulo : roundTowardsZero;
+			return roundTowardsZero;
 		}
 		return ExpressionFactory.constructIfThenElseExpression(loc,
 				getLeftSmallerZeroAndThereIsRemainder(loc, left, right), roundTowardsZero, normalModulo);
