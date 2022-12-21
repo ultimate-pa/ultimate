@@ -136,10 +136,6 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 		IGNORE, ASSUME, ASSERTandASSUME
 	}
 
-	public enum UnsignedTreatment {
-		IGNORE, ASSERT, WRAPAROUND
-	}
-
 	public enum Signedness {
 		SIGNED, UNSIGNED
 	}
@@ -269,8 +265,6 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_BITPRECISE_BITFIELDS, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
 						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_UNSIGNED_TREATMENT, UnsignedTreatment.WRAPAROUND,
-						PreferenceType.Combo, UnsignedTreatment.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES,
 						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, PointerCheckMode.IGNORE,

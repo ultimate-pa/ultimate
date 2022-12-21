@@ -36,7 +36,6 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -63,10 +62,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UnsignedTreatment;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -268,7 +264,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	private Pair<Expression, Expression> applyWraparoundsIfNecessary(final ILocation loc, final Expression left,
 			final CPrimitive leftType, final Expression right, final CPrimitive rightType) {
-		if (mSettings.unsignedTreatment() == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(leftType)) {
+		if (mTypeSizes.isUnsigned(leftType)) {
 			assert mTypeSizes.isUnsigned(rightType) : "incompatible types";
 			// Apply wraparound to ensure that Nutz transformation is sound
 			return new Pair<>(applyWraparound(loc, leftType, left), applyWraparound(loc, rightType, right));
@@ -368,27 +364,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 		throw new UnsupportedOperationException("not yet supported: conversion to " + resultType);
 	}
 
-	// TODO: This is currently only used for the conversion to unsigned, but not for arithmetic expressions.
-	// Is this wanted or should this method (along with UnsignedTreatment) removed at all?
-	// Also there is not overflow check for unsigned in the bitvector translation.
-	private void addUnsignedOverflowCheckIfNeeded(final ILocation loc, final Expression expr, final CPrimitive type,
-			final ExpressionResultBuilder erb) {
-		if (mSettings.unsignedTreatment() != UnsignedTreatment.ASSERT) {
-			return;
-		}
-		final Check check = new Check(Spec.UINT_OVERFLOW);
-		final BigInteger maxValuePlusOne = mTypeSizes.getMaxValueOfPrimitiveType(type).add(BigInteger.ONE);
-		final AssertStatement assertGeq0 = new AssertStatement(loc, ExpressionFactory.newBinaryExpression(loc,
-				Operator.COMPGEQ, expr, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0)));
-		check.annotate(assertGeq0);
-		erb.addStatement(assertGeq0);
-
-		final AssertStatement assertLtMax = new AssertStatement(loc, ExpressionFactory.newBinaryExpression(loc,
-				Operator.COMPLT, expr, ExpressionFactory.createIntegerLiteral(loc, maxValuePlusOne.toString())));
-		check.annotate(assertLtMax);
-		erb.addStatement(assertLtMax);
-	}
-
 	private ExpressionResult convertToIntegerType(final ILocation loc, final ExpressionResult operand,
 			final CPrimitive resultType) {
 		assert resultType.isIntegerType();
@@ -407,7 +382,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 			} else {
 				newExpression = operand.getLrValue().getValue();
 			}
-			addUnsignedOverflowCheckIfNeeded(loc, newExpression, resultType, erb);
 		} else {
 			assert !mTypeSizes.isUnsigned(resultType);
 			final Expression oldWrappedIfUnsigned;
