@@ -682,6 +682,7 @@ public class QuantifierPusher extends TermTransformer {
 		switch (pqeTechniques) {
 		case ALL:
 			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
+			elimtechniques.add(new DualJunctionDml(mgdScript, services));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
 			elimtechniques.add(new DualJunctionTir(mgdScript, services, true));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfUpd(mgdScript, services)));
