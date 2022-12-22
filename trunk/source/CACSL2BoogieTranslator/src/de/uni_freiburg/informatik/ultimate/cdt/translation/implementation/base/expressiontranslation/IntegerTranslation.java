@@ -359,9 +359,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 	protected ExpressionResult convertIntToIntNonBool(final ILocation loc, final ExpressionResult operand,
 			final CPrimitive resultType) {
 		if (resultType.isIntegerType()) {
-			final Expression result = convertToIntegerType(loc, operand.getLrValue().getValue(), resultType,
-					(CPrimitive) operand.getLrValue().getCType().getUnderlyingType());
-			return new ExpressionResult(new RValue(result, resultType));
+			final Expression result = convertToIntegerType(loc, operand.getLrValue().getValue(),
+					(CPrimitive) operand.getLrValue().getCType().getUnderlyingType(), resultType);
+			return new ExpressionResultBuilder().addAllExceptLrValue(operand).setLrValue(new RValue(result, resultType))
+					.build();
 		}
 		throw new UnsupportedOperationException("not yet supported: conversion to " + resultType);
 	}
