@@ -523,8 +523,7 @@ public class BvToIntTranslation extends TermTransformer {
 						setResult(negation);
 						return;
 					}
-					setResult(SmtUtils.termWithLocalSimplification(mScript, "mod", null,
-							SmtSortUtils.getIntSort(mMgdScript), negation, maxNumberPlusOne));
+					setResult(SmtUtils.mod(mScript, negation, maxNumberPlusOne));
 					return;
 				}
 				case "extract": {
@@ -578,8 +577,7 @@ public class BvToIntTranslation extends TermTransformer {
 						setResult(addition);
 						return;
 					}
-					setResult(SmtUtils.termWithLocalSimplification(mScript, "mod", null,
-							SmtSortUtils.getIntSort(mMgdScript), addition, maxNumber));
+					setResult(SmtUtils.mod(mScript, addition, maxNumber));
 					return;
 				}
 				case "bvsub": {
@@ -589,8 +587,7 @@ public class BvToIntTranslation extends TermTransformer {
 						setResult(substraction);
 						return;
 					}
-					setResult(SmtUtils.termWithLocalSimplification(mScript, "mod", null,
-							SmtSortUtils.getIntSort(mMgdScript), substraction, maxNumber));
+					setResult(SmtUtils.mod(mScript, substraction, maxNumber));
 					return;
 				}
 				case "bvmul": {
@@ -600,8 +597,7 @@ public class BvToIntTranslation extends TermTransformer {
 						setResult(multiplication);
 						return;
 					}
-					setResult(SmtUtils.termWithLocalSimplification(mScript, "mod", null,
-							SmtSortUtils.getIntSort(mMgdScript), multiplication, maxNumber));
+					setResult(SmtUtils.mod(mScript, multiplication, maxNumber));
 					return;
 				}
 				case "ite": {
@@ -675,7 +671,7 @@ public class BvToIntTranslation extends TermTransformer {
 				SmtUtils.rational2Term(mScript, Rational.valueOf(two.pow(lowerIndex), BigInteger.ONE), intSort);
 		final Term modby = SmtUtils.rational2Term(mScript,
 				Rational.valueOf(two.pow(upperIndex - lowerIndex + 1), BigInteger.ONE), intSort);
-		return SmtUtils.termWithLocalSimplification(mScript, "mod", null, SmtSortUtils.getIntSort(mMgdScript),
+		return SmtUtils.mod(mScript,
 				SmtUtils.termWithLocalSimplification(mScript, "div", null, SmtSortUtils.getIntSort(mMgdScript),
 						translatedLHS, divby),
 				modby);
@@ -686,10 +682,8 @@ public class BvToIntTranslation extends TermTransformer {
 		Term rhs;
 		Term lhs;
 		if (mNutzTransformation) {
-			rhs = SmtUtils.termWithLocalSimplification(mScript, "mod", null, SmtSortUtils.getIntSort(mMgdScript),
-					translatedRHS, maxNumber);
-			lhs = SmtUtils.termWithLocalSimplification(mScript, "mod", null, SmtSortUtils.getIntSort(mMgdScript),
-					translatedLHS, maxNumber);
+			rhs = SmtUtils.mod(mScript, translatedRHS, maxNumber);
+			lhs = SmtUtils.mod(mScript, translatedLHS, maxNumber);
 		} else {
 			rhs = translatedRHS;
 			lhs = translatedLHS;
@@ -708,10 +702,8 @@ public class BvToIntTranslation extends TermTransformer {
 		Term lhs;
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 		if (mNutzTransformation) {
-			rhs = SmtUtils.termWithLocalSimplification(mScript, "mod", null, SmtSortUtils.getIntSort(mMgdScript),
-					translatedRHS, maxNumber);
-			lhs = SmtUtils.termWithLocalSimplification(mScript, "mod", null, SmtSortUtils.getIntSort(mMgdScript),
-					translatedLHS, maxNumber);
+			rhs = SmtUtils.mod(mScript, translatedRHS, maxNumber);
+			lhs = SmtUtils.mod(mScript, translatedLHS, maxNumber);
 		} else {
 			rhs = translatedRHS;
 			lhs = translatedLHS;
@@ -719,8 +711,7 @@ public class BvToIntTranslation extends TermTransformer {
 		final Term ifTerm = SmtUtils.termWithLocalSimplification(mScript, "=", null,
 				SmtSortUtils.getIntSort(mMgdScript), rhs, SmtUtils.rational2Term(mScript, Rational.ZERO, intSort));
 		final Term thenTerm = lhs;
-		final Term elseTerm = SmtUtils.termWithLocalSimplification(mScript, "mod", null,
-				SmtSortUtils.getIntSort(mMgdScript), lhs, rhs);
+		final Term elseTerm = SmtUtils.mod(mScript, lhs, rhs);
 		return SmtUtils.ite(mScript, ifTerm, thenTerm, elseTerm);
 	}
 
@@ -730,8 +721,7 @@ public class BvToIntTranslation extends TermTransformer {
 		if (translatedRHS instanceof ConstantTerm) {
 			final Term shift = SmtUtils.termWithLocalSimplification(mScript, "*", null,
 					SmtSortUtils.getIntSort(mMgdScript), translatedLHS, pow2(translatedRHS));
-			return SmtUtils.termWithLocalSimplification(mScript, "mod", null, SmtSortUtils.getIntSort(mMgdScript),
-					shift, maxNumber);
+			return SmtUtils.mod(mScript, shift, maxNumber);
 		} else {
 			Term iteChain = SmtUtils.rational2Term(mScript, Rational.ZERO, intSort);
 			for (int i = width - 1; i >= 0; i--) {
@@ -745,9 +735,7 @@ public class BvToIntTranslation extends TermTransformer {
 							SmtSortUtils.getIntSort(mMgdScript), translatedRHS,
 							SmtUtils.rational2Term(mScript, powResult, intSort));
 					final int pow = (int) Math.pow(2, i);
-					final Term thenTerm = SmtUtils.termWithLocalSimplification(mScript, "mod", null,
-							SmtSortUtils.getIntSort(mMgdScript),
-							SmtUtils.termWithLocalSimplification(mScript, "*", null,
+					final Term thenTerm = SmtUtils.mod(mScript, SmtUtils.termWithLocalSimplification(mScript, "*", null,
 									SmtSortUtils.getIntSort(mMgdScript),
 									SmtUtils.rational2Term(mScript, Rational.valueOf(pow, 1), intSort), translatedLHS),
 							maxNumber);
@@ -799,10 +787,21 @@ public class BvToIntTranslation extends TermTransformer {
 		if (fsym.isIntern()) {
 			switch (fsym.getName()) {
 			case "=": {
+				if (mNutzTransformation && SmtSortUtils.isNumericSort(args[0].getSort())) {
+					for (int i = 0; i < args.length; i++) {
+						translatedArgs[i] = SmtUtils.mod(mScript, args[i], maxNumberPlusOne);
+					}
+				}
 				return SmtUtils.termWithLocalSimplification(mScript, "=", null, SmtSortUtils.getIntSort(mMgdScript),
 						translatedArgs);
 			}
 			case "distinct": {
+				if (mNutzTransformation) {
+					for (int i = 0; i < args.length; i++) {
+						translatedArgs[i] = SmtUtils.mod(mScript, args[i], maxNumberPlusOne);
+
+					}
+				}
 				return SmtUtils.termWithLocalSimplification(mScript, "distinct", null,
 						SmtSortUtils.getIntSort(mMgdScript), translatedArgs);
 
@@ -810,46 +809,38 @@ public class BvToIntTranslation extends TermTransformer {
 			case "bvult": {
 				if (mNutzTransformation) {
 					for (int i = 0; i < args.length; i++) {
-						translatedArgs[i] = SmtUtils.termWithLocalSimplification(mScript, "mod", null,
-								SmtSortUtils.getIntSort(mMgdScript), args[i], maxNumberPlusOne);
+						translatedArgs[i] = SmtUtils.mod(mScript, args[i], maxNumberPlusOne);
 
 					}
 				}
-				return SmtUtils.termWithLocalSimplification(mScript, "<", null, SmtSortUtils.getIntSort(mMgdScript),
-						translatedArgs);
+				return SmtUtils.less(mScript, translatedArgs[0], translatedArgs[1]);
 
 			}
 			case "bvule": {
 				if (mNutzTransformation) {
 					for (int i = 0; i < args.length; i++) {
-						translatedArgs[i] = SmtUtils.termWithLocalSimplification(mScript, "mod", null,
-								SmtSortUtils.getIntSort(mMgdScript), args[i], maxNumberPlusOne);
+						translatedArgs[i] = SmtUtils.mod(mScript, args[i], maxNumberPlusOne);
 					}
 				}
-				return SmtUtils.termWithLocalSimplification(mScript, "<=", null, SmtSortUtils.getIntSort(mMgdScript),
-						translatedArgs);
+				return SmtUtils.leq(mScript, translatedArgs[0], translatedArgs[1]);
 
 			}
 			case "bvugt": {
 				if (mNutzTransformation) {
 					for (int i = 0; i < args.length; i++) {
-						translatedArgs[i] = SmtUtils.termWithLocalSimplification(mScript, "mod", null,
-								SmtSortUtils.getIntSort(mMgdScript), args[i], maxNumberPlusOne);
+						translatedArgs[i] = SmtUtils.mod(mScript, args[i], maxNumberPlusOne);
 					}
 				}
-				return SmtUtils.termWithLocalSimplification(mScript, ">", null, SmtSortUtils.getIntSort(mMgdScript),
-						translatedArgs);
+				return SmtUtils.greater(mScript, translatedArgs[0], translatedArgs[1]);
 
 			}
 			case "bvuge": {
 				if (mNutzTransformation) {
 					for (int i = 0; i < args.length; i++) {
-						translatedArgs[i] = SmtUtils.termWithLocalSimplification(mScript, "mod", null,
-								SmtSortUtils.getIntSort(mMgdScript), args[i], maxNumberPlusOne);
+						translatedArgs[i] = SmtUtils.mod(mScript, args[i], maxNumberPlusOne);
 					}
 				}
-				return SmtUtils.termWithLocalSimplification(mScript, ">=", null, SmtSortUtils.getIntSort(mMgdScript),
-						translatedArgs);
+				return SmtUtils.geq(mScript, translatedArgs[0], translatedArgs[1]);
 
 			}
 			case "bvslt": {
@@ -857,32 +848,26 @@ public class BvToIntTranslation extends TermTransformer {
 					utsArgs[i] = uts(width, args[i], mNutzTransformation);
 				}
 
-				return SmtUtils.termWithLocalSimplification(mScript, "<", null, SmtSortUtils.getIntSort(mMgdScript),
-						utsArgs);
-
+				return SmtUtils.less(mScript, utsArgs[0], utsArgs[1]);
 			}
 			case "bvsle": {
 				for (int i = 0; i < args.length; i++) {
 					utsArgs[i] = uts(width, args[i], mNutzTransformation);
 				}
-				return SmtUtils.termWithLocalSimplification(mScript, "<=", null, SmtSortUtils.getIntSort(mMgdScript),
-						utsArgs);
+				return SmtUtils.leq(mScript, utsArgs[0], utsArgs[1]);
 
 			}
 			case "bvsgt": {
 				for (int i = 0; i < args.length; i++) {
 					utsArgs[i] = uts(width, args[i], mNutzTransformation);
 				}
-				return SmtUtils.termWithLocalSimplification(mScript, ">", null, SmtSortUtils.getIntSort(mMgdScript),
-						utsArgs);
-
+				return SmtUtils.greater(mScript, utsArgs[0], utsArgs[1]);
 			}
 			case "bvsge": {
 				for (int i = 0; i < args.length; i++) {
 					utsArgs[i] = uts(width, args[i], mNutzTransformation);
 				}
-				return SmtUtils.termWithLocalSimplification(mScript, ">=", null, SmtSortUtils.getIntSort(mMgdScript),
-						utsArgs);
+				return SmtUtils.geq(mScript, utsArgs[0], utsArgs[1]);
 
 			}
 			}
@@ -903,19 +888,16 @@ public class BvToIntTranslation extends TermTransformer {
 		if (nutz) {
 			final Term nutzPow = SmtUtils.rational2Term(mScript,
 					Rational.valueOf(BigInteger.valueOf(2).pow(width), BigInteger.ONE), intSort);
-			final Term modulo = SmtUtils.termWithLocalSimplification(mScript, "mod", null,
-					SmtSortUtils.getIntSort(mMgdScript),
-					SmtUtils.termWithLocalSimplification(mScript, "mod", null, SmtSortUtils.getIntSort(mMgdScript),
-							term, nutzPow),
-					twoPowWidth);
-			// Interesting, replacing mScript.term("mod", term, nutzPow) by term will lead to significant Qelim runtime
-			// increase
-			return mScript.term("-", mScript.term("*", two, modulo), mScript.term("mod", term, nutzPow));
-		} else {
-			final Term modulo = SmtUtils.termWithLocalSimplification(mScript, "mod", null,
-					SmtSortUtils.getIntSort(mMgdScript), term, twoPowWidth);
+			final Term modulo = SmtUtils.mod(mScript, SmtUtils.mod(mScript, term, nutzPow), twoPowWidth);
+
 			return SmtUtils.termWithLocalSimplification(mScript, "-", null, SmtSortUtils.getIntSort(mMgdScript),
-					SmtUtils.termWithLocalSimplification(mScript, "*", null, SmtSortUtils.getIntSort(mMgdScript), term,
+					SmtUtils.termWithLocalSimplification(mScript, "*", null, SmtSortUtils.getIntSort(mMgdScript), two,
+							modulo),
+					SmtUtils.mod(mScript, term, nutzPow));
+		} else {
+			final Term modulo = SmtUtils.mod(mScript, term, twoPowWidth);
+			return SmtUtils.termWithLocalSimplification(mScript, "-", null, SmtSortUtils.getIntSort(mMgdScript),
+					SmtUtils.termWithLocalSimplification(mScript, "*", null, SmtSortUtils.getIntSort(mMgdScript), two,
 							modulo),
 					term);
 		}
