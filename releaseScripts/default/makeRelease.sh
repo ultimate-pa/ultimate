@@ -198,7 +198,7 @@ deploy_new_version() {
   CURRENT_VERSION=$(echo "$RELEASE_TAGS" | head -1)
   PREVIOUS_VERSION=$(echo "$RELEASE_TAGS" | head -2 | tail -1)
   
-  if git rev-parse --verify release ; then
+  if git rev-parse --verify -q release ; then
     echo "branch 'release' already exists, delete it before trying to deploy a new version"
     exit 1
   fi
@@ -207,11 +207,14 @@ deploy_new_version() {
 
   if [ "$TO_GITHUB" = true ]; then
     DESC=$(git shortlog "${PREVIOUS_VERSION}..${CURRENT_VERSION}" --no-merges --numbered -w0,6,9 --format="%s ( https://github.com/ultimate-pa/ultimate/commit/%h )")
+    if [ ${#DESC} -ge $(getconf ARG_MAX) ] ; then
+      echo "Description is too long, just using version"
+      DESC="$CURRENT_VERSION"
+    fi
     echo "Creating release ${CURRENT_VERSION}"
     github-release release "${RELEASE_REPO}" -t "${CURRENT_VERSION}" -d "${DESC}" --draft --pre-release
 
-    for z in *.zip
-    do 
+    for z in *.zip ; do 
       echo "Uploading file $z"
       github-release upload "${RELEASE_REPO}" -t "${CURRENT_VERSION}" --name "$z" --file "$z"
     done
