@@ -184,7 +184,7 @@ create_and_tag_new_version() {
   exit_with_clean_git_stack_on_fail git tag -a "${NEW_TAG}" -m"Release new version ${NEW_VERSION}"
   exit_with_clean_git_stack_on_fail git rebase dev "$TMP_BRANCH"
   exit_with_clean_git_stack_on_fail git checkout dev
-  exit_with_clean_git_stack_on_fail git merge -ff-only "$TMP_BRANCH"
+  exit_with_clean_git_stack_on_fail git merge --ff-only "$TMP_BRANCH"
   exit_with_clean_git_stack_on_fail git branch -d "$TMP_BRANCH"
 }
 
@@ -244,8 +244,7 @@ check_params
 prepare_environment
 create_and_tag_new_version
 
-exit 
-exit_with_clean_git_stack_on_fail git push dev --force-with-lease origin
+exit_with_clean_git_stack_on_fail git push --force-with-lease origin
 exit_with_clean_git_stack_on_fail git push --tags --force-with-lease origin
 
 if [ "$TO_GITHUB" = true ] || [ "$TO_SERVER" = true ] ; then
