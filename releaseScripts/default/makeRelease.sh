@@ -86,7 +86,7 @@ read_params() {
       ;;
       --deploy-github)
       TO_GITHUB=true
-      RELEASE_REPO="-u ultimate-pa -r ultimate -s ""$2"
+      GITHUB_TOKEN_CLASSIC="$2"
       # check if required tools are there 
       test_if_cmd_is_available github-release
       shift # shift past the argument
@@ -212,11 +212,11 @@ deploy_new_version() {
       DESC="$CURRENT_VERSION"
     fi
     echo "Creating release ${CURRENT_VERSION}"
-    github-release release "${RELEASE_REPO}" -t "${CURRENT_VERSION}" -d "${DESC}" --draft --pre-release
+    github-release release -u ultimate-pa -r ultimate -s "${GITHUB_TOKEN_CLASSIC}" -t "${CURRENT_VERSION}" -d "${DESC}" --draft --pre-release
 
     for z in *.zip ; do 
       echo "Uploading file $z"
-      github-release upload "${RELEASE_REPO}" -t "${CURRENT_VERSION}" --name "$z" --file "$z"
+      github-release upload -u ultimate-pa -r ultimate -s "${GITHUB_TOKEN_CLASSIC}" -t "${CURRENT_VERSION}" --name "$z" --file "$z"
     done
   fi
 
