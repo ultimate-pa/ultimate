@@ -124,18 +124,7 @@ check_params() {
     echo "$HASH is not on remote"
     exit 1
   fi
-  if ! [ "$DEV_HEAD" == "$HASH" ] ; then
-    if abort "Warning: 
-dev is at $DEV_HEAD, but you want to tag $HASH as new release! 
-This will 
-* add a commit after that,
-* modify all hashes since then, and
-* require a force push to dev, which might lead to conflicts for other users.
-
-Continue? [y/N]" ; then
-      exit 1
-    fi
-  fi
+  
 
   if [ "$TO_SERVER" = true ] ; then
     echo "Enter password for user ${CURRENTUSER} on ${DEPLOY_SERVER}:" 
@@ -165,16 +154,26 @@ prepare_environment() {
   : "${TO_SERVER:=false}"
   : "${DEL_ZIP:=true}"
   : "${POST_FINAL:=false}"
+}
 
+create_and_tag_new_version() {
   # should we go? 
-  if abort "Making new release of version ${NEW_VERSION} for user ${CURRENTUSER} and commit ${HASH}, continue [y/N]?" ; then
+  if ! [ "$DEV_HEAD" == "$HASH" ] ; then
+    if abort "Warning: 
+dev is at $DEV_HEAD, but you want to tag $HASH as new release! 
+This will 
+* add a commit after that,
+* modify all hashes since then, and
+* require a force push to dev, which might lead to conflicts for other users.
+
+Continue? [y/N]" ; then
+      exit 1
+    fi
+  elif abort "Making new release of version ${NEW_VERSION} for user ${CURRENTUSER} and commit ${HASH}, continue [y/N]?" ; then
     echo "Aborted!"
     git stash pop 
     exit 1
   fi
-}
-
-create_and_tag_new_version() {
   TMP_BRANCH="tmp/local_state"
   exit_on_fail git branch "$TMP_BRANCH"
   exit_on_fail git reset --hard "$HASH"
