@@ -41,6 +41,8 @@ OPTIONS:
       them to the remote server. No effect for Github release.
   --commit <hash>
       Use the specified commit hash instead of HEAD.
+  --update-version
+      Actually update the version
 EOF
 }
 
@@ -95,6 +97,9 @@ read_params() {
       --commit)
       HASH="$(git rev-parse "$2")"
       shift
+      ;;
+      --update-version)
+      UPDATE_VERSION=true
       ;;
       *)
       # quit if unknown option is there 
@@ -198,17 +203,18 @@ deploy_new_version() {
   exit_on_fail bash makeFresh.sh
 
   if [ "$TO_GITHUB" = true ]; then
-    DESC=$(git shortlog "${LAST_RELEASE}.." --no-merges --numbered -w0,6,9 --format="%s ( https://github.com/ultimate-pa/ultimate/commit/%h )")
-    echo "Creating release ${NEW_TAG}"
-    github-release release "${RELEASE_REPO}" -t "${NEW_TAG}" -d "${DESC}" --draft --pre-release
-    DESC=$(git shortlog "${LAST_RELEASE}.." --no-merges --numbered -w0,6,9 --format="%s ( https://github.com/ultimate-pa/ultimate/commit/%h )")
-    echo "Creating release ${NEW_TAG}"
-    github-release release "${RELEASE_REPO}" -t "${NEW_TAG}" -d "${DESC}" --draft --pre-release
+    RELEASE_TAGS=$(git tag -l --sort=-creatordate "v[0-9]*.[0-9]*.[0-9]*")
+    CURRENT_VERSION=$(echo "$RELEASE_TAGS" | head -1)
+    PREVIOUS_VERSION=$(echo "$RELEASE_TAGS" | head -2 | tail -1)
+
+    DESC=$(git shortlog "${PREVIOUS_VERSION}..${CURRENT_VERSION}" --no-merges --numbered -w0,6,9 --format="%s ( https://github.com/ultimate-pa/ultimate/commit/%h )")
+    echo "Creating release ${CURRENT_VERSION}"
+    github-release release "${RELEASE_REPO}" -t "${CURRENT_VERSION}" -d "${DESC}" --draft --pre-release
 
     for z in *.zip
     do 
       echo "Uploading file $z"
-      github-release upload "${RELEASE_REPO}" -t "${NEW_TAG}" --name "$z" --file "$z"
+      github-release upload "${RELEASE_REPO}" -t "${CURRENT_VERSION}" --name "$z" --file "$z"
     done
   fi
 
@@ -242,10 +248,12 @@ deploy_new_version() {
 read_params "$@"
 check_params
 prepare_environment
-create_and_tag_new_version
+if [ "$UPDATE_VERSION" = true ] ; then
+  create_and_tag_new_version
+  exit_with_clean_git_stack_on_fail git push --force-with-lease origin
+  exit_with_clean_git_stack_on_fail git push --tags --force-with-lease origin
+fi
 
-exit_with_clean_git_stack_on_fail git push --force-with-lease origin
-exit_with_clean_git_stack_on_fail git push --tags --force-with-lease origin
 
 if [ "$TO_GITHUB" = true ] || [ "$TO_SERVER" = true ] ; then
   deploy_new_version
