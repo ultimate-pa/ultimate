@@ -194,18 +194,18 @@ Continue? [y/N]" ; then
 
 deploy_new_version() {
   # actually build Ultimate
-  if ! [ "$(git rev-parse HEAD)" = "$HASH" ] ; then 
-    echo "Not on $HASH , checking it out"
-    exit_on_fail git checkout "$HASH"
-  fi
+  RELEASE_TAGS=$(git tag -l --sort=-creatordate "v[0-9]*.[0-9]*.[0-9]*")
+  CURRENT_VERSION=$(echo "$RELEASE_TAGS" | head -1)
+  PREVIOUS_VERSION=$(echo "$RELEASE_TAGS" | head -2 | tail -1)
   
+  if git rev-parse --verify release ; then
+    echo "branch 'release' already exists, delete it before trying to deploy a new version"
+    exit 1
+  fi
+  exit_on_fail git checkout "$CURRENT_VERSION" -b release
   exit_on_fail bash makeFresh.sh
 
   if [ "$TO_GITHUB" = true ]; then
-    RELEASE_TAGS=$(git tag -l --sort=-creatordate "v[0-9]*.[0-9]*.[0-9]*")
-    CURRENT_VERSION=$(echo "$RELEASE_TAGS" | head -1)
-    PREVIOUS_VERSION=$(echo "$RELEASE_TAGS" | head -2 | tail -1)
-
     DESC=$(git shortlog "${PREVIOUS_VERSION}..${CURRENT_VERSION}" --no-merges --numbered -w0,6,9 --format="%s ( https://github.com/ultimate-pa/ultimate/commit/%h )")
     echo "Creating release ${CURRENT_VERSION}"
     github-release release "${RELEASE_REPO}" -t "${CURRENT_VERSION}" -d "${DESC}" --draft --pre-release
@@ -239,9 +239,8 @@ deploy_new_version() {
     rm ./*.zip 
   fi
   
-  if ! [ "$(git rev-parse HEAD)" = "$(git rev-parse dev)" ] ; then 
-    exit_on_fail git checkout dev
-  fi
+  exit_on_fail git checkout dev
+  exit_on_fail git branch -D release
 }
 
 read_params "$@"
