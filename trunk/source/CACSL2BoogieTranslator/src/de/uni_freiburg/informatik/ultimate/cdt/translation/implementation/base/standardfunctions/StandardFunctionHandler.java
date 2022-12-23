@@ -137,6 +137,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class StandardFunctionHandler {
 
+	/**
+	 * If we construct an auxvar that models a nondeterministic input, we havoc that
+	 * auxvar afterwards to ensure that we get a new nondeterministic value even if
+	 * the variable occurs in a loop. If this constant is set, we havoc the variable
+	 * also before the nondeterministic assignment. If the auxvar is also havoced
+	 * before, it is only backward-live to the havoc, otherwise it would be
+	 * backward-live until the beginning of the procedure.
+	 */
+	private static final boolean HAVOC_NONDET_AUXVARS_ALSO_BEFORE = true;
+
 	private final LocationFactory mLocationFactory;
 
 	private final Map<String, IFunctionModelHandler> mFunctionModels;
@@ -2041,7 +2051,9 @@ public class StandardFunctionHandler {
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
 		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
 		resultBuilder.addAuxVar(auxvarinfo);
-
+		if (HAVOC_NONDET_AUXVARS_ALSO_BEFORE) {
+			resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
+		}
 		final LRValue returnValue = new RValue(auxvarinfo.getExp(), cType);
 		resultBuilder.setLrValue(returnValue);
 		mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(),
