@@ -145,7 +145,7 @@ public class StandardFunctionHandler {
 	 * before, it is only backward-live to the havoc, otherwise it would be
 	 * backward-live until the beginning of the procedure.
 	 */
-	private static final boolean HAVOC_NONDET_AUXVARS_ALSO_BEFORE = true;
+	private static final boolean HAVOC_NONDET_AUXVARS_ALSO_BEFORE = false;
 
 	private final LocationFactory mLocationFactory;
 
