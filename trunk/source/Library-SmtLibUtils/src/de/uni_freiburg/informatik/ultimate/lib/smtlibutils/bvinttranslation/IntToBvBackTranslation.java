@@ -699,7 +699,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 			}
 
 			default:
-				setResult(SmtUtils.termWithLocalSimplification(mScript, fsym, args));
+				setResult(SmtUtils.unfTerm(mScript, fsym, args));
 				return;
 
 			}

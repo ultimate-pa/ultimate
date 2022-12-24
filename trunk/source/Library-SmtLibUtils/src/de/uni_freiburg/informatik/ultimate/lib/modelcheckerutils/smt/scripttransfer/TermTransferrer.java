@@ -182,7 +182,7 @@ public class TermTransferrer extends TermTransformer {
 		}
 		Term result;
 		if (mApplyLocalSimplifications) {
-			result = SmtUtils.termWithLocalSimplification(mNewScript, fsymb.getName(),
+			result = SmtUtils.unfTerm(mNewScript, fsymb.getName(),
 					appTerm.getFunction().getIndices(), resultSort, newArgs);
 		} else {
 			result = mNewScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), resultSort, newArgs);

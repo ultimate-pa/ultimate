@@ -1358,28 +1358,42 @@ public final class SmtUtils {
 			// no argument was changed, we can return the original term
 			result = appTerm;
 		} else {
-			result = SmtUtils.termWithLocalSimplification(script, appTerm.getFunction(), newArgs);
+			result = SmtUtils.unfTerm(script, appTerm.getFunction(), newArgs);
 		}
 		return result;
 	}
 
 	/**
-	 * Construct term but simplify it using lightweight simplification techniques if applicable.
+	 * Variation of
+	 * {@link SmtUtils#unfTerm(Script, String, String[], Sort, Term...)} for the
+	 * case that you already have a {@link FunctionSymbol}.
 	 */
-	public static Term termWithLocalSimplification(final Script script, final FunctionSymbol fun,
+	public static Term unfTerm(final Script script, final FunctionSymbol fun,
 			final Term... params) {
 		final Sort resultSort = fun.isReturnOverload() ? fun.getReturnSort() : null;
-		return termWithLocalSimplification(script, fun.getName(), fun.getIndices(), resultSort, params);
+		return unfTerm(script, fun.getName(), fun.getIndices(), resultSort, params);
 	}
 
 	/**
-	 * Construct term but simplify it using lightweight simplification techniques if applicable.
+	 * Ultimate's default method for constructing terms. In contrast to
+	 * {@link Script#term} this method applies some lightweight simplifications and
+	 * ensures that the output is in Ultimate normal form (UNF) if the input was in
+	 * UNF. This method applies only simplifications that do will slow down the
+	 * performance significantly. <br />
+	 * You should only apply {@link Script#term} instead of this method in the
+	 * following two cases.
+	 * <li>You want to construct a term that has to have the syntactic form
+	 * specified by your arguments. (Note that this might violate the UNF and some
+	 * of your algorithms will not be able to process your term.)
+	 * <li>You implement a method in this package that is (transitively) called by
+	 * this method (needed to avoid infinite loops) and you take care by yourself
+	 * that the UNF is preserved.
 	 *
-	 * @param resultSort
-	 *            must be non-null if and only if we have an explicitly instantiated polymorphic FunctionSymbol, i.e., a
-	 *            function of the form (as <name> <sort>)
+	 * @param resultSort must be non-null if and only if we have an explicitly
+	 *                   instantiated polymorphic FunctionSymbol, i.e., a function
+	 *                   of the form `(as <name> <sort>)`
 	 */
-	public static Term termWithLocalSimplification(final Script script, final String funcname, final String[] indices,
+	public static Term unfTerm(final Script script, final String funcname, final String[] indices,
 			final Sort resultSort, final Term... params) {
 		final Term result;
 		switch (funcname) {
