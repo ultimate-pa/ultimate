@@ -5,16 +5,15 @@ if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 
 DATE=$(date +%Y%m%d)
 
-
-spushd releaseScripts/default
-spushd UAutomizer-linux
-if VERSION=$(./Ultimate.py --ultversion) ; then 
-  echo "Ultimate did not provide a version"
+spushd "$(get_git_root)/releaseScripts/default/UAutomizer-linux"
+if ! VERSION=$(./Ultimate.py --ultversion) ; then
+  echo "./Ultimate.py --ultversion failed with $?"
   exit 1
 fi
 VERSION=$(echo "$VERSION" | head -n 1 | sed 's/This is Ultimate //g ; s/origin.//g')
-if [ -z "$VERSION" ] ; then 
-  echo "Ultimate did not provide a version"
+if [ -z "$VERSION" ] ; then
+  echo "Could not extract version string from './Ultimate.py --ultversion' output:"
+  echo "$VERSION"
   exit 1
 fi
 spopd
