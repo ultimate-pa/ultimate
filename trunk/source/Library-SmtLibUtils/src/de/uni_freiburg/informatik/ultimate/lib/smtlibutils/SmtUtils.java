@@ -1058,8 +1058,7 @@ public final class SmtUtils {
 		final Term[] resultDualJunctions = new Term[dualJunctions.size()];
 		int outerOffset = 0;
 		for (final Term dualJunction : dualJunctions) {
-			final Term[] innerDualJuncts = QuantifierUtils
-					.getXjunctsInner(QuantifierUtils.getCorrespondingQuantifier(outerConnective), dualJunction);
+			final Term[] innerDualJuncts = QuantifierUtils.getDualFiniteJuncts(QuantifierUtils.getCorrespondingQuantifier(outerConnective), dualJunction);
 			final Term[] remainingInnerDualJuncts =
 					new Term[innerDualJuncts.length - omnipresentInnerDualJuncts.size()];
 			int offset = 0;
@@ -2669,8 +2668,7 @@ public final class SmtUtils {
 		private Set<Term> mInnerDualJuncts;
 
 		public void addOuterJunct(final Term outerJunct, final String outerConnective) {
-			final Term[] innerDualJuncts = QuantifierUtils
-					.getXjunctsInner(QuantifierUtils.getCorrespondingQuantifier(outerConnective), outerJunct);
+			final Term[] innerDualJuncts = QuantifierUtils.getDualFiniteJuncts(QuantifierUtils.getCorrespondingQuantifier(outerConnective), outerJunct);
 			if (mInnerDualJuncts == null) {
 				mInnerDualJuncts = new HashSet<>(Arrays.asList(innerDualJuncts));
 			} else {

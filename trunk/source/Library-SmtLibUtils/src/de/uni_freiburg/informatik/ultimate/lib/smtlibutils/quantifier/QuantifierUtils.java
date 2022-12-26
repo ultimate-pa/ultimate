@@ -255,33 +255,6 @@ public class QuantifierUtils {
 	}
 
 	/**
-	 * Get all parameters of the outer operation of a XNF For the case of
-	 * existential quantification: Get all disjuncts of a formula in DNF. (conjuncts
-	 * of CNF for case of universal quantification)
-	 *
-	 * @deprecated The method name does not explain the method very well, see
-	 *             {@link QuantifierUtils#getDualCorrespondingJunction} for an
-	 *             alternative.
-	 */
-	@Deprecated
-	public static Term[] getXjunctsOuter(final int quantifier, final Term xnf) {
-		return getCorrespondingFiniteJuncts(quantifier, xnf);
-	}
-
-	/**
-	 * Get all parameters of the inner operation of a XNF For the case of
-	 * existential quantification: Get all conjuncts of a conjunction. (disjuncts of
-	 * disjunction in case of universal quantification)
-	 *
-	 * @deprecated The method name does not explain the method very well, see
-	 *             {@link QuantifierUtils#getDualFiniteJunction} for an alternative.
-	 */
-	@Deprecated
-	public static Term[] getXjunctsInner(final int quantifier, final Term xnf) {
-		return getDualFiniteJuncts(quantifier, xnf);
-	}
-
-	/**
 	 * @return The term `false` for ∃ and the term `true` for ∀.
 	 */
 	public static Term getNeutralElement(final Script script, final int quantifier) {
