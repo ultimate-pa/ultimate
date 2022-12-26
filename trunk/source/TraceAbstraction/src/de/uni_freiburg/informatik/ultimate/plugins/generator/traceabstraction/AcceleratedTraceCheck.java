@@ -355,8 +355,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 		services.getResultService().reportResult(Activator.PLUGIN_ID,
 				new StatisticsResult<>(Activator.PLUGIN_NAME, "LoopAccelerationStatistics", stats));
 		if (jla.getAccelerationStatus() != AccelerationStatus.SUCCESS) {
-			throw new UnsupportedOperationException(JordanLoopAcceleration.UNSUPPORTED_PREFIX + " "
-					+ jla.getAccelerationStatus() + " " + jla.getErrorMessage());
+			return null;
 		}
 		return jla.getTransFormula();
 	}
