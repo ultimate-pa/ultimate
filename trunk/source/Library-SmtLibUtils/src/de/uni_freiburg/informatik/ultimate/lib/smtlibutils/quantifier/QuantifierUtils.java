@@ -209,7 +209,15 @@ public class QuantifierUtils {
 	 * and return a singleton array.
 	 */
 	public static Term[] getCorrespondingFiniteJunction(final int quantifier, final Term correspondingFiniteJunction) {
-		return getXjunctsOuter(quantifier, correspondingFiniteJunction);
+		final Term[] correspondingFiniteJuncts;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			correspondingFiniteJuncts = SmtUtils.getDisjuncts(correspondingFiniteJunction);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			correspondingFiniteJuncts = SmtUtils.getConjuncts(correspondingFiniteJunction);
+		} else {
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
+		}
+		return correspondingFiniteJuncts;
 	}
 
 	/**
@@ -219,7 +227,15 @@ public class QuantifierUtils {
 	 * and return a singleton array.
 	 */
 	public static Term[] getDualFiniteJunction(final int quantifier, final Term dualFiniteJunction) {
-		return getXjunctsInner(quantifier, dualFiniteJunction);
+		final Term[] dualFiniteJuncts;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			dualFiniteJuncts = SmtUtils.getConjuncts(dualFiniteJunction);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			dualFiniteJuncts = SmtUtils.getDisjuncts(dualFiniteJunction);
+		} else {
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
+		}
+		return dualFiniteJuncts;
 	}
 
 	/**
@@ -249,15 +265,7 @@ public class QuantifierUtils {
 	 */
 	@Deprecated
 	public static Term[] getXjunctsOuter(final int quantifier, final Term xnf) {
-		Term[] xjunctsOuter;
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			xjunctsOuter = SmtUtils.getDisjuncts(xnf);
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			xjunctsOuter = SmtUtils.getConjuncts(xnf);
-		} else {
-			throw new AssertionError(UNKNOWN_QUANTIFIER);
-		}
-		return xjunctsOuter;
+		return getCorrespondingFiniteJunction(quantifier, xnf);
 	}
 
 	/**
@@ -270,15 +278,7 @@ public class QuantifierUtils {
 	 */
 	@Deprecated
 	public static Term[] getXjunctsInner(final int quantifier, final Term xnf) {
-		Term[] xjunctsOuter;
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			xjunctsOuter = SmtUtils.getConjuncts(xnf);
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			xjunctsOuter = SmtUtils.getDisjuncts(xnf);
-		} else {
-			throw new AssertionError(UNKNOWN_QUANTIFIER);
-		}
-		return xjunctsOuter;
+		return getDualFiniteJunction(quantifier, xnf);
 	}
 
 	/**
