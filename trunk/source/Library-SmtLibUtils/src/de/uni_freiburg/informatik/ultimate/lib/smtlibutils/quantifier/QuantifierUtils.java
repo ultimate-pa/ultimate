@@ -55,6 +55,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class QuantifierUtils {
 
+	private static final String UNKNOWN_QUANTIFIER = "unknown quantifier";
+
 	private QuantifierUtils() {
 		// do not instantiate
 	}
@@ -71,7 +73,7 @@ public class QuantifierUtils {
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			result = SmtUtils.and(script, xjunctsOuter);
 		} else {
-			throw new AssertionError("unknown quantifier");
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
 		return result;
 	}
@@ -93,7 +95,7 @@ public class QuantifierUtils {
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			result = SmtUtils.or(script, xjunctsInner);
 		} else {
-			throw new AssertionError("unknown quantifier");
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
 		return result;
 	}
@@ -114,7 +116,7 @@ public class QuantifierUtils {
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			result = SmtUtils.distinct(script, lhs, rhs);
 		} else {
-			throw new AssertionError("unknown quantifier");
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
 		return result;
 	}
@@ -130,7 +132,7 @@ public class QuantifierUtils {
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			result = SmtUtils.binaryEquality(script, lhs, rhs);
 		} else {
-			throw new AssertionError("unknown quantifier");
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
 		return result;
 	}
@@ -165,7 +167,7 @@ public class QuantifierUtils {
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			xjunctsOuter = SmtUtils.getConjuncts(xnf);
 		} else {
-			throw new AssertionError("unknown quantifier");
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
 		return xjunctsOuter;
 	}
@@ -214,7 +216,7 @@ public class QuantifierUtils {
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			xjunctsOuter = SmtUtils.getDisjuncts(xnf);
 		} else {
-			throw new AssertionError("unknown quantifier");
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
 		return xjunctsOuter;
 	}
@@ -225,7 +227,7 @@ public class QuantifierUtils {
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			return script.term("true");
 		} else {
-			throw new AssertionError("unknown quantifier");
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
 	}
 
@@ -235,7 +237,7 @@ public class QuantifierUtils {
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			return script.term("false");
 		} else {
-			throw new AssertionError("unknown quantifier");
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
 	}
 
@@ -251,7 +253,7 @@ public class QuantifierUtils {
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			term = SmtUtils.toCnf(services, freshTermVariableConstructor, term, xnfConversionTechnique);
 		} else {
-			throw new AssertionError("unknown quantifier");
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
 		return term;
 	}
@@ -289,7 +291,7 @@ public class QuantifierUtils {
 			result = new NnfTransformer(mgdScript, services, QuantifierHandling.IS_ATOM)
 					.transform(SmtUtils.not(mgdScript.getScript(), inputTerm));
 		} else {
-			throw new AssertionError("unknown quantifier");
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
 		return result;
 	}
@@ -305,7 +307,7 @@ public class QuantifierUtils {
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			result = SmtUtils.not(script, inputTerm);
 		} else {
-			throw new AssertionError("unknown quantifier");
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
 		return result;
 	}
@@ -323,7 +325,7 @@ public class QuantifierUtils {
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			result = inputTerm;
 		} else {
-			throw new AssertionError("unknown quantifier");
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
 		return result;
 	}
@@ -339,7 +341,7 @@ public class QuantifierUtils {
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			result = inputTerm;
 		} else {
-			throw new AssertionError("unknown quantifier");
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
 		return result;
 	}
@@ -368,7 +370,7 @@ public class QuantifierUtils {
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			result = "disjuncts";
 		} else {
-			throw new AssertionError("unknown quantifier");
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
 		return result;
 	}
@@ -380,7 +382,7 @@ public class QuantifierUtils {
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			result = "conjuncts";
 		} else {
-			throw new AssertionError("unknown quantifier");
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
 		return result;
 	}
@@ -391,7 +393,7 @@ public class QuantifierUtils {
 		} else if (quantifier == 1) {
 			return "A";
 		} else {
-			throw new AssertionError("unknown quantifier");
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
 	}
 
@@ -401,7 +403,7 @@ public class QuantifierUtils {
 		} else if (quantifier == 1) {
 			return RelationSymbol.DISTINCT;
 		} else {
-			throw new AssertionError("unknown quantifier");
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
 	}
 
