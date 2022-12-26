@@ -208,7 +208,7 @@ public class QuantifierUtils {
 	 * connective, we consider the input as a 1-ary corresponding finite junction
 	 * and return a singleton array.
 	 */
-	public static Term[] getCorrespondingFiniteJunction(final int quantifier, final Term correspondingFiniteJunction) {
+	public static Term[] getCorrespondingFiniteJuncts(final int quantifier, final Term correspondingFiniteJunction) {
 		final Term[] correspondingFiniteJuncts;
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			correspondingFiniteJuncts = SmtUtils.getDisjuncts(correspondingFiniteJunction);
@@ -226,7 +226,7 @@ public class QuantifierUtils {
 	 * connective, we consider the input as a 1-ary corresponding finite junction
 	 * and return a singleton array.
 	 */
-	public static Term[] getDualFiniteJunction(final int quantifier, final Term dualFiniteJunction) {
+	public static Term[] getDualFiniteJuncts(final int quantifier, final Term dualFiniteJunction) {
 		final Term[] dualFiniteJuncts;
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			dualFiniteJuncts = SmtUtils.getConjuncts(dualFiniteJunction);
@@ -243,7 +243,7 @@ public class QuantifierUtils {
 	 *         quantifier is ∀ and the term is a disjunction.
 	 */
 	public static boolean isDualFiniteJunction(final int quantifier, final Term term) {
-		return getDualFiniteJunction(quantifier, term).length > 1;
+		return getDualFiniteJuncts(quantifier, term).length > 1;
 	}
 
 	/**
@@ -251,7 +251,7 @@ public class QuantifierUtils {
 	 *         quantifier is ∀ and the term is a conjunction.
 	 */
 	public static boolean isCorrespondingFiniteJunction(final int quantifier, final Term term) {
-		return getCorrespondingFiniteJunction(quantifier, term).length > 1;
+		return getCorrespondingFiniteJuncts(quantifier, term).length > 1;
 	}
 
 	/**
@@ -265,7 +265,7 @@ public class QuantifierUtils {
 	 */
 	@Deprecated
 	public static Term[] getXjunctsOuter(final int quantifier, final Term xnf) {
-		return getCorrespondingFiniteJunction(quantifier, xnf);
+		return getCorrespondingFiniteJuncts(quantifier, xnf);
 	}
 
 	/**
@@ -278,7 +278,7 @@ public class QuantifierUtils {
 	 */
 	@Deprecated
 	public static Term[] getXjunctsInner(final int quantifier, final Term xnf) {
-		return getDualFiniteJunction(quantifier, xnf);
+		return getDualFiniteJuncts(quantifier, xnf);
 	}
 
 	/**

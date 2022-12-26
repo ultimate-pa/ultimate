@@ -130,7 +130,7 @@ public class QuantifierPushUtils {
 
 			// Step 1: Check if subformula is a dual finite junction and return if not
 			final List<Term> currentDualFiniteJuncts = Arrays
-					.asList(QuantifierUtils.getDualFiniteJunction(currentEt.getQuantifier(), currentEt.getTerm()));
+					.asList(QuantifierUtils.getDualFiniteJuncts(currentEt.getQuantifier(), currentEt.getTerm()));
 			if (currentDualFiniteJuncts.size() <= 1) {
 				return new Pair<>(false, SmtUtils.quantifier(mgdScript.getScript(), currentEt.getQuantifier(),
 						currentEt.getEliminatees(), currentDualFiniteJuncts.get(0)));
@@ -272,7 +272,7 @@ public class QuantifierPushUtils {
 		} else {
 			inputDualJunction = term;
 		}
-		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(quantifier, inputDualJunction);
+		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJuncts(quantifier, inputDualJunction);
 		final ArrayList<Term> resultDualJuncts = new ArrayList<>();
 		for (final Term dualJunct : dualJuncts) {
 			if (dualJunct instanceof QuantifiedFormula) {
@@ -318,7 +318,7 @@ public class QuantifierPushUtils {
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
 			final IQuantifierEliminator qe) {
-		final Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
+		final Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), et.getTerm());
 		assert dualFiniteParams.length > 1 : NOT_DUAL_FINITE_CONNECTIVE;
 		final List<Term> resultDualFiniteParams = new ArrayList<>();
 		boolean atLeastOneParameterModified = false;

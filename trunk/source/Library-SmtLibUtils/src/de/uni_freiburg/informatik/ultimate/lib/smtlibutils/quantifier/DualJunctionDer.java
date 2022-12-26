@@ -322,7 +322,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
 		private EliminationResult tryToEliminateSbr(final ManagedScript mgdScript, final TermVariable eliminatee,
 				final EliminationTask et) {
-			final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
+			final Term[] dualJuncts = QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), et.getTerm());
 			final Set<TermVariable> bannedForDivCapture = new HashSet<>(et.getEliminatees());
 			bannedForDivCapture.addAll(et.getContext().getBoundByAncestors());
 			final Pair<Integer, SR> pair = findBestReplacementSbr(mgdScript, et.getQuantifier(), eliminatee,

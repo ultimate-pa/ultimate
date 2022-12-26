@@ -326,7 +326,7 @@ public class ElimStorePlain {
 			// cannot eliminated this array
 			return null;
 		}
-		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(eTask.getQuantifier(), eTask.getTerm());
+		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJuncts(eTask.getQuantifier(), eTask.getTerm());
 		final Map<Boolean, List<Term>> part = Arrays.stream(dualJuncts).collect(Collectors
 				.partitioningBy(x -> QuantifierUtils.isCorrespondingFiniteJunction(eTask.getQuantifier(), x)));
 		final Term distributers = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), eTask.getQuantifier(), part.get(true));

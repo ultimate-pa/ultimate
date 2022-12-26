@@ -173,7 +173,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	public static Term tryToEliminateConjuncts(final IUltimateServiceProvider services, final Script script,
 			final int quantifier, final Term disjunct, final TermVariable eliminatee,
 			final Set<TermVariable> bannedForDivCapture, final boolean supportAntiDerTerms) {
-		final Term[] inputAtoms = QuantifierUtils.getDualFiniteJunction(quantifier, disjunct);
+		final Term[] inputAtoms = QuantifierUtils.getDualFiniteJuncts(quantifier, disjunct);
 		final List<Term> withEliminatee = Arrays.stream(inputAtoms)
 				.filter(x -> Arrays.asList(x.getFreeVars()).contains(eliminatee)).collect(Collectors.toList());
 		final List<Term> withoutEliminatee = Arrays.stream(inputAtoms)

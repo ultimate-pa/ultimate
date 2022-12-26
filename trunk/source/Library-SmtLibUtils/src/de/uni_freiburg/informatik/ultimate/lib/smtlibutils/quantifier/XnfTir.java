@@ -168,14 +168,14 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				SimplificationTechnique.SIMPLIFY_DDA);
 		disjunction = simp.getSimplifiedTerm();
 
-		final List<Term> resultDisjunctions = Arrays.asList(QuantifierUtils.getCorrespondingFiniteJunction(quantifier, disjunction));
+		final List<Term> resultDisjunctions = Arrays.asList(QuantifierUtils.getCorrespondingFiniteJuncts(quantifier, disjunction));
 		return resultDisjunctions;
 	}
 
 	public static Term tryToEliminateConjuncts(final IUltimateServiceProvider services, final Script script,
 			final int quantifier, final Term disjunct, final TermVariable eliminatee,
 			final Set<TermVariable> bannedForDivCapture) {
-		final Term[] inputAtoms  = QuantifierUtils.getDualFiniteJunction(quantifier, disjunct);
+		final Term[] inputAtoms  = QuantifierUtils.getDualFiniteJuncts(quantifier, disjunct);
 		final List<Term> termsWithoutEliminatee = new ArrayList<>();
 		final List<Bound> upperBounds = new ArrayList<>();
 		final List<Bound> lowerBounds = new ArrayList<>();
