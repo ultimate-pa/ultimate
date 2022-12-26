@@ -136,7 +136,13 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 				mReasonUnknown = tc.getTraceCheckReasonUnknown();
 				break;
 			case UNSAT:
-				mInterpolants = tc.getForwardIpp().getPredicates().toArray(new IPredicate[0]);
+				final InterpolantComputationStatus itpCompStatus = tc.getInterpolantComputationStatus();
+				if (itpCompStatus.wasComputationSuccesful()) {
+					mInterpolants = tc.getForwardIpp().getPredicates().toArray(new IPredicate[0]);
+				} else {
+					throw new UnsupportedOperationException("Acceleration-free interpolant computation failed.");
+				}
+
 				break;
 			default:
 				throw new AssertionError();
