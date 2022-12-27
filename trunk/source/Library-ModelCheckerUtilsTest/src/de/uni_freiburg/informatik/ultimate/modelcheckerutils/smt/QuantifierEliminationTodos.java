@@ -356,6 +356,20 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	/**
+	 * Division by non-literal
+	 */
+	@Test
+	public void derDivByIntVarExists() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "q", "b"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntBoolSort, "a"),
+			};
+		final String formulaAsString = "(exists ((x Int)) (and (= (* q x) b) (select a x)))";
+		final String expectedResult = "(let ((.cse0 (= q 0))) (or (and (= b 0) (exists ((x Int)) (select a x)) .cse0) (and (= (mod b q) 0) (select a (div b q)) (not .cse0))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 //	// read_type_#64._token is function symbol with
 //	// param sorts [(Array Int (Array Int Int)), (Array Int (Array Int Int)), (Array Int (Array Int Int)), Int, Int]
 //    // and return sort Int

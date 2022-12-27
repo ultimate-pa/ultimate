@@ -359,17 +359,6 @@ public class QuantifierEliminationRegressionTest {
 	}
 
 	@Test
-	public void derDivByIntVarExists() {
-		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(SmtSortUtils::getIntSort, "q", "b"),
-				new FunDecl(QuantifierEliminationTest::getArrayIntBoolSort, "a"),
-			};
-		final String formulaAsString = "(exists ((x Int)) (and (= (* q x) b) (select a x)))";
-		final String expectedResult = "(let ((.cse0 (= q 0))) (or (and (= b 0) (exists ((x Int)) (select a x)) .cse0) (and (= (mod b q) 0) (select a (div b q)) (not .cse0))))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
 	public void critConsReform01() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "p2", "b", "p1", "a", "v_DerPreprocessor_1", "v_DerPreprocessor_3"),
