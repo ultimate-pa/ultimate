@@ -1058,7 +1058,8 @@ public final class SmtUtils {
 		final Term[] resultDualJunctions = new Term[dualJunctions.size()];
 		int outerOffset = 0;
 		for (final Term dualJunction : dualJunctions) {
-			final Term[] innerDualJuncts = QuantifierUtils.getDualFiniteJuncts(QuantifierUtils.getCorrespondingQuantifier(outerConnective), dualJunction);
+			final Term[] innerDualJuncts = QuantifierUtils
+					.getDualFiniteJuncts(QuantifierUtils.getCorrespondingQuantifier(outerConnective), dualJunction);
 			final Term[] remainingInnerDualJuncts =
 					new Term[innerDualJuncts.length - omnipresentInnerDualJuncts.size()];
 			int offset = 0;
@@ -1185,11 +1186,10 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Copy of {@link Util#ite} that uses our library methods for the construction
-	 * of terms.
+	 * Copy of {@link Util#ite} that uses our library methods for the construction of terms.
 	 */
 	public static Term ite(final Script script, final Term cond, final Term thenPart, final Term elsePart) {
-		if (isTrueLiteral(cond)|| thenPart == elsePart) {
+		if (isTrueLiteral(cond) || thenPart == elsePart) {
 			return thenPart;
 		} else if (isFalseLiteral(cond)) {
 			return elsePart;
@@ -1290,8 +1290,7 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * @return term that is equivalent to lhs X rhs where X is either leq, less,
-	 *         geq, or greater.
+	 * @return term that is equivalent to lhs X rhs where X is either leq, less, geq, or greater.
 	 */
 	private static Term comparison(final Script script, final String functionSymbol, final Term lhs, final Term rhs) {
 		final RelationSymbol rel = RelationSymbol.convert(functionSymbol);
@@ -1341,8 +1340,7 @@ public final class SmtUtils {
 	 * Auxiliary method for {@link TermTransformer}. The method {@link TermTransformer#convertApplicationTerm}
 	 * constructs new terms that may violate the Ultimate Normal Form (UNF) {@link UltimateNormalFormUtils}. Classes in
 	 * Ultimate that inherit {@link TermTransformer} should overwrite {@link TermTransformer#convertApplicationTerm} by
-	 * a method that uses this method for the construction of new terms. See e.g.,
-	 * {@link Substitution}.
+	 * a method that uses this method for the construction of new terms. See e.g., {@link Substitution}.
 	 *
 	 * @param appTerm
 	 *            original ApplicationTerm
@@ -1363,34 +1361,27 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Variation of
-	 * {@link SmtUtils#unfTerm(Script, String, String[], Sort, Term...)} for the
-	 * case that you already have a {@link FunctionSymbol}.
+	 * Variation of {@link SmtUtils#unfTerm(Script, String, String[], Sort, Term...)} for the case that you already have
+	 * a {@link FunctionSymbol}.
 	 */
-	public static Term unfTerm(final Script script, final FunctionSymbol fun,
-			final Term... params) {
+	public static Term unfTerm(final Script script, final FunctionSymbol fun, final Term... params) {
 		final Sort resultSort = fun.isReturnOverload() ? fun.getReturnSort() : null;
 		return unfTerm(script, fun.getName(), fun.getIndices(), resultSort, params);
 	}
 
 	/**
-	 * Ultimate's default method for constructing terms. In contrast to
-	 * {@link Script#term} this method applies some lightweight simplifications and
-	 * ensures that the output is in Ultimate normal form (UNF) if the input was in
-	 * UNF. This method applies only simplifications that do will slow down the
-	 * performance significantly. <br />
-	 * You should only apply {@link Script#term} instead of this method in the
-	 * following two cases.
-	 * <li>You want to construct a term that has to have the syntactic form
-	 * specified by your arguments. (Note that this might violate the UNF and some
-	 * of your algorithms will not be able to process your term.)
-	 * <li>You implement a method in this package that is (transitively) called by
-	 * this method (needed to avoid infinite loops) and you take care by yourself
-	 * that the UNF is preserved.
+	 * Ultimate's default method for constructing terms. In contrast to {@link Script#term} this method applies some
+	 * lightweight simplifications and ensures that the output is in Ultimate normal form (UNF) if the input was in UNF.
+	 * This method applies only simplifications that do will slow down the performance significantly. <br />
+	 * You should only apply {@link Script#term} instead of this method in the following two cases.
+	 * <li>You want to construct a term that has to have the syntactic form specified by your arguments. (Note that this
+	 * might violate the UNF and some of your algorithms will not be able to process your term.)
+	 * <li>You implement a method in this package that is (transitively) called by this method (needed to avoid infinite
+	 * loops) and you take care by yourself that the UNF is preserved.
 	 *
-	 * @param resultSort must be non-null if and only if we have an explicitly
-	 *                   instantiated polymorphic FunctionSymbol, i.e., a function
-	 *                   of the form `(as <name> <sort>)`
+	 * @param resultSort
+	 *            must be non-null if and only if we have an explicitly instantiated polymorphic FunctionSymbol, i.e., a
+	 *            function of the form `(as <name> <sort>)`
 	 */
 	public static Term unfTerm(final Script script, final String funcname, final String[] indices,
 			final Sort resultSort, final Term... params) {
@@ -1508,8 +1499,8 @@ public final class SmtUtils {
 		assert !DEBUG_ASSERT_ULTIMATE_NORMAL_FORM
 				|| UltimateNormalFormUtils.respectsUltimateNormalForm(result) : "Term not in UltimateNormalForm";
 
-		assert !DEBUG_CHECK_EVERY_SIMPLIFICATION
-				|| Util.checkSat(script, script.term("distinct", result, script.term(funcname, indices, resultSort, params))) != LBool.SAT;
+		assert !DEBUG_CHECK_EVERY_SIMPLIFICATION || Util.checkSat(script,
+				script.term("distinct", result, script.term(funcname, indices, resultSort, params))) != LBool.SAT;
 		return result;
 	}
 
@@ -1736,18 +1727,19 @@ public final class SmtUtils {
 	 * Division for ints with the several simplifications.
 	 */
 	public static Term divInt(final Script script, final Term... inputParams) {
-		final AbstractGeneralizedAffineTerm<?>[] polynomialArgs = new AbstractGeneralizedAffineTerm<?>[inputParams.length];
+		final AbstractGeneralizedAffineTerm<?>[] polynomialArgs =
+				new AbstractGeneralizedAffineTerm<?>[inputParams.length];
 		for (int i = 0; i < inputParams.length; i++) {
-			polynomialArgs[i] = (AbstractGeneralizedAffineTerm<?>) PolynomialTermTransformer.convert(script,
-					inputParams[i]);
+			polynomialArgs[i] =
+					(AbstractGeneralizedAffineTerm<?>) PolynomialTermTransformer.convert(script, inputParams[i]);
 		}
 		return polynomialArgs[0].div(script, Arrays.copyOfRange(polynomialArgs, 1, polynomialArgs.length))
 				.toTerm(script);
 	}
 
 	/**
-	 * Convert `(div (div a1 ... an) d)` to `(div a1 ... d*an)` if `an` and `d` are
-	 * non-zero literals and convert it to `(div a1 ... an d)` otherwise.
+	 * Convert `(div (div a1 ... an) d)` to `(div a1 ... d*an)` if `an` and `d` are non-zero literals and convert it to
+	 * `(div a1 ... an d)` otherwise.
 	 */
 	public static Term divIntFlatten(final Script script, final Term divident, final Term divisor) {
 		final Rational divisorRat = SmtUtils.tryToConvertToLiteral(divisor);
@@ -1776,8 +1768,8 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Convert `(div (div a1 ... an) d)` to `(div a1 ... d*an)` if `an` is a
-	 * non-zero literal and convert it to `(div a1 ... an d)` otherwise.
+	 * Convert `(div (div a1 ... an) d)` to `(div a1 ... d*an)` if `an` is a non-zero literal and convert it to `(div a1
+	 * ... an d)` otherwise.
 	 */
 	public static Term divIntFlatten(final Script script, final Term divident, final BigInteger divisorBigInt) {
 		final Term result;
@@ -1824,8 +1816,8 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Returns a possibly simplified version of the Term (mod dividend divisor). See
-	 * {@link PolynomialTest} for examples.
+	 * Returns a possibly simplified version of the Term (mod dividend divisor). See {@link PolynomialTest} for
+	 * examples.
 	 */
 	public static Term mod(final Script script, final Term divident, final Term divisor) {
 		final Rational divisorAsRational = tryToConvertToLiteral(divisor);
@@ -1834,8 +1826,8 @@ public final class SmtUtils {
 			return script.term("mod", divident, divisor);
 		} else {
 			assert divisorAsRational.isIntegral();
-			final AbstractGeneralizedAffineTerm<?> agat = (AbstractGeneralizedAffineTerm<?>) PolynomialTermTransformer
-					.convert(script, divident);
+			final AbstractGeneralizedAffineTerm<?> agat =
+					(AbstractGeneralizedAffineTerm<?>) PolynomialTermTransformer.convert(script, divident);
 			return agat.mod(script, divisorAsRational.numerator()).toTerm(script);
 		}
 	}
@@ -2565,14 +2557,11 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Find all subterms of the given term that are constants (i.e.
-	 * {@link ApplicationTerm}s with zero parameters).
+	 * Find all subterms of the given term that are constants (i.e. {@link ApplicationTerm}s with zero parameters).
 	 *
-	 * @param restrictToNonTheoryConstants If set to true, we omit constants that
-	 *                                     are defined by the SMT that our solver is
-	 *                                     using. E.g. for the theory of floats, we
-	 *                                     omit roundTowardZero which is a constant
-	 *                                     that defines a certain rounding mode.
+	 * @param restrictToNonTheoryConstants
+	 *            If set to true, we omit constants that are defined by the SMT that our solver is using. E.g. for the
+	 *            theory of floats, we omit roundTowardZero which is a constant that defines a certain rounding mode.
 	 */
 	@SuppressWarnings("unchecked")
 	public static Set<ApplicationTerm> extractConstants(final Term term, final boolean restrictToNonTheoryConstants) {
@@ -2600,12 +2589,10 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Flatten `(⊕ (⊕ x1 ... xn) y1 .. yn)` to `(⊕ x1 ... xn y1 .. yn)`. Sound is ⊕
-	 * left-associative. Warning: Flattening sometimes allow further
-	 * simplifications, especially if ⊕ is commutative. These simplifications are
-	 * not done if you use this method. Do not change this such that it utilizes
-	 * simplifications afterwards. This might lead to nonterminating loops since
-	 * this is a low-level methods that is utilized by simplifications itself.
+	 * Flatten `(⊕ (⊕ x1 ... xn) y1 .. yn)` to `(⊕ x1 ... xn y1 .. yn)`. Sound is ⊕ left-associative. Warning:
+	 * Flattening sometimes allow further simplifications, especially if ⊕ is commutative. These simplifications are not
+	 * done if you use this method. Do not change this such that it utilizes simplifications afterwards. This might lead
+	 * to nonterminating loops since this is a low-level methods that is utilized by simplifications itself.
 	 */
 	public static Term flattenIntoFirstArgument(final Script script, final String funcname, final Term firstParam,
 			final Term... otherParams) {
@@ -2668,7 +2655,8 @@ public final class SmtUtils {
 		private Set<Term> mInnerDualJuncts;
 
 		public void addOuterJunct(final Term outerJunct, final String outerConnective) {
-			final Term[] innerDualJuncts = QuantifierUtils.getDualFiniteJuncts(QuantifierUtils.getCorrespondingQuantifier(outerConnective), outerJunct);
+			final Term[] innerDualJuncts = QuantifierUtils
+					.getDualFiniteJuncts(QuantifierUtils.getCorrespondingQuantifier(outerConnective), outerJunct);
 			if (mInnerDualJuncts == null) {
 				mInnerDualJuncts = new HashSet<>(Arrays.asList(innerDualJuncts));
 			} else {
@@ -2723,10 +2711,9 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * @return true iff this number is the binary representation of a bitvector
-	 *         whose two's complement representation is -1 (i.e., minus one).
-	 *         Exclude however the special case where bitvectors have length 1 and
-	 *         hence -1 and 1 coincide.
+	 * @return true iff this number is the binary representation of a bitvector whose two's complement representation is
+	 *         -1 (i.e., minus one). Exclude however the special case where bitvectors have length 1 and hence -1 and 1
+	 *         coincide.
 	 */
 	// <pre>
 	// TODO #bvineq 20201017 Matthias:
