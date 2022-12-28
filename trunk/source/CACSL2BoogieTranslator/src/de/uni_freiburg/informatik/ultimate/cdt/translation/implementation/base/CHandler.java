@@ -665,6 +665,20 @@ public class CHandler {
 			}
 		}
 
+		final IASTTranslationUnit hook = units.get(0).getSourceTranslationUnit();
+		final List<LTLPropertyCheck> propChecks = new ArrayList<>();
+		// annotate the Unit with LTLPropertyChecks if applicable
+		for (final LTLExpressionExtractor ex : mGlobAcslExtractors) {
+			final Map<String, LTLPropertyCheck.CheckableExpression> checkableAtomicPropositions = new LinkedHashMap<>();
+
+			for (final Entry<String, de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression> en : ex
+					.getAP2SubExpressionMap().entrySet()) {
+				final ExpressionResult r = (ExpressionResult) main.dispatch(en.getValue(), hook);
+				// TODO: some switchToRValue and handling of sideeffects?
+				checkableAtomicPropositions.put(en.getKey(), new CheckableExpression(r.getLrValue().getValue(), null));
+			}
+			propChecks.add(new LTLPropertyCheck(ex.getLTLFormatString(), checkableAtomicPropositions, null));
+		}
 		/**
 		 * Add declarations of Boogie functions (as opposed to Boogie procedures) to the Boogie program that have been
 		 * collected by the ExpressionTranslation
@@ -679,22 +693,7 @@ public class CHandler {
 				mLocationFactory.createRootCLocation(
 						units.stream().map(DecoratedUnit::getSourceTranslationUnit).collect(Collectors.toSet())),
 				mDeclarations.toArray(new Declaration[mDeclarations.size()]));
-		final IASTTranslationUnit hook = units.get(0).getSourceTranslationUnit();
-
-		// annotate the Unit with LTLPropertyChecks if applicable
-		for (final LTLExpressionExtractor ex : mGlobAcslExtractors) {
-			final Map<String, LTLPropertyCheck.CheckableExpression> checkableAtomicPropositions = new LinkedHashMap<>();
-
-			for (final Entry<String, de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression> en : ex
-					.getAP2SubExpressionMap().entrySet()) {
-				final ExpressionResult r = (ExpressionResult) main.dispatch(en.getValue(), hook);
-				// TODO: some switchToRValue and handling of sideeffects?
-				checkableAtomicPropositions.put(en.getKey(), new CheckableExpression(r.getLrValue().getValue(), null));
-			}
-			final LTLPropertyCheck propCheck =
-					new LTLPropertyCheck(ex.getLTLFormatString(), checkableAtomicPropositions, null);
-			propCheck.annotate(boogieUnit);
-		}
+		propChecks.forEach(x -> x.annotate(boogieUnit));
 		return new CHandlerTranslationResult(boogieUnit, mSymbolTable.getBoogieCIdentifierMapping());
 	}
 
