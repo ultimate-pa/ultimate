@@ -224,7 +224,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public Expression constructLiteralForFloatingType(final ILocation loc, final CPrimitive type,
 			final BigDecimal value) {
 		if (mSettings.overapproximateFloatingPointOperations()) {
-			return super.constructOverapproximationFloatLiteral(loc, value.toString(), type);
+			return super.constructOverapproximationFloatLiteral(loc, value.toPlainString(), type);
 		}
 		final Expression[] arguments;
 		final String smtFunctionName;
