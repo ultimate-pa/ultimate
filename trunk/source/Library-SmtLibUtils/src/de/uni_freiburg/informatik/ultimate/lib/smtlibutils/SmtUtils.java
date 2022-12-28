@@ -48,7 +48,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.bdd.SimplifyBdd;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
@@ -119,14 +118,10 @@ public final class SmtUtils {
 	public static final String FP_TO_IEEE_BV_EXTENSION = "fp.to_ieee_bv";
 
 	public enum XnfConversionTechnique {
-		BDD_BASED, BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION
+		BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION
 	}
 
 	public enum SimplificationTechnique {
-		SIMPLIFY_BDD_PROP(false),
-
-		SIMPLIFY_BDD_FIRST_ORDER(false),
-
 		SIMPLIFY_QUICK(true),
 
 		SIMPLIFY_DDA(true),
@@ -187,12 +182,6 @@ public final class SmtUtils {
 		try {
 			final Term simplified;
 			switch (simplificationTechnique) {
-			case SIMPLIFY_BDD_PROP:
-				simplified = new SimplifyBdd(services, script).transform(formula);
-				break;
-			case SIMPLIFY_BDD_FIRST_ORDER:
-				simplified = new SimplifyBdd(services, script).transformWithImplications(formula);
-				break;
 			case SIMPLIFY_DDA:
 				simplified = new SimplifyDDAWithTimeout(script.getScript(), true, services, context)
 						.getSimplifiedTerm(formula);
@@ -2188,20 +2177,10 @@ public final class SmtUtils {
 	/**
 	 * @return logically equivalent term in disjunctive normal form (DNF)
 	 */
+	// TODO: xnfConversionTechnique is currently not used, should we remove it?
 	public static Term toDnf(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term term,
 			final XnfConversionTechnique xnfConversionTechnique) {
-		final Term result;
-		switch (xnfConversionTechnique) {
-		case BDD_BASED:
-			result = new SimplifyBdd(services, mgdScript).transformToDNF(term);
-			break;
-		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
-			result = new DnfTransformer(mgdScript, services).transform(term);
-			break;
-		default:
-			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + xnfConversionTechnique);
-		}
-		return result;
+		return new DnfTransformer(mgdScript, services).transform(term);
 	}
 
 	/**
@@ -2214,20 +2193,10 @@ public final class SmtUtils {
 	/**
 	 * @return logically equivalent term in conjunctive normal form (CNF)
 	 */
+	// TODO: xnfConversionTechnique is currently not used, should we remove it?
 	public static Term toCnf(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term term,
 			final XnfConversionTechnique xnfConversionTechnique) {
-		final Term result;
-		switch (xnfConversionTechnique) {
-		case BDD_BASED:
-			result = new SimplifyBdd(services, mgdScript).transformToCNF(term);
-			break;
-		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
-			result = new CnfTransformer(mgdScript, services).transform(term);
-			break;
-		default:
-			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + xnfConversionTechnique);
-		}
-		return result;
+		return new CnfTransformer(mgdScript, services).transform(term);
 	}
 
 	/**
