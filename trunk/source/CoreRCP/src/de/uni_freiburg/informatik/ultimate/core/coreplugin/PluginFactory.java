@@ -123,7 +123,7 @@ public final class PluginFactory implements IServiceFactoryFactory {
 		return rtr;
 	}
 
-	List<String> getPluginIds() {
+	public List<String> getPluginIds() {
 		return new ArrayList<>(mPluginIDToClassName.keySet());
 	}
 
@@ -158,7 +158,7 @@ public final class PluginFactory implements IServiceFactoryFactory {
 	 *
 	 * @return
 	 */
-	List<IToolchainPlugin> getAllAvailableToolchainPlugins() {
+	public List<IToolchainPlugin> getAllAvailableToolchainPlugins() {
 		if (mToolchainPluginCache == null) {
 			mToolchainPluginCache = loadAdmissiblePlugins();
 		}
@@ -167,7 +167,7 @@ public final class PluginFactory implements IServiceFactoryFactory {
 		return rtr;
 	}
 
-	List<ITool> getAllAvailableTools() {
+	public List<ITool> getAllAvailableTools() {
 		final List<ITool> rtr = new ArrayList<>();
 		if (mToolCache != null) {
 			rtr.addAll(mToolCache);
@@ -263,7 +263,7 @@ public final class PluginFactory implements IServiceFactoryFactory {
 		}
 		final Pair<IConfigurationElement, Integer> preferredElem = preferredElemOptional.get();
 		final int minValue = preferredElem.getSecond();
-
+ 
 		// check if the minimum is unambiguous
 		final List<Pair<IConfigurationElement, Integer>> preferredElements =
 				elemsWithPreference.stream().filter(a -> a.getSecond().equals(minValue)).collect(Collectors.toList());

@@ -219,7 +219,7 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 			return null;
 		}
 
-		final String[] recognizedProperties = new String[] { "@user.home" };
+		final String[] recognizedProperties = { "@user.home" };
 		for (final String recognizedProperty : recognizedProperties) {
 			if (workspaceloc.contains(recognizedProperty)) {
 				workspaceloc =
@@ -240,7 +240,6 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 			mLogger.fatal("Could not find a controller. Ultimate will exit.");
 			return -1;
 		}
-		// TODO: Find better way than this cast
 		mLoggingService.setCurrentControllerID(getCurrentControllerID());
 		final int returnCode = getCurrentController().init(this);
 		final String msg = "Preparing to exit Ultimate with return code " + returnCode;
@@ -397,13 +396,7 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 
 		@Override
 		public void done(final IJobChangeEvent event) {
-			if (event == null) {
-				return;
-			}
-			if (event.getResult() == null) {
-				return;
-			}
-			if (event.getResult().getException() == null) {
+			if ((event == null) || (event.getResult() == null) || (event.getResult().getException() == null)) {
 				return;
 			}
 			mLogger.error("Error during toolchain job processing:", event.getResult().getException());

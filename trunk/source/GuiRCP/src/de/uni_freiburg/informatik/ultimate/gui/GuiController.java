@@ -129,7 +129,8 @@ public class GuiController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public synchronized ISource selectParser(final Collection<ISource> parsers) {
+	public synchronized ISource selectParser(final IToolchain<RunDefinition> toolchain,
+			final Collection<ISource> parsers) {
 		mDisplay.syncExec(() -> {
 			final Shell shell = new Shell(mDisplay);
 			mParser = new ParserChooseDialog(shell, parsers).open();
@@ -138,7 +139,8 @@ public class GuiController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public synchronized IToolchainData<RunDefinition> selectTools(final List<ITool> tools) {
+	public synchronized IToolchainData<RunDefinition> selectTools(final IToolchain<RunDefinition> toolchain,
+			final List<ITool> tools) {
 		final List<ITool> previous = Collections.emptyList();
 		return selectTools(tools, previous);
 	}
@@ -162,7 +164,8 @@ public class GuiController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public synchronized List<String> selectModel(final List<String> modelNames) {
+	public synchronized List<String> selectModel(final IToolchain<RunDefinition> toolchain,
+			final List<String> modelNames) {
 		mDisplay.syncExec(() -> {
 			final Shell shell = new Shell(mDisplay);
 			mModels = new ModelChooseDialog(shell, modelNames, "Choose the model").open();
@@ -181,7 +184,7 @@ public class GuiController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
+	public void displayToolchainResults(final IToolchain<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
 		final ResultSummarizer summarizer = new ResultSummarizer(results);
 		switch (summarizer.getResultSummary()) {
@@ -202,7 +205,7 @@ public class GuiController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
+	public void displayException(final IToolchain<RunDefinition> toolchain, final String description,
 			final Throwable ex) {
 		// TODO: Log exceptions
 	}
@@ -232,7 +235,7 @@ public class GuiController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public IToolchainData<RunDefinition> prerun(final IToolchainData<RunDefinition> tcData) {
-		return tcData;
+	public IToolchainData<RunDefinition> prerun(final IToolchain<RunDefinition> toolchain) {
+		return toolchain.getCurrentToolchainData();
 	}
 }
