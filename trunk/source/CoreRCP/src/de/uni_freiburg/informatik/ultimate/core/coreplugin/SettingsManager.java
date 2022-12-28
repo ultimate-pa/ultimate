@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvide
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-final class SettingsManager {
+public final class SettingsManager {
 
 	// TODO: Check if this works with multiple instances of plugins
 
@@ -69,12 +69,12 @@ final class SettingsManager {
 	private final ILogger mLogger;
 	private final Map<String, LogPreferenceChangeListener> mActivePreferenceListener;
 
-	SettingsManager(final ILogger logger) {
+	public SettingsManager(final ILogger logger) {
 		mLogger = logger;
 		mActivePreferenceListener = new HashMap<>();
 	}
 
-	void registerPlugin(final IUltimatePlugin plugin) {
+	public void registerPlugin(final IUltimatePlugin plugin) {
 		if (plugin == null) {
 			return;
 		}

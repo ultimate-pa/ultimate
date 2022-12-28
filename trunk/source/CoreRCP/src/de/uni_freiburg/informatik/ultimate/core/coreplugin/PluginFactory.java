@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author dietsch
  *
  */
-final class PluginFactory implements IServiceFactoryFactory {
+public final class PluginFactory implements IServiceFactoryFactory {
 
 	private static final Class<?>[] ITOOLCHAIN_PLUGIN_CLASSES =
 			{ IAnalysis.class, IGenerator.class, IOutput.class, ISource.class };
@@ -83,7 +83,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 	private List<IToolchainPlugin> mToolchainPluginCache;
 	private List<ITool> mToolCache;
 
-	PluginFactory(final SettingsManager settingsManager, final ILogger logger) {
+	public PluginFactory(final SettingsManager settingsManager, final ILogger logger) {
 		mLogger = logger;
 		mRegistry = Platform.getExtensionRegistry();
 		mAvailableToolsByClass = new HashMap<>();
