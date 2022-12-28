@@ -813,7 +813,7 @@ public class QuadraticMatrix {
 		return Arrays.deepToString(mEntries);
 	}
 
-	static class JordanTransformationResult {
+	public static class JordanTransformationResult {
 		enum JordanTransformationStatus {
 			SUCCESS,
 			/**
