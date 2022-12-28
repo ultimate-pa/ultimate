@@ -388,7 +388,7 @@ public class QuantifierEliminationBenchmarks {
 				new FunDecl(SmtSortUtils::getIntSort, "s", "q", "b", "yy", "y"),
 			};
 		final String formulaAsString = "(forall ((x Int)) (or (not (= (+ (* s y) (* q x)) b)) (forall ((xy Int)) (= (+ b (* s yy) (* q xy)) (+ (* s y) (* q x) (* b y))))))";
-		final String expectedResult = "(let ((.cse0 (+ b (* (- 1) s y))) (.cse1 (= q 0))) (and (or (not (= (mod .cse0 q) 0)) (forall ((xy Int)) (= (+ (* b y) (* s y) (* q (div (+ b (* (- 1) s y)) q))) (+ (* q xy) b (* s yy)))) .cse1) (or (forall ((x Int) (xy Int)) (= (+ (* b y) (* s y) (* q x)) (+ (* q xy) b (* s yy)))) (not (= .cse0 0)) (not .cse1))))";
+		final String expectedResult = "(forall ((x Int)) (let ((.cse0 (* s y)) (.cse1 (* x q))) (or (forall ((xy Int)) (= (+ b (* xy q) (* s yy)) (+ (* b y) .cse0 .cse1))) (not (= (+ .cse0 .cse1) b)))))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
