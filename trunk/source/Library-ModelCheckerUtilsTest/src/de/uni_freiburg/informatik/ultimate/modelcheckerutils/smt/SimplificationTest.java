@@ -589,6 +589,16 @@ public class SimplificationTest {
 	}
 
 
+	@Test
+	public void constantFolding01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"),};
+		final String formulaAsString = "(or (distinct x 1) (and (< y (* x x)) (< z (* x x))))";
+		final String simplified = "(or (distinct x 1) (and (< y 1) (< z 1)))";;
+		runSimplificationTest(funDecls, formulaAsString, simplified, mServices, mLogger, mMgdScript);
+	}
+
+
 
 	static void runSimplificationTest(final FunDecl[] funDecls, final String eliminationInputAsString,
 			final String expectedResultAsString, final IUltimateServiceProvider services, final ILogger logger,

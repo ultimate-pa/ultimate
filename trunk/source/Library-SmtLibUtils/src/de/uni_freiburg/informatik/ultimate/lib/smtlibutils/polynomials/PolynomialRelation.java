@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
@@ -43,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Binary
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.IBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionTir;
 import de.uni_freiburg.informatik.ultimate.logic.INonSolverScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -611,5 +614,31 @@ public class PolynomialRelation implements IBinaryRelation {
 
 	private static AbstractGeneralizedAffineTerm<?> transformToPolynomialTerm(final Script script, final Term term) {
 		return (AbstractGeneralizedAffineTerm<?>) PolynomialTermTransformer.convert(script, term);
+	}
+
+	/**
+	 * If this {@link PolynomialRelation} has the form `x=l`, where x is a variable
+	 * of the underlying (affine) polynomial relation and l is literal, the return
+	 * this equality as a {@link SolvedBinaryRelation} where `x` is the left-hand
+	 * side and `y` is the right-hand side.
+	 */
+	public SolvedBinaryRelation isSimpleEquality(final Script script) {
+		if (mRelationSymbol != RelationSymbol.EQ) {
+			return null;
+		}
+		if (!isAffine()) {
+			return null;
+		}
+		final Map<Term, Rational> map = mPolynomialTerm.getAbstractVariable2Coefficient();
+		final Iterator<Entry<Term, Rational>> it = map.entrySet().iterator();
+		if (!it.hasNext()) {
+			return null;
+		}
+		final Entry<Term, Rational> fst = it.next();
+		if (it.hasNext()) {
+			return null;
+		}
+		return this.solveForSubject(script, fst.getKey());
+
 	}
 }
