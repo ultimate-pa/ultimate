@@ -579,10 +579,9 @@ public class PolynomialRelationTest {
 	}
 
 	/**
-	 * Currently fails because some coefficient is null, this probably will be handled when the "Todo if no constantTErm
-	 * throw error or handle it" is finished
+	 * Currently fails because div with more than two parameters is not supported yet.
 	 */
-	@Test
+	@Test(expected = UnsupportedOperationException.class)
 	public void relationIntPolyUnknownEQ16() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (div (div x 5 2) (div y z)) y))";
