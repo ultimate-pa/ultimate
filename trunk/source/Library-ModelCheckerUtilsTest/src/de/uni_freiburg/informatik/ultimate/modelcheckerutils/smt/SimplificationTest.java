@@ -499,6 +499,7 @@ public class SimplificationTest {
 	/**
 	 * Benchmark from MCR. Quantifier elimination did not terminate.
 	 */
+	@Test
 	public void mcrPthreadWmm01() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x0", "x1"), };
 		final String formulaAsString =
