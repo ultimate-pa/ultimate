@@ -31,8 +31,8 @@ int main()
         //@assert \false;
     }
     
-    //@assert pow_thirty == literal_pow_thirty;
-    //@assert pow_threehundred == literal_pow_threehundred;
+    //@assert pow_thirty != literal_pow_thirty;
+    //@assert pow_threehundred != literal_pow_threehundred;
     
 	return 0;
 }
