@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AcceleratedTraceCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.acceleratedtracecheck.AcceleratedTraceCheck;
 
 /**
  * Creates {@link IInterpolatingTraceCheck} that uses loop acceleration.
