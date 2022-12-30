@@ -302,6 +302,11 @@ public class JordanLoopAcceleration {
 					}
 				}
 			}
+			for (final TermVariable tv : Arrays.asList(triple.getThird().getFreeVars())) {
+				if (SmtSortUtils.isArraySort(tv.getSort())) {
+					throw new UnsupportedOperationException("Written value contains modified array variable");
+				}
+			}
 		}
 		// Map that assigns to the default TermVariable of an IProgramVar its closed
 		// form, where each variable in the closed form is represented by its inVar.
