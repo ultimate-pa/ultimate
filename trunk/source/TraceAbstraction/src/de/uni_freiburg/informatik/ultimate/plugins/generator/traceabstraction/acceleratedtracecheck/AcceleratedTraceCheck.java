@@ -32,6 +32,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NavigableSet;
+import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -82,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
@@ -325,11 +328,10 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 		final TreeMap<Integer, AcceleratedSegment> result = new TreeMap<>();
 		final HashTreeRelation<IcfgLocation, Integer> similarProgramPoints = findSimilarProgramPoints(
 				counterexample.getStateSequence());
+		final TreeRelation<Integer, Integer> loopPositions = computeMaximalCrossFreeLoopPositions(similarProgramPoints);
 		for (int i = 0; i < counterexample.getLength(); i++) {
-			final IcfgLocation currentProgramPoint = ((SPredicate) counterexample.getStateSequence().get(i))
-					.getProgramPoint();
-			final TreeSet<Integer> positionsWithSimilarProgramPoint = similarProgramPoints
-					.getImage(currentProgramPoint);
+			final TreeSet<Integer> positionsWithSimilarProgramPoint = loopPositions
+					.getImage(i);
 			final Integer nextPosition = positionsWithSimilarProgramPoint.higher(i);
 			if (nextPosition != null) {
 				final NestedWord<L> nestedWord = (NestedWord<L>) counterexample.getWord();
@@ -340,6 +342,55 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 					i = nextPosition - 1;
 				}
 			}
+		}
+		return result;
+	}
+
+	/**
+	 * Compute a subset of the loop position relation. In this subset no pair should
+	 * cross (if you consider the elements a edges of a graph).
+	 */
+	private static TreeRelation<Integer, Integer> computeMaximalCrossFreeLoopPositions(
+			final HashTreeRelation<IcfgLocation, Integer> similarProgramPoints) {
+		final TreeRelation<Integer, Integer> similarPosRel = new TreeRelation<>();
+		for (final Entry<IcfgLocation, TreeSet<Integer>> entry : similarProgramPoints.entrySet()) {
+			final TreeSet<Integer> positionsOfLoc = entry.getValue();
+			for (final Integer pos : positionsOfLoc) {
+				similarPosRel.addAllPairs(pos, positionsOfLoc);
+			}
+		}
+		return computeMaximalCrossFreeLoopPositions(similarPosRel, similarPosRel.getDomain().first(),
+				similarPosRel.getDomain().last());
+	}
+
+	private static TreeRelation<Integer, Integer> computeMaximalCrossFreeLoopPositions(
+			final TreeRelation<Integer, Integer> similarPosRel, final Integer first, final Integer last) {
+		final TreeRelation<Integer, Integer> result = new TreeRelation<>();
+		if (last < first) {
+			return result;
+		}
+		int current = first;
+		while (current <= last) {
+			// start with first element that is larger or equal to current
+			final Integer e = similarPosRel.getDomain().higher(current - 1);
+			if (e == null) {
+				break;
+			}
+			// add all pairs such that both elements are in range
+			// call the algorithms recursively for all gaps between the elements that are
+			// related to e
+			final NavigableSet<Integer> relatives = similarPosRel.getImage(e);
+			final SortedSet<Integer> relativesInRange = relatives.subSet(current, last + 1);
+			int precedingElement = -1;
+			for (final Integer relativeInRange : relativesInRange) {
+				result.addAllPairs(relativeInRange, relativesInRange);
+				if (precedingElement != -1) {
+					result.addAll(computeMaximalCrossFreeLoopPositions(similarPosRel, precedingElement + 1,
+							relativeInRange - 1));
+				}
+				precedingElement = relativeInRange;
+			}
+			current = precedingElement + 1;
 		}
 		return result;
 	}
