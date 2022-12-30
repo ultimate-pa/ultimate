@@ -298,7 +298,7 @@ public class JordanLoopAcceleration {
 			for (final Term entry : triple.getSecond()) {
 				for (final TermVariable tv : Arrays.asList(entry.getFreeVars())) {
 					if (SmtSortUtils.isArraySort(tv.getSort())) {
-						throw new UnsupportedOperationException("ArrayIndex contains modified variable");
+						throw new UnsupportedOperationException("ArrayIndex contains modified array variable");
 					}
 				}
 			}
