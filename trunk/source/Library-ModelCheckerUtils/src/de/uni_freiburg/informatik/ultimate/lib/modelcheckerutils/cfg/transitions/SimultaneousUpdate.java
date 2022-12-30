@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -170,8 +171,8 @@ public class SimultaneousUpdate {
 					assert rhs.getFirst() == null ^ rhs.getSecond() == null;
 					if (rhs.getSecond() != null) {
 						throw new SimultaneousUpdateException(String.format(
-								" Reasons: %s. Cannot find an inVar-based term that is equivalent to %s's outVar %s in TransFormula %s.",
-								rhs.getSecond(), pv, outVar, tf));
+								" Reasons: %s. Size: %s. Cannot find an inVar-based term that is equivalent to %s's outVar %s in TransFormula %s.",
+								rhs.getSecond(), new DAGSize().treesize(tf.getFormula()), pv, outVar, tf));
 					}
 					final Term renamed = rhs.getFirst();
 					if (SmtSortUtils.isArraySort(pv.getSort())) {
