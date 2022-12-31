@@ -125,7 +125,7 @@ public class JordanLoopAcceleration {
 			su = SimultaneousUpdate.fromTransFormula(services, loopTransFormula, mgdScript);
 		} catch (final SimultaneousUpdateException e) {
 			final JordanLoopAccelerationStatisticsGenerator jlasg =
-					new JordanLoopAccelerationStatisticsGenerator(-1, -1, -1, -1, new NestedMap2<>());
+					new JordanLoopAccelerationStatisticsGenerator(-1, -1, -1, -1, new NestedMap2<>(), e.getMessage());
 			return new JordanLoopAccelerationResult(
 					JordanLoopAccelerationResult.AccelerationStatus.SIMULTANEOUS_UPDATE_FAILED, e.getMessage(), null,
 					jlasg);
@@ -136,9 +136,10 @@ public class JordanLoopAcceleration {
 
 		final Set<Sort> nonIntegerSorts = getNonIntegerSorts(su.getDeterministicAssignment().keySet());
 		if (!nonIntegerSorts.isEmpty()) {
-			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
-					numberOfAssignedVariables, numberOfHavocedVariables, numberOfArrayWrites, -1, new NestedMap2<>());
 			final String errorMessage = "Some updated variables are of non-integer sorts : " + nonIntegerSorts;
+			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
+					numberOfAssignedVariables, numberOfHavocedVariables, numberOfArrayWrites, -1, new NestedMap2<>(),
+					errorMessage);
 			return new JordanLoopAccelerationResult(JordanLoopAccelerationResult.AccelerationStatus.NONINTEGER_UPDATE,
 					errorMessage, null, jlasg);
 		}
@@ -163,7 +164,7 @@ public class JordanLoopAcceleration {
 			assert pair.getSecond() != null;
 			final JordanLoopAccelerationStatisticsGenerator jlasg =
 					new JordanLoopAccelerationStatisticsGenerator(numberOfAssignedVariables,
-							numberOfHavocedVariables, numberOfArrayWrites, -1, new NestedMap2<>());
+							numberOfHavocedVariables, numberOfArrayWrites, -1, new NestedMap2<>(), pair.getSecond());
 			return new JordanLoopAccelerationResult(
 					JordanLoopAccelerationResult.AccelerationStatus.NONLINEAR_UPDATE, pair.getSecond(), null, jlasg);
 		}
@@ -179,7 +180,7 @@ public class JordanLoopAcceleration {
 		if (jordanUpdate.getStatus() == JordanTransformationStatus.UNSUPPORTED_EIGENVALUES) {
 			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
 					numberOfAssignedVariables, numberOfHavocedVariables, numberOfArrayWrites, numberOfReadonlyVariables,
-					new NestedMap2<>());
+					new NestedMap2<>(), "Unsupported eigenvalues");
 			return new JordanLoopAccelerationResult(
 					JordanLoopAccelerationResult.AccelerationStatus.UNSUPPORTED_EIGENVALUES, null, null, jlasg);
 		}
@@ -188,12 +189,21 @@ public class JordanLoopAcceleration {
 
 		final boolean isAlternatingClosedFormRequired = JordanAcceleratedUpdate
 				.isAlternatingClosedFormRequired(jordanUpdate);
-		final UnmodifiableTransFormula loopAccelerationFormula = createLoopAccelerationFormula(logger, services,
-				mgdScript, su, pair.getFirst(), varMatrixIndexMap, jordanUpdate, loopTransFormula, quantifyItFinExplicitly,
-				isAlternatingClosedFormRequired);
+		final UnmodifiableTransFormula loopAccelerationFormula;
+		try {
+			loopAccelerationFormula = createLoopAccelerationFormula(logger, services,
+					mgdScript, su, pair.getFirst(), varMatrixIndexMap, jordanUpdate, loopTransFormula, quantifyItFinExplicitly,
+					isAlternatingClosedFormRequired);
+		} catch (final UnsupportedOperationException uoe) {
+			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
+					numberOfAssignedVariables, numberOfHavocedVariables, numberOfArrayWrites, numberOfReadonlyVariables,
+					jordanUpdate.getJordanBlockSizes(), uoe.getMessage());
+			return new JordanLoopAccelerationResult(
+					JordanLoopAccelerationResult.AccelerationStatus.OTHER, null, null, jlasg);
+		}
 		final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
 				numberOfAssignedVariables, numberOfHavocedVariables, numberOfArrayWrites, numberOfReadonlyVariables,
-				jordanUpdate.getJordanBlockSizes());
+				jordanUpdate.getJordanBlockSizes(), "");
 		if (isAlternatingClosedFormRequired) {
 			jlasg.reportAlternatingAcceleration();
 		} else {
@@ -1189,7 +1199,7 @@ public class JordanLoopAcceleration {
 
 	public static class JordanLoopAccelerationResult {
 		public enum AccelerationStatus {
-			SUCCESS, SIMULTANEOUS_UPDATE_FAILED, NONINTEGER_UPDATE, NONLINEAR_UPDATE, UNSUPPORTED_EIGENVALUES,
+			SUCCESS, SIMULTANEOUS_UPDATE_FAILED, NONINTEGER_UPDATE, NONLINEAR_UPDATE, UNSUPPORTED_EIGENVALUES, OTHER,
 		};
 
 		private final AccelerationStatus mAccelerationStatus;

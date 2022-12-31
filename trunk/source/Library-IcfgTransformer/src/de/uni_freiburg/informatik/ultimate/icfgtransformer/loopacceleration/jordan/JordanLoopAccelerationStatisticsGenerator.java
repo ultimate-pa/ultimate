@@ -42,10 +42,11 @@ public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDat
 	private int mSequentialAcceleration;
 	private int mQuantifierFreeResult;
 	private int mAlternatingAcceleration;
+	private final String mErrorMessage;
 
 	public JordanLoopAccelerationStatisticsGenerator(final int numberOfAssignedVariables,
 			final int numberOfHavocedVariables, final int numberOfArrayWrites, final int numberOfReadonlyVariables,
-			final NestedMap2<Integer, Integer, Integer> eigenvalues) {
+			final NestedMap2<Integer, Integer, Integer> eigenvalues, final String errorMessage) {
 		super();
 		mNumberOfAssignedVariables = numberOfAssignedVariables;
 		mNumberOfHavocedVariables = numberOfHavocedVariables;
@@ -55,6 +56,7 @@ public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDat
 		mSequentialAcceleration = 0;
 		mQuantifierFreeResult = 0;
 		mAlternatingAcceleration = 0;
+		mErrorMessage = errorMessage;
 	}
 
 	@Override
@@ -77,6 +79,8 @@ public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDat
 			return mQuantifierFreeResult;
 		case AlternatingAcceleration:
 			return mAlternatingAcceleration;
+		case ErrorMessage:
+			return mErrorMessage;
 		default:
 			throw new AssertionError("unknown data");
 		}
