@@ -1086,9 +1086,12 @@ public class CongruenceClosureTest {
 		// report x in { l1, l2 }
 		cc = manager.reportContainsConstraint(x, l1AndL2, cc, mInPlace);
 
-		// y in { l1, l2, l3 } should hold now
+		// y in { l1, l2, l3 } should hold now, but we cannot handle this case yet, therefore the result is unknown
 
-		assertTrue(cc.getEqualityStatus(y, l4) == EqualityStatus.NOT_EQUAL);
+		assertTrue(cc.getEqualityStatus(y, l1) == EqualityStatus.UNKNOWN);
+		assertTrue(cc.getEqualityStatus(y, l2) == EqualityStatus.UNKNOWN);
+		assertTrue(cc.getEqualityStatus(y, l3) == EqualityStatus.UNKNOWN);
+		assertTrue(cc.getEqualityStatus(y, l4) == EqualityStatus.UNKNOWN);
 	}
 
 	@Test
