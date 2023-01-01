@@ -248,6 +248,7 @@ public class JordanLoopAcceleration {
 
 	private static Triple<AffineTerm, Set<Term>, String> extractLinearUpdate(final ManagedScript mgdScript,
 			final Set<TermVariable> termVariablesOfModified, final Entry<IProgramVar, Term> update) {
+		// TODO Matthias 20221222: Use AffineTermTransformer
 		final IPolynomialTerm polyRhs = (IPolynomialTerm) new PolynomialTermTransformer(mgdScript.getScript())
 				.transform(update.getValue());
 		final Map<Term, Rational> variables2coeffcient = new HashMap<>();
@@ -255,6 +256,11 @@ public class JordanLoopAcceleration {
 		for (final Entry<Monomial, Rational> entry : polyRhs.getMonomial2Coefficient().entrySet()) {
 			final Term monomialAsTerm = entry.getKey().toTerm(mgdScript.getScript());
 			if (!termVariablesOfModified.contains(monomialAsTerm)) {
+				// Monomial is neither an assigned variable nor a havoced variable. In case the
+				// monomial contains a subterm that is modified, this is not a linear update,
+				// otherwise we consider the monomial as a read-only variable. E.g., a select
+				// from a non-modified array at a non-modified index is a typical read-only
+				// variable.
 				final TermVariable termVariableOfModified = containsTermVariableOfModified(termVariablesOfModified,
 						monomialAsTerm);
 				if (termVariableOfModified != null) {
