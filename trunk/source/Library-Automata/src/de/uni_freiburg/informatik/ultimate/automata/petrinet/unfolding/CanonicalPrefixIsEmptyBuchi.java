@@ -1,12 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -14,7 +10,6 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Checks if complete finite prefix contains accepting lasso configuration.
@@ -81,6 +76,78 @@ public class CanonicalPrefixIsEmptyBuchi<LETTER, PLACE> {
 	 *
 	 * @throws PetriNetNot1SafeException
 	 */
+	private void investigateTypeThreeLassos() throws PetriNetNot1SafeException {
+		mLogger.info("Type 3 Lasso search started.");
+		final Set<Event<LETTER, PLACE>> acceptingEvents = new HashSet<>();
+		for (final Condition<LETTER, PLACE> condition : mCompletePrefix.getAcceptingConditions()) {
+			acceptingEvents.add(condition.getPredecessorEvent());
+		}
+		for (final Event<LETTER, PLACE> event : mCutoffEventsWithDistantCompanion) {
+			for (final Event<LETTER, PLACE> event2 : acceptingEvents) {
+				if (event.getLocalConfiguration().contains(event2)) {
+					furtherUnfoldFrom(event, event.getCompanion());
+				}
+			}
+
+		}
+		mLogger.info("Type 3 Lasso search ended.");
+	}
+
+	private void furtherUnfoldFrom(final Event<LETTER, PLACE> cutoff, final Event<LETTER, PLACE> companion)
+			throws PetriNetNot1SafeException {
+		final Set<Event<LETTER, PLACE>> acceptingEvents = new HashSet<>();
+		for (final Condition<LETTER, PLACE> condition : mCompletePrefix.getAcceptingConditions()) {
+			acceptingEvents.add(condition.getPredecessorEvent());
+		}
+		Event<LETTER, PLACE> currCompanionEvent = companion;
+		Event<LETTER, PLACE> currCutoffEvent = cutoff;
+		final List<Event<LETTER, PLACE>> followingEvents = new ArrayList<>();
+		boolean found = false;
+		boolean foundReal = false;
+		while (!found) {
+			final int size = followingEvents.size();
+			for (final Event<LETTER, PLACE> event : mCompletePrefix.getCutoffEvents()) {
+				if (event.getLocalConfiguration().contains(currCompanionEvent)) {
+					if (followingEvents.contains(event)) {
+						found = true;
+						break;
+					}
+					for (final Event<LETTER, PLACE> event2 : event.getLocalConfiguration()
+							.getSortedConfiguration(mCompletePrefix.getOrder())) {
+						if (event2.getLocalConfiguration().contains(currCompanionEvent)) {
+							followingEvents.add(event2);
+						}
+					}
+					currCompanionEvent = event.getCompanion();
+					currCutoffEvent = event;
+					if (currCutoffEvent == cutoff) {
+						found = true;
+						foundReal = true;
+						break;
+					}
+					continue;
+				}
+			}
+			if (followingEvents.size() == size) {
+				break;
+			}
+		}
+		if (foundReal && followingEvents.stream().anyMatch(acceptingEvents::contains)) {
+			final List<Event<LETTER, PLACE>> configLoopEvents = new ArrayList<>(followingEvents);
+			final List<Event<LETTER, PLACE>> configStemEvents =
+					new ArrayList<>(cutoff.getLocalConfiguration().getSortedConfiguration(mCompletePrefix.getOrder()));
+			if (checkIfLassoConfigurationAccepted(configLoopEvents, configStemEvents)) {
+				return;
+			}
+		}
+	}
+
+	/**
+	 * (edge case) Lasso word contained in local configuration where the stem-event of the Unfolding is an event
+	 * companion.
+	 *
+	 * @throws PetriNetNot1SafeException
+	 */
 	private void investigateTypeOneLassos() throws PetriNetNot1SafeException {
 		mLogger.info("Type 1 Lasso search started.");
 		for (final Event<LETTER, PLACE> event : mOriginLoopCutoffEvents) {
@@ -120,204 +187,6 @@ public class CanonicalPrefixIsEmptyBuchi<LETTER, PLACE> {
 			}
 		}
 		mLogger.info("Type 2 Lasso search ended.");
-	}
-
-	/**
-	 * Lasso word contained in partial configuration
-	 *
-	 * @throws PetriNetNot1SafeException
-	 */
-	private void investigateTypeThreeLassos() throws PetriNetNot1SafeException {
-		mLogger.info("Type 3 Lasso search started.");
-		// First denote for all companion events of the cutoff events we investigate, if they can even reach an
-		// accepting event.
-		final Set<Event<LETTER, PLACE>> acceptingEvents = new HashSet<>();
-		for (final Condition<LETTER, PLACE> condition : mCompletePrefix.getAcceptingConditions()) {
-			acceptingEvents.add(condition.getPredecessorEvent());
-		}
-		final Set<Event<LETTER, PLACE>> needReachableInformationAcc = new HashSet<>(acceptingEvents);
-		for (final Event<LETTER, PLACE> event : mCutoffEventsWithDistantCompanion) {
-			needReachableInformationAcc.add(event.getCompanion());
-		}
-		final Map<Event<LETTER, PLACE>, Set<Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>>>> reachableCutoffsMapAccepting =
-				new HashMap<>();
-		for (final Event<LETTER, PLACE> accevent : acceptingEvents) {
-			fillReachableInformation(accevent, needReachableInformationAcc, reachableCutoffsMapAccepting);
-		}
-
-		// For every cutoff event check if its companion event can reach an accepting event and then the cutoff event
-		// itself.
-		// If that is the case, that partial configuration contains an accepting word.
-		int cutoffCounter = 0;
-		for (final Event<LETTER, PLACE> event : mCutoffEventsWithDistantCompanion) {
-			cutoffCounter += 1;
-			mLogger.info("Checking partial configuations of cutoff event " + cutoffCounter + " / "
-					+ mCutoffEventsWithDistantCompanion.size());
-
-			final Set<Event<LETTER, PLACE>> needReachableInformation = new HashSet<>(acceptingEvents);
-			needReachableInformation.add(event.getCompanion());
-			final Map<Event<LETTER, PLACE>, Set<Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>>>> reachableCutoffsMap =
-					new HashMap<>();
-			fillReachableInformation(event, needReachableInformation, reachableCutoffsMap);
-			if (reachableCutoffsMapAccepting.get(event.getCompanion()) == null
-					|| reachableCutoffsMap.get(event.getCompanion()) == null) {
-				continue;
-			}
-
-			// reachableCutoffsMapAccepting contains partial configurations of (event) companion and accepting
-			// conditions,
-			// reachableCutoffsMap contains partial configurations of accepting conditions and (event).
-			// If the concatination of two such partial configurations is a valid partial configuration,
-			// it contains a lasso word.
-			for (final Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>> pair : reachableCutoffsMapAccepting
-					.get(event.getCompanion())) {
-				if (acceptingEvents.contains(pair.getFirst()) && reachableCutoffsMap.get(pair.getFirst()) != null) {
-					for (final Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>> pair2 : reachableCutoffsMap
-							.get(pair.getFirst())) {
-						if (pair2.getFirst() == event && pair.getSecond().containsAll(pair2.getSecond())) {
-							if (buildAndCheckPartialConfig(event, pair, pair2)) {
-								return;
-							}
-						}
-					}
-				}
-			}
-		}
-		mLogger.info("Type 3 Lasso search ended.");
-	}
-
-	/**
-	 * Breadth first traversal of Unfolding, starting from (event) and going through every local configuration of cutoff
-	 * events linked by their companion events that we find during traversal (recursively). We mark every event of
-	 * interest, given with needReachableInformation, if it can build a partial configuration with (event). (in other
-	 * words if the transition in the net reflected by (event) is reachable from the transition reflected by the event
-	 * of interest, given the marking of the final state of the event of interest). The information for the described
-	 * full partial configurations is stored in the map.
-	 *
-	 * Stack used to simulate recursive tree traversal.
-	 *
-	 * @param event
-	 * @param needReachableInformation
-	 * @param reachableMap
-	 */
-	private void fillReachableInformation(final Event<LETTER, PLACE> event,
-			final Set<Event<LETTER, PLACE>> needReachableInformation,
-			final Map<Event<LETTER, PLACE>, Set<Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>>>> reachableMap) {
-		final Deque<Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>>> functionStack = new ArrayDeque<>();
-		final Set<Event<LETTER, PLACE>> alreadySeenEvents = new HashSet<>();
-		for (final Event<LETTER, PLACE> configEvent : event.getLocalConfiguration()) {
-			if (!(configEvent == event) && needReachableInformation.contains(configEvent)) {
-				if (reachableMap.get(configEvent) != null) {
-					final var newSet = reachableMap.get(configEvent);
-					newSet.add(new Pair<>(event, new ArrayList<>()));
-					reachableMap.put(configEvent, newSet);
-				} else {
-					final Set<Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>>> singleton = new HashSet<>();
-					singleton.add(new Pair<>(event, new ArrayList<>()));
-					reachableMap.put(configEvent, singleton);
-				}
-			}
-
-			if (configEvent.isCompanion()) {
-				alreadySeenEvents.add(configEvent);
-				for (final Event<LETTER, PLACE> cutoffevent : configEvent.getCutoffEventsThisIsCompanionTo()) {
-					final List<Event<LETTER, PLACE>> cutoffs = new ArrayList<>();
-					cutoffs.add(cutoffevent);
-					functionStack.push(new Pair<>(cutoffevent, cutoffs));
-				}
-			}
-		}
-
-		while (!functionStack.isEmpty()) {
-			final var currentEvent = functionStack.pop();
-			alreadySeenEvents.add(currentEvent.getFirst());
-			for (final Event<LETTER, PLACE> localConfigEvent : currentEvent.getFirst().getLocalConfiguration()) {
-				if (needReachableInformation.contains(localConfigEvent)) {
-					if (reachableMap.get(localConfigEvent) != null) {
-						final var newSet = reachableMap.get(localConfigEvent);
-						newSet.add(new Pair<>(event, currentEvent.getSecond()));
-						reachableMap.put(localConfigEvent, newSet);
-					} else {
-						final Set<Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>>> singleton = new HashSet<>();
-						singleton.add(new Pair<>(event, currentEvent.getSecond()));
-						reachableMap.put(localConfigEvent, singleton);
-					}
-				}
-				if (localConfigEvent.isCompanion()) {
-					for (final Event<LETTER, PLACE> cutoffevent : localConfigEvent.getCutoffEventsThisIsCompanionTo()) {
-						if (!alreadySeenEvents.contains(cutoffevent)) {
-							final List<Event<LETTER, PLACE>> cutoffs = new ArrayList<>(currentEvent.getSecond());
-							cutoffs.add(cutoffevent);
-							functionStack.push(new Pair<>(cutoffevent, cutoffs));
-						}
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * Hacky way to build the partial config given the result of a type 3 lasso off investigateCutOffs.
-	 *
-	 * @param event
-	 * @param pair
-	 *            Constains all cutoff events from (event) companion to cutoff event containing accepting condition in
-	 *            local config.
-	 * @param pair2
-	 *            Contains all cutoff events leading from (pair) cutoff events to (event) cutoff event.
-	 * @return Boolean representing if given partial configuration contains accepting lasso word.
-	 * @throws PetriNetNot1SafeException
-	 */
-	private boolean buildAndCheckPartialConfig(final Event<LETTER, PLACE> event,
-			final Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>> pair,
-			final Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>> pair2) throws PetriNetNot1SafeException {
-		final List<Event<LETTER, PLACE>> stemEvents = new ArrayList<>();
-		final List<Event<LETTER, PLACE>> loopEvents = new ArrayList<>();
-		Event<LETTER, PLACE> currentCompanionEvent = event.getCompanion();
-		for (int i = pair.getSecond().size() - 1; i >= 0; i--) {
-			if (i == pair.getSecond().size() - 1) {
-				for (final Event<LETTER, PLACE> configEvent : pair.getSecond().get(i).getLocalConfiguration()
-						.getSortedConfiguration(mCompletePrefix.getOrder())) {
-					if (configEvent.getLocalConfiguration().contains(currentCompanionEvent)
-							&& configEvent != currentCompanionEvent) {
-						loopEvents.add(configEvent);
-					} else {
-						stemEvents.add(configEvent);
-					}
-
-				}
-			} else {
-				for (final Event<LETTER, PLACE> configEvent : pair.getSecond().get(i).getLocalConfiguration()
-						.getSortedConfiguration(mCompletePrefix.getOrder())) {
-					if (configEvent.getLocalConfiguration().contains(currentCompanionEvent)
-							&& configEvent != currentCompanionEvent) {
-						loopEvents.add(configEvent);
-					}
-				}
-			}
-			currentCompanionEvent = pair.getSecond().get(i).getCompanion();
-		}
-		for (int i = pair2.getSecond().size() - 1; i >= 0; i--) {
-			for (final Event<LETTER, PLACE> configEvent : pair2.getSecond().get(i).getLocalConfiguration()
-					.getSortedConfiguration(mCompletePrefix.getOrder())) {
-				if (configEvent.getLocalConfiguration().contains(currentCompanionEvent)
-						&& configEvent != currentCompanionEvent) {
-					loopEvents.add(configEvent);
-				}
-			}
-			currentCompanionEvent = pair2.getSecond().get(i).getCompanion();
-		}
-		for (final Event<LETTER, PLACE> configEvent : event.getLocalConfiguration()
-				.getSortedConfiguration(mCompletePrefix.getOrder())) {
-			if (configEvent.getLocalConfiguration().contains(currentCompanionEvent)
-					&& configEvent != currentCompanionEvent) {
-				loopEvents.add(configEvent);
-			}
-		}
-		if (checkIfLassoConfigurationAccepted(loopEvents, stemEvents)) {
-			return true;
-		}
-		return false;
 	}
 
 	private final boolean checkIfLassoConfigurationAccepted(final List<Event<LETTER, PLACE>> configLoopPart,
