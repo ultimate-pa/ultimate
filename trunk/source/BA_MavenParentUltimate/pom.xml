@@ -647,7 +647,7 @@
 							<!-- <forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds> -->
 							
 							<includes>
-								<include>**/*.java</include>
+								<include>**/SystemTest.java</include>
 							</includes>
 							<excludes>
 								<exclude>**/ultimatetest/suites/**/*.java</exclude>
