@@ -21,8 +21,6 @@ package system;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -98,15 +96,11 @@ public class SystemTest {
 	}
 
 	@Parameters // (name = "{0}")
-	public static Collection<File> testFiles() throws URISyntaxException, FileNotFoundException {
+	public static Collection<File> testFiles() {
 		final Collection<File> testFiles = new ArrayList<>();
-
-		final String name = SystemTest.class.getPackage().getName();
-		final URL url = SystemTest.class.getClassLoader().getResource(name);
-		assert url.toURI().getScheme().equalsIgnoreCase("file") : "Invalid file " + url;
-		final File f = new File(url.toURI());
-		final File testDir = new File(f.getParentFile().getParentFile(), "test");
-		assert testDir.exists();
+		final File dir = new File(".").getAbsoluteFile().getParentFile();
+		final File testDir = new File(dir, "test");
+		assert testDir.exists() : testDir + " does not exist.";
 		final ArrayDeque<File> todo = new ArrayDeque<>();
 		todo.add(testDir);
 		while (!todo.isEmpty()) {
