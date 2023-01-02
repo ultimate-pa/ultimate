@@ -103,6 +103,7 @@ public class SystemTest {
 
 		final String name = SystemTest.class.getPackage().getName();
 		final URL url = SystemTest.class.getClassLoader().getResource(name);
+		assert url.toURI().getScheme().equalsIgnoreCase("file") : "Invalid file " + url;
 		final File f = new File(url.toURI());
 		final File testDir = new File(f.getParentFile().getParentFile(), "test");
 		assert testDir.exists();
