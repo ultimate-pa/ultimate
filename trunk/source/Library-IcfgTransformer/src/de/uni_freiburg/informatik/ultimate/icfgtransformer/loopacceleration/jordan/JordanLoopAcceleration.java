@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.LoopAccelerationUtils;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanAcceleratedUpdate.LinearUpdate;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanAccelerationUtils.LinearUpdate;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.QuadraticMatrix.JordanTransformationResult;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.QuadraticMatrix.JordanTransformationResult.JordanTransformationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
@@ -171,9 +171,9 @@ public class JordanLoopAcceleration {
 		final int numberOfReadonlyVariables = pair.getFirst().getReadonlyVariables().size();
 
 		// HashMap to get matrix index from TermVariable.
-		final HashMap<Term, Integer> varMatrixIndexMap = JordanAcceleratedUpdate
+		final HashMap<Term, Integer> varMatrixIndexMap = JordanAccelerationUtils
 				.determineMatrixIndices(pair.getFirst());
-		final QuadraticMatrix updateMatrix = JordanAcceleratedUpdate.computeUpdateMatrix(pair.getFirst(), varMatrixIndexMap);
+		final QuadraticMatrix updateMatrix = JordanAccelerationUtils.computeUpdateMatrix(pair.getFirst(), varMatrixIndexMap);
 
 		final JordanTransformationResult jordanUpdate = updateMatrix.constructJordanTransformation();
 
@@ -184,10 +184,10 @@ public class JordanLoopAcceleration {
 			return new JordanLoopAccelerationResult(
 					JordanLoopAccelerationResult.AccelerationStatus.UNSUPPORTED_EIGENVALUES, null, null, jlasg);
 		}
-		assert JordanAcceleratedUpdate.isBlockSizeConsistent(numberOfAssignedVariables, numberOfReadonlyVariables,
+		assert JordanAccelerationUtils.isBlockSizeConsistent(numberOfAssignedVariables, numberOfReadonlyVariables,
 				jordanUpdate) : "inconsistent blocksize";
 
-		final boolean isAlternatingClosedFormRequired = JordanAcceleratedUpdate
+		final boolean isAlternatingClosedFormRequired = JordanAccelerationUtils
 				.isAlternatingClosedFormRequired(jordanUpdate);
 		final UnmodifiableTransFormula loopAccelerationFormula;
 		try {
@@ -444,7 +444,7 @@ public class JordanLoopAcceleration {
 			final JordanTransformationResult jordanUpdate, final UnmodifiableTransFormula loopTransFormula,
 			final boolean quantifyItFinExplicitly, final boolean isAlternatingClosedFormRequired) {
 
-		final int sizeOfLargestEv0Block = JordanAcceleratedUpdate.computeSizeOfLargestEv0Block(jordanUpdate);
+		final int sizeOfLargestEv0Block = JordanAccelerationUtils.computeSizeOfLargestEv0Block(jordanUpdate);
 		assert sizeOfLargestEv0Block >= 0;
 
 		final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services);
@@ -463,7 +463,7 @@ public class JordanLoopAcceleration {
 					guards.add(guard);
 				}
 				final Term guard = SmtUtils.and(mgdScript.getScript(), guards);
-				final HashMap<TermVariable, Term> closedFormMap = JordanAcceleratedUpdate.constructClosedForm(mgdScript,
+				final HashMap<TermVariable, Term> closedFormMap = JordanAccelerationUtils.constructClosedForm(mgdScript,
 						linearUpdate, varMatrixIndexMap, jordanUpdate, i);
 				final ClosedFormOfUpdate closedFormForI = computeClosedFormOfUpdate(mgdScript, su, null, newInVars,
 						closedFormMap);
@@ -597,7 +597,7 @@ public class JordanLoopAcceleration {
 
 		final ClosedFormOfUpdate closedFormItFinTuple;
 		{
-			final HashMap<TermVariable, Term> closedFormMap = JordanAcceleratedUpdate.constructClosedForm(mgdScript,
+			final HashMap<TermVariable, Term> closedFormMap = JordanAccelerationUtils.constructClosedForm(mgdScript,
 					linearUpdate, varMatrixIndexMap, jordanUpdate, itFin, null, Iterations.ALL);
 			closedFormItFinTuple = computeClosedFormOfUpdate(mgdScript, su, itFin, loopTransFormula.getInVars(),
 					closedFormMap);
@@ -639,7 +639,7 @@ public class JordanLoopAcceleration {
 			final Term leftSideOfImpl = constructIterationRange(script, BigInteger.valueOf(firstIteration), it, BigInteger.ONE, itFin);
 			final ClosedFormOfUpdate closedFormIt;
 			{
-				final HashMap<TermVariable, Term> closedFormMap = JordanAcceleratedUpdate.constructClosedForm(mgdScript,
+				final HashMap<TermVariable, Term> closedFormMap = JordanAccelerationUtils.constructClosedForm(mgdScript,
 						linearUpdate, varMatrixIndexMap, jordanUpdate, it, null, Iterations.ALL);
 				closedFormIt = computeClosedFormOfUpdate(mgdScript, su, it, inVars, closedFormMap);
 			}
@@ -781,7 +781,7 @@ public class JordanLoopAcceleration {
 		if (k == 1) {
 			return guardTf.getFormula();
 		}
-		final HashMap<TermVariable, Term> closedFormMap = JordanAcceleratedUpdate.constructClosedForm(mgdScript,
+		final HashMap<TermVariable, Term> closedFormMap = JordanAccelerationUtils.constructClosedForm(mgdScript,
 				linearUpdate, varMatrixIndexMap, jordanUpdate, k-1);
 		final ClosedFormOfUpdate closedFormForK = computeClosedFormOfUpdate(mgdScript, su, null, inVars, closedFormMap);
 		return constructGuardAfterIntermediateIterations(mgdScript, havocedVars, guardTf,
@@ -908,7 +908,7 @@ public class JordanLoopAcceleration {
 		// (not (guard(closedFormEven(x, 2*itFinHalf))))
 		final ClosedFormOfUpdate closedFormEvenItFin;
 		{
-			final HashMap<TermVariable, Term> closedFormMap = JordanAcceleratedUpdate.constructClosedForm(mgdScript,
+			final HashMap<TermVariable, Term> closedFormMap = JordanAccelerationUtils.constructClosedForm(mgdScript,
 					linearUpdate, varMatrixIndexMap, jordanUpdate, null, itFinHalf, Iterations.EVEN);
 			closedFormEvenItFin = computeClosedFormOfUpdate(mgdScript, su, null,
 					inVars, closedFormMap);
@@ -918,7 +918,7 @@ public class JordanLoopAcceleration {
 
 		final ClosedFormOfUpdate closedFormOddItFin;
 		{
-			final HashMap<TermVariable, Term> closedFormMap = JordanAcceleratedUpdate.constructClosedForm(mgdScript,
+			final HashMap<TermVariable, Term> closedFormMap = JordanAccelerationUtils.constructClosedForm(mgdScript,
 					linearUpdate, varMatrixIndexMap, jordanUpdate, null, itFinHalf, Iterations.ODD);
 			closedFormOddItFin = computeClosedFormOfUpdate(mgdScript, su, null, inVars, closedFormMap);
 		}
@@ -935,7 +935,7 @@ public class JordanLoopAcceleration {
 		// (guard(closedFormEven(x, 2*itHalf)))
 		final ClosedFormOfUpdate closedFormEvenIt;
 		{
-			final HashMap<TermVariable, Term> closedFormMap = JordanAcceleratedUpdate.constructClosedForm(mgdScript,
+			final HashMap<TermVariable, Term> closedFormMap = JordanAccelerationUtils.constructClosedForm(mgdScript,
 					linearUpdate, varMatrixIndexMap, jordanUpdate, null, itHalf, Iterations.EVEN);
 			closedFormEvenIt = computeClosedFormOfUpdate(mgdScript, su, null,
 				inVars, closedFormMap);
@@ -954,7 +954,7 @@ public class JordanLoopAcceleration {
 		// (guard(closedFormOdd(x, 2*itHalf+1))
 		final ClosedFormOfUpdate closedFormOddIt;
 		{
-			final HashMap<TermVariable, Term> closedFormMap = JordanAcceleratedUpdate.constructClosedForm(mgdScript,
+			final HashMap<TermVariable, Term> closedFormMap = JordanAccelerationUtils.constructClosedForm(mgdScript,
 					linearUpdate, varMatrixIndexMap, jordanUpdate, null, itHalf, Iterations.ODD);
 			closedFormOddIt = computeClosedFormOfUpdate(mgdScript, su, null,
 				inVars, closedFormMap);

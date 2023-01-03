@@ -57,9 +57,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class JordanAcceleratedUpdate {
+public class JordanAccelerationUtils {
 
-	private JordanAcceleratedUpdate() {
+	private JordanAccelerationUtils() {
 		// do not instantiate
 	}
 
