@@ -867,19 +867,5 @@ public class QuadraticMatrix {
 		public NestedMap2<Integer, Integer, Integer> getJordanBlockSizes() {
 			return mJordanBlockSizes;
 		}
-
-		/**
-		 * Auxiliary method for filling the JordanBlockSizes.
-		 */
-		static void reportJordanBlock(final NestedMap2<Integer, Integer, Integer> jordanBlockSizes,
-				final int eigenvalue, final int blockSize) {
-			Integer occurence = jordanBlockSizes.get(eigenvalue, blockSize);
-			if (occurence == null) {
-				occurence = 1;
-			} else {
-				occurence++;
-			}
-			jordanBlockSizes.put(eigenvalue, blockSize, occurence);
-		}
 	}
 }
