@@ -42,8 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.LoopAccelerationUtils;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanAccelerationUtils.LinearUpdate;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.QuadraticMatrix.JordanTransformationResult;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.QuadraticMatrix.JordanTransformationResult.JordanTransformationStatus;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanUpdate.JordanTransformationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate.SimultaneousUpdateException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
@@ -175,7 +174,7 @@ public class JordanLoopAcceleration {
 				.determineMatrixIndices(pair.getFirst());
 		final QuadraticMatrix updateMatrix = JordanAccelerationUtils.computeUpdateMatrix(pair.getFirst(), varMatrixIndexMap);
 
-		final JordanTransformationResult jordanUpdate = updateMatrix.constructJordanTransformation();
+		final JordanUpdate jordanUpdate = updateMatrix.constructJordanTransformation();
 
 		if (jordanUpdate.getStatus() == JordanTransformationStatus.UNSUPPORTED_EIGENVALUES) {
 			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
@@ -441,7 +440,7 @@ public class JordanLoopAcceleration {
 	private static UnmodifiableTransFormula createLoopAccelerationFormula(final ILogger logger,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final SimultaneousUpdate su,
 			final LinearUpdate linearUpdate, final HashMap<Term, Integer> varMatrixIndexMap,
-			final JordanTransformationResult jordanUpdate, final UnmodifiableTransFormula loopTransFormula,
+			final JordanUpdate jordanUpdate, final UnmodifiableTransFormula loopTransFormula,
 			final boolean quantifyItFinExplicitly, final boolean isAlternatingClosedFormRequired) {
 
 		final int sizeOfLargestEv0Block = JordanAccelerationUtils.computeSizeOfLargestEv0Block(jordanUpdate);
@@ -587,7 +586,7 @@ public class JordanLoopAcceleration {
 	 */
 	private static Term createLoopAccelerationTermSequential(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final SimultaneousUpdate su, final LinearUpdate linearUpdate,
-			final HashMap<Term, Integer> varMatrixIndexMap, final JordanTransformationResult jordanUpdate,
+			final HashMap<Term, Integer> varMatrixIndexMap, final JordanUpdate jordanUpdate,
 			final UnmodifiableTransFormula loopTransFormula, final UnmodifiableTransFormula guardTf,
 			final TermVariable itFin, final Map<IProgramVar, TermVariable> inVars, final int firstIteration) {
 		if (firstIteration < 1) {
@@ -773,7 +772,7 @@ public class JordanLoopAcceleration {
 	private static Term constructGuardForFixedIteration(final ManagedScript mgdScript,
 			final Set<IProgramVar> havocedVars, final UnmodifiableTransFormula guardTf, final int k,
 			final LinearUpdate linearUpdate, final HashMap<Term, Integer> varMatrixIndexMap,
-			final JordanTransformationResult jordanUpdate, final SimultaneousUpdate su,
+			final JordanUpdate jordanUpdate, final SimultaneousUpdate su,
 			final Map<IProgramVar, TermVariable> inVars) {
 		if (k < 1) {
 			throw new IllegalArgumentException();
@@ -895,7 +894,7 @@ public class JordanLoopAcceleration {
 	private static Term createLoopAccelerationTermAlternating(final ILogger logger,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final SimultaneousUpdate su, final LinearUpdate linearUpdate,
-			final HashMap<Term, Integer> varMatrixIndexMap, final JordanTransformationResult jordanUpdate,
+			final HashMap<Term, Integer> varMatrixIndexMap, final JordanUpdate jordanUpdate,
 			final UnmodifiableTransFormula loopTransFormula, final UnmodifiableTransFormula guardTf,
 			final TermVariable itFinHalf, final Map<IProgramVar, TermVariable> inVars) {
 

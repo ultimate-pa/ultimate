@@ -34,7 +34,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAcceleration.Iterations;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.QuadraticMatrix.JordanTransformationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
@@ -164,7 +163,7 @@ public class JordanAccelerationUtils {
 	 * @return true iff -1 is an eigenvalue or for eigenvalue 1 there is a Jordan
 	 *         block of size greater than 2.
 	 */
-	static boolean isAlternatingClosedFormRequired(final JordanTransformationResult jordanUpdate) {
+	static boolean isAlternatingClosedFormRequired(final JordanUpdate jordanUpdate) {
 		final boolean minus1isEigenvalue = jordanUpdate.getJordanBlockSizes().containsKey(-1);
 		final boolean ev1hasBlockGreater2 = hasEv1JordanBlockStrictlyGreater2(jordanUpdate);
 		return (minus1isEigenvalue || ev1hasBlockGreater2);
@@ -174,7 +173,7 @@ public class JordanAccelerationUtils {
 	 * @return true iff there is some Jordan block for eigenvalue 1 whose size is
 	 *         strictly greater than 2
 	 */
-	private static boolean hasEv1JordanBlockStrictlyGreater2(final JordanTransformationResult jordanUpdate) {
+	private static boolean hasEv1JordanBlockStrictlyGreater2(final JordanUpdate jordanUpdate) {
 		boolean ev1hasBlockGreater2 = false;
 		for (final int blockSize : jordanUpdate.getJordanBlockSizes().get(1).keySet()) {
 			if (blockSize > 2 && (jordanUpdate.getJordanBlockSizes().get(1).get(blockSize) != 0)) {
@@ -184,7 +183,7 @@ public class JordanAccelerationUtils {
 		return ev1hasBlockGreater2;
 	}
 
-	static int computeSizeOfLargestEv0Block(final JordanTransformationResult jordanUpdate) {
+	static int computeSizeOfLargestEv0Block(final JordanUpdate jordanUpdate) {
 		final NestedMap2<Integer, Integer, Integer> blockSizes = jordanUpdate.getJordanBlockSizes();
 		if (!blockSizes.containsKey(0)) {
 			return 0;
@@ -206,7 +205,7 @@ public class JordanAccelerationUtils {
 	 */
 	static HashMap<TermVariable, Term> constructClosedForm(final ManagedScript mgdScript,
 			final LinearUpdate linearUpdate, final HashMap<Term, Integer> varMatrixIndexMap,
-			final JordanTransformationResult jordanUpdate, final TermVariable it, final TermVariable itHalf,
+			final JordanUpdate jordanUpdate, final TermVariable it, final TermVariable itHalf,
 			final Iterations itKind) {
 		final IPolynomialTerm itc = constructIterationCounter(mgdScript.getScript(), itKind, it, itHalf);
 		// Compute matrix that represents closed form.
@@ -223,7 +222,7 @@ public class JordanAccelerationUtils {
 	 */
 	static HashMap<TermVariable, Term> constructClosedForm(final ManagedScript mgdScript,
 			final LinearUpdate linearUpdate, final HashMap<Term, Integer> varMatrixIndexMap,
-			final JordanTransformationResult jordanUpdate, final int k) {
+			final JordanUpdate jordanUpdate, final int k) {
 		// Compute matrix that represents closed form.
 		final PolynomialTermMatrix closedFormMatrix = PolynomialTermMatrix.computeClosedFormMatrix(mgdScript,
 				jordanUpdate, k);
@@ -305,7 +304,7 @@ public class JordanAccelerationUtils {
 	 * that are added in the loop).
 	 */
 	static boolean isBlockSizeConsistent(final int numberOfAssignedVariables, final int numberOfReadonlyVariables,
-			final JordanTransformationResult jordanUpdate) {
+			final JordanUpdate jordanUpdate) {
 		int blockSizeSum = 0;
 		for (final Triple<Integer, Integer, Integer> triple : jordanUpdate.getJordanBlockSizes().entrySet()) {
 			blockSizeSum += triple.getSecond() * triple.getThird();

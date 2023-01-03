@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jor
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAcceleration.Iterations;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.QuadraticMatrix.JordanTransformationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
@@ -226,7 +225,7 @@ public class PolynomialTermMatrix {
 	 * Create the it-th power of a Jordan matrix out of the Jordan matrix.
 	 */
 	public static PolynomialTermMatrix jordan2JordanPower(final ManagedScript mgdScript, final IPolynomialTerm itc,
-			final Iterations itKind, final JordanTransformationResult jordan) {
+			final Iterations itKind, final JordanUpdate jordan) {
 		final int n = jordan.getJnf().getDimension();
 		final PolynomialTermMatrix jordanPower = constructConstantZeroMatrix(mgdScript, n);
 		final NestedMap2<Integer, Integer, Integer> jordanBlockSizes = jordan.getJordanBlockSizes();
@@ -252,7 +251,7 @@ public class PolynomialTermMatrix {
 	 * Computes matrix that represents closed form for `itc` iterations.
 	 */
 	public static PolynomialTermMatrix computeClosedFormMatrix(final ManagedScript mgdScript,
-			final JordanTransformationResult jordanUpdate, final IPolynomialTerm itc, final Iterations itKind) {
+			final JordanUpdate jordanUpdate, final IPolynomialTerm itc, final Iterations itKind) {
 		final int n = jordanUpdate.getJnf().getDimension();
 		final Script script = mgdScript.getScript();
 		final RationalMatrix modalUpdate = jordanUpdate.getModal();
@@ -270,7 +269,7 @@ public class PolynomialTermMatrix {
 	 * with itself.
 	 */
 	public static PolynomialTermMatrix computeClosedFormMatrix(final ManagedScript mgdScript,
-			final JordanTransformationResult jordanUpdate, final int k) {
+			final JordanUpdate jordanUpdate, final int k) {
 		final Script script = mgdScript.getScript();
 		final RationalMatrix modalUpdate = jordanUpdate.getModal();
 		final RationalMatrix inverseModalUpdate = jordanUpdate.getInverseModal();
