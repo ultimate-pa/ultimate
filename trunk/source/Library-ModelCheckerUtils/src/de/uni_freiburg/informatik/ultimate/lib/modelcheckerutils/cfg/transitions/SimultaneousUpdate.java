@@ -291,6 +291,10 @@ public class SimultaneousUpdate {
 			} else if (conjunct instanceof ApplicationTerm) {
 				final ApplicationTerm appTerm = (ApplicationTerm) conjunct;
 				switch (appTerm.getFunction().getName()) {
+				case "or": {
+					updateImpediments.add(ExtractionImpediments.DISJUNCTION);
+					continue;
+				}
 				case "=":
 					final BinaryEqualityRelation ber = BinaryEqualityRelation.convert(appTerm);
 					assert ber != null : "Must succeed for equality";
