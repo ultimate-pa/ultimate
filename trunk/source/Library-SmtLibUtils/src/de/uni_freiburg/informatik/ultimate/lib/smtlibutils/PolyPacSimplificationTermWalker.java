@@ -81,7 +81,7 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a
 	 * select term `(select a k)`.)
 	 */
-	private static final boolean APPLY_CONSTANT_FOLDING = true;
+	private static final boolean APPLY_CONSTANT_FOLDING = false;
 	private static final boolean DEBUG_CHECK_RESULT = false;
 
 	private PolyPacSimplificationTermWalker(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
