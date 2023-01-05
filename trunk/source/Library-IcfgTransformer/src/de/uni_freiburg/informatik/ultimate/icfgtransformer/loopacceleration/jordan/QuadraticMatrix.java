@@ -593,9 +593,13 @@ public class QuadraticMatrix {
 	 * Computes the jordan matrix of a given quadratic matrix given jordanBlockSizes which contains triples (eigenvalue,
 	 * blocksize, occurrence). This method also works for integral eigenvalues not equal to -1,0 or 1, only need to
 	 * change eigenvalues array.
+	 * @param linearUpdate
 	 */
 	public JordanUpdate constructJordanTransformation() {
 		final int n = mDimension;
+		if (n >= 11) {
+			throw new AssertionError("Too many dimensions " + n);
+		}
 		final QuadraticMatrix jordanMatrix = constructZeroMatrix(n);
 		final NestedMap2<Integer, Integer, Integer> jordanBlockSizes = computeJordanBlockSizes();
 		JordanTransformationStatus status;
@@ -613,7 +617,7 @@ public class QuadraticMatrix {
 				}
 			}
 		}
-		JordanUpdate jtr;
+		final JordanUpdate jtr;
 		if (current != n) {
 			status = JordanTransformationStatus.UNSUPPORTED_EIGENVALUES;
 			jtr = new JordanUpdate(status, null, null, null, null);

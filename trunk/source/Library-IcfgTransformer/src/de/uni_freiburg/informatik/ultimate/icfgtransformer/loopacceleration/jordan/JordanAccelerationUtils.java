@@ -26,22 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAcceleration.Iterations;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -60,103 +48,6 @@ public class JordanAccelerationUtils {
 
 	private JordanAccelerationUtils() {
 		// do not instantiate
-	}
-
-	/**
-	 * Go through terms, get all variables and create a hash map varMatrixIndex with
-	 * variables as key and corresponding matrix index as value to save which column
-	 * corresponds to which variable and which row corresponds to which update.
-	 */
-	static HashMap<Term, Integer> determineMatrixIndices(final LinearUpdate linearUpdate) {
-		final HashMap<Term, Integer> varMatrixIndex = new HashMap<>();
-		int i = 0;
-		// add all updated variables.
-		for (final TermVariable updatedVar : linearUpdate.getUpdateMap().keySet()) {
-			assert !varMatrixIndex.containsKey(updatedVar) : "cannot add same variable twice";
-			varMatrixIndex.put(updatedVar, i);
-			i++;
-		}
-		// add all variables that are only read in updates
-		for (final Term var : linearUpdate.getReadonlyVariables()) {
-			assert !varMatrixIndex.containsKey(var) : "cannot add same variable twice";
-			varMatrixIndex.put(var, i);
-			i++;
-		}
-		return varMatrixIndex;
-	}
-
-	/**
-	 * Compute the update matrix out of the simultaneous update.
-	 */
-	static QuadraticMatrix computeUpdateMatrix(final LinearUpdate linearUpdate,
-			final HashMap<Term, Integer> varMatrixIndexMap) {
-		final int n = varMatrixIndexMap.size() + 1;
-		// Initialize update matrix with identity matrix (every variable assigned to
-		// itself).
-		final QuadraticMatrix updateMatrix = QuadraticMatrix.constructIdentityMatrix(n);
-		// Fill update matrix.
-		for (final Entry<TermVariable, AffineTerm> update : linearUpdate.getUpdateMap().entrySet()) {
-			fillMatrixRow(updateMatrix, varMatrixIndexMap, update.getValue(), update.getKey());
-			for (int j = 0; j < n; j++) {
-				if (updateMatrix.getEntry(varMatrixIndexMap.get(update.getKey()), j) == null) {
-					return null;
-				}
-			}
-		}
-		return updateMatrix;
-	}
-
-	/**
-	 * Fills the row corresponding to variable of the updateMatrix where variable is
-	 * updated with polyRhs.
-	 */
-	private static void fillMatrixRow(final QuadraticMatrix updateMatrix,
-			final HashMap<Term, Integer> varMatrixIndexMap, final AffineTerm affineRhs, final TermVariable tv) {
-
-		final int n = updateMatrix.getDimension() - 1;
-		updateMatrix.setEntry(n, n, BigInteger.valueOf(1));
-		// Set diagonal entry to 0 for case variable assignment does not depend on
-		// variable itself
-		// (matrix was initialized as identity matrix).
-		updateMatrix.setEntry(varMatrixIndexMap.get(tv), varMatrixIndexMap.get(tv), BigInteger.valueOf(0));
-
-		// Fill row.
-		for (final Term termVar : varMatrixIndexMap.keySet()) {
-			updateMatrix.setEntry(varMatrixIndexMap.get(tv), varMatrixIndexMap.get(termVar),
-					determineCoefficient(affineRhs, termVar));
-			if (updateMatrix.getEntry(varMatrixIndexMap.get(tv), varMatrixIndexMap.get(termVar)) == null) {
-				// not a linear term.
-				break;
-			}
-			updateMatrix.setEntry(varMatrixIndexMap.get(tv), n, determineConstant(affineRhs));
-		}
-	}
-
-	/**
-	 * Determine the coefficient of termVar in the {@link AffineTerm} affineRhs.
-	 */
-	private static BigInteger determineCoefficient(final AffineTerm affineRhs, final Term termVar) {
-		final Rational coefficient = affineRhs.getVariable2Coefficient().get(termVar);
-		if (coefficient != null) {
-			if (!coefficient.isIntegral()) {
-				throw new AssertionError("Some coefficient is not integral.");
-			}
-			return coefficient.numerator();
-
-		} else {
-			return BigInteger.ZERO;
-		}
-	}
-
-	/**
-	 * Determine the constant term in the polynomial polyRhs.
-	 */
-	private static BigInteger determineConstant(final IPolynomialTerm polyRhs) {
-		final Rational constant = polyRhs.getConstant();
-		if (!constant.denominator().equals(BigInteger.valueOf(1))) {
-			throw new AssertionError("Constant in some term is not integral.");
-		}
-		return constant.numerator();
 	}
 
 	/**
@@ -200,105 +91,6 @@ public class JordanAccelerationUtils {
 	}
 
 	/**
-	 * Construct map that assigns to the default TermVariable its closed from, where each
-	 * variable in the closed form is represented by its default TermVariable.
-	 */
-	static HashMap<TermVariable, Term> constructClosedForm(final ManagedScript mgdScript,
-			final LinearUpdate linearUpdate, final HashMap<Term, Integer> varMatrixIndexMap,
-			final JordanUpdate jordanUpdate, final TermVariable it, final TermVariable itHalf,
-			final Iterations itKind) {
-		final IPolynomialTerm itc = constructIterationCounter(mgdScript.getScript(), itKind, it, itHalf);
-		// Compute matrix that represents closed form.
-		final PolynomialTermMatrix closedFormMatrix = PolynomialTermMatrix.computeClosedFormMatrix(mgdScript,
-				jordanUpdate, itc, itKind);
-		final HashMap<TermVariable, Term> closedFormMap = constructClosedForm(mgdScript, closedFormMatrix, linearUpdate,
-				varMatrixIndexMap);
-		return closedFormMap;
-	}
-
-	/**
-	 * Construct map that assigns to the default TermVariable its closed from, where each
-	 * variable in the closed form is represented by its default TermVariable.
-	 */
-	static HashMap<TermVariable, Term> constructClosedForm(final ManagedScript mgdScript,
-			final LinearUpdate linearUpdate, final HashMap<Term, Integer> varMatrixIndexMap,
-			final JordanUpdate jordanUpdate, final int k) {
-		// Compute matrix that represents closed form.
-		final PolynomialTermMatrix closedFormMatrix = PolynomialTermMatrix.computeClosedFormMatrix(mgdScript,
-				jordanUpdate, k);
-		final HashMap<TermVariable, Term> closedFormMap = constructClosedForm(mgdScript, closedFormMatrix, linearUpdate,
-				varMatrixIndexMap);
-		return closedFormMap;
-	}
-
-	private static HashMap<TermVariable, Term> constructClosedForm(final ManagedScript mgdScript,
-			final PolynomialTermMatrix closedFormMatrix, final LinearUpdate linearUpdate,
-			final HashMap<Term, Integer> var2MatrixIndex) {
-		// Array to get TermVariable from matrix index.
-		final Term[] matrixIndex2Var = new Term[var2MatrixIndex.size()];
-		for (final Term var : var2MatrixIndex.keySet()) {
-			matrixIndex2Var[var2MatrixIndex.get(var)] = var;
-		}
-		final HashMap<TermVariable, Term> closedForm = new HashMap<>();
-		for (final TermVariable tv : linearUpdate.getUpdateMap().keySet()) {
-			final Term sum = constructClosedForm(mgdScript, closedFormMatrix, var2MatrixIndex, matrixIndex2Var, tv);
-			closedForm.put(tv, sum);
-		}
-		return closedForm;
-	}
-
-	private static Term constructClosedForm(final ManagedScript mgdScript, final PolynomialTermMatrix closedFormMatrix,
-			final HashMap<Term, Integer> var2MatrixIndex, final Term[] matrixIndex2Var, final TermVariable tv) {
-		final int varIndex = var2MatrixIndex.get(tv);
-		final int n = closedFormMatrix.getDimension();
-		final Term[] summands = new Term[n];
-		int current = 0;
-		for (int j = 0; j < n - 1; j++) {
-			// Ignore if matrix entry is 0.
-			if (closedFormMatrix.getEntry(varIndex, j).isConstant()) {
-				final Rational entryRational = closedFormMatrix.getEntry(varIndex, j).getConstant();
-				if (entryRational.numerator().intValue() == 0) {
-					continue;
-				}
-			}
-			// If matrix entry is 1, only add variable.
-			if (closedFormMatrix.getEntry(varIndex, j).isConstant()) {
-				final Rational entryRational = closedFormMatrix.getEntry(varIndex, j).getConstant();
-				if (entryRational.numerator().intValue() == 1 && entryRational.denominator().intValue() == 1) {
-					summands[current] = matrixIndex2Var[j];
-				} else {
-					summands[current] = mgdScript.getScript().term("*",
-							closedFormMatrix.getEntry(varIndex, j).toTerm(mgdScript.getScript()), matrixIndex2Var[j]);
-				}
-			} else {
-				summands[current] = mgdScript.getScript().term("*",
-						closedFormMatrix.getEntry(varIndex, j).toTerm(mgdScript.getScript()), matrixIndex2Var[j]);
-			}
-			current = current + 1;
-		}
-		// Add constant term if it is not zero.
-		if (closedFormMatrix.getEntry(varIndex, n - 1).isConstant()) {
-			final Rational entryRational = closedFormMatrix.getEntry(varIndex, n - 1).getConstant();
-			if (entryRational.numerator().intValue() != 0) {
-				summands[current] = closedFormMatrix.getEntry(varIndex, n - 1).toTerm(mgdScript.getScript());
-				current = current + 1;
-			}
-		} else {
-			summands[current] = closedFormMatrix.getEntry(varIndex, n - 1).toTerm(mgdScript.getScript());
-			current = current + 1;
-		}
-		Term sum = mgdScript.getScript().numeral(BigInteger.ZERO);
-		if (current == 0) {
-			sum = mgdScript.getScript().numeral(BigInteger.ZERO);
-		} else if (current == 1) {
-			sum = summands[0];
-		} else {
-			sum = mgdScript.getScript().term("+", Arrays.copyOfRange(summands, 0, current));
-		}
-		return sum;
-	}
-
-	/**
 	 * The sum of the sizes of all block is the sum of the number of assigned scalar
 	 * variables, the number of readonly variables and one (one is for the numbers
 	 * that are added in the loop).
@@ -312,39 +104,7 @@ public class JordanAccelerationUtils {
 		return (numberOfAssignedVariables + numberOfReadonlyVariables + 1 == blockSizeSum);
 	}
 
-	/**
-	 * Construct an {@link IPolynomialTerm} that represents the current iteration
-	 * (which is also the exponent of the Jordan matrix that we construct). The
-	 * result can be
-	 * <li>`it` (can represent all iterations)
-	 * <li>`2*itHalf` (can represent even iterations)
-	 * <li>`2*itHalf+1` (can represent odd iterations)
-	 *
-	 * Note: We have to distinguish even and odd transitions
-	 * <li> if some eigenvalue is negative (currently we only support -1) or
-	 * <li> if some Jordan block is greater than 2.
-	 */
-	private static IPolynomialTerm constructIterationCounter(final Script script, final Iterations itKind,
-			final TermVariable it, final TermVariable itHalf) {
-		final Sort sort = SmtSortUtils.getIntSort(script);
-		final IPolynomialTerm result;
-		switch (itKind) {
-		case ALL:
-			result = AffineTerm.constructVariable(it);
-			break;
-		case EVEN:
-			result = PolynomialTerm.mulPolynomials(AffineTerm.constructConstant(sort, Rational.TWO),
-					AffineTerm.constructVariable(itHalf));
-			break;
-		case ODD:
-			result = PolynomialTerm.sum(PolynomialTerm.mulPolynomials(AffineTerm.constructConstant(sort, Rational.TWO),
-					AffineTerm.constructVariable(itHalf)), AffineTerm.constructConstant(sort, Rational.ONE));
-			break;
-		default:
-			throw new AssertionError("unknown value: " + itKind);
-		}
-		return result;
-	}
+
 
 	public static class LinearUpdate {
 		Map<TermVariable, AffineTerm> mUpdateMap;
