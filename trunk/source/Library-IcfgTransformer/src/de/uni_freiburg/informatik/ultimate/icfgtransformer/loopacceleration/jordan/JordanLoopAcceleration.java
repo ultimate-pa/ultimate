@@ -42,7 +42,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.LoopAccelerationUtils;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanAccelerationUtils.LinearUpdate;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanDecomposition.JordanDecompositionStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate.SimultaneousUpdateException;
@@ -62,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Monomial;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Monomial.Occurrence;
@@ -159,7 +157,7 @@ public class JordanLoopAcceleration {
 
 		}
 
-		final Pair<LinearUpdate, String> pair = extractLinearUpdate(mgdScript, su);
+		final Pair<LinearUpdate, String> pair = LinearUpdate.fromSimultaneousUpdate(mgdScript, su);
 		if (pair.getFirst() == null) {
 			assert pair.getSecond() != null;
 			final JordanLoopAccelerationStatisticsGenerator jlasg =
@@ -211,76 +209,6 @@ public class JordanLoopAcceleration {
 
 		return new JordanLoopAccelerationResult(JordanLoopAccelerationResult.AccelerationStatus.SUCCESS, null,
 				loopAccelerationFormula, jlasg);
-	}
-
-	private static Pair<LinearUpdate, String> extractLinearUpdate(final ManagedScript mgdScript,
-			final SimultaneousUpdate su) {
-		final Set<TermVariable> termVariablesOfModified = new HashSet<>();
-		for (final Entry<IProgramVar, Term> update : su.getDeterministicAssignment().entrySet()) {
-			termVariablesOfModified.add(update.getKey().getTermVariable());
-		}
-		for (final IProgramVar pv : su.getHavocedVars()) {
-			termVariablesOfModified.add(pv.getTermVariable());
-		}
-		final Set<Term> readonlyVariables = new HashSet<>();
-		final Map<TermVariable, AffineTerm> updateMap = new HashMap<>();
-		for (final Entry<IProgramVar, Term> update : su.getDeterministicAssignment().entrySet()) {
-			final Triple<AffineTerm, Set<Term>, String> triple = extractLinearUpdate(mgdScript, termVariablesOfModified,
-					update);
-			if (triple.getFirst() == null) {
-				assert triple.getSecond() == null;
-				assert triple.getThird() != null;
-				return new Pair<>(null, triple.getThird());
-			} else {
-				assert triple.getSecond() != null;
-				assert triple.getThird() == null;
-				updateMap.put(update.getKey().getTermVariable(), triple.getFirst());
-				readonlyVariables.addAll(triple.getSecond());
-			}
-		}
-		return new Pair<>(new LinearUpdate(updateMap, readonlyVariables), null);
-	}
-
-	private static Triple<AffineTerm, Set<Term>, String> extractLinearUpdate(final ManagedScript mgdScript,
-			final Set<TermVariable> termVariablesOfModified, final Entry<IProgramVar, Term> update) {
-		// TODO Matthias 20221222: Use AffineTermTransformer
-		final IPolynomialTerm polyRhs = (IPolynomialTerm) new PolynomialTermTransformer(mgdScript.getScript())
-				.transform(update.getValue());
-		final Map<Term, Rational> variables2coeffcient = new HashMap<>();
-		final Set<Term> readonlyVariables = new HashSet<>();
-		for (final Entry<Monomial, Rational> entry : polyRhs.getMonomial2Coefficient().entrySet()) {
-			final Term monomialAsTerm = entry.getKey().toTerm(mgdScript.getScript());
-			if (!termVariablesOfModified.contains(monomialAsTerm)) {
-				// Monomial is neither an assigned variable nor a havoced variable. In case the
-				// monomial contains a subterm that is modified, this is not a linear update,
-				// otherwise we consider the monomial as a read-only variable. E.g., a select
-				// from a non-modified array at a non-modified index is a typical read-only
-				// variable.
-				final TermVariable termVariableOfModified = containsTermVariableOfModified(termVariablesOfModified,
-						monomialAsTerm);
-				if (termVariableOfModified != null) {
-					final String errorMessage = String.format(
-							"Monomial contains modified variable. Monomial %s, Variable %s", monomialAsTerm,
-							termVariableOfModified);
-					return new Triple<AffineTerm, Set<Term>, String>(null, null, errorMessage);
-				} else {
-					readonlyVariables.add(monomialAsTerm);
-				}
-			}
-			variables2coeffcient.put(monomialAsTerm, entry.getValue());
-		}
-		final AffineTerm affineTerm = new AffineTerm(polyRhs.getSort(), polyRhs.getConstant(), variables2coeffcient);
-		return new Triple<AffineTerm, Set<Term>, String>(affineTerm, readonlyVariables, null);
-	}
-
-	private static TermVariable containsTermVariableOfModified(final Set<TermVariable> termVariablesOfModified,
-			final Term monomialAsTerm) {
-		for (final TermVariable tv : monomialAsTerm.getFreeVars()) {
-			if (termVariablesOfModified.contains(tv)) {
-				return tv;
-			}
-		}
-		return null;
 	}
 
 	private static Set<Sort> getNonIntegerSorts(final Set<IProgramVar> programVariables) {

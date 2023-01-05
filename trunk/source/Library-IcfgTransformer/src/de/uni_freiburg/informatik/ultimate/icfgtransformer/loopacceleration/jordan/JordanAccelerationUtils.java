@@ -27,12 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan;
 
-import java.util.Map;
-import java.util.Set;
-
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -103,26 +97,5 @@ public class JordanAccelerationUtils {
 			blockSizeSum += triple.getSecond() * triple.getThird();
 		}
 		return (numberOfAssignedVariables + numberOfReadonlyVariables + 1 == blockSizeSum);
-	}
-
-
-
-	public static class LinearUpdate {
-		Map<TermVariable, AffineTerm> mUpdateMap;
-		Set<Term> mReadonlyVariables;
-
-		public LinearUpdate(final Map<TermVariable, AffineTerm> updateMap, final Set<Term> readonlyVariables) {
-			super();
-			mUpdateMap = updateMap;
-			mReadonlyVariables = readonlyVariables;
-		}
-
-		public Map<TermVariable, AffineTerm> getUpdateMap() {
-			return mUpdateMap;
-		}
-
-		public Set<Term> getReadonlyVariables() {
-			return mReadonlyVariables;
-		}
 	}
 }

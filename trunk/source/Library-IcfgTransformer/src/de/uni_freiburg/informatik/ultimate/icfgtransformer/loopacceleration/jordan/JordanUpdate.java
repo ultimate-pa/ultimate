@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanAccelerationUtils.LinearUpdate;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanDecomposition.JordanDecompositionStatus;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAcceleration.Iterations;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -59,11 +58,11 @@ public class JordanUpdate {
 
 	private final LinearUpdate mLinearUpdate;
 	private final Map<Term, Integer> mVarMatrixIndexMap;
-	private final JordanDecomposition mData;
+	private final JordanDecomposition mJordanDecomp;
 
 	public JordanUpdate(final JordanDecomposition jordanDecomp, final LinearUpdate linearUpdate,
 			final HashMap<Term, Integer> varMatrixIndexMap) {
-		mData = jordanDecomp;
+		mJordanDecomp = jordanDecomp;
 		mLinearUpdate = linearUpdate;
 		mVarMatrixIndexMap = varMatrixIndexMap;
 	}
@@ -88,23 +87,23 @@ public class JordanUpdate {
 	}
 
 	public JordanDecompositionStatus getStatus() {
-		return mData.getStatus();
+		return mJordanDecomp.getStatus();
 	}
 
 	public QuadraticMatrix getJnf() {
-		return mData.getJnf();
+		return mJordanDecomp.getJnf();
 	}
 
 	public RationalMatrix getModal() {
-		return mData.getModal();
+		return mJordanDecomp.getModal();
 	}
 
 	public RationalMatrix getInverseModal() {
-		return mData.getInverseModal();
+		return mJordanDecomp.getInverseModal();
 	}
 
 	public NestedMap2<Integer, Integer, Integer> getJordanBlockSizes() {
-		return mData.getJordanBlockSizes();
+		return mJordanDecomp.getJordanBlockSizes();
 	}
 
 
