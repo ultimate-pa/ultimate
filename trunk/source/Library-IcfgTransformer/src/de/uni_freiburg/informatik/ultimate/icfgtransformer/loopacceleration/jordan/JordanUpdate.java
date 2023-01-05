@@ -61,7 +61,7 @@ public class JordanUpdate {
 	private final JordanDecomposition mJordanDecomp;
 
 	public JordanUpdate(final JordanDecomposition jordanDecomp, final LinearUpdate linearUpdate,
-			final HashMap<Term, Integer> varMatrixIndexMap) {
+			final Map<Term, Integer> varMatrixIndexMap) {
 		mJordanDecomp = jordanDecomp;
 		mLinearUpdate = linearUpdate;
 		mVarMatrixIndexMap = varMatrixIndexMap;
@@ -70,10 +70,10 @@ public class JordanUpdate {
 	public static JordanUpdate fromLinearUpdate(final LinearUpdate linearUpdate) {
 
 		// HashMap to get matrix index from TermVariable.
-		final HashMap<Term, Integer> varMatrixIndexMap = determineMatrixIndices(linearUpdate);
+		final Map<Term, Integer> varMatrixIndexMap = determineMatrixIndices(linearUpdate);
 		final QuadraticMatrix updateMatrix = computeUpdateMatrix(linearUpdate, varMatrixIndexMap);
 
-		final JordanDecomposition jordanDecomp = updateMatrix.constructJordanTransformation();
+		final JordanDecomposition jordanDecomp = updateMatrix.constructJordanDecomposition();
 		final JordanUpdate jordanUpdate = new JordanUpdate(jordanDecomp, linearUpdate, varMatrixIndexMap);
 		return jordanUpdate;
 	}
@@ -122,9 +122,9 @@ public class JordanUpdate {
 			i++;
 		}
 		// add all variables that are only read in updates
-		for (final Term var : linearUpdate.getReadonlyVariables()) {
-			assert !varMatrixIndex.containsKey(var) : "cannot add same variable twice";
-			varMatrixIndex.put(var, i);
+		for (final Term raVar : linearUpdate.getReadonlyVariables()) {
+			assert !varMatrixIndex.containsKey(raVar) : "cannot add same variable twice";
+			varMatrixIndex.put(raVar, i);
 			i++;
 		}
 		return varMatrixIndex;
@@ -134,7 +134,7 @@ public class JordanUpdate {
 	 * Compute the update matrix out of the simultaneous update.
 	 */
 	private static QuadraticMatrix computeUpdateMatrix(final LinearUpdate linearUpdate,
-			final HashMap<Term, Integer> varMatrixIndexMap) {
+			final Map<Term, Integer> varMatrixIndexMap) {
 		final int n = varMatrixIndexMap.size() + 1;
 		// Initialize update matrix with identity matrix (every variable assigned to
 		// itself).
@@ -156,7 +156,7 @@ public class JordanUpdate {
 	 * updated with polyRhs.
 	 */
 	private static void fillMatrixRow(final QuadraticMatrix updateMatrix,
-			final HashMap<Term, Integer> varMatrixIndexMap, final AffineTerm affineRhs, final TermVariable tv) {
+			final Map<Term, Integer> varMatrixIndexMap, final AffineTerm affineRhs, final TermVariable tv) {
 
 		final int n = updateMatrix.getDimension() - 1;
 		updateMatrix.setEntry(n, n, BigInteger.valueOf(1));
@@ -206,21 +206,6 @@ public class JordanUpdate {
 	}
 
 	/**
-	 * Construct map that assigns to the default TermVariable its closed from, where each
-	 * variable in the closed form is represented by its default TermVariable.
-	 */
-	public Map<TermVariable, Term> constructClosedForm(final ManagedScript mgdScript, final TermVariable it,
-			final TermVariable itHalf, final Iterations itKind) {
-		final IPolynomialTerm itc = constructIterationCounter(mgdScript.getScript(), itKind, it, itHalf);
-		// Compute matrix that represents closed form.
-		final PolynomialTermMatrix closedFormMatrix = PolynomialTermMatrix.computeClosedFormMatrix(mgdScript, this, itc,
-				itKind);
-		final Map<TermVariable, Term> closedFormMap = constructClosedForm(mgdScript, closedFormMatrix, mLinearUpdate,
-				mVarMatrixIndexMap);
-		return closedFormMap;
-	}
-
-	/**
 	 * Construct an {@link IPolynomialTerm} that represents the current iteration
 	 * (which is also the exponent of the Jordan matrix that we construct). The
 	 * result can be
@@ -258,9 +243,30 @@ public class JordanUpdate {
 	 * Construct map that assigns to the default TermVariable its closed from, where each
 	 * variable in the closed form is represented by its default TermVariable.
 	 */
+	public Map<TermVariable, Term> constructClosedForm(final ManagedScript mgdScript, final TermVariable it,
+			final TermVariable itHalf, final Iterations itKind) {
+		final IPolynomialTerm itc = constructIterationCounter(mgdScript.getScript(), itKind, it, itHalf);
+		return constructClosedForm(mgdScript, itc, itHalf, itKind);
+	}
+
+	private Map<TermVariable, Term> constructClosedForm(final ManagedScript mgdScript, final IPolynomialTerm itc,
+			final TermVariable itHalf, final Iterations itKind) {
+		// Compute matrix that represents closed form.
+		final PolynomialTermMatrix closedFormMatrix = PolynomialTermMatrix.computeClosedFormMatrix(mgdScript,
+				mJordanDecomp, itc, itKind);
+		final Map<TermVariable, Term> closedFormMap = constructClosedForm(mgdScript, closedFormMatrix, mLinearUpdate,
+				mVarMatrixIndexMap);
+		return closedFormMap;
+	}
+
+	/**
+	 * Construct map that assigns to the default TermVariable its closed from, where each
+	 * variable in the closed form is represented by its default TermVariable.
+	 */
 	public Map<TermVariable, Term> constructClosedForm(final ManagedScript mgdScript, final int k) {
 		// Compute matrix that represents closed form.
-		final PolynomialTermMatrix closedFormMatrix = PolynomialTermMatrix.computeClosedFormMatrix(mgdScript, this, k);
+		final PolynomialTermMatrix closedFormMatrix = PolynomialTermMatrix.computeClosedFormMatrix(mgdScript,
+				mJordanDecomp, k);
 		final Map<TermVariable, Term> closedFormMap = constructClosedForm(mgdScript, closedFormMatrix, mLinearUpdate,
 				mVarMatrixIndexMap);
 		return closedFormMap;

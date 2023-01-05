@@ -595,10 +595,11 @@ public class QuadraticMatrix {
 	 * change eigenvalues array.
 	 * @param linearUpdate
 	 */
-	public JordanDecomposition constructJordanTransformation() {
+	public JordanDecomposition constructJordanDecomposition() {
 		final int n = mDimension;
 		if (n >= 11) {
-			throw new AssertionError("Too many dimensions " + n);
+			throw new UnsupportedOperationException(
+					"Vector space has " + n + " dimensions. Computation of eigenvalues may not terminate.");
 		}
 		final QuadraticMatrix jordanMatrix = constructZeroMatrix(n);
 		final NestedMap2<Integer, Integer, Integer> jordanBlockSizes = computeJordanBlockSizes();
@@ -617,18 +618,18 @@ public class QuadraticMatrix {
 				}
 			}
 		}
-		final JordanDecomposition jd;
+		final JordanDecomposition decomp;
 		if (current != n) {
 			status = JordanDecompositionStatus.UNSUPPORTED_EIGENVALUES;
-			jd = new JordanDecomposition(status, null, null, null, null);
+			decomp = new JordanDecomposition(status, null, null, null, null);
 		} else {
 			status = JordanDecompositionStatus.SUCCESS;
 			final RationalMatrix modal = computeModalMatrix(this, jordanMatrix);
 			final RationalMatrix inverseModal = RationalMatrix.computeInverse(modal);
 			assert checkCorrectnessofJordanDecomposition(this, modal, jordanMatrix, inverseModal);
-			jd = new JordanDecomposition(status, jordanMatrix, modal, inverseModal, jordanBlockSizes);
+			decomp = new JordanDecomposition(status, jordanMatrix, modal, inverseModal, jordanBlockSizes);
 		}
-		return jd;
+		return decomp;
 	}
 
 	/**

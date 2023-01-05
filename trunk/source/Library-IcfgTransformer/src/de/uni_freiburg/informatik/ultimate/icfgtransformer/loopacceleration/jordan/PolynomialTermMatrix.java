@@ -225,10 +225,10 @@ public class PolynomialTermMatrix {
 	 * Create the it-th power of a Jordan matrix out of the Jordan matrix.
 	 */
 	public static PolynomialTermMatrix jordan2JordanPower(final ManagedScript mgdScript, final IPolynomialTerm itc,
-			final Iterations itKind, final JordanUpdate jordan) {
-		final int n = jordan.getJnf().getDimension();
+			final Iterations itKind, final JordanDecomposition decomp) {
+		final int n = decomp.getJnf().getDimension();
 		final PolynomialTermMatrix jordanPower = constructConstantZeroMatrix(mgdScript, n);
-		final NestedMap2<Integer, Integer, Integer> jordanBlockSizes = jordan.getJordanBlockSizes();
+		final NestedMap2<Integer, Integer, Integer> jordanBlockSizes = decomp.getJordanBlockSizes();
 		int current = 0;
 		for (int lambda=-1; lambda<=1; lambda++) {
 			if (jordanBlockSizes.get(lambda) != null) {
@@ -251,13 +251,13 @@ public class PolynomialTermMatrix {
 	 * Computes matrix that represents closed form for `itc` iterations.
 	 */
 	public static PolynomialTermMatrix computeClosedFormMatrix(final ManagedScript mgdScript,
-			final JordanUpdate jordanUpdate, final IPolynomialTerm itc, final Iterations itKind) {
-		final int n = jordanUpdate.getJnf().getDimension();
+			final JordanDecomposition decomp, final IPolynomialTerm itc, final Iterations itKind) {
+		final int n = decomp.getJnf().getDimension();
 		final Script script = mgdScript.getScript();
-		final RationalMatrix modalUpdate = jordanUpdate.getModal();
-		final RationalMatrix inverseModalUpdate = jordanUpdate.getInverseModal();
+		final RationalMatrix modalUpdate = decomp.getModal();
+		final RationalMatrix inverseModalUpdate = decomp.getInverseModal();
 		PolynomialTermMatrix closedFormMatrix = constructConstantZeroMatrix(mgdScript, n);
-		final PolynomialTermMatrix jordanUpdatePower = jordan2JordanPower(mgdScript, itc, itKind, jordanUpdate);
+		final PolynomialTermMatrix jordanUpdatePower = jordan2JordanPower(mgdScript, itc, itKind, decomp);
 		final PolynomialTermMatrix tmp = multiplication(mgdScript, rationalMatrix2TermMatrix(script, modalUpdate),
 				jordanUpdatePower);
 		closedFormMatrix = multiplication(mgdScript, tmp, rationalMatrix2TermMatrix(script, inverseModalUpdate));
@@ -269,11 +269,11 @@ public class PolynomialTermMatrix {
 	 * with itself.
 	 */
 	public static PolynomialTermMatrix computeClosedFormMatrix(final ManagedScript mgdScript,
-			final JordanUpdate jordanUpdate, final int k) {
+			final JordanDecomposition decomp, final int k) {
 		final Script script = mgdScript.getScript();
-		final RationalMatrix modalUpdate = jordanUpdate.getModal();
-		final RationalMatrix inverseModalUpdate = jordanUpdate.getInverseModal();
-		final QuadraticMatrix powerQm = QuadraticMatrix.power(jordanUpdate.getJnf(), k);
+		final RationalMatrix modalUpdate = decomp.getModal();
+		final RationalMatrix inverseModalUpdate = decomp.getInverseModal();
+		final QuadraticMatrix powerQm = QuadraticMatrix.power(decomp.getJnf(), k);
 		final PolynomialTermMatrix jordanUpdatePower = rationalMatrix2TermMatrix(script,
 				new RationalMatrix(BigInteger.ONE, powerQm));
 		final PolynomialTermMatrix tmp = multiplication(mgdScript, rationalMatrix2TermMatrix(script, modalUpdate),
