@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanAccelerationUtils.LinearUpdate;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanDecomposition.JordanDecompositionStatus;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAcceleration.Iterations;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -54,40 +55,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  *
  */
 public class JordanUpdate {
-	public enum JordanTransformationStatus {
-		SUCCESS,
-		/**
-		 * We support the transformation to JNF only if each eigenvalue is either -1,0 or 1.
-		 */
-		UNSUPPORTED_EIGENVALUES
-	};
 
-	private final JordanUpdate.JordanTransformationStatus mStatus;
-	private LinearUpdate mLinearUpdate;
-	private Map<Term, Integer> mVarMatrixIndexMap;
-	private final QuadraticMatrix mJnf;
-	private final RationalMatrix mModal;
-	private final RationalMatrix mInverseModal;
-	/**
-	 * Contains triple (ev, bs, occ) if there are exactly occ Jordan blocks of size bs for eigenvalue ev.
-	 */
-	private final NestedMap2<Integer, Integer, Integer> mJordanBlockSizes;
 
-	public JordanUpdate(final JordanUpdate.JordanTransformationStatus status,
-			final QuadraticMatrix jnf, final RationalMatrix modal, final RationalMatrix inverseModal,
-			final NestedMap2<Integer, Integer, Integer> jordanBlockSizes) {
-		super();
-		assert (status == JordanTransformationStatus.SUCCESS) ^ (jnf == null) : "provide JNF iff success";
-		assert (jnf == null) == (jordanBlockSizes == null) : "all or nothing";
-		if (jordanBlockSizes != null) {
-			assert jordanBlockSizes.keySet().stream()
-					.allMatch(x -> x == -1 || x == 0 || x == 1) : "only supported eigenvalues as keys";
-		}
-		mStatus = status;
-		mJnf = jnf;
-		mModal = modal;
-		mInverseModal = inverseModal;
-		mJordanBlockSizes = jordanBlockSizes;
+	private final LinearUpdate mLinearUpdate;
+	private final Map<Term, Integer> mVarMatrixIndexMap;
+	private final JordanDecomposition mData;
+
+	public JordanUpdate(final JordanDecomposition jordanDecomp, final LinearUpdate linearUpdate,
+			final HashMap<Term, Integer> varMatrixIndexMap) {
+		mData = jordanDecomp;
+		mLinearUpdate = linearUpdate;
+		mVarMatrixIndexMap = varMatrixIndexMap;
 	}
 
 	public static JordanUpdate fromLinearUpdate(final LinearUpdate linearUpdate) {
@@ -96,9 +74,8 @@ public class JordanUpdate {
 		final HashMap<Term, Integer> varMatrixIndexMap = determineMatrixIndices(linearUpdate);
 		final QuadraticMatrix updateMatrix = computeUpdateMatrix(linearUpdate, varMatrixIndexMap);
 
-		final JordanUpdate jordanUpdate = updateMatrix.constructJordanTransformation();
-		jordanUpdate.setLinearUpdate(linearUpdate);
-		jordanUpdate.setVarMatrixIndexMap(varMatrixIndexMap);
+		final JordanDecomposition jordanDecomp = updateMatrix.constructJordanTransformation();
+		final JordanUpdate jordanUpdate = new JordanUpdate(jordanDecomp, linearUpdate, varMatrixIndexMap);
 		return jordanUpdate;
 	}
 
@@ -106,36 +83,28 @@ public class JordanUpdate {
 		return mLinearUpdate;
 	}
 
-	public void setLinearUpdate(final LinearUpdate linearUpdate) {
-		mLinearUpdate = linearUpdate;
-	}
-
 	public Map<Term, Integer> getVarMatrixIndexMap() {
 		return mVarMatrixIndexMap;
 	}
 
-	public void setVarMatrixIndexMap(final Map<Term, Integer> varMatrixIndexMap) {
-		mVarMatrixIndexMap = varMatrixIndexMap;
-	}
-
-	public JordanUpdate.JordanTransformationStatus getStatus() {
-		return mStatus;
+	public JordanDecompositionStatus getStatus() {
+		return mData.getStatus();
 	}
 
 	public QuadraticMatrix getJnf() {
-		return mJnf;
+		return mData.getJnf();
 	}
 
 	public RationalMatrix getModal() {
-		return mModal;
+		return mData.getModal();
 	}
 
 	public RationalMatrix getInverseModal() {
-		return mInverseModal;
+		return mData.getInverseModal();
 	}
 
 	public NestedMap2<Integer, Integer, Integer> getJordanBlockSizes() {
-		return mJordanBlockSizes;
+		return mData.getJordanBlockSizes();
 	}
 
 

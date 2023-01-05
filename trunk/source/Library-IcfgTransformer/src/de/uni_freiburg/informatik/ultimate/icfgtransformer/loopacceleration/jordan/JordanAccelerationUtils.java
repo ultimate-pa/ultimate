@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2021 Miriam Herzig
  * Copyright (C) 2021 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2021 University of Freiburg
  *
  * This file is part of the ULTIMATE IcfgTransformer library.
  *

@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2021 Miriam Herzig
  * Copyright (C) 2021 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2021 University of Freiburg
  *
  * This file is part of the ULTIMATE IcfgTransformer library.
  *
@@ -42,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.LoopAccelerationUtils;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanAccelerationUtils.LinearUpdate;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanUpdate.JordanTransformationStatus;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanDecomposition.JordanDecompositionStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate.SimultaneousUpdateException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
@@ -171,7 +172,7 @@ public class JordanLoopAcceleration {
 
 		final JordanUpdate jordanUpdate = JordanUpdate.fromLinearUpdate(pair.getFirst());
 
-		if (jordanUpdate.getStatus() == JordanTransformationStatus.UNSUPPORTED_EIGENVALUES) {
+		if (jordanUpdate.getStatus() == JordanDecompositionStatus.UNSUPPORTED_EIGENVALUES) {
 			final JordanLoopAccelerationStatisticsGenerator jlasg = new JordanLoopAccelerationStatisticsGenerator(
 					numberOfAssignedVariables, numberOfHavocedVariables, numberOfArrayWrites, numberOfReadonlyVariables,
 					new NestedMap2<>(), "Unsupported eigenvalues");

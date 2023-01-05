@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanUpdate.JordanTransformationStatus;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanDecomposition.JordanDecompositionStatus;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -595,14 +595,14 @@ public class QuadraticMatrix {
 	 * change eigenvalues array.
 	 * @param linearUpdate
 	 */
-	public JordanUpdate constructJordanTransformation() {
+	public JordanDecomposition constructJordanTransformation() {
 		final int n = mDimension;
 		if (n >= 11) {
 			throw new AssertionError("Too many dimensions " + n);
 		}
 		final QuadraticMatrix jordanMatrix = constructZeroMatrix(n);
 		final NestedMap2<Integer, Integer, Integer> jordanBlockSizes = computeJordanBlockSizes();
-		JordanTransformationStatus status;
+		JordanDecompositionStatus status;
 		int current = 0;
 		for (int e = -1; e <= 1; e++) {
 			if (jordanBlockSizes.get(e) != null) {
@@ -617,18 +617,18 @@ public class QuadraticMatrix {
 				}
 			}
 		}
-		final JordanUpdate jtr;
+		final JordanDecomposition jd;
 		if (current != n) {
-			status = JordanTransformationStatus.UNSUPPORTED_EIGENVALUES;
-			jtr = new JordanUpdate(status, null, null, null, null);
+			status = JordanDecompositionStatus.UNSUPPORTED_EIGENVALUES;
+			jd = new JordanDecomposition(status, null, null, null, null);
 		} else {
-			status = JordanTransformationStatus.SUCCESS;
+			status = JordanDecompositionStatus.SUCCESS;
 			final RationalMatrix modal = computeModalMatrix(this, jordanMatrix);
 			final RationalMatrix inverseModal = RationalMatrix.computeInverse(modal);
 			assert checkCorrectnessofJordanDecomposition(this, modal, jordanMatrix, inverseModal);
-			jtr = new JordanUpdate(status, jordanMatrix, modal, inverseModal, jordanBlockSizes);
+			jd = new JordanDecomposition(status, jordanMatrix, modal, inverseModal, jordanBlockSizes);
 		}
-		return jtr;
+		return jd;
 	}
 
 	/**
