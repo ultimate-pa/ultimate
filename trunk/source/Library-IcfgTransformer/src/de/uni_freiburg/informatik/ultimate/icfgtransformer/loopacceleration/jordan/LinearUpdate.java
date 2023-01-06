@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -42,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Polynomia
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -137,5 +140,34 @@ public class LinearUpdate {
 			}
 		}
 		return null;
+	}
+
+	public List<LinearUpdate> partition() {
+		final UnionFind<Term> uf = new UnionFind<>();
+		for (final Entry<TermVariable, AffineTerm> entry : mUpdateMap.entrySet()) {
+			uf.findAndConstructEquivalenceClassIfNeeded(entry.getKey());
+			for (final Term affineVar : entry.getValue().getVariable2Coefficient().keySet()) {
+				uf.findAndConstructEquivalenceClassIfNeeded(affineVar);
+				uf.union(entry.getKey(), affineVar);
+			}
+		}
+		final List<LinearUpdate> result = new ArrayList<>();
+		for (final Set<Term> eqClass : uf.getAllEquivalenceClasses()) {
+			final Map<TermVariable, AffineTerm> newUpdateMap = new HashMap<>();
+			for (final Entry<TermVariable, AffineTerm> entry : mUpdateMap.entrySet()) {
+				if (eqClass.contains(entry.getKey())) {
+					newUpdateMap.put(entry.getKey(), entry.getValue());
+				}
+			}
+			final Set<Term> newReadonlyVariables = new HashSet<>();
+			for (final Term roVar : mReadonlyVariables) {
+				if (eqClass.contains(roVar)) {
+					newReadonlyVariables.add(roVar);
+				}
+			}
+			final LinearUpdate lu = new LinearUpdate(newUpdateMap, newReadonlyVariables);
+			result.add(lu);
+		}
+		return result;
 	}
 }

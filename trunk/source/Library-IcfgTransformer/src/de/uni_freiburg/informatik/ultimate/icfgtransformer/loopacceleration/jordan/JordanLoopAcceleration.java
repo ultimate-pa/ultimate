@@ -177,8 +177,8 @@ public class JordanLoopAcceleration {
 			return new JordanLoopAccelerationResult(
 					JordanLoopAccelerationResult.AccelerationStatus.UNSUPPORTED_EIGENVALUES, null, null, jlasg);
 		}
-		assert JordanAccelerationUtils.isBlockSizeConsistent(numberOfAssignedVariables, numberOfReadonlyVariables,
-				jordanUpdate) : "inconsistent blocksize";
+//		assert JordanAccelerationUtils.isBlockSizeConsistent(numberOfAssignedVariables, numberOfReadonlyVariables,
+//				jordanUpdate) : "inconsistent blocksize";
 
 		final boolean isAlternatingClosedFormRequired = JordanAccelerationUtils
 				.isAlternatingClosedFormRequired(jordanUpdate);

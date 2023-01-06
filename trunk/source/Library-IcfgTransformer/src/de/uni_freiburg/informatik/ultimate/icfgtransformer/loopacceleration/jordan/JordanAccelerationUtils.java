@@ -60,6 +60,9 @@ public class JordanAccelerationUtils {
 	 *         strictly greater than 2
 	 */
 	private static boolean hasEv1JordanBlockStrictlyGreater2(final JordanUpdate jordanUpdate) {
+		if (!jordanUpdate.getJordanBlockSizes().containsKey(1)) {
+			return false;
+		}
 		boolean ev1hasBlockGreater2 = false;
 		for (final int blockSize : jordanUpdate.getJordanBlockSizes().get(1).keySet()) {
 			if (blockSize > 2 && (jordanUpdate.getJordanBlockSizes().get(1).get(blockSize) != 0)) {
