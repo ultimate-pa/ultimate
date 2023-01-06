@@ -177,11 +177,9 @@ public class JordanLoopAcceleration {
 			return new JordanLoopAccelerationResult(
 					JordanLoopAccelerationResult.AccelerationStatus.UNSUPPORTED_EIGENVALUES, null, null, jlasg);
 		}
-//		assert JordanAccelerationUtils.isBlockSizeConsistent(numberOfAssignedVariables, numberOfReadonlyVariables,
-//				jordanUpdate) : "inconsistent blocksize";
+		assert jordanUpdate.isBlockSizeConsistent(numberOfAssignedVariables, numberOfReadonlyVariables) : "inconsistent blocksize";
 
-		final boolean isAlternatingClosedFormRequired = JordanAccelerationUtils
-				.isAlternatingClosedFormRequired(jordanUpdate);
+		final boolean isAlternatingClosedFormRequired = jordanUpdate.isAlternatingClosedFormRequired();
 		final UnmodifiableTransFormula loopAccelerationFormula;
 		try {
 			loopAccelerationFormula = createLoopAccelerationFormula(logger, services,
@@ -367,7 +365,7 @@ public class JordanLoopAcceleration {
 			final UnmodifiableTransFormula loopTransFormula, final boolean quantifyItFinExplicitly,
 			final boolean isAlternatingClosedFormRequired) {
 
-		final int sizeOfLargestEv0Block = JordanAccelerationUtils.computeSizeOfLargestEv0Block(jordanUpdate);
+		final int sizeOfLargestEv0Block = jordanUpdate.computeSizeOfLargestEv0Block();
 		assert sizeOfLargestEv0Block >= 0;
 
 		final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(loopTransFormula, mgdScript, services);

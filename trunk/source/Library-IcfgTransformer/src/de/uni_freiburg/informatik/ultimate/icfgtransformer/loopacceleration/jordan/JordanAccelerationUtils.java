@@ -27,9 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan;
 
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
-
 /**
  * Our Jordan-based loop acceleration works with closed forms of the variables
  * updates that are done in the loop. This class provides (static) methods that
@@ -45,60 +42,4 @@ public class JordanAccelerationUtils {
 		// do not instantiate
 	}
 
-	/**
-	 * @return true iff -1 is an eigenvalue or for eigenvalue 1 there is a Jordan
-	 *         block of size greater than 2.
-	 */
-	static boolean isAlternatingClosedFormRequired(final JordanUpdate jordanUpdate) {
-		final boolean minus1isEigenvalue = jordanUpdate.getJordanBlockSizes().containsKey(-1);
-		final boolean ev1hasBlockGreater2 = hasEv1JordanBlockStrictlyGreater2(jordanUpdate);
-		return (minus1isEigenvalue || ev1hasBlockGreater2);
-	}
-
-	/**
-	 * @return true iff there is some Jordan block for eigenvalue 1 whose size is
-	 *         strictly greater than 2
-	 */
-	private static boolean hasEv1JordanBlockStrictlyGreater2(final JordanUpdate jordanUpdate) {
-		if (!jordanUpdate.getJordanBlockSizes().containsKey(1)) {
-			return false;
-		}
-		boolean ev1hasBlockGreater2 = false;
-		for (final int blockSize : jordanUpdate.getJordanBlockSizes().get(1).keySet()) {
-			if (blockSize > 2 && (jordanUpdate.getJordanBlockSizes().get(1).get(blockSize) != 0)) {
-				ev1hasBlockGreater2 = true;
-			}
-		}
-		return ev1hasBlockGreater2;
-	}
-
-	static int computeSizeOfLargestEv0Block(final JordanUpdate jordanUpdate) {
-		final NestedMap2<Integer, Integer, Integer> blockSizes = jordanUpdate.getJordanBlockSizes();
-		if (!blockSizes.containsKey(0)) {
-			return 0;
-		} else {
-			int max = 0;
-			for (final int blockSize : jordanUpdate.getJordanBlockSizes().get(0).keySet()) {
-				if (blockSize > max) {
-					max = blockSize;
-				}
-			}
-			assert max > 0;
-			return max;
-		}
-	}
-
-	/**
-	 * The sum of the sizes of all block is the sum of the number of assigned scalar
-	 * variables, the number of readonly variables and one (one is for the numbers
-	 * that are added in the loop).
-	 */
-	static boolean isBlockSizeConsistent(final int numberOfAssignedVariables, final int numberOfReadonlyVariables,
-			final JordanUpdate jordanUpdate) {
-		int blockSizeSum = 0;
-		for (final Triple<Integer, Integer, Integer> triple : jordanUpdate.getJordanBlockSizes().entrySet()) {
-			blockSizeSum += triple.getSecond() * triple.getThird();
-		}
-		return (numberOfAssignedVariables + numberOfReadonlyVariables + 1 == blockSizeSum);
-	}
 }

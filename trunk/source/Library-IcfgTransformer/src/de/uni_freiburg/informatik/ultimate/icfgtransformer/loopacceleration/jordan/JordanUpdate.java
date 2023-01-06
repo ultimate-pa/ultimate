@@ -351,6 +351,62 @@ public class JordanUpdate {
 		}
 	}
 
+
+	/**
+	 * @return true iff -1 is an eigenvalue or for eigenvalue 1 there is a Jordan
+	 *         block of size greater than 2.
+	 */
+	public boolean isAlternatingClosedFormRequired() {
+		final boolean minus1isEigenvalue = mJordanBlockSizes.containsKey(-1);
+		final boolean ev1hasBlockGreater2 = hasEv1JordanBlockStrictlyGreater2();
+		return (minus1isEigenvalue || ev1hasBlockGreater2);
+	}
+
+	/**
+	 * @return true iff there is some Jordan block for eigenvalue 1 whose size is
+	 *         strictly greater than 2
+	 */
+	public boolean hasEv1JordanBlockStrictlyGreater2() {
+		if (!mJordanBlockSizes.containsKey(1)) {
+			return false;
+		}
+		boolean ev1hasBlockGreater2 = false;
+		for (final int blockSize : mJordanBlockSizes.get(1).keySet()) {
+			if (blockSize > 2 && (mJordanBlockSizes.get(1).get(blockSize) != 0)) {
+				ev1hasBlockGreater2 = true;
+			}
+		}
+		return ev1hasBlockGreater2;
+	}
+
+	public int computeSizeOfLargestEv0Block() {
+		if (!mJordanBlockSizes.containsKey(0)) {
+			return 0;
+		} else {
+			int max = 0;
+			for (final int blockSize : mJordanBlockSizes.get(0).keySet()) {
+				if (blockSize > max) {
+					max = blockSize;
+				}
+			}
+			assert max > 0;
+			return max;
+		}
+	}
+
+	/**
+	 * The sum of the sizes of all block is the sum of the number of assigned scalar
+	 * variables, the number of readonly variables and one (one is for the numbers
+	 * that are added in the loop).
+	 */
+	public boolean isBlockSizeConsistent(final int numberOfAssignedVariables, final int numberOfReadonlyVariables) {
+		int blockSizeSum = 0;
+		for (final Triple<Integer, Integer, Integer> triple : mJordanBlockSizes.entrySet()) {
+			blockSizeSum += triple.getSecond() * triple.getThird();
+		}
+		return (numberOfAssignedVariables + numberOfReadonlyVariables + mParts.size() == blockSizeSum);
+	}
+
 	private static class JordanUpdatePart {
 		private final LinearUpdate mLinearUpdate;
 		private final Map<Term, Integer> mVarMatrixIndexMap;
