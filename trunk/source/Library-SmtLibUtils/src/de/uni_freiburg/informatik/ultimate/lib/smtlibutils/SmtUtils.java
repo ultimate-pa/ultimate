@@ -664,8 +664,15 @@ public final class SmtUtils {
 	public static Term not(final Script script, final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			if ("distinct".equals(appTerm.getFunction().getName()) && appTerm.getParameters().length == 2) {
-				return SmtUtils.binaryEquality(script, appTerm.getParameters()[0], appTerm.getParameters()[1]);
+			if (appTerm.getParameters().length == 2) {
+				final String funcName = appTerm.getFunction().getName();
+				if (funcName.equals("distinct") && appTerm.getParameters().length == 2) {
+					return SmtUtils.binaryEquality(script, appTerm.getParameters()[0], appTerm.getParameters()[1]);
+				}
+				if (funcName.equals("<") || funcName.equals("<=") || funcName.equals(">") || funcName.equals(">=")) {
+					final PolynomialRelation polyRel = PolynomialRelation.convert(script, term);
+					return polyRel.negate(script).positiveNormalForm(script);
+				}
 			}
 			return Util.not(script, term);
 		}
