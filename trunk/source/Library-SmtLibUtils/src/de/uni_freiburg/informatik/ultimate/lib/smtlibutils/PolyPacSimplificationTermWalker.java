@@ -132,7 +132,7 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 		if (APPLY_CONSTANT_FOLDING) {
 			final Map<Term, Term> substitutionMapping = new HashMap<>();
 			for (final Term conjunct : SmtUtils.getConjuncts(context)) {
-				final PolynomialRelation polyRel = PolynomialRelation.convert(mMgdScript.getScript(), conjunct);
+				final PolynomialRelation polyRel = PolynomialRelation.of(mMgdScript.getScript(), conjunct);
 				if (polyRel != null) {
 					final SolvedBinaryRelation sbr = polyRel.isSimpleEquality(mMgdScript.getScript());
 					if (sbr != null) {

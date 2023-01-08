@@ -235,7 +235,7 @@ public class IntervalDomain implements IDomain {
 	}
 
 	private Collection<SolvedBinaryRelation> solveForAllSubjects(final Term term) {
-		final PolynomialRelation polyRel = PolynomialRelation.convert(mTools.getScript(), term);
+		final PolynomialRelation polyRel = PolynomialRelation.of(mTools.getScript(), term);
 		if (polyRel == null) {
 			return Collections.emptyList();
 		}

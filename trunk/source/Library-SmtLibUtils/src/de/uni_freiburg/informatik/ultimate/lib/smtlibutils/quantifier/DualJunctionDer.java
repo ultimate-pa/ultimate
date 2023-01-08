@@ -376,7 +376,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 					return sfs;
 				}
 			}
-			final PolynomialRelation pr = PolynomialRelation.convert(mgdScript.getScript(), term);
+			final PolynomialRelation pr = PolynomialRelation.of(mgdScript.getScript(), term);
 			if (pr == null) {
 				return null;
 			}
@@ -416,7 +416,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		@Override
 		public MultiCaseSolvedBinaryRelation solveForSubject(final ManagedScript mgdScript, final int quantifier,
 				final TermVariable eliminatee, final Term term, final Set<TermVariable> bannedForDivCapture) {
-			final PolynomialRelation pr = PolynomialRelation.convert(mgdScript.getScript(), term);
+			final PolynomialRelation pr = PolynomialRelation.of(mgdScript.getScript(), term);
 			if (pr == null) {
 				return null;
 			}

@@ -119,19 +119,60 @@ public class PolynomialRelation implements IBinaryRelation {
 	 *
 	 * Resulting relation is then <code><term> <symbol> 0</code>.
 	 *
-	 * @deprecated no constructor for this special case
 	 */
-	@Deprecated
-	public PolynomialRelation(final Script script, final AbstractGeneralizedAffineTerm<?> term,
+	private PolynomialRelation(final AbstractGeneralizedAffineTerm<?> agat,
 			final RelationSymbol relationSymbol) {
-		mPolynomialTerm = Objects.requireNonNull(term);
+		if (relationSymbol.isConvexInequality() && SmtSortUtils.isBitvecSort(agat.getSort())) {
+			throw new AssertionError("Unsupported inequality/sort combination");
+		}
+		mPolynomialTerm = Objects.requireNonNull(agat);
 		check(mPolynomialTerm);
 		mRelationSymbol = relationSymbol;
 
 		mTrivialityStatus = computeTrivialityStatus(mPolynomialTerm, mRelationSymbol);
 	}
 
-	public PolynomialRelation(final TransformInequality transformInequality, final RelationSymbol relationSymbol,
+	public static PolynomialRelation of(final AbstractGeneralizedAffineTerm<?> agat,
+			final RelationSymbol relationSymbol) {
+		return new PolynomialRelation(agat, relationSymbol);
+	}
+
+	public static PolynomialRelation of(final Script script, final Term term) {
+		return of(script, term, TransformInequality.NO_TRANFORMATION);
+	}
+
+	public static PolynomialRelation of(final Script script, final Term term,
+			final TransformInequality transformInequality) {
+		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);
+		if (bnr == null) {
+			return null;
+		}
+		final Term lhs = bnr.getLhs();
+		final Term rhs = bnr.getRhs();
+		final AbstractGeneralizedAffineTerm<?> polyLhs = transformToPolynomialTerm(script, lhs);
+		final AbstractGeneralizedAffineTerm<?> polyRhs = transformToPolynomialTerm(script, rhs);
+		if (polyLhs.isErrorTerm() || polyRhs.isErrorTerm()) {
+			return null;
+		}
+		if (bnr.getRelationSymbol().isConvexInequality() && SmtSortUtils.isBitvecSort(lhs.getSort())) {
+			return null;
+		}
+		final RelationSymbol relationSymbol = bnr.getRelationSymbol();
+		return PolynomialRelation.of(transformInequality, relationSymbol, polyLhs, polyRhs);
+	}
+
+	public static PolynomialRelation of(final Script script, final RelationSymbol relationSymbol, final Term lhs,
+			final Term rhs) {
+		final IPolynomialTerm lhsPoly = PolynomialTermTransformer.convert(script, lhs);
+		final IPolynomialTerm rhsPoly = PolynomialTermTransformer.convert(script, rhs);
+		if (lhsPoly == null || rhsPoly == null) {
+			throw new AssertionError("lhs or rhs not suitable for polynomial");
+		}
+		return PolynomialRelation.of(TransformInequality.NO_TRANFORMATION, relationSymbol,
+				(AbstractGeneralizedAffineTerm<?>) lhsPoly, (AbstractGeneralizedAffineTerm<?>) rhsPoly);
+	}
+
+	public static PolynomialRelation of(final TransformInequality transformInequality, final RelationSymbol relationSymbol,
 			final AbstractGeneralizedAffineTerm<?> polyLhs, final AbstractGeneralizedAffineTerm<?> polyRhs) {
 		// TODO 20220908 Matthias: maybe static method and return null instead of constructor and AssertionError
 		if (polyLhs.getSort() != polyRhs.getSort()) {
@@ -221,12 +262,10 @@ public class PolynomialRelation implements IBinaryRelation {
 			polyTerm = difference;
 			relationSymbolAfterTransformation = relationSymbol;
 		}
-		mPolynomialTerm = polyTerm;
-		mRelationSymbol = relationSymbolAfterTransformation;
-		mTrivialityStatus = computeTrivialityStatus(polyTerm, relationSymbolAfterTransformation);
+		return new PolynomialRelation(polyTerm, relationSymbolAfterTransformation);
 	}
 
-	private AffineTerm constructConstant(final Sort s, final Rational r) {
+	private static AffineTerm constructConstant(final Sort s, final Rational r) {
 		return AffineTerm.constructConstant(s, r);
 	}
 
@@ -497,14 +536,13 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	public PolynomialRelation negate(final Script script) {
-		return new PolynomialRelation(script, mPolynomialTerm, mRelationSymbol.negate());
+		return new PolynomialRelation(mPolynomialTerm, mRelationSymbol.negate());
 	}
 
 	public PolynomialRelation mul(final Script script, final Rational r) {
 		final RelationSymbol resultRelationSymbol = ExplicitLhsPolynomialRelation.swapOfRelationSymbolRequired(r,
 				mPolynomialTerm.getSort()) ? mRelationSymbol.swapParameters() : mRelationSymbol;
-		return new PolynomialRelation(script,
-				(AbstractGeneralizedAffineTerm<?>) PolynomialTermOperations.mul(mPolynomialTerm, r),
+		return new PolynomialRelation((AbstractGeneralizedAffineTerm<?>) PolynomialTermOperations.mul(mPolynomialTerm, r),
 				resultRelationSymbol);
 	}
 
@@ -545,41 +583,6 @@ public class PolynomialRelation implements IBinaryRelation {
 			zero = Rational.ZERO.toTerm(mPolynomialTerm.getSort()).toString();
 		}
 		return String.format("(%s, %s, %s)", mRelationSymbol.toString(), mPolynomialTerm.toString(), zero);
-	}
-
-	public static PolynomialRelation convert(final Script script, final Term term) {
-		return convert(script, term, TransformInequality.NO_TRANFORMATION);
-	}
-
-	public static PolynomialRelation convert(final Script script, final Term term,
-			final TransformInequality transformInequality) {
-		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);
-		if (bnr == null) {
-			return null;
-		}
-		final Term lhs = bnr.getLhs();
-		final Term rhs = bnr.getRhs();
-		final AbstractGeneralizedAffineTerm<?> polyLhs = transformToPolynomialTerm(script, lhs);
-		final AbstractGeneralizedAffineTerm<?> polyRhs = transformToPolynomialTerm(script, rhs);
-		if (polyLhs.isErrorTerm() || polyRhs.isErrorTerm()) {
-			return null;
-		}
-		if (bnr.getRelationSymbol().isConvexInequality() && SmtSortUtils.isBitvecSort(lhs.getSort())) {
-			return null;
-		}
-		final RelationSymbol relationSymbol = bnr.getRelationSymbol();
-		return new PolynomialRelation(transformInequality, relationSymbol, polyLhs, polyRhs);
-	}
-
-	public static PolynomialRelation of(final Script script, final RelationSymbol relationSymbol, final Term lhs,
-			final Term rhs) {
-		final IPolynomialTerm lhsPoly = PolynomialTermTransformer.convert(script, lhs);
-		final IPolynomialTerm rhsPoly = PolynomialTermTransformer.convert(script, rhs);
-		if (lhsPoly == null || rhsPoly == null) {
-			throw new AssertionError("lhs or rhs not suitable for polynomial");
-		}
-		return new PolynomialRelation(TransformInequality.NO_TRANFORMATION, relationSymbol,
-				(AbstractGeneralizedAffineTerm<?>) lhsPoly, (AbstractGeneralizedAffineTerm<?>) rhsPoly);
 	}
 
 	private static AbstractGeneralizedAffineTerm<?> transformToPolynomialTerm(final Script script, final Term term) {

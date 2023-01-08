@@ -670,7 +670,7 @@ public final class SmtUtils {
 					return SmtUtils.binaryEquality(script, appTerm.getParameters()[0], appTerm.getParameters()[1]);
 				}
 				if (funcName.equals("<") || funcName.equals("<=") || funcName.equals(">") || funcName.equals(">=")) {
-					final PolynomialRelation polyRel = PolynomialRelation.convert(script, term);
+					final PolynomialRelation polyRel = PolynomialRelation.of(script, term);
 					return polyRel.negate(script).positiveNormalForm(script);
 				}
 			}

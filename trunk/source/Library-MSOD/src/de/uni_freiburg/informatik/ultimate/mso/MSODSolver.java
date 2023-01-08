@@ -391,7 +391,7 @@ public final class MSODSolver {
 			throws AutomataLibraryException {
 
 		final PolynomialRelation polyRel =
-				PolynomialRelation.convert(mScript, term, TransformInequality.NONSTRICT2STRICT);
+				PolynomialRelation.of(mScript, term, TransformInequality.NONSTRICT2STRICT);
 		final AffineTerm affineTerm = (AffineTerm) polyRel.getPolynomialTerm();
 		final Map<Term, Rational> variables = affineTerm.getVariable2Coefficient();
 		final Rational constant = affineTerm.getConstant().negate();

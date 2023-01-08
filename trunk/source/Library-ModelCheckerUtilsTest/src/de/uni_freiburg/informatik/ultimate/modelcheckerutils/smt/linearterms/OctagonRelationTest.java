@@ -163,7 +163,7 @@ public class OctagonRelationTest {
 
 	private String octRelAsString(final String termAsString) {
 		final PolynomialRelation polyRel =
-				PolynomialRelation.convert(mScript, TermParseUtils.parseTerm(mScript, termAsString));
+				PolynomialRelation.of(mScript, TermParseUtils.parseTerm(mScript, termAsString));
 		if (polyRel == null) {
 			throw new IllegalArgumentException("Invalid test case. Term was not affine.");
 		}

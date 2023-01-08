@@ -72,7 +72,7 @@ public class PolyPoNe {
 			// TODO 20201123 Matthias: For bitvectors distinct and equality are polynomial,
 			// the other inequalities not, hence distinct and equality should also be added
 			// as nonPoly. Add another data structure for binary relations
-			final PolynomialRelation polyPolyRel = PolynomialRelation.convert(mScript, param);
+			final PolynomialRelation polyPolyRel = PolynomialRelation.of(mScript, param);
 			if (polyPolyRel != null) {
 				final PolynomialRelation addedRel = negate ? polyPolyRel.negate(mScript) : polyPolyRel;
 				final boolean isInconsistent = addPolyRel(mScript, addedRel, true);

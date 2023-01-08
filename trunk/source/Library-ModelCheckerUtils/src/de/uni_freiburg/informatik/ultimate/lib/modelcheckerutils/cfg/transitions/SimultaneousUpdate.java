@@ -230,7 +230,7 @@ public class SimultaneousUpdate {
 		final Term[] conjuncts = SmtUtils.getConjuncts(conjunction);
 		for (final Term conjunct : conjuncts) {
 			if (Arrays.asList(conjunct.getFreeVars()).contains(outVar)) {
-				final PolynomialRelation polyRel = PolynomialRelation.convert(script, conjunct);
+				final PolynomialRelation polyRel = PolynomialRelation.of(script, conjunct);
 				final SolvedBinaryRelation sbr = polyRel.solveForSubject(script, outVar);
 				if (sbr != null) {
 					final Term lhs = sbr.getLeftHandSide();
@@ -304,7 +304,7 @@ public class SimultaneousUpdate {
 							updateImpediments.add(ExtractionImpediments.NORHSARRAY);
 							continue;
 						}
-						final PolynomialRelation polyRel = PolynomialRelation.convert(mgdScript.getScript(), appTerm);
+						final PolynomialRelation polyRel = PolynomialRelation.of(mgdScript.getScript(), appTerm);
 						assert polyRel != null : "Must succeed for equality";
 						sbr = polyRel.solveForSubject(mgdScript.getScript(), outVar);
 						if (sbr == null) {
