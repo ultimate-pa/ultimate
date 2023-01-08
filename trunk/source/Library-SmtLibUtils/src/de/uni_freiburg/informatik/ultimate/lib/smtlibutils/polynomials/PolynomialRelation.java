@@ -126,9 +126,7 @@ public class PolynomialRelation implements IBinaryRelation {
 			throw new AssertionError("Unsupported inequality/sort combination");
 		}
 		mPolynomialTerm = Objects.requireNonNull(agat);
-		check(mPolynomialTerm);
 		mRelationSymbol = relationSymbol;
-
 		mTrivialityStatus = computeTrivialityStatus(mPolynomialTerm, mRelationSymbol);
 	}
 
@@ -174,7 +172,6 @@ public class PolynomialRelation implements IBinaryRelation {
 
 	public static PolynomialRelation of(final TransformInequality transformInequality, final RelationSymbol relationSymbol,
 			final AbstractGeneralizedAffineTerm<?> polyLhs, final AbstractGeneralizedAffineTerm<?> polyRhs) {
-		// TODO 20220908 Matthias: maybe static method and return null instead of constructor and AssertionError
 		if (polyLhs.getSort() != polyRhs.getSort()) {
 			throw new AssertionError("Inconsistent sorts");
 		}
@@ -269,22 +266,11 @@ public class PolynomialRelation implements IBinaryRelation {
 		return AffineTerm.constructConstant(s, r);
 	}
 
-	/**
-	 * Given a AbstractGeneralizedAffineTerm, check whether it is of Type AffineTerm or PolynomialTerm.
-	 */
-	private static void check(final AbstractGeneralizedAffineTerm<?> poly) {
-		if (!(poly instanceof AffineTerm || poly instanceof PolynomialTerm)) {
-			throw new IllegalArgumentException(
-					"PolynomialRelation accepts only AffineTerm " + "and PolynomialTerm as internal terms.");
-		}
-	}
-
 	private static TrivialityStatus computeTrivialityStatus(final AbstractGeneralizedAffineTerm<?> term,
 			final RelationSymbol symbol) {
 		if (!term.isConstant()) {
 			return checkMinMaxValues(term, symbol);
 		}
-
 		switch (symbol) {
 		case DISTINCT:
 			return computeTrivialityStatus(term, a -> a != 0);
