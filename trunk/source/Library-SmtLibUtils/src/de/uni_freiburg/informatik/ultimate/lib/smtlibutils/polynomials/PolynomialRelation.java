@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Binary
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.IBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionTir;
 import de.uni_freiburg.informatik.ultimate.logic.INonSolverScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -88,7 +87,7 @@ public class PolynomialRelation implements IBinaryRelation {
 	 * {@link PolynomialTerm}s or {@link AffineTerm}s ψ such that the relation ψ ▷ 0
 	 * is equivalent to the mOriginalTerm.
 	 */
-	protected final AbstractGeneralizedAffineTerm<Term> mPolynomialTerm;
+	protected final AbstractGeneralizedAffineTerm<?> mPolynomialTerm;
 
 	public enum TransformInequality {
 		NO_TRANFORMATION, STRICT2NONSTRICT, NONSTRICT2STRICT;
@@ -125,7 +124,8 @@ public class PolynomialRelation implements IBinaryRelation {
 	@Deprecated
 	public PolynomialRelation(final Script script, final AbstractGeneralizedAffineTerm<?> term,
 			final RelationSymbol relationSymbol) {
-		mPolynomialTerm = Objects.requireNonNull(checkThenCast(term));
+		mPolynomialTerm = Objects.requireNonNull(term);
+		check(mPolynomialTerm);
 		mRelationSymbol = relationSymbol;
 
 		mTrivialityStatus = computeTrivialityStatus(mPolynomialTerm, mRelationSymbol);
@@ -143,9 +143,9 @@ public class PolynomialRelation implements IBinaryRelation {
 		if (relationSymbol.isConvexInequality() && SmtSortUtils.isBitvecSort(polyLhs.getSort())) {
 			throw new AssertionError("Unsupported inequality/sort combination");
 		}
-		final AbstractGeneralizedAffineTerm<Term> difference =
-				sum(checkThenCast(polyLhs), mul(checkThenCast(polyRhs), Rational.MONE));
-		final AbstractGeneralizedAffineTerm<Term> polyTerm;
+		final AbstractGeneralizedAffineTerm<?> difference = PolynomialTerm.sum(polyLhs,
+				PolynomialTerm.mul(polyRhs, Rational.MONE));
+		final AbstractGeneralizedAffineTerm<?> polyTerm;
 		final RelationSymbol relationSymbolAfterTransformation;
 
 		if (transformInequality != TransformInequality.NO_TRANFORMATION
@@ -167,12 +167,12 @@ public class PolynomialRelation implements IBinaryRelation {
 				case LESS:
 					// increment polynomial term by one
 					relationSymbolAfterTransformation = RelationSymbol.LEQ;
-					polyTerm = sum(difference, constructConstant(difference.getSort(), Rational.ONE));
+					polyTerm = PolynomialTerm.sum(difference, constructConstant(difference.getSort(), Rational.ONE));
 					break;
 				case GREATER:
 					// decrement polynomial term by one
 					relationSymbolAfterTransformation = RelationSymbol.GEQ;
-					polyTerm = sum(difference, constructConstant(difference.getSort(), Rational.MONE));
+					polyTerm = PolynomialTerm.sum(difference, constructConstant(difference.getSort(), Rational.MONE));
 					break;
 				case BVULT:
 				case BVUGT:
@@ -199,12 +199,12 @@ public class PolynomialRelation implements IBinaryRelation {
 				case GEQ:
 					// increment polynomial term by one
 					relationSymbolAfterTransformation = RelationSymbol.GREATER;
-					polyTerm = sum(difference, constructConstant(difference.getSort(), Rational.ONE));
+					polyTerm = PolynomialTerm.sum(difference, constructConstant(difference.getSort(), Rational.ONE));
 					break;
 				case LEQ:
 					// decrement polynomial term by one
 					relationSymbolAfterTransformation = RelationSymbol.LESS;
-					polyTerm = sum(difference, constructConstant(difference.getSort(), Rational.MONE));
+					polyTerm = PolynomialTerm.sum(difference, constructConstant(difference.getSort(), Rational.MONE));
 					break;
 				case BVULE:
 				case BVUGE:
@@ -226,51 +226,21 @@ public class PolynomialRelation implements IBinaryRelation {
 		mTrivialityStatus = computeTrivialityStatus(polyTerm, relationSymbolAfterTransformation);
 	}
 
-	private AbstractGeneralizedAffineTerm<Term> sum(final AbstractGeneralizedAffineTerm<Term> op1,
-			final AbstractGeneralizedAffineTerm<Term> op2) {
-		final AbstractGeneralizedAffineTerm<Term> result;
-		if (op1.isAffine() && op2.isAffine()) {
-			result = AffineTerm.sum(op1, op2);
-		} else {
-			final AbstractGeneralizedAffineTerm<?> polynomialSum = PolynomialTerm.sum(op1, op2);
-			result = unsafeCast(polynomialSum);
-		}
-		return result;
-	}
-
-	private AbstractGeneralizedAffineTerm<Term> mul(final AbstractGeneralizedAffineTerm<Term> op, final Rational r) {
-		final AbstractGeneralizedAffineTerm<Term> result;
-		if (op.isAffine()) {
-			result = AffineTerm.mul(op, r);
-		} else {
-			final AbstractGeneralizedAffineTerm<?> polynomialSum = PolynomialTerm.mul(op, r);
-			result = unsafeCast(polynomialSum);
-		}
-		return result;
-	}
-
 	private AffineTerm constructConstant(final Sort s, final Rational r) {
 		return AffineTerm.constructConstant(s, r);
 	}
 
 	/**
-	 * Given a AbstractGeneralizedAffineTerm, check whether it is of Type AffineTerm and PolynomialTerm. If yes, cast it
-	 * (UNSAFE) and return the result, throw an exception otherwise.
+	 * Given a AbstractGeneralizedAffineTerm, check whether it is of Type AffineTerm or PolynomialTerm.
 	 */
-	private static AbstractGeneralizedAffineTerm<Term> checkThenCast(final AbstractGeneralizedAffineTerm<?> poly) {
+	private static void check(final AbstractGeneralizedAffineTerm<?> poly) {
 		if (!(poly instanceof AffineTerm || poly instanceof PolynomialTerm)) {
 			throw new IllegalArgumentException(
 					"PolynomialRelation accepts only AffineTerm " + "and PolynomialTerm as internal terms.");
 		}
-		return unsafeCast(poly);
 	}
 
-	@SuppressWarnings("unchecked")
-	private static AbstractGeneralizedAffineTerm<Term> unsafeCast(final AbstractGeneralizedAffineTerm<?> poly) {
-		return (AbstractGeneralizedAffineTerm<Term>) poly;
-	}
-
-	private static TrivialityStatus computeTrivialityStatus(final AbstractGeneralizedAffineTerm<Term> term,
+	private static TrivialityStatus computeTrivialityStatus(final AbstractGeneralizedAffineTerm<?> term,
 			final RelationSymbol symbol) {
 		if (!term.isConstant()) {
 			return checkMinMaxValues(term, symbol);
@@ -303,7 +273,7 @@ public class PolynomialRelation implements IBinaryRelation {
 		}
 	}
 
-	private static TrivialityStatus checkMinMaxValues(final AbstractGeneralizedAffineTerm<Term> term,
+	private static TrivialityStatus checkMinMaxValues(final AbstractGeneralizedAffineTerm<?> term,
 			final RelationSymbol symbol) {
 		final Pair<Rational, Rational> minMaxValues = term.computeMinMax();
 		final TrivialityStatus result;
@@ -379,7 +349,7 @@ public class PolynomialRelation implements IBinaryRelation {
 		return result;
 	}
 
-	private static TrivialityStatus computeTrivialityStatus(final AbstractGeneralizedAffineTerm<Term> term,
+	private static TrivialityStatus computeTrivialityStatus(final AbstractGeneralizedAffineTerm<?> term,
 			final Predicate<Integer> pred) {
 		if (pred.test(term.getConstant().signum())) {
 			return TrivialityStatus.EQUIVALENT_TO_TRUE;
@@ -392,7 +362,7 @@ public class PolynomialRelation implements IBinaryRelation {
 		return mRelationSymbol;
 	}
 
-	public AbstractGeneralizedAffineTerm<Term> getPolynomialTerm() {
+	public AbstractGeneralizedAffineTerm<?> getPolynomialTerm() {
 		return mPolynomialTerm;
 	}
 
@@ -629,7 +599,7 @@ public class PolynomialRelation implements IBinaryRelation {
 		if (!isAffine()) {
 			return null;
 		}
-		final Map<Term, Rational> map = mPolynomialTerm.getAbstractVariable2Coefficient();
+		final Map<Term, Rational> map = ((AffineTerm) mPolynomialTerm).getAbstractVariable2Coefficient();
 		final Iterator<Entry<Term, Rational>> it = map.entrySet().iterator();
 		if (!it.hasNext()) {
 			return null;

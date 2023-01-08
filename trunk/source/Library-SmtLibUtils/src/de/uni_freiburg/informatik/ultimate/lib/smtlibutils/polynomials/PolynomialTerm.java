@@ -77,9 +77,16 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 */
 	public static AbstractGeneralizedAffineTerm<?> mul(final IPolynomialTerm polynomialTerm,
 			final Rational multiplier) {
-		final GeneralizedConstructor<Monomial, AbstractGeneralizedAffineTerm<?>> constructor = PolynomialTerm::minimalRepresentation;
-		return PolynomialTermUtils.constructMul(x -> ((PolynomialTerm) x).getMonomial2Coefficient(), constructor,
-				polynomialTerm, multiplier);
+		if (polynomialTerm.isAffine()) {
+			final GeneralizedConstructor<Term, AbstractGeneralizedAffineTerm<Term>> constructor = AffineTerm::new;
+			return PolynomialTermUtils.constructMul(x -> ((AffineTerm) x).getAbstractVariable2Coefficient(),
+					constructor, polynomialTerm, multiplier);
+		} else {
+			final GeneralizedConstructor<Monomial, AbstractGeneralizedAffineTerm<?>> constructor = PolynomialTerm::minimalRepresentation;
+			return PolynomialTermUtils.constructMul(
+					x -> ((AbstractGeneralizedAffineTerm<?>) x).getMonomial2Coefficient(), constructor, polynomialTerm,
+					multiplier);
+		}
 	}
 
 	/**
