@@ -67,7 +67,7 @@ public class EquivalenceFinder {
 				final AffineTerm negative = symbol == RelationSymbol.LEQ ? affine2 : affine1;
 				if (leqTerms.contains(negative)) {
 					leqTerms.remove(negative);
-					result.add(PolynomialRelation.of(mScript, positive, RelationSymbol.EQ));
+					result.add(PolynomialRelation.of(positive, RelationSymbol.EQ));
 				} else {
 					leqTerms.add(positive);
 				}
