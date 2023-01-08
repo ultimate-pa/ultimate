@@ -27,6 +27,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  * where c_i, c, e_i are literals, and x_i are variables.
  *
+ * TODO 20230107 Matthias: Revise construction methods. Try to utilize abstract
+ * superclass. Convert operands to PolynomialTerm if needed. Convert
+ * construction result to AffineTerm if needed.
+ *
  * @author Leonard Fichtner (leonard.fichtner@web.de)
  *
  */
@@ -267,7 +271,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	@Override
 	protected Pair<Rational, Rational> computeMinMax() {
 		// TODO implement for analogously to method in AffineTerm,
-		// helps only if all variables in all all monomials are variables
+		// helps only if all variables in all monomials are variables
 		return null;
 	}
 
