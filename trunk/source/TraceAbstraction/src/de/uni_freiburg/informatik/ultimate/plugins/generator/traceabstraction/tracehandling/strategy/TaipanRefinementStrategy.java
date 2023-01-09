@@ -111,7 +111,7 @@ public class TaipanRefinementStrategy<L extends IIcfgTransition<?>> extends Basi
 	}
 
 	@Override
-	public List<QualifiedTracePredicates> filterInterpolants(final List<QualifiedTracePredicates> perfectIpps,
+	public List<QualifiedTracePredicates> mergeInterpolants(final List<QualifiedTracePredicates> perfectIpps,
 			final List<QualifiedTracePredicates> imperfectIpps) {
 		final List<QualifiedTracePredicates> perfectAbsIntIpps =
 				perfectIpps.stream().filter(this::isAbsIntPredicate).collect(Collectors.toList());

@@ -172,7 +172,7 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 			mQualifiedTracePredicates = null;
 			return LBool.UNKNOWN;
 		}
-		mQualifiedTracePredicates = mStrategy.filterInterpolants(perfectIpps, imperfectIpps);
+		mQualifiedTracePredicates = mStrategy.mergeInterpolants(perfectIpps, imperfectIpps);
 		mUsedTracePredicates = mQualifiedTracePredicates;
 		return LBool.UNSAT;
 	}

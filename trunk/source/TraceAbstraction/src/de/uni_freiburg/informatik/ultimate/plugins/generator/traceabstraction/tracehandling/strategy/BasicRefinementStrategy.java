@@ -145,7 +145,7 @@ public class BasicRefinementStrategy<L extends IIcfgTransition<?>> implements IT
 	}
 
 	@Override
-	public List<QualifiedTracePredicates> filterInterpolants(final List<QualifiedTracePredicates> perfectIpps,
+	public List<QualifiedTracePredicates> mergeInterpolants(final List<QualifiedTracePredicates> perfectIpps,
 			final List<QualifiedTracePredicates> imperfectIpps) {
 		return DataStructureUtils.concat(perfectIpps, imperfectIpps);
 	}
