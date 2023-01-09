@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs an interpolant automaton.
@@ -171,7 +170,7 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 			mQualifiedTracePredicates = null;
 			return LBool.UNKNOWN;
 		}
-		mQualifiedTracePredicates = DataStructureUtils.concat(perfectIpps, imperfectIpps);
+		mQualifiedTracePredicates = mStrategy.filterInterpolants(perfectIpps, imperfectIpps);
 		mUsedTracePredicates = mQualifiedTracePredicates;
 		return LBool.UNSAT;
 	}

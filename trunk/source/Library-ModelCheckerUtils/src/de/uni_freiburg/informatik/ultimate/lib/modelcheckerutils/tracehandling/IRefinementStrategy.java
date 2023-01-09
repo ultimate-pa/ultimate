@@ -146,4 +146,7 @@ public interface IRefinementStrategy<L extends IAction> {
 	 */
 	IPredicateUnifier getPredicateUnifier(IRefinementEngine<L, ?> engine);
 
+	List<QualifiedTracePredicates> filterInterpolants(List<QualifiedTracePredicates> perfectIpps,
+			List<QualifiedTracePredicates> imperfectIpps);
+
 }
