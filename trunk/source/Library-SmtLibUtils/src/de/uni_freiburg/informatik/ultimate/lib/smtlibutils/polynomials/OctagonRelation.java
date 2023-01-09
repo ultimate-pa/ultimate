@@ -103,7 +103,8 @@ public class OctagonRelation {
 	private static OctagonRelation from2Vars(final AffineTerm affineTerm, final RelationSymbol relationSymbol) {
 		final Map<Term, Rational> var2coeff = affineTerm.getAbstractVariable2Coefficient();
 		checkNumberOfVariables(2, var2coeff.size());
-		final Iterator<Map.Entry<Term, Rational>> iter = var2coeff.entrySet().iterator();
+		final Iterator<Map.Entry<Term, Rational>> iter = var2coeff.entrySet().stream()
+				.sorted((x, y) -> x.getKey().toString().compareTo(y.getKey().toString())).iterator();
 		final Map.Entry<Term, Rational> var2coeff1 = iter.next();
 		final Map.Entry<Term, Rational> var2coeff2 = iter.next();
 		final Rational absCommonCoeff = var2coeff1.getValue().abs();

@@ -116,12 +116,12 @@ public class OctagonRelationTest {
 
 	@Test
 	public void testTwoVarReal() {
-		Assert.assertEquals("(-y) - (-x) <= 2", octRelAsString("(<= (- x y) 2.0)"));
-		Assert.assertEquals("(-y) - (+x) < -3", octRelAsString("(< 3.0 (+ x y))"));
-		Assert.assertEquals("(+y) - (-x) = 4", octRelAsString("(= (+ (* 3 x) (* 3 y)) 12.0)"));
-		Assert.assertEquals("(+y) - (+x) distinct 4", octRelAsString("(distinct (+ (* x (- 3)) (* 3 y)) 12.0)"));
+		Assert.assertEquals("(+x) - (+y) <= 2", octRelAsString("(<= (- x y) 2.0)"));
+		Assert.assertEquals("(-x) - (+y) < -3", octRelAsString("(< 3.0 (+ x y))"));
+		Assert.assertEquals("(+x) - (-y) = 4", octRelAsString("(= (+ (* 3 x) (* 3 y)) 12.0)"));
+		Assert.assertEquals("(-x) - (-y) distinct 4", octRelAsString("(distinct (+ (* x (- 3)) (* 3 y)) 12.0)"));
 
-		Assert.assertEquals("(-y) - (-x) > 4", octRelAsString("(> (+ x (* (- 3.0) y)) (- 12.0 (* x 2.0)))"));
+		Assert.assertEquals("(+x) - (+y) > 4", octRelAsString("(> (+ x (* (- 3.0) y)) (- 12.0 (* x 2.0)))"));
 	}
 
 	@Test
