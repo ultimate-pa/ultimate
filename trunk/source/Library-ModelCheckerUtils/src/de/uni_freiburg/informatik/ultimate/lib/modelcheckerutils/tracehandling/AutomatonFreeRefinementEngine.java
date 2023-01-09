@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -142,7 +143,8 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 		final List<QualifiedTracePredicates> perfectIpps = new ArrayList<>();
 		final List<QualifiedTracePredicates> imperfectIpps = new ArrayList<>();
 
-		while (mStrategy.hasNextInterpolantGenerator(perfectIpps, imperfectIpps)) {
+		while (mStrategy.hasNextInterpolantGenerator(Collections.unmodifiableList(perfectIpps),
+				Collections.unmodifiableList(imperfectIpps))) {
 			final IIpgStrategyModule<?, L> interpolantGenerator = tryExecuteInterpolantGenerator();
 			if (interpolantGenerator == null) {
 				continue;
