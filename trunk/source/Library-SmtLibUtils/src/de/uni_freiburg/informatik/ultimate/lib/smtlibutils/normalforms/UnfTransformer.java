@@ -92,7 +92,7 @@ public class UnfTransformer extends TermTransformer {
 		final String appString = fun.getApplicationString();
 		Term result = SmtUtils.unfTerm(mScript, fun, newArgs);
 		if (mRelationSymbols.contains(appString)) {
-			final PolynomialRelation polyPolyRel = PolynomialRelation.convert(mScript, result);
+			final PolynomialRelation polyPolyRel = PolynomialRelation.of(mScript, result);
 			if (polyPolyRel != null) {
 				result = polyPolyRel.positiveNormalForm(mScript);
 			}

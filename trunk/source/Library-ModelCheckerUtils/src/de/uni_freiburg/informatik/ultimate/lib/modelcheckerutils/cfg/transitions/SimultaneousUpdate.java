@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -170,8 +171,8 @@ public class SimultaneousUpdate {
 					assert rhs.getFirst() == null ^ rhs.getSecond() == null;
 					if (rhs.getSecond() != null) {
 						throw new SimultaneousUpdateException(String.format(
-								" Reasons: %s. Cannot find an inVar-based term that is equivalent to %s's outVar %s in TransFormula %s.",
-								rhs.getSecond(), pv, outVar, tf));
+								" Reasons: %s. Size: %s. Cannot find an inVar-based term that is equivalent to %s's outVar %s in TransFormula %s.",
+								rhs.getSecond(), new DAGSize().treesize(tf.getFormula()), pv, outVar, tf));
 					}
 					final Term renamed = rhs.getFirst();
 					if (SmtSortUtils.isArraySort(pv.getSort())) {
@@ -229,7 +230,7 @@ public class SimultaneousUpdate {
 		final Term[] conjuncts = SmtUtils.getConjuncts(conjunction);
 		for (final Term conjunct : conjuncts) {
 			if (Arrays.asList(conjunct.getFreeVars()).contains(outVar)) {
-				final PolynomialRelation polyRel = PolynomialRelation.convert(script, conjunct);
+				final PolynomialRelation polyRel = PolynomialRelation.of(script, conjunct);
 				final SolvedBinaryRelation sbr = polyRel.solveForSubject(script, outVar);
 				if (sbr != null) {
 					final Term lhs = sbr.getLeftHandSide();
@@ -290,6 +291,10 @@ public class SimultaneousUpdate {
 			} else if (conjunct instanceof ApplicationTerm) {
 				final ApplicationTerm appTerm = (ApplicationTerm) conjunct;
 				switch (appTerm.getFunction().getName()) {
+				case "or": {
+					updateImpediments.add(ExtractionImpediments.DISJUNCTION);
+					continue;
+				}
 				case "=":
 					final BinaryEqualityRelation ber = BinaryEqualityRelation.convert(appTerm);
 					assert ber != null : "Must succeed for equality";
@@ -299,7 +304,7 @@ public class SimultaneousUpdate {
 							updateImpediments.add(ExtractionImpediments.NORHSARRAY);
 							continue;
 						}
-						final PolynomialRelation polyRel = PolynomialRelation.convert(mgdScript.getScript(), appTerm);
+						final PolynomialRelation polyRel = PolynomialRelation.of(mgdScript.getScript(), appTerm);
 						assert polyRel != null : "Must succeed for equality";
 						sbr = polyRel.solveForSubject(mgdScript.getScript(), outVar);
 						if (sbr == null) {

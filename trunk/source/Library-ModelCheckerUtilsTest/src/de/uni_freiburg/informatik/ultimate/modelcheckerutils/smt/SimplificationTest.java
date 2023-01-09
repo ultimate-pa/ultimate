@@ -70,10 +70,9 @@ public class SimplificationTest {
 	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
-	// private static final long TEST_TIMEOUT_MILLISECONDS = 10_000_99999;
-	private static final long TEST_TIMEOUT_MILLISECONDS = 60_000;
+	 private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
-	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
+	private static final String SOLVER_COMMAND = "cvc4 --incremental --lang smt";
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
@@ -499,6 +498,7 @@ public class SimplificationTest {
 	/**
 	 * Benchmark from MCR. Quantifier elimination did not terminate.
 	 */
+	@Test
 	public void mcrPthreadWmm01() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x0", "x1"), };
 		final String formulaAsString =

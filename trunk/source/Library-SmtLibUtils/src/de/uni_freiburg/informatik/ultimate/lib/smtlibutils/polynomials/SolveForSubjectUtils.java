@@ -213,7 +213,7 @@ public class SolveForSubjectUtils {
 			final HashSet<TermVariable> bannedForDivCaptureWithAuxiliary = new HashSet<>(bannedForDivCapture);
 			bannedForDivCaptureWithAuxiliary.add(auxDiv);
 			bannedForDivCaptureWithAuxiliary.add(auxMod);
-			solvedComparison = PolynomialRelation.convert(mgdScript.getScript(), subtermSumComparison).solveForSubject(mgdScript, subject,
+			solvedComparison = PolynomialRelation.of(mgdScript.getScript(), subtermSumComparison).solveForSubject(mgdScript, subject,
 					xnf, bannedForDivCaptureWithAuxiliary);
 			if (solvedComparison == null) {
 				return null;

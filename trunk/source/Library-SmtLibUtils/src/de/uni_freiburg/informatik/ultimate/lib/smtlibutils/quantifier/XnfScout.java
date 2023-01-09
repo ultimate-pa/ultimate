@@ -162,7 +162,7 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 				return Occurrence.ELIMINABLE;
 			}
 		} else {
-			final PolynomialRelation polyRel = PolynomialRelation.convert(script, term);
+			final PolynomialRelation polyRel = PolynomialRelation.of(script, term);
 			if (polyRel == null) {
 				return Occurrence.OTHER_OCCURRENCE;
 			}

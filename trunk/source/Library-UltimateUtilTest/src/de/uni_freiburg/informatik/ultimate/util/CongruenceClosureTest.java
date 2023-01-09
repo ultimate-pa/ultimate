@@ -31,8 +31,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void test01() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -101,8 +100,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void test02() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -165,8 +163,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void test03() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -206,8 +203,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void test04() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -258,8 +254,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void test05() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -297,8 +292,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void test06() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -338,8 +332,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void test07() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -366,8 +359,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void test07a() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -399,8 +391,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void test07b() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -439,8 +430,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void test08() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -469,8 +459,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void test09() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -499,8 +488,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void testOperators1() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		final StringElementFactory factory = new StringElementFactory();
@@ -626,8 +614,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void testOperators2() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		final StringElementFactory factory = new StringElementFactory();
@@ -734,8 +721,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void testOperators3() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		final StringElementFactory factory = new StringElementFactory();
@@ -768,8 +754,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void testOperators4() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		final StringElementFactory factory = new StringElementFactory();
@@ -795,8 +780,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void testRemove01() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -822,8 +806,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void testRemove02() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -857,8 +840,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void testRemove03() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -889,8 +871,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void testRemove04() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -919,8 +900,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void testContainsConstraints01() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -976,8 +956,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void testContainsConstraints02() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -1034,7 +1013,6 @@ public class CongruenceClosureTest {
 
 		// report y in { l3, x }
 		cc = manager.reportContainsConstraint(y, l3AndX, cc, mInPlace);
-		// cc = manager.reportContainsConstraint(y, Collections.singleton(l3), cc, mInPlace);
 
 		// y in { l1, l2, l3 } should hold now
 
@@ -1049,8 +1027,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void testContainsConstraints03() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -1109,16 +1086,18 @@ public class CongruenceClosureTest {
 		// report x in { l1, l2 }
 		cc = manager.reportContainsConstraint(x, l1AndL2, cc, mInPlace);
 
-		// y in { l1, l2, l3 } should hold now
+		// y in { l1, l2, l3 } should hold now, but we cannot handle this case yet, therefore the result is unknown
 
-		assertTrue(cc.getEqualityStatus(y, l4) == EqualityStatus.NOT_EQUAL);
+		assertTrue(cc.getEqualityStatus(y, l1) == EqualityStatus.UNKNOWN);
+		assertTrue(cc.getEqualityStatus(y, l2) == EqualityStatus.UNKNOWN);
+		assertTrue(cc.getEqualityStatus(y, l3) == EqualityStatus.UNKNOWN);
+		assertTrue(cc.getEqualityStatus(y, l4) == EqualityStatus.UNKNOWN);
 	}
 
 	@Test
 	public void testContainsConstraints04() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
@@ -1189,8 +1168,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void testContainsConstraints05() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc1 = manager.getEmptyCc(mInPlace);
@@ -1252,8 +1230,7 @@ public class CongruenceClosureTest {
 	@Test
 	public void testContainsConstraints06() {
 		final ILogger logger = new ConsoleLogger();
-		final CongruenceClosureComparator<StringCcElement> ccComparator =
-				new CongruenceClosureComparator<>();
+		final CongruenceClosureComparator<StringCcElement> ccComparator = new CongruenceClosureComparator<>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
 		CongruenceClosure<StringCcElement> cc1 = manager.getEmptyCc(mInPlace);

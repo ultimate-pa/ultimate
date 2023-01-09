@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.QuadraticMatrix.JordanTransformationResult.JordanTransformationStatus;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanDecomposition.JordanDecompositionStatus;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -593,12 +593,17 @@ public class QuadraticMatrix {
 	 * Computes the jordan matrix of a given quadratic matrix given jordanBlockSizes which contains triples (eigenvalue,
 	 * blocksize, occurrence). This method also works for integral eigenvalues not equal to -1,0 or 1, only need to
 	 * change eigenvalues array.
+	 * @param linearUpdate
 	 */
-	public JordanTransformationResult constructJordanTransformation() {
+	public JordanDecomposition constructJordanDecomposition() {
 		final int n = mDimension;
+		if (n >= 11) {
+			throw new UnsupportedOperationException(
+					"Vector space has " + n + " dimensions. Computation of eigenvalues may not terminate.");
+		}
 		final QuadraticMatrix jordanMatrix = constructZeroMatrix(n);
 		final NestedMap2<Integer, Integer, Integer> jordanBlockSizes = computeJordanBlockSizes();
-		JordanTransformationStatus status;
+		JordanDecompositionStatus status;
 		int current = 0;
 		for (int e = -1; e <= 1; e++) {
 			if (jordanBlockSizes.get(e) != null) {
@@ -613,18 +618,18 @@ public class QuadraticMatrix {
 				}
 			}
 		}
-		JordanTransformationResult jtr;
+		final JordanDecomposition decomp;
 		if (current != n) {
-			status = JordanTransformationStatus.UNSUPPORTED_EIGENVALUES;
-			jtr = new JordanTransformationResult(status, null, null, null, null);
+			status = JordanDecompositionStatus.UNSUPPORTED_EIGENVALUES;
+			decomp = new JordanDecomposition(status, null, null, null, null);
 		} else {
-			status = JordanTransformationStatus.SUCCESS;
+			status = JordanDecompositionStatus.SUCCESS;
 			final RationalMatrix modal = computeModalMatrix(this, jordanMatrix);
 			final RationalMatrix inverseModal = RationalMatrix.computeInverse(modal);
 			assert checkCorrectnessofJordanDecomposition(this, modal, jordanMatrix, inverseModal);
-			jtr = new JordanTransformationResult(status, jordanMatrix, modal, inverseModal, jordanBlockSizes);
+			decomp = new JordanDecomposition(status, jordanMatrix, modal, inverseModal, jordanBlockSizes);
 		}
-		return jtr;
+		return decomp;
 	}
 
 	/**
@@ -811,75 +816,5 @@ public class QuadraticMatrix {
 	@Override
 	public String toString() {
 		return Arrays.deepToString(mEntries);
-	}
-
-	public static class JordanTransformationResult {
-		enum JordanTransformationStatus {
-			SUCCESS,
-			/**
-			 * We support the transformation to JNF only if each eigenvalue is either -1,0 or 1.
-			 */
-			UNSUPPORTED_EIGENVALUES
-		};
-
-		private final JordanTransformationStatus mStatus;
-		private final QuadraticMatrix mJnf;
-		private final RationalMatrix mModal;
-		private final RationalMatrix mInverseModal;
-		/**
-		 * Contains triple (ev, bs, occ) if there are exactly occ Jordan blocks of size bs for eigenvalue ev.
-		 */
-		private final NestedMap2<Integer, Integer, Integer> mJordanBlockSizes;
-
-		public JordanTransformationResult(final JordanTransformationStatus status, final QuadraticMatrix jnf,
-				final RationalMatrix modal, final RationalMatrix inverseModal,
-				final NestedMap2<Integer, Integer, Integer> jordanBlockSizes) {
-			super();
-			assert (status == JordanTransformationStatus.SUCCESS) ^ (jnf == null) : "provide JNF iff success";
-			assert (jnf == null) == (jordanBlockSizes == null) : "all or nothing";
-			if (jordanBlockSizes != null) {
-				assert jordanBlockSizes.keySet().stream()
-						.allMatch(x -> x == -1 || x == 0 || x == 1) : "only supported eigenvalues as keys";
-			}
-			mStatus = status;
-			mJnf = jnf;
-			mModal = modal;
-			mInverseModal = inverseModal;
-			mJordanBlockSizes = jordanBlockSizes;
-		}
-
-		public JordanTransformationStatus getStatus() {
-			return mStatus;
-		}
-
-		public QuadraticMatrix getJnf() {
-			return mJnf;
-		}
-
-		public RationalMatrix getModal() {
-			return mModal;
-		}
-
-		public RationalMatrix getInverseModal() {
-			return mInverseModal;
-		}
-
-		public NestedMap2<Integer, Integer, Integer> getJordanBlockSizes() {
-			return mJordanBlockSizes;
-		}
-
-		/**
-		 * Auxiliary method for filling the JordanBlockSizes.
-		 */
-		static void reportJordanBlock(final NestedMap2<Integer, Integer, Integer> jordanBlockSizes,
-				final int eigenvalue, final int blockSize) {
-			Integer occurence = jordanBlockSizes.get(eigenvalue, blockSize);
-			if (occurence == null) {
-				occurence = 1;
-			} else {
-				occurence++;
-			}
-			jordanBlockSizes.put(eigenvalue, blockSize, occurence);
-		}
 	}
 }

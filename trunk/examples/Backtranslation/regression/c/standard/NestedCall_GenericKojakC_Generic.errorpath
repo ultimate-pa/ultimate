@@ -1,0 +1,20 @@
+[L9]               int a = 5;
+[L11]  EXPR        a++
+       VAL         [a++=5, a=6]
+[L11]  CALL, EXPR  f(a++)
+       VAL         [\old(b)=5]
+[L4]   EXPR        ++b
+[L4]               return ++b;
+[L11]  RET, EXPR   f(a++)
+       VAL         [a++=5, a=6, f(a++)=6]
+[L11]  CALL, EXPR  f(f(a++))
+       VAL         [\old(b)=6]
+[L4]   EXPR        ++b
+[L4]               return ++b;
+[L11]  RET, EXPR   f(f(a++))
+       VAL         [a++=5, a=6, f(a++)=6, f(f(a++))=7]
+[L11]              a = f(f(a++))
+[L13]  COND TRUE   a != 8
+       VAL         [a=7]
+[L19]              __VERIFIER_error()
+       VAL         [a=7]

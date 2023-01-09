@@ -81,7 +81,7 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a
 	 * select term `(select a k)`.)
 	 */
-	private static final boolean APPLY_CONSTANT_FOLDING = true;
+	private static final boolean APPLY_CONSTANT_FOLDING = false;
 	private static final boolean DEBUG_CHECK_RESULT = false;
 
 	private PolyPacSimplificationTermWalker(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
@@ -132,7 +132,7 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 		if (APPLY_CONSTANT_FOLDING) {
 			final Map<Term, Term> substitutionMapping = new HashMap<>();
 			for (final Term conjunct : SmtUtils.getConjuncts(context)) {
-				final PolynomialRelation polyRel = PolynomialRelation.convert(mMgdScript.getScript(), conjunct);
+				final PolynomialRelation polyRel = PolynomialRelation.of(mMgdScript.getScript(), conjunct);
 				if (polyRel != null) {
 					final SolvedBinaryRelation sbr = polyRel.isSimpleEquality(mMgdScript.getScript());
 					if (sbr != null) {

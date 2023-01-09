@@ -49,7 +49,11 @@ public enum JordanLoopAccelerationDefinitions implements IStatisticsElement {
 
 	AlternatingAcceleration(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	QuantifierFreeResult(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),;
+	QuantifierFreeResult(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
+	ErrorMessage(String.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
+	;
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;

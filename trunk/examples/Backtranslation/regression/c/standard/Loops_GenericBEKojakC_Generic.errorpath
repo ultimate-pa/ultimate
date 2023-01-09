@@ -5,10 +5,13 @@
 [L8]               d = 2
 [L9]               e = 2
 [L10]              f = 2
+       VAL         [a=2, b=2, c=2, d=2, e=2, f=2]
 [L12]  COND TRUE   a > 0
 [L13]              a--
+       VAL         [a=1, b=2, c=2, d=2, e=2, f=2]
 [L12]  COND TRUE   a > 0
 [L13]              a--
+       VAL         [a=0, b=2, c=2, d=2, e=2, f=2]
 [L12]  COND FALSE  !(a > 0)
 [L16]  COND TRUE   b > 0
 [L17]              b--
@@ -25,12 +28,15 @@
        VAL         [a=0, b=0, c=0, d=2, e=2, f=2]
 [L18]  COND FALSE  !(c > 0)
 [L16]  COND FALSE  !(b > 0)
+       VAL         [a=0, b=0, c=0, d=2, e=2, f=2]
 [L23]  COND TRUE   d>0
 [L24]              e--
 [L23]              d--
+       VAL         [a=0, b=0, c=0, d=1, e=1, f=2]
 [L23]  COND TRUE   d>0
 [L24]              e--
 [L23]              d--
+       VAL         [a=0, b=0, c=0, d=0, e=0, f=2]
 [L23]  COND FALSE  !(d>0)
 [L28]              f--
        VAL         [a=0, b=0, c=0, d=0, e=0, f=1]

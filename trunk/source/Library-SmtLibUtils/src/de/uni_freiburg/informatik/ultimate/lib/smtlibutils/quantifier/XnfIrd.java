@@ -176,7 +176,7 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 
 	private static SolvedBinaryRelation solve(final ManagedScript mgdScript, final TermVariable tv,
 			final int quantifier, final Term term) {
-		final PolynomialRelation polyRel = PolynomialRelation.convert(mgdScript.getScript(), term);
+		final PolynomialRelation polyRel = PolynomialRelation.of(mgdScript.getScript(), term);
 		if (polyRel == null) {
 			// unable to eliminate quantifier
 			return null;

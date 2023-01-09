@@ -77,7 +77,7 @@ public class PolyPoNeWithContext extends PolyPoNe {
 
 	private boolean addContext(final Collection<Term> contextParams) {
 		for (final Term param : contextParams) {
-			final PolynomialRelation polyRel = PolynomialRelation.convert(mScript, param);
+			final PolynomialRelation polyRel = PolynomialRelation.of(mScript, param);
 			if (polyRel != null) {
 				final boolean isInconsistent = mContext.addPolyRel(mScript, polyRel, true);
 				if (isInconsistent) {
