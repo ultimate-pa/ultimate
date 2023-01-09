@@ -41,5 +41,5 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public interface ITermProvider {
 
-	public Term asTerm();
+	public Term getTerm();
 }

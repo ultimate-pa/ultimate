@@ -87,7 +87,7 @@ public class SolveForSubjectUtils {
 		}
 		assert res.isSubjectOnlyOnRhs() : "subject not only LHS";
 		assert mgdScript instanceof INonSolverScript || SmtUtils.checkEquivalence(polyRel.positiveNormalForm(mgdScript.getScript()),
-				res.asTerm(mgdScript.getScript()), mgdScript.getScript()) != LBool.SAT : "solveForSubject unsound";
+				res.toTerm(mgdScript.getScript()), mgdScript.getScript()) != LBool.SAT : "solveForSubject unsound";
 		return res;
 	}
 
@@ -285,7 +285,7 @@ public class SolveForSubjectUtils {
 		mcsb.addAtoms(auxModLessCoef, auxModGreaterZero);
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
 		assert result.isSubjectOnlyOnRhs() : "subject not only LHS";
-		assert mgdScript instanceof INonSolverScript || SmtUtils.checkEquivalence(pnf, result.asTerm(mgdScript.getScript()),
+		assert mgdScript instanceof INonSolverScript || SmtUtils.checkEquivalence(pnf, result.toTerm(mgdScript.getScript()),
 				mgdScript.getScript()) != LBool.SAT : "solveForSubject unsound";
 		return result;
 	}
@@ -618,7 +618,7 @@ public class SolveForSubjectUtils {
 				}
 				for (final SupportingTerm st : c.getSupportingTerms()) {
 					if (st.getIntricateOperation() == IntricateOperation.DIV_BY_INTEGER_CONSTANT
-							&& Arrays.stream(st.asTerm().getFreeVars()).anyMatch(termVariables::contains)) {
+							&& Arrays.stream(st.getTerm().getFreeVars()).anyMatch(termVariables::contains)) {
 						return true;
 					}
 				}

@@ -241,7 +241,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 //						&& !sbr.getRelationSymbol().equals(RelationSymbol.EQ)) {
 //					return null;
 //				}
-				final Term eliminateeOnLhs = sbr.asTerm(script);
+				final Term eliminateeOnLhs = sbr.toTerm(script);
 				final BinaryNumericRelation bnr = BinaryNumericRelation.convert(eliminateeOnLhs);
 				switch (bnr.getRelationSymbol()) {
 				case DISTINCT:

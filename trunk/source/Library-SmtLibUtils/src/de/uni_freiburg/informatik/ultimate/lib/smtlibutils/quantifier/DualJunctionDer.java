@@ -461,7 +461,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			for (final Case cas : mcsbr.getCases()) {
 				final List<Term> dualJunctsResult = new ArrayList<>();
 				for (final SupportingTerm st : cas.getSupportingTerms()) {
-					dualJunctsResult.add(st.asTerm());
+					dualJunctsResult.add(st.getTerm());
 				}
 				final Term dualJunctionResult;
 				if (cas.getSolvedBinaryRelation() != null) {

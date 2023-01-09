@@ -490,7 +490,7 @@ public class PolynomialRelation implements IBinaryRelation {
 				assert subject.equals(solvedElpr.getLhsMonomial().getSingleVariable());
 				final SolvedBinaryRelation result = new SolvedBinaryRelation(subject,
 						solvedElpr.getRhs().toTerm(script), solvedElpr.getRelationSymbol());
-				final Term relationToTerm = result.asTerm(script);
+				final Term relationToTerm = result.toTerm(script);
 				assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(positiveNormalForm(script),
 						relationToTerm, script) != LBool.SAT : "solveForSubject unsound";
 				return result;
