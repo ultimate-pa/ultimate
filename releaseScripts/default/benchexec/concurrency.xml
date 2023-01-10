@@ -4,6 +4,8 @@
 
   <option name="--force-no-wrapper" />
 
+  <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+
   <!-- === No Partial Order Reduction === -->
   <!-- ================================== -->
 
@@ -216,6 +218,10 @@
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep-VarAbsGlobalSyntactic.epf</option>
   </rundefinition>
 
+  <rundefinition name="GemCutter.NewStatesSleep.VarAbsGlobalSmt">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep-VarAbsGlobalSmt.epf</option>
+  </rundefinition>
+
   <!--rundefinition name="GemCutter.NewStatesSleep.VarAbsGlobalSyntactic.OrderLoopLockstep">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep-VarAbsGlobalSyntactic.epf</option>
     <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
@@ -233,6 +239,10 @@
 
   <rundefinition name="GemCutter.SleepMap.ConcreteSmt_VarAbsGlobalSyntactic">
     <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+  </rundefinition>
+
+  <rundefinition name="GemCutter.SleepMap.ConcreteSmt_VarAbsGlobalSmt">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSmt.epf</option>
   </rundefinition>
 
   <!--rundefinition name="GemCutter.SleepMapPersistentFixedOrder.ConcreteSmt_VarAbsGlobalSyntactic">
