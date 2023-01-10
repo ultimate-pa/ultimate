@@ -671,7 +671,7 @@ public final class SmtUtils {
 				}
 				if (funcName.equals("<") || funcName.equals("<=") || funcName.equals(">") || funcName.equals(">=")) {
 					final PolynomialRelation polyRel = PolynomialRelation.of(script, term);
-					return polyRel.negate(script).positiveNormalForm(script);
+					return polyRel.negate(script).toTerm(script);
 				}
 			}
 			return Util.not(script, term);
@@ -759,7 +759,7 @@ public final class SmtUtils {
 		if (!SmtSortUtils.isBitvecSort(rhs.getSort())) {
 			throw new UnsupportedOperationException("need BitVec sort");
 		}
-		return PolynomialRelation.of(script, RelationSymbol.EQ, lhs, rhs).positiveNormalForm(script);
+		return PolynomialRelation.of(script, RelationSymbol.EQ, lhs, rhs).toTerm(script);
 	}
 
 	/**
@@ -773,7 +773,7 @@ public final class SmtUtils {
 		if (!rhs.getSort().isNumericSort()) {
 			throw new UnsupportedOperationException("need numeric sort");
 		}
-		return PolynomialRelation.of(script, RelationSymbol.EQ, lhs, rhs).positiveNormalForm(script);
+		return PolynomialRelation.of(script, RelationSymbol.EQ, lhs, rhs).toTerm(script);
 	}
 
 	/**
@@ -1307,7 +1307,7 @@ public final class SmtUtils {
 		}
 		if (SmtSortUtils.isNumericSort(lhs.getSort())) {
 			return PolynomialRelation.of(script, RelationSymbol.convert(functionSymbol), lhs, rhs)
-					.positiveNormalForm(script);
+					.toTerm(script);
 		} else {
 			assert SmtSortUtils.isBitvecSort(lhs.getSort());
 			// TODO 20220908 Matthias: Minor improvements still possible. E.g., everything

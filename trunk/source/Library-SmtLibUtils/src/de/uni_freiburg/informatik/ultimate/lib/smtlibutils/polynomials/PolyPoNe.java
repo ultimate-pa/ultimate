@@ -272,7 +272,7 @@ public class PolyPoNe {
 		}
 		final List<Term> params = new ArrayList<>();
 		for (final Entry<Map<?, Rational>, PolynomialRelation> pair : mPolyRels.getSetOfPairs()) {
-			params.add(pair.getValue().positiveNormalForm(mScript));
+			params.add(pair.getValue().toTerm(mScript));
 		}
 		for (final Term term : mPositive) {
 			params.add(term);
@@ -289,7 +289,7 @@ public class PolyPoNe {
 		}
 		final List<Term> params = new ArrayList<>();
 		for (final Entry<Map<?, Rational>, PolynomialRelation> pair : mPolyRels.getSetOfPairs()) {
-			params.add(pair.getValue().negate(mScript).positiveNormalForm(mScript));
+			params.add(pair.getValue().negate(mScript).toTerm(mScript));
 		}
 		for (final Term term : mPositive) {
 			params.add(SmtUtils.not(mScript, term));

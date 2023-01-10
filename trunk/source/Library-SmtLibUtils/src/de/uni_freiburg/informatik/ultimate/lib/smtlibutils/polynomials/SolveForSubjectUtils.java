@@ -75,7 +75,7 @@ public class SolveForSubjectUtils {
 		MultiCaseSolvedBinaryRelation res;
 		if (SmtSortUtils.isNumericSort(subject.getSort())) {
 			res = findTreatableDivModSubterm(mgdScript, subject, polyRel.getPolynomialTerm(), null, xnf,
-					polyRel.positiveNormalForm(mgdScript.getScript()), bannedForDivCapture);
+					polyRel.toTerm(mgdScript.getScript()), bannedForDivCapture);
 		} else {
 			res = null;
 		}
@@ -86,7 +86,7 @@ public class SolveForSubjectUtils {
 			return null;
 		}
 		assert res.isSubjectOnlyOnRhs() : "subject not only LHS";
-		assert mgdScript instanceof INonSolverScript || SmtUtils.checkEquivalence(polyRel.positiveNormalForm(mgdScript.getScript()),
+		assert mgdScript instanceof INonSolverScript || SmtUtils.checkEquivalence(polyRel.toTerm(mgdScript.getScript()),
 				res.toTerm(mgdScript.getScript()), mgdScript.getScript()) != LBool.SAT : "solveForSubject unsound";
 		return res;
 	}

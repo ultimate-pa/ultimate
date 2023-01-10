@@ -421,7 +421,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		if (polyRel == null) {
 			throw new AssertionError("should be affine");
 		}
-		return polyRel.positiveNormalForm(script);
+		return polyRel.toTerm(script);
 	}
 
 	private static class AntiDerBuildingInstructions {

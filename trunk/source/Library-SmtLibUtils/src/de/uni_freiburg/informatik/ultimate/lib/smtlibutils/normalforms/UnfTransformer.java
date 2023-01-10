@@ -94,7 +94,7 @@ public class UnfTransformer extends TermTransformer {
 		if (mRelationSymbols.contains(appString)) {
 			final PolynomialRelation polyPolyRel = PolynomialRelation.of(mScript, result);
 			if (polyPolyRel != null) {
-				result = polyPolyRel.positiveNormalForm(mScript);
+				result = polyPolyRel.toTerm(mScript);
 			}
 		}
 		setResult(result);

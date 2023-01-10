@@ -332,7 +332,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		if (term != result) {
 			final PolynomialRelation polyRel = PolynomialRelation.of(mScript, result);
 			if (polyRel != null) {
-				result = polyRel.positiveNormalForm(mScript);
+				result = polyRel.toTerm(mScript);
 			}
 		}
 		return result;

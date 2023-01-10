@@ -407,7 +407,7 @@ public class FastUPRCore {
 			if (polyRel == null) {
 				return false;
 			}
-			t = polyRel.positiveNormalForm(script);
+			t = polyRel.toTerm(script);
 			mUtils.debug("Term as Positive Normal Form:");
 			mUtils.debug(t.toString());
 

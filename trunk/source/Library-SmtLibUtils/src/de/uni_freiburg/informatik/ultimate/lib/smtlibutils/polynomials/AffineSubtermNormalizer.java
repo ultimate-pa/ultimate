@@ -64,7 +64,7 @@ public class AffineSubtermNormalizer extends TermTransformer {
 				setResult(term);
 				return;
 			}
-			final Term pnf = polyRel.positiveNormalForm(mScript);
+			final Term pnf = polyRel.toTerm(mScript);
 			setResult(pnf);
 			return;
 		}

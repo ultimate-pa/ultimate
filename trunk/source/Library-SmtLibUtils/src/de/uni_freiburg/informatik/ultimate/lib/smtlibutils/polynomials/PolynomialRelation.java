@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -76,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class PolynomialRelation implements IBinaryRelation {
+public class PolynomialRelation implements IBinaryRelation, ITermProviderOnDemand {
 
 	protected static final String NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE =
 			"No affine representation where desired variable is on left hand side";
@@ -396,7 +397,7 @@ public class PolynomialRelation implements IBinaryRelation {
 	 * greater-than relation symbols are replaced by less-than relation symbols. If the term is equivalent to
 	 * <i>true</i> (resp. <i>false</i>) we return <i>true</i> (resp. <i>false</i>).
 	 */
-	public Term positiveNormalForm(final Script script) {
+	public Term toTerm(final Script script) {
 		if (mTrivialityStatus == TrivialityStatus.EQUIVALENT_TO_TRUE) {
 			return script.term("true");
 		} else if (mTrivialityStatus == TrivialityStatus.EQUIVALENT_TO_FALSE) {
@@ -491,7 +492,7 @@ public class PolynomialRelation implements IBinaryRelation {
 				final SolvedBinaryRelation result = new SolvedBinaryRelation(subject,
 						solvedElpr.getRhs().toTerm(script), solvedElpr.getRelationSymbol());
 				final Term relationToTerm = result.toTerm(script);
-				assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(positiveNormalForm(script),
+				assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(toTerm(script),
 						relationToTerm, script) != LBool.SAT : "solveForSubject unsound";
 				return result;
 			}
