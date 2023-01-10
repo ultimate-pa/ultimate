@@ -500,7 +500,6 @@
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 
     <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
-    <excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
   </tasks>
 
@@ -511,7 +510,6 @@
     <option name="&#45;-cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
 
     <includesfile>../../../trunk/examples/svcomp/NoDataRace-Main.set</includesfile>
-    <excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
   </tasks>
 
@@ -526,7 +524,6 @@
     <option name="--cacsl2boogietranslator.adapt.memory.model.on.pointer.casts.if.necessary">true</option>
 
     <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
-    <excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
   </tasks>
 
@@ -537,7 +534,6 @@
     <option name="--cacsl2boogietranslator.check.absence.of.signed.integer.overflows">true</option>
 
     <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
-    <excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/no-overflow.prp</propertyfile>
   </tasks>
 
@@ -548,7 +544,6 @@
     <option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
 
     <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
-    <excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
   </tasks>
 
@@ -556,7 +551,6 @@
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 
     <includesfile>../../../trunk/examples/bench-pthreads.set</includesfile>
-    <excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
   </tasks>
 
@@ -564,7 +558,6 @@
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
 
     <includesfile>../../../trunk/examples/bench-concurrent-boogie.set</includesfile>
-    <excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
   </tasks>
 
