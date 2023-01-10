@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -50,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs an interpolant automaton.
@@ -143,7 +143,8 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 		final List<QualifiedTracePredicates> perfectIpps = new ArrayList<>();
 		final List<QualifiedTracePredicates> imperfectIpps = new ArrayList<>();
 
-		while (mStrategy.hasNextInterpolantGenerator(perfectIpps, imperfectIpps)) {
+		while (mStrategy.hasNextInterpolantGenerator(Collections.unmodifiableList(perfectIpps),
+				Collections.unmodifiableList(imperfectIpps))) {
 			final IIpgStrategyModule<?, L> interpolantGenerator = tryExecuteInterpolantGenerator();
 			if (interpolantGenerator == null) {
 				continue;
@@ -171,7 +172,7 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 			mQualifiedTracePredicates = null;
 			return LBool.UNKNOWN;
 		}
-		mQualifiedTracePredicates = DataStructureUtils.concat(perfectIpps, imperfectIpps);
+		mQualifiedTracePredicates = mStrategy.mergeInterpolants(perfectIpps, imperfectIpps);
 		mUsedTracePredicates = mQualifiedTracePredicates;
 		return LBool.UNSAT;
 	}

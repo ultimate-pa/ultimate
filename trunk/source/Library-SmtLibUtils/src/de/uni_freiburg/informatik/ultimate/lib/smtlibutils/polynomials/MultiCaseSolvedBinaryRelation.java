@@ -150,8 +150,8 @@ public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
 	}
 
 	@Override
-	public Term asTerm(final Script script) {
-		final Collection<Term> params = mCases.stream().map(x -> x.asTerm(script)).collect(Collectors.toList());
+	public Term toTerm(final Script script) {
+		final Collection<Term> params = mCases.stream().map(x -> x.toTerm(script)).collect(Collectors.toList());
 		final Term body;
 		final int quantifier;
 		switch (mXnf) {
@@ -201,7 +201,7 @@ public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
 			}
 		}
 		for (final SupportingTerm st : c.getSupportingTerms()) {
-			final boolean containsSubject = SmtUtils.isSubterm(st.asTerm(), subject);
+			final boolean containsSubject = SmtUtils.isSubterm(st.getTerm(), subject);
 			if (containsSubject) {
 				return false;
 			}

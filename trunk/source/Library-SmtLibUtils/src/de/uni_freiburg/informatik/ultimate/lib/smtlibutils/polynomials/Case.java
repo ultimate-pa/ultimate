@@ -98,10 +98,10 @@ public class Case implements ITermProviderOnDemand {
 	}
 
 	@Override
-	public Term asTerm(final Script script) {
-		final Collection<Term> params = mSupportingTerms.stream().map(x -> x.asTerm()).collect(Collectors.toList());
+	public Term toTerm(final Script script) {
+		final Collection<Term> params = mSupportingTerms.stream().map(x -> x.getTerm()).collect(Collectors.toList());
 		if (mSolvedBinaryRelation != null) {
-			params.add(mSolvedBinaryRelation.asTerm(script));
+			params.add(mSolvedBinaryRelation.toTerm(script));
 		}
 		final Term result;
 		switch (mXnf) {

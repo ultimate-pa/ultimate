@@ -636,14 +636,14 @@ public class PolynomialRelationTest {
 	private void testSingleCaseSolveForSubject(final Term inputAsTerm, final Term x) {
 		final SolvedBinaryRelation sbr = PolynomialRelation.of(mScript, inputAsTerm).solveForSubject(mScript, x);
 		mScript.echo(new QuotedObject("Checking if input and output of solveForSubject are equivalent"));
-		Assert.assertTrue(SmtUtils.areFormulasEquivalent(sbr.asTerm(mScript), inputAsTerm, mScript));
+		Assert.assertTrue(SmtUtils.areFormulasEquivalent(sbr.toTerm(mScript), inputAsTerm, mScript));
 	}
 
 	private void testMultiCaseSolveForSubject(final Term inputAsTerm, final Term x, final Xnf xnf) {
 		final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation.of(mScript, inputAsTerm)
 				.solveForSubject(new ManagedScript(mServices, mScript), x, xnf, Collections.emptySet());
 		mScript.echo(new QuotedObject("Checking if input and output of multiCaseSolveForSubject are equivalent"));
-		final Term solvedAsTerm = mcsbr.asTerm(mScript);
+		final Term solvedAsTerm = mcsbr.toTerm(mScript);
 		final Term tmp;
 		if (USE_QUANTIFIER_ELIMINATION_TO_SIMPLIFY_INPUT_OF_EQUIVALENCE_CHECK) {
 			final IUltimateServiceProvider services = UltimateMocks.createUltimateServiceProviderMock();
