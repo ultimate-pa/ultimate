@@ -48,24 +48,25 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Inform
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.UnionNwa;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.CoinFlipBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.OptimisticBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.AcceptingRunSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor.CoveringMode;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDeadEndStore;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.SleepSetVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor.CoveringMode;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -182,6 +183,16 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
+		// TODO make this work for all CEGAR loops
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.RefinementTime);
+		try {
+			return internalRefineAbstraction();
+		} finally {
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.RefinementTime);
+		}
+	}
+
+	private boolean internalRefineAbstraction() throws AutomataLibraryException {
 		// Compute the enhanced interpolant automaton
 		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
 		final IHoareTripleChecker htc = getHoareTripleChecker();
@@ -255,12 +266,24 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
-		switchToOnDemandConstructionMode();
+	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible()
+			throws AutomataOperationCanceledException {
+		// TODO make this work for all CEGAR loops
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.FeasibilityCheckTime);
+		try {
+			return super.isCounterexampleFeasible();
+		} finally {
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.FeasibilityCheckTime);
+		}
+	}
 
+	@Override
+	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		try {
 			final IDfsVisitor<L, IPredicate> visitor = createVisitor();
+
+			switchToOnDemandConstructionMode();
 			mPOR.apply(mAbstraction, visitor);
 			mCounterexample = getCounterexample(visitor);
 			switchToReadonlyMode();

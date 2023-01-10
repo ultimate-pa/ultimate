@@ -134,6 +134,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		switch (keyEnum) {
 		case OverallTime:
 		case EmptinessCheckTime:
+		case FeasibilityCheckTime:
+		case RefinementTime:
 		case AutomataDifference:
 		case DeadEndRemovalTime:
 		case HoareAnnotationTime:
@@ -191,6 +193,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	public String[] getStopwatches() {
 		return new String[] { CegarLoopStatisticsDefinitions.OverallTime.toString(),
 				CegarLoopStatisticsDefinitions.EmptinessCheckTime.toString(),
+				CegarLoopStatisticsDefinitions.FeasibilityCheckTime.toString(),
+				CegarLoopStatisticsDefinitions.RefinementTime.toString(),
 				CegarLoopStatisticsDefinitions.AutomataDifference.toString(),
 				CegarLoopStatisticsDefinitions.DeadEndRemovalTime.toString(),
 				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),

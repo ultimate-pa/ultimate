@@ -48,6 +48,8 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 	PathProgramHistogramMax(StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
 
 	EmptinessCheckTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+	FeasibilityCheckTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+	RefinementTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 	AutomataDifference(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
