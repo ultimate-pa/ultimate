@@ -889,18 +889,11 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		}
 
 		@Override
-		protected IPredicate getOrConstructPredicateForConjunction(final Set<IPredicate> minimalSubset,
-				final HashMap<IPredicate, Validity> impliedPredicates,
-				final HashMap<IPredicate, Validity> expliedPredicates) {
-			final IPredicate unifiedPred =
-					super.getOrConstructPredicateForConjunction(minimalSubset, impliedPredicates, expliedPredicates);
-			if (unifiedPred instanceof AbsIntPredicate<?>) {
-				assert assertValidPredicate((AbsIntPredicate<?>) unifiedPred) : "Created invalid predicate";
-				return unifiedPred;
-			}
+		protected IPredicate postProcessPredicateForConjunction(final IPredicate unified,
+				final Set<IPredicate> conjunctPredicates) {
 			@SuppressWarnings("unchecked")
 			final Set<DisjunctiveAbstractState<STATE>> multistates =
-					minimalSubset.stream().map(a -> ((AbsIntPredicate<STATE>) a).getAbstractStates())
+					conjunctPredicates.stream().map(a -> ((AbsIntPredicate<STATE>) a).getAbstractStates())
 							.map(a -> DisjunctiveAbstractState.createDisjunction(a)).collect(Collectors.toSet());
 			final Set<DisjunctiveAbstractState<STATE>> synchronizedMultiStates =
 					AbsIntUtil.synchronizeVariables(multistates);
@@ -908,21 +901,18 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					.collect(Collectors.toSet())) : "Synchronize failed";
 			final DisjunctiveAbstractState<STATE> conjunction = synchronizedMultiStates.stream()
 					.reduce((a, b) -> a.intersect(b)).orElseThrow(() -> new AssertionError("No predicates given"));
-			final AbsIntPredicate<?> rtr = new AbsIntPredicate<>(unifiedPred, conjunction);
+			final AbsIntPredicate<?> rtr = new AbsIntPredicate<>(unified, conjunction);
 			assert assertValidPredicate(rtr) : "Created invalid predicate";
 			return rtr;
 		}
 
 		@Override
-		protected IPredicate getOrConstructPredicateForDisjunction(final Set<IPredicate> minimalSubset,
-				final HashMap<IPredicate, Validity> impliedPredicates,
-				final HashMap<IPredicate, Validity> expliedPredicates) {
-			final IPredicate unifiedPred =
-					super.getOrConstructPredicateForDisjunction(minimalSubset, impliedPredicates, expliedPredicates);
-			if (unifiedPred instanceof AbsIntPredicate<?>) {
-				return unifiedPred;
+		protected IPredicate postProcessPredicateForDisjunction(final IPredicate unified,
+				final Set<IPredicate> disjunctPredicates) {
+			if (unified instanceof AbsIntPredicate<?>) {
+				return unified;
 			}
-			final AbsIntPredicate<?> rtr = new AbsIntPredicate<>(unifiedPred, toDisjunctiveState(minimalSubset));
+			final AbsIntPredicate<?> rtr = new AbsIntPredicate<>(unified, toDisjunctiveState(disjunctPredicates));
 			assert assertValidPredicate(rtr) : "Created invalid predicate";
 			return rtr;
 		}
