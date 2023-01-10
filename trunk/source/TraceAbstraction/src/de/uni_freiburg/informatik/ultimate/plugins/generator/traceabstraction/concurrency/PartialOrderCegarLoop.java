@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -92,6 +93,8 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -125,6 +128,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProgram;
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mItpAutomata;
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
+	private final Set<IHoareTripleChecker> mHtcs = new LinkedHashSet<>();
 
 	private final boolean mSupportsDeadEnds;
 	private IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
@@ -243,6 +247,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		// augment refinement result with Hoare triple checker to allow re-use by independence providers
 		final var resultWithHtc = addHoareTripleChecker(mRefinementResult, htc);
+		mHtcs.add(htc);
 
 		// update independence relations (in case of abstract independence)
 		for (int i = 0; i < mIndependenceProviders.size(); ++i) {
@@ -323,6 +328,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	public void finish() {
 		for (final AbstractInterpolantAutomaton<L> ia : mAbstractItpAutomata) {
 			mCegarLoopBenchmark.reportInterpolantAutomatonStates(ia.size());
+		}
+		for (final IHoareTripleChecker htc : mHtcs) {
+			mCegarLoopBenchmark.addEdgeCheckerData(htc.getStatistics());
 		}
 		mPOR.reportStatistics(Activator.PLUGIN_ID);
 
