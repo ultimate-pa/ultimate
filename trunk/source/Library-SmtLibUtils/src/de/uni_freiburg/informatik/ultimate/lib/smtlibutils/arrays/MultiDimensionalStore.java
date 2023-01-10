@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -58,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * mStoreTerm.
  * @author Matthias Heizmann
  */
-public class MultiDimensionalStore {
+public class MultiDimensionalStore implements ITermProviderOnDemand {
 	private final Term mArray;
 	private final ArrayIndex mIndex;
 	private final Term mValue;
