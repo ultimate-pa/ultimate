@@ -322,57 +322,63 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 				mIndependenceRelations.isEmpty() ? null : mIndependenceRelations.get(0);
 		final TraversalStatisticsVisitor<L, IPredicate, ?> traversalStatisticsVisitor =
 				new TraversalStatisticsVisitor<>(visitor);
+
+		try {
+			applyInternal(input, independence, traversalStatisticsVisitor);
+		} finally {
+			final StatisticsData data = new StatisticsData();
+			data.aggregateBenchmarkData(traversalStatisticsVisitor.getStatistics());
+			mStatisticsData.add(data);
+
+			final StatisticsData sleepData = new StatisticsData();
+			sleepData.aggregateBenchmarkData(
+					new SleepBlockedStatistics<>((SleepSetStateFactoryForRefinement<L>) mSleepFactory, input));
+			mStatisticsData.add(sleepData);
+		}
+	}
+
+	private void applyInternal(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input,
+			final IIndependenceRelation<IPredicate, L> independence, final IDfsVisitor<L, IPredicate> visitor)
+			throws AutomataOperationCanceledException {
 		switch (mMode) {
 		case SLEEP_DELAY_SET:
-			new SleepSetDelayReduction<>(mAutomataServices, input, mSleepFactory, independence, mDfsOrder,
-					traversalStatisticsVisitor);
+			new SleepSetDelayReduction<>(mAutomataServices, input, mSleepFactory, independence, mDfsOrder, visitor);
 			break;
 		case SLEEP_NEW_STATES:
 			if (mIndependenceRelations.size() == 1) {
 				DepthFirstTraversal.traverse(mAutomataServices,
 						new MinimalSleepSetReduction<>(input, mSleepFactory, independence, mDfsOrder), mDfsOrder,
-						traversalStatisticsVisitor);
+						visitor);
 			} else {
 				final var red = new SleepMapReduction<>(input, mIndependenceRelations, mDfsOrder, mSleepMapFactory,
 						mGetBudget.andThen(CachedBudget::new));
-				DepthFirstTraversal.traverse(mAutomataServices, red, mDfsOrder, traversalStatisticsVisitor);
+				DepthFirstTraversal.traverse(mAutomataServices, red, mDfsOrder, visitor);
 			}
 			break;
 		case PERSISTENT_SETS:
-			PersistentSetReduction.applyWithoutSleepSets(mAutomataServices, input, mDfsOrder, mPersistent,
-					traversalStatisticsVisitor);
+			PersistentSetReduction.applyWithoutSleepSets(mAutomataServices, input, mDfsOrder, mPersistent, visitor);
 			break;
 		case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
 		case PERSISTENT_SLEEP_DELAY_SET:
 			PersistentSetReduction.applyDelaySetReduction(mAutomataServices, input, independence, mDfsOrder,
-					mPersistent, traversalStatisticsVisitor);
+					mPersistent, visitor);
 			break;
 		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
 		case PERSISTENT_SLEEP_NEW_STATES:
 			if (mIndependenceRelations.size() == 1) {
 				PersistentSetReduction.applyNewStateReduction(mAutomataServices, input, independence, mDfsOrder,
-						mSleepFactory, mPersistent, traversalStatisticsVisitor);
+						mSleepFactory, mPersistent, visitor);
 			} else {
 				PersistentSetReduction.applySleepMapReduction(mAutomataServices, input, mIndependenceRelations,
-						mDfsOrder, mSleepMapFactory, mGetBudget.andThen(CachedBudget::new), mPersistent,
-						traversalStatisticsVisitor);
+						mDfsOrder, mSleepMapFactory, mGetBudget.andThen(CachedBudget::new), mPersistent, visitor);
 			}
 			break;
 		case NONE:
-			DepthFirstTraversal.traverse(mAutomataServices, input, mDfsOrder, traversalStatisticsVisitor);
+			DepthFirstTraversal.traverse(mAutomataServices, input, mDfsOrder, visitor);
 			break;
 		default:
 			throw new UnsupportedOperationException("Unsupported POR mode: " + mMode);
 		}
-
-		final StatisticsData data = new StatisticsData();
-		data.aggregateBenchmarkData(traversalStatisticsVisitor.getStatistics());
-		mStatisticsData.add(data);
-
-		final StatisticsData sleepData = new StatisticsData();
-		sleepData.aggregateBenchmarkData(
-				new SleepBlockedStatistics<>((SleepSetStateFactoryForRefinement<L>) mSleepFactory, input));
-		mStatisticsData.add(sleepData);
 	}
 
 	/**
