@@ -67,8 +67,6 @@ public class DepthFirstTraversal<L, S> {
 
 	private int mIndentLevel = -1;
 
-	// private Statistics mStatistics;
-
 	/**
 	 * Performs a depth-first traversal. This constructor is called purely for its side-effects.
 	 *
@@ -96,7 +94,7 @@ public class DepthFirstTraversal<L, S> {
 		mStartState = startingState;
 		mOrder = order;
 		mVisitor = visitor;
-		// mStatistics = new Statistics();
+
 		traverse();
 	}
 
@@ -139,7 +137,7 @@ public class DepthFirstTraversal<L, S> {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
-			// System.out.println(mStatistics);
+
 			final var current = mWorklist.pop();
 			final S currentState = current.getFirst();
 
@@ -242,5 +240,4 @@ public class DepthFirstTraversal<L, S> {
 	private void debugIndent(final String msg, final Object... params) {
 		mLogger.debug("  ".repeat(mIndentLevel) + msg, params);
 	}
-
 }
