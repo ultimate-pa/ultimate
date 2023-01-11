@@ -482,7 +482,11 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 		public SleepBlockedStatistics(final SleepSetStateFactoryForRefinement<L> sleepFactory,
 				final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input) {
-			mSleepBlockedStates = computeSleepBlocked(sleepFactory, input);
+			if (sleepFactory == null) {
+				mSleepBlockedStates = -1;
+			} else {
+				mSleepBlockedStates = computeSleepBlocked(sleepFactory, input);
+			}
 
 			declare(SLEEP_BLOCKED_STATES, () -> mSleepBlockedStates, KeyType.COUNTER);
 		}
