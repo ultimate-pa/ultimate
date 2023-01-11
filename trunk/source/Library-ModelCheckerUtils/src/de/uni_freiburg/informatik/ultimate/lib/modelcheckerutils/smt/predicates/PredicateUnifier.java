@@ -228,7 +228,9 @@ public class PredicateUnifier implements IPredicateUnifier {
 				expliedPredicates.put(noncoverer, Validity.INVALID);
 			}
 		}
-		return getOrConstructPredicateForConjunction(minimalSubset, impliedPredicates, expliedPredicates);
+		final IPredicate and = mPredicateFactory.and(minimalSubset);
+		return getOrConstructPredicate(and.getFormula(), impliedPredicates, expliedPredicates, and,
+				x -> postProcessPredicateForConjunction(x, minimalSubset));
 	}
 
 	/**
@@ -265,7 +267,9 @@ public class PredicateUnifier implements IPredicateUnifier {
 				}
 			}
 		}
-		return getOrConstructPredicateForDisjunction(minimalSubset, impliedPredicates, expliedPredicates);
+		final IPredicate or = mPredicateFactory.or(minimalSubset);
+		return getOrConstructPredicate(or.getFormula(), impliedPredicates, expliedPredicates, or,
+				x -> postProcessPredicateForDisjunction(x, minimalSubset));
 	}
 
 	/**
@@ -394,22 +398,6 @@ public class PredicateUnifier implements IPredicateUnifier {
 
 	protected IPredicate constructNewPredicate(final Term term, final IPredicate originalPredicate) {
 		return mPredicateFactory.newPredicate(term);
-	}
-
-	private IPredicate getOrConstructPredicateForConjunction(final Set<IPredicate> minimalSubset,
-			final HashMap<IPredicate, Validity> impliedPredicates,
-			final HashMap<IPredicate, Validity> expliedPredicates) {
-		final IPredicate and = mPredicateFactory.and(minimalSubset);
-		return getOrConstructPredicate(and.getFormula(), impliedPredicates, expliedPredicates, and,
-				x -> postProcessPredicateForConjunction(x, minimalSubset));
-	}
-
-	private IPredicate getOrConstructPredicateForDisjunction(final Set<IPredicate> minimalSubset,
-			final HashMap<IPredicate, Validity> impliedPredicates,
-			final HashMap<IPredicate, Validity> expliedPredicates) {
-		final IPredicate or = mPredicateFactory.or(minimalSubset);
-		return getOrConstructPredicate(or.getFormula(), impliedPredicates, expliedPredicates, or,
-				x -> postProcessPredicateForDisjunction(x, minimalSubset));
 	}
 
 	private static Term stripAnnotation(final Term term) {
