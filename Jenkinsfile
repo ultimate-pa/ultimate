@@ -45,6 +45,7 @@ pipeline {
   options {
     skipDefaultCheckout()
     timeout(time: 12, unit: 'HOURS')
+    timestamps()
   }
   environment {
     PATH = "${env.WORKSPACE}/releaseScripts/default/adds:${env.PATH}"
