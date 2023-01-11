@@ -27,7 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -55,7 +55,7 @@ public class Intvasr implements IVasr<Integer> {
 	 */
 	public Intvasr(final Integer[] resetVector, final Integer[] additionVector) {
 		final Pair<Integer[], Integer[]> initialTransformer = new Pair<>(resetVector, additionVector);
-		final Set<Pair<Integer[], Integer[]>> initialTransformerSet = new HashSet<>();
+		final Set<Pair<Integer[], Integer[]>> initialTransformerSet = new LinkedHashSet<>();
 		initialTransformerSet.add(initialTransformer);
 		mDimension = resetVector.length;
 		mTransformer = initialTransformerSet;
@@ -66,7 +66,7 @@ public class Intvasr implements IVasr<Integer> {
 	 */
 	public Intvasr() {
 		mDimension = 0;
-		mTransformer = new HashSet<>();
+		mTransformer = new LinkedHashSet<>();
 	}
 
 	@Override
