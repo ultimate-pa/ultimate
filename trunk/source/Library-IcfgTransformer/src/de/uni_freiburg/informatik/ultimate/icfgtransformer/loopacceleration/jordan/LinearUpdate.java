@@ -85,7 +85,7 @@ public class LinearUpdate {
 		final Map<TermVariable, AffineTerm> updateMap = new HashMap<>();
 		for (final Entry<IProgramVar, Term> update : su.getDeterministicAssignment().entrySet()) {
 			final Triple<AffineTerm, Set<Term>, String> triple = extractLinearUpdate(mgdScript, termVariablesOfModified,
-					update);
+					update.getValue());
 			if (triple.getFirst() == null) {
 				assert triple.getSecond() == null;
 				assert triple.getThird() != null;
@@ -101,10 +101,10 @@ public class LinearUpdate {
 	}
 
 	private static Triple<AffineTerm, Set<Term>, String> extractLinearUpdate(final ManagedScript mgdScript,
-			final Set<TermVariable> termVariablesOfModified, final Entry<IProgramVar, Term> update) {
+			final Set<TermVariable> termVariablesOfModified, final Term term) {
 		// TODO Matthias 20221222: Use AffineTermTransformer
 		final IPolynomialTerm polyRhs = (IPolynomialTerm) new PolynomialTermTransformer(mgdScript.getScript())
-				.transform(update.getValue());
+				.transform(term);
 		final Map<Term, Rational> variables2coeffcient = new HashMap<>();
 		final Set<Term> readonlyVariables = new HashSet<>();
 		for (final Entry<Monomial, Rational> entry : polyRhs.getMonomial2Coefficient().entrySet()) {
