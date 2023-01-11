@@ -162,7 +162,7 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 				return Occurrence.ELIMINABLE;
 			}
 		} else {
-			final PolynomialRelation polyRel = PolynomialRelation.convert(script, term);
+			final PolynomialRelation polyRel = PolynomialRelation.of(script, term);
 			if (polyRel == null) {
 				return Occurrence.OTHER_OCCURRENCE;
 			}
@@ -263,7 +263,7 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 
 	private Result transduceDual(final ApplicationTerm originalTerm, final Adk adk,
 			final List<Result> transducedArguments) {
-		double originalCorrespondingJuncts = QuantifierUtils.getCorrespondingFiniteJunction(mQuantifier,
+		double originalCorrespondingJuncts = QuantifierUtils.getCorrespondingFiniteJuncts(mQuantifier,
 				originalTerm.getParameters()[0]).length;
 		double derCorrespondingJuncts = transducedArguments.get(0).getDerCorrespondingJuncts();
 		double eliminableCorrespondingJuncts = transducedArguments.get(0).getEliminableCorrespondingJuncts();
@@ -281,7 +281,7 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 			final double oldNonInvolved = (atLeastOneNonInvolvedCorrespondingJunct ? 1 : 0);
 
 			final double operandOriginalCorrespondingJuncts = QuantifierUtils
-					.getCorrespondingFiniteJunction(mQuantifier, originalTerm.getParameters()[i]).length;
+					.getCorrespondingFiniteJuncts(mQuantifier, originalTerm.getParameters()[i]).length;
 			final double operandDerCorrespondingJuncts = transducedArguments.get(i).getDerCorrespondingJuncts();
 			final double operandEliminableCorrespondingJuncts = transducedArguments.get(i)
 					.getEliminableCorrespondingJuncts();

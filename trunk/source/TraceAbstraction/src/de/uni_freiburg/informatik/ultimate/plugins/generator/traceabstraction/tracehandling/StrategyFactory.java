@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.AcceleratedInterpolationRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.AcceleratedTraceCheckRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.BadgerRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.BearRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.CamelNoAmRefinementStrategy;
@@ -207,6 +208,8 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			return new McrRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist, this);
 		case ACCELERATED_INTERPOLATION:
 			return new AcceleratedInterpolationRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
+		case ACCELERATED_TRACE_CHECK:
+			return new AcceleratedTraceCheckRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		default:
 			throw new IllegalArgumentException(
 					"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());
@@ -278,6 +281,17 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 
 			return new IpTcStrategyModuleAcceleratedInterpolation<>(mServices, mLogger, mCounterexample,
 					mPredicateUnifier, mPrefs, strategySupplier, mTransitionClazz);
+		}
+
+		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleAcceleratedTraceCheck() {
+			isOnlyDefaultPrePostConditions();
+			final boolean useInterpolantConsolidation = mPrefs.getUseInterpolantConsolidation();
+			if (useInterpolantConsolidation) {
+				throw new UnsupportedOperationException(
+						"Interpolant consolidation and AcceleratedInterpolation cannot be combined");
+			}
+			return new IpTcStrategyModuleAcceleratedTraceCheck<>(mServices, mLogger, mCounterexample, mPrecondition,
+					mPostcondition, mPredicateUnifier, mPrefs, mPredicateFactory);
 		}
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolCraig(

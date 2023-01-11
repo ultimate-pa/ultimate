@@ -17,7 +17,7 @@ TOMCAT_INIT_SCRIPT="/etc/init.d/tomcat-8-ultimate"
 source /etc/init.d/functions.sh
 DATE=`date +"%F %T"`
 
-function exitOnFail {
+function exit_on_fail {
     "$@"
     local status=$?
     if [ $status -ne 0 ]; then
@@ -56,7 +56,7 @@ function backupWebsite {
         if [ ! -f "$oldwar" ]; then
             ewarn "The old .war file $oldwar does not exist"
         else
-            exitOnFail mv "$oldwar" "$backup"
+            exit_on_fail mv "$oldwar" "$backup"
         fi
         eoutdent
         eend 0
@@ -77,7 +77,7 @@ function updateWebsite {
         if [ ! -d "$olddir" ]; then
             ewarn "The old webapp directory $olddir does not exist"
         else 
-            exitOnFail rm -r "$olddir"
+            exit_on_fail rm -r "$olddir"
         fi
         eoutdent
         eend 0
@@ -88,14 +88,14 @@ function updateWebsite {
         	if [ ! -d "$catdir" ]; then
 	            ewarn "The old local webapp directory $catdir does not exist"
         	else
-	            exitOnFail rm -r "$catdir"
+	            exit_on_fail rm -r "$catdir"
         	fi
 	        eoutdent
 	done
 
         ebegin "Copying $war to $oldwar"
         eindent
-        exitOnFail cp "$war" "$oldwar"
+        exit_on_fail cp "$war" "$oldwar"
         eoutdent
         eend 0
     done
@@ -116,18 +116,18 @@ function getRestoreDir {
 
 function runUpdate {
     checkFiles
-    exitOnFail $TOMCAT_INIT_SCRIPT stop
+    exit_on_fail $TOMCAT_INIT_SCRIPT stop
     backupWebsite
     updateWebsite
-    exitOnFail $TOMCAT_INIT_SCRIPT start
+    exit_on_fail $TOMCAT_INIT_SCRIPT start
 }
 
 function revertFromLastBackup {
     getRestoreDir restoreDir
     WARS=("$restoreDir"/*)
-    exitOnFail $TOMCAT_INIT_SCRIPT stop
+    exit_on_fail $TOMCAT_INIT_SCRIPT stop
     updateWebsite
-    exitOnFail $TOMCAT_INIT_SCRIPT start
+    exit_on_fail $TOMCAT_INIT_SCRIPT start
 }
 
 ARG_UPDATE=false

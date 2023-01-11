@@ -1165,7 +1165,7 @@ public class Elim1Store {
 		private final int mQuantifier;
 
 		public EqProvider(final Term inputTerm, final TermVariable eliminatee, final int quantifier) {
-			mContext = QuantifierUtils.getXjunctsInner(quantifier, inputTerm);
+			mContext = QuantifierUtils.getDualFiniteJuncts(quantifier, inputTerm);
 			mEliminatee = eliminatee;
 			mQuantifier = quantifier;
 		}

@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -42,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class MultiDimensionalNestedStore {
+public class MultiDimensionalNestedStore implements ITermProviderOnDemand {
 	private final Term mArray;
 	private final List<ArrayIndex> mIndices;
 	private final List<Term> mValues;

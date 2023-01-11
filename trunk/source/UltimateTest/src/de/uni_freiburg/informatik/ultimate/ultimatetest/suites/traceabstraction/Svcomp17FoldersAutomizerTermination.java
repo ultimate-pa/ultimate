@@ -52,10 +52,10 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 	private static final int FILE_OFFSET = 10;
 
 	// @formatter:off
-	private static final String STANDARD_DOT_C_PATTERN = ".*_false-termination.*\\.c|.*_true-termination.*\\.c";
-	private static final String STANDARD_DOT_I_PATTERN = ".*_false-termination.*\\.c.i|.*_true-termination.*\\.c.i";
-	
-	
+	private static final String STANDARD_DOT_C_PATTERN = ".*\\.c";
+	private static final String STANDARD_DOT_I_PATTERN = ".*\\.i";
+
+
 	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs = {
 		/***** Category 5. Termination *****/
 		/*** Subcategory  Termination-MainControlFlow ***/

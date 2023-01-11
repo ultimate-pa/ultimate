@@ -260,7 +260,8 @@ public class GccStaticLanguageSettingsProvider implements ILanguageSettingsProvi
 				createEntry("_cdecl", "__attribute__((__cdecl__))"),
 				createEntry("_fastcall", "__attribute__((__fastcall__))"),
 				createEntry("_stdcall", "__attribute__((__stdcall__))"),
-				createEntry("_thiscall", "__attribute__((__thiscall__))") };
+				createEntry("_thiscall", "__attribute__((__thiscall__))"),
+				createEntry("__builtin_va_arg(ap,type)", "*((typeof(type) *)((ap += sizeof(type)) - sizeof(type)))") };
 
 		mSettings = LanguageSettingsStorage.getPooledList(Arrays.asList(entries));
 

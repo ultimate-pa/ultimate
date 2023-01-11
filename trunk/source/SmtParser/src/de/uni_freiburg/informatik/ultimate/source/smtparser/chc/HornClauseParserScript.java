@@ -415,7 +415,7 @@ public class HornClauseParserScript extends HistoryRecordingScript implements IN
 			result = super.term(funcname, indices, returnSort, params);
 		} else {
 			mSimplificationStack.push(new Triple<>(funcname, indicesList, paramsList));
-			result = SmtUtils.termWithLocalSimplification(this, funcname, indices, returnSort, params);
+			result = SmtUtils.unfTerm(this, funcname, indices, returnSort, params);
 			mSimplificationStack.pop();
 		}
 		return result;

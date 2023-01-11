@@ -1,11 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.memoryhandler;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -33,9 +30,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -47,45 +42,42 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 /**
  *
  * Constructs the Boogie procedure used to model calls to the C standard function
- *  <code>void *realloc(void *ptr, size_t size);</code>
+ * <code>void *realloc(void *ptr, size_t size);</code>
  *
  * Roughly we model it like this:
  * <ol>
- *  <li> if (ptr == null) return malloc(size)
- *  <li> oldptr := ptr
- *  <li> free(ptr)
- *  <li> res := malloc(size)
- *  <li> mem[res.base] := mem[oldptr.base]
- *  <li> return res
+ * <li>if (ptr == null) return malloc(size)
+ * <li>oldptr := ptr
+ * <li>free(ptr)
+ * <li>res := malloc(size)
+ * <li>mem[res.base] := mem[oldptr.base]
+ * <li>return res
  * </ol>
  *
- *   (for the last step, we may need an extra Boogie function because mem is a multidimensional Boogie array (rather
- *    than a nested Boogie array)
+ * (for the last step, we may need an extra Boogie function because mem is a multidimensional Boogie array (rather than
+ * a nested Boogie array)
  *
  * Note that the sub-array copying works, because ptr must match a "pointer returned earlier by a memory management
- *  function".
+ * function".
  *
  * See also: C11 7.22.3.5
  *
- * 2 The realloc function deallocates the old object pointed to by ptr and returns a
- * pointer to a new object that has the size specified by size. The contents of the new
- * object shall be the same as that of the old object prior to deallocation, up to the lesser of
- * the new and old sizes. Any bytes in the new object beyond the size of the old object have
- * indeterminate values.
+ * 2 The realloc function deallocates the old object pointed to by ptr and returns a pointer to a new object that has
+ * the size specified by size. The contents of the new object shall be the same as that of the old object prior to
+ * deallocation, up to the lesser of the new and old sizes. Any bytes in the new object beyond the size of the old
+ * object have indeterminate values.
  *
- * 3 If ptr is a null pointer, the realloc function behaves like the malloc function for the
- * specified size. Otherwise, if ptr does not match a pointer earlier returned by a memory
- * management function, or if the space has been deallocated by a call to the free or
- * realloc function, the behavior is undefined. If memory for the new object cannot be
- * allocated, the old object is not deallocated and its value is unchanged.
+ * 3 If ptr is a null pointer, the realloc function behaves like the malloc function for the specified size. Otherwise,
+ * if ptr does not match a pointer earlier returned by a memory management function, or if the space has been
+ * deallocated by a call to the free or realloc function, the behavior is undefined. If memory for the new object cannot
+ * be allocated, the old object is not deallocated and its value is unchanged.
  *
- * Note: here "memory management functions" include aligned_alloc, calloc, malloc, and realloc (listed in 7.22.3-1),
- *  In particular passing a pointer to stack memory (from alloca or the addressof operator) is undefined behaviour.
- *  (My interpretation of the standard.)
+ * Note: here "memory management functions" include aligned_alloc, calloc, malloc, and realloc (listed in 7.22.3-1), In
+ * particular passing a pointer to stack memory (from alloca or the addressof operator) is undefined behaviour. (My
+ * interpretation of the standard.)
  *
- * 4 The realloc function returns a pointer to the new object (which may have the same
- * value as a pointer to the old object), or a null pointer if the new object could not be
- * allocated.
+ * 4 The realloc function returns a pointer to the new object (which may have the same value as a pointer to the old
+ * object), or a null pointer if the new object could not be allocated.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -96,20 +88,15 @@ public final class ConstructRealloc {
 	private final TypeHandler mTypeHandler;
 	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 	private final ExpressionTranslation mExpressionTranslation;
-	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
-	private final TypeSizes mTypeSizes;
 
 	public ConstructRealloc(final MemoryHandler memoryHandler, final ProcedureManager procedureHandler,
 			final TypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final ExpressionTranslation expressionTranslation, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final TypeSizes typeSizes) {
+			final ExpressionTranslation expressionTranslation) {
 		mMemoryHandler = memoryHandler;
 		mProcedureManager = procedureHandler;
 		mTypeHandler = typeHandler;
 		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
 		mExpressionTranslation = expressionTranslation;
-		mAuxVarInfoBuilder = auxVarInfoBuilder;
-		mTypeSizes = typeSizes;
 	}
 
 	/**
@@ -117,33 +104,28 @@ public final class ConstructRealloc {
 	 * See {@link ConstructRealloc}
 	 *
 	 * @param main
-	 * @param heapDataArrays
-	 * @param hook
 	 * @return
 	 */
-	public List<Declaration> declareRealloc(final CHandler main, final Collection<HeapDataArray> heapDataArrays,
-			final IASTNode hook) {
-
+	public List<Declaration> declareRealloc(final CHandler main) {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final CType voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();
 		final String reallocProcName = SFO.C_REALLOC;
 
-
 		/* in parameters ptr and size, out parameter */
 
 		final VarList inPPtr =
 				new VarList(ignoreLoc, new String[] { SFO.REALLOC_PTR }, mTypeHandler.constructPointerType(ignoreLoc));
-		final VarList inPSize = new VarList(ignoreLoc, new String[] { SFO.REALLOC_SIZE },
-				mTypeHandler.cType2AstType(ignoreLoc, sizeT));
+		final VarList inPSize =
+				new VarList(ignoreLoc, new String[] { SFO.REALLOC_SIZE }, mTypeHandler.cType2AstType(ignoreLoc, sizeT));
 		final VarList outP =
 				new VarList(ignoreLoc, new String[] { SFO.RES }, mTypeHandler.constructPointerType(ignoreLoc));
 		final VarList[] inParams = new VarList[] { inPPtr, inPSize };
 		final VarList[] outParams = new VarList[] { outP };
 
 		{
-			final Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], reallocProcName,
-					new String[0], inParams, outParams, new Specification[0], null);
+			final Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], reallocProcName, new String[0],
+					inParams, outParams, new Specification[0], null);
 			mProcedureManager.beginCustomProcedure(main, ignoreLoc, reallocProcName, memCpyProcDecl);
 		}
 
@@ -155,37 +137,27 @@ public final class ConstructRealloc {
 				mTypeHandler.getBoogieTypeForSizeT(), SFO.REALLOC_SIZE,
 				new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, reallocProcName));
 
-		final IdentifierExpression resultExprImpl = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
-				mTypeHandler.getBoogiePointerType(), SFO.RES,
-				new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, reallocProcName));
-		final VariableLHS resultLhsImpl = ExpressionFactory.constructVariableLHS(ignoreLoc,
-				mTypeHandler.getBoogiePointerType(), SFO.RES,
-				new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, reallocProcName));
-
-
-
+		final IdentifierExpression resultExprImpl =
+				ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogiePointerType(), SFO.RES,
+						new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, reallocProcName));
+		final VariableLHS resultLhsImpl =
+				ExpressionFactory.constructVariableLHS(ignoreLoc, mTypeHandler.getBoogiePointerType(), SFO.RES,
+						new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, reallocProcName));
 
 		final List<Declaration> bodyDecl = new ArrayList<>();
 		final List<Statement> bodyStmt = new ArrayList<>();
 
 		// if (ptr == NULL) { return malloc(size) }
 		{
-			final Expression condition = ExpressionFactory.newBinaryExpression(ignoreLoc,
-					BinaryExpression.Operator.COMPEQ,
-					ptrIdExprImpl,
-					mExpressionTranslation.constructNullPointer(ignoreLoc));
-			final Statement mallocCallStm = mMemoryHandler.getUltimateMemAllocCall(sizeIdExprImpl, resultLhsImpl,
-					ignoreLoc, MemoryArea.HEAP);
+			final Expression condition =
+					ExpressionFactory.newBinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPEQ, ptrIdExprImpl,
+							mExpressionTranslation.constructNullPointer(ignoreLoc));
+			final Statement mallocCallStm =
+					mMemoryHandler.getUltimateMemAllocCall(sizeIdExprImpl, resultLhsImpl, ignoreLoc, MemoryArea.HEAP);
 			final Statement returnStm = new ReturnStatement(ignoreLoc);
 			bodyStmt.add(StatementFactory.constructIfStatement(ignoreLoc, condition,
-					new Statement[] { mallocCallStm, returnStm },
-					new Statement[0]));
+					new Statement[] { mallocCallStm, returnStm }, new Statement[0]));
 		}
-
-//		// oldptr := ptr
-//		final AuxVarInfo oldPtrAux =
-//				mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, voidPointerType, SFO.AUXVAR.REALLOC_OLDPTR);
-//		bodyStmt.add(StatementFactory.constructSingleAssignmentStatement(ignoreLoc, oldPtrAux.getLhs(), ptrIdExprImpl));
 
 		// free(ptr)
 		bodyStmt.add(mMemoryHandler.getDeallocCall(new RValue(ptrIdExprImpl, voidPointerType), ignoreLoc));
@@ -198,27 +170,20 @@ public final class ConstructRealloc {
 			final HeapDataArray hda = mMemoryHandler.getMemoryModel().getDataHeapArray(prim);
 
 			final BoogieType innerArrayBoogieType =
-					BoogieType.createArrayType(0,
-							new BoogieType[] { mTypeHandler.getBoogieTypeForPointerComponents() },
+					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogieTypeForPointerComponents() },
 							hda.getArrayContentBoogieType());
 
-			final Expression select = ExpressionFactory.constructFunctionApplication(ignoreLoc,
-					mMemoryHandler.getNameOfHeapSelectFunction(hda),
-					new Expression[] {
-							hda.getIdentifierExpression(),
-							MemoryHandler.getPointerBaseAddress(ptrIdExprImpl, ignoreLoc),
-					},
-					innerArrayBoogieType);
+			final Expression select = ExpressionFactory
+					.constructFunctionApplication(ignoreLoc, mMemoryHandler.getNameOfHeapSelectFunction(hda),
+							new Expression[] { hda.getIdentifierExpression(),
+									MemoryHandler.getPointerBaseAddress(ptrIdExprImpl, ignoreLoc), },
+							innerArrayBoogieType);
 
-			bodyStmt.add(StatementFactory.constructSingleAssignmentStatement(ignoreLoc,
-					hda.getVariableLHS(),
+			bodyStmt.add(StatementFactory.constructSingleAssignmentStatement(ignoreLoc, hda.getVariableLHS(),
 					ExpressionFactory.constructFunctionApplication(ignoreLoc,
 							mMemoryHandler.getNameOfHeapStoreFunction(hda),
-							new Expression[] {
-									hda.getIdentifierExpression(),
-									MemoryHandler.getPointerBaseAddress(resultExprImpl, ignoreLoc),
-									select
-									},
+							new Expression[] { hda.getIdentifierExpression(),
+									MemoryHandler.getPointerBaseAddress(resultExprImpl, ignoreLoc), select },
 							(BoogieType) hda.getVariableLHS().getType())));
 		}
 
@@ -226,27 +191,20 @@ public final class ConstructRealloc {
 			final HeapDataArray hda = mMemoryHandler.getMemoryModel().getPointerHeapArray();
 
 			final BoogieType innerArrayBoogieType =
-					BoogieType.createArrayType(0,
-							new BoogieType[] { mTypeHandler.getBoogieTypeForPointerComponents() },
+					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogieTypeForPointerComponents() },
 							hda.getArrayContentBoogieType());
 
-			final Expression select = ExpressionFactory.constructFunctionApplication(ignoreLoc,
-					mMemoryHandler.getNameOfHeapSelectFunction(hda),
-					new Expression[] {
-							hda.getIdentifierExpression(),
-							MemoryHandler.getPointerBaseAddress(ptrIdExprImpl, ignoreLoc),
-					},
-					innerArrayBoogieType);
+			final Expression select = ExpressionFactory
+					.constructFunctionApplication(ignoreLoc, mMemoryHandler.getNameOfHeapSelectFunction(hda),
+							new Expression[] { hda.getIdentifierExpression(),
+									MemoryHandler.getPointerBaseAddress(ptrIdExprImpl, ignoreLoc), },
+							innerArrayBoogieType);
 
-			bodyStmt.add(StatementFactory.constructSingleAssignmentStatement(ignoreLoc,
-					hda.getVariableLHS(),
+			bodyStmt.add(StatementFactory.constructSingleAssignmentStatement(ignoreLoc, hda.getVariableLHS(),
 					ExpressionFactory.constructFunctionApplication(ignoreLoc,
 							mMemoryHandler.getNameOfHeapStoreFunction(hda),
-							new Expression[] {
-									hda.getIdentifierExpression(),
-									MemoryHandler.getPointerBaseAddress(resultExprImpl, ignoreLoc),
-									select
-									},
+							new Expression[] { hda.getIdentifierExpression(),
+									MemoryHandler.getPointerBaseAddress(resultExprImpl, ignoreLoc), select },
 							(BoogieType) hda.getVariableLHS().getType())));
 
 		}
@@ -255,12 +213,11 @@ public final class ConstructRealloc {
 				mProcedureManager.constructBody(ignoreLoc, bodyDecl.toArray(new VariableDeclaration[bodyDecl.size()]),
 						bodyStmt.toArray(new Statement[bodyStmt.size()]), reallocProcName);
 
-
-
 		// specification:
 		final List<Specification> specs = new ArrayList<>();
 
-		/* realloc has undefined behaviour if ptr does not come from a malloc.
+		/*
+		 * realloc has undefined behaviour if ptr does not come from a malloc.
 		 *
 		 * Sufficient condition for this in our memory model: ptr.offset != 0
 		 *
@@ -272,8 +229,8 @@ public final class ConstructRealloc {
 		mProcedureManager.addSpecificationsToCurrentProcedure(specs);
 
 		// add the procedure implementation
-		final Procedure reallocProc = new Procedure(ignoreLoc, new Attribute[0], reallocProcName,
-				new String[0], inParams, outParams, null, procBody);
+		final Procedure reallocProc = new Procedure(ignoreLoc, new Attribute[0], reallocProcName, new String[0],
+				inParams, outParams, null, procBody);
 
 		mProcedureManager.endCustomProcedure(main, reallocProcName);
 

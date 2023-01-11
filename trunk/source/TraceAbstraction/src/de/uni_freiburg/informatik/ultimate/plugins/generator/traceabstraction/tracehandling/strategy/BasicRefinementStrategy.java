@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  *
@@ -141,6 +142,12 @@ public class BasicRefinementStrategy<L extends IIcfgTransition<?>> implements IT
 	@Override
 	public IPredicateUnifier getPredicateUnifier(final IRefinementEngine<L, ?> engine) {
 		return mDefaultPredicateUnifier;
+	}
+
+	@Override
+	public List<QualifiedTracePredicates> mergeInterpolants(final List<QualifiedTracePredicates> perfectIpps,
+			final List<QualifiedTracePredicates> imperfectIpps) {
+		return DataStructureUtils.concat(perfectIpps, imperfectIpps);
 	}
 
 	/**

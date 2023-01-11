@@ -6,13 +6,13 @@
 	<parent>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 		<artifactId>mavenparent</artifactId>
-		<version>0.2.2</version>
+		<version>0.2.3</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
 	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>UltimateWebsite</artifactId>
-	<version>0.2.2</version>
+	<version>0.2.3</version>
 	<packaging>war</packaging>
 
 	<dependencies>

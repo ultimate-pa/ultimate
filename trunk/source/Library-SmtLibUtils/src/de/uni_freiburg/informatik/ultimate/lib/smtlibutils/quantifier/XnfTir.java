@@ -168,14 +168,14 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				SimplificationTechnique.SIMPLIFY_DDA);
 		disjunction = simp.getSimplifiedTerm();
 
-		final List<Term> resultDisjunctions = Arrays.asList(QuantifierUtils.getCorrespondingFiniteJunction(quantifier, disjunction));
+		final List<Term> resultDisjunctions = Arrays.asList(QuantifierUtils.getCorrespondingFiniteJuncts(quantifier, disjunction));
 		return resultDisjunctions;
 	}
 
 	public static Term tryToEliminateConjuncts(final IUltimateServiceProvider services, final Script script,
 			final int quantifier, final Term disjunct, final TermVariable eliminatee,
 			final Set<TermVariable> bannedForDivCapture) {
-		final Term[] inputAtoms  = QuantifierUtils.getDualFiniteJunction(quantifier, disjunct);
+		final Term[] inputAtoms  = QuantifierUtils.getDualFiniteJuncts(quantifier, disjunct);
 		final List<Term> termsWithoutEliminatee = new ArrayList<>();
 		final List<Bound> upperBounds = new ArrayList<>();
 		final List<Bound> lowerBounds = new ArrayList<>();
@@ -193,7 +193,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				} else {
 					throw new AssertionError("unknown quantifier");
 				}
-				final PolynomialRelation polyRel = PolynomialRelation.convert(script, term, transform);
+				final PolynomialRelation polyRel = PolynomialRelation.of(script, term, transform);
 				if (polyRel == null) {
 					// no chance to eliminate the variable
 					return null;
@@ -241,7 +241,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 //						&& !sbr.getRelationSymbol().equals(RelationSymbol.EQ)) {
 //					return null;
 //				}
-				final Term eliminateeOnLhs = sbr.asTerm(script);
+				final Term eliminateeOnLhs = sbr.toTerm(script);
 				final BinaryNumericRelation bnr = BinaryNumericRelation.convert(eliminateeOnLhs);
 				switch (bnr.getRelationSymbol()) {
 				case DISTINCT:
@@ -321,7 +321,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 
 		final Rational coeff;
 		{
-			final PolynomialRelation origPolyRel = PolynomialRelation.convert(script, originalTerm);
+			final PolynomialRelation origPolyRel = PolynomialRelation.of(script, originalTerm);
 			final ExplicitLhsPolynomialRelation elpr = ExplicitLhsPolynomialRelation.moveMonomialToLhs(script,
 					eliminatee, origPolyRel);
 			coeff = elpr.getLhsCoefficient();
@@ -353,7 +353,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(originalTerm);
 
 		final BinaryNumericRelation lowerBoundBnr = bnr.changeRelationSymbol(lowerRelationSymbol);
-		final PolynomialRelation relLower = PolynomialRelation.convert(script, lowerBoundBnr.toTerm(script), transform);
+		final PolynomialRelation relLower = PolynomialRelation.of(script, lowerBoundBnr.toTerm(script), transform);
 		final ExplicitLhsPolynomialRelation elprLower = ExplicitLhsPolynomialRelation.moveMonomialToLhs(script,
 				eliminatee, relLower);
 		assert(coeff.equals(elprLower.getLhsCoefficient()));
@@ -362,7 +362,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				Collections.emptySet());
 
 		final BinaryNumericRelation upperBoundBnr = bnr.changeRelationSymbol(upperRelationSymbol);
-		final PolynomialRelation relUpper = PolynomialRelation.convert(script, upperBoundBnr.toTerm(script), transform);
+		final PolynomialRelation relUpper = PolynomialRelation.of(script, upperBoundBnr.toTerm(script), transform);
 		final ExplicitLhsPolynomialRelation elprUpper = ExplicitLhsPolynomialRelation.moveMonomialToLhs(script,
 				eliminatee, relUpper);
 		assert(coeff.equals(elprUpper.getLhsCoefficient()));
@@ -417,11 +417,11 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		}
 		final String symbol = isStrict ? "<" : "<=";
 		final Term term = script.term(symbol, lowerBound.getTerm(), upperBound.getTerm());
-		final PolynomialRelation polyRel = PolynomialRelation.convert(script, term);
+		final PolynomialRelation polyRel = PolynomialRelation.of(script, term);
 		if (polyRel == null) {
 			throw new AssertionError("should be affine");
 		}
-		return polyRel.positiveNormalForm(script);
+		return polyRel.toTerm(script);
 	}
 
 	private static class AntiDerBuildingInstructions {

@@ -94,7 +94,7 @@ public class EliminationTask extends EliminationTaskSimple {
 
 	public Pair<Term, EliminationTask> makeTight(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript) {
-		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(getQuantifier(), getTerm());
+		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJuncts(getQuantifier(), getTerm());
 		final List<Term> dualJunctsWithEliminatee = new ArrayList<>();
 		final List<Term> dualJunctsWithoutEliminatee = new ArrayList<>();
 		for (final Term dualJunct : dualJuncts) {

@@ -30,10 +30,9 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
 
-import org.eclipse.cdt.core.dom.ast.IASTNode;
-
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -55,24 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
  */
 public class TypeSizes {
 	private final boolean mUseFixedTypeSizes;
-
-	private final int mSizeOfBoolType;
-	private final int mSizeOfCharType;
-	private final int mSizeOfShortType;
-	private final int mSizeOfIntType;
-	private final int mSizeOfLongType;
-	private final int mSizeOfLongLongType;
-	private final int mSizeOfFloatType;
-	private final int mSizeOfDoubleType;
-	private final int mSizeOfLongDoubleType;
 	private final int mSizeOfPointerType;
-	private final int mSizeOfInt128Type;
-	private final int mSizeOfFloat128Type;
-
-	// for pointer arithmetic on a void pointer -- c standard disallows that, but
-	// gcc does not..
-	private final int mSizeOfVoidType;
-
 	/**
 	 * is char (without modifier) schar or uchar?
 	 */
@@ -80,86 +62,54 @@ public class TypeSizes {
 
 	private final LinkedHashMap<CPrimitive.CPrimitives, Integer> mCPrimitiveToTypeSizeConstant;
 
-	private final FlatSymbolTable mSymboltable;
-	private final ValueExtraction mValueExtraction;
-
 	private final TranslationSettings mSettings;
 
-	public TypeSizes(final IPreferenceProvider ups, final TranslationSettings settings,
-			final FlatSymbolTable symbolTable) {
-		mSymboltable = symbolTable;
-		mValueExtraction = new ValueExtraction(mSymboltable);
+	public TypeSizes(final IPreferenceProvider ups, final TranslationSettings settings) {
 		mUseFixedTypeSizes = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
 		mSettings = settings;
-		mCPrimitiveToTypeSizeConstant = new LinkedHashMap<>();
 
-		mSizeOfVoidType = 1;
-		mSizeOfBoolType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
-		mSizeOfCharType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR);
-		mSizeOfShortType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_SHORT);
-		mSizeOfIntType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_INT);
-		mSizeOfLongType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONG);
-		mSizeOfLongLongType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGLONG);
-		mSizeOfFloatType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_FLOAT);
-		mSizeOfDoubleType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_DOUBLE);
-		mSizeOfLongDoubleType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE);
+		final int sizeOfBoolType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
+		final int sizeOfCharType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR);
+		final int sizeOfShortType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_SHORT);
+		final int sizeOfIntType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_INT);
+		final int sizeOfLongType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONG);
+		final int sizeOfLongLongType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGLONG);
+		final int sizeOfFloatType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_FLOAT);
+		final int sizeOfDoubleType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_DOUBLE);
+		final int sizeOfLongDoubleType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE);
 		mSizeOfPointerType = ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_POINTER);
 		mSignednessOfChar = ups.getEnum(CACSLPreferenceInitializer.LABEL_SIGNEDNESS_CHAR, Signedness.class);
-		// Hardcoded to 16 bytes. According to the GNU C is could probably also be
-		// larger
+
+		mCPrimitiveToTypeSizeConstant = new LinkedHashMap<>();
+		// for pointer arithmetic on a void pointer -- c standard disallows that, but
+		// gcc does not..
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.VOID, 1);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.BOOL, sizeOfBoolType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.CHAR, sizeOfCharType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.SCHAR, sizeOfCharType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UCHAR, sizeOfCharType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.SHORT, sizeOfShortType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.USHORT, sizeOfShortType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.INT, sizeOfIntType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UINT, sizeOfIntType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONG, sizeOfLongType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONG, sizeOfLongType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGLONG, sizeOfLongLongType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONGLONG, sizeOfLongLongType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.DOUBLE, sizeOfDoubleType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT, sizeOfFloatType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGDOUBLE, sizeOfLongDoubleType);
+
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_DOUBLE, sizeOfDoubleType * 2);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_FLOAT, sizeOfFloatType * 2);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_LONGDOUBLE, sizeOfLongDoubleType * 2);
+
+		// Hardcoded to 16 bytes. According to the GNU C is could probably also be larger
 		// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fint128.html
-		mSizeOfInt128Type = 16;
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.INT128, 16);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UINT128, 16);
 		// Hardcoded to 16 bytes https://gcc.gnu.org/onlinedocs/gcc/Floating-Types.html
-		mSizeOfFloat128Type = 16;
-
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.VOID, mSizeOfVoidType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.BOOL, mSizeOfBoolType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.CHAR, mSizeOfCharType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.SCHAR, mSizeOfCharType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UCHAR, mSizeOfCharType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.SHORT, mSizeOfShortType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.USHORT, mSizeOfShortType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.INT, mSizeOfIntType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UINT, mSizeOfIntType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONG, mSizeOfLongType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONG, mSizeOfLongType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGLONG, mSizeOfLongLongType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONGLONG, mSizeOfLongLongType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.INT128, mSizeOfInt128Type);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.UINT128, mSizeOfInt128Type);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.DOUBLE, mSizeOfDoubleType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT, mSizeOfFloatType);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT128, mSizeOfFloat128Type);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGDOUBLE, mSizeOfLongDoubleType);
-
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_DOUBLE, mSizeOfDoubleType * 2);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_FLOAT, mSizeOfFloatType * 2);
-		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_LONGDOUBLE, mSizeOfLongDoubleType * 2);
-
-	}
-
-	public TypeSizes(final TypeSizes prerunTypeSizes, final FlatSymbolTable symbolTable) {
-		mSymboltable = symbolTable;
-		mValueExtraction = new ValueExtraction(mSymboltable);
-
-		mUseFixedTypeSizes = prerunTypeSizes.mUseFixedTypeSizes;
-		mSettings = prerunTypeSizes.mSettings;
-		mCPrimitiveToTypeSizeConstant = prerunTypeSizes.mCPrimitiveToTypeSizeConstant;
-
-		mSizeOfVoidType = prerunTypeSizes.mSizeOfVoidType;
-		mSizeOfBoolType = prerunTypeSizes.mSizeOfBoolType;
-		mSizeOfCharType = prerunTypeSizes.mSizeOfCharType;
-		mSizeOfShortType = prerunTypeSizes.mSizeOfShortType;
-		mSizeOfIntType = prerunTypeSizes.mSizeOfIntType;
-		mSizeOfLongType = prerunTypeSizes.mSizeOfLongType;
-		mSizeOfLongLongType = prerunTypeSizes.mSizeOfLongLongType;
-		mSizeOfFloatType = prerunTypeSizes.mSizeOfFloatType;
-		mSizeOfDoubleType = prerunTypeSizes.mSizeOfDoubleType;
-		mSizeOfLongDoubleType = prerunTypeSizes.mSizeOfLongDoubleType;
-		mSizeOfPointerType = prerunTypeSizes.mSizeOfPointerType;
-		mSignednessOfChar = prerunTypeSizes.mSignednessOfChar;
-		mSizeOfInt128Type = prerunTypeSizes.mSizeOfInt128Type;
-		mSizeOfFloat128Type = prerunTypeSizes.mSizeOfFloat128Type;
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT128, 16);
 	}
 
 	public boolean useFixedTypeSizes() {
@@ -218,45 +168,26 @@ public class TypeSizes {
 		}
 	}
 
-	private static boolean isComplex(final CPrimitives type) {
-		switch (type) {
-		case COMPLEX_FLOAT:
-		case COMPLEX_DOUBLE:
-		case COMPLEX_LONGDOUBLE:
-			return true;
-		default:
-			return false;
-		}
-	}
-
 	public BigInteger getMaxValueOfPrimitiveType(final CPrimitive cPrimitive) {
 		final int byteSize = getSize(cPrimitive.getType());
-		BigInteger maxValue;
+		int exponent;
 		if (isUnsigned(cPrimitive)) {
-			maxValue = new BigInteger("2").pow(byteSize * 8);
+			exponent = byteSize * 8;
 		} else {
-			maxValue = new BigInteger("2").pow(byteSize * 8 - 1);
+			exponent = byteSize * 8 - 1;
 		}
-		maxValue = maxValue.subtract(BigInteger.ONE);
-		return maxValue;
+		return BigInteger.TWO.pow(exponent).subtract(BigInteger.ONE);
 	}
 
 	public BigInteger getMinValueOfPrimitiveType(final CPrimitive cPrimitive) {
-		final int byteSize = getSize(cPrimitive.getType());
-		BigInteger minValue;
 		if (isUnsigned(cPrimitive)) {
-			minValue = BigInteger.ZERO;
-		} else {
-			minValue = new BigInteger("2").pow(byteSize * 8 - 1).negate();
+			return BigInteger.ZERO;
 		}
-		return minValue;
+		return BigInteger.TWO.pow(getSize(cPrimitive.getType()) * 8 - 1).negate();
 	}
 
 	public BigInteger getMaxValueOfPointer() {
-		final int byteSize = mSizeOfPointerType;
-		BigInteger maxValue = new BigInteger("2").pow(byteSize * 8);
-		maxValue = maxValue.subtract(BigInteger.ONE);
-		return maxValue;
+		return BigInteger.TWO.pow(mSizeOfPointerType * 8).subtract(BigInteger.ONE);
 	}
 
 	/**
@@ -344,23 +275,29 @@ public class TypeSizes {
 	 * represents a constant value. Extraction fails, e.g., if rval represents a variable.
 	 *
 	 * @param expr
+	 *
 	 * @return
 	 */
-	public BigInteger extractIntegerValue(final RValue rval, final IASTNode hook) {
-		return extractIntegerValue(rval.getValue(), rval.getCType().getUnderlyingType(), hook);
+	public BigInteger extractIntegerValue(final RValue rval) {
+		return extractIntegerValue(rval.getValue(), rval.getCType().getUnderlyingType());
 	}
 
-	public BigInteger extractIntegerValue(final Expression expr, final CType cType, final IASTNode hook) {
-		final BigInteger tmp = mValueExtraction.extractIntegerValue(expr, hook);
-		if (tmp == null) {
-			return null;
+	public BigInteger extractIntegerValue(final Expression expr, final CType cType) {
+		if (expr instanceof IntegerLiteral) {
+			final BigInteger tmp = new BigInteger(((IntegerLiteral) expr).getValue());
+			if (!isUnsigned((CPrimitive) cType)) {
+				return tmp;
+			}
+			// TODO 20221119 Matthias: Because of the Nutz transformation we do
+			// do a modulo operation. It don't think this should be necessary,
+			// but it won't hurt and I don't have the time to check.
+			final BigInteger maxValue = getMaxValueOfPrimitiveType((CPrimitive) cType);
+			final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
+			return tmp.mod(maxValuePlusOne);
 		}
-
-		if (!(cType instanceof CPrimitive)) {
-			throw new AssertionError("Expected only CPrimitive but got " + cType);
-		}
-		final CPrimitive cPrimitive = (CPrimitive) cType;
-		if (mSettings.isBitvectorTranslation()) {
+		if (expr instanceof BitvecLiteral) {
+			final BigInteger tmp = new BigInteger(((BitvecLiteral) expr).getValue());
+			final CPrimitive cPrimitive = (CPrimitive) cType;
 			if (isUnsigned(cPrimitive)) {
 				// my return as is
 				if (getMinValueOfPrimitiveType(cPrimitive).compareTo(tmp) > 0) {
@@ -371,22 +308,11 @@ public class TypeSizes {
 				}
 				return tmp;
 			}
-			// is signed
-			final Integer bytesize = getSize(cPrimitive.getType());
-			final int bitsize = bytesize * 8;
+			final int bitsize = 8 * getSize(cPrimitive.getType());
 			final BitvectorConstant bc = new BitvectorConstant(tmp, BigInteger.valueOf(bitsize));
 			return bc.toSignedInt();
 		}
-		// integer translation
-		if (isUnsigned(cPrimitive)) {
-			// TODO 20221119 Matthias: Because of the Nutz transformation we do
-			// do a modulo operation. It don't think this should be necessary,
-			// but it won't hurt and I don't have the time to check.
-			final BigInteger maxValue = getMaxValueOfPrimitiveType((CPrimitive) cType);
-			final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
-			return tmp.mod(maxValuePlusOne);
-		}
-		return tmp;
+		return null;
 	}
 
 	/**

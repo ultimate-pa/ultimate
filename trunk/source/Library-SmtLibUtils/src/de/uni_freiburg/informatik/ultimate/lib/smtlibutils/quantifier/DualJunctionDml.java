@@ -65,7 +65,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		// Iterate over all variable that should be eliminated
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
 			// Iterate over all conjuncts
-			final Term[] conjuncts = QuantifierUtils.getDualFiniteJunction(inputEt.getQuantifier(), inputEt.getTerm());
+			final Term[] conjuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
 			for (final Term conjunct : conjuncts) {
 				// find subterms
 				//SubTermFinder.find(term, predicate, onlyOutermost)

@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleCheckerMap;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.ChainingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
@@ -137,7 +136,7 @@ class IndependenceProviderForLoopers<L extends IIcfgTransition<?>> implements IR
 				new TransferringHoareTripleChecker(underlyingHtc, transferrer, unifier);
 
 		final HoareTripleCheckerCache cache = extractCache(refinement.getHoareTripleChecker());
-		return new CachingHoareTripleCheckerMap(mServices, transferringHtc, refinement.getPredicateUnifier(), cache);
+		return new CachingHoareTripleChecker(mServices, transferringHtc, refinement.getPredicateUnifier(), cache);
 	}
 
 	private HoareTripleCheckerCache extractCache(final IHoareTripleChecker refinementHtc) {

@@ -348,7 +348,8 @@ public final class MSODSolver {
 
 		final Term[] terms = term.getParameters();
 		final Term lessEqual = SmtUtils.leq(mScript, terms[0], terms[1]);
-		final Term greaterEqual = SmtUtils.not(mScript, SmtUtils.less(mScript, terms[0], terms[1]));
+		// This term should not be simplified, therefore we use mScript.term("not", ...) instead of SmtUtils.not
+		final Term greaterEqual = mScript.term("not", SmtUtils.less(mScript, terms[0], terms[1]));
 		final Term equal = SmtUtils.and(mScript, lessEqual, greaterEqual);
 
 		mLogger.error("equal: " + equal);
@@ -390,8 +391,7 @@ public final class MSODSolver {
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processLessOrLessEqual(final ApplicationTerm term)
 			throws AutomataLibraryException {
 
-		final PolynomialRelation polyRel =
-				PolynomialRelation.convert(mScript, term, TransformInequality.NONSTRICT2STRICT);
+		final PolynomialRelation polyRel = PolynomialRelation.of(mScript, term, TransformInequality.NONSTRICT2STRICT);
 		final AffineTerm affineTerm = (AffineTerm) polyRel.getPolynomialTerm();
 		final Map<Term, Rational> variables = affineTerm.getVariable2Coefficient();
 		final Rational constant = affineTerm.getConstant().negate();

@@ -106,10 +106,10 @@ public class BvToIntTest {
 				PartialQuantifierElimination.eliminate(mServices, mMgdScript, t1, SimplificationTechnique.SIMPLIFY_DDA);
 
 		final LBool equi = SmtUtils.checkEquivalence(t1, t2, mScript);
-		Assert.assertFalse(equi.equals(LBool.UNKNOWN));
+		Assert.assertFalse("Equivalence check returned UNKNOWN", equi.equals(LBool.UNKNOWN));
 		Assert.assertFalse(equi.equals(LBool.SAT));
 		// System.out.println("bit-vector quantifier Elimination: " + qelimResult.toStringDirect());
-		Assert.assertTrue(QuantifierUtils.isQuantifierFree(t2)); // translation qelim
+		Assert.assertTrue("Result contains quantifiers", QuantifierUtils.isQuantifierFree(t2)); // translation qelim
 		// Assert.assertTrue(QuantifierUtils.isQuantifierFree(qelimResult)); // bit-vector qelim
 
 	}

@@ -226,7 +226,7 @@ public class Context {
 		if (ccTransformation == CcTransformation.OVERAPPROXIMATE_QUANTIFIERS) {
 			result = QuantifierOverapproximator.apply(mgdScript.getScript(), tmpWithParent);
 		} else {
-			result = tmp;
+			result = tmpWithParent;
 		}
 		return result;
 	}

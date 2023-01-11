@@ -140,7 +140,7 @@ public class ArrayHandler {
 			final RValue integer = (RValue) subscript.getLrValue();
 			final CType valueType = ((CPointer) cTypeLeft).getPointsToType();
 			final ExpressionResult newAddress = mMemoryHandler.doPointerArithmeticWithConversion(
-					IASTBinaryExpression.op_plus, loc, transformedValue.getValue(), integer, valueType, node);
+					IASTBinaryExpression.op_plus, loc, transformedValue.getValue(), integer, valueType);
 			result.addAllExceptLrValue(transformedResult, subscript, newAddress);
 			final HeapLValue lValue = LRValueFactory.constructHeapLValue(mTypeHandler,
 					newAddress.getLrValue().getValue(), valueType, false, null);
@@ -172,7 +172,7 @@ public class ArrayHandler {
 
 			final Expression oldAddress = ((HeapLValue) leftlrValue).getAddress();
 			final ExpressionResult newAddress = mMemoryHandler.doPointerArithmeticWithConversion(
-					IASTBinaryExpression.op_plus, loc, oldAddress, (RValue) subscript.getLrValue(), resultCType, node);
+					IASTBinaryExpression.op_plus, loc, oldAddress, (RValue) subscript.getLrValue(), resultCType);
 			final HeapLValue lValue = LRValueFactory.constructHeapLValue(mTypeHandler,
 					newAddress.getLrValue().getValue(), resultCType, false, null);
 			result.addAllExceptLrValue(leftExpRes, subscript, newAddress);
@@ -216,7 +216,7 @@ public class ArrayHandler {
 		if (leftlrValue instanceof RValue) {
 			final ExpressionResult newAddress =
 					mMemoryHandler.doPointerArithmeticWithConversion(IASTBinaryExpression.op_plus, loc,
-							leftlrValue.getValue(), (RValue) subscript.getLrValue(), resultCType, node);
+							leftlrValue.getValue(), (RValue) subscript.getLrValue(), resultCType);
 			result.addAllExceptLrValue(leftExpRes, subscript, newAddress);
 			final HeapLValue lValue = LRValueFactory.constructHeapLValue(mTypeHandler,
 					newAddress.getLrValue().getValue(), resultCType, false, null);

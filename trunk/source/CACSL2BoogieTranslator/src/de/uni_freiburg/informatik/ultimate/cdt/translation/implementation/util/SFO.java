@@ -225,6 +225,8 @@ public final class SFO {
 
 	public static final String SELECT_SUBARRAY_AT_ADDRESS = "selectAtPointerBaseAddress~";
 
+	public static final String VARARGS = "#varArgs";
+
 	/**
 	 * Specifies purpose of an auxiliary temporary variable.
 	 */
@@ -379,7 +381,7 @@ public final class SFO {
 
 		RACE_DETECT("detect~race"),
 
-		ABS("abs"),
+		VARARGS_POINTER("varargs"),
 
 		;
 

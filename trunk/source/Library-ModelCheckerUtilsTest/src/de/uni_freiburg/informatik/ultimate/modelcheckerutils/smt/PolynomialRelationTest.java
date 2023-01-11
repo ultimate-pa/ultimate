@@ -579,10 +579,9 @@ public class PolynomialRelationTest {
 	}
 
 	/**
-	 * Currently fails because some coefficient is null, this probably will be handled when the "Todo if no constantTErm
-	 * throw error or handle it" is finished
+	 * Currently fails because div with more than two parameters is not supported yet.
 	 */
-	@Test
+	@Test(expected = UnsupportedOperationException.class)
 	public void relationIntPolyUnknownEQ16() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (div (div x 5 2) (div y z)) y))";
@@ -598,7 +597,7 @@ public class PolynomialRelationTest {
 		mScript = script;
 		final Term subject = TermParseUtils.parseTerm(mScript, "x");
 		final MultiCaseSolvedBinaryRelation sbr = PolynomialRelation
-				.convert(mScript, TermParseUtils.parseTerm(mScript, inputAsString))
+				.of(mScript, TermParseUtils.parseTerm(mScript, inputAsString))
 				.solveForSubject(new ManagedScript(mServices, script), subject, Xnf.DNF, Collections.emptySet());
 		Assert.assertNull(sbr);
 	}
@@ -628,23 +627,23 @@ public class PolynomialRelationTest {
 		final Term inputAsTerm = TermParseUtils.parseTerm(script, inputAsString);
 		final Term subject = TermParseUtils.parseTerm(script, "x");
 		final SolvedBinaryRelation sbr =
-				PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, subject);
+				PolynomialRelation.of(mScript, inputAsTerm).solveForSubject(mScript, subject);
 		Assert.assertNull("Solvable, but unsolvable expected", sbr);
 		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.DNF);
 		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.CNF);
 	}
 
 	private void testSingleCaseSolveForSubject(final Term inputAsTerm, final Term x) {
-		final SolvedBinaryRelation sbr = PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x);
+		final SolvedBinaryRelation sbr = PolynomialRelation.of(mScript, inputAsTerm).solveForSubject(mScript, x);
 		mScript.echo(new QuotedObject("Checking if input and output of solveForSubject are equivalent"));
-		Assert.assertTrue(SmtUtils.areFormulasEquivalent(sbr.asTerm(mScript), inputAsTerm, mScript));
+		Assert.assertTrue(SmtUtils.areFormulasEquivalent(sbr.toTerm(mScript), inputAsTerm, mScript));
 	}
 
 	private void testMultiCaseSolveForSubject(final Term inputAsTerm, final Term x, final Xnf xnf) {
-		final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation.convert(mScript, inputAsTerm)
+		final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation.of(mScript, inputAsTerm)
 				.solveForSubject(new ManagedScript(mServices, mScript), x, xnf, Collections.emptySet());
 		mScript.echo(new QuotedObject("Checking if input and output of multiCaseSolveForSubject are equivalent"));
-		final Term solvedAsTerm = mcsbr.asTerm(mScript);
+		final Term solvedAsTerm = mcsbr.toTerm(mScript);
 		final Term tmp;
 		if (USE_QUANTIFIER_ELIMINATION_TO_SIMPLIFY_INPUT_OF_EQUIVALENCE_CHECK) {
 			final IUltimateServiceProvider services = UltimateMocks.createUltimateServiceProviderMock();

@@ -312,7 +312,7 @@ public class NnfTransformer {
 
 		@Override
 		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
-			final Term simplified = SmtUtils.termWithLocalSimplification(mScript, appTerm.getFunction(), newArgs);
+			final Term simplified = SmtUtils.unfTerm(mScript, appTerm.getFunction(), newArgs);
 			setResult(simplified);
 		}
 

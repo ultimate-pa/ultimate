@@ -104,7 +104,7 @@ public class QuantifierPushUtilsForSubsetPush {
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
 			final IQuantifierEliminator qe) {
 		List<Term> currentDualFiniteJuncts = Arrays
-				.asList(QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm()));
+				.asList(QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), et.getTerm()));
 		// TODO Reduce the following checks
 		if (currentDualFiniteJuncts.size() <= 1) {
 			throw new AssertionError("No dual finite junction");
@@ -213,7 +213,7 @@ public class QuantifierPushUtilsForSubsetPush {
 				currentEliminatees = new ArrayList<>(Arrays.asList(qf.getVariables()));
 				failedEliminatees.retainAll(currentEliminatees);
 				currentDualFiniteJuncts = Arrays
-						.asList(QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), qf.getSubformula()));
+						.asList(QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), qf.getSubformula()));
 			}
 
 			currentSuitableEliminatees = findSuitableEliminatees(currentEliminatees, failedEliminatees,

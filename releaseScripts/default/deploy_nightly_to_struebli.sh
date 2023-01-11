@@ -1,18 +1,22 @@
 #!/bin/bash
+DIR="${BASH_SOURCE%/*}"
+if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
+. "$DIR/makeSettings.sh"
+
 DATE=$(date +%Y%m%d)
-pushd releaseScripts/default > /dev/null
-pushd UAutomizer-linux > /dev/null
-VERSION=$(./Ultimate.py --ultversion)
-if [ $? -ne 0 ] ; then 
-  echo "Ultimate did not provide a version"
+
+spushd "$(get_git_root)/releaseScripts/default/UAutomizer-linux"
+if ! VERSION=$(./Ultimate.py --ultversion) ; then
+  echo "./Ultimate.py --ultversion failed with $?"
   exit 1
 fi
 VERSION=$(echo "$VERSION" | head -n 1 | sed 's/This is Ultimate //g ; s/origin.//g')
-if [ -z "$VERSION" ] ; then 
-  echo "Ultimate did not provide a version"
+if [ -z "$VERSION" ] ; then
+  echo "Could not extract version string from './Ultimate.py --ultversion' output:"
+  echo "$VERSION"
   exit 1
 fi
-popd > /dev/null
+spopd
 
 new_dir="${DATE}-${VERSION}"
 echo "Deploying Ultimate ${VERSION} by moving *.zip via SFTP to struebli.informatik.uni-freiburg.de:upload/${new_dir}"

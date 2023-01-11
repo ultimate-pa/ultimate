@@ -27,7 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -56,7 +56,7 @@ public class Qvasr implements IVasr<Rational> {
 	 */
 	public Qvasr(final Rational[] resetVector, final Rational[] additionVector) {
 		final Pair<Rational[], Rational[]> initialTransformer = new Pair<>(resetVector, additionVector);
-		final Set<Pair<Rational[], Rational[]>> initialTransformerSet = new HashSet<>();
+		final Set<Pair<Rational[], Rational[]>> initialTransformerSet = new LinkedHashSet<>();
 		initialTransformerSet.add(initialTransformer);
 		mDimension = resetVector.length;
 		mTransformer = initialTransformerSet;
@@ -67,7 +67,7 @@ public class Qvasr implements IVasr<Rational> {
 	 */
 	public Qvasr() {
 		mDimension = 0;
-		mTransformer = new HashSet<>();
+		mTransformer = new LinkedHashSet<>();
 	}
 
 	@Override

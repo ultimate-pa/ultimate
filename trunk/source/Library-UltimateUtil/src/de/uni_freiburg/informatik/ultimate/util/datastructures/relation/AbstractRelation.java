@@ -166,8 +166,8 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 	 *            the domain element to remove
 	 * @return the set of all elements with which the given element was in relation
 	 */
-	public Set<R> removeDomainElement(final D elem) {
-		final Set<R> result = mMap.remove(elem);
+	public SET removeDomainElement(final D elem) {
+		final SET result = mMap.remove(elem);
 		assert sanityCheck();
 		return result;
 	}

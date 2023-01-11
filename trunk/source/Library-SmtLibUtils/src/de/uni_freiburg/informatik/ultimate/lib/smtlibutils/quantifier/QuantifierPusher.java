@@ -371,7 +371,7 @@ public class QuantifierPusher extends TermTransformer {
 			final IQuantifierEliminator qe,
 			final boolean derBasedDistributivityParameterPreselection,
 			final boolean evaluateSuccessOfDistributivityApplication) {
-		final Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
+		final Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), et.getTerm());
 		if (dualFiniteParams.length == 1) {
 			throw new AssertionError("No dual finite junction");
 		}
@@ -480,7 +480,7 @@ public class QuantifierPusher extends TermTransformer {
 			final ManagedScript mgdScript, final int quantifier, final Set<TermVariable> eliminatees,
 			final Context context, final Term[] dualFiniteParams, final int i) {
 		final Term[] correspondingFiniteParams =
-				QuantifierUtils.getCorrespondingFiniteJunction(quantifier, dualFiniteParams[i]);
+				QuantifierUtils.getCorrespondingFiniteJuncts(quantifier, dualFiniteParams[i]);
 		final List<Term> otherDualFiniteParams = new ArrayList<>(dualFiniteParams.length - 1);
 		for (int j = 0; j < dualFiniteParams.length; j++) {
 			if (j != i) {
@@ -534,7 +534,7 @@ public class QuantifierPusher extends TermTransformer {
 		final int numberOfEliminateesBefore = et.getEliminatees().size();
 		final List<XjunctPartialQuantifierElimination> elimtechniques =
 				generateOldEliminationTechniques(pqeTechniques, mgdScript, services);
-		final Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
+		final Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), et.getTerm());
 		for (final XjunctPartialQuantifierElimination technique : elimtechniques) {
 			// nothing was removed in last iteration, continue with original params
 			final Term[] elimResulDualFiniteParams =

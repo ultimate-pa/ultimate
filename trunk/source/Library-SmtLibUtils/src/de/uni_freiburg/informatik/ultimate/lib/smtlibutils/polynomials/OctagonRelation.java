@@ -62,7 +62,12 @@ public class OctagonRelation {
 	}
 
 	public static OctagonRelation from(final PolynomialRelation polyRel) {
-		final Set<Term> variables = polyRel.getPolynomialTerm().getAbstractVariable2Coefficient().keySet();
+		final AbstractGeneralizedAffineTerm<?> agat = polyRel.getPolynomialTerm();
+		if (!agat.isAffine()) {
+			return null;
+		}
+		final AffineTerm affineTerm = (AffineTerm) agat;
+		final Set<Term> variables = affineTerm.getAbstractVariable2Coefficient().keySet();
 		for (final Term v : variables) {
 			if (!(v instanceof TermVariable || SmtUtils.isConstant(v))) {
 				// If there is anything other than a variable or a constant, we cannot build an OctagonRelation
@@ -71,34 +76,35 @@ public class OctagonRelation {
 		}
 		switch (variables.size()) {
 		case 1:
-			return from1Var(polyRel);
+			return from1Var(affineTerm, polyRel.getRelationSymbol());
 		case 2:
-			return from2Vars(polyRel);
+			return from2Vars(affineTerm, polyRel.getRelationSymbol());
 		default:
 			return null;
 		}
 
 	}
 
-	private static OctagonRelation from1Var(final PolynomialRelation arWith1Var) {
-		checkNumberOfVariables(1, arWith1Var.getPolynomialTerm().getAbstractVariable2Coefficient().size());
-		final Map.Entry<Term, Rational> var2coeff = arWith1Var.getPolynomialTerm().getAbstractVariable2Coefficient()
+	private static OctagonRelation from1Var(final AffineTerm affineTerm, final RelationSymbol relationSymbol) {
+		checkNumberOfVariables(1, affineTerm.getAbstractVariable2Coefficient().size());
+		final Map.Entry<Term, Rational> var2coeff = affineTerm.getAbstractVariable2Coefficient()
 				.entrySet().iterator().next();
 		final Term var = var2coeff.getKey();
 		final Rational absCoeff = var2coeff.getValue().abs();
 		final boolean negVar = var2coeff.getValue().isNegative();
 		// In AffineRelation the constant is left of the relation, but here it is right
 		// of the relation => negate
-		final Rational constant = arWith1Var.getPolynomialTerm().getConstant().mul(Rational.TWO).div(absCoeff).negate();
+		final Rational constant = affineTerm.getConstant().mul(Rational.TWO).div(absCoeff).negate();
 		// 2x R c <==> (+x) - (-x) R c
 		// -2x R c <==> (-x) - (+x) R c
-		return new OctagonRelation(negVar, var, !negVar, var, arWith1Var.getRelationSymbol(), constant);
+		return new OctagonRelation(negVar, var, !negVar, var, relationSymbol, constant);
 	}
 
-	private static OctagonRelation from2Vars(final PolynomialRelation arWith2Vars) {
-		final Map<Term, Rational> var2coeff = arWith2Vars.getPolynomialTerm().getAbstractVariable2Coefficient();
+	private static OctagonRelation from2Vars(final AffineTerm affineTerm, final RelationSymbol relationSymbol) {
+		final Map<Term, Rational> var2coeff = affineTerm.getAbstractVariable2Coefficient();
 		checkNumberOfVariables(2, var2coeff.size());
-		final Iterator<Map.Entry<Term, Rational>> iter = var2coeff.entrySet().iterator();
+		final Iterator<Map.Entry<Term, Rational>> iter = var2coeff.entrySet().stream()
+				.sorted((x, y) -> x.getKey().toString().compareTo(y.getKey().toString())).iterator();
 		final Map.Entry<Term, Rational> var2coeff1 = iter.next();
 		final Map.Entry<Term, Rational> var2coeff2 = iter.next();
 		final Rational absCommonCoeff = var2coeff1.getValue().abs();
@@ -107,9 +113,9 @@ public class OctagonRelation {
 			return null;
 		}
 		// In AffineRelation the constant is left of the relation, but here it is right of the relation => negate
-		final Rational constant = arWith2Vars.getPolynomialTerm().getConstant().div(absCommonCoeff).negate();
+		final Rational constant = affineTerm.getConstant().div(absCommonCoeff).negate();
 		return new OctagonRelation(var2coeff1.getValue().isNegative(), var2coeff1.getKey(),
-				!var2coeff2.getValue().isNegative(), var2coeff2.getKey(), arWith2Vars.getRelationSymbol(), constant);
+				!var2coeff2.getValue().isNegative(), var2coeff2.getKey(), relationSymbol, constant);
 	}
 
 	private static void checkNumberOfVariables(final int expected, final int actual) {
