@@ -123,14 +123,14 @@ public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 	 *            the element to remove
 	 * @return the set of all elements with which the given {@code elem} was in relation
 	 */
-	public Set<E> removeElement(final E elem) {
-		final Set<E> rangeElems = super.removeDomainElement(elem);
+	public HashSet<E> removeElement(final E elem) {
+		final HashSet<E> rangeElems = super.removeDomainElement(elem);
 		super.removeRangeElement(elem);
 		return rangeElems;
 	}
 
 	@Override
-	public Set<E> removeDomainElement(final E elem) {
+	public HashSet<E> removeDomainElement(final E elem) {
 		return removeElement(elem);
 	}
 
