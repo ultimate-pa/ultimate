@@ -584,6 +584,10 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 	}
 
 	@Override
+	public
+	abstract AbstractGeneralizedAffineTerm<?> divInvertible(Rational r);
+
+	@Override
 	public IPolynomialTerm mod(final Script script, final IPolynomialTerm divisor) {
 		if (divisor.isConstant()) {
 			return mod(script, divisor.getConstant().numerator());
@@ -620,7 +624,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		} else {
 			// GCD is > 1. We pull out the GCD (divide coeff+const and divisor by GCD,
 			// multiply result by GCD).
-			final AbstractGeneralizedAffineTerm<?> quotientPoly = (AbstractGeneralizedAffineTerm<?>) intermediateResult
+			final AbstractGeneralizedAffineTerm<?> quotientPoly = intermediateResult
 					.divInvertible(gcd);
 			final BigInteger quotientDivisor = divisor.abs().divide(gcd.numerator());
 			// Call method recursively because the new divisor might enable further

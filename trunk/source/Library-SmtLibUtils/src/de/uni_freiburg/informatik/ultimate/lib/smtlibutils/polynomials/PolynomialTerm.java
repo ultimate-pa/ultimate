@@ -300,7 +300,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	}
 
 	@Override
-	public PolynomialTerm divInvertible(final Rational divisor) {
+	public AbstractGeneralizedAffineTerm<?> divInvertible(final Rational divisor) {
 		final HashMap<Monomial, Rational> newAbstractVariable2Coefficient = new HashMap<>();
 		for (final Entry<Monomial, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
 			final Rational newCoefficient = PolynomialTermUtils.divInvertible(getSort(), entry.getValue(), divisor);
