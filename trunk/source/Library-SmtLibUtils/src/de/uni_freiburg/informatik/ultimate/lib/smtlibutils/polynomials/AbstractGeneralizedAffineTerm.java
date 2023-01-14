@@ -698,20 +698,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 	}
 
 	@Override
-	public IPolynomialTerm add(final Rational offset) {
-		final Rational newConstant;
-		if (SmtSortUtils.isRealSort(getSort())) {
-			newConstant = getConstant().add(offset);
-		} else if (SmtSortUtils.isIntSort(getSort())) {
-			newConstant = getConstant().add(offset);
-		} else if (SmtSortUtils.isBitvecSort(getSort())) {
-			newConstant = PolynomialTermUtils.bringBitvectorValueInRange(getConstant().add(offset), getSort());
-		} else {
-			throw new AssertionError("unsupported Sort " + getSort());
-		}
-		return constructNew(getSort(), newConstant, getAbstractVariable2Coefficient());
-	}
-
+	public abstract AbstractGeneralizedAffineTerm<AVAR> add(final Rational offset);
 
 	@Override
 	public Equivalence compare(final IPolynomialTerm otherTerm) {

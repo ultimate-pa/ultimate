@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermUtils.GeneralizedConstructor;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -273,6 +274,27 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		// TODO implement for analogously to method in AffineTerm,
 		// helps only if all variables in all monomials are variables
 		return null;
+	}
+
+	@Override
+	public PolynomialTerm add(final Rational offset) {
+		final Rational newConstant;
+		if (SmtSortUtils.isRealSort(getSort())) {
+			newConstant = getConstant().add(offset);
+		} else if (SmtSortUtils.isIntSort(getSort())) {
+			if (!offset.isIntegral()) {
+				throw new UnsupportedOperationException("Cannot add non-integral summand if sort is " + getSort());
+			}
+			newConstant = getConstant().add(offset);
+		} else if (SmtSortUtils.isBitvecSort(getSort())) {
+			if (!offset.isIntegral()) {
+				throw new UnsupportedOperationException("Cannot add non-integral summand if sort is " + getSort());
+			}
+			newConstant = PolynomialTermUtils.bringBitvectorValueInRange(getConstant().add(offset), getSort());
+		} else {
+			throw new AssertionError("unsupported Sort " + getSort());
+		}
+		return new PolynomialTerm(getSort(), newConstant, getAbstractVariable2Coefficient());
 	}
 
 	@Override
