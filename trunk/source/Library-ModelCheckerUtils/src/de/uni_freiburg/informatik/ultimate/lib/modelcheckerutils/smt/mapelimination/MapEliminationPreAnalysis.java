@@ -229,7 +229,7 @@ public class MapEliminationPreAnalysis {
 	}
 
 	public Stream<Term> findMapReads(final Term term) {
-		final Stream<Term> arrays =
+		final Stream<ApplicationTerm> arrays =
 				SmtUtils.extractApplicationTerms("select", term, true).stream().filter(x -> !x.getSort().isArraySort());
 		final Stream<Term> functions =
 				mUninterpretedFunctions.stream().flatMap(x -> SmtUtils.extractApplicationTerms(x, term, true).stream());

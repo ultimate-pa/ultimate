@@ -2528,8 +2528,10 @@ public final class SmtUtils {
 	 * @param onlyOutermost
 	 *            if set to true we do not descend to subterms of a term that has been found
 	 */
-	public static Set<Term> extractApplicationTerms(final String fun, final Term term, final boolean onlyOutermost) {
-		return SubTermFinder.find(term, x -> isFunctionApplication(x, fun), onlyOutermost);
+	@SuppressWarnings("unchecked")
+	public static Set<ApplicationTerm> extractApplicationTerms(final String fun, final Term term,
+			final boolean onlyOutermost) {
+		return (Set) SubTermFinder.find(term, x -> isFunctionApplication(x, fun), onlyOutermost);
 	}
 
 	/**
