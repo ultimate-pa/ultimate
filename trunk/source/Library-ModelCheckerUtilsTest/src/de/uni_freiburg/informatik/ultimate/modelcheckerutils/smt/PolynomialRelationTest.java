@@ -422,7 +422,7 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationIntPolyDistinctSimplified() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "a", "t") };
-		final String inputSTR = "(not (= (* 2 a x) 1337 ))";
+		final String inputSTR = "(not (= (* 2 a x) 1338 ))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
@@ -477,7 +477,7 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationIntPolyEqRhsLiteral() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
-		final String inputSTR = "(= (* 17 y z x) 42 )";
+		final String inputSTR = "(= (* 21 y z x) 42 )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
