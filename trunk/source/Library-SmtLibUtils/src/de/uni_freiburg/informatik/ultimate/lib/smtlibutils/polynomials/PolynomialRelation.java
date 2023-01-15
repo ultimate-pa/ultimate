@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
@@ -121,14 +122,107 @@ public class PolynomialRelation implements IBinaryRelation, ITermProviderOnDeman
 	 * Resulting relation is then <code><term> <symbol> 0</code>.
 	 *
 	 */
-	private PolynomialRelation(final AbstractGeneralizedAffineTerm<?> agat,
-			final RelationSymbol relationSymbol) {
+	private PolynomialRelation(final AbstractGeneralizedAffineTerm<?> agat, final RelationSymbol relationSymbol) {
 		if (relationSymbol.isConvexInequality() && SmtSortUtils.isBitvecSort(agat.getSort())) {
 			throw new AssertionError("Unsupported inequality/sort combination");
 		}
-		mPolynomialTerm = Objects.requireNonNull(agat);
 		mRelationSymbol = relationSymbol;
-		mTrivialityStatus = computeTrivialityStatus(mPolynomialTerm, mRelationSymbol);
+		if (!SmtSortUtils.isIntSort(agat.getSort())) {
+			mPolynomialTerm = Objects.requireNonNull(agat);
+			mTrivialityStatus = computeTrivialityStatus(mPolynomialTerm, mRelationSymbol);
+		} else {
+			// For sort `Int` we normalize the polynomial. We divide by the GCD of the
+			// variables' coefficients. The constant can be adapted accordingly even if it
+			// is not divisible by the GCD.
+			final Rational gcd = agat.computeGcdOfCoefficients().abs();
+			assert gcd.isIntegral();
+			assert !gcd.isNegative();
+			if (gcd.equals(Rational.ZERO) || gcd.equals(Rational.ONE)) {
+				// Already normalized, no need to divide by GCD
+				mPolynomialTerm = Objects.requireNonNull(agat);
+				mTrivialityStatus = computeTrivialityStatus(mPolynomialTerm, mRelationSymbol);
+			} else {
+				// Let's divide by the GCD
+				final AbstractGeneralizedAffineTerm<?> dividedAgat = agat.divInvertible(gcd);
+				if (dividedAgat != null) {
+					// Constant is also divisible by GCD
+					mPolynomialTerm = Objects.requireNonNull(dividedAgat);
+					mTrivialityStatus = computeTrivialityStatus(dividedAgat, mRelationSymbol);
+				} else {
+					// Constant is not divisible by GCD
+					switch (mRelationSymbol) {
+					case EQ:
+					case DISTINCT:
+						// PolynomialRelation is equivalent to false for EQ and equivalent to true for
+						// DISTINCT.
+						mPolynomialTerm = AffineTerm.constructConstant(agat.getSort(), BigInteger.ONE);
+						mTrivialityStatus = computeTrivialityStatus(mPolynomialTerm, mRelationSymbol);
+						break;
+					case GEQ:
+					case GREATER:
+					case LEQ:
+					case LESS:
+						// We can always divide, but we have to make sure that we round the constant in
+						// a direction that preserves the truth value of the relation.
+						// Note that we always divide by a positive number and hence the relation symbol
+						// will not change.
+						final AbstractGeneralizedAffineTerm<?> withoutConstant = agat.add(agat.getConstant().negate());
+						final AbstractGeneralizedAffineTerm<?> withoutConstantDivided = withoutConstant
+								.divInvertible(gcd);
+						assert withoutConstantDivided != null : "Division problem";
+						final Rational newConstantRational = agat.getConstant().div(gcd);
+						final Rational newConstantRounded = getEquivalencePreservingRoundingMethod(mRelationSymbol)
+								.apply(newConstantRational);
+						mPolynomialTerm = withoutConstantDivided.add(newConstantRounded);
+						mTrivialityStatus = computeTrivialityStatus(mPolynomialTerm, mRelationSymbol);
+						break;
+					case BVSGE:
+					case BVSGT:
+					case BVSLE:
+					case BVSLT:
+					case BVUGE:
+					case BVUGT:
+					case BVULE:
+					case BVULT:
+						// Bitvectors cannot occur here
+						throw new AssertionError();
+					default:
+						throw new AssertionError("Unknown value " + mRelationSymbol);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * If we have a relation of the form `r ▷ 0`, where r is a rational, in which
+	 * direction can we round `r` (upwards, downwards) without changing the truth
+	 * value of the relation.
+	 *
+	 * @param symb Convex inequality, i.e., one of the following \<=, \<, \>=, \>.
+	 */
+	private static Function<Rational, Rational> getEquivalencePreservingRoundingMethod(final RelationSymbol symb) {
+		switch (symb) {
+		case GEQ:
+		case LESS:
+			return Rational::floor;
+		case GREATER:
+		case LEQ:
+			return Rational::ceil;
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+		case DISTINCT:
+		case EQ:
+			throw new IllegalArgumentException();
+		default:
+			throw new AssertionError("Unknown value " + symb);
+		}
 	}
 
 	public static PolynomialRelation of(final AbstractGeneralizedAffineTerm<?> agat,
@@ -397,6 +491,7 @@ public class PolynomialRelation implements IBinaryRelation, ITermProviderOnDeman
 	 * greater-than relation symbols are replaced by less-than relation symbols. If the term is equivalent to
 	 * <i>true</i> (resp. <i>false</i>) we return <i>true</i> (resp. <i>false</i>).
 	 */
+	@Override
 	public Term toTerm(final Script script) {
 		if (mTrivialityStatus == TrivialityStatus.EQUIVALENT_TO_TRUE) {
 			return script.term("true");

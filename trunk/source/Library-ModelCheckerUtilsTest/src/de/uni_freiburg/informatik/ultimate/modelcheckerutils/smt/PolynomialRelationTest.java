@@ -85,6 +85,7 @@ public class PolynomialRelationTest {
 	private static final boolean USE_QUANTIFIER_ELIMINATION_TO_SIMPLIFY_INPUT_OF_EQUIVALENCE_CHECK = false;
 
 	private final IUltimateServiceProvider mServices = UltimateMocks.createUltimateServiceProviderMock(LogLevel.INFO);
+	private final ILogger mLogger = mServices.getLoggingService().getLogger("myLogger");
 	private Script mScript;
 
 	@Before
@@ -616,6 +617,24 @@ public class PolynomialRelationTest {
 		testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.CNF); // this is not yet implemented?
 	}
 
+	private void testNormalForm(final String solverCommand, final String inputAsString,
+			final String expectedResultAsString, final VarDecl... varDecls) {
+		final Script script = createSolver(solverCommand);
+		script.setLogic(Logics.ALL);
+		for (final VarDecl varDecl : varDecls) {
+			varDecl.declareVars(script);
+		}
+		mScript = script;
+		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
+		final PolynomialRelation polyRel = PolynomialRelation.of(mScript, inputAsTerm);
+		Assert.assertTrue(polyRel != null);
+		final Term result = polyRel.toTerm(script);
+		mLogger.info("Result: " + result);
+		Assert.assertTrue(SmtUtils.areFormulasEquivalent(inputAsTerm, result, mScript));
+		final Term expectedResultAsTerm = TermParseUtils.parseTerm(mScript, expectedResultAsString);
+		Assert.assertTrue(expectedResultAsTerm.equals(result));
+	}
+
 	private void testSolveForXMultiCaseOnly(final String solverCommand, final String inputAsString,
 			final VarDecl... varDecls) {
 		final Script script = createSolver(solverCommand);
@@ -1018,6 +1037,63 @@ public class PolynomialRelationTest {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(<= (+ (* 7 x) (* 7 (div (+ y (- 7)) 7)) (* (- 1) y) 7) 0)";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	@Test
+	public void gcdNormalization01() {
+		final VarDecl[] varDecls = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(= (+ (* 6 x) (* 8 y)) 10)";
+		final String expectedResultAsString = "(= (+ (* 3 x) (* y 4)) 5)";
+		testNormalForm(SOLVER_COMMAND_Z3, inputSTR, expectedResultAsString, varDecls);
+	}
+
+
+	@Test
+	public void gcdNormalization02() {
+		final VarDecl[] varDecls = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(= (+ (* 6 x) (* 8 y)) 9)";
+		final String expectedResultAsString = "false";
+		testNormalForm(SOLVER_COMMAND_Z3, inputSTR, expectedResultAsString, varDecls);
+	}
+
+	@Test
+	public void gcdNormalization03() {
+		final VarDecl[] varDecls = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(distinct (+ (* 6 x) (* 8 y))  9)";
+		final String expectedResultAsString = "true";
+		testNormalForm(SOLVER_COMMAND_Z3, inputSTR, expectedResultAsString, varDecls);
+	}
+
+	@Test
+	public void gcdNormalization04() {
+		final VarDecl[] varDecls = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(<= (+ (* 6 x) (* 8 y)) 9)";
+		final String expectedResultAsString = "(<= (+ (* 3 x) (* y 4)) 4)";
+		testNormalForm(SOLVER_COMMAND_Z3, inputSTR, expectedResultAsString, varDecls);
+	}
+
+	@Test
+	public void gcdNormalization05() {
+		final VarDecl[] varDecls = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(< (+ (* 6 x) (* 8 y))  9)";
+		final String expectedResultAsString = "(< (+ (* 3 x) (* y 4)) 5)";
+		testNormalForm(SOLVER_COMMAND_Z3, inputSTR, expectedResultAsString, varDecls);
+	}
+
+	@Test
+	public void gcdNormalization07() {
+		final VarDecl[] varDecls = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(>= (+ (* 6 x) (* 8 y)) 9)";
+		final String expectedResultAsString = "(<= 5 (+ (* 3 x) (* y 4)))";
+		testNormalForm(SOLVER_COMMAND_Z3, inputSTR, expectedResultAsString, varDecls);
+	}
+
+	@Test
+	public void gcdNormalization08() {
+		final VarDecl[] varDecls = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(> (+ (* 6 x) (* 8 y)) 9)";
+		final String expectedResultAsString = "(< 4 (+ (* 3 x) (* y 4)))";
+		testNormalForm(SOLVER_COMMAND_Z3, inputSTR, expectedResultAsString, varDecls);
 	}
 
 }
