@@ -70,10 +70,9 @@ public class SimplificationTest {
 	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
-	// private static final long TEST_TIMEOUT_MILLISECONDS = 10_000_99999;
-	private static final long TEST_TIMEOUT_MILLISECONDS = 60_000;
+	 private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
-	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
+	private static final String SOLVER_COMMAND = "cvc4 --incremental --lang smt";
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
@@ -584,7 +583,17 @@ public class SimplificationTest {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "b"),};
 		final String formulaAsString = "(= (mod (let ((.cse0 (mod b 4294967296))) (mod (mod (+ b .cse0) 4294967296) .cse0)) 4294967296) 0)";
-		final String simplified = "true";
+		final String simplified = null;
+		runSimplificationTest(funDecls, formulaAsString, simplified, mServices, mLogger, mMgdScript);
+	}
+
+
+	@Test
+	public void constantFolding01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"),};
+		final String formulaAsString = "(or (distinct x 1) (and (< y (* x x)) (< z (* x x))))";
+		final String simplified = "(or (distinct x 1) (and (< y 1) (< z 1)))";;
 		runSimplificationTest(funDecls, formulaAsString, simplified, mServices, mLogger, mMgdScript);
 	}
 

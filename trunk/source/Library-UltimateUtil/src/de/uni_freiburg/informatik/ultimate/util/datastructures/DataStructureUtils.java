@@ -437,6 +437,21 @@ public class DataStructureUtils {
 	}
 
 	/**
+	 * Return an unmodifiable view of the input set. Use
+	 * {@link Collections#emptySet} or {@link Collections#singleton} if possible to
+	 * get a memory-efficient representation.
+	 */
+	public static <T> Set<T> getUnmodifiable(final Set<T> set) {
+		if (set.isEmpty()) {
+			return Collections.emptySet();
+		} else if (set.size() == 1) {
+			return Collections.singleton(set.iterator().next());
+		} else {
+			return Collections.unmodifiableSet(set);
+		}
+	}
+
+	/**
 	 * Returns the transitive closure of the given relation, i.e. if the pairs (a, b) and (b, c) are contained in the
 	 * relation, then (a, c) is contained in the resulting relation, as well as every pair of the given relation.
 	 *

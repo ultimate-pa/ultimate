@@ -99,7 +99,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE>, ACTION extends
 		final Term acc = SmtUtils.and(mMgdScript.getScript(), terms);
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mMgdScript, mSymbolTable);
 		return new AbsIntPredicate<>(new BasicPredicate(getIllegalPredicateId(), tvp.getProcedures(), acc,
-				tvp.getVars(), tvp.getClosedFormula()), states);
+				tvp.getVars(), tvp.getFuns(), tvp.getClosedFormula()), states);
 	}
 
 	private static int getIllegalPredicateId() {

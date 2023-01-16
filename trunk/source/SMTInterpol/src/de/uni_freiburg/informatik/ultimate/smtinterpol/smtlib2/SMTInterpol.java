@@ -770,15 +770,15 @@ public class SMTInterpol extends NoopScript {
 
 	@Override
 	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree) {
+		if (getProofMode() == ProofMode.NONE || mAssertions == null) {
+			throw new SMTLIBException("Option :produce-interpolants not set to true");
+		}
 		return getInterpolants(partition, startOfSubtree, getProof(ProofMode.CLAUSES));
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree) {
-		if (getProofMode() == ProofMode.NONE || mAssertions == null) {
-			throw new SMTLIBException("Option :produce-interpolants not set to true");
-		}
 		final long timeout = mSolverOptions.getTimeout();
 		if (timeout > 0) {
 			mCancel.setTimeout(timeout);
@@ -846,6 +846,9 @@ public class SMTInterpol extends NoopScript {
 				final Interpolator interpolator = new Interpolator(mLogger, checkingSolver, mAssertions, getTheory(),
 						parts, startOfSubtree, mCancel);
 				ipls = interpolator.getInterpolants(proofTree);
+				if (checkingSolver != null) {
+					mLogger.info("FOUND VALID INTERPOLANT");
+				}
 			} finally {
 				if (checkingSolver != null) {
 					checkingSolver.exit();
@@ -863,7 +866,6 @@ public class SMTInterpol extends NoopScript {
 					ipls[i] = simplifier.getSimplifiedTerm(ipls[i]);
 				}
 			}
-			mLogger.info("FOUND VALID INTERPOLANT");
 			return ipls;
 		} catch (final SMTLIBException ex) {
 			if (mErrorCallback != null) {

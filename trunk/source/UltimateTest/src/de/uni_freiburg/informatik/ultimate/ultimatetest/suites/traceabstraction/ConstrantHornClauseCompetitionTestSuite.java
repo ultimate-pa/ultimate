@@ -50,7 +50,8 @@ public class ConstrantHornClauseCompetitionTestSuite extends AbstractConstraintH
 	};
 
 	private static final String[] SETTINGS_UNIHORN = {
-//		"chc/AutomizerCHC/AutomizerCHC_No_Goto.epf",
+		"chc/AutomizerCHC/AutomizerCHC_No_Goto.epf",
+		"default/unihorn/chccomp-Unihorn_Default.epf"
 	};
 
 

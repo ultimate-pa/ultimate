@@ -257,7 +257,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 				if (sber != null) {
 					sbr = sber;
 				} else {
-					final PolynomialRelation polyRel = PolynomialRelation.convert(script, entry.getKey());
+					final PolynomialRelation polyRel = PolynomialRelation.of(script, entry.getKey());
 					if (polyRel == null) {
 						sbr = null;
 					} else {
@@ -330,9 +330,9 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	private Term substituteAndNormalize(final Map<Term, Term> substitutionMapping, final Term term) {
 		Term result = Substitution.apply(mMgdScript, substitutionMapping, term);
 		if (term != result) {
-			final PolynomialRelation polyRel = PolynomialRelation.convert(mScript, result);
+			final PolynomialRelation polyRel = PolynomialRelation.of(mScript, result);
 			if (polyRel != null) {
-				result = polyRel.positiveNormalForm(mScript);
+				result = polyRel.toTerm(mScript);
 			}
 		}
 		return result;

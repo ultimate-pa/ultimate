@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -111,6 +111,15 @@ public final class DataRaceChecker {
 		mIsPreRun = isPreRun;
 	}
 
+	/**
+	 * Adds a data race check appropriate for read accesses.
+	 *
+	 * @param erb
+	 *            An {@link ExpressionResultBuilder} to which the data race check statements are added
+	 * @param loc
+	 * @param lrVal
+	 *            The value being read
+	 */
 	public void checkOnRead(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
 		if (mProcedureManager.isGlobalScope()) {
 			// TODO find a cleaner way to fix this
@@ -147,6 +156,15 @@ public final class DataRaceChecker {
 		return mMemoryHandler.getBooleanArrayHelper().constructFalse();
 	}
 
+	/**
+	 * Adds a data race check appropriate for write accesses.
+	 *
+	 * @param erb
+	 *            An {@link ExpressionResultBuilder} to which the data race check statements and declarations are added
+	 * @param loc
+	 * @param lrVal
+	 *            The value being written
+	 */
 	public void checkOnWrite(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
 		if (mProcedureManager.isGlobalScope()) {
 			// TODO find a cleaner way to fix this
@@ -304,9 +322,8 @@ public final class DataRaceChecker {
 	}
 
 	private int getTypeSize(final ILocation loc, final CType type) {
-		final Expression operandTypeByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, type, null);
-		return mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), null)
-				.intValueExact();
+		final Expression operandTypeByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, type);
+		return mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT()).intValueExact();
 	}
 
 	private LeftHandSide getRaceIndicatorLhs(final ILocation loc, final LocalLValue lval) {

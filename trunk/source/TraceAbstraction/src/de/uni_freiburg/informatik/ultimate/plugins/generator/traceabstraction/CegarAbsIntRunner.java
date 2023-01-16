@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.Disjunct
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
@@ -68,9 +67,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleCheckerMap;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
@@ -79,20 +76,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntNonSmtInterpolantAutomatonBuilder;
@@ -489,8 +482,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					mResult.getUsedDomain().createTopState());
 			mPredicateUnifierAbsInt = new AbsIntPredicateUnifier<>(mLogger, mServices, mCsToolkit.getManagedScript(),
 					mPredicateUnifierSmt.getPredicateFactory(), mCsToolkit.getSymbolTable(),
-					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-					mFalsePredicate, mTruePredicate);
+					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, mFalsePredicate, mTruePredicate);
 		}
 
 		public IPredicateUnifier getPredicateUnifier() {
@@ -512,10 +504,10 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			return mHtc;
 		}
 
-		private CachingHoareTripleCheckerMap createHoareTripleChecker(final boolean onlyAbsInt) {
+		private CachingHoareTripleChecker createHoareTripleChecker(final boolean onlyAbsInt) {
 			final IHoareTripleChecker htc = new AbsIntHoareTripleChecker<>(mLogger, mServices, mResult.getUsedDomain(),
 					mResult.getUsedVariableProvider(), mPredicateUnifierAbsInt, mCsToolkit, onlyAbsInt);
-			return new CachingHoareTripleCheckerMap(mServices, htc, mPredicateUnifierAbsInt);
+			return new CachingHoareTripleChecker(mServices, htc, mPredicateUnifierAbsInt);
 		}
 
 		public IInterpolatingTraceCheck<LETTER> getInterpolantGenerator() {
@@ -542,7 +534,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 				final List<AbsIntPredicate<STATE>> weakenedPredicates;
 				if (USE_INTERPOLANT_WEAKENER) {
-					final CachingHoareTripleCheckerMap absIntOnlyHtc = createHoareTripleChecker(true);
+					final CachingHoareTripleChecker absIntOnlyHtc = createHoareTripleChecker(true);
 					weakenedPredicates = weakenPredicates(nonUnifiedPredicates, ppTrace, absIntOnlyHtc);
 					assert isInductive(ppTrace, weakenedPredicates,
 							absIntOnlyHtc) : "Sequence of interpolants not inductive (after weakening)!";
@@ -861,124 +853,6 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		public IStatisticsDataProvider getStatistics() {
 			throw new UnsupportedOperationException();
 		}
-	}
-
-	private static final class AbsIntPredicateUnifier<STATE extends IAbstractState<STATE>> extends PredicateUnifier {
-
-		public AbsIntPredicateUnifier(final ILogger logger, final IUltimateServiceProvider services,
-				final ManagedScript mgdScript, final BasicPredicateFactory predicateFactory,
-				final IIcfgSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique,
-				final XnfConversionTechnique xnfConversionTechnique, final IPredicate... initialPredicates) {
-			super(logger, services, mgdScript, predicateFactory, symbolTable, SimplificationTechnique.NONE,
-					xnfConversionTechnique, initialPredicates);
-		}
-
-		@Override
-		protected IPredicate constructNewPredicate(final Term term, final IPredicate originalPredicate) {
-			final IPredicate unifiedPred = super.constructNewPredicate(term, originalPredicate);
-			if (unifiedPred instanceof AbsIntPredicate<?>) {
-				assert assertValidPredicate((AbsIntPredicate<?>) unifiedPred) : "Created invalid predicate";
-				return unifiedPred;
-			}
-			if (originalPredicate instanceof AbsIntPredicate<?>) {
-				final AbsIntPredicate<?> rtr = new AbsIntPredicate<>(unifiedPred,
-						((AbsIntPredicate<?>) originalPredicate).getAbstractStates());
-				assert assertValidPredicate(rtr) : "Created invalid predicate";
-				return rtr;
-			}
-			return unifiedPred;
-		}
-
-		@Override
-		protected IPredicate getOrConstructPredicateForConjunction(final Set<IPredicate> minimalSubset,
-				final HashMap<IPredicate, Validity> impliedPredicates,
-				final HashMap<IPredicate, Validity> expliedPredicates) {
-			final IPredicate unifiedPred =
-					super.getOrConstructPredicateForConjunction(minimalSubset, impliedPredicates, expliedPredicates);
-			if (unifiedPred instanceof AbsIntPredicate<?>) {
-				assert assertValidPredicate((AbsIntPredicate<?>) unifiedPred) : "Created invalid predicate";
-				return unifiedPred;
-			}
-			@SuppressWarnings("unchecked")
-			final Set<DisjunctiveAbstractState<STATE>> multistates =
-					minimalSubset.stream().map(a -> ((AbsIntPredicate<STATE>) a).getAbstractStates())
-							.map(a -> DisjunctiveAbstractState.createDisjunction(a)).collect(Collectors.toSet());
-			final Set<DisjunctiveAbstractState<STATE>> synchronizedMultiStates =
-					AbsIntUtil.synchronizeVariables(multistates);
-			assert sameVars(synchronizedMultiStates.stream().flatMap(a -> a.getStates().stream())
-					.collect(Collectors.toSet())) : "Synchronize failed";
-			final DisjunctiveAbstractState<STATE> conjunction = synchronizedMultiStates.stream()
-					.reduce((a, b) -> a.intersect(b)).orElseThrow(() -> new AssertionError("No predicates given"));
-			final AbsIntPredicate<?> rtr = new AbsIntPredicate<>(unifiedPred, conjunction);
-			assert assertValidPredicate(rtr) : "Created invalid predicate";
-			return rtr;
-		}
-
-		@Override
-		protected IPredicate getOrConstructPredicateForDisjunction(final Set<IPredicate> minimalSubset,
-				final HashMap<IPredicate, Validity> impliedPredicates,
-				final HashMap<IPredicate, Validity> expliedPredicates) {
-			final IPredicate unifiedPred =
-					super.getOrConstructPredicateForDisjunction(minimalSubset, impliedPredicates, expliedPredicates);
-			if (unifiedPred instanceof AbsIntPredicate<?>) {
-				return unifiedPred;
-			}
-			final AbsIntPredicate<?> rtr = new AbsIntPredicate<>(unifiedPred, toDisjunctiveState(minimalSubset));
-			assert assertValidPredicate(rtr) : "Created invalid predicate";
-			return rtr;
-		}
-
-		@SuppressWarnings("unchecked")
-		private DisjunctiveAbstractState<STATE> toDisjunctiveState(final Set<IPredicate> preds) {
-			if (preds == null || preds.isEmpty()) {
-				return new DisjunctiveAbstractState<>();
-			}
-			final Set<STATE> allStates = new HashSet<>();
-			for (final IPredicate pred : preds) {
-				final Set<STATE> states = ((AbsIntPredicate<STATE>) pred).getAbstractStates();
-				for (final STATE state : states) {
-					if (state instanceof DisjunctiveAbstractState<?>) {
-						allStates.addAll(((DisjunctiveAbstractState<STATE>) state).getStates());
-					} else {
-						allStates.add(state);
-					}
-				}
-
-			}
-			return DisjunctiveAbstractState.createDisjunction(AbsIntUtil.synchronizeVariables(allStates));
-		}
-
-		private boolean sameVars(final Set<STATE> allStates) {
-			final Set<IProgramVarOrConst> someVars = allStates.iterator().next().getVariables();
-			return allStates.stream().allMatch(a -> a.getVariables().equals(someVars));
-		}
-
-		private boolean assertValidPredicate(final AbsIntPredicate<?> pred) {
-			final Script script = mMgdScript.getScript();
-			final List<Term> terms =
-					pred.getAbstractStates().stream().map(a -> a.getTerm(script)).collect(Collectors.toList());
-			final Term stateTerm = SmtUtils.and(script, terms);
-			final Term checkTerm = script.term("distinct", pred.getFormula(), stateTerm);
-			final LBool result = SmtUtils.checkSatTerm(script, checkTerm);
-			if (result == LBool.UNSAT || result == LBool.UNKNOWN) {
-				return true;
-			}
-			mLogger.fatal("Invalid predicate! Predicate and state conjunction should be equal, but it is not.");
-			mLogger.fatal("Pred: "
-					+ SmtUtils.simplify(mMgdScript, pred.getFormula(), mServices, SimplificationTechnique.SIMPLIFY_DDA)
-							.toStringDirect());
-			mLogger.fatal("States: " + SmtUtils
-					.simplify(mMgdScript, stateTerm, mServices, SimplificationTechnique.SIMPLIFY_DDA).toStringDirect());
-			mLogger.fatal("Conjunctive states: ");
-			for (final IAbstractState<?> state : pred.getAbstractStates()) {
-				mLogger.fatal(state.toLogString());
-				mLogger.fatal(SmtUtils
-						.simplify(mMgdScript, state.getTerm(script), mServices, SimplificationTechnique.SIMPLIFY_DDA)
-						.toStringDirect());
-			}
-			return false;
-		}
-
 	}
 
 }

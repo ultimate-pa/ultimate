@@ -1,0 +1,7 @@
+[L4]                 int a, b;
+[L6]     COND FALSE  !(a > 10)
+[L13]    COND TRUE   a < 5
+[L14]                b = 3
+[L1338]  COND TRUE   b == 3
+[L1344]              __VERIFIER_error()
+         VAL         [a=0, b=3]

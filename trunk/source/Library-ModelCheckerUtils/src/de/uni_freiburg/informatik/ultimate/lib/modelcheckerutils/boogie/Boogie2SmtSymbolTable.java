@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.LocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVar;
@@ -74,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttrans
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.ISmtDeclarable;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -317,8 +319,8 @@ public class Boogie2SmtSymbolTable
 	}
 
 	@Override
-	public ProgramConst getProgramConst(final ApplicationTerm smtConstant) {
-		return (ProgramConst) mIcfgSymbolTable.getProgramConst(smtConstant);
+	public ProgramFunction getProgramFun(final FunctionSymbol smtFunSym) {
+		return (ProgramFunction) mIcfgSymbolTable.getProgramFun(smtFunSym);
 	}
 
 	public Map<String, Expression[]> getAttributes(final String boogieFunctionId) {
@@ -405,6 +407,9 @@ public class Boogie2SmtSymbolTable
 			final DeclarableFunctionSymbol smtFunctionDefinition = DeclarableFunctionSymbol
 					.createFromString(mScript.getScript(), smtID, smtDefinedBody, paramIds, paramSorts, resultSort);
 			smtFunctionDefinition.defineOrDeclare(mScript.getScript());
+			final FunctionSymbol funSymb = mScript.getScript().getFunctionSymbol(smtID);
+			final ProgramFunction progFunc = new ProgramFunction(funSymb);
+			mIcfgSymbolTable.addFun(progFunc);
 		} else {
 			smtID = attributeDefinedIdentifier;
 			if (smtDefinedBody != null) {
@@ -784,4 +789,5 @@ public class Boogie2SmtSymbolTable
 	private static <V, T, K1, K2> Stream<T> getAll(final Map<K1, Map<K2, V>> map, final Function<V, T> fun) {
 		return map.entrySet().stream().flatMap(a -> a.getValue().entrySet().stream()).map(a -> fun.apply(a.getValue()));
 	}
+
 }

@@ -49,6 +49,15 @@ public final class HoareTripleCheckerUtils {
 	private static final boolean REVIEW_SMT_RESULTS_IF_ASSERTIONS_ENABLED = true;
 	private static final boolean REVIEW_SD_RESULTS_IF_ASSERTIONS_ENABLED = true;
 
+	/**
+	 * Let Hoare triple checker immediately say `unknown` if one of the predicates is quantified.
+	 */
+	private static final boolean UNKNOWN_FOR_ALL_QUANTIFIED_PREDICATES = false;
+	/**
+	 * Let Hoare triple checker immediately say `unknown` if the action is quantified.
+	 */
+	private static final boolean UNKNOWN_FOR_ALL_QUANTIFIED_TRANSFORMULAS = false;
+
 	private HoareTripleCheckerUtils() {
 		// do not instantiate utility class
 	}
@@ -99,11 +108,19 @@ public final class HoareTripleCheckerUtils {
 		ChainingHoareTripleChecker chain = ChainingHoareTripleChecker.with(logger, solverHtc);
 		// protect against quantified transition formulas and intricate predicates
 		final SubtermPropertyChecker quantifierFinder = new SubtermPropertyChecker(QuantifiedFormula.class::isInstance);
-		final Predicate<IPredicate> noIntricateNoQuantifier =
-				p -> unifier.isIntricatePredicate(p) || quantifierFinder.isSatisfiedBySomeSubterm(p.getFormula());
-		final Predicate<IAction> noQuantifier =
-				a -> quantifierFinder.isSatisfiedBySomeSubterm(a.getTransformula().getFormula());
-		chain = chain.predicatesProtectedBy(noIntricateNoQuantifier).actionsProtectedBy(noQuantifier);
+		final Predicate<IPredicate> quantifierProtectionForPredicates;
+		if (UNKNOWN_FOR_ALL_QUANTIFIED_PREDICATES) {
+			quantifierProtectionForPredicates = (p -> unifier.isIntricatePredicate(p)
+					|| quantifierFinder.isSatisfiedBySomeSubterm(p.getFormula()));
+		} else {
+			quantifierProtectionForPredicates = (p -> unifier.isIntricatePredicate(p));
+		}
+		chain = chain.predicatesProtectedBy(quantifierProtectionForPredicates);
+		if (UNKNOWN_FOR_ALL_QUANTIFIED_TRANSFORMULAS) {
+			final Predicate<IAction> noQuantifier =
+					a -> quantifierFinder.isSatisfiedBySomeSubterm(a.getTransformula().getFormula());
+			chain = chain.actionsProtectedBy(noQuantifier);
+		}
 		if (REVIEW_SMT_RESULTS_IF_ASSERTIONS_ENABLED) {
 			chain = chain.reviewWith(new MonolithicHoareTripleChecker(csToolkit));
 		}
@@ -114,9 +131,19 @@ public final class HoareTripleCheckerUtils {
 			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
 			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier) {
 		// TODO: Cache support in ChainingHtc
-		return new CachingHoareTripleCheckerMap(services,
+		return new CachingHoareTripleChecker(services,
 				constructEfficientHoareTripleChecker(services, hoareTripleChecks, csToolkit, predicateUnifier),
 				predicateUnifier);
+	}
+
+	public static IHoareTripleChecker constructEfficientHoareTripleCheckerWithCaching(
+			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
+			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier,
+			final HoareTripleCheckerCache initialCache) {
+		// TODO: Cache support in ChainingHtc
+		return new CachingHoareTripleChecker(services,
+				constructEfficientHoareTripleChecker(services, hoareTripleChecks, csToolkit, predicateUnifier),
+				predicateUnifier, initialCache);
 	}
 
 	/**

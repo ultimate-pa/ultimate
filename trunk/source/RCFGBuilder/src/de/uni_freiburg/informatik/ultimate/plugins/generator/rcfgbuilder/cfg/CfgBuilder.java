@@ -204,8 +204,9 @@ public class CfgBuilder {
 
 		final CodeBlockSize userDefineCodeBlockSize =
 				prefs.getEnum(RcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE, CodeBlockSize.class);
-		if (userDefineCodeBlockSize != CodeBlockSize.SingleStatement && fgInfo.hasSomeForkEdge()) {
-			mCodeBlockSize = CodeBlockSize.SingleStatement;
+		if ((userDefineCodeBlockSize == CodeBlockSize.LoopFreeBlock
+				|| userDefineCodeBlockSize == CodeBlockSize.SequenceOfStatements) && fgInfo.hasSomeForkEdge()) {
+			mCodeBlockSize = CodeBlockSize.OneNontrivialStatement;
 			mLogger.warn("User set CodeBlockSize to " + userDefineCodeBlockSize
 					+ " but program contains fork statements. Overwriting the user preferences and setting CodeBlockSize to "
 					+ mCodeBlockSize);
@@ -279,6 +280,7 @@ public class CfgBuilder {
 			new LargeBlockEncoding(InternalLbeMode.ALL);
 			break;
 		case SequenceOfStatements: // handled in ProcedureCfgBuilder
+		case OneNontrivialStatement:
 		case SingleStatement:
 			new LargeBlockEncoding(InternalLbeMode.ONLY_ATOMIC_BLOCK);
 			break;
@@ -494,7 +496,7 @@ public class CfgBuilder {
 	/**
 	 * Check it this statement is a plain <code>assume true</code> statement, i.e. whether
 	 * * it has an empty list of attributes or no attributes at all, and
-	 * * it is not annotated with an LTLStepAnnotation. 
+	 * * it is not annotated with an LTLStepAnnotation.
 	 */
 	private static boolean isPlainAssumeTrueStatement(final Statement st) {
 		if (st instanceof AssumeStatement) {
@@ -979,9 +981,14 @@ public class CfgBuilder {
 					ModelUtils.copyAnnotations(gotoEdge, out, LoopExitAnnotation.class);
 				}
 
-				mLogger.debug(mother + " has no sucessors any more or " + child + "has no predecessors any more.");
-				mLogger.debug(child + " gets absorbed by " + mother);
-				mergeLocNodes(child, mother);
+				final boolean childIsLoopEntry = (LoopEntryAnnotation.getAnnotation(mother) != null);
+				if (childIsLoopEntry) {
+					mergeLocNodes(mother, child, false);
+					mLogger.debug(mother + " gets absorbed by " + child);
+				} else {
+					mergeLocNodes(child, mother, true);
+					mLogger.debug(child + " gets absorbed by " + mother);
+				}
 				return true;
 			}
 			if (allowMultiplicationOfEdges) {
@@ -1144,30 +1151,33 @@ public class CfgBuilder {
 				throw new AssertionError("Label " + labelName + " occurred twice");
 			}
 			final StringDebugIdentifier tmpLabelIdentifier = new StringDebugIdentifier(labelName);
+			mLastLabelName = tmpLabelIdentifier;
+			// mlocSuffix = 0;
+
+			// Is there already a LocNode that represents this label?
+			// (This can be the case if this label was destination of a goto statement.)
+			// If not construct the LocNode.
+			// If yes, add the Location Object to the existing LocNode.
+			final BoogieIcfgLocation locNode = getLocNodeForLabel(tmpLabelIdentifier, st);
 			if (mCurrent instanceof BoogieIcfgLocation) {
-				// from now on this label is represented by mCurrent
-
-				final BoogieIcfgLocation oldNodeForLabel = mLabel2LocNodes.get(tmpLabelIdentifier);
-				if (oldNodeForLabel != null) {
-					mergeLocNodes(oldNodeForLabel, (BoogieIcfgLocation) mCurrent);
-				}
-				mLabel2LocNodes.put(tmpLabelIdentifier, (BoogieIcfgLocation) mCurrent);
+				// We replace mCurrent by the new node
+				// In this case we do not copy the node's annotations.
+				// TODO Matthias 20221124: This is a workaround for the problem that we cannot
+				// output the correct loop invariant for two successive loops. The
+				// UnstructureCode of the BoogiePreprocessor will add a label at the end of the
+				// preceding loop and at the beginning the successive loop. If we merge the
+				// annotations, the loop entry of the successive loops will have the line
+				// numbers of both loops.
+				final boolean mergeAllAnnotations = (LoopExitAnnotation.getAnnotation(mCurrent) == null
+						|| LoopEntryAnnotation.getAnnotation(st) == null);
+				mergeLocNodes((BoogieIcfgLocation) mCurrent, locNode, mergeAllAnnotations);
 			} else {
-				mLastLabelName = tmpLabelIdentifier;
-				// mlocSuffix = 0;
-
-				// Is there already a LocNode that represents this label?
-				// (This can be the case if this label was destination of a goto statement.)
-				// If not construct the LocNode.
-				// If yes, add the Location Object to the existing LocNode.
-				final BoogieIcfgLocation locNode = getLocNodeForLabel(tmpLabelIdentifier, st);
-
 				if (mCurrent instanceof CodeBlock) {
 					((IcfgEdge) mCurrent).setTarget(locNode);
 					locNode.addIncoming((CodeBlock) mCurrent);
 				}
-				mCurrent = locNode;
 			}
+			mCurrent = locNode;
 
 			// Mark the current location as loop location if necessary.
 			final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(st);
@@ -1181,12 +1191,25 @@ public class CfgBuilder {
 			if (mCurrent instanceof BoogieIcfgLocation) {
 				startNewStatementSequenceAndAddStatement(st, origin);
 			} else if (mCurrent instanceof CodeBlock) {
-				if (mCodeBlockSize == CodeBlockSize.SequenceOfStatements
-						|| mCodeBlockSize == CodeBlockSize.LoopFreeBlock) {
+				switch (mCodeBlockSize) {
+				case LoopFreeBlock:
+				case SequenceOfStatements:
 					addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
-				} else {
+					break;
+				case OneNontrivialStatement:
+					if (((StatementSequence) mCurrent).isTrivial() || StatementSequence.isAssumeTrueStatement(st)) {
+						addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
+					} else {
+						endCurrentStatementSequence(st);
+						startNewStatementSequenceAndAddStatement(st, origin);
+					}
+					break;
+				case SingleStatement:
 					endCurrentStatementSequence(st);
 					startNewStatementSequenceAndAddStatement(st, origin);
+					break;
+				default:
+					throw new AssertionError("Unknown value: " + mCodeBlockSize);
 				}
 			} else {
 				// mcurrent must either be LocNode or TransEdge
@@ -1428,7 +1451,7 @@ public class CfgBuilder {
 					mLogger.debug("Constructed TransEdge " + transEdge + "as predecessr of " + mIcfg.mFinalNode);
 				}
 			} else if (mCurrent instanceof BoogieIcfgLocation) {
-				mergeLocNodes((BoogieIcfgLocation) mCurrent, finalNode);
+				mergeLocNodes((BoogieIcfgLocation) mCurrent, finalNode, true);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Replacing " + mCurrent + " by " + finalNode);
 				}
@@ -1544,17 +1567,21 @@ public class CfgBuilder {
 		}
 
 		/**
-		 * Merge one LocNode into another. The oldLocNode will be merged into the newLocNode. The newLocNode gets
-		 * connected to all incoming/outgoing transitions of the oldLocNode. The oldLocNode looses connections to all
-		 * incoming/outgoing transitions. If the oldLocNode was representative for a Label the new location will from
-		 * now on be the representative of this Label.
+		 * Merge one LocNode into another. The oldLocNode will be merged into the
+		 * newLocNode. The newLocNode gets connected to all incoming/outgoing
+		 * transitions of the oldLocNode. The oldLocNode looses connections to all
+		 * incoming/outgoing transitions. If the oldLocNode was representative for a
+		 * Label the new location will from now on be the representative of this Label.
 		 *
-		 * @param oldLocNode
-		 *            LocNode that gets merged into the newLocNode. Must not represent an error location.
-		 * @param newLocNode
-		 *            LocNode that absorbes the oldLocNode.
+		 * @param oldLocNode         LocNode that gets merged into the newLocNode. Must
+		 *                           not represent an error location.
+		 * @param newLocNode         LocNode that absorbes the oldLocNode.
+		 * @param copyAllAnnotations If `true` then we copy all annotations from the old
+		 *                           node to the new node, if `false` we copy all
+		 *                           annotations by the {@link ILocation}.
 		 */
-		private void mergeLocNodes(final BoogieIcfgLocation oldLocNode, final BoogieIcfgLocation newLocNode) {
+		private void mergeLocNodes(final BoogieIcfgLocation oldLocNode, final BoogieIcfgLocation newLocNode,
+				final boolean copyAllAnnotations) {
 			// oldLocNode must not represent an error location
 			assert !oldLocNode.isErrorLocation();
 			if (oldLocNode == newLocNode) {
@@ -1589,7 +1616,11 @@ public class CfgBuilder {
 				// if the old location was a loop location, the new one is also
 				mIcfg.getLoopLocations().add(newLocNode);
 			}
-			ModelUtils.copyAnnotations(oldLocNode, newLocNode);
+			if (copyAllAnnotations) {
+				ModelUtils.copyAnnotations(oldLocNode, newLocNode);
+			} else {
+				ModelUtils.copyAnnotationsExcept(oldLocNode, newLocNode, ILocation.class);
+			}
 		}
 	}
 

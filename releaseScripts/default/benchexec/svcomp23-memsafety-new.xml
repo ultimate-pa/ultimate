@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="90s" hardtimelimit="90s" cpuCores="2">
+    
+	<option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+    <rundefinition name="Automizer">
+        <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Default.epf</option>
+    </rundefinition>
+
+  <tasks name="MemSafety">
+    <includesfile>../sv-benchmarks/c/Memsafety-New.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+  </tasks>
+  
+  <resultfiles></resultfiles>
+</benchmark>

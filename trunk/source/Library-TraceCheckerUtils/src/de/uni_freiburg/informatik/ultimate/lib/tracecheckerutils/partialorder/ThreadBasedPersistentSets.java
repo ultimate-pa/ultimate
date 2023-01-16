@@ -40,6 +40,7 @@ import java.util.function.Predicate;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
@@ -363,8 +364,8 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 		final String persistentThread = persistentLoc.getProcedure();
 		return canReachConflict(persistentLoc, sourceLoc,
 				// TODO (optimization) filter persistentLoc.getOutgoingEdges(): only enabled; or: no join / no fork ?
-				e -> persistentLoc.getOutgoingEdges().stream()
-						.anyMatch(persAction -> !mIndependence.contains(null, e, persAction)),
+				e -> persistentLoc.getOutgoingEdges().stream().anyMatch(
+						persAction -> mIndependence.isIndependent(null, e, persAction) != Dependence.INDEPENDENT),
 				e -> !ExtendedConcurrencyInformation.isThreadLocal(e) || mInfo.mustBeJoinOf(persistentThread, e),
 				mCommutativityConflicts);
 	}

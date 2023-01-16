@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -102,7 +104,7 @@ public class QuantifierPushUtilsForSubsetPush {
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
 			final IQuantifierEliminator qe) {
 		List<Term> currentDualFiniteJuncts = Arrays
-				.asList(QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm()));
+				.asList(QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), et.getTerm()));
 		// TODO Reduce the following checks
 		if (currentDualFiniteJuncts.size() <= 1) {
 			throw new AssertionError("No dual finite junction");
@@ -125,9 +127,11 @@ public class QuantifierPushUtilsForSubsetPush {
 		int iterations = 0;
 		int iterationsWithProgress = 0;
 		while (!currentSuitableEliminatees.isEmpty()) {
-			if (iterations > 20) {
-				// TODO change to logging output
-				throw new AssertionError("Maybe an infinite loop");
+			if (iterations > 20 + et.getEliminatees().size()) {
+				final ILogger logger = services.getLoggingService().getLogger(QuantifierPushUtilsForSubsetPush.class);
+				logger.info(String.format(
+						"Initially %s eliminatees, after %s iterations we have %s eliminatees. Is this in finite loop?",
+						et.getEliminatees().size(), iterations, currentEliminatees.size()));
 			}
 			final TermVariable eliminatee = XnfScout.selectBestEliminatee(mgdScript.getScript(),
 					et.getQuantifier(), currentSuitableEliminatees, currentDualFiniteJuncts);
@@ -209,7 +213,7 @@ public class QuantifierPushUtilsForSubsetPush {
 				currentEliminatees = new ArrayList<>(Arrays.asList(qf.getVariables()));
 				failedEliminatees.retainAll(currentEliminatees);
 				currentDualFiniteJuncts = Arrays
-						.asList(QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), qf.getSubformula()));
+						.asList(QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), qf.getSubformula()));
 			}
 
 			currentSuitableEliminatees = findSuitableEliminatees(currentEliminatees, failedEliminatees,

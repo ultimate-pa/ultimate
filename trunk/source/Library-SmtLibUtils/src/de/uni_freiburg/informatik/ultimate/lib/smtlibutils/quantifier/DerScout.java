@@ -98,7 +98,7 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 		final BigInteger withoutVar;
 		if (Arrays.asList(term.getFreeVars()).contains(mEliminatee)) {
 			withoutVar = BigInteger.ZERO;
-			final PolynomialRelation polyRel = PolynomialRelation.convert(mScript, term);
+			final PolynomialRelation polyRel = PolynomialRelation.of(mScript, term);
 			if (polyRel == null) {
 				withoutDer = BigInteger.ONE;
 			} else {

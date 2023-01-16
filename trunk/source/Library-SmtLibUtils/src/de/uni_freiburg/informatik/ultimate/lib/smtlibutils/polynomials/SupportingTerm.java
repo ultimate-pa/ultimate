@@ -74,7 +74,7 @@ public class SupportingTerm implements ITermProvider {
 	}
 
 	@Override
-	public Term asTerm() {
+	public Term getTerm() {
 		return mTerm;
 	}
 

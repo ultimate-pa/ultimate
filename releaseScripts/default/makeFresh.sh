@@ -8,32 +8,32 @@ if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 
 
 ## start the actual script
-pushd ../../trunk/source/BA_MavenParentUltimate/ > /dev/null
-test mvn -T 1C clean install -Pmaterialize
-popd > /dev/null
+spushd ../../trunk/source/BA_MavenParentUltimate/ 
+exit_on_fail mvn -T 1C clean install -Pmaterialize
+spopd 
 
 for platform in {linux,win32}; do
     # makeZip <toolname> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc> <ltlc> <termwitnessvaltc>
     # Taipan
-    exitOnFail bash makeZip.sh Taipan $platform AutomizerCInline_WitnessPrinter.xml NONE AutomizerCInline.xml AutomizerCInline_WitnessPrinter.xml NONE NONE
+    exit_on_fail bash makeZip.sh Taipan $platform AutomizerCInline_WitnessPrinter.xml NONE AutomizerCInline.xml AutomizerCInline_WitnessPrinter.xml NONE NONE
 
     # Automizer without separate blockencoding plugin
-    exitOnFail bash makeZip.sh Automizer $platform AutomizerCInline_WitnessPrinter.xml BuchiAutomizerCInline_WitnessPrinter.xml AutomizerCInline.xml AutomizerCInline_WitnessPrinter.xml LTLAutomizerC.xml BuchiAutomizerCInline.xml
+    exit_on_fail bash makeZip.sh Automizer $platform AutomizerCInline_WitnessPrinter.xml BuchiAutomizerCInline_WitnessPrinter.xml AutomizerCInline.xml AutomizerCInline_WitnessPrinter.xml LTLAutomizerC.xml BuchiAutomizerCInline.xml
 
     # Automizer with separate blockencoding plugin
-    #exitOnFail bash makeZip.sh Automizer linux AutomizerC_BE_WitnessPrinter.xml BuchiAutomizerCInline_BE_WitnessPrinter.xml AutomizerC.xml AutomizerC_BE_WitnessPrinter.xml LTLAutomizerC.xml BuchiAutomizerCInline.xml
+    #exit_on_fail bash makeZip.sh Automizer linux AutomizerC_BE_WitnessPrinter.xml BuchiAutomizerCInline_BE_WitnessPrinter.xml AutomizerC.xml AutomizerC_BE_WitnessPrinter.xml LTLAutomizerC.xml BuchiAutomizerCInline.xml
 
     # Kojak
-    exitOnFail bash makeZip.sh Kojak $platform KojakC_WitnessPrinter.xml NONE NONE KojakC_WitnessPrinter.xml NONE NONE
+    exit_on_fail bash makeZip.sh Kojak $platform KojakC_WitnessPrinter.xml NONE NONE KojakC_WitnessPrinter.xml NONE NONE
 
     # GemCutter
-    exitOnFail bash makeZip.sh GemCutter $platform AutomizerCInline_WitnessPrinter.xml NONE NONE NONE NONE NONE
+    exit_on_fail bash makeZip.sh GemCutter $platform AutomizerCInline_WitnessPrinter.xml NONE NONE AutomizerCInline_WitnessPrinter.xml NONE NONE
 
     # DeltaDebugger
-    exitOnFail bash createDeltaDebuggerDir.sh $platform
+    exit_on_fail bash createDeltaDebuggerDir.sh $platform
 
     # ReqCheck
-    exitOnFail bash createReqCheckZip.sh ReqCheck $platform ReqCheck.xml ReqCheck.xml
+    exit_on_fail bash createReqCheckZip.sh ReqCheck $platform ReqCheck.xml ReqCheck.xml
 done
 
 exit 0

@@ -27,12 +27,18 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.CachedBudget;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.ISleepMapStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
 
@@ -67,6 +73,21 @@ public final class PersistentSetReduction {
 		DepthFirstTraversal.traverse(services,
 				new MinimalSleepSetReduction<>(operand, factory, independenceRelation, combinedOrder), combinedOrder,
 				combinedVisitor);
+	}
+
+	public static <L, S, R> void applySleepMapReduction(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
+			final List<IIndependenceRelation<S, L>> independenceRelations, final IDfsOrder<L, R> dfsOrder,
+			final ISleepMapStateFactory<L, S, R> factory,
+			final Function<SleepMapReduction<L, S, R>, IBudgetFunction<L, R>> getBudget,
+			final IPersistentSetChoice<L, R> persistent, final IDfsVisitor<L, R> visitor)
+			throws AutomataOperationCanceledException {
+		final IDfsOrder<L, R> combinedOrder = new CompatibleDfsOrder<>(persistent, dfsOrder);
+		final IDfsVisitor<L, R> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
+
+		final var red = new SleepMapReduction<>(operand, independenceRelations, combinedOrder, factory,
+				getBudget.andThen(CachedBudget::new));
+		DepthFirstTraversal.traverse(services, red, combinedOrder, combinedVisitor);
 	}
 
 	public static <L, S> void applyDelaySetReduction(final AutomataLibraryServices services,

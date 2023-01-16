@@ -185,7 +185,7 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		}
 		final ExplicitLhsPolynomialRelation result =
 				new ExplicitLhsPolynomialRelation(resultRelationSymbol, newLhsCoefficient, mLhsMonomial, newRhs);
-		assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(asTerm(script), result.asTerm(script),
+		assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(toTerm(script), result.toTerm(script),
 				script) != LBool.SAT : "mul unsound";
 		return result;
 	}
@@ -695,7 +695,7 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		} else if (SmtSortUtils.isBitvecSort(mRhs.getSort())) {
 			if (!mLhsCoefficient.equals(Rational.ONE)
 					&& !SmtUtils.isBvMinusOneButNotOne(mLhsCoefficient, mRhs.getSort())) {
-				throw new AssertionError("Expect that bitvector relations can only habe coefficient 1 and -1.");
+				throw new AssertionError("Expect that bitvector relations can only have coefficient 1 and -1.");
 			}
 			divisor = mLhsCoefficient;
 		} else if (SmtSortUtils.isIntSort(mRhs.getSort())) {
@@ -728,7 +728,7 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 	}
 
 	@Override
-	public Term asTerm(final Script script) {
+	public Term toTerm(final Script script) {
 		final Term lhs = SmtUtils.mul(script, mLhsCoefficient, mLhsMonomial.toTerm(script));
 		return mRelationSymbol.constructTerm(script, lhs, mRhs.toTerm(script));
 	}

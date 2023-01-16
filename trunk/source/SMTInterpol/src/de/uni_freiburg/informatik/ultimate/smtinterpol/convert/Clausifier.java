@@ -595,7 +595,7 @@ public class Clausifier {
 		 */
 		public void collectLiteral(Term term) {
 			while (isNotTerm(term) && isNotTerm(((ApplicationTerm) term).getParameters()[0])) {
-				Term negated = ((ApplicationTerm) term).getParameters()[0];
+				final Term negated = ((ApplicationTerm) term).getParameters()[0];
 				term = ((ApplicationTerm) negated).getParameters()[0];
 			}
 			if (mCurrentLits.add(term)) {
@@ -822,14 +822,26 @@ public class Clausifier {
 					final ApplicationTerm at = (ApplicationTerm) mTerm;
 					if (at.getFunction().getName().equals("ite")
 							&& (at.mTmpCtr <= Config.OCC_INLINE_TERMITE_THRESHOLD || mConds.size() == 0)) {
-						final Term c = at.getParameters()[0];
 						final Term t = at.getParameters()[1];
 						final Term e = at.getParameters()[2];
-						LinkedHashSet<Term> other = new LinkedHashSet<>(mConds);
-						mConds.add(c.getTheory().term(SMTLIBConstants.NOT, c));
-						other.add(c);
-						pushOperation(new CollectConditions(mConds, t));
-						pushOperation(new CollectConditions(other, e));
+						Term c = at.getParameters()[0];
+						boolean isNegated = false;
+						while (isNotTerm(c)) {
+							c = ((ApplicationTerm) c).getParameters()[0];
+							isNegated = !isNegated;
+						}
+						final Term notC = c.getTheory().term(SMTLIBConstants.NOT, c);
+						if (mConds.contains(c)) {
+							pushOperation(new CollectConditions(mConds, isNegated ? t : e));
+						} else if (mConds.contains(notC)) {
+							pushOperation(new CollectConditions(mConds, isNegated ? e : t));
+						} else {
+							final LinkedHashSet<Term> other = new LinkedHashSet<>(mConds);
+							mConds.add(isNegated ? c : notC);
+							other.add(isNegated ? notC : c);
+							pushOperation(new CollectConditions(mConds, t));
+							pushOperation(new CollectConditions(other, e));
+						}
 						return;
 					}
 				}

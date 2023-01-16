@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
@@ -61,8 +62,21 @@ public class LooperIndependenceRelation<L extends IAction, S> implements IIndepe
 	}
 
 	@Override
-	public boolean contains(final S state, final L a, final L b) {
-		return mLooperCheck.isUniversalLooper(a, mPredicates) || mLooperCheck.isUniversalLooper(b, mPredicates);
+	public Dependence isIndependent(final S state, final L a, final L b) {
+		final LBool aLooper = mLooperCheck.isUniversalLooper(a, mPredicates);
+		if (aLooper == LBool.UNSAT) {
+			return Dependence.INDEPENDENT;
+		}
+
+		final LBool bLooper = mLooperCheck.isUniversalLooper(b, mPredicates);
+		if (bLooper == LBool.UNSAT) {
+			return Dependence.INDEPENDENT;
+		}
+
+		if (aLooper == LBool.UNKNOWN || bLooper == LBool.UNKNOWN) {
+			return Dependence.UNKNOWN;
+		}
+		return Dependence.DEPENDENT;
 	}
 
 	public ILattice<Set<IPredicate>> getHierarchy() {

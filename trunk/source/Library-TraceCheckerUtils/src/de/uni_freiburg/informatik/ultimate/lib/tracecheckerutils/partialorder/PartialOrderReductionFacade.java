@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.MinimalSleepSetReduction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.MultiPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
@@ -92,6 +93,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	// Turn on to prune sleep set states where same program state with smaller sleep set already explored.
 	public static final boolean ENABLE_COVERING_OPTIMIZATION = false;
 
+	// Enables the combination of persistent sets up to multiple independence relations.
+	public static final boolean ENABLE_MULTI_PERSISTENT_SETS = true;
+
 	public enum OrderType {
 		BY_SERIAL_NUMBER, PSEUDO_LOCKSTEP, RANDOM, POSITIONAL_RANDOM, LOOP_LOCKSTEP
 	}
@@ -130,7 +134,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		if (independenceRelations.isEmpty() && mMode != PartialOrderMode.NONE) {
 			throw new IllegalArgumentException("Need at least one independence relation");
 		}
-		if (independenceRelations.size() > 1 && mMode != PartialOrderMode.SLEEP_NEW_STATES) {
+		if (independenceRelations.size() > 1 && mMode != PartialOrderMode.SLEEP_NEW_STATES
+				&& mMode != PartialOrderMode.PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER) {
 			throw new IllegalArgumentException("This mode does not support multiple independence relations");
 		}
 		mIndependenceRelations = new ArrayList<>(independenceRelations);
@@ -167,6 +172,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		}
 
 		mIndependenceRelations.set(index, independence);
+		// TODO reuse cached persistent sets of non-replaced relations between iterations!
 		mPersistent = createPersistentSets(mIcfg, mErrorLocs);
 	}
 
@@ -243,9 +249,21 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			return null;
 		}
 
-		// TODO Persistent sets currently only supported for single independence relation
+		// Preliminary support for multiple independence relations
+		if (ENABLE_MULTI_PERSISTENT_SETS && mIndependenceRelations.size() > 1) {
+			final var persistent = mIndependenceRelations.stream()
+					.map(indep -> createPersistentSets(icfg, errorLocs, indep)).collect(Collectors.toList());
+			return new MultiPersistentSetChoice<>(persistent, mSleepMapFactory);
+		}
+
 		final IIndependenceRelation<IPredicate, L> independence =
 				IndependenceBuilder.fromIndependence(mIndependenceRelations.get(0)).ensureUnconditional().build();
+		return createPersistentSets(icfg, errorLocs, independence);
+	}
+
+	private IPersistentSetChoice<L, IPredicate> createPersistentSets(final IIcfg<?> icfg,
+			final Collection<? extends IcfgLocation> errorLocs,
+			final IIndependenceRelation<IPredicate, L> independence) {
 		final IDfsOrder<IcfgEdge, IPredicate> relevantOrder =
 				mMode.hasFixedOrder() ? (IDfsOrder<IcfgEdge, IPredicate>) mDfsOrder : null;
 
@@ -289,6 +307,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		if (mSleepFactory instanceof SleepSetStateFactoryForRefinement<?>) {
 			((SleepSetStateFactoryForRefinement<?>) mSleepFactory).reset();
 		}
+		if (mSleepMapFactory instanceof SleepMapStateFactory<?>) {
+			((SleepMapStateFactory<?>) mSleepMapFactory).reset();
+		}
 
 		final IIndependenceRelation<IPredicate, L> independence =
 				mIndependenceRelations.isEmpty() ? null : mIndependenceRelations.get(0);
@@ -317,8 +338,13 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			break;
 		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
 		case PERSISTENT_SLEEP_NEW_STATES:
-			PersistentSetReduction.applyNewStateReduction(mAutomataServices, input, independence, mDfsOrder,
-					mSleepFactory, mPersistent, visitor);
+			if (mIndependenceRelations.size() == 1) {
+				PersistentSetReduction.applyNewStateReduction(mAutomataServices, input, independence, mDfsOrder,
+						mSleepFactory, mPersistent, visitor);
+			} else {
+				PersistentSetReduction.applySleepMapReduction(mAutomataServices, input, mIndependenceRelations,
+						mDfsOrder, mSleepMapFactory, mGetBudget.andThen(CachedBudget::new), mPersistent, visitor);
+			}
 			break;
 		case NONE:
 			DepthFirstTraversal.traverse(mAutomataServices, input, mDfsOrder, visitor);

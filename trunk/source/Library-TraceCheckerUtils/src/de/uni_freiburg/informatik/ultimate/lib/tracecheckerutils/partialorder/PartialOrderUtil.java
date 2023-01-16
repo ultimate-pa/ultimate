@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accept
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -92,7 +93,7 @@ public final class PartialOrderUtil {
 				}
 				boolean isNext = true;
 				for (int i = 0; i < index; ++i) {
-					if (!independence.contains(null, suff.get(i), x)) {
+					if (independence.isIndependent(null, suff.get(i), x) != Dependence.INDEPENDENT) {
 						isNext = false;
 						break;
 					}

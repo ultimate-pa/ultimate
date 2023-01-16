@@ -112,6 +112,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -711,41 +712,86 @@ public class CACSL2BoogieBacktranslator
 			final List<Pair<Expression, Collection<Expression>>> newEntries) {
 		for (int i = oldEntries.size() - 1; i >= 0; i--) {
 			final Pair<Expression, Collection<Expression>> entry = oldEntries.get(i);
-			final String str = BoogiePrettyPrinter.print(entry.getFirst());
-			if (entry.getFirst() instanceof IdentifierExpression && str.endsWith(SFO.POINTER_BASE)) {
-				final String name = str.substring(0, str.length() - SFO.POINTER_BASE.length());
+
+			boolean isPointerBase = false;
+			boolean isOld = false;
+			if (isPointerBase(entry.getFirst())) {
+				isPointerBase = true;
+				isOld = false;
+			} else if (isOldPointerBase(entry.getFirst())) {
+				isPointerBase = true;
+				isOld = true;
+			}
+			if (isPointerBase) {
+				final String name = getPointerName(entry.getFirst(), isOld);
 				for (int j = oldEntries.size() - 1; j >= 0; j--) {
 					final Pair<Expression, Collection<Expression>> otherentry = oldEntries.get(j);
-					final String other = BoogiePrettyPrinter.print(otherentry.getFirst());
-					if (otherentry.getFirst() instanceof IdentifierExpression && other.endsWith(SFO.POINTER_OFFSET)
-							&& other.startsWith(name)) {
-						final TemporaryPointerExpression tmpPointerVar =
-								new TemporaryPointerExpression(entry.getFirst().getLocation());
-						tmpPointerVar.setBase(entry.getFirst());
-						tmpPointerVar.setOffset(otherentry.getFirst());
-						if (entry.getSecond().size() != 1 || otherentry.getSecond().size() != 1) {
-							reportUnfinishedBacktranslation(
-									UNFINISHED_BACKTRANSLATION + " Pointers with multiple values");
-						}
-						final TemporaryPointerExpression tmpPointerValue =
-								new TemporaryPointerExpression(entry.getFirst().getLocation());
-						for (final Expression baseValue : entry.getSecond()) {
-							tmpPointerValue.setBase(baseValue);
-						}
-						for (final Expression offsetValue : otherentry.getSecond()) {
-							tmpPointerValue.setOffset(offsetValue);
-						}
-						final Pair<Expression, Collection<Expression>> newEntry =
-								new Pair<>(tmpPointerVar, new ArrayList<>());
-						newEntry.getSecond().add(tmpPointerValue);
-						newEntries.add(newEntry);
-						oldEntries.remove(entry);
-						oldEntries.remove(otherentry);
-						return;
+					if (!isPointerOffsetFor(otherentry.getFirst(), name, isOld)) {
+						continue;
 					}
+					final Expression tmpPointerVar = assemblePointer(entry.getFirst(), otherentry.getFirst(), isOld);
+
+					if (entry.getSecond().size() != 1 || otherentry.getSecond().size() != 1) {
+						reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " Pointers with multiple values");
+					}
+					final var valueBase = DataStructureUtils.getOneAndOnly(entry.getSecond(), "pointer base");
+					final var valueOffset = DataStructureUtils.getOneAndOnly(otherentry.getSecond(), "pointer offset");
+					final TemporaryPointerExpression tmpPointerValue =
+							new TemporaryPointerExpression(entry.getFirst().getLocation(), valueBase, valueOffset);
+
+					final Pair<Expression, Collection<Expression>> newEntry =
+							new Pair<>(tmpPointerVar, new ArrayList<>());
+					newEntry.getSecond().add(tmpPointerValue);
+					newEntries.add(newEntry);
+					oldEntries.remove(entry);
+					oldEntries.remove(otherentry);
+					return;
 				}
 			}
 		}
+	}
+
+	private static boolean isPointerBase(final Expression expr) {
+		if (expr instanceof IdentifierExpression) {
+			return ((IdentifierExpression) expr).getIdentifier().endsWith(SFO.POINTER_BASE);
+		}
+		return false;
+	}
+
+	private static boolean isOldPointerBase(final Expression expr) {
+		if (expr instanceof UnaryExpression) {
+			return ((UnaryExpression) expr).getOperator() == Operator.OLD
+					&& isPointerBase(((UnaryExpression) expr).getExpr());
+		}
+		return false;
+	}
+
+	private static boolean isPointerOffsetFor(final Expression expr, final String name, final boolean isOld) {
+		if (isOld && expr instanceof UnaryExpression) {
+			final var uexp = (UnaryExpression) expr;
+			return uexp.getOperator() == Operator.OLD && isPointerOffsetFor(uexp.getExpr(), name, false);
+		}
+		if (!isOld && expr instanceof IdentifierExpression) {
+			final var identifier = ((IdentifierExpression) expr).getIdentifier();
+			return identifier.startsWith(name) && identifier.endsWith(SFO.POINTER_OFFSET);
+		}
+		return false;
+	}
+
+	private static String getPointerName(final Expression base, final boolean isOld) {
+		if (isOld) {
+			return getPointerName(((UnaryExpression) base).getExpr(), false);
+		}
+		final String baseName = ((IdentifierExpression) base).getIdentifier();
+		return baseName.substring(0, baseName.length() - SFO.POINTER_BASE.length());
+	}
+
+	private Expression assemblePointer(final Expression base, final Expression offset, final boolean isOld) {
+		if (isOld) {
+			return new UnaryExpression(base.getLoc(), Operator.OLD,
+					assemblePointer(((UnaryExpression) base).getExpr(), ((UnaryExpression) offset).getExpr(), false));
+		}
+		return new TemporaryPointerExpression(base.getLoc(), base, offset);
 	}
 
 	@Override
@@ -851,6 +897,11 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	private CLocation getConditionLoc(final boolean isNegated, final IASTExpression condExpr) {
+		if (condExpr == null) {
+			// We should not call mLocationFactory.createCLocation with null
+			// TODO: Is null good to return here?
+			return null;
+		}
 		return (CLocation) mLocationFactory.createCLocation(condExpr);
 	}
 
@@ -1169,7 +1220,7 @@ public class CACSL2BoogieBacktranslator
 		} else if (cType instanceof CNamed) {
 			return translateIntegerLiteral(cType.getUnderlyingType(), lit, hook);
 		} else {
-			final BigInteger extractedValue = mTypeSizes.extractIntegerValue(lit, cType, hook);
+			final BigInteger extractedValue = mTypeSizes.extractIntegerValue(lit, cType);
 			value = String.valueOf(extractedValue);
 		}
 		checkLiteral(cType, lit, value);
@@ -1192,7 +1243,7 @@ public class CACSL2BoogieBacktranslator
 			// translation, but it seems that AExpression is incomplete
 			final CPrimitive primitive = (CPrimitive) cType.getUnderlyingType();
 			if (primitive.isIntegerType()) {
-				value = String.valueOf(mTypeSizes.extractIntegerValue(lit, cType, hook));
+				value = String.valueOf(mTypeSizes.extractIntegerValue(lit, cType));
 			} else if (primitive.isFloatingType()) {
 				value = naiveBitvecLiteralValueExtraction(lit);
 				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION
@@ -1204,7 +1255,7 @@ public class CACSL2BoogieBacktranslator
 				return null;
 			}
 		} else {
-			final BigInteger extractedValue = mTypeSizes.extractIntegerValue(lit, cType, hook);
+			final BigInteger extractedValue = mTypeSizes.extractIntegerValue(lit, cType);
 			value = String.valueOf(extractedValue);
 		}
 		checkLiteral(cType, lit, value);
@@ -1317,32 +1368,30 @@ public class CACSL2BoogieBacktranslator
 		final TranslatedVariable result;
 		if (boogieId.equals(SFO.RES)) {
 			result = new TranslatedVariable(expr, "\\result", null, VariableType.RESULT);
-		} else if (mMapping.getVar2CVar().containsKey(boogieId)) {
-			final Pair<String, CType> pair = mMapping.getVar2CVar().get(boogieId);
+		} else if (mMapping.hasVar(boogieId, expr.getDeclarationInformation())) {
+			final Pair<String, CType> pair = mMapping.getVar(boogieId, expr.getDeclarationInformation());
 			result = new TranslatedVariable(expr, pair.getFirst(), pair.getSecond(), VariableType.NORMAL);
-		} else if (mMapping.getInVar2CVar().containsKey(boogieId)) {
+		} else if (mMapping.hasInVar(boogieId, expr.getDeclarationInformation())) {
 			// invars can only occur in expressions as part of synthetic expressions, and then they represent oldvars
-			final Pair<String, CType> pair = mMapping.getInVar2CVar().get(boogieId);
+			final Pair<String, CType> pair = mMapping.getInVar(boogieId, expr.getDeclarationInformation());
 			result = new TranslatedVariable(expr, pair.getFirst(), pair.getSecond(), VariableType.INVAR);
 		} else if (mMapping.getTempVar2Obj().containsKey(boogieId)) {
 			final SFO.AUXVAR purpose = mMapping.getTempVar2Obj().get(boogieId);
 			result = new TranslatedVariable(expr, boogieId, null, purpose);
 		} else if (boogieId.equals(SFO.VALID)) {
 			result = new TranslatedVariable(expr, "\\valid", null, VariableType.VALID);
-		} else {
+		} else if (boogieId.endsWith(SFO.POINTER_BASE)) {
 			// if its base or offset, try again with them stripped
-			if (boogieId.endsWith(SFO.POINTER_BASE)) {
-				final TranslatedVariable base = translateBoogieIdentifier(expr,
-						boogieId.substring(0, boogieId.length() - SFO.POINTER_BASE.length() - 1));
-				result = new TranslatedVariable(expr, base.getName(), base.getCType(), VariableType.POINTER_BASE);
-			} else if (boogieId.endsWith(SFO.POINTER_OFFSET)) {
-				final TranslatedVariable offset = translateBoogieIdentifier(expr,
-						boogieId.substring(0, boogieId.length() - SFO.POINTER_OFFSET.length() - 1));
-				result = new TranslatedVariable(expr, offset.getName(), offset.getCType(), VariableType.POINTER_OFFSET);
-			} else {
-				result = new TranslatedVariable(expr, boogieId, null, VariableType.UNKNOWN);
-				reportUnfinishedBacktranslation("unknown boogie variable " + boogieId);
-			}
+			final TranslatedVariable base = translateBoogieIdentifier(expr,
+					boogieId.substring(0, boogieId.length() - SFO.POINTER_BASE.length() - 1));
+			result = new TranslatedVariable(expr, base.getName(), base.getCType(), VariableType.POINTER_BASE);
+		} else if (boogieId.endsWith(SFO.POINTER_OFFSET)) {
+			final TranslatedVariable offset = translateBoogieIdentifier(expr,
+					boogieId.substring(0, boogieId.length() - SFO.POINTER_OFFSET.length() - 1));
+			result = new TranslatedVariable(expr, offset.getName(), offset.getCType(), VariableType.POINTER_OFFSET);
+		} else {
+			result = new TranslatedVariable(expr, boogieId, null, VariableType.UNKNOWN);
+			reportUnfinishedBacktranslation("unknown boogie variable " + boogieId);
 		}
 		return result;
 	}
@@ -1517,11 +1566,13 @@ public class CACSL2BoogieBacktranslator
 	private class TemporaryPointerExpression extends Expression {
 
 		private static final long serialVersionUID = 1L;
-		private Expression mBase;
-		private Expression mOffset;
+		private final Expression mBase;
+		private final Expression mOffset;
 
-		public TemporaryPointerExpression(final ILocation loc) {
+		public TemporaryPointerExpression(final ILocation loc, final Expression base, final Expression offset) {
 			super(loc);
+			mBase = base;
+			mOffset = offset;
 		}
 
 		public IASTExpression translate() {
@@ -1533,14 +1584,6 @@ public class CACSL2BoogieBacktranslator
 			final IASTExpression base = translateExpression(mBase);
 			final IASTExpression offset = translateExpression(mOffset);
 			return new FakeExpression(base, "{" + base.getRawSignature() + ":" + offset.getRawSignature() + "}", null);
-		}
-
-		public void setBase(final Expression expr) {
-			mBase = expr;
-		}
-
-		public void setOffset(final Expression expr) {
-			mOffset = expr;
 		}
 
 		@Override

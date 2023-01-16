@@ -173,7 +173,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	public static Term tryToEliminateConjuncts(final IUltimateServiceProvider services, final Script script,
 			final int quantifier, final Term disjunct, final TermVariable eliminatee,
 			final Set<TermVariable> bannedForDivCapture, final boolean supportAntiDerTerms) {
-		final Term[] inputAtoms = QuantifierUtils.getDualFiniteJunction(quantifier, disjunct);
+		final Term[] inputAtoms = QuantifierUtils.getDualFiniteJuncts(quantifier, disjunct);
 		final List<Term> withEliminatee = Arrays.stream(inputAtoms)
 				.filter(x -> Arrays.asList(x.getFreeVars()).contains(eliminatee)).collect(Collectors.toList());
 		final List<Term> withoutEliminatee = Arrays.stream(inputAtoms)
@@ -328,7 +328,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			}
 		}
 		for (final Term t : withEliminatee) {
-			final PolynomialRelation polyRel = PolynomialRelation.convert(script, t, tfi);
+			final PolynomialRelation polyRel = PolynomialRelation.of(script, t, tfi);
 			final ExplicitLhsPolynomialRelation elpr;
 			if (polyRel == null) {
 				final BinaryNumericRelation bnr = BinaryNumericRelation.convert(t);
@@ -350,6 +350,12 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				}
 				if (!elpr.getLhsMonomial().isLinear()) {
 					return null;
+				}
+				if (SmtSortUtils.isBitvecSort(elpr.getLhsMonomial().getSort())) {
+					if (elpr.getLhsCoefficient() != Rational.ONE && !SmtUtils
+							.isBvMinusOneButNotOne(elpr.getLhsCoefficient(), elpr.getLhsMonomial().getSort())) {
+						return null;
+					}
 				}
 			}
 			switch (elpr.getRelationSymbol()) {
@@ -965,9 +971,9 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				} else {
 					resultRhs = rhs;
 				}
-				result = new PolynomialRelation(TransformInequality.NO_TRANFORMATION, relSymbAndOffset.getFirst(),
+				result = PolynomialRelation.of(TransformInequality.NO_TRANFORMATION, relSymbAndOffset.getFirst(),
 						(AbstractGeneralizedAffineTerm<?>) resultLhs, (AbstractGeneralizedAffineTerm<?>) resultRhs)
-								.positiveNormalForm(script);
+								.toTerm(script);
 			}
 			return result;
 		}

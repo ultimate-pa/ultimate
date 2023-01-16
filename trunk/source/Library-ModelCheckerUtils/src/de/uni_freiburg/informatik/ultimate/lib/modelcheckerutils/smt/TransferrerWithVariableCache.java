@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
@@ -58,13 +59,20 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class TransferrerWithVariableCache {
 	private final ManagedScript mTargetScript;
 	private final TermTransferrer mTransferrer;
+	private final SmtFreePredicateFactory mFactory;
 
-	private final SmtFreePredicateFactory mFactory = new SmtFreePredicateFactory();
 	private final Map<IProgramVarOrConst, IProgramVarOrConst> mCache = new HashMap<>();
+	private final Map<IPredicate, BasicPredicate> mPredicateCache = new HashMap<>();
 
 	public TransferrerWithVariableCache(final Script sourceScript, final ManagedScript targetScript) {
+		this(sourceScript, targetScript, new SmtFreePredicateFactory());
+	}
+
+	public TransferrerWithVariableCache(final Script sourceScript, final ManagedScript targetScript,
+			final SmtFreePredicateFactory factory) {
 		mTargetScript = targetScript;
 		mTransferrer = new TermTransferrer(sourceScript, targetScript.getScript(), new HashMap<>(), false);
+		mFactory = factory;
 	}
 
 	public IProgramVar transferProgramVar(final IProgramVar oldPv) {
@@ -86,11 +94,19 @@ public class TransferrerWithVariableCache {
 	}
 
 	public BasicPredicate transferPredicate(final IPredicate predicate) {
+		return mPredicateCache.computeIfAbsent(predicate, this::transferPredicateHelper);
+	}
+
+	private BasicPredicate transferPredicateHelper(final IPredicate predicate) {
+		if (!predicate.getFuns().isEmpty()) {
+			throw new UnsupportedOperationException("Implement support for transferring functions");
+		}
 		final Set<IProgramVar> variables = transferVariables(predicate.getVars());
+		final Set<IProgramFunction> functions = predicate.getFuns();
 		final Term transferredFormula = transferTerm(predicate.getFormula());
 		final Term transferredClosed = transferTerm(predicate.getClosedFormula());
 		return mFactory.construct(serial -> new BasicPredicate(serial, predicate.getProcedures(), transferredFormula,
-				variables, transferredClosed));
+				variables, functions, transferredClosed));
 	}
 
 	public <T extends Term> T transferTerm(final T term) {

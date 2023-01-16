@@ -94,7 +94,7 @@ public class ArrayStore {
 	 *                      that has been found
 	 */
 	public static Collection<ArrayStore> extractStores(final Term term, final boolean onlyOutermost) {
-		final Set<Term> storeTerms = SmtUtils.extractApplicationTerms("store", term, onlyOutermost);
+		final Set<ApplicationTerm> storeTerms = SmtUtils.extractApplicationTerms("store", term, onlyOutermost);
 		return storeTerms.stream().map(ArrayStore::convert).collect(Collectors.toList());
 	}
 }

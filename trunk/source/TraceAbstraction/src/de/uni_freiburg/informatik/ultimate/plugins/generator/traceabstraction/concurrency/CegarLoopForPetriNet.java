@@ -75,7 +75,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -83,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PetriCegarLoopStatisticsDefinitions;
@@ -218,13 +218,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		final IHoareTripleChecker htc;
-		if (mRefinementResult.getHoareTripleChecker() != null) {
-			htc = mRefinementResult.getHoareTripleChecker();
-		} else {
-			htc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
-					mPref.getHoareTripleChecks(), mCsToolkit, mRefinementResult.getPredicateUnifier());
-		}
+		final IHoareTripleChecker htc = getHoareTripleChecker();
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		try {
 			// Determinize the interpolant automaton
@@ -567,7 +561,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			throw new AssertionError("Unsupported looper check");
 		}
 
-		return alphabet.stream().filter(letter -> looperCheck.isUniversalLooper(letter, states))
+		return alphabet.stream().filter(letter -> looperCheck.isUniversalLooper(letter, states) == LBool.UNSAT)
 				.collect(Collectors.toSet());
 	}
 

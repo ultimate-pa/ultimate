@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IReplacementVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -52,19 +53,21 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 
 	final LinkedHashMap<Term, Term> mBacktranslationMap = new LinkedHashMap<>();
 
+	private final boolean mUseNutzTransformation;
+
 	/**
 	 * @param fac
 	 * @param mgdScript
 	 * @param useNeighbors
-	 *            If set to false we obtain the underapproximation where we
-	 *            assume that the modulo operator is the identity for the
-	 *            first argument.
+	 *            If set to false we obtain the underapproximation where we assume that the modulo operator is the
+	 *            identity for the first argument.
 	 */
 	public BvToIntTransformation(final IUltimateServiceProvider services, final ReplacementVarFactory fac,
-			final ManagedScript mgdScript) {
+			final ManagedScript mgdScript, final boolean useNutzTransformation) {
 		super();
 		mFac = fac;
 		mServices = services;
+		mUseNutzTransformation = useNutzTransformation;
 	}
 
 	@Override
@@ -84,9 +87,8 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 		// null, false, null, false, null, false);
 		final ModifiableTransFormula newIntTF = new ModifiableTransFormula(tf);
 
-
-		final LinkedHashMap<Term, Term> varMap = new LinkedHashMap<Term, Term>();
-		for (final IProgramVar progVar : ModifiableTransFormula.collectAllProgramVars(tf)) {
+		final LinkedHashMap<Term, Term> varMap = new LinkedHashMap<>();
+		for (final IProgramVar progVar : TransFormula.collectAllProgramVars(tf)) {
 
 			final IReplacementVarOrConst repVar = mFac.getOrConstuctReplacementVar(progVar.getTermVariable(), true,
 					bvToIntSort(mgdScript, progVar.getTerm().getSort()));
@@ -97,9 +99,8 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 
 			if ((tf.getInVars().get(progVar) != null) && (tf.getOutVars().get(progVar) != null)) {
 				if (tf.getInVars().get(progVar).equals(tf.getOutVars().get(progVar))) {
-					final TermVariable intInAndOutVar =
-							mgdScript.constructFreshTermVariable("intInAndOutVar",
-									bvToIntSort(mgdScript, tf.getInVars().get(progVar).getSort()));
+					final TermVariable intInAndOutVar = mgdScript.constructFreshTermVariable("intInAndOutVar",
+							bvToIntSort(mgdScript, tf.getInVars().get(progVar).getSort()));
 					intInVar = intInAndOutVar;
 					intOutVar = intInAndOutVar;
 				} else {
@@ -130,22 +131,20 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 			}
 		}
 
-
-
 		// construct new auxVar for each existing auxVar
 		for (final TermVariable auxVar : tf.getAuxVars()) {
-			final TermVariable newAuxVar = mgdScript.constructFreshTermVariable(auxVar.getName(),
-					bvToIntSort(mgdScript, auxVar.getSort()));
+			final TermVariable newAuxVar =
+					mgdScript.constructFreshTermVariable(auxVar.getName(), bvToIntSort(mgdScript, auxVar.getSort()));
 			varMap.put(auxVar, newAuxVar);
 			newIntTF.addAuxVars(Collections.singleton(newAuxVar));
 		}
 
-		final TranslationManager mTranslationManager;
-		mTranslationManager = new TranslationManager(mgdScript, ConstraintsForBitwiseOperations.SUM);
-		mTranslationManager.setReplacementVarMaps(varMap);
+		final TranslationManager translationManager =
+				new TranslationManager(mgdScript, ConstraintsForBitwiseOperations.SUM, mUseNutzTransformation);
+		translationManager.setReplacementVarMaps(varMap);
 
-		final Triple<Term, Set<TermVariable>, Boolean> translated = mTranslationManager
-				.translateBvtoInt(tf.getFormula());
+		final Triple<Term, Set<TermVariable>, Boolean> translated =
+				translationManager.translateBvtoInt(tf.getFormula());
 		if (!translated.getSecond().isEmpty() || translated.getThird()) {
 			throw new UnsupportedOperationException();
 		}
@@ -170,7 +169,7 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 			return sort;
 		} else {
 			return sort;
-//			throw new UnsupportedOperationException("Unexpected Sort: " + sort);
+			// throw new UnsupportedOperationException("Unexpected Sort: " + sort);
 		}
 
 	}

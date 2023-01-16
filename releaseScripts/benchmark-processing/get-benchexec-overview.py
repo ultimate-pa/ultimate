@@ -695,8 +695,12 @@ def parse_benchexec_xmls(input_dir: str) -> Tuple[Dict[str, Run], bool]:
                 f"Run in xml file {xml} has no name! Cannot detect toolname, ignoring .xml"
             )
             continue
-        name = name_attr.split(".")
-        tool_name = name[0]
+        block_attr = result.attrib.get("block", None)
+        if block_attr is not None and name_attr.endswith("." + block_attr):
+          # Remove the suffix consisting of "." and the block
+          tool_name = name_attr[:-len(block_attr) - 1]
+        else:
+          tool_name = name_attr
         for elem in root.findall(".//run"):
             # files = elem.attrib["files"]
             yml = elem.attrib["name"]

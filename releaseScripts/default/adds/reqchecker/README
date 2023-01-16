@@ -13,38 +13,39 @@ Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 
 
 This archive also contains binaries for the following theorem provers.
- * Z3 (https://github.com/Z3Prover/z3) 
-   - Linux (z3)
-     z3-4.8.13 - 64 bit build from master 939860148 (2021-08-04)
-   - Windows (z3.exe)
-     z3-4.8.13 - 64 bit build from master 939860148 (2021-08-04)
+* Z3 (<https://github.com/Z3Prover/z3>)
+  * Linux (z3)
+    Z3 version 4.12.0 - 64 bit build from master 689af3b4d (2022-11-12)
+  * Windows (z3.exe)
+    Z3 version 4.12.0 - 64 bit build from master 689af3b4d (2022-11-12)
 
- * CVC4 (http://cvc4.cs.nyu.edu/)
-   - Linux 
-     - cvc4nyu is an old build, 
-       version 1.5-prerelease, 
-       subversion URL: https://github.com/CVC4/CVC4/trunk r4671 (with modifications), 
-       compiled with GCC version 4.6.4 on Dec 5 2015 05:45:40
-     - cvc4 is a release version, 
-       version 1.8 [git HEAD 52479010]
-       compiled with GCC version 5.4.0 20160609
-       on Aug 25 2020 00:35:00
-   - Windows
-     - cvc4nyu.exe is an old build, 
-       version 1.5-prerelease, 
-       subversion URL: https://github.com/CVC4/CVC4/trunk r5092 (with modifications), 
-       compiled with GCC version 4.2.1-sjlj (mingw32-2) on Aug 4 2016 10:21:05
-     - cvc4.exe is a release version, 
-       version 1.8
-       compiled with GCC version 5.3.1 20160211
-       on Aug 25 2020 08:27:39
-       Note that this version does not output the git hash, but it should be the same as the Linux version
+* CVC4 (<http://cvc4.cs.nyu.edu/>)
+  * Linux
+    * cvc4nyu is an old build,
+      version 1.5-prerelease,
+      subversion URL: <https://github.com/CVC4/CVC4/trunk> r4671 (with modifications),
+      compiled with GCC version 4.6.4 on Dec 5 2015 05:45:40
+    * cvc4 is a release version,
+      version 1.8 [git HEAD 52479010]
+      compiled with GCC version 5.4.0 20160609
+      on Aug 25 2020 00:35:00
+  * Windows
+    * cvc4nyu.exe is an old build,
+      version 1.5-prerelease,
+      subversion URL: <https://github.com/CVC4/CVC4/trunk> r5092 (with modifications),
+      compiled with GCC version 4.2.1-sjlj (mingw32-2) on Aug 4 2016 10:21:05
+    * cvc4.exe is a release version,
+      version 1.8
+      compiled with GCC version 5.3.1 20160211
+      on Aug 25 2020 08:27:39
+      Note that this version does not output the git hash, but it should be
+      the same as the Linux version.
 
- * MathSAT5 (http://mathsat.fbk.eu)  
-   - Windows (mathsat.exe, mpir.dll, mathsat.dll)
-     MathSAT5 version 5.6.5 (63ef7602814c) (Nov  9 2020 09:13:57, gmp 6.0.0/mpir 3.0.0, msvc 18.00, 64-bit)
-   - Linux (mathsat)
-     MathSAT5 version 5.6.5 (63ef7602814c) (Nov  9 2020 08:58:55, gmp 6.1.2, gcc 7.5.0, 64-bit)
+* MathSAT5 (<http://mathsat.fbk.eu>)  
+  * Linux (mathsat)
+    MathSAT5 version 5.6.9 (0214d34392af) (Nov 10 2022 09:57:27, gmp 6.2.0, gcc 7.5.0, 64-bit, reentrant)
+  * Windows (mathsat.exe, mpir.dll, mathsat.dll)
+    MathSAT5 version 5.6.9 (<UNKNOWN>) (Nov  8 2022 11:29:39, gmp 6.0.0/mpir 3.0.0, msvc 19.12, 64-bit)
 
 For each of these theorem provers, a corresponding license file (z3-LICENSE, cvc4-LICENSE, 
 mathsat-LICENSE) can be found in our archive. Please consult these files for additional 

@@ -208,6 +208,14 @@ public class ExpressionResultBuilder {
 		return this;
 	}
 
+	public ExpressionResultBuilder addAllSideEffects(final ResultWithSideEffects result) {
+		addStatements(result.getStatements());
+		addDeclarations(result.getDeclarations());
+		addAuxVars(result.getAuxVars());
+		addOverapprox(result.getOverapprs());
+		return this;
+	}
+
 	public ExpressionResult build() {
 		return new ExpressionResult(mStatements, mLrVal, mDeclarations, mAuxVars, mOverappr, mNeighbourUnionFields);
 	}

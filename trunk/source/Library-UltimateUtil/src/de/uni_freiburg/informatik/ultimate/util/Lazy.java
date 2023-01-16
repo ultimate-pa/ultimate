@@ -45,6 +45,10 @@ public class Lazy<V> {
 		mFun = Objects.requireNonNull(valueConstruction);
 	}
 
+	public Lazy(final V value) {
+		mValue = value;
+	}
+
 	/**
 	 * Get or construct the cached value.
 	 */

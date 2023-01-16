@@ -27,10 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors;
 
 /**
- * A visitor that implements a dead-end removal optimization. Each instance can be used in multiple traversals, if it is
- * reset in between traversals. From each traversal, it remembers backtracked states and marks them as dead ends. In
- * future traversals, the successors of such dead ends are not explored. Additionally, states can be explicitly marked
- * as dead ends.
+ * A visitor that implements a dead-end removal optimization.
+ *
+ * The visitor collects backtracked states in a given {@link IDeadEndStore}. When it encounters a state marked as dead
+ * end, the successors of this state are not explored.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
@@ -53,7 +53,7 @@ public class DeadEndOptimizingSearchVisitor<L, S, V extends IDfsVisitor<L, S>> e
 	 * @param store
 	 *            A dead end store which is used to store and query dead end information
 	 * @param isReadOnly
-	 *            Whether the dead end store should be treated as read-only
+	 *            Whether the dead end store should be treated as read-only (backtracked states should not be added)
 	 */
 	public DeadEndOptimizingSearchVisitor(final V underlying, final IDeadEndStore<?, S> store,
 			final boolean isReadOnly) {

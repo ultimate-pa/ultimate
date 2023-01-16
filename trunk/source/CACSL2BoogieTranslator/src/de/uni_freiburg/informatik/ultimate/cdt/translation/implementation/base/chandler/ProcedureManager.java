@@ -270,7 +270,7 @@ public class ProcedureManager {
 
 				final int nrSpec = newSpec.length;
 				final Check check = new Check(Check.Spec.MEMORY_LEAK);
-				final ILocation ensLoc = LocationFactory.createLocation(loc, check);
+				final ILocation ensLoc = LocationFactory.createLocation(loc);
 				newSpecWithExtraEnsuresClauses = Arrays.copyOf(newSpec, nrSpec + 1);
 				newSpecWithExtraEnsuresClauses[nrSpec] = new EnsuresSpecification(ensLoc, false,
 						ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, vIe,

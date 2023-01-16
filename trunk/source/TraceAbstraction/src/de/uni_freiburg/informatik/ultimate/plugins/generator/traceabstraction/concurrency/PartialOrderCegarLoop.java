@@ -33,6 +33,7 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -80,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
@@ -96,6 +98,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -227,15 +230,28 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		mAbstraction =
 				new InformationStorage<>(mProgram == null ? mAbstraction : mProgram, mItpAutomata, mFactory, false);
 
+		// augment refinement result with Hoare triple checker to allow re-use by independence providers
+		final var resultWithHtc = addHoareTripleChecker(mRefinementResult, htc);
+
 		// update independence relations (in case of abstract independence)
 		for (int i = 0; i < mIndependenceProviders.size(); ++i) {
 			final var container = mIndependenceProviders.get(i);
-			container.refine(mRefinementResult);
+			container.refine(resultWithHtc);
 			mPOR.replaceIndependence(i, container.retrieveIndependence());
 		}
 
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
+	}
+
+	private <T> IRefinementEngineResult<L, T> addHoareTripleChecker(final IRefinementEngineResult<L, T> result,
+			final IHoareTripleChecker htc) {
+		if (result.getHoareTripleChecker() != null) {
+			return result;
+		}
+		return new IRefinementEngineResult.BasicRefinementEngineResult<>(result.getCounterexampleFeasibility(),
+				result.getInfeasibilityProof(), result.getIcfgProgramExecution(), result.somePerfectSequenceFound(),
+				result.getUsedTracePredicates(), new Lazy<>(htc), new Lazy<>(result::getPredicateUnifier));
 	}
 
 	@Override
@@ -258,16 +274,24 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	private IBudgetFunction<L, IPredicate> makeBudget(final SleepMapReduction<L, IPredicate, IPredicate> reduction) {
-		final IBudgetFunction<L, IPredicate> budget = new OptimisticBudget<>(new AutomataLibraryServices(mServices),
+		final IBudgetFunction<L, IPredicate> optBudget = new OptimisticBudget<>(new AutomataLibraryServices(mServices),
 				mPOR.getDfsOrder(), mPOR.getSleepMapFactory(), this::createVisitor, reduction);
+
+		final double switchProbability = mPref.getCoinflipProbability(mIteration);
+		final long seed = mPref.coinflipSeed();
 		switch (mPref.useCoinflip()) {
 		case OFF:
-			return budget;
+			return optBudget;
 		case FALLBACK:
-			return new CoinFlipBudget<>(true, mPref.coinflipSeed(), mPref.getCoinflipProbability(mIteration), budget);
+			return new CoinFlipBudget<>(optBudget, switchProbability, seed, true);
 		case PURE:
-			return new CoinFlipBudget<>(true, mPref.coinflipSeed(), mPref.getCoinflipProbability(mIteration),
-					(s, l) -> 1);
+			return new CoinFlipBudget<>((s, l) -> 1, switchProbability, seed, true);
+		case COARSE:
+			final boolean flip = new Random(seed).nextDouble() >= switchProbability;
+			if (flip) {
+				return (s, l) -> 0;
+			}
+			return optBudget;
 		}
 		throw new IllegalArgumentException("Unknown coinflip mode: " + mPref.useCoinflip());
 	}

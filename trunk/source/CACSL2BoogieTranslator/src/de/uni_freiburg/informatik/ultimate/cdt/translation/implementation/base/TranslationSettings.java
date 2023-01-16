@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UnsignedTreatment;
 
 /**
  * @author Markus Lindenmann
@@ -58,7 +57,6 @@ public final class TranslationSettings {
 	private final boolean mOverapproximateFloatingPointOperations;
 	private final boolean mBitpreciseBitfields;
 	private final PointerCheckMode mCheckArrayAccessOffHeap;
-	private final UnsignedTreatment mUnsignedTreatment;
 	private final boolean mInRange;
 	private final PointerIntegerConversion mPointerIntegerConversion;
 	private final boolean mCheckIfFreedPointerIsValid;
@@ -81,6 +79,7 @@ public final class TranslationSettings {
 	private final boolean mEnableFesetround;
 	private final FloatingPointRoundingMode mInitialRoundingMode;
 	private final boolean mAdaptMemoryModelResolutionOnPointerCasts;
+	private final int mStringOverapproximationThreshold;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS);
@@ -110,8 +109,6 @@ public final class TranslationSettings {
 		mPointerIntegerConversion = ups.getEnum(CACSLPreferenceInitializer.LABEL_POINTER_INTEGER_CONVERSION,
 				CACSLPreferenceInitializer.PointerIntegerConversion.class);
 		mInRange = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ASSUME_NONDET_VALUES_IN_RANGE);
-		mUnsignedTreatment = ups.getEnum(CACSLPreferenceInitializer.LABEL_UNSIGNED_TREATMENT,
-				CACSLPreferenceInitializer.UnsignedTreatment.class);
 		mCheckArrayAccessOffHeap =
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_ARRAYACCESSOFFHEAP, PointerCheckMode.class);
 		mDivisionByZeroOfIntegerTypes = ups.getEnum(
@@ -130,15 +127,16 @@ public final class TranslationSettings {
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_FP_ROUNDING_MODE_INITIAL, FloatingPointRoundingMode.class);
 		mAdaptMemoryModelResolutionOnPointerCasts =
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS);
+		mStringOverapproximationThreshold =
+				ups.getInt(CACSLPreferenceInitializer.LABEL_STRING_OVERAPPROXIMATION_THRESHOLD);
 	}
 
 	private TranslationSettings(final PointerCheckMode divisionByZeroOfIntegerTypes,
 			final PointerCheckMode divisionByZeroOfFloatingTypes, final boolean bitvectorTranslation,
 			final boolean overapproximateFloatingPointOperations, final boolean bitpreciseBitfields,
-			final PointerCheckMode checkArrayAccessOffHeap, final UnsignedTreatment unsignedTreatment,
-			final boolean inRange, final PointerIntegerConversion pointerIntegerConversion,
-			final boolean checkIfFreedPointerIsValid, final PointerCheckMode pointerBaseValidity,
-			final PointerCheckMode pointerTargetFullyAllocated,
+			final PointerCheckMode checkArrayAccessOffHeap, final boolean inRange,
+			final PointerIntegerConversion pointerIntegerConversion, final boolean checkIfFreedPointerIsValid,
+			final PointerCheckMode pointerBaseValidity, final PointerCheckMode pointerTargetFullyAllocated,
 			final PointerCheckMode checkPointerSubtractionAndComparisonValidity,
 			final MemoryModel memoryModelPreference, final boolean fpToIeeeBvExtension,
 			final boolean smtBoolArraysWorkaround, final String checkedMethod, final TranslationMode translationMode,
@@ -146,8 +144,8 @@ public final class TranslationSettings {
 			final boolean checkAllocationPurity, final boolean checkMemoryLeakInMain,
 			final boolean checkSignedIntegerBounds, final boolean checkDataRaces, final boolean useConstantArrays,
 			final boolean useStoreChains, final boolean enableFesetround,
-			final FloatingPointRoundingMode initialRoundingMode,
-			final boolean adaptMemoryModelResolutionOnPointerCasts) {
+			final FloatingPointRoundingMode initialRoundingMode, final boolean adaptMemoryModelResolutionOnPointerCasts,
+			final int stringOverapproximationThreshold) {
 		super();
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
@@ -155,7 +153,6 @@ public final class TranslationSettings {
 		mOverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
 		mBitpreciseBitfields = bitpreciseBitfields;
 		mCheckArrayAccessOffHeap = checkArrayAccessOffHeap;
-		mUnsignedTreatment = unsignedTreatment;
 		mInRange = inRange;
 		mPointerIntegerConversion = pointerIntegerConversion;
 		mCheckIfFreedPointerIsValid = checkIfFreedPointerIsValid;
@@ -178,6 +175,7 @@ public final class TranslationSettings {
 		mEnableFesetround = enableFesetround;
 		mInitialRoundingMode = initialRoundingMode;
 		mAdaptMemoryModelResolutionOnPointerCasts = adaptMemoryModelResolutionOnPointerCasts;
+		mStringOverapproximationThreshold = stringOverapproximationThreshold;
 	}
 
 	public PointerIntegerConversion getPointerIntegerCastMode() {
@@ -186,10 +184,6 @@ public final class TranslationSettings {
 
 	public boolean assumeNondeterministicValuesInRange() {
 		return mInRange;
-	}
-
-	public UnsignedTreatment unsignedTreatment() {
-		return mUnsignedTreatment;
 	}
 
 	public PointerCheckMode checkArrayAccessOffHeap() {
@@ -315,16 +309,20 @@ public final class TranslationSettings {
 		return mAdaptMemoryModelResolutionOnPointerCasts;
 	}
 
+	public int getStringOverapproximationThreshold() {
+		return mStringOverapproximationThreshold;
+	}
+
 	public TranslationSettings setMemoryModelPreference(final MemoryModel memoryModel) {
 		return new TranslationSettings(mDivisionByZeroOfIntegerTypes, mDivisionByZeroOfFloatingTypes,
 				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mBitpreciseBitfields,
-				mCheckArrayAccessOffHeap, mUnsignedTreatment, mInRange, mPointerIntegerConversion,
-				mCheckIfFreedPointerIsValid, mPointerBaseValidity, mPointerTargetFullyAllocated,
-				mCheckPointerSubtractionAndComparisonValidity, memoryModel, mFpToIeeeBvExtension,
-				mSmtBoolArraysWorkaround, mEntryMethod, mTranslationMode, mCheckSvcompErrorFunction,
-				mIsSvcompMemtrackCompatibilityMode, mCheckAllocationPurity, mCheckMemoryLeakInMain,
-				mCheckSignedIntegerBounds, mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround,
-				mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts);
+				mCheckArrayAccessOffHeap, mInRange, mPointerIntegerConversion, mCheckIfFreedPointerIsValid,
+				mPointerBaseValidity, mPointerTargetFullyAllocated, mCheckPointerSubtractionAndComparisonValidity,
+				memoryModel, mFpToIeeeBvExtension, mSmtBoolArraysWorkaround, mEntryMethod, mTranslationMode,
+				mCheckSvcompErrorFunction, mIsSvcompMemtrackCompatibilityMode, mCheckAllocationPurity,
+				mCheckMemoryLeakInMain, mCheckSignedIntegerBounds, mCheckDataRaces, mUseConstantArrays, mUseStoreChains,
+				mEnableFesetround, mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts,
+				mStringOverapproximationThreshold);
 	}
 
 	/**

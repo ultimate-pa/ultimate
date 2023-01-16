@@ -610,34 +610,23 @@ public class DataTypeTheory implements ITheory {
 			// if it is not sure that pathRep is the matching constructor to the selector (lastCT)
 			// build the corresponding is-function
 			if (prevAsParent == null) {
-				// there is no constructor for the previous step. So lastCt should be a selector
-				// for which the corresponding tester is true or does not exist.
-				final CCAppTerm trueTester = trueTesters.get(prevAsChild.getRepresentative());
-
-				if (trueTester != null) {
-					// trueTester is a is_cons term on prevChild that is true. It is part of the
-					// conflict.
-					reason.add(new SymmetricPair<>(trueTester, trueCC));
-					final CCTerm testerArg = trueTester.getArg();
-					assert prevAsChild.getRepresentative() == testerArg.getRepresentative();
-					if (testerArg != prevAsChild) {
-						reason.add(new SymmetricPair<>(prevAsChild, testerArg));
-					}
-				} else {
-					// There is no true tester; build the tester corresponding to the current
-					// conflict and try again.
-					final ApplicationTerm selectorApp = (ApplicationTerm) currentAsChild.mFlatTerm;
-					final FunctionSymbol selectorFunc = selectorApp.getFunction();
-					final Constructor cons = getConstructor(selectorFunc);
-					final Term isTerm = mTheory.term(mTheory.getFunctionWithResult("is",
-							new String[] { cons.getName() }, null, selectorFunc.getParameterSorts()[0]),
-							selectorApp.getParameters()[0]);
+				// there is no constructor for the previous step. So lastCt should be a
+				// selector.
+				// Get the corresponding tester or create it if it does not exists.
+				// If it exists, the corresponding tester is true.
+				prevAsParent = ((CCAppTerm) currentAsChild).getArg();
+				final ApplicationTerm selectorApp = (ApplicationTerm) currentAsChild.getFlatTerm();
+				final FunctionSymbol selectorFunc = selectorApp.getFunction();
+				final Constructor cons = getConstructor(selectorFunc);
+				final Term isTerm = mTheory.term(mTheory.getFunctionWithResult("is", new String[] { cons.getName() },
+						null, selectorFunc.getParameterSorts()[0]), prevAsParent.getFlatTerm());
+				final CCTerm trueTester = mClausifier.getCCTerm(isTerm);
+				if (trueTester == null) {
 					mClausifier.createCCTerm(isTerm, SourceAnnotation.EMPTY_SOURCE_ANNOT);
 					return null;
 				}
-				// The childTerm must be a selector and the parent is the argument of the
-				// selector.
-				prevAsParent = ((CCAppTerm) currentAsChild).getArg();
+				assert trueTester.getRepresentative() == trueCC.getRepresentative();
+				reason.add(new SymmetricPair<>(trueTester, trueCC));
 			}
 
 			cycle.addFirst(prevAsParent);

@@ -35,7 +35,6 @@ import java.util.ListIterator;
 import java.util.Set;
 import java.util.Stack;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
@@ -289,9 +288,10 @@ public class UnstructureCode extends BaseObserver {
 
 			// The label before the condition of the while loop gets the
 			// location that represents the while loop.
-			final ILocation loopLocation = new BoogieLocation(stmt.getLocation().getFileName(),
-					stmt.getLocation().getStartLine(), stmt.getLocation().getEndLine(),
-					stmt.getLocation().getStartColumn(), stmt.getLocation().getEndColumn());
+			final ILocation loopLocation = stmt.getLocation();
+//					new BoogieLocation(stmt.getLocation().getFileName(),
+//					stmt.getLocation().getStartLine(), stmt.getLocation().getEndLine(),
+//					stmt.getLocation().getStartColumn(), stmt.getLocation().getEndColumn());
 			final Label l = new Label(loopLocation, head);
 			new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(l);
 			addLabel(l);

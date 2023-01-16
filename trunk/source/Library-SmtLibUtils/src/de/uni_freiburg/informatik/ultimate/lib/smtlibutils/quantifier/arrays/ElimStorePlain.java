@@ -195,8 +195,7 @@ public class ElimStorePlain {
 					if (mLogger.isInfoEnabled()) {
 						mLogger.info("Start of round: " + printVarInfo(tr) + " End of round: "
 								+ printVarInfo(classifyEliminatees(eliminationTask2.getEliminatees())) + " and "
-								+ QuantifierUtils.getXjunctsOuter(eTask.getQuantifier(),
-										eliminationTask2.getTerm()).length
+								+ QuantifierUtils.getCorrespondingFiniteJuncts(eTask.getQuantifier(), eliminationTask2.getTerm()).length
 								+ " xjuncts.");
 					}
 					// assert (!maxSizeIncrease(tr,
@@ -261,7 +260,7 @@ public class ElimStorePlain {
 
 
 	private EliminationTaskPlain doElimOneRec(final EliminationTaskPlain eTask) throws ElimStorePlainException {
-		if (QuantifierUtils.getXjunctsOuter(eTask.getQuantifier(),eTask.getTerm()).length != 1) {
+		if (QuantifierUtils.getCorrespondingFiniteJuncts(eTask.getQuantifier(), eTask.getTerm()).length != 1) {
 			throw new AssertionError("Input not split");
 		}
 		// input one ?
@@ -326,7 +325,7 @@ public class ElimStorePlain {
 			// cannot eliminated this array
 			return null;
 		}
-		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(eTask.getQuantifier(), eTask.getTerm());
+		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJuncts(eTask.getQuantifier(), eTask.getTerm());
 		final Map<Boolean, List<Term>> part = Arrays.stream(dualJuncts).collect(Collectors
 				.partitioningBy(x -> QuantifierUtils.isCorrespondingFiniteJunction(eTask.getQuantifier(), x)));
 		final Term distributers = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), eTask.getQuantifier(), part.get(true));
@@ -563,7 +562,7 @@ public class ElimStorePlain {
 			mLogger.info("Start of recursive call " + thisRecursiveCallNumber + ": " + printVarInfo(tr)
 					+ " End of recursive call: " + printVarInfo(classifyEliminatees(finalResult.getEliminatees()))
 					+ " and "
-					+ QuantifierUtils.getXjunctsOuter(finalResult.getQuantifier(), finalResult.getTerm()).length
+					+ QuantifierUtils.getCorrespondingFiniteJuncts(finalResult.getQuantifier(), finalResult.getTerm()).length
 					+ " xjuncts.");
 		}
 		return finalResult;
@@ -672,7 +671,7 @@ public class ElimStorePlain {
 	private Pair<Term[], Term> split(final int quantifier, final TermVariable eliminatee, final Term term) {
 		final List<Term> dualJunctsWithEliminatee = new ArrayList<>();
 		final List<Term> dualJunctsWithoutEliminatee = new ArrayList<>();
-		final Term[] dualJuncts = QuantifierUtils.getXjunctsInner(quantifier, term);
+		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJuncts(quantifier, term);
 		for (final Term xjunct : dualJuncts) {
 			if (Arrays.asList(xjunct.getFreeVars()).contains(eliminatee)) {
 				dualJunctsWithEliminatee.add(xjunct);
@@ -695,7 +694,7 @@ public class ElimStorePlain {
 		} else {
 			correspondingJunction = dualJunctionWithElimantee;
 		}
-		final Term[] correspodingJuncts = QuantifierUtils.getXjunctsOuter(quantifier, correspondingJunction);
+		final Term[] correspodingJuncts = QuantifierUtils.getCorrespondingFiniteJuncts(quantifier, correspondingJunction);
 		return new Pair<Term[], Term>(correspodingJuncts, dualJunctionWithoutElimantee);
 	}
 
@@ -709,7 +708,7 @@ public class ElimStorePlain {
 
 	private void pushTaskOnStack(final EliminationTaskSimple eTask, final Stack<EliminationTaskSimple> taskStack) {
 		final Term term = eTask.getTerm();
-		final Term[] disjuncts = QuantifierUtils.getXjunctsOuter(eTask.getQuantifier(), term);
+		final Term[] disjuncts = QuantifierUtils.getCorrespondingFiniteJuncts(eTask.getQuantifier(), term);
 		if (disjuncts.length == 1) {
 			taskStack.push(eTask);
 		} else {

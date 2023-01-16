@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -50,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.SparseMapBuilder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -101,19 +103,33 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		Objects.requireNonNull(variables2coeffcient);
 		mSort = s;
 		mConstant = constant;
-		assert !SmtSortUtils.isBitvecSort(s) || !constant.isNegative() : "Negative constant in bitvector term";
-		assert !SmtSortUtils.isBitvecSort(s)
-				|| allCoefficientsAreNonNegative(variables2coeffcient) : "Negative coefficients in bitvector term "
-						+ variables2coeffcient;
+		assert !SmtSortUtils.isBitvecSort(s) || !constant.isNegative() : "Negative constant in BitVec term";
+		assert !SmtSortUtils.isBitvecSort(s) || isTrueForAllCoefficients(variables2coeffcient,
+				x -> !x.isNegative()) : "Negative coefficient in BitVec term " + variables2coeffcient;
+		assert !SmtSortUtils.isBitvecSort(s) || constant.isIntegral() : "Non-integral constant in BitVec term";
+		assert !SmtSortUtils.isBitvecSort(s) || isTrueForAllCoefficients(variables2coeffcient,
+				x -> x.isIntegral()) : "Non-integral coefficient in BitVec term " + variables2coeffcient;
+		assert !SmtSortUtils.isIntSort(s) || constant.isIntegral() : "Non-integral constant in Int term";
+		assert !SmtSortUtils.isIntSort(s) || isTrueForAllCoefficients(variables2coeffcient,
+				x -> x.isIntegral()) : "Non-integral coefficient in Int term " + variables2coeffcient;
 		mAbstractVariable2Coefficient = variables2coeffcient;
 	}
 
-	private static boolean allCoefficientsAreNonNegative(final Map<?, Rational> variables2coeffcient) {
-		return variables2coeffcient.entrySet().stream().allMatch(x -> !x.getValue().isNegative());
+	private static boolean isTrueForAllCoefficients(final Map<?, Rational> variable2coeffcient, final Predicate<Rational> p) {
+		return variable2coeffcient.entrySet().stream().allMatch(x -> p.test(x.getValue()));
 	}
 
-	protected abstract IPolynomialTerm constructNew(final Sort sort, final Rational constant,
+	protected abstract AbstractGeneralizedAffineTerm<?> constructNew(final Sort sort, final Rational constant,
 			final Map<AVAR, Rational> variables2coeffcient);
+
+	/**
+	 * Construct a new {@link AffineTerm} in which term is the only variable. This
+	 * is usually a bad idea and useful only in rare cases. Hence, this method is
+	 * private.
+	 */
+	private static AffineTerm constructNewSingleVariableTerm(final Term term) {
+		return new AffineTerm(term.getSort(), Rational.ZERO, Collections.singletonMap(term, Rational.ONE));
+	}
 
 	protected abstract AVAR constructAbstractVar(Term term);
 
@@ -353,7 +369,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final AbstractGeneralizedAffineTerm other = (AbstractGeneralizedAffineTerm) obj;
+		final AbstractGeneralizedAffineTerm<?> other = (AbstractGeneralizedAffineTerm<?>) obj;
 		if (mConstant == null) {
 			if (other.mConstant != null) {
 				return false;
@@ -400,9 +416,99 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 
 	public abstract AbstractGeneralizedAffineTerm<?> removeAndNegate(Monomial monomialOfSubject);
 
-	public IPolynomialTerm div(final Script script, final BigInteger divisor, final Set<TermVariable> bannedForDivCapture) {
+	private ApplicationTerm isDivision(final String funcname) {
+		if (!mConstant.equals(Rational.ZERO)) {
+			return null;
+		}
+		if (mAbstractVariable2Coefficient.size() != 1) {
+			return null;
+		}
+		final Entry<AVAR, Rational> entry = mAbstractVariable2Coefficient.entrySet().iterator().next();
+		if (!entry.getValue().equals(Rational.ONE)) {
+			return null;
+		}
+		final AVAR avar = entry.getKey();
+		final Term singleVar;
+		if (avar instanceof Monomial) {
+			final Monomial monominal = (Monomial) avar;
+			singleVar = monominal.getSingleVariable();
+		} else if (avar instanceof Term) {
+			singleVar = (Term) avar;
+		} else {
+			throw new AssertionError();
+		}
+		if (!(singleVar instanceof ApplicationTerm)) {
+			return null;
+		}
+		final ApplicationTerm appTerm = (ApplicationTerm) singleVar;
+		if (!appTerm.getFunction().getApplicationString().equals(funcname)) {
+			return null;
+		}
+		return appTerm;
+	}
+
+	@Override
+	public IPolynomialTerm div(final Script script, final IPolynomialTerm... divisors) {
+		AbstractGeneralizedAffineTerm<?> current = this;
+		for (final IPolynomialTerm divisor : divisors) {
+			if (divisor.isConstant()) {
+				if (SmtSortUtils.isIntSort(mSort)) {
+					current = current.divInt(script, divisor.getConstant().numerator(), Collections.emptySet());
+				} else if (SmtSortUtils.isBitvecSort(mSort)) {
+					throw new UnsupportedOperationException();
+				} else if (SmtSortUtils.isRealSort(mSort)) {
+					current = current.divReal(script, divisor.getConstant());
+				} else {
+					throw new UnsupportedOperationException();
+				}
+			} else {
+				final String funcname = getDivisionFuncname(getSort());
+				// TODO: extract gcd from divisor and divide by gcd separately
+				current = constructDivResultForNonSimplifiableCase(script, funcname, current, divisor.toTerm(script));
+			}
+		}
+		return current;
+	}
+
+	public static String getDivisionFuncname(final Sort sort) {
+		final String funcname;
+		if (SmtSortUtils.isIntSort(sort)) {
+			funcname = "div";
+		} else if (SmtSortUtils.isBitvecSort(sort)) {
+			throw new UnsupportedOperationException();
+		} else if (SmtSortUtils.isRealSort(sort)) {
+			funcname = "/";
+		} else {
+			throw new UnsupportedOperationException();
+		}
+		return funcname;
+	}
+
+	/**
+	 * If divisor is zero (for Int and for Real, not for bitvector) or not a
+	 * literal, we cannot simplify besides flattening and return an
+	 * {@link AffineTerm} whose only variable is the divisibility result.
+	 *
+	 */
+	private static AffineTerm constructDivResultForNonSimplifiableCase(final Script script, final String funcname,
+			final IPolynomialTerm divident, final Term divisor) {
+		return constructNewSingleVariableTerm(
+				SmtUtils.flattenIntoFirstArgument(script, funcname, divident.toTerm(script), divisor));
+	}
+
+	public AbstractGeneralizedAffineTerm<?> divInt(final Script script, final BigInteger divisor,
+			final Set<TermVariable> bannedForDivCapture) {
 		if (!SmtSortUtils.isIntSort(getSort())) {
 			throw new AssertionError("only for int");
+		}
+		if (divisor.equals(BigInteger.ZERO)) {
+			// A non-initial zero cannot be simplified (semantics of division by zero
+			// similar to uninterpreted function see
+			// http://smtlib.cs.uiowa.edu/theories-Ints.shtml). This means especially that
+			// an initial zero does not make the result zero, because 0 is not equivalent to
+			// (div 0 0).
+			return constructDivResultForNonSimplifiableCase(script, "div", this,
+					SmtUtils.constructIntegerValue(script, getSort(), divisor));
 		}
 		final Map<AVAR, Rational> variables2coeffcient = new HashMap<>();
 		final List<Term> summandsOfDiv = new ArrayList<>();
@@ -416,24 +522,54 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 				if (getFreeVars(entry.getKey()).stream().anyMatch(bannedForDivCapture::contains)) {
 					return null;
 				}
-				summandsOfDiv.add(SmtUtils.mul(script, entry.getValue(), abstractVariableToTerm(script, entry.getKey())));
+				summandsOfDiv
+						.add(SmtUtils.mul(script, entry.getValue(), abstractVariableToTerm(script, entry.getKey())));
 			}
 		}
 		final Rational constant;
 		if (summandsOfDiv.isEmpty()) {
+			// since all coefficients could be divided without remainder, it is sound to
+			// divide the constant even if it is not divisible without remainder
 			constant = euclideanDivision(getConstant(), divisor);
 		} else {
-			constant = Rational.ZERO;
-			if (!getConstant().equals(Rational.ZERO)) {
-				summandsOfDiv.add(getConstant().toTerm(getSort()));
+			if (getConstant().div(Rational.valueOf(divisor, BigInteger.ONE)).isIntegral()) {
+				// constant can be divided without remainder
+				constant = euclideanDivision(getConstant(), divisor);
+			} else {
+				// constant cannot be divided without remainder, we have to add the constant to
+				// the sum (to which we apply the div operator)
+				constant = Rational.ZERO;
+				if (!getConstant().equals(Rational.ZERO)) {
+					summandsOfDiv.add(getConstant().toTerm(getSort()));
+				}
 			}
 			final Term sum = SmtUtils.sum(script, getSort(), summandsOfDiv.toArray(new Term[summandsOfDiv.size()]));
-
-			final Term div = SmtUtils.div(script, sum, SmtUtils.constructIntegerValue(script, getSort(), divisor));
+			final Term div = SmtUtils.divIntFlatten(script, sum, divisor);
 			final AVAR avar = constructAbstractVar(div);
-			variables2coeffcient.put(avar, Rational.ONE);
+			final Rational oldCoeffcient = variables2coeffcient.get(avar);
+			if (oldCoeffcient == null) {
+				variables2coeffcient.put(avar, Rational.ONE);
+			} else {
+				final Rational newCoefficient = oldCoeffcient.add(Rational.ONE);
+				if (newCoefficient.equals(Rational.ZERO)) {
+					variables2coeffcient.remove(avar);
+				} else {
+					variables2coeffcient.put(avar, newCoefficient);
+				}
+			}
 		}
 		return constructNew(getSort(), constant, variables2coeffcient);
+	}
+
+
+	public AbstractGeneralizedAffineTerm<?> divReal(final Script script, final Rational divisor) {
+		if (!SmtSortUtils.isRealSort(getSort())) {
+			throw new AssertionError("only for Real");
+		}
+		if (divisor.equals(Rational.ZERO)) {
+			return constructDivResultForNonSimplifiableCase(script, "/", this, divisor.toTerm(getSort()));
+		}
+		return (AbstractGeneralizedAffineTerm<?>) this.mul(divisor.inverse());
 	}
 
 	protected Rational euclideanDivision(final Rational divident, final BigInteger divisor) {
@@ -448,20 +584,121 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 	}
 
 	@Override
-	public IPolynomialTerm add(final Rational offset) {
-		final Rational newConstant;
-		if (SmtSortUtils.isRealSort(getSort())) {
-			newConstant = getConstant().add(offset);
-		} else if (SmtSortUtils.isIntSort(getSort())) {
-			newConstant = getConstant().add(offset);
-		} else if (SmtSortUtils.isBitvecSort(getSort())) {
-			newConstant = PolynomialTermUtils.bringBitvectorValueInRange(getConstant().add(offset), getSort());
+	public
+	abstract AbstractGeneralizedAffineTerm<?> divInvertible(Rational r);
+
+	@Override
+	public IPolynomialTerm mod(final Script script, final IPolynomialTerm divisor) {
+		if (divisor.isConstant()) {
+			return mod(script, divisor.getConstant().numerator());
 		} else {
-			throw new AssertionError("unsupported Sort " + getSort());
+			return constructNewSingleVariableTerm(script.term("mod", this.toTerm(script), divisor.toTerm(script)));
 		}
-		return constructNew(getSort(), newConstant, getAbstractVariable2Coefficient());
 	}
 
+	public IPolynomialTerm mod(final Script script, final BigInteger divisor) {
+		if (divisor.equals(BigInteger.ZERO)) {
+			final Term resultAsTerm = script.term("mod", this.toTerm(script),
+					SmtUtils.constructIntegerValue(script, getSort(), divisor));
+			return constructNewSingleVariableTerm(resultAsTerm);
+		}
+		final Map<AVAR, Rational> preprocessedMap = modPreprocessMap(script, divisor.abs());
+		final Rational preprocessedConstant = SmtUtils
+				.toRational(ArithmeticUtils.euclideanMod(SmtUtils.toInt(getConstant()), divisor.abs()));
+		final AbstractGeneralizedAffineTerm<?> intermediateResult = constructNew(getSort(), preprocessedConstant,
+				preprocessedMap);
+		if (preprocessedMap.isEmpty()) {
+			// Result is a constant. Effect of the modulo was already taken into account
+			return intermediateResult;
+		}
+		final Rational gcd = computeGcdOfValues(preprocessedMap).gcd(preprocessedConstant)
+				.gcd(Rational.valueOf(divisor, BigInteger.ONE));
+		assert !gcd.isNegative() && !gcd.equals(Rational.ZERO);
+		if (gcd.equals(Rational.ONE)) {
+			// No further simplification possible. Return AffineTerm whose single variable
+			// is
+			// the modulo term.
+			final Term intermediateResultAsTerm = script.term("mod", intermediateResult.toTerm(script),
+					SmtUtils.constructIntegerValue(script, getSort(), divisor.abs()));
+			return constructNewSingleVariableTerm(intermediateResultAsTerm);
+		} else {
+			// GCD is > 1. We pull out the GCD (divide coeff+const and divisor by GCD,
+			// multiply result by GCD).
+			final AbstractGeneralizedAffineTerm<?> quotientPoly = intermediateResult
+					.divInvertible(gcd);
+			final BigInteger quotientDivisor = divisor.abs().divide(gcd.numerator());
+			// Call method recursively because the new divisor might enable further
+			// simplifications in the polynomial
+			final IPolynomialTerm recResult = quotientPoly.mod(script, quotientDivisor);
+			return recResult.mul(gcd);
+		}
+	}
+
+	/**
+	 * Apply two transformations the variable map of an affine term.
+	 * <li>If the variable has the form `(mod t k)` and k is divisible by `divisor`
+	 * we replace the variable by `t`
+	 * <li>We apply modulo to all coefficients.
+	 */
+	private Map<AVAR, Rational> modPreprocessMap(final Script script, final BigInteger divisor) {
+		assert divisor.compareTo(BigInteger.ZERO) > 0 : "Divisor must be positive";
+		final SparseMapBuilder<AVAR, Rational> smb = new SparseMapBuilder<>();
+		for (final Entry<AVAR, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+			final Rational newCoefficient = SmtUtils
+					.toRational(ArithmeticUtils.euclideanMod(SmtUtils.toInt(entry.getValue()), divisor));
+			if (newCoefficient.equals(Rational.ZERO)) {
+				continue;
+			}
+			final AVAR newAvar = constructAbstractVarForModulo(script, entry.getKey(), divisor);
+			// Changing a variable may require a merge of two map entries via addition of
+			// the coefficients
+			if (smb.containsKey(newAvar)) {
+				final Rational oldEntry = smb.get(newAvar);
+				final Rational sumTmp = oldEntry.add(entry.getValue());
+				// An addition of coefficients requires that we apply the modulo operation
+				// again.
+				final Rational sum = SmtUtils.toRational(ArithmeticUtils.euclideanMod(SmtUtils.toInt(sumTmp), divisor));
+				if (sum.equals(Rational.ZERO)) {
+					smb.remove(newAvar);
+				} else {
+					smb.put(newAvar, sum);
+				}
+			} else {
+				smb.put(newAvar, newCoefficient);
+			}
+		}
+		return smb.getBuiltMap();
+	}
+
+	/**
+	 * Prepare abstract variable for an application of `mod`. In case the abstract
+	 * variable is itself a `mod` term and its divisor is divisible by the divisor
+	 * of our `mod` application, we can omit the inner `mod`. <br>
+	 * E.g., `(mod (mod x 32) 4)` is (mod x 4).
+	 */
+	private AVAR constructAbstractVarForModulo(final Script script, final AVAR abstractVar, final BigInteger divisor) {
+		final ApplicationTerm appTerm = SmtUtils.getFunctionApplication(abstractVariableToTerm(script, abstractVar),
+				"mod");
+		if (appTerm == null) {
+			return abstractVar;
+		}
+		assert appTerm.getParameters().length == 2;
+		final Term innerDivisorTerm = appTerm.getParameters()[1];
+		final Rational innerDivisorRational = SmtUtils.tryToConvertToLiteral(innerDivisorTerm);
+		if (innerDivisorRational == null) {
+			return abstractVar;
+		}
+		if (innerDivisorRational.div(Rational.valueOf(divisor, BigInteger.ONE)).isIntegral()) {
+			// inner divisor is divisible by outer divisor
+			final Term divident = appTerm.getParameters()[0];
+			return constructAbstractVar(divident);
+		} else {
+			return abstractVar;
+		}
+	}
+
+	@Override
+	public abstract AbstractGeneralizedAffineTerm<AVAR> add(final Rational offset);
 
 	@Override
 	public Equivalence compare(final IPolynomialTerm otherTerm) {
@@ -970,8 +1207,13 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 	 */
 	@Override
 	public Rational computeGcdOfCoefficients() {
+		final Map<?, Rational> map = mAbstractVariable2Coefficient;
+		return computeGcdOfValues(map);
+	}
+
+	private static Rational computeGcdOfValues(final Map<?, Rational> map) {
 		Rational gcd = Rational.ZERO;
-		for (final Entry<AVAR, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+		for (final Entry<?, Rational> entry : map.entrySet()) {
 			gcd = gcd.gcd(entry.getValue());
 		}
 		return gcd;

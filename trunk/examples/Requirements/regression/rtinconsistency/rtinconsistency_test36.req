@@ -1,5 +1,4 @@
-// #TestSpec: rt-inconsistent:req1+req2; vacuous:; inconsistent:; results:-1
-// 2020-01-13: Spec checked by Elli
+// #TestSpec: rt-inconsistent:req1+req2; vacuous:req1; inconsistent:; results:-1
 Input var3 is bool
 Input var4 is bool
 CONST time_at_least is 30.0

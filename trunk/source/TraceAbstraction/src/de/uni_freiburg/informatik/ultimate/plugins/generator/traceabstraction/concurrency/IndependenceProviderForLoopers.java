@@ -36,24 +36,37 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.ChainingHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.TransferringHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.UnionPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.LooperIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.util.Lazy;
 
 class IndependenceProviderForLoopers<L extends IIcfgTransition<?>> implements IRefinableIndependenceProvider<L> {
+
+	private static final boolean USE_SEPARATE_SCRIPT = false;
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final CfgSmtToolkit mCsToolkit;
+	private final Lazy<ManagedScript> mIndependenceScript;
 	private final IndependenceSettings.IndependenceType mType;
 
 	private Set<IPredicate> mAbstractionLevel;
@@ -62,10 +75,11 @@ class IndependenceProviderForLoopers<L extends IIcfgTransition<?>> implements IR
 	private UnionPredicateCoverageChecker mCoverage;
 
 	public IndependenceProviderForLoopers(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final IndependenceSettings.IndependenceType type) {
+			final Lazy<ManagedScript> independenceScript, final IndependenceSettings.IndependenceType type) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(IndependenceProviderForLoopers.class);
 		mCsToolkit = csToolkit;
+		mIndependenceScript = independenceScript;
 		mType = type;
 	}
 
@@ -96,12 +110,41 @@ class IndependenceProviderForLoopers<L extends IIcfgTransition<?>> implements IR
 	}
 
 	private IHoareTripleChecker getHoareTripleChecker(final IRefinementEngineResult<L, ?> refinement) {
-		final IHoareTripleChecker refinementHtc = refinement.getHoareTripleChecker();
-		if (refinementHtc != null) {
-			return refinementHtc;
+		if (!USE_SEPARATE_SCRIPT) {
+			final var htc = refinement.getHoareTripleChecker();
+			assert htc != null : "Refinement must have Hoare triple checker";
+			return htc;
 		}
-		return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
-				HoareTripleChecks.MONOLITHIC, mCsToolkit, refinement.getPredicateUnifier());
+
+		// TODO The code below does not yet work entirely. The problem is that various components (unifier, symbol
+		// table, etc.) need to be transferred to the independence script.
+
+		// TODO see if we can re-use the existing predicate unifier somehow
+		// TODO see if passing (untransferred) CFG symbol table (twice) causes problems here
+		final BasicPredicateFactory factory =
+				new BasicPredicateFactory(mServices, mIndependenceScript.get(), mCsToolkit.getSymbolTable());
+		final var unifier = new PredicateUnifier(mLogger, mServices, mIndependenceScript.get(), factory,
+				mCsToolkit.getSymbolTable(), SimplificationTechnique.NONE,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+
+		final IHoareTripleChecker underlyingHtc = HoareTripleCheckerUtils
+				.constructEfficientHoareTripleChecker(mServices, HoareTripleChecks.MONOLITHIC, mCsToolkit, unifier);
+
+		final var transferrer = new TransferrerWithVariableCache(mCsToolkit.getManagedScript().getScript(),
+				mIndependenceScript.get(), factory);
+		final IHoareTripleChecker transferringHtc =
+				new TransferringHoareTripleChecker(underlyingHtc, transferrer, unifier);
+
+		final HoareTripleCheckerCache cache = extractCache(refinement.getHoareTripleChecker());
+		return new CachingHoareTripleChecker(mServices, transferringHtc, refinement.getPredicateUnifier(), cache);
+	}
+
+	private HoareTripleCheckerCache extractCache(final IHoareTripleChecker refinementHtc) {
+		if (refinementHtc instanceof CachingHoareTripleChecker) {
+			return ((CachingHoareTripleChecker) refinementHtc).getCache();
+		}
+		mLogger.warn("Can not access Hoare triple cache. Additional checks may be costly.");
+		return new HoareTripleCheckerCache();
 	}
 
 	private ILooperCheck<L> constructCheck() {

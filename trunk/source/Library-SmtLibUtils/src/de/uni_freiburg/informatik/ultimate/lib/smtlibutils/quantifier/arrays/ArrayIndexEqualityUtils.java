@@ -91,7 +91,7 @@ public class ArrayIndexEqualityUtils {
 			final int quantifier, final Term preprocessedInput, final List<MultiDimensionalSelect> selectTerms,
 			final List<MultiDimensionalNestedStore> stores) {
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation = new ThreeValuedEquivalenceRelation<>();
-		final Term[] context = QuantifierUtils.getXjunctsInner(quantifier, preprocessedInput);
+		final Term[] context = QuantifierUtils.getDualFiniteJuncts(quantifier, preprocessedInput);
 		boolean inconsistencyDetected = false;
 		for (final MultiDimensionalSelect selectTerm : selectTerms) {
 			for (final Term entry : selectTerm.getIndex()) {

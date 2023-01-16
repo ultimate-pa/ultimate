@@ -172,8 +172,7 @@ public class ACSLHandler implements IACSLHandler {
 
 	public ACSLHandler(final boolean witnessInvariantMode, final FlatSymbolTable symboltable,
 			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
-			final ProcedureManager procedureManager, final LocationFactory locationFactory,
-			final CHandler chandler) {
+			final ProcedureManager procedureManager, final LocationFactory locationFactory, final CHandler chandler) {
 		mWitnessInvariantMode = witnessInvariantMode;
 		mSymboltable = symboltable;
 		mExpressionTranslation = expressionTranslation;
@@ -220,7 +219,7 @@ public class ACSLHandler implements IACSLHandler {
 			} else {
 				check = new Check(Check.Spec.ASSERT);
 			}
-			final ILocation loc = mLocationFactory.createACSLLocation(node, check);
+			final ILocation loc = mLocationFactory.createACSLLocation(node);
 
 			ExpressionResult formula = (ExpressionResult) main
 					.dispatch(((Assertion) ((CodeAnnotStmt) node).getCodeStmt()).getFormula(), main.getAcslHook());
@@ -388,7 +387,7 @@ public class ACSLHandler implements IACSLHandler {
 			final ExpressionResult right =
 					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getRight());
 			final int op = getCASTBinaryExprOperator(node.getOperator());
-			return mCExpressionTranslator.handleMultiplicativeOperation(loc, op, left, right, main.getAcslHook());
+			return mCExpressionTranslator.handleMultiplicativeOperation(loc, op, left, right);
 		}
 		case ARITHMINUS:
 		case ARITHPLUS: {
@@ -397,7 +396,7 @@ public class ACSLHandler implements IACSLHandler {
 			final ExpressionResult right =
 					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getRight());
 			final int op = getCASTBinaryExprOperator(node.getOperator());
-			return mCExpressionTranslator.handleAdditiveOperation(loc, op, left, right, main.getAcslHook());
+			return mCExpressionTranslator.handleAdditiveOperation(loc, op, left, right);
 		}
 		case COMPEQ:
 		case COMPNEQ: {
@@ -490,14 +489,11 @@ public class ACSLHandler implements IACSLHandler {
 
 		switch (node.getOperator()) {
 		case LOGICNEG:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_not, res,
-					main.getAcslHook());
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_not, res);
 		case MINUS:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus, res,
-					main.getAcslHook());
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus, res);
 		case PLUS:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus, res,
-					main.getAcslHook());
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus, res);
 		case POINTER:
 		case ADDROF:
 		case LOGICCOMPLEMENT:
@@ -650,7 +646,7 @@ public class ACSLHandler implements IACSLHandler {
 		mSpecType = ACSLHandler.SPEC_TYPE.REQUIRES;
 		final Expression formula = ((ExpressionResult) main.dispatch(node.getFormula())).getLrValue().getValue();
 		final Check check = new Check(Check.Spec.PRE_CONDITION);
-		final ILocation reqLoc = mLocationFactory.createACSLLocation(node, check);
+		final ILocation reqLoc = mLocationFactory.createACSLLocation(node);
 		final RequiresSpecification req = new RequiresSpecification(reqLoc, false, formula);
 		check.annotate(req);
 		return new ContractResult(new Specification[] { req });
@@ -669,7 +665,7 @@ public class ACSLHandler implements IACSLHandler {
 		mSpecType = ACSLHandler.SPEC_TYPE.ENSURES;
 		final Expression formula = ((ExpressionResult) main.dispatch(e)).getLrValue().getValue();
 		final Check check = new Check(Check.Spec.POST_CONDITION);
-		final ILocation ensLoc = mLocationFactory.createACSLLocation(node, check);
+		final ILocation ensLoc = mLocationFactory.createACSLLocation(node);
 		final EnsuresSpecification ens = new EnsuresSpecification(ensLoc, false, formula);
 		check.annotate(ens);
 		return new ContractResult(new Specification[] { ens });
@@ -747,7 +743,7 @@ public class ACSLHandler implements IACSLHandler {
 
 		assert res != null && res.getLrValue().getValue() != null;
 		final Check check = new Check(Check.Spec.INVARIANT);
-		final ILocation invLoc = mLocationFactory.createACSLLocation(node, check);
+		final ILocation invLoc = mLocationFactory.createACSLLocation(node);
 		final LoopInvariantSpecification lis =
 				new LoopInvariantSpecification(invLoc, false, res.getLrValue().getValue());
 		check.annotate(lis);

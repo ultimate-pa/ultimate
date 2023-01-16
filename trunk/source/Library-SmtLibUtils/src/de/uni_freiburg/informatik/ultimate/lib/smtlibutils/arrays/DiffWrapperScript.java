@@ -157,7 +157,17 @@ public class DiffWrapperScript extends WrapperScript {
 				final Term b = arrays.getOtherElement();
 				final Term selectA = term("select", a, diffTerm);
 				final Term selectB = term("select", b, diffTerm);
-				final Term axiom = term("=>", term("=", selectA, selectB), term("=", a, b));
+				Term axiom = term("=>", term("=", selectA, selectB), term("=", a, b));
+
+				/*
+				 * If one of the arguments of diff contains a quantified variable, the axiom is
+				 * not a closed formula. The problem was discussed in Issue #577. The
+				 * quantification of free vars is a quick solution. An probably more performant
+				 * alternative would be to instantiate the axiom inside the quantified formula.
+				 */
+				if (axiom.getFreeVars().length > 0) {
+				   axiom = quantifier(Script.FORALL, axiom.getFreeVars(), axiom);
+				}
 				mScript.assertTerm(axiom);
 			}
 		}

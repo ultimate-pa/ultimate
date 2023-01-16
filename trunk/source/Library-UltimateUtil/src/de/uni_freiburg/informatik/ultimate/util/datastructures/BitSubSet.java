@@ -94,6 +94,9 @@ public final class BitSubSet<E> extends AbstractCollection<E> {
 
 	@Override
 	public boolean equals(final Object o) {
+		if (this == o) {
+			return true;
+		}
 		if (o instanceof BitSubSet<?>) {
 			final BitSubSet<?> b = (BitSubSet<?>) o;
 			if (b.mFactory == mFactory) {
@@ -234,6 +237,9 @@ public final class BitSubSet<E> extends AbstractCollection<E> {
 			assert left.mFactory == this : LEFT_NOT_CREATED_BY_FACTORY;
 			assert right.mFactory == this : RIGHT_NOT_CREATED_BY_FACTORY;
 
+			if (left == right) {
+				return left;
+			}
 			if (right.isEmpty()) {
 				return left;
 			}
@@ -256,11 +262,14 @@ public final class BitSubSet<E> extends AbstractCollection<E> {
 			assert left.mFactory == this : LEFT_NOT_CREATED_BY_FACTORY;
 			assert right.mFactory == this : RIGHT_NOT_CREATED_BY_FACTORY;
 
+			if (left == right) {
+				return left;
+			}
 			if (right.isEmpty()) {
-				return right;
+				return empty();
 			}
 			if (left.isEmpty()) {
-				return left;
+				return empty();
 			}
 			final BitSet inter = copy(left.mBitSet);
 			inter.and(right.mBitSet);

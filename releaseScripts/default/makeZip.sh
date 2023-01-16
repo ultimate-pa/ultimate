@@ -61,8 +61,8 @@ fi
 
 
 # set version 
-VERSION=`git rev-parse HEAD | cut -c1-8`
-echo "Version is "$VERSION
+VERSION=$(git rev-parse HEAD | cut -c1-8)
+echo "Version is $VERSION"
 
 
 TARGETDIR=U${TOOLNAME}-${ARCH}
@@ -72,7 +72,7 @@ ZIPFILE=Ultimate${TOOLNAME}-${ARCH}.zip
 SETTINGS=../../trunk/examples/settings/default/${LCTOOLNAME}/*${TOOLNAME}*
 
 # check all toolchain arguments 
-if [ ! -z "$3" -a ! "NONE" = "$3" ]; then
+if [ -n "$3" -a ! "NONE" = "$3" ]; then
 	TOOLCHAIN=../../trunk/examples/toolchains/${3}
 else 
 	echo "No reach toolchain specified, ommitting..."
@@ -131,14 +131,14 @@ mkdir "$TARGETDIR"
 mkdir "$CONFIGDIR"
 mkdir "$DATADIR"
 
-test cp -a ../../trunk/source/BA_SiteRepository/target/${ARCHPATH}/* "$TARGETDIR"/
+exit_on_fail cp -a ../../trunk/source/BA_SiteRepository/target/${ARCHPATH}/* "$TARGETDIR"/
 copy_if_non_empty "$TOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"Reach.xml
 copy_if_non_empty "$TERMTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"Termination.xml
 copy_if_non_empty "$VALTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"ReachWitnessValidation.xml
 copy_if_non_empty "$MEMDEREFMEMTRACKTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"MemDerefMemtrack.xml
 copy_if_non_empty "$LTLTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"LTL.xml
 copy_if_non_empty "$TERMVALTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"TerminationWitnessValidation.xml
-test cp ${SETTINGS} "$CONFIGDIR"/.
+exit_on_fail cp ${SETTINGS} "$CONFIGDIR"/.
 
 ## copy all adds to target dir 
 for add in "${ADDS[@]}" ; do 
@@ -146,18 +146,18 @@ for add in "${ADDS[@]}" ; do
         echo "$add does not exist, aborting..." 
         exit 1
     fi 
-    test cp $add "$TARGETDIR"/
+    exit_on_fail cp $add "$TARGETDIR"/
 done 
 
 
 echo "Modifying Ultimate.py with version and toolname"
 ## replacing version value in Ultimate.py
-test sed "s/^version =.*$/version = \'$VERSION\'/g" "$TARGETDIR"/Ultimate.py > "$TARGETDIR"/Ultimate.py.tmp && mv "$TARGETDIR"/Ultimate.py.tmp "$TARGETDIR"/Ultimate.py && chmod a+x "$TARGETDIR"/Ultimate.py
+exit_on_fail sed "s/^version =.*$/version = \'$VERSION\'/g" "$TARGETDIR"/Ultimate.py > "$TARGETDIR"/Ultimate.py.tmp && mv "$TARGETDIR"/Ultimate.py.tmp "$TARGETDIR"/Ultimate.py && chmod a+x "$TARGETDIR"/Ultimate.py
 
 ## replacing toolname value in Ultimate.py
-test sed "s/toolname =.*/toolname = \'$TOOLNAME\'/g" "$TARGETDIR"/Ultimate.py > "$TARGETDIR"/Ultimate.py.tmp && mv "$TARGETDIR"/Ultimate.py.tmp "$TARGETDIR"/Ultimate.py && chmod a+x "$TARGETDIR"/Ultimate.py
+exit_on_fail sed "s/toolname =.*/toolname = \'$TOOLNAME\'/g" "$TARGETDIR"/Ultimate.py > "$TARGETDIR"/Ultimate.py.tmp && mv "$TARGETDIR"/Ultimate.py.tmp "$TARGETDIR"/Ultimate.py && chmod a+x "$TARGETDIR"/Ultimate.py
 
 ## creating new zipfile 
 echo "Creating .zip"
-test zip -q ${ZIPFILE} -r "$TARGETDIR"/*
+exit_on_fail zip -q ${ZIPFILE} -r "$TARGETDIR"/*
 

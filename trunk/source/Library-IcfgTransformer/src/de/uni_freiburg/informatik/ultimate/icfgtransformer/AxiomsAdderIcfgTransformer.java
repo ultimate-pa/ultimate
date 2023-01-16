@@ -29,8 +29,8 @@ public class AxiomsAdderIcfgTransformer<INLOC extends IcfgLocation, OUTLOC exten
 		final CfgSmtToolkit inputCfgCsToolkit = inputCfg.getCfgSmtToolkit();
 		final ManagedScript mgdScript = inputCfgCsToolkit.getManagedScript();
 
-		final SmtFunctionsAndAxioms newSmtSymbols =
-				inputCfgCsToolkit.getSmtFunctionsAndAxioms().addAxiom(additionalAxioms);
+		final SmtFunctionsAndAxioms newSmtSymbols = inputCfgCsToolkit.getSmtFunctionsAndAxioms()
+				.addAxiom(additionalAxioms, inputCfgCsToolkit.getSymbolTable());
 
 		final CfgSmtToolkit newToolkit = new CfgSmtToolkit(inputCfgCsToolkit.getModifiableGlobalsTable(), mgdScript,
 				inputCfgCsToolkit.getSymbolTable(), inputCfgCsToolkit.getProcedures(), inputCfgCsToolkit.getInParams(),

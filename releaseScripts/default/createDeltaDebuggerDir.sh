@@ -4,15 +4,11 @@
 # It also adds README, Ultimate.py, and various license files
 # In contrast to createZip, it does not add toolchains or settings files and it does not generate a .zip, only the directory 
 
-function test {
-    "$@"
-    local status=$?
-    if [ $status -ne 0 ]; then
-        echo "$@ failed with $1"
-        exit $status
-    fi
-    return $status
-}
+## Include the makeSettings shared functions 
+DIR="${BASH_SOURCE%/*}"
+if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
+. "$DIR/makeSettings.sh"
+
 
 if [ $# -le 0 ]; then
     echo $#
@@ -63,21 +59,21 @@ mkdir "$TARGETDIR"
 mkdir "$CONFIGDIR"
 mkdir "$DATADIR"
 
-test cp -a ../../trunk/source/BA_SiteRepository/target/${ARCHPATH}/* "$TARGETDIR"/
-test cp adds/LICENSE* "$TARGETDIR"/
-test cp adds/*LICENSE "$TARGETDIR"/
-test cp adds/Ultimate.py "$TARGETDIR"/
-test cp adds/Ultimate.ini "$TARGETDIR"/
-test cp adds/README "$TARGETDIR"/
-test cp ${Z3PATH} "$TARGETDIR"/
-test cp ${CVC4PATH} "$TARGETDIR"/
-test cp ${MATHSATPATH} "$TARGETDIR"/
+exit_on_fail cp -a ../../trunk/source/BA_SiteRepository/target/${ARCHPATH}/* "$TARGETDIR"/
+exit_on_fail cp adds/LICENSE* "$TARGETDIR"/
+exit_on_fail cp adds/*LICENSE "$TARGETDIR"/
+exit_on_fail cp adds/Ultimate.py "$TARGETDIR"/
+exit_on_fail cp adds/Ultimate.ini "$TARGETDIR"/
+exit_on_fail cp adds/README "$TARGETDIR"/
+exit_on_fail cp ${Z3PATH} "$TARGETDIR"/
+exit_on_fail cp ${CVC4PATH} "$TARGETDIR"/
+exit_on_fail cp ${MATHSATPATH} "$TARGETDIR"/
 
 echo "Modifying Ultimate.py with version and toolname"
 ## replacing version value in Ultimate.py
-test sed "s/version =.*/version = \'$VERSION\'/g" "$TARGETDIR"/Ultimate.py > "$TARGETDIR"/Ultimate.py.tmp && mv "$TARGETDIR"/Ultimate.py.tmp "$TARGETDIR"/Ultimate.py && chmod a+x "$TARGETDIR"/Ultimate.py
+exit_on_fail sed "s/version =.*/version = \'$VERSION\'/g" "$TARGETDIR"/Ultimate.py > "$TARGETDIR"/Ultimate.py.tmp && mv "$TARGETDIR"/Ultimate.py.tmp "$TARGETDIR"/Ultimate.py && chmod a+x "$TARGETDIR"/Ultimate.py
 
 ## replacing toolname value in Ultimate.py
-test sed "s/toolname =.*/toolname = \'$TOOLNAME\'/g" "$TARGETDIR"/Ultimate.py > "$TARGETDIR"/Ultimate.py.tmp && mv "$TARGETDIR"/Ultimate.py.tmp "$TARGETDIR"/Ultimate.py && chmod a+x "$TARGETDIR"/Ultimate.py
+exit_on_fail sed "s/toolname =.*/toolname = \'$TOOLNAME\'/g" "$TARGETDIR"/Ultimate.py > "$TARGETDIR"/Ultimate.py.tmp && mv "$TARGETDIR"/Ultimate.py.tmp "$TARGETDIR"/Ultimate.py && chmod a+x "$TARGETDIR"/Ultimate.py
 
 

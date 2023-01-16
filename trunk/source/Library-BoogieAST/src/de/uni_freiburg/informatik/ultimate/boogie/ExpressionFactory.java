@@ -62,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckHelper;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
@@ -132,7 +131,6 @@ public class ExpressionFactory {
 			return constructBinaryExpression(loc, op, left, right);
 		}
 
-		final boolean isCommutative = isCommutative(op);
 		if (!isLeftLiteral && isRightLiteral && isCommutative(op)) {
 			// keep the literal on the left if commutative
 			return newBinaryExpression(loc, op, right, left);
@@ -158,7 +156,7 @@ public class ExpressionFactory {
 
 		if (isLeftLiteral && isRightLiteral) {
 			return computeBinaryExpression(loc, op, left, right);
-		} else if (isLeftLiteral && isCommutative) {
+		} else if (isLeftLiteral && isCommutative(op)) {
 			if (right instanceof BinaryExpression) {
 				// if possible, try to combine constants
 				// if expression is of the form (op c1 (op c2 x)), make (op c3 x) with c3 == (op c1 c2)
@@ -175,19 +173,19 @@ public class ExpressionFactory {
 	private static Expression computeBinaryExpression(final ILocation loc, final Operator op, final Expression left,
 			final Expression right) {
 		if (left instanceof BooleanLiteral) {
-			return constructBinExprWithLiteralOps_Bool(loc, op, (BooleanLiteral) left, (BooleanLiteral) right);
+			return constructBinExprWithLiteralOpsBool(loc, op, (BooleanLiteral) left, (BooleanLiteral) right);
 		} else if (left instanceof IntegerLiteral) {
-			return constructBinExprWithLiteralOps_Integer(loc, op, (IntegerLiteral) left, (IntegerLiteral) right);
+			return constructBinExprWithLiteralOpsInteger(loc, op, (IntegerLiteral) left, (IntegerLiteral) right);
 		} else if (left instanceof RealLiteral) {
-			return constructBinExprWithLiteralOps_Real(loc, op, (RealLiteral) left, (RealLiteral) right);
+			return constructBinExprWithLiteralOpsReal(loc, op, (RealLiteral) left, (RealLiteral) right);
 		} else if (left instanceof BitvecLiteral) {
-			return constructBinExprWithLiteralOps_Bitvector(loc, op, (BitvecLiteral) left, (BitvecLiteral) right);
+			return constructBinExprWithLiteralOpsBitvector(loc, op, (BitvecLiteral) left, (BitvecLiteral) right);
 		} else {
 			throw new UnsupportedOperationException("Unknown literal: " + left.getClass());
 		}
 	}
 
-	private static BooleanLiteral constructBinExprWithLiteralOps_Bool(final ILocation loc, final Operator operator,
+	private static BooleanLiteral constructBinExprWithLiteralOpsBool(final ILocation loc, final Operator operator,
 			final BooleanLiteral leftLiteral, final BooleanLiteral rightLiteral) {
 		final boolean leftValue = leftLiteral.getValue();
 		final boolean rightValue = rightLiteral.getValue();
@@ -229,7 +227,7 @@ public class ExpressionFactory {
 		return createBooleanLiteral(loc, result);
 	}
 
-	private static Expression constructBinExprWithLiteralOps_Integer(final ILocation loc, final Operator operator,
+	private static Expression constructBinExprWithLiteralOpsInteger(final ILocation loc, final Operator operator,
 			final IntegerLiteral leftLiteral, final IntegerLiteral rightLiteral) {
 		final BigInteger leftValue = new BigInteger(leftLiteral.getValue());
 		final BigInteger rightValue = new BigInteger(rightLiteral.getValue());
@@ -290,7 +288,7 @@ public class ExpressionFactory {
 		}
 	}
 
-	private static Expression constructBinExprWithLiteralOps_Real(final ILocation loc, final Operator operator,
+	private static Expression constructBinExprWithLiteralOpsReal(final ILocation loc, final Operator operator,
 			final RealLiteral leftLiteral, final RealLiteral rightLiteral) {
 
 		final Rational leftValue = toRational(leftLiteral.getValue());
@@ -349,7 +347,7 @@ public class ExpressionFactory {
 		}
 	}
 
-	private static Expression constructBinExprWithLiteralOps_Bitvector(final ILocation loc, final Operator operator,
+	private static Expression constructBinExprWithLiteralOpsBitvector(final ILocation loc, final Operator operator,
 			final BitvecLiteral leftLiteral, final BitvecLiteral rightLiteral) {
 		final BigInteger leftValue = new BigInteger(leftLiteral.getValue());
 		final BigInteger rightValue = new BigInteger(rightLiteral.getValue());
@@ -448,13 +446,32 @@ public class ExpressionFactory {
 				(BoogieType) operand.getType(), new TypeErrorReporter(loc));
 
 		if (operand instanceof BitvecLiteral) {
-			final BigInteger biValue = new BigInteger(((BitvecLiteral) operand).getValue());
-			final BigInteger two = BigInteger.valueOf(2);
-			final BigInteger dividedByLow = biValue.divide(two.pow(low));
-			final BigInteger biresult = dividedByLow.mod(two.pow(high));
-			return new BitvecLiteral(loc, type, biresult.toString(), high - low);
+			return constructBitvectorAccessExpressionResult(loc, (BitvecLiteral) operand, high, low, type);
 		}
 		return new BitVectorAccessExpression(loc, type, operand, high, low);
+	}
+
+	/**
+	 * Result of BitvectorAccessExpression for the special case that the operand is a literal.
+	 *
+	 * @param high
+	 *            exclusive
+	 * @param low
+	 *            inclusive
+	 */
+	public static Expression constructBitvectorAccessExpressionResult(final ILocation loc, final BitvecLiteral operand,
+			final int high, final int low, final BoogieType type) {
+		final BigInteger biresult =
+				constructBitvectorAccessExpressionResult(new BigInteger(operand.getValue()), high, low);
+		return new BitvecLiteral(loc, type, biresult.toString(), high - low);
+	}
+
+	public static BigInteger constructBitvectorAccessExpressionResult(final BigInteger value, final int high,
+			final int low) {
+		final BigInteger two = BigInteger.valueOf(2);
+		final BigInteger dividedByLow = value.divide(two.pow(low));
+		final BigInteger biresult = dividedByLow.mod(two.pow(high));
+		return biresult;
 	}
 
 	public static Expression and(final ILocation loc, final List<Expression> exprs) {
@@ -562,11 +579,6 @@ public class ExpressionFactory {
 		return new ArrayLHS(loc, lhsType, innerLhs, outerMostIndex);
 	}
 
-	public static ArrayLHS constructNestedArrayLHS(final ILocation loc, final IBoogieType type, final LeftHandSide lhs,
-			final Expression[] indices) {
-		return constructNestedArrayLHS(loc, lhs, indices);
-	}
-
 	public static IdentifierExpression constructIdentifierExpression(final ILocation loc, final BoogieType type,
 			final String identifier, final DeclarationInformation declarationInformation) {
 		assert loc != null && type != null && identifier != null && declarationInformation != null;
@@ -599,7 +611,6 @@ public class ExpressionFactory {
 		return new BinaryExpression(loc, type, operator, operand1, operand2);
 	}
 
-
 	/**
 	 * Construct a new {@link FunctionApplication} with the given C function identifier and the given Boogie arguments.
 	 *
@@ -616,9 +627,8 @@ public class ExpressionFactory {
 	 */
 	public static Expression constructFunctionApplication(final ILocation loc, final String identifier,
 			final Expression[] arguments, final BoogieType resultBoogieType) {
-	return new FunctionApplication(loc, resultBoogieType, identifier, arguments);
+		return new FunctionApplication(loc, resultBoogieType, identifier, arguments);
 	}
-
 
 	public static StructAccessExpression constructStructAccessExpression(final ILocation loc, final Expression struct,
 			final String fieldName) {
@@ -637,6 +647,24 @@ public class ExpressionFactory {
 
 	public static BitvecLiteral createBitvecLiteral(final ILocation loc, final String value, final int length) {
 		return new BitvecLiteral(loc, BoogieType.createBitvectorType(length), value, length);
+	}
+
+	public static Expression createBitvecLiteral(final ILocation loc, BigInteger value, final int bitlength) {
+		final Expression resultLiteral;
+		if (value.signum() == -1) {
+			final BigInteger maxValue = BigInteger.valueOf(2).pow(bitlength);
+			value = value.add(maxValue);
+		}
+		final BigInteger valueInRange = constructBitvectorInRange(value, bitlength);
+		resultLiteral = ExpressionFactory.createBitvecLiteral(loc, valueInRange.toString(), bitlength);
+		return resultLiteral;
+	}
+
+	/**
+	 * @return the result of value % 2^bitlength
+	 */
+	private static BigInteger constructBitvectorInRange(final BigInteger value, final int bitlength) {
+		return value.mod(BigInteger.TWO.pow(bitlength));
 	}
 
 	public static RealLiteral createRealLiteral(final ILocation loc, final String value) {
@@ -721,14 +749,12 @@ public class ExpressionFactory {
 		return new WildcardExpression(loc, BoogieType.TYPE_BOOL);
 	}
 
-
 	/**
 	 * true iff left is neutral if it is the left operand of binOp, false otherwise
 	 *
 	 * If true, then (binOp left x) == x for any x
 	 */
 	private static boolean isNeutralLeft(final Operator binOp, final Expression left) {
-		// TODO: Complete
 		switch (binOp) {
 		case ARITHMUL:
 			if (left instanceof IntegerLiteral) {
@@ -745,15 +771,10 @@ public class ExpressionFactory {
 			}
 			return false;
 		case LOGICAND:
-			if (left instanceof BooleanLiteral) {
-				return ((BooleanLiteral) left).getValue();
-			}
-			return false;
+		case LOGICIMPLIES:
+			return left instanceof BooleanLiteral && ((BooleanLiteral) left).getValue();
 		case LOGICOR:
-			if (left instanceof BooleanLiteral) {
-				return !((BooleanLiteral) left).getValue();
-			}
-			return false;
+			return left instanceof BooleanLiteral && !((BooleanLiteral) left).getValue();
 		case COMPEQ:
 		case COMPNEQ:
 		case ARITHDIV:
@@ -765,7 +786,6 @@ public class ExpressionFactory {
 		case COMPLEQ:
 		case COMPLT:
 		case COMPPO:
-		case LOGICIMPLIES:
 		case LOGICIFF:
 			return false;
 		default:
@@ -790,7 +810,9 @@ public class ExpressionFactory {
 		case LOGICOR:
 			return isNeutralLeft(binOp, right);
 		case ARITHDIV:
+			return isNeutralLeft(Operator.ARITHMUL, right);
 		case ARITHMINUS:
+			return isNeutralLeft(Operator.ARITHPLUS, right);
 		case ARITHMOD:
 		case BITVECCONCAT:
 		case COMPGEQ:
@@ -912,7 +934,7 @@ public class ExpressionFactory {
 		}
 	}
 
-	public static Rational toRational(final String realLiteralValue) {
+	private static Rational toRational(final String realLiteralValue) {
 		final String[] twoParts = realLiteralValue.split("/");
 		if (twoParts.length == 2) {
 			return Rational.valueOf(new BigInteger(twoParts[0]), new BigInteger(twoParts[1]));
@@ -923,11 +945,7 @@ public class ExpressionFactory {
 		throw new IllegalArgumentException("Not a valid real literal value: " + realLiteralValue);
 	}
 
-	public static Rational toRational(final BigInteger bigInt) {
-		return Rational.valueOf(bigInt, BigInteger.ONE);
-	}
-
-	public static Rational toRational(final BigDecimal bigDec) {
+	private static Rational toRational(final BigDecimal bigDec) {
 		Rational rat;
 		if (bigDec.scale() <= 0) {
 			final BigInteger num = bigDec.toBigInteger();
@@ -939,6 +957,5 @@ public class ExpressionFactory {
 		}
 		return rat;
 	}
-
 
 }

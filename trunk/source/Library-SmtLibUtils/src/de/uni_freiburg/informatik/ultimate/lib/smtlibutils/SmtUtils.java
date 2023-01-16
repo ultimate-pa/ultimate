@@ -48,7 +48,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.bdd.SimplifyBdd;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
@@ -59,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.DnfTransf
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm.Equivalence;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
@@ -88,7 +88,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
-import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
@@ -119,14 +118,10 @@ public final class SmtUtils {
 	public static final String FP_TO_IEEE_BV_EXTENSION = "fp.to_ieee_bv";
 
 	public enum XnfConversionTechnique {
-		BDD_BASED, BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION
+		BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION
 	}
 
 	public enum SimplificationTechnique {
-		SIMPLIFY_BDD_PROP(false),
-
-		SIMPLIFY_BDD_FIRST_ORDER(false),
-
 		SIMPLIFY_QUICK(true),
 
 		SIMPLIFY_DDA(true),
@@ -187,12 +182,6 @@ public final class SmtUtils {
 		try {
 			final Term simplified;
 			switch (simplificationTechnique) {
-			case SIMPLIFY_BDD_PROP:
-				simplified = new SimplifyBdd(services, script).transform(formula);
-				break;
-			case SIMPLIFY_BDD_FIRST_ORDER:
-				simplified = new SimplifyBdd(services, script).transformWithImplications(formula);
-				break;
 			case SIMPLIFY_DDA:
 				simplified = new SimplifyDDAWithTimeout(script.getScript(), true, services, context)
 						.getSimplifiedTerm(formula);
@@ -675,8 +664,15 @@ public final class SmtUtils {
 	public static Term not(final Script script, final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			if ("distinct".equals(appTerm.getFunction().getName()) && appTerm.getParameters().length == 2) {
-				return SmtUtils.binaryEquality(script, appTerm.getParameters()[0], appTerm.getParameters()[1]);
+			if (appTerm.getParameters().length == 2) {
+				final String funcName = appTerm.getFunction().getName();
+				if (funcName.equals("distinct") && appTerm.getParameters().length == 2) {
+					return SmtUtils.binaryEquality(script, appTerm.getParameters()[0], appTerm.getParameters()[1]);
+				}
+				if (funcName.equals("<") || funcName.equals("<=") || funcName.equals(">") || funcName.equals(">=")) {
+					final PolynomialRelation polyRel = PolynomialRelation.of(script, term);
+					return polyRel.negate(script).toTerm(script);
+				}
 			}
 			return Util.not(script, term);
 		}
@@ -763,7 +759,7 @@ public final class SmtUtils {
 		if (!SmtSortUtils.isBitvecSort(rhs.getSort())) {
 			throw new UnsupportedOperationException("need BitVec sort");
 		}
-		return PolynomialRelation.of(script, RelationSymbol.EQ, lhs, rhs).positiveNormalForm(script);
+		return PolynomialRelation.of(script, RelationSymbol.EQ, lhs, rhs).toTerm(script);
 	}
 
 	/**
@@ -777,7 +773,7 @@ public final class SmtUtils {
 		if (!rhs.getSort().isNumericSort()) {
 			throw new UnsupportedOperationException("need numeric sort");
 		}
-		return PolynomialRelation.of(script, RelationSymbol.EQ, lhs, rhs).positiveNormalForm(script);
+		return PolynomialRelation.of(script, RelationSymbol.EQ, lhs, rhs).toTerm(script);
 	}
 
 	/**
@@ -1059,7 +1055,7 @@ public final class SmtUtils {
 		int outerOffset = 0;
 		for (final Term dualJunction : dualJunctions) {
 			final Term[] innerDualJuncts = QuantifierUtils
-					.getXjunctsInner(QuantifierUtils.getCorrespondingQuantifier(outerConnective), dualJunction);
+					.getDualFiniteJuncts(QuantifierUtils.getCorrespondingQuantifier(outerConnective), dualJunction);
 			final Term[] remainingInnerDualJuncts =
 					new Term[innerDualJuncts.length - omnipresentInnerDualJuncts.size()];
 			int offset = 0;
@@ -1186,11 +1182,10 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Copy of {@link Util#ite} that uses our library methods for the construction
-	 * of terms.
+	 * Copy of {@link Util#ite} that uses our library methods for the construction of terms.
 	 */
 	public static Term ite(final Script script, final Term cond, final Term thenPart, final Term elsePart) {
-		if (isTrueLiteral(cond)|| thenPart == elsePart) {
+		if (isTrueLiteral(cond) || thenPart == elsePart) {
 			return thenPart;
 		} else if (isFalseLiteral(cond)) {
 			return elsePart;
@@ -1291,8 +1286,7 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * @return term that is equivalent to lhs X rhs where X is either leq, less,
-	 *         geq, or greater.
+	 * @return term that is equivalent to lhs X rhs where X is either leq, less, geq, or greater.
 	 */
 	private static Term comparison(final Script script, final String functionSymbol, final Term lhs, final Term rhs) {
 		final RelationSymbol rel = RelationSymbol.convert(functionSymbol);
@@ -1313,7 +1307,7 @@ public final class SmtUtils {
 		}
 		if (SmtSortUtils.isNumericSort(lhs.getSort())) {
 			return PolynomialRelation.of(script, RelationSymbol.convert(functionSymbol), lhs, rhs)
-					.positiveNormalForm(script);
+					.toTerm(script);
 		} else {
 			assert SmtSortUtils.isBitvecSort(lhs.getSort());
 			// TODO 20220908 Matthias: Minor improvements still possible. E.g., everything
@@ -1342,8 +1336,7 @@ public final class SmtUtils {
 	 * Auxiliary method for {@link TermTransformer}. The method {@link TermTransformer#convertApplicationTerm}
 	 * constructs new terms that may violate the Ultimate Normal Form (UNF) {@link UltimateNormalFormUtils}. Classes in
 	 * Ultimate that inherit {@link TermTransformer} should overwrite {@link TermTransformer#convertApplicationTerm} by
-	 * a method that uses this method for the construction of new terms. See e.g.,
-	 * {@link Substitution}.
+	 * a method that uses this method for the construction of new terms. See e.g., {@link Substitution}.
 	 *
 	 * @param appTerm
 	 *            original ApplicationTerm
@@ -1358,28 +1351,35 @@ public final class SmtUtils {
 			// no argument was changed, we can return the original term
 			result = appTerm;
 		} else {
-			result = SmtUtils.termWithLocalSimplification(script, appTerm.getFunction(), newArgs);
+			result = SmtUtils.unfTerm(script, appTerm.getFunction(), newArgs);
 		}
 		return result;
 	}
 
 	/**
-	 * Construct term but simplify it using lightweight simplification techniques if applicable.
+	 * Variation of {@link SmtUtils#unfTerm(Script, String, String[], Sort, Term...)} for the case that you already have
+	 * a {@link FunctionSymbol}.
 	 */
-	public static Term termWithLocalSimplification(final Script script, final FunctionSymbol fun,
-			final Term... params) {
+	public static Term unfTerm(final Script script, final FunctionSymbol fun, final Term... params) {
 		final Sort resultSort = fun.isReturnOverload() ? fun.getReturnSort() : null;
-		return termWithLocalSimplification(script, fun.getName(), fun.getIndices(), resultSort, params);
+		return unfTerm(script, fun.getName(), fun.getIndices(), resultSort, params);
 	}
 
 	/**
-	 * Construct term but simplify it using lightweight simplification techniques if applicable.
+	 * Ultimate's default method for constructing terms. In contrast to {@link Script#term} this method applies some
+	 * lightweight simplifications and ensures that the output is in Ultimate normal form (UNF) if the input was in UNF.
+	 * This method applies only simplifications that do will slow down the performance significantly. <br />
+	 * You should only apply {@link Script#term} instead of this method in the following two cases.
+	 * <li>You want to construct a term that has to have the syntactic form specified by your arguments. (Note that this
+	 * might violate the UNF and some of your algorithms will not be able to process your term.)
+	 * <li>You implement a method in this package that is (transitively) called by this method (needed to avoid infinite
+	 * loops) and you take care by yourself that the UNF is preserved.
 	 *
 	 * @param resultSort
 	 *            must be non-null if and only if we have an explicitly instantiated polymorphic FunctionSymbol, i.e., a
-	 *            function of the form (as <name> <sort>)
+	 *            function of the form `(as <name> <sort>)`
 	 */
-	public static Term termWithLocalSimplification(final Script script, final String funcname, final String[] indices,
+	public static Term unfTerm(final Script script, final String funcname, final String[] indices,
 			final Sort resultSort, final Term... params) {
 		final Term result;
 		switch (funcname) {
@@ -1436,10 +1436,10 @@ public final class SmtUtils {
 			result = SmtUtils.mul(script, funcname, params);
 			break;
 		case "div":
-			if (params.length != 2) {
-				throw new IllegalArgumentException("no div");
+			if (params.length < 2) {
+				throw new IllegalArgumentException("div needs at least two arguments");
 			}
-			result = div(script, params[0], params[1]);
+			result = divInt(script, params);
 			break;
 		case "mod":
 			if (params.length != 2) {
@@ -1495,8 +1495,8 @@ public final class SmtUtils {
 		assert !DEBUG_ASSERT_ULTIMATE_NORMAL_FORM
 				|| UltimateNormalFormUtils.respectsUltimateNormalForm(result) : "Term not in UltimateNormalForm";
 
-		assert !DEBUG_CHECK_EVERY_SIMPLIFICATION
-				|| Util.checkSat(script, script.term("distinct", result, script.term(funcname, indices, resultSort, params))) != LBool.SAT;
+		assert !DEBUG_CHECK_EVERY_SIMPLIFICATION || Util.checkSat(script,
+				script.term("distinct", result, script.term(funcname, indices, resultSort, params))) != LBool.SAT;
 		return result;
 	}
 
@@ -1638,27 +1638,6 @@ public final class SmtUtils {
 		return name.replaceAll("\\|", "BAR").replaceAll(" ", "_");
 	}
 
-	/**
-	 * Returns a possibly simplified version of the Term (div dividend divisor). If dividend and divisor are both
-	 * literals the returned Term is a literal which is equivalent to the result of the operation
-	 */
-	public static Term div(final Script script, final Term dividend, final Term divisor) {
-		if (dividend instanceof ConstantTerm && dividend.getSort().isNumericSort() && divisor instanceof ConstantTerm
-				&& divisor.getSort().isNumericSort()) {
-			final Rational dividentAsRational = toRational((ConstantTerm) dividend);
-			final Rational divisorAsRational = toRational((ConstantTerm) divisor);
-			final Rational quotientAsRational = dividentAsRational.div(divisorAsRational);
-			Rational result;
-			if (divisorAsRational.isNegative()) {
-				result = quotientAsRational.ceil();
-			} else {
-				result = quotientAsRational.floor();
-			}
-			return result.toTerm(dividend.getSort());
-		}
-		return script.term("div", dividend, divisor);
-	}
-
 	public static Term abs(final Script script, final Term operand) {
 		if (operand instanceof ConstantTerm && SmtSortUtils.isIntSort(operand.getSort())) {
 			final Rational operandAsRational = toRational((ConstantTerm) operand);
@@ -1741,71 +1720,75 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Division for ints with the following simplifications.
-	 * <ul>
-	 * <li>Initial literals are simplified by division as long as the result is integral.
-	 * <li>A non-initial zero cannot be simplified (semantics of division by zero similar to uninterpreted function see
-	 * http://smtlib.cs.uiowa.edu/theories-Ints.shtml). This means especially that an initial zero does not make the
-	 * result zero, because 0 is not equivalent to (div 0 0).
-	 * <li>An intermediate 1 literal is dropped.
-	 * </ul>
-	 *
-	 * See {@link SmtUtilsTest#divIntTest01} for tests. TODO: Apply flattening such that (div (div x y) z) becomes (div
-	 * x y z).
+	 * Division for ints with the several simplifications.
 	 */
 	public static Term divInt(final Script script, final Term... inputParams) {
-		final List<Term> resultParams = new ArrayList<>();
-		boolean simplificationPossible = true;
-		if (inputParams.length == 0) {
-			throw new IllegalArgumentException("int division needs at least one argument");
+		final AbstractGeneralizedAffineTerm<?>[] polynomialArgs =
+				new AbstractGeneralizedAffineTerm<?>[inputParams.length];
+		for (int i = 0; i < inputParams.length; i++) {
+			polynomialArgs[i] =
+					(AbstractGeneralizedAffineTerm<?>) PolynomialTermTransformer.convert(script, inputParams[i]);
 		}
-		resultParams.add(inputParams[0]);
-		for (int i = 1; i < inputParams.length; i++) {
-			if (simplificationPossible) {
-				final Rational nextAsRational = tryToConvertToLiteral(inputParams[i]);
-				if (nextAsRational == null) {
-					// cannot simplify - is not at literal
-					resultParams.add(inputParams[i]);
-					simplificationPossible = false;
-				} else if (nextAsRational.numerator() == BigInteger.ZERO) {
-					// cannot simplify
-					resultParams.add(inputParams[i]);
-					simplificationPossible = false;
-				} else if (nextAsRational.numerator() == BigInteger.ONE && nextAsRational.isIntegral()) {
-					// do nothing
-				} else {
-					final Rational numerator = tryToConvertToLiteral(resultParams.get(0));
-					if (numerator == null) {
-						// cannot simplify
-						resultParams.add(inputParams[i]);
-						simplificationPossible = false;
-					} else {
-						if (!numerator.isIntegral() || !nextAsRational.isIntegral()) {
-							throw new AssertionError("no integers");
-						}
-						// Euclidean division. E.g. (div -5 2) is -3
-						final BigInteger div =
-								ArithmeticUtils.euclideanDiv(numerator.numerator(), nextAsRational.numerator());
-						final Term resultTerm = SmtUtils.rational2Term(script, Rational.valueOf(div, BigInteger.ONE),
-								resultParams.get(0).getSort());
-						resultParams.set(0, resultTerm);
-					}
+		return polynomialArgs[0].div(script, Arrays.copyOfRange(polynomialArgs, 1, polynomialArgs.length))
+				.toTerm(script);
+	}
+
+	/**
+	 * Convert `(div (div a1 ... an) d)` to `(div a1 ... d*an)` if `an` and `d` are non-zero literals and convert it to
+	 * `(div a1 ... an d)` otherwise.
+	 */
+	public static Term divIntFlatten(final Script script, final Term divident, final Term divisor) {
+		final Rational divisorRat = SmtUtils.tryToConvertToLiteral(divisor);
+		Term result;
+		if (divisorRat != null) {
+			final BigInteger divisorBigInt = divisorRat.numerator();
+			result = divIntFlatten(script, divident, divisorBigInt);
+		} else {
+			final ApplicationTerm divTerm = SmtUtils.getFunctionApplication(divident, "div");
+			if (divTerm != null) {
+				final List<Term> divArguments = new ArrayList<>(Arrays.asList(divTerm.getParameters()));
+				if (divArguments.size() < 2) {
+					throw new AssertionError();
 				}
+				divArguments.add(divisor);
+				// Can't be simplified.
+				// Do not use {@link SmtUtils#div} to avoid nonterminating loop.
+				result = script.term("div", divArguments.toArray(new Term[divArguments.size()]));
 			} else {
-				final Rational nextAsRational = tryToConvertToLiteral(inputParams[i]);
-				if (nextAsRational == null) {
-					resultParams.add(inputParams[i]);
-				} else if (nextAsRational.numerator() == BigInteger.ONE) {
-					// do nothing
-				} else {
-					resultParams.add(inputParams[i]);
-				}
+				// Can't be simplified.
+				// Do not use {@link SmtUtils#div} to avoid nonterminating loop.
+				result = script.term("div", divident, divisor);
 			}
 		}
-		if (resultParams.size() == 1) {
-			return resultParams.get(0);
+		return result;
+	}
+
+	/**
+	 * Convert `(div (div a1 ... an) d)` to `(div a1 ... d*an)` if `an` is a non-zero literal and convert it to `(div a1
+	 * ... an d)` otherwise.
+	 */
+	public static Term divIntFlatten(final Script script, final Term divident, final BigInteger divisorBigInt) {
+		final Term result;
+		final ApplicationTerm divTerm = SmtUtils.getFunctionApplication(divident, "div");
+		if (divTerm != null) {
+			final List<Term> divArguments = new ArrayList<>(Arrays.asList(divTerm.getParameters()));
+			if (divArguments.size() < 2) {
+				throw new AssertionError();
+			}
+			final Term lastElement = divArguments.get(divArguments.size() - 1);
+			final Rational lastElementRat = SmtUtils.tryToConvertToLiteral(lastElement);
+			if (lastElementRat != null && !lastElementRat.equals(Rational.ZERO)) {
+				final BigInteger lastElementBigInteger = lastElementRat.numerator();
+				final BigInteger newLastElement = lastElementBigInteger.multiply(divisorBigInt);
+				divArguments.set(divArguments.size() - 1, SmtUtils.constructIntValue(script, newLastElement));
+			} else {
+				divArguments.add(SmtUtils.constructIntValue(script, divisorBigInt));
+			}
+			result = script.term("div", divArguments.toArray(new Term[divArguments.size()]));
+		} else {
+			result = script.term("div", divident, SmtUtils.constructIntValue(script, divisorBigInt));
 		}
-		return script.term("div", resultParams.toArray(new Term[resultParams.size()]));
+		return result;
 	}
 
 	/**
@@ -1829,40 +1812,20 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Returns a possibly simplified version of the Term (mod dividend divisor). If dividend and divisor are both
-	 * literals the returned Term is a literal which is equivalent to the result of the operation. If only the divisor
-	 * is a literal we apply modulo to all coefficients of the dividend (helpful simplification in case where
-	 * coefficient becomes zero).
+	 * Returns a possibly simplified version of the Term (mod dividend divisor). See {@link PolynomialTest} for
+	 * examples.
 	 */
 	public static Term mod(final Script script, final Term divident, final Term divisor) {
-		final AffineTerm affineDivident = (AffineTerm) new AffineTermTransformer(script).transform(divident);
-		final AffineTerm affineDivisor = (AffineTerm) new AffineTermTransformer(script).transform(divisor);
-		if (affineDivident.isErrorTerm() || affineDivisor.isErrorTerm()) {
+		final Rational divisorAsRational = tryToConvertToLiteral(divisor);
+		if (divisorAsRational == null) {
+			// cannot simplify
 			return script.term("mod", divident, divisor);
+		} else {
+			assert divisorAsRational.isIntegral();
+			final AbstractGeneralizedAffineTerm<?> agat =
+					(AbstractGeneralizedAffineTerm<?>) PolynomialTermTransformer.convert(script, divident);
+			return agat.mod(script, divisorAsRational.numerator()).toTerm(script);
 		}
-		if (affineDivisor.isZero()) {
-			// pass the problem how to deal with division by zero to the
-			// subsequent analysis
-			return script.term("mod", divident, divisor);
-		}
-		if (affineDivisor.isConstant()) {
-			// We take the absolut value since (mod x -k) is (mod x k) for all k>0.
-			final BigInteger bigIntDivisor = toInt(affineDivisor.getConstant()).abs();
-			if (affineDivident.isConstant()) {
-				final BigInteger bigIntDivident = toInt(affineDivident.getConstant());
-				final BigInteger modulus = ArithmeticUtils.euclideanMod(bigIntDivident, bigIntDivisor);
-				return constructIntValue(script, modulus);
-			}
-			final Term simplifiedNestedModulo = simplifyNestedModulo(script, divident, bigIntDivisor);
-			if (simplifiedNestedModulo != null) {
-				return simplifiedNestedModulo;
-			}
-			final AffineTerm moduloApplied =
-					AffineTerm.applyModuloToAllCoefficients(script, affineDivident, bigIntDivisor);
-			return script.term("mod", moduloApplied.toTerm(script),
-					affineDivisor.getConstant().abs().toTerm(affineDivisor.getSort()));
-		}
-		return script.term("mod", affineDivident.toTerm(script), affineDivisor.toTerm(script));
 	}
 
 	/**
@@ -2221,20 +2184,10 @@ public final class SmtUtils {
 	/**
 	 * @return logically equivalent term in disjunctive normal form (DNF)
 	 */
+	// TODO: xnfConversionTechnique is currently not used, should we remove it?
 	public static Term toDnf(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term term,
 			final XnfConversionTechnique xnfConversionTechnique) {
-		final Term result;
-		switch (xnfConversionTechnique) {
-		case BDD_BASED:
-			result = new SimplifyBdd(services, mgdScript).transformToDNF(term);
-			break;
-		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
-			result = new DnfTransformer(mgdScript, services).transform(term);
-			break;
-		default:
-			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + xnfConversionTechnique);
-		}
-		return result;
+		return new DnfTransformer(mgdScript, services).transform(term);
 	}
 
 	/**
@@ -2247,20 +2200,10 @@ public final class SmtUtils {
 	/**
 	 * @return logically equivalent term in conjunctive normal form (CNF)
 	 */
+	// TODO: xnfConversionTechnique is currently not used, should we remove it?
 	public static Term toCnf(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term term,
 			final XnfConversionTechnique xnfConversionTechnique) {
-		final Term result;
-		switch (xnfConversionTechnique) {
-		case BDD_BASED:
-			result = new SimplifyBdd(services, mgdScript).transformToCNF(term);
-			break;
-		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
-			result = new CnfTransformer(mgdScript, services).transform(term);
-			break;
-		default:
-			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + xnfConversionTechnique);
-		}
-		return result;
+		return new CnfTransformer(mgdScript, services).transform(term);
 	}
 
 	/**
@@ -2585,19 +2528,18 @@ public final class SmtUtils {
 	 * @param onlyOutermost
 	 *            if set to true we do not descend to subterms of a term that has been found
 	 */
-	public static Set<Term> extractApplicationTerms(final String fun, final Term term, final boolean onlyOutermost) {
-		return SubTermFinder.find(term, x -> isFunctionApplication(x, fun), onlyOutermost);
+	@SuppressWarnings("unchecked")
+	public static Set<ApplicationTerm> extractApplicationTerms(final String fun, final Term term,
+			final boolean onlyOutermost) {
+		return (Set) SubTermFinder.find(term, x -> isFunctionApplication(x, fun), onlyOutermost);
 	}
 
 	/**
-	 * Find all subterms of the given term that are constants (i.e.
-	 * {@link ApplicationTerm}s with zero parameters).
+	 * Find all subterms of the given term that are constants (i.e. {@link ApplicationTerm}s with zero parameters).
 	 *
-	 * @param restrictToNonTheoryConstants If set to true, we omit constants that
-	 *                                     are defined by the SMT that our solver is
-	 *                                     using. E.g. for the theory of floats, we
-	 *                                     omit roundTowardZero which is a constant
-	 *                                     that defines a certain rounding mode.
+	 * @param restrictToNonTheoryConstants
+	 *            If set to true, we omit constants that are defined by the SMT that our solver is using. E.g. for the
+	 *            theory of floats, we omit roundTowardZero which is a constant that defines a certain rounding mode.
 	 */
 	@SuppressWarnings("unchecked")
 	public static Set<ApplicationTerm> extractConstants(final Term term, final boolean restrictToNonTheoryConstants) {
@@ -2622,6 +2564,30 @@ public final class SmtUtils {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Flatten `(⊕ (⊕ x1 ... xn) y1 .. yn)` to `(⊕ x1 ... xn y1 .. yn)`. Sound is ⊕ left-associative. Warning:
+	 * Flattening sometimes allow further simplifications, especially if ⊕ is commutative. These simplifications are not
+	 * done if you use this method. Do not change this such that it utilizes simplifications afterwards. This might lead
+	 * to nonterminating loops since this is a low-level methods that is utilized by simplifications itself.
+	 */
+	public static Term flattenIntoFirstArgument(final Script script, final String funcname, final Term firstParam,
+			final Term... otherParams) {
+		final List<Term> resultParams;
+		if ((firstParam instanceof ApplicationTerm)
+				&& ((ApplicationTerm) firstParam).getFunction().getApplicationString().equals(funcname)) {
+			// same operator, we can flatten
+			final ApplicationTerm appTerm = (ApplicationTerm) firstParam;
+			resultParams = new ArrayList<>(appTerm.getParameters().length + otherParams.length);
+			resultParams.addAll(Arrays.asList(appTerm.getParameters()));
+			resultParams.addAll(Arrays.asList(otherParams));
+		} else {
+			resultParams = new ArrayList<>(otherParams.length + 1);
+			resultParams.add(firstParam);
+			resultParams.addAll(Arrays.asList(otherParams));
+		}
+		return script.term(funcname, resultParams.toArray(new Term[resultParams.size()]));
 	}
 
 	/**
@@ -2668,7 +2634,7 @@ public final class SmtUtils {
 
 		public void addOuterJunct(final Term outerJunct, final String outerConnective) {
 			final Term[] innerDualJuncts = QuantifierUtils
-					.getXjunctsInner(QuantifierUtils.getCorrespondingQuantifier(outerConnective), outerJunct);
+					.getDualFiniteJuncts(QuantifierUtils.getCorrespondingQuantifier(outerConnective), outerJunct);
 			if (mInnerDualJuncts == null) {
 				mInnerDualJuncts = new HashSet<>(Arrays.asList(innerDualJuncts));
 			} else {
@@ -2723,10 +2689,9 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * @return true iff this number is the binary representation of a bitvector
-	 *         whose two's complement representation is -1 (i.e., minus one).
-	 *         Exclude however the special case where bitvectors have length 1 and
-	 *         hence -1 and 1 coincide.
+	 * @return true iff this number is the binary representation of a bitvector whose two's complement representation is
+	 *         -1 (i.e., minus one). Exclude however the special case where bitvectors have length 1 and hence -1 and 1
+	 *         coincide.
 	 */
 	// <pre>
 	// TODO #bvineq 20201017 Matthias:

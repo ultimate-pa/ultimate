@@ -106,7 +106,7 @@ public class DerPreprocessor extends TermTransformer {
 		boolean existsEqualityThatIsNotOnTopLevel = false;
 		BinaryEqualityRelation someTopLevelEquality = null;
 		DerCase derCase = null;
-		final Set<Term> topLevelDualJuncts = Arrays.stream(QuantifierUtils.getXjunctsInner(quantifier, input))
+		final Set<Term> topLevelDualJuncts = Arrays.stream(QuantifierUtils.getDualFiniteJuncts(quantifier, input))
 				.collect(Collectors.toSet());
 		for (final BinaryEqualityRelation ber : classification.getImage(DerCase.CLASSICAL_DER)) {
 			if (topLevelDualJuncts.contains(ber.toTerm(mgdScript.getScript()))) {

@@ -15,9 +15,9 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol.HornClauseD
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol.HornClauseTruePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.ITerm2ExpressionSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -348,7 +348,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	// }
 
 	@Override
-	public ProgramConst getProgramConst(final ApplicationTerm term) {
+	public IProgramFunction getProgramFun(final FunctionSymbol funSym) {
 		throw new AssertionError();
 	}
 

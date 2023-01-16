@@ -43,5 +43,5 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public interface ITermProviderOnDemand {
 
-	public Term asTerm(Script script);
+	public Term toTerm(Script script);
 }

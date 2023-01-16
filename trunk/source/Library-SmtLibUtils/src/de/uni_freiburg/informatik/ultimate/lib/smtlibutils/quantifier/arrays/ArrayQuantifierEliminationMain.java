@@ -455,13 +455,14 @@ public class ArrayQuantifierEliminationMain {
 	private Term dER(Term newterm, final TermVariable newarrayvar) {
 		// DER on a_new. To eliminate the new exist quantifier: "Exists a_new"
 		final XnfDer xnfDer = new XnfDer(mMgdScript, mServices);
-		final Term[] oldParams = QuantifierUtils.getXjunctsOuter(0, newterm);
+		final Term xnf = newterm;
+		final Term[] oldParams = QuantifierUtils.getCorrespondingFiniteJuncts(0, xnf);
 		final Term[] newParams = new Term[oldParams.length];
 		final Set<TermVariable> eliminateesDER = new HashSet<>();
 		eliminateesDER.add(newarrayvar);
 		for (int i = 0; i < oldParams.length; i++) {
 
-			final Term[] oldAtoms = QuantifierUtils.getXjunctsInner(0, oldParams[i]);
+			final Term[] oldAtoms = QuantifierUtils.getDualFiniteJuncts(0, oldParams[i]);
 			newParams[i] = QuantifierUtils.applyDualFiniteConnective(mScript, 0,
 					Arrays.asList(xnfDer.tryToEliminate(0, oldAtoms, eliminateesDER)));
 		}

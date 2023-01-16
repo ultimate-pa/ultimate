@@ -204,6 +204,9 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 	/**
 	 * To make a given loopacceleration reflexive, create disjunction of acceleration and conjunction of equalities
 	 * between in and out vars
+	 * FIXME 20220925 Matthias:
+	 *  <li> We do not have an ourvar for each invar
+	 *  <li> Here we accidentally omit IProgramVars that occur only as outVar but not as invar
 	 *
 	 * @param t
 	 *            A {@link Term}

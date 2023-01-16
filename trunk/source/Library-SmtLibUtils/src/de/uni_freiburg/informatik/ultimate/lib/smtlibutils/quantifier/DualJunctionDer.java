@@ -121,7 +121,9 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		final IDerHelper<?>[] helpers;
 		if (mExpensiveEliminations) {
 			helpers = new IDerHelper[] { new DerHelperMcsbr(IntricateOperations.AUXILIARY_VARIABLES),
-					new DerHelperMcsbr(IntricateOperations.CASE_DISTINCTION) };
+//					20221121 Matthias: Omit cases that require case distinction temporarily
+//					new DerHelperMcsbr(IntricateOperations.CASE_DISTINCTION)
+					};
 		} else {
 			helpers = new IDerHelper[] { new DerHelperSbr(),
 					new DerHelperMcsbr(IntricateOperations.ADDITIONAL_DUAL_JUNCTS) };
@@ -320,7 +322,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
 		private EliminationResult tryToEliminateSbr(final ManagedScript mgdScript, final TermVariable eliminatee,
 				final EliminationTask et) {
-			final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
+			final Term[] dualJuncts = QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), et.getTerm());
 			final Set<TermVariable> bannedForDivCapture = new HashSet<>(et.getEliminatees());
 			bannedForDivCapture.addAll(et.getContext().getBoundByAncestors());
 			final Pair<Integer, SR> pair = findBestReplacementSbr(mgdScript, et.getQuantifier(), eliminatee,
@@ -374,7 +376,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 					return sfs;
 				}
 			}
-			final PolynomialRelation pr = PolynomialRelation.convert(mgdScript.getScript(), term);
+			final PolynomialRelation pr = PolynomialRelation.of(mgdScript.getScript(), term);
 			if (pr == null) {
 				return null;
 			}
@@ -414,7 +416,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		@Override
 		public MultiCaseSolvedBinaryRelation solveForSubject(final ManagedScript mgdScript, final int quantifier,
 				final TermVariable eliminatee, final Term term, final Set<TermVariable> bannedForDivCapture) {
-			final PolynomialRelation pr = PolynomialRelation.convert(mgdScript.getScript(), term);
+			final PolynomialRelation pr = PolynomialRelation.of(mgdScript.getScript(), term);
 			if (pr == null) {
 				return null;
 			}
@@ -459,7 +461,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			for (final Case cas : mcsbr.getCases()) {
 				final List<Term> dualJunctsResult = new ArrayList<>();
 				for (final SupportingTerm st : cas.getSupportingTerms()) {
-					dualJunctsResult.add(st.asTerm());
+					dualJunctsResult.add(st.getTerm());
 				}
 				final Term dualJunctionResult;
 				if (cas.getSolvedBinaryRelation() != null) {

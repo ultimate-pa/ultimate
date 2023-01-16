@@ -6,6 +6,7 @@ import argparse
 import fnmatch
 import glob
 import os
+import platform
 import re
 import shutil
 import signal
@@ -15,8 +16,12 @@ import xml.etree.ElementTree as elementtree
 from stat import ST_MODE
 from functools import lru_cache
 
+# quoting style is important here
+# fmt: off
 version = '839c364b'
 toolname = 'Automizer'
+# fmt: on
+
 write_ultimate_output_to_file = True
 output_file_name = "Ultimate.log"
 error_path_file_name = "UltimateCounterExample.errorpath"
@@ -249,7 +254,7 @@ def get_java():
             match = re.search(pattern, line)
             if match:
                 java_version = match.groups()[0]
-                java_version = java_version.split('.')[0]
+                java_version = java_version.split(".")[0]
                 java_version = int(java_version)
                 if java_version == 11:
                     return candidate
@@ -442,7 +447,7 @@ def call_desperate(call_args):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             shell=False,
-            preexec_fn=_init_child_process,
+            preexec_fn=None if is_windows() else _init_child_process,
         )
     except:
         print("Error trying to open subprocess " + str(call_args))
@@ -548,7 +553,6 @@ def check_dir(d):
 
 def check_witness_type(witness, type):
     tree = elementtree.parse(witness)
-    root = tree.getroot()
     namespace = "{http://graphml.graphdrawing.org/xmlns}"
     query = ".//{0}graph/{0}data[@key='witness-type']".format(namespace)
     elem = tree.find(query)
@@ -577,9 +581,13 @@ def debug_environment():
         print(str(env) + "=" + str(os.environ.get(env)))
 
     print("--- Machine ---")
+    print(platform.uname())
     call_relaxed_and_print(["uname", "-a"])
     call_relaxed_and_print(["cat", "/proc/cpuinfo"])
     call_relaxed_and_print(["cat", "/proc/meminfo"])
+
+    print("--- libs ---")
+    call_relaxed_and_print(["ldconfig", "-p"])
 
     print("--- Java ---")
     java_bin = get_java()
@@ -605,6 +613,16 @@ def debug_environment():
     print("--- Versions ---")
     print(version)
     call_relaxed_and_print(create_callargs(create_ultimate_base_call(), ["--version"]))
+    solver_versions = [
+        ("z3", "-version"),
+        ("mathsat", "-version"),
+        ("cvc4", "--version"),
+        ("cvc4nyu", "--version"),
+    ]
+    for solver, vflag in solver_versions:
+        abs_solver = os.path.join(ultimatedir, solver)
+        call_relaxed_and_print([abs_solver, vflag])
+        call_relaxed_and_print(["sha256sum", abs_solver])
 
     print("--- umask ---")
     call_relaxed_and_print(["touch", "testfile"])
@@ -617,7 +635,9 @@ def call_relaxed_and_print(call_args):
         print("No call_args given")
     try:
         child_process = subprocess.Popen(
-            call_args, stdout=subprocess.PIPE, preexec_fn=_init_child_process
+            call_args,
+            stdout=subprocess.PIPE,
+            preexec_fn=None if is_windows() else _init_child_process,
         )
         stdout, stderr = child_process.communicate()
     except Exception as ex:
@@ -974,6 +994,10 @@ def main():
     )
 
 
+def is_windows():
+    return sys.platform == "win32"
+
+
 def signal_handler(sig, frame):
     print("Killed by {}".format(sig))
     sys.exit(ExitCode.FAIL_SIGNAL)
@@ -983,5 +1007,6 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
     # just ignore pipe exceptions
-    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    if not is_windows():
+        signal.signal(signal.SIGPIPE, signal.SIG_DFL)
     main()

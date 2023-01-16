@@ -3,8 +3,8 @@ Please direct any questions to one of the maintainers and/or consult the
 websites.
 
 Websites:
-https://github.com/ultimate-pa/ultimate
-https://ultimate.informatik.uni-freiburg.de/
+<https://github.com/ultimate-pa/ultimate>
+<https://ultimate.informatik.uni-freiburg.de/>
 
 Maintainers:
 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -13,59 +13,59 @@ Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
 
 This archive also contains binaries for the following theorem provers.
- * Z3 (https://github.com/Z3Prover/z3) 
-   - Linux (z3)
-     z3-4.8.13 - 64 bit build from master 939860148 (2021-08-04)
-   - Windows (z3.exe)
-     z3-4.8.13 - 64 bit build from master 939860148 (2021-08-04)
+* Z3 (<https://github.com/Z3Prover/z3>)
+  * Linux (z3)
+    Z3 version 4.12.0 - 64 bit build from master 689af3b4d (2022-11-12)
+  * Windows (z3.exe)
+    Z3 version 4.12.0 - 64 bit build from master 689af3b4d (2022-11-12)
 
- * CVC4 (http://cvc4.cs.nyu.edu/)
-   - Linux 
-     - cvc4nyu is an old build, 
-       version 1.5-prerelease, 
-       subversion URL: https://github.com/CVC4/CVC4/trunk r4671 (with modifications), 
-       compiled with GCC version 4.6.4 on Dec 5 2015 05:45:40
-     - cvc4 is a release version, 
-       version 1.8 [git HEAD 52479010]
-       compiled with GCC version 5.4.0 20160609
-       on Aug 25 2020 00:35:00
-   - Windows
-     - cvc4nyu.exe is an old build, 
-       version 1.5-prerelease, 
-       subversion URL: https://github.com/CVC4/CVC4/trunk r5092 (with modifications), 
-       compiled with GCC version 4.2.1-sjlj (mingw32-2) on Aug 4 2016 10:21:05
-     - cvc4.exe is a release version, 
-       version 1.8
-       compiled with GCC version 5.3.1 20160211
-       on Aug 25 2020 08:27:39
-       Note that this version does not output the git hash, but it should be 
-       the same as the Linux version.
+* CVC4 (<http://cvc4.cs.nyu.edu/>)
+  * Linux
+    * cvc4nyu is an old build,
+      version 1.5-prerelease,
+      subversion URL: <https://github.com/CVC4/CVC4/trunk> r4671 (with modifications),
+      compiled with GCC version 4.6.4 on Dec 5 2015 05:45:40
+    * cvc4 is a release version,
+      version 1.8 [git HEAD 52479010]
+      compiled with GCC version 5.4.0 20160609
+      on Aug 25 2020 00:35:00
+  * Windows
+    * cvc4nyu.exe is an old build,
+      version 1.5-prerelease,
+      subversion URL: <https://github.com/CVC4/CVC4/trunk> r5092 (with modifications),
+      compiled with GCC version 4.2.1-sjlj (mingw32-2) on Aug 4 2016 10:21:05
+    * cvc4.exe is a release version,
+      version 1.8
+      compiled with GCC version 5.3.1 20160211
+      on Aug 25 2020 08:27:39
+      Note that this version does not output the git hash, but it should be
+      the same as the Linux version.
 
- * MathSAT5 (http://mathsat.fbk.eu)  
-   - Windows (mathsat.exe, mpir.dll, mathsat.dll)
-     MathSAT5 version 5.6.5 (63ef7602814c) (Nov 9 2020 09:13:57, gmp 6.0.0/mpir 3.0.0, msvc 18.00, 64-bit)
-   - Linux (mathsat)
-     MathSAT5 version 5.6.5 (63ef7602814c) (Nov 9 2020 08:58:55, gmp 6.1.2, gcc 7.5.0, 64-bit)
+* MathSAT5 (<http://mathsat.fbk.eu>)  
+  * Linux (mathsat)
+    MathSAT5 version 5.6.9 (0214d34392af) (Nov 10 2022 09:57:27, gmp 6.2.0, gcc 7.5.0, 64-bit, reentrant)
+  * Windows (mathsat.exe, mpir.dll, mathsat.dll)
+    MathSAT5 version 5.6.9 (<UNKNOWN>) (Nov  8 2022 11:29:39, gmp 6.0.0/mpir 3.0.0, msvc 19.12, 64-bit)
 
-For each of these theorem provers, a corresponding license file (z3-LICENSE, 
-cvc4-LICENSE, mathsat-LICENSE) can be found in our archive. Please consult 
-these files for additional restrictions regarding your application. If these 
-restrictions apply, you must delete the corresponding binaries. This might not 
-necessarily affect your application. 
+For each of these theorem provers, a corresponding license file (z3-LICENSE,
+cvc4-LICENSE, mathsat-LICENSE) can be found in our archive. Please consult
+these files for additional restrictions regarding your application. If these
+restrictions apply, you must delete the corresponding binaries. This might not
+necessarily affect your application.
 
 -------------------------------------------------------------------------------
 
 1. Requirements
-You require a working version of Python3.6 or higher. Its executable should be 
+You require a working version of Python3.6 or higher. Its executable should be
 present in your PATH variable.
 
 
 2. Usage
-This Ultimate tool should be called by the Python wrapper script Ultimate.py. 
-The wrapper script invokes a tool of the Ultimate family by selecting the 
-correct toolchain and settings file based on the given property file and the 
-files available in Ultimate's config/ directory. Depending on the concrete tool 
-you downloaded, the toolchain and the settings invoke very different 
+This Ultimate tool should be called by the Python wrapper script Ultimate.py.
+The wrapper script invokes a tool of the Ultimate family by selecting the
+correct toolchain and settings file based on the given property file and the
+files available in Ultimate's config/ directory. Depending on the concrete tool
+you downloaded, the toolchain and the settings invoke very different
 verification algorithms.
 
 The script supports the input parameters that are used in the SV-COMP and
@@ -74,17 +74,17 @@ should be invoked as follows.
  $ ./Ultimate.py --spec <propfile> --file <inputfile> --architecture <architecture>
 
 where
- * <propfile> is a property file, usually with the ending *.prp,
- * <inputfile> is a C program,
- * <architecture> is either '32bit' or '64bit' (without quotes).
+* <propfile> is a property file, usually with the ending *.prp,
+* <inputfile> is a C program,
+* <architecture> is either '32bit' or '64bit' (without quotes).
 
-Additional information can be found by invoking 
+Additional information can be found by invoking
  $ ./Ultimate.py --help
- 
-The output of the Ultimate tool is written to the file "Ultimate.log" in the
-current working directory and the result is written to stdout. 
 
-If the property specified in the property file does not hold, a human-readable 
+The output of the Ultimate tool is written to the file "Ultimate.log" in the
+current working directory and the result is written to stdout.
+
+If the property specified in the property file does not hold, a human-readable
 counterexample is written to UltimateCounterExample.errorpath.
 
 Ultimate writes for many properties a violation or correctness witness to the
@@ -92,36 +92,36 @@ file witness.graphml.
 
 
 3. Choosing the right parameters
-3.1 Property files 
-You can use property files as defined by the latest SV-COMP 
-(e.g., for 2021, https://sv-comp.sosy-lab.org/2021/rules.php and 
-https://github.com/sosy-lab/sv-benchmarks/releases/tag/svcomp21). 
- * valid-memsafety.prp
+3.1 Property files
+You can use property files as defined by the latest SV-COMP
+(e.g., for 2021, <https://sv-comp.sosy-lab.org/2021/rules.php> and
+<https://github.com/sosy-lab/sv-benchmarks/releases/tag/svcomp21>).
+* valid-memsafety.prp
    The result is 'TRUE' iff all pointer dereferences are valid,
    all deallocations are valid, and all allocated memory is eventually freed.
- * no-overflow.prp
+* no-overflow.prp
    The result is 'TRUE' iff no operations on signed integers results in an
    overflow. (Operations on unsigned integers are not checked as their
    behaviour is always defined by the C standard.)
- * unreach-call.prp
+* unreach-call.prp
    The result is 'TRUE' iff the program does not contain an execution that
    calls the SV-COMP error function __VERIFIER_error().
- * termination.prp
+* termination.prp
    The result is 'TRUE' iff every program execution reaches the end of the
    program, i.e., iff all program executions are finite.
- * no-data-race.prp
-   The result is 'TRUE' iff there is no data race. Please refer to 
-   https://en.cppreference.com/w/c/language/memory_model#Threads_and_data_races
-   for a definition of data race. 
- * valid-memcleanup.prp
-   All allocated memory is deallocated before the program terminates and there 
-   exists no finite execution of the program on which the program terminates 
+* no-data-race.prp
+   The result is 'TRUE' iff there is no data race. Please refer to
+   <https://en.cppreference.com/w/c/language/memory_model#Threads_and_data_races>
+   for a definition of data race.
+* valid-memcleanup.prp
+   All allocated memory is deallocated before the program terminates and there
+   exists no finite execution of the program on which the program terminates
    but still points to allocated memory.
-For most of these property files (except termination.prp) Ultimate also checks 
+For most of these property files (except termination.prp) Ultimate also checks
 if all ACSL specifications (e.g., "//@ assert x > 0") are valid.
 
 
-3.2 Architecture 
+3.2 Architecture
 The architecture parameter specifies whether the program is written for an
 ILP32 (32bit) or an LP64 (64bit) architecture.
 
@@ -135,8 +135,8 @@ property is violated or not. The output can be one of the following:
   Generally means that the property is violated. P specifies which property is
   violated.
 * UNKNOWN: MSG
-  Ultimate is not able to decide whether the property is satisfied or not. MSG 
-  usually describes, why it is not able to decide. 
+  Ultimate is not able to decide whether the property is satisfied or not. MSG
+  usually describes, why it is not able to decide.
 * ERROR: MSG
   Indicates an abnormal termination of Ultimate due to some error. MSG usually
   describes the error.
