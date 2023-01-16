@@ -1994,8 +1994,15 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
-
+	@Test
+	public void constantFolding01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "a", "b"),
+			};
+		final String formulaAsString = "(exists ((x Int)) (and (= a 1) (= (* x a a) 1) (= (* x b) 5)))";
+		final String expectedResult = "(and (= a 1) (= b 5))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
 
 	//@formatter:on
