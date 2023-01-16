@@ -260,10 +260,12 @@ public class FunctionHandler {
 	 * @param node
 	 *            the node to translate.
 	 * @param contract
+	 * @param isInLibraryMode
 	 * @return the translation result.
 	 */
 	public Result handleFunctionDefinition(final IDispatcher main, final MemoryHandler memoryHandler,
-			final IASTFunctionDefinition node, final CDeclaration cDec, final List<ACSLNode> contract) {
+			final IASTFunctionDefinition node, final CDeclaration cDec, final List<ACSLNode> contract,
+			final boolean isInLibraryMode) {
 
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		final String definedProcName = cDec.getName();
@@ -376,7 +378,7 @@ public class FunctionHandler {
 			final ExpressionResultBuilder bodyResultBuilder = new ExpressionResultBuilder();
 
 			// 1)
-			handleFunctionsInParams(main, loc, memoryHandler, bodyResultBuilder, node);
+			handleFunctionsInParams(main, loc, memoryHandler, bodyResultBuilder, node, isInLibraryMode);
 			// 2)
 			final ExpressionResult bodyResult = (ExpressionResult) main.dispatch(node.getBody());
 			bodyResultBuilder.addAllExceptLrValue(bodyResult);
@@ -874,9 +876,11 @@ public class FunctionHandler {
 	 * @param stmt
 	 *            the statement list to append to.
 	 * @param parent
+	 * @param isInLibraryMode
 	 */
 	private void handleFunctionsInParams(final IDispatcher main, final ILocation loc, final MemoryHandler memoryHandler,
-			final ExpressionResultBuilder resultBuilder, final IASTFunctionDefinition parent) {
+			final ExpressionResultBuilder resultBuilder, final IASTFunctionDefinition parent,
+			final boolean isInLibraryMode) {
 		final VarList[] inparamVarListArray =
 				mProcedureManager.getCurrentProcedureInfo().getDeclaration().getInParams();
 		IASTNode[] paramDecs;
@@ -944,6 +948,10 @@ public class FunctionHandler {
 				final IdentifierExpression rhsId = ExpressionFactory.constructIdentifierExpression(loc,
 						inParamAuxVarType, inparamBId, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM,
 								mProcedureManager.getCurrentProcedureInfo().getProcedureName()));
+
+				if (isInLibraryMode) {
+					mExpressionTranslation.addAssumeValueInRangeStatements(loc, rhsId, cvar, resultBuilder);
+				}
 
 				final ILocation igLoc = LocationFactory.createIgnoreLocation(loc);
 				if (isOnHeap && !(cvar instanceof CArray)) {

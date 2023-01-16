@@ -364,6 +364,8 @@ public class CHandler {
 
 	private final DataRaceChecker mDataRaceChecker;
 
+	private final boolean mIsInLibraryMode;
+
 	/**
 	 * Constructor for CHandler in pre-run mode.
 	 *
@@ -447,6 +449,7 @@ public class CHandler {
 				mFunctionToIndex, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, mProcedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
 
+		mIsInLibraryMode = false;
 	}
 
 	/**
@@ -539,6 +542,7 @@ public class CHandler {
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctionToIndex, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
+		mIsInLibraryMode = !prerunCHandler.mProcedureManager.hasProcedure(mSettings.getEntryMethod());
 
 	}
 
@@ -1476,7 +1480,7 @@ public class CHandler {
 		mCurrentDeclaredTypes.pop();
 		assert declResult.getDeclaration().getType() instanceof CFunction;
 		return mFunctionHandler.handleFunctionDefinition(main, mMemoryHandler, node, declResult.getDeclaration(),
-				mContract);
+				mContract, mIsInLibraryMode);
 	}
 
 	public Result visit(final IDispatcher main, final IASTGotoStatement node) {
