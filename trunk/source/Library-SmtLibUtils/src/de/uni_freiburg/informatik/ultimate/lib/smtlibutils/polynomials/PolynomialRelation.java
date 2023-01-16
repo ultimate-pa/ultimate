@@ -693,7 +693,22 @@ public class PolynomialRelation implements IBinaryRelation, ITermProviderOnDeman
 		if (it.hasNext()) {
 			return null;
 		}
-		return this.solveForSubject(script, fst.getKey());
-
+		final Rational rhsAsRational;
+		if (SmtSortUtils.isRealSort(mPolynomialTerm.getSort())) {
+			rhsAsRational = mPolynomialTerm.getConstant().negate().div(fst.getValue());
+		} else {
+			assert (SmtSortUtils.isIntSort(mPolynomialTerm.getSort())
+					|| SmtSortUtils.isBitvecSort(mPolynomialTerm.getSort()));
+			if (fst.getValue().equals(Rational.ONE)) {
+				rhsAsRational = mPolynomialTerm.getConstant().negate();
+			} else if (fst.getValue().equals(Rational.MONE) || SmtSortUtils.isBitvecSort(mPolynomialTerm.getSort())
+					&& SmtUtils.isBvMinusOneButNotOne(fst.getValue(), mPolynomialTerm.getSort())) {
+				rhsAsRational = mPolynomialTerm.getConstant();
+			} else {
+				return null;
+			}
+		}
+		return new SolvedBinaryRelation(fst.getKey(),
+				SmtUtils.rational2Term(script, rhsAsRational, mPolynomialTerm.getSort()), mRelationSymbol);
 	}
 }
