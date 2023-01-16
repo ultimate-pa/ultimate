@@ -1,4 +1,13 @@
-extern void __VERIFIER_assume(int);
+//#Safe
+
+/*
+ * Taken from CBMC's regression test suite
+ * (http://svn.cprover.org/svn/cbmc/trunk/regression/cbmc/).
+ *
+ * The overflow checks were omitted as these require more elaborate assertions.
+ */
+
+ extern void __VERIFIER_error(void);
 
 
 
@@ -947,50 +956,26 @@ struct exception
 
 extern int matherr (struct exception *__exc);
 
-extern void __VERIFIER_error(void);
+
 int main()
 {
-  double f, f2;
-
-  __VERIFIER_assume(!(sizeof (f2) == sizeof (float) ? __isnanf (f2) : sizeof (f2) == sizeof (double) ? __isnan (f2) : __isnanl (f2)));
-  __VERIFIER_assume(!(sizeof (f2) == sizeof (float) ? __isinff (f2) : sizeof (f2) == sizeof (double) ? __isinf (f2) : __isinfl (f2)));
-  f=f2;
+  double d;
 
 
-  if(!(100.0*10==1000)) __VERIFIER_error();
-  if(!(0*f==0)) __VERIFIER_error();
-  if(!(f*0==0)) __VERIFIER_error();
-  if(!(100*0.5==50)) __VERIFIER_error();
-//   if(!(f*1==f)) __VERIFIER_error();
-//   if(!(1*f==f)) __VERIFIER_error();
-//   if(!(1.0*1.0*f==f)) __VERIFIER_error();
-// 
-// 
-  if(!(100.0/1.0==100)) __VERIFIER_error();
-  if(!(100.1/1.0==100.1)) __VERIFIER_error();
-  if(!(100.0/2.0==50)) __VERIFIER_error();
-  if(!(100.0/0.5==200)) __VERIFIER_error();
-  if(!(0/1.0==0)) __VERIFIER_error();
-//   if(!(f/1.0==f)) __VERIFIER_error();
+  // File was split into three parts to speed up tests in Ultiate. 2016-08-08, Matthias Heizmann
 
 
-  if(!(((double)(float)100)==100.0)) __VERIFIER_error();
-  if(!(((unsigned int)100.0)==100.0)) __VERIFIER_error();
-  if(!(100.0)) __VERIFIER_error();
-  if(!(!0.0)) __VERIFIER_error();
-  if(!((int)0.5==0)) __VERIFIER_error();
-  if(!((int)0.49==0)) __VERIFIER_error();
-  if(!((int)-1.5==-1)) __VERIFIER_error();
-  if(!((int)-10.49==-10)) __VERIFIER_error();
+  if(!(0.0/(__builtin_inff())==0)) __VERIFIER_error();
+  if(!(1.0/(__builtin_inff())==0)) __VERIFIER_error();
+  if(!((sizeof (-1.0/(__builtin_inff())) == sizeof (float) ? __signbitf (-1.0/(__builtin_inff())) : sizeof (-1.0/(__builtin_inff())) == sizeof (double) ? __signbit (-1.0/(__builtin_inff())) : __signbitl (-1.0/(__builtin_inff()))))) __VERIFIER_error();
+  if(!((sizeof (1.0/-(__builtin_inff())) == sizeof (float) ? __signbitf (1.0/-(__builtin_inff())) : sizeof (1.0/-(__builtin_inff())) == sizeof (double) ? __signbit (1.0/-(__builtin_inff())) : __signbitl (1.0/-(__builtin_inff()))))) __VERIFIER_error();
+  if(!((__builtin_inff())/-2<0)) __VERIFIER_error();
+  if(!((sizeof (1.0/0.0) == sizeof (float) ? __isinff (1.0/0.0) : sizeof (1.0/0.0) == sizeof (double) ? __isinf (1.0/0.0) : __isinfl (1.0/0.0)))) __VERIFIER_error();
+  if(!((sizeof ((__builtin_inff())/2) == sizeof (float) ? __isinff ((__builtin_inff())/2) : sizeof ((__builtin_inff())/2) == sizeof (double) ? __isinf ((__builtin_inff())/2) : __isinfl ((__builtin_inff())/2)))) __VERIFIER_error();
+  if(!((sizeof (0.0/0.0) == sizeof (float) ? __isnanf (0.0/0.0) : sizeof (0.0/0.0) == sizeof (double) ? __isnan (0.0/0.0) : __isnanl (0.0/0.0)))) __VERIFIER_error();
+  if(!((sizeof ((__builtin_nanf (""))/d) == sizeof (float) ? __isnanf ((__builtin_nanf (""))/d) : sizeof ((__builtin_nanf (""))/d) == sizeof (double) ? __isnan ((__builtin_nanf (""))/d) : __isnanl ((__builtin_nanf (""))/d)))) __VERIFIER_error();
+  if(!((sizeof ((__builtin_nanf (""))/(__builtin_inff())) == sizeof (float) ? __isnanf ((__builtin_nanf (""))/(__builtin_inff())) : sizeof ((__builtin_nanf (""))/(__builtin_inff())) == sizeof (double) ? __isnan ((__builtin_nanf (""))/(__builtin_inff())) : __isnanl ((__builtin_nanf (""))/(__builtin_inff()))))) __VERIFIER_error();
+  if(!((sizeof (-0.0/1) == sizeof (float) ? __signbitf (-0.0/1) : sizeof (-0.0/1) == sizeof (double) ? __signbit (-0.0/1) : __signbitl (-0.0/1)))) __VERIFIER_error();
 
 
-  if(!(1.0<2.5)) __VERIFIER_error();
-  if(!(1.0<=2.5)) __VERIFIER_error();
-  if(!(1.01<=1.01)) __VERIFIER_error();
-  if(!(2.5>1.0)) __VERIFIER_error();
-  if(!(2.5>=1.0)) __VERIFIER_error();
-  if(!(1.01>=1.01)) __VERIFIER_error();
-  if(!(!(1.0>=2.5))) __VERIFIER_error();
-  if(!(!(1.0>2.5))) __VERIFIER_error();
-  if(!(1.0!=2.5)) __VERIFIER_error();
 }

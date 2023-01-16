@@ -1,4 +1,13 @@
-extern void __VERIFIER_assume(int);
+//#Safe
+
+/*
+ * Taken from CBMC's regression test suite
+ * (http://svn.cprover.org/svn/cbmc/trunk/regression/cbmc/).
+ *
+ * The overflow checks were omitted as these require more elaborate assertions.
+ */
+
+ extern void __VERIFIER_assume(int);
 
 
 
@@ -953,27 +962,8 @@ int main()
   double f, f2;
 
   __VERIFIER_assume(!(sizeof (f2) == sizeof (float) ? __isnanf (f2) : sizeof (f2) == sizeof (double) ? __isnan (f2) : __isnanl (f2)));
-  __VERIFIER_assume((sizeof (f2) == sizeof (float) ? __finitef (f2) : sizeof (f2) == sizeof (double) ? __finite (f2) : __finitel (f2)));
+  __VERIFIER_assume(!(sizeof (f2) == sizeof (float) ? __isinff (f2) : sizeof (f2) == sizeof (double) ? __isinf (f2) : __isinfl (f2)));
   f=f2;
-
-
-  if(!(100.0+10==110)) __VERIFIER_error();
-  if(!(0+f==f)) __VERIFIER_error();
-
-  if(!(100+0.5==100.5)) __VERIFIER_error();
-
-
-
-  if(!(100.0-10==90)) __VERIFIER_error();
-
-
-  if(!(100-0.5==99.5)) __VERIFIER_error();
-
-
-
-  if(!(-(-100.0)==100)) __VERIFIER_error();
-  if(!(-(1-2.0)==1)) __VERIFIER_error();
-  if(!(-(-f)==f)) __VERIFIER_error();
 
 
   if(!(100.0*10==1000)) __VERIFIER_error();
@@ -981,10 +971,10 @@ int main()
   if(!(f*0==0)) __VERIFIER_error();
   if(!(100*0.5==50)) __VERIFIER_error();
 //   if(!(f*1==f)) __VERIFIER_error();
-
-
-
-
+//   if(!(1*f==f)) __VERIFIER_error();
+//   if(!(1.0*1.0*f==f)) __VERIFIER_error();
+// 
+// 
   if(!(100.0/1.0==100)) __VERIFIER_error();
   if(!(100.1/1.0==100.1)) __VERIFIER_error();
   if(!(100.0/2.0==50)) __VERIFIER_error();

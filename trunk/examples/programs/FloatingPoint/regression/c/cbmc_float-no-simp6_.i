@@ -1,4 +1,13 @@
-extern void __VERIFIER_error(void);
+//#Safe
+
+/*
+ * Taken from CBMC's regression test suite
+ * (http://svn.cprover.org/svn/cbmc/trunk/regression/cbmc/).
+ *
+ * The overflow checks were omitted as these require more elaborate assertions.
+ */
+
+ extern void __VERIFIER_error(void);
 
 void multiply(void)
 {

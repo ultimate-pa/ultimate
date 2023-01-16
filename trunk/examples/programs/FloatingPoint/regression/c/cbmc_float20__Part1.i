@@ -1,4 +1,13 @@
-extern void __VERIFIER_assume(int);
+//#Safe
+
+/*
+ * Taken from CBMC's regression test suite
+ * (http://svn.cprover.org/svn/cbmc/trunk/regression/cbmc/).
+ *
+ * The overflow checks were omitted as these require more elaborate assertions.
+ */
+
+ extern void __VERIFIER_assume(int);
 extern void __VERIFIER_error(void);
 void bug (float min) {
   __VERIFIER_assume(min == 0x1.fffffep-105f);
@@ -33,13 +42,13 @@ void bugCasting (double d) {
 
 int main (void) {
   float f;
-//  bug(f);
+  bug(f);
 
   float g;
 //  bugBrokenOut(g);
 
   double d;
-  bugCasting(d);
+//  bugCasting(d);
 
   return 1;
 }

@@ -1,4 +1,13 @@
-extern void __VERIFIER_error(void);
+//#Safe
+
+/*
+ * Taken from CBMC's regression test suite
+ * (http://svn.cprover.org/svn/cbmc/trunk/regression/cbmc/).
+ *
+ * The overflow checks were omitted as these require more elaborate assertions.
+ */
+
+ extern void __VERIFIER_error(void);
 
 
 
@@ -948,24 +957,14 @@ struct exception
 extern int matherr (struct exception *__exc);
 
 
+int main (int argc, char **argv) {
+  float f = -0x1p-129f;
+  float g = 0x1p-129f;
+  float target = 0x0;
 
+  float result = f + g;
 
-void f00 (float f)
-{
-  if (f > 0x1.FFFFFEp+127) {
-    if(!((sizeof (f) == sizeof (float) ? __isinff (f) : sizeof (f) == sizeof (double) ? __isinf (f) : __isinfl (f)))) __VERIFIER_error();
-  }
-}
-
-
-
-int main (void)
-{
-
-  float f;
-
-  f00(f);
-
+  if(!(result == target && (sizeof (result) == sizeof (float) ? __signbitf (result) : sizeof (result) == sizeof (double) ? __signbit (result) : __signbitl (result)) == (sizeof (target) == sizeof (float) ? __signbitf (target) : sizeof (target) == sizeof (double) ? __signbit (target) : __signbitl (target)))) __VERIFIER_error();
 
   return 0;
 }

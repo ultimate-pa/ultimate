@@ -1,4 +1,13 @@
-extern void __VERIFIER_error(void);
+//#Safe
+
+/*
+ * Taken from CBMC's regression test suite
+ * (http://svn.cprover.org/svn/cbmc/trunk/regression/cbmc/).
+ *
+ * The overflow checks were omitted as these require more elaborate assertions.
+ */
+
+ extern void __VERIFIER_error(void);
 
 
 
@@ -953,45 +962,11 @@ int main()
   double d;
 
 
-
-
-
-  if(!(((sizeof (3.40282346638528859812e+38F) == sizeof (float) ? __fpclassifyf (3.40282346638528859812e+38F) : sizeof (3.40282346638528859812e+38F) == sizeof (double) ? __fpclassify (3.40282346638528859812e+38F) : __fpclassifyl (3.40282346638528859812e+38F)) == 4))) __VERIFIER_error();
-  if(!((sizeof ((__builtin_huge_val())) == sizeof (float) ? __isinff ((__builtin_huge_val())) : sizeof ((__builtin_huge_val())) == sizeof (double) ? __isinf ((__builtin_huge_val())) : __isinfl ((__builtin_huge_val()))))) __VERIFIER_error();
-  if(!((sizeof ((__builtin_huge_valf())) == sizeof (float) ? __isinff ((__builtin_huge_valf())) : sizeof ((__builtin_huge_valf())) == sizeof (double) ? __isinf ((__builtin_huge_valf())) : __isinfl ((__builtin_huge_valf()))))) __VERIFIER_error();
-
-  if(!((sizeof ((__builtin_inff())) == sizeof (float) ? __isinff ((__builtin_inff())) : sizeof ((__builtin_inff())) == sizeof (double) ? __isinf ((__builtin_inff())) : __isinfl ((__builtin_inff()))))) __VERIFIER_error();
-  if(!((sizeof ((__builtin_nanf (""))) == sizeof (float) ? __isnanf ((__builtin_nanf (""))) : sizeof ((__builtin_nanf (""))) == sizeof (double) ? __isnan ((__builtin_nanf (""))) : __isnanl ((__builtin_nanf ("")))))) __VERIFIER_error();
-
-
-  if(!((sizeof ((__builtin_inff())+(__builtin_inff())) == sizeof (float) ? __isinff ((__builtin_inff())+(__builtin_inff())) : sizeof ((__builtin_inff())+(__builtin_inff())) == sizeof (double) ? __isinf ((__builtin_inff())+(__builtin_inff())) : __isinfl ((__builtin_inff())+(__builtin_inff()))))) __VERIFIER_error();
-  if(!((sizeof (-(__builtin_inff())+(__builtin_inff())) == sizeof (float) ? __isnanf (-(__builtin_inff())+(__builtin_inff())) : sizeof (-(__builtin_inff())+(__builtin_inff())) == sizeof (double) ? __isnan (-(__builtin_inff())+(__builtin_inff())) : __isnanl (-(__builtin_inff())+(__builtin_inff()))))) __VERIFIER_error();
-  if(!((__builtin_inff())+(__builtin_inff())>0)) __VERIFIER_error();
-  if(!((sizeof ((__builtin_nanf (""))+d) == sizeof (float) ? __isnanf ((__builtin_nanf (""))+d) : sizeof ((__builtin_nanf (""))+d) == sizeof (double) ? __isnan ((__builtin_nanf (""))+d) : __isnanl ((__builtin_nanf (""))+d)))) __VERIFIER_error();
-  if(!((sizeof ((__builtin_nanf (""))+(__builtin_inff())) == sizeof (float) ? __isnanf ((__builtin_nanf (""))+(__builtin_inff())) : sizeof ((__builtin_nanf (""))+(__builtin_inff())) == sizeof (double) ? __isnan ((__builtin_nanf (""))+(__builtin_inff())) : __isnanl ((__builtin_nanf (""))+(__builtin_inff()))))) __VERIFIER_error();
-
-
-  if(!((sizeof ((__builtin_inff())-(__builtin_inff())) == sizeof (float) ? __isnanf ((__builtin_inff())-(__builtin_inff())) : sizeof ((__builtin_inff())-(__builtin_inff())) == sizeof (double) ? __isnan ((__builtin_inff())-(__builtin_inff())) : __isnanl ((__builtin_inff())-(__builtin_inff()))))) __VERIFIER_error();
-  if(!((sizeof (-(__builtin_inff())-(__builtin_inff())) == sizeof (float) ? __isinff (-(__builtin_inff())-(__builtin_inff())) : sizeof (-(__builtin_inff())-(__builtin_inff())) == sizeof (double) ? __isinf (-(__builtin_inff())-(__builtin_inff())) : __isinfl (-(__builtin_inff())-(__builtin_inff()))))) __VERIFIER_error();
-  if(!(-(__builtin_inff())-(__builtin_inff())<0)) __VERIFIER_error();
-  if(!((sizeof ((__builtin_nanf (""))-d) == sizeof (float) ? __isnanf ((__builtin_nanf (""))-d) : sizeof ((__builtin_nanf (""))-d) == sizeof (double) ? __isnan ((__builtin_nanf (""))-d) : __isnanl ((__builtin_nanf (""))-d)))) __VERIFIER_error();
-  if(!((sizeof ((__builtin_nanf (""))-(__builtin_inff())) == sizeof (float) ? __isnanf ((__builtin_nanf (""))-(__builtin_inff())) : sizeof ((__builtin_nanf (""))-(__builtin_inff())) == sizeof (double) ? __isnan ((__builtin_nanf (""))-(__builtin_inff())) : __isnanl ((__builtin_nanf (""))-(__builtin_inff()))))) __VERIFIER_error();
-
-
-  if(!((sizeof ((__builtin_inff())*(__builtin_inff())) == sizeof (float) ? __isinff ((__builtin_inff())*(__builtin_inff())) : sizeof ((__builtin_inff())*(__builtin_inff())) == sizeof (double) ? __isinf ((__builtin_inff())*(__builtin_inff())) : __isinfl ((__builtin_inff())*(__builtin_inff()))))) __VERIFIER_error();
-  if(!((sizeof (-(__builtin_inff())*(__builtin_inff())) == sizeof (float) ? __isinff (-(__builtin_inff())*(__builtin_inff())) : sizeof (-(__builtin_inff())*(__builtin_inff())) == sizeof (double) ? __isinf (-(__builtin_inff())*(__builtin_inff())) : __isinfl (-(__builtin_inff())*(__builtin_inff()))))) __VERIFIER_error();
-  if(!((__builtin_inff())*(__builtin_inff())>0)) __VERIFIER_error();
-  if(!(-(__builtin_inff())*(__builtin_inff())<0)) __VERIFIER_error();
-  if(!((sizeof ((__builtin_nanf (""))*d) == sizeof (float) ? __isnanf ((__builtin_nanf (""))*d) : sizeof ((__builtin_nanf (""))*d) == sizeof (double) ? __isnan ((__builtin_nanf (""))*d) : __isnanl ((__builtin_nanf (""))*d)))) __VERIFIER_error();
-  if(!((sizeof ((__builtin_nanf (""))*(__builtin_inff())) == sizeof (float) ? __isnanf ((__builtin_nanf (""))*(__builtin_inff())) : sizeof ((__builtin_nanf (""))*(__builtin_inff())) == sizeof (double) ? __isnan ((__builtin_nanf (""))*(__builtin_inff())) : __isnanl ((__builtin_nanf (""))*(__builtin_inff()))))) __VERIFIER_error();
-  if(!((sizeof ((__builtin_inff())*0) == sizeof (float) ? __isnanf ((__builtin_inff())*0) : sizeof ((__builtin_inff())*0) == sizeof (double) ? __isnan ((__builtin_inff())*0) : __isnanl ((__builtin_inff())*0)))) __VERIFIER_error();
-  if(!((sizeof (1.0*-0.0) == sizeof (float) ? __signbitf (1.0*-0.0) : sizeof (1.0*-0.0) == sizeof (double) ? __signbit (1.0*-0.0) : __signbitl (1.0*-0.0)))) __VERIFIER_error();
-  if(!(!(sizeof (1.0*0.0) == sizeof (float) ? __signbitf (1.0*0.0) : sizeof (1.0*0.0) == sizeof (double) ? __signbit (1.0*0.0) : __signbitl (1.0*0.0)))) __VERIFIER_error();
-
-
-  if(!((sizeof ((__builtin_inff())/(__builtin_inff())) == sizeof (float) ? __isnanf ((__builtin_inff())/(__builtin_inff())) : sizeof ((__builtin_inff())/(__builtin_inff())) == sizeof (double) ? __isnan ((__builtin_inff())/(__builtin_inff())) : __isnanl ((__builtin_inff())/(__builtin_inff()))))) __VERIFIER_error();
-  if(!((sizeof (-(__builtin_inff())/(__builtin_inff())) == sizeof (float) ? __isnanf (-(__builtin_inff())/(__builtin_inff())) : sizeof (-(__builtin_inff())/(__builtin_inff())) == sizeof (double) ? __isnan (-(__builtin_inff())/(__builtin_inff())) : __isnanl (-(__builtin_inff())/(__builtin_inff()))))) __VERIFIER_error();
-
   // File was split into three parts to speed up tests in Ultiate. 2016-08-08, Matthias Heizmann
+
+
+  int zero=0;
+  if(!((sizeof ((__builtin_inff())/zero) == sizeof (float) ? __isinff ((__builtin_inff())/zero) : sizeof ((__builtin_inff())/zero) == sizeof (double) ? __isinf ((__builtin_inff())/zero) : __isinfl ((__builtin_inff())/zero)))) __VERIFIER_error();
+
 
 }
