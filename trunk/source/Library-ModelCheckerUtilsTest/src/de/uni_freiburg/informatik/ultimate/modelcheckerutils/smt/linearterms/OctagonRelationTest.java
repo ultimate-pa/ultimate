@@ -88,7 +88,7 @@ public class OctagonRelationTest {
 		Assert.assertEquals("(-a) - (+a) < 14", octRelAsString("(< (- a) 7)"));
 		Assert.assertEquals("(+a) - (-a) >= -14", octRelAsString("(>= a (- 7))"));
 		Assert.assertEquals("(+a) - (-a) > 14", octRelAsString("(> a 7)"));
-		Assert.assertEquals("(+a) - (-a) <= 14/3", octRelAsString("(<= (* 3 a) 7)"));
+		Assert.assertEquals("(+a) - (-a) <= 4", octRelAsString("(<= (* 3 a) 7)"));
 
 		Assert.assertEquals("(-a) - (+a) = 5", octRelAsString("(= (- 5) (* a 2))"));
 	}
