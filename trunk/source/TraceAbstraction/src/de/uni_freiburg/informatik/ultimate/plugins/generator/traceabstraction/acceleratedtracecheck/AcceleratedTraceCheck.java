@@ -109,6 +109,9 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 	private boolean mTraceCheckFinishedNormally;
 	private final PredicateFactory mPredicateFactory;
 
+	private final AcceleratedTraceCheckStatisticsGenerator mStatisticsGenerator;
+
+
 	public AcceleratedTraceCheck(final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences<L> prefs, final ManagedScript script,
 			final IPredicateUnifier predicateUnifier, final IRun<L, IPredicate> counterexample,
@@ -125,11 +128,11 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 		mIcfg = mPrefs.getIcfgContainer();
 		mPredicateUnifier = predicateUnifier;
 		mInterpolants = null;
+		mStatisticsGenerator = new AcceleratedTraceCheckStatisticsGenerator();
 
 		final TreeMap<Integer, AcceleratedSegment> acceleratedSegments = constructAcceleratedSegments(mServices,
 				mLogger, script, counterexample);
 		if (acceleratedSegments.isEmpty()) {
-
 			final TraceCheckSpWp<L> tc = checkTrace(mPrecondition, mPostcondition, mCounterexample);
 			mIsTraceCorrect = tc.isCorrect();
 			switch (tc.isCorrect()) {
@@ -146,7 +149,6 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 				} else {
 					throw new UnsupportedOperationException("Acceleration-free interpolant computation failed.");
 				}
-
 				break;
 			default:
 				throw new AssertionError();
@@ -172,6 +174,11 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 			default:
 				throw new AssertionError();
 			}
+			mStatisticsGenerator.reportSatisfiability(tc.isCorrect());
+			final StatisticsData stats = new StatisticsData();
+			stats.aggregateBenchmarkData(mStatisticsGenerator);
+			services.getResultService().reportResult(Activator.PLUGIN_ID,
+					new StatisticsResult<>(Activator.PLUGIN_NAME, "AcceleratedTraceCheckStatistics", stats));
 		}
 	}
 
@@ -329,6 +336,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 		final HashTreeRelation<IcfgLocation, Integer> similarProgramPoints = findSimilarProgramPoints(
 				counterexample.getStateSequence());
 		final TreeRelation<Integer, Integer> loopPositions = computeMaximalCrossFreeLoopPositions(similarProgramPoints);
+
 		for (int i = 0; i < counterexample.getLength(); i++) {
 			final TreeSet<Integer> positionsWithSimilarProgramPoint = loopPositions
 					.getImage(i);
@@ -337,7 +345,9 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 				final NestedWord<L> nestedWord = (NestedWord<L>) counterexample.getWord();
 				final NestedWord<L> subWord = nestedWord.getSubWord(i, nextPosition);
 				final UnmodifiableTransFormula transitiveClosure = accelerate(services, logger, mgdScript, subWord);
+				mStatisticsGenerator.reportAccelerationAttempt();
 				if (transitiveClosure != null) {
+					mStatisticsGenerator.reportSuccessfullAcceleration();
 					result.put(i, new AcceleratedSegment(i, nextPosition - 1, transitiveClosure));
 					i = nextPosition - 1;
 				}
