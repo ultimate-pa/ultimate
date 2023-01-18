@@ -285,32 +285,32 @@ public class TypeSizes {
 
 	public BigInteger extractIntegerValue(final Expression expr, final CType cType) {
 		if (expr instanceof IntegerLiteral) {
-			final BigInteger tmp = new BigInteger(((IntegerLiteral) expr).getValue());
+			final BigInteger value = new BigInteger(((IntegerLiteral) expr).getValue());
 			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
 			if (!isUnsigned(cPrimitive)) {
-				return tmp;
+				return value;
 			}
 			// Because of the Nutz transformation we do a modulo operation.
 			// Otherwise we do not extract the correct value for negative literals of unsigned type.
 			final BigInteger maxValue = getMaxValueOfPrimitiveType(cPrimitive);
 			final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
-			return tmp.mod(maxValuePlusOne);
+			return value.mod(maxValuePlusOne);
 		}
 		if (expr instanceof BitvecLiteral) {
-			final BigInteger tmp = new BigInteger(((BitvecLiteral) expr).getValue());
+			final BigInteger value = new BigInteger(((BitvecLiteral) expr).getValue());
 			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
 			if (isUnsigned(cPrimitive)) {
-				if (getMinValueOfPrimitiveType(cPrimitive).compareTo(tmp) > 0) {
+				if (getMinValueOfPrimitiveType(cPrimitive).compareTo(value) > 0) {
 					throw new AssertionError("Value too small for type " + cType);
 				}
-				if (getMaxValueOfPrimitiveType(cPrimitive).compareTo(tmp) < 0) {
+				if (getMaxValueOfPrimitiveType(cPrimitive).compareTo(value) < 0) {
 					throw new AssertionError("Value too large for type " + cType);
 				}
 				// Return simply the value of the BitvecLiteral.
-				return tmp;
+				return value;
 			}
 			final int bitsize = 8 * getSize(cPrimitive.getType());
-			final BitvectorConstant bc = new BitvectorConstant(tmp, BigInteger.valueOf(bitsize));
+			final BitvectorConstant bc = new BitvectorConstant(value, BigInteger.valueOf(bitsize));
 			return bc.toSignedInt();
 		}
 		return null;
