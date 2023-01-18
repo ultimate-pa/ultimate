@@ -290,9 +290,8 @@ public class TypeSizes {
 			if (!isUnsigned(cPrimitive)) {
 				return tmp;
 			}
-			// TODO 20221119 Matthias: Because of the Nutz transformation we do
-			// do a modulo operation. It don't think this should be necessary,
-			// but it won't hurt and I don't have the time to check.
+			// Because of the Nutz transformation we do a modulo operation.
+			// Otherwise we do not extract the correct value for negative literals of unsigned type.
 			final BigInteger maxValue = getMaxValueOfPrimitiveType(cPrimitive);
 			final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
 			return tmp.mod(maxValuePlusOne);
@@ -301,13 +300,13 @@ public class TypeSizes {
 			final BigInteger tmp = new BigInteger(((BitvecLiteral) expr).getValue());
 			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
 			if (isUnsigned(cPrimitive)) {
-				// my return as is
 				if (getMinValueOfPrimitiveType(cPrimitive).compareTo(tmp) > 0) {
 					throw new AssertionError("Value too small for type " + cType);
 				}
 				if (getMaxValueOfPrimitiveType(cPrimitive).compareTo(tmp) < 0) {
 					throw new AssertionError("Value too large for type " + cType);
 				}
+				// Return simply the value of the BitvecLiteral.
 				return tmp;
 			}
 			final int bitsize = 8 * getSize(cPrimitive.getType());
