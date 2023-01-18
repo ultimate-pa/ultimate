@@ -90,7 +90,7 @@ public class OctagonRelationTest {
 		Assert.assertEquals("(+a) - (-a) > 14", octRelAsString("(> a 7)"));
 		Assert.assertEquals("(+a) - (-a) <= 4", octRelAsString("(<= (* 3 a) 7)"));
 
-		Assert.assertEquals("(-a) - (+a) = 5", octRelAsString("(= (- 5) (* a 2))"));
+		Assert.assertEquals("(-a) - (+a) = 6", octRelAsString("(= (- 6) (* a 2))"));
 	}
 
 	@Test
@@ -127,6 +127,7 @@ public class OctagonRelationTest {
 	@Test
 	public void testNoCommonCoefficient() {
 		Assert.assertNull(octRelAsString("(<= (+ (* 3 a) (* 4 b)) 5)"));
+		Assert.assertNull(octRelAsString("(= (- 5) (* a 2))"));
 	}
 
 	@Test
