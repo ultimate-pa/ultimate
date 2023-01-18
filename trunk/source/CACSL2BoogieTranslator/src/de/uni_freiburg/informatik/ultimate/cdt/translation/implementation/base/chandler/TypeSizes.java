@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
@@ -285,19 +286,20 @@ public class TypeSizes {
 	public BigInteger extractIntegerValue(final Expression expr, final CType cType) {
 		if (expr instanceof IntegerLiteral) {
 			final BigInteger tmp = new BigInteger(((IntegerLiteral) expr).getValue());
-			if (!isUnsigned((CPrimitive) cType)) {
+			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
+			if (!isUnsigned(cPrimitive)) {
 				return tmp;
 			}
 			// TODO 20221119 Matthias: Because of the Nutz transformation we do
 			// do a modulo operation. It don't think this should be necessary,
 			// but it won't hurt and I don't have the time to check.
-			final BigInteger maxValue = getMaxValueOfPrimitiveType((CPrimitive) cType);
+			final BigInteger maxValue = getMaxValueOfPrimitiveType(cPrimitive);
 			final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
 			return tmp.mod(maxValuePlusOne);
 		}
 		if (expr instanceof BitvecLiteral) {
 			final BigInteger tmp = new BigInteger(((BitvecLiteral) expr).getValue());
-			final CPrimitive cPrimitive = (CPrimitive) cType;
+			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
 			if (isUnsigned(cPrimitive)) {
 				// my return as is
 				if (getMinValueOfPrimitiveType(cPrimitive).compareTo(tmp) > 0) {
