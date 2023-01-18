@@ -1,6 +1,7 @@
 //#Safe
 /*
- * Test: Reads and write from/to similar cell in each iteration.
+ * Test: Considers a different array cell in each interation. 
+ * Reads and writes from that cell.
  * 
  * Author: heizmann@informatik.uni-freiburg.de
  * Date: 2022-12-20
