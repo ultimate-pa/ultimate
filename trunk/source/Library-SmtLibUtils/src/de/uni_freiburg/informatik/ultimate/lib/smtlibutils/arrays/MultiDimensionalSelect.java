@@ -56,6 +56,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * <br>
  * Note that due to the select-over-store optimization the resulting term may
  * not necessarily be an ApplicationTerm.
+ * Note that we also allow indices of size 0 and hence every Term can be the
+ * mArray or mSelectTerm of this class.
  * @author Matthias Heizmann
  *
  */
@@ -71,11 +73,7 @@ public class MultiDimensionalSelect implements ITermProviderOnDemand {
 	 * index i2.
 	 */
 	public MultiDimensionalSelect(Term term) {
-		if (term instanceof ApplicationTerm) {
-			mSelectTerm = term;
-		} else {
-			mSelectTerm = null;
-		}
+		mSelectTerm = term;
 		final ArrayList<Term> index = new ArrayList<Term>();
 		while (true) {
 			if (!(term instanceof ApplicationTerm)) {
@@ -164,6 +162,7 @@ public class MultiDimensionalSelect implements ITermProviderOnDemand {
 		return getIndex().size();
 	}
 
+	@Override
 	public Term toTerm(final Script script) {
 		return SmtUtils.multiDimensionalSelect(script, getArray(), getIndex());
 	}
