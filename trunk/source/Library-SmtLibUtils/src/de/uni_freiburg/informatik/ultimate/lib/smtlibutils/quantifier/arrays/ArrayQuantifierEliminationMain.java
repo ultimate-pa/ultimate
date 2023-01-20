@@ -249,7 +249,7 @@ public class ArrayQuantifierEliminationMain {
 	 * tries to simplify select over nested store terms.
 	 */
 	private Term selectOverStore(final Term term, final TermVariable qarray) {
-		final MultiDimensionalSelect mds = new MultiDimensionalSelect(term);
+		final MultiDimensionalSelect mds = MultiDimensionalSelect.of(term);
 		final List<MultiDimensionalSelect> selectterms = mds.extractSelectDeep(term, false);
 		for (final MultiDimensionalSelect select : selectterms) {
 			// if Array is BasicArray, its no SelectOverStore

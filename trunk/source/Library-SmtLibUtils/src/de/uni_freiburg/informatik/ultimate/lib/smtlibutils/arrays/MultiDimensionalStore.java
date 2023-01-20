@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -123,7 +122,7 @@ public class MultiDimensionalStore implements ITermProviderOnDemand {
 	}
 
 	static boolean isCompatibleSelect(final Term term, final Term array, final List<Term> index) {
-		final MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(term);
+		final MultiDimensionalSelect mdSelect = MultiDimensionalSelect.of(term);
 		return mdSelect.getArray() == array && index.equals(mdSelect.getIndex());
 	}
 
@@ -147,6 +146,7 @@ public class MultiDimensionalStore implements ITermProviderOnDemand {
 		return getIndex().size();
 	}
 
+	@Override
 	public Term toTerm(final Script script) {
 		return SmtUtils.multiDimensionalStore(script, getArray(), getIndex(), getValue());
 	}

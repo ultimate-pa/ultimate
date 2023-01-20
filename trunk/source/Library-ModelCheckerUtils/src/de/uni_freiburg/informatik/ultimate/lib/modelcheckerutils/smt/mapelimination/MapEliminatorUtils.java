@@ -165,7 +165,7 @@ public final class MapEliminatorUtils {
 	private static String niceTermString(final Term term) {
 		if (SmtUtils.isFunctionApplication(term, "select")) {
 			final StringBuilder stringBuilder = new StringBuilder();
-			final MultiDimensionalSelect select = new MultiDimensionalSelect(term);
+			final MultiDimensionalSelect select = MultiDimensionalSelect.of(term);
 			stringBuilder.append("array_").append(niceTermString(select.getArray())).append('[');
 			final ArrayIndex index = select.getIndex();
 			for (int i = 0; i < index.size(); i++) {

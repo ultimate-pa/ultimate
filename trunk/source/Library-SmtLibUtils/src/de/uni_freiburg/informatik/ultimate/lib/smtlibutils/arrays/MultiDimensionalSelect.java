@@ -67,13 +67,21 @@ public class MultiDimensionalSelect implements ITermProviderOnDemand {
 	private final ArrayIndex mIndex;
 	private final Term mSelectTerm;
 
+	private MultiDimensionalSelect(final Term array, final ArrayIndex index, final Term selectTerm) {
+		super();
+		mArray = array;
+		mIndex = index;
+		mSelectTerm = selectTerm;
+		assert classInvariant();
+	}
+
 	/**
 	 * Translate a (possibly) nested SMT term into this data structure.
 	 * @param term term of the form ("select" a i2) for some array a and some
 	 * index i2.
 	 */
-	public MultiDimensionalSelect(Term term) {
-		mSelectTerm = term;
+	public static MultiDimensionalSelect of(Term term) {
+		final Term selectTerm = term;
 		final ArrayList<Term> index = new ArrayList<Term>();
 		while (true) {
 			if (!(term instanceof ApplicationTerm)) {
@@ -87,12 +95,8 @@ public class MultiDimensionalSelect implements ITermProviderOnDemand {
 			index.add(0,appTerm.getParameters()[1]);
 			term = appTerm.getParameters()[0];
 		}
-		mIndex = new ArrayIndex(index);
-		mArray = term;
-		assert classInvariant();
+		return new MultiDimensionalSelect(term, new ArrayIndex(index), selectTerm);
 	}
-
-
 
 	public MultiDimensionalSelect(final Term array, final ArrayIndex index, final Script script) {
 		super();
@@ -135,8 +139,6 @@ public class MultiDimensionalSelect implements ITermProviderOnDemand {
 		return MultiDimensionalSelect.convert(as.asTerm());
 	}
 
-
-
 	private boolean classInvariant() {
 		if (mSelectTerm == null) {
 			return mIndex.size() == 0;
@@ -167,12 +169,11 @@ public class MultiDimensionalSelect implements ITermProviderOnDemand {
 		return SmtUtils.multiDimensionalSelect(script, getArray(), getIndex());
 	}
 
-
 	public static MultiDimensionalSelect convert(final Term term) {
 		if (!(term instanceof ApplicationTerm)) {
 			return null;
 		}
-		final MultiDimensionalSelect mds = new MultiDimensionalSelect(term);
+		final MultiDimensionalSelect mds = MultiDimensionalSelect.of(term);
 		if (mds.getArray() == null) {
 			return null;
 		} else {
@@ -219,7 +220,7 @@ public class MultiDimensionalSelect implements ITermProviderOnDemand {
 				(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
 		for (final Term storeTerm : selectTerms) {
 			if (allowArrayValues || !storeTerm.getSort().isArraySort()) {
-				final MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(storeTerm);
+				final MultiDimensionalSelect mdSelect = MultiDimensionalSelect.of(storeTerm);
 				if (mdSelect.getIndex().size() == 0) {
 					throw new AssertionError("select must not have dimension 0");
 				}

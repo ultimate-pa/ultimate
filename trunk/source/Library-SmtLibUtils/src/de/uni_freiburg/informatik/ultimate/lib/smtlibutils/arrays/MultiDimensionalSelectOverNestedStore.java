@@ -46,7 +46,7 @@ public class MultiDimensionalSelectOverNestedStore {
 	private final Term mTerm;
 
 	public MultiDimensionalSelectOverNestedStore(final Script script, final Term term) {
-		final MultiDimensionalSelect select = new MultiDimensionalSelect(term);
+		final MultiDimensionalSelect select = MultiDimensionalSelect.of(term);
 		if (!select.getIndex().isEmpty()) {
 			final Term innerArray = select.getArray();
 			if (innerArray instanceof ApplicationTerm) {

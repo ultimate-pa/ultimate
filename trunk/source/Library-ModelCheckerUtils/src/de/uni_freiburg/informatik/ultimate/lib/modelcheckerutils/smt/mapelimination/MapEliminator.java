@@ -391,7 +391,7 @@ public class MapEliminator {
 	private TermVariable replaceSelectStoreTerm(final Term term, final ModifiableTransFormula transformula,
 			final EqualityAnalysisResult invariants, final List<Term> auxVarEqualities,
 			final Set<TermVariable> auxVars) {
-		final MultiDimensionalSelect multiDimensionalSelect = new MultiDimensionalSelect(term);
+		final MultiDimensionalSelect multiDimensionalSelect = MultiDimensionalSelect.of(term);
 		final ArrayIndex index = multiDimensionalSelect.getIndex();
 		final ArrayWrite arrayWrite = new ArrayWrite(multiDimensionalSelect.getArray(), mScript);
 		final Set<ArrayIndex> processedIndices = new HashSet<>();
