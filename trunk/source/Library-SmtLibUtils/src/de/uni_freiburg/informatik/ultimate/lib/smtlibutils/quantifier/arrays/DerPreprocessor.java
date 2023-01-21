@@ -183,7 +183,7 @@ public class DerPreprocessor extends TermTransformer {
 		Term result;
 		switch (derCase) {
 		case EQ_SELECT:
-			final MultiDimensionalSelect as = MultiDimensionalSelect.convert(otherSide);
+			final MultiDimensionalSelect as = MultiDimensionalSelect.of(otherSide);
 			result = constructReplacementForSelectCase(as.getArray(), as.getIndex(), mgdScript, eliminatee, quantifier,
 					airc);
 			break;
@@ -238,8 +238,8 @@ public class DerPreprocessor extends TermTransformer {
 				}
 			}
 		}
-		final MultiDimensionalSelect arraySelect = MultiDimensionalSelect.convert(otherSide);
-		if (arraySelect != null) {
+		final MultiDimensionalSelect arraySelect = MultiDimensionalSelect.of(otherSide);
+		if (arraySelect.getIndex().size() > 0) {
 			return DerCase.EQ_SELECT;
 		}
 		throw new UnsupportedOperationException("DerPreprocessor supports only store and select, but not " + otherSide);

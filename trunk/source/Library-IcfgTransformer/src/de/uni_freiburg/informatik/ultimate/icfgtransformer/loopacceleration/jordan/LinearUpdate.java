@@ -172,8 +172,8 @@ public class LinearUpdate {
 			if (someOccuringModifiedTermVariable == null) {
 				// Case where monomial is some term that does not contain a modified variable,
 				// we will consider this term as a readonly variable
-				final MultiDimensionalSelect mds = MultiDimensionalSelect.convert(monomialAsTerm);
-				if (mds != null) {
+				final MultiDimensionalSelect mds = MultiDimensionalSelect.of(monomialAsTerm);
+				if (mds.getIndex().size() > 0) {
 					// we have to report this array read because we might need the assumption that
 					// its index is different from indices that to which we write
 					arrayReadsWithFixedIndex.add(mds);
@@ -204,7 +204,7 @@ public class LinearUpdate {
 					return new Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String>(null, null, null,
 							errorMessage);
 				}
-				final MultiDimensionalSelect mds = MultiDimensionalSelect.convert(monomialAsTerm);
+				final MultiDimensionalSelect mds = MultiDimensionalSelect.of(monomialAsTerm);
 				if (mds != null) {
 					final Set<TermVariable> freeVarsOfIndex = mds.getIndex().getFreeVars();
 					freeVarsOfIndex.retainAll(termVariablesOfModified);

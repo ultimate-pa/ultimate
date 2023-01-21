@@ -136,7 +136,7 @@ public class MultiDimensionalSelect implements ITermProviderOnDemand {
 		for (int i = 0; i < getDimension() - dim; i++) {
 			as = ArraySelect.convert(as.getArray());
 		}
-		return MultiDimensionalSelect.convert(as.asTerm());
+		return MultiDimensionalSelect.of(as.asTerm());
 	}
 
 	private boolean classInvariant() {
@@ -167,18 +167,6 @@ public class MultiDimensionalSelect implements ITermProviderOnDemand {
 	@Override
 	public Term toTerm(final Script script) {
 		return SmtUtils.multiDimensionalSelect(script, getArray(), getIndex());
-	}
-
-	public static MultiDimensionalSelect convert(final Term term) {
-		if (!(term instanceof ApplicationTerm)) {
-			return null;
-		}
-		final MultiDimensionalSelect mds = MultiDimensionalSelect.of(term);
-		if (mds.getArray() == null) {
-			return null;
-		} else {
-			return mds;
-		}
 	}
 
 	@Override

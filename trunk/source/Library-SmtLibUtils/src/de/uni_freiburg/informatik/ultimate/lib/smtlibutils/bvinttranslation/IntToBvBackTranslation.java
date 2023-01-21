@@ -219,8 +219,8 @@ public class IntToBvBackTranslation extends TermTransformer {
 		if (appTerm instanceof TermVariable) {
 			return appTerm;
 		}
-		final MultiDimensionalSelect mds = MultiDimensionalSelect.convert(appTerm);
-		if (mds != null) {
+		final MultiDimensionalSelect mds = MultiDimensionalSelect.of(appTerm);
+		if (mds.getIndex().size() > 0) {
 			array = mds.getArray();
 		} else {
 			final MultiDimensionalSelectOverNestedStore mdsons =
