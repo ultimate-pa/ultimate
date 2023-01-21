@@ -210,7 +210,7 @@ public class MultiDimensionalSelect implements ITermProviderOnDemand {
 			if (allowArrayValues || !storeTerm.getSort().isArraySort()) {
 				final MultiDimensionalSelect mdSelect = MultiDimensionalSelect.of(storeTerm);
 				if (mdSelect.getIndex().size() == 0) {
-					throw new AssertionError("select must not have dimension 0");
+					throw new AssertionError("MultiDimensionalSelect must not have dimension 0 here");
 				}
 				result.add(mdSelect);
 			}
