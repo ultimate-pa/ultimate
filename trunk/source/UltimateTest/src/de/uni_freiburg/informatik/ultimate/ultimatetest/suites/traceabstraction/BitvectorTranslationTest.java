@@ -108,6 +108,7 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 			"automizer/BvToInt/svcomp-Reach-32bit-Automizer_BvToInt_BITWISE.epf",
 			"automizer/BvToInt/svcomp-Reach-32bit-Automizer_BvToInt_LAZY.epf",
 			"automizer/BvToInt/svcomp-Reach-32bit-Automizer_BvToInt_NONE.epf",
+			"automizer/BvToInt/svcomp-Reach-32bit-Automizer_BvToIntCongruence_NONE.epf",
 	};
 
 	/**
