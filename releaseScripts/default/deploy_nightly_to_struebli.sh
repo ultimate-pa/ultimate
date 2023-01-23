@@ -18,10 +18,11 @@ if [ -z "$VERSION" ] ; then
 fi
 spopd
 
+spushd "$(get_git_root)/releaseScripts/default"
 new_dir="${DATE}-${VERSION}"
 echo "Deploying Ultimate ${VERSION} by moving *.zip via SFTP to struebli.informatik.uni-freiburg.de:upload/${new_dir}"
 sftp -o StrictHostKeyChecking=no jenkins-deploy@struebli.informatik.uni-freiburg.de:upload/ <<< "mkdir ${new_dir}"
 for i in *.zip ; do
   sftp -o StrictHostKeyChecking=no jenkins-deploy@struebli.informatik.uni-freiburg.de:upload/${new_dir} <<< "put ${i}"
 done
-
+spopd
