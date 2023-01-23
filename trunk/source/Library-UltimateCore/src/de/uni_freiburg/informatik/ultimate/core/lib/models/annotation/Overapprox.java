@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -40,8 +38,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 
 /**
  * Annotation for transition (e.g., CodeBlock) that indicates that it was not build by a semantics preserving
@@ -76,33 +72,6 @@ public class Overapprox extends ModernAnnotations {
 
 	public Map<String, ILocation> getOverapproximatedLocations() {
 		return mReason2Loc;
-	}
-
-	public static Map<String, ILocation> getOverapproximations(final List<? extends IElement> trace) {
-		final Map<String, ILocation> result = new HashMap<>();
-		for (final IElement elem : trace) {
-			final Overapprox overapprox = Overapprox.getAnnotation(elem);
-			if (overapprox == null) {
-				continue;
-			}
-			result.putAll(overapprox.getOverapproximatedLocations());
-		}
-		return result;
-	}
-
-	public static <TE extends IElement> Map<String, ILocation>
-			getOverapproximations(final IProgramExecution<TE, ?> pe) {
-		final Map<String, ILocation> result = new HashMap<>();
-		final Iterator<AtomicTraceElement<TE>> iter = pe.iterator();
-		while (iter.hasNext()) {
-			final TE current = iter.next().getTraceElement();
-			final Overapprox overapprox = Overapprox.getAnnotation(current);
-			if (overapprox == null) {
-				continue;
-			}
-			result.putAll(overapprox.getOverapproximatedLocations());
-		}
-		return result;
 	}
 
 	@Override

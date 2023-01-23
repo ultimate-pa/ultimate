@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsSemi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -410,7 +408,9 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 							mCsToolkitWithoutRankVars.getConcurrencyInformation().getInUseErrorNodeMap().values());
 					final NestedWord<L> stem = getWordWithoutLocs(mCounterexample.getStem(), inUseLocs);
 					final NestedWord<L> loop = getWordWithoutLocs(mCounterexample.getLoop(), inUseLocs);
-					if (cd == ContinueDirective.REPORT_NONTERMINATION && getOverapproximations().isEmpty()) {
+					final Map<String, ILocation> overapproximations =
+							TraceCheckUtils.getOverapproximations(stem.asList(), loop.asList());
+					if (cd == ContinueDirective.REPORT_NONTERMINATION && overapproximations.isEmpty()) {
 						reportRemainderModule(true);
 						// The loop is empty, i.e. it contains only self-loops in the insufficient thread locations.
 						if (loop.length() == 0) {
@@ -420,8 +420,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 								lassoCheck.getNonTerminationArgument(), mMDBenchmark, mTermcompProofBenchmark);
 					}
 					reportRemainderModule(false);
-					return BuchiCegarLoopResult.constructUnknownResult(stem, loop, getOverapproximations(),
-							mMDBenchmark, mTermcompProofBenchmark);
+					return BuchiCegarLoopResult.constructUnknownResult(stem, loop, overapproximations, mMDBenchmark,
+							mTermcompProofBenchmark);
 				default:
 					throw new AssertionError("impossible case");
 				}
@@ -750,15 +750,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		if (mConstructTermcompProof) {
 			mTermcompProofBenchmark.reportRemainderModule(nonterminationKnown);
 		}
-	}
-
-	private Map<String, ILocation> getOverapproximations() {
-		final NestedWord<L> stem = mCounterexample.getStem().getWord();
-		final NestedWord<L> loop = mCounterexample.getLoop().getWord();
-		final Map<String, ILocation> overapproximations = new HashMap<>();
-		overapproximations.putAll(Overapprox.getOverapproximations(stem.asList()));
-		overapproximations.putAll(Overapprox.getOverapproximations(loop.asList()));
-		return overapproximations;
 	}
 
 	private static class SubtaskAdditionalLoopUnwinding extends TaskIdentifier {

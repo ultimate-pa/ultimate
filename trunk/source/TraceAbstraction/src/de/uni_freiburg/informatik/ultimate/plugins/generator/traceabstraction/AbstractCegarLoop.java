@@ -85,6 +85,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -820,7 +821,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 				}
 
 				if (programExecution != null) {
-					unprovabilityReasons.addAll(UnprovabilityReason.getUnprovabilityReasons(programExecution));
+					unprovabilityReasons.addAll(UnprovabilityReason
+							.getUnprovabilityReasons(TraceCheckUtils.getOverapproximations(programExecution)));
 				}
 
 				if (unprovabilityReasons.isEmpty()) {

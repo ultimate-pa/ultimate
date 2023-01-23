@@ -755,7 +755,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private void reportCounterexampleResult(final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> pe) {
-		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
+		final List<UnprovabilityReason> upreasons =
+				UnprovabilityReason.getUnprovabilityReasons(TraceCheckUtils.getOverapproximations(pe));
 		if (!upreasons.isEmpty()) {
 			reportUnproveableResult(pe, upreasons);
 			return;

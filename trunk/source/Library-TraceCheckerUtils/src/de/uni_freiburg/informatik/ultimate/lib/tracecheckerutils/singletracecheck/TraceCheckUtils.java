@@ -30,6 +30,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -42,9 +43,14 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
@@ -78,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysi
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * Class that contains static methods that are related to the {@link TraceCheck}.
@@ -391,6 +398,34 @@ public final class TraceCheckUtils {
 					result.setOldVarAssignmentAtPos(i, nf.getOldVarAssignment(i));
 				}
 			}
+		}
+		return result;
+	}
+
+	public static <TE extends IIcfgTransition<?>> Map<String, ILocation>
+			getOverapproximations(final IProgramExecution<TE, ?> pe) {
+		final Map<String, ILocation> result = new HashMap<>();
+		final Iterator<AtomicTraceElement<TE>> iter = pe.iterator();
+		while (iter.hasNext()) {
+			final TE current = iter.next().getTraceElement();
+			final Overapprox overapprox = Overapprox.getAnnotation(current);
+			if (overapprox == null) {
+				continue;
+			}
+			result.putAll(overapprox.getOverapproximatedLocations());
+		}
+		return result;
+	}
+
+	public static <TE extends IIcfgTransition<?>> Map<String, ILocation> getOverapproximations(final List<TE> stem,
+			final List<TE> loop) {
+		final Map<String, ILocation> result = new HashMap<>();
+		for (final IElement elem : DataStructureUtils.concat(stem, loop)) {
+			final Overapprox overapprox = Overapprox.getAnnotation(elem);
+			if (overapprox == null) {
+				continue;
+			}
+			result.putAll(overapprox.getOverapproximatedLocations());
 		}
 		return result;
 	}

@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -41,7 +40,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GeometricNonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NoResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NonTerminationArgumentResult;
@@ -49,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
@@ -91,6 +88,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -190,7 +188,7 @@ public class LassoRankerStarter {
 			try {
 				final GeometricNonTerminationArgument nta = laNT.checkNonTermination(nonterminationSettings);
 				if (nta != null) {
-					if (!lassoWasOverapproximated().isEmpty()) {
+					if (lassoWasOverapproximated()) {
 						reportFailBecauseOfOverapproximationResult();
 						return;
 					}
@@ -263,11 +261,8 @@ public class LassoRankerStarter {
 		reportNoResult(templates);
 	}
 
-	private Map<String, ILocation> lassoWasOverapproximated() {
-		final Map<String, ILocation> overapproximations = new HashMap<>();
-		overapproximations.putAll(Overapprox.getOverapproximations(mStem.asList()));
-		overapproximations.putAll(Overapprox.getOverapproximations(mLoop.asList()));
-		return overapproximations;
+	private boolean lassoWasOverapproximated() {
+		return !TraceCheckUtils.getOverapproximations(mStem.asList(), mLoop.asList()).isEmpty();
 	}
 
 	public UnmodifiableTransFormula constructTransformula(final NestedWord<IIcfgTransition<IcfgLocation>> nw) {

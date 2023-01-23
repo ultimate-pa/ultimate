@@ -27,14 +27,11 @@
 
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 
 /**
  * Objects of this class represent one reason why we were not able to prove something. Such a reason is given as a
@@ -64,13 +61,9 @@ public class UnprovabilityReason {
 		return mDescription + " at line " + mLocation.getStartLine();
 	}
 
-	public static <TE extends IElement> List<UnprovabilityReason>
-			getUnprovabilityReasons(final IProgramExecution<TE, ?> pe) {
-		final List<UnprovabilityReason> unproabilityReasons = new ArrayList<>();
-		for (final Entry<String, ILocation> entry : Overapprox.getOverapproximations(pe).entrySet()) {
-			unproabilityReasons
-					.add(new UnprovabilityReason("overapproximation of " + entry.getKey(), entry.getValue()));
-		}
-		return unproabilityReasons;
+	public static List<UnprovabilityReason> getUnprovabilityReasons(final Map<String, ILocation> overapproximations) {
+		return overapproximations.entrySet().stream()
+				.map(x -> new UnprovabilityReason("overapproximation of " + x.getKey(), x.getValue()))
+				.collect(Collectors.toList());
 	}
 }
