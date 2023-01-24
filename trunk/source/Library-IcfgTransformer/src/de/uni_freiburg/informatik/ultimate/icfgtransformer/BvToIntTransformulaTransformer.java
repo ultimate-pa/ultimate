@@ -191,7 +191,9 @@ public final class BvToIntTransformulaTransformer implements ITransformulaTransf
 	@Override
 	public AxiomTransformationResult transform(final IPredicate oldAxioms) {
 		if (!oldAxioms.getFuns().isEmpty()) {
-			throw new UnsupportedOperationException("No support for functions.");
+			throw new UnsupportedOperationException(String.format(
+					"Cannot yet translate axioms but CFG has axioms that contain %s uninterpreted function symbols",
+					oldAxioms.getFuns().size()));
 		}
 
 		final Triple<Term, Set<TermVariable>, Boolean> result =
