@@ -262,7 +262,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
         // sum3 = z + b
         final Term sum3 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), z, bAsTerm);
         // mod2 = z + b mod k
-        final Term mod2 = SmtUtils.mod(mScript, sum3, divisorAsTerm);
+        //final Term mod2 = SmtUtils.mod(mScript, sum3, divisorAsTerm);
         final Map<Term, Term> sub1 = new HashMap<Term, Term>();
         sub1.put(xEliminate, sum1);
         Term termWithITE;
