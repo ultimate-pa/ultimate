@@ -8,15 +8,14 @@
  * 
  */
 
-var ctr : int;
-var i : int;
+var c, i : int;
 
 procedure ULTIMATE.start()
-modifies ctr, i;
+modifies c, i;
 {
-    ctr := 0;
+    c := 0;
     i := 0;
-    while (*) {
+    while (true) {
         fork i worker();
         if (i > 0) { join i-1; }
         i := i + 1;
@@ -24,10 +23,10 @@ modifies ctr, i;
 }
 
 procedure worker()
-modifies ctr;
+modifies c;
 {
-    ctr := ctr + i;
-    assert ctr <= 2 * i;
-    ctr := ctr - i;
+    c := c + i;
+    assert c <= 2 * i;
+    c := c - i;
 }
 
