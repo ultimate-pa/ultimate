@@ -1,3 +1,4 @@
+//#NonTerminating
 /**
  * This program is an example for a non-terminating concurrent program.
  *
