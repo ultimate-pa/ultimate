@@ -74,7 +74,7 @@ public class DTReverseTrigger extends ReverseTrigger {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void activate(final CCAppTerm appTerm, final boolean isFresh) {
-		mClausifier.getLogger().info("DTReverseTrigger: %s on %s", appTerm, mArg);
+		mClausifier.getLogger().debug("DTReverseTrigger: %s on %s", appTerm, mArg);
 		final ApplicationTerm argAT = (ApplicationTerm) mArg.mFlatTerm;
 		final SymmetricPair<CCTerm>[] reason;
 		if (appTerm.getArg() != mArg) {
@@ -118,7 +118,7 @@ public class DTReverseTrigger extends ReverseTrigger {
 				}
 			}
 
-			assert false :"selector function not part of constructor";
+			throw new AssertionError("selector function not part of constructor");
 		}
 	}
 

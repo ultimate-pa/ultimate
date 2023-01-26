@@ -843,7 +843,7 @@ public class DataTypeTheory implements ITheory {
 		@SuppressWarnings("unchecked")
 		final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_CONSTRUCTOR, eq,
 				new SymmetricPair[] { new SymmetricPair<>(isTerm, mClausifier.getCCTerm(mTheory.mTrue)) });
-		mClausifier.getLogger().info("New DT_CONSTRUCTOR lemma for %s", dtTerm);
+		mClausifier.getLogger().debug("New DT_CONSTRUCTOR lemma for %s", dtTerm);
 		addPendingLemma(lemma);
 	}
 

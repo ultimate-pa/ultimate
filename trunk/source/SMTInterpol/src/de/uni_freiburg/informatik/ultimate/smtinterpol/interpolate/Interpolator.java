@@ -779,11 +779,16 @@ public class Interpolator extends NonRecursive {
 
 		final Set<Term> seen = new HashSet<>();
 		final Deque<Term> todoStack = new ArrayDeque<>();
-		seen.add(proofTree);
 		todoStack.add(proofTree);
 
 		while (!todoStack.isEmpty()) {
+			if (mCancel.isTerminationRequested()) {
+				throw new SMTLIBException("Timeout exceeded");
+			}
 			final Term proofTerm = todoStack.pop();
+			if (!seen.add(proofTerm)) {
+				continue;
+			}
 			final InterpolatorClauseInfo proofTermInfo = getClauseTermInfo(proofTerm);
 			if (proofTermInfo.isResolution()) {
 				final Term resolutionTerm = proofTerm instanceof AnnotatedTerm
