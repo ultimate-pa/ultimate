@@ -62,62 +62,6 @@ import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Katharina Wagner
  */
-final class partsOfModTerm {
-        final BigInteger mAAsBigInteger;
-        final Term mBAsTerm;
-        final BigInteger mDivisorAsBigInteger;
-        final Term mModConjunct;
-        final BigInteger mInverse;
-        final Term mSubtermWithMod;
-        final TermVariable mXEliminate;
-
-        partsOfModTerm(final BigInteger mAAsBigInteger, final Term mBAsTerm, final BigInteger mDivisorAsBigInteger, final Term mModConjunct, final BigInteger mInverse, final Term mSubtermWithMod, final TermVariable mXEliminate) {
-            this.mAAsBigInteger = mAAsBigInteger;
-            this.mBAsTerm = mBAsTerm;
-            this.mDivisorAsBigInteger = mDivisorAsBigInteger;
-            this.mModConjunct = mModConjunct;
-            this.mInverse = mInverse;
-            this.mSubtermWithMod = mSubtermWithMod;
-            this.mXEliminate = mXEliminate;
-        }
-
-
-
-	public BigInteger getInverse() {
-		return mInverse;
-	}
-
-	public BigInteger getA() {
-		return mAAsBigInteger;
-	}
-
-	public Term getModConjunct() {
-		return mModConjunct;
-	}
-
-	public Term getB() {
-		return mBAsTerm;
-	}
-
-	public TermVariable getXEliminate() {
-		return mXEliminate;
-	}
-
-	public Term getSubtermWithMod() {
-		return mSubtermWithMod;
-	}
-
-	public BigInteger getDivisor() {
-		return mDivisorAsBigInteger;
-	}
-
-	}
-
-
-
-
-
-
 public class DualJunctionDml extends DualJunctionQuantifierElimination {
 
 
@@ -135,7 +79,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		return "DML";
 	}
 
-    public partsOfModTerm findAllComponents(final EliminationTask inputEt) {
+    public PartsOfModTerm findAllComponents(final EliminationTask inputEt) {
         final Term[] conjuncts = QuantifierUtils.getDualFiniteJunction(inputEt.getQuantifier(), inputEt.getTerm());
         for (final TermVariable eliminatee : inputEt.getEliminatees()) {
 	    // Iterate over all conjuncts
@@ -165,7 +109,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 								bAsAffineTermMap.put(entry.getKey(), entry.getValue());
 							}
 						}
-						final AffineTerm bAsAffineTerm = new AffineTerm(dividentAsAffineTerm.getSort(), dividentAsAffineTerm.getConstant(), bAsAffineTermMap);
+						final AffineTerm bAsAffineTerm = new AffineTerm(dividentAsAffineTerm.getSort(),
+								dividentAsAffineTerm.getConstant(), bAsAffineTermMap);
 						final Term bAsTerm = bAsAffineTerm.toTerm(mScript);
 						if (Arrays.asList(bAsTerm.getFreeVars()).contains(eliminatee)) {
 							continue;
@@ -200,7 +145,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
                         xEliminate = eliminatee;
                         if ((divisorAsBigInteger.gcd(aAsBigInteger)).equals(BigInteger.valueOf(1))) {
                         	inverse = ArithmeticUtils.extendedEuclidean(aAsBigInteger, divisorAsBigInteger);
-                        	final partsOfModTerm returnSeven = new partsOfModTerm(aAsBigInteger, bAsTerm, divisorAsBigInteger, modConjunct, inverse, subtermWithMod, xEliminate);
+                        	final PartsOfModTerm returnSeven = new PartsOfModTerm(aAsBigInteger, bAsTerm, divisorAsBigInteger, modConjunct, inverse, subtermWithMod, xEliminate);
                         	//final partsOfModTerm<BigInteger, BigInteger, BigInteger, Term, BigInteger, Term, TermVariable> returnSeven = new partsOfModTerm<>(aAsBigInteger, bAsBigInteger, divisorAsBigInteger, modConjunct, inverse, subtermWithMod, xEliminate);
                         	return returnSeven;
                         }
@@ -220,7 +165,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 	@Override
 	public EliminationResult tryToEliminate(final EliminationTask inputEt) {
         final Term[] conjuncts = QuantifierUtils.getDualFiniteJunction(inputEt.getQuantifier(), inputEt.getTerm());
-        final partsOfModTerm inputSeven = findAllComponents(inputEt);
+        final PartsOfModTerm inputSeven = findAllComponents(inputEt);
         //final partsOfModTerm<BigInteger, BigInteger, BigInteger, Term, BigInteger, Term, TermVariable> inputSeven = findAllComponents(inputEt);
         if (inputSeven == null){
         	return null;
@@ -321,8 +266,55 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 	}
 
 
+	private class PartsOfModTerm {
+		final BigInteger mAAsBigInteger;
+		final Term mBAsTerm;
+		final BigInteger mDivisorAsBigInteger;
+		final Term mModConjunct;
+		final BigInteger mInverse;
+		final Term mSubtermWithMod;
+		final TermVariable mXEliminate;
 
+		PartsOfModTerm(final BigInteger mAAsBigInteger, final Term mBAsTerm, final BigInteger mDivisorAsBigInteger, final Term mModConjunct,
+				final BigInteger mInverse, final Term mSubtermWithMod, final TermVariable mXEliminate) {
+			this.mAAsBigInteger = mAAsBigInteger;
+			this.mBAsTerm = mBAsTerm;
+			this.mDivisorAsBigInteger = mDivisorAsBigInteger;
+			this.mModConjunct = mModConjunct;
+			this.mInverse = mInverse;
+			this.mSubtermWithMod = mSubtermWithMod;
+			this.mXEliminate = mXEliminate;
+		}
 
+		public BigInteger getInverse() {
+			return mInverse;
+		}
+
+		public BigInteger getA() {
+			return mAAsBigInteger;
+		}
+
+		public Term getModConjunct() {
+			return mModConjunct;
+		}
+
+		public Term getB() {
+			return mBAsTerm;
+		}
+
+		public TermVariable getXEliminate() {
+			return mXEliminate;
+		}
+
+		public Term getSubtermWithMod() {
+			return mSubtermWithMod;
+		}
+
+		public BigInteger getDivisor() {
+			return mDivisorAsBigInteger;
+		}
+
+	}
 
 
 }
