@@ -79,15 +79,16 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		return "DML";
 	}
 
-    public PartsOfModTerm findAllComponents(final EliminationTask inputEt) {
-        final Term[] conjuncts = QuantifierUtils.getDualFiniteJunction(inputEt.getQuantifier(), inputEt.getTerm());
-        for (final TermVariable eliminatee : inputEt.getEliminatees()) {
-	    // Iterate over all conjuncts
-			for (final Term conjunct : conjuncts) {
+	public PartsOfModTerm findAllComponents(final EliminationTask inputEt) {
+		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJunction(inputEt.getQuantifier(),
+				inputEt.getTerm());
+		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
+			// Iterate over all conjuncts
+			for (final Term conjunct : dualFiniteJuncts) {
 				final Set<Term> moduloSubterms;
 				final Predicate<Term> isModTerm = (x -> isModTerm(x));
-                final boolean onlyOutermost = false;
-                moduloSubterms = SubTermFinder.find(conjunct, isModTerm, onlyOutermost);
+				final boolean onlyOutermost = false;
+				moduloSubterms = SubTermFinder.find(conjunct, isModTerm, onlyOutermost);
 				for (final Term subterm : moduloSubterms) {
 					if (Arrays.asList(subterm.getFreeVars()).contains(eliminatee)) {
 						final ApplicationTerm appTerm = (ApplicationTerm) subterm;
@@ -101,7 +102,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 						if (Arrays.asList(divisorAsTerm.getFreeVars()).contains(eliminatee)) {
 							continue;
 						}
-						final AffineTerm dividentAsAffineTerm = (AffineTerm) new AffineTermTransformer(mScript).transform(dividentAsTerm);
+						final AffineTerm dividentAsAffineTerm = (AffineTerm) new AffineTermTransformer(mScript)
+								.transform(dividentAsTerm);
 						final Map<Term, Rational> varToCoeff = dividentAsAffineTerm.getVariable2Coefficient();
 						final Map<Term, Rational> bAsAffineTermMap = new HashMap<>();
 						for (final Entry<Term, Rational> entry : varToCoeff.entrySet()) {
@@ -122,40 +124,44 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 						final Rational bAsRational = dividentAsAffineTerm.getConstant();
 						assert aAsRational.denominator().equals(BigInteger.ONE);
 						BigInteger divisorAsBigInteger;
-				        BigInteger aAsBigInteger;
-				        BigInteger bAsBigInteger;
+						BigInteger aAsBigInteger;
+						BigInteger bAsBigInteger;
 						aAsBigInteger = aAsRational.numerator();
 						bAsBigInteger = bAsRational.numerator();
-						final AffineTerm divisorAsAffineTerm = (AffineTerm) new AffineTermTransformer(mScript).transform(divisorAsTerm);
+						final AffineTerm divisorAsAffineTerm = (AffineTerm) new AffineTermTransformer(mScript)
+								.transform(divisorAsTerm);
 						final Rational divisorAsRational = divisorAsAffineTerm.getConstant();
 						if (!divisorAsAffineTerm.getVariable2Coefficient().isEmpty()) {
 							continue;
 						}
 						if (divisorAsRational.numerator().equals(BigInteger.valueOf(0))) {
-                        	continue;
-                        }
+							continue;
+						}
 						assert divisorAsRational.denominator().equals(BigInteger.ONE);
-                        divisorAsBigInteger = divisorAsRational.numerator();
-                        Term modConjunct;
-                        BigInteger inverse;
-                        TermVariable xEliminate;
-                        Term subtermWithMod;
-                        modConjunct = conjunct;
-                        subtermWithMod = subterm;
-                        xEliminate = eliminatee;
-                        if ((divisorAsBigInteger.gcd(aAsBigInteger)).equals(BigInteger.valueOf(1))) {
-                        	inverse = ArithmeticUtils.extendedEuclidean(aAsBigInteger, divisorAsBigInteger);
-                        	final PartsOfModTerm returnSeven = new PartsOfModTerm(aAsBigInteger, bAsTerm, divisorAsBigInteger, modConjunct, inverse, subtermWithMod, xEliminate);
-                        	//final partsOfModTerm<BigInteger, BigInteger, BigInteger, Term, BigInteger, Term, TermVariable> returnSeven = new partsOfModTerm<>(aAsBigInteger, bAsBigInteger, divisorAsBigInteger, modConjunct, inverse, subtermWithMod, xEliminate);
-                        	return returnSeven;
-                        }
+						divisorAsBigInteger = divisorAsRational.numerator();
+						Term modConjunct;
+						BigInteger inverse;
+						TermVariable xEliminate;
+						Term subtermWithMod;
+						modConjunct = conjunct;
+						subtermWithMod = subterm;
+						xEliminate = eliminatee;
+						if ((divisorAsBigInteger.gcd(aAsBigInteger)).equals(BigInteger.valueOf(1))) {
+							inverse = ArithmeticUtils.extendedEuclidean(aAsBigInteger, divisorAsBigInteger);
+							final PartsOfModTerm returnSeven = new PartsOfModTerm(aAsBigInteger, bAsTerm,
+									divisorAsBigInteger, modConjunct, inverse, subtermWithMod, xEliminate);
+							// final partsOfModTerm<BigInteger, BigInteger, BigInteger, Term, BigInteger,
+							// Term, TermVariable> returnSeven = new partsOfModTerm<>(aAsBigInteger,
+							// bAsBigInteger, divisorAsBigInteger, modConjunct, inverse, subtermWithMod,
+							// xEliminate);
+							return returnSeven;
+						}
 					}
 				}
 			}
-        }
-        return null;
-    }
-
+		}
+		return null;
+	}
 
 
 
