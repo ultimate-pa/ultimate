@@ -2,19 +2,21 @@
 <benchmark tool="ultimateautomizer" memlimit="16GB" timelimit="900" hardtimelimit="920" cpuCores="2">
 	<option name="--force-no-wrapper" />
 
-	<rundefinition name="Automizer PN">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf</option>
+	<rundefinition name="Automizer-PN">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf</option>
 	</rundefinition>
 	
-	<rundefinition name="Automizer PN.Before">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe-Before.epf</option>
+	<rundefinition name="Automizer-PN.Before">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf</option>
+		<option name="--traceabstraction.when.to.check.the.insufficient.erros.location.relative.to.the.other.error.locations">BEFORE</option>
 	</rundefinition>
   
-  <rundefinition name="Automizer PN.After">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe-After.epf</option>
+  <rundefinition name="Automizer-PN.After">
+		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf</option>
+		<option name="--traceabstraction.when.to.check.the.insufficient.erros.location.relative.to.the.other.error.locations">AFTER</option>
 	</rundefinition>
 
-	<tasks name="SVCOMP ConcurrencySafety-Main">
+	<tasks name="SVCOMP-ConcurrencySafety-Main">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
