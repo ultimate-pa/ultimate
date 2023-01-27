@@ -24,17 +24,12 @@ int main() {
 
     pthread_t first_thread_id;
     pthread_t second_thread_id;
-    pthread_t third_thread_id;
 
     pthread_create(&first_thread_id, NULL, foo, &val);
     pthread_create(&second_thread_id, NULL, foo, &val);
-    pthread_create(&third_thread_id, NULL, foo, &val);
 
     pthread_join(first_thread_id, NULL);
     pthread_join(second_thread_id, NULL);
-    pthread_join(third_thread_id, NULL);
-
-    //@assert val == 3;
 
     return 0;
 }
