@@ -1116,6 +1116,36 @@ public class QuantifierEliminationDivMod {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void honigbuck01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "c"),
+		};
+		final String formulaAsString = "(forall ((|v1| Int) (|v2| Int) (|v3| Int)) (or (< (mod (mod |v3| 256) 4294967296) (* |v1| 256)) (<= (+ (* |v1| 256) 256) (mod (mod |v3| 256) 4294967296)) (= (mod (mod |v3| 256) 4294967296) (+ (* |v1| 256) (* 4294967296 |v2|))) (<= (+ (* |v1| 256) 4294967296 (* 4294967296 |v2|)) (mod (mod |v3| 256) 4294967296)) (< (mod (mod |v3| 256) 4294967296) (+ (* |v1| 256) (* 4294967296 |v2|))) (and (or (<= (mod (mod |v3| 256) 4294967296) 2147483647) (<= (mod (mod |c| 256) 4294967296) 2147483647) (not (= (mod (mod |v3| 256) 4294967296) (mod (mod |c| 256) 4294967296)))) (or (not (<= (mod (mod |c| 256) 4294967296) 2147483647)) (not (<= (mod (mod |v3| 256) 4294967296) 2147483647)) (not (= (mod (mod |v3| 256) 4294967296) (mod (mod |c| 256) 4294967296)))))))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+	@Test
+	public void honigbuck02() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "c"),
+		};
+		final String formulaAsString = "(exists ((v2 Int) (v3 Int) (v1 Int)) (let ((.cse1 (* 256 v1)) (.cse2 (* v2 4294967296))) (let ((.cse3 (+ .cse1 .cse2)) (.cse0 (mod (mod v3 256) 4294967296))) (and (< .cse0 (+ .cse1 .cse2 4294967296)) (<= .cse1 .cse0) (not (= .cse3 .cse0)) (< .cse0 (+ .cse1 256)) (let ((.cse5 (mod (mod c 256) 4294967296))) (let ((.cse4 (= .cse5 .cse0))) (or (and .cse4 (< 2147483647 .cse5) (< 2147483647 .cse0)) (and .cse4 (<= .cse5 2147483647) (<= .cse0 2147483647))))) (<= .cse3 .cse0)))))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void honigbuck03() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "c"),
+		};
+		final String formulaAsString = "(exists ((v2 Int) (v3 Int) (v1 Int)) (let ((.cse1 (* 256 v1)) (.cse2 (* v2 4294967296))) (let ((.cse3 (+ .cse1 .cse2)) (.cse0 (mod (mod v3 256) 4294967296))) (and (< .cse0 (+ .cse1 .cse2 4294967296)) (<= .cse1 .cse0) (not (= .cse3 .cse0)) (< .cse0 (+ .cse1 256)) (let ((.cse5 (mod (mod c 256) 4294967296))) (let ((.cse4 (= .cse5 .cse0))) (or (and .cse4 (< 2147483647 .cse5) (< 2147483647 .cse0)) (and .cse4 (<= .cse5 2147483647)))))))))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
 
 	//@formatter:on
