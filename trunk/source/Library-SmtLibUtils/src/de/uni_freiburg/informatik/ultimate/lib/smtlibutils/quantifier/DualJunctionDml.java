@@ -80,7 +80,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 	}
 
 	public ComponentsOfFormulaContainingMod findAllComponents(final EliminationTask inputEt) {
-		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJunction(inputEt.getQuantifier(),
+		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(),
 				inputEt.getTerm());
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
 			// Iterate over all conjuncts
@@ -153,7 +153,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 
 	@Override
 	public EliminationResult tryToEliminate(final EliminationTask inputEt) {
-		final Term[] conjuncts = QuantifierUtils.getDualFiniteJunction(inputEt.getQuantifier(), inputEt.getTerm());
+		final Term[] conjuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
 		final ComponentsOfFormulaContainingMod pmt = findAllComponents(inputEt);
 		if (pmt == null) {
 			return null;
