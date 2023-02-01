@@ -1,3 +1,4 @@
+//#Safe
 /*
  * 
  *
@@ -13,11 +14,11 @@ modifies x;
 
 implementation ULTIMATE.start()
 {
-    x := 0;
+	x := 0;
 
-    fork 1 fistIncrementProcess();
+	fork 1 fistIncrementProcess();
 	fork 2 secondIncrementProcess();
-    join 1;
+	join 1;
 	join 2;
 	assert x >= 2;
 }
