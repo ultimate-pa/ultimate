@@ -160,8 +160,30 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 			successorMarkingSet.addAll(getSuccessorMarkingsOfFireSequence(markingOfFireSequence, currentSymbol));
 		}
 		mFireSequenceTreeMarkings = successorMarkingSet;
+		// Remove firesequences with same marking as others
+		removeRedundantMarkings();
 
 		mfireSequenceIndex++;
+	}
+
+	private void removeRedundantMarkings() {
+		final Set<MarkingOfFireSequence<LETTER, PLACE>> markingsToRemove = new HashSet<>();
+		for (final MarkingOfFireSequence<LETTER, PLACE> marking : mFireSequenceTreeMarkings) {
+			if (markingsToRemove.contains(marking)) {
+				// all markings that this contains would have been removed already
+				continue;
+			}
+			for (final MarkingOfFireSequence<LETTER, PLACE> marking2 : mFireSequenceTreeMarkings) {
+				if (marking == marking2) {
+					continue;
+				}
+				final Set<PLACE> comparedMarkingPlaceSet = marking2.getMarking().stream().collect(Collectors.toSet());
+				if (marking.getMarking().containsAll(comparedMarkingPlaceSet)) {
+					markingsToRemove.add(marking2);
+				}
+			}
+		}
+		mFireSequenceTreeMarkings.removeAll(markingsToRemove);
 	}
 
 	private Set<MarkingOfFireSequence<LETTER, PLACE>> getSuccessorMarkingsOfFireSequence(

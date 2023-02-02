@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -51,7 +52,9 @@ public class MarkingOfFireSequence<LETTER, PLACE> {
 	}
 
 	public Set<Pair<Marking<PLACE>, Integer>> getHondaMarkingsOfFireSequence() {
-		return mHondaMarkingsOfFireSequence;
+		final Set<Pair<Marking<PLACE>, Integer>> newSet = new HashSet<>();
+		newSet.addAll(mHondaMarkingsOfFireSequence);
+		return newSet;
 	}
 
 	public void addHondaMarkingOfFireSequence(final Marking<PLACE> newHondaMarking, final int hondaMarkingIndex) {
