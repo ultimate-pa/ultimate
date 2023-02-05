@@ -611,6 +611,12 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 			// Result is a constant. Effect of the modulo was already taken into account
 			return intermediateResult;
 		}
+		final Pair<Rational, Rational> minmax = intermediateResult.computeMinMax();
+		if (minmax != null && !minmax.getFirst().isNegative()
+				&& minmax.getSecond().compareTo(Rational.valueOf(divisor, BigInteger.ONE)) < 0) {
+			// outer modulo is useless, we are in range [0 ... divisor) anyway.
+			return intermediateResult;
+		}
 		final Rational gcd = computeGcdOfValues(preprocessedMap).gcd(preprocessedConstant)
 				.gcd(Rational.valueOf(divisor, BigInteger.ONE));
 		assert !gcd.isNegative() && !gcd.equals(Rational.ZERO);
