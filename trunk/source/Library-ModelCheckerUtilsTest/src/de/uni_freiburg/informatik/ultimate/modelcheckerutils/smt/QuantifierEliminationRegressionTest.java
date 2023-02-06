@@ -2005,7 +2005,11 @@ public class QuantifierEliminationRegressionTest {
 	}
 
 	/**
+<<<<<<< HEAD
 	 * Ird with {@link MultiCaseSolvedBinaryRelation} would be unsound here.
+=======
+	 * Ird would be unsound here.
+>>>>>>> 2444ac990c (add test)
 	 */
 	@Test
 	public void ird02() {
@@ -2017,6 +2021,7 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+<<<<<<< HEAD
 	@Test
 	public void alignedArrayAccess01() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -2046,6 +2051,8 @@ public class QuantifierEliminationRegressionTest {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+=======
+>>>>>>> 2444ac990c (add test)
 
 	//@formatter:on
 }
