@@ -802,6 +802,19 @@ public class PolynomialTest {
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
 
+	/**
+	 * Outer modulo is useless.
+	 */
+	@Test
+	public void mod11() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		final String inputAsString = "(mod (+ (mod x 7) (mod x 19) 4) 30)";
+		final String expectedOutputAsString = "(+ (mod x 7) (mod x 19) 4)";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+		runDefaultTest(inputAsString, expectedOutputAsString);
+	}
+
 	@Test
 	public void multiplicationWithAddition() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
