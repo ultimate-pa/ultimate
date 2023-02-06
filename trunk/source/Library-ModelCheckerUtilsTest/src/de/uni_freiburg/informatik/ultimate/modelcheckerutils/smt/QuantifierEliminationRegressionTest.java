@@ -2005,7 +2005,7 @@ public class QuantifierEliminationRegressionTest {
 	}
 
 	/**
-	 * Ird would be unsound here.
+	 * Ird with {@link MultiCaseSolvedBinaryRelation} would be unsound here.
 	 */
 	@Test
 	public void ird02() {
@@ -2015,6 +2015,16 @@ public class QuantifierEliminationRegressionTest {
 		final String formulaAsString = "(exists ((x Int)) (< a (mod x 133)))";
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void alignedArrayAccess01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"),
+			};
+		final String formulaAsString = "(exists ((x Int)) (and (= (mod x 4) 0) (= (select a x) 1337)))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 
