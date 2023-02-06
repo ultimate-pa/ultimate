@@ -420,7 +420,13 @@ public class QuantifierEliminationTodos {
 			QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, null, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
+	@Test
+	public void fusibleInequalities01() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "main_result", "main_m", "main_n"), };
+		final String formulaAsString = "(exists ((main_n_tmp Int)) (and (= (+ main_result (* main_m main_n_tmp)) (* main_n main_m)) (<= 0 main_n_tmp) (not (<= 1 main_n_tmp))))";
+		final String expectedResultAsString = "(= (+ main_result (* main_m 1)) (* main_n main_m))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
 	//@formatter:on
 }
