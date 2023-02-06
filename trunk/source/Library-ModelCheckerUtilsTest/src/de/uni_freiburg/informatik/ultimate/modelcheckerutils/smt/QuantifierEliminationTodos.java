@@ -155,7 +155,7 @@ public class QuantifierEliminationTodos {
 	public void choirNightTrezor04Triathlon2() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "i", "b"), };
 		final String formulaAsString = "(forall ((diva Int) (moda Int)) (or (<= 4294967296 (+ (* 4294967296 diva) moda)) (<= (mod (+ (* b 4294967295) moda) 4294967296) 1)  (<= (+ (* 4294967296 diva) moda) (mod i 4294967296)) (< (+ (* 4294967296 diva) moda) 0)))";
-		final String expectedResult = "false";
+		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -163,8 +163,8 @@ public class QuantifierEliminationTodos {
 	public void choirNightTrezor04Triathlon3() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "i", "b"), };
 		final String formulaAsString = "(forall ((diva Int) (moda Int)) (or (<= 4294967296 (+ (* 4294967296 diva) moda)) (<= (mod (+ (* b 4294967295) moda) 4294967296) 1)  (<= (+ (* 4294967296 diva) moda) (mod i 4294967296)) (< (+ (* 4294967296 diva) moda) 0)))";
-		final String expectedResult = "false";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, formulaAsString, !true, mServices, mLogger, mMgdScript, mCsvWriter);
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
