@@ -2027,6 +2027,25 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void uneliminableInfiniteLoopRisk01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2", "a3"),
+			};
+		final String formulaAsString = "(exists ((x1 Int) (x2 Int) (x3 Int)) (and (= (+ (* 2 x1) (* 3 x2) (* 5 x3)) 0) (= (select a1 x1) 1337) (= (select a2 x2) 1337) (= (select a3 x3) 1337)))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void uneliminableInfiniteLoopRisk02() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2", "a3"),
+			};
+		final String formulaAsString = "(exists ((x1 Int) (x2 Int) (x3 Int)) (and (= (+ (mod x1 2) (* 3 x2) (* 5 x3)) 0) (= (select a1 x1) 1337) (= (select a2 x2) 1337) (= (select a3 x3) 1337)))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
 	//@formatter:on
 }
