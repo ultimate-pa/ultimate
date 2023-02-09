@@ -24,7 +24,7 @@ public class CanonicalPrefixIsEmptyBuchi<LETTER, PLACE> {
 	private PetriNetLassoRun<LETTER, PLACE> mRun = null;
 	AutomataLibraryServices mServices;
 	protected final ILogger mLogger;
-	Boolean searchAllLassoTypes = false;
+	Boolean searchAllLassoTypes = true;
 
 	public CanonicalPrefixIsEmptyBuchi(final AutomataLibraryServices services,
 			final BranchingProcess<LETTER, PLACE> completePrefix) throws PetriNetNot1SafeException {
@@ -71,8 +71,7 @@ public class CanonicalPrefixIsEmptyBuchi<LETTER, PLACE> {
 	}
 
 	/**
-	 * (edge case) Lasso word contained in local configuration where the stem-event of the Unfolding is an event
-	 * companion.
+	 * Word not conatained in any local configuration, but would be in complete (infinite) Unfolding
 	 *
 	 * @throws PetriNetNot1SafeException
 	 */

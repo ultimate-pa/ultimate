@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.IntersectBuchiEager;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.IsEmptyBuchi;
@@ -92,6 +93,21 @@ public class BuchiPetriNetCegarLoop<L extends IIcfgTransition<?>>
 	@Override
 	protected IPetriNet<L, IPredicate> reduceAbstractionSize(final IPetriNet<L, IPredicate> abstraction,
 			final Minimization automataMinimization) throws AutomataOperationCanceledException {
-		return abstraction;
+		BoundedPetriNet<L, IPredicate> reducedNet;
+		try {
+			// reducedNet = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable<>(
+			// new AutomataLibraryServices(mServices), abstraction).getResult();
+			reducedNet = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDeadBuchi<>(
+					new AutomataLibraryServices(mServices), abstraction, null).getResult();
+			// reducedNet = new RemoveRedundantFlow<>(new AutomataLibraryServices(mServices), reducedNet, null, null,
+			// null)
+			// .getResult();
+			return reducedNet;
+		} catch (AutomataOperationCanceledException | PetriNetNot1SafeException e) {
+			e.printStackTrace();
+			mLogger.warn(
+					"Unhandled " + e + "occured during abstarction size reduction. Continuing with non-reduced net");
+			return abstraction;
+		}
 	}
 }
