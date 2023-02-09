@@ -429,11 +429,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-<<<<<<< HEAD
 	public void bvToIntLynxForall() {
-=======
-	public void bvToIntSingleDirectionForallUpperSigned() {
->>>>>>> 08122738da (Add tests)
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "n", "m"),
 		};
