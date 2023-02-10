@@ -48,7 +48,7 @@ public class LTLTranslationRegressionTestSuite extends AbstractRegressionTestSui
 	}
 
 	@Override
-	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition) {
+	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition, boolean isIgnored) {
 		return new TranslationTestResultDecider(runDefinition.selectPrimaryInputFile());
 	}
 

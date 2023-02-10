@@ -26,7 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.regressiontest;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -48,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.test.logs.summaries.TraceAbstractionT
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * An {@link AbstractRegressionTestSuite} is a {@link UltimateTestSuite} that automatically generates tests from folders
@@ -110,15 +115,34 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		final Predicate<File> filesRegexFilter = getFilesRegexFilter();
 		for (final Config runConfiguration : runConfigurations) {
 			final Collection<File> inputFiles = getInputFiles(filesRegexFilter, runConfiguration);
-
+			// TODO: Better path
+			final Set<Triple<String, String, String>> ignoredTestFails =
+					getIgnoredTestFails(new File(runConfiguration.getSettingsFile().getParentFile(), "ignored.txt"));
 			for (final File inputFile : inputFiles) {
 				final UltimateRunDefinition urd =
 						new UltimateRunDefinition(inputFile, runConfiguration.getSettingsFile(),
 								runConfiguration.getToolchainFile(), getTimeout(runConfiguration, inputFile));
-				rtr.add(buildTestCase(urd, getTestResultDecider(urd)));
+				final boolean isIgnored = ignoredTestFails.contains(new Triple<>(inputFile.getName(),
+						runConfiguration.getSettingsFile().getName(), runConfiguration.getToolchainFile().getName()));
+				rtr.add(buildTestCase(urd, getTestResultDecider(urd, isIgnored)));
 			}
 		}
 		return rtr;
+	}
+
+	private static Set<Triple<String, String, String>>  getIgnoredTestFails(final File ignoreFile) {
+		final Set<Triple<String, String, String>> ignoredTestFails = new HashSet<>();
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(ignoreFile)))) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				final String[] args = line.split("\\s+");
+				assert args.length == 3;
+				ignoredTestFails.add(new Triple<>(args[0], args[1], args[2]));
+			}
+		} catch (final IOException e) {
+			// Just skip
+		}
+		return ignoredTestFails;
 	}
 
 	protected long getTimeout(final Config rundef, final File file) {
@@ -264,10 +288,10 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 				.collect(Collectors.toList());
 	}
 
-	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition);
+	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition, boolean isIgnored);
 
 	public static final class Config
-			extends de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair<File, File> {
+	extends de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair<File, File> {
 
 		public Config(final File toolchain, final File settings) {
 			super(toolchain, settings);
