@@ -634,8 +634,9 @@ public class QuantifierPusher extends TermTransformer {
 					logger.debug(String.format("Applying %s to %s term with %s context. Eliminated %s Introduced %s",
 							djqe.getAcronym(), termCdc, contextCdc, eliminated, er.getNewEliminatees()));
 				} else {
-					logger.debug(String.format("Applying %s to %s term with %s context. Could eliminate any variable %s",
-							djqe.getAcronym(), termCdc, contextCdc, currentEt.getEliminatees()));
+					logger.debug(
+							String.format("Applying %s to %s term with %s context. Could eliminate any variable %s",
+									djqe.getAcronym(), termCdc, contextCdc, currentEt.getEliminatees()));
 				}
 
 			}
