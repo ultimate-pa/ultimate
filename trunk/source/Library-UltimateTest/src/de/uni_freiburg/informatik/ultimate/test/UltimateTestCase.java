@@ -125,7 +125,7 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 			final ILogger logger = getLoggerFromStarter(starter);
 			logger.info("Deciding this test: " + deciderName);
 			result = mDecider.getTestResult(starter.getServices());
-			if (!returnCode.isOK() && result != TestResult.FAIL) {
+			if (!returnCode.isOK() && result != TestResult.FAIL && result != TestResult.IGNORE) {
 				logger.fatal("#################### Overwriting decision of " + deciderName
 						+ " and setting test status to FAIL ####################");
 				logger.fatal("Ultimate returned an unexpected status:");
