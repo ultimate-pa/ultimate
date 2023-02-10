@@ -48,14 +48,27 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<SafetyCheckerOverallResult> {
 
 	/**
-	 * 
+	 *
 	 * @param ultimateRunDefinition
-	 * 
+	 *
+	 * @param unknownIsJUnitSuccess
+	 *            if true the TestResult UNKNOWN is a success for JUnit, if false, the TestResult UNKNOWN is a failure
+	 *            for JUnit.
+	 */
+	public SafetyCheckTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
+			final boolean unknownIsJUnitSuccess, final boolean isIgnored) {
+		super(ultimateRunDefinition, unknownIsJUnitSuccess, isIgnored);
+	}
+	/**
+	 *
+	 * @param ultimateRunDefinition
+	 *
 	 * @param unknownIsJUnitSuccess
 	 *            if true the TestResult UNKNOWN is a success for JUnit, if
 	 *            false, the TestResult UNKNOWN is a failure for JUnit.
 	 */
-	public SafetyCheckTestResultDecider(final UltimateRunDefinition ultimateRunDefinition, final boolean unknownIsJUnitSuccess) {
+	public SafetyCheckTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
+			final boolean unknownIsJUnitSuccess) {
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
 	}
 
@@ -107,6 +120,10 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 
 			mCategory = overallResult + " (Expected:UNKNOWN)";
 			mMessage += " UltimateResult: " + overallResultMsg;
+			if (mIsIgnored) {
+				mTestResult = TestResult.IGNORE;
+				return;
+			}
 			switch (overallResult) {
 			case EXCEPTION_OR_ERROR:
 			case UNSUPPORTED_SYNTAX:
@@ -139,7 +156,7 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 			switch (overallResult) {
 			case EXCEPTION_OR_ERROR:
 				mCategory = overallResult + " (Expected:" + expectedResult + ") " + overallResultMsg;
-				mTestResult = TestResult.FAIL;
+				mTestResult = mIsIgnored ? TestResult.IGNORE : TestResult.FAIL;
 				break;
 			case SAFE:
 				if (expectedResult == SafetyCheckerOverallResult.SAFE) {
@@ -166,7 +183,7 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				} else if (expectedResult == SafetyCheckerOverallResult.UNSAFE) {
 					mTestResult = TestResult.SUCCESS;
 				} else {
-					mTestResult = TestResult.UNKNOWN;
+					mTestResult = mIsIgnored ? TestResult.IGNORE : TestResult.UNKNOWN;
 				}
 				break;
 			case UNKNOWN:
@@ -174,7 +191,7 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
 					mTestResult = TestResult.FAIL;
 				} else {
-					mTestResult = TestResult.UNKNOWN;
+					mTestResult = mIsIgnored ? TestResult.IGNORE : TestResult.UNKNOWN;
 				}
 				break;
 			case SYNTAX_ERROR:
@@ -189,7 +206,7 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
 					mTestResult = TestResult.FAIL;
 				} else {
-					mTestResult = TestResult.UNKNOWN;
+					mTestResult = mIsIgnored ? TestResult.IGNORE : TestResult.UNKNOWN;
 				}
 				break;
 			case UNSUPPORTED_SYNTAX:
