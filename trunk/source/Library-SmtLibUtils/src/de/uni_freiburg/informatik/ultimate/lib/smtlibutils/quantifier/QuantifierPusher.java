@@ -626,12 +626,16 @@ public class QuantifierPusher extends TermTransformer {
 		for (final DualJunctionQuantifierElimination djqe : elimtechniques) {
 			final EliminationResult er = djqe.tryToEliminate(currentEt);
 			if (logger.isDebugEnabled()) {
+				final CondisDepthCode termCdc = CondisDepthCode.of(currentEt.getTerm());
+				final CondisDepthCode contextCdc = CondisDepthCode.of(currentEt.getContext().getCriticalConstraint());
 				if (er != null) {
-					logger.debug(String.format("At least one variable eliminated via %s: %s", djqe.getAcronym(),
-							currentEt.getEliminatees()));
+					final Set<TermVariable> eliminated = new HashSet<>(currentEt.getEliminatees());
+					eliminated.removeAll(er.getEliminationTask().getEliminatees());
+					logger.debug(String.format("Applying %s to %s term with %s context. Eliminated %s Introduced %s",
+							djqe.getAcronym(), termCdc, contextCdc, eliminated, er.getNewEliminatees()));
 				} else {
-					logger.debug(String.format("No variable eliminated via %s: %s", djqe.getAcronym(),
-							currentEt.getEliminatees()));
+					logger.debug(String.format("Applying %s to %s term with %s context. Could eliminate any variable %s",
+							djqe.getAcronym(), termCdc, contextCdc, currentEt.getEliminatees()));
 				}
 
 			}
