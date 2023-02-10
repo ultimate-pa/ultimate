@@ -59,6 +59,27 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 	private final IExpectedResultFinder<OVERALL_RESULT> mExpectedResultEvaluation;
 	private IOverallResultEvaluator<OVERALL_RESULT> mUltimateResultEvaluation;
 	private ITestResultEvaluation<OVERALL_RESULT> mTestResultEvaluation;
+	protected boolean mIsIgnored;
+
+	/**
+	 *
+	 * @param ultimateRunDefinition
+	 *
+	 * @param unknownIsJUnitSuccess
+	 *            if true the TestResult UNKNOWN is a success for JUnit, if false, the TestResult UNKNOWN is a failure
+	 *            for JUnit.
+	 *
+	 * @param isIgnored
+	 *            Is the test case ignored?
+	 */
+	public ThreeTierTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
+			final boolean unknownIsJUnitSuccess, final boolean isIgnored) {
+		mUnknownIsJUnitSuccess = unknownIsJUnitSuccess;
+		mIsIgnored = isIgnored;
+		mUltimateRunDefinition = ultimateRunDefinition;
+		mExpectedResultEvaluation = constructExpectedResultFinder();
+		mExpectedResultEvaluation.findExpectedResult(ultimateRunDefinition);
+	}
 
 	/**
 	 *
@@ -70,10 +91,7 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 	 */
 	public ThreeTierTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
 			final boolean unknownIsJUnitSuccess) {
-		mUnknownIsJUnitSuccess = unknownIsJUnitSuccess;
-		mUltimateRunDefinition = ultimateRunDefinition;
-		mExpectedResultEvaluation = constructExpectedResultFinder();
-		mExpectedResultEvaluation.findExpectedResult(ultimateRunDefinition);
+		this(ultimateRunDefinition, unknownIsJUnitSuccess, false);
 	}
 
 	@Override
