@@ -2005,7 +2005,15 @@ public class QuantifierEliminationRegressionTest {
 	}
 
 	/**
+<<<<<<< HEAD
+<<<<<<< HEAD
 	 * Ird with {@link MultiCaseSolvedBinaryRelation} would be unsound here.
+=======
+	 * Ird would be unsound here.
+>>>>>>> 2444ac990c (add test)
+=======
+	 * Ird with {@link MultiCaseSolvedBinaryRelation} would be unsound here.
+>>>>>>> 06434e9928 (add test)
 	 */
 	@Test
 	public void ird02() {
