@@ -79,7 +79,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		return "DML";
 	}
 
-	public ComponentsOfFormulaContainingMod findAllComponents(final EliminationTask inputEt) {
+	public DmlPossibility findAllComponents(final EliminationTask inputEt) {
 		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(),
 				inputEt.getTerm());
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
@@ -139,7 +139,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 						final TermVariable eliminate = eliminatee;
 						if ((divisorAsBigInteger.gcd(aAsBigInteger)).equals(BigInteger.valueOf(1))) {
 							inverse = ArithmeticUtils.extendedEuclidean(aAsBigInteger, divisorAsBigInteger);
-							final ComponentsOfFormulaContainingMod returnSeven = new ComponentsOfFormulaContainingMod(
+							final DmlPossibility returnSeven = new DmlPossibility(
 									aAsBigInteger, bAsTerm, divisorAsBigInteger, modConjunct, inverse, subtermWithMod,
 									eliminate);
 							return returnSeven;
@@ -154,7 +154,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 	@Override
 	public EliminationResult tryToEliminate(final EliminationTask inputEt) {
 		final Term[] conjuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
-		final ComponentsOfFormulaContainingMod pmt = findAllComponents(inputEt);
+		final DmlPossibility pmt = findAllComponents(inputEt);
 		if (pmt == null) {
 			return null;
 		}
@@ -196,7 +196,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		Term termAfterFirstSubstitution = QuantifierUtils.getAbsorbingElement(mScript, inputEt.getQuantifier());
 		//Term termAfterFirstSubstitution = mScript.term("true");
 		for (final Term conjunct : conjuncts) {
-			if (conjunct == pmt.getModConjunct()) {
+			if (conjunct == pmt.getContainingDualJunct()) {
 				final Term modConjunctSub = Substitution.apply(mMgdScript, sub3, conjunct);
 				termAfterFirstSubstitution = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
 						termAfterFirstSubstitution, modConjunctSub);
@@ -247,25 +247,37 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		return false;
 	}
 
-	private class ComponentsOfFormulaContainingMod {
-		final BigInteger mAAsBigInteger;
-		final Term mBAsTerm;
-		final BigInteger mDivisorAsBigInteger;
-		final Term mModConjunct;
-		final BigInteger mInverse;
-		final Term mSubtermWithMod;
-		final TermVariable mEliminate;
 
-		ComponentsOfFormulaContainingMod(final BigInteger mAAsBigInteger, final Term mBAsTerm,
-				final BigInteger mDivisorAsBigInteger, final Term mModConjunct, final BigInteger mInverse,
-				final Term mSubtermWithMod, final TermVariable mEliminate) {
-			this.mAAsBigInteger = mAAsBigInteger;
-			this.mBAsTerm = mBAsTerm;
-			this.mDivisorAsBigInteger = mDivisorAsBigInteger;
-			this.mModConjunct = mModConjunct;
-			this.mInverse = mInverse;
-			this.mSubtermWithMod = mSubtermWithMod;
-			this.mEliminate = mEliminate;
+	/**
+	 * Represents a subterm of the form `(op (+ (* a x) b) K)`, where
+	 * <li>`op` is either "div" or "mod",
+	 * <li>x is the {@link TermVariable} that we want to eliminate, hence called
+	 * eliminatee,
+	 * <li>a is some integer that we call the coefficient of x,
+	 * <li>b is some term that must not contain x,
+	 * <li>K is some integer that we call the divisor. This subterm will be one
+	 * candidate for an elimination of x via {@link DualJunctionDml} and contains
+	 * additional data that supports the elimination.
+	 */
+	private class DmlPossibility {
+		final BigInteger mA;
+		final Term mB;
+		final BigInteger mDivisor;
+		final Term mContainingDualJunct;
+		final BigInteger mInverse;
+		final Term mDmlSubterm;
+		final TermVariable mEliminatee;
+
+		DmlPossibility(final BigInteger a, final Term b, final BigInteger divisor,
+				final Term containingDualJunct, final BigInteger inverse, final Term mSubtermWithMod,
+				final TermVariable eliminatee) {
+			mA = a;
+			mB = b;
+			mDivisor = divisor;
+			mContainingDualJunct = containingDualJunct;
+			mInverse = inverse;
+			mDmlSubterm = mSubtermWithMod;
+			mEliminatee = eliminatee;
 		}
 
 		public BigInteger getInverse() {
@@ -275,29 +287,29 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		// The formula containing mod is of the form F(ax+b mod k), i.e. getA() returns
 		// the coefficient of x
 		public BigInteger getA() {
-			return mAAsBigInteger;
+			return mA;
 		}
 
-		public Term getModConjunct() {
-			return mModConjunct;
+		public Term getContainingDualJunct() {
+			return mContainingDualJunct;
 		}
 
 		// The formula containing mod is of the form F(ax+b mod k), i.e. getB() returns
 		// any additional terms which do not contain the quantified variable x
 		public Term getB() {
-			return mBAsTerm;
+			return mB;
 		}
 
 		public TermVariable getEliminate() {
-			return mEliminate;
+			return mEliminatee;
 		}
 
-		public Term getSubtermWithMod() {
-			return mSubtermWithMod;
+		public Term getDmlSubterm() {
+			return mDmlSubterm;
 		}
 
 		public BigInteger getDivisor() {
-			return mDivisorAsBigInteger;
+			return mDivisor;
 		}
 
 	}
