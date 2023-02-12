@@ -260,17 +260,32 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 	 * additional data that supports the elimination.
 	 */
 	private class DmlPossibility {
+		/**
+		 * Coefficient of eliminatee
+		 */
 		final BigInteger mA;
+		/**
+		 * Other summand besides a*x
+		 */
 		final Term mB;
 		final BigInteger mDivisor;
+		/**
+		 * The dualJunct of the elimination input that contains the div/mod subterm we
+		 * will replace.
+		 */
 		final Term mContainingDualJunct;
+		/**
+		 * Term such that (a*mInverse%K)=1 holds.
+		 */
 		final BigInteger mInverse;
+		/**
+		 * div/mod subterm that we will replace.
+		 */
 		final Term mDmlSubterm;
 		final TermVariable mEliminatee;
 
-		DmlPossibility(final BigInteger a, final Term b, final BigInteger divisor,
-				final Term containingDualJunct, final BigInteger inverse, final Term mSubtermWithMod,
-				final TermVariable eliminatee) {
+		DmlPossibility(final BigInteger a, final Term b, final BigInteger divisor, final Term containingDualJunct,
+				final BigInteger inverse, final Term mSubtermWithMod, final TermVariable eliminatee) {
 			mA = a;
 			mB = b;
 			mDivisor = divisor;
@@ -311,7 +326,6 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		public BigInteger getDivisor() {
 			return mDivisor;
 		}
-
 	}
 
 }
