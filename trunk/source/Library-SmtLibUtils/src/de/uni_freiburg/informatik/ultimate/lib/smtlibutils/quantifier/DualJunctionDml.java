@@ -31,9 +31,11 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -51,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransf
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -79,19 +82,21 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		return "DML";
 	}
 
-	public DmlPossibility findAllComponents(final EliminationTask inputEt) {
+	public List<DmlPossibility> findAllDmlPossibilities(final EliminationTask inputEt) {
+		final List<DmlPossibility> result = new ArrayList<>();
 		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(),
 				inputEt.getTerm());
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
 			// Iterate over all conjuncts
 			for (final Term conjunct : dualFiniteJuncts) {
-				final Predicate<Term> isModTerm = (x -> isModTerm(x));
+				final Predicate<Term> isDivModTerm = (x -> isDivModTerm(x));
 				final boolean onlyOutermost = false;
-				final Set<Term> moduloSubterms = SubTermFinder.find(conjunct, isModTerm, onlyOutermost);
-				for (final Term subterm : moduloSubterms) {
+				final Set<Term> divModSubterms = SubTermFinder.find(conjunct, isDivModTerm, onlyOutermost);
+				for (final Term subterm : divModSubterms) {
 					if (Arrays.asList(subterm.getFreeVars()).contains(eliminatee)) {
 						final ApplicationTerm appTerm = (ApplicationTerm) subterm;
-						assert appTerm.getFunction().getApplicationString().equals("mod");
+						assert appTerm.getFunction().getApplicationString().equals("div")
+								|| appTerm.getFunction().getApplicationString().equals("mod");
 						assert appTerm.getParameters().length == 2;
 						final Term dividentAsTerm = appTerm.getParameters()[0];
 						final Term divisorAsTerm = appTerm.getParameters()[1];
@@ -139,25 +144,36 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 						final TermVariable eliminate = eliminatee;
 						if ((divisorAsBigInteger.gcd(aAsBigInteger)).equals(BigInteger.valueOf(1))) {
 							inverse = ArithmeticUtils.extendedEuclidean(aAsBigInteger, divisorAsBigInteger);
-							final DmlPossibility returnSeven = new DmlPossibility(
-									aAsBigInteger, bAsTerm, divisorAsBigInteger, modConjunct, inverse, subtermWithMod,
-									eliminate);
-							return returnSeven;
+							final DmlPossibility dmlPossibility = new DmlPossibility(
+									appTerm.getFunction().getApplicationString(), aAsBigInteger, bAsTerm,
+									divisorAsBigInteger, modConjunct, inverse, subtermWithMod, eliminate);
+							result.add(dmlPossibility);
 						}
 					}
 				}
 			}
 		}
-		return null;
+		return result;
 	}
 
 	@Override
 	public EliminationResult tryToEliminate(final EliminationTask inputEt) {
-		final Term[] conjuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
-		final DmlPossibility pmt = findAllComponents(inputEt);
-		if (pmt == null) {
+		final List<DmlPossibility> possibilities = findAllDmlPossibilities(inputEt);
+		if (possibilities.isEmpty()) {
 			return null;
 		}
+		// temporary solution: pick first mod term
+		for (final DmlPossibility dmlPossibility : possibilities) {
+			if (dmlPossibility.getFunName().equals("mod")) {
+				return applyModElimination(inputEt, dmlPossibility);
+			}
+		}
+		return null;
+	}
+
+	private EliminationResult applyModElimination(final EliminationTask inputEt, final DmlPossibility pmt)
+			throws AssertionError {
+		final Term[] conjuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
 		final TermVariable y = mMgdScript.constructFreshTermVariable("y", SmtSortUtils.getIntSort(mScript));
 		final TermVariable z = mMgdScript.constructFreshTermVariable("z", SmtSortUtils.getIntSort(mScript));
 		final Term divisorAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
@@ -238,15 +254,18 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		return resultWithoutXInMod;
 	}
 
-	private boolean isModTerm(final Term term) {
+	/**
+	 * Return true if the input is `div` term or a `mod` term.
+	 */
+	private boolean isDivModTerm(final Term term) {
 		if (term instanceof ApplicationTerm) {
-			if (((ApplicationTerm) term).getFunction().getApplicationString().equals("mod")) {
+			final FunctionSymbol fun = ((ApplicationTerm) term).getFunction();
+			if (fun.getApplicationString().equals("div") || fun.getApplicationString().equals("mod")) {
 				return true;
 			}
 		}
 		return false;
 	}
-
 
 	/**
 	 * Represents a subterm of the form `(op (+ (* a x) b) K)`, where
@@ -260,6 +279,10 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 	 * additional data that supports the elimination.
 	 */
 	private class DmlPossibility {
+		/**
+		 * Either "div" or "mod"
+		 */
+		private final String mFunName;
 		/**
 		 * Coefficient of eliminatee
 		 */
@@ -284,8 +307,17 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final Term mDmlSubterm;
 		final TermVariable mEliminatee;
 
-		DmlPossibility(final BigInteger a, final Term b, final BigInteger divisor, final Term containingDualJunct,
-				final BigInteger inverse, final Term mSubtermWithMod, final TermVariable eliminatee) {
+		DmlPossibility(final String funName, final BigInteger a, final Term b, final BigInteger divisor,
+				final Term containingDualJunct, final BigInteger inverse, final Term mSubtermWithMod,
+				final TermVariable eliminatee) {
+			if (!funName.equals("div") && !funName.equals("mod")) {
+				throw new IllegalArgumentException("Neither div nor mod");
+			}
+			if (funName.equals("mod") && a.compareTo(BigInteger.ZERO) <= 0) {
+				throw new IllegalArgumentException("For mod, the coefficient must be positive");
+			}
+
+			mFunName = funName;
 			mA = a;
 			mB = b;
 			mDivisor = divisor;
@@ -293,6 +325,10 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 			mInverse = inverse;
 			mDmlSubterm = mSubtermWithMod;
 			mEliminatee = eliminatee;
+		}
+
+		public String getFunName() {
+			return mFunName;
 		}
 
 		public BigInteger getInverse() {
