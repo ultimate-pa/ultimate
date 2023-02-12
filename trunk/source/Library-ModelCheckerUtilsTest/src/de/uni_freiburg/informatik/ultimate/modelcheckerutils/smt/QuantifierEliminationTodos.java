@@ -449,7 +449,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void bvToIntFoxForall() {
+	public void bvToIntFoxForall01() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "n", "m"),
 		};
@@ -459,11 +459,31 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void bvToIntFoxExists() {
+	public void bvToIntFoxExists01() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "n", "m"),
 		};
 		final String formulaAsString = "(exists ((x Int)) (and (> (mod x 256) (+ m (* (mod x 128) 2))) (> (mod x 256) (+ (* (mod x 128) 2) n))))";
+		final String expectedResultAsString = "(and (<= n 127) (<= m 127))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvToIntFoxForall02() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "n", "m"),
+		};
+		final String formulaAsString = "(forall ((x Int)) (or (>= x 256) (>= (+ (* 2 (mod x 128)) n) (mod x 256)) (> 0 x) (> (+ m (* 2 (mod x 128))) x)))";
+		final String expectedResultAsString = "(or (< 127 n) (< 127 m))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvToIntFoxExists02() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "n", "m"),
+		};
+		final String formulaAsString = "(exists ((x Int)) (and (< x 256) (< (+ (* 2 (mod x 128)) n) (mod x 256)) (<= 0 x) (< (+ m (* 2 (mod x 128))) x)))";
 		final String expectedResultAsString = "(and (<= n 127) (<= m 127))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
