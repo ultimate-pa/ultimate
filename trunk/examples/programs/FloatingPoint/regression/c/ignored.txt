@@ -2,3 +2,13 @@ BvaddWithThreeArguments.c AutomizerCInline-Reach-32bit-MathSAT-IcSpLv-Float_Cons
 SAS09-Float.c AutomizerC-Reach-32bit-Z3-IcWpLv-Float_Const.epf AutomizerC.xml
 SAS09-Float.c AutomizerCInline-Reach-32bit-MathSAT-IcSpLv-Float_Const.epf AutomizerC.xml
 cbmc_float4_PART1.i AutomizerCInline-Reach-32bit-MathSAT-IcSpLv-Float_Const.epf AutomizerC.xml
+ctrans-float-rounding.c AutomizerC-Reach-32bit-Z3-IcWpLv-Float_Const.epf AutomizerC.xml
+ctrans-float-rounding.c AutomizerCInline-Reach-32bit-MathSAT-IcSpLv-Float_Const.epf AutomizerC.xml
+cbmc_float-no-simp1.i AutomizerCInline-Reach-32bit-MathSAT-IcSpLv-Float_Const.epf AutomizerC.xml
+cbmc_float-to-double2.i AutomizerCInline-Reach-32bit-MathSAT-IcSpLv-Float_Const.epf AutomizerC.xml
+cbmc_float12.i AutomizerCInline-Reach-32bit-MathSAT-IcSpLv-Float_Const.epf AutomizerC.xml
+cbmc_float13.i AutomizerCInline-Reach-32bit-MathSAT-IcSpLv-Float_Const.epf AutomizerC.xml
+cbmc_float19.i AutomizerCInline-Reach-32bit-MathSAT-IcSpLv-Float_Const.epf AutomizerC.xml
+cbmc_float20_Part1.i AutomizerCInline-Reach-32bit-MathSAT-IcSpLv-Float_Const.epf AutomizerC.xml
+cbmc_float20_Part3.i AutomizerCInline-Reach-32bit-MathSAT-IcSpLv-Float_Const.epf AutomizerC.xml
+cbmc_float6.i AutomizerCInline-Reach-32bit-MathSAT-IcSpLv-Float_Const.epf AutomizerC.xml
