@@ -279,7 +279,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 	 * <li>`op` is either "div" or "mod",
 	 * <li>x is the {@link TermVariable} that we want to eliminate, hence called
 	 * eliminatee,
-	 * <li>a is some integer that we call the coefficient of x,
+	 * <li>a is some integer (called coeffcient of x) that is coprime to K,
 	 * <li>b is some term that must not contain x,
 	 * <li>K is some integer that we call the divisor. This subterm will be one
 	 * candidate for an elimination of x via {@link DualJunctionDml} and contains
@@ -305,7 +305,9 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		 */
 		final Term mContainingDualJunct;
 		/**
-		 * Term such that (a*mInverse%K)=1 holds.
+		 * Term that is the inverse of a in the ring of integers modulo the divisor. The
+		 * inverse exists always because a and the divisor are coprime. I.e., this is a
+		 * term such that (a*mInverse%K)=1 holds.
 		 */
 		final BigInteger mInverse;
 		/**
@@ -315,7 +317,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final TermVariable mEliminatee;
 
 		DmlPossibility(final String funName, final BigInteger a, final Term b, final BigInteger divisor,
-				final Term containingDualJunct, final BigInteger inverse, final Term mSubtermWithMod,
+				final Term containingDualJunct, final BigInteger inverse, final Term dmlSubterm,
 				final TermVariable eliminatee) {
 			if (!funName.equals("div") && !funName.equals("mod")) {
 				throw new IllegalArgumentException("Neither div nor mod");
@@ -330,7 +332,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 			mDivisor = divisor;
 			mContainingDualJunct = containingDualJunct;
 			mInverse = inverse;
-			mDmlSubterm = mSubtermWithMod;
+			mDmlSubterm = dmlSubterm;
 			mEliminatee = eliminatee;
 		}
 
