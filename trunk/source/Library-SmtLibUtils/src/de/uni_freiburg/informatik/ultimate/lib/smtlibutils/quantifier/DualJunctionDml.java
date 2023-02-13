@@ -181,29 +181,24 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final Term inverseAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
 				pmt.getInverse());
 		final Term aAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getA());
-		// product1 = y'*k
-		final Term product1 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript), divisorAsTerm, y);
-		// product2 = a⁻1*z
-		final Term product2 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript), inverseAsTerm, z);
-		// sum1 = y'*k + a⁻1*z
-		final Term sum1 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), product1, product2);
 		// product3 = a*x
 		final Term product3 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript), aAsTerm, pmt.getEliminate());
 		// sum2 = a*x + b
 		final Term sum2 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), product3, pmt.getB());
 		// mod1 = a*x + b mod k
 		final Term mod1 = SmtUtils.mod(mScript, sum2, divisorAsTerm);
-		final Map<Term, Term> sub1 = new HashMap<Term, Term>();
-		sub1.put(pmt.getEliminate(), sum1);
-		// mod3 = b mod k
-		final Term mod3 = SmtUtils.mod(mScript, pmt.getB(), divisorAsTerm);
-		// sum4 = z + (b mod k)
-		final Term sum4 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), z, mod3);
-		// substr1 = z + (b mod k) - k
-		final Term substr1 = SmtUtils.minus(mScript, sum4, divisorAsTerm);
-		// conditionalOfIte = z + (b mod k) >= k
-		final Term conditionalOfIte = SmtUtils.geq(mScript, sum4, divisorAsTerm);
-		final Term termWithITE = SmtUtils.ite(mScript, conditionalOfIte, substr1, sum4);
+		final Term termWithITE;
+		{
+			// mod3 = b mod k
+			final Term mod3 = SmtUtils.mod(mScript, pmt.getB(), divisorAsTerm);
+			// sum4 = z + (b mod k)
+			final Term sum4 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), z, mod3);
+			// substr1 = z + (b mod k) - k
+			final Term substr1 = SmtUtils.minus(mScript, sum4, divisorAsTerm);
+			// conditionalOfIte = z + (b mod k) >= k
+			final Term conditionalOfIte = SmtUtils.geq(mScript, sum4, divisorAsTerm);
+			termWithITE = SmtUtils.ite(mScript, conditionalOfIte, substr1, sum4);
+		}
 		final BigInteger zeroAsBigInteger = BigInteger.valueOf(0);
 		final Term zeroAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), zeroAsBigInteger);
 		// for A-Quantifier z < 0 and z >= k is necessary
@@ -240,6 +235,14 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		}
 
 		final Term termWithRemovedITE = new IteRemover(mMgdScript).transform(termAfterFirstSubstitution);
+		// product1 = y'*k
+		final Term product1 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript), divisorAsTerm, y);
+		// product2 = a⁻1*z
+		final Term product2 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript), inverseAsTerm, z);
+		// sum1 = y'*k + a⁻1*z
+		final Term sum1 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), product1, product2);
+		final Map<Term, Term> sub1 = new HashMap<Term, Term>();
+		sub1.put(pmt.getEliminate(), sum1);
 		final Term resultTerm = Substitution.apply(mMgdScript, sub1, termWithRemovedITE);
 		final NnfTransformer TermNnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP);
 		final Term ResultTermNnf = TermNnf.transform(resultTerm);
