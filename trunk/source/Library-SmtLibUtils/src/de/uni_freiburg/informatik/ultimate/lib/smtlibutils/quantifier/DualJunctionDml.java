@@ -187,8 +187,11 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final Term sum2 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), product3, pmt.getB());
 		// mod1 = a*x + b mod k
 		final Term mod1 = SmtUtils.mod(mScript, sum2, divisorAsTerm);
-		final Term termWithITE;
-		{
+		final Term modTermReplacement;
+		if (SmtUtils.tryToConvertToLiteral(pmt.getB()) != null
+				&& SmtUtils.tryToConvertToLiteral(pmt.getB()).equals(Rational.ZERO)) {
+			modTermReplacement = z;
+		} else {
 			// mod3 = b mod k
 			final Term mod3 = SmtUtils.mod(mScript, pmt.getB(), divisorAsTerm);
 			// sum4 = z + (b mod k)
@@ -197,15 +200,16 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 			final Term substr1 = SmtUtils.minus(mScript, sum4, divisorAsTerm);
 			// conditionalOfIte = z + (b mod k) >= k
 			final Term conditionalOfIte = SmtUtils.geq(mScript, sum4, divisorAsTerm);
-			termWithITE = SmtUtils.ite(mScript, conditionalOfIte, substr1, sum4);
+			modTermReplacement = SmtUtils.ite(mScript, conditionalOfIte, substr1, sum4);
 		}
 		final BigInteger zeroAsBigInteger = BigInteger.valueOf(0);
-		final Term zeroAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), zeroAsBigInteger);
+		final Term zeroAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
+				zeroAsBigInteger);
 		// for A-Quantifier z < 0 and z >= k is necessary
 		final Map<Term, Term> sub3 = new HashMap<Term, Term>();
-		sub3.put(mod1, termWithITE);
+		sub3.put(mod1, modTermReplacement);
 		Term termAfterFirstSubstitution = QuantifierUtils.getAbsorbingElement(mScript, inputEt.getQuantifier());
-		//Term termAfterFirstSubstitution = mScript.term("true");
+		// Term termAfterFirstSubstitution = mScript.term("true");
 		for (final Term conjunct : conjuncts) {
 			if (conjunct == pmt.getContainingDualJunct()) {
 				final Term modConjunctSub = Substitution.apply(mMgdScript, sub3, conjunct);
