@@ -99,16 +99,16 @@ public class CommuhashNormalForm {
 
 		@Override
 		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
-			final String funcname = appTerm.getFunction().getName();
-			if (CommuhashUtils.isKnownToBeCommutative(funcname)) {
-				final Sort resultSort =
-						appTerm.getFunction().isReturnOverload() ? appTerm.getFunction().getReturnSort() : null;
-				final Term simplified = constructlocallySimplifiedTermWithSortedParams(funcname,
-						null, resultSort, newArgs);
-				setResult(simplified);
-			} else {
+//			final String funcname = appTerm.getFunction().getName();
+//			if (CommuhashUtils.isKnownToBeCommutative(funcname)) {
+//				final Sort resultSort =
+//						appTerm.getFunction().isReturnOverload() ? appTerm.getFunction().getReturnSort() : null;
+//				final Term simplified = constructlocallySimplifiedTermWithSortedParams(funcname,
+//						null, resultSort, newArgs);
+//				setResult(simplified);
+//			} else {
 				super.convertApplicationTerm(appTerm, newArgs);
-			}
+//			}
 		}
 
 
