@@ -1,3 +1,4 @@
+// Fails due to overapproximation of bitwise operators in the integer translation
 BitwiseOperations01.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml
 BitwiseOperations02.c AutomizerC-forwardPredicates.epf AutomizerC.xml
 BitwiseOperations02.c AutomizerC-forwardPredicates_const.epf AutomizerC.xml
@@ -6,6 +7,8 @@ BitwiseOperations02.c AutomizerC-nestedInterpolants_const.epf AutomizerC.xml
 BitwiseOperations02.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml
 BitwiseOperations02.c BlockEncodingV2AutomizerC-forwardPredicates.epf BlockEncodingV2AutomizerC.xml
 BitwiseOperations02.c KojakC-Reach-32Bit-Default.epf KojakC.xml
+
+// Timeout
 ShortCircuit-SideEffect-DoStatement-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml
 ShortCircuit-SideEffect-ForStatement-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml
 StructPositiveSum-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml

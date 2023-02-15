@@ -1,1 +1,2 @@
+// Timeout with Automizer, GemCutter succeeds
 NonAtomicIncrement_2Threads.c ReachSafety-32bit-Automizer.epf ReachSafety.xml
