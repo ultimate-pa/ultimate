@@ -1,0 +1,40 @@
+/*
+ * Simple test for DPOR.
+ *
+ * We here assume that a and b commute, and a < b < c.
+ *
+ * 1) Since a and b both disable c, the algorithm must make sure to add c to the backtrack set at the initial state.
+ * 2) When observing the trace cab, we should avoid adding b to the backtrack set at the initial state.
+ */
+
+FiniteAutomaton input = (
+     alphabet      = {a b c},
+     states        = {eps A AB B BA C CA CAB CB CBA},
+     initialStates = {eps},
+     finalStates   = {AB BA CAB CBA},
+     transitions   = {
+         (eps a A)
+         (A   b AB)
+         (eps b B)
+         (B   a BA)
+         (eps c C)
+         (C   a CA)
+         (CA  b CAB)
+         (C   b CB)
+         (CB  a CBA)
+     }
+);
+
+FiniteAutomaton expected = (
+     alphabet      = {a b c},
+     states        = {eps A AB C CA CAB},
+     initialStates = {eps},
+     finalStates   = {AB CAB},
+     transitions   = {
+         (eps a A)
+         (A   b AB)
+         (eps c C)
+         (C   a CA)
+         (CA  b CAB)
+     }
+);

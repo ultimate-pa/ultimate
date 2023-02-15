@@ -1,0 +1,43 @@
+/*
+ * Simple test for DPOR.
+ *
+ * We here assume that a commutes with b and c, and a < b < c.
+ *
+ * Though b disables c, it is not necessary to add c to the initial state's backtrack set.
+ * (Perhaps because b is itself not in the backtrack set?)
+ */
+
+FiniteAutomaton input = (
+     alphabet      = {a b c},
+     states        = {eps A AB ABC AC ACB B BA C CA CAB CB CBA},
+     initialStates = {eps},
+     finalStates   = {AB ABC BA CAB CBA},
+     transitions   = {
+         (eps a A)
+         (A   b AB)
+         (AB  c ABC)
+         (A   c AC)
+         (AC  b ACB)
+         (eps b B)
+         (B   a BA)
+         (eps c C)
+         (C   a CA)
+         (CA  b CAB)
+         (C   b CB)
+         (CB  a CBA)
+     }
+);
+
+FiniteAutomaton expected = (
+     alphabet      = {a b c},
+     states        = {eps A AB ABC AC ACB},
+     initialStates = {eps},
+     finalStates   = {AB ABC ACB},
+     transitions   = {
+         (eps a A)
+         (A   b AB)
+         (AB  c ABC)
+         (A   c AC)
+         (AC  b ACB)
+     }
+);
