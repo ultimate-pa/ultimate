@@ -12,3 +12,4 @@ cbmc_float19.i AutomizerCInline-Reach-32bit-MathSAT-IcSpLv-Float_Const.epf Autom
 cbmc_float20_Part1.i AutomizerCInline-Reach-32bit-MathSAT-IcSpLv-Float_Const.epf AutomizerC.xml
 cbmc_float20_Part3.i AutomizerCInline-Reach-32bit-MathSAT-IcSpLv-Float_Const.epf AutomizerC.xml
 cbmc_float6.i AutomizerCInline-Reach-32bit-MathSAT-IcSpLv-Float_Const.epf AutomizerC.xml
+QuantifiedFloatInvariant.c AutomizerCInline-Reach-32bit-MathSAT-IcSpLv-Float_Const.epf AutomizerC.xml
