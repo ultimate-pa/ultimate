@@ -130,19 +130,52 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		return rtr;
 	}
 
-	private static Set<Triple<String, String, String>>  getIgnoredTestFails(final File ignoreFile) {
+	private static Set<Triple<String, String, String>> getIgnoredTestFails(final File ignoreFile) {
 		final Set<Triple<String, String, String>> ignoredTestFails = new HashSet<>();
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(ignoreFile)))) {
 			String line;
 			while ((line = br.readLine()) != null) {
-				final String[] args = line.split("\\s+");
-				assert args.length == 3;
-				ignoredTestFails.add(new Triple<>(args[0], args[1], args[2]));
+				final Triple<String, String, String> triple = parseIgnoreLine(line);
+				if (triple != null) {
+					ignoredTestFails.add(triple);
+				}
 			}
 		} catch (final IOException e) {
 			// Just skip
 		}
 		return ignoredTestFails;
+	}
+
+	private static Triple<String, String, String> parseIgnoreLine(final String line) {
+		if (line.startsWith("//")) {
+			return null;
+		}
+		String settings = null;
+		String toolchain = null;
+		String file = null;
+		final String[] args = line.split("\\s+");
+		if (args.length != 3) {
+			return null;
+		}
+		for (final String arg : args) {
+			if (arg.endsWith(".epf")) {
+				if (settings != null) {
+					return null;
+				}
+				settings = arg;
+			} else if (arg.endsWith(".xml")) {
+				if (toolchain != null) {
+					return null;
+				}
+				toolchain = arg;
+			} else {
+				if (file != null) {
+					return null;
+				}
+				file = arg;
+			}
+		}
+		return new Triple<>(file, settings, toolchain);
 	}
 
 	protected long getTimeout(final Config rundef, final File file) {
@@ -291,7 +324,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition, boolean isIgnored);
 
 	public static final class Config
-	extends de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair<File, File> {
+			extends de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair<File, File> {
 
 		public Config(final File toolchain, final File settings) {
 			super(toolchain, settings);
