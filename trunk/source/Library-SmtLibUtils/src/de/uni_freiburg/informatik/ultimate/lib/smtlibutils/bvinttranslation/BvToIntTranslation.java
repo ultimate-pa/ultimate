@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class BvToIntTranslation extends TermTransformer {
 	private final Script mScript;
 	private static final String BITVEC_CONST_PATTERN = "bv\\d+";
-	private final boolean mNutzTransformation;
+	private final boolean mCongruenceBasedTransformation;
 	private final ManagedScript mMgdScript;
 	private final TermVariable[] mFreeVars;
 	private final TranslationConstrainer mTc;
@@ -67,12 +67,13 @@ public class BvToIntTranslation extends TermTransformer {
 	 *
 	 */
 	public BvToIntTranslation(final ManagedScript mgdscript, final LinkedHashMap<Term, Term> variableMap,
-			final TranslationConstrainer tc, final TermVariable[] freeVars, final boolean useNutzTransformation) {
+			final TranslationConstrainer tc, final TermVariable[] freeVars,
+			final boolean useCongruenceBasedTransformation) {
 
 		mMgdScript = mgdscript;
 		mScript = mgdscript.getScript();
 
-		mNutzTransformation = useNutzTransformation;
+		mCongruenceBasedTransformation = useCongruenceBasedTransformation;
 
 		mFreeVars = freeVars;
 		if (variableMap != null) {
@@ -498,7 +499,7 @@ public class BvToIntTranslation extends TermTransformer {
 				case "bvneg": {
 					final Term negation = SmtUtils.unfTerm(mScript, "-", null,
 							SmtSortUtils.getIntSort(mMgdScript), maxNumberPlusOne, translatedLHS);
-					if (mNutzTransformation) {
+					if (mCongruenceBasedTransformation) {
 						setResult(negation);
 						return;
 					}
@@ -506,7 +507,7 @@ public class BvToIntTranslation extends TermTransformer {
 					return;
 				}
 				case "extract": {
-					if (mNutzTransformation) {
+					if (mCongruenceBasedTransformation) {
 						// TODO not sure if we need to do sth here
 					}
 
@@ -552,7 +553,7 @@ public class BvToIntTranslation extends TermTransformer {
 				case "bvadd": {
 					final Term addition = SmtUtils.unfTerm(mScript, "+", null,
 							SmtSortUtils.getIntSort(mMgdScript), translatedArgs);
-					if (mNutzTransformation) {
+					if (mCongruenceBasedTransformation) {
 						setResult(addition);
 						return;
 					}
@@ -562,7 +563,7 @@ public class BvToIntTranslation extends TermTransformer {
 				case "bvsub": {
 					final Term substraction = SmtUtils.unfTerm(mScript, "-", null,
 							SmtSortUtils.getIntSort(mMgdScript), translatedArgs);
-					if (mNutzTransformation) {
+					if (mCongruenceBasedTransformation) {
 						setResult(substraction);
 						return;
 					}
@@ -572,7 +573,7 @@ public class BvToIntTranslation extends TermTransformer {
 				case "bvmul": {
 					final Term multiplication = SmtUtils.unfTerm(mScript, "*", null,
 							SmtSortUtils.getIntSort(mMgdScript), translatedArgs);
-					if (mNutzTransformation) {
+					if (mCongruenceBasedTransformation) {
 						setResult(multiplication);
 						return;
 					}
@@ -604,7 +605,7 @@ public class BvToIntTranslation extends TermTransformer {
 					case "concat": {
 						final Term multiplication = SmtUtils.unfTerm(mScript, "*", null,
 								SmtSortUtils.getIntSort(mMgdScript), translatedLHS, maxNumber);
-						if (mNutzTransformation) {
+						if (mCongruenceBasedTransformation) {
 							// TODO not sure if we need to do sth here
 						}
 						setResult(SmtUtils.unfTerm(mScript, "+", null,
@@ -660,7 +661,7 @@ public class BvToIntTranslation extends TermTransformer {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 		Term rhs;
 		Term lhs;
-		if (mNutzTransformation) {
+		if (mCongruenceBasedTransformation) {
 			rhs = SmtUtils.mod(mScript, translatedRHS, maxNumber);
 			lhs = SmtUtils.mod(mScript, translatedLHS, maxNumber);
 		} else {
@@ -680,15 +681,15 @@ public class BvToIntTranslation extends TermTransformer {
 		Term rhs;
 		Term lhs;
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
-		if (mNutzTransformation) {
+		if (mCongruenceBasedTransformation) {
 			rhs = SmtUtils.mod(mScript, translatedRHS, maxNumber);
 			lhs = SmtUtils.mod(mScript, translatedLHS, maxNumber);
 		} else {
 			rhs = translatedRHS;
 			lhs = translatedLHS;
 		}
-		final Term ifTerm = SmtUtils.unfTerm(mScript, "=", null,
-				SmtSortUtils.getIntSort(mMgdScript), rhs, SmtUtils.rational2Term(mScript, Rational.ZERO, intSort));
+		final Term ifTerm = SmtUtils.unfTerm(mScript, "=", null, SmtSortUtils.getIntSort(mMgdScript), rhs,
+				SmtUtils.rational2Term(mScript, Rational.ZERO, intSort));
 		final Term thenTerm = translatedLHS; //Congruence Based doesnt need mod here.
 		final Term elseTerm = SmtUtils.mod(mScript, lhs, rhs);
 		return SmtUtils.ite(mScript, ifTerm, thenTerm, elseTerm);
@@ -766,7 +767,7 @@ public class BvToIntTranslation extends TermTransformer {
 		if (fsym.isIntern()) {
 			switch (fsym.getName()) {
 			case "=": {
-				if (mNutzTransformation && SmtSortUtils.isNumericSort(args[0].getSort())) {
+				if (mCongruenceBasedTransformation && SmtSortUtils.isNumericSort(args[0].getSort())) {
 					for (int i = 0; i < args.length; i++) {
 						translatedArgs[i] = SmtUtils.mod(mScript, args[i], maxNumberPlusOne);
 					}
@@ -775,7 +776,7 @@ public class BvToIntTranslation extends TermTransformer {
 						translatedArgs);
 			}
 			case "distinct": {
-				if (mNutzTransformation) {
+				if (mCongruenceBasedTransformation) {
 					for (int i = 0; i < args.length; i++) {
 						translatedArgs[i] = SmtUtils.mod(mScript, args[i], maxNumberPlusOne);
 
@@ -786,7 +787,7 @@ public class BvToIntTranslation extends TermTransformer {
 
 			}
 			case "bvult": {
-				if (mNutzTransformation) {
+				if (mCongruenceBasedTransformation) {
 					for (int i = 0; i < args.length; i++) {
 						translatedArgs[i] = SmtUtils.mod(mScript, args[i], maxNumberPlusOne);
 
@@ -796,7 +797,7 @@ public class BvToIntTranslation extends TermTransformer {
 
 			}
 			case "bvule": {
-				if (mNutzTransformation) {
+				if (mCongruenceBasedTransformation) {
 					for (int i = 0; i < args.length; i++) {
 						translatedArgs[i] = SmtUtils.mod(mScript, args[i], maxNumberPlusOne);
 					}
@@ -805,7 +806,7 @@ public class BvToIntTranslation extends TermTransformer {
 
 			}
 			case "bvugt": {
-				if (mNutzTransformation) {
+				if (mCongruenceBasedTransformation) {
 					for (int i = 0; i < args.length; i++) {
 						translatedArgs[i] = SmtUtils.mod(mScript, args[i], maxNumberPlusOne);
 					}
@@ -814,7 +815,7 @@ public class BvToIntTranslation extends TermTransformer {
 
 			}
 			case "bvuge": {
-				if (mNutzTransformation) {
+				if (mCongruenceBasedTransformation) {
 					for (int i = 0; i < args.length; i++) {
 						translatedArgs[i] = SmtUtils.mod(mScript, args[i], maxNumberPlusOne);
 					}
@@ -824,27 +825,27 @@ public class BvToIntTranslation extends TermTransformer {
 			}
 			case "bvslt": {
 				for (int i = 0; i < args.length; i++) {
-					utsArgs[i] = uts(width, args[i], mNutzTransformation);
+					utsArgs[i] = uts(width, args[i]);
 				}
 
 				return SmtUtils.less(mScript, utsArgs[0], utsArgs[1]);
 			}
 			case "bvsle": {
 				for (int i = 0; i < args.length; i++) {
-					utsArgs[i] = uts(width, args[i], mNutzTransformation);
+					utsArgs[i] = uts(width, args[i]);
 				}
 				return SmtUtils.leq(mScript, utsArgs[0], utsArgs[1]);
 
 			}
 			case "bvsgt": {
 				for (int i = 0; i < args.length; i++) {
-					utsArgs[i] = uts(width, args[i], mNutzTransformation);
+					utsArgs[i] = uts(width, args[i]);
 				}
 				return SmtUtils.greater(mScript, utsArgs[0], utsArgs[1]);
 			}
 			case "bvsge": {
 				for (int i = 0; i < args.length; i++) {
-					utsArgs[i] = uts(width, args[i], mNutzTransformation);
+					utsArgs[i] = uts(width, args[i]);
 				}
 				return SmtUtils.geq(mScript, utsArgs[0], utsArgs[1]);
 
@@ -855,7 +856,7 @@ public class BvToIntTranslation extends TermTransformer {
 	}
 
 	// unsigned to signed for relations
-	private final Term uts(final int width, final Term term, final boolean nutz) {
+	private final Term uts(final int width, final Term term) {
 		// 2 * (x mod 2^(k - 1) ) - x
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
@@ -864,21 +865,18 @@ public class BvToIntTranslation extends TermTransformer {
 		final Term twoPowWidth = SmtUtils.rational2Term(mScript,
 				Rational.valueOf(BigInteger.valueOf(2).pow(width - 1), BigInteger.ONE), intSort);
 
-		if (nutz) {
-			final Term nutzPow = SmtUtils.rational2Term(mScript,
+		if (mCongruenceBasedTransformation) {
+			final Term congruencePow = SmtUtils.rational2Term(mScript,
 					Rational.valueOf(BigInteger.valueOf(2).pow(width), BigInteger.ONE), intSort);
-			final Term modulo = SmtUtils.mod(mScript, SmtUtils.mod(mScript, term, nutzPow), twoPowWidth);
+			final Term modulo = SmtUtils.mod(mScript, SmtUtils.mod(mScript, term, congruencePow), twoPowWidth);
 
 			return SmtUtils.unfTerm(mScript, "-", null, SmtSortUtils.getIntSort(mMgdScript),
-					SmtUtils.unfTerm(mScript, "*", null, SmtSortUtils.getIntSort(mMgdScript), two,
-							modulo),
-					SmtUtils.mod(mScript, term, nutzPow));
+					SmtUtils.unfTerm(mScript, "*", null, SmtSortUtils.getIntSort(mMgdScript), two, modulo),
+					SmtUtils.mod(mScript, term, congruencePow));
 		} else {
 			final Term modulo = SmtUtils.mod(mScript, term, twoPowWidth);
 			return SmtUtils.unfTerm(mScript, "-", null, SmtSortUtils.getIntSort(mMgdScript),
-					SmtUtils.unfTerm(mScript, "*", null, SmtSortUtils.getIntSort(mMgdScript), two,
-							modulo),
-					term);
+					SmtUtils.unfTerm(mScript, "*", null, SmtSortUtils.getIntSort(mMgdScript), two, modulo), term);
 		}
 
 	}

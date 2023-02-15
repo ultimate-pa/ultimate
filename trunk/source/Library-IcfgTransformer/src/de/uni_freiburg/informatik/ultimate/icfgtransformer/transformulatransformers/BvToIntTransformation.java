@@ -53,7 +53,7 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 
 	final LinkedHashMap<Term, Term> mBacktranslationMap = new LinkedHashMap<>();
 
-	private final boolean mUseNutzTransformation;
+	private final boolean mUseCongruenceBasedTransformation;
 
 	/**
 	 * @param fac
@@ -63,11 +63,11 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 	 *            identity for the first argument.
 	 */
 	public BvToIntTransformation(final IUltimateServiceProvider services, final ReplacementVarFactory fac,
-			final ManagedScript mgdScript, final boolean useNutzTransformation) {
+			final ManagedScript mgdScript, final boolean useCongruenceBasedTransformation) {
 		super();
 		mFac = fac;
 		mServices = services;
-		mUseNutzTransformation = useNutzTransformation;
+		mUseCongruenceBasedTransformation = useCongruenceBasedTransformation;
 	}
 
 	@Override
@@ -140,7 +140,7 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 		}
 
 		final TranslationManager translationManager =
-				new TranslationManager(mgdScript, ConstraintsForBitwiseOperations.SUM, mUseNutzTransformation);
+				new TranslationManager(mgdScript, ConstraintsForBitwiseOperations.SUM, mUseCongruenceBasedTransformation);
 		translationManager.setReplacementVarMaps(varMap);
 
 		final Triple<Term, Set<TermVariable>, Boolean> translated =

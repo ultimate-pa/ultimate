@@ -290,7 +290,7 @@ public class TypeSizes {
 			if (!isUnsigned(cPrimitive)) {
 				return value;
 			}
-			// Because of the Nutz transformation we do a modulo operation.
+			// Because of the congruence based transformation we do a modulo operation.
 			// Otherwise we do not extract the correct value for negative literals of unsigned type.
 			final BigInteger maxValue = getMaxValueOfPrimitiveType(cPrimitive);
 			final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);

@@ -49,7 +49,8 @@ public class IntegerCongruenceTranslation extends IntegerTranslation {
 	}
 
 	@Override
-	public Expression applyNutzWraparound(final ILocation loc, final CPrimitive cPrimitive, final Expression operand) {
+	public Expression applyCongruenceBasedWraparound(final ILocation loc, final CPrimitive cPrimitive,
+			final Expression operand) {
 		return applyWraparound(loc, cPrimitive, operand);
 	}
 
@@ -67,7 +68,7 @@ public class IntegerCongruenceTranslation extends IntegerTranslation {
 				&& mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())) {
 			// required for sound congruence based transformation
 			// (see examples/programs/regression/c/NutzTransformation03.c)
-			return applyNutzWraparound(loc, oldType, operand);
+			return applyCongruenceBasedWraparound(loc, oldType, operand);
 		}
 		return operand;
 	}

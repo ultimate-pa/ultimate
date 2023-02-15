@@ -51,14 +51,14 @@ public class TranslationManager {
 	private final TranslationConstrainer mTc;
 
 	private HashSet<Term> mConstraintSet; // Set of all constraints
-	private final boolean mNutzTransformation;
+	private final boolean mCongruenceBasedTransformation;
 	private final ConstraintsForBitwiseOperations mCfo;
 
 	/*
 	 * Wrapper class for bit-vector to integer translation and back-translation Manages: variables and constraints
 	 */
 	public TranslationManager(final ManagedScript mgdscript, final ConstraintsForBitwiseOperations cfbo,
-			final boolean useNutzTransformation) {
+			final boolean useCongruenceBasedTransformation) {
 		mMgdScript = mgdscript;
 		mScript = mgdscript.getScript();
 
@@ -69,7 +69,7 @@ public class TranslationManager {
 		mTc = new TranslationConstrainer(mMgdScript, cfbo);
 		mIntand = mTc.getIntAndFunctionSymbol();
 
-		mNutzTransformation = useNutzTransformation;
+		mCongruenceBasedTransformation = useCongruenceBasedTransformation;
 		mCfo = cfbo;
 	}
 
@@ -84,29 +84,31 @@ public class TranslationManager {
 	 * constraint mode is NONE
 	 */
 	public Triple<Term, Set<TermVariable>, Boolean> translateBvtoInt(final Term bitvecFormula) {
-		final BvToIntTranslation bvToInt =
-				new BvToIntTranslation(mMgdScript, mVariableMap, mTc, bitvecFormula.getFreeVars(), mNutzTransformation);
+		final BvToIntTranslation bvToInt = new BvToIntTranslation(mMgdScript, mVariableMap, mTc,
+				bitvecFormula.getFreeVars(), mCongruenceBasedTransformation);
 		final Term integerFormulaNoConstraint = bvToInt.transform(bitvecFormula);
 		mVariableMap = bvToInt.getVarMap();
 		mReversedVarMap = bvToInt.getReversedVarMap();
 		final Set<TermVariable> overapproxVariables = bvToInt.getOverapproxVariables();
 		final boolean isOverapproximation = bvToInt.wasOverapproximation();
-		if (!mNutzTransformation) {
+		if (!mCongruenceBasedTransformation) {
 			mConstraintSet.addAll(mTc.getConstraints());
 			mConstraintSet.addAll(bvToInt.mArraySelectConstraintMap.values());
 		}
-		// TODO: Also add the constraints with mNutzTransformation=true, maybe we need to be more careful there
+		// TODO: Also add the constraints with mCongruenceBasedTransformation=true, maybe we need to be more careful
+		// there
 		final Term integerFormula =
 				SmtUtils.and(mScript, integerFormulaNoConstraint, SmtUtils.and(mScript, mConstraintSet));
 		return new Triple<>(integerFormula, overapproxVariables, isOverapproximation);
 
 	}
 
-	public Triple<Term, Set<Term>, Boolean> translateBvtoIntTransferrer(final Term bitvecFormula, final Script scriptBV, final Script scriptINT) {
+	public Triple<Term, Set<Term>, Boolean> translateBvtoIntTransferrer(final Term bitvecFormula, final Script scriptBV,
+			final Script scriptINT) {
 		mConstraintSet = new HashSet<>();
 		final TranslationConstrainer tc = new TranslationConstrainer(mMgdScript, mCfo);
-		final BvToIntTransferrer bvToInt =
-				new BvToIntTransferrer(scriptBV, scriptINT, mMgdScript, mVariableMap, tc, bitvecFormula.getFreeVars(), mNutzTransformation);
+		final BvToIntTransferrer bvToInt = new BvToIntTransferrer(scriptBV, scriptINT, mMgdScript, mVariableMap, tc,
+				bitvecFormula.getFreeVars(), mCongruenceBasedTransformation);
 		final Term integerFormulaNoConstraint;
 		try {
 			integerFormulaNoConstraint = bvToInt.transform(bitvecFormula);
@@ -117,28 +119,28 @@ public class TranslationManager {
 		mReversedVarMap = bvToInt.getReversedVarMap();
 		final Set<Term> overapproxVariables = bvToInt.getOverapproxVariables();
 		final boolean isOverapproximation = bvToInt.wasOverapproximation();
-		if (!mNutzTransformation) {
+		if (!mCongruenceBasedTransformation) {
 			mConstraintSet.addAll(tc.getConstraints());
 			mConstraintSet.addAll(bvToInt.mArraySelectConstraintMap.values());
-		}else {
+		} else {
 			mConstraintSet.addAll(tc.getBvandConstraints());
 		}
 		if (!mConstraintSet.isEmpty() && !SmtSortUtils.isBoolSort(integerFormulaNoConstraint.getSort())) {
 			throw new AssertionError("Cannot add constraints to non-Boolean formula.");
 		}
-		// TODO: Also add the constraints with mNutzTransformation=true, maybe we need to be more careful there
+		// TODO: Also add the constraints with mCongruenceBasedTransformation=true, maybe we need to be more careful
+		// there
 		final Term integerFormula =
 				SmtUtils.and(mScript, integerFormulaNoConstraint, SmtUtils.and(mScript, mConstraintSet));
 		return new Triple<>(integerFormula, overapproxVariables, isOverapproximation);
 
 	}
 
-
 	/*
 	 * Method to translate from integer back to bit-vector requires mReversedVarMap to be filled returns the translation
 	 * result
 	 */
-	// TODO: Is there anything we need to change here with the Nutz-Transformation?
+	// TODO: Is there anything we need to change here with the congruence based transformation?
 	public Term translateIntBacktoBv(final Term integerFormula) {
 		// The preprocessing steps need also to be applied on the constraint, to ensure the map matches them.
 		final UnfTransformer unfT = new UnfTransformer(mScript);

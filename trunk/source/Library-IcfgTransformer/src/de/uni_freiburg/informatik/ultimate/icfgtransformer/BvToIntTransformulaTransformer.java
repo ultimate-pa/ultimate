@@ -93,7 +93,7 @@ public final class BvToIntTransformulaTransformer implements ITransformulaTransf
 	private VariableTranslation mVarTrans;
 	private IIcfgSymbolTable mNewSymbolTable;
 	private final ConstraintsForBitwiseOperations mCfbo;
-	private final boolean mNutzTransformation;
+	private final boolean mCongruenceBasedTransformation;
 
 	/**
 	 * Default constructor using a sequence of {@link TransitionPreprocessor}s.
@@ -108,11 +108,11 @@ public final class BvToIntTransformulaTransformer implements ITransformulaTransf
 	 *            A {@link ReplacementVarFactory} instance.
 	 */
 	public BvToIntTransformulaTransformer(final ManagedScript managedScript, final ConstraintsForBitwiseOperations cfbo,
-			final boolean useNutzTransformation) {
+			final boolean useCongruenceBasedTransformation) {
 		mMgdScript = Objects.requireNonNull(managedScript);
 		mSortTranslation = x -> BvToIntTransformation.bvToIntSort(mMgdScript, x);
 		mCfbo = cfbo;
-		mNutzTransformation = useNutzTransformation;
+		mCongruenceBasedTransformation = useCongruenceBasedTransformation;
 	}
 
 	@Override
@@ -182,7 +182,7 @@ public final class BvToIntTransformulaTransformer implements ITransformulaTransf
 
 	private Triple<Term, Set<TermVariable>, Boolean> translateTerm(final ManagedScript mgdScript,
 			final Map<Term, Term> translationMap, final Term term) {
-		final TranslationManager translationManager = new TranslationManager(mgdScript, mCfbo, mNutzTransformation);
+		final TranslationManager translationManager = new TranslationManager(mgdScript, mCfbo, mCongruenceBasedTransformation);
 		translationManager.setReplacementVarMaps(new LinkedHashMap<>(translationMap));
 		final Triple<Term, Set<TermVariable>, Boolean> translated = translationManager.translateBvtoInt(term);
 		return translated;

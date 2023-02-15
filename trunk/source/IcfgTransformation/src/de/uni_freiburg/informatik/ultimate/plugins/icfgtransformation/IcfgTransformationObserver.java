@@ -394,7 +394,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		final IPreferenceProvider ups = services.getPreferenceProvider(Activator.PLUGIN_ID);
 
 		final BvToIntTransformulaTransformer transformer = new BvToIntTransformulaTransformer(icfg.getCfgSmtToolkit().getManagedScript(), cfbo,
-				ups.getBoolean(IcfgTransformationPreferences.LABEL_NUTZ_TRANSFORMATION));
+				ups.getBoolean(IcfgTransformationPreferences.LABEL_CONGRUENCE_BASED_TRANSFORMATION));
 		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(logger, icfg, locFac,
 				backtranslationTracker, outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer);
 		final UnaryOperator<Term> backtranslation =

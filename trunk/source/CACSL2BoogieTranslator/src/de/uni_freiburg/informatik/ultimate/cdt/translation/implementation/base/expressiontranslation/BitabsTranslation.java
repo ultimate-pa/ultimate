@@ -467,7 +467,7 @@ public class BitabsTranslation {
 	}
 
 	private Expression applyWraparoundIfNecessary(final ILocation loc, final Expression expr, final CPrimitive type) {
-		return mTypeSizes.isUnsigned(type) ? mIntegerTranslation.applyNutzWraparound(loc, type, expr) : expr;
+		return mTypeSizes.isUnsigned(type) ? mIntegerTranslation.applyCongruenceBasedWraparound(loc, type, expr) : expr;
 	}
 
 	private static ExpressionResult handleConstants(final BigInteger leftValue, final BigInteger rightValue,

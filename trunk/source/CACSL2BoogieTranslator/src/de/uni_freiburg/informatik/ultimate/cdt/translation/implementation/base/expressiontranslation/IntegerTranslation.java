@@ -107,7 +107,8 @@ public abstract class IntegerTranslation extends ExpressionTranslation {
 		if (!type1.equals(type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " and " + type2);
 		}
-		final Pair<Expression, Expression> wrapped = applyNutzWraparoundsIfNecessary(loc, exp1, type1, exp2, type2);
+		final Pair<Expression, Expression> wrapped =
+				applyCongruenceWraparoundsIfNecessary(loc, exp1, type1, exp2, type2);
 		return constructBinaryComparison(loc, nodeOperator, wrapped.getFirst(), wrapped.getSecond());
 	}
 
@@ -233,12 +234,12 @@ public abstract class IntegerTranslation extends ExpressionTranslation {
 			return constructArithmeticExpression(loc, nodeOperator, leftExp, rightExp, leftType);
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_divide: {
-			final var pair = applyNutzWraparoundsIfNecessary(loc, leftExp, leftType, rightExp, rightType);
+			final var pair = applyCongruenceWraparoundsIfNecessary(loc, leftExp, leftType, rightExp, rightType);
 			return constructDivExpression(loc, pair.getFirst(), pair.getSecond(), leftType, rightType);
 		}
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_modulo: {
-			final var pair = applyNutzWraparoundsIfNecessary(loc, leftExp, leftType, rightExp, rightType);
+			final var pair = applyCongruenceWraparoundsIfNecessary(loc, leftExp, leftType, rightExp, rightType);
 			return constructModExpression(loc, pair.getFirst(), pair.getSecond(), leftType, rightType);
 		}
 		default:
@@ -246,12 +247,13 @@ public abstract class IntegerTranslation extends ExpressionTranslation {
 		}
 	}
 
-	private Pair<Expression, Expression> applyNutzWraparoundsIfNecessary(final ILocation loc, final Expression left,
-			final CPrimitive leftType, final Expression right, final CPrimitive rightType) {
+	private Pair<Expression, Expression> applyCongruenceWraparoundsIfNecessary(final ILocation loc,
+			final Expression left, final CPrimitive leftType, final Expression right, final CPrimitive rightType) {
 		if (mTypeSizes.isUnsigned(leftType)) {
 			assert mTypeSizes.isUnsigned(rightType) : "incompatible types";
-			// Apply wraparound to ensure that Nutz transformation is sound
-			return new Pair<>(applyNutzWraparound(loc, leftType, left), applyNutzWraparound(loc, rightType, right));
+			// Apply wraparound to ensure that congruence based transformation is sound
+			return new Pair<>(applyCongruenceBasedWraparound(loc, leftType, left),
+					applyCongruenceBasedWraparound(loc, rightType, right));
 		}
 		return new Pair<>(left, right);
 	}
@@ -363,9 +365,9 @@ public abstract class IntegerTranslation extends ExpressionTranslation {
 		assert !mTypeSizes.isUnsigned(resultType);
 		final Expression oldWrappedIfUnsigned;
 		if (mTypeSizes.isUnsigned(oldType)) {
-			// required for sound Nutz transformation
+			// required for sound congruence based transformation
 			// (see examples/programs/regression/c/NutzTransformation01.c)
-			oldWrappedIfUnsigned = applyNutzWraparound(loc, oldType, operand);
+			oldWrappedIfUnsigned = applyCongruenceBasedWraparound(loc, oldType, operand);
 		} else {
 			oldWrappedIfUnsigned = operand;
 		}
@@ -382,7 +384,7 @@ public abstract class IntegerTranslation extends ExpressionTranslation {
 		// If the number is strictly larger than MAX_VALUE we
 		// subtract the cardinality of the data range.
 		final CPrimitive correspondingUnsignedType = mTypeSizes.getCorrespondingUnsignedType(resultType);
-		final Expression wrapped = applyNutzWraparound(loc, correspondingUnsignedType, oldWrappedIfUnsigned);
+		final Expression wrapped = applyCongruenceBasedWraparound(loc, correspondingUnsignedType, oldWrappedIfUnsigned);
 		final Expression maxValue = mTypeSizes.constructLiteralForIntegerType(loc, oldType,
 				mTypeSizes.getMaxValueOfPrimitiveType(resultType));
 		final Expression condition = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, wrapped, maxValue);
@@ -398,7 +400,7 @@ public abstract class IntegerTranslation extends ExpressionTranslation {
 				&& mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())) {
 			// required for sound congruence based transformation
 			// (see examples/programs/regression/c/NutzTransformation03.c)
-			return applyNutzWraparound(loc, oldType, operand);
+			return applyCongruenceBasedWraparound(loc, oldType, operand);
 		}
 		return operand;
 	}
@@ -547,6 +549,9 @@ public abstract class IntegerTranslation extends ExpressionTranslation {
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported arithmetic expression");
 		}
 		final Expression result = ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
+		if (type.getGeneralType() != CPrimitiveCategory.INTTYPE || !mTypeSizes.isUnsigned(type)) {
+			return result;
+		}
 		return applyWraparoundForExpression(loc, type, result);
 	}
 
@@ -583,7 +588,7 @@ public abstract class IntegerTranslation extends ExpressionTranslation {
 		Expression rightExpr = exp2;
 		if (type1 instanceof CPrimitive && type2 instanceof CPrimitive) {
 			final Pair<Expression, Expression> wrapped =
-					applyNutzWraparoundsIfNecessary(loc, exp1, (CPrimitive) type1, exp2, (CPrimitive) type2);
+					applyCongruenceWraparoundsIfNecessary(loc, exp1, (CPrimitive) type1, exp2, (CPrimitive) type2);
 			leftExpr = wrapped.getFirst();
 			rightExpr = wrapped.getSecond();
 		}

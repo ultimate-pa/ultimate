@@ -88,7 +88,8 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 	public static final String LABEL_MAPELIM_MONNIAUX_NUMBER_OF_CELLS = "Map elimination Monniaux: number of cells";
 	private static final String DESC_MAPELIM_MONNIAUX_NUMBER_OF_CELLS =
 			"The number of cells that should be used to abstract a map. Must be non-zero positive.";
-	public static final String LABEL_NUTZ_TRANSFORMATION = "Use Nutz Transformation in bitvector translation";
+	public static final String LABEL_CONGRUENCE_BASED_TRANSFORMATION =
+			"Use congruence based transformation in bitvector translation";
 
 	/**
 	 * Select which transformation should be performed by this plugin.
@@ -168,7 +169,7 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 				new UltimatePreferenceItem<>(LABEL_MAPELIM_MONNIAUX_NUMBER_OF_CELLS, 1,
 						DESC_MAPELIM_MONNIAUX_NUMBER_OF_CELLS, PreferenceType.Integer,
 						IUltimatePreferenceItemValidator.ONLY_POSITIVE_NON_ZERO),
-				new UltimatePreferenceItem<>(LABEL_NUTZ_TRANSFORMATION, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CONGRUENCE_BASED_TRANSFORMATION, false, PreferenceType.Boolean),
 
 		};
 	}

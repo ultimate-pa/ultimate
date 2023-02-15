@@ -55,7 +55,8 @@ public class IntegerRangeTranslation extends IntegerTranslation {
 	}
 
 	@Override
-	public Expression applyNutzWraparound(final ILocation loc, final CPrimitive cPrimitive, final Expression operand) {
+	public Expression applyCongruenceBasedWraparound(final ILocation loc, final CPrimitive cPrimitive,
+			final Expression operand) {
 		// No need to apply modulos here, since we used the range based translation
 		return operand;
 	}
