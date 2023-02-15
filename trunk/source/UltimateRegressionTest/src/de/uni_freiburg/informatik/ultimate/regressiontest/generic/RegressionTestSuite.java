@@ -54,8 +54,9 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 	}
 
 	@Override
-	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition, final boolean isIgnored) {
-		return new SafetyCheckTestResultDecider(runDefinition, false, isIgnored);
+	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition,
+			final String overridenExpectedVerdict) {
+		return new SafetyCheckTestResultDecider(runDefinition, false, overridenExpectedVerdict);
 	}
 
 }

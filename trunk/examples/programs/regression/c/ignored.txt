@@ -1,21 +1,21 @@
 // Fails due to overapproximation of bitwise operators in the integer translation
-BitwiseOperations01.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml
-BitwiseOperations02.c AutomizerC-forwardPredicates.epf AutomizerC.xml
-BitwiseOperations02.c AutomizerC-forwardPredicates_const.epf AutomizerC.xml
-BitwiseOperations02.c AutomizerC-nestedInterpolants.epf AutomizerC.xml
-BitwiseOperations02.c AutomizerC-nestedInterpolants_const.epf AutomizerC.xml
-BitwiseOperations02.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml
-BitwiseOperations02.c BlockEncodingV2AutomizerC-forwardPredicates.epf BlockEncodingV2AutomizerC.xml
-BitwiseOperations02.c KojakC-Reach-32Bit-Default.epf KojakC.xml
+BitwiseOperations01.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml UNKNOWN
+BitwiseOperations02.c AutomizerC-forwardPredicates.epf AutomizerC.xml UNKNOWN
+BitwiseOperations02.c AutomizerC-forwardPredicates_const.epf AutomizerC.xml UNKNOWN
+BitwiseOperations02.c AutomizerC-nestedInterpolants.epf AutomizerC.xml UNKNOWN
+BitwiseOperations02.c AutomizerC-nestedInterpolants_const.epf AutomizerC.xml UNKNOWN
+BitwiseOperations02.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml UNKNOWN
+BitwiseOperations02.c BlockEncodingV2AutomizerC-forwardPredicates.epf BlockEncodingV2AutomizerC.xml UNKNOWN
+BitwiseOperations02.c KojakC-Reach-32Bit-Default.epf KojakC.xml UNKNOWN
 
 // Timeout
-ShortCircuit-SideEffect-DoStatement-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml
-ShortCircuit-SideEffect-ForStatement-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml
-StructPositiveSum-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml
-StructPositiveSum-Safe.c AutomizerC-forwardPredicates.epf AutomizerC.xml
-StructPositiveSum-Safe.c AutomizerC-forwardPredicates_const.epf AutomizerC.xml
-StructPositiveSum-Safe.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml
-StructPositiveSum-Safe.c BlockEncodingV2AutomizerC-forwardPredicates.epf BlockEncodingV2AutomizerC.xml
-array10_pattern_simplified.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml
-array10_pattern_simplified.c AutomizerC-nestedInterpolants.epf AutomizerC.xml
-array10_pattern_simplified.c AutomizerC-nestedInterpolants_const.epf AutomizerC.xml
+ShortCircuit-SideEffect-DoStatement-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml TIMEOUT
+ShortCircuit-SideEffect-ForStatement-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml TIMEOUT
+StructPositiveSum-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml TIMEOUT
+StructPositiveSum-Safe.c AutomizerC-forwardPredicates.epf AutomizerC.xml TIMEOUT
+StructPositiveSum-Safe.c AutomizerC-forwardPredicates_const.epf AutomizerC.xml TIMEOUT
+StructPositiveSum-Safe.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml TIMEOUT
+StructPositiveSum-Safe.c BlockEncodingV2AutomizerC-forwardPredicates.epf BlockEncodingV2AutomizerC.xml TIMEOUT
+array10_pattern_simplified.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml TIMEOUT
+array10_pattern_simplified.c AutomizerC-nestedInterpolants.epf AutomizerC.xml TIMEOUT
+array10_pattern_simplified.c AutomizerC-nestedInterpolants_const.epf AutomizerC.xml TIMEOUT

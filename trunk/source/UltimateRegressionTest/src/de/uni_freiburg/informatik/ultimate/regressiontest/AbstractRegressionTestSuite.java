@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.test.logs.summaries.TraceAbstractionT
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 /**
  * An {@link AbstractRegressionTestSuite} is a {@link UltimateTestSuite} that automatically generates tests from folders
@@ -116,66 +116,64 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		for (final Config runConfiguration : runConfigurations) {
 			final Collection<File> inputFiles = getInputFiles(filesRegexFilter, runConfiguration);
 			// TODO: Better path
-			final Set<Triple<String, String, String>> ignoredTestFails =
+			final NestedMap3<String, String, String, String> ignoredTestFails =
 					getIgnoredTestFails(new File(runConfiguration.getSettingsFile().getParentFile(), "ignored.txt"));
 			for (final File inputFile : inputFiles) {
 				final UltimateRunDefinition urd =
 						new UltimateRunDefinition(inputFile, runConfiguration.getSettingsFile(),
 								runConfiguration.getToolchainFile(), getTimeout(runConfiguration, inputFile));
-				final boolean isIgnored = ignoredTestFails.contains(new Triple<>(inputFile.getName(),
-						runConfiguration.getSettingsFile().getName(), runConfiguration.getToolchainFile().getName()));
-				rtr.add(buildTestCase(urd, getTestResultDecider(urd, isIgnored)));
+				final String overridenVerdict = ignoredTestFails.get(inputFile.getName(),
+						runConfiguration.getSettingsFile().getName(), runConfiguration.getToolchainFile().getName());
+				rtr.add(buildTestCase(urd, getTestResultDecider(urd, overridenVerdict)));
 			}
 		}
 		return rtr;
 	}
 
-	private static Set<Triple<String, String, String>> getIgnoredTestFails(final File ignoreFile) {
-		final Set<Triple<String, String, String>> ignoredTestFails = new HashSet<>();
+	private static NestedMap3<String, String, String, String> getIgnoredTestFails(final File ignoreFile) {
+		final NestedMap3<String, String, String, String> result = new NestedMap3<>();
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(ignoreFile)))) {
 			String line;
 			while ((line = br.readLine()) != null) {
-				final Triple<String, String, String> triple = parseIgnoreLine(line);
-				if (triple != null) {
-					ignoredTestFails.add(triple);
-				}
+				addIgnoreLine(line, result);
 			}
 		} catch (final IOException e) {
 			// Just skip
 		}
-		return ignoredTestFails;
+		return result;
 	}
 
-	private static Triple<String, String, String> parseIgnoreLine(final String line) {
+	private static void addIgnoreLine(final String line, final NestedMap3<String, String, String, String> map) {
 		if (line.startsWith("//")) {
-			return null;
+			return;
 		}
 		String settings = null;
 		String toolchain = null;
 		String file = null;
 		final String[] args = line.split("\\s+");
-		if (args.length != 3) {
-			return null;
+		if (args.length != 4) {
+			return;
 		}
-		for (final String arg : args) {
+		for (int i = 0; i < 3; i++) {
+			final String arg = args[i];
 			if (arg.endsWith(".epf")) {
 				if (settings != null) {
-					return null;
+					return;
 				}
 				settings = arg;
 			} else if (arg.endsWith(".xml")) {
 				if (toolchain != null) {
-					return null;
+					return;
 				}
 				toolchain = arg;
 			} else {
 				if (file != null) {
-					return null;
+					return;
 				}
 				file = arg;
 			}
 		}
-		return new Triple<>(file, settings, toolchain);
+		map.put(file, settings, toolchain, args[3]);
 	}
 
 	protected long getTimeout(final Config rundef, final File file) {
@@ -321,7 +319,8 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 				.collect(Collectors.toList());
 	}
 
-	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition, boolean isIgnored);
+	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition,
+			String overridenExpectedVerdict);
 
 	public static final class Config
 			extends de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair<File, File> {

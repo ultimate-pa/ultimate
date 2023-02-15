@@ -1,8 +1,8 @@
 // Timeout
-BugLiveVariables03-Safe.bpl AutomizerBpl-FPandBP.epf AutomizerBpl.xml
-BugNestedSsaWithPendingContexts.bpl AutomizerBpl-forwardPredicates.epf AutomizerBpl.xml
-BugNoPredecessorOfReturnTransition.bpl PdrAutomizerBpl.epf PdrAutomizerBpl.xml
-nestedWhileSimple-Safe.bpl PdrAutomizerBpl.epf PdrAutomizerBpl.xml
+BugLiveVariables03-Safe.bpl AutomizerBpl-FPandBP.epf AutomizerBpl.xml TIMEOUT
+BugNestedSsaWithPendingContexts.bpl AutomizerBpl-forwardPredicates.epf AutomizerBpl.xml TIMEOUT
+BugNoPredecessorOfReturnTransition.bpl PdrAutomizerBpl.epf PdrAutomizerBpl.xml TIMEOUT
+nestedWhileSimple-Safe.bpl PdrAutomizerBpl.epf PdrAutomizerBpl.xml TIMEOUT
 
 // The solver is unable to evaluate the formula, PDR cannot handle this
-BugLiveVariables04-Safe.bpl PdrAutomizerBpl.epf PdrAutomizerBpl.xml
+BugLiveVariables04-Safe.bpl PdrAutomizerBpl.epf PdrAutomizerBpl.xml EXCEPTION_OR_ERROR

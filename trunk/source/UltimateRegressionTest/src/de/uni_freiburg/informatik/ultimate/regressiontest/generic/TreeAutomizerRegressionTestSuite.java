@@ -57,7 +57,7 @@ public class TreeAutomizerRegressionTestSuite extends AbstractRegressionTestSuit
 	}
 
 	@Override
-	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition, boolean isIgnored) {
+	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition, String overridenExpectedVerdict) {
 		boolean unknownIsSuccess = false;
 		return new TreeAutomizerTestResultDecider(runDefinition, unknownIsSuccess);
 	}
