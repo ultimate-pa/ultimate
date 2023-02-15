@@ -269,23 +269,21 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		return resultWithoutXInMod;
 	}
 	
-	public EliminationResult helpReturnForEliminatingDiv(final EliminationTask inputEt, final DmlPossibility pmt, final Map<Term, Term> sub1,
-			final Map<Term, Term> sub3, final TermVariable y, final TermVariable z) {
+	public EliminationResult helpReturnForEliminatingDiv(final EliminationTask inputEt, final DmlPossibility pmt, final Map<Term, Term> sub1, final Term termJunctSubst,
+			final TermVariable y, final TermVariable z) {
 		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
 		final BigInteger zeroAsBigInteger = BigInteger.valueOf(0);
 		final Term zeroAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
 				zeroAsBigInteger);
 		Term termAfterFirstSubstitution = QuantifierUtils.getAbsorbingElement(mScript, inputEt.getQuantifier());
 		for (final Term junct : dualFiniteJuncts) {
-			if (junct == pmt.getContainingDualJunct()) {
-				final Term divConjunctSub = Substitution.apply(mMgdScript, sub3, junct);
-				termAfterFirstSubstitution = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
-						termAfterFirstSubstitution, divConjunctSub);
-			} else {
+			if (!(junct == pmt.getContainingDualJunct())) {
 				termAfterFirstSubstitution = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
 						termAfterFirstSubstitution, junct);
 			}
 		}
+		termAfterFirstSubstitution = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
+				termAfterFirstSubstitution, termJunctSubst);
 		if (inputEt.getQuantifier() == QuantifiedFormula.EXISTS) {
 			// lowerBoundExists = z >= 0
 			final Term lowerBoundExists = SmtUtils.geq(mScript, z, zeroAsTerm);
@@ -354,14 +352,17 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		// div2 = ax + b div k
 		final Term div2 = SmtUtils.divInt(mScript, sum4,
 				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor()));
-		List<Term> termJunctSubstList = new ArrayList<>(); // , mylist.add
+		List<Term> termJunctSubstList = new ArrayList<>();
 		if (aAsInt > 0) {
 			for (int i = 0; i < (aAsInt + 1); i++) {
 				BigInteger iAsBigInteger = BigInteger.valueOf(i);
 				Term iAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), iAsBigInteger);
 				// sum3 = ay + (b div k) + i
 				Term sum3 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), sum2, iAsTerm);
-				termJunctSubstList.add(sum3);
+				Map<Term, Term> subJunct = new HashMap<Term, Term>();
+				subJunct.put(pmt.getDmlSubterm(), sum3);
+				Term divConjunctSub = Substitution.apply(mMgdScript, subJunct, pmt.getContainingDualJunct());
+				termJunctSubstList.add(divConjunctSub);
 			}
 		} else {
 			for (int i = aAsInt; i < 1; i++) {
@@ -369,14 +370,15 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 				Term iAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), iAsBigInteger);
 				// sum3 = ay + (b div k) + i
 				Term sum3 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), sum2, iAsTerm);
-				termJunctSubstList.add(sum3);
+				Map<Term, Term> subJunct = new HashMap<Term, Term>();
+				subJunct.put(pmt.getDmlSubterm(), sum3);
+				Term divConjunctSub = Substitution.apply(mMgdScript, subJunct, pmt.getContainingDualJunct());
+				termJunctSubstList.add(divConjunctSub);
 			}
 		}
 		final Term termJunctSubst = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, inputEt.getQuantifier(),
 				termJunctSubstList);
-		final Map<Term, Term> sub3 = new HashMap<Term, Term>();
-		sub3.put(div2, termJunctSubst);
-		final EliminationResult resultWithoutXInDiv = helpReturnForEliminatingDiv(inputEt, pmt, sub1, sub3, y, z);
+		final EliminationResult resultWithoutXInDiv = helpReturnForEliminatingDiv(inputEt, pmt, sub1, termJunctSubst, y, z);
 		return resultWithoutXInDiv;
 	}
 
@@ -422,19 +424,22 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		// div2 = ax + b div k
 		final Term div2 = SmtUtils.divInt(mScript, sum4,
 				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor()));
-		List<Term> termJunctSubstList = new ArrayList<>(); // , mylist.add
+		List<Term> termJunctSubstList = new ArrayList<>();
 		for (int i = 0; i < absIntRemainderG + 1; i++) {
 			BigInteger iAsBigInteger = BigInteger.valueOf(i);
 			Term iAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), iAsBigInteger);
 			// sum3 = ay + (b div k) + nz + i
 			Term sum3 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), sumBeforeFinal, iAsTerm);
-			termJunctSubstList.add(sum3);
+			Map<Term, Term> subJunct = new HashMap<Term, Term>();
+			subJunct.put(pmt.getDmlSubterm(), sum3);
+			Term divConjunctSub = Substitution.apply(mMgdScript, subJunct, pmt.getContainingDualJunct());
+			termJunctSubstList.add(divConjunctSub);
 		}
 		final Term termJunctSubst = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, inputEt.getQuantifier(),
 				termJunctSubstList);
-		final Map<Term, Term> sub3 = new HashMap<Term, Term>();
-		sub3.put(div2, termJunctSubst);
-		final EliminationResult resultWithoutXInDiv = helpReturnForEliminatingDiv(inputEt, pmt, sub1, sub3, y, z);
+		//final Map<Term, Term> sub3 = new HashMap<Term, Term>();
+		//sub3.put(div2, termJunctSubst);
+		final EliminationResult resultWithoutXInDiv = helpReturnForEliminatingDiv(inputEt, pmt, sub1, termJunctSubst, y, z);
 		return resultWithoutXInDiv;
 	}
 	
