@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.test.decider;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
+import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder.ExpectedResultFinderStatus;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.KeywordBasedExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.IOverallResultEvaluator;
 import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.SafetyCheckerOverallResult;
@@ -54,8 +55,8 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 	 *            for JUnit.
 	 */
 	public SafetyCheckTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
-			final boolean unknownIsJUnitSuccess, final boolean isIgnored) {
-		super(ultimateRunDefinition, unknownIsJUnitSuccess, isIgnored);
+			final boolean unknownIsJUnitSuccess, final String overridenExpectedVerdict) {
+		super(ultimateRunDefinition, unknownIsJUnitSuccess, overridenExpectedVerdict);
 	}
 
 	/**
@@ -94,19 +95,20 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 		@Override
 		public void evaluateTestResult(final IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder,
 				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
-			evaluateExpectedResult(expectedResultFinder);
-			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
-			case ERROR:
-				// we will not evaluate overall result;
-				return;
-			case EXPECTED_RESULT_FOUND:
-				compareToOverallResult(expectedResultFinder.getExpectedResult(), overallResultDeterminer);
-				return;
-			case NO_EXPECTED_RESULT_FOUND:
-				evaluateOverallResultWithoutExpectedResult(overallResultDeterminer);
-				return;
-			default:
-				throw new IllegalArgumentException();
+
+			final ExpectedResultFinderStatus status = expectedResultFinder.getExpectedResultFinderStatus();
+			if (mOverridenExpectedVerdict != null) {
+				final SafetyCheckerOverallResult expectedVerdict =
+						SafetyCheckerOverallResult.valueOf(mOverridenExpectedVerdict);
+				mMessage = "ExpectedResult (overriden): " + expectedVerdict;
+				compareToOverallResult(expectedVerdict, overallResultDeterminer, true);
+			} else {
+				evaluateExpectedResult(expectedResultFinder);
+				if (status == ExpectedResultFinderStatus.NO_EXPECTED_RESULT_FOUND) {
+					evaluateOverallResultWithoutExpectedResult(overallResultDeterminer);
+				} else if (status == ExpectedResultFinderStatus.EXPECTED_RESULT_FOUND) {
+					compareToOverallResult(expectedResultFinder.getExpectedResult(), overallResultDeterminer, false);
+				}
 			}
 		}
 
@@ -117,10 +119,6 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 
 			mCategory = overallResult + " (Expected:UNKNOWN)";
 			mMessage += " UltimateResult: " + overallResultMsg;
-			if (mIsIgnored) {
-				mTestResult = TestResult.IGNORE;
-				return;
-			}
 			switch (overallResult) {
 			case EXCEPTION_OR_ERROR:
 			case UNSUPPORTED_SYNTAX:
@@ -144,7 +142,8 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 		}
 
 		private void compareToOverallResult(final SafetyCheckerOverallResult expectedResult,
-				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
+				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer,
+				final boolean skipOnSuccess) {
 			final SafetyCheckerOverallResult overallResult = overallResultDeterminer.getOverallResult();
 			final String overallResultMsg = overallResultDeterminer.generateOverallResultMessage();
 
@@ -153,7 +152,7 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 			switch (overallResult) {
 			case EXCEPTION_OR_ERROR:
 				mCategory = overallResult + " (Expected:" + expectedResult + ") " + overallResultMsg;
-				mTestResult = mIsIgnored ? TestResult.IGNORE : TestResult.FAIL;
+				mTestResult = skipOnSuccess && expectedResult == overallResult ? TestResult.IGNORE : TestResult.FAIL;
 				break;
 			case SAFE:
 				if (expectedResult == SafetyCheckerOverallResult.SAFE) {
@@ -176,11 +175,11 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				break;
 			case UNSAFE_OVERAPPROXIMATED:
 				if (expectedResult == overallResult) {
-					mTestResult = TestResult.SUCCESS;
+					mTestResult = skipOnSuccess ? TestResult.IGNORE : TestResult.SUCCESS;
 				} else if (expectedResult == SafetyCheckerOverallResult.UNSAFE) {
 					mTestResult = TestResult.SUCCESS;
 				} else {
-					mTestResult = mIsIgnored ? TestResult.IGNORE : TestResult.UNKNOWN;
+					mTestResult = TestResult.UNKNOWN;
 				}
 				break;
 			case INVALID_ANNOTATION:
@@ -192,11 +191,14 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				}
 				break;
 			case UNKNOWN:
+			case TIMEOUT:
 				// syntax error should always have been found
 				if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
 					mTestResult = TestResult.FAIL;
+				} else if (skipOnSuccess && expectedResult == overallResult) {
+					mTestResult = TestResult.IGNORE;
 				} else {
-					mTestResult = mIsIgnored ? TestResult.IGNORE : TestResult.UNKNOWN;
+					mTestResult = TestResult.UNKNOWN;
 				}
 				break;
 			case SYNTAX_ERROR:
@@ -204,14 +206,6 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 					mTestResult = TestResult.SUCCESS;
 				} else {
 					mTestResult = TestResult.FAIL;
-				}
-				break;
-			case TIMEOUT:
-				// syntax error should always have been found
-				if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
-					mTestResult = TestResult.FAIL;
-				} else {
-					mTestResult = mIsIgnored ? TestResult.IGNORE : TestResult.UNKNOWN;
 				}
 				break;
 			case UNSUPPORTED_SYNTAX:

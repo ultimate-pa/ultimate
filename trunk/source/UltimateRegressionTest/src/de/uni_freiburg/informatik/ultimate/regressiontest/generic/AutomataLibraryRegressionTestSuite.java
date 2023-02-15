@@ -50,7 +50,7 @@ public class AutomataLibraryRegressionTestSuite extends AbstractRegressionTestSu
 	}
 
 	@Override
-	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition, boolean isIgnored) {
+	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition, String overridenExpectedVerdict) {
 		return new AutomataScriptTestResultDecider();
 	}
 

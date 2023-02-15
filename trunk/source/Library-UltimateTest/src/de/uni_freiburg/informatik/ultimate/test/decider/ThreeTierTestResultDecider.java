@@ -59,7 +59,7 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 	private final IExpectedResultFinder<OVERALL_RESULT> mExpectedResultEvaluation;
 	private IOverallResultEvaluator<OVERALL_RESULT> mUltimateResultEvaluation;
 	private ITestResultEvaluation<OVERALL_RESULT> mTestResultEvaluation;
-	protected boolean mIsIgnored;
+	protected final String mOverridenExpectedVerdict;
 
 	/**
 	 *
@@ -73,9 +73,9 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 	 *            Is the test case ignored?
 	 */
 	public ThreeTierTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
-			final boolean unknownIsJUnitSuccess, final boolean isIgnored) {
+			final boolean unknownIsJUnitSuccess, final String overridenExpectedVerdict) {
 		mUnknownIsJUnitSuccess = unknownIsJUnitSuccess;
-		mIsIgnored = isIgnored;
+		mOverridenExpectedVerdict = overridenExpectedVerdict;
 		mUltimateRunDefinition = ultimateRunDefinition;
 		mExpectedResultEvaluation = constructExpectedResultFinder();
 		mExpectedResultEvaluation.findExpectedResult(ultimateRunDefinition);
@@ -91,7 +91,7 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 	 */
 	public ThreeTierTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
 			final boolean unknownIsJUnitSuccess) {
-		this(ultimateRunDefinition, unknownIsJUnitSuccess, false);
+		this(ultimateRunDefinition, unknownIsJUnitSuccess, null);
 	}
 
 	@Override
