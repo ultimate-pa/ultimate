@@ -7,6 +7,8 @@
  * (Perhaps because b is itself not in the backtrack set?)
  */
 
+//@ commutativity (a, b) (b, a) (a, c) (c, a)
+
 FiniteAutomaton input = (
      alphabet      = {a b c},
      states        = {eps A AB ABC AC ACB B BA C CA CAB CB CBA},
