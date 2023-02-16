@@ -1,14 +1,14 @@
 // Fails due to overapproximation of bitwise operators in the integer translation
-BitwiseOperations01.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml UNKNOWN
 BitwiseOperations02.c AutomizerC-forwardPredicates.epf AutomizerC.xml UNKNOWN
 BitwiseOperations02.c AutomizerC-forwardPredicates_const.epf AutomizerC.xml UNKNOWN
 BitwiseOperations02.c AutomizerC-nestedInterpolants.epf AutomizerC.xml UNKNOWN
 BitwiseOperations02.c AutomizerC-nestedInterpolants_const.epf AutomizerC.xml UNKNOWN
-BitwiseOperations02.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml UNKNOWN
 BitwiseOperations02.c BlockEncodingV2AutomizerC-forwardPredicates.epf BlockEncodingV2AutomizerC.xml UNKNOWN
 BitwiseOperations02.c KojakC-Reach-32Bit-Default.epf KojakC.xml UNKNOWN
 
 // Timeout
+BitwiseOperations01.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml TIMEOUT
+BitwiseOperations02.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml TIMEOUT
 ShortCircuit-SideEffect-DoStatement-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml TIMEOUT
 ShortCircuit-SideEffect-ForStatement-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml TIMEOUT
 StructPositiveSum-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml TIMEOUT
@@ -17,5 +17,7 @@ StructPositiveSum-Safe.c AutomizerC-forwardPredicates_const.epf AutomizerC.xml T
 StructPositiveSum-Safe.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml TIMEOUT
 StructPositiveSum-Safe.c BlockEncodingV2AutomizerC-forwardPredicates.epf BlockEncodingV2AutomizerC.xml TIMEOUT
 array10_pattern_simplified.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml TIMEOUT
-array10_pattern_simplified.c AutomizerC-nestedInterpolants.epf AutomizerC.xml TIMEOUT
-array10_pattern_simplified.c AutomizerC-nestedInterpolants_const.epf AutomizerC.xml TIMEOUT
+
+// Unable to decide satisfiability of path constraint
+array10_pattern_simplified.c AutomizerC-nestedInterpolants.epf AutomizerC.xml UNKNOWN
+array10_pattern_simplified.c AutomizerC-nestedInterpolants_const.epf AutomizerC.xml UNKNOWN
