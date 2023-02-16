@@ -1,4 +1,4 @@
-// #Safe
+// #Unknown
 // Reveals bug of issue #441.
 // https://github.com/ultimate-pa/ultimate/issues/441
 // Computations of pre, sp, wp, and interprocedural sequential composition
