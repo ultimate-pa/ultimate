@@ -87,6 +87,18 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 		return new SafetyCheckerTestResultEvaluation();
 	}
 
+	private SafetyCheckerOverallResult getOverridenExpectedVerdict() {
+		if (mOverridenExpectedVerdict == null) {
+			return null;
+		}
+		try {
+			return SafetyCheckerOverallResult.valueOf(mOverridenExpectedVerdict);
+		} catch (final IllegalArgumentException e) {
+			// Cannot convert to SafetyCheckerOverallResult, fall back to provided expected result
+			return null;
+		}
+	}
+
 	public class SafetyCheckerTestResultEvaluation implements ITestResultEvaluation<SafetyCheckerOverallResult> {
 		private String mCategory;
 		private String mMessage;
@@ -97,9 +109,8 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
 
 			final ExpectedResultFinderStatus status = expectedResultFinder.getExpectedResultFinderStatus();
-			if (mOverridenExpectedVerdict != null) {
-				final SafetyCheckerOverallResult expectedVerdict =
-						SafetyCheckerOverallResult.valueOf(mOverridenExpectedVerdict);
+			final SafetyCheckerOverallResult expectedVerdict = getOverridenExpectedVerdict();
+			if (expectedVerdict != null) {
 				mMessage = "ExpectedResult (overriden): " + expectedVerdict;
 				compareToOverallResult(expectedVerdict, overallResultDeterminer, true);
 			} else {
