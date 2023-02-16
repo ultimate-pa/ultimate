@@ -114,8 +114,7 @@ pipeline {
       }
       steps {
           withMaven(mavenOpts: '-Xmx4g -Xss4m -ea', options: [artifactsPublisher(disabled: true), junitPublisher(healthScaleFactor: 1.0, keepLongStdio: true, skipPublishingChecks: false)]) {
-            //TODO Remove using icfgtransformer tests as test of the jenkinsfile (was: -Dtest=QuadraticMatrixTest )
-            sh 'cd trunk/source/BA_MavenParentUltimate && mvn -T 1C clean install -Pcoverage -Dmaven.test.failure.ignore=true'
+            sh 'cd trunk/source/BA_MavenParentUltimate && mvn -T 1C clean install -Pcoverage -Dmaven.test.failure.ignore=true -DexcludedGroups=de.uni_freiburg.informatik.ultimate.test.junitextension.categories.NoRegression'
           }
       }
     }
