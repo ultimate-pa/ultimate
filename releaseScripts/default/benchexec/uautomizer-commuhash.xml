@@ -3,6 +3,7 @@
 <benchmark tool="ultimateautomizer" timelimit="300s" hardtimelimit="300s" memlimit="8 GB"
   cpuCores="2">
 
+  <resultfiles></resultfiles>
   <option name="--full-output" />
 
   <rundefinition name="sv-comp21_prop-reachsafety">
