@@ -52,6 +52,9 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 	 * @param unknownIsJUnitSuccess
 	 *            if true the TestResult UNKNOWN is a success for JUnit, if false, the TestResult UNKNOWN is a failure
 	 *            for JUnit.
+	 *
+	 * @param overridenExpectedVerdict
+	 *            The expected verdict overridden in a separate file, null if not present.
 	 */
 	public SafetyCheckTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
 			final boolean unknownIsJUnitSuccess, final String overridenExpectedVerdict) {
