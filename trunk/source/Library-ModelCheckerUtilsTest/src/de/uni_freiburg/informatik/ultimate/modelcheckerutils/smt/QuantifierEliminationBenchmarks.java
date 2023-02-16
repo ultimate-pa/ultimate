@@ -33,6 +33,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
@@ -43,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.test.junitextension.categories.NoRegression;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
 /**
@@ -50,6 +52,8 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
+// These tests are simply for benchmarking and should not run as regression tests.
+@Category(NoRegression.class)
 public class QuantifierEliminationBenchmarks {
 
 	/**
