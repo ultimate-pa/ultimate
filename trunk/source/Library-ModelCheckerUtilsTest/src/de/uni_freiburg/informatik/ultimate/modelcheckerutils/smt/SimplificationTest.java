@@ -607,8 +607,8 @@ public class SimplificationTest {
 		final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
 		final Term unf = new UnfTransformer(mgdScript.getScript()).transform(letFree);
 
-		final ExtendedSimplificationResult esr =
-				SmtUtils.simplifyWithStatistics(mgdScript, unf, services, SimplificationTechnique.POLY_PAC);
+		final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, unf, services,
+				simplificationTechnique);
 		final Term result = esr.getSimplifiedTerm();
 		logger.info("Simplified result: " + esr.getSimplifiedTerm());
 		logger.info(esr.buildSizeReductionMessage());
