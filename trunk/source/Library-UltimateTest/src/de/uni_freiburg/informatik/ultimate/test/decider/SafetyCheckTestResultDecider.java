@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.test.decider;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
-import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder.ExpectedResultFinderStatus;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.KeywordBasedExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.IOverallResultEvaluator;
 import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.SafetyCheckerOverallResult;
@@ -107,19 +106,25 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 		@Override
 		public void evaluateTestResult(final IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder,
 				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
-
-			final ExpectedResultFinderStatus status = expectedResultFinder.getExpectedResultFinderStatus();
 			final SafetyCheckerOverallResult expectedVerdict = getOverridenExpectedVerdict();
 			if (expectedVerdict != null) {
 				mMessage = "ExpectedResult (overriden): " + expectedVerdict;
 				compareToOverallResult(expectedVerdict, overallResultDeterminer, true);
-			} else {
-				evaluateExpectedResult(expectedResultFinder);
-				if (status == ExpectedResultFinderStatus.NO_EXPECTED_RESULT_FOUND) {
-					evaluateOverallResultWithoutExpectedResult(overallResultDeterminer);
-				} else if (status == ExpectedResultFinderStatus.EXPECTED_RESULT_FOUND) {
-					compareToOverallResult(expectedResultFinder.getExpectedResult(), overallResultDeterminer, false);
-				}
+				return;
+			}
+			evaluateExpectedResult(expectedResultFinder);
+			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
+			case ERROR:
+				// we will not evaluate overall result;
+				return;
+			case EXPECTED_RESULT_FOUND:
+				compareToOverallResult(expectedResultFinder.getExpectedResult(), overallResultDeterminer, false);
+				return;
+			case NO_EXPECTED_RESULT_FOUND:
+				evaluateOverallResultWithoutExpectedResult(overallResultDeterminer);
+				return;
+			default:
+				throw new IllegalArgumentException();
 			}
 		}
 
