@@ -69,8 +69,8 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 	 *            if true the TestResult UNKNOWN is a success for JUnit, if false, the TestResult UNKNOWN is a failure
 	 *            for JUnit.
 	 *
-	 * @param isIgnored
-	 *            Is the test case ignored?
+	 * @param overridenExpectedVerdict
+	 *            The expected verdict overridden in a separate file, null if not present.
 	 */
 	public ThreeTierTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
 			final boolean unknownIsJUnitSuccess, final String overridenExpectedVerdict) {
