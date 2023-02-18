@@ -143,6 +143,16 @@ public class QuantifierEliminationDivMod2 {
 	}
 	
 	@Test
+	public void divElim20() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "c"),
+		};
+		final String formulaAsString = "(exists ((v1 Int)) (and (<= v1 127) (not (= c (div v1 (- 256)))) (< v1 0)))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	
+	@Test
 	public void divElim15() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "c"),
