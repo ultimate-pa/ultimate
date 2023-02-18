@@ -387,7 +387,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final BigInteger aAsBigInteger = pmt.getA();
 		final BigInteger aTimesInverse = aAsBigInteger.multiply(pmt.getInverse());
 		final BigInteger nAsBigInteger = aTimesInverse.divide(pmt.getDivisor());
-		final BigInteger remainderG = aTimesInverse.mod(pmt.getDivisor());
+		final BigInteger remainderG = aTimesInverse.mod((pmt.getDivisor()).abs());
 		final BigInteger absRemainderG = remainderG.abs();
 		final int absIntRemainderG = absRemainderG.intValue();
 		final Term nAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), nAsBigInteger);
@@ -435,6 +435,9 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 			Term divConjunctSub = Substitution.apply(mMgdScript, subJunct, pmt.getContainingDualJunct());
 			termJunctSubstList.add(divConjunctSub);
 		}
+		//QuantifierUtils.applyDualFiniteConnective
+		//final Term termJunctSubst = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
+			//	termJunctSubstList);
 		final Term termJunctSubst = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, inputEt.getQuantifier(),
 				termJunctSubstList);
 		//final Map<Term, Term> sub3 = new HashMap<Term, Term>();
