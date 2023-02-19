@@ -33,7 +33,9 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -53,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Monomial;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionTir.TirPossibility.CostEstimation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -134,43 +137,50 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	 * did not make progress for any eliminatee.
 	 */
 	private EliminationResult tryToEliminateOne(final EliminationTask inputEt) {
-		// TODO 20220921 Matthias: Add some heuristics that allows us to iterates over
-		// "inexpensive" variables first.
 		final Set<TermVariable> bannedForDivCapture = new HashSet<>(inputEt.getEliminatees());
 		bannedForDivCapture.addAll(inputEt.getContext().getBoundByAncestors());
+		final TreeMap<CostEstimation, List<TirPossibility>> tirPossibilities = new TreeMap<>();
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
-			final Term resultTerm = tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
+			final TirPossibility tirPossibility = tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
 					inputEt.getTerm(), eliminatee, bannedForDivCapture, mSupportAntiDerTerms);
-			if (resultTerm != null) {
-				if (COMPARE_TO_OLD_RESULT) {
-					final Term old = XnfTir.tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
-							inputEt.getTerm(), eliminatee, bannedForDivCapture);
-					if (old != null) {
-						final LBool test = SmtUtils.checkEquivalence(old, resultTerm, mScript);
-						if (test != LBool.UNSAT) {
-							mLogger.info(
-									"unexp:" + inputEt.toTerm(mScript) + "   old:" + old + "     new:" + resultTerm);
+			if (tirPossibility != null) {
+				final List<TirPossibility> list = tirPossibilities.computeIfAbsent(tirPossibility.getCostEstimation(),
+						x -> new ArrayList<>());
+				list.add(tirPossibility);
+			}
+		}
+		for (final Entry<CostEstimation, List<TirPossibility>> entry : tirPossibilities.entrySet()) {
+			for (final TirPossibility tirPossibility : entry.getValue()) {
+				final Term tirConstraints = tirPossibility.getElprs().buildBoundConstraint(mServices, mScript,
+						inputEt.getQuantifier(), bannedForDivCapture);
+				if (tirConstraints != null) {
+					final List<Term> resultDualFiniteJuncts = new ArrayList<>(tirPossibility.getWithoutEliminatee());
+					resultDualFiniteJuncts.add(tirConstraints);
+					final Term resultTerm = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
+							resultDualFiniteJuncts);
+					if (resultTerm != null) {
+						if (COMPARE_TO_OLD_RESULT) {
+							final Term old = XnfTir.tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
+									inputEt.getTerm(), tirPossibility.getEliminatee(), bannedForDivCapture);
+							if (old != null) {
+								final LBool test = SmtUtils.checkEquivalence(old, resultTerm, mScript);
+								if (test != LBool.UNSAT) {
+									mLogger.info("unexp:" + inputEt.toTerm(mScript) + "   old:" + old + "     new:"
+											+ resultTerm);
+								}
+								assert test == LBool.UNSAT : "unexp:" + inputEt.toTerm(mScript) + "   old:" + old
+										+ "     new:" + resultTerm;
+							}
 						}
-						assert test == LBool.UNSAT : "unexp:" + inputEt.toTerm(mScript) + "   old:" + old + "     new:"
-								+ resultTerm;
 					}
+					return new EliminationResult(inputEt.update(resultTerm), Collections.emptySet());
 				}
-				// final ExtendedSimplificationResult esr =
-				// SmtUtils.simplifyWithStatistics(mMgdScript, resultTerm,
-				// null, mServices, SimplificationTechnique.SIMPLIFY_DDA);
-				// final String sizeMessage = String.format("treesize reduction
-				// %d, result has
-				// %2.1f percent of original
-				// size", esr.getReductionOfTreeSize(),
-				// esr.getReductionRatioInPercent());
-				// mLogger.info(sizeMessage);
-				return new EliminationResult(inputEt.update(resultTerm), Collections.emptySet());
 			}
 		}
 		return null;
 	}
 
-	public static Term tryToEliminateConjuncts(final IUltimateServiceProvider services, final Script script,
+	public static TirPossibility tryToEliminateConjuncts(final IUltimateServiceProvider services, final Script script,
 			final int quantifier, final Term disjunct, final TermVariable eliminatee,
 			final Set<TermVariable> bannedForDivCapture, final boolean supportAntiDerTerms) {
 		final Term[] inputAtoms = QuantifierUtils.getDualFiniteJuncts(quantifier, disjunct);
@@ -186,15 +196,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			return null;
 		}
 		final ExplicitLhsPolynomialRelations bestElprs = makeTight(elprs);
-		if (bestElprs == null) {
-			return null;
-		}
-		final Term constraint = bestElprs.buildBoundConstraint(services, script, quantifier, bannedForDivCapture);
-		if (constraint == null) {
-			return null;
-		}
-		withoutEliminatee.add(constraint);
-		return QuantifierUtils.applyDualFiniteConnective(script, quantifier, withoutEliminatee);
+		return new TirPossibility(eliminatee, bestElprs, withoutEliminatee);
 	}
 
 	private static ExplicitLhsPolynomialRelations makeTight(final ExplicitLhsPolynomialRelations elprs) {
@@ -502,9 +504,9 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				return checkforSingleDirectionBounds(script, lowerBounds, upperBounds, quantifier);
 			}
 			// TODO 20220731 Matthias: The non-antider conjunct are similar in each
-			// disjuncts, we could pull them out. Workaround: construct there conjuncts here
+			// disjuncts, we could pull them out. Workaround: construct these conjuncts here
 			// and let simplification delete them in disjuncts.
-			return  buildCorrespondingFiniteJunctionForAntiDer(services, quantifier, script, bannedForDivCapture);
+			return buildCorrespondingFiniteJunctionForAntiDer(services, quantifier, script, bannedForDivCapture);
 		}
 
 
@@ -828,6 +830,32 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			return number;
 		}
 
+		private static int countNonOneCoefficientsInAntiDerRelations(
+				final List<Pair<ExplicitLhsPolynomialRelation, ExplicitLhsPolynomialRelation>> antiDerRelations) {
+			int number = 0;
+			for (final Pair<ExplicitLhsPolynomialRelation, ExplicitLhsPolynomialRelation> pair : antiDerRelations) {
+				if (!pair.getFirst().getLhsMonomial().isLinear()) {
+					throw new AssertionError("cannot handle proper monomial");
+				}
+				if (!pair.getSecond().getLhsMonomial().isLinear()) {
+					throw new AssertionError("cannot handle proper monomial");
+				}
+				if (pair.getFirst().getLhsCoefficient().isNegative()) {
+					throw new AssertionError("cannot handle negative coefficients");
+				}
+				if (pair.getSecond().getLhsCoefficient().isNegative()) {
+					throw new AssertionError("cannot handle negative coefficients");
+				}
+				if (!pair.getFirst().getLhsCoefficient().equals(Rational.ONE)) {
+					assert !pair.getSecond().getLhsCoefficient().equals(Rational.ONE);
+					number++;
+				} else {
+					assert pair.getSecond().getLhsCoefficient().equals(Rational.ONE);
+				}
+			}
+			return number;
+		}
+
 		private Term combine(final Script script, final int quantifier, final ExplicitLhsPolynomialRelation lower,
 				final ExplicitLhsPolynomialRelation upper) {
 			final Pair<RelationSymbol, Rational> relSymbAndOffset = computeRelationSymbolAndOffset(quantifier,
@@ -922,5 +950,164 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					lowerBoundRelationSymbol, upperBoundRelationSymbol));
 		}
 		return new Pair<RelationSymbol, Rational>(resultRelationSymbol, offset);
+	}
+
+
+	public static class TirPossibility {
+
+		public enum Difficulty {
+			/**
+			 * Eliminatee occurs only in upper bounds or only in lower bounds. The
+			 * elimination is simple for bitvectors and trivial for the other sorts.
+			 */
+			SINGLE_DIRECTION,
+			/**
+			 * Eliminatee has coefficient one in all upper bounds and in all lower bounds.
+			 * The elimination will not introduce additional factors or divisions to the
+			 * result.
+			 */
+			BOTH_SIDES_ONE,
+			/**
+			 * Eliminatee has coefficient one either in all upper bounds or in all lower
+			 * bounds. The elimination will based on the "exact shadows" and not introduce
+			 * additional divisions to the result.
+			 */
+			ONE_SIDE_ONE,
+			/**
+			 * Eliminatee occurs in upper bounds and in lower bounds at least once with a
+			 * coefficient that is different from one. The elimination will introduce
+			 * additional factors and division to the result.
+			 */
+			NO_SIDE_ONE,
+		};
+
+		private final TermVariable mEliminatee;
+		private final ExplicitLhsPolynomialRelations mElprs;
+		private final List<Term> mWithoutEliminatee;
+		private final CostEstimation mCostEstimation;
+
+		public TirPossibility(final TermVariable eliminatee, final ExplicitLhsPolynomialRelations elprs,
+				final List<Term> withoutEliminatee) {
+			mEliminatee = eliminatee;
+			mElprs = elprs;
+			mWithoutEliminatee = withoutEliminatee;
+			mCostEstimation = new CostEstimation(determineDifficulty(elprs), approximateResultSize(elprs));
+		}
+
+		private long approximateResultSize(final ExplicitLhsPolynomialRelations elprs) {
+			final long numberOfCorrespondingFiniteJuncts = (long) Math.pow(2, elprs.getAntiDerRelations().size());
+			final long lowerBoundApproximation = elprs.getLowerBounds().size()
+					+ (elprs.getAntiDerRelations().size() / 2);
+			final long upperBoundApproximation = elprs.getUpperBounds().size()
+					+ (elprs.getAntiDerRelations().size() / 2);
+			final long numberOfAtomsInCorrespondingFiniteJunct = lowerBoundApproximation * upperBoundApproximation;
+			return numberOfAtomsInCorrespondingFiniteJunct * numberOfCorrespondingFiniteJuncts;
+		}
+
+		private Difficulty determineDifficulty(final ExplicitLhsPolynomialRelations elprs) {
+			if (elprs.getLowerBounds().isEmpty() && elprs.getAntiDerRelations().isEmpty()) {
+				return Difficulty.SINGLE_DIRECTION;
+			}
+			if (elprs.getUpperBounds().isEmpty() && elprs.getAntiDerRelations().isEmpty()) {
+				return Difficulty.SINGLE_DIRECTION;
+			}
+			if (elprs.getLowerBounds().isEmpty() && elprs.getUpperBounds().isEmpty()
+					&& elprs.getAntiDerRelations().size() == 1) {
+				return Difficulty.SINGLE_DIRECTION;
+			}
+
+			final int lowerBoundNonOne = ExplicitLhsPolynomialRelations.countNonOneCoefficients(elprs.getLowerBounds());
+			final int upperBoundNonOne = ExplicitLhsPolynomialRelations.countNonOneCoefficients(elprs.getUpperBounds());
+			final int antiDerNonOne = ExplicitLhsPolynomialRelations
+					.countNonOneCoefficientsInAntiDerRelations(elprs.getAntiDerRelations());
+			if ((lowerBoundNonOne == 0 && upperBoundNonOne == 0) && antiDerNonOne == 0) {
+				return Difficulty.BOTH_SIDES_ONE;
+			}
+			if ((lowerBoundNonOne == 0 || upperBoundNonOne == 0) && antiDerNonOne == 0) {
+				return Difficulty.ONE_SIDE_ONE;
+			}
+			return Difficulty.NO_SIDE_ONE;
+		}
+
+		public TermVariable getEliminatee() {
+			return mEliminatee;
+		}
+
+		public ExplicitLhsPolynomialRelations getElprs() {
+			return mElprs;
+		}
+
+		public List<Term> getWithoutEliminatee() {
+			return mWithoutEliminatee;
+		}
+
+		public CostEstimation getCostEstimation() {
+			return mCostEstimation;
+		}
+
+
+
+		/**
+		 * Estimation for the costs of eliminating a variable via
+		 * {@link DualJunctionTir}.
+		 */
+		public static class CostEstimation implements Comparable<CostEstimation> {
+			public CostEstimation(final Difficulty difficulty, final long resultSizeApproximation) {
+				super();
+				mDifficulty = difficulty;
+				mResultSizeApproximation = resultSizeApproximation;
+			}
+
+			private final Difficulty mDifficulty;
+			private final long mResultSizeApproximation;
+
+			@Override
+			public int compareTo(final CostEstimation arg0) {
+				final int tmp = mDifficulty.compareTo(arg0.getDifficulty());
+				if (tmp != 0) {
+					return tmp;
+				} else {
+					return Long.compare(mResultSizeApproximation, arg0.getResultSizeApproximation());
+				}
+			}
+
+			public Difficulty getDifficulty() {
+				return mDifficulty;
+			}
+
+			public long getResultSizeApproximation() {
+				return mResultSizeApproximation;
+			}
+
+			@Override
+			public int hashCode() {
+				final int prime = 31;
+				int result = 1;
+				result = prime * result + ((mDifficulty == null) ? 0 : mDifficulty.hashCode());
+				result = prime * result + (int) (mResultSizeApproximation ^ (mResultSizeApproximation >>> 32));
+				return result;
+			}
+
+			@Override
+			public boolean equals(final Object obj) {
+				if (this == obj)
+					return true;
+				if (obj == null)
+					return false;
+				if (getClass() != obj.getClass())
+					return false;
+				final CostEstimation other = (CostEstimation) obj;
+				if (mDifficulty != other.mDifficulty)
+					return false;
+				if (mResultSizeApproximation != other.mResultSizeApproximation)
+					return false;
+				return true;
+			}
+
+			@Override
+			public String toString() {
+				return String.format("(%s,%s)", mDifficulty, mResultSizeApproximation);
+			}
+		}
 	}
 }
