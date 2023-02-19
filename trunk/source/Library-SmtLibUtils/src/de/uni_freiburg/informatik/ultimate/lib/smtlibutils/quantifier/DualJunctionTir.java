@@ -186,7 +186,6 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			return null;
 		}
 		final ExplicitLhsPolynomialRelations bestElprs = makeTight(elprs);
-//				bestDivision(script, eliminatee, bannedForDivCapture, quantifier, elprs);
 		if (bestElprs == null) {
 			return null;
 		}
@@ -226,88 +225,6 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 		return result;
 	}
 
-
-	/**
-	 * @deprecated Unused since we use the "exact shadows" from the omega test.
-	 *             Maybe we can delete this method in the future.
-	 */
-	@Deprecated
-	private static ExplicitLhsPolynomialRelations bestDivision(final Script script, final TermVariable eliminatee,
-			final Set<TermVariable> bannedForDivCapture, final int quantifier,
-			final ExplicitLhsPolynomialRelations elprs) {
-		final ExplicitLhsPolynomialRelations result = new ExplicitLhsPolynomialRelations(elprs.getSort());
-		for (final ExplicitLhsPolynomialRelation elpr : elprs.getLowerBounds()) {
-			final ExplicitLhsPolynomialRelation solved = bestDivision(script, bannedForDivCapture, elpr);
-			if (solved == null) {
-				return null;
-			} else {
-				result.addSimpleRelation(solved);
-			}
-		}
-		for (final ExplicitLhsPolynomialRelation elpr : elprs.getUpperBounds()) {
-			final ExplicitLhsPolynomialRelation solved = bestDivision(script, bannedForDivCapture, elpr);
-			if (solved == null) {
-				return null;
-			} else {
-				result.addSimpleRelation(solved);
-			}
-		}
-		for (final Pair<ExplicitLhsPolynomialRelation, ExplicitLhsPolynomialRelation> pair : elprs
-				.getAntiDerRelations()) {
-			final ExplicitLhsPolynomialRelation solvedLower = bestDivision(script, bannedForDivCapture,
-					pair.getFirst());
-			final ExplicitLhsPolynomialRelation solvedUpper = bestDivision(script, bannedForDivCapture,
-					pair.getSecond());
-			if (solvedLower == null) {
-				assert solvedUpper == null;
-				return null;
-			} else {
-				final Sort sort = pair.getFirst().getLhsMonomial().getSort();
-				if (ExplicitLhsPolynomialRelation.swapOfRelationSymbolRequired(pair.getFirst().getLhsCoefficient(),
-						sort)) {
-					assert ExplicitLhsPolynomialRelation
-							.swapOfRelationSymbolRequired(pair.getSecond().getLhsCoefficient(), sort);
-					// upper and lower have been swapped
-					result.addAntiDerRelation(solvedUpper, solvedLower);
-				} else {
-					result.addAntiDerRelation(solvedLower, solvedUpper);
-				}
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * @deprecated Unused since we use the "exact shadows" from the omega test.
-	 *             Maybe we can delete this method in the future.
-	 */
-	@Deprecated
-	private static ExplicitLhsPolynomialRelation bestDivision(final Script script,
-			final Set<TermVariable> bannedForDivCapture, final ExplicitLhsPolynomialRelation elpr) {
-		final ExplicitLhsPolynomialRelation solved = elpr.divInvertible(elpr.getLhsCoefficient());
-		if (solved != null) {
-			return solved;
-		}
-		if (SmtSortUtils.isBitvecSort(elpr.getLhsMonomial().getSort())) {
-			// For bitvectors it is not sufficient to add additional constraints.
-			// We would also have to do case distinctions to take the modulo arithmetic
-			// of bitvectors into account.
-			return null;
-		}
-		final Pair<ExplicitLhsPolynomialRelation, Term> pair =
-				elpr.divideByIntegerCoefficient(script, bannedForDivCapture);
-		if (pair != null) {
-			if (pair.getSecond() != null) {
-				throw new AssertionError("not this case");
-			}
-			return pair.getFirst();
-		}
-		if (elpr.getLhsCoefficient().isNegative()) {
-			return elpr.divInvertible(Rational.MONE);
-		} else {
-			return elpr;
-		}
-	}
 
 	private static ExplicitLhsPolynomialRelations convert(final List<Term> withEliminatee, final Script script,
 			final TermVariable eliminatee, final int quantifier) {
@@ -654,8 +571,6 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			return boundAsBigInt;
 		}
 
-
-
 		/**
 		 * Calculates the equivalent Quantifier free Term, if BitVector Sort,
 		 * one Bounds List is empty and the RelationSymbol is Strict.
@@ -895,25 +810,6 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				}
 			}
 			return result;
-		}
-
-		/**
-		 * @deprecated Superseded by {@link DualJunctionTir#countNonOneCoefficients}
-		 */
-		@Deprecated
-		private static boolean allCoefficientsOne(final List<ExplicitLhsPolynomialRelation> bounds) {
-			for (final ExplicitLhsPolynomialRelation bound : bounds) {
-				if (!bound.getLhsMonomial().isLinear()) {
-					throw new AssertionError("cannot handle proper monomial");
-				}
-				if (bound.getLhsCoefficient().isNegative()) {
-					throw new AssertionError("cannot handle negative coefficients");
-				}
-				if (!bound.getLhsCoefficient().equals(Rational.ONE)) {
-					return false;
-				}
-			}
-			return true;
 		}
 
 		private static int countNonOneCoefficients(final List<ExplicitLhsPolynomialRelation> bounds) {
