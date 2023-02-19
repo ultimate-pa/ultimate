@@ -136,9 +136,9 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	private EliminationResult tryToEliminateOne(final EliminationTask inputEt) {
 		// TODO 20220921 Matthias: Add some heuristics that allows us to iterates over
 		// "inexpensive" variables first.
+		final Set<TermVariable> bannedForDivCapture = new HashSet<>(inputEt.getEliminatees());
+		bannedForDivCapture.addAll(inputEt.getContext().getBoundByAncestors());
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
-			final Set<TermVariable> bannedForDivCapture = new HashSet<>(inputEt.getEliminatees());
-			bannedForDivCapture.addAll(inputEt.getContext().getBoundByAncestors());
 			final Term resultTerm = tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
 					inputEt.getTerm(), eliminatee, bannedForDivCapture, mSupportAntiDerTerms);
 			if (resultTerm != null) {
