@@ -1,0 +1,45 @@
+/*
+ * Simple test for DPOR.
+ *
+ * We here assume that a, b and c commute, and a < b < c. membrane(eps) = a
+ *
+ * 1) Since a,b and c commute no backtrackpoints need to be set.
+ */
+
+//@ commutativity (a, b) (b, a) (a, c) (c, a) (c, b) (b, c)
+
+FiniteAutomaton input = (
+     alphabet      = {a b c},
+     states        = {eps A AB ABC AC ACB B BA BAC BC BCA C CA CAB CB CBA},
+     initialStates = {eps},
+     finalStates   = {ABC ACB BAC BCA CAB CBA},
+     transitions   = {
+         (eps a A)
+         (eps b B)
+         (eps c C)
+         (A   b AB)
+         (A   c AC)
+         (B   a BA)
+         (B   c BC)
+         (C   a CA)
+         (C   b CB)
+         (AB  c ABC)
+         (AC  b ACB)
+         (BA  c BAC)
+         (BC  a BCA)
+         (CA  b CAB)
+         (CB  a CBA)
+     }
+);
+
+FiniteAutomaton expected = (
+     alphabet      = {a b c},
+     states        = {eps A AB ABC},
+     initialStates = {eps},
+     finalStates   = {ABC},
+     transitions   = {
+         (eps a A)
+         (A   b AB)
+         (AB  c ABC)
+     }
+);
