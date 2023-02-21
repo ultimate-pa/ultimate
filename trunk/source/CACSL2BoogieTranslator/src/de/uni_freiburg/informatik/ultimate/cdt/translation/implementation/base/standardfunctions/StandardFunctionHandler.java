@@ -315,20 +315,20 @@ public class StandardFunctionHandler {
 		fill(map, "snprintf", (main, node, loc, name) -> handleSnPrintF(main, node, loc));
 
 		// https://en.cppreference.com/w/c/io/fscanf
-		fill(map, "scanf", (main, node, loc, name) -> handleScanf(main, node, loc, 1));
-		fill(map, "scanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 1));
-		fill(map, "fscanf", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
-		fill(map, "fscanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
-		fill(map, "sscanf", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
-		fill(map, "sscanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
+		fill(map, "scanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1));
+		fill(map, "scanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1));
+		fill(map, "fscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
+		fill(map, "fscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
+		fill(map, "sscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
+		fill(map, "sscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
 
 		// https://en.cppreference.com/w/c/io/fwscanf
-		fill(map, "wscanf", (main, node, loc, name) -> handleScanf(main, node, loc, 1));
-		fill(map, "wscanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 1));
-		fill(map, "fwscanf", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
-		fill(map, "fwscanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
-		fill(map, "swscanf", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
-		fill(map, "swscanf_s", (main, node, loc, name) -> handleScanf(main, node, loc, 2));
+		fill(map, "wscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1));
+		fill(map, "wscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1));
+		fill(map, "fwscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
+		fill(map, "fwscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
+		fill(map, "swscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
+		fill(map, "swscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
 
 		fill(map, "__builtin_memcpy", this::handleMemcpy);
 		fill(map, "__memcpy", this::handleMemcpy);
@@ -1093,27 +1093,29 @@ public class StandardFunctionHandler {
 
 	/**
 	 * Handles all derivates of *scanf as an overapproximation by writing non-deterministic values to all arguments
-	 * starting from {@code firstArgumentToConsider}.
+	 * starting from {@code firstArgumentToWrite}.
 	 */
-	// TODO Frank 2022-11-14: In general this is unsound for various reasons:
-	// - We don't label the result as an overapproximation. For reading from e.g. stdin this is fine, but for
-	// something like sscanf("0", "%d", &data) it is not (data has the value 0 afterwards)
-	// - In general scanf can write multiple bytes. E.g. for the format %2c we would need two writes, for the format %s
-	// even non-determinstically many writes! Determining whether this occurs in the format, is only possible if the
-	// format is a literal (it can be any expression in general).
-	// - We always return a value indicating success, though the call could fail (for stdin) or may even necessarily
-	// fail (in case of e.g. sscanf("z", "%d", &data)).
-	private Result handleScanf(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
-			final int firstArgumentToConsider) {
+	// TODO Frank 2022-11-14: In general this is unsound since scanf can write multiple bytes. E.g. for the format %2c
+	// we would need two writes, for the format %s even non-determinstically many writes! Determining whether this
+	// occurs in the format, is only possible if the format is a literal (it can be any expression in general).
+	private Result handleScanf(final String name, final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final int firstArgumentToWrite) {
+		// The application is only marked as an overapproximation, if we read from a string.
+		final boolean markAsOverapproximation = name.startsWith("sscanf") || name.startsWith("swscanf");
 		final IASTInitializerClause[] arguments = node.getArguments();
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
-		// TODO we should probably dispatch all parameters, in case they have side effects
-
-		for (int i = firstArgumentToConsider; i < arguments.length; i++) {
+		for (int i = 0; i < arguments.length; i++) {
+			if (i < firstArgumentToWrite && isStringLiteral(arguments[i])) {
+				// Don't dispatch string literals
+				continue;
+			}
 			final ExpressionResult arg =
 					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]);
 			builder.addAllExceptLrValue(arg);
+			if (i < firstArgumentToWrite) {
+				continue;
+			}
 
 			final CType type = ((CPointer) arg.getCType()).getPointsToType();
 			final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
@@ -1125,6 +1127,9 @@ public class StandardFunctionHandler {
 					LRValueFactory.constructHeapLValue(mTypeHandler, arg.getLrValue().getValue(), type, null);
 			mExpressionTranslation.addAssumeValueInRangeStatements(loc, auxvar.getExp(), type, builder);
 			final List<Statement> writes = mMemoryHandler.getWriteCall(loc, lValue, auxvar.getExp(), type, false);
+			if (markAsOverapproximation) {
+				writes.forEach(new Overapprox(name, loc)::annotate);
+			}
 			builder.addStatements(writes);
 
 			if (mDataRaceChecker != null) {
@@ -1132,11 +1137,27 @@ public class StandardFunctionHandler {
 			}
 		}
 
-		// The number of arguments to which sth should be written.
-		// Returning this value indicates success.
-		final int writtenArgs = arguments.length - firstArgumentToConsider;
-		final var retVal = mExpressionTranslation.translateIntegerLiteral(loc, Integer.toString(writtenArgs));
-		builder.setLrValue(retVal);
+		// The number of arguments to which sth should be written is returned.
+		// Therefore we create a fresh variable and assume that it is in the desired range
+		// (0 to the number of variables written to)
+		final CPrimitive retValueType = new CPrimitive(CPrimitives.LONG);
+		final AuxVarInfo returnAuxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, retValueType, SFO.AUXVAR.NONDET);
+		builder.addAuxVar(returnAuxVar);
+		builder.addDeclaration(returnAuxVar.getVarDec());
+		final var minValue = mExpressionTranslation.constructLiteralForIntegerType(loc, retValueType, BigInteger.ZERO);
+		final var retVal = returnAuxVar.getExp();
+		final var greaterMin = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessEqual, minValue, retValueType, retVal, retValueType);
+		final int writtenArgs = arguments.length - firstArgumentToWrite;
+		final var maxValue = mExpressionTranslation.constructLiteralForIntegerType(loc, retValueType,
+				BigInteger.valueOf(writtenArgs));
+		final var smallerMax = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessEqual, retVal, retValueType, maxValue, retValueType);
+		builder.addStatement(new AssumeStatement(loc, ExpressionFactory.and(loc, List.of(greaterMin, smallerMax))));
+		builder.setLrValue(new RValue(retVal, retValueType));
+		if (markAsOverapproximation) {
+			builder.addOverapprox(new Overapprox(name, loc));
+		}
 
 		return builder.build();
 	}
