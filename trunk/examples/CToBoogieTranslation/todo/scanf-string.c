@@ -12,5 +12,7 @@ int main() {
   char x[2];
   x[1] = 42;
   scanf("%2c", x);
-  if (x[1] != 42) { //@ assert 0; }
+  if (x[1] != 42) {
+    //@ assert 0;
+  }
 }
