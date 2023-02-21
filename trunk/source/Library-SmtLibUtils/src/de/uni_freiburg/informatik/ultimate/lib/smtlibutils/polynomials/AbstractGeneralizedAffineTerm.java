@@ -510,6 +510,8 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 			return constructDivResultForNonSimplifiableCase(script, "div", this,
 					SmtUtils.constructIntegerValue(script, getSort(), divisor));
 		}
+		// Idea: Pull all summand whose coefficient is a multiple of the divisor out of
+		// the `div`.
 		final Map<AVAR, Rational> variables2coeffcient = new HashMap<>();
 		final List<Term> summandsOfDiv = new ArrayList<>();
 		for (final Entry<AVAR, Rational> entry : getAbstractVariable2Coefficient().entrySet()) {

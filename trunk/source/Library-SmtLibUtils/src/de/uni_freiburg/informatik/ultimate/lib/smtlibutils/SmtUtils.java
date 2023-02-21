@@ -1764,8 +1764,10 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Convert `(div (div a1 ... an) d)` to `(div a1 ... d*an)` if `an` is a non-zero literal and convert it to `(div a1
-	 * ... an d)` otherwise.
+	 * Convert `(div (div a1 ... an) d)` to `(div a1 ... d*an)` if `an` is a
+	 * positive literal and convert it to `(div a1 ... an d)` otherwise. Note that
+	 * the similar transformation would be unsound for negative literals, see
+	 * {@link PolynomialTest#intDivision10}
 	 */
 	public static Term divIntFlatten(final Script script, final Term divident, final BigInteger divisorBigInt) {
 		final Term result;
@@ -1777,7 +1779,7 @@ public final class SmtUtils {
 			}
 			final Term lastElement = divArguments.get(divArguments.size() - 1);
 			final Rational lastElementRat = SmtUtils.tryToConvertToLiteral(lastElement);
-			if (lastElementRat != null && !lastElementRat.equals(Rational.ZERO)) {
+			if (lastElementRat != null && lastElementRat.compareTo(Rational.ONE) >= 0) {
 				final BigInteger lastElementBigInteger = lastElementRat.numerator();
 				final BigInteger newLastElement = lastElementBigInteger.multiply(divisorBigInt);
 				divArguments.set(divArguments.size() - 1, SmtUtils.constructIntValue(script, newLastElement));
