@@ -40,11 +40,11 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
@@ -58,11 +58,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunction
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -84,7 +88,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysi
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Class that contains static methods that are related to the {@link TraceCheck}.
@@ -403,30 +407,78 @@ public final class TraceCheckUtils {
 	}
 
 	public static <TE extends IIcfgTransition<?>> Map<String, ILocation>
-			getOverapproximations(final IProgramExecution<TE, ?> pe) {
-		final Map<String, ILocation> result = new HashMap<>();
-		final Iterator<AtomicTraceElement<TE>> iter = pe.iterator();
-		while (iter.hasNext()) {
-			final TE current = iter.next().getTraceElement();
-			final Overapprox overapprox = Overapprox.getAnnotation(current);
-			if (overapprox == null) {
-				continue;
-			}
-			result.putAll(overapprox.getOverapproximatedLocations());
-		}
-		return result;
+			getOverapproximations(final IProgramExecution<TE, ?> execution) {
+		return getOverapproximations(execution.stream().map(AtomicTraceElement::getTraceElement).iterator());
 	}
 
 	public static <TE extends IIcfgTransition<?>> Map<String, ILocation> getOverapproximations(final List<TE> stem,
 			final List<TE> loop) {
+		// TODO: Is iterating over the loop twice sufficient to the dataflow correctly?
+		return getOverapproximations(Stream.of(stem.stream(), loop.stream(), loop.stream()).flatMap(x -> x).iterator());
+	}
+
+	private static <TE extends IIcfgTransition<?>> Map<String, ILocation>
+			getOverapproximations(final Iterator<TE> trace) {
 		final Map<String, ILocation> result = new HashMap<>();
-		for (final IElement elem : DataStructureUtils.concat(stem, loop)) {
-			final Overapprox overapprox = Overapprox.getAnnotation(elem);
-			if (overapprox == null) {
-				continue;
+		for (final IIcfgTransition<?> t : computeTransitionsInDataFlow(trace)) {
+			final Overapprox overapprox = Overapprox.getAnnotation(t);
+			if (overapprox != null) {
+				result.putAll(overapprox.getOverapproximatedLocations());
 			}
-			result.putAll(overapprox.getOverapproximatedLocations());
 		}
 		return result;
+	}
+
+	private static <TE extends IIcfgTransition<?>> Set<IIcfgTransition<?>>
+			computeTransitionsInDataFlow(final Iterator<TE> trace) {
+		final HashRelation<IIcfgTransition<?>, IIcfgTransition<?>> readsFrom = new HashRelation<>();
+		final Map<IProgramVar, IIcfgTransition<?>> lastWrites = new HashMap<>();
+		IIcfgTransition<?> traceElement = null;
+		while (trace.hasNext()) {
+			traceElement = trace.next();
+			final TransFormula tf = getTransformula(traceElement);
+			for (final IProgramVar inVar : tf.getInVars().keySet()) {
+				final IIcfgTransition<?> lastWrite = lastWrites.get(inVar);
+				if (lastWrite != null) {
+					readsFrom.addPair(traceElement, lastWrite);
+				}
+			}
+			Set<IProgramVar> assignedVars = tf.getAssignedVars();
+			if (Overapprox.getAnnotation(traceElement) != null) {
+				// If an overapproximated action does not assign any variables, we pretend all its outVars to be
+				// assigned.
+				// TODO: What are the semantics of an overapproximation flag that does not belong to an assignment?
+				if (assignedVars.isEmpty()) {
+					assignedVars = tf.getOutVars().keySet();
+				}
+			}
+			for (final IProgramVar var : assignedVars) {
+				lastWrites.put(var, traceElement);
+			}
+		}
+		final Set<IIcfgTransition<?>> result = new HashSet<>();
+		result.add(traceElement);
+		while (true) {
+			final Set<IIcfgTransition<?>> newTransitions = new HashSet<>();
+			for (final IIcfgTransition<?> t : result) {
+				newTransitions.addAll(readsFrom.getImage(t));
+			}
+			if (!result.addAll(newTransitions)) {
+				break;
+			}
+		}
+		return result;
+	}
+
+	private static TransFormula getTransformula(final IIcfgTransition<?> transition) {
+		if (transition instanceof IInternalAction) {
+			return ((IIcfgInternalTransition<?>) transition).getTransformula();
+		} else if (transition instanceof ICallAction) {
+			return ((IIcfgCallTransition<?>) transition).getLocalVarsAssignment();
+		} else if (transition instanceof IReturnAction) {
+			return ((IIcfgReturnTransition<?, ?>) transition).getAssignmentOfReturn();
+		}
+		// TODO: Extend for concurrency
+		throw new UnsupportedOperationException("Unknown transition type " + transition.getClass().getSimpleName());
 	}
 }
