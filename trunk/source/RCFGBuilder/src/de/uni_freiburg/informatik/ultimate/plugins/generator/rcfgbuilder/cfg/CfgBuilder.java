@@ -1191,6 +1191,11 @@ public class CfgBuilder {
 			if (mCurrent instanceof BoogieIcfgLocation) {
 				startNewStatementSequenceAndAddStatement(st, origin);
 			} else if (mCurrent instanceof CodeBlock) {
+				if (isOverapproximation(st)) {
+					endCurrentStatementSequence(st);
+					startNewStatementSequenceAndAddStatement(st, origin);
+					return;
+				}
 				switch (mCodeBlockSize) {
 				case LoopFreeBlock:
 				case SequenceOfStatements:
