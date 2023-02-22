@@ -609,6 +609,8 @@ public class CfgBuilder {
 		 */
 		private DebugIdentifier mLastLabelName;
 
+		private boolean mLastWasOverapproximation;
+
 		/**
 		 * Distance to the last LocNode that was constructed as representative of a label.
 		 */
@@ -1191,9 +1193,11 @@ public class CfgBuilder {
 			if (mCurrent instanceof BoogieIcfgLocation) {
 				startNewStatementSequenceAndAddStatement(st, origin);
 			} else if (mCurrent instanceof CodeBlock) {
-				if (isOverapproximation(st)) {
+				final boolean overapproximation = isOverapproximation(st);
+				if (overapproximation || mLastWasOverapproximation) {
 					endCurrentStatementSequence(st);
 					startNewStatementSequenceAndAddStatement(st, origin);
+					mLastWasOverapproximation = overapproximation;
 					return;
 				}
 				switch (mCodeBlockSize) {
