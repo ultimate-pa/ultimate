@@ -405,19 +405,21 @@ public final class TraceCheckUtils {
 
 	public static <TE extends IIcfgTransition<?>> Map<String, ILocation>
 			getOverapproximations(final IProgramExecution<TE, ?> execution) {
-		return getOverapproximations(execution.stream().map(AtomicTraceElement::getTraceElement).iterator());
+		final TE lastAction = execution.getTraceElement(execution.getLength() - 1).getTraceElement();
+		return getOverapproximations(execution.stream().map(AtomicTraceElement::getTraceElement).iterator(),
+				List.of(lastAction));
 	}
 
 	public static <TE extends IIcfgTransition<?>> Map<String, ILocation> getOverapproximations(final List<TE> stem,
 			final List<TE> loop) {
-		// TODO: Is iterating over the loop twice sufficient to the dataflow correctly?
-		return getOverapproximations(Stream.of(stem.stream(), loop.stream(), loop.stream()).flatMap(x -> x).iterator());
+		return getOverapproximations(Stream.of(stem.stream(), loop.stream(), loop.stream()).flatMap(x -> x).iterator(),
+				loop);
 	}
 
 	private static <TE extends IIcfgTransition<?>> Map<String, ILocation>
-			getOverapproximations(final Iterator<TE> trace) {
+			getOverapproximations(final Iterator<TE> trace, final List<TE> finalActions) {
 		final Map<String, ILocation> result = new HashMap<>();
-		for (final IIcfgTransition<?> t : computeTransitionsInDataFlow(trace)) {
+		for (final IIcfgTransition<?> t : computeTransitionsInDataFlow(trace, finalActions)) {
 			final Overapprox overapprox = Overapprox.getAnnotation(t);
 			if (overapprox != null) {
 				result.putAll(overapprox.getOverapproximatedLocations());
@@ -427,12 +429,11 @@ public final class TraceCheckUtils {
 	}
 
 	private static <TE extends IIcfgTransition<?>> Set<IIcfgTransition<?>>
-			computeTransitionsInDataFlow(final Iterator<TE> trace) {
+			computeTransitionsInDataFlow(final Iterator<TE> trace, final List<TE> finalActions) {
 		final HashRelation<IIcfgTransition<?>, IIcfgTransition<?>> readsFrom = new HashRelation<>();
 		final Map<IProgramVar, IIcfgTransition<?>> lastWrites = new HashMap<>();
-		IIcfgTransition<?> traceElement = null;
 		while (trace.hasNext()) {
-			traceElement = trace.next();
+			final IIcfgTransition<?> traceElement = trace.next();
 			final TransFormula tf = getTransformula(traceElement);
 			for (final IProgramVar inVar : tf.getInVars().keySet()) {
 				final IIcfgTransition<?> lastWrite = lastWrites.get(inVar);
@@ -453,8 +454,7 @@ public final class TraceCheckUtils {
 				lastWrites.put(var, traceElement);
 			}
 		}
-		final Set<IIcfgTransition<?>> result = new HashSet<>();
-		result.add(traceElement);
+		final Set<IIcfgTransition<?>> result = new HashSet<>(finalActions);
 		while (true) {
 			final Set<IIcfgTransition<?>> newTransitions = new HashSet<>();
 			for (final IIcfgTransition<?> t : result) {
