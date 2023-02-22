@@ -58,9 +58,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunction
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
@@ -472,13 +469,12 @@ public final class TraceCheckUtils {
 
 	private static TransFormula getTransformula(final IIcfgTransition<?> transition) {
 		if (transition instanceof IInternalAction) {
-			return ((IIcfgInternalTransition<?>) transition).getTransformula();
+			return transition.getTransformula();
 		} else if (transition instanceof ICallAction) {
-			return ((IIcfgCallTransition<?>) transition).getLocalVarsAssignment();
+			return ((ICallAction) transition).getLocalVarsAssignment();
 		} else if (transition instanceof IReturnAction) {
-			return ((IIcfgReturnTransition<?, ?>) transition).getAssignmentOfReturn();
+			return ((IReturnAction) transition).getAssignmentOfReturn();
 		}
-		// TODO: Extend for concurrency
 		throw new UnsupportedOperationException("Unknown transition type " + transition.getClass().getSimpleName());
 	}
 }
