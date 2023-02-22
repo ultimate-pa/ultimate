@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -503,13 +504,14 @@ public class BitabsTranslation {
 		builder.setLrValue(new RValue(auxvar, resultType));
 		final VariableLHS auxvarLhs = auxvarinfo.getLhs();
 
-		final Overapprox overapprox = new Overapprox(functionName, loc);
-		Statement[] resultStatements = new Statement[assumptionsForOverapproximation.size()];
+		Statement[] resultStatements = new Statement[assumptionsForOverapproximation.size() + 1];
+		final HavocStatement havoc = new HavocStatement(loc, new VariableLHS[] { auxvarLhs });
+		new Overapprox(functionName, loc).annotate(havoc);
+		resultStatements[0] = havoc;
 		// TODO: Is it better to have the one assume with the conjunction instead of multiple assumes?
 		for (int i = 0; i < assumptionsForOverapproximation.size(); i++) {
 			final Statement assume = new AssumeStatement(loc, assumptionsForOverapproximation.get(i));
-			overapprox.annotate(assume);
-			resultStatements[i] = assume;
+			resultStatements[i + 1] = assume;
 		}
 		for (int i = exactCases.size() - 1; i >= 0; i--) {
 			final Pair<Expression, Expression> pair = exactCases.get(i);
