@@ -451,14 +451,12 @@ public final class TraceCheckUtils {
 				lastWrites.put(var, elem);
 			}
 		});
-		final Set<IIcfgTransition<?>> result = new HashSet<>(finalActions);
-		while (true) {
-			final Set<IIcfgTransition<?>> newTransitions = new HashSet<>();
-			for (final IIcfgTransition<?> t : result) {
-				newTransitions.addAll(readsFrom.getImage(t));
-			}
-			if (!result.addAll(newTransitions)) {
-				break;
+		final Set<IIcfgTransition<?>> result = new HashSet<>();
+		final ArrayDeque<IIcfgTransition<?>> worklist = new ArrayDeque<>(finalActions);
+		while (!worklist.isEmpty()) {
+			final IIcfgTransition<?> transition = worklist.pop();
+			if (result.add(transition)) {
+				worklist.addAll(readsFrom.getImage(transition));
 			}
 		}
 		return result;
