@@ -432,20 +432,17 @@ public final class TraceCheckUtils {
 		final Map<IProgramVar, IIcfgTransition<?>> lastWrites = new HashMap<>();
 		trace.forEach(elem -> {
 			final TransFormula tf = getTransformula(elem);
-			for (final IProgramVar inVar : tf.getInVars().keySet()) {
-				final IIcfgTransition<?> lastWrite = lastWrites.get(inVar);
+			for (final IProgramVar readVar : tf.getInVars().keySet()) {
+				final IIcfgTransition<?> lastWrite = lastWrites.get(readVar);
 				if (lastWrite != null) {
 					readsFrom.addPair(elem, lastWrite);
 				}
 			}
 			Set<IProgramVar> assignedVars = tf.getAssignedVars();
-			if (Overapprox.getAnnotation(elem) != null) {
-				// If an overapproximated action does not assign any variables, we pretend all its outVars to be
-				// assigned.
-				// TODO: What are the semantics of an overapproximation flag that does not belong to an assignment?
-				if (assignedVars.isEmpty()) {
-					assignedVars = tf.getOutVars().keySet();
-				}
+			// If an overapproximated action does not assign any variables, we pretend all its outVars to be assigned.
+			// TODO: What are the semantics of an overapproximation flag that does not belong to an assignment?
+			if (Overapprox.getAnnotation(elem) != null && assignedVars.isEmpty()) {
+				assignedVars = tf.getOutVars().keySet();
 			}
 			for (final IProgramVar var : assignedVars) {
 				lastWrites.put(var, elem);
