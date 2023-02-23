@@ -1194,7 +1194,7 @@ public class CfgBuilder {
 				startNewStatementSequenceAndAddStatement(st, origin);
 			} else if (mCurrent instanceof CodeBlock) {
 				final boolean overapproximation = isOverapproximation(st);
-				if (overapproximation || mLastWasOverapproximation) {
+				if (overapproximation != mLastWasOverapproximation) {
 					endCurrentStatementSequence(st);
 					startNewStatementSequenceAndAddStatement(st, origin);
 					mLastWasOverapproximation = overapproximation;
