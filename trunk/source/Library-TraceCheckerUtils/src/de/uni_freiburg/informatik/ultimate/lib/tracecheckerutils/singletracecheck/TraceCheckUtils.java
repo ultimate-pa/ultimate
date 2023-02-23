@@ -406,18 +406,16 @@ public final class TraceCheckUtils {
 	public static <TE extends IIcfgTransition<?>> Map<String, ILocation>
 			getOverapproximations(final IProgramExecution<TE, ?> execution) {
 		final TE lastAction = execution.getTraceElement(execution.getLength() - 1).getTraceElement();
-		return getOverapproximations(execution.stream().map(AtomicTraceElement::getTraceElement).iterator(),
-				List.of(lastAction));
+		return getOverapproximations(execution.stream().map(AtomicTraceElement::getTraceElement), List.of(lastAction));
 	}
 
 	public static <TE extends IIcfgTransition<?>> Map<String, ILocation> getOverapproximations(final List<TE> stem,
 			final List<TE> loop) {
-		return getOverapproximations(Stream.of(stem.stream(), loop.stream(), loop.stream()).flatMap(x -> x).iterator(),
-				loop);
+		return getOverapproximations(Stream.of(stem.stream(), loop.stream(), loop.stream()).flatMap(x -> x), loop);
 	}
 
-	private static <TE extends IIcfgTransition<?>> Map<String, ILocation>
-			getOverapproximations(final Iterator<TE> trace, final List<TE> finalActions) {
+	private static <TE extends IIcfgTransition<?>> Map<String, ILocation> getOverapproximations(final Stream<TE> trace,
+			final List<TE> finalActions) {
 		final Map<String, ILocation> result = new HashMap<>();
 		for (final IIcfgTransition<?> t : computeTransitionsInDataFlow(trace, finalActions)) {
 			final Overapprox overapprox = Overapprox.getAnnotation(t);
@@ -429,20 +427,19 @@ public final class TraceCheckUtils {
 	}
 
 	private static <TE extends IIcfgTransition<?>> Set<IIcfgTransition<?>>
-			computeTransitionsInDataFlow(final Iterator<TE> trace, final List<TE> finalActions) {
+			computeTransitionsInDataFlow(final Stream<TE> trace, final List<TE> finalActions) {
 		final HashRelation<IIcfgTransition<?>, IIcfgTransition<?>> readsFrom = new HashRelation<>();
 		final Map<IProgramVar, IIcfgTransition<?>> lastWrites = new HashMap<>();
-		while (trace.hasNext()) {
-			final IIcfgTransition<?> traceElement = trace.next();
-			final TransFormula tf = getTransformula(traceElement);
+		trace.forEach(elem -> {
+			final TransFormula tf = getTransformula(elem);
 			for (final IProgramVar inVar : tf.getInVars().keySet()) {
 				final IIcfgTransition<?> lastWrite = lastWrites.get(inVar);
 				if (lastWrite != null) {
-					readsFrom.addPair(traceElement, lastWrite);
+					readsFrom.addPair(elem, lastWrite);
 				}
 			}
 			Set<IProgramVar> assignedVars = tf.getAssignedVars();
-			if (Overapprox.getAnnotation(traceElement) != null) {
+			if (Overapprox.getAnnotation(elem) != null) {
 				// If an overapproximated action does not assign any variables, we pretend all its outVars to be
 				// assigned.
 				// TODO: What are the semantics of an overapproximation flag that does not belong to an assignment?
@@ -451,9 +448,9 @@ public final class TraceCheckUtils {
 				}
 			}
 			for (final IProgramVar var : assignedVars) {
-				lastWrites.put(var, traceElement);
+				lastWrites.put(var, elem);
 			}
-		}
+		});
 		final Set<IIcfgTransition<?>> result = new HashSet<>(finalActions);
 		while (true) {
 			final Set<IIcfgTransition<?>> newTransitions = new HashSet<>();
