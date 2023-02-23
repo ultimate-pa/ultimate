@@ -184,8 +184,8 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			}
 
 		}
-		// final Set<Event<LETTER, PLACE>> releventEvents=new HashSet<>(mEventRepresentatives.getAllRepresentatives());
 		final Set<Event<LETTER, PLACE>> releventEvents = new HashSet<>(mEventRepresentatives.getAllRepresentatives());
+		releventEvents.remove(mInput.getDummyRoot());
 
 		if (mRemoveDeadTransitions) {
 			final HashRelation<Event<LETTER, PLACE>, Event<LETTER, PLACE>> companion2cutoff = new HashRelation<>();
