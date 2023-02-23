@@ -38,7 +38,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.AutomatonConstructingVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.DynamicPORVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.ReachabilityCheckVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
 
@@ -53,8 +55,9 @@ public class DynamicPORTests extends DynamicPORTestsBase {
 
 		// TODO wrap constructor in DynamicPORVisitor, or otherwise modify the code to apply DPOR.
 		final IDfsVisitor<String, String> visitor = constructor;
+		final var dporvisitor = new DynamicPORVisitor<>(visitor);
 
-		DepthFirstTraversal.traverse(mAutomataServices, input, new AlphabeticOrder<>(), visitor);
+		DepthFirstTraversal.traverse(mAutomataServices, input, new AlphabeticOrder<>(), dporvisitor);
 		final NestedWordAutomaton<String, String> actual = constructor.getReductionAutomaton();
 
 		assertThat("Automata differ, expected " + expected + " but actual was " + actual, areEqual(expected, actual));
