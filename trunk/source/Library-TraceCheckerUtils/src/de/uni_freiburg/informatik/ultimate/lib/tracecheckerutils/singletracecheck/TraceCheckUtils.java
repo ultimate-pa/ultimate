@@ -431,7 +431,7 @@ public final class TraceCheckUtils {
 		final HashRelation<IIcfgTransition<?>, IIcfgTransition<?>> readsFrom = new HashRelation<>();
 		final Map<IProgramVar, IIcfgTransition<?>> lastWrites = new HashMap<>();
 		trace.forEach(elem -> {
-			final TransFormula tf = getTransformula(elem);
+			final TransFormula tf = elem.getTransformula();
 			for (final IProgramVar readVar : tf.getInVars().keySet()) {
 				final IIcfgTransition<?> lastWrite = lastWrites.get(readVar);
 				if (lastWrite != null) {
@@ -457,16 +457,5 @@ public final class TraceCheckUtils {
 			}
 		}
 		return result;
-	}
-
-	private static TransFormula getTransformula(final IIcfgTransition<?> transition) {
-		if (transition instanceof IInternalAction) {
-			return transition.getTransformula();
-		} else if (transition instanceof ICallAction) {
-			return ((ICallAction) transition).getLocalVarsAssignment();
-		} else if (transition instanceof IReturnAction) {
-			return ((IReturnAction) transition).getAssignmentOfReturn();
-		}
-		throw new UnsupportedOperationException("Unknown transition type " + transition.getClass().getSimpleName());
 	}
 }
