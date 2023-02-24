@@ -340,6 +340,21 @@ public class PolynomialTest {
 	}
 
 	/**
+	 * The simplification where we merge divisors by multiplication is only sound
+	 * for positive integers.
+	 */
+	@Test
+	public void intDivision10() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String inputAsString = "(div y (- 2) (- 2))";
+		final String expectedOutputAsString = inputAsString;
+		runDefaultTest(inputAsString, expectedOutputAsString);
+		runLogicalEquivalenceBasedTest(inputAsString, false);
+	}
+
+	/**
 	 * Test addition of AffineTerm and a PolynomialTerm.
 	 */
 	@Test
