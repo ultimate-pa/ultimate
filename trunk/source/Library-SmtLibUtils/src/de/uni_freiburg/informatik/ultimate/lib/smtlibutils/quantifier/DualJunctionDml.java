@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -58,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 
 /**
@@ -162,10 +164,13 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		if (possibilities.isEmpty()) {
 			return null;
 		}
-		// temporary solution: pick first mod term
+
+		final TreeMap<Long, EliminationResult> map = new TreeMap<>();
 		for (final DmlPossibility dmlPossibility : possibilities) {
 			if (dmlPossibility.getFunName().equals("mod")) {
-				return applyModElimination(inputEt, dmlPossibility);
+				final EliminationResult er = applyModElimination(inputEt, dmlPossibility);
+				final long size = new DAGSize().treesize(er.getEliminationTask().getTerm());
+				map.put(size, er);
 			}
 			if (dmlPossibility.getFunName().equals("div")) {
 				final EliminationResult result = applyDivEliminationWithSmallA(inputEt, dmlPossibility);
@@ -175,15 +180,16 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 				else {
 					return result;
 				}
-				
 			}
+		}
+		if (!map.isEmpty()) {
+			return map.entrySet().iterator().next().getValue();
 		}
 		return null;
 	}
 
 	private EliminationResult applyModElimination(final EliminationTask inputEt, final DmlPossibility pmt)
 			throws AssertionError {
-		final Term[] juncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
 		final TermVariable y = mMgdScript.constructFreshTermVariable("y", SmtSortUtils.getIntSort(mScript));
 		final TermVariable z = mMgdScript.constructFreshTermVariable("z", SmtSortUtils.getIntSort(mScript));
 		final Term divisorAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
