@@ -189,7 +189,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final Term divisorAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
 				pmt.getDivisor());
 		final Term inverseAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
-				pmt.getInverse());	
+				pmt.getInverse());
 		final Term modTermReplacement;
 		if (SmtUtils.tryToConvertToLiteral(pmt.getB()) != null
 				&& SmtUtils.tryToConvertToLiteral(pmt.getB()).equals(Rational.ZERO)) {
@@ -210,17 +210,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 				zeroAsBigInteger);
 		final Map<Term, Term> sub3 = new HashMap<Term, Term>();
 		sub3.put(pmt.getDmlSubterm(), modTermReplacement);
-		Term termAfterFirstSubstitution = QuantifierUtils.getAbsorbingElement(mScript, inputEt.getQuantifier());
-		for (final Term conjunct : juncts) {
-			if (conjunct == pmt.getContainingDualJunct()) {
-				final Term modConjunctSub = Substitution.apply(mMgdScript, sub3, conjunct);
-				termAfterFirstSubstitution = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
-						termAfterFirstSubstitution, modConjunctSub);
-			} else {
-				termAfterFirstSubstitution = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
-						termAfterFirstSubstitution, conjunct);
-			}
-		}
+		Term termAfterFirstSubstitution = Substitution.apply(mMgdScript, sub3, inputEt.getTerm());
 		if (inputEt.getQuantifier() == QuantifiedFormula.EXISTS) {
 			// lowerBoundExists = z >= 0
 			final Term lowerBoundExists = SmtUtils.geq(mScript, z, zeroAsTerm);
@@ -261,7 +251,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final EliminationResult resultWithoutXInMod = new EliminationResult(eliminationTask, newEliminatees);
 		return resultWithoutXInMod;
 	}
-	
+
 	public EliminationResult helpReturnForEliminatingDiv(final EliminationTask inputEt, final DmlPossibility pmt, final Map<Term, Term> sub1, final Term termJunctSubst,
 			final TermVariable y, final TermVariable z) {
 		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
