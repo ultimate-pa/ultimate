@@ -29,8 +29,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator.EvalResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.OctMatrix;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.OctValue;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
 
 /**
  * Interval representation used inside the octagon abstract domain.
@@ -67,11 +70,17 @@ public class OctInterval {
 			mMin = OctValue.ONE;
 			mMax = OctValue.ZERO;
 		} else {
-			mMin = new OctValue(ivlInterval.getLower());
-			mMax = new OctValue(ivlInterval.getUpper());
+			mMin = toOctValue(ivlInterval.getLower());
+			mMax = toOctValue(ivlInterval.getUpper());
 		}
 	}
 
+	private static OctValue toOctValue(final IntervalValue interval) {
+		if (interval.isInfinity()) {
+			return OctValue.INFINITY;
+		}
+		return new OctValue(interval.getValue());
+	}
 	/**
 	 * Creates a new interval from the given bounds.
 	 * 
@@ -128,7 +137,11 @@ public class OctInterval {
 		if (isBottom()) {
 			return new IntervalDomainValue(true);
 		}
-		return new IntervalDomainValue(mMin.toIvlValue(), mMax.toIvlValue());
+		return new IntervalDomainValue(toIntervalValue(mMin), toIntervalValue(mMax));
+	}
+
+	private static IntervalValue toIntervalValue(final OctValue octValue) {
+		return octValue.isInfinity() ? new IntervalValue() : new IntervalValue(octValue.getValue());
 	}
 
 	/** @return Lower bound (inclusive) of this interval. {@link OctValue#INFINITY} represents {@code -\inf}. */

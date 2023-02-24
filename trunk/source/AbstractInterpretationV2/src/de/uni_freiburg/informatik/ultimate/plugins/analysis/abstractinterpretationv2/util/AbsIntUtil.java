@@ -235,17 +235,6 @@ public final class AbsIntUtil {
 	}
 
 	/**
-	 * Checks if a number is integral.
-	 *
-	 * @param d
-	 *            number
-	 * @return {@code d} is an integer
-	 */
-	public static boolean isIntegral(final BigDecimal d) {
-		return d.remainder(BigDecimal.ONE).signum() == 0;
-	}
-
-	/**
 	 * Calculates the euclidean modulo. The result {@code r} is the remainder of the euclidean division
 	 * {@code a / b = q}, satisfying {@code a = bq + r} where {@code 0 ≤ r < |b|} and {@code b ≠ 0}.
 	 * <p>
@@ -462,27 +451,4 @@ public final class AbsIntUtil {
 		assert !state.isBottom() || rtr.isBottom() : "Bottom lost during synchronization";
 		return rtr;
 	}
-
-	/**
-	 * Accounts for found problems when passing values by string directly to BigDecimal, in order to avoid
-	 * NumberFormatExceptions.
-	 *
-	 * @param val
-	 *            The value as string.
-	 * @return A new {@link BigDecimal} object that contains the given value. It is also possible that an exception is
-	 *         thrown when the object is created if the given value is invalid or not handled.
-	 */
-	public static BigDecimal sanitizeBigDecimalValue(final String val) {
-		if (val.contains("/")) {
-			final String[] twoParts = val.split("/");
-			if (twoParts.length != 2) {
-				throw new NumberFormatException("Not a valid division value: " + val);
-			}
-			final BigDecimal one = new BigDecimal(twoParts[0]);
-			final BigDecimal two = new BigDecimal(twoParts[1]);
-			return one.divide(two);
-		}
-		return new BigDecimal(val);
-	}
-
 }

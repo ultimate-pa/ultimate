@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.NumericUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
 /**
  * Methods to transform Boogie expressions into {@link AffineExpression}s {@link IfThenElseExpression}-free expressions
@@ -157,10 +157,10 @@ public class ExpressionTransformer {
 				+ expr;
 		if (expr instanceof IntegerLiteral) {
 			final String value = ((IntegerLiteral) expr).getValue();
-			return new AffineExpression(AbsIntUtil.sanitizeBigDecimalValue(value));
+			return new AffineExpression(NumericUtils.sanitizeBigDecimalValue(value));
 		} else if (expr instanceof RealLiteral) {
 			final String value = ((RealLiteral) expr).getValue();
-			return new AffineExpression(AbsIntUtil.sanitizeBigDecimalValue(value));
+			return new AffineExpression(NumericUtils.sanitizeBigDecimalValue(value));
 		} else if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression ie = (IdentifierExpression) expr;
 			IProgramVarOrConst var =

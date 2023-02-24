@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.OctMatrix;
+
 /**
  * Measures speed of different closures on random generated matrices.
  *

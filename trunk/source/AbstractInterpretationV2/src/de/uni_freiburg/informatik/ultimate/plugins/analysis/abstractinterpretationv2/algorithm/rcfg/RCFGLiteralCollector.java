@@ -48,12 +48,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.NumericUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
@@ -170,7 +170,7 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 			litBuilder.append(expr.getValue());
 			mLiterals.add(litBuilder.toString());
 
-			BigDecimal val = AbsIntUtil.sanitizeBigDecimalValue(expr.getValue());
+			BigDecimal val = NumericUtils.sanitizeBigDecimalValue(expr.getValue());
 			if (mNegate) {
 				val = val.negate();
 			}
@@ -197,7 +197,7 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 			litBuilder.append(expr.getValue());
 			mLiterals.add(litBuilder.toString());
 
-			BigDecimal val = AbsIntUtil.sanitizeBigDecimalValue(expr.getValue());
+			BigDecimal val = NumericUtils.sanitizeBigDecimalValue(expr.getValue());
 			if (mNegate) {
 				val = val.negate();
 			}
