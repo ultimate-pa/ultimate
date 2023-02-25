@@ -370,6 +370,9 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final BigInteger remainderG = aTimesInverse.mod((pmt.getDivisor()).abs());
 		final BigInteger absRemainderG = remainderG.abs();
 		final int absIntRemainderG = absRemainderG.intValue();
+		if (absIntRemainderG != 1) {
+			throw new AssertionError("Remainder not 1");
+		}
 		final Term nAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), nAsBigInteger);
 		if (absIntRemainderG > 8) {
 			return null;
@@ -378,6 +381,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final TermVariable z = mMgdScript.constructFreshTermVariable("z", SmtSortUtils.getIntSort(mScript));
 		final Term inverseAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
 				pmt.getInverse());
+		final Term absDivisorAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor().abs());
 		// product1 = y'*k
 		final Term product1 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript),
 				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor()), y);
@@ -400,14 +404,27 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		// sumBeforeFinal = ay + (b div k) + nz
 		final Term sumBeforeFinal = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), sum2, product3);
 		final List<Term> termJunctSubstList = new ArrayList<>();
-		for (int i = 0; i < absIntRemainderG + 1; i++) {
+		for (int i = 0; i < absIntRemainderG; i++) {
 			final BigInteger iAsBigInteger = BigInteger.valueOf(i);
 			final Term iAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), iAsBigInteger);
 			// sum3 = ay + (b div k) + nz + i
 			final Term sum3 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), sumBeforeFinal, iAsTerm);
 			final Map<Term, Term> subJunct = new HashMap<Term, Term>();
 			subJunct.put(pmt.getDmlSubterm(), sum3);
-			final Term divConjunctSub = Substitution.apply(mMgdScript, subJunct, pmt.getContainingDualJunct());
+			Term divConjunctSub = Substitution.apply(mMgdScript, subJunct, pmt.getContainingDualJunct());
+			if (i == 0) {
+				final Term sum4 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), div1, z);
+				Term iIsZero = SmtUtils.less(mScript, sum4, absDivisorAsTerm);
+				iIsZero = QuantifierUtils.negateIfUniversal(mScript, inputEt.getQuantifier(), iIsZero);
+				divConjunctSub = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
+						divConjunctSub, iIsZero);
+			} else {
+				final Term sum4 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), div1, z);
+				Term iIsOne = SmtUtils.leq(mScript, absDivisorAsTerm, sum4);
+				iIsOne = QuantifierUtils.negateIfUniversal(mScript, inputEt.getQuantifier(), iIsOne);
+				divConjunctSub = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
+						divConjunctSub, iIsOne);
+			}
 			termJunctSubstList.add(divConjunctSub);
 		}
 		final Term termJunctSubst = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, inputEt.getQuantifier(),
