@@ -102,27 +102,32 @@ public class ArithmeticUtilsTest {
 		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(3), BigInteger.valueOf(256));
 		Assert.assertTrue(result.equals(BigInteger.valueOf(171)));
 	}
-    @Test
+
+	@Test
 	public void extendedEuclidean02() {
 		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(5), BigInteger.valueOf(128));
 		Assert.assertTrue(result.equals(BigInteger.valueOf(77)));
 	}
-    @Test
+
+	@Test
 	public void extendedEuclidean03() {
 		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(17), BigInteger.valueOf(11));
 		Assert.assertTrue(result.equals(BigInteger.valueOf(2)));
 	}
-   @Test
+
+	@Test
 	public void extendedEuclidean04() {
 		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(1), BigInteger.valueOf(256));
 		Assert.assertTrue(result.equals(BigInteger.valueOf(1)));
 	}
-   @Test
+
+	@Test
 	public void extendedEuclidean05() {
 		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(-3), BigInteger.valueOf(256));
 		Assert.assertTrue(result.equals(BigInteger.valueOf(85)));
 	}
-    @Test
+
+	@Test
 	public void extendedEuclidean06() {
 		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(7), BigInteger.valueOf(1));
 		Assert.assertTrue(result.equals(BigInteger.valueOf(0)));
