@@ -278,7 +278,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 			final Term lowerBoundExists = SmtUtils.geq(mScript, z, zeroAsTerm);
 			// upperBoundExists = z < k
 			final Term upperBoundExists = SmtUtils.less(mScript, z,
-					SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor()));
+					SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor().abs()));
 			termAfterFirstSubstitution = SmtUtils.and(mScript, termAfterFirstSubstitution, lowerBoundExists);
 			termAfterFirstSubstitution = SmtUtils.and(mScript, termAfterFirstSubstitution, upperBoundExists);
 		} else if (inputEt.getQuantifier() == QuantifiedFormula.FORALL) {
@@ -286,7 +286,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 			final Term upperBoundForall = SmtUtils.less(mScript, z, zeroAsTerm);
 			// lowerBoundForall = z >= k
 			final Term lowerBoundForall = SmtUtils.geq(mScript, z,
-					SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor()));
+					SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor().abs()));
 			termAfterFirstSubstitution = SmtUtils.or(mScript, termAfterFirstSubstitution, upperBoundForall);
 			termAfterFirstSubstitution = SmtUtils.or(mScript, termAfterFirstSubstitution, lowerBoundForall);
 		} else {
