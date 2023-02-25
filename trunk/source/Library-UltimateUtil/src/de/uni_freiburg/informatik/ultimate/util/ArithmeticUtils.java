@@ -33,6 +33,7 @@ import java.math.BigInteger;
  * arithmetic data types.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Katharina Wagner
  *
  */
 public final class ArithmeticUtils {
@@ -69,37 +70,33 @@ public final class ArithmeticUtils {
 		} else {
 			result = nonEuclideanQuotient;
 		}
-		assert result.multiply(divisor).add(euclideanMod(dividend, divisor)).equals(dividend)
-				: "incorrect euclidean division";
+		assert result.multiply(divisor).add(euclideanMod(dividend, divisor))
+				.equals(dividend) : "incorrect euclidean division";
 		return result;
 	}
 
 	/**
-	 * The input `a` is the number for which the inverse should be found the divisor
-	 * is the integer which defines the field 0 <= a and a < divisor and
-	 * gcd(divisor, a) = 1
+	 * Compute the multiplicative inverse of a number in the ring ℤ/nℤ.
 	 *
-	 * @param a
-	 * @param divisor
-	 * @return
+	 * @param a       Number for which we compute the inverse. May be any integer
+	 *                that is coprime to the modulus. We apply the Euclidean modulus
+	 *                to interpret the number as an element of ℤ/nℤ.
+	 * @param modulus The `n` in ℤ/nℤ. Must be strictly greater than one.
+	 * @return Number `inv` such that `a*inv` is `1` in ℤ/nℤ.
 	 */
-	public static BigInteger extendedEuclidean(BigInteger a, BigInteger divisor) {
-		// the inverse of any number mod 1 is always 0
-		if (divisor.equals(BigInteger.valueOf(1))){
-			return BigInteger.valueOf(0);
+	public static BigInteger multiplicativeInverse(final BigInteger a, final BigInteger modulus) {
+		if (modulus.compareTo(BigInteger.ONE) <= 0) {
+			throw new IllegalArgumentException(
+					String.format("Modulus must be strictly greater one but is %s", modulus));
 		}
-		if (a.equals(BigInteger.valueOf(0))) {
-			throw new IllegalArgumentException("0 does not have a multiplicative inverse");
-		}
-		if (a.compareTo(divisor) >= 0) {
-			BigInteger newa = a.mod(divisor);
-			extendedEuclidean(newa, divisor);
-		}
-		// inverse of a in the field Z/divisorZ
+		final BigInteger aInRange = euclideanMod(a, modulus);
+
+		// Apply algorithm that is based on the extended Euclidean algorithm. See
+		// https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm#Computing_multiplicative_inverses_in_modular_structures
 		BigInteger inverse = BigInteger.valueOf(0);
-		BigInteger remainder = divisor;
+		BigInteger remainder = modulus;
 		BigInteger newInverse = BigInteger.valueOf(1);
-		BigInteger newRemainder = a;
+		BigInteger newRemainder = aInRange;
 		BigInteger oldRemainder;
 		BigInteger oldInverse;
 		BigInteger quotient;
@@ -115,19 +112,14 @@ public final class ArithmeticUtils {
 			remainder = newRemainder;
 			newRemainder = oldRemainder.subtract(quotient.multiply(newRemainder));
 		}
-		// gcd(a, divisor) > 1
+		// gcd(a, modulus) > 1
 		if (remainder.compareTo(BigInteger.valueOf(1)) > 0) {
-			throw new IllegalArgumentException("a has no multiplicative inverse mod divisor");
+			throw new IllegalArgumentException(
+					String.format("Input number %s and modulus %s are not coprime", a, modulus));
 		}
-		// correct inverse if 'a' is a negative number
-		if (inverse.compareTo(BigInteger.valueOf(0)) < 0 & a.compareTo(BigInteger.valueOf(0)) < 0) {
-			inverse = inverse.negate();
-		}
-		if (inverse.compareTo(BigInteger.valueOf(0)) < 0) {
-			inverse = inverse.add(divisor);
-		}
-		// Check if result is inverse of (a mod divisor)
-		assert ((inverse.multiply(a)).mod(divisor)).equals(BigInteger.valueOf(1));
-		return inverse;
+		final BigInteger result = euclideanMod(inverse, modulus);
+		// Check that we computed indeed the multiplicative inverse.
+		assert ((result.multiply(a)).mod(modulus).equals(BigInteger.valueOf(1)));
+		return result;
 	}
 }
