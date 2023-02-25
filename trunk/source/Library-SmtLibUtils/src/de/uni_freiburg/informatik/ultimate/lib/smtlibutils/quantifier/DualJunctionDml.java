@@ -145,7 +145,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 						final Term subtermWithModDiv = subterm;
 						final TermVariable eliminate = eliminatee;
 						if ((divisorAsBigInteger.gcd(aAsBigInteger)).equals(BigInteger.valueOf(1))) {
-							inverse = ArithmeticUtils.multiplicativeInverse(aAsBigInteger, divisorAsBigInteger);
+							inverse = ArithmeticUtils.multiplicativeInverse(aAsBigInteger, divisorAsBigInteger.abs());
 							final DmlPossibility dmlPossibility = new DmlPossibility(
 									appTerm.getFunction().getApplicationString(), aAsBigInteger, bAsTerm,
 									divisorAsBigInteger, modDivJunct, inverse, subtermWithModDiv, eliminate);
