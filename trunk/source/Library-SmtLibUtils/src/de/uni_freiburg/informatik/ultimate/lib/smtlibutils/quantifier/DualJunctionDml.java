@@ -132,8 +132,19 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 					final Term modDivJunct = dualJunct;
 					final Term subtermWithModDiv = subterm;
 					final TermVariable eliminate = eliminatee;
-					BigInteger inverse;
-					inverse = ArithmeticUtils.multiplicativeInverse(ceo.getCoefficient(), divisorAsBigInteger.abs());
+					final BigInteger inverse;
+					{
+						final BigInteger tmp = ArithmeticUtils.multiplicativeInverse(ceo.getCoefficient(),
+								divisorAsBigInteger.abs());
+						// In order to simplify other parts of the algorithm, we want to make sure that
+						// the multiplication of coefficient and inverse is always positive. Hence, if
+						// the coefficient was negative, we have to take a negative inverse.
+						if (ceo.getCoefficient().compareTo(BigInteger.ZERO) < 0) {
+							inverse = tmp.subtract(divisorAsBigInteger.abs());
+						} else {
+							inverse = tmp;
+						}
+					}
 					final DmlPossibility dmlPossibility = new DmlPossibility(
 							appTerm.getFunction().getApplicationString(), ceo.getCoefficient(), ceo.getOffset(),
 							divisorAsBigInteger, modDivJunct, inverse, subtermWithModDiv, eliminate);
