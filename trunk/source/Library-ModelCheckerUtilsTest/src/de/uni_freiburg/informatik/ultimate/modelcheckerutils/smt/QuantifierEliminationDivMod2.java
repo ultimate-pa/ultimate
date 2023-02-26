@@ -58,7 +58,7 @@ public class QuantifierEliminationDivMod2 {
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
 	private static final boolean CHECK_SIMPLIFICATION_POSSIBILITY = false;
-	private static final long TEST_TIMEOUT_MILLISECONDS = 100000;
+	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final LogLevel LOG_LEVEL_SOLVER = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
@@ -111,117 +111,68 @@ public class QuantifierEliminationDivMod2 {
 	}
 
 	//@formatter:off
-	
-	@Test
-	public void divElim1() {
-		final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(SmtSortUtils::getIntSort, "c"),
-		};
-		final String formulaAsString = "(exists ((v1 Int)) (and (not (<= v1 127)) (not (= c (div v1 256))) (< v1 0)))";
-		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-	
-	@Test
-	public void divElim13() {
-		final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(SmtSortUtils::getIntSort, "c"),
-		};
-		final String formulaAsString = "(exists ((v1 Int)) (and (not (<= v1 127)) (= c (div v1 256)) (< v1 0)))";
-		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-	
+
+
 	@Test
 	public void divElim14() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "c"),
 		};
-		final String formulaAsString = "(exists ((v1 Int)) (and (<= v1 127) (not (= c (div v1 256))) (< v1 0)))";
+		final String formulaAsString = "(exists ((v1 Int)) (and (not (= c (div v1 256))) (< v1 0)))";
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void divElim20() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "c"),
 		};
-		final String formulaAsString = "(exists ((v1 Int)) (and (<= v1 127) (not (= c (div v1 (- 256)))) (< v1 0)))";
+		final String formulaAsString = "(exists ((v1 Int)) (and (not (= c (div v1 (- 256)))) (< v1 0)))";
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void divElim15() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "c"),
 		};
-		final String formulaAsString = "(exists ((v1 Int)) (and (<= v1 127) (= c (div v1 256)) (< v1 0)))";
+		final String formulaAsString = "(exists ((v1 Int)) (and (= c (div v1 256)) (< v1 0)))";
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
-	@Test
-	public void divElim2() {
-		final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(SmtSortUtils::getIntSort, "c"),
-		};
-		final String formulaAsString = "(exists ((v1 Int)) (and (not (<= v1 127)) (not (= c (div (* 15 v1) 256))) (< v1 0)))";
-		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-	
+
 	@Test
 	public void divElim16() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "c"),
 		};
-		final String formulaAsString = "(exists ((v1 Int)) (and (<= v1 127) (not (= c (div (* 15 v1) 256))) (< v1 0)))";
+		final String formulaAsString = "(exists ((v1 Int)) (and (not (= c (div (* 15 v1) 256))) (< v1 0)))";
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
-	@Test
-	public void divElim17() {
-		final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(SmtSortUtils::getIntSort, "c"),
-		};
-		final String formulaAsString = "(exists ((v1 Int)) (and (not (<= v1 127)) (= c (div (* 15 v1) 256)) (< v1 0)))";
-		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-	
+
 	@Test
 	public void divElim18() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "c"),
 		};
-		final String formulaAsString = "(exists ((v1 Int)) (and (<= v1 127) (= c (div (* 15 v1) 256)) (< v1 0)))";
+		final String formulaAsString = "(exists ((v1 Int)) (and (= c (div (* 15 v1) 256)) (< v1 0)))";
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void divElim19() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "c"),
 		};
-		final String formulaAsString = "(exists ((v1 Int)) (and (<= v1 127) (= c (div (* (- 3) v1) 256)) (< v1 0)))";
+		final String formulaAsString = "(exists ((v1 Int)) (and (= c (div (* (- 3) v1) 256)) (< v1 0)))";
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
-	@Test
-	public void divElim3() {
-		final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(SmtSortUtils::getIntSort, "c"),
-		};
-		final String formulaAsString = "(exists ((v1 Int)) (and (not (<= v1 127)) (not (= c (div (* 233 v1) 19))) (< v1 0)))";
-		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-	
+
 
 	@Test
 	public void divElim4() {
@@ -232,27 +183,27 @@ public class QuantifierEliminationDivMod2 {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void divElim10() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "c"),
 		};
-		final String formulaAsString = "(forall ((v1 Int)) (or (<= v1 127) (not (= c (div v1 256))) (< v1 0)))";
+		final String formulaAsString = "(forall ((v1 Int)) (or (<= v1 127) (not (= c (div v1 256)))))";
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void divElim11() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "c"),
 		};
-		final String formulaAsString = "(forall ((v1 Int)) (or (<= v1 127) (= c (div v1 256)) (< v1 0)))";
+		final String formulaAsString = "(forall ((v1 Int)) (or (<= v1 127) (= c (div v1 256))))";
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void divElim12() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -262,7 +213,7 @@ public class QuantifierEliminationDivMod2 {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void divElim5() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -272,7 +223,7 @@ public class QuantifierEliminationDivMod2 {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void divElim6() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -282,27 +233,17 @@ public class QuantifierEliminationDivMod2 {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
-	@Test
-	public void divElim7() {
-		final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(SmtSortUtils::getIntSort, "c"),
-		};
-		final String formulaAsString = "(exists ((v1 Int)) (and (not (<= v1 127)) (not (= c (div (+ v1 5) 256))) (< v1 0)))";
-		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-	
+
 	@Test
 	public void divElim8() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "c"),
 		};
-		final String formulaAsString = "(forall ((v1 Int)) (or (<= v1 127) (= c (div (+ v1 5) 256)) (< v1 0)))";
+		final String formulaAsString = "(forall ((v1 Int)) (or (<= v1 127) (= c (div (+ v1 5) 256))))";
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void divElim9() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -312,7 +253,7 @@ public class QuantifierEliminationDivMod2 {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
-	
+
+
 	//@formatter:on
 }
