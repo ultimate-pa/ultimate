@@ -189,12 +189,12 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final Term inverseAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
 				pmt.getInverse());
 		final Term modTermReplacement;
-		if (SmtUtils.tryToConvertToLiteral(pmt.getB()) != null
-				&& SmtUtils.tryToConvertToLiteral(pmt.getB()).equals(Rational.ZERO)) {
+		if (SmtUtils.tryToConvertToLiteral(pmt.getOffset()) != null
+				&& SmtUtils.tryToConvertToLiteral(pmt.getOffset()).equals(Rational.ZERO)) {
 			modTermReplacement = z;
 		} else {
 			// mod3 = b mod k
-			final Term mod3 = SmtUtils.mod(mScript, pmt.getB(), divisorAsTerm);
+			final Term mod3 = SmtUtils.mod(mScript, pmt.getOffset(), divisorAsTerm);
 			// sum4 = z + (b mod k)
 			final Term sum4 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), z, mod3);
 			// substr1 = z + (b mod k) - k
@@ -300,7 +300,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 
 	private EliminationResult applyDivEliminationWithSmallA(final EliminationTask inputEt, final DmlPossibility pmt)
 			throws AssertionError {
-		final BigInteger aAsBigInteger = pmt.getA();
+		final BigInteger aAsBigInteger = pmt.getCoefficient();
 		final int aAsInt = aAsBigInteger.intValue();
 		final BigInteger absOfAAsBigInteger = aAsBigInteger.abs();
 		final int absAAsInt = absOfAAsBigInteger.intValue();
@@ -317,11 +317,11 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final Map<Term, Term> sub1 = new HashMap<Term, Term>();
 		sub1.put(pmt.getEliminate(), sum1);
 		// div1 = b div k
-		final Term div1 = SmtUtils.divInt(mScript, pmt.getB(),
+		final Term div1 = SmtUtils.divInt(mScript, pmt.getOffset(),
 				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor()));
 		// product2 = a*y
 		final Term product2 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript),
-				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getA()), y);
+				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getCoefficient()), y);
 		// sum2 = ay + (b div k)
 		final Term sum2 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), product2, div1);
 		final List<Term> termJunctSubstList = new ArrayList<>();
@@ -359,7 +359,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 
 	private EliminationResult applyDivEliminationWithSmallRemainder(final EliminationTask inputEt,
 			final DmlPossibility pmt) throws AssertionError {
-		final BigInteger aAsBigInteger = pmt.getA();
+		final BigInteger aAsBigInteger = pmt.getCoefficient();
 		final BigInteger aTimesInverse = aAsBigInteger.multiply(pmt.getInverse());
 		final BigInteger nAsBigInteger = aTimesInverse.divide(pmt.getDivisor());
 		final BigInteger remainderG = aTimesInverse.mod((pmt.getDivisor()).abs());
@@ -389,11 +389,11 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final Map<Term, Term> sub1 = new HashMap<Term, Term>();
 		sub1.put(pmt.getEliminate(), sum1);
 		// div1 = b div k
-		final Term div1 = SmtUtils.divInt(mScript, pmt.getB(),
+		final Term div1 = SmtUtils.divInt(mScript, pmt.getOffset(),
 				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor()));
 		// product2 = a*y
 		final Term product2 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript),
-				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getA()), y);
+				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getCoefficient()), y);
 		// sum2 = ay + (b div k)
 		final Term sum2 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), product2, div1);
 		// product3 = nz
@@ -504,14 +504,15 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 
 	/**
 	 * Represents a subterm of the form `(op (+ (* a x) b) K)`, where
+	 * <ul>
 	 * <li>`op` is either "div" or "mod",
 	 * <li>x is the {@link TermVariable} that we want to eliminate, hence called
 	 * eliminatee,
-	 * <li>a is some integer (called coeffcient of x) that is coprime to K,
-	 * <li>b is some term that must not contain x,
-	 * <li>K is some integer that we call the divisor. This subterm will be one
-	 * candidate for an elimination of x via {@link DualJunctionDml} and contains
-	 * additional data that supports the elimination.
+	 * <li>a is some non-zero integer (called coeffcient of x) that is coprime to K,
+	 * <li>b is some term (called offset) that must not contain x,
+	 * <li>K is some integer that we call the divisor. </ ul> <br /> This subterm will be
+	 * one candidate for an elimination of x via {@link DualJunctionDml} and
+	 * contains additional data that supports the elimination.
 	 */
 	private static class DmlPossibility {
 		/**
@@ -563,7 +564,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		// The formula containing mod / div is of the form F(ax+b mod k) / F(ax+b div
 		// k), i.e. getA() returns
 		// the coefficient of x
-		public BigInteger getA() {
+		public BigInteger getCoefficient() {
 			return mCeo.getCoefficient();
 		}
 
@@ -574,7 +575,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		// The formula containing mod / div is of the form F(ax+b mod k) / F(ax+b div
 		// k), i.e. getB() returns
 		// any additional terms which do not contain the quantified variable x
-		public Term getB() {
+		public Term getOffset() {
 			return mCeo.getOffset();
 		}
 
