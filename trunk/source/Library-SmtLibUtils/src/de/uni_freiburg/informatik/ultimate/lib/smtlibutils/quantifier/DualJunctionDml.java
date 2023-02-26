@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
@@ -115,35 +116,20 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 					if (!Arrays.asList(dividentAsTerm.getFreeVars()).contains(eliminatee)) {
 						continue;
 					}
-					final AffineTerm dividentAsAffineTerm = (AffineTerm) new AffineTermTransformer(mScript)
-							.transform(dividentAsTerm);
-					final Map<Term, Rational> varToCoeff = dividentAsAffineTerm.getVariable2Coefficient();
-					final Map<Term, Rational> bAsAffineTermMap = new HashMap<>();
-					for (final Entry<Term, Rational> entry : varToCoeff.entrySet()) {
-						if (entry.getKey() != eliminatee) {
-							bAsAffineTermMap.put(entry.getKey(), entry.getValue());
-						}
-					}
-					final AffineTerm bAsAffineTerm = new AffineTerm(dividentAsAffineTerm.getSort(),
-							dividentAsAffineTerm.getConstant(), bAsAffineTermMap);
-					final Term bAsTerm = bAsAffineTerm.toTerm(mScript);
-					if (Arrays.asList(bAsTerm.getFreeVars()).contains(eliminatee)) {
+					final CoeffcientEliminateeOffset ceo = CoeffcientEliminateeOffset.of(mScript, eliminatee,
+							dividentAsTerm);
+					if (ceo == null) {
 						continue;
 					}
-					final Rational aAsRational = varToCoeff.get(eliminatee);
-					if (aAsRational == null) {
-						continue;
-					}
-					assert aAsRational.denominator().equals(BigInteger.ONE);
-					final BigInteger aAsBigInteger = aAsRational.numerator();
 					BigInteger inverse;
 					final Term modDivJunct = dualJunct;
 					final Term subtermWithModDiv = subterm;
 					final TermVariable eliminate = eliminatee;
-					if ((divisorAsBigInteger.gcd(aAsBigInteger)).equals(BigInteger.valueOf(1))) {
-						inverse = ArithmeticUtils.multiplicativeInverse(aAsBigInteger, divisorAsBigInteger.abs());
+					if ((divisorAsBigInteger.gcd(ceo.getCoefficient())).equals(BigInteger.valueOf(1))) {
+						inverse = ArithmeticUtils.multiplicativeInverse(ceo.getCoefficient(),
+								divisorAsBigInteger.abs());
 						final DmlPossibility dmlPossibility = new DmlPossibility(
-								appTerm.getFunction().getApplicationString(), aAsBigInteger, bAsTerm,
+								appTerm.getFunction().getApplicationString(), ceo.getCoefficient(), ceo.getOffset(),
 								divisorAsBigInteger, modDivJunct, inverse, subtermWithModDiv, eliminate);
 						result.add(dmlPossibility);
 					}
@@ -447,6 +433,63 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 	}
 
 	/**
+	 * Represents a term of the form `(+ (* a x) b)`, where
+	 * <li>x is the {@link TermVariable} that we want to eliminate, hence called
+	 * eliminatee,
+	 * <li>a is some non-zero integer (called coeffcient of x)
+	 * <li>b is some term that must not contain x (called offset).
+	 */
+	private static class CoeffcientEliminateeOffset {
+		final BigInteger mCoefficient;
+		final TermVariable mEliminatee;
+		final Term mOffset;
+
+		private CoeffcientEliminateeOffset(final BigInteger coefficient, final TermVariable eliminatee,
+				final Term offset) {
+			super();
+			mCoefficient = coefficient;
+			mEliminatee = eliminatee;
+			mOffset = offset;
+		}
+
+		public BigInteger getCoefficient() {
+			return mCoefficient;
+		}
+
+		public TermVariable getEliminatee() {
+			return mEliminatee;
+		}
+
+		public Term getOffset() {
+			return mOffset;
+		}
+
+		public static CoeffcientEliminateeOffset of(final Script script, final TermVariable eliminatee,
+				final Term term) {
+			final AffineTerm affineTerm = (AffineTerm) new AffineTermTransformer(script).transform(term);
+			final Map<Term, Rational> varToCoeff = affineTerm.getVariable2Coefficient();
+			final Map<Term, Rational> offsetAsAffineTermMap = new HashMap<>();
+			for (final Entry<Term, Rational> entry : varToCoeff.entrySet()) {
+				if (entry.getKey() != eliminatee) {
+					offsetAsAffineTermMap.put(entry.getKey(), entry.getValue());
+				}
+			}
+			final AffineTerm offsetAsAffineTerm = new AffineTerm(affineTerm.getSort(), affineTerm.getConstant(),
+					offsetAsAffineTermMap);
+			final Term bAsTerm = offsetAsAffineTerm.toTerm(script);
+			if (Arrays.asList(bAsTerm.getFreeVars()).contains(eliminatee)) {
+				return null;
+			}
+			final Rational coefficient = varToCoeff.get(eliminatee);
+			if (coefficient == null) {
+				return null;
+			}
+			assert coefficient.denominator().equals(BigInteger.ONE);
+			return new CoeffcientEliminateeOffset(coefficient.numerator(), eliminatee, bAsTerm);
+		}
+	}
+
+	/**
 	 * Represents a subterm of the form `(op (+ (* a x) b) K)`, where
 	 * <li>`op` is either "div" or "mod",
 	 * <li>x is the {@link TermVariable} that we want to eliminate, hence called
@@ -457,7 +500,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 	 * candidate for an elimination of x via {@link DualJunctionDml} and contains
 	 * additional data that supports the elimination.
 	 */
-	private class DmlPossibility {
+	private static class DmlPossibility {
 		/**
 		 * Either "div" or "mod"
 		 */
