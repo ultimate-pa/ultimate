@@ -86,71 +86,64 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 
 	public List<DmlPossibility> findAllDmlPossibilities(final EliminationTask inputEt) {
 		final List<DmlPossibility> result = new ArrayList<>();
-		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(),
-				inputEt.getTerm());
+		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
-			// Iterate over all conjuncts
-			for (final Term junct : dualFiniteJuncts) {
+			for (final Term dualJunct : dualFiniteJuncts) {
 				final Predicate<Term> isDivModTerm = (x -> isDivModTerm(x));
 				final boolean onlyOutermost = false;
-				final Set<Term> divModSubterms = SubTermFinder.find(junct, isDivModTerm, onlyOutermost);
+				final Set<Term> divModSubterms = SubTermFinder.find(dualJunct, isDivModTerm, onlyOutermost);
 				for (final Term subterm : divModSubterms) {
-					if (Arrays.asList(subterm.getFreeVars()).contains(eliminatee)) {
-						final ApplicationTerm appTerm = (ApplicationTerm) subterm;
-						assert appTerm.getFunction().getApplicationString().equals("div")
-								|| appTerm.getFunction().getApplicationString().equals("mod");
-						assert appTerm.getParameters().length == 2;
-						final Term dividentAsTerm = appTerm.getParameters()[0];
+					final ApplicationTerm appTerm = (ApplicationTerm) subterm;
+					assert appTerm.getFunction().getApplicationString().equals("div")
+							|| appTerm.getFunction().getApplicationString().equals("mod");
+					assert appTerm.getParameters().length == 2;
+					final BigInteger divisorAsBigInteger;
+					{
 						final Term divisorAsTerm = appTerm.getParameters()[1];
-						if (!Arrays.asList(dividentAsTerm.getFreeVars()).contains(eliminatee)) {
+						final Rational divisorAsRational = SmtUtils.tryToConvertToLiteral(divisorAsTerm);
+						if (divisorAsRational == null) {
+							// nonlinear term
 							continue;
 						}
-						if (Arrays.asList(divisorAsTerm.getFreeVars()).contains(eliminatee)) {
-							continue;
-						}
-						final AffineTerm dividentAsAffineTerm = (AffineTerm) new AffineTermTransformer(mScript)
-								.transform(dividentAsTerm);
-						final Map<Term, Rational> varToCoeff = dividentAsAffineTerm.getVariable2Coefficient();
-						final Map<Term, Rational> bAsAffineTermMap = new HashMap<>();
-						for (final Entry<Term, Rational> entry : varToCoeff.entrySet()) {
-							if (entry.getKey() != eliminatee) {
-								bAsAffineTermMap.put(entry.getKey(), entry.getValue());
-							}
-						}
-						final AffineTerm bAsAffineTerm = new AffineTerm(dividentAsAffineTerm.getSort(),
-								dividentAsAffineTerm.getConstant(), bAsAffineTermMap);
-						final Term bAsTerm = bAsAffineTerm.toTerm(mScript);
-						if (Arrays.asList(bAsTerm.getFreeVars()).contains(eliminatee)) {
-							continue;
-						}
-						final Rational aAsRational = varToCoeff.get(eliminatee);
-						if (aAsRational == null) {
-							continue;
-						}
-						assert aAsRational.denominator().equals(BigInteger.ONE);
-						final BigInteger aAsBigInteger = aAsRational.numerator();
-						final AffineTerm divisorAsAffineTerm = (AffineTerm) new AffineTermTransformer(mScript)
-								.transform(divisorAsTerm);
-						final Rational divisorAsRational = divisorAsAffineTerm.getConstant();
-						if (!divisorAsAffineTerm.getVariable2Coefficient().isEmpty()) {
-							continue;
-						}
-						if (divisorAsRational.numerator().equals(BigInteger.valueOf(0))) {
-							continue;
-						}
+						assert !divisorAsRational.numerator().equals(BigInteger.ZERO);
 						assert divisorAsRational.denominator().equals(BigInteger.ONE);
-						final BigInteger divisorAsBigInteger = divisorAsRational.numerator();
-						BigInteger inverse;
-						final Term modDivJunct = junct;
-						final Term subtermWithModDiv = subterm;
-						final TermVariable eliminate = eliminatee;
-						if ((divisorAsBigInteger.gcd(aAsBigInteger)).equals(BigInteger.valueOf(1))) {
-							inverse = ArithmeticUtils.multiplicativeInverse(aAsBigInteger, divisorAsBigInteger.abs());
-							final DmlPossibility dmlPossibility = new DmlPossibility(
-									appTerm.getFunction().getApplicationString(), aAsBigInteger, bAsTerm,
-									divisorAsBigInteger, modDivJunct, inverse, subtermWithModDiv, eliminate);
-							result.add(dmlPossibility);
+						divisorAsBigInteger = divisorAsRational.numerator();
+					}
+					final Term dividentAsTerm = appTerm.getParameters()[0];
+					if (!Arrays.asList(dividentAsTerm.getFreeVars()).contains(eliminatee)) {
+						continue;
+					}
+					final AffineTerm dividentAsAffineTerm = (AffineTerm) new AffineTermTransformer(mScript)
+							.transform(dividentAsTerm);
+					final Map<Term, Rational> varToCoeff = dividentAsAffineTerm.getVariable2Coefficient();
+					final Map<Term, Rational> bAsAffineTermMap = new HashMap<>();
+					for (final Entry<Term, Rational> entry : varToCoeff.entrySet()) {
+						if (entry.getKey() != eliminatee) {
+							bAsAffineTermMap.put(entry.getKey(), entry.getValue());
 						}
+					}
+					final AffineTerm bAsAffineTerm = new AffineTerm(dividentAsAffineTerm.getSort(),
+							dividentAsAffineTerm.getConstant(), bAsAffineTermMap);
+					final Term bAsTerm = bAsAffineTerm.toTerm(mScript);
+					if (Arrays.asList(bAsTerm.getFreeVars()).contains(eliminatee)) {
+						continue;
+					}
+					final Rational aAsRational = varToCoeff.get(eliminatee);
+					if (aAsRational == null) {
+						continue;
+					}
+					assert aAsRational.denominator().equals(BigInteger.ONE);
+					final BigInteger aAsBigInteger = aAsRational.numerator();
+					BigInteger inverse;
+					final Term modDivJunct = dualJunct;
+					final Term subtermWithModDiv = subterm;
+					final TermVariable eliminate = eliminatee;
+					if ((divisorAsBigInteger.gcd(aAsBigInteger)).equals(BigInteger.valueOf(1))) {
+						inverse = ArithmeticUtils.multiplicativeInverse(aAsBigInteger, divisorAsBigInteger.abs());
+						final DmlPossibility dmlPossibility = new DmlPossibility(
+								appTerm.getFunction().getApplicationString(), aAsBigInteger, bAsTerm,
+								divisorAsBigInteger, modDivJunct, inverse, subtermWithModDiv, eliminate);
+						result.add(dmlPossibility);
 					}
 				}
 			}
