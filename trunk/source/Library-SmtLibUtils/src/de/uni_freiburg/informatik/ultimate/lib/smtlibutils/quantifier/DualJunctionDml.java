@@ -121,18 +121,23 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 					if (ceo == null) {
 						continue;
 					}
-					BigInteger inverse;
+					final BigInteger gcd = divisorAsBigInteger.gcd(ceo.getCoefficient());
+					if (gcd.compareTo(BigInteger.ZERO) <= 0) {
+						throw new AssertionError("Expected that GCD is always positive");
+					}
+					if (!gcd.equals(BigInteger.valueOf(1))) {
+						// TODO 20230226 Matthias: Think about an extension for the GCD≠1 case.
+						continue;
+					}
 					final Term modDivJunct = dualJunct;
 					final Term subtermWithModDiv = subterm;
 					final TermVariable eliminate = eliminatee;
-					if ((divisorAsBigInteger.gcd(ceo.getCoefficient())).equals(BigInteger.valueOf(1))) {
-						inverse = ArithmeticUtils.multiplicativeInverse(ceo.getCoefficient(),
-								divisorAsBigInteger.abs());
-						final DmlPossibility dmlPossibility = new DmlPossibility(
-								appTerm.getFunction().getApplicationString(), ceo.getCoefficient(), ceo.getOffset(),
-								divisorAsBigInteger, modDivJunct, inverse, subtermWithModDiv, eliminate);
-						result.add(dmlPossibility);
-					}
+					BigInteger inverse;
+					inverse = ArithmeticUtils.multiplicativeInverse(ceo.getCoefficient(), divisorAsBigInteger.abs());
+					final DmlPossibility dmlPossibility = new DmlPossibility(
+							appTerm.getFunction().getApplicationString(), ceo.getCoefficient(), ceo.getOffset(),
+							divisorAsBigInteger, modDivJunct, inverse, subtermWithModDiv, eliminate);
+					result.add(dmlPossibility);
 				}
 			}
 		}
