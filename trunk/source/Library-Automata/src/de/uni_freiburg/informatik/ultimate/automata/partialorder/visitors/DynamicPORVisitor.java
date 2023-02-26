@@ -9,11 +9,15 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTraversal;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 
 /**
@@ -29,17 +33,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends WrapperVisitor<L, S, V> {
 	// The current stack of states
 	private final Deque<S> mStateStack = new ArrayDeque<>();
-	// The current stack of letters (word to current state)
-	private final ArrayList<L> mWord = new ArrayList<>();
-	// Hashmap to remember backtrackingpoints
-	private ArrayList<L> mBacktrackSet = new ArrayList<>();
+	// List to remember chosen path
+	// Contains States, Letter representing the Backtrackset and Letter chosen from State S
+	private ArrayList<Triple<S,L,L>> mStateTrace = new ArrayList<>();
+
 	//private final Deque<Pair<S, OutgoingInternalTransition<L, S>>> mWorklist = new ArrayDeque<>();
+	private final INwaOutgoingLetterAndTransitionProvider<L, S> mAutomaton;
+	private final IDfsOrder<L,S> mOrder;
 
 	// A possible successor of the last state on the stack, which may become the next element on the stack.
 	private S mPendingState;
 	
-	public DynamicPORVisitor(final V underlying) { // V - underlying visitor to which calls are proxied
+	public DynamicPORVisitor(final V underlying, final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order) { // V - underlying visitor to which calls are proxied
 		super(underlying);
+		mAutomaton = operand;
+		mOrder = order;
 	}
 	
 	@Override
@@ -58,12 +66,18 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	@Override
 	public void backtrackState(final S state, final boolean isComplete) {
 		if (isComplete) {
-			//mWord.remove(mWord.size() - 1);  // remove last letter
-			//mBacktrackSet.remove(mBacktrackSet.size() - 1);
+			int index = mStateTrace.size()-1;
+			if (index > 0) {
+				if (mStateTrace.get(mStateTrace.size()-1).getFirst().equals(state)) {
+				mStateTrace.remove(mStateTrace.size() - 1);
+				}
+			}
 		}
 	}
 	
 	private void visitState(final S state) {
+		// add the greatest letter from membrane to backtrack(state)
+		
 		// actions for a state
 		//System.out.println("visit state");
 	}
@@ -72,39 +86,83 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	public boolean discoverTransition(final S source, final L letter, final S target) {
 		// keep track of word and state
 		mPendingState = target;
-		mWord.add(letter);
-		mBacktrackSet.add(letter); // is the smallest letter -> add to backtrack
+		int index = mStateTrace.size()-1;
+		if (index < 0) {
+			mStateTrace.add(new Triple<S,L,L>(source, letter, letter));
+			return false || mUnderlying.discoverTransition(source, letter, target);
+		}
 		
+		if (!mStateTrace.get(index).getFirst().equals(source)) {
+			mStateTrace.add(new Triple<S,L,L>(source, letter, letter));
+		} else {
+			// get old backtrackset and set state, letter
+			L backtrackState = mStateTrace.get(index).getSecond();
+			mStateTrace.set(index, new Triple<S,L,L>(source, backtrackState, letter));
+		}
+		// backtracksetLetter is the greatest letter from backtrackset
+		// any letter greater can therefore not be in backtrackset
+		if (mOrder.getOrder(source).compare(letter, mStateTrace.get(mStateTrace.size()-1).getSecond()) > 0) {
+			return true;
+		}
+		// Set the disable backtrackingpoints
+		disableBacktracking(letter);
 		// Set the necessary backtrackingpoints
-		SetBacktrackingPoints(letter);
+		setBacktrackingPoints(letter);
 		
+		System.out.println(mStateTrace);
 		// return true if letter is not in backtrackset(source)
 		return false || mUnderlying.discoverTransition(source, letter, target);
 	}
 	
-	private boolean SetBacktrackingPoints(final L letter) {
-		if (mWord.size() == 1) {
+	private boolean disableBacktracking(final L letter) {
+		return true;
+	}
+	
+	
+	private boolean setBacktrackingPoints(final L letter) {
+		ArrayList<L> mWord = currentWord();
+		if (mWord.size() <= 1) {
 			return true;
 		}
-		System.out.println(mBacktrackSet.toString());
-		for (int i = 0; i < mWord.size(); i++) {
-			if (!isIndependent(mWord.get(i), letter)) {
-				// if letter < mBacktrackset(i) and letter enabled
-				mBacktrackSet.set(i, letter);
+		for (int i = 0; i < mWord.size() - 1; i++) {
+			S backtrackState = mStateTrace.get(i).getFirst();
+			L backtrackSetLetter = mStateTrace.get(i).getSecond();
+			L transitionLetter = mStateTrace.get(i).getThird();
+
+			if (!isIndependent(transitionLetter, letter)) {
+				// check if letter is enabled in State i
+				boolean enabled = false;
+				 for (OutgoingInternalTransition<L, S> a : mAutomaton.internalSuccessors(backtrackState, letter)) {
+					 enabled = true;
+				 }
+				 // if enabled and dependent add letter to backtrack
+				 if (enabled) {
+					 if (mOrder.getOrder(mPendingState).compare(letter, backtrackSetLetter) < 0) {
+						 // letter < backtrackset(i)
+						// letter is already backtracked if backtrackset(i) > letter by compatibility
+					 } else {
+						 Triple<S,L,L> triple = new Triple<S,L,L>(backtrackState, letter, transitionLetter);
+						 mStateTrace.set(i, triple);
+					 }
+				 } else {
+					 // compute necessary enabling set
+					 // set the backtrackletter from mStateTrace(i) to the max of enabling set
+				 }
 			}
 		}
-		
-		System.out.println("backtrack word " + mWord.toString());
-		// backtrack state has to be computed from word
-		//final Set<L> backtrack = mBacktrackSet.get(state);
-		// add letter to backtrack
-		//backtrack.add(letter);
-		//mBacktrackSet.replace(state, backtrack);
 		return false;
 	}
 	
 	// placeholder for Independence
 	private boolean isIndependent(L a, L b) {
 		return false;
+	}
+	
+	private ArrayList<L> currentWord() {
+		ArrayList<L> result = new ArrayList<>();
+		for (Triple<S,L,L> triple : mStateTrace) {
+			result.add(triple.getThird());
+		}
+		return result;
 	}
 }
