@@ -129,9 +129,6 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 						// TODO 20230226 Matthias: Think about an extension for the GCD≠1 case.
 						continue;
 					}
-					final Term modDivJunct = dualJunct;
-					final Term subtermWithModDiv = subterm;
-					final TermVariable eliminate = eliminatee;
 					final BigInteger inverse;
 					{
 						final BigInteger tmp = ArithmeticUtils.multiplicativeInverse(ceo.getCoefficient(),
@@ -146,8 +143,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 						}
 					}
 					final DmlPossibility dmlPossibility = new DmlPossibility(
-							appTerm.getFunction().getApplicationString(), ceo.getCoefficient(), ceo.getOffset(),
-							divisorAsBigInteger, modDivJunct, inverse, subtermWithModDiv, eliminate);
+							appTerm.getFunction().getApplicationString(), ceo, divisorAsBigInteger, dualJunct, inverse,
+							subterm);
 					result.add(dmlPossibility);
 				}
 			}
@@ -521,14 +518,6 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		 * Either "div" or "mod"
 		 */
 		private final String mFunName;
-		/**
-		 * Coefficient of eliminatee
-		 */
-		final BigInteger mA;
-		/**
-		 * Other summand besides a*x
-		 */
-		final Term mB;
 		final BigInteger mDivisor;
 		/**
 		 * The dualJunct of the elimination input that contains the div/mod subterm we
@@ -545,26 +534,22 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		 * div/mod subterm that we will replace.
 		 */
 		final Term mDmlSubterm;
-		final TermVariable mEliminatee;
+		private final CoeffcientEliminateeOffset mCeo;
 
-		DmlPossibility(final String funName, final BigInteger a, final Term b, final BigInteger divisor,
-				final Term containingDualJunct, final BigInteger inverse, final Term dmlSubterm,
-				final TermVariable eliminatee) {
+		DmlPossibility(final String funName, final CoeffcientEliminateeOffset ceo, final BigInteger divisor,
+				final Term containingDualJunct, final BigInteger inverse, final Term dmlSubterm) {
 			if (!funName.equals("div") && !funName.equals("mod")) {
 				throw new IllegalArgumentException("Neither div nor mod");
 			}
-			if (funName.equals("mod") && a.compareTo(BigInteger.ZERO) <= 0) {
+			if (funName.equals("mod") && ceo.getCoefficient().compareTo(BigInteger.ZERO) <= 0) {
 				throw new IllegalArgumentException("For mod, the coefficient must be positive");
 			}
-
+			mCeo = ceo;
 			mFunName = funName;
-			mA = a;
-			mB = b;
 			mDivisor = divisor;
 			mContainingDualJunct = containingDualJunct;
 			mInverse = inverse;
 			mDmlSubterm = dmlSubterm;
-			mEliminatee = eliminatee;
 		}
 
 		public String getFunName() {
@@ -579,7 +564,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		// k), i.e. getA() returns
 		// the coefficient of x
 		public BigInteger getA() {
-			return mA;
+			return mCeo.getCoefficient();
 		}
 
 		public Term getContainingDualJunct() {
@@ -590,11 +575,11 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		// k), i.e. getB() returns
 		// any additional terms which do not contain the quantified variable x
 		public Term getB() {
-			return mB;
+			return mCeo.getOffset();
 		}
 
 		public TermVariable getEliminate() {
-			return mEliminatee;
+			return mCeo.getEliminatee();
 		}
 
 		public Term getDmlSubterm() {
