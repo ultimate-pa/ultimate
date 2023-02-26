@@ -70,6 +70,8 @@ import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
  */
 public class DualJunctionDml extends DualJunctionQuantifierElimination {
 
+	private static final boolean ENABLE_DIV_ELIMINATION = true;
+
 	public DualJunctionDml(final ManagedScript script, final IUltimateServiceProvider services) {
 		super(script, services);
 	}
@@ -157,23 +159,21 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		if (possibilities.isEmpty()) {
 			return null;
 		}
-
 		final TreeMap<Long, EliminationResult> map = new TreeMap<>();
 		for (final DmlPossibility dmlPossibility : possibilities) {
+			final EliminationResult er;
 			if (dmlPossibility.getFunName().equals("mod")) {
-				final EliminationResult er = applyModElimination(inputEt, dmlPossibility);
-				final long size = new DAGSize().treesize(er.getEliminationTask().getTerm());
-				map.put(size, er);
-			}
-			if (dmlPossibility.getFunName().equals("div")) {
-				final EliminationResult result = applyDivEliminationWithSmallA(inputEt, dmlPossibility);
-				if (result == null) {
-				   return applyDivEliminationWithSmallRemainder(inputEt, dmlPossibility);
+				er = applyModElimination(inputEt, dmlPossibility);
+			} else if (dmlPossibility.getFunName().equals("div")) {
+				if (!ENABLE_DIV_ELIMINATION) {
+					continue;
 				}
-				else {
-					return result;
-				}
+				er = applyDivEliminationWithSmallRemainder(inputEt, dmlPossibility);
+			} else {
+				throw new AssertionError();
 			}
+			final long size = new DAGSize().treesize(er.getEliminationTask().getTerm());
+			map.put(size, er);
 		}
 		if (!map.isEmpty()) {
 			return map.entrySet().iterator().next().getValue();
