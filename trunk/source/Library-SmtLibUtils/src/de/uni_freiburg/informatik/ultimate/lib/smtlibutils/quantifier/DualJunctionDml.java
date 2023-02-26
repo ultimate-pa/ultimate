@@ -361,6 +361,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final BigInteger aTimesInverse = aAsBigInteger.multiply(pmt.getInverse());
 		final BigInteger nAsBigInteger = aTimesInverse.divide(pmt.getDivisor());
 		final BigInteger remainderG = aTimesInverse.mod((pmt.getDivisor()).abs());
+		assert (aTimesInverse.equals(nAsBigInteger.multiply(pmt.getDivisor()).add(BigInteger.ONE)));
 		final BigInteger absRemainderG = remainderG.abs();
 		final int absIntRemainderG = absRemainderG.intValue();
 		if (absIntRemainderG != 1) {
