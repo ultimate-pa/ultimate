@@ -238,12 +238,12 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final Map<Term, Term> sub1 = new HashMap<Term, Term>();
 		sub1.put(pmt.getEliminate(), sum1);
 		final Term resultTerm = Substitution.apply(mMgdScript, sub1, termWithRemovedITE);
-		final NnfTransformer TermNnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP);
-		final Term ResultTermNnf = TermNnf.transform(resultTerm);
+		final NnfTransformer termNnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP);
+		final Term resultTermNnf = termNnf.transform(resultTerm);
 		final Set<TermVariable> remainingEliminatees = new HashSet<>(inputEt.getEliminatees());
 		remainingEliminatees.remove(pmt.getEliminate());
 		final EliminationTask eliminationTask = new EliminationTask(inputEt.getQuantifier(), remainingEliminatees,
-				ResultTermNnf, inputEt.getContext());
+				resultTermNnf, inputEt.getContext());
 		final Set<TermVariable> newEliminatees = new HashSet<>();
 		newEliminatees.add(y);
 		newEliminatees.add(z);
@@ -251,8 +251,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		return resultWithoutXInMod;
 	}
 
-	public EliminationResult helpReturnForEliminatingDiv(final EliminationTask inputEt, final DmlPossibility pmt, final Map<Term, Term> sub1, final Term termJunctSubst,
-			final TermVariable y, final TermVariable z) {
+	public EliminationResult helpReturnForEliminatingDiv(final EliminationTask inputEt, final DmlPossibility pmt,
+			final Map<Term, Term> sub1, final Term termJunctSubst, final TermVariable y, final TermVariable z) {
 		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
 		final BigInteger zeroAsBigInteger = BigInteger.valueOf(0);
 		final Term zeroAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
@@ -329,7 +329,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		if (aAsInt > 0) {
 			for (int i = 0; i < aAsInt; i++) {
 				final BigInteger iAsBigInteger = BigInteger.valueOf(i);
-				final Term iAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), iAsBigInteger);
+				final Term iAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
+						iAsBigInteger);
 				// sum3 = ay + (b div k) + i
 				final Term sum3 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), sum2, iAsTerm);
 				final Map<Term, Term> subJunct = new HashMap<Term, Term>();
@@ -340,7 +341,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		} else {
 			for (int i = aAsInt; i < 1; i++) {
 				final BigInteger iAsBigInteger = BigInteger.valueOf(i);
-				final Term iAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), iAsBigInteger);
+				final Term iAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
+						iAsBigInteger);
 				// sum3 = ay + (b div k) + i
 				final Term sum3 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), sum2, iAsTerm);
 				final Map<Term, Term> subJunct = new HashMap<Term, Term>();
@@ -351,7 +353,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		}
 		final Term termJunctSubst = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, inputEt.getQuantifier(),
 				termJunctSubstList);
-		final EliminationResult resultWithoutXInDiv = helpReturnForEliminatingDiv(inputEt, pmt, sub1, termJunctSubst, y, z);
+		final EliminationResult resultWithoutXInDiv = helpReturnForEliminatingDiv(inputEt, pmt, sub1, termJunctSubst, y,
+				z);
 		return resultWithoutXInDiv;
 	}
 
@@ -375,7 +378,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final TermVariable z = mMgdScript.constructFreshTermVariable("z", SmtSortUtils.getIntSort(mScript));
 		final Term inverseAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
 				pmt.getInverse());
-		final Term absDivisorAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor().abs());
+		final Term absDivisorAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
+				pmt.getDivisor().abs());
 		// product1 = y'*k
 		final Term product1 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript),
 				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor()), y);
@@ -400,7 +404,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final List<Term> termJunctSubstList = new ArrayList<>();
 		for (int i = 0; i < absIntRemainderG; i++) {
 			final BigInteger iAsBigInteger = BigInteger.valueOf(i);
-			final Term iAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), iAsBigInteger);
+			final Term iAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
+					iAsBigInteger);
 			// sum3 = ay + (b div k) + nz + i
 			final Term sum3 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), sumBeforeFinal, iAsTerm);
 			final Map<Term, Term> subJunct = new HashMap<Term, Term>();
@@ -423,12 +428,10 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		}
 		final Term termJunctSubst = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, inputEt.getQuantifier(),
 				termJunctSubstList);
-		final EliminationResult resultWithoutXInDiv = helpReturnForEliminatingDiv(inputEt, pmt, sub1, termJunctSubst, y, z);
+		final EliminationResult resultWithoutXInDiv = helpReturnForEliminatingDiv(inputEt, pmt, sub1, termJunctSubst, y,
+				z);
 		return resultWithoutXInDiv;
 	}
-
-
-
 
 	/**
 	 * Return true if the input is `div` term or a `mod` term.
@@ -514,8 +517,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		}
 
 		// The formula containing mod / div is of the form F(ax+b mod k) / F(ax+b div
-				// k), i.e. getA() returns
-				// the coefficient of x
+		// k), i.e. getA() returns
+		// the coefficient of x
 		public BigInteger getA() {
 			return mA;
 		}
@@ -525,8 +528,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		}
 
 		// The formula containing mod / div is of the form F(ax+b mod k) / F(ax+b div
-				// k), i.e. getB() returns
-				// any additional terms which do not contain the quantified variable x
+		// k), i.e. getB() returns
+		// any additional terms which do not contain the quantified variable x
 		public Term getB() {
 			return mB;
 		}
