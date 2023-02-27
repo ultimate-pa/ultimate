@@ -63,6 +63,7 @@ public class QuantifierEliminationDivMod2 {
 	private static final LogLevel LOG_LEVEL_SOLVER = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
 //	private static final String SOLVER_COMMAND = "smtinterpol -q";
+//	private static final String SOLVER_COMMAND = "cvc5 --incremental --lang smt --tlimit-per=1000";
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
@@ -111,6 +112,57 @@ public class QuantifierEliminationDivMod2 {
 	}
 
 	//@formatter:off
+
+
+	@Test
+	public void divCisternPositiveExists() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "c", "d", "e"),
+		};
+		final String formulaAsString = "(exists ((x Int)) (and (= c (div (+ x e) 100)) (<= d x)))";
+		final String expectedResult = "(<= (+ d e) (+ (* c 100) 99))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void divCisternNegativeExists() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "c", "d", "e"),
+		};
+		final String formulaAsString = "(exists ((x Int)) (and (= c (div (+ x e) (- 100))) (<= d x)))";
+		final String expectedResult = "(<= (+ d e) (+ (* c (- 100)) 99))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void divCisternPositiveForall() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "c", "d", "e"),
+		};
+		final String formulaAsString = "(forall ((x Int)) (or (not (= c (div (+ x e) 100))) (> d x)))";
+		final String expectedResult = "(> (+ d e) (+ (* c 100) 99))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void divCisternNegativeForall() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "c", "d", "e"),
+		};
+		final String formulaAsString = "(forall ((x Int)) (or (not (= c (div (+ x e) (- 100)))) (> d x)))";
+		final String expectedResult = "(> (+ d e) (+ (* c (- 100)) 99))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void divFountainPositiveExists() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "c", "d"),
+		};
+		final String formulaAsString = "(exists ((x Int)) (and (= c (div (* 3 x) 100)) (<= d x)))";
+		final String expectedResult = "(exists ((v_z_1 Int) (v_y_1 Int)) (and (<= d (+ (* v_y_1 100) (* 67 v_z_1))) (= c (+ (* 2 v_z_1) (* 3 v_y_1))) (<= 0 v_z_1) (< v_z_1 100)))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
 
 	@Test
