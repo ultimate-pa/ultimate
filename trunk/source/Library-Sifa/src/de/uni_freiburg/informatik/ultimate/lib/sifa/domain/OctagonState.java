@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.OctMatrix;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.OctValue;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -52,14 +53,20 @@ public class OctagonState {
 				varToIndex.putIfAbsent(var, varToIndex.size());
 			}
 		}
-		OctMatrix resultMatrix = new OctMatrix(varToIndex.size());
+		OctMatrix resultMatrix = getFreshMatrix(varToIndex.size());
 		for (final PolynomialRelation rel : numericRelations) {
 			// TODO: Insert the information of rel into newMatrix
-			final OctMatrix newMatrix = new OctMatrix(varToIndex.size());
+			final OctMatrix newMatrix = getFreshMatrix(varToIndex.size());
 			resultMatrix = OctMatrix.min(bestAvailableClosure(resultMatrix, allVarsAreInt),
 					bestAvailableClosure(newMatrix, allVarsAreInt));
 		}
 		return new OctagonState(varToIndex, resultMatrix, allVarsAreInt);
+	}
+
+	private static OctMatrix getFreshMatrix(final int size) {
+		final OctMatrix result = new OctMatrix(size);
+		result.fill(OctValue.INFINITY);
+		return result;
 	}
 
 	private static OctMatrix bestAvailableClosure(final OctMatrix numericAbstraction, final boolean allVarsAreInt) {
