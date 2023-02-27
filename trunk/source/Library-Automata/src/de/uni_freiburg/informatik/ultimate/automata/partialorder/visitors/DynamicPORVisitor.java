@@ -115,6 +115,29 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	}
 	
 	private boolean disableBacktracking(final L letter) {
+		int index = mStateTrace.size();
+		for (L a: mAutomaton.getAlphabet()) {
+			if (disables(letter, a)) {
+				L backtrackLetter = mStateTrace.get(index).getSecond();
+				S backtrackState = mStateTrace.get(index).getFirst();
+				// check if a enabled in backtrackState
+				boolean enabled = false;
+				for (OutgoingInternalTransition<L, S> t : mAutomaton.internalSuccessors(backtrackState, a)) {
+					enabled = true;
+				}
+				if (enabled) {
+					if (mOrder.getOrder(backtrackState).compare(backtrackLetter, a) < 0) {
+						// backtrackLetter < a
+						// Set mStateTrace.get(index).Second to a
+					} else {
+						// do nothing
+					}
+				} else {
+					// a is not enabled
+					// add necessary enabling set for a
+				}
+			}
+		}
 		return true;
 	}
 	
@@ -132,8 +155,8 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 			if (!isIndependent(transitionLetter, letter)) {
 				// check if letter is enabled in State i
 				boolean enabled = false;
-				 for (OutgoingInternalTransition<L, S> a : mAutomaton.internalSuccessors(backtrackState, letter)) {
-					 enabled = true;
+				for (OutgoingInternalTransition<L, S> a : mAutomaton.internalSuccessors(backtrackState, letter)) {
+					enabled = true;
 				 }
 				 // if enabled and dependent add letter to backtrack
 				 if (enabled) {
@@ -155,6 +178,10 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	
 	// placeholder for Independence
 	private boolean isIndependent(L a, L b) {
+		return false;
+	}
+	
+	private boolean disables(L a, L b) {
 		return false;
 	}
 	
