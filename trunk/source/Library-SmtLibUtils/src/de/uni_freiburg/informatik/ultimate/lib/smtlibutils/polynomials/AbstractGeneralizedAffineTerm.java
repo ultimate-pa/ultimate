@@ -552,6 +552,9 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 				constantOfDivArgument = getConstant();
 			}
 			final Term div = divIntHelper(script, nonDivisible, constantOfDivArgument, divisorAsRational);
+			// Add `div` term to resulting polynomial. Take care of the special case that
+			// the resulting polynomial already has a variable that is coincides with the
+			// div Term.
 			final AVAR avar = constructAbstractVar(div);
 			final Rational oldCoeffcient = divisible.get(avar);
 			if (oldCoeffcient == null) {
