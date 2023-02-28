@@ -7,6 +7,7 @@ import org.junit.runners.JUnit4;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.pea.ComplementPEA;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
@@ -75,6 +76,13 @@ public class ComplementPEATest {
 		PhaseEventAutomata ResponseDelayGlobally = createResponseDelayGloballyPea();
 		Phase[] init = UniversalityGlobally.getInit();
 		// wo initialkante.
+	}
+	
+	@Test
+	public void testComplementResponseDelayGlobally() {
+		PhaseEventAutomata responseDelayGlobally = createResponseDelayGloballyPea();
+		ComplementPEA complementPEA = new ComplementPEA(responseDelayGlobally);
+		PhaseEventAutomata complementAutomaton = complementPEA.complement();
 	}
 	
 }
