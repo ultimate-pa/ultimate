@@ -67,6 +67,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	private static final Predicate<File> FILTER_XML = TestUtil.getFileEndingTest(".xml");
 	private static final Predicate<File> FILTER_EPF = TestUtil.getFileEndingTest(".epf");
+	private static final String SKIPPED_FILENAME = ".skip";
 
 	protected long mTimeout;
 	protected String mRootFolder;
@@ -115,14 +116,12 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		final Predicate<File> filesRegexFilter = getFilesRegexFilter();
 		for (final Config runConfiguration : runConfigurations) {
 			final Collection<File> inputFiles = getInputFiles(filesRegexFilter, runConfiguration);
-			// TODO: Better path
-			final NestedMap3<String, String, String, String> ignoredTestFails =
-					getIgnoredTestFails(new File(runConfiguration.getSettingsFile().getParentFile(), ".skip"));
+			final NestedMap3<String, String, String, String> skippedTests = getSkippedTests(runConfiguration);
 			for (final File inputFile : inputFiles) {
 				final UltimateRunDefinition urd =
 						new UltimateRunDefinition(inputFile, runConfiguration.getSettingsFile(),
 								runConfiguration.getToolchainFile(), getTimeout(runConfiguration, inputFile));
-				final String overridenVerdict = ignoredTestFails.get(inputFile.getName(),
+				final String overridenVerdict = skippedTests.get(inputFile.getName(),
 						runConfiguration.getSettingsFile().getName(), runConfiguration.getToolchainFile().getName());
 				rtr.add(buildTestCase(urd, getTestResultDecider(urd, overridenVerdict)));
 			}
@@ -130,20 +129,34 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		return rtr;
 	}
 
-	private static NestedMap3<String, String, String, String> getIgnoredTestFails(final File ignoreFile) {
+	private static NestedMap3<String, String, String, String> getSkippedTests(final Config runConfiguration) {
 		final NestedMap3<String, String, String, String> result = new NestedMap3<>();
-		try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(ignoreFile)))) {
-			String line;
-			while ((line = br.readLine()) != null) {
-				addIgnoreLine(line, result);
-			}
-		} catch (final IOException e) {
-			// Just skip
+		final File settingsDir = runConfiguration.getSettingsFile().getParentFile();
+		final File toolchainDir = runConfiguration.getToolchainFile().getParentFile();
+		if (settingsDir.equals(toolchainDir)) {
+			addSkippedTest(new File(settingsDir, SKIPPED_FILENAME), result);
+		} else if (settingsDir.toString().length() < toolchainDir.toString().length()) {
+			addSkippedTest(new File(settingsDir, SKIPPED_FILENAME), result);
+			addSkippedTest(new File(toolchainDir, SKIPPED_FILENAME), result);
+		} else {
+			addSkippedTest(new File(toolchainDir, SKIPPED_FILENAME), result);
+			addSkippedTest(new File(settingsDir, SKIPPED_FILENAME), result);
 		}
 		return result;
 	}
 
-	private static void addIgnoreLine(final String line, final NestedMap3<String, String, String, String> map) {
+	private static void addSkippedTest(final File ignoreFile, final NestedMap3<String, String, String, String> map) {
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(ignoreFile)))) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				addSkipLine(line, map);
+			}
+		} catch (final IOException e) {
+			// Just skip
+		}
+	}
+
+	private static void addSkipLine(final String line, final NestedMap3<String, String, String, String> map) {
 		if (line.startsWith("//")) {
 			return;
 		}
