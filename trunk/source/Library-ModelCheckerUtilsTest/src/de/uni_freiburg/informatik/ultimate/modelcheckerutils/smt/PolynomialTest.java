@@ -519,7 +519,7 @@ public class PolynomialTest {
 		mScript.declareFun("y", new Sort[0], intSort);
 		mScript.declareFun("z", new Sort[0], intSort);
 		final String inputAsString = "(div (div (div (div (div (* 8 (div x 2342)) 16) y) 5) 3) z 7 6) ";
-		final String expectedOutputAsString = "(div (* (div x 2342) 8) 16 y 15 z 42)";
+		final String expectedOutputAsString = "(div x 4684 y 15 z 42)";
 		runDefaultTest(inputAsString, expectedOutputAsString);
 		runLogicalEquivalenceBasedTest(inputAsString, true);
 	}
@@ -657,6 +657,36 @@ public class PolynomialTest {
 		mScript.declareFun("y", new Sort[0], intSort);
 		final String inputAsString = "(div (+ (* 14 x) (* 21 y) 20) (- 7))";
 		runLogicalEquivalenceBasedTest(inputAsString, true);
+	}
+
+	/**
+	 * Minor simplification. Possible because all coefficients, constant, and
+	 * divisor share common factor.
+	 */
+	@Test
+	public void intDivisionDistributivity05() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String inputAsString = "(div (+ (* 6 x) (* 12 y) 36) 10)";
+		final String expectedOutputAsString = "(div (+ (* 3 x) 18 (* 6 y)) 5)";
+		runDefaultTest(inputAsString, expectedOutputAsString);
+		runLogicalEquivalenceBasedTest(inputAsString, false);
+	}
+
+	/**
+	 * No simplification possible. Similar to example above but
+	 * constant does not share factor with coefficients and divisor.
+	 */
+	@Test
+	public void intDivisionDistributivity06() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String inputAsString = "(div (+ (* 6 x) (* 12 y) 9) 10)";
+		final String expectedOutputAsString = "(div (+ 9 (* y 12) (* 6 x)) 10)";
+		runDefaultTest(inputAsString, expectedOutputAsString);
+		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
 
 	/**
