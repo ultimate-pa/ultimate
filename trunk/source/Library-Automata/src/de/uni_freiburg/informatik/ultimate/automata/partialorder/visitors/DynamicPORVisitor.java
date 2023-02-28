@@ -14,10 +14,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTraversal;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.abstraction.IndependenceRelationWithAbstraction;
 
 
 /**
@@ -40,14 +43,16 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	//private final Deque<Pair<S, OutgoingInternalTransition<L, S>>> mWorklist = new ArrayDeque<>();
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mAutomaton;
 	private final IDfsOrder<L,S> mOrder;
+	private final IIndependenceRelation<S, L> independenceRelation;
 
 	// A possible successor of the last state on the stack, which may become the next element on the stack.
 	private S mPendingState;
 	
-	public DynamicPORVisitor(final V underlying, final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order) { // V - underlying visitor to which calls are proxied
+	public DynamicPORVisitor(final V underlying, final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order, final IIndependenceRelation<?, String> independence) { // V - underlying visitor to which calls are proxied
 		super(underlying);
 		mAutomaton = operand;
 		mOrder = order;
+		independenceRelation = (IIndependenceRelation<S, L>) independence;
 	}
 	
 	@Override
@@ -176,9 +181,15 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 		return false;
 	}
 	
-	// placeholder for Independence
+	// Independence check
 	private boolean isIndependent(L a, L b) {
-		return false;
+		Dependence dep = independenceRelation.isIndependent(null, a, b);
+		if (dep.name() == "INDEPENDENT") {
+			return true;
+		} else {
+			// assume dependency
+			return false;
+		}
 	}
 	
 	private boolean disables(L a, L b) {

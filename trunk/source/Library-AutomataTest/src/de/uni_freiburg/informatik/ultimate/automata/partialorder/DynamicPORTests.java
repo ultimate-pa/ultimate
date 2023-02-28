@@ -55,7 +55,7 @@ public class DynamicPORTests extends DynamicPORTestsBase {
 
 		// TODO wrap constructor in DynamicPORVisitor, or otherwise modify the code to apply DPOR.
 		final IDfsVisitor<String, String> visitor = constructor;
-		final var dporvisitor = new DynamicPORVisitor<>(visitor, input, new AlphabeticOrder<>());
+		final var dporvisitor = new DynamicPORVisitor<>(visitor, input, new AlphabeticOrder<>(), independence);
 
 		DepthFirstTraversal.traverse(mAutomataServices, input, new AlphabeticOrder<>(), dporvisitor);
 		final NestedWordAutomaton<String, String> actual = constructor.getReductionAutomaton();
