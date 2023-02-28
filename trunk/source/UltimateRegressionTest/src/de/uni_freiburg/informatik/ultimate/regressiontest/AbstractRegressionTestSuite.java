@@ -117,7 +117,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 			final Collection<File> inputFiles = getInputFiles(filesRegexFilter, runConfiguration);
 			// TODO: Better path
 			final NestedMap3<String, String, String, String> ignoredTestFails =
-					getIgnoredTestFails(new File(runConfiguration.getSettingsFile().getParentFile(), "ignored.txt"));
+					getIgnoredTestFails(new File(runConfiguration.getSettingsFile().getParentFile(), ".skip"));
 			for (final File inputFile : inputFiles) {
 				final UltimateRunDefinition urd =
 						new UltimateRunDefinition(inputFile, runConfiguration.getSettingsFile(),
