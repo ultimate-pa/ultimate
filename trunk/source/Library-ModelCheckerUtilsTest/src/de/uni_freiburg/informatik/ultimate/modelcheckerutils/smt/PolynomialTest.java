@@ -349,7 +349,7 @@ public class PolynomialTest {
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
 		final String inputAsString = "(div y (- 2) (- 2))";
-		final String expectedOutputAsString = inputAsString;
+		final String expectedOutputAsString = "(* (- 1) (div (* (- 1) (div y 2)) 2))";
 		runDefaultTest(inputAsString, expectedOutputAsString);
 		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
@@ -685,6 +685,20 @@ public class PolynomialTest {
 		mScript.declareFun("y", new Sort[0], intSort);
 		final String inputAsString = "(div (+ (* 6 x) (* 12 y) 9) 10)";
 		final String expectedOutputAsString = "(div (+ 9 (* y 12) (* 6 x)) 10)";
+		runDefaultTest(inputAsString, expectedOutputAsString);
+		runLogicalEquivalenceBasedTest(inputAsString, false);
+	}
+
+	/**
+	 * Make sure that divisor is always positive.
+	 */
+	@Test
+	public void intDivisionDistributivity07() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String inputAsString = "(div x (- 10))";
+		final String expectedOutputAsString = "(* (- 1) (div x 10))";
 		runDefaultTest(inputAsString, expectedOutputAsString);
 		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}

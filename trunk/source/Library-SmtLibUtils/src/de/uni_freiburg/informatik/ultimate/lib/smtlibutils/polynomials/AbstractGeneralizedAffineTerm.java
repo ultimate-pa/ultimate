@@ -546,16 +546,17 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 				constant = Rational.ZERO;
 				constantOfDivArgument = getConstant();
 			}
-			final Term div = divIntHelper(script, nonDivisible, constantOfDivArgument, divisorAsRational);
+			final Pair<Rational, Term> coeffAndDiv = divIntHelper(script, nonDivisible, constantOfDivArgument,
+					divisorAsRational);
 			// Add `div` term to resulting polynomial. Take care of the special case that
 			// the resulting polynomial already has a variable that is coincides with the
 			// div Term.
-			final AVAR avar = constructAbstractVar(div);
+			final AVAR avar = constructAbstractVar(coeffAndDiv.getSecond());
 			final Rational oldCoeffcient = divisible.get(avar);
 			if (oldCoeffcient == null) {
-				divisible.put(avar, Rational.ONE);
+				divisible.put(avar, coeffAndDiv.getFirst());
 			} else {
-				final Rational newCoefficient = oldCoeffcient.add(Rational.ONE);
+				final Rational newCoefficient = oldCoeffcient.add(coeffAndDiv.getFirst());
 				if (newCoefficient.equals(Rational.ZERO)) {
 					divisible.remove(avar);
 				} else {
@@ -567,15 +568,17 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 	}
 
 	/**
-	 * Construct polynomial and apply `div` with one simplification.
-	 * <li>divide polynomial and divisor by the GCD of all coefficients, the
+	 * Construct polynomial and apply `div` with two simplifications.
+	 * <li>Divide polynomial and divisor by the GCD of all coefficients, the
 	 * constant, and the divisor.
+	 * <li>Make the divisor positive. If it was negative the `div` term's
+	 * coefficient will be `-1`.
 	 *
 	 * @param coefficientToVar Map whose coefficients are NOT divisible by the
 	 *                         divisor.
 	 * @param constant         Number that is not divisible by the divisor.
 	 */
-	private Term divIntHelper(final Script script, final Map<AVAR, Rational> coefficientToVar,
+	private Pair<Rational, Term> divIntHelper(final Script script, final Map<AVAR, Rational> coefficientToVar,
 			final Rational constant, final Rational divisor) {
 		AbstractGeneralizedAffineTerm<?> divArgument = constructNew(getSort(), constant, coefficientToVar);
 		final Rational gcd = divArgument.computeGcdOfCoefficientsAndConstant().gcd(divisor).abs();
@@ -583,7 +586,11 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 			divArgument = divArgument.divInvertible(gcd);
 		}
 		final Term divArgumentAsTerm = divArgument.toTerm(script);
-		return SmtUtils.divIntFlatten(script, divArgumentAsTerm, divisor.div(gcd).numerator());
+		final Rational newDivisor = divisor.div(gcd).abs();
+		assert newDivisor.isIntegral();
+		final Term resultDivTerm = SmtUtils.divIntFlatten(script, divArgumentAsTerm, newDivisor.numerator());
+		final Rational resultCoefficient = divisor.isNegative() ? Rational.MONE : Rational.ONE;
+		return new Pair<>(resultCoefficient, resultDivTerm);
 	}
 
 
