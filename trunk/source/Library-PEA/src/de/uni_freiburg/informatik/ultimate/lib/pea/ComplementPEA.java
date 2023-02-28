@@ -60,11 +60,13 @@ public class ComplementPEA {
 				// if the same clock is in the reset set of the transition
 				// TODO: what if a clock invariant refers to multiple clock variables
 				// and not all of them are in the reset set?
+				String clock = "none";
 				if ( successorClockInv.getDecision() instanceof RangeDecision) {
 					clockInvDecision = (RangeDecision) successorClockInv.getDecision() ;
+					clock =  clockInvDecision.getVar();
 					
 				}
-				String clock =  clockInvDecision.getVar();
+				
 				// if the clock  of the clock invariant gets reset, 
 				// the clock invariant does not need to be in the guard
 				if (Arrays.asList(reset).contains(clock)) {
@@ -104,6 +106,7 @@ public class ComplementPEA {
 		if (clockInvNonStrictDecision instanceof RangeDecision) {
 			RangeDecision decision  = (RangeDecision) clockInvNonStrictDecision;
 			CDD[] childs = clockInv.getChilds();
+			// Was soll das int childs bei getOp???? offensichtlich nicht die Anzahl der Kinder?????
 			int numChilds = childs.length;
 			int OP = decision.getOp(numChilds);
 			if (OP == RangeDecision.OP_LTEQ) { // c <= T
