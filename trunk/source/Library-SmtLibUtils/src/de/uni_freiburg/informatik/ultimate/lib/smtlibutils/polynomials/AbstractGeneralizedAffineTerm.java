@@ -28,11 +28,9 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -515,7 +513,6 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		final Map<AVAR, Rational> divisible = new HashMap<>();
 		final Map<AVAR, Rational> nonDivisible = new HashMap<>();
 		final Rational divisorAsRational = toRational(divisor);
-		final List<Term> summandsOfDiv = new ArrayList<>();
 		for (final Entry<AVAR, Rational> entry : getAbstractVariable2Coefficient().entrySet()) {
 			final Rational quotient = entry.getValue().div(divisorAsRational);
 			if (quotient.isIntegral()) {
@@ -526,8 +523,6 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 					return null;
 				}
 				nonDivisible.put(entry.getKey(), entry.getValue());
-				summandsOfDiv
-						.add(SmtUtils.mul(script, entry.getValue(), abstractVariableToTerm(script, entry.getKey())));
 			}
 		}
 		// The constant of the result. Will be zero if we cannot pull the input's
