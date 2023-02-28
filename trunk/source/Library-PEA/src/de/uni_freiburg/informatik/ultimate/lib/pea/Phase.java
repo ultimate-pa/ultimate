@@ -46,6 +46,14 @@ public class Phase implements Comparable<Phase> {
 	Set<String> stoppedClocks;
 	List<Transition> transitions;
 	public int ID;
+	
+	
+	
+	// LENA_BA
+	boolean isAccepting;
+	
+	
+	
 
 	/**
 	 * The phase bits used by the powerset construction. This is only set for automata built from CounterExample traces.
@@ -64,6 +72,9 @@ public class Phase implements Comparable<Phase> {
 		isEntry = false;
 		isExit = false;
 		incomming = new Vector<>();
+		
+		// LENA_BA
+		isAccepting = true;
 	}
 
 	public Phase(final String name, final CDD stateInv, final CDD clockInv) {
@@ -248,5 +259,16 @@ public class Phase implements Comparable<Phase> {
 
 	public int getID() {
 		return ID;
+	}
+	
+	
+	// LENA_BA 
+	public boolean getAccepting() {
+		return isAccepting;
+	}
+	
+	// LENA_BA
+	public void setAccepting(final boolean val) {
+		isAccepting = val;
 	}
 }
