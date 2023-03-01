@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 
 /**
@@ -158,7 +157,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		if (possibilities.isEmpty()) {
 			return null;
 		}
-		final TreeMap<Long, EliminationResult> map = new TreeMap<>();
+		final TreeSet<EliminationResult> candidates = new TreeSet<>();
 		for (final DmlPossibility dmlPossibility : possibilities) {
 			final EliminationResult er;
 			if (dmlPossibility.getFunName().equals("mod")) {
@@ -171,11 +170,10 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 			} else {
 				throw new AssertionError();
 			}
-			final long size = new DAGSize().treesize(er.getEliminationTask().getTerm());
-			map.put(size, er);
+			candidates.add(er);
 		}
-		if (!map.isEmpty()) {
-			return map.entrySet().iterator().next().getValue();
+		if (!candidates.isEmpty()) {
+			return candidates.iterator().next();
 		}
 		return null;
 	}
@@ -401,7 +399,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		// sumBeforeFinal = ay + (b div k) + nz
 		final Term sumBeforeFinal = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), sum2, product3);
 		final List<Term> termJunctSubstList = new ArrayList<>();
-		for (int i = 0; i < absIntRemainderG; i++) {
+		for (int i = 0; i <= absIntRemainderG; i++) {
 			final BigInteger iAsBigInteger = BigInteger.valueOf(i);
 			final Term iAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
 					iAsBigInteger);
@@ -410,14 +408,17 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 			final Map<Term, Term> subJunct = new HashMap<Term, Term>();
 			subJunct.put(pmt.getDmlSubterm(), sum3);
 			Term divConjunctSub = Substitution.apply(mMgdScript, subJunct, pmt.getContainingDualJunct());
+			// mod1 = b mod k
+			final Term mod1 = SmtUtils.mod(mScript, pmt.getOffset(),
+					SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor()));
 			if (i == 0) {
-				final Term sum4 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), div1, z);
+				final Term sum4 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), mod1, z);
 				Term iIsZero = SmtUtils.less(mScript, sum4, absDivisorAsTerm);
 				iIsZero = QuantifierUtils.negateIfUniversal(mScript, inputEt.getQuantifier(), iIsZero);
 				divConjunctSub = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
 						divConjunctSub, iIsZero);
 			} else {
-				final Term sum4 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), div1, z);
+				final Term sum4 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), mod1, z);
 				Term iIsOne = SmtUtils.leq(mScript, absDivisorAsTerm, sum4);
 				iIsOne = QuantifierUtils.negateIfUniversal(mScript, inputEt.getQuantifier(), iIsOne);
 				divConjunctSub = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
