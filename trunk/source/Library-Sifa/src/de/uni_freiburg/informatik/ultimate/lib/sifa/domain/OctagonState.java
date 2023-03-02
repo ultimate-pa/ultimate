@@ -60,21 +60,16 @@ public class OctagonState {
 				allVarsAreInt = false;
 			}
 		}
-		OctMatrix resultMatrix = getFreshMatrix(varToIndex.size());
+		final OctMatrix resultMatrix = new OctMatrix(varToIndex.size());
+		resultMatrix.fill(OctValue.INFINITY);
 		for (final OctagonRelation octRel : octRelations) {
-			resultMatrix = OctMatrix.min(bestAvailableClosure(resultMatrix, allVarsAreInt),
-					bestAvailableClosure(processRelation(varToIndex, octRel), allVarsAreInt));
+			processRelation(varToIndex, octRel, resultMatrix);
 		}
 		return new OctagonState(varToIndex, resultMatrix, allVarsAreInt);
 	}
 
-	private static OctMatrix getFreshMatrix(final int size) {
-		final OctMatrix result = new OctMatrix(size);
-		result.fill(OctValue.INFINITY);
-		return result;
-	}
-
-	private static OctMatrix processRelation(final Map<Term, Integer> varToIndex, final OctagonRelation octRel) {
+	private static void processRelation(final Map<Term, Integer> varToIndex, final OctagonRelation octRel,
+			final OctMatrix matrix) {
 		final Rational constant;
 		final boolean var1Negated;
 		final boolean var2Negated;
@@ -109,24 +104,12 @@ public class OctagonState {
 			var2Negated = !octRel.isNegateVar2();
 			break;
 		default:
-			// TODO: Convert =, != before; Throw a exception here
-			return getFreshMatrix(varToIndex.size());
+			return;
 		}
-		final OctMatrix result = getFreshMatrix(varToIndex.size());
 		final BigDecimal constantAsDecimal =
 				new BigDecimal(constant.numerator()).divide(new BigDecimal(constant.denominator()));
-		result.assumeVarRelationLeConstant(varToIndex.get(octRel.getVar1()), var1Negated,
+		matrix.assumeVarRelationLeConstant(varToIndex.get(octRel.getVar1()), var1Negated,
 				varToIndex.get(octRel.getVar2()), var2Negated, new OctValue(constantAsDecimal));
-		return result;
-	}
-
-	private static OctMatrix bestAvailableClosure(final OctMatrix numericAbstraction, final boolean allVarsAreInt) {
-		if (allVarsAreInt && numericAbstraction.hasCachedTightClosure()) {
-			return numericAbstraction.cachedTightClosure();
-		} else if (numericAbstraction.hasCachedStrongClosure()) {
-			return numericAbstraction.cachedStrongClosure();
-		}
-		return numericAbstraction;
 	}
 
 	public Term toTerm(final Script script) {
