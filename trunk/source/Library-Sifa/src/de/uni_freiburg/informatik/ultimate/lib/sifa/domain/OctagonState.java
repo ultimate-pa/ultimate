@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -108,12 +109,21 @@ public class OctagonState {
 				varToIndex.get(octRel.getVar2()), var2Negated, new OctValue(constantAsDecimal));
 	}
 
-	public Term toTerm(final Script script) {
-		final Term[] mapIndexToTerm = new Term[mMapNumericVarToIndex.size()];
+	private Term[] getIndexToTermArray() {
+		final Term[] result = new Term[mMapNumericVarToIndex.size()];
 		for (final Entry<Term, Integer> entry : mMapNumericVarToIndex.entrySet()) {
-			mapIndexToTerm[entry.getValue()] = entry.getKey();
+			result[entry.getValue()] = entry.getKey();
 		}
-		return SmtUtils.and(script, cachedSelectiveClosure().getTerm(script, mapIndexToTerm));
+		return result;
+	}
+
+	public Term toTerm(final Script script) {
+		return SmtUtils.and(script, cachedSelectiveClosure().getTerm(script, getIndexToTermArray()));
+	}
+
+	@Override
+	public String toString() {
+		return Arrays.toString(getIndexToTermArray()) + "\n" + mNumericAbstraction.toString();
 	}
 
 	private OctMatrix cachedSelectiveClosure() {
