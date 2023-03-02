@@ -88,8 +88,7 @@ public abstract class AbstractStateBasedDomain<STATE extends IAbstractState<STAT
 
 	private List<STATE> computeStates(final IPredicate pred) {
 		final IProgressAwareTimer timer = mTimeout.get();
-		// TODO consider removing boolean sub-terms before computing DNF as we don't use the boolean terms anyways
-		final Term[] disjuncts = mTools.dnfDisjuncts(pred);
+		final Term[] disjuncts = mTools.dnfDisjuncts(pred, this::transformTerm);
 		final List<STATE> result = new ArrayList<>(disjuncts.length);
 		for (final Term dnfDisjunct : disjuncts) {
 			if (!timer.continueProcessing()) {
@@ -107,6 +106,10 @@ public abstract class AbstractStateBasedDomain<STATE extends IAbstractState<STAT
 		}
 		// TODO join disjuncts if there are too many of them
 		return result;
+	}
+
+	protected Term transformTerm(final Term term) {
+		return term;
 	}
 
 	private IPredicate toPredicate(final Collection<STATE> states) {

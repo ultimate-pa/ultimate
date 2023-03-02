@@ -102,6 +102,12 @@ public class IntervalDomain extends AbstractStateBasedDomain<IntervalState> {
 		return new IntervalState();
 	}
 
+	@Override
+	protected Term transformTerm(final Term term) {
+		// TODO consider removing boolean sub-terms before computing DNF as we don't use the boolean terms anyways
+		return term;
+	}
+
 	private Collection<SolvedBinaryRelation> solveForAllSubjects(final Term term) {
 		final PolynomialRelation polyRel = PolynomialRelation.of(mTools.getScript(), term);
 		if (polyRel == null) {
