@@ -116,4 +116,20 @@ public class OctagonState {
 	private OctMatrix cachedSelectiveClosure() {
 		return mAllVarsAreInt ? mNumericAbstraction.cachedTightClosure() : mNumericAbstraction.cachedStrongClosure();
 	}
+
+	public OctagonState widen(final OctagonState other) {
+		// TODO: Do we need to rearrange other, if this is not satisfied?
+		assert mMapNumericVarToIndex.equals(other.mMapNumericVarToIndex);
+		return new OctagonState(mMapNumericVarToIndex, mNumericAbstraction.widenSimple(other.bestAvailableClosure()),
+				mAllVarsAreInt);
+	}
+
+	private OctMatrix bestAvailableClosure() {
+		if (mAllVarsAreInt && mNumericAbstraction.hasCachedTightClosure()) {
+			return mNumericAbstraction.cachedTightClosure();
+		} else if (mNumericAbstraction.hasCachedStrongClosure()) {
+			return mNumericAbstraction.cachedStrongClosure();
+		}
+		return mNumericAbstraction;
+	}
 }
