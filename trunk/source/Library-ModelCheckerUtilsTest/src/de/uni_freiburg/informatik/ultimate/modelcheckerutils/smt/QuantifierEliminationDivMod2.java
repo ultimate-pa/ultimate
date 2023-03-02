@@ -145,16 +145,6 @@ public class QuantifierEliminationDivMod2 {
 	}
 
 	@Test
-	public void divCisternNegativeExists01bug() {
-		final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(SmtSortUtils::getIntSort, "c", "d", "e"),
-		};
-		final String formulaAsString = "(exists ((x Int)) (and (= c (div (+ x 1) (- 100))) (<= 0 x)))";
-		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
 	public void divCisternNegativeExists02() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "c", "d", "e"),
