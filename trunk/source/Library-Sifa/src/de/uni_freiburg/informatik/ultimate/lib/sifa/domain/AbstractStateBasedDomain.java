@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public abstract class AbstractStateBasedDomain<STATE extends IAbstractState<STATE>> implements IDomain {
-	private final ILogger mLogger;
+	protected final ILogger mLogger;
 	protected final SymbolicTools mTools;
 	private final int mMaxDisjuncts;
 	private final Supplier<IProgressAwareTimer> mTimeout;

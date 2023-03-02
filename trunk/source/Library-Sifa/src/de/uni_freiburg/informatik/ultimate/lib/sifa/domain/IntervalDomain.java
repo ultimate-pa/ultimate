@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
- * Copyright (C) 2019 University of Freiburg
+ * Copyright (C) 2023 Frank Schüssele (schuessf@tf.uni-freiburg.de)
+ * Copyright (C) 2019-2023 University of Freiburg
  *
  * This file is part of the ULTIMATE Library-Sifa plug-in.
  *
@@ -27,189 +28,59 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.WeakHashMap;
-import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-// TODO consider splitting dedicated abstract states into classes IntervalDnf and IntervalConjunction
-public class IntervalDomain implements IDomain {
-
-	private final ILogger mLogger;
-	private final SymbolicTools mTools;
-	private final int mMaxDisjuncts;
-	private final Supplier<IProgressAwareTimer> mTermToIntervalTimeout;
-
-	private final WeakHashMap<IPredicate, Collection<Map<TermVariable, Interval>>> mPredToIntervalCache =
-			new WeakHashMap<>();
+public class IntervalDomain extends AbstractStateBasedDomain<IntervalState> {
 
 	public IntervalDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
-			final Supplier<IProgressAwareTimer> termToIntervalTimeout) {
-		mTools = tools;
-		mLogger = logger;
-		mMaxDisjuncts = maxDisjuncts;
-		mTermToIntervalTimeout = termToIntervalTimeout;
+			final Supplier<IProgressAwareTimer> timeout) {
+		super(logger, tools, maxDisjuncts, timeout);
 	}
 
 	@Override
-	public IPredicate join(final IPredicate lhs, final IPredicate rhs) {
-		// TODO using return mTools.or(lhs, rhs) is still an option.
-		//      Should we use it sometimes (for instance when inputs are not already cached as intervalDnfs)?
-		Collection<Map<TermVariable, Interval>> joinedIntervalDnf = new ArrayList<>();
-		joinedIntervalDnf.addAll(toIntervals(lhs));
-		joinedIntervalDnf.addAll(toIntervals(rhs));
-		if (joinedIntervalDnf.size() > mMaxDisjuncts) {
-			joinedIntervalDnf = Collections.singleton(joinToSingleConjunction(joinedIntervalDnf));
-		}
-		return toPredicate(joinedIntervalDnf);
-	}
-
-	private Map<TermVariable, Interval> join(
-			final Map<TermVariable, Interval> lhs, final Map<TermVariable, Interval> rhs) {
-		return merge(Interval::union, lhs, rhs);
-	}
-
-	private Map<TermVariable, Interval> joinToSingleConjunction(
-			final Collection<Map<TermVariable, Interval>> intervalDnf) {
-		return intervalDnf.stream().reduce(this::join).orElse(Collections.emptyMap());
-	}
-
-	@Override
-	public IPredicate widen(final IPredicate old, final IPredicate widenWith) {
-		// TODO widen cartesian product instead of joining everything into one state
-		//      as long as cartesian product doesn't exceed limit for parallel states
-		final Map<TermVariable, Interval> oldItvlConjunction = joinToSingleConjunction(toIntervals(old));
-		final Map<TermVariable, Interval> widenWithItvlConjunction = joinToSingleConjunction(toIntervals(widenWith));
-		return toPredicate(widen(oldItvlConjunction, widenWithItvlConjunction));
-	}
-
-	private static Map<TermVariable, Interval> widen(
-			final Map<TermVariable, Interval> old, final Map<TermVariable, Interval> widenWith) {
-		return merge(Interval::widen, old, widenWith);
-	}
-
-	@Override
-	public ResultForAlteredInputs isEqBottom(final IPredicate pred) {
-		return RelationCheckUtil.isEqBottom_SolverAlphaSolver(mTools, this, pred);
-	}
-
-	@Override
-	public ResultForAlteredInputs isSubsetEq(final IPredicate subset, final IPredicate superset) {
-		return RelationCheckUtil.isSubsetEq_SolverAlphaSolver(mTools, this, subset, superset);
-	}
-
-	@Override
-	public IPredicate alpha(final IPredicate pred) {
-		final Collection<Map<TermVariable, Interval>> intervalDnf = toIntervals(pred);
-		return toPredicate(intervalDnf);
-	}
-
-	private static Map<TermVariable, Interval> merge(final BiFunction<Interval, Interval, Interval> mergeOperation,
-			final Map<TermVariable, Interval> lhs, final Map<TermVariable, Interval> rhs) {
-		final Collection<TermVariable> allVars = new HashSet<>();
-		allVars.addAll(lhs.keySet());
-		allVars.addAll(rhs.keySet());
-		final Map<TermVariable, Interval> join = new HashMap<>();
-		for (final TermVariable var : allVars) {
-			final Interval joinedValue = mergeOperation
-					.apply(lhs.getOrDefault(var, Interval.TOP), rhs.getOrDefault(var, Interval.TOP));
-			if (!joinedValue.isTop()) {
-				join.put(var, joinedValue);
-			}
-		}
-		return join;
-	}
-
-	private IPredicate toPredicate(final Map<TermVariable, Interval> intervalConjunction) {
-		return mTools.predicate(intervalsToTerm(intervalConjunction));
-	}
-	private IPredicate toPredicate(final Collection<Map<TermVariable, Interval>> intervalDnf) {
-		return mTools.orT(intervalDnf.stream().map(this::intervalsToTerm).collect(Collectors.toList()));
-	}
-
-	private Collection<Map<TermVariable, Interval>> toIntervals(final IPredicate pred) {
-		final Collection<Map<TermVariable, Interval>> itvlDnf = mPredToIntervalCache
-				.computeIfAbsent(pred, this::toIntervalsInternal);
-		mLogger.debug("Interval abstraction of %s is %s", pred, itvlDnf);
-		return itvlDnf;
-	}
-
-	/**
-	 * Over-approximate a predicate by intervals.
-	 * @param pred Predicate to be converted
-	 * @return Interval over-approximation of the given predicate in DNF.
-	 *         The outer collection represents a disjunction.
-	 *         Each map represents a conjunction of the form (key1 ∊ value1) ∧ (key2 ∊ value2) ∧ ….
-	 *         Variables without mappings are unbound and can assume any value.
-	 */
-	private Collection<Map<TermVariable, Interval>> toIntervalsInternal(final IPredicate pred) {
-		final IProgressAwareTimer timer = mTermToIntervalTimeout.get();
-		// TODO consider removing boolean sub-terms before computing DNF as we don't use the boolean terms anyways
-		final Term[] dnfDisjunctsAsTerms = mTools.dnfDisjuncts(pred);
-		final List<Map<TermVariable, Interval>> dnfDisjunctsAsIntervals = new ArrayList<>(dnfDisjunctsAsTerms.length);
-		for (final Term dnfDisjunct : dnfDisjunctsAsTerms) {
-			if (!timer.continueProcessing()) {
-				mLogger.warn("Interval domain alpha timed out before all disjuncts were processed. "
-						+ "Continuing with top.");
-				// empty conjunction (the inner map) is true
-				return Collections.singleton(Collections.emptyMap());
-			}
-			dnfDisjunctToIntervals(dnfDisjunct, timer).ifPresent(dnfDisjunctsAsIntervals::add);
-		}
-		// TODO join disjuncts if there are too many of them
-		return Collections.unmodifiableCollection(dnfDisjunctsAsIntervals);
-	}
-
-	private Optional<Map<TermVariable, Interval>> dnfDisjunctToIntervals(
-			final Term dnfDisjunct, final IProgressAwareTimer timer) {
-		// TODO improve check to also find trivial cases like "(and true false)" instead of just "false"
-		if (SmtUtils.isFalseLiteral(dnfDisjunct)) {
-			return Optional.empty();
-		}
-		final List<SolvedBinaryRelation> solvedRelations = dnfDisjunctToSolvedRelations(dnfDisjunct);
+	public IntervalState toState(final Term[] conjuncts) {
+		final List<SolvedBinaryRelation> solvedRelations =
+				Arrays.stream(conjuncts).flatMap(x -> solveForAllSubjects(x).stream()).collect(Collectors.toList());
 		Collections.sort(solvedRelations, new CompareNumberOfFreeVariablesInRhs(solvedRelations));
 
-		final Map<TermVariable, Interval> varToInterval = new HashMap<>();
+		final Map<Term, Interval> varToInterval = new HashMap<>();
 		boolean updated = true;
-		final long maxIterations = 1 + solvedRelations.stream()
-				.map(SolvedBinaryRelation::getLeftHandSide).distinct().count();
+		final long maxIterations =
+				1 + solvedRelations.stream().map(SolvedBinaryRelation::getLeftHandSide).distinct().count();
 		for (int iteration = 1; updated && iteration <= maxIterations; ++iteration) {
-			if (!timer.continueProcessing()) {
-				mLogger.warn("Term to interval evaluator loop timed out before fixpoint was reached. "
-						+ "Continuing with non-optimal over-approximation.");
-				// further iterations will make the abstract state only more precise
-				// current state is a legit over-approximation
-				break;
-			}
+			// TODO: Should we pass a timer for this?
+			// if (!timer.continueProcessing()) {
+			// mLogger.warn("Term to interval evaluator loop timed out before fixpoint was reached. "
+			// + "Continuing with non-optimal over-approximation.");
+			// // further iterations will make the abstract state only more precise
+			// // current state is a legit over-approximation
+			// break;
+			// }
 			updated = false;
 			for (final SolvedBinaryRelation rel : solvedRelations) {
 				final Optional<Interval> updatedLhsInterval = updatedLhsInterval(varToInterval, rel);
 				if (!updatedLhsInterval.isPresent()) {
 					continue;
 				} else if (updatedLhsInterval.get().isBottom()) {
-					return Optional.empty();
+					return null;
 				}
 				updated = true;
 			}
@@ -217,21 +88,18 @@ public class IntervalDomain implements IDomain {
 		if (updated) {
 			// maxIter limit reached
 			// TODO research whether this only happens if dnfDisjunct is unsat.
-			//      If so, then return bottom
+			// If so, then return bottom
 			mLogger.warn("Interval conversion did not stabilize in %d iterations. "
 					+ "Over-approximation may be very coarse.", maxIterations);
 			mLogger.debug("Relations used to update are %s.", solvedRelations);
 			mLogger.debug("Interval values after last iteration are %s.", varToInterval);
 		}
-		return Optional.of(Collections.unmodifiableMap(varToInterval));
+		return new IntervalState(varToInterval);
 	}
 
-	private List<SolvedBinaryRelation> dnfDisjunctToSolvedRelations(final Term dnfDisjunct) {
-		final List<SolvedBinaryRelation> solvedRelations = new ArrayList<>();
-		for (final Term conjunct : SmtUtils.getConjuncts(dnfDisjunct)) {
-			solvedRelations.addAll(solveForAllSubjects(conjunct));
-		}
-		return solvedRelations;
+	@Override
+	public IntervalState getTopState() {
+		return new IntervalState();
 	}
 
 	private Collection<SolvedBinaryRelation> solveForAllSubjects(final Term term) {
@@ -258,6 +126,7 @@ public class IntervalDomain implements IDomain {
 			mNumberOfFreeVarsInRhs = relations.stream()
 					.collect(Collectors.toMap(key -> key, key -> key.getRightHandSide().getFreeVars().length));
 		}
+
 		@Override
 		public int compare(final SolvedBinaryRelation left, final SolvedBinaryRelation right) {
 			return mNumberOfFreeVarsInRhs.get(left).compareTo(mNumberOfFreeVarsInRhs.get(right));
@@ -265,17 +134,18 @@ public class IntervalDomain implements IDomain {
 	}
 
 	/**
-	 * Evaluates a relation and updates the lhs's interval value in the scope if the value changed
-	 * compared to the old value.
+	 * Evaluates a relation and updates the lhs's interval value in the scope if the value changed compared to the old
+	 * value.
+	 *
 	 * @return New value of the lhs (already in updated in the scope) or nothing if the value didn't change
 	 */
-	private Optional<Interval> updatedLhsInterval(
-			final Map<TermVariable, Interval> scope, final SolvedBinaryRelation relation) {
+	private static Optional<Interval> updatedLhsInterval(final Map<Term, Interval> scope,
+			final SolvedBinaryRelation relation) {
 		assert relation.getLeftHandSide() instanceof TermVariable;
 		final TermVariable subject = (TermVariable) relation.getLeftHandSide();
 		final Interval oldValue = scope.getOrDefault(subject, Interval.TOP);
-		final Interval newValue = updatedLhsForRelation(
-				oldValue, relation.getRelationSymbol(), TermToInterval.evaluate(relation.getRightHandSide(), scope));
+		final Interval newValue = updatedLhsForRelation(oldValue, relation.getRelationSymbol(),
+				TermToInterval.evaluate(relation.getRightHandSide(), scope));
 		if (oldValue.equals(newValue)) {
 			return Optional.empty();
 		}
@@ -283,7 +153,7 @@ public class IntervalDomain implements IDomain {
 		return Optional.of(newValue);
 	}
 
-	private Interval updatedLhsForRelation(final Interval lhs, final RelationSymbol relSym, final Interval rhs) {
+	private static Interval updatedLhsForRelation(final Interval lhs, final RelationSymbol relSym, final Interval rhs) {
 		switch (relSym) {
 		case DISTINCT:
 			return lhs.satisfyDistinct(rhs).getLhs();
@@ -300,36 +170,4 @@ public class IntervalDomain implements IDomain {
 		}
 	}
 
-	private Term intervalsToTerm(final Map<TermVariable, Interval> mapVarsToVals) {
-		final Script script = mTools.getScript();
-		final Collection<Term> conjunction = new ArrayList<>(2 * mapVarsToVals.size());
-		for (final Entry<TermVariable, Interval> varAndVal : mapVarsToVals.entrySet()) {
-			final TermVariable var = varAndVal.getKey();
-			final Interval val = varAndVal.getValue();
-			if (val.hasLower()) {
-				conjunction.add(SmtUtils.geq(script, var, boundFor(var, val.getLower())));
-			}
-			if (val.hasUpper()) {
-				conjunction.add(SmtUtils.leq(script, var, boundFor(var, val.getUpper())));
-			}
-		}
-		return SmtUtils.and(script, conjunction);
-	}
-
-	private Term boundFor(final TermVariable variable, final Rational bound) {
-		return SmtUtils.rational2Term(mTools.getScript(), bound, variable.getSort());
-	}
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
