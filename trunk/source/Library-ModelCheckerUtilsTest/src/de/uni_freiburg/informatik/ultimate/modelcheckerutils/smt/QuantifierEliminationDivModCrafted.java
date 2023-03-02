@@ -114,6 +114,19 @@ public class QuantifierEliminationDivModCrafted {
 	//@formatter:off
 
 
+	/**
+	 * Minimal formula that revealed bug in `div` elimination.
+	 */
+	@Test
+	public void qeDivMod87C893B3Bug() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "c", "d"),
+		};
+		final String formulaAsString = "(exists ((x Int)) (and (= c (div (+ x 1) 100)) (<= x 99)))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	@Test
 	public void divCisternPositiveExists01() {
 		final FunDecl[] funDecls = new FunDecl[] {
