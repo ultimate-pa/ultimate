@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
-public class OctagonState {
+public class OctagonState implements IAbstractState<OctagonState> {
 	public static final OctagonState TOP = new OctagonState(Map.of(), OctMatrix.NEW, true);
 
 	/**
@@ -42,10 +42,10 @@ public class OctagonState {
 		mAllVarsAreInt = allVarsAreInt;
 	}
 
-	public static OctagonState from(final Term term, final Script script) {
+	public static OctagonState from(final Term[] conjuncts, final Script script) {
 		final List<OctagonRelation> octRelations = new ArrayList<>();
 		final Map<Term, Integer> varToIndex = new HashMap<>();
-		for (final Term conjunct : SmtUtils.getConjuncts(term)) {
+		for (final Term conjunct : conjuncts) {
 			final PolynomialRelation polynomial = PolynomialRelation.of(script, conjunct);
 			if (polynomial == null) {
 				continue;
@@ -117,6 +117,7 @@ public class OctagonState {
 		return result;
 	}
 
+	@Override
 	public Term toTerm(final Script script) {
 		return SmtUtils.and(script, cachedSelectiveClosure().getTerm(script, getIndexToTermArray()));
 	}
@@ -165,11 +166,13 @@ public class OctagonState {
 		return mNumericAbstraction;
 	}
 
+	@Override
 	public OctagonState widen(final OctagonState other) {
 		// TODO: Make the widening operator a setting?
 		return applyMergeOperator(other, OctMatrix::widenSimple);
 	}
 
+	@Override
 	public OctagonState join(final OctagonState other) {
 		return applyMergeOperator(other, OctMatrix::max);
 	}
