@@ -49,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
  * Any word accepted by the unfolded automaton is also accepted by the input automaton. The language of the unfolded
  * automaton is empty if and only if the language of the input automaton is empty.
  *
+ * Call and return edges are not supported.
+ *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <L>
@@ -56,33 +58,38 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
  * @param <S>
  *            The type of states
  */
-public class UnfoldToTree<L, S> implements INwaOutgoingLetterAndTransitionProvider<L, UnfoldToTree.TreeNode<L, S>> {
+public class UnfoldToTree<L, S, U> implements INwaOutgoingLetterAndTransitionProvider<L, U> {
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
-	private final TreeNode<L, S> mRoot;
+	private final U mRoot;
+	private final IUnfoldStateFactory<L, S, U> mStateFactory;
 
-	private final NwaCacheBookkeeping<L, TreeNode<L, S>> mCacheBookkeeping = new NwaCacheBookkeeping<>();
-	private final NestedWordAutomatonCache<L, TreeNode<L, S>> mCache;
+	private final NwaCacheBookkeeping<L, U> mCacheBookkeeping = new NwaCacheBookkeeping<>();
+	private final NestedWordAutomatonCache<L, U> mCache;
 
 	public UnfoldToTree(final AutomataLibraryServices services,
-			final INwaOutgoingLetterAndTransitionProvider<L, S> operand) {
-		this(services, operand, DataStructureUtils.getOneAndOnly(operand.getInitialStates(), "initial state"));
+			final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
+			final IUnfoldStateFactory<L, S, U> stateFactory) {
+		this(services, operand, DataStructureUtils.getOneAndOnly(operand.getInitialStates(), "initial state"),
+				stateFactory);
 	}
 
 	public UnfoldToTree(final AutomataLibraryServices services,
-			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final S initial) {
+			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final S initial,
+			final IUnfoldStateFactory<L, S, U> stateFactory) {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "Operand must be finite automaton";
 		mOperand = operand;
+		mStateFactory = stateFactory;
 
 		mCache = new NestedWordAutomatonCache<>(services, mOperand.getVpAlphabet(), () -> null);
 
-		mRoot = new TreeNode<>(initial);
+		mRoot = mStateFactory.treeNode(initial, ImmutableList.empty());
 		mCache.addState(true, mOperand.isFinal(initial), mRoot);
 	}
 
 	@Deprecated
 	@Override
-	public IStateFactory<TreeNode<L, S>> getStateFactory() {
+	public IStateFactory<U> getStateFactory() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -92,23 +99,23 @@ public class UnfoldToTree<L, S> implements INwaOutgoingLetterAndTransitionProvid
 	}
 
 	@Override
-	public TreeNode<L, S> getEmptyStackState() {
+	public U getEmptyStackState() {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Iterable<TreeNode<L, S>> getInitialStates() {
+	public Iterable<U> getInitialStates() {
 		return Set.of(mRoot);
 	}
 
 	@Override
-	public boolean isInitial(final TreeNode<L, S> state) {
-		return state == mRoot;
+	public boolean isInitial(final U treeNode) {
+		return treeNode == mRoot;
 	}
 
 	@Override
-	public boolean isFinal(final TreeNode<L, S> state) {
-		return mOperand.isFinal(state.getCurrentState());
+	public boolean isFinal(final U treeNode) {
+		return mOperand.isFinal(mStateFactory.getCurrentState(treeNode));
 	}
 
 	@Override
@@ -122,72 +129,102 @@ public class UnfoldToTree<L, S> implements INwaOutgoingLetterAndTransitionProvid
 	}
 
 	@Override
-	public Set<L> lettersInternal(final TreeNode<L, S> state) {
-		return mOperand.lettersInternal(state.getCurrentState());
+	public Set<L> lettersInternal(final U treeNode) {
+		return mOperand.lettersInternal(mStateFactory.getCurrentState(treeNode));
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<L, TreeNode<L, S>>> internalSuccessors(final TreeNode<L, S> state,
-			final L letter) {
-		if (!mCacheBookkeeping.isCachedInternal(state, letter)) {
-			final var transitions = mOperand.internalSuccessors(state.getCurrentState(), letter);
+	public Iterable<OutgoingInternalTransition<L, U>> internalSuccessors(final U treeNode, final L letter) {
+		if (!mCacheBookkeeping.isCachedInternal(treeNode, letter)) {
+			final var transitions = mOperand.internalSuccessors(mStateFactory.getCurrentState(treeNode), letter);
 			final var transition = DataStructureUtils.getOnly(transitions, "Automaton must be deterministic");
-			if (!transition.isEmpty() && !state.containsState(transition.get().getSucc())) {
-				final var child = new TreeNode<>(state, transition.get());
+			if (!transition.isEmpty() && !containsState(treeNode, transition.get().getSucc())) {
+				final var childPath = new ImmutableList<>(transition.get(), mStateFactory.getPath(treeNode));
+				final var child = mStateFactory.treeNode(mStateFactory.getRoot(treeNode), childPath);
 
 				final var successor = transition.get().getSucc();
 				mCache.addState(false, mOperand.isFinal(successor), child);
 
-				mCache.addInternalTransition(state, letter, child);
+				mCache.addInternalTransition(treeNode, letter, child);
 			}
-			mCacheBookkeeping.reportCachedInternal(state, letter);
+			mCacheBookkeeping.reportCachedInternal(treeNode, letter);
 		}
-		return mCache.internalSuccessors(state, letter);
+		return mCache.internalSuccessors(treeNode, letter);
 	}
 
 	@Override
-	public Iterable<OutgoingCallTransition<L, TreeNode<L, S>>> callSuccessors(final TreeNode<L, S> state,
-			final L letter) {
+	public Iterable<OutgoingCallTransition<L, U>> callSuccessors(final U treeNode, final L letter) {
 		return Collections.emptySet();
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<L, TreeNode<L, S>>> returnSuccessors(final TreeNode<L, S> state,
-			final TreeNode<L, S> hier, final L letter) {
+	public Iterable<OutgoingReturnTransition<L, U>> returnSuccessors(final U treeNode, final U hier, final L letter) {
 		return Collections.emptySet();
 	}
 
-	public static final class TreeNode<L, S> {
-		private final S mRoot;
-		private final ImmutableList<OutgoingInternalTransition<L, S>> mPath;
+	private boolean containsState(final U treeNode, final S state) {
+		return mStateFactory.getRoot(treeNode).equals(state)
+				|| mStateFactory.getPath(treeNode).stream().anyMatch(t -> t.getSucc().equals(state));
+	}
 
-		private TreeNode(final S root) {
-			mRoot = root;
-			mPath = ImmutableList.empty();
-		}
+	/**
+	 * A state factory used to unfold finite automata into trees.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 * @param <L>
+	 *            The type of letters
+	 * @param <S>
+	 *            The type of states in the input automaton
+	 * @param <U>
+	 *            The type of states in the unfolded automaton
+	 */
+	public interface IUnfoldStateFactory<L, S, U> extends IStateFactory<U> {
+		/**
+		 * Creates a new state (or "tree node") of the unfolded automaton.
+		 *
+		 * @param root
+		 *            The state representing the root of the unfodled tree (typically, an initial state)
+		 * @param path
+		 *            The path of transitions from the root to the current node. The path is reversed, i.e., the first
+		 *            transition in the list is the last transition in the path.
+		 * @return the new tree node
+		 */
+		U treeNode(S root, ImmutableList<OutgoingInternalTransition<L, S>> path);
 
-		private TreeNode(final TreeNode<L, S> parent, final OutgoingInternalTransition<L, S> transition) {
-			mRoot = parent.mRoot;
-			mPath = new ImmutableList<>(transition, parent.mPath);
-		}
+		/**
+		 * Retrieves the root from a tree node created by this factory
+		 *
+		 * @param treeNode
+		 *            A state of the unfolded automaton, created by {@link #treeNode(S, ImmutableList)}
+		 * @return The state of the input automaton that was passed to the {@link #treeNode(S, ImmutableList)} call that
+		 *         created the given tree node
+		 */
+		S getRoot(U treeNode);
 
-		public S getCurrentState() {
-			if (mPath.isEmpty()) {
-				return mRoot;
+		/**
+		 * Retrieves the path from a tree node created by this factory
+		 *
+		 * @param treeNode
+		 *            A state of the unfolded automaton, created by {@link #treeNode(S, ImmutableList)}
+		 * @return The path of transitions that was passed to the {@link #treeNode(S, ImmutableList)} call that created
+		 *         the given tree node
+		 */
+		ImmutableList<OutgoingInternalTransition<L, S>> getPath(U treeNode);
+
+		/**
+		 * Retrieves the current state of the input automaton corresponding to a given state of the unfolded automaton.
+		 *
+		 * @param treeNode
+		 *            the state of the unfolded automaton
+		 * @return the last state in the path represented by the given tree node (the root, if the path is empty)
+		 */
+		default S getCurrentState(final U treeNode) {
+			final var path = getPath(treeNode);
+			if (path.isEmpty()) {
+				return getRoot(treeNode);
 			}
-			return mPath.getHead().getSucc();
-		}
-
-		public S getRoot() {
-			return mRoot;
-		}
-
-		public ImmutableList<OutgoingInternalTransition<L, S>> getPath() {
-			return mPath;
-		}
-
-		private boolean containsState(final S state) {
-			return mRoot.equals(state) || mPath.stream().anyMatch(t -> t.getSucc().equals(state));
+			return path.getHead().getSucc();
 		}
 	}
 }
