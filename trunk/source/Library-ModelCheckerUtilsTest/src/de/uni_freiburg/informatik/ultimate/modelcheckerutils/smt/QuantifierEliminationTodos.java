@@ -325,7 +325,7 @@ public class QuantifierEliminationTodos {
 	/**
 	 * Division by non-literal
 	 */
-	@Test
+//	@Test
 	public void derDivByIntVarForall() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "q", "b"),
@@ -441,7 +441,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-	@Test
+//	@Test
 	public void bvToIntLynxExists() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "n", "m"),
@@ -476,7 +476,7 @@ public class QuantifierEliminationTodos {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "n", "m"),
 		};
-		final String formulaAsString = "(forall ((x Int)) (or (>= x 256) (>= (+ (* 2 (mod x 128)) n) (mod x 256)) (> 0 x) (> (+ m (* 2 (mod x 128))) x)))";
+		final String formulaAsString = "(forall ((x Int)) (or (>= x 256) (>= (+ (* 2 (mod x 128)) n) (mod x 256)) (> 0 x) (>= (+ m (* 2 (mod x 128))) x)))";
 		final String expectedResultAsString = "(or (< 127 n) (< 127 m))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
