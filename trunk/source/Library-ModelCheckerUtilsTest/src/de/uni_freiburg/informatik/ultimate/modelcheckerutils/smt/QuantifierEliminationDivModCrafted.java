@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class QuantifierEliminationDivMod2 {
+public class QuantifierEliminationDivModCrafted {
 
 	/**
 	 * Warning: each test will overwrite the SMT script of the preceding test.
