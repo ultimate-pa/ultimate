@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.RewriteEqualityTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class OctagonDomain implements IDomain {
@@ -92,6 +93,9 @@ public class OctagonDomain implements IDomain {
 	}
 
 	private List<OctagonState> computeOctagons(final IPredicate pred) {
+		if (SmtUtils.isFalseLiteral(pred.getFormula())) {
+			return List.of();
+		}
 		final IProgressAwareTimer timer = mTimeout.get();
 		// TODO consider removing boolean sub-terms before computing DNF as we don't use the boolean terms anyways
 		final Term[] disjuncts =
