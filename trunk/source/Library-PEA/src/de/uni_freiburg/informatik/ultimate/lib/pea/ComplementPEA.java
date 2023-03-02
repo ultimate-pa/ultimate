@@ -85,19 +85,19 @@ public class ComplementPEA {
 			if (clockDecision instanceof RangeDecision) {
 				// make clock invariant non-strict
 				RangeDecision clockInv = (RangeDecision) clockDecision;
-				int numChilds = newPhase.getClockInvariant().getChilds().length;
-				if (clockInv.getOp(numChilds) == RangeDecision.OP_LT) {
-					newPhase.clockInv = RangeDecision.create(clockInv.getVar(), RangeDecision.OP_LTEQ, clockInv.getVal(numChilds));
+				// int numChilds = newPhase.getClockInvariant().getChilds().length;
+				if (clockInv.getOp(0) == RangeDecision.OP_LT) {
+					newPhase.clockInv = RangeDecision.create(clockInv.getVar(), RangeDecision.OP_LTEQ, clockInv.getVal(0));
 				}
 				// add c < T as guard to all outgoing transitions
 				// TODO: correct? 
 				for (Transition transition : newPhase.transitions) {
-					CDD newGuard = transition.getGuard().and(RangeDecision.create(clockInv.getVar(), RangeDecision.OP_LT, clockInv.getVal(numChilds)));
+					CDD newGuard = transition.getGuard().and(RangeDecision.create(clockInv.getVar(), RangeDecision.OP_LT, clockInv.getVal(0)));
 					transition.setGuard(newGuard);
 				}
 			}
 		}
-		PhaseEventAutomata complementedPEA = new PhaseEventAutomata("aaaaa", (Phase[]) phases.toArray(), mPEAtoComplement.mInit);
+		PhaseEventAutomata complementedPEA = new PhaseEventAutomata("aaaaa",  phases.toArray(new Phase[0]), mPEAtoComplement.mInit);
 		return complementedPEA;
 	}
 	
@@ -105,16 +105,17 @@ public class ComplementPEA {
 		Decision<?> clockInvNonStrictDecision =  clockInv.getDecision();
 		if (clockInvNonStrictDecision instanceof RangeDecision) {
 			RangeDecision decision  = (RangeDecision) clockInvNonStrictDecision;
-			CDD[] childs = clockInv.getChilds();
+			//CDD[] childs = clockInv.getChilds();
 			// Was soll das int childs bei getOp???? offensichtlich nicht die Anzahl der Kinder?????
-			int numChilds = childs.length;
-			int OP = decision.getOp(numChilds);
+			// Theorie: childs = 0 -> root node. Kann aber nicht sein, bei childs = 0 immer LT o. LTEQ
+			//int numChilds = childs.length;
+			int OP = decision.getOp(0);
 			if (OP == RangeDecision.OP_LTEQ) { // c <= T
-				CDD strictClockInv = RangeDecision.create(decision.getVar(), RangeDecision.OP_LT, decision.getVal(numChilds));
+				CDD strictClockInv = RangeDecision.create(decision.getVar(), RangeDecision.OP_LT, decision.getVal(0));
 				return strictClockInv; // c < T
 			}
 			else if (OP == RangeDecision.OP_GTEQ) {  // c >= T
-				CDD strictClockInv = RangeDecision.create(decision.getVar(), RangeDecision.OP_GT, decision.getVal(numChilds));
+				CDD strictClockInv = RangeDecision.create(decision.getVar(), RangeDecision.OP_GT, decision.getVal(0));
 				return strictClockInv; // c > T
 			}
 			else { // already strict 
