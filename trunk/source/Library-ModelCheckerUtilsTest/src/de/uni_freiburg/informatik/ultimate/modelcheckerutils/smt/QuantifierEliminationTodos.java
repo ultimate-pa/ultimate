@@ -441,7 +441,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-//	@Test
+	@Test
 	public void bvToIntLynxExists() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "n", "m"),
@@ -546,7 +546,7 @@ public class QuantifierEliminationTodos {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "n", "m"),
 		};
-		final String formulaAsString = "(exists ((v_y_3 Int) (v_y_2 Int) (v_z_3 Int)) (and (< (+ (* v_y_3 128) v_z_3) 256) (< (+ m v_z_3) (+ (* v_y_3 128) (* 256 v_y_2))) (<= 0 v_z_3) (<= 0 (+ (* v_y_3 128) v_z_3 (* 256 v_y_2))) (<= 0 (+ (* v_y_3 128) v_z_3)) (< v_z_3 128) (< (+ n (* (mod v_z_3 128) 2)) (+ (* v_y_3 128) v_z_3)) (< (+ (* v_y_3 128) v_z_3 (* 256 v_y_2)) 256)))";
+		final String formulaAsString = "(exists ((v_y_3 Int) (v_z_1 Int) (v_y_2 Int) (v_y_1 Int)) (and (<= 0 (+ (* v_y_3 128) v_z_1 (* v_y_1 128))) (<= 0 v_z_1) (< (+ v_z_1 (* v_y_1 128)) 128) (<= 0 (+ (* v_y_3 128) v_z_1 (* 256 v_y_2) (* v_y_1 128))) (< (+ n v_z_1) (+ (* v_y_3 128) (* v_y_1 128))) (< (+ m v_z_1 (* v_y_1 128)) (+ (* v_y_3 128) (* 256 v_y_2))) (< (+ (* v_y_3 128) v_z_1 (* v_y_1 128)) 256) (< (+ (* v_y_3 128) v_z_1 (* 256 v_y_2) (* v_y_1 128)) 256) (< v_z_1 128) (<= 0 (+ v_z_1 (* v_y_1 128)))))";
 		final String expectedResultAsString = "(and (<= n 127) (<= m 127))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
