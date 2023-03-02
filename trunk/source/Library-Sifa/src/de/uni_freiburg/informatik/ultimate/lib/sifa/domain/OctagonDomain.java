@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.WeakHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -19,6 +20,8 @@ public class OctagonDomain implements IDomain {
 	private final int mMaxDisjuncts;
 	private final Supplier<IProgressAwareTimer> mTimeout;
 
+	private final WeakHashMap<IPredicate, List<OctagonState>> mPredicateCache = new WeakHashMap<>();
+
 	public OctagonDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
 			final Supplier<IProgressAwareTimer> timeout) {
 		mTools = tools;
@@ -29,14 +32,40 @@ public class OctagonDomain implements IDomain {
 
 	@Override
 	public IPredicate join(final IPredicate lhs, final IPredicate rhs) {
-		// TODO: Should we convert this to octagons instead?
-		return mTools.or(lhs, rhs);
+		// TODO using return mTools.or(lhs, rhs) is still an option.
+		// Should we use it sometimes (for instance when inputs are not already cached)?
+		List<OctagonState> joined = new ArrayList<>();
+		joined.addAll(toOctagons(lhs));
+		joined.addAll(toOctagons(rhs));
+		if (joined.size() > mMaxDisjuncts) {
+			joined = List.of(joinToSingleState(joined));
+		}
+		return toPredicate(joined);
+	}
+
+	private static OctagonState joinToSingleState(final List<OctagonState> states) {
+		return states.stream().reduce(OctagonState::join).orElseThrow();
 	}
 
 	@Override
 	public IPredicate widen(final IPredicate old, final IPredicate widenWith) {
-		// TODO: Use actual widening that reaches a fixpoint!
-		return mTools.or(old, widenWith);
+		final List<OctagonState> oldStates = toOctagons(old);
+		final List<OctagonState> widenWithStates = toOctagons(widenWith);
+		final int productSize = oldStates.size() * widenWithStates.size();
+		List<OctagonState> resultStates;
+		if (productSize > mMaxDisjuncts) {
+			final OctagonState oldState = joinToSingleState(oldStates);
+			final OctagonState widenWithState = joinToSingleState(widenWithStates);
+			resultStates = List.of(oldState.widen(widenWithState));
+		} else {
+			resultStates = new ArrayList<>(productSize);
+			for (final OctagonState s1 : oldStates) {
+				for (final OctagonState s2 : widenWithStates) {
+					resultStates.add(s1.widen(s2));
+				}
+			}
+		}
+		return toPredicate(resultStates);
 	}
 
 	@Override
@@ -59,6 +88,10 @@ public class OctagonDomain implements IDomain {
 	}
 
 	private List<OctagonState> toOctagons(final IPredicate pred) {
+		return mPredicateCache.computeIfAbsent(pred, this::computeOctagons);
+	}
+
+	private List<OctagonState> computeOctagons(final IPredicate pred) {
 		final IProgressAwareTimer timer = mTimeout.get();
 		// TODO consider removing boolean sub-terms before computing DNF as we don't use the boolean terms anyways
 		final Term[] disjuncts =

@@ -132,4 +132,11 @@ public class OctagonState {
 		}
 		return mNumericAbstraction;
 	}
+
+	public OctagonState join(final OctagonState other) {
+		// TODO: Do we need to rearrange other, if this is not satisfied?
+		assert mMapNumericVarToIndex.equals(other.mMapNumericVarToIndex);
+		return new OctagonState(mMapNumericVarToIndex,
+				OctMatrix.max(bestAvailableClosure(), other.bestAvailableClosure()), mAllVarsAreInt);
+	}
 }
