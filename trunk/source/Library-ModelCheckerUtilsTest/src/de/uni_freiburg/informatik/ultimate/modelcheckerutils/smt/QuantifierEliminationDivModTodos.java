@@ -284,16 +284,6 @@ public class QuantifierEliminationDivModTodos {
 	}
 
 	@Test
-	public void honigbuck01() {
-		final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(SmtSortUtils::getIntSort, "c"),
-		};
-		final String formulaAsString = "(forall ((|v1| Int) (|v2| Int) (|v3| Int)) (or (< (mod (mod |v3| 256) 4294967296) (* |v1| 256)) (<= (+ (* |v1| 256) 256) (mod (mod |v3| 256) 4294967296)) (= (mod (mod |v3| 256) 4294967296) (+ (* |v1| 256) (* 4294967296 |v2|))) (<= (+ (* |v1| 256) 4294967296 (* 4294967296 |v2|)) (mod (mod |v3| 256) 4294967296)) (< (mod (mod |v3| 256) 4294967296) (+ (* |v1| 256) (* 4294967296 |v2|))) (and (or (<= (mod (mod |v3| 256) 4294967296) 2147483647) (<= (mod (mod |c| 256) 4294967296) 2147483647) (not (= (mod (mod |v3| 256) 4294967296) (mod (mod |c| 256) 4294967296)))) (or (not (<= (mod (mod |c| 256) 4294967296) 2147483647)) (not (<= (mod (mod |v3| 256) 4294967296) 2147483647)) (not (= (mod (mod |v3| 256) 4294967296) (mod (mod |c| 256) 4294967296)))))))";
-		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
 	public void qeModC1E78117() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(SmtSortUtils::getIntSort, "__VERIFIER_assert_#in~cond"),
