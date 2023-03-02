@@ -41,7 +41,6 @@ public class OctagonState {
 	public static OctagonState from(final Term term, final Script script) {
 		final List<OctagonRelation> octRelations = new ArrayList<>();
 		final Map<Term, Integer> varToIndex = new HashMap<>();
-		boolean allVarsAreInt = true;
 		for (final Term conjunct : SmtUtils.getConjuncts(term)) {
 			final PolynomialRelation polynomial = PolynomialRelation.of(script, conjunct);
 			if (polynomial == null) {
@@ -52,24 +51,22 @@ public class OctagonState {
 				continue;
 			}
 			octRelations.add(octRel);
-			final Term var1 = octRel.getVar1();
-			final Term var2 = octRel.getVar2();
-			varToIndex.putIfAbsent(var1, varToIndex.size());
-			varToIndex.putIfAbsent(var2, varToIndex.size());
-			if (allVarsAreInt && (SmtSortUtils.isRealSort(var1.getSort()) || SmtSortUtils.isRealSort(var2.getSort()))) {
-				allVarsAreInt = false;
-			}
+			varToIndex.putIfAbsent(octRel.getVar1(), varToIndex.size());
+			varToIndex.putIfAbsent(octRel.getVar2(), varToIndex.size());
 		}
+		boolean allVarsAreInt = true;
 		final OctMatrix resultMatrix = new OctMatrix(varToIndex.size());
 		resultMatrix.fill(OctValue.INFINITY);
 		for (final OctagonRelation octRel : octRelations) {
-			processRelation(varToIndex, octRel, resultMatrix);
+			final boolean isRealSort = SmtSortUtils.isRealSort(octRel.getVar1().getSort());
+			allVarsAreInt &= !isRealSort;
+			processRelation(varToIndex, octRel, resultMatrix, isRealSort);
 		}
 		return new OctagonState(varToIndex, resultMatrix, allVarsAreInt);
 	}
 
 	private static void processRelation(final Map<Term, Integer> varToIndex, final OctagonRelation octRel,
-			final OctMatrix matrix) {
+			final OctMatrix matrix, final boolean isRealSort) {
 		final Rational constant;
 		final boolean var1Negated;
 		final boolean var2Negated;
@@ -86,20 +83,16 @@ public class OctagonState {
 			var2Negated = !octRel.isNegateVar2();
 			break;
 		case LESS:
-			if (oldConstant.isIntegral()) {
-				constant = oldConstant.sub(Rational.ONE);
-			} else {
-				constant = oldConstant.floor();
-			}
+			// For int sort: Replace a+b < c by a+b <= c-1
+			// For real sort: Replace a+b < c by a+b <= c (overapproximation)
+			constant = isRealSort ? oldConstant : oldConstant.sub(Rational.ONE);
 			var1Negated = octRel.isNegateVar1();
 			var2Negated = octRel.isNegateVar2();
 			break;
 		case GREATER:
-			if (oldConstant.isIntegral()) {
-				constant = oldConstant.negate().sub(Rational.ONE);
-			} else {
-				constant = oldConstant.negate().floor();
-			}
+			// For int sort: Replace a+b > c by -a-b <= -c-1
+			// For real sort: Replace a+b > c by -a-b <= -c (overapproximation)
+			constant = isRealSort ? oldConstant.negate() : oldConstant.negate().sub(Rational.ONE);
 			var1Negated = !octRel.isNegateVar1();
 			var2Negated = !octRel.isNegateVar2();
 			break;
