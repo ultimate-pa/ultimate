@@ -114,6 +114,22 @@ public class QuantifierEliminationDivModCrafted {
 	//@formatter:off
 
 
+	@Test
+	public void crispbreadModulo01() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "y"), };
+		final String formulaAsString = "(exists ((x Int)) (= y (mod (* 3 x) 256)))";
+		final String expectedResult = "(and (< y 256) (<= 0 y))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void crispbreadModulo02() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "y"), };
+		final String formulaAsString = "(and (exists ((x Int))	(and (< x 128) (<= 0 x) (= y (mod (* 3 x) 256)))) (< y 256) (<= 0 y))";
+		final String expectedResult = "(and (<= 0 y) (< y 256) (<= (+ (* 171 y) (* (div (+ (- 1) (* y (- 171))) 256) 256) 129) 0))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	/**
 	 * Minimal formula that revealed bug in `div` elimination.
 	 */
