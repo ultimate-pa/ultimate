@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.function.BinaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -16,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Polynomia
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class OctagonState {
 	public static final OctagonState TOP = new OctagonState(Map.of(), OctMatrix.NEW, true);
@@ -117,11 +120,30 @@ public class OctagonState {
 		return mAllVarsAreInt ? mNumericAbstraction.cachedTightClosure() : mNumericAbstraction.cachedStrongClosure();
 	}
 
-	public OctagonState widen(final OctagonState other) {
-		// TODO: Do we need to rearrange other, if this is not satisfied?
-		assert mMapNumericVarToIndex.equals(other.mMapNumericVarToIndex);
-		return new OctagonState(mMapNumericVarToIndex, mNumericAbstraction.widenSimple(other.bestAvailableClosure()),
-				mAllVarsAreInt);
+	private OctagonState applyMergeOperator(final OctagonState other, final BinaryOperator<OctMatrix> matrixOp) {
+		final Map<Term, Integer> varToIndex = new HashMap<>();
+		final Set<Term> allVars =
+				DataStructureUtils.union(mMapNumericVarToIndex.keySet(), other.mMapNumericVarToIndex.keySet());
+		final int[] copyInstructions1 = new int[allVars.size()];
+		final int[] copyInstructions2 = new int[allVars.size()];
+		int lastIndex = mMapNumericVarToIndex.size();
+		for (final Term variable : allVars) {
+			final int index1 = mMapNumericVarToIndex.getOrDefault(variable, -1);
+			final int index2 = other.mMapNumericVarToIndex.getOrDefault(variable, -1);
+			if (index1 != -1) {
+				varToIndex.put(variable, index1);
+				copyInstructions1[index1] = index1;
+				copyInstructions2[index1] = index2;
+			} else {
+				varToIndex.put(variable, lastIndex);
+				copyInstructions1[lastIndex] = index1;
+				copyInstructions2[lastIndex] = index2;
+				lastIndex++;
+			}
+		}
+		final OctMatrix matrix1 = bestAvailableClosure().rearrange(copyInstructions1);
+		final OctMatrix matrix2 = other.bestAvailableClosure().rearrange(copyInstructions2);
+		return new OctagonState(varToIndex, matrixOp.apply(matrix1, matrix2), mAllVarsAreInt);
 	}
 
 	private OctMatrix bestAvailableClosure() {
@@ -133,10 +155,12 @@ public class OctagonState {
 		return mNumericAbstraction;
 	}
 
+	public OctagonState widen(final OctagonState other) {
+		// TODO: Make the widening operator a setting?
+		return applyMergeOperator(other, OctMatrix::widenSimple);
+	}
+
 	public OctagonState join(final OctagonState other) {
-		// TODO: Do we need to rearrange other, if this is not satisfied?
-		assert mMapNumericVarToIndex.equals(other.mMapNumericVarToIndex);
-		return new OctagonState(mMapNumericVarToIndex,
-				OctMatrix.max(bestAvailableClosure(), other.bestAvailableClosure()), mAllVarsAreInt);
+		return applyMergeOperator(other, OctMatrix::max);
 	}
 }
