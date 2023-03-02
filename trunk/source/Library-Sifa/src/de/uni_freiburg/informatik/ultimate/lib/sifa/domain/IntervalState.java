@@ -27,16 +27,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BinaryOperator;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -54,22 +52,9 @@ public class IntervalState implements IAbstractState<IntervalState> {
 
 	@Override
 	public Term toTerm(final Script script) {
-		final Collection<Term> conjunction = new ArrayList<>(2 * mVariablesToValues.size());
-		for (final Entry<Term, Interval> varAndVal : mVariablesToValues.entrySet()) {
-			final Term var = varAndVal.getKey();
-			final Interval val = varAndVal.getValue();
-			if (val.hasLower()) {
-				conjunction.add(SmtUtils.geq(script, var, boundFor(var, val.getLower(), script)));
-			}
-			if (val.hasUpper()) {
-				conjunction.add(SmtUtils.leq(script, var, boundFor(var, val.getUpper(), script)));
-			}
-		}
+		final List<Term> conjunction = mVariablesToValues.entrySet().stream()
+				.map(x -> x.getValue().toTerm(x.getKey(), script)).collect(Collectors.toList());
 		return SmtUtils.and(script, conjunction);
-	}
-
-	private static Term boundFor(final Term variable, final Rational bound, final Script script) {
-		return SmtUtils.rational2Term(script, bound, variable.getSort());
 	}
 
 	private IntervalState merge(final IntervalState other, final BinaryOperator<Interval> operator) {
