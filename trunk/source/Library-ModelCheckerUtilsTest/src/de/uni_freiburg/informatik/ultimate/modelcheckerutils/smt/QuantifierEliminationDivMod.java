@@ -204,18 +204,6 @@ public class QuantifierEliminationDivMod {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
-	@Test
-	public void qeMod22274A50() {
-		final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(SmtSortUtils::getIntSort, "main_~pos~0"),
-		};
-		final String formulaAsString = "(exists ((aux_mod_v_main_~pos~0_9_35 Int) (aux_div_v_main_~pos~0_9_35 Int)) (and (<= 254 aux_mod_v_main_~pos~0_9_35) (< 0 (+ 256 aux_mod_v_main_~pos~0_9_35 (* aux_div_v_main_~pos~0_9_35 256))) (= (+ (mod (+ (* 255 aux_mod_v_main_~pos~0_9_35) 2) 256) 2) main_~pos~0) (<= (+ aux_mod_v_main_~pos~0_9_35 (* aux_div_v_main_~pos~0_9_35 256)) 0) (< aux_mod_v_main_~pos~0_9_35 256)))";
-		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-
 	@Test
 	public void qeDivModE208D894() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -557,6 +545,75 @@ public class QuantifierEliminationDivMod {
 			new FunDecl(SmtSortUtils::getIntSort, "upsweep_#in~right", "upsweep_#in~left"),
 		};
 		final String formulaAsString = "(forall ((|aux_mod_aux_mod_v_ULTIMATE.start_main_~n~0#1_BEFORE_CALL_8_52_63| Int) (|aux_div_aux_mod_v_ULTIMATE.start_main_~n~0#1_BEFORE_CALL_8_52_63| Int)) (or (not (= (mod |aux_mod_aux_mod_v_ULTIMATE.start_main_~n~0#1_BEFORE_CALL_8_52_63| 2) 0)) (>= |aux_mod_aux_mod_v_ULTIMATE.start_main_~n~0#1_BEFORE_CALL_8_52_63| 2) (< (+ (* 2 (div |aux_mod_aux_mod_v_ULTIMATE.start_main_~n~0#1_BEFORE_CALL_8_52_63| 2)) |upsweep_#in~right|) (+ (* 2 |upsweep_#in~left|) |aux_mod_aux_mod_v_ULTIMATE.start_main_~n~0#1_BEFORE_CALL_8_52_63| 1)) (< (+ (* |aux_div_aux_mod_v_ULTIMATE.start_main_~n~0#1_BEFORE_CALL_8_52_63| 2) |aux_mod_aux_mod_v_ULTIMATE.start_main_~n~0#1_BEFORE_CALL_8_52_63|) 0) (> 0 |aux_mod_aux_mod_v_ULTIMATE.start_main_~n~0#1_BEFORE_CALL_8_52_63|) (< (+ (* |aux_div_aux_mod_v_ULTIMATE.start_main_~n~0#1_BEFORE_CALL_8_52_63| 2) |upsweep_#in~right| |aux_mod_aux_mod_v_ULTIMATE.start_main_~n~0#1_BEFORE_CALL_8_52_63|) 3) (<= 2 (+ (* |aux_div_aux_mod_v_ULTIMATE.start_main_~n~0#1_BEFORE_CALL_8_52_63| 2) |aux_mod_aux_mod_v_ULTIMATE.start_main_~n~0#1_BEFORE_CALL_8_52_63|))))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void qeDivMod87C893B3() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "~a29~0"),
+		};
+		final String formulaAsString = "(exists ((v_~a29~0_897 Int)) (and (<= ~a29~0 (+ (div (+ v_~a29~0_897 (- 142312)) 5) 1)) (not (= (mod (+ 3 v_~a29~0_897) 5) 0)) (<= (+ v_~a29~0_897 127) 0)))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void qeMod3862CCBE() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "~a28~0"),
+		};
+		final String formulaAsString = "(exists ((v_~a28~0_1300 Int)) (and (<= v_~a28~0_1300 111) (not (= (mod (+ v_~a28~0_1300 4) 5) 0)) (or (and (<= ~a28~0 (+ (div (+ (div (+ v_~a28~0_1300 (- 600036)) 5) 1) 5) 1)) (< (+ (div (+ v_~a28~0_1300 (- 600036)) 5) 1) 0) (not (= (mod (+ (div (+ v_~a28~0_1300 (- 600036)) 5) 1) 5) 0))) (and (<= ~a28~0 (div (+ (div (+ v_~a28~0_1300 (- 600036)) 5) 1) 5)) (or (not (< (+ (div (+ v_~a28~0_1300 (- 600036)) 5) 1) 0)) (= (mod (+ (div (+ v_~a28~0_1300 (- 600036)) 5) 1) 5) 0))))))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+    @Test
+	public void qeDivModB3099151() {
+		final FunDecl[] funDecls = new FunDecl[] {
+		};
+		final String formulaAsString = "(exists ((aux_mod_aux_mod_aux_mod_ULTIMATE.start_main_~n~6_41_52_63 Int) (aux_div_aux_mod_ULTIMATE.start_main_~n~6_41_52 Int) (aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~n~6_41_52_63 Int)) (and (not (= (mod (div (mod (+ aux_mod_aux_mod_aux_mod_ULTIMATE.start_main_~n~6_41_52_63 (* aux_mod_aux_mod_aux_mod_ULTIMATE.start_main_~n~6_41_52_63 aux_mod_aux_mod_aux_mod_ULTIMATE.start_main_~n~6_41_52_63)) 18446744073709551616) 2) 18446744073709551616) 1)) (< (+ aux_mod_aux_mod_aux_mod_ULTIMATE.start_main_~n~6_41_52_63 (* aux_div_aux_mod_ULTIMATE.start_main_~n~6_41_52 4294967296) (* aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~n~6_41_52_63 4294967296)) 4294967296) (<= 1 (+ aux_mod_aux_mod_aux_mod_ULTIMATE.start_main_~n~6_41_52_63 (* aux_div_aux_mod_ULTIMATE.start_main_~n~6_41_52 4294967296) (* aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~n~6_41_52_63 4294967296))) (<= 0 (+ aux_mod_aux_mod_aux_mod_ULTIMATE.start_main_~n~6_41_52_63 (* aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~n~6_41_52_63 4294967296))) (< (+ aux_mod_aux_mod_aux_mod_ULTIMATE.start_main_~n~6_41_52_63 (* aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~n~6_41_52_63 4294967296)) 2) (< aux_mod_aux_mod_aux_mod_ULTIMATE.start_main_~n~6_41_52_63 4294967296) (<= 0 aux_mod_aux_mod_aux_mod_ULTIMATE.start_main_~n~6_41_52_63)))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void qeMod38D95F62() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~mask_SORT_1~0#1", "ULTIMATE.start_main_~var_107~0#1"),
+		};
+		final String formulaAsString = "(forall ((|v_ULTIMATE.start_main_~var_141~0#1_8| Int)) (or (and (or (<= (mod (mod |ULTIMATE.start_main_~var_107~0#1| 256) 4294967296) 2147483647) (not (= (+ (mod (mod |ULTIMATE.start_main_~var_107~0#1| 256) 4294967296) |v_ULTIMATE.start_main_~var_141~0#1_8|) 4294967295))) (or (not (<= (mod (mod |ULTIMATE.start_main_~var_107~0#1| 256) 4294967296) 2147483647)) (not (= (+ (mod (mod |ULTIMATE.start_main_~var_107~0#1| 256) 4294967296) |v_ULTIMATE.start_main_~var_141~0#1_8| 1) 0)))) (not (= (mod (+ (* |v_ULTIMATE.start_main_~var_141~0#1_8| 255) |ULTIMATE.start_main_~mask_SORT_1~0#1|) 256) 0))))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void qeMod5C9A1EC6() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~mask_SORT_1~0#1"),
+		};
+		final String formulaAsString = "(forall ((|aux_div_v_ULTIMATE.start_main_#t~nondet87#1_12_50| Int) (|aux_div_aux_mod_v_ULTIMATE.start_main_#t~nondet87#1_12_50_68| Int) (|ULTIMATE.start_main_~var_131~0#1| Int)) (or (< (mod (mod |ULTIMATE.start_main_~var_131~0#1| 256) 4294967296) (* |aux_div_v_ULTIMATE.start_main_#t~nondet87#1_12_50| 256)) (<= (+ (* |aux_div_v_ULTIMATE.start_main_#t~nondet87#1_12_50| 256) 256) (mod (mod |ULTIMATE.start_main_~var_131~0#1| 256) 4294967296)) (= (mod (mod |ULTIMATE.start_main_~var_131~0#1| 256) 4294967296) (+ (* |aux_div_v_ULTIMATE.start_main_#t~nondet87#1_12_50| 256) (* 4294967296 |aux_div_aux_mod_v_ULTIMATE.start_main_#t~nondet87#1_12_50_68|))) (<= (+ (* |aux_div_v_ULTIMATE.start_main_#t~nondet87#1_12_50| 256) 4294967296 (* 4294967296 |aux_div_aux_mod_v_ULTIMATE.start_main_#t~nondet87#1_12_50_68|)) (mod (mod |ULTIMATE.start_main_~var_131~0#1| 256) 4294967296)) (< (mod (mod |ULTIMATE.start_main_~var_131~0#1| 256) 4294967296) (+ (* |aux_div_v_ULTIMATE.start_main_#t~nondet87#1_12_50| 256) (* 4294967296 |aux_div_aux_mod_v_ULTIMATE.start_main_#t~nondet87#1_12_50_68|))) (and (or (<= (mod (mod |ULTIMATE.start_main_~var_131~0#1| 256) 4294967296) 2147483647) (<= (mod (mod |ULTIMATE.start_main_~mask_SORT_1~0#1| 256) 4294967296) 2147483647) (not (= (mod (mod |ULTIMATE.start_main_~var_131~0#1| 256) 4294967296) (mod (mod |ULTIMATE.start_main_~mask_SORT_1~0#1| 256) 4294967296)))) (or (not (<= (mod (mod |ULTIMATE.start_main_~mask_SORT_1~0#1| 256) 4294967296) 2147483647)) (not (<= (mod (mod |ULTIMATE.start_main_~var_131~0#1| 256) 4294967296) 2147483647)) (not (= (mod (mod |ULTIMATE.start_main_~var_131~0#1| 256) 4294967296) (mod (mod |ULTIMATE.start_main_~mask_SORT_1~0#1| 256) 4294967296)))))))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void qeDivModE3613A47() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "base2flt_#res"),
+		};
+		final String formulaAsString = "(forall ((|v_ULTIMATE.start_main_~a~0#1_BEFORE_CALL_17| Int)) (or (not (< (mod (div |v_ULTIMATE.start_main_~a~0#1_BEFORE_CALL_17| 16777216) 4294967296) 256)) (and (or (not (<= (mod (div |v_ULTIMATE.start_main_~a~0#1_BEFORE_CALL_17| 16777216) 4294967296) 2147483647)) (< (mod (div |v_ULTIMATE.start_main_~a~0#1_BEFORE_CALL_17| 16777216) 4294967296) (+ (mod (div |base2flt_#res| 16777216) 4294967296) 1))) (or (<= (mod (div |base2flt_#res| 16777216) 4294967296) 2147483647) (and (not (<= (mod (div |v_ULTIMATE.start_main_~a~0#1_BEFORE_CALL_17| 16777216) 4294967296) 2147483647)) (< (mod (div |v_ULTIMATE.start_main_~a~0#1_BEFORE_CALL_17| 16777216) 4294967296) (+ (mod (div |base2flt_#res| 16777216) 4294967296) 1)))))))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void qeModD7D5D9D2() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~mask_SORT_1~0#1", "ULTIMATE.start_main_~var_109~0#1"),
+		};
+		final String formulaAsString = "(forall ((|v_ULTIMATE.start_main_~var_139~0#1_12| Int)) (or (and (or (<= (mod (mod |ULTIMATE.start_main_~var_109~0#1| 256) 4294967296) 2147483647) (not (= (+ (mod (mod |ULTIMATE.start_main_~var_109~0#1| 256) 4294967296) |v_ULTIMATE.start_main_~var_139~0#1_12|) 4294967295))) (or (not (= (+ (mod (mod |ULTIMATE.start_main_~var_109~0#1| 256) 4294967296) |v_ULTIMATE.start_main_~var_139~0#1_12| 1) 0)) (not (<= (mod (mod |ULTIMATE.start_main_~var_109~0#1| 256) 4294967296) 2147483647)))) (not (= (mod (+ |ULTIMATE.start_main_~mask_SORT_1~0#1| (* 255 |v_ULTIMATE.start_main_~var_139~0#1_12|)) 256) 0))))";
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
