@@ -62,11 +62,12 @@ public class QuantifierEliminationDivModTodos {
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
 	private static final boolean CHECK_SIMPLIFICATION_POSSIBILITY = false;
-	private static final long TEST_TIMEOUT_MILLISECONDS = 60000999;
+	private static final long TEST_TIMEOUT_MILLISECONDS = 20_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final LogLevel LOG_LEVEL_SOLVER = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
 //	private static final String SOLVER_COMMAND = "smtinterpol -q";
+//	private static final String SOLVER_COMMAND = "cvc5 --incremental --lang smt --tlimit-per=1000";
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
@@ -116,8 +117,8 @@ public class QuantifierEliminationDivModTodos {
 	}
 
 	//@formatter:off
-	
-	
+
+
 	@Test
 	public void qeDiv72B59E81() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -127,7 +128,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeDivMod79A79F74() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -137,7 +138,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeDivMod87C893B3() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -147,7 +148,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod408F192() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -157,7 +158,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod3862CCBE() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -167,7 +168,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeModB80ACE51() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -178,7 +179,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeModF059E9EA() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -188,7 +189,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 		@Test
 	public void qeMod62C06A2A() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -199,7 +200,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-        
+
         @Test
 	public void qeDivModB3099151() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -208,7 +209,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod4E5EF4AF() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -241,7 +242,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod8B5E500A() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -251,7 +252,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod38D95F62() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -261,7 +262,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod5C9A1EC6() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -271,7 +272,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeModC44E259() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -281,7 +282,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void honigbuck01() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -291,7 +292,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeModC1E78117() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -301,7 +302,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeModBB65ABF4() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -311,7 +312,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod47117616() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -321,7 +322,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeDiv7C176B87() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -332,7 +333,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeDivModE3613A47() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -342,7 +343,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod3CD45A9E() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -352,7 +353,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeModDA7283E() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -362,7 +363,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod779F44B9() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -373,7 +374,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeDiv4686750A() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -384,7 +385,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeDiv883B2FE0() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -394,7 +395,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod27F0D8E4() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -404,7 +405,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod6C989C94() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -415,7 +416,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeDiv75B4002B() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -426,7 +427,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeModE9F5B50() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -436,7 +437,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeModFA6DC5F4() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -446,7 +447,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeDivModE995CB24() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -456,7 +457,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod94843759() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -467,7 +468,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod868D31B1() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -477,7 +478,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod4C35A753() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -487,7 +488,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeModECC70C69() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -497,7 +498,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod9C6A4266() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -507,7 +508,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeModB1B00B69() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -517,7 +518,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod8E7FC458() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -527,7 +528,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod115C8EE3() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -538,7 +539,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod40615611() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -548,7 +549,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod9052E25D() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -558,7 +559,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeModD7D5D9D2() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -568,7 +569,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeMod2944E2C6() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -579,7 +580,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeModCCCC5BE3() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -589,7 +590,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeDivModB6FB8F46() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -599,7 +600,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeModABFFDE63() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -610,7 +611,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeModBEF5E320() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -621,7 +622,7 @@ public class QuantifierEliminationDivModTodos {
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void qeDiv77A7B16() {
 		final FunDecl[] funDecls = new FunDecl[] {
