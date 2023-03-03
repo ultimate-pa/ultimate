@@ -139,7 +139,7 @@ public class QuantifierEliminationDivModCrafted {
 			new FunDecl(SmtSortUtils::getIntSort, "c", "d"),
 		};
 		final String formulaAsString = "(exists ((x Int)) (and (= c (div (+ x 1) 100)) (<= x 99)))";
-		final String expectedResult = formulaAsString;
+		final String expectedResult = "(<= c 1)";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -149,7 +149,7 @@ public class QuantifierEliminationDivModCrafted {
 			new FunDecl(SmtSortUtils::getIntSort, "c", "d", "e"),
 		};
 		final String formulaAsString = "(exists ((x Int)) (and (= c (div (+ x e) 100)) (<= d x)))";
-		final String expectedResult = formulaAsString;
+		final String expectedResult = "(<= (+ e d) (+ (* c 100) 99))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -159,7 +159,7 @@ public class QuantifierEliminationDivModCrafted {
 			new FunDecl(SmtSortUtils::getIntSort, "c", "d", "e"),
 		};
 		final String formulaAsString = "(exists ((x Int)) (and (= c (div (+ x e) 100)) (>= d x)))";
-		final String expectedResult = formulaAsString;
+		final String expectedResult = "(<= (* c 100) (+ e d))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -169,7 +169,7 @@ public class QuantifierEliminationDivModCrafted {
 			new FunDecl(SmtSortUtils::getIntSort, "c", "d", "e"),
 		};
 		final String formulaAsString = "(exists ((x Int)) (and (= c (div (+ x e) (- 100))) (<= d x)))";
-		final String expectedResult = formulaAsString;
+		final String expectedResult = "(<= (+ e d (* c 100)) 99)";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -179,7 +179,7 @@ public class QuantifierEliminationDivModCrafted {
 			new FunDecl(SmtSortUtils::getIntSort, "c", "d", "e"),
 		};
 		final String formulaAsString = "(exists ((x Int)) (and (= c (div (+ x e) (- 100))) (>= d x)))";
-		final String expectedResult = formulaAsString;
+		final String expectedResult = "(<= 0 (+ e d (* c 100)))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -189,7 +189,7 @@ public class QuantifierEliminationDivModCrafted {
 			new FunDecl(SmtSortUtils::getIntSort, "c", "d", "e"),
 		};
 		final String formulaAsString = "(forall ((x Int)) (or (not (= c (div (+ x e) 100))) (> d x)))";
-		final String expectedResult = formulaAsString;
+		final String expectedResult = "(< (+ (* c 100) 99) (+ e d))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -199,7 +199,7 @@ public class QuantifierEliminationDivModCrafted {
 			new FunDecl(SmtSortUtils::getIntSort, "c", "d", "e"),
 		};
 		final String formulaAsString = "(forall ((x Int)) (or (not (= c (div (+ x e) 100))) (< d x)))";
-		final String expectedResult = formulaAsString;
+		final String expectedResult = "(< (+ e d) (* c 100))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -209,7 +209,7 @@ public class QuantifierEliminationDivModCrafted {
 			new FunDecl(SmtSortUtils::getIntSort, "c", "d", "e"),
 		};
 		final String formulaAsString = "(forall ((x Int)) (or (not (= c (div (+ x e) (- 100)))) (> d x)))";
-		final String expectedResult = formulaAsString;
+		final String expectedResult = "(< 99 (+ e d (* c 100)))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -219,7 +219,7 @@ public class QuantifierEliminationDivModCrafted {
 			new FunDecl(SmtSortUtils::getIntSort, "c", "d", "e"),
 		};
 		final String formulaAsString = "(forall ((x Int)) (or (not (= c (div (+ x e) (- 100)))) (< d x)))";
-		final String expectedResult = formulaAsString;
+		final String expectedResult = "(< (+ e d (* c 100)) 0)";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -233,7 +233,6 @@ public class QuantifierEliminationDivModCrafted {
 		final String expectedResult = "(exists ((v_z_1 Int) (v_y_1 Int)) (and (<= d (+ (* v_y_1 100) (* 67 v_z_1))) (= c (+ (* 2 v_z_1) (* 3 v_y_1))) (<= 0 v_z_1) (< v_z_1 100)))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-
 
 	@Test
 	public void divElim14() {
