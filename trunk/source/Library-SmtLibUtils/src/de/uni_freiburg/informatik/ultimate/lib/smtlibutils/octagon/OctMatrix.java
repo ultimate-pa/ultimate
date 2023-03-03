@@ -1782,7 +1782,7 @@ public class OctMatrix {
 				subtrahend = script.term("to_real", subtrahend);
 			}
 		}
-		return script.term("<=", script.term("-", minuend, subtrahend), tBound);
+		return SmtUtils.leq(script, SmtUtils.minus(script, minuend, subtrahend), tBound);
 	}
 
 	@Override
