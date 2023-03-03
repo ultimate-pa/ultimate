@@ -1,9 +1,18 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea.test;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.jar.Attributes.Name;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -12,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseSet;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
@@ -69,20 +79,46 @@ public class ComplementPEATest {
 		return new PhaseEventAutomata("ResponseDelayGlobally", phases, new Phase[] { phases[0], phases[1] });
 	}
 	
+	public CDD constructMultiClockInvariant() {
+		CDD clkInv1 = RangeDecision.create("clk1",  RangeDecision.OP_LTEQ, 5);
+		CDD clkInv2 = RangeDecision.create("clk2",  RangeDecision.OP_LT, 6);
+		CDD clkInv3 = RangeDecision.create("clk3",  RangeDecision.OP_GTEQ, 5);
+		CDD clkInv4 = RangeDecision.create("clk4",  RangeDecision.OP_GT, 6);
+		
+		CDD multiClock = clkInv1.and(clkInv2).and(clkInv3).and(clkInv4);
+		return multiClock;
+	}
+	
+	public Boolean comparePhases(Phase phaseA, Phase phaseB) {
+		if (phaseA.getStateInvariant() != phaseB.getStateInvariant() || phaseA.getClockInvariant() != phaseB.getClockInvariant()) {
+			return false;
+		}
+		List<Transition> transA = phaseA.getTransitions();
+		List<Transition> transB = phaseB.getTransitions();
+		return true;
+	}
 	
 	@Test
-	public void testPeaConstruction_1() {
+	public void checkPeaConstruction() {
 		PhaseEventAutomata UniversalityGlobally = createUniversalityGloballyPea();
 		PhaseEventAutomata ResponseDelayGlobally = createResponseDelayGloballyPea();
 		Phase[] init = UniversalityGlobally.getInit();
 		// wo initialkante.
 	}
 	
+
+	
 	@Test
 	public void testComplementResponseDelayGlobally() {
 		PhaseEventAutomata responseDelayGlobally = createResponseDelayGloballyPea();
 		ComplementPEA complementPEA = new ComplementPEA(responseDelayGlobally);
 		PhaseEventAutomata complementAutomaton = complementPEA.complement();
+		Phase[] originalPhases = responseDelayGlobally.getPhases();
+		Phase[] phases = complementAutomaton.getPhases();
+		// does the complement automaton contain a sink? 
+		assertTrue(phases[0].getName() == "sink");
+		assertTrue(phases[0].getAccepting());
+		assertEquals(originalPhases.length, phases.length - 1);
 	}
 	
 }

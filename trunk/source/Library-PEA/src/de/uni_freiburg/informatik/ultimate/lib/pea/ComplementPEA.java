@@ -1,18 +1,15 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
-import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
-// TODO: Soll man Phasen nochmal neu machen oder kann man die vom alten PEA nehmen? Die haben eine ID.
 
 /**
- * This class implements an algorithm for complementing Phase Event Automata. 
+ * This class implements an algorithm for complementing Phase Event Automata as described in my bachelors thesis.
+ * To be continued...
  *
  * @author Lena Funk
- *
  */
 public class ComplementPEA {
 	
@@ -20,11 +17,15 @@ public class ComplementPEA {
 	
 	
 	public ComplementPEA(PhaseEventAutomata PEAtoComplement) {
-		mPEAtoComplement = PEAtoComplement;
-		
-		
+		mPEAtoComplement = PEAtoComplement;		
 	}
 	
+	
+	/**
+	 * Complements mPEAtoComplement
+	 * 
+	 * @return the complement automaton of mPEAtoComplement
+	 */
 	public PhaseEventAutomata complement() {
 		// create arrayList to collect phases for complement automaton
 		List<Phase> phases = new ArrayList<>();
@@ -50,27 +51,17 @@ public class ComplementPEA {
 				newPhase.addTransition(transition.getDest(), transition.getGuard(), transition.getResets());
 				String[] reset = transition.getResets();
 				
-				// compute guard to sink
+				
 				Phase successorPhase = transition.getDest();
 				CDD successorStateInv = successorPhase.stateInv;
 				CDD successorClockInv = successorPhase.clockInv;
-				RangeDecision clockInvDecision = null;
 				
+				// compute guard to sink
 				// we do not use the clock invariant of the successor phase
 				// if the same clock is in the reset set of the transition
-				// TODO: what if a clock invariant refers to multiple clock variables
-				// and not all of them are in the reset set?
-				String clock = "none";
-				if ( successorClockInv.getDecision() instanceof RangeDecision) {
-					clockInvDecision = (RangeDecision) successorClockInv.getDecision() ;
-					clock =  clockInvDecision.getVar();
-					
-				}
-				
-				// if the clock  of the clock invariant gets reset, 
-				// the clock invariant does not need to be in the guard
-				if (Arrays.asList(reset).contains(clock)) {
-					guardToSink = guardToSink.or(transition.getGuard().and(successorStateInv));
+				if (reset.length > 0) {
+					CDD noResetClockInv = noReset(successorClockInv, reset);
+					guardToSink = guardToSink.or(transition.getGuard().and(successorStateInv).and(strict(noResetClockInv)));
 				} else {
 					guardToSink = guardToSink.or(transition.getGuard().and(successorStateInv).and(strict(successorClockInv)));
 				}
@@ -101,7 +92,13 @@ public class ComplementPEA {
 		return complementedPEA;
 	}
 	
+	/**
+	 * Computes a CDD representing strict(clockInv)
+	 * 
+	 * @param clockInv: the clock invariant that will be strictified
+	 */
 	public CDD strict(CDD clockInv) {
+		CDD strict = CDD.TRUE;
 		Decision<?> clockInvNonStrictDecision =  clockInv.getDecision();
 		if (clockInvNonStrictDecision instanceof RangeDecision) {
 			RangeDecision decision  = (RangeDecision) clockInvNonStrictDecision;
@@ -112,17 +109,48 @@ public class ComplementPEA {
 			int OP = decision.getOp(0);
 			if (OP == RangeDecision.OP_LTEQ) { // c <= T
 				CDD strictClockInv = RangeDecision.create(decision.getVar(), RangeDecision.OP_LT, decision.getVal(0));
-				return strictClockInv; // c < T
+				strict = strict.and(strictClockInv); // c < T
 			}
+			// Dieser Fall würde nie eintreten??? 
+			// ähnliches Problem bei val(int childs)
 			else if (OP == RangeDecision.OP_GTEQ) {  // c >= T
 				CDD strictClockInv = RangeDecision.create(decision.getVar(), RangeDecision.OP_GT, decision.getVal(0));
-				return strictClockInv; // c > T
+				strict.and(strictClockInv); // c > T
 			}
 			else { // already strict 
-				return clockInv;
+				strict.and(clockInv);
+			}
+			for (CDD child : clockInv.getChilds()) {
+				return strict(child);
 			}
 		}
-		return clockInv;
-		
+		return strict;
+	}
+	
+	
+	/**
+	 * Computes a CDD representing the conjunction of the RangeDecision-Nodes in the CDD given 
+	 * that are NOT in the reset set also given.
+	 * 
+	 * @param clockInv: Clock invariant of some phase.
+	 * 
+	 * @param reset: the reset set of an incoming transition of that phase.
+	 */
+	public CDD noReset(CDD clockInv, String[] reset) {
+		CDD noReset = CDD.TRUE;
+		Decision<?> clockInvDecision = clockInv.getDecision();
+		if (clockInvDecision instanceof RangeDecision) {
+			RangeDecision decision = (RangeDecision) clockInvDecision;
+			// if the variable of the decision is not in reset, we compute the conjunction
+			if (!Arrays.asList(reset).contains(decision.getVar())) {
+				CDD newDecision = RangeDecision.create(decision.getVar(), decision.getOp(0), decision.getVal(0));
+				noReset = noReset.and(newDecision);
+			}
+			CDD[] childs = clockInv.getChilds();
+			for (CDD cdd : childs) {
+				return noReset(cdd, reset);
+			}
+		}
+		return noReset;
 	}
 }
