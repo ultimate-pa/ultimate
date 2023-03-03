@@ -39,13 +39,26 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
+/**
+ * State used in {@link IntervalDomain}
+ *
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
+ *
+ */
 public class IntervalState implements IAbstractState<IntervalState> {
 	private final Map<Term, Interval> mVariablesToValues;
 
+	/**
+	 * Creates a new state with the given variable mapping.
+	 */
 	public IntervalState(final Map<Term, Interval> variablesToValues) {
 		mVariablesToValues = variablesToValues;
 	}
 
+	/**
+	 * Creates a top state
+	 */
 	public IntervalState() {
 		this(Map.of());
 	}

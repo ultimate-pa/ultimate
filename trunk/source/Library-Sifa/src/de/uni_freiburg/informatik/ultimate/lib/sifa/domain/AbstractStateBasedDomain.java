@@ -1,3 +1,31 @@
+/*
+ * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
+ * Copyright (C) 2023 Frank Schüssele (schuessf@tf.uni-freiburg.de)
+ * Copyright (C) 2019-2023 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Library-Sifa plug-in.
+ *
+ * The ULTIMATE Library-Sifa plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Library-Sifa plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Library-Sifa plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Library-Sifa plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Library-Sifa plug-in grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
 import java.util.ArrayList;
@@ -14,6 +42,16 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
+/**
+ * Abstract class for an {@link IDomain} that uses states, i.e. that transforms predicates into an internal state
+ * representation (using the method {@code toState}).
+ *
+ * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ *
+ * @param <STATE>
+ *            The abstract state that is used internally
+ */
 public abstract class AbstractStateBasedDomain<STATE extends IAbstractState<STATE>> implements IDomain {
 	protected final ILogger mLogger;
 	protected final SymbolicTools mTools;
@@ -108,16 +146,25 @@ public abstract class AbstractStateBasedDomain<STATE extends IAbstractState<STAT
 		return result;
 	}
 
-	protected Term transformTerm(final Term term) {
-		return term;
-	}
-
 	private IPredicate toPredicate(final Collection<STATE> states) {
 		return mTools.orT(states.stream().map(x -> x.toTerm(mTools.getScript())).collect(Collectors.toList()));
 	}
 
+	/**
+	 * Transformations that are applied before converting the DNF to improve the states that are produced from the DNF.
+	 * This method has to return an overapproximation of {@code term}.
+	 */
+	protected Term transformTerm(final Term term) {
+		return term;
+	}
+
+	/**
+	 * Returns the internal state representation for the given conjuncts.
+	 */
 	protected abstract STATE toState(Term[] conjuncts);
 
+	/**
+	 * Returns the internal state that that represents top.
+	 */
 	protected abstract STATE getTopState();
-
 }
