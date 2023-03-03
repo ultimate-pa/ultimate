@@ -175,6 +175,7 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 		final int[] copyInstructions1 = new int[allVars.size()];
 		final int[] copyInstructions2 = new int[allVars.size()];
 		int lastIndex = mMapNumericVarToIndex.size();
+		boolean allVarsAreInt = mAllVarsAreInt;
 		for (final Term variable : allVars) {
 			final int index1 = mMapNumericVarToIndex.getOrDefault(variable, -1);
 			final int index2 = other.mMapNumericVarToIndex.getOrDefault(variable, -1);
@@ -187,11 +188,24 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 				copyInstructions1[lastIndex] = index1;
 				copyInstructions2[lastIndex] = index2;
 				lastIndex++;
+				if (allVarsAreInt && SmtSortUtils.isRealSort(variable.getSort())) {
+					allVarsAreInt = false;
+				}
 			}
 		}
-		final OctMatrix matrix1 = bestAvailableClosure().rearrange(copyInstructions1);
-		final OctMatrix matrix2 = other.bestAvailableClosure().rearrange(copyInstructions2);
-		return new OctagonState(varToIndex, matrixOp.apply(matrix1, matrix2), mAllVarsAreInt);
+		final OctMatrix matrix1 = rearrangeIfNecessary(bestAvailableClosure(), copyInstructions1);
+		final OctMatrix matrix2 = rearrangeIfNecessary(other.bestAvailableClosure(), copyInstructions2);
+		return new OctagonState(varToIndex, matrixOp.apply(matrix1, matrix2), allVarsAreInt);
+	}
+
+	private static OctMatrix rearrangeIfNecessary(final OctMatrix matrix, final int[] copyInstructions) {
+		for (int i = 0; i < copyInstructions.length; i++) {
+			if (copyInstructions[i] != i) {
+				return matrix.rearrange(copyInstructions);
+			}
+		}
+		// The copyInstructions are simply the identity, so there is no need to rearrange
+		return matrix;
 	}
 
 	private OctMatrix bestAvailableClosure() {
