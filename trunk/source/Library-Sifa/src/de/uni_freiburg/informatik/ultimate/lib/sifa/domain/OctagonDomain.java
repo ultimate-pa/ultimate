@@ -16,12 +16,12 @@ public class OctagonDomain extends AbstractStateBasedDomain<OctagonState> {
 	}
 
 	@Override
-	public OctagonState toState(final Term[] conjuncts) {
+	protected OctagonState toState(final Term[] conjuncts) {
 		return OctagonState.from(conjuncts, mTools.getScript());
 	}
 
 	@Override
-	public OctagonState getTopState() {
+	protected OctagonState getTopState() {
 		return OctagonState.TOP;
 	}
 

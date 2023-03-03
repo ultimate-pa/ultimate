@@ -55,7 +55,7 @@ public class IntervalDomain extends AbstractStateBasedDomain<IntervalState> {
 	}
 
 	@Override
-	public IntervalState toState(final Term[] conjuncts) {
+	protected IntervalState toState(final Term[] conjuncts) {
 		final List<SolvedBinaryRelation> solvedRelations = solveForAllSubjects(conjuncts);
 		final Map<Term, Interval> varToInterval = new HashMap<>();
 		boolean updated = true;
@@ -94,7 +94,7 @@ public class IntervalDomain extends AbstractStateBasedDomain<IntervalState> {
 	}
 
 	@Override
-	public IntervalState getTopState() {
+	protected IntervalState getTopState() {
 		return new IntervalState();
 	}
 
@@ -122,11 +122,11 @@ public class IntervalDomain extends AbstractStateBasedDomain<IntervalState> {
 		return result;
 	}
 
-	public static class CompareNumberOfFreeVariablesInRhs implements Comparator<SolvedBinaryRelation> {
+	private static class CompareNumberOfFreeVariablesInRhs implements Comparator<SolvedBinaryRelation> {
 
 		private final Map<SolvedBinaryRelation, Integer> mNumberOfFreeVarsInRhs;
 
-		public CompareNumberOfFreeVariablesInRhs(final Collection<SolvedBinaryRelation> relations) {
+		CompareNumberOfFreeVariablesInRhs(final Collection<SolvedBinaryRelation> relations) {
 			// pre-compute values since each .getFreeVars() would traverse the whole term again
 			mNumberOfFreeVarsInRhs = relations.stream()
 					.collect(Collectors.toMap(key -> key, key -> key.getRightHandSide().getFreeVars().length));

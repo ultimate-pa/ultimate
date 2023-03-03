@@ -116,8 +116,8 @@ public abstract class AbstractStateBasedDomain<STATE extends IAbstractState<STAT
 		return mTools.orT(states.stream().map(x -> x.toTerm(mTools.getScript())).collect(Collectors.toList()));
 	}
 
-	public abstract STATE toState(Term[] conjuncts);
+	protected abstract STATE toState(Term[] conjuncts);
 
-	public abstract STATE getTopState();
+	protected abstract STATE getTopState();
 
 }
