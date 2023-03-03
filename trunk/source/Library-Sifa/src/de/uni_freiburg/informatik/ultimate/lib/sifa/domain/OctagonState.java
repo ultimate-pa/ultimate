@@ -59,19 +59,19 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 
 	/**
 	 * Map of numerical variable (ints and reals) names to the index of the corresponding block row/column in the
-	 * octagon matrix {@link #mNumericAbstraction}. Block row/column i contains the rows/columns 2i and 2i+1.
+	 * octagon matrix {@link #mMatrix}. Block row/column i contains the rows/columns 2i and 2i+1.
 	 */
-	private final Map<Term, Integer> mMapNumericVarToIndex;
+	private final Map<Term, Integer> mVarToIndex;
 
 	/** Abstract state for numeric variables (ints and reals). This is the actual octagon. */
-	private final OctMatrix mNumericAbstraction;
+	private final OctMatrix mMatrix;
 
 	private final boolean mAllVarsAreInt;
 
-	private OctagonState(final Map<Term, Integer> mapNumericVarToIndex, final OctMatrix numericAbstraction,
+	private OctagonState(final Map<Term, Integer> varToIndex, final OctMatrix matrix,
 			final boolean allVarsAreInt) {
-		mMapNumericVarToIndex = mapNumericVarToIndex;
-		mNumericAbstraction = numericAbstraction;
+		mVarToIndex = varToIndex;
+		mMatrix = matrix;
 		mAllVarsAreInt = allVarsAreInt;
 	}
 
@@ -147,8 +147,8 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 	}
 
 	private Term[] getIndexToTermArray() {
-		final Term[] result = new Term[mMapNumericVarToIndex.size()];
-		for (final Entry<Term, Integer> entry : mMapNumericVarToIndex.entrySet()) {
+		final Term[] result = new Term[mVarToIndex.size()];
+		for (final Entry<Term, Integer> entry : mVarToIndex.entrySet()) {
 			result[entry.getValue()] = entry.getKey();
 		}
 		return result;
@@ -161,24 +161,23 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 
 	@Override
 	public String toString() {
-		return Arrays.toString(getIndexToTermArray()) + "\n" + mNumericAbstraction.toString();
+		return Arrays.toString(getIndexToTermArray()) + "\n" + mMatrix.toString();
 	}
 
 	private OctMatrix cachedSelectiveClosure() {
-		return mAllVarsAreInt ? mNumericAbstraction.cachedTightClosure() : mNumericAbstraction.cachedStrongClosure();
+		return mAllVarsAreInt ? mMatrix.cachedTightClosure() : mMatrix.cachedStrongClosure();
 	}
 
 	private OctagonState applyMergeOperator(final OctagonState other, final BinaryOperator<OctMatrix> matrixOp) {
 		final Map<Term, Integer> varToIndex = new HashMap<>();
-		final Set<Term> allVars =
-				DataStructureUtils.union(mMapNumericVarToIndex.keySet(), other.mMapNumericVarToIndex.keySet());
+		final Set<Term> allVars = DataStructureUtils.union(mVarToIndex.keySet(), other.mVarToIndex.keySet());
 		final int[] copyInstructions1 = new int[allVars.size()];
 		final int[] copyInstructions2 = new int[allVars.size()];
-		int lastIndex = mMapNumericVarToIndex.size();
+		int lastIndex = mVarToIndex.size();
 		boolean allVarsAreInt = mAllVarsAreInt;
 		for (final Term variable : allVars) {
-			final int index1 = mMapNumericVarToIndex.getOrDefault(variable, -1);
-			final int index2 = other.mMapNumericVarToIndex.getOrDefault(variable, -1);
+			final int index1 = mVarToIndex.getOrDefault(variable, -1);
+			final int index2 = other.mVarToIndex.getOrDefault(variable, -1);
 			if (index1 != -1) {
 				varToIndex.put(variable, index1);
 				copyInstructions1[index1] = index1;
@@ -209,12 +208,12 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 	}
 
 	private OctMatrix bestAvailableClosure() {
-		if (mAllVarsAreInt && mNumericAbstraction.hasCachedTightClosure()) {
-			return mNumericAbstraction.cachedTightClosure();
-		} else if (mNumericAbstraction.hasCachedStrongClosure()) {
-			return mNumericAbstraction.cachedStrongClosure();
+		if (mAllVarsAreInt && mMatrix.hasCachedTightClosure()) {
+			return mMatrix.cachedTightClosure();
+		} else if (mMatrix.hasCachedStrongClosure()) {
+			return mMatrix.cachedStrongClosure();
 		}
-		return mNumericAbstraction;
+		return mMatrix;
 	}
 
 	@Override
