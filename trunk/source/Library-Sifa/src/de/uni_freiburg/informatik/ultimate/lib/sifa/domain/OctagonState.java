@@ -141,8 +141,9 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 		}
 		final BigDecimal constantAsDecimal =
 				new BigDecimal(constant.numerator()).divide(new BigDecimal(constant.denominator()));
+		// OctagonRelation and OctMatrix use different representations, therefore we need to negate var2Negated
 		matrix.assumeVarRelationLeConstant(varToIndex.get(octRel.getVar1()), var1Negated,
-				varToIndex.get(octRel.getVar2()), var2Negated, new OctValue(constantAsDecimal));
+				varToIndex.get(octRel.getVar2()), !var2Negated, new OctValue(constantAsDecimal));
 	}
 
 	private Term[] getIndexToTermArray() {
