@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -57,10 +56,7 @@ public class IntervalDomain extends AbstractStateBasedDomain<IntervalState> {
 
 	@Override
 	public IntervalState toState(final Term[] conjuncts) {
-		final List<SolvedBinaryRelation> solvedRelations =
-				Arrays.stream(conjuncts).flatMap(x -> solveForAllSubjects(x).stream()).collect(Collectors.toList());
-		Collections.sort(solvedRelations, new CompareNumberOfFreeVariablesInRhs(solvedRelations));
-
+		final List<SolvedBinaryRelation> solvedRelations = solveForAllSubjects(conjuncts);
 		final Map<Term, Interval> varToInterval = new HashMap<>();
 		boolean updated = true;
 		final long maxIterations =
@@ -108,18 +104,21 @@ public class IntervalDomain extends AbstractStateBasedDomain<IntervalState> {
 		return term;
 	}
 
-	private Collection<SolvedBinaryRelation> solveForAllSubjects(final Term term) {
-		final PolynomialRelation polyRel = PolynomialRelation.of(mTools.getScript(), term);
-		if (polyRel == null) {
-			return Collections.emptyList();
-		}
-		final Collection<SolvedBinaryRelation> result = new ArrayList<>();
-		for (final TermVariable subject : term.getFreeVars()) {
-			final SolvedBinaryRelation solved = polyRel.solveForSubject(mTools.getScript(), subject);
-			if (solved != null) {
-				result.add(solved);
+	private List<SolvedBinaryRelation> solveForAllSubjects(final Term[] conjuncts) {
+		final List<SolvedBinaryRelation> result = new ArrayList<>();
+		for (final Term term : conjuncts) {
+			final PolynomialRelation polyRel = PolynomialRelation.of(mTools.getScript(), term);
+			if (polyRel == null) {
+				continue;
+			}
+			for (final TermVariable subject : term.getFreeVars()) {
+				final SolvedBinaryRelation solved = polyRel.solveForSubject(mTools.getScript(), subject);
+				if (solved != null) {
+					result.add(solved);
+				}
 			}
 		}
+		Collections.sort(result, new CompareNumberOfFreeVariablesInRhs(result));
 		return result;
 	}
 
