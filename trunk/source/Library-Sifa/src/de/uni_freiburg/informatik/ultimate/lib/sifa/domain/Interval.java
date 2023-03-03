@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
-public final class Interval {
+public final class Interval implements INonrelationalValue<Interval> {
 
 	/**
 	 * The interval containing everything. Top intervals are unified, so {@code someInterval == TOP} can be used instead
@@ -121,6 +121,7 @@ public final class Interval {
 		return mLower.signum() <= 0 && mUpper.signum() >= 0;
 	}
 
+	@Override
 	public boolean isTop() {
 		assert (this == TOP) == (isNegInf(mLower) && isPosInf(mUpper)) : "Top interval was not unified";
 		return this == TOP;
@@ -181,10 +182,12 @@ public final class Interval {
 		return rhs.satisfyLessOrEqual(this).swap();
 	}
 
+	@Override
 	public Interval union(final Interval rhs) {
 		return Interval.of(min(mLower, rhs.mLower), max(mUpper, rhs.mUpper));
 	}
 
+	@Override
 	public Interval widen(final Interval rhs) {
 		return Interval.of(rhs.mLower.compareTo(mLower) < 0 ? Rational.NEGATIVE_INFINITY : mLower,
 				mUpper.compareTo(rhs.mUpper) < 0 ? Rational.POSITIVE_INFINITY : mUpper);
@@ -237,6 +240,7 @@ public final class Interval {
 		return String.format("[%s, %s]", mLower, mUpper);
 	}
 
+	@Override
 	public Term toTerm(final Term variable, final Script script) {
 		final List<Term> conjunction = new ArrayList<>(2);
 		if (hasLower()) {

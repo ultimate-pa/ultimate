@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Polynomia
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-public class IntervalDomain extends AbstractStateBasedDomain<IntervalState> {
+public class IntervalDomain extends AbstractStateBasedDomain<NonrelationalState<Interval>> {
 
 	public IntervalDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
 			final Supplier<IProgressAwareTimer> timeout) {
@@ -55,7 +55,7 @@ public class IntervalDomain extends AbstractStateBasedDomain<IntervalState> {
 	}
 
 	@Override
-	protected IntervalState toState(final Term[] conjuncts) {
+	protected NonrelationalState<Interval> toState(final Term[] conjuncts) {
 		final IProgressAwareTimer timer = mTimeout.get();
 		final List<SolvedBinaryRelation> solvedRelations = solveForAllSubjects(conjuncts);
 		final Map<Term, Interval> varToInterval = new HashMap<>();
@@ -90,12 +90,12 @@ public class IntervalDomain extends AbstractStateBasedDomain<IntervalState> {
 			mLogger.debug("Relations used to update are %s.", solvedRelations);
 			mLogger.debug("Interval values after last iteration are %s.", varToInterval);
 		}
-		return new IntervalState(varToInterval);
+		return new NonrelationalState<>(varToInterval);
 	}
 
 	@Override
-	protected IntervalState getTopState() {
-		return new IntervalState();
+	protected NonrelationalState<Interval> getTopState() {
+		return new NonrelationalState<>();
 	}
 
 	@Override

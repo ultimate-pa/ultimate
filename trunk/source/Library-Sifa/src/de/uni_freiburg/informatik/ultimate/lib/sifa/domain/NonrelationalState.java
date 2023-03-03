@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * Copyright (C) 2023 Frank Schüssele (schuessf@tf.uni-freiburg.de)
- * Copyright (C) 2019-2023 University of Freiburg
+ * Copyright (C) 2023 University of Freiburg
  *
  * This file is part of the ULTIMATE Library-Sifa plug-in.
  *
@@ -30,36 +29,35 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Map.Entry;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
- * State used in {@link IntervalDomain}
+ * Class to represent a state in a non-relational domain
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
- * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  *
  */
-public class IntervalState implements IAbstractState<IntervalState> {
-	private final Map<Term, Interval> mVariablesToValues;
+public class NonrelationalState<VALUE extends INonrelationalValue<VALUE>>
+		implements IAbstractState<NonrelationalState<VALUE>> {
+	private final Map<Term, VALUE> mVariablesToValues;
 
 	/**
 	 * Creates a new state with the given variable mapping.
 	 */
-	public IntervalState(final Map<Term, Interval> variablesToValues) {
+	public NonrelationalState(final Map<Term, VALUE> variablesToValues) {
 		mVariablesToValues = variablesToValues;
 	}
 
 	/**
 	 * Creates a top state
 	 */
-	public IntervalState() {
+	public NonrelationalState() {
 		this(Map.of());
 	}
 
@@ -70,28 +68,32 @@ public class IntervalState implements IAbstractState<IntervalState> {
 		return SmtUtils.and(script, conjunction);
 	}
 
-	private IntervalState merge(final IntervalState other, final BinaryOperator<Interval> operator) {
-		final Set<Term> allVars =
-				DataStructureUtils.union(mVariablesToValues.keySet(), other.mVariablesToValues.keySet());
-		final Map<Term, Interval> join = new HashMap<>();
-		for (final Term var : allVars) {
-			final Interval value1 = mVariablesToValues.getOrDefault(var, Interval.TOP);
-			final Interval value2 = other.mVariablesToValues.getOrDefault(var, Interval.TOP);
-			final Interval joinedValue = operator.apply(value1, value2);
+	private NonrelationalState<VALUE> merge(final NonrelationalState<VALUE> other,
+			final BinaryOperator<VALUE> operator) {
+		final Map<Term, VALUE> join = new HashMap<>();
+		for (final Entry<Term, VALUE> entry : mVariablesToValues.entrySet()) {
+			final Term var = entry.getKey();
+			final VALUE otherValue = other.mVariablesToValues.get(var);
+			if (otherValue == null) {
+				// The variable is not present in the second state (i.e. it is top).
+				// Therefore it is also top in the union and we omit it.
+				continue;
+			}
+			final VALUE joinedValue = operator.apply(entry.getValue(), otherValue);
 			if (!joinedValue.isTop()) {
 				join.put(var, joinedValue);
 			}
 		}
-		return new IntervalState(join);
+		return new NonrelationalState<>(join);
 	}
 
 	@Override
-	public IntervalState join(final IntervalState other) {
-		return merge(other, Interval::union);
+	public NonrelationalState<VALUE> join(final NonrelationalState<VALUE> other) {
+		return merge(other, VALUE::union);
 	}
 
 	@Override
-	public IntervalState widen(final IntervalState other) {
-		return merge(other, Interval::widen);
+	public NonrelationalState<VALUE> widen(final NonrelationalState<VALUE> other) {
+		return merge(other, VALUE::widen);
 	}
 }
