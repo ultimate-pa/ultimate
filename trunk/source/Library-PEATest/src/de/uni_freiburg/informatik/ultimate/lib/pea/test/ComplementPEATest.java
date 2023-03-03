@@ -93,8 +93,6 @@ public class ComplementPEATest {
 		if (phaseA.getStateInvariant() != phaseB.getStateInvariant() || phaseA.getClockInvariant() != phaseB.getClockInvariant()) {
 			return false;
 		}
-		List<Transition> transA = phaseA.getTransitions();
-		List<Transition> transB = phaseB.getTransitions();
 		return true;
 	}
 	
@@ -119,6 +117,17 @@ public class ComplementPEATest {
 		assertTrue(phases[0].getName() == "sink");
 		assertTrue(phases[0].getAccepting());
 		assertEquals(originalPhases.length, phases.length - 1);
+	}
+	
+	@Test 
+	public void testNoReset1() {
+		CDD clkInv1 = RangeDecision.create("clk1",  RangeDecision.OP_LTEQ, 5);
+		CDD clkInv2 = RangeDecision.create("clk2",  RangeDecision.OP_LTEQ, 6);
+		CDD clkInv3 = RangeDecision.create("clk3",  RangeDecision.OP_LTEQ, 5);
+		CDD clkInv4 = RangeDecision.create("clk4",  RangeDecision.OP_LTEQ, 6);
+
+		CDD clkInvCombi = clkInv1.and(clkInv2).or(clkInv4).and(clkInv3);
+		String clkInvString = clkInvCombi.toString();
 	}
 	
 }

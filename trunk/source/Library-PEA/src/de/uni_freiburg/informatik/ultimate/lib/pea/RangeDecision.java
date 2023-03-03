@@ -384,46 +384,46 @@ public class RangeDecision extends Decision<RangeDecision> {
 	}
 
 	@Override
-	public String toSmtString(final int childs) {
+	public String toSmtString(final int trueChildIndex) {
 		final String var = "(- T_" + " " + mVar + ")";
 
-		if (childs == 0) {
+		if (trueChildIndex == 0) {
 			return "( " + (((mLimits[0] & 1) == 0) ? " < " : " <= ") + var + " " + (mLimits[0] / 2) + ".0)";
 		}
 
-		if (childs == mLimits.length) {
+		if (trueChildIndex == mLimits.length) {
 			return "( " + (((mLimits[mLimits.length - 1] & 1) == 1) ? " > " : " >= ") + var + " "
 					+ (mLimits[mLimits.length - 1] / 2) + ".0)";
 		}
 
-		if ((mLimits[childs - 1] / 2) == (mLimits[childs] / 2)) {
-			return " (= " + var + " " + (mLimits[childs] / 2) + ".0)";
+		if ((mLimits[trueChildIndex - 1] / 2) == (mLimits[trueChildIndex] / 2)) {
+			return " (= " + var + " " + (mLimits[trueChildIndex] / 2) + ".0)";
 		}
 
-		return "(and (" + (((mLimits[childs - 1] & 1) == 1) ? " < " : " <= ") + (mLimits[childs - 1] / 2) + ".0 " + var
-				+ ") (" + (((mLimits[childs] & 1) == 0) ? " < " : ".0 <= ") + var + " " + (mLimits[childs] / 2)
+		return "(and (" + (((mLimits[trueChildIndex - 1] & 1) == 1) ? " < " : " <= ") + (mLimits[trueChildIndex - 1] / 2) + ".0 " + var
+				+ ") (" + (((mLimits[trueChildIndex] & 1) == 0) ? " < " : ".0 <= ") + var + " " + (mLimits[trueChildIndex] / 2)
 				+ "0. ))";
 	}
 
-	public int getVal(final int childs) {
-		if ((childs == 0) || (childs == 1)) {
+	public int getVal(final int trueChildIndex) {
+		if ((trueChildIndex == 0) || (trueChildIndex == 1)) {
 			return (mLimits[0] / 2);
 		}
 
 		return -1;
 	}
 
-	public int getOp(final int childs) {
-		if (childs == 0) {
+	public int getOp(final int trueChildIndex) {
+		if (trueChildIndex == 0) {
 			return (((mLimits[0] & 1) == 0) ? OP_LT : OP_LTEQ);
 		}
 
-		if (childs == mLimits.length) {
+		if (trueChildIndex == mLimits.length) {
 			// expects 1
 			return (((mLimits[mLimits.length - 1] & 1) == 1) ? OP_GT : OP_GTEQ);
 		}
 
-		if ((mLimits[childs - 1] / 2) == (mLimits[childs] / 2)) {
+		if ((mLimits[trueChildIndex - 1] / 2) == (mLimits[trueChildIndex] / 2)) {
 			return OP_EQ;
 		}
 

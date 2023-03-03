@@ -40,7 +40,7 @@ public class ComplementPEA {
 		// set sink as initial phase 
 		
 		for (Phase phase : mPEAtoComplement.getPhases()) {
-			CDD guardToSink = phase.stateInv.and(strict(phase.clockInv));
+			CDD guardToSink = phase.stateInv.and(strict(phase.clockInv, CDD.TRUE));
 			// create new phase for complement automaton that is not accepting
 			Phase newPhase = new Phase(phase.name, phase.stateInv, phase.clockInv);
 			newPhase.setAccepting(false);
@@ -59,11 +59,13 @@ public class ComplementPEA {
 				// compute guard to sink
 				// we do not use the clock invariant of the successor phase
 				// if the same clock is in the reset set of the transition
+				CDD noResetCdd = CDD.TRUE;
+				CDD strictCdd = CDD.TRUE;
 				if (reset.length > 0) {
-					CDD noResetClockInv = noReset(successorClockInv, reset);
-					guardToSink = guardToSink.or(transition.getGuard().and(successorStateInv).and(strict(noResetClockInv)));
+					CDD noResetClockInv = noReset(successorClockInv, reset, noResetCdd);
+					guardToSink = guardToSink.or(transition.getGuard().and(successorStateInv).and(strict(noResetClockInv, strictCdd)));
 				} else {
-					guardToSink = guardToSink.or(transition.getGuard().and(successorStateInv).and(strict(successorClockInv)));
+					guardToSink = guardToSink.or(transition.getGuard().and(successorStateInv).and(strict(successorClockInv, strictCdd)));
 				}
 			}
 			// make transition to sink 
@@ -93,12 +95,12 @@ public class ComplementPEA {
 	}
 	
 	/**
-	 * Computes a CDD representing strict(clockInv)
+	 * Computes a CDD representing strict(clockInv
+	 * TODO: move to RangeDecision Class
 	 * 
 	 * @param clockInv: the clock invariant that will be strictified
 	 */
-	public CDD strict(CDD clockInv) {
-		CDD strict = CDD.TRUE;
+	public CDD strict(CDD clockInv, CDD strict) {
 		Decision<?> clockInvNonStrictDecision =  clockInv.getDecision();
 		if (clockInvNonStrictDecision instanceof RangeDecision) {
 			RangeDecision decision  = (RangeDecision) clockInvNonStrictDecision;
@@ -121,7 +123,7 @@ public class ComplementPEA {
 				strict.and(clockInv);
 			}
 			for (CDD child : clockInv.getChilds()) {
-				return strict(child);
+				return strict(child, strict);
 			}
 		}
 		return strict;
@@ -132,12 +134,17 @@ public class ComplementPEA {
 	 * Computes a CDD representing the conjunction of the RangeDecision-Nodes in the CDD given 
 	 * that are NOT in the reset set also given.
 	 * 
+	 * TODO move to RangeDecision class
+	 * TODO rename filterCDDbyArray()
+	 * 
 	 * @param clockInv: Clock invariant of some phase.
 	 * 
 	 * @param reset: the reset set of an incoming transition of that phase.
 	 */
-	public CDD noReset(CDD clockInv, String[] reset) {
-		CDD noReset = CDD.TRUE;
+	public CDD noReset(CDD clockInv, String[] reset, CDD noReset) {
+		if (clockInv.getChilds() == null) { // terminal node
+			return noReset; // no clock invariant
+		}
 		Decision<?> clockInvDecision = clockInv.getDecision();
 		if (clockInvDecision instanceof RangeDecision) {
 			RangeDecision decision = (RangeDecision) clockInvDecision;
@@ -148,9 +155,10 @@ public class ComplementPEA {
 			}
 			CDD[] childs = clockInv.getChilds();
 			for (CDD cdd : childs) {
-				return noReset(cdd, reset);
+				return noReset(cdd, reset, noReset);
 			}
 		}
 		return noReset;
 	}
+	
 }
