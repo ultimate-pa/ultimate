@@ -66,7 +66,7 @@ public class QuantifierEliminationTodos {
 	private static final LogLevel LOG_LEVEL = LogLevel.DEBUG;
 	private static final LogLevel LOG_LEVEL_SOLVER = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
-//	private static final String SOLVER_COMMAND = "smtinterpol -q";
+//	private static final String SOLVER_COMMAND = "INTERNAL_SMTINTERPOL:10000";
 //	private static final String SOLVER_COMMAND = "cvc5 --incremental --lang smt";
 
 	private IUltimateServiceProvider mServices;
@@ -129,48 +129,6 @@ public class QuantifierEliminationTodos {
 		final String expextedResultAsString = "(<= 50.0 T1)";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expextedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-
-	@Test
-	public void choirNightTrezor04Triathlon() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "i", "b"), };
-		final String formulaAsString = "(forall ((diva Int) (moda Int)) (or (<= 4294967296 (+ (* 4294967296 diva) moda)) (and (< 0 (mod (+ (* b 4294967295) moda) 4294967296)) (<= (mod (+ (* b 4294967295) moda) 4294967296) 1)) (> 0 moda) (>= moda 4294967296) (<= (+ (* 4294967296 diva) moda) (mod i 4294967296)) (< (mod (+ i 1) 4294967296) moda) (< (+ (* 4294967296 diva) moda) 0)))";
-		final String expectedResult = "(let ((.cse0 (* b (- 4294967295))) (.cse1 (* b 4294967295)) (.cse2 (mod i 4294967296))) (and (<= (div (+ .cse0 (* (mod (+ i 1) 4294967296) (- 1)) 1) (- 4294967296)) (+ (div (+ .cse1 .cse2 (- 4294967295)) 4294967296) 1)) (<= (div (+ .cse0 (- 4294967296)) (- 4294967296)) (+ (div (+ .cse1 .cse2) 4294967296) 1))))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
-	public void choirNightTrezor04Triathlon2() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "i", "b"), };
-		final String formulaAsString = "(forall ((diva Int) (moda Int)) (or (<= 4294967296 (+ (* 4294967296 diva) moda)) (<= (mod (+ (* b 4294967295) moda) 4294967296) 1)  (<= (+ (* 4294967296 diva) moda) (mod i 4294967296)) (< (+ (* 4294967296 diva) moda) 0)))";
-		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
-	public void choirNightTrezor04Triathlon3() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "i", "b"), };
-		final String formulaAsString = "(forall ((diva Int) (moda Int)) (or (<= 4294967296 (+ (* 4294967296 diva) moda)) (<= (mod (+ (* b 4294967295) moda) 4294967296) 1)  (<= (+ (* 4294967296 diva) moda) (mod i 4294967296)) (< (+ (* 4294967296 diva) moda) 0)))";
-		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
-	public void choirNightTrezor04Triathlon4() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "i", "b"), };
-		final String formulaAsString = "(forall ((diva Int) (aux_mod_moda_42 Int) (aux_div_moda_42 Int)) (or (> 0 aux_mod_moda_42) (<= aux_mod_moda_42 1) (<= (+ (* 4294967295 b) 4294967296) (+ (* 4294967296 diva) aux_mod_moda_42 (* 4294967296 aux_div_moda_42))) (>= aux_mod_moda_42 4294967296) (<= (+ (* 4294967296 diva) aux_mod_moda_42 (* 4294967296 aux_div_moda_42)) (+ (* 4294967295 b) (mod i 4294967296))) (< (+ (* 4294967296 diva) aux_mod_moda_42 (* 4294967296 aux_div_moda_42)) (* 4294967295 b))))";
-		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
-	public void choirNightTrezor04Triathlon5() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "b"), };
-		final String formulaAsString = "(forall ((x Int)) (<= (+ (* 7 b) 8) (* 8 x))))";
-		final String expectedResult = "false";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-
 
 	/**
 	 * Regression test for bug in array PQE. Should maybe be moved to different file.

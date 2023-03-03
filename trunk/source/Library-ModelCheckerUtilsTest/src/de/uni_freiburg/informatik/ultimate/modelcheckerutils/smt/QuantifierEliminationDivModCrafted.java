@@ -130,6 +130,38 @@ public class QuantifierEliminationDivModCrafted {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void choirNightTrezor04Triathlon1() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "i", "b"), };
+		final String formulaAsString = "(forall ((diva Int) (moda Int)) (or (<= 4294967296 (+ (* 4294967296 diva) moda)) (and (< 0 (mod (+ (* b 4294967295) moda) 4294967296)) (<= (mod (+ (* b 4294967295) moda) 4294967296) 1)) (> 0 moda) (>= moda 4294967296) (<= (+ (* 4294967296 diva) moda) (mod i 4294967296)) (< (mod (+ i 1) 4294967296) moda) (< (+ (* 4294967296 diva) moda) 0)))";
+		final String expectedResult = "(let ((.cse0 (mod (* b 4294967295) 4294967296)) (.cse3 (mod i 4294967296))) (let ((.cse1 (+ .cse0 .cse3)) (.cse2 (+ .cse0 (mod (+ i 1) 4294967296)))) (and (or (< (+ (* (div (+ (- 1) .cse0) 4294967296) 4294967296) 4294967295) .cse1) (< .cse2 (+ (* (div (+ .cse0 (- 4294967297)) 4294967296) 4294967296) 8589934592))) (< .cse2 4294967298) (or (< 4294967294 .cse1) (< .cse2 (+ (* (div (+ .cse3 (- 4294967295)) 4294967296) 4294967296) 4294967298))))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void choirNightTrezor04Triathlon2() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "i", "b"), };
+		final String formulaAsString = "(forall ((diva Int) (moda Int)) (or (<= 4294967296 (+ (* 4294967296 diva) moda)) (<= (mod (+ (* b 4294967295) moda) 4294967296) 1)  (<= (+ (* 4294967296 diva) moda) (mod i 4294967296)) (< (+ (* 4294967296 diva) moda) 0)))";
+		final String expectedResult = "(let ((.cse0 (mod i 4294967296))) (or (< 4294967294 .cse0) (let ((.cse1 (* b 4294967295))) (< (+ 4294967294 (* 4294967296 (div (+ .cse1 4294967293) 4294967296))) (+ .cse0 .cse1)))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void choirNightTrezor04Triathlon3() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "i", "b"), };
+		final String formulaAsString = "(forall ((diva Int) (aux_mod_moda_42 Int) (aux_div_moda_42 Int)) (or (> 0 aux_mod_moda_42) (<= aux_mod_moda_42 1) (<= (+ (* 4294967295 b) 4294967296) (+ (* 4294967296 diva) aux_mod_moda_42 (* 4294967296 aux_div_moda_42))) (>= aux_mod_moda_42 4294967296) (<= (+ (* 4294967296 diva) aux_mod_moda_42 (* 4294967296 aux_div_moda_42)) (+ (* 4294967295 b) (mod i 4294967296))) (< (+ (* 4294967296 diva) aux_mod_moda_42 (* 4294967296 aux_div_moda_42)) (* 4294967295 b))))";
+		final String expectedResult = "(let ((.cse0 (mod i 4294967296))) (or (< 4294967294 .cse0) (let ((.cse1 (* b 4294967295))) (< (+ 4294967294 (* 4294967296 (div (+ .cse1 4294967293) 4294967296))) (+ .cse0 .cse1)))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void choirNightTrezor04Triathlon4() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "b"), };
+		final String formulaAsString = "(forall ((x Int)) (<= (+ (* 7 b) 8) (* 8 x))))";
+		final String expectedResult = "false";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	/**
 	 * Minimal formula that revealed bug in `div` elimination.
 	 */
@@ -222,7 +254,6 @@ public class QuantifierEliminationDivModCrafted {
 		final String expectedResult = "(< (+ e d (* c 100)) 0)";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-
 
 	@Test
 	public void divFountainPositiveExists() {
