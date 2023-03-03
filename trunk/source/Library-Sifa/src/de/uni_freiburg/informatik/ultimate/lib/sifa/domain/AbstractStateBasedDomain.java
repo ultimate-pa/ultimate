@@ -18,7 +18,7 @@ public abstract class AbstractStateBasedDomain<STATE extends IAbstractState<STAT
 	protected final ILogger mLogger;
 	protected final SymbolicTools mTools;
 	private final int mMaxDisjuncts;
-	private final Supplier<IProgressAwareTimer> mTimeout;
+	protected final Supplier<IProgressAwareTimer> mTimeout;
 	private final WeakHashMap<IPredicate, List<STATE>> mPredicateCache = new WeakHashMap<>();
 
 	public AbstractStateBasedDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,

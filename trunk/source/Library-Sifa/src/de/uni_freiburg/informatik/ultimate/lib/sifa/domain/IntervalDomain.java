@@ -56,20 +56,20 @@ public class IntervalDomain extends AbstractStateBasedDomain<IntervalState> {
 
 	@Override
 	protected IntervalState toState(final Term[] conjuncts) {
+		final IProgressAwareTimer timer = mTimeout.get();
 		final List<SolvedBinaryRelation> solvedRelations = solveForAllSubjects(conjuncts);
 		final Map<Term, Interval> varToInterval = new HashMap<>();
 		boolean updated = true;
 		final long maxIterations =
 				1 + solvedRelations.stream().map(SolvedBinaryRelation::getLeftHandSide).distinct().count();
 		for (int iteration = 1; updated && iteration <= maxIterations; ++iteration) {
-			// TODO: Should we pass a timer for this?
-			// if (!timer.continueProcessing()) {
-			// mLogger.warn("Term to interval evaluator loop timed out before fixpoint was reached. "
-			// + "Continuing with non-optimal over-approximation.");
-			// // further iterations will make the abstract state only more precise
-			// // current state is a legit over-approximation
-			// break;
-			// }
+			if (!timer.continueProcessing()) {
+				mLogger.warn("Term to interval evaluator loop timed out before fixpoint was reached. "
+						+ "Continuing with non-optimal over-approximation.");
+				// further iterations will make the abstract state only more precise
+				// current state is a legit over-approximation
+				break;
+			}
 			updated = false;
 			for (final SolvedBinaryRelation rel : solvedRelations) {
 				final Optional<Interval> updatedLhsInterval = updatedLhsInterval(varToInterval, rel);
