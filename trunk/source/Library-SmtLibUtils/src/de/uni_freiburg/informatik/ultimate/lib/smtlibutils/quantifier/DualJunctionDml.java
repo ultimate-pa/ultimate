@@ -109,6 +109,9 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 						}
 						assert !divisorAsRational.numerator().equals(BigInteger.ZERO);
 						assert divisorAsRational.denominator().equals(BigInteger.ONE);
+						if (divisorAsRational.isNegative()) {
+							throw new AssertionError("UltimateNormalForm makes sure that divisors are non-negative");
+						}
 						divisorAsBigInteger = divisorAsRational.numerator();
 					}
 					final Term dividentAsTerm = appTerm.getParameters()[0];
@@ -131,7 +134,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 					final BigInteger inverse;
 					{
 						final BigInteger tmp = ArithmeticUtils.multiplicativeInverse(ceo.getCoefficient(),
-								divisorAsBigInteger.abs());
+								divisorAsBigInteger);
 						// In order to simplify other parts of the algorithm, we want to make sure that
 						// the multiplication of coefficient and inverse is always positive. Hence, if
 						// the coefficient was negative, we have to take a negative inverse.
