@@ -71,6 +71,13 @@ import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 public class DualJunctionDml extends DualJunctionQuantifierElimination {
 
 	private static final boolean ENABLE_DIV_ELIMINATION = true;
+	//
+	/**
+	 * TODO 20230305 Matthias: Looks very useful but has surprisingly bad effects on
+	 * {@link QuantifierEliminationDivModCrafted#bvToIntFoxExists04}.
+	 *
+	 */
+	private static final boolean EXCLUDE_CORRESPONDING_FINITE_JUNCTIONS = false;
 
 	public DualJunctionDml(final ManagedScript script, final IUltimateServiceProvider services) {
 		super(script, services);
@@ -91,6 +98,13 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
 			for (final Term dualJunct : dualFiniteJuncts) {
+				if (QuantifierUtils.isCorrespondingFiniteJunction(inputEt.getQuantifier(), dualJunct)
+						&& EXCLUDE_CORRESPONDING_FINITE_JUNCTIONS) {
+					// If this is e.g., a disjunction in a conjunction, we skip the conjunct.
+					// Rationale, we will take care of this after applying distributivity and then
+					// our chances are higher that the newly introduced variables can be eliminated.
+					continue;
+				}
 				final Predicate<Term> isDivModTerm = (x -> isDivModTerm(x));
 				final boolean onlyOutermost = false;
 				final Set<Term> divModSubterms = SubTermFinder.find(dualJunct, isDivModTerm, onlyOutermost);
