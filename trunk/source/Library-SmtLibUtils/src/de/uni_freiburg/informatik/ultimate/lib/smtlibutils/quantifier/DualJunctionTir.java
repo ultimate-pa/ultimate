@@ -44,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol.BvSignedness;
@@ -56,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Polynomia
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionTir.TirPossibility.CostEstimation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionTir.TirPossibility.Difficulty;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -97,6 +100,18 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	private static final boolean HANDLE_DER_OPERATOR = false;
 	private static final boolean COMPARE_TO_OLD_RESULT = false;
 	private static final boolean ERROR_FOR_OMEGA_TEST_APPLICABILITY = false;
+	/**
+	 * This elimination introduces typically a formula with many redundant
+	 * subformulas. Often the PolyPac simplification which is applied after each
+	 * elimination step removes many redundant subformulas. If we have `div` terms
+	 * (sometimes introduced by this elimination) the PolyPac simplification is
+	 * often useless. Instead we should use SimplifyDDA here. <br />
+	 * TODO 20230503 Matthias: Ideas for further optimizations.
+	 * <li>Benchmark if SimplifyDDA should always be used here.
+	 * <li>Omit the simplification in the QuantifierPusher if we simplified here
+	 * already.
+	 */
+	private static final boolean SIMPLIFYDDA_AFTER_DIV_INTRODUCTION = true;
 
 	/**
 	 * @see constructor
@@ -156,8 +171,27 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				if (tirConstraints != null) {
 					final List<Term> resultDualFiniteJuncts = new ArrayList<>(tirPossibility.getWithoutEliminatee());
 					resultDualFiniteJuncts.add(tirConstraints);
-					final Term resultTerm = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
-							resultDualFiniteJuncts);
+					final Term resultTerm;
+					{
+						final Term tmp1 = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
+								resultDualFiniteJuncts);
+						if (SIMPLIFYDDA_AFTER_DIV_INTRODUCTION
+								&& tirPossibility.getCostEstimation().getDifficulty() == Difficulty.NO_SIDE_ONE) {
+							final Term tmp2 = SmtUtils.simplify(mMgdScript, tmp1,
+									inputEt.getContext().getCriticalConstraint(), mServices,
+									SimplificationTechnique.POLY_PAC);
+							final ExtendedSimplificationResult tmp3 = SmtUtils.simplifyWithStatistics(mMgdScript, tmp2,
+									inputEt.getContext().getCriticalConstraint(), mServices,
+									SimplificationTechnique.SIMPLIFY_DDA);
+							resultTerm = tmp3.getSimplifiedTerm();
+							if (mLogger.isDebugEnabled()) {
+								mLogger.debug(String.format("TIR eliminated %s via div, SimplifyDDA %s",
+										tirPossibility.getEliminatee(), tmp3.buildSizeReductionMessage()));
+							}
+						} else {
+							resultTerm = tmp1;
+						}
+					}
 					if (COMPARE_TO_OLD_RESULT) {
 						final Term old = XnfTir.tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
 								inputEt.getTerm(), tirPossibility.getEliminatee(), bannedForDivCapture);
