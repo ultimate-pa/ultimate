@@ -158,19 +158,17 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 					resultDualFiniteJuncts.add(tirConstraints);
 					final Term resultTerm = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
 							resultDualFiniteJuncts);
-					if (resultTerm != null) {
-						if (COMPARE_TO_OLD_RESULT) {
-							final Term old = XnfTir.tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
-									inputEt.getTerm(), tirPossibility.getEliminatee(), bannedForDivCapture);
-							if (old != null) {
-								final LBool test = SmtUtils.checkEquivalence(old, resultTerm, mScript);
-								if (test != LBool.UNSAT) {
-									mLogger.info("unexp:" + inputEt.toTerm(mScript) + "   old:" + old + "     new:"
-											+ resultTerm);
-								}
-								assert test == LBool.UNSAT : "unexp:" + inputEt.toTerm(mScript) + "   old:" + old
-										+ "     new:" + resultTerm;
+					if (COMPARE_TO_OLD_RESULT) {
+						final Term old = XnfTir.tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
+								inputEt.getTerm(), tirPossibility.getEliminatee(), bannedForDivCapture);
+						if (old != null) {
+							final LBool test = SmtUtils.checkEquivalence(old, resultTerm, mScript);
+							if (test != LBool.UNSAT) {
+								mLogger.info("unexp:" + inputEt.toTerm(mScript) + "   old:" + old + "     new:"
+										+ resultTerm);
 							}
+							assert test == LBool.UNSAT : "unexp:" + inputEt.toTerm(mScript) + "   old:" + old
+									+ "     new:" + resultTerm;
 						}
 					}
 					return new EliminationResult(inputEt.update(resultTerm), Collections.emptySet());
