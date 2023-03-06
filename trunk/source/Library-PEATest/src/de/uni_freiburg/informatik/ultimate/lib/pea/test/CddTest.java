@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import org.junit.Test;
@@ -14,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
+import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimplePair;
 
 /**
  * TODO: Moved the main method from CDD to this class; make unit tests from it.
@@ -31,12 +33,19 @@ public class CddTest {
 	CDD mTestCddTest4;
 	ArrayList<Decision<?>> mExpectedTest4;
 	
+	CDD mCDDTest2;
+	ArrayList<SimplePair<Decision<?>, Integer>> mExpected2;
+	HashMap<String, SimplePair<Decision<?>, Integer>> mExpected2HashMap;
+	
 	public CddTest() {
 		mTestCddsTest3 = new ArrayList<CDD>();
 		mExpectedTest3 = new ArrayList<Decision<?>>();
 		mExpectedTest4 = new ArrayList<Decision<?>>();
+		mExpected2 = new ArrayList<SimplePair<Decision<?>, Integer>>();
+		mExpected2HashMap = new HashMap<>();
 		createTestCDDsTest3();
 		createTestCDDTest4();
+		createTestCDD1();
 		
 	}
 	
@@ -71,14 +80,44 @@ public class CddTest {
 		
 		CDD c1 = mTestCddsTest3.get(0);
 		CDD c2 = mTestCddsTest3.get(1);
+		CDD c3 = mTestCddsTest3.get(2);
+		CDD c4 = mTestCddsTest3.get(3);
  
 		mExpectedTest4.add(c1.getDecision());
 		mExpectedTest4.add(c2.getDecision());
 		
-		CDD subCDD1 = a.and(c1);
-		CDD subCDD2 = b.negate().or(c2);
+		CDD c5 = RangeDecision.create("c5", RangeDecision.OP_GT, 5);
+		CDD c6 = RangeDecision.create("c6", RangeDecision.OP_GT, 5);
+		CDD c7 = RangeDecision.create("c7", RangeDecision.OP_GT, 5);
 		
-		mTestCddTest4 = subCDD1.and(subCDD2); 
+		CDD conjunctionGTCdd = c5.and(c7).and(c7);
+		
+		CDD subCDD1 = c2.and(c1);
+		CDD subCDD2 = c3.and(c4);
+		
+		mTestCddTest4 = subCDD1.or(subCDD2); 
+		CDD testCddTest4DNF = mTestCddTest4.toDNF_CDD();
+		CDD conjunctions[] = mTestCddTest4.toDNF();
+	}
+	
+	public void createTestCDD1() {
+		CDD a = BooleanDecision.create("a");
+		mExpected2.add(new SimplePair<Decision<?>, Integer>(a.getDecision(), 0));
+		CDD b = BooleanDecision.create("b");
+		CDD notb = b.negate();
+		mExpected2.add(new SimplePair<Decision<?>, Integer>(notb.getDecision(), 1));
+		CDD c5 = RangeDecision.create("c5", RangeDecision.OP_GT, 5);
+		mExpected2.add(new SimplePair<Decision<?>, Integer>(c5.getDecision(), 1));
+		CDD c6 = RangeDecision.create("c6", RangeDecision.OP_GT, 5);
+		mExpected2.add(new SimplePair<Decision<?>, Integer>(c6.getDecision(), 1));
+		
+		mCDDTest2 = a.and(c6).and(notb).and(c5);
+		
+		for (SimplePair<Decision<?>, Integer> simplePair : mExpected2) {
+			mExpected2HashMap.put(simplePair.getFirst().getVar(), simplePair);
+		}
+		
+		
 	}
 
 	/**
@@ -145,60 +184,78 @@ public class CddTest {
 //		System.out.println("The formula " + cdd.toString() + " is atomic: " + cdd.isAtomic());
 //	}
 	
-	/**
-	 * Test fringe case 1: 
-	 * 		CDD.TRUE
-	 */
+//	/**
+//	 * Test fringe case 1: 
+//	 * 		CDD.TRUE
+//	 */
+//	@Test
+//	public void getDecisionsTest1() {
+//		HashSet<Decision<?>> actual = CDD.TRUE.getAtomsDNF();
+//		assertEquals(0, actual.size());
+//	}
+//	
+//	/**
+//	 * Test fringe case 1: 
+//	 * 		CDD.FALSE 
+//	 */
+//	@Test
+//	public void getDecisionsTest2() {
+//		HashSet<Decision<?>> actual = CDD.FALSE.getAtomsDNF();
+//		assertEquals(0, actual.size());
+//	}
+//	
+//	/**
+//	 * Test "normal" case: 
+//	 * 		Disjunction of mixed RangeDecisions, no EQ or NEQ:
+//	 * 		c1 <= 5 || c2 >= 5 || c3 < 5 || c4 > 5
+//	 * 		
+//	 */
+//	@Test
+//	public void getDecisionsTest3() {
+//		CDD disjunction = CDD.FALSE;
+//		ArrayList<Decision<?>> expected = new ArrayList<>();
+//		for (CDD cdd : mTestCddsTest3) {
+//			expected.add(cdd.getDecision());
+//			disjunction = disjunction.or(cdd);
+//		}
+//		HashSet<Decision<?>> actual = disjunction.getAtomsDNF();
+//		assertEquals(expected.size(), actual.size());
+//		assertTrue(actual.contains(expected.get(0)));
+//		assertTrue(actual.contains(expected.get(1)));
+//		assertTrue(actual.contains(expected.get(2)));
+//		assertTrue(actual.contains(expected.get(3)));
+//	}
+//	
+//	/**
+//	 * Test "mixed" case: 
+//	 * 
+//	 */
+//	@Test
+//	public void getDecisionsTest4() {
+//		HashSet<Decision<?>> actual = mTestCddTest4.getAtomsDNF();
+//		assertEquals(mExpectedTest4.size(), actual.size());
+//		for (Decision<?> decision : mExpectedTest4) {
+//			Boolean result = actual.contains(decision); 
+//			assertTrue(result);
+//		}
+//		
+//	}
+	
+	
 	@Test
-	public void getDecisionsTest1() {
-		HashSet<Decision<?>> actual = CDD.TRUE.getDecisions();
+	public void getDecisionsConjunctionTest1() {
+		ArrayList<SimplePair<Decision<?>, Integer>> actual = CDD.TRUE.getDecisionsConjunction();
 		assertEquals(0, actual.size());
 	}
 	
-	/**
-	 * Test fringe case 1: 
-	 * 		CDD.FALSE 
-	 */
-	@Test
-	public void getDecisionsTest2() {
-		HashSet<Decision<?>> actual = CDD.FALSE.getDecisions();
-		assertEquals(0, actual.size());
-	}
 	
-	/**
-	 * Test "normal" case: 
-	 * 		Disjunction of mixed RangeDecisions, no EQ or NEQ:
-	 * 		c1 <= 5 || c2 >= 5 || c3 < 5 || c4 > 5
-	 * 		
-	 */
 	@Test
-	public void getDecisionsTest3() {
-		CDD disjunction = CDD.FALSE;
-		ArrayList<Decision<?>> expected = new ArrayList<>();
-		for (CDD cdd : mTestCddsTest3) {
-			expected.add(cdd.getDecision());
-			disjunction = disjunction.or(cdd);
+	public void getDecisionConjunctionTest2() {
+		ArrayList<SimplePair<Decision<?>, Integer>> actual = mCDDTest2.getDecisionsConjunction();
+		assertEquals(mExpected2.size(), actual.size());
+		for (SimplePair<Decision<?>, Integer> simplePair : actual) {
+			SimplePair<Decision<?>, Integer> match = mExpected2HashMap.get(simplePair.getFirst().getVar());
+			assertTrue(simplePair.equals(match));
 		}
-		HashSet<Decision<?>> actual = disjunction.getDecisions();
-		assertEquals(expected.size(), actual.size());
-		assertTrue(actual.contains(expected.get(0)));
-		assertTrue(actual.contains(expected.get(1)));
-		assertTrue(actual.contains(expected.get(2)));
-		assertTrue(actual.contains(expected.get(3)));
-	}
-	
-	/**
-	 * Test "mixed" case: 
-	 * 
-	 */
-	@Test
-	public void getDecisionsTest4() {
-		HashSet<Decision<?>> actual = mTestCddTest4.getDecisions();
-		assertEquals(mExpectedTest4.size(), actual.size());
-		for (Decision<?> decision : mExpectedTest4) {
-			Boolean result = actual.contains(decision); 
-			assertTrue(result);
-		}
-		
 	}
 }
