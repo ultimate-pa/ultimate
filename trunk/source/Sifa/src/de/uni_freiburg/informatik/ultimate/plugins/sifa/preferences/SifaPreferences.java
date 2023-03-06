@@ -120,7 +120,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	private static final int DEFAULT_INTERVALDOM_MAX_PARALLEL_STATES = 2;
 
 	// settings specific to OctagonDomain
-	public static final String LABEL_OCTAGONDOM_MAX_PARALLEL_STATES = "Max. Parallel Intervals";
+	public static final String LABEL_OCTAGONDOM_MAX_PARALLEL_STATES = "Max. Parallel Octagon";
 	private static final int DEFAULT_OCTAGONDOM_MAX_PARALLEL_STATES = 2;
 
 	// settings specific to CompoundDomain
