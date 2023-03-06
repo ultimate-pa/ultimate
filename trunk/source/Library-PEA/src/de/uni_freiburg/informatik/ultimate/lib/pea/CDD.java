@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
+import static org.junit.Assert.assertArrayEquals;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -37,7 +39,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import javax.naming.spi.DirStateFactory.Result;
+
+import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimplePair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * A CDD (constraint decision diagram) represents a logical quantifier free formula in a BDD like structure. This
@@ -855,6 +861,54 @@ public final class CDD {
 		return sb.toString();
 	}
 	
+	public ArrayList<SimplePair<Decision<?>, Integer>> getDecisionsConjunction() {
+		if (mChilds == null) {
+			return new ArrayList<SimplePair<Decision<?>, Integer>>();
+		} else {
+			
+			// all nodes must have two kids
+			assert mChilds.length == 2;
+			// formula must be a conjunction
+			assert !toString().contains("||");
+			
+			
+			CDD childLeft = mChilds[0];
+			CDD childRight = mChilds[1];
+			ArrayList<SimplePair<Decision<?>, Integer>> left;
+			ArrayList<SimplePair<Decision<?>, Integer>> right;
+			if (childLeft == CDD.TRUE || childLeft == CDD.FALSE) {
+				left = new ArrayList<SimplePair<Decision<?>, Integer>>();
+			} else {
+				left = childLeft.getDecisionsConjunction();
+			}
+			if (childRight == CDD.TRUE || childRight == CDD.FALSE) {
+				right = new ArrayList<SimplePair<Decision<?>, Integer>>();
+			} else {
+				right = childRight.getDecisionsConjunction();
+			}
+			
+			Decision<?> decision = getDecision();	
+			if (childLeft == CDD.FALSE) { // this means the true child is 1
+				SimplePair<Decision<?>, Integer> pair = new SimplePair<Decision<?>, Integer>(decision, 1);
+				left.add(pair);
+			} else {
+				SimplePair<Decision<?>, Integer> pair = new SimplePair<Decision<?>, Integer>(decision, 0);
+				left.add(pair);
+			}
+			left.addAll(right);
+			return left;
+		}
+	}
+	
+	public ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> getDecisionsDNF() {
+		CDD[] dnf = toDNF();	
+		ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> result = new ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>>();
+		for (CDD conjunction : dnf) {
+			result.add(conjunction.getDecisionsConjunction());
+		}
+		return result;
+	}
+	
 	/**
 	 * @author lena
 	 * 
@@ -867,7 +921,7 @@ public final class CDD {
 	 * @return ArrayList<Decision<?> result: contains all decisions in cdd
 	 * 
 	 */
-	public HashSet<Decision<?>> getDecisions() {
+	public HashSet<Decision<?>> getAtomsDNF() {
 		if (mChilds == null) {
 			return new HashSet<Decision<?>>();
 		} else {
@@ -883,12 +937,12 @@ public final class CDD {
 			if (childLeft == CDD.TRUE || childLeft == CDD.FALSE) {
 				left = new HashSet<Decision<?>>();
 			} else {
-				left = childLeft.getDecisions();
+				left = childLeft.getAtomsDNF();
 			}
 			if (childRight == CDD.TRUE || childRight == CDD.FALSE) {
 				right = new HashSet<Decision<?>>();
 			} else {
-				right = childRight.getDecisions();
+				right = childRight.getAtomsDNF();
 			}
 				
 			Decision<?> decision = getDecision();
