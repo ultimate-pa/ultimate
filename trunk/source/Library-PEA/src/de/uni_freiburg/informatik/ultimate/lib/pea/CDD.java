@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -852,6 +853,60 @@ public final class CDD {
 		}
 		sb.append(")");
 		return sb.toString();
+	}
+	
+	/**
+	 * @author lena
+	 * 
+	 * A recursive function that returns an ArrayList with all the decisions in the nodes of the CDD 
+	 * given as the argument. If called on CDD.TRUE or CDD.FALSE, it will return an empty list.
+	 * 
+	 * Invariant: All nodes in the CDD have either 2 or "null" children. 
+	 * 
+	 * @param CDD cdd
+	 * @return ArrayList<Decision<?> result: contains all decisions in cdd
+	 * 
+	 */
+	public HashSet<Decision<?>> getDecisions() {
+		if (mChilds == null) {
+			return new HashSet<Decision<?>>();
+		} else {
+			// assure all nodes have two kids
+			assert mChilds.length == 2;
+			CDD childLeft = mChilds[0];
+			CDD childRight = mChilds[1];
+//			ArrayList<Decision<?>> left;
+//			ArrayList<Decision<?>> right;
+//			ArrayList<Decision<?>> result;
+			Set<Decision<?>> left;
+			Set<Decision<?>> right;
+			if (childLeft == CDD.TRUE || childLeft == CDD.FALSE) {
+				left = new HashSet<Decision<?>>();
+			} else {
+				left = childLeft.getDecisions();
+			}
+			if (childRight == CDD.TRUE || childRight == CDD.FALSE) {
+				right = new HashSet<Decision<?>>();
+			} else {
+				right = childRight.getDecisions();
+			}
+				
+			Decision<?> decision = getDecision();
+			left.add(decision);
+			left.addAll(right);
+//			result = left;
+//			result.addAll(right);
+//			if (!result.contains(decision)) {
+//				result.add(decision);
+//			}
+//			left.add(decision);
+//			if (!left.contains(decision) && !right.contains(decision)) {
+//				left.add(decision);
+//			}
+// 			left.addAll(right);
+//			return left;
+			return (HashSet<Decision<?>>) left;
+		}
 	}
 
 }
