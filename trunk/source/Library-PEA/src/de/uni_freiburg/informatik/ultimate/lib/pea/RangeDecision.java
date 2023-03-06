@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -481,32 +482,7 @@ public class RangeDecision extends Decision<RangeDecision> {
 	}
 	
 	
-	public ArrayList<RangeDecision> getDecisions(CDD cdd) {
-		CDD childLeft = cdd.getChilds()[0];
-		CDD childRight = cdd.getChilds()[1];
-		ArrayList<RangeDecision> left;
-		ArrayList<RangeDecision> right;
-		if (childLeft == null) {
-			left = new ArrayList<>();
-		} else {
-			left = getDecisions(childLeft);
-		}
-		if (childRight == null) {
-			right = new ArrayList<>();
-		} else {
-			right = getDecisions(childLeft);
-		}
-			
-		Decision<?> decision = cdd.getDecision();
-		if (decision instanceof RangeDecision) {
-			RangeDecision rangeDecision = (RangeDecision) decision;
-			left.add(rangeDecision);
-			left.addAll(right);
-			return left;
-		} else {
-			return null;
-		}
-	}
+	
 	
 	/**
 	 * @author lena
@@ -524,13 +500,13 @@ public class RangeDecision extends Decision<RangeDecision> {
 		for (CDD disjunction : cnf) {
 			String disjunctionString = disjunction.toString();
 			if (disjunctionString.contains(var)) {
-				ArrayList<RangeDecision> disjunctionDecisions = getDecisions(cdd); 
+				HashSet<Decision<?>> disjunctionDecisions = cdd.getDecisions(); 
 				CDD newDisjunction = CDD.FALSE;
-				for (RangeDecision decision : disjunctionDecisions) {
-					if (decision.mVar != var) {
-						
-					}
-				}
+//				for (RangeDecision decision : disjunctionDecisions) {
+//					if (decision.mVar != var) {
+//						
+//					}
+//				}
 				newCnf.add(newDisjunction);
 			} else {
 				newCnf.add(disjunction);
