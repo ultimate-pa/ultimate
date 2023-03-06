@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,6 +39,7 @@ public class RangeDecision extends Decision<RangeDecision> {
 	public static final int OP_GT = 2;
 	public static final int OP_NEQ = 4;
 	public static final int OP_INVALID = 5;
+
 	private static final CDD[] FTF = new CDD[] { CDD.FALSE, CDD.TRUE, CDD.FALSE };
 	private static final CDD[] TFT = new CDD[] { CDD.TRUE, CDD.FALSE, CDD.TRUE };
 
@@ -475,6 +478,92 @@ public class RangeDecision extends Decision<RangeDecision> {
 	@Override
 	public int compareToSimilar(final Decision<?> other) {
 		return mVar.compareTo(((RangeDecision) other).mVar);
+	}
+	
+	
+	public ArrayList<RangeDecision> getDecisions(CDD cdd) {
+		CDD childLeft = cdd.getChilds()[0];
+		CDD childRight = cdd.getChilds()[1];
+		ArrayList<RangeDecision> left;
+		ArrayList<RangeDecision> right;
+		if (childLeft == null) {
+			left = new ArrayList<>();
+		} else {
+			left = getDecisions(childLeft);
+		}
+		if (childRight == null) {
+			right = new ArrayList<>();
+		} else {
+			right = getDecisions(childLeft);
+		}
+			
+		Decision<?> decision = cdd.getDecision();
+		if (decision instanceof RangeDecision) {
+			RangeDecision rangeDecision = (RangeDecision) decision;
+			left.add(rangeDecision);
+			left.addAll(right);
+			return left;
+		} else {
+			return null;
+		}
+	}
+	
+	/**
+	 * @author lena
+	 * 
+	 * 
+	 * 
+	 * @param toFilter
+	 * @param var
+	 * @return
+	 */
+	public CDD removeConstraint(CDD cdd, String var) {
+		CDD[] cnf = cdd.toCNF();
+		ArrayList<CDD> newCnf = null; 
+		
+		for (CDD disjunction : cnf) {
+			String disjunctionString = disjunction.toString();
+			if (disjunctionString.contains(var)) {
+				ArrayList<RangeDecision> disjunctionDecisions = getDecisions(cdd); 
+				CDD newDisjunction = CDD.FALSE;
+				for (RangeDecision decision : disjunctionDecisions) {
+					if (decision.mVar != var) {
+						
+					}
+				}
+				newCnf.add(newDisjunction);
+			} else {
+				newCnf.add(disjunction);
+			}
+		}
+		return CDD.TRUE;
+	}
+	
+	/**
+	 * @author lena 
+	 * 
+	 * Removes all RangeDecisions in a CDD that have a mVar contained in roRemove.
+	 * 
+	 * Example: 
+	 * 	toFilter: 
+	 * 	toRemove: 
+	 * 
+	 * @param toFilter
+	 * @param toRemove
+	 * @return
+	 */
+	public CDD filterCdd(CDD toFilter, String[] toRemove) {
+		CDD result = toFilter;
+		for (String var : toRemove) {
+			result = removeConstraint(result, var);
+		}
+		return result;
+	}
+	
+	public CDD strict(CDD toStrict) {
+		// TODO
+		return CDD.TRUE;
+		
 	}
 
 }
