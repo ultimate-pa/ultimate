@@ -31,11 +31,14 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BinaryOperator;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -68,8 +71,7 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 
 	private final boolean mAllVarsAreInt;
 
-	private OctagonState(final Map<Term, Integer> varToIndex, final OctMatrix matrix,
-			final boolean allVarsAreInt) {
+	private OctagonState(final Map<Term, Integer> varToIndex, final OctMatrix matrix, final boolean allVarsAreInt) {
 		mVarToIndex = varToIndex;
 		mMatrix = matrix;
 		mAllVarsAreInt = allVarsAreInt;
@@ -80,7 +82,7 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 	 */
 	public static OctagonState from(final Term[] conjuncts, final Script script) {
 		final List<OctagonRelation> octRelations = new ArrayList<>();
-		final Map<Term, Integer> varToIndex = new HashMap<>();
+		final Set<Term> vars = new HashSet<>();
 		for (final Term conjunct : conjuncts) {
 			final PolynomialRelation polynomial = PolynomialRelation.of(script, conjunct);
 			if (polynomial == null) {
@@ -91,10 +93,14 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 				continue;
 			}
 			octRelations.add(octRel);
-			varToIndex.putIfAbsent(octRel.getVar1(), varToIndex.size());
-			varToIndex.putIfAbsent(octRel.getVar2(), varToIndex.size());
+			vars.add(octRel.getVar1());
+			vars.add(octRel.getVar2());
 		}
 		boolean allVarsAreInt = true;
+		final List<Term> sortedVars =
+				vars.stream().sorted((x, y) -> x.toString().compareTo(y.toString())).collect(Collectors.toList());
+		final Map<Term, Integer> varToIndex =
+				IntStream.range(0, vars.size()).boxed().collect(Collectors.toMap(sortedVars::get, x -> x));
 		final OctMatrix resultMatrix = new OctMatrix(varToIndex.size());
 		resultMatrix.fill(OctValue.INFINITY);
 		for (final OctagonRelation octRel : octRelations) {
