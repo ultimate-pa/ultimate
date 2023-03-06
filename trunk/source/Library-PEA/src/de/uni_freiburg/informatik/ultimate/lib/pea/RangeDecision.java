@@ -32,6 +32,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimplePair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+
 public class RangeDecision extends Decision<RangeDecision> {
 	public static final int OP_LT = -2;
 	public static final int OP_LTEQ = -1;
@@ -494,25 +497,23 @@ public class RangeDecision extends Decision<RangeDecision> {
 	 * @return
 	 */
 	public CDD removeConstraint(CDD cdd, String var) {
-		CDD[] cnf = cdd.toCNF();
-		ArrayList<CDD> newCnf = null; 
-		
-		for (CDD disjunction : cnf) {
-			String disjunctionString = disjunction.toString();
-			if (disjunctionString.contains(var)) {
-				HashSet<Decision<?>> disjunctionDecisions = cdd.getDecisions(); 
-				CDD newDisjunction = CDD.FALSE;
-//				for (RangeDecision decision : disjunctionDecisions) {
-//					if (decision.mVar != var) {
-//						
-//					}
-//				}
-				newCnf.add(newDisjunction);
-			} else {
-				newCnf.add(disjunction);
+		ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> decisionDNF = cdd.getDecisionsDNF();
+		ArrayList<CDD> newConjunction;
+		for (ArrayList<SimplePair<Decision<?>, Integer>> conjunction : decisionDNF) {
+			for (SimplePair<Decision<?>, Integer> pair : conjunction) {
+				Decision<?> decision = pair.getFirst();
+				if (decision instanceof RangeDecision) {
+					RangeDecision rangeDecision = (RangeDecision) decision;
+					int trueChild = pair.getSecond();
+					if (var != decision.getVar()) {
+						CDD newRangeDecision = RangeDecision.create(rangeDecision.getVar(), rangeDecision.getOp(trueChild), rangeDecision.getVal(trueChild));
+					}
+					
+				}
 			}
 		}
-		return CDD.TRUE;
+		return cdd;
+		
 	}
 	
 	/**
