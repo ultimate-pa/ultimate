@@ -122,12 +122,13 @@ public class ComplementPEATest {
 	@Test 
 	public void testNoReset1() {
 		CDD clkInv1 = RangeDecision.create("clk1",  RangeDecision.OP_LTEQ, 5);
-		CDD clkInv2 = RangeDecision.create("clk2",  RangeDecision.OP_LTEQ, 6);
+		CDD clkInv2 = RangeDecision.create("clk2",  RangeDecision.OP_LTEQ, 5);
 		CDD clkInv3 = RangeDecision.create("clk3",  RangeDecision.OP_LTEQ, 5);
-		CDD clkInv4 = RangeDecision.create("clk4",  RangeDecision.OP_LTEQ, 6);
-
-		CDD clkInvCombi = clkInv1.and(clkInv2).or(clkInv4).and(clkInv3);
+		CDD clkInvOr = clkInv2.or(clkInv3);
+		CDD clkInvCombi = clkInv1.and(clkInvOr);
 		String clkInvString = clkInvCombi.toString();
+		CDD[] cnf = clkInvCombi.toCNF();
+		String cnfString = cnf.toString();
 	}
 	
 }
