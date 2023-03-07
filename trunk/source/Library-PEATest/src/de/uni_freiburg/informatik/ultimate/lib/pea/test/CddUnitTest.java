@@ -5,8 +5,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -23,6 +21,8 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimplePair;
  */
 @RunWith(JUnit4.class)
 public class CddUnitTest {
+	
+	ArrayList<SimplePair<CDD, SimplePair<Decision<?>, Integer>>> mTestCases;
 	
 	ArrayList<CDD> mTestCddsTest3;
 	ArrayList<Decision<?>> mExpectedTest3;

@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimplePair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -487,22 +488,34 @@ public class RangeDecision extends Decision<RangeDecision> {
 	}
 	
 	
-	
-	
 	/**
-	 * @author lena
+	 * Filters a CDD. 
+	 * Replaces all decisions specified in @param toRemove with the neutral element and
+	 * returns the resulting CDD.
 	 * 
+	 * Assertions: 
+	 * 		- CDD must only contains RangeDecisions
 	 * 
+	 * Example: 
+	 * 		- toFilter: (c1 <= 5 && c2 >= 5 && c4 < 5) || (c1 <= 5 && c3 > 5 && c4 < 5)
+	 * 		- toRemove: reset = ["c3". "c4"]
+	 * 		- result: (c1 && c2) || (c1) = c1
 	 * 
-	 * @param toFilter
-	 * @param toRemove
-	 * @return
+	 * @param toFilter	the CDD
+	 * @param toRemove	the list of names to remove from toFilter
+	 * @return the filtered CDD
 	 */
-	public static CDD removeConstraint(CDD cdd, String[] toRemove) {
+	public static CDD filterCdd(CDD cdd, String[] toRemove) {
+		// get all decision in DNF-Form (each sublist is a conjunction)
+		// the second element of each pair is the index of the decisions true child
+		// this integer is needed to build the atomic CDDs of each decision
 		ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> decisionDNF = cdd.getDecisionsDNF();
-		ArrayList<CDD> newConjunctions =  new ArrayList<>();
 		List<String> toRemoveArrayList = Arrays.asList(toRemove);
+			
+		ArrayList<CDD> newConjunctions =  new ArrayList<>();
 		CDD newDisjunction = CDD.FALSE;
+		
+		// look for the decisions to remove in DNF
 		for (ArrayList<SimplePair<Decision<?>, Integer>> conjunction : decisionDNF) {
 			CDD newConjunction = CDD.TRUE;
 			for (SimplePair<Decision<?>, Integer> pair : conjunction) {
@@ -510,6 +523,7 @@ public class RangeDecision extends Decision<RangeDecision> {
 				assert (decision instanceof RangeDecision);
 				RangeDecision rangeDecision = (RangeDecision) decision;
 				String var = rangeDecision.getVar();
+				
 				// build a new conjunction without the decision to remove
 				if (!toRemoveArrayList.contains(var)) {
 					int trueChild = pair.getSecond();
@@ -523,35 +537,75 @@ public class RangeDecision extends Decision<RangeDecision> {
 			newDisjunction = newDisjunction.or(conjunction);
 		}
 		return newDisjunction;
-		
 	}
 	
 	/**
-	 * @author lena 
-	 * 
-	 * Removes all RangeDecisions in a CDD that have a mVar contained in roRemove.
+	 * Makes all RangeDecisions in @param CDD non-strict.
 	 * 
 	 * Example: 
-	 * 	toFilter: 
-	 * 	toRemove: 
+	 * 		- toStrict: (c1 <= 5 && c2 >= 5 && c4 < 5) || (c1 <= 5 && c3 > 5 && c4 < 5)
+	 * 		- result: (c1 < 5 && c2 > 5 && c4 < 5) || (c1 < 5 && c3 > 5 && c4 < 5)
 	 * 
-	 * @param toFilter
-	 * @param toRemove
-	 * @return
+	 * @param toStrict	the CDD
+	 * @return the CDD with all non-strict RangeDecisions changed into strict ones
 	 */
-	public static CDD filterCdd(CDD toFilter, String[] toRemove) {
-		CDD result = toFilter;
-//		for (String var : toRemove) {
-//			result = removeConstraint(result, var);
-//		}
-		result = removeConstraint(toFilter, toRemove);
-		return result;
-	}
-	
 	public CDD strict(CDD toStrict) {
-		// TODO
-		return CDD.TRUE;
+		ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> decisionDNF = toStrict.getDecisionsDNF();
+		ArrayList<CDD> newConjunctions =  new ArrayList<>();
+		CDD newDisjunction = CDD.FALSE;
 		
+		// look for decisions to strictify in DNF
+		for (ArrayList<SimplePair<Decision<?>, Integer>> conjunction : decisionDNF) {
+			CDD newConjunction = CDD.TRUE;
+			for (SimplePair<Decision<?>, Integer> pair : conjunction) {
+				Decision<?> decision = pair.getFirst();
+				int trueChild = pair.getSecond();
+				assert decision instanceof RangeDecision;
+				RangeDecision rangeDecision = (RangeDecision) decision;
+				String var = rangeDecision.getVar();
+				int op = rangeDecision.getOp(trueChild);
+				int[] limits = rangeDecision.getLimits();
+				assert limits.length == 1;
+				int limit = limits[0];
+				// check if limit is uneven. if it is, we have a non-strict decision
+				if (limit % 2 == 1) {
+					int newOp = strictOp(rangeDecision.getOp(trueChild));
+					// create new atomic CDD with strict operation
+					CDD newRangeDecision = RangeDecision.create(var, newOp, rangeDecision.getVal(trueChild));
+					newConjunction  = newConjunction.and(newRangeDecision);
+				} else {
+					// reuse old decision for atomic CDD
+					CDD newRangeDecision = RangeDecision.create(var, op, rangeDecision.getVal(trueChild));
+					newConjunction = newConjunction.and(newRangeDecision);
+				}
+			}
+			newConjunctions.add(newConjunction);
+		}
+		for (CDD conjunction : newConjunctions) {
+			newDisjunction = newDisjunction.or(conjunction);
+		}
+		return newDisjunction;	
 	}
-
+	 
+	/**
+	 * Returns the strict operator for a non-strict operator @param op.
+	 * If the operator is already strict or EQ or NEQ, we return the original operator.
+	 * 
+	 * @param op	the binary operation 
+	 * @return		the strict binary operation
+	 */
+	public static int strictOp(int op) {
+		switch (op) {
+		case OP_LTEQ:
+			return OP_LT;
+		case OP_GTEQ:
+			return OP_GT;
+		default:
+			return op;
+		}
+	}
 }
+	
+	
+
+
