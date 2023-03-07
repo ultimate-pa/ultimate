@@ -71,13 +71,12 @@ import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 public class DualJunctionDml extends DualJunctionQuantifierElimination {
 
 	private static final boolean ENABLE_DIV_ELIMINATION = true;
-	//
 	/**
-	 * TODO 20230305 Matthias: Looks very useful but has surprisingly bad effects on
-	 * {@link QuantifierEliminationDivModCrafted#bvToIntFoxExists04}.
-	 *
+	 * Looks very useful and is required for some benchmarks but had surprisingly
+	 * bad effects on {@link QuantifierEliminationDivModCrafted#bvToIntFoxExists04}
+	 * (which are by now solved by another optimization).
 	 */
-	private static final boolean EXCLUDE_CORRESPONDING_FINITE_JUNCTIONS = false;
+	private static final boolean EXCLUDE_CORRESPONDING_FINITE_JUNCTIONS = true;
 
 	public DualJunctionDml(final ManagedScript script, final IUltimateServiceProvider services) {
 		super(script, services);
