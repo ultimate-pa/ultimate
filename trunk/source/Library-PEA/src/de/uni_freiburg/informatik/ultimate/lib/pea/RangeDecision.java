@@ -27,8 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -493,26 +495,34 @@ public class RangeDecision extends Decision<RangeDecision> {
 	 * 
 	 * 
 	 * @param toFilter
-	 * @param var
+	 * @param toRemove
 	 * @return
 	 */
-	public CDD removeConstraint(CDD cdd, String var) {
+	public static CDD removeConstraint(CDD cdd, String[] toRemove) {
 		ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> decisionDNF = cdd.getDecisionsDNF();
-		ArrayList<CDD> newConjunction;
+		ArrayList<CDD> newConjunctions =  new ArrayList<>();
+		List<String> toRemoveArrayList = Arrays.asList(toRemove);
+		CDD newDisjunction = CDD.FALSE;
 		for (ArrayList<SimplePair<Decision<?>, Integer>> conjunction : decisionDNF) {
+			CDD newConjunction = CDD.TRUE;
 			for (SimplePair<Decision<?>, Integer> pair : conjunction) {
 				Decision<?> decision = pair.getFirst();
-				if (decision instanceof RangeDecision) {
-					RangeDecision rangeDecision = (RangeDecision) decision;
+				assert (decision instanceof RangeDecision);
+				RangeDecision rangeDecision = (RangeDecision) decision;
+				String var = rangeDecision.getVar();
+				// build a new conjunction without the decision to remove
+				if (!toRemoveArrayList.contains(var)) {
 					int trueChild = pair.getSecond();
-					if (var != decision.getVar()) {
-						CDD newRangeDecision = RangeDecision.create(rangeDecision.getVar(), rangeDecision.getOp(trueChild), rangeDecision.getVal(trueChild));
-					}
-					
+					CDD newRangeDecision = RangeDecision.create(var, rangeDecision.getOp(trueChild), rangeDecision.getVal(trueChild));
+					newConjunction = newConjunction.and(newRangeDecision);
 				}
 			}
+			newConjunctions.add(newConjunction);
 		}
-		return cdd;
+		for (CDD conjunction : newConjunctions) {
+			newDisjunction = newDisjunction.or(conjunction);
+		}
+		return newDisjunction;
 		
 	}
 	
@@ -529,11 +539,12 @@ public class RangeDecision extends Decision<RangeDecision> {
 	 * @param toRemove
 	 * @return
 	 */
-	public CDD filterCdd(CDD toFilter, String[] toRemove) {
+	public static CDD filterCdd(CDD toFilter, String[] toRemove) {
 		CDD result = toFilter;
-		for (String var : toRemove) {
-			result = removeConstraint(result, var);
-		}
+//		for (String var : toRemove) {
+//			result = removeConstraint(result, var);
+//		}
+		result = removeConstraint(toFilter, toRemove);
 		return result;
 	}
 	

@@ -861,6 +861,20 @@ public final class CDD {
 		return sb.toString();
 	}
 	
+	/** 
+	 * A recursive method that returns an ArrayList of pairs containing all the Decisions in the CDD.
+	 * The first element of each pair is a Decision<?>, the second element is an int signifying the true child of the decision.
+	 * If called on CDD.TRUE or CDD.FALSE, it will return an empty list.
+	 * 
+	 * Invariants: 
+	 *  1. All nodes in the CDD have either 2 or "null" children.
+	 *  2. The CDD given as the parameter must be a pure conjunction 
+	 * 
+	 * @param CDD cdd
+	 * @return ArrayList<SimplePair<Decision<?>, Integer>> result
+	 * 		
+	 * @author lena
+	 */
 	public ArrayList<SimplePair<Decision<?>, Integer>> getDecisionsConjunction() {
 		if (mChilds == null) {
 			return new ArrayList<SimplePair<Decision<?>, Integer>>();
@@ -900,6 +914,14 @@ public final class CDD {
 		}
 	}
 	
+	/**
+	 * This method converts a CDD into DNF, and, for each conjunction, collects a List of (Decision<?> decision, int trueChild).
+	 * It then returns an ArrayList of those conjunction-Lists.
+	 * 
+	 * @return ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> result 
+	 * 
+	 * @author lena
+	 */
 	public ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> getDecisionsDNF() {
 		CDD[] dnf = toDNF();	
 		ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> result = new ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>>();
