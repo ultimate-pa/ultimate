@@ -17,6 +17,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * Test class for the functions filterCDD() and strict() in the class RangeDecision 
  * implemented by me as part of my bachelors Thesis.
+ * 
+ * TODO: test strict()
  *
  * @author Lena Funk
  */
@@ -27,11 +29,11 @@ public class RangeDecisionTest {
 	
 	public RangeDecisionTest() {
 		mTestCases = new ArrayList<SimplePair<CDD, CDD>>();
-		createTestCases();
+		createTestCasesFilterCdd();
 		
 	}
 	
-	public void createTestCases() {
+	public void createTestCasesFilterCdd() {
 		// c1 <= 5
 		CDD c1 = RangeDecision.create("c1", RangeDecision.OP_LTEQ, 5);
 		// c2 >= 5
@@ -42,24 +44,19 @@ public class RangeDecisionTest {
 		CDD c4 = RangeDecision.create("c4", RangeDecision.OP_GT, 5);
 		
 		//-----------------------------------------------------------
-		// Test 0
-		//
-		// c1 <= 5 && (c2 >= 5 || c3 > 5) && c4 < 5
-		// DNF: (c1 && c2 && c4) || (c1 && c3 && c4)
-		// reset = ["c3", "c4"]
-		// after reset: c1 <= 5 && (c2 >= 5 || FALSE) && TRUE = c1 <= 5 && c2 >= 5 
+		// Test 0 (Contains all binary operators
 		//
 		CDD conj1 = (c1.and(c2)).and(c4);
 		CDD conj2 = (c1.and(c3)).and(c4);
-		CDD testCdd0 = conj1.and(conj2);
+		CDD testCdd0 = conj1.or(conj2);
 		CDD conj1expected = c1.and(c2);
 		CDD conj2expected = c1;
-		CDD expected0 = conj1expected.and(conj2expected);
+		CDD expected0 = conj1expected.or(conj2expected);
 		SimplePair<CDD, CDD> testCase0 = new SimplePair<CDD, CDD>(testCdd0, expected0);
 		mTestCases.add(testCase0);
 		
 		//-----------------------------------------------------------
-		// Test 1
+		// Test 1 (Fringe Case)
 		//
 		CDD testCdd1 = CDD.TRUE;
 		CDD expected1 = CDD.TRUE;
@@ -67,21 +64,30 @@ public class RangeDecisionTest {
 		mTestCases.add(testCase1);
 		
 		//-----------------------------------------------------------
-		// Test 2
-		//
-		// reset = ["c1"]
+		// Test 2 (Simple Case)
+		// 
 		CDD testCdd2 = c1.and(c2);
 		CDD expected2 = c2;
 		SimplePair<CDD, CDD> testCase2 = new SimplePair<CDD, CDD>(testCdd2, expected2);
 		mTestCases.add(testCase2);
+		
+		//-----------------------------------------------------------
+		// Test 3 (filter out all)
+		// 
+		SimplePair<CDD, CDD> testCase3 = new SimplePair<CDD, CDD>(testCdd0, CDD.TRUE);
+		mTestCases.add(testCase3);
 	}	
 	
 	
 	/**
-	 * Test case 0
+	 * Test 0 (Contains all binary operators#
+	 * 
+	 * TestCdd (DNF): (c1 && c2 && c4) || (c1 && c3 && c4)
+	 * reset = ["c3", "c4"]
+	 * expected: (c1 && c2) || (c1)
 	 */
 	@Test
-	public void getDecisionsTest0() {
+	public void filterCDDTest0() {
 		SimplePair<CDD, CDD> testCase = mTestCases.get(0);
 		String[] reset = {"c3", "c4"};
 		CDD testCDD = testCase.getFirst();
@@ -90,8 +96,14 @@ public class RangeDecisionTest {
 		assertTrue(actual.equals(expected));
 	}
 	
+	/**
+	 * Test 1 (Fringe Case)
+	 * 
+	 * TestCDD: TRUE
+	 * reset: ["c3", "c4"]
+	 */
 	@Test
-	public void getDecisionsTest1() {
+	public void filterCDDTest1() {
 		SimplePair<CDD, CDD> testCase = mTestCases.get(1);
 		String[] reset = {"c3", "c4"};
 		CDD testCDD = testCase.getFirst();
@@ -99,15 +111,39 @@ public class RangeDecisionTest {
 		CDD actual = RangeDecision.filterCdd(testCDD, reset);
 		assertTrue(actual.equals(expected));
 	}
-	
+	/**
+	 *  Test 2 (Simple Case)
+	 *  
+	 *  TestCDD (DNF): c1 && c2
+	 *  reset = ["c1"]
+	 *  expected: c2
+	 */
 	@Test
-	public void getDecisionsTest2() {
+	public void filterCDDTest2() {
 		SimplePair<CDD, CDD> testCase = mTestCases.get(2);
 		String[] reset = {"c1"};
 		CDD testCDD = testCase.getFirst();
 		CDD expected = testCase.getSecond();
 		CDD actual = RangeDecision.filterCdd(testCDD, reset);
 		assertTrue(actual.equals(expected));
+	}
+	
+	/**
+	 * Test 3 (reset is all variables)
+	 * 
+	 * TestCdd (DNF): (c1 && c2 && c4) || (c1 && c3 && c4)
+	 * reset = ["c1", "c2", "c3", "c4"]
+	 * expected: TRUE
+	 */
+	@Test
+	public void filterCDDTest3() {
+		SimplePair<CDD, CDD> testCase = mTestCases.get(3);
+		String[] reset = {"c1", "c2", "c3", "c4" };
+		CDD testCDD = testCase.getFirst();
+		CDD expected = testCase.getSecond();
+		CDD actual = RangeDecision.filterCdd(testCDD, reset);
+		assertTrue(actual.equals(expected));
+		
 	}
 	
 }
