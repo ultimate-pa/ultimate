@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -877,8 +878,13 @@ public class TypeHandler implements ITypeHandler {
 			if (specifiedValue instanceof IntegerLiteral) {
 				value = specifiedValue;
 			} else {
-				final BigInteger expressionIntegerValue =
-						mTypeSizes.extractIntegerValue(specifiedValue, typeOfEnumIdentifiers);
+				final BigInteger expressionIntegerValue;
+				if (specifiedValue instanceof BooleanLiteral) {
+					expressionIntegerValue =
+							((BooleanLiteral) specifiedValue).getValue() ? BigInteger.ONE : BigInteger.ZERO;
+				} else {
+					expressionIntegerValue = mTypeSizes.extractIntegerValue(specifiedValue, typeOfEnumIdentifiers);
+				}
 				if (expressionIntegerValue == null) {
 					throw new AssertionError("not an integer constant: " + specifiedValue);
 				}
