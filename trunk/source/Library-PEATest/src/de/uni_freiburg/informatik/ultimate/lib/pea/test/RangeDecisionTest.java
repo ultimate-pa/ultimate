@@ -84,7 +84,7 @@ public class RangeDecisionTest {
 	 * 
 	 * TestCdd (DNF): (c1 && c2 && c4) || (c1 && c3 && c4)
 	 * reset = ["c3", "c4"]
-	 * expected: (c1 && c2) || (c1)
+	 * expected: (c1 && c2) || (c1) = c1
 	 */
 	@Test
 	public void filterCDDTest0() {
