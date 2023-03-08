@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.RewriteEqualityTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
 /**
  * Octagon abstract domain, based on A. Miné's "The octagon abstract domain"
@@ -47,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  */
 public class OctagonDomain extends AbstractStateBasedDomain<OctagonState> {
+	private final TermTransformer mTermTransformer = new RewriteEqualityTransformer(mTools.getScript());
 
 	public OctagonDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
 			final Supplier<IProgressAwareTimer> timeout) {
@@ -66,6 +68,6 @@ public class OctagonDomain extends AbstractStateBasedDomain<OctagonState> {
 	@Override
 	protected Term transformTerm(final Term term) {
 		// TODO consider removing boolean sub-terms before computing DNF as we don't use the boolean terms anyways
-		return new RewriteEqualityTransformer(mTools.getScript()).transform(term);
+		return mTermTransformer.transform(term);
 	}
 }
