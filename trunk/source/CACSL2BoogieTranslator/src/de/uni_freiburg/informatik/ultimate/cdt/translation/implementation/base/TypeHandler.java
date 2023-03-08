@@ -363,7 +363,7 @@ public class TypeHandler implements ITypeHandler {
 			} else {
 				specifiedValue = null;
 			}
-			final Expression value = constructEnumValue(loc, specifiedValue, valueOfPrecedingEnumConstant, node);
+			final Expression value = constructEnumValue(loc, specifiedValue, valueOfPrecedingEnumConstant);
 			final Pair<ConstDeclaration, Axiom> cd = handleEnumerationConstant(loc, enumId, fNames[i], value, node);
 			constDecls.add(cd);
 			valueOfPrecedingEnumConstant = value;
@@ -868,53 +868,36 @@ public class TypeHandler implements ITypeHandler {
 	 * value of the preceding enumeration constant in the list of this enumeration specifier.
 	 */
 	private Expression constructEnumValue(final ILocation loc, final Expression specifiedValue,
-			final Expression valueOfPrecedingEnumConstant, final IASTEnumerationSpecifier node) {
-		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
-		final Expression value;
+			final Expression valueOfPrecedingEnumConstant) {
+		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitives.INT);
 		if (specifiedValue != null) {
-			// case where the value of the enumeration constant is explicitly defined by an
-			// integer constant expression
+			// case where the value of the enumeration constant is explicitly defined by an integer constant expression
 			if (specifiedValue instanceof IntegerLiteral) {
-				value = specifiedValue;
-			} else {
-				final BigInteger expressionIntegerValue;
-				if (specifiedValue instanceof BooleanLiteral) {
-					expressionIntegerValue =
-							((BooleanLiteral) specifiedValue).getValue() ? BigInteger.ONE : BigInteger.ZERO;
-				} else {
-					expressionIntegerValue = mTypeSizes.extractIntegerValue(specifiedValue, typeOfEnumIdentifiers);
-				}
-				if (expressionIntegerValue == null) {
-					throw new AssertionError("not an integer constant: " + specifiedValue);
-				}
-				value = mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
-						BigInteger.valueOf(expressionIntegerValue.intValue()));
+				return specifiedValue;
 			}
-
-			// }
-		} else {
-			// case where the value of the enumeration constant is not explicitly defined by
-			// an integer constant expression and hence the value of the preceding
-			// enumeration constant in the list defines the value of this enumeration
-			// constant (see C11 6.7.2.2.3)
-			if (valueOfPrecedingEnumConstant == null) {
-				// case where this is the first enumeration constant in the list
-				final Expression zero =
-						mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers, BigInteger.ZERO);
-				value = zero;
+			final BigInteger intValue;
+			if (specifiedValue instanceof BooleanLiteral) {
+				intValue = ((BooleanLiteral) specifiedValue).getValue() ? BigInteger.ONE : BigInteger.ZERO;
 			} else {
-				final BigInteger bi =
-						mTypeSizes.extractIntegerValue(valueOfPrecedingEnumConstant, typeOfEnumIdentifiers);
-				if (bi == null) {
-					throw new AssertionError("not an integer constant: " + specifiedValue);
-				}
-				final int valueOfPrecedingEnumConstantAsInt = bi.intValue();
-				final int valueAsInt = valueOfPrecedingEnumConstantAsInt + 1;
-				value = mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
-						BigInteger.valueOf(valueAsInt));
+				intValue = mTypeSizes.extractIntegerValue(specifiedValue, typeOfEnumIdentifiers);
 			}
+			if (intValue == null) {
+				throw new AssertionError("not an integer constant: " + specifiedValue);
+			}
+			return mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers, intValue);
 		}
-		return value;
+		// case where the value of the enumeration constant is not explicitly defined by an integer constant expression
+		// and hence the value of the preceding enumeration constant in the list defines the value of this enumeration
+		// constant (see C11 6.7.2.2.3)
+		if (valueOfPrecedingEnumConstant == null) {
+			// case where this is the first enumeration constant in the list
+			return mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers, BigInteger.ZERO);
+		}
+		final BigInteger intValue = mTypeSizes.extractIntegerValue(valueOfPrecedingEnumConstant, typeOfEnumIdentifiers);
+		if (intValue == null) {
+			throw new AssertionError("not an integer constant: " + valueOfPrecedingEnumConstant);
+		}
+		return mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers, intValue.add(BigInteger.ONE));
 	}
 
 	/**
