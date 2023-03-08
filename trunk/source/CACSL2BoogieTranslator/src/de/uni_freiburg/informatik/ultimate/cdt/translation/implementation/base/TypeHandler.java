@@ -349,27 +349,26 @@ public class TypeHandler implements ITypeHandler {
 		final String[] fNames = new String[nrFields];
 		Expression valueOfPrecedingEnumConstant = null;
 
-		final Expression[] fValues = new Expression[nrFields];
 		final List<Pair<ConstDeclaration, Axiom>> constDecls = new ArrayList<>();
 
 		for (int i = 0; i < nrFields; i++) {
 			final IASTEnumerator e = node.getEnumerators()[i];
 			fNames[i] = e.getName().toString();
+			final Expression specifiedValue;
 			if (e.getValue() != null) {
 				final ExpressionResult rex = (ExpressionResult) main.dispatch(e.getValue());
 				// TODO Frank 2022-11-22: rex might contain statements (e.g. overflow-assertions), but they are ignored
 				// here! We should probably crash instead. But we could try to remove trivial assertions additionally.
-				fValues[i] = rex.getLrValue().getValue();
+				specifiedValue = rex.getLrValue().getValue();
 			} else {
-				fValues[i] = null;
+				specifiedValue = null;
 			}
-			final Expression specifiedValue = fValues[i];
 			final Expression value = constructEnumValue(loc, specifiedValue, valueOfPrecedingEnumConstant, node);
 			final Pair<ConstDeclaration, Axiom> cd = handleEnumerationConstant(loc, enumId, fNames[i], value, node);
 			constDecls.add(cd);
 			valueOfPrecedingEnumConstant = value;
 		}
-		final CEnum cEnum = new CEnum(enumId, fNames, fValues);
+		final CEnum cEnum = new CEnum(enumId, fNames);
 		final ASTType at = cPrimitive2AstType(loc, intType);
 		final TypesResult result = new TypesResult(at, false, false, cEnum);
 		for (int i = 0; i < nrFields; i++) {

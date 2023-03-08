@@ -33,7 +33,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 
 import java.util.Arrays;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
@@ -48,10 +47,6 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 	 */
 	private final String[] mNames;
 	/**
-	 * Field values.
-	 */
-	private final Expression[] mValues;
-	/**
 	 * The _boogie_ identifier of this enum set.
 	 */
 	private final String mIdentifier;
@@ -63,22 +58,18 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 	 *
 	 * @param fNames
 	 *            field names.
-	 * @param fValues
-	 *            field values.
 	 * @param cDeclSpec
 	 *            the C declaration used.
 	 * @param id
 	 *            this enums identifier.
 	 */
-	public CEnum(final String id, final String[] fNames, final Expression[] fValues) {
+	public CEnum(final String id, final String[] fNames) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
 		super(false, false, false, false, false);
 
-		assert fNames.length == fValues.length;
 		assert id != null;
 		mIdentifier = id;
 		mNames = fNames;
-		mValues = fValues;
 		mIsComplete = true;
 	}
 
@@ -89,7 +80,6 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 		mIdentifier = id;
 		mIsComplete = false;
 		mNames = null;
-		mValues = null;
 	}
 
 	/**
@@ -102,21 +92,6 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 			return 0;
 		}
 		return mNames.length;
-	}
-
-	/**
-	 * Returns the field value.
-	 *
-	 * @param id
-	 *            the fields id.
-	 * @return the fields value.
-	 */
-	public Expression getFieldValue(final String id) {
-		final int idx = Arrays.asList(mNames).indexOf(id);
-		if (idx < 0) {
-			throw new IllegalArgumentException("Field '" + id + "' not in struct!");
-		}
-		return mValues[idx];
 	}
 
 	/**
@@ -150,7 +125,7 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 
 	@Override
 	public CEnum complete(final CEnum cEnum) {
-		return new CEnum(getName(), cEnum.getFieldIds(), cEnum.mValues);
+		return new CEnum(getName(), cEnum.getFieldIds());
 	}
 
 	@Override
@@ -199,7 +174,6 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 		result = prime * result + ((mIdentifier == null) ? 0 : mIdentifier.hashCode());
 		result = prime * result + (mIsComplete ? 1231 : 1237);
 		result = prime * result + Arrays.hashCode(mNames);
-		result = prime * result + Arrays.hashCode(mValues);
 		return result;
 	}
 
