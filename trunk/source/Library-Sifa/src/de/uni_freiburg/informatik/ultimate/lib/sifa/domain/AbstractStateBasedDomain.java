@@ -138,7 +138,7 @@ public abstract class AbstractStateBasedDomain<STATE extends IAbstractState<STAT
 				continue;
 			}
 			final STATE state = toState(SmtUtils.getConjuncts(dnfDisjunct));
-			if (state != null) {
+			if (!state.isBottom()) {
 				result.add(state);
 			}
 		}

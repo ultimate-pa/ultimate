@@ -76,7 +76,8 @@ public class IntervalDomain extends AbstractStateBasedDomain<NonrelationalState<
 				if (!updatedLhsInterval.isPresent()) {
 					continue;
 				} else if (updatedLhsInterval.get().isBottom()) {
-					return null;
+					// The value is bottom so we return the current state, since it will remain bottom.
+					return new NonrelationalState<>(varToInterval);
 				}
 				updated = true;
 			}

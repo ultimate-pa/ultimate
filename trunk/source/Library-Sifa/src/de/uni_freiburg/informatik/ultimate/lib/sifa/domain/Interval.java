@@ -108,6 +108,7 @@ public final class Interval implements INonrelationalValue<Interval> {
 		return mUpper;
 	}
 
+	@Override
 	public boolean isBottom() {
 		assert (this == BOTTOM) == (mLower.compareTo(mUpper) > 0) : "Empty interval was not unified";
 		return this == BOTTOM;

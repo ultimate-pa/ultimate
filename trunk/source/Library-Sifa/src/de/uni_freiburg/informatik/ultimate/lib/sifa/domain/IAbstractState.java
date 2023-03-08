@@ -41,4 +41,6 @@ public interface IAbstractState<STATE extends IAbstractState<STATE>> extends ITe
 	STATE join(STATE other);
 
 	STATE widen(STATE other);
+
+	boolean isBottom();
 }

@@ -232,4 +232,9 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 	public OctagonState join(final OctagonState other) {
 		return applyMergeOperator(other, OctMatrix::max);
 	}
+
+	@Override
+	public boolean isBottom() {
+		return cachedSelectiveClosure().hasNegativeSelfLoop();
+	}
 }

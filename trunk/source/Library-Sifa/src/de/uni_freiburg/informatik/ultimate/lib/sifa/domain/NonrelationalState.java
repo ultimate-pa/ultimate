@@ -96,4 +96,9 @@ public class NonrelationalState<VALUE extends INonrelationalValue<VALUE>>
 	public NonrelationalState<VALUE> widen(final NonrelationalState<VALUE> other) {
 		return merge(other, VALUE::widen);
 	}
+
+	@Override
+	public boolean isBottom() {
+		return mVariablesToValues.values().stream().anyMatch(INonrelationalValue::isBottom);
+	}
 }
