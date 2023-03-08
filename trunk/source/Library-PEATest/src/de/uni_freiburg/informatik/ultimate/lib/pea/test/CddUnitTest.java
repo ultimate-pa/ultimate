@@ -3,8 +3,12 @@ package de.uni_freiburg.informatik.ultimate.lib.pea.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
+
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -13,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
-import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimplePair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /** 
  * Tests for the function getDecisions(CDD cdd) implemented by me in the Class CDD as part of my bachelors Thesis.
@@ -22,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimplePair;
 @RunWith(JUnit4.class)
 public class CddUnitTest {
 	
-	ArrayList<SimplePair<CDD, SimplePair<Decision<?>, Integer>>> mTestCases;
+	ArrayList<Pair<CDD, HashMap<String, Pair<Decision<?>, int[]>>>> mTestCases;
 	
 	ArrayList<CDD> mTestCddsTest3;
 	ArrayList<Decision<?>> mExpectedTest3;
@@ -30,18 +34,23 @@ public class CddUnitTest {
 	ArrayList<Decision<?>> mExpectedTest4;
 	
 	CDD mCDDTest2;
-	ArrayList<SimplePair<Decision<?>, Integer>> mExpected2;
-	HashMap<String, SimplePair<Decision<?>, Integer>> mExpected2HashMap;
+	ArrayList<Pair<Decision<?>, int[]>> mExpected2;
+	HashMap<String, Pair<Decision<?>, int[]>> mExpected2HashMap;
 	
 	public CddUnitTest() {
 		mTestCddsTest3 = new ArrayList<CDD>();
 		mExpectedTest3 = new ArrayList<Decision<?>>();
 		mExpectedTest4 = new ArrayList<Decision<?>>();
-		mExpected2 = new ArrayList<SimplePair<Decision<?>, Integer>>();
+		mExpected2 = new ArrayList<Pair<Decision<?>, int[]>>();
 		mExpected2HashMap = new HashMap<>();
 		createTestCDDsTest3();
 		createTestCDDTest4();
-		createTestCDD1();
+		
+		
+		
+		mTestCases = new ArrayList<Pair<CDD, HashMap<String, Pair<Decision<?>, int[]>>>>();
+		createTestCase0();
+		createTestCase1();
 		
 	}
 	
@@ -96,21 +105,61 @@ public class CddUnitTest {
 		CDD conjunctions[] = mTestCddTest4.toDNF();
 	}
 	
-	public void createTestCDD1() {
+	public void createTestCase0() {
+		HashMap<String, Pair<Decision<?>, int[]>> expected = new HashMap<String, Pair<Decision<?>, int[]>>();
+		
 		CDD a = BooleanDecision.create("a");
-		mExpected2.add(new SimplePair<Decision<?>, Integer>(a.getDecision(), 0));
+		int[] trueChildA = {0};
+		Pair<Decision<?>, int[]> pairA = new Pair<Decision<?>, int[]>(a.getDecision(), trueChildA);
+		expected.put(a.getDecision().getVar(), pairA);
+		
 		CDD b = BooleanDecision.create("b");
 		CDD notb = b.negate();
-		mExpected2.add(new SimplePair<Decision<?>, Integer>(notb.getDecision(), 1));
+		int[] trueChildNotB = {1};
+		Pair<Decision<?>, int[]> pairNotB = new Pair<Decision<?>, int[]>(notb.getDecision(), trueChildNotB);
+		expected.put(notb.getDecision().getVar(), pairNotB);
+		
 		CDD c5 = RangeDecision.create("c5", RangeDecision.OP_GT, 5);
-		mExpected2.add(new SimplePair<Decision<?>, Integer>(c5.getDecision(), 1));
-		CDD c6 = RangeDecision.create("c6", RangeDecision.OP_GT, 5);
-		mExpected2.add(new SimplePair<Decision<?>, Integer>(c6.getDecision(), 1));
+		int[] trueChildC5 = {1};
+		Pair<Decision<?>, int[]> pairC5 = new Pair<Decision<?>, int[]>(c5.getDecision(), trueChildC5);
+		expected.put(c5.getDecision().getVar(), pairC5);
 		
-		mCDDTest2 = a.and(c6).and(notb).and(c5);
+		CDD c6 = RangeDecision.create("c6", RangeDecision.OP_LT, 5);
+		int[] trueChildC6 = {0};
+		Pair<Decision<?>, int[]> pairC6 = new Pair<Decision<?>, int[]>(c6.getDecision(), trueChildC6);
+		expected.put(c6.getDecision().getVar(), pairC6);
 		
-		for (SimplePair<Decision<?>, Integer> simplePair : mExpected2) {
-			mExpected2HashMap.put(simplePair.getFirst().getVar(), simplePair);
+		CDD c7 = RangeDecision.create("c7", RangeDecision.OP_EQ, 5);
+		int[] trueChildC7 = {1};
+		Pair<Decision<?>, int[]> pairC7 = new Pair<Decision<?>, int[]>(c7.getDecision(), trueChildC7);
+		expected.put(c7.getDecision().getVar(), pairC7);
+		
+		CDD c8 = RangeDecision.create("c8", RangeDecision.OP_NEQ, 5);
+		int[] trueChildC8 = {0, 2};
+		Pair<Decision<?>, int[]> pairC8 = new Pair<Decision<?>, int[]>(c8.getDecision(), trueChildC8);
+		expected.put(c8.getDecision().getVar(), pairC8);
+		
+		CDD testCDD = c8.and(a).and(c6).and(c7).and(notb).and(c5);
+		Pair<CDD, HashMap<String, Pair<Decision<?>, int[]>>> testCase = new Pair<>(testCDD, expected);
+		mTestCases.add(testCase);
+	}
+	
+	public void createTestCase1() {
+		CDD c1 = RangeDecision.create("c1", RangeDecision.OP_LT, 5);
+		mExpected2.add(new Pair<Decision<?>, int[]>(c1.getDecision(),new int[] {0}));
+		CDD c2 = RangeDecision.create("c2", RangeDecision.OP_GT, 5);
+		mExpected2.add(new Pair<Decision<?>, int[]>(c2.getDecision(), new int[] {1}));
+		CDD c3 = RangeDecision.create("c3", RangeDecision.OP_EQ, 5);
+		mExpected2.add(new Pair<Decision<?>, int[]>(c3.getDecision(), new int[] {1}));
+		CDD c4 = RangeDecision.create("c4", RangeDecision.OP_EQ, 5);
+		mExpected2.add(new Pair<Decision<?>, int[]>(c4.getDecision(), new int[] {1}));
+		CDD c5 = RangeDecision.create("c6", RangeDecision.OP_NEQ, 5);
+		mExpected2.add(new Pair<Decision<?>, int[]>(c5.getDecision(), new int[] {0,2}));
+		
+		mCDDTest2 = c1.and(c5).and(c2).and(c4).and(c3);
+		
+		for (Pair<Decision<?>, int[]> Pair : mExpected2) {
+			mExpected2HashMap.put(Pair.getFirst().getVar(), Pair);
 		}
 		
 		
@@ -118,18 +167,23 @@ public class CddUnitTest {
 	
 	@Test
 	public void getDecisionsConjunctionTest1() {
-		ArrayList<SimplePair<Decision<?>, Integer>> actual = CDD.TRUE.getDecisionsConjunction();
+		ArrayList<Pair<Decision<?>, int[]>> actual = CDD.TRUE.getDecisionsConjunction();
 		assertEquals(0, actual.size());
 	}
 	
 	
 	@Test
 	public void getDecisionConjunctionTest2() {
-		ArrayList<SimplePair<Decision<?>, Integer>> actual = mCDDTest2.getDecisionsConjunction();
+		ArrayList<Pair<Decision<?>, int[]>> actual = mCDDTest2.getDecisionsConjunction();
 		assertEquals(mExpected2.size(), actual.size());
-		for (SimplePair<Decision<?>, Integer> simplePair : actual) {
-			SimplePair<Decision<?>, Integer> match = mExpected2HashMap.get(simplePair.getFirst().getVar());
-			assertTrue(simplePair.equals(match));
+		for (Pair<Decision<?>, int[]> Pair : actual) {
+			Pair<Decision<?>, int[]> match = mExpected2HashMap.get(Pair.getFirst().getVar());
+			Decision<?> expectedfirst = match.getFirst();
+			int[] expectedsecond = match.getSecond();
+			Decision<?> actualFirst = Pair.getFirst();
+			int[] actualSecond = Pair.getSecond();
+			assertEquals(expectedfirst, actualFirst);
+			assertEquals(expectedsecond[0], actualSecond[0]);
 		}
 	}
 }
