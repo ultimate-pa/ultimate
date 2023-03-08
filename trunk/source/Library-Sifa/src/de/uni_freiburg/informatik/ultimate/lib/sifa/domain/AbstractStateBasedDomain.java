@@ -57,6 +57,7 @@ public abstract class AbstractStateBasedDomain<STATE extends IAbstractState<STAT
 	protected final SymbolicTools mTools;
 	private final int mMaxDisjuncts;
 	protected final Supplier<IProgressAwareTimer> mTimeout;
+	// TODO: Is it good to use a WeakHashMap here?
 	private final WeakHashMap<IPredicate, List<STATE>> mPredicateCache = new WeakHashMap<>();
 
 	public AbstractStateBasedDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
