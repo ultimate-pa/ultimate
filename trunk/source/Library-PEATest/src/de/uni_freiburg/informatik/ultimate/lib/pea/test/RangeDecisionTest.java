@@ -11,7 +11,6 @@ import org.junit.runners.JUnit4;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
-import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimplePair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -25,10 +24,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 @RunWith(JUnit4.class)
 public class RangeDecisionTest {
-	ArrayList<SimplePair<CDD, CDD>> mTestCases;
+	ArrayList<Pair<CDD, CDD>> mTestCases;
 	
 	public RangeDecisionTest() {
-		mTestCases = new ArrayList<SimplePair<CDD, CDD>>();
+		mTestCases = new ArrayList<Pair<CDD, CDD>>();
 		createTestCasesFilterCdd();
 		
 	}
@@ -52,7 +51,7 @@ public class RangeDecisionTest {
 		CDD conj1expected = c1.and(c2);
 		CDD conj2expected = c1;
 		CDD expected0 = conj1expected.or(conj2expected);
-		SimplePair<CDD, CDD> testCase0 = new SimplePair<CDD, CDD>(testCdd0, expected0);
+		Pair<CDD, CDD> testCase0 = new Pair<CDD, CDD>(testCdd0, expected0);
 		mTestCases.add(testCase0);
 		
 		//-----------------------------------------------------------
@@ -60,7 +59,7 @@ public class RangeDecisionTest {
 		//
 		CDD testCdd1 = CDD.TRUE;
 		CDD expected1 = CDD.TRUE;
-		SimplePair<CDD, CDD> testCase1 = new SimplePair<CDD, CDD>(testCdd1, expected1);
+		Pair<CDD, CDD> testCase1 = new Pair<CDD, CDD>(testCdd1, expected1);
 		mTestCases.add(testCase1);
 		
 		//-----------------------------------------------------------
@@ -68,13 +67,13 @@ public class RangeDecisionTest {
 		// 
 		CDD testCdd2 = c1.and(c2);
 		CDD expected2 = c2;
-		SimplePair<CDD, CDD> testCase2 = new SimplePair<CDD, CDD>(testCdd2, expected2);
+		Pair<CDD, CDD> testCase2 = new Pair<CDD, CDD>(testCdd2, expected2);
 		mTestCases.add(testCase2);
 		
 		//-----------------------------------------------------------
 		// Test 3 (filter out all)
 		// 
-		SimplePair<CDD, CDD> testCase3 = new SimplePair<CDD, CDD>(testCdd0, CDD.TRUE);
+		Pair<CDD, CDD> testCase3 = new Pair<CDD, CDD>(testCdd0, CDD.TRUE);
 		mTestCases.add(testCase3);
 	}	
 	
@@ -88,7 +87,7 @@ public class RangeDecisionTest {
 	 */
 	@Test
 	public void filterCDDTest0() {
-		SimplePair<CDD, CDD> testCase = mTestCases.get(0);
+		Pair<CDD, CDD> testCase = mTestCases.get(0);
 		String[] reset = {"c3", "c4"};
 		CDD testCDD = testCase.getFirst();
 		CDD expected = testCase.getSecond();
@@ -104,7 +103,7 @@ public class RangeDecisionTest {
 	 */
 	@Test
 	public void filterCDDTest1() {
-		SimplePair<CDD, CDD> testCase = mTestCases.get(1);
+		Pair<CDD, CDD> testCase = mTestCases.get(1);
 		String[] reset = {"c3", "c4"};
 		CDD testCDD = testCase.getFirst();
 		CDD expected = testCase.getSecond();
@@ -120,7 +119,7 @@ public class RangeDecisionTest {
 	 */
 	@Test
 	public void filterCDDTest2() {
-		SimplePair<CDD, CDD> testCase = mTestCases.get(2);
+		Pair<CDD, CDD> testCase = mTestCases.get(2);
 		String[] reset = {"c1"};
 		CDD testCDD = testCase.getFirst();
 		CDD expected = testCase.getSecond();
@@ -137,7 +136,7 @@ public class RangeDecisionTest {
 	 */
 	@Test
 	public void filterCDDTest3() {
-		SimplePair<CDD, CDD> testCase = mTestCases.get(3);
+		Pair<CDD, CDD> testCase = mTestCases.get(3);
 		String[] reset = {"c1", "c2", "c3", "c4" };
 		CDD testCDD = testCase.getFirst();
 		CDD expected = testCase.getSecond();
