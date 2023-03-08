@@ -38,9 +38,32 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand
  *            The type of the state
  */
 public interface IAbstractState<STATE extends IAbstractState<STATE>> extends ITermProviderOnDemand {
+	/**
+	 * Joins two abstract states. The join of two abstract states is an over-approximation of their union.
+	 *
+	 * @param other
+	 *            The state to be joined.
+	 * @return An overapproximation of this ∪ other
+	 */
 	STATE join(STATE other);
 
+	/**
+	 * Widens one abstract state by another one.
+	 * <p>
+	 * Widening is similar to {@link #join} with the additional property that on any infinite sequence p1, p2, p3, ...
+	 * the sequence w1, w2, w3, ... with w1 = p1 and wi = widen(w(i-1), pi) reaches a fixpoint, that is, wi = w(i+1) =
+	 * w(i+2) = ... for some i.
+	 *
+	 * @param other
+	 *            The state to be widened with
+	 * @return A new widened state
+	 */
 	STATE widen(STATE other);
 
+	/**
+	 * Checks if this state represents bottom, i.e. represents the empty state.
+	 *
+	 * @return true iff this state is bottom
+	 */
 	boolean isBottom();
 }

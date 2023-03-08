@@ -37,13 +37,50 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  */
 public interface INonrelationalValue<VALUE extends INonrelationalValue<VALUE>> {
+	/**
+	 * Converts the value to a term with the given variable, i.e. create a term representation for variable ∈ this.
+	 *
+	 * @param variable
+	 *            The variable with this value
+	 * @param script
+	 *            A script to be used for the term creation
+	 * @return A term that represents this value
+	 */
 	Term toTerm(Term variable, Script script);
 
+	/**
+	 * Checks if this value represents top.
+	 *
+	 * @return true iff this value is top
+	 */
 	boolean isTop();
 
+	/**
+	 * Checks if this value represents bottom, i.e. represents the empty set.
+	 *
+	 * @return true iff this value is bottom
+	 */
 	boolean isBottom();
 
+	/**
+	 * Joins two abstract values. The join of two abstract values is an over-approximation of their union.
+	 *
+	 * @param other
+	 *            The value to be joined.
+	 * @return An overapproximation of this ∪ other
+	 */
 	VALUE join(VALUE other);
 
+	/**
+	 * Widens one abstract value by another one.
+	 * <p>
+	 * Widening is similar to {@link #join} with the additional property that on any infinite sequence p1, p2, p3, ...
+	 * the sequence w1, w2, w3, ... with w1 = p1 and wi = widen(w(i-1), pi) reaches a fixpoint, that is, wi = w(i+1) =
+	 * w(i+2) = ... for some i.
+	 *
+	 * @param other
+	 *            The value to be widened with
+	 * @return A new widened value
+	 */
 	VALUE widen(VALUE other);
 }
