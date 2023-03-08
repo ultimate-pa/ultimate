@@ -40,6 +40,9 @@ import java.util.Set;
 import java.util.function.Function;
 
 import javax.naming.spi.DirStateFactory.Result;
+import javax.swing.text.AsyncBoxView.ChildState;
+
+import org.w3c.dom.Node;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimplePair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
@@ -862,127 +865,70 @@ public final class CDD {
 	}
 	
 	/** 
-	 * A recursive method that returns an ArrayList of pairs containing all the Decisions in the CDD.
+	 * Returns an ArrayList of pairs containing all the Decisions in the CDD.
 	 * The first element of each pair is a Decision<?>, the second element is an int signifying the true child of the decision.
 	 * If called on CDD.TRUE or CDD.FALSE, it will return an empty list.
 	 * 
-	 * Invariants: 
-	 *  1. All nodes in the CDD have either 2 or "null" children.
-	 *  2. The CDD given as the parameter must be a pure conjunction 
+	 * Assertions: 
+	 *  1. The CDD given as the parameter must be a pure conjunction 
 	 * 
 	 * @param CDD cdd
 	 * @return ArrayList<SimplePair<Decision<?>, Integer>> result
-	 * 		
-	 * @author lena
 	 */
-	public ArrayList<SimplePair<Decision<?>, Integer>> getDecisionsConjunction() {
-		if (mChilds == null) {
-			return new ArrayList<SimplePair<Decision<?>, Integer>>();
-		} else {
-			
-			// all nodes must have two kids
-			assert mChilds.length == 2;
-			// formula must be a conjunction
-			assert !toString().contains("||");
-			
-			
-			CDD childLeft = mChilds[0];
-			CDD childRight = mChilds[1];
-			ArrayList<SimplePair<Decision<?>, Integer>> left;
-			ArrayList<SimplePair<Decision<?>, Integer>> right;
-			if (childLeft == CDD.TRUE || childLeft == CDD.FALSE) {
-				left = new ArrayList<SimplePair<Decision<?>, Integer>>();
-			} else {
-				left = childLeft.getDecisionsConjunction();
+	public ArrayList<Pair<Decision<?>, int[]>> getDecisionsConjunction() {
+		ArrayList<Pair<Decision<?>, int[]>> result = new ArrayList<Pair<Decision<?>, int[]>>();
+		//assert !toString().contains("||");
+		CDD node = this;
+		
+		while (node.getChilds() != null) {
+			CDD[] childs = node.getChilds();
+			CDD childLeft = childs[0];
+			CDD childRight = childs[1];
+			Decision<?> decision = node.getDecision();
+			String var = decision.getVar();
+			// check which operation
+			if (childLeft == CDD.FALSE) { 
+				// c > T, c >= T, c == T
+				// trueChild is [1]
+				int[] trueChilds = {1};
+				Pair<Decision<?>, int[]> pair = new Pair<Decision<?>, int[]>(decision, trueChilds); 
+				result.add(pair);
+				node = childRight;
+			} else { 
+				// (childRight == CDD.FALSE) because the CDD is a conjunction
+				// c < T, c <= T, c != T
+				if (childs.length == 3) {
+					// c != T
+					// trueChild is [0, 2]
+					int[] trueChilds = {0,2};
+					Pair<Decision<?>, int[]> pair = new Pair<Decision<?>, int[]>(decision, trueChilds);
+					result.add(pair);
+				} else { 
+					// c > T, c >= T
+					// trueChild is [0]
+					int[] trueChilds = {0};
+					Pair<Decision<?>, int[]> pair = new Pair<Decision<?>, int[]>(decision, trueChilds);
+					result.add(pair);
+				}
+				node = childLeft;
 			}
-			if (childRight == CDD.TRUE || childRight == CDD.FALSE) {
-				right = new ArrayList<SimplePair<Decision<?>, Integer>>();
-			} else {
-				right = childRight.getDecisionsConjunction();
-			}
 			
-			Decision<?> decision = getDecision();	
-			if (childLeft == CDD.FALSE) { // this means the true child is 1
-				SimplePair<Decision<?>, Integer> pair = new SimplePair<Decision<?>, Integer>(decision, 1);
-				left.add(pair);
-			} else {
-				SimplePair<Decision<?>, Integer> pair = new SimplePair<Decision<?>, Integer>(decision, 0);
-				left.add(pair);
-			}
-			left.addAll(right);
-			return left;
-		}
-	}
-	
-	/**
-	 * This method converts a CDD into DNF, and, for each conjunction, collects a List of (Decision<?> decision, int trueChild).
-	 * It then returns an ArrayList of those conjunction-Lists.
-	 * 
-	 * @return ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> result 
-	 * 
-	 * @author lena
-	 */
-	public ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> getDecisionsDNF() {
-		CDD[] dnf = toDNF();	
-		ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> result = new ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>>();
-		for (CDD conjunction : dnf) {
-			result.add(conjunction.getDecisionsConjunction());
 		}
 		return result;
 	}
 	
 	/**
-	 * @author lena
+	 * Converts a CDD into DNF, and, for each conjunction, collects a List of (Decision<?> decision, int trueChild).
+	 * int trueChild is needed to later build atomic CDDs for each decision, as it is used to determine the operation (see getOp())
 	 * 
-	 * A recursive function that returns an ArrayList with all the decisions in the nodes of the CDD 
-	 * given as the argument. If called on CDD.TRUE or CDD.FALSE, it will return an empty list.
-	 * 
-	 * Invariant: All nodes in the CDD have either 2 or "null" children. 
-	 * 
-	 * @param CDD cdd
-	 * @return ArrayList<Decision<?> result: contains all decisions in cdd
-	 * 
+	 * @return ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> result 	the List of those conjunction-Lists
 	 */
-	public HashSet<Decision<?>> getAtomsDNF() {
-		if (mChilds == null) {
-			return new HashSet<Decision<?>>();
-		} else {
-			// assure all nodes have two kids
-			assert mChilds.length == 2;
-			CDD childLeft = mChilds[0];
-			CDD childRight = mChilds[1];
-//			ArrayList<Decision<?>> left;
-//			ArrayList<Decision<?>> right;
-//			ArrayList<Decision<?>> result;
-			Set<Decision<?>> left;
-			Set<Decision<?>> right;
-			if (childLeft == CDD.TRUE || childLeft == CDD.FALSE) {
-				left = new HashSet<Decision<?>>();
-			} else {
-				left = childLeft.getAtomsDNF();
-			}
-			if (childRight == CDD.TRUE || childRight == CDD.FALSE) {
-				right = new HashSet<Decision<?>>();
-			} else {
-				right = childRight.getAtomsDNF();
-			}
-				
-			Decision<?> decision = getDecision();
-			left.add(decision);
-			left.addAll(right);
-//			result = left;
-//			result.addAll(right);
-//			if (!result.contains(decision)) {
-//				result.add(decision);
-//			}
-//			left.add(decision);
-//			if (!left.contains(decision) && !right.contains(decision)) {
-//				left.add(decision);
-//			}
-// 			left.addAll(right);
-//			return left;
-			return (HashSet<Decision<?>>) left;
+	public ArrayList<ArrayList<Pair<Decision<?>, int[]>>> getDecisionsDNF() {
+		CDD[] dnf = toDNF();	
+		ArrayList<ArrayList<Pair<Decision<?>, int[]>>> result = new ArrayList<ArrayList<Pair<Decision<?>,int[]>>>();
+		for (CDD conjunction : dnf) {
+			result.add(conjunction.getDecisionsConjunction());
 		}
+		return result;
 	}
-
 }
