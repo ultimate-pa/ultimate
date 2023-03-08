@@ -44,7 +44,6 @@ import javax.swing.text.AsyncBoxView.ChildState;
 
 import org.w3c.dom.Node;
 
-import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimplePair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
