@@ -166,7 +166,7 @@ public final class TermToInterval {
 		// For now we ignore the condition and over-approximate
 		final Interval iteThenResult = evaluate(iteParams[1], scope);
 		final Interval iteElseResult = evaluate(iteParams[2], scope);
-		return iteThenResult.union(iteElseResult);
+		return iteThenResult.join(iteElseResult);
 	}
 
 	private static boolean isFunction(final String functionName, final ApplicationTerm term) {

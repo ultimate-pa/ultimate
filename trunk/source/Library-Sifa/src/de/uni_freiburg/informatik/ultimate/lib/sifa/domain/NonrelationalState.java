@@ -89,7 +89,7 @@ public class NonrelationalState<VALUE extends INonrelationalValue<VALUE>>
 
 	@Override
 	public NonrelationalState<VALUE> join(final NonrelationalState<VALUE> other) {
-		return merge(other, VALUE::union);
+		return merge(other, VALUE::join);
 	}
 
 	@Override

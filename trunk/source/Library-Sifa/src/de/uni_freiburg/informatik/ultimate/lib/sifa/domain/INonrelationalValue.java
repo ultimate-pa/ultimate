@@ -43,7 +43,7 @@ public interface INonrelationalValue<VALUE extends INonrelationalValue<VALUE>> {
 
 	boolean isBottom();
 
-	VALUE union(VALUE other);
+	VALUE join(VALUE other);
 
 	VALUE widen(VALUE other);
 }

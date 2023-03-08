@@ -184,7 +184,7 @@ public final class Interval implements INonrelationalValue<Interval> {
 	}
 
 	@Override
-	public Interval union(final Interval rhs) {
+	public Interval join(final Interval rhs) {
 		return Interval.of(min(mLower, rhs.mLower), max(mUpper, rhs.mUpper));
 	}
 
