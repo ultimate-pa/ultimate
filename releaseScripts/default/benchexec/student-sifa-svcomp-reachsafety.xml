@@ -31,6 +31,7 @@
 
   <tasks name="ReachSafety64">
     <includesfile>../../../trunk/examples/svcomp/Systems_DeviceDriversLinux64_ReachSafety.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
     <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
   </tasks>
 
