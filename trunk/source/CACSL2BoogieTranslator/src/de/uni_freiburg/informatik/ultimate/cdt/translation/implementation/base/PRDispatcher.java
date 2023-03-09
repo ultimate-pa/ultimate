@@ -145,6 +145,9 @@ public class PRDispatcher implements IDispatcher {
 		if (n instanceof IASTParameterDeclaration) {
 			return mCHandler.visit(this, (IASTParameterDeclaration) n);
 		}
+		if (n instanceof IASTProblemDeclaration) {
+			return mCHandler.visit(this, (IASTProblemDeclaration) n);
+		}
 		if (n instanceof IASTASMDeclaration) {
 			return mCHandler.visit(this, (IASTASMDeclaration) n);
 		}
