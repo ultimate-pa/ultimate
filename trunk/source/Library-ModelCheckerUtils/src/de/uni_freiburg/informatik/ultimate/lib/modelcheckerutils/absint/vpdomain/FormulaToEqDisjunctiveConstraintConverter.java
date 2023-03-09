@@ -107,7 +107,7 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 
 	private void computeResult() {
 		final Term formulaInNnf =
-				new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH).transform(mFormula);
+				new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP).transform(mFormula);
 
 		final StoreChainSquisher scs = new StoreChainSquisher(mMgdScript);
 		final List<Term> conjunction = new ArrayList<>();
@@ -312,8 +312,8 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 
 		@Override
 		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
-			throw new UnsupportedOperationException(
-					"quantifiers in Transformulas are currently not supported in the" + " equality domain");
+			// Overapproximate quantifiers
+			mResultStack.push(mEqConstraintFactory.getEmptyDisjunctiveConstraint(INPLACE_CONJUNCTIONS));
 		}
 
 		@Override
