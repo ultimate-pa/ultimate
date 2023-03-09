@@ -174,6 +174,12 @@ public class PhaseEventAutomata implements Comparable<Object> {
 
 		final Phase[] allPhases = newPhases.values().toArray(new Phase[newPhases.size()]);
 		final Phase[] initPhases = newInit.toArray(new Phase[newInit.size()]);
+		
+		// add initial transition to Phases in initPhases 
+		for (Phase phase : initPhases) {
+			InitialTransition initialTransition = new InitialTransition(phase.clockInv, phase);
+			phase.setInitialTransition(initialTransition);
+		}
 
 		final List<String> newClocks = mergeClockLists(b);
 
