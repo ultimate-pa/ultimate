@@ -24,11 +24,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 @RunWith(JUnit4.class)
 public class RangeDecisionTest {
-	ArrayList<Pair<CDD, CDD>> mTestCases;
+	ArrayList<Pair<CDD, CDD>> mTestCasesFilterCdd;
+	ArrayList<Pair<CDD, CDD>> mTestCasesStrict;
 	
 	public RangeDecisionTest() {
-		mTestCases = new ArrayList<Pair<CDD, CDD>>();
+		mTestCasesFilterCdd = new ArrayList<Pair<CDD, CDD>>();
+		mTestCasesStrict = new ArrayList<Pair<CDD, CDD>>();
 		createTestCasesFilterCdd();
+		createTestCasesStrict();
 		
 	}
 	
@@ -52,7 +55,7 @@ public class RangeDecisionTest {
 		CDD conj2expected = c1;
 		CDD expected0 = conj1expected.or(conj2expected);
 		Pair<CDD, CDD> testCase0 = new Pair<CDD, CDD>(testCdd0, expected0);
-		mTestCases.add(testCase0);
+		mTestCasesFilterCdd.add(testCase0);
 		
 		//-----------------------------------------------------------
 		// Test 1 (Fringe Case)
@@ -60,7 +63,7 @@ public class RangeDecisionTest {
 		CDD testCdd1 = CDD.TRUE;
 		CDD expected1 = CDD.TRUE;
 		Pair<CDD, CDD> testCase1 = new Pair<CDD, CDD>(testCdd1, expected1);
-		mTestCases.add(testCase1);
+		mTestCasesFilterCdd.add(testCase1);
 		
 		//-----------------------------------------------------------
 		// Test 2 (Simple Case)
@@ -68,14 +71,47 @@ public class RangeDecisionTest {
 		CDD testCdd2 = c1.and(c2);
 		CDD expected2 = c2;
 		Pair<CDD, CDD> testCase2 = new Pair<CDD, CDD>(testCdd2, expected2);
-		mTestCases.add(testCase2);
+		mTestCasesFilterCdd.add(testCase2);
 		
 		//-----------------------------------------------------------
 		// Test 3 (filter out all)
 		// 
 		Pair<CDD, CDD> testCase3 = new Pair<CDD, CDD>(testCdd0, CDD.TRUE);
-		mTestCases.add(testCase3);
-	}	
+		mTestCasesFilterCdd.add(testCase3);
+	}
+	
+	public void createTestCasesStrict() {
+		//-----------------------------------------------------------
+		// Test 0 (Contains all binary operators
+		//
+		// c1 <= 5
+		CDD c1 = RangeDecision.create("c1", RangeDecision.OP_LT, 5);
+		// c2 >= 5
+		CDD c2 = RangeDecision.create("c2", RangeDecision.OP_GT, 5);
+		// c3 > 5
+		CDD c3 = RangeDecision.create("c3", RangeDecision.OP_GT, 5);
+		// c4 < 5
+		CDD c4 = RangeDecision.create("c4", RangeDecision.OP_GT, 5);
+		
+		CDD conj1 = (c1.and(c2)).and(c4);
+		CDD conj2 = (c1.and(c3)).and(c4);
+		
+		CDD testCdd = mTestCasesFilterCdd.get(0).getFirst();
+		CDD expected = conj1.or(conj2);
+		
+		Pair<CDD, CDD> testCase = new Pair<CDD, CDD>(testCdd, expected);
+		
+		mTestCasesStrict.add(testCase);
+		
+		//-----------------------------------------------------------
+		// Test 1 (Fringe Case) Grenzfälle des FBI
+		//
+		CDD testCdd1 = CDD.TRUE;
+		CDD expected1 = CDD.TRUE;
+		Pair<CDD, CDD> testCase1 = new Pair<CDD, CDD>(testCdd1, expected1);
+		mTestCasesStrict.add(testCase1);
+		
+	}
 	
 	
 	/**
@@ -87,7 +123,7 @@ public class RangeDecisionTest {
 	 */
 	@Test
 	public void filterCDDTest0() {
-		Pair<CDD, CDD> testCase = mTestCases.get(0);
+		Pair<CDD, CDD> testCase = mTestCasesFilterCdd.get(0);
 		String[] reset = {"c3", "c4"};
 		CDD testCDD = testCase.getFirst();
 		CDD expected = testCase.getSecond();
@@ -103,7 +139,7 @@ public class RangeDecisionTest {
 	 */
 	@Test
 	public void filterCDDTest1() {
-		Pair<CDD, CDD> testCase = mTestCases.get(1);
+		Pair<CDD, CDD> testCase = mTestCasesFilterCdd.get(1);
 		String[] reset = {"c3", "c4"};
 		CDD testCDD = testCase.getFirst();
 		CDD expected = testCase.getSecond();
@@ -119,7 +155,7 @@ public class RangeDecisionTest {
 	 */
 	@Test
 	public void filterCDDTest2() {
-		Pair<CDD, CDD> testCase = mTestCases.get(2);
+		Pair<CDD, CDD> testCase = mTestCasesFilterCdd.get(2);
 		String[] reset = {"c1"};
 		CDD testCDD = testCase.getFirst();
 		CDD expected = testCase.getSecond();
@@ -136,13 +172,42 @@ public class RangeDecisionTest {
 	 */
 	@Test
 	public void filterCDDTest3() {
-		Pair<CDD, CDD> testCase = mTestCases.get(3);
+		Pair<CDD, CDD> testCase = mTestCasesFilterCdd.get(3);
 		String[] reset = {"c1", "c2", "c3", "c4" };
 		CDD testCDD = testCase.getFirst();
 		CDD expected = testCase.getSecond();
 		CDD actual = RangeDecision.filterCdd(testCDD, reset);
 		assertTrue(actual.equals(expected));
 		
+	}
+	
+	/**
+	 * Test 0 (Contains all binary operators#
+	 * 
+	 * TestCdd (DNF):  (c1 <= 5 && c2 >= 5 && c4 < 5) || (c1 <= 5 && c3 > 5 && c4 < 5)
+	 * expected: (c1 < 5 && c2 > 5 && c4 < 5) || (c1 < 5 && c3 > 5 && c4 < 5)
+	 */
+	@Test
+	public void strictTest0() {
+		Pair<CDD, CDD> testCase = mTestCasesStrict.get(0);
+		CDD testCDD = testCase.getFirst();
+		CDD expected = testCase.getSecond();
+		CDD actual = RangeDecision.strict(testCDD);
+		assertTrue(actual.equals(expected));
+	}
+	/**
+	 * Test 1 (Fringe Case)
+	 * 
+	 * TestCDD: TRUE
+	 * expected: TRUE
+	 */
+	@Test
+	public void strictTest1() {
+		Pair<CDD, CDD> testCase = mTestCasesFilterCdd.get(1);
+		CDD testCDD = testCase.getFirst();
+		CDD expected = testCase.getSecond();
+		CDD actual = RangeDecision.strict(testCDD);
+		assertTrue(actual.equals(expected));
 	}
 	
 }
