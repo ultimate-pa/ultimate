@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
-import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimplePair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class RangeDecision extends Decision<RangeDecision> {
@@ -548,7 +547,7 @@ public class RangeDecision extends Decision<RangeDecision> {
 	 * @param toStrict	the CDD
 	 * @return the CDD with all non-strict RangeDecisions changed into strict ones
 	 */
-	public CDD strict(CDD toStrict) {
+	public static CDD strict(CDD toStrict) {
 		ArrayList<ArrayList<Pair<Decision<?>, int[]>>> decisionDNF = toStrict.getDecisionsDNF();
 		ArrayList<CDD> newConjunctions =  new ArrayList<>();
 		CDD newDisjunction = CDD.FALSE;
@@ -566,13 +565,21 @@ public class RangeDecision extends Decision<RangeDecision> {
 				int[] limits = rangeDecision.getLimits();
 				assert limits.length == 1;
 				int limit = limits[0];
-				// check if limit is uneven. if it is, we have a non-strict decision
-				if (limit % 2 == 1) {
-					int newOp = strictOp(rangeDecision.getOp(trueChild));
+				// check if limit is uneven. if it is, c <= T or c > T
+				// if trueChild is also 0, then it is c <= T and must be strictified
+				if (limit % 2 == 1 && trueChild == 0) {
+					//int newOp = strictOp(rangeDecision.getOp(trueChild));
 					// create new atomic CDD with strict operation
-					CDD newRangeDecision = RangeDecision.create(var, newOp, rangeDecision.getVal(trueChild));
+					CDD newRangeDecision = RangeDecision.create(var, OP_LT, rangeDecision.getVal(trueChild));
 					newConjunction  = newConjunction.and(newRangeDecision);
-				} else {
+					}
+				// check if limit is even. if it is, c >= T or c < T
+				// if trueChild is also 1, then it is c >= T and must be strictified
+				else if (limit % 2 == 0 && trueChild ==1) {
+					CDD newRangeDecision = RangeDecision.create(var, OP_GT, rangeDecision.getVal(trueChild));
+					newConjunction  = newConjunction.and(newRangeDecision);
+				} else { 
+					// the RangeDecision is already strict
 					// reuse old decision for atomic CDD
 					CDD newRangeDecision = RangeDecision.create(var, op, rangeDecision.getVal(trueChild));
 					newConjunction = newConjunction.and(newRangeDecision);
@@ -587,8 +594,8 @@ public class RangeDecision extends Decision<RangeDecision> {
 	}
 	 
 	/**
-	 * Returns the strict operator for a non-strict operator @param op.
-	 * If the operator is already strict or EQ or NEQ, we return the original operator.
+	 * Returns the strict operation for a non-strict operation @param op.
+	 * If the operator is already strict or EQ or NEQ, we return the original operation.
 	 * 
 	 * @param op	the binary operation 
 	 * @return		the strict binary operation
