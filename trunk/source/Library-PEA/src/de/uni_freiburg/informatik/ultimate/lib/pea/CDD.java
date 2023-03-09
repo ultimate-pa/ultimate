@@ -870,6 +870,9 @@ public final class CDD {
 	 * 
 	 * Assertions: 
 	 *  1. The CDD given as the parameter must be a pure conjunction 
+	 *  
+	 *  Example:
+	 *  
 	 * 
 	 * @param CDD cdd
 	 * @return ArrayList<SimplePair<Decision<?>, Integer>> result
@@ -917,7 +920,7 @@ public final class CDD {
 	}
 	
 	/**
-	 * Converts a CDD into DNF, and, for each conjunction, collects a List of (Decision<?> decision, int trueChild).
+	 * Converts a CDD into DNF, and, for each conjunction, collects a List of Pairs (Decision<?> decision, int trueChild).
 	 * int trueChild is needed to later build atomic CDDs for each decision, as it is used to determine the operation (see getOp())
 	 * 
 	 * @return ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> result 	the List of those conjunction-Lists
