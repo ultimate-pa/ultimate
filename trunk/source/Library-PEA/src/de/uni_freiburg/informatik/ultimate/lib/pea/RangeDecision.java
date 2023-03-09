@@ -592,24 +592,6 @@ public class RangeDecision extends Decision<RangeDecision> {
 		}
 		return newDisjunction;	
 	}
-	 
-	/**
-	 * Returns the strict operation for a non-strict operation @param op.
-	 * If the operator is already strict or EQ or NEQ, we return the original operation.
-	 * 
-	 * @param op	the binary operation 
-	 * @return		the strict binary operation
-	 */
-	public static int strictOp(int op) {
-		switch (op) {
-		case OP_LTEQ:
-			return OP_LT;
-		case OP_GTEQ:
-			return OP_GT;
-		default:
-			return op;
-		}
-	}
 }
 	
 	
