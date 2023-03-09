@@ -154,7 +154,7 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 		public void walk(final NonRecursive walker, final ApplicationTerm term) {
 			if ("=".equals(term.getFunction().getName())) {
 				handleXquality(term.getParameters()[0], term.getParameters()[1], true);
-			} else if ("distinct".equals(term.getFunction().getName())) {
+			} else if (List.of("distinct", ">", "<").contains(term.getFunction().getName())) {
 				handleXquality(term.getParameters()[0], term.getParameters()[1], false);
 			} else if ("not".equals(term.getFunction().getName())
 					&& SmtUtils.isFunctionApplication(term.getParameters()[0], "=")) {
