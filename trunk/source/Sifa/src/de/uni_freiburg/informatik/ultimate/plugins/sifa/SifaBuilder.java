@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ExplicitValueDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IntervalDomain;
@@ -134,6 +135,9 @@ public class SifaBuilder {
 		} else if (OctagonDomain.class.getSimpleName().equals(domainName)) {
 			domain = new OctagonDomain(mLogger, tools,
 					mPrefs.getInt(SifaPreferences.LABEL_OCTAGONDOM_MAX_PARALLEL_STATES), () -> timer);
+		} else if (EqDomain.class.getSimpleName().equals(domainName)) {
+			domain = new EqDomain(mLogger, tools, mPrefs.getInt(SifaPreferences.LABEL_EQDOM_MAX_PARALLEL_STATES),
+					() -> timer, mServices);
 		} else {
 			throw new IllegalArgumentException("Unknown domain setting: " + domainName);
 		}
