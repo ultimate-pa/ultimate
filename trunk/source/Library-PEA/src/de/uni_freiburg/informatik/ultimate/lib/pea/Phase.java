@@ -26,6 +26,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pea;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Vector;
 
@@ -47,10 +48,10 @@ public class Phase implements Comparable<Phase> {
 	List<Transition> transitions;
 	public int ID;
 	
-	
-	
 	// LENA_BA
-	boolean isAccepting;
+	boolean mIsAccepting;
+	// using Optional to avoid null
+	private Optional<InitialTransition> mInitialTransition;
 	
 	
 	
@@ -74,7 +75,8 @@ public class Phase implements Comparable<Phase> {
 		incomming = new Vector<>();
 		
 		// LENA_BA
-		isAccepting = true;
+		mIsAccepting = true;
+		mInitialTransition = Optional.empty();
 	}
 
 	public Phase(final String name, final CDD stateInv, final CDD clockInv) {
@@ -262,13 +264,20 @@ public class Phase implements Comparable<Phase> {
 	}
 	
 	
-	// LENA_BA 
 	public boolean getAccepting() {
-		return isAccepting;
+		return mIsAccepting;
 	}
 	
-	// LENA_BA
 	public void setAccepting(final boolean val) {
-		isAccepting = val;
+		mIsAccepting = val;
 	}
+	
+
+    public void setInitialTransition(InitialTransition initialTransition) {
+        mInitialTransition = Optional.ofNullable(initialTransition);
+    }
+
+    public Optional<InitialTransition> getInitialTransition() {
+        return mInitialTransition;
+    }
 }
