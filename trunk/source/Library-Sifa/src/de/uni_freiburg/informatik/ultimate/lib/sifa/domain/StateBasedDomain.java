@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
  * @param <STATE>
  *            The abstract state that is used internally
  */
-public abstract class AbstractStateBasedDomain<STATE extends IAbstractState<STATE>> implements IDomain {
+public abstract class StateBasedDomain<STATE extends IAbstractState<STATE>> implements IDomain {
 	protected final ILogger mLogger;
 	protected final SymbolicTools mTools;
 	private final int mMaxDisjuncts;
@@ -57,7 +57,7 @@ public abstract class AbstractStateBasedDomain<STATE extends IAbstractState<STAT
 	// TODO: Is it good to use a WeakHashMap here?
 	private final WeakHashMap<IPredicate, List<STATE>> mPredicateCache = new WeakHashMap<>();
 
-	public AbstractStateBasedDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
+	public StateBasedDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
 			final Supplier<IProgressAwareTimer> timeout) {
 		mTools = tools;
 		mLogger = logger;

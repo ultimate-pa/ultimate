@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
  */
-public class OctagonDomain extends AbstractDnfStateBasedDomain<OctagonState> {
+public class OctagonDomain extends StateBasedDomainWithDnf<OctagonState> {
 	private final TermTransformer mTermTransformer = new RewriteEqualityTransformer(mTools.getScript());
 
 	public OctagonDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,

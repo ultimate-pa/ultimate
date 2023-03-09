@@ -11,9 +11,9 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-public abstract class AbstractDnfStateBasedDomain<STATE extends IAbstractState<STATE>>
-		extends AbstractStateBasedDomain<STATE> {
-	public AbstractDnfStateBasedDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
+public abstract class StateBasedDomainWithDnf<STATE extends IAbstractState<STATE>>
+		extends StateBasedDomain<STATE> {
+	public StateBasedDomainWithDnf(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
 			final Supplier<IProgressAwareTimer> timeout) {
 		super(logger, tools, maxDisjuncts, timeout);
 	}

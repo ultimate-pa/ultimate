@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 
-public class EqDomain extends AbstractStateBasedDomain<EqState> {
+public class EqDomain extends StateBasedDomain<EqState> {
 	private final IUltimateServiceProvider mServices;
 	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqFactory;

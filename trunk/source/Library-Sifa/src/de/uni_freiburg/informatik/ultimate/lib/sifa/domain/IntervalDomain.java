@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Polynomia
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-public class IntervalDomain extends AbstractDnfStateBasedDomain<NonrelationalState<Interval>> {
+public class IntervalDomain extends StateBasedDomainWithDnf<NonrelationalState<Interval>> {
 
 	public IntervalDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
 			final Supplier<IProgressAwareTimer> timeout) {

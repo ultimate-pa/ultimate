@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand;
 
 /**
- * Interface for an abstract state that is used in {@link AbstractStateBasedDomain}
+ * Interface for an abstract state that is used in {@link StateBasedDomain}
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
