@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
+import java.awt.geom.CubicCurve2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,7 +41,9 @@ public class ComplementPEA {
 		// set sink as initial phase 
 		
 		for (Phase phase : mPEAtoComplement.getPhases()) {
-			CDD guardToSink = phase.stateInv.and(strict(phase.clockInv, CDD.TRUE));
+			CDD clockInv = phase.getClockInvariant();
+			Decision<?> clockDecision = clockInv.getDecision();
+			CDD guardToSink = phase.stateInv.and(RangeDecision.strict(clockInv));
 			// create new phase for complement automaton that is not accepting
 			Phase newPhase = new Phase(phase.name, phase.stateInv, phase.clockInv);
 			newPhase.setAccepting(false);
@@ -62,10 +65,11 @@ public class ComplementPEA {
 				CDD noResetCdd = CDD.TRUE;
 				CDD strictCdd = CDD.TRUE;
 				if (reset.length > 0) {
-					CDD noResetClockInv = noReset(successorClockInv, reset, noResetCdd);
-					guardToSink = guardToSink.or(transition.getGuard().and(successorStateInv).and(strict(noResetClockInv, strictCdd)));
+					CDD noResetClockInv = RangeDecision.filterCdd(successorClockInv, reset);
+							//noReset(successorClockInv, reset, noResetCdd);
+					guardToSink = guardToSink.or(transition.getGuard().and(successorStateInv).and(RangeDecision.strict(noResetClockInv)));
 				} else {
-					guardToSink = guardToSink.or(transition.getGuard().and(successorStateInv).and(strict(successorClockInv, strictCdd)));
+					guardToSink = guardToSink.or(transition.getGuard().and(successorStateInv).and(RangeDecision.strict(successorClockInv)));
 				}
 			}
 			// make transition to sink 
@@ -93,72 +97,4 @@ public class ComplementPEA {
 		PhaseEventAutomata complementedPEA = new PhaseEventAutomata("aaaaa",  phases.toArray(new Phase[0]), mPEAtoComplement.mInit);
 		return complementedPEA;
 	}
-	
-	/**
-	 * Computes a CDD representing strict(clockInv
-	 * TODO: move to RangeDecision Class
-	 * 
-	 * @param clockInv: the clock invariant that will be strictified
-	 */
-	public CDD strict(CDD clockInv, CDD strict) {
-		Decision<?> clockInvNonStrictDecision =  clockInv.getDecision();
-		if (clockInvNonStrictDecision instanceof RangeDecision) {
-			RangeDecision decision  = (RangeDecision) clockInvNonStrictDecision;
-			//CDD[] childs = clockInv.getChilds();
-			// Was soll das int childs bei getOp???? offensichtlich nicht die Anzahl der Kinder?????
-			// Theorie: childs = 0 -> root node. Kann aber nicht sein, bei childs = 0 immer LT o. LTEQ
-			//int numChilds = childs.length;
-			int OP = decision.getOp(0);
-			if (OP == RangeDecision.OP_LTEQ) { // c <= T
-				CDD strictClockInv = RangeDecision.create(decision.getVar(), RangeDecision.OP_LT, decision.getVal(0));
-				strict = strict.and(strictClockInv); // c < T
-			}
-			// Dieser Fall würde nie eintreten??? 
-			// ähnliches Problem bei val(int childs)
-			else if (OP == RangeDecision.OP_GTEQ) {  // c >= T
-				CDD strictClockInv = RangeDecision.create(decision.getVar(), RangeDecision.OP_GT, decision.getVal(0));
-				strict.and(strictClockInv); // c > T
-			}
-			else { // already strict 
-				strict.and(clockInv);
-			}
-			for (CDD child : clockInv.getChilds()) {
-				return strict(child, strict);
-			}
-		}
-		return strict;
-	}
-	
-	
-	/**
-	 * Computes a CDD representing the conjunction of the RangeDecision-Nodes in the CDD given 
-	 * that are NOT in the reset set also given.
-	 * 
-	 * TODO move to RangeDecision class
-	 * TODO rename filterCDDbyArray()
-	 * 
-	 * @param clockInv: Clock invariant of some phase.
-	 * 
-	 * @param reset: the reset set of an incoming transition of that phase.
-	 */
-	public CDD noReset(CDD clockInv, String[] reset, CDD noReset) {
-		if (clockInv.getChilds() == null) { // terminal node
-			return noReset; // no clock invariant
-		}
-		Decision<?> clockInvDecision = clockInv.getDecision();
-		if (clockInvDecision instanceof RangeDecision) {
-			RangeDecision decision = (RangeDecision) clockInvDecision;
-			// if the variable of the decision is not in reset, we compute the conjunction
-			if (!Arrays.asList(reset).contains(decision.getVar())) {
-				CDD newDecision = RangeDecision.create(decision.getVar(), decision.getOp(0), decision.getVal(0));
-				noReset = noReset.and(newDecision);
-			}
-			CDD[] childs = clockInv.getChilds();
-			for (CDD cdd : childs) {
-				return noReset(cdd, reset, noReset);
-			}
-		}
-		return noReset;
-	}
-	
 }
