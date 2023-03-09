@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.WeakHashMap;
 import java.util.function.Supplier;
@@ -39,8 +38,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * Abstract class for an {@link IDomain} that uses states, i.e. that transforms predicates into an internal state
@@ -73,8 +70,8 @@ public abstract class AbstractStateBasedDomain<STATE extends IAbstractState<STAT
 		// TODO using return mTools.or(lhs, rhs) is still an option.
 		// Should we use it sometimes (for instance when inputs are not already cached)?
 		List<STATE> joined = new ArrayList<>();
-		joined.addAll(toStates(lhs));
-		joined.addAll(toStates(rhs));
+		joined.addAll(toStatesCached(lhs));
+		joined.addAll(toStatesCached(rhs));
 		if (joined.size() > mMaxDisjuncts) {
 			joined = List.of(joinToSingleState(joined));
 		}
@@ -87,8 +84,8 @@ public abstract class AbstractStateBasedDomain<STATE extends IAbstractState<STAT
 
 	@Override
 	public IPredicate widen(final IPredicate old, final IPredicate widenWith) {
-		final List<STATE> oldStates = toStates(old);
-		final List<STATE> widenWithStates = toStates(widenWith);
+		final List<STATE> oldStates = toStatesCached(old);
+		final List<STATE> widenWithStates = toStatesCached(widenWith);
 		final int productSize = oldStates.size() * widenWithStates.size();
 		List<STATE> resultStates;
 		if (productSize > mMaxDisjuncts) {
@@ -118,54 +115,16 @@ public abstract class AbstractStateBasedDomain<STATE extends IAbstractState<STAT
 
 	@Override
 	public IPredicate alpha(final IPredicate pred) {
-		return toPredicate(toStates(pred));
+		return toPredicate(toStatesCached(pred));
 	}
 
-	private List<STATE> toStates(final IPredicate pred) {
-		return mPredicateCache.computeIfAbsent(pred, this::computeStates);
+	private List<STATE> toStatesCached(final IPredicate pred) {
+		return mPredicateCache.computeIfAbsent(pred, this::toStates);
 	}
 
-	private List<STATE> computeStates(final IPredicate pred) {
-		final IProgressAwareTimer timer = mTimeout.get();
-		final Term[] disjuncts = mTools.dnfDisjuncts(pred, this::transformTerm);
-		final List<STATE> result = new ArrayList<>(disjuncts.length);
-		for (final Term dnfDisjunct : disjuncts) {
-			if (!timer.continueProcessing()) {
-				mLogger.warn(getClass().getSimpleName()
-						+ " alpha timed out before all disjuncts were processed. Continuing with top.");
-				return List.of(getTopState());
-			}
-			if (SmtUtils.isFalseLiteral(dnfDisjunct)) {
-				continue;
-			}
-			final STATE state = toState(SmtUtils.getConjuncts(dnfDisjunct));
-			if (!state.isBottom()) {
-				result.add(state);
-			}
-		}
-		// TODO join disjuncts if there are too many of them
-		return result;
-	}
+	protected abstract List<STATE> toStates(final IPredicate pred);
 
-	private IPredicate toPredicate(final Collection<STATE> states) {
+	private IPredicate toPredicate(final List<STATE> states) {
 		return mTools.orT(states.stream().map(x -> x.toTerm(mTools.getScript())).collect(Collectors.toList()));
 	}
-
-	/**
-	 * Transformations that are applied before converting the DNF to improve the states that are produced from the DNF.
-	 * This method has to return an overapproximation of {@code term}.
-	 */
-	protected Term transformTerm(final Term term) {
-		return term;
-	}
-
-	/**
-	 * Returns the internal state representation for the given conjuncts.
-	 */
-	protected abstract STATE toState(Term[] conjuncts);
-
-	/**
-	 * Returns the internal state that that represents top.
-	 */
-	protected abstract STATE getTopState();
 }
