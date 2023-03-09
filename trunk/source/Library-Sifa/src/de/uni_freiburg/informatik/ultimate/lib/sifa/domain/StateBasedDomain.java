@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 
 /**
  * Abstract class for an {@link IDomain} that uses states, i.e. that transforms predicates into an internal state
- * representation (using the method {@code toState}).
+ * representation (using the method {@code toStates}).
  *
  * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
@@ -122,6 +122,13 @@ public abstract class StateBasedDomain<STATE extends IAbstractState<STATE>> impl
 		return mPredicateCache.computeIfAbsent(pred, this::toStates);
 	}
 
+	/**
+	 * Converts the predicate to a list (i.e. disjunction) of abstract states.
+	 *
+	 * @param pred
+	 *            The predicate to be abstracted.
+	 * @return A list of abstract states that overapproximate {@code pred}.
+	 */
 	protected abstract List<STATE> toStates(final IPredicate pred);
 
 	private IPredicate toPredicate(final List<STATE> states) {
