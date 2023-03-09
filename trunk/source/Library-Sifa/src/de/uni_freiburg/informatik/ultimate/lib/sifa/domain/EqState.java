@@ -59,7 +59,9 @@ public class EqState implements IAbstractState<EqState> {
 
 	@Override
 	public EqState widen(final EqState other) {
-		return join(other);
+		final EqConstraint<EqNode> constraint = mConstraint.widen(other.mConstraint);
+		constraint.freezeIfNecessary();
+		return new EqState(constraint);
 	}
 
 	@Override

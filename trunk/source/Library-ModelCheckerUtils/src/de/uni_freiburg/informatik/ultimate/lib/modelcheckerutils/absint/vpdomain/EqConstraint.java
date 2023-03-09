@@ -300,6 +300,17 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		return res;
 	}
 
+	public EqConstraint<NODE> widen(final EqConstraint<NODE> other) {
+		if (this.isBottom()) {
+			return other;
+		}
+		if (other.isBottom()) {
+			return this;
+		}
+		// TODO: Can we do anything better than returning top?
+		return mFactory.getEmptyConstraint(false);
+	}
+
 	/**
 	 *
 	 * @param other
