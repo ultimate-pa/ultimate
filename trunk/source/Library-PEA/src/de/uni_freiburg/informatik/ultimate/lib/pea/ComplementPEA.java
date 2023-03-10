@@ -1,14 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
-import java.awt.geom.CubicCurve2D;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 
 /**
  * This class implements an algorithm for complementing Phase Event Automata as described in my bachelors thesis.
- * To be continued...
+ * Documentation to be continued...
  *
  * @author Lena Funk
  */
@@ -20,7 +19,6 @@ public class ComplementPEA {
 	public ComplementPEA(PhaseEventAutomata PEAtoComplement) {
 		mPEAtoComplement = PEAtoComplement;		
 	}
-	
 	
 	/**
 	 * Complements mPEAtoComplement
@@ -36,9 +34,7 @@ public class ComplementPEA {
 		sinkPhase.addTransition(sinkPhase, CDD.TRUE, new String[] {});
 		phases.add(sinkPhase);
 		
-		// TODO: 
-		// compute guard for initial transition to sink
-		// set sink as initial phase 
+		computeInitialTransitionSink(sinkPhase);
 		
 		for (Phase phase : mPEAtoComplement.getPhases()) {
 			CDD clockInv = phase.getClockInvariant();
@@ -62,8 +58,6 @@ public class ComplementPEA {
 				// compute guard to sink
 				// we do not use the clock invariant of the successor phase
 				// if the same clock is in the reset set of the transition
-				CDD noResetCdd = CDD.TRUE;
-				CDD strictCdd = CDD.TRUE;
 				if (reset.length > 0) {
 					CDD noResetClockInv = RangeDecision.filterCdd(successorClockInv, reset);
 							//noReset(successorClockInv, reset, noResetCdd);
@@ -76,25 +70,45 @@ public class ComplementPEA {
 			newPhase.addTransition(sinkPhase, guardToSink.negate(), new String[] {});
 			phases.add(newPhase);
 			
-			Decision<?> clockDecision = newPhase.getClockInvariant().getDecision();
+			Decision<?> newClockDecision = newPhase.getClockInvariant().getDecision();
 			
 			// special case: clock invariant is  c < T
 			if (clockDecision instanceof RangeDecision) {
 				// make clock invariant non-strict
-				RangeDecision clockInv = (RangeDecision) clockDecision;
-				// int numChilds = newPhase.getClockInvariant().getChilds().length;
-				if (clockInv.getOp(0) == RangeDecision.OP_LT) {
-					newPhase.clockInv = RangeDecision.create(clockInv.getVar(), RangeDecision.OP_LTEQ, clockInv.getVal(0));
+				RangeDecision newClockInv = (RangeDecision) newClockDecision;
+				// because all clock invariants are convex, we know that the true Child is always 0.
+				if (newClockInv.getOp(0) == RangeDecision.OP_LT) {
+					newPhase.clockInv = RangeDecision.create(newClockInv.getVar(), RangeDecision.OP_LTEQ, newClockInv.getVal(0));
 				}
-				// add c < T as guard to all outgoing transitions
-				// TODO: correct? 
 				for (Transition transition : newPhase.transitions) {
-					CDD newGuard = transition.getGuard().and(RangeDecision.create(clockInv.getVar(), RangeDecision.OP_LT, clockInv.getVal(0)));
+					CDD newGuard = transition.getGuard().and(RangeDecision.create(newClockInv.getVar(), RangeDecision.OP_LT, newClockInv.getVal(0)));
 					transition.setGuard(newGuard);
 				}
 			}
 		}
 		PhaseEventAutomata complementedPEA = new PhaseEventAutomata("aaaaa",  phases.toArray(new Phase[0]), mPEAtoComplement.mInit);
 		return complementedPEA;
+	}
+
+	/**
+	 * Computes guard for initial transition to sink
+	 * 
+	 * @param sinkPhase
+	 */
+	private void computeInitialTransitionSink(Phase sinkPhase) {
+		CDD initialTransitionSinkGuard = CDD.TRUE;
+		Phase[] initialPhases = mPEAtoComplement.getInit();
+		for (Phase phase : initialPhases) {
+			Optional<InitialTransition> initialTransition = phase.getInitialTransition();
+			if (initialTransition.isPresent()) {
+				CDD conjunction = phase.getStateInvariant().and(initialTransition.get().getGuard());
+				initialTransitionSinkGuard = initialTransitionSinkGuard.or(conjunction);
+			}
+		}
+		if (initialTransitionSinkGuard.negate() != CDD.TRUE) {
+			sinkPhase.setInit(true);
+			InitialTransition sinkInitialTransition = new InitialTransition(initialTransitionSinkGuard, sinkPhase);
+			sinkPhase.setInitialTransition(sinkInitialTransition);
+		}
 	}
 }

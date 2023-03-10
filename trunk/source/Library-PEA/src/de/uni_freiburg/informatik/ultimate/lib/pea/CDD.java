@@ -872,6 +872,8 @@ public final class CDD {
 	 *  1. The CDD given as the parameter must be a pure conjunction 
 	 *  
 	 *  Example:
+	 *  	cdd:  a && !b && c5 >= 5 && c6 <= 5 && c7 == 5  && c8 != 5
+	 *  	result: [(a, [0]) (b, [1]), (c5, [1]), (c6, [0]), (c7, [1]), (c8, [0, 2])]
 	 *  
 	 * 
 	 * @param CDD cdd
@@ -887,7 +889,6 @@ public final class CDD {
 			CDD childLeft = childs[0];
 			CDD childRight = childs[1];
 			Decision<?> decision = node.getDecision();
-			String var = decision.getVar();
 			// check which operation
 			if (childLeft == CDD.FALSE) { 
 				// c > T, c >= T, c == T
@@ -923,7 +924,7 @@ public final class CDD {
 	 * Converts a CDD into DNF, and, for each conjunction, collects a List of Pairs (Decision<?> decision, int trueChild).
 	 * int trueChild is needed to later build atomic CDDs for each decision, as it is used to determine the operation (see getOp())
 	 * 
-	 * @return ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> result 	the List of those conjunction-Lists
+	 * @return ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> result 	the List of conjunction-Lists
 	 */
 	public ArrayList<ArrayList<Pair<Decision<?>, int[]>>> getDecisionsDNF() {
 		CDD[] dnf = toDNF();	
