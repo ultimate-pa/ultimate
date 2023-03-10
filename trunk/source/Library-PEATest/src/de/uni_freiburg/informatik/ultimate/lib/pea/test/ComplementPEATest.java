@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.ComplementPEA;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
+import de.uni_freiburg.informatik.ultimate.lib.pea.InitialTransition;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseSet;
@@ -35,9 +36,20 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 @RunWith(JUnit4.class)
 public class ComplementPEATest {
 	
+	ArrayList<PhaseEventAutomata> mTestAutomata;
+	
+	public ComplementPEATest() {
+		mTestAutomata = new ArrayList<PhaseEventAutomata>();
+		
+		PhaseEventAutomata ResponseDelayGlobally = createResponseDelayGloballyPea();
+		PhaseEventAutomata UniversalityGlobally = createUniversalityGloballyPea();
+		
+		mTestAutomata.add(ResponseDelayGlobally);
+		mTestAutomata.add(UniversalityGlobally);
+	}
+	
 	// constructs a PEA corresponding to pattern UniversalityGlobally
 	public PhaseEventAutomata createUniversalityGloballyPea() {
-		// variablen? initialkante? 
 		CDD r = BooleanDecision.create("R");
 		final Phase[] phases = new Phase[] { new Phase("0", r, CDD.TRUE)};
 		final String[] noreset = new String[0];
@@ -47,8 +59,6 @@ public class ComplementPEATest {
 	
 	// constructs a PEA corresponding to pattern ResponseDelay Globally
 	public PhaseEventAutomata createResponseDelayGloballyPea() {
-		
-		// variablen? initialkante? 
 		CDD r = BooleanDecision.create("R");
 		CDD s = BooleanDecision.create("S");
 		CDD locInv0 = s.or(r.negate());
@@ -96,23 +106,20 @@ public class ComplementPEATest {
 		return true;
 	}
 	
-	@Test
-	public void checkPeaConstruction() {
-		PhaseEventAutomata UniversalityGlobally = createUniversalityGloballyPea();
-		PhaseEventAutomata ResponseDelayGlobally = createResponseDelayGloballyPea();
-		Phase[] init = UniversalityGlobally.getInit();
-		// wo initialkante.
-	}
 	
-
-	
+	/**
+	 * Test PEA: ResponseDelayGlobally
+	 * 
+	 * Sink is not initial
+	 */
 	@Test
 	public void testComplementResponseDelayGlobally() {
-		PhaseEventAutomata responseDelayGlobally = createResponseDelayGloballyPea();
-		ComplementPEA complementPEA = new ComplementPEA(responseDelayGlobally);
+		PhaseEventAutomata testPEA = mTestAutomata.get(0);
+		ComplementPEA complementPEA = new ComplementPEA(testPEA);
 		PhaseEventAutomata complementAutomaton = complementPEA.complement();
-		Phase[] originalPhases = responseDelayGlobally.getPhases();
+		Phase[] originalPhases = testPEA.getPhases();
 		Phase[] phases = complementAutomaton.getPhases();
+		assertEquals(originalPhases.length, phases.length - 1);
 		// does the complement automaton contain a sink? 
 		Phase sink = phases[0];
 		assertTrue(sink.getName() == "sink");
@@ -121,19 +128,26 @@ public class ComplementPEATest {
 		// it should not be initial
 		assertTrue(sink.isInit == false);
 		assertTrue(!sink.getInitialTransition().isPresent());
-		assertEquals(originalPhases.length, phases.length - 1);
+		
 	}
 	
-	@Test 
-	public void testNoReset1() {
-		CDD clkInv1 = RangeDecision.create("clk1",  RangeDecision.OP_LTEQ, 5);
-		CDD clkInv2 = RangeDecision.create("clk2",  RangeDecision.OP_LTEQ, 5);
-		CDD clkInv3 = RangeDecision.create("clk3",  RangeDecision.OP_LTEQ, 5);
-		CDD clkInvOr = clkInv2.or(clkInv3);
-		CDD clkInvCombi = clkInv1.and(clkInvOr);
-		String clkInvString = clkInvCombi.toString();
-		CDD[] cnf = clkInvCombi.toCNF();
-		String cnfString = cnf.toString();
+	/**
+	 * Test PEA: UniversalityGlobally
+	 * 
+	 * Case where sink is initial
+	 */
+	@Test
+	public void testComplementUniversalityGlobally() {
+		PhaseEventAutomata testPEA = mTestAutomata.get(1);
+		ComplementPEA complementPEA = new ComplementPEA(testPEA);
+		PhaseEventAutomata complementAutomaton = complementPEA.complement();
+		Phase[] phases = complementAutomaton.getPhases();
+		Phase sink = phases[0];
+		assertTrue(sink.getInitialTransition().isPresent());
+		InitialTransition sinkInitialTransition = sink.getInitialTransition().get();
+		CDD guard = sinkInitialTransition.getGuard();
+		CDD expected = BooleanDecision.create("R").negate();
+		assertTrue(guard.equals(expected));
 	}
 	
 }
