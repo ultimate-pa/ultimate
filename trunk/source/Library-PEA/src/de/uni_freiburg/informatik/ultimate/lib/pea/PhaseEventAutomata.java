@@ -92,6 +92,12 @@ public class PhaseEventAutomata implements Comparable<Object> {
 		mName = name;
 		mPhases = phases;
 		mVariables = variables;
+		
+		// add initial transition to Phases in initPhases 
+		for (Phase phase : mInit) {
+			InitialTransition initialTransition = new InitialTransition(phase.stateInv, phase);
+			phase.setInitialTransition(initialTransition);
+		}
 	}
 
 	public PhaseEventAutomata parallel(final PhaseEventAutomata b) {

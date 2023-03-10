@@ -114,8 +114,13 @@ public class ComplementPEATest {
 		Phase[] originalPhases = responseDelayGlobally.getPhases();
 		Phase[] phases = complementAutomaton.getPhases();
 		// does the complement automaton contain a sink? 
-		assertTrue(phases[0].getName() == "sink");
-		assertTrue(phases[0].getAccepting());
+		Phase sink = phases[0];
+		assertTrue(sink.getName() == "sink");
+		// is it accepting?
+		assertTrue(sink.getAccepting());
+		// it should not be initial
+		assertTrue(sink.isInit == false);
+		assertTrue(!sink.getInitialTransition().isPresent());
 		assertEquals(originalPhases.length, phases.length - 1);
 	}
 	

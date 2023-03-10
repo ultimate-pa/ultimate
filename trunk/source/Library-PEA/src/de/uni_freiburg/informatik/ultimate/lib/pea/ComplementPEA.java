@@ -9,6 +9,8 @@ import java.util.Optional;
  * This class implements an algorithm for complementing Phase Event Automata as described in my bachelors thesis.
  * Documentation to be continued...
  *
+ * TODO: split Alg up in multiple methods
+ *
  * @author Lena Funk
  */
 public class ComplementPEA {
@@ -86,6 +88,7 @@ public class ComplementPEA {
 				}
 			}
 		}
+		// TODO: better name for complement automaton, such as "oldname" + "_C" or ...??
 		PhaseEventAutomata complementedPEA = new PhaseEventAutomata("aaaaa",  phases.toArray(new Phase[0]), mPEAtoComplement.mInit);
 		return complementedPEA;
 	}
@@ -96,19 +99,20 @@ public class ComplementPEA {
 	 * @param sinkPhase
 	 */
 	private void computeInitialTransitionSink(Phase sinkPhase) {
-		CDD initialTransitionSinkGuard = CDD.TRUE;
+		CDD initialTransitionSinkGuard = CDD.FALSE;
 		Phase[] initialPhases = mPEAtoComplement.getInit();
 		for (Phase phase : initialPhases) {
-			Optional<InitialTransition> initialTransition = phase.getInitialTransition();
-			if (initialTransition.isPresent()) {
-				CDD conjunction = phase.getStateInvariant().and(initialTransition.get().getGuard());
-				initialTransitionSinkGuard = initialTransitionSinkGuard.or(conjunction);
-			}
+			assert phase.getInitialTransition().isPresent();
+			InitialTransition initialTransition = phase.getInitialTransition().get();
+			CDD conjunction = phase.getStateInvariant().and(initialTransition.getGuard());
+			initialTransitionSinkGuard = initialTransitionSinkGuard.or(conjunction);
 		}
-		if (initialTransitionSinkGuard.negate() != CDD.TRUE) {
+		if (initialTransitionSinkGuard.negate() == CDD.TRUE) {
 			sinkPhase.setInit(true);
 			InitialTransition sinkInitialTransition = new InitialTransition(initialTransitionSinkGuard, sinkPhase);
 			sinkPhase.setInitialTransition(sinkInitialTransition);
+		} else {
+			sinkPhase.setInit(false);
 		}
 	}
 }
