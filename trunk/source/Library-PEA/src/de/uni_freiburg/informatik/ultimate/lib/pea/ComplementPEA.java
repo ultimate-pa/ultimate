@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+
 
 
 /**
@@ -107,9 +107,9 @@ public class ComplementPEA {
 			CDD conjunction = phase.getStateInvariant().and(initialTransition.getGuard());
 			initialTransitionSinkGuard = initialTransitionSinkGuard.or(conjunction);
 		}
-		if (initialTransitionSinkGuard.negate() == CDD.TRUE) {
+		if (initialTransitionSinkGuard != CDD.TRUE) {
 			sinkPhase.setInit(true);
-			InitialTransition sinkInitialTransition = new InitialTransition(initialTransitionSinkGuard, sinkPhase);
+			InitialTransition sinkInitialTransition = new InitialTransition(initialTransitionSinkGuard.negate(), sinkPhase);
 			sinkPhase.setInitialTransition(sinkInitialTransition);
 		} else {
 			sinkPhase.setInit(false);
