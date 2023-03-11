@@ -599,7 +599,7 @@ public class PolynomialRelationTest {
 		final Term subject = TermParseUtils.parseTerm(mScript, "x");
 		final MultiCaseSolvedBinaryRelation sbr = PolynomialRelation
 				.of(mScript, TermParseUtils.parseTerm(mScript, inputAsString))
-				.solveForSubject(new ManagedScript(mServices, script), subject, Xnf.DNF, Collections.emptySet());
+				.solveForSubject(new ManagedScript(mServices, script), subject, Xnf.DNF, Collections.emptySet(), true);
 		Assert.assertNull(sbr);
 	}
 
@@ -660,7 +660,7 @@ public class PolynomialRelationTest {
 
 	private void testMultiCaseSolveForSubject(final Term inputAsTerm, final Term x, final Xnf xnf) {
 		final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation.of(mScript, inputAsTerm)
-				.solveForSubject(new ManagedScript(mServices, mScript), x, xnf, Collections.emptySet());
+				.solveForSubject(new ManagedScript(mServices, mScript), x, xnf, Collections.emptySet(), true);
 		mScript.echo(new QuotedObject("Checking if input and output of multiCaseSolveForSubject are equivalent"));
 		final Term solvedAsTerm = mcsbr.toTerm(mScript);
 		final Term tmp;
