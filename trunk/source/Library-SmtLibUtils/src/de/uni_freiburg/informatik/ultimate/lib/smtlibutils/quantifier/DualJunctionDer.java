@@ -420,8 +420,10 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			if (pr == null) {
 				return null;
 			}
+			final boolean allowDivModBasedSolution = (mIntricateOperations == IntricateOperations.AUXILIARY_VARIABLES
+					|| mIntricateOperations == IntricateOperations.CASE_DISTINCTION);
 			final MultiCaseSolvedBinaryRelation mcsbr = pr.solveForSubject(mgdScript, eliminatee,
-					Xnf.fromQuantifier(quantifier), bannedForDivCapture);
+					Xnf.fromQuantifier(quantifier), bannedForDivCapture, allowDivModBasedSolution);
 			if (mcsbr == null) {
 				return null;
 			}
