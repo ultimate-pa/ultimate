@@ -41,12 +41,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
@@ -65,6 +67,10 @@ import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 /**
  * Div-mod liberation (DML) for conjunctions (resp. disjunctions). <br>
  *
+ * TODO: PolyPac, DER, PolyPac for each candidate. Drop candidates where DER is
+ * not successful and x occurred on disjuntion. Rationale: elimination only
+ * after distributivity anyway.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Katharina Wagner
  */
@@ -77,6 +83,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 	 * (which are by now solved by another optimization).
 	 */
 	private static final boolean EXCLUDE_CORRESPONDING_FINITE_JUNCTIONS = true;
+	private static final boolean POSTPONE_ELIMINATEES_NOT_YET_PROMISING = false;
 
 	public DualJunctionDml(final ManagedScript script, final IUltimateServiceProvider services) {
 		super(script, services);
@@ -96,12 +103,16 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final List<DmlPossibility> result = new ArrayList<>();
 		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
+			boolean  eliminateeOccursInCorrespondingFiniteJunction = false;
 			for (final Term dualJunct : dualFiniteJuncts) {
 				if (QuantifierUtils.isCorrespondingFiniteJunction(inputEt.getQuantifier(), dualJunct)
 						&& EXCLUDE_CORRESPONDING_FINITE_JUNCTIONS) {
 					// If this is e.g., a disjunction in a conjunction, we skip the conjunct.
 					// Rationale, we will take care of this after applying distributivity and then
 					// our chances are higher that the newly introduced variables can be eliminated.
+					if (Arrays.asList(dualJunct.getFreeVars()).contains(eliminatee)) {
+						eliminateeOccursInCorrespondingFiniteJunction = true;
+					}
 					continue;
 				}
 				final Predicate<Term> isDivModTerm = (x -> isDivModTerm(x));
@@ -159,7 +170,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 					}
 					final DmlPossibility dmlPossibility = new DmlPossibility(
 							appTerm.getFunction().getApplicationString(), ceo, divisorAsBigInteger, dualJunct, inverse,
-							subterm);
+							subterm, eliminateeOccursInCorrespondingFiniteJunction);
 					result.add(dmlPossibility);
 				}
 			}
@@ -175,23 +186,69 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		}
 		final TreeSet<EliminationResult> candidates = new TreeSet<>();
 		for (final DmlPossibility dmlPossibility : possibilities) {
-			final EliminationResult er;
+			final EliminationResult er1;
 			if (dmlPossibility.getFunName().equals("mod")) {
-				er = applyModElimination(inputEt, dmlPossibility);
+				er1 = applyModElimination(inputEt, dmlPossibility);
 			} else if (dmlPossibility.getFunName().equals("div")) {
 				if (!ENABLE_DIV_ELIMINATION) {
 					continue;
 				}
-				er = applyDivEliminationWithSmallRemainder(inputEt, dmlPossibility);
+				er1 = applyDivEliminationWithSmallRemainder(inputEt, dmlPossibility);
 			} else {
 				throw new AssertionError();
 			}
-			candidates.add(er);
+			final EliminationResult er2 = tryImmediateDer(er1);
+			assert er2.getNewEliminatees().size() <= 2;
+			if (POSTPONE_ELIMINATEES_NOT_YET_PROMISING
+					&& dmlPossibility.doesEliminateeOccurInCorrespondingFiniteJunction()
+					&& er2.getNewEliminatees().size() > 0) {
+				// DER could not eliminate something an the eliminatee occurred inside a
+				// correspondingFiniteJunction, hence the elimination should be delayed until
+				// inner correspondingFiniteJunctions are resolved by distributivity.
+				continue;
+			} else {
+				candidates.add(er2);
+			}
 		}
 		if (!candidates.isEmpty()) {
 			return candidates.iterator().next();
 		}
 		return null;
+	}
+
+	/**
+	 * Try to eliminate something via DER. Return input if impossible.
+	 */
+	private EliminationResult tryImmediateDer(final EliminationResult er) {
+		final EliminationTask newIntegrated = er.integrateNewEliminatees();
+		final DualJunctionDer der = new DualJunctionDer(mMgdScript, mServices, false);
+		final EliminationResult afterDer = der.tryToEliminate(newIntegrated);
+		final EliminationResult result;
+		if (afterDer == null) {
+			result = er;
+		} else {
+			if (!afterDer.getNewEliminatees().isEmpty()) {
+				throw new AssertionError("DER cannot add new eliminatees");
+			}
+			result = extractNewEliminatees(afterDer.getEliminationTask(), er.getNewEliminatees());
+		}
+		return result;
+	}
+
+	/**
+	 * Given an {@link EliminationTask} whose set of eliminatees may "accidentally"
+	 * contain some "newEliminatees", remove the newEliminatees from the
+	 * {@link EliminationTask} and add the ones that are really there separately to
+	 * an {@link EliminationResult}.
+	 */
+	private EliminationResult extractNewEliminatees(final EliminationTask et, final Set<TermVariable> newEliminatees) {
+		final Set<TermVariable> originalEliminatees = et.getEliminatees().stream()
+				.filter(x -> !newEliminatees.contains(x)).collect(Collectors.toSet());
+		final Set<TermVariable> occuingNewEliminatees = et.getEliminatees().stream()
+				.filter(x -> newEliminatees.contains(x)).collect(Collectors.toSet());
+		final EliminationTask eliminationTask = new EliminationTask(et.getQuantifier(), originalEliminatees,
+				et.getTerm(), et.getContext());
+		return new EliminationResult(eliminationTask, occuingNewEliminatees);
 	}
 
 	private EliminationResult applyModElimination(final EliminationTask inputEt, final DmlPossibility pmt)
@@ -253,10 +310,12 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final Term resultTerm = Substitution.apply(mMgdScript, sub1, termWithRemovedITE);
 		final NnfTransformer termNnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP);
 		final Term resultTermNnf = termNnf.transform(resultTerm);
+		final Term resultTermSimplified = SmtUtils.simplify(mMgdScript, resultTermNnf, mServices,
+				SimplificationTechnique.POLY_PAC);
 		final Set<TermVariable> remainingEliminatees = new HashSet<>(inputEt.getEliminatees());
 		remainingEliminatees.remove(pmt.getEliminate());
 		final EliminationTask eliminationTask = new EliminationTask(inputEt.getQuantifier(), remainingEliminatees,
-				resultTermNnf, inputEt.getContext());
+				resultTermSimplified, inputEt.getContext());
 		final Set<TermVariable> newEliminatees = new HashSet<>();
 		newEliminatees.add(y);
 		newEliminatees.add(z);
@@ -553,9 +612,11 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		 */
 		final Term mDmlSubterm;
 		private final CoeffcientEliminateeOffset mCeo;
+		private final boolean mEliminateeOccursInCorrespondingFiniteJunction;
 
 		DmlPossibility(final String funName, final CoeffcientEliminateeOffset ceo, final BigInteger divisor,
-				final Term containingDualJunct, final BigInteger inverse, final Term dmlSubterm) {
+				final Term containingDualJunct, final BigInteger inverse, final Term dmlSubterm,
+				final boolean eliminateeOccursInCorrespondingFiniteJunction) {
 			if (!funName.equals("div") && !funName.equals("mod")) {
 				throw new IllegalArgumentException("Neither div nor mod");
 			}
@@ -568,6 +629,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 			mContainingDualJunct = containingDualJunct;
 			mInverse = inverse;
 			mDmlSubterm = dmlSubterm;
+			mEliminateeOccursInCorrespondingFiniteJunction = eliminateeOccursInCorrespondingFiniteJunction;
 		}
 
 		public String getFunName() {
@@ -607,6 +669,12 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		public BigInteger getDivisor() {
 			return mDivisor;
 		}
+
+		public boolean doesEliminateeOccurInCorrespondingFiniteJunction() {
+			return mEliminateeOccursInCorrespondingFiniteJunction;
+		}
+
+
 	}
 
 }
