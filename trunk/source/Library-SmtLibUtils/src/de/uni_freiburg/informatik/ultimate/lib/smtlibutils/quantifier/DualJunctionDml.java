@@ -269,14 +269,14 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		}
 		final Term eliminateeReplaced;
 		{
-			// product1 = y*k
+			// product1: y*k
 			final Term product1 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript), divisor, y);
-			// product2 = a⁻1*z
+			// product2: a⁻1*z
 			final Term product2 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript), inverse, z);
-			// sum1 = y*k + a⁻1*z
+			// sum1: y*k + a⁻1*z
 			final Term sum = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), product1, product2);
-			final Map<Term, Term> sub1 = Collections.singletonMap(pmt.getEliminate(), sum);
-			eliminateeReplaced = Substitution.apply(mMgdScript, sub1, modReplaced);
+			final Map<Term, Term> substitutionMapping = Collections.singletonMap(pmt.getEliminate(), sum);
+			eliminateeReplaced = Substitution.apply(mMgdScript, substitutionMapping, modReplaced);
 		}
 		final Term interval = constructInterval(inputEt.getQuantifier(), z, divisor);
 		final Term preliminaryResultTerm = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
@@ -323,18 +323,18 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 				&& SmtUtils.tryToConvertToLiteral(pmt.getOffset()).equals(Rational.ZERO)) {
 			modTermReplacement = z;
 		} else {
-			// mod3 = b mod k
-			final Term mod3 = SmtUtils.mod(mScript, pmt.getOffset(), divisorAsTerm);
-			// sum4 = z + (b mod k)
-			final Term sum4 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), z, mod3);
-			// substr1 = z + (b mod k) - k
-			final Term substr1 = SmtUtils.minus(mScript, sum4, divisorAsTerm);
-			// conditionalOfIte = z + (b mod k) >= k
-			final Term conditionalOfIte = SmtUtils.geq(mScript, sum4, divisorAsTerm);
-			modTermReplacement = SmtUtils.ite(mScript, conditionalOfIte, substr1, sum4);
+			// modTerm: b mod k
+			final Term modTerm = SmtUtils.mod(mScript, pmt.getOffset(), divisorAsTerm);
+			// sum: z + (b mod k)
+			final Term sum = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), z, modTerm);
+			// subtraction: z + (b mod k) - k
+			final Term subtraction = SmtUtils.minus(mScript, sum, divisorAsTerm);
+			// conditionalOfIte: z + (b mod k) >= k
+			final Term conditionalOfIte = SmtUtils.geq(mScript, sum, divisorAsTerm);
+			modTermReplacement = SmtUtils.ite(mScript, conditionalOfIte, subtraction, sum);
 		}
-		final Map<Term, Term> sub3 = Collections.singletonMap(pmt.getDmlSubterm(), modTermReplacement);
-		return Substitution.apply(mMgdScript, sub3, inputEt.getTerm());
+		final Map<Term, Term> substitutionMaping = Collections.singletonMap(pmt.getDmlSubterm(), modTermReplacement);
+		return Substitution.apply(mMgdScript, substitutionMaping, inputEt.getTerm());
 	}
 
 	public EliminationResult helpReturnForEliminatingDiv(final EliminationTask inputEt, final DmlPossibility pmt,
