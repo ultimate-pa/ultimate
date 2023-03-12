@@ -33,6 +33,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -255,10 +256,68 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 			throws AssertionError {
 		final TermVariable y = mMgdScript.constructFreshTermVariable("y", SmtSortUtils.getIntSort(mScript));
 		final TermVariable z = mMgdScript.constructFreshTermVariable("z", SmtSortUtils.getIntSort(mScript));
-		final Term divisorAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
+		final Term divisor = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
 				pmt.getDivisor());
-		final Term inverseAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
+		final Term inverse = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
 				pmt.getInverse());
+		Term modReplaced;
+		{
+			final Term tmp1 = replaceModTerm(inputEt, pmt, z, divisor);
+			final Term termWithRemovedITE = new IteRemover(mMgdScript).transform(tmp1);
+			final NnfTransformer termNnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP);
+			modReplaced = termNnf.transform(termWithRemovedITE);
+		}
+		final Term eliminateeReplaced;
+		{
+			// product1 = y*k
+			final Term product1 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript), divisor, y);
+			// product2 = a⁻1*z
+			final Term product2 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript), inverse, z);
+			// sum1 = y*k + a⁻1*z
+			final Term sum = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), product1, product2);
+			final Map<Term, Term> sub1 = Collections.singletonMap(pmt.getEliminate(), sum);
+			eliminateeReplaced = Substitution.apply(mMgdScript, sub1, modReplaced);
+		}
+		final Term interval = constructInterval(inputEt.getQuantifier(), z, divisor);
+		final Term preliminaryResultTerm = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
+				eliminateeReplaced, interval);
+		final Term simplifiedResultTerm = SmtUtils.simplify(mMgdScript, preliminaryResultTerm, mServices,
+				SimplificationTechnique.POLY_PAC);
+		final Set<TermVariable> remainingEliminatees = new HashSet<>(inputEt.getEliminatees());
+		remainingEliminatees.remove(pmt.getEliminate());
+		final EliminationTask eliminationTask = new EliminationTask(inputEt.getQuantifier(), remainingEliminatees,
+				simplifiedResultTerm, inputEt.getContext());
+		final Set<TermVariable> newEliminatees = new HashSet<>();
+		newEliminatees.add(y);
+		newEliminatees.add(z);
+		final EliminationResult resultWithoutXInMod = new EliminationResult(eliminationTask, newEliminatees);
+		return resultWithoutXInMod;
+	}
+
+	private Term constructInterval(final int quantifier, final TermVariable z, final Term divisor) {
+		final Term zeroAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
+				BigInteger.ZERO);
+		final Term result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			// lowerBoundExists: 0 <= z
+			final Term lowerBoundExists = SmtUtils.geq(mScript, z, zeroAsTerm);
+			// upperBoundExists: z < k
+			final Term upperBoundExists = SmtUtils.less(mScript, z, divisor);
+			result = SmtUtils.and(mScript, lowerBoundExists, upperBoundExists);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			// upperBoundForall: z < 0
+			final Term upperBoundForall = SmtUtils.less(mScript, z, zeroAsTerm);
+			// lowerBoundForall: k <= z
+			final Term lowerBoundForall = SmtUtils.geq(mScript, z, divisor);
+			result = SmtUtils.or(mScript, upperBoundForall, lowerBoundForall);
+		} else {
+			throw new AssertionError("Illegal Quantifier");
+		}
+		return result;
+	}
+
+	private Term replaceModTerm(final EliminationTask inputEt, final DmlPossibility pmt, final TermVariable z,
+			final Term divisorAsTerm) {
 		final Term modTermReplacement;
 		if (SmtUtils.tryToConvertToLiteral(pmt.getOffset()) != null
 				&& SmtUtils.tryToConvertToLiteral(pmt.getOffset()).equals(Rational.ZERO)) {
@@ -274,53 +333,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 			final Term conditionalOfIte = SmtUtils.geq(mScript, sum4, divisorAsTerm);
 			modTermReplacement = SmtUtils.ite(mScript, conditionalOfIte, substr1, sum4);
 		}
-		final BigInteger zeroAsBigInteger = BigInteger.valueOf(0);
-		final Term zeroAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
-				zeroAsBigInteger);
-		final Map<Term, Term> sub3 = new HashMap<Term, Term>();
-		sub3.put(pmt.getDmlSubterm(), modTermReplacement);
-		Term termAfterFirstSubstitution = Substitution.apply(mMgdScript, sub3, inputEt.getTerm());
-		if (inputEt.getQuantifier() == QuantifiedFormula.EXISTS) {
-			// lowerBoundExists = z >= 0
-			final Term lowerBoundExists = SmtUtils.geq(mScript, z, zeroAsTerm);
-			// upperBoundExists = z < k
-			final Term upperBoundExists = SmtUtils.less(mScript, z, divisorAsTerm);
-			termAfterFirstSubstitution = SmtUtils.and(mScript, termAfterFirstSubstitution, lowerBoundExists);
-			termAfterFirstSubstitution = SmtUtils.and(mScript, termAfterFirstSubstitution, upperBoundExists);
-		} else if (inputEt.getQuantifier() == QuantifiedFormula.FORALL) {
-			// upperBoundForall = z < 0
-			final Term upperBoundForall = SmtUtils.less(mScript, z, zeroAsTerm);
-			// lowerBoundForall = z >= k
-			final Term lowerBoundForall = SmtUtils.geq(mScript, z, divisorAsTerm);
-			termAfterFirstSubstitution = SmtUtils.or(mScript, termAfterFirstSubstitution, upperBoundForall);
-			termAfterFirstSubstitution = SmtUtils.or(mScript, termAfterFirstSubstitution, lowerBoundForall);
-		} else {
-			throw new AssertionError("Illegal Quantifier");
-		}
-
-		final Term termWithRemovedITE = new IteRemover(mMgdScript).transform(termAfterFirstSubstitution);
-		// product1 = y'*k
-		final Term product1 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript), divisorAsTerm, y);
-		// product2 = a⁻1*z
-		final Term product2 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript), inverseAsTerm, z);
-		// sum1 = y'*k + a⁻1*z
-		final Term sum1 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), product1, product2);
-		final Map<Term, Term> sub1 = new HashMap<Term, Term>();
-		sub1.put(pmt.getEliminate(), sum1);
-		final Term resultTerm = Substitution.apply(mMgdScript, sub1, termWithRemovedITE);
-		final NnfTransformer termNnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP);
-		final Term resultTermNnf = termNnf.transform(resultTerm);
-		final Term resultTermSimplified = SmtUtils.simplify(mMgdScript, resultTermNnf, mServices,
-				SimplificationTechnique.POLY_PAC);
-		final Set<TermVariable> remainingEliminatees = new HashSet<>(inputEt.getEliminatees());
-		remainingEliminatees.remove(pmt.getEliminate());
-		final EliminationTask eliminationTask = new EliminationTask(inputEt.getQuantifier(), remainingEliminatees,
-				resultTermSimplified, inputEt.getContext());
-		final Set<TermVariable> newEliminatees = new HashSet<>();
-		newEliminatees.add(y);
-		newEliminatees.add(z);
-		final EliminationResult resultWithoutXInMod = new EliminationResult(eliminationTask, newEliminatees);
-		return resultWithoutXInMod;
+		final Map<Term, Term> sub3 = Collections.singletonMap(pmt.getDmlSubterm(), modTermReplacement);
+		return Substitution.apply(mMgdScript, sub3, inputEt.getTerm());
 	}
 
 	public EliminationResult helpReturnForEliminatingDiv(final EliminationTask inputEt, final DmlPossibility pmt,
