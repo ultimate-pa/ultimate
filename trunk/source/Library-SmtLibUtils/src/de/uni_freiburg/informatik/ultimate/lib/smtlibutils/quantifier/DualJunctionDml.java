@@ -600,9 +600,10 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 	 * eliminatee,
 	 * <li>a is some non-zero integer (called coeffcient of x) that is coprime to K,
 	 * <li>b is some term (called offset) that must not contain x,
-	 * <li>K is some integer that we call the divisor. </ ul> <br /> This subterm will be
-	 * one candidate for an elimination of x via {@link DualJunctionDml} and
-	 * contains additional data that supports the elimination.
+	 * <li>K is some positive integer that we call the divisor. </ ul> <br />
+	 * This subterm will be one candidate for an elimination of x via
+	 * {@link DualJunctionDml} and contains additional data that supports the
+	 * elimination.
 	 */
 	private static class DmlPossibility {
 		/**
@@ -636,6 +637,9 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 			}
 			if (funName.equals("mod") && ceo.getCoefficient().compareTo(BigInteger.ZERO) <= 0) {
 				throw new IllegalArgumentException("For mod, the coefficient must be positive");
+			}
+			if (divisor.compareTo(BigInteger.ZERO) < 0) {
+				throw new AssertionError("Negative divisors should have been replaced by our normal form.");
 			}
 			mCeo = ceo;
 			mFunName = funName;
