@@ -77,14 +77,21 @@ import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
  */
 public class DualJunctionDml extends DualJunctionQuantifierElimination {
 
-	private static final boolean ENABLE_DIV_ELIMINATION = true;
+	private static final boolean POSTPONE_ELIMINATEES_NOT_YET_PROMISING = false;
 	/**
 	 * Looks very useful and is required for some benchmarks but had surprisingly
 	 * bad effects on {@link QuantifierEliminationDivModCrafted#bvToIntFoxExists04}
 	 * (which are by now solved by another optimization).
 	 */
 	private static final boolean EXCLUDE_CORRESPONDING_FINITE_JUNCTIONS = true;
-	private static final boolean POSTPONE_ELIMINATEES_NOT_YET_PROMISING = false;
+	/**
+	 * Omit `div` eliminations where we think that an elimination of the new
+	 * auxiliary variables is unlikely. Currently: Omit if the absolut value of the
+	 * coefficient of the eliminatee is one. <br />
+	 * TODO Matthias 20230312: Maybe we can do the elimination additionally if the
+	 * eliminatee occurs only in one dualJunct.
+	 */
+	private static final boolean OMIT_NON_PROMISING_DIV_ELIMINATIONS = true;
 
 	public DualJunctionDml(final ManagedScript script, final IUltimateServiceProvider services) {
 		super(script, services);
@@ -191,7 +198,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 			if (dmlPossibility.getFunName().equals("mod")) {
 				er1 = applyElimination(inputEt, dmlPossibility);
 			} else if (dmlPossibility.getFunName().equals("div")) {
-				if (!ENABLE_DIV_ELIMINATION) {
+				if (OMIT_NON_PROMISING_DIV_ELIMINATIONS
+						&& !dmlPossibility.getCoefficient().abs().equals(BigInteger.ONE)) {
 					continue;
 				}
 				er1 = applyElimination(inputEt, dmlPossibility);
