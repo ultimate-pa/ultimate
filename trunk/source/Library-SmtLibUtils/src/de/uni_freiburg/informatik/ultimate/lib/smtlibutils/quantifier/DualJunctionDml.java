@@ -77,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
  */
 public class DualJunctionDml extends DualJunctionQuantifierElimination {
 
-	private static final boolean POSTPONE_ELIMINATEES_NOT_YET_PROMISING = false;
+	private static final boolean POSTPONE_ELIMINATEES_NOT_YET_PROMISING = true;
 	/**
 	 * Looks very useful and is required for some benchmarks but had surprisingly
 	 * bad effects on {@link QuantifierEliminationDivModCrafted#bvToIntFoxExists04}
