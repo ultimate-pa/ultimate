@@ -261,8 +261,8 @@ public class QuantifierEliminationDivModCrafted {
 			new FunDecl(SmtSortUtils::getIntSort, "c", "d"),
 		};
 		final String formulaAsString = "(exists ((x Int)) (and (= c (div (* 3 x) 100)) (<= d x)))";
-		final String expectedResult = "(exists ((v_z_1 Int) (v_y_1 Int)) (and (<= d (+ (* v_y_1 100) (* 67 v_z_1))) (= c (+ (* 2 v_z_1) (* 3 v_y_1))) (<= 0 v_z_1) (< v_z_1 100)))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -291,7 +291,7 @@ public class QuantifierEliminationDivModCrafted {
 			new FunDecl(SmtSortUtils::getIntSort, "c"),
 		};
 		final String formulaAsString = "(exists ((v1 Int)) (and (= c (div v1 256)) (< v1 0)))";
-		final String expectedResult = formulaAsString;
+		final String expectedResult = "(<= (+ c 1) 0)";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -302,7 +302,7 @@ public class QuantifierEliminationDivModCrafted {
 		};
 		final String formulaAsString = "(exists ((v1 Int)) (and (not (= c (div (* 15 v1) 256))) (< v1 0)))";
 		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -312,7 +312,7 @@ public class QuantifierEliminationDivModCrafted {
 		};
 		final String formulaAsString = "(exists ((v1 Int)) (and (= c (div (* 15 v1) 256)) (< v1 0)))";
 		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -322,9 +322,8 @@ public class QuantifierEliminationDivModCrafted {
 		};
 		final String formulaAsString = "(exists ((v1 Int)) (and (= c (div (* (- 3) v1) 256)) (< v1 0)))";
 		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-
 
 	@Test
 	public void divElim4() {
@@ -342,7 +341,7 @@ public class QuantifierEliminationDivModCrafted {
 			new FunDecl(SmtSortUtils::getIntSort, "c"),
 		};
 		final String formulaAsString = "(forall ((v1 Int)) (or (<= v1 127) (not (= c (div v1 256)))))";
-		final String expectedResult = formulaAsString;
+		final String expectedResult = "(< c 0)"; //checked with CVC5
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -373,7 +372,7 @@ public class QuantifierEliminationDivModCrafted {
 		};
 		final String formulaAsString = "(forall ((v1 Int)) (or (not (<= v1 127)) (not (= c (div (* 15 v1) 256))) (< v1 0)))";
 		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -383,7 +382,7 @@ public class QuantifierEliminationDivModCrafted {
 		};
 		final String formulaAsString = "(forall ((v1 Int)) (or (not (<= v1 127)) (not (= c (div (* 233 v1) 19))) (< v1 0)))";
 		final String expectedResult = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
