@@ -48,9 +48,7 @@ public class Phase implements Comparable<Phase> {
 	List<Transition> transitions;
 	public int ID;
 	
-	// LENA_BA
-	boolean mIsAccepting;
-	// using Optional to avoid null
+	boolean mIsTerminal;
 	private Optional<InitialTransition> mInitialTransition;
 	
 	
@@ -74,8 +72,7 @@ public class Phase implements Comparable<Phase> {
 		isExit = false;
 		incomming = new Vector<>();
 		
-		// LENA_BA
-		mIsAccepting = true;
+		mIsTerminal = true;
 		mInitialTransition = Optional.empty();
 	}
 
@@ -265,11 +262,11 @@ public class Phase implements Comparable<Phase> {
 	
 	
 	public boolean getAccepting() {
-		return mIsAccepting;
+		return mIsTerminal;
 	}
 	
 	public void setAccepting(final boolean val) {
-		mIsAccepting = val;
+		mIsTerminal = val;
 	}
 	
 

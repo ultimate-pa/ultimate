@@ -92,6 +92,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private boolean mCheckVacuity;
 	private int mCombinationNum;
 	private boolean mCheckConsistency;
+	private boolean mCheckIntersectionNotEmpty;
 	private boolean mReportTrivialConsistency;
 
 	private boolean mSeparateInvariantHandling;
@@ -177,6 +178,23 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final ReqCheck check = new ReqCheck(Spec.CONSISTENCY);
 		final Expression expr = ExpressionFactory.createBooleanLiteral(bl, false);
 		return Collections.singletonList(createAssert(expr, check, "CONSISTENCY"));
+	}
+	
+	// TODO: add method genCheckEmptiness
+	private List<Statement> genCheckIntersectionNotEmpty(final BoogieLocation bl) {
+		if (!mCheckVacuity) {
+			return Collections.emptyList();
+		}
+		final List<Statement> stmtList = new ArrayList<>();
+		for (final ReqPeas reqpea : mReqPeas) {
+		
+		}
+		return null;
+	}
+	
+	private Statement genAssertIntersectionNotEmpty(final PatternType<?> req, final PhaseEventAutomata aut, final BoogieLocation bl) {
+		return null;
+	
 	}
 
 	@SuppressWarnings("unchecked")
