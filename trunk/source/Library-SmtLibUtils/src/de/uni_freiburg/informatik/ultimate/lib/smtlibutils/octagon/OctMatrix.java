@@ -27,7 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon;
 
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1773,7 +1772,8 @@ public class OctMatrix {
 		final Term t1 = subtrahend;
 		final boolean subtrahendIsInt = SmtSortUtils.isIntSort(t1.getSort());
 		if (minuendIsInt && subtrahendIsInt) {
-			tBound = SmtUtils.constructIntValue(script, bound.getValue().round(new MathContext(0, RoundingMode.FLOOR)).toBigIntegerExact());
+			tBound = SmtUtils.constructIntValue(script,
+					bound.getValue().setScale(0, RoundingMode.FLOOR).toBigIntegerExact());
 		} else {
 			tBound = script.decimal(bound.getValue());
 			if (minuendIsInt) {
