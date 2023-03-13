@@ -36,12 +36,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.StateBasedDomain.IStateProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Abstract class for an {@link IDomain} that uses states and a DNF representation of the predicates. The class uses the
- * method {@code toState} to convert a conjunction to an abstract state.
+ * Implements an {@link IStateProvider} that uses a DNF representation of the predicates.
  *
  * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
@@ -49,50 +49,57 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @param <STATE>
  *            The abstract state that is used internally
  */
-public abstract class StateBasedDomainWithDnf<STATE extends IAbstractState<STATE>> extends StateBasedDomain<STATE> {
-	public StateBasedDomainWithDnf(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
-			final Supplier<IProgressAwareTimer> timeout) {
-		super(logger, tools, maxDisjuncts, timeout);
+public class DnfStateProvider<STATE extends IAbstractState<STATE>> implements IStateProvider<STATE> {
+	private final IConjunctiveStateProvider<STATE> mConjunctiveStateProvider;
+	private final SymbolicTools mTools;
+	private final ILogger mLogger;
+	private final Supplier<IProgressAwareTimer> mTimeout;
+
+	public DnfStateProvider(final IConjunctiveStateProvider<STATE> conjunctiveStateProvider, final SymbolicTools tools,
+			final ILogger logger, final Supplier<IProgressAwareTimer> timeout) {
+		mConjunctiveStateProvider = conjunctiveStateProvider;
+		mTools = tools;
+		mLogger = logger;
+		mTimeout = timeout;
 	}
 
 	@Override
-	protected List<STATE> toStates(final IPredicate pred) {
+	public List<STATE> toStates(final IPredicate pred) {
 		final IProgressAwareTimer timer = mTimeout.get();
-		final Term[] disjuncts = mTools.dnfDisjuncts(pred, this::transformTerm);
+		final Term[] disjuncts = mTools.dnfDisjuncts(pred, mConjunctiveStateProvider::preprocessTerm);
 		final List<STATE> result = new ArrayList<>(disjuncts.length);
 		for (final Term dnfDisjunct : disjuncts) {
 			if (!timer.continueProcessing()) {
 				mLogger.warn(getClass().getSimpleName()
 						+ " alpha timed out before all disjuncts were processed. Continuing with top.");
-				return List.of(getTopState());
+				return List.of(mConjunctiveStateProvider.getTopState());
 			}
 			if (SmtUtils.isFalseLiteral(dnfDisjunct)) {
 				continue;
 			}
-			final STATE state = toState(SmtUtils.getConjuncts(dnfDisjunct));
+			final STATE state = mConjunctiveStateProvider.toState(SmtUtils.getConjuncts(dnfDisjunct));
 			if (!state.isBottom()) {
 				result.add(state);
 			}
 		}
-		// TODO join disjuncts if there are too many of them
 		return result;
 	}
 
-	/**
-	 * Transformations that are applied before converting the DNF to improve the states that are produced from the DNF.
-	 * This method has to return an overapproximation of {@code term}.
-	 */
-	protected Term transformTerm(final Term term) {
-		return term;
+	public interface IConjunctiveStateProvider<STATE extends IAbstractState<STATE>> {
+		/**
+		 * Returns the internal state representation for the given conjuncts.
+		 */
+		STATE toState(Term[] conjuncts);
+
+		/**
+		 * Returns the internal state that that represents top.
+		 */
+		STATE getTopState();
+
+		/**
+		 * Transformations that are applied before converting the DNF to improve the states that are produced from the
+		 * DNF. This method has to return an overapproximation of {@code term}.
+		 */
+		Term preprocessTerm(final Term term);
 	}
-
-	/**
-	 * Returns the internal state representation for the given conjuncts.
-	 */
-	protected abstract STATE toState(Term[] conjuncts);
-
-	/**
-	 * Returns the internal state that that represents top.
-	 */
-	protected abstract STATE getTopState();
 }

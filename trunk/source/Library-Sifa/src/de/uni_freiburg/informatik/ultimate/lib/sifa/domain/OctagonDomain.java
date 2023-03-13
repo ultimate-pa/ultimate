@@ -32,7 +32,9 @@ import java.util.function.Supplier;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.DnfStateProvider.IConjunctiveStateProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.RewriteEqualityTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
@@ -47,27 +49,36 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
  */
-public class OctagonDomain extends StateBasedDomainWithDnf<OctagonState> {
-	private final TermTransformer mTermTransformer = new RewriteEqualityTransformer(mTools.getScript());
-
+public class OctagonDomain extends StateBasedDomain<OctagonState> {
 	public OctagonDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
 			final Supplier<IProgressAwareTimer> timeout) {
-		super(logger, tools, maxDisjuncts, timeout);
+		super(tools, maxDisjuncts,
+				new DnfStateProvider<>(new OctagonStateProvider(tools.getScript()), tools, logger, timeout));
 	}
 
-	@Override
-	protected OctagonState toState(final Term[] conjuncts) {
-		return OctagonState.from(conjuncts, mTools.getScript());
-	}
+	private static class OctagonStateProvider implements IConjunctiveStateProvider<OctagonState> {
+		private final Script mScript;
+		private final TermTransformer mTermTransformer;
 
-	@Override
-	protected OctagonState getTopState() {
-		return OctagonState.TOP;
-	}
+		public OctagonStateProvider(final Script script) {
+			mScript = script;
+			mTermTransformer = new RewriteEqualityTransformer(script);
+		}
 
-	@Override
-	protected Term transformTerm(final Term term) {
-		// TODO consider removing boolean sub-terms before computing DNF as we don't use the boolean terms anyways
-		return mTermTransformer.transform(term);
+		@Override
+		public OctagonState toState(final Term[] conjuncts) {
+			return OctagonState.from(conjuncts, mScript);
+		}
+
+		@Override
+		public OctagonState getTopState() {
+			return OctagonState.TOP;
+		}
+
+		@Override
+		public Term preprocessTerm(final Term term) {
+			// TODO consider removing boolean sub-terms before computing DNF as we don't use the boolean terms anyways
+			return mTermTransformer.transform(term);
+		}
 	}
 }

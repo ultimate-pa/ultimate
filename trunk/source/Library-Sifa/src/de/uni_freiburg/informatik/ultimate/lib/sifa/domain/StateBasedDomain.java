@@ -31,11 +31,8 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.WeakHashMap;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 
@@ -49,20 +46,18 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
  * @param <STATE>
  *            The abstract state that is used internally
  */
-public abstract class StateBasedDomain<STATE extends IAbstractState<STATE>> implements IDomain {
-	protected final ILogger mLogger;
-	protected final SymbolicTools mTools;
+public class StateBasedDomain<STATE extends IAbstractState<STATE>> implements IDomain {
+	private final SymbolicTools mTools;
 	private final int mMaxDisjuncts;
-	protected final Supplier<IProgressAwareTimer> mTimeout;
+	private final IStateProvider<STATE> mStateProvider;
 	// TODO: Is it good to use a WeakHashMap here?
 	private final WeakHashMap<IPredicate, List<STATE>> mPredicateCache = new WeakHashMap<>();
 
-	public StateBasedDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
-			final Supplier<IProgressAwareTimer> timeout) {
+	public StateBasedDomain(final SymbolicTools tools, final int maxDisjuncts,
+			final IStateProvider<STATE> stateProvider) {
 		mTools = tools;
-		mLogger = logger;
 		mMaxDisjuncts = maxDisjuncts;
-		mTimeout = timeout;
+		mStateProvider = stateProvider;
 	}
 
 	@Override
@@ -119,19 +114,22 @@ public abstract class StateBasedDomain<STATE extends IAbstractState<STATE>> impl
 	}
 
 	private List<STATE> toStatesCached(final IPredicate pred) {
-		return mPredicateCache.computeIfAbsent(pred, this::toStates);
+		// TODO: Should we join the states returned by mStateProvider if there are too many?
+		return mPredicateCache.computeIfAbsent(pred, mStateProvider::toStates);
 	}
-
-	/**
-	 * Converts the predicate to a list (i.e. disjunction) of abstract states.
-	 *
-	 * @param pred
-	 *            The predicate to be abstracted.
-	 * @return A list of abstract states that overapproximate {@code pred}.
-	 */
-	protected abstract List<STATE> toStates(final IPredicate pred);
 
 	private IPredicate toPredicate(final List<STATE> states) {
 		return mTools.orT(states.stream().map(x -> x.toTerm(mTools.getScript())).collect(Collectors.toList()));
+	}
+
+	public interface IStateProvider<STATE extends IAbstractState<STATE>> {
+		/**
+		 * Converts the predicate to a list (i.e. disjunction) of abstract states.
+		 *
+		 * @param pred
+		 *            The predicate to be abstracted.
+		 * @return A list of abstract states that overapproximate {@code pred}.
+		 */
+		List<STATE> toStates(final IPredicate pred);
 	}
 }
