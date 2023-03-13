@@ -15,6 +15,12 @@
     <option name="--sifa.abstract.domain">OctagonDomain</option>
   </rundefinition>
 
+  <rundefinition name="Sifa EQ">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/SifaC.xml</option>
+    <option name="--sifa.abstract.domain">EqDomain</option>
+  </rundefinition>
+
   <tasks name="ReachSafety32">
     <includesfile>../sv-benchmarks/c/ReachSafety-Arrays.set</includesfile>
     <includesfile>../sv-benchmarks/c/ReachSafety-BitVectors.set</includesfile>
