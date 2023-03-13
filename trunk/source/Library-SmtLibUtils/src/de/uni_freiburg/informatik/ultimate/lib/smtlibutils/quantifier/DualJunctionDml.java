@@ -104,7 +104,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final List<DmlPossibility> result = new ArrayList<>();
 		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
-			boolean  eliminateeOccursInCorrespondingFiniteJunction = false;
+			boolean eliminateeOccursInCorrespondingFiniteJunction = false;
 			for (final Term dualJunct : dualFiniteJuncts) {
 				if (QuantifierUtils.isCorrespondingFiniteJunction(inputEt.getQuantifier(), dualJunct)
 						&& EXCLUDE_CORRESPONDING_FINITE_JUNCTIONS) {
@@ -189,12 +189,12 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		for (final DmlPossibility dmlPossibility : possibilities) {
 			final EliminationResult er1;
 			if (dmlPossibility.getFunName().equals("mod")) {
-				er1 = applyModElimination(inputEt, dmlPossibility);
+				er1 = applyElimination(inputEt, dmlPossibility);
 			} else if (dmlPossibility.getFunName().equals("div")) {
 				if (!ENABLE_DIV_ELIMINATION) {
 					continue;
 				}
-				er1 = applyDivEliminationWithSmallRemainder(inputEt, dmlPossibility);
+				er1 = applyElimination(inputEt, dmlPossibility);
 			} else {
 				throw new AssertionError();
 			}
@@ -252,7 +252,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		return new EliminationResult(eliminationTask, occuingNewEliminatees);
 	}
 
-	private EliminationResult applyModElimination(final EliminationTask inputEt, final DmlPossibility pmt)
+	private EliminationResult applyElimination(final EliminationTask inputEt, final DmlPossibility pmt)
 			throws AssertionError {
 		final TermVariable y = mMgdScript.constructFreshTermVariable("y", SmtSortUtils.getIntSort(mScript));
 		final TermVariable z = mMgdScript.constructFreshTermVariable("z", SmtSortUtils.getIntSort(mScript));
@@ -260,13 +260,30 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 				pmt.getDivisor());
 		final Term inverse = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
 				pmt.getInverse());
-		Term modReplaced;
-		{
-			final Term tmp1 = replaceModTerm(inputEt, pmt, z, divisor);
-			final Term termWithRemovedITE = new IteRemover(mMgdScript).transform(tmp1);
-			final NnfTransformer termNnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP);
-			modReplaced = termNnf.transform(termWithRemovedITE);
+		final Term replacedDivMod;
+		if (pmt.getFunName().equals("mod")) {
+			replacedDivMod = applyModElimination(inputEt, pmt, y, z, divisor, inverse);
+		} else if (pmt.getFunName().equals("div")) {
+			replacedDivMod = applyDivElimination(inputEt, pmt, y, z, divisor, inverse);
+		} else {
+			throw new AssertionError();
 		}
+		final Term simplifiedResultTerm = SmtUtils.simplify(mMgdScript, replacedDivMod, mServices,
+				SimplificationTechnique.POLY_PAC);
+		final Set<TermVariable> remainingEliminatees = new HashSet<>(inputEt.getEliminatees());
+		remainingEliminatees.remove(pmt.getEliminate());
+		final EliminationTask eliminationTask = new EliminationTask(inputEt.getQuantifier(), remainingEliminatees,
+				simplifiedResultTerm, inputEt.getContext());
+		final Set<TermVariable> newEliminatees = new HashSet<>();
+		newEliminatees.add(y);
+		newEliminatees.add(z);
+		final EliminationResult resultWithoutXInMod = new EliminationResult(eliminationTask, newEliminatees);
+		return resultWithoutXInMod;
+	}
+
+	private Term applyModElimination(final EliminationTask inputEt, final DmlPossibility pmt, final TermVariable y,
+			final TermVariable z, final Term divisor, final Term inverse) {
+		final Term modReplaced = replaceModTerm(inputEt, pmt, z, divisor);
 		final Term eliminateeReplaced;
 		{
 			// product1: y*k
@@ -279,19 +296,13 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 			eliminateeReplaced = Substitution.apply(mMgdScript, substitutionMapping, modReplaced);
 		}
 		final Term interval = constructInterval(inputEt.getQuantifier(), z, divisor);
-		final Term preliminaryResultTerm = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
-				eliminateeReplaced, interval);
-		final Term simplifiedResultTerm = SmtUtils.simplify(mMgdScript, preliminaryResultTerm, mServices,
-				SimplificationTechnique.POLY_PAC);
-		final Set<TermVariable> remainingEliminatees = new HashSet<>(inputEt.getEliminatees());
-		remainingEliminatees.remove(pmt.getEliminate());
-		final EliminationTask eliminationTask = new EliminationTask(inputEt.getQuantifier(), remainingEliminatees,
-				simplifiedResultTerm, inputEt.getContext());
-		final Set<TermVariable> newEliminatees = new HashSet<>();
-		newEliminatees.add(y);
-		newEliminatees.add(z);
-		final EliminationResult resultWithoutXInMod = new EliminationResult(eliminationTask, newEliminatees);
-		return resultWithoutXInMod;
+		return QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(), eliminateeReplaced,
+				interval);
+	}
+
+	private Term dissolveIte(final Term termWithIte) {
+		final Term iteRemoved = new IteRemover(mMgdScript).transform(termWithIte);
+		return new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP).transform(iteRemoved);
 	}
 
 	private Term constructInterval(final int quantifier, final TermVariable z, final Term divisor) {
@@ -334,147 +345,15 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 			modTermReplacement = SmtUtils.ite(mScript, conditionalOfIte, subtraction, sum);
 		}
 		final Map<Term, Term> substitutionMaping = Collections.singletonMap(pmt.getDmlSubterm(), modTermReplacement);
-		return Substitution.apply(mMgdScript, substitutionMaping, inputEt.getTerm());
+		return dissolveIte(Substitution.apply(mMgdScript, substitutionMaping, inputEt.getTerm()));
 	}
 
-	public EliminationResult helpReturnForEliminatingDiv(final EliminationTask inputEt, final DmlPossibility pmt,
-			final Map<Term, Term> sub1, final Term termJunctSubst, final TermVariable y, final TermVariable z) {
-		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
-		final BigInteger zeroAsBigInteger = BigInteger.valueOf(0);
-		final Term zeroAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
-				zeroAsBigInteger);
-		Term termAfterFirstSubstitution = QuantifierUtils.getAbsorbingElement(mScript, inputEt.getQuantifier());
-		for (final Term junct : dualFiniteJuncts) {
-			if (!(junct == pmt.getContainingDualJunct())) {
-				termAfterFirstSubstitution = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
-						termAfterFirstSubstitution, junct);
-			}
-		}
-		termAfterFirstSubstitution = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
-				termAfterFirstSubstitution, termJunctSubst);
-		if (inputEt.getQuantifier() == QuantifiedFormula.EXISTS) {
-			// lowerBoundExists = z >= 0
-			final Term lowerBoundExists = SmtUtils.geq(mScript, z, zeroAsTerm);
-			// upperBoundExists = z < k
-			final Term upperBoundExists = SmtUtils.less(mScript, z,
-					SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor().abs()));
-			termAfterFirstSubstitution = SmtUtils.and(mScript, termAfterFirstSubstitution, lowerBoundExists);
-			termAfterFirstSubstitution = SmtUtils.and(mScript, termAfterFirstSubstitution, upperBoundExists);
-		} else if (inputEt.getQuantifier() == QuantifiedFormula.FORALL) {
-			// upperBoundForall = z < 0
-			final Term upperBoundForall = SmtUtils.less(mScript, z, zeroAsTerm);
-			// lowerBoundForall = z >= k
-			final Term lowerBoundForall = SmtUtils.geq(mScript, z,
-					SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor().abs()));
-			termAfterFirstSubstitution = SmtUtils.or(mScript, termAfterFirstSubstitution, upperBoundForall);
-			termAfterFirstSubstitution = SmtUtils.or(mScript, termAfterFirstSubstitution, lowerBoundForall);
-		} else {
-			throw new AssertionError("Illegal Quantifier");
-		}
-		final Term resultTerm = Substitution.apply(mMgdScript, sub1, termAfterFirstSubstitution);
-		final NnfTransformer TermNnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP);
-		final Term ResultTermNnf = TermNnf.transform(resultTerm);
-		final Set<TermVariable> remainingEliminatees = new HashSet<>(inputEt.getEliminatees());
-		remainingEliminatees.remove(pmt.getEliminate());
-		final EliminationTask eliminationTask = new EliminationTask(inputEt.getQuantifier(), remainingEliminatees,
-				ResultTermNnf, inputEt.getContext());
-		final Set<TermVariable> newEliminatees = new HashSet<>();
-		newEliminatees.add(y);
-		newEliminatees.add(z);
-		final EliminationResult resultWithoutXInDiv = new EliminationResult(eliminationTask, newEliminatees);
-		return resultWithoutXInDiv;
-	}
-
-	private EliminationResult applyDivEliminationWithSmallA(final EliminationTask inputEt, final DmlPossibility pmt)
-			throws AssertionError {
-		final BigInteger aAsBigInteger = pmt.getCoefficient();
-		final int aAsInt = aAsBigInteger.intValue();
-		final BigInteger absOfAAsBigInteger = aAsBigInteger.abs();
-		final int absAAsInt = absOfAAsBigInteger.intValue();
-		if (absAAsInt > 8) {
-			return null;
-		}
-		final TermVariable y = mMgdScript.constructFreshTermVariable("y", SmtSortUtils.getIntSort(mScript));
-		final TermVariable z = mMgdScript.constructFreshTermVariable("z", SmtSortUtils.getIntSort(mScript));
-		// product1 = y'*k
-		final Term product1 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript),
-				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor()), y);
-		// sum1 = y'*k + z
-		final Term sum1 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), product1, z);
-		final Map<Term, Term> sub1 = new HashMap<Term, Term>();
-		sub1.put(pmt.getEliminate(), sum1);
-		// div1 = b div k
-		final Term div1 = SmtUtils.divInt(mScript, pmt.getOffset(),
-				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor()));
-		// product2 = a*y
-		final Term product2 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript),
-				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getCoefficient()), y);
-		// sum2 = ay + (b div k)
-		final Term sum2 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), product2, div1);
-		final List<Term> termJunctSubstList = new ArrayList<>();
-		if (aAsInt > 0) {
-			for (int i = 0; i < aAsInt; i++) {
-				final BigInteger iAsBigInteger = BigInteger.valueOf(i);
-				final Term iAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
-						iAsBigInteger);
-				// sum3 = ay + (b div k) + i
-				final Term sum3 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), sum2, iAsTerm);
-				final Map<Term, Term> subJunct = new HashMap<Term, Term>();
-				subJunct.put(pmt.getDmlSubterm(), sum3);
-				final Term divConjunctSub = Substitution.apply(mMgdScript, subJunct, pmt.getContainingDualJunct());
-				termJunctSubstList.add(divConjunctSub);
-			}
-		} else {
-			for (int i = aAsInt; i < 1; i++) {
-				final BigInteger iAsBigInteger = BigInteger.valueOf(i);
-				final Term iAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
-						iAsBigInteger);
-				// sum3 = ay + (b div k) + i
-				final Term sum3 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), sum2, iAsTerm);
-				final Map<Term, Term> subJunct = new HashMap<Term, Term>();
-				subJunct.put(pmt.getDmlSubterm(), sum3);
-				final Term divConjunctSub = Substitution.apply(mMgdScript, subJunct, pmt.getContainingDualJunct());
-				termJunctSubstList.add(divConjunctSub);
-			}
-		}
-		final Term termJunctSubst = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, inputEt.getQuantifier(),
-				termJunctSubstList);
-		final EliminationResult resultWithoutXInDiv = helpReturnForEliminatingDiv(inputEt, pmt, sub1, termJunctSubst, y,
-				z);
-		return resultWithoutXInDiv;
-	}
-
-	private EliminationResult applyDivEliminationWithSmallRemainder(final EliminationTask inputEt,
-			final DmlPossibility pmt) throws AssertionError {
-		final BigInteger aAsBigInteger = pmt.getCoefficient();
-		final BigInteger aTimesInverse = aAsBigInteger.multiply(pmt.getInverse());
-		final BigInteger nAsBigInteger = aTimesInverse.divide(pmt.getDivisor());
-		final BigInteger remainderG = aTimesInverse.mod((pmt.getDivisor()).abs());
-		assert (aTimesInverse.equals(nAsBigInteger.multiply(pmt.getDivisor()).add(BigInteger.ONE)));
-		final BigInteger absRemainderG = remainderG.abs();
-		final int absIntRemainderG = absRemainderG.intValue();
-		if (absIntRemainderG != 1) {
-			throw new AssertionError("Remainder not 1");
-		}
-		final Term nAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), nAsBigInteger);
-		if (absIntRemainderG > 8) {
-			return null;
-		}
-		final TermVariable y = mMgdScript.constructFreshTermVariable("y", SmtSortUtils.getIntSort(mScript));
-		final TermVariable z = mMgdScript.constructFreshTermVariable("z", SmtSortUtils.getIntSort(mScript));
-		final Term inverseAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
-				pmt.getInverse());
-		final Term absDivisorAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
-				pmt.getDivisor().abs());
-		// product1 = y'*k
-		final Term product1 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript),
-				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor()), y);
-		// product5 = a⁻1*z
-		final Term product5 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript), inverseAsTerm, z);
-		// sum1 = y'*k + a⁻1*z
-		final Term sum1 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), product1, product5);
-		final Map<Term, Term> sub1 = new HashMap<Term, Term>();
-		sub1.put(pmt.getEliminate(), sum1);
+	/**
+	 * Replace `(a*x+b) div K` by `IF ((b mod k) + z < K) THEN ay + (b div k) + nz
+	 * ELSE ay + (b div k) + nz + 1`
+	 */
+	private Term replaceDivTerm(final EliminationTask inputEt, final DmlPossibility pmt, final TermVariable y,
+			final TermVariable z, final Term divisor, final Term n) {
 		// div1 = b div k
 		final Term div1 = SmtUtils.divInt(mScript, pmt.getOffset(),
 				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor()));
@@ -484,42 +363,64 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		// sum2 = ay + (b div k)
 		final Term sum2 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), product2, div1);
 		// product3 = nz
-		final Term product3 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript), nAsTerm, z);
+		final Term product3 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript), n, z);
 		// sumBeforeFinal = ay + (b div k) + nz
 		final Term sumBeforeFinal = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), sum2, product3);
-		final List<Term> termJunctSubstList = new ArrayList<>();
-		for (int i = 0; i <= absIntRemainderG; i++) {
-			final BigInteger iAsBigInteger = BigInteger.valueOf(i);
-			final Term iAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
-					iAsBigInteger);
-			// sum3 = ay + (b div k) + nz + i
-			final Term sum3 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), sumBeforeFinal, iAsTerm);
-			final Map<Term, Term> subJunct = new HashMap<Term, Term>();
-			subJunct.put(pmt.getDmlSubterm(), sum3);
-			Term divConjunctSub = Substitution.apply(mMgdScript, subJunct, pmt.getContainingDualJunct());
+
+		final Term divTermReplacement;
+		if (SmtUtils.tryToConvertToLiteral(pmt.getOffset()) != null
+				&& SmtUtils.tryToConvertToLiteral(pmt.getOffset()).equals(Rational.ZERO)) {
+			divTermReplacement = sumBeforeFinal;
+		} else {
 			// mod1 = b mod k
 			final Term mod1 = SmtUtils.mod(mScript, pmt.getOffset(),
 					SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor()));
-			if (i == 0) {
-				final Term sum4 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), mod1, z);
-				Term iIsZero = SmtUtils.less(mScript, sum4, absDivisorAsTerm);
-				iIsZero = QuantifierUtils.negateIfUniversal(mScript, inputEt.getQuantifier(), iIsZero);
-				divConjunctSub = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
-						divConjunctSub, iIsZero);
-			} else {
-				final Term sum4 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), mod1, z);
-				Term iIsOne = SmtUtils.leq(mScript, absDivisorAsTerm, sum4);
-				iIsOne = QuantifierUtils.negateIfUniversal(mScript, inputEt.getQuantifier(), iIsOne);
-				divConjunctSub = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
-						divConjunctSub, iIsOne);
-			}
-			termJunctSubstList.add(divConjunctSub);
+			final Term sum4 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), mod1, z);
+			final Term iIsZero = SmtUtils.less(mScript, sum4, divisor);
+			final Term ifTerm = iIsZero;
+			final Term thenTerm = sumBeforeFinal;
+			final Term one = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), BigInteger.ONE);
+			final Term elseTerm = SmtUtils.sum(mScript, sumBeforeFinal.getSort(), sumBeforeFinal, one);
+			// conditionalOfIte: z + (b mod k) >= k
+			divTermReplacement = SmtUtils.ite(mScript, ifTerm, thenTerm, elseTerm);
 		}
-		final Term termJunctSubst = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, inputEt.getQuantifier(),
-				termJunctSubstList);
-		final EliminationResult resultWithoutXInDiv = helpReturnForEliminatingDiv(inputEt, pmt, sub1, termJunctSubst, y,
-				z);
-		return resultWithoutXInDiv;
+		final Map<Term, Term> substitutionMaping = Collections.singletonMap(pmt.getDmlSubterm(), divTermReplacement);
+		return dissolveIte(Substitution.apply(mMgdScript, substitutionMaping, inputEt.getTerm()));
+	}
+
+	private Term applyDivElimination(final EliminationTask inputEt, final DmlPossibility pmt, final TermVariable y,
+			final TermVariable z, final Term divisor, final Term inverse) {
+		final Term n;
+		{
+			final BigInteger aAsBigInteger = pmt.getCoefficient();
+			final BigInteger aTimesInverse = aAsBigInteger.multiply(pmt.getInverse());
+			final BigInteger nAsBigInteger = aTimesInverse.divide(pmt.getDivisor());
+			final BigInteger remainderG = aTimesInverse.mod((pmt.getDivisor()).abs());
+			assert (aTimesInverse.equals(nAsBigInteger.multiply(pmt.getDivisor()).add(BigInteger.ONE)));
+			final BigInteger absRemainderG = remainderG.abs();
+			final int absIntRemainderG = absRemainderG.intValue();
+			if (absIntRemainderG != 1) {
+				throw new AssertionError("Remainder not 1");
+			}
+			n = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), nAsBigInteger);
+		}
+
+		final Term divReplaced = replaceDivTerm(inputEt, pmt, y, z, divisor, n);
+		final Term eliminateeReplaced;
+		{
+			// product1: y*k
+			final Term product1 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript),
+					SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor()), y);
+			// product5 = a⁻1*z
+			final Term product5 = SmtUtils.mul(mScript, SmtSortUtils.getIntSort(mScript), inverse, z);
+			// sum1 = y'*k + a⁻1*z
+			final Term sum1 = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript), product1, product5);
+			final Map<Term, Term> substitutionMapping = Collections.singletonMap(pmt.getEliminate(), sum1);
+			eliminateeReplaced = Substitution.apply(mMgdScript, substitutionMapping, divReplaced);
+		}
+		final Term interval = constructInterval(inputEt.getQuantifier(), z, divisor);
+		return QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(), eliminateeReplaced,
+				interval);
 	}
 
 	/**
@@ -691,7 +592,6 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		public boolean doesEliminateeOccurInCorrespondingFiniteJunction() {
 			return mEliminateeOccursInCorrespondingFiniteJunction;
 		}
-
 
 	}
 
