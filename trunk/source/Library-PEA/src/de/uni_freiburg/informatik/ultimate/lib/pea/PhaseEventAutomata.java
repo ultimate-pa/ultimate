@@ -43,10 +43,10 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimpleSet;
 public class PhaseEventAutomata implements Comparable<Object> {
 
 	public static final String TIMES = "_X_";
-
 	String mName;
 	Phase[] mPhases;
 	Phase[] mInit;
+	Phase[] mTerminal;
 	List<String> mClocks;
 
 	// A map of variables and its types to be used in this PEA.
