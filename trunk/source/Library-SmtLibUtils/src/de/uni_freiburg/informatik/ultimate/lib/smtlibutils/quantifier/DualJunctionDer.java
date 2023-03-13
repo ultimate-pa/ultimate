@@ -116,6 +116,10 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		return "DER";
 	}
 
+	public boolean areExpensiveEliminationsAllowed() {
+		return mExpensiveEliminations;
+	}
+
 	@Override
 	public EliminationResult tryToEliminate(final EliminationTask inputEt) {
 		final IDerHelper<?>[] helpers;
