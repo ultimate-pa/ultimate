@@ -198,6 +198,12 @@ public enum Spec {
 	INCOMPLETE(Group.REQUIREMENT,
 			"complete",
 			"incomplete");
+	/**
+	 * Checks if intersection of two PEAs is not empty.
+	 */
+	INTERSECTION_NOT_EMPTY(Group.REQUIREMENT,
+			"the intersection is empty",
+			"the intersection is not empty");
 	// @formatter:on
 
 	/**
