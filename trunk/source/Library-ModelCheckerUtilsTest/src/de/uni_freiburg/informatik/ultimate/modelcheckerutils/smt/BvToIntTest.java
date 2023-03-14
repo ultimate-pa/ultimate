@@ -106,8 +106,11 @@ public class BvToIntTest {
 				PartialQuantifierElimination.eliminate(mServices, mMgdScript, t1, SimplificationTechnique.SIMPLIFY_DDA);
 
 		final LBool equi = SmtUtils.checkEquivalence(t1, t2, mScript);
-		Assert.assertFalse("Equivalence check returned UNKNOWN", equi.equals(LBool.UNKNOWN));
-		Assert.assertFalse(equi.equals(LBool.SAT));
+		Assert.assertFalse(String.format(
+				"Insufficient ressources to check equivalence between input and output. Input: %s, Output %s", t1, t2),
+				equi.equals(LBool.UNKNOWN));
+		Assert.assertFalse(String.format("Input and output are not logically equivalent. Input: %s, Output %s", t1, t2),
+				equi.equals(LBool.SAT));
 		// System.out.println("bit-vector quantifier Elimination: " + qelimResult.toStringDirect());
 		Assert.assertTrue("Result contains quantifiers", QuantifierUtils.isQuantifierFree(t2)); // translation qelim
 		// Assert.assertTrue(QuantifierUtils.isQuantifierFree(qelimResult)); // bit-vector qelim
