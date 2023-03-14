@@ -180,6 +180,11 @@ public class ComplementPEATest {
 		assertTrue(guard.equals(expected));
 	}
 	
+	/**
+	 * Test PEA: DurationBoundUGlobally
+	 * 
+	 * Special case with countertrace phi = ... l >= T; true
+	 */
 	@Test
 	public void testComplementDurationBoundUGlobally() {
 		PhaseEventAutomata testPEA = mTestAutomata.get(2);
@@ -189,7 +194,6 @@ public class ComplementPEATest {
 		assertTrue(phases.length == testPEA.getPhases().length + 1);
 		Phase sink = phases[0];
 		assertTrue(sink.getTerminal());
-		Phase originalPhase0 = phases[1];
 		Phase originalPhase1 = phases[2];
 		CDD expectedClkInv = RangeDecision.create("c0", RangeDecision.OP_LTEQ, 5);
 		assertEquals(expectedClkInv, originalPhase1.getClockInvariant());
