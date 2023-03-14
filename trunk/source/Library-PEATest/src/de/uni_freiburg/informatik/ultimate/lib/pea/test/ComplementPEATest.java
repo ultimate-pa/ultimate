@@ -43,9 +43,11 @@ public class ComplementPEATest {
 		
 		PhaseEventAutomata ResponseDelayGlobally = createResponseDelayGloballyPea();
 		PhaseEventAutomata UniversalityGlobally = createUniversalityGloballyPea();
+		PhaseEventAutomata DurationBoundUGlobally = createDurationBoundUGlobally();
 		
 		mTestAutomata.add(ResponseDelayGlobally);
 		mTestAutomata.add(UniversalityGlobally);
+		mTestAutomata.add(DurationBoundUGlobally);
 	}
 	
 	// constructs a PEA corresponding to pattern UniversalityGlobally
@@ -87,6 +89,34 @@ public class ComplementPEATest {
 		phases[2].addTransition(phases[0], s, noreset);
 
 		return new PhaseEventAutomata("ResponseDelayGlobally", phases, new Phase[] { phases[0], phases[1] });
+	}
+	
+	/**
+	 * Constructs a PEA corresponding to pattern DurationBoundUGlobally:
+	 * Globally, it is always the case that once "R" becomes satisfied, it holds for less than "5" time units
+	 * 
+	 * @return the PEA
+	 */
+	public PhaseEventAutomata createDurationBoundUGlobally() {
+		CDD r = BooleanDecision.create("R");
+		CDD notR = r.negate();
+		CDD clkInv = RangeDecision.create("c0", RangeDecision.OP_LT, 5);
+		
+		final Phase[] phases = new Phase[] { new Phase("0", notR, CDD.TRUE), new Phase("1", r, clkInv)};
+		
+		
+		final String[] reset = new String[] { "c0" };
+		final String[] noreset = new String[0];
+		
+		// loop transitions
+		phases[0].addTransition(phases[0], CDD.TRUE, noreset);
+		phases[1].addTransition(phases[1], CDD.TRUE, noreset);
+		
+		phases[0].addTransition(phases[1], CDD.TRUE, reset);
+		phases[1].addTransition(phases[0], CDD.TRUE, noreset);
+		
+		
+		return new PhaseEventAutomata("DurationBoundUGlobally", phases, new Phase[] { phases[0], phases[1] });
 	}
 	
 	public CDD constructMultiClockInvariant() {
@@ -148,6 +178,28 @@ public class ComplementPEATest {
 		CDD guard = sinkInitialTransition.getGuard();
 		CDD expected = BooleanDecision.create("R").negate();
 		assertTrue(guard.equals(expected));
+	}
+	
+	@Test
+	public void testComplementDurationBoundUGlobally() {
+		PhaseEventAutomata testPEA = mTestAutomata.get(2);
+		ComplementPEA complementPEA = new ComplementPEA(testPEA);
+		PhaseEventAutomata complementAutomaton = complementPEA.complement();
+		Phase[] phases = complementAutomaton.getPhases();
+		assertTrue(phases.length == testPEA.getPhases().length + 1);
+		Phase sink = phases[0];
+		assertTrue(sink.getTerminal());
+		Phase originalPhase0 = phases[1];
+		Phase originalPhase1 = phases[2];
+		CDD expectedClkInv = RangeDecision.create("c0", RangeDecision.OP_LTEQ, 5);
+		assertEquals(expectedClkInv, originalPhase1.getClockInvariant());
+		List<Transition> phase1OutgoingTransitions = originalPhase1.getTransitions();
+		for (Transition transition : phase1OutgoingTransitions) {
+			if (transition.getDest() == phases[1]) {
+				CDD expectedGuard = RangeDecision.create("c0", RangeDecision.OP_LT, 5);
+				assertEquals(expectedGuard, transition.getGuard());
+			}
+		}
 	}
 	
 }
