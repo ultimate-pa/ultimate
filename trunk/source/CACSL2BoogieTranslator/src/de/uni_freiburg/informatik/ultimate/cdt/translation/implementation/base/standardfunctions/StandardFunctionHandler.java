@@ -629,7 +629,7 @@ public class StandardFunctionHandler {
 
 		/** from assert.h */
 		fill(map, "__assert_fail", this::handleAssertFail);
-		// fill(map, "assert", this::handleAssert);
+		fill(map, "__assert_func", this::handleAssertFail);
 
 		/** from fenv.h */
 		fill(map, "fegetround", this::handleBuiltinFegetround);
