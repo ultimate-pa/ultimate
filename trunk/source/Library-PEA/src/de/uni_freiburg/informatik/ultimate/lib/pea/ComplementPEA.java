@@ -44,7 +44,7 @@ public class ComplementPEA {
 			CDD guardToSink = phase.stateInv.and(RangeDecision.strict(clockInv));
 			// create new phase for complement automaton that is not accepting
 			Phase newPhase = new Phase(phase.name, phase.stateInv, phase.clockInv);
-			newPhase.setAccepting(false);
+			newPhase.setTerminal(false);
 			
 			
 			for (Transition transition : phase.transitions) {
@@ -88,8 +88,7 @@ public class ComplementPEA {
 				}
 			}
 		}
-		// TODO: better name for complement automaton, such as "oldname" + "_C" or ...??
-		PhaseEventAutomata complementedPEA = new PhaseEventAutomata("aaaaa",  phases.toArray(new Phase[0]), mPEAtoComplement.mInit);
+		PhaseEventAutomata complementedPEA = new PhaseEventAutomata(mPEAtoComplement.getName() + "_c",  phases.toArray(new Phase[0]), mPEAtoComplement.mInit);
 		return complementedPEA;
 	}
 
