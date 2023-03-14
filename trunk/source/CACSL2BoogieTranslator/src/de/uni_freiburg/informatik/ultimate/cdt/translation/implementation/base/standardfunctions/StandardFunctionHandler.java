@@ -34,10 +34,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -138,12 +136,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class StandardFunctionHandler {
 
 	/**
-	 * If we construct an auxvar that models a nondeterministic input, we havoc that
-	 * auxvar afterwards to ensure that we get a new nondeterministic value even if
-	 * the variable occurs in a loop. If this constant is set, we havoc the variable
-	 * also before the nondeterministic assignment. If the auxvar is also havoced
-	 * before, it is only backward-live to the havoc, otherwise it would be
-	 * backward-live until the beginning of the procedure.
+	 * If we construct an auxvar that models a nondeterministic input, we havoc that auxvar afterwards to ensure that we
+	 * get a new nondeterministic value even if the variable occurs in a loop. If this constant is set, we havoc the
+	 * variable also before the nondeterministic assignment. If the auxvar is also havoced before, it is only
+	 * backward-live to the havoc, otherwise it would be backward-live until the beginning of the procedure.
 	 */
 	private static final boolean HAVOC_NONDET_AUXVARS_ALSO_BEFORE = true;
 
@@ -185,8 +181,6 @@ public class StandardFunctionHandler {
 
 	private final ILogger mLogger;
 
-	private final Set<String> mOverwrittenFunctionNames;
-
 	public StandardFunctionHandler(final ILogger logger, final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
@@ -212,7 +206,6 @@ public class StandardFunctionHandler {
 		mTypeHandler = typeHandler;
 		mCEpressionTranslator = cEpressionTranslator;
 		mFunctionModels = getFunctionModels();
-		mOverwrittenFunctionNames = getOverwrittenFunctionNames(settings);
 		mThreadIdManager = new ThreadIdManager(mAuxVarInfoBuilder, mExprResultTransformer, mExpressionTranslation,
 				mMemoryHandler, mTypeHandler, mTypeSizes, null /* TODO */, symboltable);
 		mDataRaceChecker = dataRaceChecker;
@@ -241,7 +234,7 @@ public class StandardFunctionHandler {
 			final IASTNode funDecl = mFunctionTable.get(transformedName);
 			if (funDecl instanceof IASTFunctionDefinition) {
 				// it is a function that already has a body
-				if (!mOverwrittenFunctionNames.contains(transformedName)) {
+				if (!mSettings.checkErrorFunction() || !"reach_error".equals(transformedName)) {
 					return null;
 				}
 				mLogger.warn(String.format(
@@ -252,16 +245,6 @@ public class StandardFunctionHandler {
 			return functionModel.handleFunction(main, node, loc, name);
 		}
 		return null;
-	}
-
-	private static Set<String> getOverwrittenFunctionNames(final TranslationSettings settings) {
-		if (!settings.isSvcompMode()) {
-			return Collections.emptySet();
-		}
-
-		final Set<String> rtr = new HashSet<>();
-		rtr.add("reach_error");
-		return rtr;
 	}
 
 	private Map<String, IFunctionModelHandler> getFunctionModels() {
@@ -1831,11 +1814,7 @@ public class StandardFunctionHandler {
 		}
 
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults);
-		if (mSettings.isSvcompMode()) {
-			final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
-			return erb.addStatement(new AssumeStatement(loc, falseLiteral)).build();
-		}
-		return erb.addStatement(createReachabilityAssert(loc, name)).build();
+		return erb.addStatement(createReachabilityAssert(loc, name, mSettings.checkAssertions(), Spec.ASSERT)).build();
 	}
 
 	private Result handleBuiltinFegetround(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -2412,7 +2391,7 @@ public class StandardFunctionHandler {
 
 	private Result handleErrorFunction(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		final Statement st = createReachabilityAssert(loc, name);
+		final Statement st = createReachabilityAssert(loc, name, mSettings.checkErrorFunction(), Spec.ERROR_FUNCTION);
 		return new ExpressionResult(Collections.singletonList(st), null);
 	}
 
@@ -2421,12 +2400,12 @@ public class StandardFunctionHandler {
 	 * settings. If we want to check reachability, an assert false will be generated. If not, (e.g., if we only want to
 	 * check memsafety), an assume false will be generated.
 	 */
-	private Statement createReachabilityAssert(final ILocation loc, final String functionName) {
-		final boolean checkSvcompErrorfunction = mSettings.checkSvcompErrorFunction();
+	private Statement createReachabilityAssert(final ILocation loc, final String functionName,
+			final boolean checkProperty, final Spec spec) {
 		final boolean checkMemoryleakInMain = mSettings.checkMemoryLeakInMain()
 				&& mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired();
 		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
-		if (!checkSvcompErrorfunction && !checkMemoryleakInMain) {
+		if (!checkProperty && !checkMemoryleakInMain) {
 			return new AssumeStatement(loc, falseLiteral);
 		}
 
@@ -2439,7 +2418,7 @@ public class StandardFunctionHandler {
 		// need separate arrays for stack and heap.
 		// https://github.com/sosy-lab/sv-benchmarks/pull/1001
 		final Check check;
-		if (checkSvcompErrorfunction) {
+		if (checkProperty) {
 			final Function<Spec, String> funPosMessage =
 					s -> s == Spec.ERROR_FUNCTION ? "call to " + functionName + " is unreachable"
 							: Check.getDefaultPositiveMessage(s);
@@ -2447,9 +2426,9 @@ public class StandardFunctionHandler {
 					s -> s == Spec.ERROR_FUNCTION ? "a call to " + functionName + " is reachable"
 							: Check.getDefaultNegativeMessage(s);
 			if (checkMemoryleakInMain) {
-				check = new Check(EnumSet.of(Spec.ERROR_FUNCTION, Spec.MEMORY_LEAK), funPosMessage, funNegMessage);
+				check = new Check(EnumSet.of(spec, Spec.MEMORY_LEAK), funPosMessage, funNegMessage);
 			} else {
-				check = new Check(Spec.ERROR_FUNCTION, funPosMessage, funNegMessage);
+				check = new Check(spec, funPosMessage, funNegMessage);
 			}
 		} else {
 			check = new Check(EnumSet.of(Spec.MEMORY_LEAK));

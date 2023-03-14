@@ -31,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferen
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.TranslationMode;
 
 /**
  * Defines preference page for C translation.
@@ -46,11 +45,10 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final String MAINPROC_DESC =
 			"Specify the entry function of the program. " + "Use an empty string for library mode "
 					+ "(i.e., assume all globals are non-deterministic and verify each function in isolation).";
-	public static final String LABEL_MODE = "Translation Mode:";
+	public static final String LABEL_ERROR = "Check reachability of error function";
 	public static final String MAINPROC_LABEL = "Entry function";
 	private static final String MAINPROC_DEFAULT = "main";
-	public static final String LABEL_CHECK_SVCOMP_ERRORFUNCTION =
-			"Check unreachability of error function in SV-COMP mode";
+	public static final String LABEL_CHECK_ASSERTIONS = "Check assertions";
 	public static final String LABEL_CHECK_POINTER_VALIDITY = "Pointer base address is valid at dereference";
 	public static final String LABEL_CHECK_POINTER_ALLOC = "Pointer to allocated memory at dereference";
 	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
@@ -241,10 +239,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<>(LABEL_MODE, TranslationMode.SV_COMP14, PreferenceType.Radio,
-						TranslationMode.values()),
+				new UltimatePreferenceItem<>(LABEL_ERROR, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(MAINPROC_LABEL, MAINPROC_DEFAULT, MAINPROC_DESC, PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_CHECK_SVCOMP_ERRORFUNCTION, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CHECK_ASSERTIONS, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_VALIDITY, PointerCheckMode.ASSERTandASSUME,
 						PreferenceType.Combo, PointerCheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_ALLOC, PointerCheckMode.ASSERTandASSUME,
