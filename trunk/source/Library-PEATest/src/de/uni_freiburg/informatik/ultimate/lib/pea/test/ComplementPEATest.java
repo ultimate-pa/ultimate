@@ -124,7 +124,7 @@ public class ComplementPEATest {
 		Phase sink = phases[0];
 		assertTrue(sink.getName() == "sink");
 		// is it accepting?
-		assertTrue(sink.getAccepting());
+		assertTrue(sink.getTerminal());
 		// it should not be initial
 		assertTrue(sink.isInit == false);
 		assertTrue(!sink.getInitialTransition().isPresent());
