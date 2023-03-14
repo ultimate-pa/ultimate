@@ -46,7 +46,6 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	String mName;
 	Phase[] mPhases;
 	Phase[] mInit;
-	Phase[] mTerminal;
 	List<String> mClocks;
 
 	// A map of variables and its types to be used in this PEA.

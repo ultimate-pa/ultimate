@@ -133,13 +133,15 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mCheckConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
 		mReportTrivialConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY);
 		mSeparateInvariantHandling = prefs.getBoolean(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS);
+		mCheckIntersectionNotEmpty = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_INTERSECTION_NOT_EMPTY);
 
 		// log preferences
-		mLogger.info(String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s", Pea2BoogiePreferences.LABEL_CHECK_VACUITY,
+		mLogger.info(String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s, %s=%s", Pea2BoogiePreferences.LABEL_CHECK_VACUITY,
 				mCheckVacuity, Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE, mCombinationNum,
 				Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY, mCheckConsistency,
 				Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, mReportTrivialConsistency,
-				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS, mSeparateInvariantHandling));
+				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS, mSeparateInvariantHandling,
+				Pea2BoogiePreferences.LABEL_CHECK_INTERSECTION_NOT_EMPTY, mCheckIntersectionNotEmpty));
 
 		final List<Declaration> decls = new ArrayList<>();
 		decls.addAll(mSymbolTable.getDeclarations());
@@ -170,6 +172,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		if (mCheckVacuity) {
 			annotations.addAll(genChecksNonVacuity(mUnitLocation));
 		}
+		if (mCheckIntersectionNotEmpty) {
+			annotations.addAll(genCheckIntersectionNotEmpty(mUnitLocation));
+		}
 		annotations.addAll(genChecksRTInconsistency(mUnitLocation));
 		return annotations;
 	}
@@ -180,21 +185,36 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return Collections.singletonList(createAssert(expr, check, "CONSISTENCY"));
 	}
 	
-	// TODO: add method genCheckEmptiness
+
 	private List<Statement> genCheckIntersectionNotEmpty(final BoogieLocation bl) {
 		if (!mCheckVacuity) {
 			return Collections.emptyList();
 		}
 		final List<Statement> stmtList = new ArrayList<>();
 		for (final ReqPeas reqpea : mReqPeas) {
-		
+			 for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
+					final Statement assertTerminalPhase = genAssertIntersectionNotEmpty(pea.getValue(),bl);
+					if (assertTerminalPhase != null) {
+						stmtList.add(assertTerminalPhase);
+					}
+				}
 		}
-		return null;
+		return stmtList;
 	}
 	
-	private Statement genAssertIntersectionNotEmpty(final PatternType<?> req, final PhaseEventAutomata aut, final BoogieLocation bl) {
-		return null;
-	
+	private Statement genAssertIntersectionNotEmpty(final PhaseEventAutomata aut, final BoogieLocation bl) {
+		Phase[] phases = aut.getPhases();
+		final List<Expression> checkTerminal = new ArrayList<>();
+		for (int i = 0; i < phases.length; i++) {
+			Phase phase = phases[i];
+			if (phase.getTerminal()) {
+				checkTerminal.add(genComparePhaseCounter(i, mSymbolTable.getPcName(aut), bl));
+			}
+		}
+		final Expression disjunction = genDisjunction(checkTerminal, bl);
+		final ReqCheck check = new ReqCheck(Spec.INTERSECTION_NOT_EMPTY);
+		final String label = "INTERSECTION_NOT_EMPTY_" + aut.getName();
+		return createAssert(disjunction, check, label);
 	}
 
 	@SuppressWarnings("unchecked")

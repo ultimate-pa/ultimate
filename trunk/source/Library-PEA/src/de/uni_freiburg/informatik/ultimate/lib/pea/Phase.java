@@ -261,11 +261,11 @@ public class Phase implements Comparable<Phase> {
 	}
 	
 	
-	public boolean getAccepting() {
+	public boolean getTerminal() {
 		return mIsTerminal;
 	}
 	
-	public void setAccepting(final boolean val) {
+	public void setTerminal(final boolean val) {
 		mIsTerminal = val;
 	}
 	
