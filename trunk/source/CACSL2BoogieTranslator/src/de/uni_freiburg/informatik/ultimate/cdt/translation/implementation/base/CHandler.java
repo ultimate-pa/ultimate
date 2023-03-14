@@ -710,13 +710,7 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTASMDeclaration node) {
-		if (mSettings.isSvcompMode()) {
-			// workaround for now: ignore inline assembler instructions
-			return new SkipResult();
-		}
-		final String msg = "CHandler: Not yet implemented: \"" + node.getRawSignature() + "\" (Type: "
-				+ node.getClass().getName() + ")";
-		throw new UnsupportedSyntaxException(mLocationFactory.createCLocation(node), msg);
+		return new SkipResult();
 	}
 
 	public Result visit(final IDispatcher main, final IASTBinaryExpression node) {

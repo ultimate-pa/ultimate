@@ -142,9 +142,6 @@ public class MainTranslator {
 
 		TranslationSettings translationSettings = new TranslationSettings(ups);
 
-		mLogger.info(
-				"Starting translation in" + (translationSettings.isSvcompMode() ? " SV-COMP mode " : " normal mode"));
-
 		while (true) {
 
 			// TODO: Line Directive mapping doesn't work with multiple TUs right now
@@ -232,8 +229,7 @@ public class MainTranslator {
 		final CHandler mainCHandler = new CHandler(prerunCHandler, procedureManager, staticObjectsHandler, typeHandler,
 				expressionTranslation, typeSizeAndOffsetComputer, nameHandler, flatSymbolTable, typeSizes);
 
-		final PreprocessorHandler ppHandler =
-				new PreprocessorHandler(reporter, locationFactory, translationSettings.isSvcompMode());
+		final PreprocessorHandler ppHandler = new PreprocessorHandler(reporter, locationFactory);
 		final ACSLHandler acslHandler = new ACSLHandler(witnessInvariants != null, flatSymbolTable,
 				expressionTranslation, typeHandler, procedureManager, locationFactory, mainCHandler);
 		final MainDispatcher mainDispatcher = new MainDispatcher(mLogger, witnessInvariants, locationFactory,
