@@ -970,7 +970,7 @@ public class PolynomialRelationTest {
 	public void relationIntDivModStickyPaint() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(<= (div (+ z (* y (- 1)) x) (- 8)) 9)";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, vars);
 	}
 
 	@Test
