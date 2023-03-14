@@ -11,7 +11,6 @@ Export-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.sc
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms,
- de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.simplify,

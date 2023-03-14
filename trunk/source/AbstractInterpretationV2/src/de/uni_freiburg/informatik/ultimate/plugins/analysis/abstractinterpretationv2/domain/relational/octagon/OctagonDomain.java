@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.NumericUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RCFGLiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
@@ -49,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomainPreferences.LogMessageFormatting;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomainPreferences.WideningOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 
@@ -143,7 +143,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge> 
 		case EXPONENTIAL:
 			final String thresholdString = ups.getString(OctagonDomainPreferences.EXP_WIDENING_THRESHOLD);
 			try {
-				final BigDecimal threshold = NumericUtils.sanitizeBigDecimalValue(thresholdString);
+				final BigDecimal threshold = AbsIntUtil.sanitizeBigDecimalValue(thresholdString);
 				return () -> new OctExponentialWideningOperator(threshold);
 			} catch (final NumberFormatException nfe) {
 				throw makeIllegalSettingException(settingLabel, settingValue);

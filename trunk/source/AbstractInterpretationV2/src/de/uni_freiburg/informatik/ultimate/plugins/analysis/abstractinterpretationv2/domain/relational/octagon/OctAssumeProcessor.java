@@ -52,8 +52,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.NumericUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.OctValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
@@ -404,7 +402,7 @@ public class OctAssumeProcessor {
 		leC = geC = affExpr.getConstant().negate();
 		if (intRelation) {
 			// in case of integers: (affExpr - c != 0) as (affExpr <= c-1) or (affExpr >= c+1)
-			if (NumericUtils.isIntegral(leC)) {
+			if (AbsIntUtil.isIntegral(leC)) {
 				leC = leC.subtract(BigDecimal.ONE);
 				geC = geC.add(BigDecimal.ONE);
 			} else {
@@ -491,7 +489,7 @@ public class OctAssumeProcessor {
 
 		// from now on handle (affExpr - c == 0) as (affExpr == c) ----------------
 		final BigDecimal c = affExpr.getConstant().negate();
-		if (intRelation && !NumericUtils.isIntegral(c)) {
+		if (intRelation && !AbsIntUtil.isIntegral(c)) {
 			// (assume intVar == 1.5) is equivalent to (assume false).
 			return new ArrayList<>();
 		}
@@ -610,7 +608,7 @@ public class OctAssumeProcessor {
 		// from now on handle (affExpr - c <= 0) as (affExpr <= c) ----------------
 		BigDecimal c = affExpr.getConstant().negate();
 		if (intRelation) {
-			if (!NumericUtils.isIntegral(c)) {
+			if (!AbsIntUtil.isIntegral(c)) {
 				// int <= 1.5 ==> int <= 1
 				// int < 1.5 ==> int <= 1
 				c = c.setScale(0, RoundingMode.FLOOR);

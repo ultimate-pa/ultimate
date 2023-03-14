@@ -11,9 +11,7 @@ import java.util.TreeSet;
 import org.junit.Assert;
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.OctMatrix;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.OctValue;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.OctMatrix.WideningStepSupplier;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctMatrix.WideningStepSupplier;
 
 public class OctMatrixTest {
 

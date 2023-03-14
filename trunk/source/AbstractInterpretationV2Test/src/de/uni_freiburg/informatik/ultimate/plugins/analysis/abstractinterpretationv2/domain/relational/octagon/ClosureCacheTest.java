@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.OctMatrix;
-
 public class ClosureCacheTest {
 
 	public static void main(String[] args) {

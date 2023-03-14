@@ -32,9 +32,7 @@ import java.util.Collection;
 import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.OctMatrix;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.OctValue;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.OctMatrix.WideningStepSupplier;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctMatrix.WideningStepSupplier;
 
 /**
  * Widening operator for octagons that increases bounds using a fixed set of constants. Usually, the constants are

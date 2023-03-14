@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
 /**
  * Matrix representation of octagons, based on A. Miné's "The octagon abstract
@@ -816,7 +817,7 @@ public class OctMatrix {
 	 * Compute the shortest path closure in-place, using the naive
 	 * Floyd-Warshall algorithm.
 	 */
-	public void shortestPathClosureNaiv() {
+	protected void shortestPathClosureNaiv() {
 		for (int k = 0; k < mSize; ++k) {
 			for (int i = 0; i < mSize; ++i) {
 				final OctValue ik = get(i, k);
@@ -839,7 +840,7 @@ public class OctMatrix {
 	 * Finite matrix entries are indexed. Updates are computed using only the
 	 * indexed entries.
 	 */
-	public void shortestPathClosureFullSparse() {
+	protected void shortestPathClosureFullSparse() {
 		for (int k = 0; k < mSize; ++k) {
 			final List<Integer> indexFiniteEntriesInColK = indexFiniteEntriesInColumn(k);
 			final List<Integer> indexFiniteEntriesInRowK = indexFiniteEntriesInRow(k);
@@ -896,7 +897,7 @@ public class OctMatrix {
 	 * <p>
 	 * This is a modification of {@link #shortestPathClosureFullSparse()}.
 	 */
-	public void shortestPathClosureSparse() {
+	protected void shortestPathClosureSparse() {
 		List<Integer> indexFiniteEntriesInBlockCol = null;
 		List<Integer> indexFiniteEntriesInBlockRow = null;
 		for (int k = 0; k < mSize; ++k) {
@@ -973,7 +974,7 @@ public class OctMatrix {
 	 * {@link #shortestPathClosureSparse()}, while using only one primitive
 	 * array instead of two java collections to represent the index.
 	 */
-	public void shortestPathClosurePrimitiveSparse() {
+	protected void shortestPathClosurePrimitiveSparse() {
 		int[] rk = null; // indices of finite entries in rows k and k^1
 		int[] ck = null; // indices of finite entries in columns k and k^1
 		int indexLength = 0;
@@ -1051,7 +1052,7 @@ public class OctMatrix {
 	 * This algorithm is based on Floyd-Warshall and iterates only the block
 	 * lower triangular matrix.
 	 */
-	public void shortestPathClosureApron() {
+	protected void shortestPathClosureApron() {
 		for (int k = 0; k < mSize; ++k) {
 			for (int i = 0; i < mSize; ++i) {
 				final OctValue ik = get(i, k);
@@ -1416,7 +1417,7 @@ public class OctMatrix {
 	 *            the source (a different!) matrix. Values may be {@code null}
 	 *            for new variables. Keys must not be {@code null}.
 	 */
-	public void copySelection(final OctMatrix source, final Map<Integer, Integer> mapTargetToSourceVar,
+	protected void copySelection(final OctMatrix source, final Map<Integer, Integer> mapTargetToSourceVar,
 			int skipVarsLessThan, int skipVarsBiggerEqualThan) {
 
 		skipVarsLessThan = Math.min(0, skipVarsLessThan);
@@ -1454,7 +1455,7 @@ public class OctMatrix {
 	}
 
 	/** @see #copySelection(OctMatrix, Map, int) */
-	public void copySelection(final OctMatrix source, final Map<Integer, Integer> mapTargetToSourceVar) {
+	protected void copySelection(final OctMatrix source, final Map<Integer, Integer> mapTargetToSourceVar) {
 		copySelection(source, mapTargetToSourceVar, 0, Integer.MAX_VALUE);
 	}
 
@@ -1507,7 +1508,7 @@ public class OctMatrix {
 	 * @param sourceVar
 	 *            variable which will be copied
 	 */
-	public void assignVarCopy(final int targetVar, final int sourceVar) {
+	protected void assignVarCopy(final int targetVar, final int sourceVar) {
 		if (targetVar == sourceVar) {
 			return;
 		}
@@ -1556,7 +1557,7 @@ public class OctMatrix {
 	 * @param targetVar
 	 *            variable which will be negated
 	 */
-	public void negateVar(final int targetVar) {
+	protected void negateVar(final int targetVar) {
 		final int t2 = targetVar * 2;
 		final int t21 = t2 + 1;
 
@@ -1606,7 +1607,7 @@ public class OctMatrix {
 	 * @param constant
 	 *            summand
 	 */
-	public void incrementVar(final int targetVar, final OctValue constant) {
+	protected void incrementVar(final int targetVar, final OctValue constant) {
 		final int t2 = targetVar * 2;
 		final int t21 = t2 + 1;
 
@@ -1634,12 +1635,12 @@ public class OctMatrix {
 			mStrongClosure = null;
 		}
 		if (mTightClosure != this) {
-			assert constant.isInfinity() || NumericUtils.isIntegral(constant.getValue()) : "int incremented by real";
+			assert constant.isInfinity() || AbsIntUtil.isIntegral(constant.getValue()) : "int incremented by real";
 			mTightClosure = null;
 		}
 	}
 
-	public void assignVarConstant(final int targetVar, final OctValue constant) {
+	protected void assignVarConstant(final int targetVar, final OctValue constant) {
 		havocVar(targetVar);
 		final int t2 = targetVar * 2;
 		final int t21 = t2 + 1;
@@ -1649,7 +1650,7 @@ public class OctMatrix {
 		// cached closures were already reset by "set"
 	}
 
-	public void assumeVarConstant(final int targetVar, final OctValue constant) {
+	protected void assumeVarConstant(final int targetVar, final OctValue constant) {
 		final int t2 = targetVar * 2;
 		final int t21 = t2 + 1;
 		final OctValue doubleConstant = constant.add(constant);
@@ -1658,7 +1659,7 @@ public class OctMatrix {
 		// cached closures were already reset by "set"
 	}
 
-	public void assignVarInterval(final int targetVar, final OctValue min, final OctValue max) {
+	protected void assignVarInterval(final int targetVar, final OctValue min, final OctValue max) {
 		havocVar(targetVar);
 		final int t2 = targetVar * 2;
 		final int t21 = t2 + 1;
@@ -1667,7 +1668,7 @@ public class OctMatrix {
 		// cached closures were already reset by "set"
 	}
 
-	public void assumeVarInterval(final int targetVar, final OctValue min, final OctValue max) {
+	protected void assumeVarInterval(final int targetVar, final OctValue min, final OctValue max) {
 		final int t2 = targetVar * 2;
 		final int t21 = t2 + 1;
 		setMin(t2, t21, min.add(min).negateIfNotInfinity());
@@ -1676,7 +1677,7 @@ public class OctMatrix {
 	}
 
 	// var1 + var2 <= constant
-	public void assumeVarRelationLeConstant(int var1, final boolean var1Negate, int var2, final boolean var2Negate,
+	protected void assumeVarRelationLeConstant(int var1, final boolean var1Negate, int var2, final boolean var2Negate,
 			final OctValue constant) {
 		var1 *= 2;
 		var2 *= 2;
@@ -1689,7 +1690,7 @@ public class OctMatrix {
 		setMin(var1, var2, constant);
 	}
 
-	public void havocVar(final int targetVar) {
+	protected void havocVar(final int targetVar) {
 		final int t2 = targetVar * 2;
 		final int t21 = t2 + 1;
 

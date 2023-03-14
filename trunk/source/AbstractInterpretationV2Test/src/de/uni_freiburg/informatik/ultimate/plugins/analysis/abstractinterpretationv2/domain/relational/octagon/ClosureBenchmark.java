@@ -13,8 +13,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.OctMatrix;
-
 /**
  * Measures speed of different closures on matrices from Benchmark set.
  *
