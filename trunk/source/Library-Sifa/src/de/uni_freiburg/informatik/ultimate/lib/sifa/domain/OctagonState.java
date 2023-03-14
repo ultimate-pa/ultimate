@@ -27,7 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -42,11 +41,8 @@ import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.OctMatrix;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.octagon.OctValue;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.OctagonRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -58,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *
  */
 public final class OctagonState implements IAbstractState<OctagonState> {
-	public static final OctagonState TOP = new OctagonState(Map.of(), OctMatrix.NEW, true);
+	public static final OctagonState TOP = new OctagonState(Map.of(), OctagonMatrix.NEW, true);
 
 	/**
 	 * Map of numerical variable (ints and reals) names to the index of the corresponding block row/column in the
@@ -67,11 +63,11 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 	private final Map<Term, Integer> mVarToIndex;
 
 	/** Abstract state for numeric variables (ints and reals). This is the actual octagon. */
-	private final OctMatrix mMatrix;
+	private final OctagonMatrix mMatrix;
 
 	private final boolean mAllVarsAreInt;
 
-	private OctagonState(final Map<Term, Integer> varToIndex, final OctMatrix matrix, final boolean allVarsAreInt) {
+	private OctagonState(final Map<Term, Integer> varToIndex, final OctagonMatrix matrix, final boolean allVarsAreInt) {
 		mVarToIndex = varToIndex;
 		mMatrix = matrix;
 		mAllVarsAreInt = allVarsAreInt;
@@ -101,55 +97,12 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 				vars.stream().sorted((x, y) -> x.toString().compareTo(y.toString())).collect(Collectors.toList());
 		final Map<Term, Integer> varToIndex =
 				IntStream.range(0, vars.size()).boxed().collect(Collectors.toMap(sortedVars::get, x -> x));
-		final OctMatrix resultMatrix = new OctMatrix(varToIndex.size());
-		resultMatrix.fill(OctValue.INFINITY);
+		final OctagonMatrix resultMatrix = new OctagonMatrix(varToIndex.size());
 		for (final OctagonRelation octRel : octRelations) {
-			final boolean isRealSort = SmtSortUtils.isRealSort(octRel.getVar1().getSort());
-			allVarsAreInt &= !isRealSort;
-			processRelation(varToIndex, octRel, resultMatrix, isRealSort);
+			allVarsAreInt &= !SmtSortUtils.isRealSort(octRel.getVar1().getSort());
+			resultMatrix.processRelation(octRel, varToIndex);
 		}
 		return new OctagonState(varToIndex, resultMatrix, allVarsAreInt);
-	}
-
-	private static void processRelation(final Map<Term, Integer> varToIndex, final OctagonRelation octRel,
-			final OctMatrix matrix, final boolean isRealSort) {
-		final Rational constant;
-		final boolean var1Negated;
-		final boolean var2Negated;
-		final Rational oldConstant = octRel.getConstant();
-		switch (octRel.getRelationSymbol()) {
-		case LEQ:
-			constant = octRel.getConstant();
-			var1Negated = octRel.isNegateVar1();
-			var2Negated = octRel.isNegateVar2();
-			break;
-		case GEQ:
-			constant = octRel.getConstant().negate();
-			var1Negated = !octRel.isNegateVar1();
-			var2Negated = !octRel.isNegateVar2();
-			break;
-		case LESS:
-			// For int sort: Replace a+b < c by a+b <= c-1
-			// For real sort: Replace a+b < c by a+b <= c (overapproximation)
-			constant = isRealSort ? oldConstant : oldConstant.sub(Rational.ONE);
-			var1Negated = octRel.isNegateVar1();
-			var2Negated = octRel.isNegateVar2();
-			break;
-		case GREATER:
-			// For int sort: Replace a+b > c by -a-b <= -c-1
-			// For real sort: Replace a+b > c by -a-b <= -c (overapproximation)
-			constant = isRealSort ? oldConstant.negate() : oldConstant.negate().sub(Rational.ONE);
-			var1Negated = !octRel.isNegateVar1();
-			var2Negated = !octRel.isNegateVar2();
-			break;
-		default:
-			return;
-		}
-		final BigDecimal constantAsDecimal =
-				new BigDecimal(constant.numerator()).divide(new BigDecimal(constant.denominator()));
-		// OctagonRelation and OctMatrix use different representations, therefore we need to negate var2Negated
-		matrix.assumeVarRelationLeConstant(varToIndex.get(octRel.getVar1()), var1Negated,
-				varToIndex.get(octRel.getVar2()), !var2Negated, new OctValue(constantAsDecimal));
 	}
 
 	private Term[] getIndexToTermArray() {
@@ -170,11 +123,11 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 		return Arrays.toString(getIndexToTermArray()) + "\n" + mMatrix.toString();
 	}
 
-	private OctMatrix cachedSelectiveClosure() {
+	private OctagonMatrix cachedSelectiveClosure() {
 		return mAllVarsAreInt ? mMatrix.cachedTightClosure() : mMatrix.cachedStrongClosure();
 	}
 
-	private OctagonState applyMergeOperator(final OctagonState other, final BinaryOperator<OctMatrix> matrixOp) {
+	private OctagonState applyMergeOperator(final OctagonState other, final BinaryOperator<OctagonMatrix> matrixOp) {
 		final Map<Term, Integer> varToIndex = new HashMap<>();
 		final Set<Term> allVars = DataStructureUtils.union(mVarToIndex.keySet(), other.mVarToIndex.keySet());
 		final int[] copyInstructions1 = new int[allVars.size()];
@@ -198,12 +151,12 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 				}
 			}
 		}
-		final OctMatrix matrix1 = rearrangeIfNecessary(bestAvailableClosure(), copyInstructions1);
-		final OctMatrix matrix2 = rearrangeIfNecessary(other.bestAvailableClosure(), copyInstructions2);
+		final OctagonMatrix matrix1 = rearrangeIfNecessary(bestAvailableClosure(), copyInstructions1);
+		final OctagonMatrix matrix2 = rearrangeIfNecessary(other.bestAvailableClosure(), copyInstructions2);
 		return new OctagonState(varToIndex, matrixOp.apply(matrix1, matrix2), allVarsAreInt);
 	}
 
-	private static OctMatrix rearrangeIfNecessary(final OctMatrix matrix, final int[] copyInstructions) {
+	private static OctagonMatrix rearrangeIfNecessary(final OctagonMatrix matrix, final int[] copyInstructions) {
 		for (int i = 0; i < copyInstructions.length; i++) {
 			if (copyInstructions[i] != i) {
 				return matrix.rearrange(copyInstructions);
@@ -213,7 +166,7 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 		return matrix;
 	}
 
-	private OctMatrix bestAvailableClosure() {
+	private OctagonMatrix bestAvailableClosure() {
 		if (mAllVarsAreInt && mMatrix.hasCachedTightClosure()) {
 			return mMatrix.cachedTightClosure();
 		} else if (mMatrix.hasCachedStrongClosure()) {
@@ -225,12 +178,12 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 	@Override
 	public OctagonState widen(final OctagonState other) {
 		// TODO: Make the widening operator a setting?
-		return applyMergeOperator(other, OctMatrix::widenSimple);
+		return applyMergeOperator(other, OctagonMatrix::widenSimple);
 	}
 
 	@Override
 	public OctagonState join(final OctagonState other) {
-		return applyMergeOperator(other, OctMatrix::max);
+		return applyMergeOperator(other, OctagonMatrix::max);
 	}
 
 	@Override
