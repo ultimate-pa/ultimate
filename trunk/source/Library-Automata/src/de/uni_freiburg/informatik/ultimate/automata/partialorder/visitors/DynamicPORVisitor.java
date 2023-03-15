@@ -43,16 +43,16 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	//private final Deque<Pair<S, OutgoingInternalTransition<L, S>>> mWorklist = new ArrayDeque<>();
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mAutomaton;
 	private final IDfsOrder<L,S> mOrder;
-	private final IIndependenceRelation<S, L> independenceRelation;
+	private final IIndependenceRelation<?, L> independenceRelation;
 
 	// A possible successor of the last state on the stack, which may become the next element on the stack.
 	private S mPendingState;
 	
-	public DynamicPORVisitor(final V underlying, final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order, final IIndependenceRelation<?, String> independence) { // V - underlying visitor to which calls are proxied
+	public DynamicPORVisitor(final V underlying, final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order, final IIndependenceRelation<?, L> independence) { // V - underlying visitor to which calls are proxied
 		super(underlying);
 		mAutomaton = operand;
 		mOrder = order;
-		independenceRelation = (IIndependenceRelation<S, L>) independence;
+		independenceRelation = independence;
 	}
 	
 	@Override
