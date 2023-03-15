@@ -27,22 +27,15 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BinaryOperator;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.OctagonRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -67,42 +60,10 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 
 	private final boolean mAllVarsAreInt;
 
-	private OctagonState(final Map<Term, Integer> varToIndex, final OctagonMatrix matrix, final boolean allVarsAreInt) {
+	public OctagonState(final Map<Term, Integer> varToIndex, final OctagonMatrix matrix, final boolean allVarsAreInt) {
 		mVarToIndex = varToIndex;
 		mMatrix = matrix;
 		mAllVarsAreInt = allVarsAreInt;
-	}
-
-	/**
-	 * Constructs a OctagonState from a given collection of conjuncts
-	 */
-	public static OctagonState from(final Term[] conjuncts, final Script script) {
-		final List<OctagonRelation> octRelations = new ArrayList<>();
-		final Set<Term> vars = new HashSet<>();
-		for (final Term conjunct : conjuncts) {
-			final PolynomialRelation polynomial = PolynomialRelation.of(script, conjunct);
-			if (polynomial == null) {
-				continue;
-			}
-			final OctagonRelation octRel = OctagonRelation.from(polynomial);
-			if (octRel == null) {
-				continue;
-			}
-			octRelations.add(octRel);
-			vars.add(octRel.getVar1());
-			vars.add(octRel.getVar2());
-		}
-		boolean allVarsAreInt = true;
-		final List<Term> sortedVars =
-				vars.stream().sorted((x, y) -> x.toString().compareTo(y.toString())).collect(Collectors.toList());
-		final Map<Term, Integer> varToIndex =
-				IntStream.range(0, vars.size()).boxed().collect(Collectors.toMap(sortedVars::get, x -> x));
-		final OctagonMatrix resultMatrix = new OctagonMatrix(varToIndex.size());
-		for (final OctagonRelation octRel : octRelations) {
-			allVarsAreInt &= !SmtSortUtils.isRealSort(octRel.getVar1().getSort());
-			resultMatrix.processRelation(octRel, varToIndex);
-		}
-		return new OctagonState(varToIndex, resultMatrix, allVarsAreInt);
 	}
 
 	private Term[] getIndexToTermArray() {
