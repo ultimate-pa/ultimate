@@ -297,4 +297,17 @@ public class BvToIntTestTodo {
 		final Term qelim = translateQelimBacktranslate(parse(inputSTR));
 		testQelim(parse(inputSTR), qelim);
 	}
+
+	/**
+	 * TODO Matthias 2023-03-14: After switching to the new elimination for div and
+	 * mod (DML) we cannot eliminate all auxiliary variables.
+	 */
+	@Test
+	public void bvTirBug07() {
+		final VarDecl[] funDecls = { new VarDecl(QuantifierEliminationTest::getBitvectorSort32, "main_~a~0", "main_~b~0") };
+		final String inputSTR =	"(forall ((|main_#t~post2| (_ BitVec 32)) (main_~i~0 (_ BitVec 32)) (|v_main_#t~post2_11| (_ BitVec 32)) (|v_main_#t~ret1_14| (_ BitVec 32)) (v_main_~b~0_19 (_ BitVec 32))) (or (bvult v_main_~b~0_19 main_~a~0) (bvult (bvadd (bvneg v_main_~b~0_19) main_~a~0) (_ bv1 32)) (not (bvult main_~i~0 main_~a~0)) (and (or (= |v_main_#t~ret1_14| (_ bv0 32)) (not (= (bvadd v_main_~b~0_19 (_ bv4294967295 32)) main_~b~0))) (or (not (= |v_main_#t~ret1_14| (_ bv0 32))) (not (= v_main_~b~0_19 main_~b~0)) (not (= |main_#t~post2| |v_main_#t~post2_11|))))))";
+		setUpScript(SOLVER_COMMAND_Z3, funDecls);
+		final Term qelim = translateQelimBacktranslate(parse(inputSTR));
+		testQelim(parse(inputSTR), qelim);
+	}
 }
