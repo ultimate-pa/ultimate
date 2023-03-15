@@ -443,6 +443,9 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 				enqueueWalker(new SquishFirstOfTwoArgumentStoresWalker((ApplicationTerm) term));
 				assert ((ApplicationTerm) term).getParameters().length == 2;
 				pushTerms(((ApplicationTerm) term).getParameters());
+			} else if (term instanceof QuantifiedFormula) {
+				// Don't process quantified formulas
+				setResult(term);
 			} else {
 				super.convert(term);
 			}
