@@ -26,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ab
 /**
  * Visitor Class for the Dynamic Partial Order Reduction.
  *
- * @author 
+ * @author tiloh
  *
  * @param <L>
  *            letter
@@ -38,7 +38,7 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	private final Deque<S> mStateStack = new ArrayDeque<>();
 	// List to remember chosen path
 	// Contains States, Letter representing the Backtrackset and Letter chosen from State S
-	private ArrayList<Triple<S,L,L>> mStateTrace = new ArrayList<>();
+	private ArrayList<BacktrackTriple> mStateTrace = new ArrayList<>();
 
 	//private final Deque<Pair<S, OutgoingInternalTransition<L, S>>> mWorklist = new ArrayDeque<>();
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mAutomaton;
@@ -73,7 +73,7 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 		if (isComplete) {
 			int index = mStateTrace.size()-1;
 			if (index > 0) {
-				if (mStateTrace.get(mStateTrace.size()-1).getFirst().equals(state)) {
+				if (mStateTrace.get(mStateTrace.size()-1).mState.equals(state)) {
 				mStateTrace.remove(mStateTrace.size() - 1);
 				}
 			}
@@ -81,10 +81,6 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	}
 	
 	private void visitState(final S state) {
-		// add the greatest letter from membrane to backtrack(state)
-		
-		// actions for a state
-		//System.out.println("visit state");
 	}
 	
 	@Override
@@ -93,20 +89,20 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 		mPendingState = target;
 		int index = mStateTrace.size()-1;
 		if (index < 0) {
-			mStateTrace.add(new Triple<S,L,L>(source, letter, letter));
+			mStateTrace.add(new BacktrackTriple(source, letter, letter));
 			return false || mUnderlying.discoverTransition(source, letter, target);
 		}
 		
-		if (!mStateTrace.get(index).getFirst().equals(source)) {
-			mStateTrace.add(new Triple<S,L,L>(source, letter, letter));
+		if (!mStateTrace.get(index).mState.equals(source)) {
+			mStateTrace.add(new BacktrackTriple(source, letter, letter));
 		} else {
 			// get old backtrackset and set state, letter
-			L backtrackState = mStateTrace.get(index).getSecond();
-			mStateTrace.set(index, new Triple<S,L,L>(source, backtrackState, letter));
+			L backtrackLetter = mStateTrace.get(index).mBacktrackLetter;
+			mStateTrace.set(index, new BacktrackTriple(source, backtrackLetter, letter));
 		}
 		// backtracksetLetter is the greatest letter from backtrackset
 		// any letter greater can therefore not be in backtrackset
-		if (mOrder.getOrder(source).compare(letter, mStateTrace.get(mStateTrace.size()-1).getSecond()) > 0) {
+		if (mOrder.getOrder(source).compare(letter, mStateTrace.get(mStateTrace.size()-1).mBacktrackLetter) > 0) {
 			return true;
 		}
 		// Set the disable backtrackingpoints
@@ -123,8 +119,8 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 		int index = mStateTrace.size();
 		for (L a: mAutomaton.getAlphabet()) {
 			if (disables(letter, a)) {
-				L backtrackLetter = mStateTrace.get(index).getSecond();
-				S backtrackState = mStateTrace.get(index).getFirst();
+				L backtrackLetter = mStateTrace.get(index).mBacktrackLetter;
+				S backtrackState = mStateTrace.get(index).mState;
 				// check if a enabled in backtrackState
 				boolean enabled = false;
 				for (OutgoingInternalTransition<L, S> t : mAutomaton.internalSuccessors(backtrackState, a)) {
@@ -153,9 +149,9 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 			return true;
 		}
 		for (int i = 0; i < mWord.size() - 1; i++) {
-			S backtrackState = mStateTrace.get(i).getFirst();
-			L backtrackSetLetter = mStateTrace.get(i).getSecond();
-			L transitionLetter = mStateTrace.get(i).getThird();
+			S backtrackState = mStateTrace.get(i).mState;
+			L backtrackSetLetter = mStateTrace.get(i).mBacktrackLetter;
+			L transitionLetter = mStateTrace.get(i).mTransitionLetter;
 
 			if (!isIndependent(transitionLetter, letter)) {
 				// check if letter is enabled in State i
@@ -169,7 +165,7 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 						 // letter < backtrackset(i)
 						// letter is already backtracked if backtrackset(i) > letter by compatibility
 					 } else {
-						 Triple<S,L,L> triple = new Triple<S,L,L>(backtrackState, letter, transitionLetter);
+						 BacktrackTriple triple = new BacktrackTriple(backtrackState, letter, transitionLetter);
 						 mStateTrace.set(i, triple);
 					 }
 				 } else {
@@ -198,9 +194,31 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	
 	private ArrayList<L> currentWord() {
 		ArrayList<L> result = new ArrayList<>();
-		for (Triple<S,L,L> triple : mStateTrace) {
-			result.add(triple.getThird());
+		for (BacktrackTriple triple : mStateTrace) {
+			result.add(triple.mTransitionLetter);
 		}
 		return result;
+	}
+	
+	/**
+	 * Class to remember information about backtrackstatus.
+	 * Triple of
+	 * - State which is backtracked
+	 * - max letter that needs to be backtracked
+	 * - transitionletter chosen the last time exploring this state
+	 * 
+	 * @author tiloh
+	 *
+	 */
+	public class BacktrackTriple {
+		private S mState;
+		private L mBacktrackLetter;
+		private L mTransitionLetter;
+
+		public BacktrackTriple(S state, L backtrackLetter, L transitionLetter) {
+			mState = state;
+			mBacktrackLetter = backtrackLetter;
+			mTransitionLetter = transitionLetter;
+		}
 	}
 }

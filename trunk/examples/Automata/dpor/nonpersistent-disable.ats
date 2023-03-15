@@ -13,7 +13,7 @@ FiniteAutomaton input = (
      alphabet      = {a b c},
      states        = {eps A AB ABC AC ACB B BA C CA CAB CB CBA},
      initialStates = {eps},
-     finalStates   = {AB ABC BA CAB CBA},
+     finalStates   = {AB ABC BA CAB CBA ACB},
      transitions   = {
          (eps a A)
          (A   b AB)
