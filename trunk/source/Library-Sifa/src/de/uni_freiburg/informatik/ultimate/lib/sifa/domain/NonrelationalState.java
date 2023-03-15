@@ -99,7 +99,7 @@ public class NonrelationalState<VALUE extends INonrelationalValue<VALUE>>
 
 	@Override
 	public boolean isBottom() {
-		return mVariablesToValues.values().stream().anyMatch(INonrelationalValue::isBottom);
+		return mVariablesToValues.values().stream().anyMatch(VALUE::isBottom);
 	}
 
 	@Override
