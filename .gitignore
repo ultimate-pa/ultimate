@@ -241,6 +241,7 @@ hs_err_pid*
 /trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2/LexerSymbols.java
 /trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2/Parser.java
 /trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofLexer.java
+/trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofLexer.java~
 /trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofParser.java
 /trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofSymbols.java
 
