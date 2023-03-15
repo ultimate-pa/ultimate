@@ -28,13 +28,12 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -93,10 +92,9 @@ public class OctagonDomain extends StateBasedDomain<OctagonState> {
 				vars.add(octRel.getVar2());
 			}
 			boolean allVarsAreInt = true;
-			final List<Term> sortedVars =
-					vars.stream().sorted((x, y) -> x.toString().compareTo(y.toString())).collect(Collectors.toList());
-			final Map<Term, Integer> varToIndex =
-					IntStream.range(0, vars.size()).boxed().collect(Collectors.toMap(sortedVars::get, x -> x));
+			final Map<Term, Integer> varToIndex = new HashMap<>();
+			vars.stream().sorted((x, y) -> x.toString().compareTo(y.toString()))
+					.forEach(x -> varToIndex.put(x, varToIndex.size()));
 			final OctagonMatrix resultMatrix = new OctagonMatrix(varToIndex.size());
 			for (final OctagonRelation octRel : octRelations) {
 				allVarsAreInt &= !SmtSortUtils.isRealSort(octRel.getVar1().getSort());
