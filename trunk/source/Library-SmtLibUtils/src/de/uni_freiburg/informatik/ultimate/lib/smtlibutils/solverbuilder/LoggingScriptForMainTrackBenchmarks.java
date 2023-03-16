@@ -187,7 +187,7 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 		final long timeBefore = System.nanoTime();
 		final LBool sat = super.mScript.checkSat();
 		final long durationInMilliseconds = (System.nanoTime() - timeBefore) / 1000 / 1000;
-		final boolean solved = sat == LBool.SAT || sat == LBool.UNSAT;
+		final boolean solved = (sat == LBool.SAT || sat == LBool.UNSAT);
 		if (solved && durationInMilliseconds >= mBenchmarkTooSimpleThreshold || !solved && mWriteUnsolvedBenchmarks) {
 			// final File file = constructFile('_' + String.valueOf(mWrittenScriptCounter));
 			// final List<ArrayList<ISmtCommand<?>>> processedCommandStack = process(mCommandStack, sat);
