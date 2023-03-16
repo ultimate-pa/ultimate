@@ -3,24 +3,16 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTraversal;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.disabling.IDisabling;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.enabling.IEnabling;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.abstraction.IndependenceRelationWithAbstraction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.membranes.IMembranes;
 
 
 /**
@@ -44,15 +36,21 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mAutomaton;
 	private final IDfsOrder<L,S> mOrder;
 	private final IIndependenceRelation<?, L> independenceRelation;
+	private final IDisabling<L> disablingRelation;
+	private final IMembranes<S, L> membraneSets;
+	private final IEnabling<S, L> enablingFunction;
 
 	// A possible successor of the last state on the stack, which may become the next element on the stack.
 	private S mPendingState;
 	
-	public DynamicPORVisitor(final V underlying, final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order, final IIndependenceRelation<?, L> independence) { // V - underlying visitor to which calls are proxied
+	public DynamicPORVisitor(final V underlying, final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order, final IIndependenceRelation<?, L> independence, final IDisabling<L> disabling, final IMembranes<S,L> membrane, final IEnabling<S, L> enabling) { // V - underlying visitor to which calls are proxied
 		super(underlying);
 		mAutomaton = operand;
 		mOrder = order;
 		independenceRelation = independence;
+		disablingRelation = disabling;
+		membraneSets = membrane;
+		enablingFunction = enabling;
 	}
 	
 	@Override
@@ -89,20 +87,23 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 		mPendingState = target;
 		int index = mStateTrace.size()-1;
 		if (index < 0) {
-			mStateTrace.add(new BacktrackTriple(source, letter, letter));
+			L initBacktrack = findInitialBacktrackset(source, letter);
+			mStateTrace.add(new BacktrackTriple(source, initBacktrack, letter));
 			return false || mUnderlying.discoverTransition(source, letter, target);
 		}
 		
 		if (!mStateTrace.get(index).mState.equals(source)) {
-			mStateTrace.add(new BacktrackTriple(source, letter, letter));
+			// find the inital backtrackset
+			L initBacktrack = findInitialBacktrackset(source, letter);
+			mStateTrace.add(new BacktrackTriple(source, initBacktrack, letter));
 		} else {
-			// get old backtrackset and set state, letter
+			// get old backtrackset keep the backtrackletter and the state and change the transitionletter
 			L backtrackLetter = mStateTrace.get(index).mBacktrackLetter;
 			mStateTrace.set(index, new BacktrackTriple(source, backtrackLetter, letter));
 		}
 		// backtracksetLetter is the greatest letter from backtrackset
-		// any letter greater can therefore not be in backtrackset
-		if (mOrder.getOrder(source).compare(letter, mStateTrace.get(mStateTrace.size()-1).mBacktrackLetter) > 0) {
+		// if letter > backtrackletter the transition can be pruned
+		if (!smaller(source, letter, mStateTrace.get(mStateTrace.size()-1).mBacktrackLetter)) {
 			return true;
 		}
 		// Set the disable backtrackingpoints
@@ -127,15 +128,22 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 					enabled = true;
 				}
 				if (enabled) {
-					if (mOrder.getOrder(backtrackState).compare(backtrackLetter, a) < 0) {
+					if (smaller(backtrackState, backtrackLetter, a)) {
 						// backtrackLetter < a
-						// Set mStateTrace.get(index).Second to a
+						// Set backtrackletter to a since a has to be added and
+						// is the new max of backtrackset
+						mStateTrace.set(index, new BacktrackTriple(backtrackState, a, letter));
 					} else {
 						// do nothing
 					}
 				} else {
 					// a is not enabled
-					// add necessary enabling set for a
+					// add necessary enabling set for a (c is the maximum of the enabling set)
+					// since a is not enabled by definition the enabling set can not be empty
+					L c = getEnabling(backtrackState, a);
+					if (c != null) {
+						mStateTrace.set(index, new BacktrackTriple(backtrackState, c, letter));
+					}
 				}
 			}
 		}
@@ -177,6 +185,17 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 		return false;
 	}
 	
+	private L findInitialBacktrackset(S state, L letter) {
+		// first time visiting a state we have to add the membraneset to the backtrackset
+		L backtrackLetter = getMembrane(state);
+		if (backtrackLetter == null) {
+			// if the membraneset is empty the backtrackset contains only the smallest enabled letter
+			// which is the transitionletter "letter"
+			backtrackLetter = letter;
+		}
+		return backtrackLetter;
+	}
+	
 	// Independence check
 	private boolean isIndependent(L a, L b) {
 		Dependence dep = independenceRelation.isIndependent(null, a, b);
@@ -189,7 +208,52 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	}
 	
 	private boolean disables(L a, L b) {
-		return false;
+		if (disablingRelation == null) {return false;}
+		boolean dis = disablingRelation.disables(a, b);
+		return dis;
+	}
+	
+	private L getEnabling(S state, L letter) {
+		if (enablingFunction == null) {return null;}
+		Set<L> enablingSet = enablingFunction.getEnablingSet(state, letter);
+		return getMax(state, enablingSet);
+	}
+	
+	/**
+	 * 
+	 * @param state
+	 * @return a letter that is the maximum of all letters in membraneset of state
+	 *         returns null if the membraneset is empty
+	 */
+	private L getMembrane(S state) {
+		if (membraneSets == null) {return null;}
+		Set<L> membraneSet = membraneSets.getMembraneSet(state);
+		return getMax(state, membraneSet);
+	}
+	
+	/**
+	 * function to compute the maximum of a set of letters.
+	 * Parametric in the state because the preference order might depend on the state.
+	 * @param state
+	 * @param m
+	 * @return
+	 */
+	private L getMax(S state, Set<L> m) {
+		if (m.size() == 0) {
+			return null;
+		}
+		L maxLetter = null;
+		for (L letter : m) {
+			// if maxLetter not yet set or letter greater than maxLetter refresh maxLetter
+			if (maxLetter == null || !smaller(state, letter, maxLetter)) {
+				maxLetter = letter;
+			}
+		}
+		return maxLetter;
+	}
+	
+	private boolean smaller(S state, L a, L b) {
+		return (mOrder.getOrder(state).compare(a, b) <= 0);
 	}
 	
 	private ArrayList<L> currentWord() {
@@ -205,7 +269,7 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	 * Triple of
 	 * - State which is backtracked
 	 * - max letter that needs to be backtracked
-	 * - transitionletter chosen the last time exploring this state
+	 * - transitionletter chosen the last time after exploring this state
 	 * 
 	 * @author tiloh
 	 *

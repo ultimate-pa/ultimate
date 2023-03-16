@@ -36,7 +36,10 @@ import org.junit.runner.RunWith;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.disabling.IDisabling;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.membranes.IMembranes;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.enabling.IEnabling;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.DynamicPORVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
@@ -53,9 +56,11 @@ public class DynamicPORTests extends DynamicPORTestsBase {
 			final IIndependenceRelation<?, String> independence) throws AutomataLibraryException {
 		final var constructor = new AutomatonConstructingVisitor<>(input, mAutomataServices, () -> "###empty###");
 
-		// TODO wrap constructor in DynamicPORVisitor, or otherwise modify the code to apply DPOR.
+		final IDisabling<String> disablingRelation = null;
+		final IMembranes<String, String> membranes = null;
+		final IEnabling<String, String> enablingFunction = null;
 		final IDfsVisitor<String, String> visitor = constructor;
-		final var dporvisitor = new DynamicPORVisitor<>(visitor, input, new AlphabeticOrder<>(), independence);
+		final var dporvisitor = new DynamicPORVisitor<>(visitor, input, new AlphabeticOrder<>(), independence, disablingRelation, membranes, enablingFunction);
 
 		DepthFirstTraversal.traverse(mAutomataServices, input, new AlphabeticOrder<>(), dporvisitor);
 		final NestedWordAutomaton<String, String> actual = constructor.getReductionAutomaton();

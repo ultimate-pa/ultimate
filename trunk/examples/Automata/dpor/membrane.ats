@@ -1,0 +1,35 @@
+/*
+ * Simple test for DPOR.
+ *
+ * We here assume that a and b commute, and a < b.
+ *
+ * Testcase where membranes are necessary and neither a disables b nor b disables a
+ */
+
+//@ commutativity (a, b) (b, a)
+
+FiniteAutomaton input = (
+     alphabet      = {a b},
+     states        = {eps A B AB BA},
+     initialStates = {eps},
+     finalStates   = {B BA AB},
+     transitions   = {
+         (eps a A)
+         (eps b B)
+         (B a BA)
+         (A b AB)
+     }
+);
+
+FiniteAutomaton expected = (
+     alphabet      = {a b},
+     states        = {eps A B AB BA},
+     initialStates = {eps},
+     finalStates   = {B BA AB},
+     transitions   = {
+         (eps a A)
+         (eps b B)
+         (B a BA)
+         (A b AB)
+     }
+);

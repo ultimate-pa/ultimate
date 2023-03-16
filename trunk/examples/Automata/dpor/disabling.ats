@@ -1,0 +1,33 @@
+/*
+ * Simple test for DPOR.
+ *
+ * We here assume that a and b do not commute and a < b.
+ *
+ * Testcase where a disables b -> example for necessity of disabling relation
+ */
+
+//@ commutativity 
+
+FiniteAutomaton input = (
+     alphabet      = {a b},
+     states        = {eps A B BA},
+     initialStates = {eps},
+     finalStates   = {A BA},
+     transitions   = {
+         (eps a A)
+         (eps b B)
+         (B a BA)
+     }
+);
+
+FiniteAutomaton expected = (
+     alphabet      = {a b},
+     states        = {eps A B BA},
+     initialStates = {eps},
+     finalStates   = {A BA},
+     transitions   = {
+         (eps a A)
+         (eps b B)
+         (B a BA)
+     }
+);

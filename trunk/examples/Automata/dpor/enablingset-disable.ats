@@ -1,0 +1,33 @@
+/*
+ * Simple test for DPOR.
+ *
+ * We here assume that a, b and c commute, and a < b < c.
+ *
+ * No pruning at all
+ */
+
+//@ commutativity (a, b) (b, a) (a, c) (c, a) (b, c) (c, b)
+
+FiniteAutomaton input = (
+     alphabet      = {a b c},
+     states        = {eps A AB ABC},
+     initialStates = {eps},
+     finalStates   = {ABC},
+     transitions   = {
+         (eps a A)
+         (A   b AB)
+         (AB  c ABC)
+     }
+);
+
+FiniteAutomaton expected = (
+     alphabet      = {a b c},
+     states        = {eps A AB ABC},
+     initialStates = {eps},
+     finalStates   = {ABC},
+     transitions   = {
+         (eps a A)
+         (A   b AB)
+         (AB  c ABC)
+     }
+);
