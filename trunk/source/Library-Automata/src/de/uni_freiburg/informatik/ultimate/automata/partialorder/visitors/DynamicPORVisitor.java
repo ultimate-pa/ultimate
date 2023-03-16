@@ -130,20 +130,23 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 				if (enabled) {
 					if (smaller(backtrackState, backtrackLetter, a)) {
 						// backtrackLetter < a
-						// Set backtrackletter to a since a has to be added and
-						// is the new max of backtrackset
+						// Set backtrack letter to a since a has to be added and
+						// is the new max of backtrack set
 						mStateTrace.set(index, new BacktrackTriple(backtrackState, a, letter));
 					} else {
 						// do nothing
 					}
 				} else {
-					// a is not enabled
-					// add necessary enabling set for a (c is the maximum of the enabling set)
-					// since a is not enabled by definition the enabling set can not be empty
-					L c = getEnabling(backtrackState, a);
-					if (c != null) {
-						mStateTrace.set(index, new BacktrackTriple(backtrackState, c, letter));
+					// add every enabled letter to backtrack set by setting 
+					// backtrackletter to the max of enabled letters
+					L maxLetter = letter;
+					for(OutgoingInternalTransition<L, S> trans : mAutomaton.internalSuccessors(backtrackState)) {
+						if (!smaller(backtrackState, trans.getLetter(), maxLetter)) {
+							maxLetter = trans.getLetter();
+						}
 					}
+					mStateTrace.set(index, new BacktrackTriple(backtrackState, maxLetter, letter));
+					
 				}
 			}
 		}
@@ -177,8 +180,13 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 						 mStateTrace.set(i, triple);
 					 }
 				 } else {
-					 // compute necessary enabling set
-					 // set the backtrackletter from mStateTrace(i) to the max of enabling set
+					 // a is not enabled
+					// add necessary enabling set for a (c is the maximum of the enabling set)
+					// since a is not enabled by definition the enabling set can not be empty
+					L c = getEnabling(backtrackState, letter);
+					if (c != null) {
+						mStateTrace.set(i, new BacktrackTriple(backtrackState, c, transitionLetter));
+					}
 				 }
 			}
 		}
