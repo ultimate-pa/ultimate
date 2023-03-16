@@ -124,6 +124,7 @@ known_safe:
   "We were not able to verify any specification because the program does not contain any specification":
   "specifications checked. All of them hold":
   "TerminationAnalysisResult: Termination proven":
+  "AllSpecificationsHoldResult: All specifications hold":
 
 known_unsafe:
   "CounterExampleResult":
