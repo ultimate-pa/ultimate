@@ -275,7 +275,7 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 		result.add(new SetInfoCommand(":source", new QuotedObject(info)));
 		result.add(new SetInfoCommand(":license", new QuotedObject("https://creativecommons.org/licenses/by/4.0/")));
 		result.add(new SetInfoCommand(":category", new QuotedObject("industrial")));
-		result.add(new SetInfoCommand(":status", new QuotedObject(sat.toString())));
+		result.add(new SetInfoCommand(":status", sat.toString()));
 		return result;
 	}
 
