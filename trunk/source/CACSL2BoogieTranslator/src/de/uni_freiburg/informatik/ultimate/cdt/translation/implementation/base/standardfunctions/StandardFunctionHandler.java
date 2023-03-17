@@ -902,31 +902,30 @@ public class StandardFunctionHandler {
 		return builder.build();
 	}
 
+	private List<Statement> makeAssignment(final ILocation loc, final LRValue lhs, final Expression rhs) {
+		if (lhs instanceof LocalLValue) {
+			return List.of(StatementFactory.constructAssignmentStatement(loc, ((LocalLValue) lhs).getLhs(), rhs));
+		} else if (lhs instanceof HeapLValue) {
+			return mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, rhs, lhs.getCType(), false);
+		} else {
+			throw new UnsupportedOperationException("Unsupported type " + lhs.getClass().getSimpleName());
+		}
+	}
+
 	private Result handleVaStart(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final ExpressionResult arg0 =
-				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		final ExpressionResult arg0 = (ExpressionResult) main.dispatch(arguments[0]);
 		builder.addAllExceptLrValue(arg0);
 		// The second argument of va_start has to be the rightmost fixed parameter
 		// (according to the C standard section 7.16.1.3.4). Therefore we simply dispatch it here.
-		final ExpressionResult arg1 =
-				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
-		builder.addAllExceptLrValue(arg1);
-		final Expression dst = arg0.getLrValue().getValue();
-		if (!(dst instanceof IdentifierExpression)) {
-			throw new UnsupportedSyntaxException(loc, "The first argument of " + name + " has to be an identifier.");
-		}
+		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[1]));
 		final String procedure = mProcedureManager.getCurrentProcedureID();
-		final LeftHandSide lhs =
-				new VariableLHS(loc, mTypeHandler.getBoogiePointerType(), ((IdentifierExpression) dst).getIdentifier(),
-						new DeclarationInformation(StorageClass.LOCAL, procedure));
 		final IdentifierExpression rhs = new IdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), SFO.VARARGS,
 				new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procedure));
-		builder.addStatement(StatementFactory.constructAssignmentStatement(loc, lhs, rhs));
-		return builder.build();
+		return builder.addStatements(makeAssignment(loc, arg0.getLrValue(), rhs)).build();
 	}
 
 	private Result handleVaEnd(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -974,14 +973,13 @@ public class StandardFunctionHandler {
 		final ExpressionResult dst = (ExpressionResult) main.dispatch(arguments[0]);
 		builder.addAllExceptLrValue(dst);
 		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[1]));
-		if (!(dst.getLrValue().getValue() instanceof IdentifierExpression)) {
-			throw new UnsupportedSyntaxException(loc, "The second argument of " + name + " has to be an identifier.");
-		}
-		final VariableLHS lhs =
-				new VariableLHS(loc, ((IdentifierExpression) dst.getLrValue().getValue()).getIdentifier());
-		final Statement havoc = new HavocStatement(loc, new VariableLHS[] { lhs });
-		new Overapprox(name, loc).annotate(havoc);
-		return builder.addStatement(havoc).build();
+		final AuxVarInfo auxVarInfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
+				new CPointer(new CPrimitive(CPrimitives.CHAR)), AUXVAR.NONDET);
+		builder.addAuxVar(auxVarInfo);
+		builder.addDeclaration(auxVarInfo.getVarDec());
+		final List<Statement> writes = makeAssignment(loc, dst.getLrValue(), auxVarInfo.getExp());
+		writes.forEach(new Overapprox(name, loc)::annotate);
+		return builder.addStatements(writes).build();
 	}
 
 	private Result handleAbs(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
