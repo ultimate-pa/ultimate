@@ -317,6 +317,9 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 			if (logic == Logics.ALL) {
 				continue;
 			}
+			if (logic.isString()) {
+				continue;
+			}
 			if (logic.isDifferenceLogic()) {
 				continue;
 			}
