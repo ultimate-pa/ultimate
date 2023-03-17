@@ -46,6 +46,7 @@ public final class DynamicPOR {
 	private DynamicPOR() {
 	}
 
+	// TODO Are we sure this is sound?
 	public static <L, S, U> void applyWithoutSleepSets(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IIndependenceRelation<?, L> independence,
 			final IDfsOrder<L, S> dfsOrder, final IUnfoldStateFactory<L, S, U> stateFactory,
