@@ -574,8 +574,8 @@ public class StandardFunctionHandler {
 		fill(map, "__builtin_va_start", this::handleVaStart);
 		fill(map, "va_end", this::handleVaEnd);
 		fill(map, "__builtin_va_end", this::handleVaEnd);
-		fill(map, "va_copy", die);
-		fill(map, "__builtin_va_copy", die);
+		fill(map, "va_copy", this::handleVaCopy);
+		fill(map, "__builtin_va_copy", this::handleVaCopy);
 
 		/** SV-COMP and modeling functions **/
 		fill(map, "__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
@@ -960,6 +960,28 @@ public class StandardFunctionHandler {
 		resultBuilder.addStatement(deallocCall);
 
 		return resultBuilder.build();
+	}
+
+	/**
+	 * Translate va_copy(dst, src) to a simple overapproximation that simply havocs dst (and annotates it with
+	 * "overapproximation")
+	 */
+	private Result handleVaCopy(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult dst = (ExpressionResult) main.dispatch(arguments[0]);
+		builder.addAllExceptLrValue(dst);
+		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[1]));
+		if (!(dst.getLrValue().getValue() instanceof IdentifierExpression)) {
+			throw new UnsupportedSyntaxException(loc, "The second argument of " + name + " has to be an identifier.");
+		}
+		final VariableLHS lhs =
+				new VariableLHS(loc, ((IdentifierExpression) dst.getLrValue().getValue()).getIdentifier());
+		final Statement havoc = new HavocStatement(loc, new VariableLHS[] { lhs });
+		new Overapprox(name, loc).annotate(havoc);
+		return builder.addStatement(havoc).build();
 	}
 
 	private Result handleAbs(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
