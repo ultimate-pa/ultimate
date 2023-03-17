@@ -697,10 +697,10 @@ def parse_benchexec_xmls(input_dir: str) -> Tuple[Dict[str, Run], bool]:
             continue
         block_attr = result.attrib.get("block", None)
         if block_attr is not None and name_attr.endswith("." + block_attr):
-          # Remove the suffix consisting of "." and the block
-          tool_name = name_attr[:-len(block_attr) - 1]
+            # Remove the suffix consisting of "." and the block
+            tool_name = name_attr[: -len(block_attr) - 1]
         else:
-          tool_name = name_attr
+            tool_name = name_attr
         for elem in root.findall(".//run"):
             # files = elem.attrib["files"]
             yml = elem.attrib["name"]
