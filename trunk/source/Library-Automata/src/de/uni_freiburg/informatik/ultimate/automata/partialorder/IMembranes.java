@@ -12,11 +12,12 @@ import java.util.Set;
  * @param <LETTER>
  *            The type of letters which are in the membrane set
  */
-public interface IMembranes<STATE, LETTER> {
-	
+public interface IMembranes<LETTER, STATE> {
+
 	/**
-	 * 
-	 * @param s: state in which the membrane set should be computed
+	 *
+	 * @param s:
+	 *            state in which the membrane set should be computed
 	 * @return a set of enabled letters being a membrane in state s
 	 */
 	Set<LETTER> getMembraneSet(STATE s);

@@ -37,13 +37,16 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	private final IDfsOrder<L,S> mOrder;
 	private final IIndependenceRelation<?, L> independenceRelation;
 	private final IDisabling<L> disablingRelation;
-	private final IMembranes<S, L> membraneSets;
-	private final IEnabling<S, L> enablingFunction;
+	private final IMembranes<L, S> membraneSets;
+	private final IEnabling<L, S> enablingFunction;
 
 	// A possible successor of the last state on the stack, which may become the next element on the stack.
 	private S mPendingState;
-	
-	public DynamicPORVisitor(final V underlying, final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order, final IIndependenceRelation<?, L> independence, final IDisabling<L> disabling, final IMembranes<S,L> membrane, final IEnabling<S, L> enabling) { // V - underlying visitor to which calls are proxied
+
+	public DynamicPORVisitor(final V underlying, final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
+			final IDfsOrder<L, S> order, final IIndependenceRelation<?, L> independence, final IDisabling<L> disabling,
+			final IMembranes<L, S> membrane, final IEnabling<L, S> enabling) { // V - underlying visitor to which calls
+																				// are proxied
 		super(underlying);
 		mAutomaton = operand;
 		mOrder = order;
