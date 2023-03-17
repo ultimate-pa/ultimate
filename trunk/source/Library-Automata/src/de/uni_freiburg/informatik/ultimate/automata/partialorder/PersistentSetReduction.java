@@ -58,6 +58,7 @@ public final class PersistentSetReduction {
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> dfsOrder,
 			final IPersistentSetChoice<L, S> persistent, final IDfsVisitor<L, S> visitor)
 			throws AutomataOperationCanceledException {
+		// TODO what is the point of using CompatibleDfsOrder here?
 		final IDfsOrder<L, S> combinedOrder = new CompatibleDfsOrder<>(persistent, dfsOrder);
 		final IDfsVisitor<L, S> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
 		DepthFirstTraversal.traverse(services, operand, combinedOrder, combinedVisitor);
