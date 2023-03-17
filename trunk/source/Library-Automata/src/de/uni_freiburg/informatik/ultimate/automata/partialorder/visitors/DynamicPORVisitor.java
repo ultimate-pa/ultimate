@@ -8,11 +8,11 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.disabling.IDisabling;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.enabling.IEnabling;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDisabling;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IEnabling;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IMembranes;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.membranes.IMembranes;
 
 
 /**

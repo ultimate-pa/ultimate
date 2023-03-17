@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.partialorder.disabling;
+package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 
 /**

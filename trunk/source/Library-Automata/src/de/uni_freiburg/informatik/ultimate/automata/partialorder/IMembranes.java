@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.partialorder.membranes;
+package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Set;
 
