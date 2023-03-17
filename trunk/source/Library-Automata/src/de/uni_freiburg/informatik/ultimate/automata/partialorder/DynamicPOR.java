@@ -50,21 +50,25 @@ public final class DynamicPOR {
 	public static <L, S, U> void applyWithoutSleepSets(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IIndependenceRelation<?, L> independence,
 			final IDfsOrder<L, S> dfsOrder, final IUnfoldStateFactory<L, S, U> stateFactory,
-			final IDfsVisitor<L, U> visitor) throws AutomataOperationCanceledException {
+			final IDfsVisitor<L, U> visitor, final IDisabling<L> disabling, final IMembranes<L, U> membrane,
+			final IEnabling<L, U> enabling) throws AutomataOperationCanceledException {
 		final var unfolded = new UnfoldToTree<>(services, operand, stateFactory);
 		final var liftedOrder = new LiftedDfsOrder<>(dfsOrder, stateFactory);
-		final var combinedVisitor = new DynamicPORVisitor<>(visitor, unfolded, liftedOrder, independence);
+		final var combinedVisitor =
+				new DynamicPORVisitor<>(visitor, unfolded, liftedOrder, independence, disabling, membrane, enabling);
 		DepthFirstTraversal.traverse(services, unfolded, liftedOrder, combinedVisitor);
 	}
 
 	public static <L, S, U, R> void applyWithSleepSets(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IIndependenceRelation<S, L> independence,
 			final IDfsOrder<L, R> dfsOrder, final ISleepSetStateFactory<L, S, R> sleepSetStateFactory,
-			final IUnfoldStateFactory<L, R, U> unfoldStateFactory, final IDfsVisitor<L, U> visitor)
+			final IUnfoldStateFactory<L, R, U> unfoldStateFactory, final IDfsVisitor<L, U> visitor,
+			final IDisabling<L> disabling, final IMembranes<L, U> membrane, final IEnabling<L, U> enabling)
 			throws AutomataOperationCanceledException {
 		final var sleepSetReduction =
 				new MinimalSleepSetReduction<>(operand, sleepSetStateFactory, independence, dfsOrder);
-		applyWithoutSleepSets(services, sleepSetReduction, independence, dfsOrder, unfoldStateFactory, visitor);
+		applyWithoutSleepSets(services, sleepSetReduction, independence, dfsOrder, unfoldStateFactory, visitor,
+				disabling, membrane, enabling);
 	}
 
 	private static class LiftedDfsOrder<L, S, U> implements IDfsOrder<L, U> {
