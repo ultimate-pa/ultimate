@@ -561,8 +561,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 					nonLiveVars, pred.getFormula());
 			// apply only a parsimonious quantifier elimination,
 			// we use a quantifier elimination postprocessor later
-			final Term pushed = PartialQuantifierElimination.eliminateCompat(mServices, mCfgManagedScript, false,
-					PqeTechniques.ONLY_DER, SimplificationTechnique.NONE, projectedT);
+			final Term pushed = PartialQuantifierElimination.eliminateLight(mServices, mCfgManagedScript, projectedT);
 			final IPredicate projected = mPredicateFactory.newPredicate(pushed);
 			mNonLiveVariablesBp += nonLiveVars.size();
 			return projected;
