@@ -577,8 +577,8 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 						throw new UnsupportedOperationException(DIFF_IS_UNSUPPORTED);
 					}
 					final Term withoutIndicesNormalized = new ConstantTermNormalizer().transform(withoutIndices);
-					final Term lessQuantifiers = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScriptCfg,
-							mSimplificationTechnique, withoutIndicesNormalized);
+					final Term lessQuantifiers = PartialQuantifierElimination.eliminate(mServices, mMgdScriptCfg,
+							withoutIndicesNormalized, mSimplificationTechnique);
 					result[resultPos] = mPredicateUnifier.getOrConstructPredicate(lessQuantifiers);
 					withIndices2Predicate.put(withIndices, result[resultPos]);
 				}
