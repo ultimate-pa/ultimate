@@ -701,11 +701,12 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 			}
 			divisor = mLhsCoefficient;
 		} else if (SmtSortUtils.isIntSort(mRhs.getSort())) {
-			final Rational gcd = mLhsCoefficient.gcd(mRhs.computeGcdOfCoefficients());
-			if (!gcd.abs().equals(Rational.ONE)) {
+			final Rational gcd = mLhsCoefficient.gcd(mRhs.computeGcdOfCoefficients()).abs();
+			assert !gcd.isNegative();
+			if (!gcd.equals(Rational.ONE)) {
 				throw new AssertionError("The PolynomialRelation should have divided by the GCD!");
 			}
-			if (!gcd.isNegative() && mLhsCoefficient.isNegative()) {
+			if (mLhsCoefficient.isNegative()) {
 				divisor = gcd.negate();
 			} else {
 				divisor = gcd;
