@@ -61,6 +61,8 @@ import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.TestF
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Base class for Dynamic POR tests. Callers must only implemented the method
@@ -77,7 +79,7 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 
 	protected abstract void runTest(final Path path, AutomataTestFileAST ast, NestedWordAutomaton<String, String> input,
 			NestedWordAutomaton<String, String> expected, IIndependenceRelation<?, String> independence,
-			IDisabling<String> disabling, IMembranes<String, String> membrane)
+			IDisabling<String> disabling, IMembranes<String, String> membrane, IEnabling<String, String> enabling)
 			throws AutomataLibraryException;
 
 	@Before
@@ -145,7 +147,8 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 		final HashIndependence indep = new HashIndependence(extractCommutativity(path));
 		final HashDisabling dis = new HashDisabling(extractDisabling(path));
 		final HashMembranes mem = new HashMembranes(extractMembranes(path));
-		runTest(path, parsed, input, expected, indep, dis, mem);
+		final HashEnabling enab = new HashEnabling(extractEnabling(path));
+		runTest(path, parsed, input, expected, indep, dis, mem, enab);
 	}
 
 	@Override
@@ -273,7 +276,7 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 
 		final HashRelation<String, String> result = new HashRelation<>();
 		if (!commLine.isPresent()) {
-			mLogger.info("no disabling specification found");
+			mLogger.info("no membrane specification found");
 			return result;
 		}
 
@@ -301,6 +304,53 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 		@Override
 		public Set<String> getMembraneSet(final String s) {
 			return mRelation.getImage(s);
+		}
+	}
+	
+	private HashRelation<Pair<String, String>, String> extractEnabling(final Path path) throws IOException {
+		final String prefix = "//@ enabling ";
+
+		final Optional<String> commLine;
+		try (final var lines = Files.lines(path)) {
+			commLine = lines.filter(l -> l.startsWith(prefix)).findFirst();
+		}
+
+		final HashRelation<Pair<String, String>, String> result = new HashRelation<>();
+		if (!commLine.isPresent()) {
+			mLogger.info("no enabling specification found");
+			return result;
+		}
+
+		final String relDescr = commLine.get().substring(prefix.length());
+		final Pattern pairPattern = Pattern.compile("\\s*\\(([^,]+),([^\\)]+)\\)");
+		final Matcher matcher = pairPattern.matcher(relDescr);
+		while (matcher.find()) {
+			String state = matcher.group(1).strip();
+			final String letters = matcher.group(2).strip();
+			final String first = letters.split(", ")[0];
+			final String second = letters.split(", ")[1];
+			System.out.println(state);
+			if (state == "E") {state = "eps";}
+			final Pair<String, String> pair = new Pair<>(state, first);
+			result.addPair(pair, second);
+		}
+
+		mLogger.info("enabling: " + result.getSetOfPairs());
+		return result;
+	}
+	
+	private static final class HashEnabling implements IEnabling<String, String> {
+		private final HashRelation<Pair<String, String>, String> mRelation;
+		//private final boolean mSymmetric;
+
+		public HashEnabling(final HashRelation<Pair<String, String>, String> relation) {
+			mRelation = relation;
+		}
+
+		@Override
+		public Set<String> getEnablingSet(final String s, final String a) {
+			Pair<String, String> searchPair = new Pair<>(s,a);
+			return mRelation.getImage(searchPair);
 		}
 	}
 }

@@ -8,6 +8,7 @@
 
 //@ commutativity (a, b) (b, a)
 //@ membranes (eps, b)
+//@ enabling (eps, b, b) (eps, a, a) (A, b, b)
 
 FiniteAutomaton input = (
      alphabet      = {a b},
