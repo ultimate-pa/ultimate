@@ -2038,9 +2038,16 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTProblemDeclaration node) {
-		final String msg = "Syntax error (declaration problem) in C program: " + node.getProblem().getMessage();
-		final ILocation loc = mLocationFactory.createCLocation(node);
-		throw new IncorrectSyntaxException(loc, msg);
+		if (node.getRawSignature().equals("_Noreturn") || node.getRawSignature().equals("noreturn")) {
+			// Matthias 20230309: It seems like the parser does not support die _Noreturn
+			// function specifier. It considers this as a IASTProblemDeclaration that is a
+			// direct child of the translation unit. As a workaround, we skip this node.
+			return new SkipResult();
+		} else {
+			final ILocation loc = mLocationFactory.createCLocation(node);
+			final String msg = "Syntax error (declaration problem) in C program: " + node.getProblem().getMessage();
+			throw new IncorrectSyntaxException(loc, msg);
+		}
 	}
 
 	public Result visit(final IDispatcher main, final IASTProblemExpression node) {

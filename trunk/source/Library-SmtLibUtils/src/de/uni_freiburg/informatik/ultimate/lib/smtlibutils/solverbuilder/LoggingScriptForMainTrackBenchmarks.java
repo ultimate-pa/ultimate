@@ -187,7 +187,7 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 		final long timeBefore = System.nanoTime();
 		final LBool sat = super.mScript.checkSat();
 		final long durationInMilliseconds = (System.nanoTime() - timeBefore) / 1000 / 1000;
-		final boolean solved = sat == LBool.SAT || sat == LBool.UNSAT;
+		final boolean solved = (sat == LBool.SAT || sat == LBool.UNSAT);
 		if (solved && durationInMilliseconds >= mBenchmarkTooSimpleThreshold || !solved && mWriteUnsolvedBenchmarks) {
 			// final File file = constructFile('_' + String.valueOf(mWrittenScriptCounter));
 			// final List<ArrayList<ISmtCommand<?>>> processedCommandStack = process(mCommandStack, sat);
@@ -275,7 +275,7 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 		result.add(new SetInfoCommand(":source", new QuotedObject(info)));
 		result.add(new SetInfoCommand(":license", new QuotedObject("https://creativecommons.org/licenses/by/4.0/")));
 		result.add(new SetInfoCommand(":category", new QuotedObject("industrial")));
-		result.add(new SetInfoCommand(":status", new QuotedObject(sat.toString())));
+		result.add(new SetInfoCommand(":status", sat.toString()));
 		return result;
 	}
 
@@ -315,6 +315,9 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 		final ArrayList<Logics> remainingCandidates = new ArrayList<>();
 		for (final Logics logic : Logics.values()) {
 			if (logic == Logics.ALL) {
+				continue;
+			}
+			if (logic.isString()) {
 				continue;
 			}
 			if (logic.isDifferenceLogic()) {

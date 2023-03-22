@@ -27,7 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1774,7 +1773,8 @@ public class OctMatrix {
 		final Term t1 = subtrahend;
 		final boolean subtrahendIsInt = SmtSortUtils.isIntSort(t1.getSort());
 		if (minuendIsInt && subtrahendIsInt) {
-			tBound = SmtUtils.constructIntValue(script, bound.getValue().round(new MathContext(0, RoundingMode.FLOOR)).toBigIntegerExact());
+			tBound = SmtUtils.constructIntValue(script,
+					bound.getValue().setScale(0, RoundingMode.FLOOR).toBigIntegerExact());
 		} else {
 			tBound = script.decimal(bound.getValue());
 			if (minuendIsInt) {
@@ -1783,7 +1783,7 @@ public class OctMatrix {
 				subtrahend = script.term("to_real", subtrahend);
 			}
 		}
-		return script.term("<=", script.term("-", minuend, subtrahend), tBound);
+		return SmtUtils.leq(script, SmtUtils.minus(script, minuend, subtrahend), tBound);
 	}
 
 	@Override

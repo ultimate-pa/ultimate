@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
@@ -155,14 +156,18 @@ public class SymbolicTools {
 		return postState;
 	}
 
+	public Term[] dnfDisjuncts(final IPredicate pred, final UnaryOperator<Term> termTransformer) {
+		final Term dnf =
+				SmtUtils.toDnf(mServices, mMngdScript, termTransformer.apply(pred.getFormula()), mXnfConversion);
+		return SmtUtils.getDisjuncts(dnf);
+	}
+
 	public Term[] dnfDisjuncts(final IPredicate pred) {
 		// TODO consider using QuantifierPusher to push quantifiers as inward as possible
 
 		// you can ensure that there are no let terms by using the unletter, but there should not be any let terms
 		// final Term unletedTerm = new FormulaUnLet().transform(pred.getFormula());
-
-		final Term dnf = SmtUtils.toDnf(mServices, mMngdScript, pred.getFormula(), mXnfConversion);
-		return SmtUtils.getDisjuncts(dnf);
+		return dnfDisjuncts(pred, x -> x);
 	}
 
 	public IPredicate top() {

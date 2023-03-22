@@ -45,7 +45,7 @@ assert(!accepts(differenceI, [a b]));
 assert(!accepts(differenceI, [a b c]));
 assert(!accepts(differenceI, [a c b]));
 assert(!accepts(differenceI, [c a b]));
-assert(numberOfTransitions(differenceI) == 4);
+assert(numberOfTransitions(differenceI) == 2);
 assert(numberOfPlaces(differenceI) == 9);
 
 

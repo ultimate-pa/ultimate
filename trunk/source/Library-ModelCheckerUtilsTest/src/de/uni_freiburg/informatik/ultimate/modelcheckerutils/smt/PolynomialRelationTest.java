@@ -599,7 +599,7 @@ public class PolynomialRelationTest {
 		final Term subject = TermParseUtils.parseTerm(mScript, "x");
 		final MultiCaseSolvedBinaryRelation sbr = PolynomialRelation
 				.of(mScript, TermParseUtils.parseTerm(mScript, inputAsString))
-				.solveForSubject(new ManagedScript(mServices, script), subject, Xnf.DNF, Collections.emptySet());
+				.solveForSubject(new ManagedScript(mServices, script), subject, Xnf.DNF, Collections.emptySet(), true);
 		Assert.assertNull(sbr);
 	}
 
@@ -660,7 +660,7 @@ public class PolynomialRelationTest {
 
 	private void testMultiCaseSolveForSubject(final Term inputAsTerm, final Term x, final Xnf xnf) {
 		final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation.of(mScript, inputAsTerm)
-				.solveForSubject(new ManagedScript(mServices, mScript), x, xnf, Collections.emptySet());
+				.solveForSubject(new ManagedScript(mServices, mScript), x, xnf, Collections.emptySet(), true);
 		mScript.echo(new QuotedObject("Checking if input and output of multiCaseSolveForSubject are equivalent"));
 		final Term solvedAsTerm = mcsbr.toTerm(mScript);
 		final Term tmp;
@@ -970,7 +970,7 @@ public class PolynomialRelationTest {
 	public void relationIntDivModStickyPaint() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(<= (div (+ z (* y (- 1)) x) (- 8)) 9)";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, vars);
 	}
 
 	@Test

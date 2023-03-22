@@ -685,8 +685,10 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 	 * <li>the sort is Int and the lhs coefficient is positive and there is no
 	 * equivalent {@link ExplicitLhsPolynomialRelation} that has a smaller lhs
 	 * coefficient but the same monomials (i.e., it is not allowed to obtain the
-	 * smaller lhs coefficient by a division that introduces a div term on the
-	 * rhs).
+	 * smaller lhs coefficient by a division that introduces a div term on the rhs).
+	 * TODO 20230219 Matthias: Revise this documentation. Since the
+	 * {@link PolynomialRelation} divides by the GCD the work that is done here can
+	 * be explained more precisely.
 	 */
 	public ExplicitLhsPolynomialRelation makeTight() {
 		Rational divisor;
@@ -699,8 +701,12 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 			}
 			divisor = mLhsCoefficient;
 		} else if (SmtSortUtils.isIntSort(mRhs.getSort())) {
-			final Rational gcd = mLhsCoefficient.gcd(mRhs.computeGcdOfCoefficients());
-			if (!gcd.isNegative() && mLhsCoefficient.isNegative()) {
+			final Rational gcd = mLhsCoefficient.gcd(mRhs.computeGcdOfCoefficients()).abs();
+			assert !gcd.isNegative();
+			if (!gcd.equals(Rational.ONE)) {
+				throw new AssertionError("The PolynomialRelation should have divided by the GCD!");
+			}
+			if (mLhsCoefficient.isNegative()) {
 				divisor = gcd.negate();
 			} else {
 				divisor = gcd;

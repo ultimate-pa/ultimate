@@ -599,8 +599,10 @@ public class PolynomialRelation implements IBinaryRelation, ITermProviderOnDeman
 	 * cannot find such a {@link MultiCaseSolvedBinaryRelation}.
 	 */
 	public MultiCaseSolvedBinaryRelation solveForSubject(final ManagedScript mgdScript, final Term subject,
-			final MultiCaseSolvedBinaryRelation.Xnf xnf, final Set<TermVariable> bannedForDivCapture) {
-		return SolveForSubjectUtils.solveForSubject(mgdScript, subject, xnf, this, bannedForDivCapture);
+			final MultiCaseSolvedBinaryRelation.Xnf xnf, final Set<TermVariable> bannedForDivCapture,
+			final boolean allowDivModBasedSolution) {
+		return SolveForSubjectUtils.solveForSubject(mgdScript, subject, xnf, this, bannedForDivCapture,
+				allowDivModBasedSolution);
 	}
 
 	/**

@@ -1,0 +1,16 @@
+#Thu Aug 29 17:38:40 CEST 2019
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Abstract\ Domain=EqDomain
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/SizeLimitFluid\ Max.\ DAG\ Size=-1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/SizeLimitFluid\ Max.\ Disjunctions=4
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Call\ Summarizer=TopInputCallSummarizer
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Fluid=SizeLimitFluid
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Loop\ Summarizer=FixpointLoopSummarizer
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Simplification\ Technique=NONE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Xnf\ Conversion\ Technique=BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION
+@de.uni_freiburg.informatik.ultimate.plugins.sifa=0.1.24
+file_export_version=3.0
+#Thu Aug 29 17:38:40 CEST 2019
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=LoopFreeBlock
+file_export_version=3.0

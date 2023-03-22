@@ -71,9 +71,9 @@ public class SolveForSubjectUtils {
 
 	static MultiCaseSolvedBinaryRelation solveForSubject(final ManagedScript mgdScript, final Term subject,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf, final PolynomialRelation polyRel,
-			final Set<TermVariable> bannedForDivCapture) throws AssertionError {
+			final Set<TermVariable> bannedForDivCapture, final boolean allowDivModBasedSolutions) {
 		MultiCaseSolvedBinaryRelation res;
-		if (SmtSortUtils.isNumericSort(subject.getSort())) {
+		if (allowDivModBasedSolutions && SmtSortUtils.isNumericSort(subject.getSort())) {
 			res = findTreatableDivModSubterm(mgdScript, subject, polyRel.getPolynomialTerm(), null, xnf,
 					polyRel.toTerm(mgdScript.getScript()), bannedForDivCapture);
 		} else {
@@ -213,8 +213,8 @@ public class SolveForSubjectUtils {
 			final HashSet<TermVariable> bannedForDivCaptureWithAuxiliary = new HashSet<>(bannedForDivCapture);
 			bannedForDivCaptureWithAuxiliary.add(auxDiv);
 			bannedForDivCaptureWithAuxiliary.add(auxMod);
-			solvedComparison = PolynomialRelation.of(mgdScript.getScript(), subtermSumComparison).solveForSubject(mgdScript, subject,
-					xnf, bannedForDivCaptureWithAuxiliary);
+			solvedComparison = PolynomialRelation.of(mgdScript.getScript(), subtermSumComparison)
+					.solveForSubject(mgdScript, subject, xnf, bannedForDivCaptureWithAuxiliary, true);
 			if (solvedComparison == null) {
 				return null;
 			}

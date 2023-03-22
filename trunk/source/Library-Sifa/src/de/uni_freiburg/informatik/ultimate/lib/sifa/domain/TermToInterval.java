@@ -70,7 +70,7 @@ public final class TermToInterval {
 	 * @param scope Already known values for some variables
 	 * @return Result of the given term according to interval arithmetic
 	 */
-	public static Interval evaluate(final Term term, final Map<TermVariable, Interval> scope) {
+	public static Interval evaluate(final Term term, final Map<Term, Interval> scope) {
 		if (!term.getSort().isNumericSort()) {
 			throw new IllegalArgumentException("Tried to use intervals for non-numeric sort: " + term);
 		} else if (term instanceof ApplicationTerm) {
@@ -89,7 +89,7 @@ public final class TermToInterval {
 		throw new UnsupportedOperationException("Could not process term of unknown type: " + term);
 	}
 
-	private static Interval evaluate(final ConstantTerm term, final Map<TermVariable, Interval> scope) {
+	private static Interval evaluate(final ConstantTerm term, final Map<Term, Interval> scope) {
 		final Object value = term.getValue();
 		if (value instanceof Rational) {
 			return Interval.point((Rational) value);
@@ -101,18 +101,18 @@ public final class TermToInterval {
 		return Interval.TOP;
 	}
 
-	private static Interval evaluate(final TermVariable term, final Map<TermVariable, Interval> scope) {
+	private static Interval evaluate(final TermVariable term, final Map<Term, Interval> scope) {
 		return scope.getOrDefault(term, Interval.TOP);
 	}
 
-	private static Interval evaluate(final AnnotatedTerm term, final Map<TermVariable, Interval> scope) {
+	private static Interval evaluate(final AnnotatedTerm term, final Map<Term, Interval> scope) {
 		// TODO are there any annotations we have to consider?
 		return evaluate(term.getSubterm(), scope);
 	}
 
-	private static Interval evaluate(final LetTerm term, final Map<TermVariable, Interval> outerScope) {
+	private static Interval evaluate(final LetTerm term, final Map<Term, Interval> outerScope) {
 		// IScopedMap could be used with an intermediate map, but using a completely new map is easier
-		final HashMap<TermVariable, Interval> innerScope = new HashMap<>(outerScope);
+		final HashMap<Term, Interval> innerScope = new HashMap<>(outerScope);
 		final TermVariable[] letVariables = term.getVariables();
 		final Term[] letValues = term.getValues();
 		assert letVariables.length == letValues.length : "Number of variables and values does not match: " + term;
@@ -123,11 +123,11 @@ public final class TermToInterval {
 		return evaluate(term.getSubTerm(), innerScope);
 	}
 
-	private static Interval evaluate(final QuantifiedFormula term, final Map<TermVariable, Interval> scope) {
+	private static Interval evaluate(final QuantifiedFormula term, final Map<Term, Interval> scope) {
 		throw new UnsupportedOperationException("Bool cannot be expressed as an interval.");
 	}
 
-	private static Interval evaluate(final ApplicationTerm term, final Map<TermVariable, Interval> scope) {
+	private static Interval evaluate(final ApplicationTerm term, final Map<Term, Interval> scope) {
 		final int arity = term.getParameters().length;
 		if (arity < 1) {
 			return Interval.TOP;
@@ -138,7 +138,7 @@ public final class TermToInterval {
 		}
 	}
 
-	private static Interval handleUnaryFunction(final ApplicationTerm term, final Map<TermVariable, Interval> scope) {
+	private static Interval handleUnaryFunction(final ApplicationTerm term, final Map<Term, Interval> scope) {
 		assert term.getParameters().length == 1 : "Expected unary function but found " + term;
 		if (isFunction("-", term)) {
 			final Term param = term.getParameters()[0];
@@ -149,7 +149,7 @@ public final class TermToInterval {
 	}
 
 	/** Evaluates functions of arity greater or equal 2. */
-	private static Interval handleGEq2AryFunction(final ApplicationTerm term, final Map<TermVariable, Interval> scope) {
+	private static Interval handleGEq2AryFunction(final ApplicationTerm term, final Map<Term, Interval> scope) {
 		if (isFunction("ite", term)) {
 			return handleIfThenElseFunction(term, scope);
 		} else {
@@ -158,7 +158,7 @@ public final class TermToInterval {
 	}
 
 	private static Interval handleIfThenElseFunction(final ApplicationTerm term,
-			final Map<TermVariable, Interval> scope) {
+			final Map<Term, Interval> scope) {
 		final Term[] iteParams = term.getParameters();
 		assert isFunction("ite", term) : "Expected ite term but found " + term;
 		assert iteParams.length == 3 : "Expected 3 parameters for ite term but found " + term;
@@ -166,7 +166,7 @@ public final class TermToInterval {
 		// For now we ignore the condition and over-approximate
 		final Interval iteThenResult = evaluate(iteParams[1], scope);
 		final Interval iteElseResult = evaluate(iteParams[2], scope);
-		return iteThenResult.union(iteElseResult);
+		return iteThenResult.join(iteElseResult);
 	}
 
 	private static boolean isFunction(final String functionName, final ApplicationTerm term) {
@@ -174,7 +174,7 @@ public final class TermToInterval {
 	}
 
 	private static Interval handleLeftAssociativeFunction(final ApplicationTerm term,
-			final Map<TermVariable, Interval> scope) {
+			final Map<Term, Interval> scope) {
 		final BinaryOperator<Interval> leftAssociativeOp =
 				intervalOpForSmtFunc(term.getFunction().getName());
 		if (leftAssociativeOp == null) {

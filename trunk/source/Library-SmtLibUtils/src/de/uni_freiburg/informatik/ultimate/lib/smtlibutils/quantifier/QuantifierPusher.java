@@ -635,7 +635,7 @@ public class QuantifierPusher extends TermTransformer {
 							djqe.getAcronym(), termCdc, contextCdc, eliminated, er.getNewEliminatees()));
 				} else {
 					logger.debug(
-							String.format("Applying %s to %s term with %s context. Could eliminate any variable %s",
+							String.format("Applying %s to %s term with %s context. Could not eliminate any variable %s",
 									djqe.getAcronym(), termCdc, contextCdc, currentEt.getEliminatees()));
 				}
 
@@ -690,7 +690,11 @@ public class QuantifierPusher extends TermTransformer {
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
 			elimtechniques.add(new DualJunctionTir(mgdScript, services, true));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfUpd(mgdScript, services)));
-			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
+			elimtechniques.add(new DualJunctionDml(mgdScript, services));
+			final boolean useOldEliminationForDivAndMod = false;
+			if (useOldEliminationForDivAndMod) {
+				elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
+			}
 			elimtechniques.add(new DualJunctionSaa(mgdScript, services, true));
 			break;
 		case ALL_LOCAL:

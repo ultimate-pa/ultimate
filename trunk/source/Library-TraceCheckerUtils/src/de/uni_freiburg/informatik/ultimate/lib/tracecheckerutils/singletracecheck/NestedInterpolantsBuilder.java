@@ -82,7 +82,6 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 	// probably has to become a parameter for this class.
 	private static final boolean ALLOW_AT_DIFF = SolverBuilder.USE_DIFF_WRAPPER_SCRIPT;
 	public static final String DIFF_IS_UNSUPPORTED = "@diff is unsupported";
-	private static final boolean IGNORE_PQE_ERROR = false;
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -578,16 +577,8 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 						throw new UnsupportedOperationException(DIFF_IS_UNSUPPORTED);
 					}
 					final Term withoutIndicesNormalized = new ConstantTermNormalizer().transform(withoutIndices);
-					Term lessQuantifiers;
-					try {
-						lessQuantifiers = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScriptCfg, mSimplificationTechnique, withoutIndicesNormalized);
-					} catch (final AssertionError ae) {
-						if (IGNORE_PQE_ERROR) {
-							lessQuantifiers = withoutIndicesNormalized;
-						} else {
-							throw ae;
-						}
-					}
+					final Term lessQuantifiers = PartialQuantifierElimination.eliminate(mServices, mMgdScriptCfg,
+							withoutIndicesNormalized, mSimplificationTechnique);
 					result[resultPos] = mPredicateUnifier.getOrConstructPredicate(lessQuantifiers);
 					withIndices2Predicate.put(withIndices, result[resultPos]);
 				}
