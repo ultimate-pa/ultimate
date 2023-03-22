@@ -76,7 +76,8 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 	protected AutomataDefinitionInterpreter mInterpreter;
 
 	protected abstract void runTest(final Path path, AutomataTestFileAST ast, NestedWordAutomaton<String, String> input,
-			NestedWordAutomaton<String, String> expected, IIndependenceRelation<?, String> independence, IDisabling<String> disabling)
+			NestedWordAutomaton<String, String> expected, IIndependenceRelation<?, String> independence,
+			IDisabling<String> disabling, IMembranes<String, String> membrane)
 			throws AutomataLibraryException;
 
 	@Before
@@ -143,7 +144,8 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 
 		final HashIndependence indep = new HashIndependence(extractCommutativity(path));
 		final HashDisabling dis = new HashDisabling(extractDisabling(path));
-		runTest(path, parsed, input, expected, indep, dis);
+		final HashMembranes mem = new HashMembranes(extractMembranes(path));
+		runTest(path, parsed, input, expected, indep, dis, mem);
 	}
 
 	@Override
@@ -258,6 +260,47 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 		@Override
 		public boolean disables(final String a, final String b) {
 			return mRelation.containsPair(a, b) ? true : false;
+		}
+	}
+	
+	private HashRelation<String, String> extractMembranes(final Path path) throws IOException {
+		final String prefix = "//@ membranes ";
+
+		final Optional<String> commLine;
+		try (final var lines = Files.lines(path)) {
+			commLine = lines.filter(l -> l.startsWith(prefix)).findFirst();
+		}
+
+		final HashRelation<String, String> result = new HashRelation<>();
+		if (!commLine.isPresent()) {
+			mLogger.info("no disabling specification found");
+			return result;
+		}
+
+		final String relDescr = commLine.get().substring(prefix.length());
+		final Pattern pairPattern = Pattern.compile("\\s*\\(([^,]+),([^\\)]+)\\)");
+		final Matcher matcher = pairPattern.matcher(relDescr);
+		while (matcher.find()) {
+			final String left = matcher.group(1).strip();
+			final String right = matcher.group(2).strip();
+			result.addPair(left, right);
+		}
+
+		mLogger.info("membranes: " + result.getSetOfPairs());
+		return result;
+	}
+	
+	private static final class HashMembranes implements IMembranes<String, String> {
+		private final HashRelation<String, String> mRelation;
+		//private final boolean mSymmetric;
+
+		public HashMembranes(final HashRelation<String, String> relation) {
+			mRelation = relation;
+		}
+
+		@Override
+		public Set<String> getMembraneSet(final String s) {
+			return mRelation.getImage(s);
 		}
 	}
 }
