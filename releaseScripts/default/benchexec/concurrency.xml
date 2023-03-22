@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="900" hardtimelimit="920" cpuCores="2">
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="600" hardtimelimit="620" cpuCores="2">
   <resultfiles></resultfiles>
 
   <option name="--force-no-wrapper" />
@@ -158,7 +158,11 @@
 
   <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
-    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_THREAD_INSTANCE</option>
+  </rundefinition>
+
+  <rundefinition name="GemCutter.NewStatesSleepDpor">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">DPOR_SLEEP_NEW_STATES</option>
   </rundefinition>
 
   <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.Badger">

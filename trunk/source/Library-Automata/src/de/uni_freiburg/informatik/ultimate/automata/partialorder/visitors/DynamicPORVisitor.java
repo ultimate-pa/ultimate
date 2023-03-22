@@ -213,20 +213,14 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	// Independence check
 	private boolean isIndependent(final L a, final L b) {
 		final Dependence dep = independenceRelation.isIndependent(null, a, b);
-		if (dep.name() == "INDEPENDENT") {
-			return true;
-		} else {
-			// assume dependency
-			return false;
-		}
+		return dep == Dependence.INDEPENDENT;
 	}
 
 	private boolean disables(final L a, final L b) {
 		if (disablingRelation == null) {
 			return false;
 		}
-		final boolean dis = disablingRelation.disables(a, b);
-		return dis;
+		return disablingRelation.disables(a, b);
 	}
 
 	private L getEnabling(final S state, final L letter) {
@@ -260,7 +254,7 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	 * @return
 	 */
 	private L getMax(final S state, final Set<L> m) {
-		if (m.size() == 0) {
+		if (m.isEmpty()) {
 			return null;
 		}
 		L maxLetter = null;
