@@ -59,7 +59,9 @@ public enum PartialOrderMode {
 	 * Combines persistent set reduction with {@link SLEEP_NEW_STATES}.
 	 */
 	PERSISTENT_SLEEP_NEW_STATES(true, true, true, false),
-	PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER(true, true, true, true);
+	PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER(true, true, true, true),
+
+	DPOR_SLEEP_NEW_STATES(true, false, true, true);
 
 	private final boolean mHasSleepSets;
 	private final boolean mHasPersistentSets;

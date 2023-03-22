@@ -27,9 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -41,10 +44,15 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.CachedPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTraversal;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.DynamicPOR;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDisabling;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IEnabling;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IMembranes;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.MinimalSleepSetReduction;
@@ -52,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.MultiPersistent
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.UnfoldToTree.IUnfoldStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.CachedBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.ISleepMapStateFactory;
@@ -59,23 +68,31 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor.CoveringMode;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDeadEndStore;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor.CoveringMode;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
@@ -107,6 +124,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private final IDfsOrder<L, IPredicate> mDfsOrder;
 	private final ISleepSetStateFactory<L, IPredicate, IPredicate> mSleepFactory;
 	private final ISleepMapStateFactory<L, IPredicate, IPredicate> mSleepMapFactory;
+	private final IUnfoldStateFactory<L, IPredicate, IPredicate> mUnfoldFactory;
 
 	private StateSplitter<IPredicate> mStateSplitter;
 	private final IDeadEndStore<?, IPredicate> mDeadEndStore;
@@ -141,6 +159,13 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		mIndependenceRelations = new ArrayList<>(independenceRelations);
 		mGetBudget = getBudget;
 
+		if (mMode == PartialOrderMode.DPOR_SLEEP_NEW_STATES) {
+			mUnfoldFactory = new UnfoldPredicate.Factory<>();
+			mStateSplitter = StateSplitter.extend(mStateSplitter, mUnfoldFactory::getCurrentState, x -> x);
+		} else {
+			mUnfoldFactory = null;
+		}
+
 		mSleepFactory = createSleepFactory(predicateFactory);
 		mSleepMapFactory = createSleepMapFactory(predicateFactory);
 		mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
@@ -150,7 +175,6 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 		mIcfg = icfg;
 		mErrorLocs = errorLocs;
-
 		mPersistent = createPersistentSets(mIcfg, mErrorLocs);
 	}
 
@@ -346,11 +370,161 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 						mDfsOrder, mSleepMapFactory, mGetBudget.andThen(CachedBudget::new), mPersistent, visitor);
 			}
 			break;
+		case DPOR_SLEEP_NEW_STATES:
+			assert mIndependenceRelations.size() == 1;
+			final var helper = new DPORSupport<L>(mErrorLocs);
+			final var factory = new UnfoldPredicate.Factory<L>();
+			DynamicPOR.applyWithSleepSets(mAutomataServices, input, independence, mDfsOrder, mSleepFactory, factory,
+					visitor, helper, helper, helper);
+			break;
 		case NONE:
 			DepthFirstTraversal.traverse(mAutomataServices, input, mDfsOrder, visitor);
 			break;
 		default:
 			throw new UnsupportedOperationException("Unsupported POR mode: " + mMode);
+		}
+	}
+
+	private static class UnfoldPredicate<L> implements IMLPredicate {
+
+		private final IPredicate mRoot;
+		private final ImmutableList<OutgoingInternalTransition<L, IPredicate>> mPath;
+
+		public UnfoldPredicate(final IPredicate root,
+				final ImmutableList<OutgoingInternalTransition<L, IPredicate>> path) {
+			mRoot = root;
+			mPath = path;
+		}
+
+		private IMLPredicate getCurrentState() {
+			if (mPath.isEmpty()) {
+				return (IMLPredicate) mRoot;
+			}
+			return (IMLPredicate) mPath.getHead().getSucc();
+		}
+
+		@Override
+		public Term getFormula() {
+			return getCurrentState().getFormula();
+		}
+
+		@Override
+		public Term getClosedFormula() {
+			return getCurrentState().getClosedFormula();
+		}
+
+		@Override
+		public String[] getProcedures() {
+			return getCurrentState().getProcedures();
+		}
+
+		@Override
+		public Set<IProgramVar> getVars() {
+			return getCurrentState().getVars();
+		}
+
+		@Override
+		public Set<IProgramFunction> getFuns() {
+			return getCurrentState().getFuns();
+		}
+
+		@Override
+		public IcfgLocation[] getProgramPoints() {
+			return getCurrentState().getProgramPoints();
+		}
+
+		public static class Factory<L> implements IUnfoldStateFactory<L, IPredicate, IPredicate> {
+			@Override
+			public IPredicate treeNode(final IPredicate root,
+					final ImmutableList<OutgoingInternalTransition<L, IPredicate>> path) {
+				return new UnfoldPredicate<>(root, path);
+			}
+
+			@Override
+			public IPredicate getRoot(final IPredicate treeNode) {
+				return ((UnfoldPredicate<?>) treeNode).mRoot;
+			}
+
+			@Override
+			public ImmutableList<OutgoingInternalTransition<L, IPredicate>> getPath(final IPredicate treeNode) {
+				return (ImmutableList) ((UnfoldPredicate<?>) treeNode).mPath;
+			}
+		}
+	}
+
+	private static class DPORSupport<L extends IIcfgTransition<?>>
+			implements IDisabling<L>, IMembranes<L, IPredicate>, IEnabling<L, IPredicate> {
+		private final Collection<? extends IcfgLocation> mErrorLocs;
+
+		public DPORSupport(final Collection<? extends IcfgLocation> errorLocs) {
+			mErrorLocs = errorLocs;
+		}
+
+		private static HashRelation<IcfgLocation, IcfgEdge> getEnabledActions(final IMLPredicate state) {
+			final HashRelation<IcfgLocation, IcfgEdge> enabledActions = new HashRelation<>();
+			final Set<IcfgLocation> locs = Set.of(state.getProgramPoints());
+			for (final IcfgLocation loc : locs) {
+				for (final IcfgEdge edge : loc.getOutgoingEdges()) {
+					if (IcfgUtils.isEnabled(locs, edge)) {
+						enabledActions.addPair(loc, edge);
+					}
+				}
+			}
+			return enabledActions;
+		}
+
+		private final Map<IcfgLocation, Boolean> mReachErrorCache = new HashMap<>();
+
+		private boolean canReachError(final IcfgLocation loc) {
+			return IcfgUtils.canReachCached(loc, e -> mErrorLocs.contains(e.getTarget()), e -> false, l -> {
+				final Boolean stored = mReachErrorCache.get(l);
+				if (stored != null) {
+					return stored ? LBool.SAT : LBool.UNSAT;
+				}
+				return LBool.UNKNOWN;
+			}, (l, r) -> mReachErrorCache.put(l, r));
+
+		}
+
+		@Override
+		public boolean disables(final L a, final L b) {
+			// all letters with same thread
+			if (a.getPrecedingProcedure() == b.getPrecedingProcedure()) {
+				return true;
+			}
+
+			// also handle joins
+			if (a instanceof IIcfgJoinTransitionThreadOther<?> && b instanceof IIcfgJoinTransitionThreadOther<?>) {
+				return a.getSucceedingProcedure() == b.getSucceedingProcedure();
+			}
+			return false;
+		}
+
+		@Override
+		public Set<L> getMembraneSet(final IPredicate state) {
+			// select threads that can reach error, return transitions of those threads
+			final IMLPredicate mlState = (IMLPredicate) state;
+			final var enabled = getEnabledActions(mlState);
+			return (Set) Arrays.stream(mlState.getProgramPoints()).filter(this::canReachError)
+					.flatMap(l -> enabled.getImage(l).stream()).collect(Collectors.toSet());
+		}
+
+		@Override
+		public Set<L> getEnablingSet(final IPredicate state, final L letter) {
+			final IMLPredicate mlState = (IMLPredicate) state;
+			final var thread = letter.getSource().getProcedure();
+			final var threadLoc =
+					Arrays.stream(mlState.getProgramPoints()).filter(l -> l.getProcedure().equals(thread)).findFirst();
+			if (threadLoc.isPresent()) {
+				// return all enabled actions with predecessor threadLoc
+				return (Set) getEnabledActions(mlState).getImage(threadLoc.get());
+			}
+
+			// no corresponding location in mlState, e.g. because thread was not yet forked
+			// TODO either return all letters, or check fork hierarchy
+			final var enabled = getEnabledActions(mlState);
+			return (Set) Arrays.stream(mlState.getProgramPoints()).flatMap(l -> enabled.getImage(l).stream())
+					.collect(Collectors.toSet());
 		}
 	}
 
