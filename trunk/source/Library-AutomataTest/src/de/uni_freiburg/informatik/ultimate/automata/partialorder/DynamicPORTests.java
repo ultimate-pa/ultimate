@@ -50,10 +50,10 @@ public class DynamicPORTests extends DynamicPORTestsBase {
 	@Override
 	protected void runTest(final Path path, final AutomataTestFileAST ast,
 			final NestedWordAutomaton<String, String> input, final NestedWordAutomaton<String, String> expected,
-			final IIndependenceRelation<?, String> independence) throws AutomataLibraryException {
+			final IIndependenceRelation<?, String> independence, final IDisabling<String> dis) throws AutomataLibraryException {
 		final var constructor = new AutomatonConstructingVisitor<>(input, mAutomataServices, () -> "###empty###");
 
-		final IDisabling<String> disablingRelation = null;
+		final IDisabling<String> disablingRelation = dis;
 		final IMembranes<String, String> membranes = null;
 		final IEnabling<String, String> enablingFunction = null;
 		final IDfsVisitor<String, String> visitor = constructor;

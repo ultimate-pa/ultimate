@@ -76,7 +76,7 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 	protected AutomataDefinitionInterpreter mInterpreter;
 
 	protected abstract void runTest(final Path path, AutomataTestFileAST ast, NestedWordAutomaton<String, String> input,
-			NestedWordAutomaton<String, String> expected, IIndependenceRelation<?, String> independence)
+			NestedWordAutomaton<String, String> expected, IIndependenceRelation<?, String> independence, IDisabling<String> disabling)
 			throws AutomataLibraryException;
 
 	@Before
@@ -142,7 +142,8 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 		assert input != null && expected != null : "either input or expected is missing";
 
 		final HashIndependence indep = new HashIndependence(extractCommutativity(path));
-		runTest(path, parsed, input, expected, indep);
+		final HashDisabling dis = new HashDisabling(extractDisabling(path));
+		runTest(path, parsed, input, expected, indep, dis);
 	}
 
 	@Override
@@ -216,6 +217,47 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 		@Override
 		public Dependence isIndependent(final Set<String> state, final String a, final String b) {
 			return mRelation.containsPair(a, b) ? Dependence.INDEPENDENT : Dependence.DEPENDENT;
+		}
+	}
+	
+	private HashRelation<String, String> extractDisabling(final Path path) throws IOException {
+		final String prefix = "//@ disabling ";
+
+		final Optional<String> commLine;
+		try (final var lines = Files.lines(path)) {
+			commLine = lines.filter(l -> l.startsWith(prefix)).findFirst();
+		}
+
+		final HashRelation<String, String> result = new HashRelation<>();
+		if (!commLine.isPresent()) {
+			mLogger.info("no disabling specification found");
+			return result;
+		}
+
+		final String relDescr = commLine.get().substring(prefix.length());
+		final Pattern pairPattern = Pattern.compile("\\s*\\(([^,]+),([^\\)]+)\\)");
+		final Matcher matcher = pairPattern.matcher(relDescr);
+		while (matcher.find()) {
+			final String left = matcher.group(1).strip();
+			final String right = matcher.group(2).strip();
+			result.addPair(left, right);
+		}
+
+		mLogger.info("disabling: " + result.getSetOfPairs());
+		return result;
+	}
+	
+	private static final class HashDisabling implements IDisabling<String> {
+		private final HashRelation<String, String> mRelation;
+		//private final boolean mSymmetric;
+
+		public HashDisabling(final HashRelation<String, String> relation) {
+			mRelation = relation;
+		}
+
+		@Override
+		public boolean disables(final String a, final String b) {
+			return mRelation.containsPair(a, b) ? true : false;
 		}
 	}
 }

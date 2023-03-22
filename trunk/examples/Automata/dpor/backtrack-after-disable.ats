@@ -8,6 +8,7 @@
  */
 
 //@ commutativity (a, b) (b, a)
+//@ disabling (a, c)
 
 FiniteAutomaton input = (
      alphabet      = {a b c},
@@ -29,14 +30,18 @@ FiniteAutomaton input = (
 
 FiniteAutomaton expected = (
      alphabet      = {a b c},
-     states        = {eps A AB C CA CAB},
+     states        = {eps A AB B BA C CA CAB CB CBA},
      initialStates = {eps},
-     finalStates   = {AB CAB},
+     finalStates   = {AB BA CAB CBA},
      transitions   = {
          (eps a A)
          (A   b AB)
+         (eps b B)
+         (B   a BA)
          (eps c C)
          (C   a CA)
          (CA  b CAB)
+         (C   b CB)
+         (CB  a CBA)
      }
 );

@@ -92,6 +92,8 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 		if (index < 0) {
 			final L initBacktrack = findInitialBacktrackset(source, letter);
 			mStateTrace.add(new BacktrackTriple(source, initBacktrack, letter));
+			// Set the disable backtrackingpoints for the first letter in inital state
+			disableBacktracking(letter);
 			return mUnderlying.discoverTransition(source, letter, target);
 		}
 
@@ -110,7 +112,7 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 			// do not proxy call to underlying visitor, just return
 			return true;
 		}
-		// Set the disable backtrackingpoints
+		// Set the disable backtrackingpoints for the first 
 		disableBacktracking(letter);
 		// Set the necessary backtrackingpoints
 		setBacktrackingPoints(letter);
@@ -120,9 +122,11 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	}
 
 	private boolean disableBacktracking(final L letter) {
+		System.out.println("disableBacktracking" + letter);
 		final int index = mStateTrace.size() - 1;
 		for (final L a : mAutomaton.getAlphabet()) {
 			if (disables(letter, a)) {
+				System.out.println(letter + "disables" + a);
 				final L backtrackLetter = mStateTrace.get(index).mBacktrackLetter;
 				final S backtrackState = mStateTrace.get(index).mState;
 				// check if a enabled in backtrackState

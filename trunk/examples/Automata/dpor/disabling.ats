@@ -7,6 +7,7 @@
  */
 
 //@ commutativity 
+//@ disabling (a, b)
 
 FiniteAutomaton input = (
      alphabet      = {a b},
