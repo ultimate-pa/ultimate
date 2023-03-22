@@ -118,7 +118,7 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	}
 
 	private boolean disableBacktracking(final L letter) {
-		final int index = mStateTrace.size();
+		final int index = mStateTrace.size() - 1;
 		for (final L a : mAutomaton.getAlphabet()) {
 			if (disables(letter, a)) {
 				final L backtrackLetter = mStateTrace.get(index).mBacktrackLetter;
