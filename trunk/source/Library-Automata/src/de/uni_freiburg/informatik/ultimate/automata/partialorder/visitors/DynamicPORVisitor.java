@@ -69,6 +69,7 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 
 	@Override
 	public void backtrackState(final S state, final boolean isComplete) {
+		assert isComplete : "Incomplete backtracks should only happen for loops, which are unsupported";
 		if (isComplete) {
 			final int index = mStateTrace.size() - 1;
 			if (index > 0) {
@@ -77,6 +78,7 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 				}
 			}
 		}
+		mUnderlying.backtrackState(state, isComplete);
 	}
 
 	private void visitState(final S state) {
@@ -90,7 +92,7 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 		if (index < 0) {
 			final L initBacktrack = findInitialBacktrackset(source, letter);
 			mStateTrace.add(new BacktrackTriple(source, initBacktrack, letter));
-			return false || mUnderlying.discoverTransition(source, letter, target);
+			return mUnderlying.discoverTransition(source, letter, target);
 		}
 
 		if (!mStateTrace.get(index).mState.equals(source)) {
@@ -105,6 +107,7 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 		// backtracksetLetter is the greatest letter from backtrackset
 		// if letter > backtrackletter the transition can be pruned
 		if (!smaller(source, letter, mStateTrace.get(mStateTrace.size() - 1).mBacktrackLetter)) {
+			// do not proxy call to underlying visitor, just return
 			return true;
 		}
 		// Set the disable backtrackingpoints
@@ -113,8 +116,7 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 		setBacktrackingPoints(letter);
 
 		System.out.println(mStateTrace);
-		// return true if letter is not in backtrackset(source)
-		return false || mUnderlying.discoverTransition(source, letter, target);
+		return mUnderlying.discoverTransition(source, letter, target);
 	}
 
 	private boolean disableBacktracking(final L letter) {

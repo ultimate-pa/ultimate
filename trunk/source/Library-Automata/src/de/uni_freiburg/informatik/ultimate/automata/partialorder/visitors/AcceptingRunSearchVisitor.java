@@ -87,7 +87,8 @@ public class AcceptingRunSearchVisitor<L, S> implements IDfsVisitor<L, S> {
 	@Override
 	public boolean discoverTransition(final S source, final L letter, final S target) {
 		assert !mFound : "Unexpected transition discovery after abort";
-		assert mStateStack.getLast() == source : "Unexpected transition from state " + source;
+		assert mStateStack.getLast() == source : "Unexpected transition from state " + source + ", expected "
+				+ mStateStack.getLast();
 		mPendingLetter = letter;
 		mPendingState = target;
 		return isHopelessState(target);
