@@ -295,9 +295,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 			return other;
 		}
 		final WeqCongruenceClosure<NODE> newPartialArrangement =
-				mFactory.getWeqCcManager().join(this.mWeqCc, other.mWeqCc, true);
-		final EqConstraint<NODE> res = mFactory.getEqConstraint(newPartialArrangement, true);
-		return res;
+				mFactory.getWeqCcManager().join(mWeqCc, other.mWeqCc, true);
+		return mFactory.getEqConstraint(newPartialArrangement, true);
 	}
 
 	public EqConstraint<NODE> widen(final EqConstraint<NODE> other) {
@@ -307,8 +306,15 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		if (other.isBottom()) {
 			return this;
 		}
-		// TODO: Can we do anything better than returning top?
-		return mFactory.getEmptyConstraint(false);
+		if (this.isTop()) {
+			return this;
+		}
+		if (other.isTop()) {
+			return other;
+		}
+		final WeqCongruenceClosure<NODE> newPartialArrangement =
+				mFactory.getWeqCcManager().widen(mWeqCc, other.mWeqCc, true);
+		return mFactory.getEqConstraint(newPartialArrangement, true);
 	}
 
 	/**

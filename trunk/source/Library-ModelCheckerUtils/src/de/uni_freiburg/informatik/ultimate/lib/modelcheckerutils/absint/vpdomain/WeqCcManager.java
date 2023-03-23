@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -457,8 +458,27 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
+	public CongruenceClosure<NODE> widen(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2,
+			final boolean modifiable) {
+		// (just passing it through to CcManager)
+		final CongruenceClosure<NODE> result = mCcManager.widen(cc1, cc2, modifiable);
+		assert checkJoinResult(cc1, cc2, result, getNonTheoryLiteralDisequalitiesIfNecessary());
+		return result;
+	}
+
 	public WeqCongruenceClosure<NODE> join(final WeqCongruenceClosure<NODE> weqcc1Raw,
 			final WeqCongruenceClosure<NODE> weqcc2Raw, final boolean modifiable) {
+		return merge(weqcc1Raw, weqcc2Raw, modifiable, WeqCongruenceClosure::join);
+	}
+
+	public WeqCongruenceClosure<NODE> widen(final WeqCongruenceClosure<NODE> weqcc1Raw,
+			final WeqCongruenceClosure<NODE> weqcc2Raw, final boolean modifiable) {
+		return merge(weqcc1Raw, weqcc2Raw, modifiable, WeqCongruenceClosure::widen);
+	}
+
+	private WeqCongruenceClosure<NODE> merge(final WeqCongruenceClosure<NODE> weqcc1Raw,
+			final WeqCongruenceClosure<NODE> weqcc2Raw, final boolean modifiable,
+			final BinaryOperator<WeqCongruenceClosure<NODE>> mergeOperator) {
 		bmStart(WeqCcBmNames.JOIN);
 
 		final WeqCongruenceClosure<NODE> weqcc1 = closeIfNecessary(weqcc1Raw);
@@ -480,7 +500,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			return getEmptyWeqCc(modifiable);
 		}
 
-		final WeqCongruenceClosure<NODE> result = weqcc1.join(weqcc2);
+		final WeqCongruenceClosure<NODE> result = mergeOperator.apply(weqcc1, weqcc2);
 		assert result != weqcc1 && result != weqcc2 : "join should construct a new object";
 		if (!modifiable) {
 			result.freezeAndClose();

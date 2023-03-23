@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -257,9 +258,9 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		return eqToProp;
 	}
 
-	public CCLiteralSetConstraints<ELEM> join(final CongruenceClosure<ELEM> newCc,
+	public CCLiteralSetConstraints<ELEM> merge(final CongruenceClosure<ELEM> newCc,
 			final HashRelation<ELEM, ELEM> thisSplitInfo, final HashRelation<ELEM, ELEM> otherSplitInfo,
-			final CCLiteralSetConstraints<ELEM> other) {
+			final CCLiteralSetConstraints<ELEM> other, final BinaryOperator<Set<SetConstraint<ELEM>>> literalMergeOperator) {
 		if (this.isInconsistent()) {
 			return other;
 		}
@@ -281,7 +282,7 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			final Set<SetConstraint<ELEM>> otherConstraint =
 					other.getConstraintWrtSplit(constrainedElem, newCc, otherSplitInfo);
 
-			final Set<SetConstraint<ELEM>> newConstraints = mSetConstraintManager.join(thisConstraint, otherConstraint);
+			final Set<SetConstraint<ELEM>> newConstraints = literalMergeOperator.apply(thisConstraint, otherConstraint);
 
 			assert mSetConstraintManager.getSingletonValues(newConstraints).stream()
 					.filter(sv -> !newCc.getRepresentativeElement(sv).equals(constrainedElem))

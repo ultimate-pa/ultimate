@@ -524,6 +524,23 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return newSetConstraints;
 	}
 
+	public Set<SetConstraint<ELEM>> widen(final Set<SetConstraint<ELEM>> constraintConjunction1,
+			final Set<SetConstraint<ELEM>> constraintConjunction2) {
+		if (isTautological(constraintConjunction1)) {
+			return getTautologicalSetConstraintConjunction();
+		}
+		if (isTautological(constraintConjunction2)) {
+			return getTautologicalSetConstraintConjunction();
+		}
+		if (isInconsistent(constraintConjunction1)) {
+			return constraintConjunction2;
+		}
+		if (isInconsistent(constraintConjunction2)) {
+			return constraintConjunction1;
+		}
+		return DataStructureUtils.intersection(constraintConjunction1, constraintConjunction2);
+	}
+
 	/**
 	 * assumes that representatives are resolved..
 	 *

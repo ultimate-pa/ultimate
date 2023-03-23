@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -177,21 +178,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return resultPp;
 	}
 
-
-
-	/**
-	 * note: join always happens immutable/non-inplace style. Thus before a join everything has to be frozen.
-	 * The result is not frozen by default (but guaranteed to be a fresh object).
-	 *
-	 * (even though not frozen, the result is probably always completely reduced/closed)
-	 *
-	 * @param cc1
-	 * @param cc2
-	 * @param modifiable result Cc should be modifiable or frozen?
-	 * @return
-	 */
-	public CongruenceClosure<ELEM> join(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
-			final boolean modifiable) {
+	private CongruenceClosure<ELEM> merge(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
+			final boolean modifiable, final BinaryOperator<Set<SetConstraint<ELEM>>> literalMergeOperator) {
 		bmStart(CcBmNames.JOIN);
 		/*
 		 * Freeze-before-join politics.. -- might not be strictly necessary here, because CongruenceClosure-freeze
@@ -199,7 +187,6 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 */
 		freezeIfNecessary(cc1);
 		freezeIfNecessary(cc2);
-
 
 		if (cc1.isInconsistent()) {
 			bmEnd(CcBmNames.JOIN);
@@ -214,7 +201,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return getEmptyCc(modifiable);
 		}
 
-		final CongruenceClosure<ELEM> result = cc1.join(cc2);
+		final CongruenceClosure<ELEM> result = cc1.merge(cc2, literalMergeOperator);
 
 		if (!modifiable) {
 			result.freezeAndClose();
@@ -226,17 +213,31 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return resultPp;
 	}
 
-//	public ComparisonResult compare(final CongruenceClosure<ELEM> cc1,
-//			final CongruenceClosure<ELEM> cc2) {
-//		if (CcSettings.UNIFY_CCS) {
-//			return mPartialOrderCache.lowerEqual(elem1, elem2)
-//		}
-//		return mCcComparator.compare(cc1, cc2);
-//	}
+	/**
+	 * note: join always happens immutable/non-inplace style. Thus before a join everything has to be frozen. The result
+	 * is not frozen by default (but guaranteed to be a fresh object).
+	 *
+	 * (even though not frozen, the result is probably always completely reduced/closed)
+	 *
+	 * @param cc1
+	 * @param cc2
+	 * @param modifiable
+	 *            result Cc should be modifiable or frozen?
+	 * @return
+	 */
+	public CongruenceClosure<ELEM> join(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
+			final boolean modifiable) {
+		return merge(cc1, cc2, modifiable, mSetConstraintManager::join);
+	}
+
+	public CongruenceClosure<ELEM> widen(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
+			final boolean modifiable) {
+		return merge(cc1, cc2, modifiable, mSetConstraintManager::widen);
+	}
 
 	/**
-	 * The given list is implicitly a disjunction.
-	 * If one element in the disjunction is stronger than another, we can drop it.
+	 * The given list is implicitly a disjunction. If one element in the disjunction is stronger than another, we can
+	 * drop it.
 	 *
 	 * TODO: poor man's solution, could be done much nicer with lattice representation..
 	 *
@@ -416,7 +417,6 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return resultPp;
 		}
 	}
-
 
 	/**
 	 * (always works in place)
@@ -981,12 +981,10 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			literalsMerged = expanded;
 		}
 
-
 		// TODO: only instantiate SetConstraintComparator once??
 		final PartialOrderCache<SetConstraint<ELEM>> poc =
 				new PartialOrderCache<>(mSetConstraintManager.getSetConstraintComparator());
 		final Set<SetConstraint<ELEM>> filtered = poc.getMaximalRepresentatives(literalsMerged);
-
 
 		assert SetConstraintConjunction.sanityCheck(filtered);
 		bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);

@@ -38,6 +38,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
+import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -947,7 +948,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return newRep;
 	}
 
-	CongruenceClosure<ELEM> join(final CongruenceClosure<ELEM> other) {
+	CongruenceClosure<ELEM> merge(final CongruenceClosure<ELEM> other,
+			final BinaryOperator<Set<SetConstraint<ELEM>>> literalMergeOperator) {
 		assert !this.isInconsistent() && !other.isInconsistent() && !this.isTautological() && !other.isTautological();
 
 		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned =
@@ -977,8 +979,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3
 				|| CcManager.isPartitionStronger(otherAligned.mElementTVER, newCc.mElementTVER);
 
-		final CCLiteralSetConstraints<ELEM> newLiteralSetConstraints =
-				mLiteralSetConstraints.join(newCc, thisSplitInfo, otherSplitInfo, other.mLiteralSetConstraints);
+		final CCLiteralSetConstraints<ELEM> newLiteralSetConstraints = mLiteralSetConstraints.merge(newCc,
+				thisSplitInfo, otherSplitInfo, other.mLiteralSetConstraints, literalMergeOperator);
 		newCc.resetCcLiteralSetConstraints(newLiteralSetConstraints);
 
 		return newCc;
