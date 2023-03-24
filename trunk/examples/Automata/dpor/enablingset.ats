@@ -1,0 +1,42 @@
+/*
+ * Simple test for DPOR.
+ *
+ * We here assume that a and b commute, c is dependent with a and b,  a < b < c.
+ *
+ * 1) Since a is dependent with c and c is not enabled in state E enabling set has to add b to E
+ */
+
+//@ commutativity (a, b) (b, a)
+//@ disabling
+//@ enabling (E, c, b)
+//@ membrane
+
+FiniteAutomaton input = (
+     alphabet      = {a b c},
+     states        = {E A AB ABC B BC BCA},
+     initialStates = {E},
+     finalStates   = {ABC BCA},
+     transitions   = {
+         (E a A)
+         (A b AB)
+         (AB c ABC)
+         (E b B)
+         (B c BC)
+         (BC a BCA)
+     }
+);
+
+FiniteAutomaton expected = (
+     alphabet      = {a b c},
+     states        = {E A AB ABC B BC BCA},
+     initialStates = {E},
+     finalStates   = {ABC BCA},
+     transitions   = {
+         (E a A)
+         (A b AB)
+         (AB c ABC)
+         (E b B)
+         (B c BC)
+         (BC a BCA)
+     }
+);

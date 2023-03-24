@@ -1,0 +1,36 @@
+/*
+ * Simple test for DPOR.
+ *
+ * We here assume that a and c commute, a disables b and a < b < c.
+ * because a disables b, b needs to be backtracked but not c since a is independent with c
+ * 
+ */
+
+//@ commutativity (a, c) (c, a)
+//@ disabling (a, b)
+
+FiniteAutomaton input = (
+     alphabet      = {a b c},
+     states        = {E A AC C CA B},
+     initialStates = {E},
+     finalStates   = {AC CA B},
+     transitions   = {
+         (E a A)
+         (E c C)
+         (A c AC)
+         (C a CA)
+         (E b B)
+     }
+);
+
+FiniteAutomaton expected = (
+     alphabet      = {a b c},
+     states        = {E A AC B},
+     initialStates = {E},
+     finalStates   = {AC B},
+     transitions   = {
+         (E a A)
+         (A c AC)
+         (E b B)
+     }
+);

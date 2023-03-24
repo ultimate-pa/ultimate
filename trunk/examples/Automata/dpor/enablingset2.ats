@@ -1,0 +1,68 @@
+/*
+ * Simple test for DPOR.
+ *
+ * We here assume that a and b commute, c is dependent with a and b,  a < b < c.
+ *
+ * 1) Since the enabling set of d contains only a, and a is already backtracked nothing has to be backtracked 
+ *    a is dependent with d but there is no word where d comes before a
+ */
+
+//@ commutativity (a, b) (b, a) (a, c) (c, a) (b, c) (c, b) (b, d) (d, b) (c, d) (d, c)
+//@ enabling (E, d, a)
+
+
+FiniteAutomaton input = (
+     alphabet      = {a b c d},
+     states        = {E A B C AB AC AD BA BC CA CB CAB CBA CAD ACB ADC ACD ADB ABD ABC BAD BCA BAC BDA ABCD ABDC ACBD ACDB ADBC ADCB BACD BCAD BADC CABD CBAD CADB},
+     initialStates = {E},
+     finalStates   = {ABCD ABDC ACBD ACDB ADBC ADCB BACD BCAD BADC CABD CBAD CADB},
+     transitions   = {
+         (E a A)
+         (E b B)
+         (E c C)
+         (A b AB)
+         (A c AC)
+         (A d AD)
+         (B a BA)
+         (B c BC)
+         (C a CA)
+         (C b CB)
+         (AB d ABD)
+         (AB c ABC)
+         (AC d ACD)
+         (AC b ACB)
+         (AD b ADB)
+         (AD c ADC)
+         (BA c BAC)
+         (BA d BAD)
+         (BC a BCA)
+         (CA b CAB)
+         (CA d CAD)
+         (CB a CBA)
+         (ABD c ABDC)
+         (ABC d ABCD)
+         (ACD b ACDB)
+         (ACB d ACBD)
+         (ADB c ADBC)
+         (ADC b ADCB)
+         (BAC d BACD)
+         (BAD c BADC)
+         (BCA d BCAD)
+         (CAB d CABD)
+         (CAD b CADB)
+         (CBA d CBAD)
+     }
+);
+
+FiniteAutomaton expected = (
+     alphabet      = {a b c d},
+     states        = {E A AB ABC ABCD},
+     initialStates = {E},
+     finalStates   = {ABCD},
+     transitions   = {
+         (E a A)
+         (A b AB)
+         (AB c ABC)
+         (ABC d ABCD)
+     }
+);
