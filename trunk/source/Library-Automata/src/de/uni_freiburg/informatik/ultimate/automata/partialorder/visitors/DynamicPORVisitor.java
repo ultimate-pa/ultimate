@@ -112,21 +112,21 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 			// do not proxy call to underlying visitor, just return
 			return true;
 		}
-		// Set the disable backtrackingpoints for the first 
+		// Set the disable backtrackingpoints for the first
 		disableBacktracking(letter);
 		// Set the necessary backtrackingpoints
 		setBacktrackingPoints(letter);
 
-		System.out.println(mStateTrace);
+		// System.out.println(mStateTrace);
 		return mUnderlying.discoverTransition(source, letter, target);
 	}
 
 	private boolean disableBacktracking(final L letter) {
-		System.out.println("disableBacktracking" + letter);
+		// System.out.println("disableBacktracking" + letter);
 		final int index = mStateTrace.size() - 1;
 		for (final L a : mAutomaton.getAlphabet()) {
 			if (disables(letter, a)) {
-				System.out.println(letter + "disables" + a);
+				// System.out.println(letter + "disables" + a);
 				final L backtrackLetter = mStateTrace.get(index).mBacktrackLetter;
 				final S backtrackState = mStateTrace.get(index).mState;
 				// check if a enabled in backtrackState
