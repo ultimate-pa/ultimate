@@ -152,6 +152,7 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 							maxLetter = trans.getLetter();
 						}
 					}
+					System.out.println("set backtracking in state "+ backtrackState + "to " +maxLetter);
 					mStateTrace.set(index, new BacktrackTriple(backtrackState, maxLetter, letter));
 
 				}
