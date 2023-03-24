@@ -329,7 +329,6 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 			final String letters = matcher.group(2).strip();
 			final String first = letters.split(", ")[0];
 			final String second = letters.split(", ")[1];
-			System.out.println(state);
 			if (state == "E") {state = "eps";}
 			final Pair<String, String> pair = new Pair<>(state, first);
 			result.addPair(pair, second);

@@ -152,7 +152,6 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 							maxLetter = trans.getLetter();
 						}
 					}
-					System.out.println("set backtracking in state "+ backtrackState + "to " +maxLetter);
 					mStateTrace.set(index, new BacktrackTriple(backtrackState, maxLetter, letter));
 
 				}
@@ -172,7 +171,6 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 			final L transitionLetter = mStateTrace.get(i).mTransitionLetter;
 
 			if (!isIndependent(transitionLetter, letter)) {
-				System.out.println(transitionLetter + " dependent with " + letter);
 				// check if letter is enabled in State i
 				boolean enabled = false;
 				for (final OutgoingInternalTransition<L, S> a : mAutomaton.internalSuccessors(backtrackState, letter)) {
@@ -188,12 +186,10 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 						mStateTrace.set(i, triple);
 					}
 				} else {
-					System.out.println(letter + " not enabled");
 					// a is not enabled
 					// add necessary enabling set for a (c is the maximum of the enabling set)
 					// since a is not enabled by definition the enabling set can not be empty
 					final L c = getEnabling(backtrackState, letter);
-					System.out.println("enablingletter "+ c);
 					if (c != null) {
 						mStateTrace.set(i, new BacktrackTriple(backtrackState, c, transitionLetter));
 					}
