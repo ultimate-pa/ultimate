@@ -49,6 +49,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
  *
  */
 public class EqDomain extends StateBasedDomain<EqState> {
+	// TODO: Make this a setting?
+	private static final boolean DISABLE_WEAK_EQUIVALENCES = true;
+
 	public EqDomain(final SymbolicTools tools, final int maxDisjuncts, final IUltimateServiceProvider services) {
 		super(tools, maxDisjuncts, new EqStateProvider(services, tools.getManagedScript()));
 	}
@@ -63,8 +66,10 @@ public class EqDomain extends StateBasedDomain<EqState> {
 			mServices = services;
 			mManagedScript = managedScript;
 			mEqFactory = new EqNodeAndFunctionFactory(services, managedScript, Set.of(), null, Set.of());
+			final WeqSettings settings = new WeqSettings();
+			settings.setDeactivateWeakEquivalences(DISABLE_WEAK_EQUIVALENCES);
 			mEqConstraintFactory =
-					new EqConstraintFactory<>(mEqFactory, services, managedScript, new WeqSettings(), false, Set.of());
+					new EqConstraintFactory<>(mEqFactory, services, managedScript, settings, false, Set.of());
 		}
 
 		@Override
