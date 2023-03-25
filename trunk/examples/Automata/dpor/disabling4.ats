@@ -1,0 +1,39 @@
+/*
+ * Simple test for DPOR.
+ *
+ * We here assume that a and b commute, c is dependent with a and b,  a < b < c.
+ *
+ *  a disables b and c enables b
+ *  the algorithm detects that a disables b and adds all enabled letters to the initial state E
+ */
+
+//@ disabling (a, b)
+
+
+FiniteAutomaton input = (
+     alphabet      = {a b c},
+     states        = {E A C CA CB CBA},
+     initialStates = {E},
+     finalStates   = {CBA},
+     transitions   = {
+         (E a A)
+         (E c C)
+         (C b CB)
+         (C a CA)
+         (CB a CBA)
+     }
+);
+
+FiniteAutomaton expected = (
+     alphabet      = {a b c},
+     states        = {E A C CA CB CBA},
+     initialStates = {E},
+     finalStates   = {CBA},
+     transitions   = {
+         (E a A)
+         (E c C)
+         (C b CB)
+         (C a CA)
+         (CB a CBA)
+     }
+);

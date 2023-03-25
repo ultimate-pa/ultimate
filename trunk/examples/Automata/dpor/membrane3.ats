@@ -1,0 +1,46 @@
+/*
+ * Simple test for DPOR.
+ *
+ /*
+ * Simple test for DPOR.
+ *
+ * We here assume that a commutes with b and c, and a < b < c.
+ * All states are final states so the membrane of a state has to be all letters enabled in the state
+ */
+
+//@ commutativity (a, b) (b, a) (a, c) (c, a)
+//@ membranes (eps, a) (eps, b) (eps, c) (A, b) (A, c) (B, a) (B, c) (C, a) (C, b)
+
+FiniteAutomaton input = (
+     alphabet      = {a b c},
+     states        = {eps A AB AC B BA C CA CB},
+     initialStates = {eps},
+     finalStates   = {eps A AB AC B BA C CA CB},
+     transitions   = {
+         (eps a A)
+         (A   b AB)
+         (A   c AC)
+         (eps b B)
+         (B   a BA)
+         (eps c C)
+         (C   a CA)
+         (C   b CB)
+     }
+);
+
+FiniteAutomaton expected = (
+     alphabet      = {a b c},
+     states        = {eps A AB AC B BA C CA CB},
+     initialStates = {eps},
+     finalStates   = {eps A AB AC B BA C CA CB},
+     transitions   = {
+         (eps a A)
+         (A   b AB)
+         (A   c AC)
+         (eps b B)
+         (B   a BA)
+         (eps c C)
+         (C   a CA)
+         (C   b CB)
+     }
+);
