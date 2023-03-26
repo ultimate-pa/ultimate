@@ -324,6 +324,9 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 			if (logic.isUF()) {
 				continue;
 			}
+			if (logic.isDatatype()) {
+				continue;
+			}
 			if (logic.isNonLinearArithmetic() != tc.hasNonlinearArithmetic()) {
 				continue;
 			}
