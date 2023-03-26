@@ -1,0 +1,37 @@
+/*
+ * Simple test for DPOR.
+ *
+ * We here assume that r and b commute, a is dependent with b,  a < b < r.
+ *
+ * By definition a disables r but this is left out intentionally to test the enabling set
+ */
+
+//@ commutativity (r, b) (b, r)
+//@ enabling (E, b, a) (E, b, r)
+
+
+FiniteAutomaton input = (
+     alphabet      = {a b r},
+     states        = {E A R RB AB},
+     initialStates = {E},
+     finalStates   = {AB RB},
+     transitions   = {
+         (E a A)
+         (E r R)
+         (A b AB)
+         (R b RB)
+     }
+);
+
+FiniteAutomaton expected = (
+     alphabet      = {a b r},
+     states        = {E A R RB AB},
+     initialStates = {E},
+     finalStates   = {AB RB},
+     transitions   = {
+         (E a A)
+         (E r R)
+         (A b AB)
+         (R b RB)
+     }
+);

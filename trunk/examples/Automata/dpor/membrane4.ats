@@ -1,0 +1,36 @@
+/*
+ * Simple test for DPOR.
+ *
+ /*
+ * Simple test for DPOR.
+ *
+ * We here assume that a commutes with b and c, and a < b < c.
+ * Simple test: three words containing only one letter
+ */
+
+//@ commutativity
+//@ membranes (eps, a) (eps, b) (eps, c)
+
+FiniteAutomaton input = (
+     alphabet      = {a b c},
+     states        = {eps A B C},
+     initialStates = {eps},
+     finalStates   = {A B C},
+     transitions   = {
+         (eps a A)
+         (eps b B)
+         (eps c C)
+     }
+);
+
+FiniteAutomaton expected = (
+     alphabet      = {a b c},
+     states        = {eps A B C},
+     initialStates = {eps},
+     finalStates   = {A B C},
+     transitions   = {
+         (eps a A)
+         (eps b B)
+         (eps c C)
+     }
+);

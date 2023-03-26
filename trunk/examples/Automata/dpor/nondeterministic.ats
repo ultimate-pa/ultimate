@@ -1,0 +1,30 @@
+/*
+ * Simple test for DPOR.
+ *
+ * We here assume that a, b and c commute, and a < b < c.
+ *
+ * Nondeterministic transition a in state eps
+ */
+
+
+FiniteAutomaton input = (
+     alphabet      = {a},
+     states        = {eps A A2},
+     initialStates = {eps},
+     finalStates   = {A A2},
+     transitions   = {
+         (eps a A)
+         (eps a A2)
+     }
+);
+
+FiniteAutomaton expected = (
+     alphabet      = {a},
+     states        = {eps A A2},
+     initialStates = {eps},
+     finalStates   = {A A2},
+     transitions   = {
+         (eps a A)
+         (eps a A2)
+     }
+);
