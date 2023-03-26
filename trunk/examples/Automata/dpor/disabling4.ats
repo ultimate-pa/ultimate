@@ -7,7 +7,7 @@
  *  the algorithm detects that a disables b and adds all enabled letters to the initial state E
  */
 
-//@ disabling (a, b)
+//@ disabling (a, b) (a, c)
 
 
 FiniteAutomaton input = (
