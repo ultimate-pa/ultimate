@@ -275,11 +275,12 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	 *
 	 * @param inputTerm Term from which quantifiers are eliminated. Has to be in NNF.
 	 */
-	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
+	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
 			final SimplificationTechnique simplificationTechnique, final Term inputTerm) {
-		return eliminate(services, script, applyDistributivity, quantifierEliminationTechniques,
-				simplificationTechnique, new Context(script.getScript()), inputTerm);
+		mgdScript.assertScriptNotLocked();
+		return eliminate(services, mgdScript, applyDistributivity, quantifierEliminationTechniques,
+				simplificationTechnique, new Context(mgdScript.getScript()), inputTerm);
 	}
 
 	/**

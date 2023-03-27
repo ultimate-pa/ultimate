@@ -160,11 +160,12 @@ public final class SmtUtils {
 		return simplify(mgdScript, formula, mgdScript.getScript().term("true"), services, simplificationTechnique);
 	}
 
-	public static Term simplify(final ManagedScript mgScript, final Term formula, final Term context,
+	public static Term simplify(final ManagedScript mgdScript, final Term formula, final Term context,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
 		if (simplificationTechnique == SimplificationTechnique.NONE) {
 			return formula;
 		}
+		mgdScript.assertScriptNotLocked();
 		Objects.requireNonNull(context);
 		final ILogger logger = services.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 		if (logger.isDebugEnabled()) {
@@ -177,7 +178,7 @@ public final class SmtUtils {
 					simplificationTechnique + " does not support simplification with respect to context");
 		}
 		final long startTime = System.nanoTime();
-		final UndoableWrapperScript undoableScript = new UndoableWrapperScript(mgScript.getScript());
+		final UndoableWrapperScript undoableScript = new UndoableWrapperScript(mgdScript.getScript());
 		final ManagedScript script = new ManagedScript(services, undoableScript);
 		try {
 			final Term simplified;
@@ -228,7 +229,7 @@ public final class SmtUtils {
 				// TODO: Matthias 2019-11-19 SimplifyDDA can produce nested
 				// conjunctions or disjunctions. Use UnfTransformer to get
 				// rid of these.
-				return new UnfTransformer(mgScript.getScript()).transform(simplified);
+				return new UnfTransformer(mgdScript.getScript()).transform(simplified);
 			}
 			return simplified;
 		} catch (final ToolchainCanceledException t) {
@@ -241,17 +242,17 @@ public final class SmtUtils {
 		}
 	}
 
-	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula,
+	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript mgdScript, final Term formula,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
-		return simplifyWithStatistics(script, formula, script.term(null, "true"), services, simplificationTechnique);
+		return simplifyWithStatistics(mgdScript, formula, mgdScript.term(null, "true"), services, simplificationTechnique);
 	}
 
-	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula,
+	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript mgdScript, final Term formula,
 			final Term context, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique) {
 		final long startTime = System.nanoTime();
 		final long sizeBefore = new DAGSize().treesize(formula);
-		final Term simplified = simplify(script, formula, context, services, simplificationTechnique);
+		final Term simplified = simplify(mgdScript, formula, context, services, simplificationTechnique);
 		final long sizeAfter = new DAGSize().treesize(simplified);
 		final long endTime = System.nanoTime();
 		return new ExtendedSimplificationResult(simplified, endTime - startTime, sizeBefore - sizeAfter,

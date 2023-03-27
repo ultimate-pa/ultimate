@@ -28,12 +28,11 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
@@ -1027,27 +1026,34 @@ public class OctagonMatrix {
 		}
 	}
 
-	public List<Term> getTerm(final Script script, final Term[] vars) {
-		final List<Term> rtr = new ArrayList<>(variables() * variables());
+	public Term getTerm(final Script script, final Term[] vars) {
+		final Set<Term> rtr = new HashSet<>();
 		for (int row = 0; row < 2 * variables(); ++row) {
 			final Term rowVar = selectVar(script, row, vars);
-			// iterate only block lower triangular matrix (skip coherent upper
-			// part)
+			// iterate only block lower triangular matrix (skip coherent upper part)
 			for (int col = 0; col < (row / 2 + 1) * 2; ++col) {
 				final Rational entry = get(row, col);
 				if (col == row) {
 					if (entry.signum() < 0) {
 						// constraint of the form (0 <= -1)
-						return Collections.singletonList(script.term("false"));
+						return script.term("false");
 					}
 					// constraint of the form (0 <= 1)
 					continue;
 				}
+				if (entry.equals(Rational.POSITIVE_INFINITY)) {
+					continue;
+				}
 				final Term colVar = selectVar(script, col, vars);
-				rtr.add(createBoundedDiffTerm(script, colVar, rowVar, entry));
+				final Rational dualEntry = get(getDualIndex(row), getDualIndex(col));
+				rtr.add(createBoundedDiffTerm(script, colVar, rowVar, entry, entry.negate().equals(dualEntry)));
 			}
 		}
-		return rtr;
+		return SmtUtils.and(script, rtr);
+	}
+
+	private static int getDualIndex(final int index) {
+		return index % 2 == 0 ? (index + 1) : (index - 1);
 	}
 
 	// returns variable in positive or negative form, depending on row or column
@@ -1059,12 +1065,9 @@ public class OctagonMatrix {
 		return posNegVar;
 	}
 
-	// returns minuend - subtrahend <= bound
-	private static Term createBoundedDiffTerm(final Script script, Term minuend, Term subtrahend,
-			final Rational bound) {
-		if (bound.equals(Rational.POSITIVE_INFINITY)) {
-			return script.term("true");
-		}
+	// returns minuend - subtrahend <= bound or minuend - subtrahend = bound (depending on isEquality)
+	private static Term createBoundedDiffTerm(final Script script, Term minuend, Term subtrahend, final Rational bound,
+			final boolean isEquality) {
 		final Term tBound;
 		final Term t = minuend;
 		final boolean minuendIsInt = SmtSortUtils.isIntSort(t.getSort());
@@ -1080,7 +1083,11 @@ public class OctagonMatrix {
 				subtrahend = script.term("to_real", subtrahend);
 			}
 		}
-		return SmtUtils.leq(script, SmtUtils.minus(script, minuend, subtrahend), tBound);
+		final Term diff = SmtUtils.minus(script, minuend, subtrahend);
+		if (isEquality) {
+			return SmtUtils.binaryEquality(script, diff, tBound);
+		}
+		return SmtUtils.leq(script, diff, tBound);
 	}
 
 	@Override

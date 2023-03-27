@@ -260,8 +260,7 @@ public final class PetriNetUnfolder<L, P> {
 
 		final ConditionMarking<L, P> finalMarking = current.fireEvent(event);
 		final Transition<L, P> t = event.getTransition();
-		final PetriNetRun<L, P> appendix =
-				new PetriNetRun<>(current.getMarking(), t.getSymbol(), finalMarking.getMarking());
+		final PetriNetRun<L, P> appendix = new PetriNetRun<>(current.getMarking(), t, finalMarking.getMarking());
 		run = run.concatenate(appendix);
 
 		mLogger.debug("Event  : " + event);

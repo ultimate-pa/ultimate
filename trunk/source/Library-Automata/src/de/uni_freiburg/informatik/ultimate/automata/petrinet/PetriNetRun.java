@@ -32,6 +32,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -47,6 +48,7 @@ public class PetriNetRun<LETTER, PLACE> implements IRun<LETTER, Marking<PLACE>> 
 
 	private final Word<LETTER> mWord;
 	private final List<Marking<PLACE>> mMarkingSequence;
+	private final List<Transition<LETTER, PLACE>> mTransitionSequence;
 
 	/**
 	 * Construct Petri net run of length 0.
@@ -56,8 +58,8 @@ public class PetriNetRun<LETTER, PLACE> implements IRun<LETTER, Marking<PLACE>> 
 	 */
 	public PetriNetRun(final Marking<PLACE> m0) {
 		mWord = new NestedWord<>();
-		mMarkingSequence = new ArrayList<>();
-		mMarkingSequence.add(m0);
+		mTransitionSequence = List.of();
+		mMarkingSequence = List.of(m0);
 	}
 
 	/**
@@ -70,8 +72,9 @@ public class PetriNetRun<LETTER, PLACE> implements IRun<LETTER, Marking<PLACE>> 
 	 * @param m1
 	 *            next marking
 	 */
-	public PetriNetRun(final Marking<PLACE> m0, final LETTER symbol, final Marking<PLACE> m1) {
-		mWord = new NestedWord<>(symbol, NestedWord.INTERNAL_POSITION);
+	public PetriNetRun(final Marking<PLACE> m0, final Transition<LETTER, PLACE> transition, final Marking<PLACE> m1) {
+		mTransitionSequence = List.of(transition);
+		mWord = new NestedWord<>(transition.getSymbol(), NestedWord.INTERNAL_POSITION);
 		mMarkingSequence = new ArrayList<>();
 		mMarkingSequence.add(m0);
 		mMarkingSequence.add(m1);
@@ -85,11 +88,16 @@ public class PetriNetRun<LETTER, PLACE> implements IRun<LETTER, Marking<PLACE>> 
 	 * @param word
 	 *            corresponding word
 	 */
-	public PetriNetRun(final List<Marking<PLACE>> sequenceOfMarkings, final Word<LETTER> word) {
+	public PetriNetRun(final List<Marking<PLACE>> sequenceOfMarkings, final Word<LETTER> word,
+			final List<Transition<LETTER, PLACE>> transitions) {
 		if (sequenceOfMarkings.size() - 1 != word.length()) {
 			throw new IllegalArgumentException("run consists of word length +1 markings");
 		}
+		if (transitions.size() != word.length()) {
+			throw new IllegalArgumentException("number of transitions differs from length of word");
+		}
 		mMarkingSequence = sequenceOfMarkings;
+		mTransitionSequence = transitions;
 		mWord = word;
 	}
 
@@ -112,6 +120,10 @@ public class PetriNetRun<LETTER, PLACE> implements IRun<LETTER, Marking<PLACE>> 
 		return mMarkingSequence.get(pos);
 	}
 
+	public Transition<LETTER, PLACE> getTransition(final int pos) {
+		return mTransitionSequence.get(pos);
+	}
+
 	/**
 	 * @param run2
 	 *            Another run.
@@ -124,8 +136,10 @@ public class PetriNetRun<LETTER, PLACE> implements IRun<LETTER, Marking<PLACE>> 
 		}
 		final List<Marking<PLACE>> concatMarkingSequence =
 				DataStructureUtils.concat(mMarkingSequence, run2.mMarkingSequence.subList(1, run2.getLength()));
-		final Word<LETTER> concatWord = mWord.concatenate(run2.getWord());
-		return new PetriNetRun<>(concatMarkingSequence, concatWord);
+		final List<Transition<LETTER, PLACE>> concatTransitions =
+				DataStructureUtils.concat(mTransitionSequence, run2.mTransitionSequence);
+		final Word<LETTER> concatWord = mWord.concatenate(run2.getWord()); // TODO
+		return new PetriNetRun<>(concatMarkingSequence, concatWord, concatTransitions);
 	}
 
 	@Override

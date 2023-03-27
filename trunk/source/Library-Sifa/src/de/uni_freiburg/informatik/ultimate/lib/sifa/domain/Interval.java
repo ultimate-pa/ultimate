@@ -243,6 +243,10 @@ public final class Interval implements INonrelationalValue<Interval> {
 
 	@Override
 	public Term toTerm(final Term variable, final Script script) {
+		if (isPoint()) {
+			final Term value = SmtUtils.rational2Term(script, mLower, variable.getSort());
+			return SmtUtils.binaryEquality(script, variable, value);
+		}
 		final List<Term> conjunction = new ArrayList<>(2);
 		if (hasLower()) {
 			final Term lower = SmtUtils.rational2Term(script, mLower, variable.getSort());

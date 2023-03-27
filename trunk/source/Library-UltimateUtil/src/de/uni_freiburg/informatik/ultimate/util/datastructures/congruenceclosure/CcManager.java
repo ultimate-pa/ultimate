@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -73,10 +74,10 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		mEmptyFrozenCc.freezeAndClose();
 
 		if (CcSettings.UNIFY_CCS) {
-	 		mPartialOrderCache = new PartialOrderCache<>(mCcComparator);
-	 	} else {
-	 		mPartialOrderCache = null;
-	 	}
+			mPartialOrderCache = new PartialOrderCache<>(mCcComparator);
+		} else {
+			mPartialOrderCache = null;
+		}
 
 		mBenchmarkMode = !true;
 		if (mBenchmarkMode) {
@@ -89,14 +90,14 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	private CongruenceClosure<ELEM> addToPartialOrderCache(final CongruenceClosure<ELEM> cc) {
 		assert mPartialOrderCache != null;
-//		assert cc.isFrozen();
+		// assert cc.isFrozen();
 		freezeIfNecessary(cc);
 		final CongruenceClosure<ELEM> result = mPartialOrderCache.addElement(cc);
 		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_1
-			|| (result.isStrongerThanNoCaching(cc) && cc.isStrongerThanNoCaching(result));
+				|| (result.isStrongerThanNoCaching(cc) && cc.isStrongerThanNoCaching(result));
 		/*
-		 *  TODO: we do not work with/return the representative here because it might have a different expset!
-		 *   (should make this method void probably)
+		 * TODO: we do not work with/return the representative here because it might have a different expset! (should
+		 * make this method void probably)
 		 */
 		return cc;
 	}
@@ -112,7 +113,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	private CongruenceClosure<ELEM> postProcessCcResult(final CongruenceClosure<ELEM> cc) {
 		CongruenceClosure<ELEM> result = cc;
 		if (CcSettings.UNIFY_CCS) {
-//			assert result.isFrozen();
+			// assert result.isFrozen();
 			if (cc.isFrozen()) {
 				result = addToPartialOrderCache(cc);
 			}
@@ -125,8 +126,9 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @param cc1
 	 * @param cc2
 	 * @param remInfo
-	 * @param inplace the result is the same object as the first argument, with all constraints from the second argument
-	 *  added
+	 * @param inplace
+	 *            the result is the same object as the first argument, with all constraints from the second argument
+	 *            added
 	 * @return
 	 */
 	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
@@ -144,7 +146,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		if (cc1.isTautological() && !inplace) {
-//			assert cc1.isFrozen() && cc2.isFrozen() : "unforeseen case, when does this happen?";
+			// assert cc1.isFrozen() && cc2.isFrozen() : "unforeseen case, when does this happen?";
 			freezeIfNecessary(cc2);
 			bmEnd(CcBmNames.MEET);
 			return cc2;
@@ -176,21 +178,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return resultPp;
 	}
 
-
-
-	/**
-	 * note: join always happens immutable/non-inplace style. Thus before a join everything has to be frozen.
-	 * The result is not frozen by default (but guaranteed to be a fresh object).
-	 *
-	 * (even though not frozen, the result is probably always completely reduced/closed)
-	 *
-	 * @param cc1
-	 * @param cc2
-	 * @param modifiable result Cc should be modifiable or frozen?
-	 * @return
-	 */
-	public CongruenceClosure<ELEM> join(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
-			final boolean modifiable) {
+	private CongruenceClosure<ELEM> merge(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
+			final boolean modifiable, final BinaryOperator<Set<SetConstraint<ELEM>>> literalMergeOperator) {
 		bmStart(CcBmNames.JOIN);
 		/*
 		 * Freeze-before-join politics.. -- might not be strictly necessary here, because CongruenceClosure-freeze
@@ -198,7 +187,6 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 */
 		freezeIfNecessary(cc1);
 		freezeIfNecessary(cc2);
-
 
 		if (cc1.isInconsistent()) {
 			bmEnd(CcBmNames.JOIN);
@@ -213,7 +201,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return getEmptyCc(modifiable);
 		}
 
-		final CongruenceClosure<ELEM> result = cc1.join(cc2);
+		final CongruenceClosure<ELEM> result = cc1.merge(cc2, literalMergeOperator);
 
 		if (!modifiable) {
 			result.freezeAndClose();
@@ -225,17 +213,31 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return resultPp;
 	}
 
-//	public ComparisonResult compare(final CongruenceClosure<ELEM> cc1,
-//			final CongruenceClosure<ELEM> cc2) {
-//		if (CcSettings.UNIFY_CCS) {
-//			return mPartialOrderCache.lowerEqual(elem1, elem2)
-//		}
-//		return mCcComparator.compare(cc1, cc2);
-//	}
+	/**
+	 * note: join always happens immutable/non-inplace style. Thus before a join everything has to be frozen. The result
+	 * is not frozen by default (but guaranteed to be a fresh object).
+	 *
+	 * (even though not frozen, the result is probably always completely reduced/closed)
+	 *
+	 * @param cc1
+	 * @param cc2
+	 * @param modifiable
+	 *            result Cc should be modifiable or frozen?
+	 * @return
+	 */
+	public CongruenceClosure<ELEM> join(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
+			final boolean modifiable) {
+		return merge(cc1, cc2, modifiable, mSetConstraintManager::join);
+	}
+
+	public CongruenceClosure<ELEM> widen(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
+			final boolean modifiable) {
+		return merge(cc1, cc2, modifiable, mSetConstraintManager::widen);
+	}
 
 	/**
-	 * The given list is implicitly a disjunction.
-	 * If one element in the disjunction is stronger than another, we can drop it.
+	 * The given list is implicitly a disjunction. If one element in the disjunction is stronger than another, we can
+	 * drop it.
 	 *
 	 * TODO: poor man's solution, could be done much nicer with lattice representation..
 	 *
@@ -249,7 +251,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	}
 
-	public  IPartialComparator<CongruenceClosure<ELEM>> getCcComparator() {
+	public IPartialComparator<CongruenceClosure<ELEM>> getCcComparator() {
 		return mCcComparator;
 	}
 
@@ -305,8 +307,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			unfrozen.reportDisequality(node1, node2);
 			unfrozen.freezeAndClose();
 
-			assert unfrozen.isInconsistent()
-				|| unfrozen.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
+			assert unfrozen.isInconsistent() || unfrozen.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
 			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(unfrozen);
 			bmEnd(CcBmNames.REPORT_DISEQUALITY);
 			return resultPp;
@@ -314,34 +315,31 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM elem, final Collection<ELEM> elementSet,
-			final CongruenceClosure<ELEM> origCc,
-			final boolean inplace) {
-		return reportContainsConstraint(elem, Collections.singleton(mSetConstraintManager.buildSetConstraint(elementSet)),
-				origCc, inplace);
+			final CongruenceClosure<ELEM> origCc, final boolean inplace) {
+		return reportContainsConstraint(elem,
+				Collections.singleton(mSetConstraintManager.buildSetConstraint(elementSet)), origCc, inplace);
 	}
 
-
 	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM elem, final Set<SetConstraint<ELEM>> elementSet,
-			final CongruenceClosure<ELEM> origCc,
-			final boolean inplace) {
+			final CongruenceClosure<ELEM> origCc, final boolean inplace) {
 		bmStart(CcBmNames.REPORTCONTAINS);
 		assert !CcSettings.FORBID_INPLACE || !inplace;
 		if (inplace) {
-//			final SetConstraintConjunction<ELEM> newSetCc = buildSetConstraintConjunction(
-//					origCc.getLiteralSetConstraints(), elem,
-//					elementSet);
-//					Collections.singleton(SetConstraint.buildSetConstraint(elementSet)));
-//			origCc.reportContainsConstraint(elem, newSetCc.getSetConstraints());
+			// final SetConstraintConjunction<ELEM> newSetCc = buildSetConstraintConjunction(
+			// origCc.getLiteralSetConstraints(), elem,
+			// elementSet);
+			// Collections.singleton(SetConstraint.buildSetConstraint(elementSet)));
+			// origCc.reportContainsConstraint(elem, newSetCc.getSetConstraints());
 			origCc.reportContainsConstraint(elem, elementSet);
 			bmEnd(CcBmNames.REPORTCONTAINS);
 			return origCc;
 		} else {
 			final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
-//			final SetConstraintConjunction<ELEM> newSetCc = buildSetConstraintConjunction(
-//					unfrozen.getLiteralSetConstraints(), elem,
-//					elementSet);
-////					Collections.singleton(SetConstraint.buildSetConstraint(elementSet)));
-//			unfrozen.reportContainsConstraint(elem, newSetCc.getSetConstraints());
+			// final SetConstraintConjunction<ELEM> newSetCc = buildSetConstraintConjunction(
+			// unfrozen.getLiteralSetConstraints(), elem,
+			// elementSet);
+			//// Collections.singleton(SetConstraint.buildSetConstraint(elementSet)));
+			// unfrozen.reportContainsConstraint(elem, newSetCc.getSetConstraints());
 			unfrozen.reportContainsConstraint(elem, elementSet);
 			unfrozen.freezeAndClose();
 
@@ -350,34 +348,6 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return resultPp;
 		}
 	}
-
-//	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM element,
-//			final SetConstraintConjunction<ELEM> containsConstraintRaw,
-//			final CongruenceClosure<ELEM> origCc, final boolean inplace) {
-//
-//		final ELEM elementRep = origCc.getRepresentativeElement(element);
-//
-//		// we are reporting this SetCc into a possibly new constraint --> remove surrounding constraint
-//		final SetConstraintConjunction<ELEM> setCc =
-//				new SetConstraintConjunction<>(null, containsConstraintRaw);
-//		setCc.resetConstrainedElement(elementRep);
-//
-//		bmStart(CcBmNames.REPORTCONTAINS);
-//		assert !CcSettings.FORBID_INPLACE || !inplace;
-//		if (inplace) {
-//			origCc.reportContainsConstraint(elementRep, setCc.getSetConstraints());
-//			bmEnd(CcBmNames.REPORTCONTAINS);
-//			return origCc;
-//		} else {
-//			final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
-//			unfrozen.reportContainsConstraint(elementRep, setCc.getSetConstraints());
-//			unfrozen.freeze();
-//
-//			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(unfrozen);
-//			bmEnd(CcBmNames.REPORTCONTAINS);
-//			return resultPp;
-//		}
-//	}
 
 	public CongruenceClosure<ELEM> removeSimpleElement(final ELEM elem, final CongruenceClosure<ELEM> origCc,
 			final boolean modifiable) {
@@ -430,10 +400,9 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return addElement(congruenceClosure, elem, congruenceClosure, inplace, omitSanityCheck);
 	}
 
-
 	public CongruenceClosure<ELEM> addElement(final CongruenceClosure<ELEM> congruenceClosure, final ELEM elem,
-			final IEqualityReportingTarget<ELEM> newEqualityTarget,
-			final boolean inplace, final boolean omitSanityCheck) {
+			final IEqualityReportingTarget<ELEM> newEqualityTarget, final boolean inplace,
+			final boolean omitSanityCheck) {
 		assert !CcSettings.FORBID_INPLACE || !inplace;
 		assert inplace != congruenceClosure.isFrozen();
 		if (inplace) {
@@ -448,21 +417,6 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return resultPp;
 		}
 	}
-
-//	public Pair<CongruenceClosure<ELEM>, HashRelation<ELEM, ELEM>> addElementAndGetNewEqualities(
-//			final CongruenceClosure<ELEM> congruenceClosure, final ELEM elem, final boolean inplace,
-//			final boolean omitSanityChecks) {
-//		assert inplace != congruenceClosure.isFrozen();
-//		if (inplace) {
-//			final HashRelation<ELEM, ELEM> newEqualities = congruenceClosure.addElement(elem, omitSanityChecks);
-//			return new Pair<>(congruenceClosure, newEqualities);
-//		} else {
-//			final CongruenceClosure<ELEM> unfrozen = unfreeze(congruenceClosure);
-//			final HashRelation<ELEM, ELEM> newEqualities = unfrozen.addElement(elem, omitSanityChecks);
-//			unfrozen.freeze();
-//			return unfrozen;
-//		}
-//	}
 
 	/**
 	 * (always works in place)
@@ -492,7 +446,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return resultPp;
 	}
 
-	public CongruenceClosure<ELEM> getSingleDisequalityCc(final ELEM node1, final ELEM node2, final boolean modifiable) {
+	public CongruenceClosure<ELEM> getSingleDisequalityCc(final ELEM node1, final ELEM node2,
+			final boolean modifiable) {
 		final CongruenceClosure<ELEM> cc = getEmptyCc(modifiable);
 		final CongruenceClosure<ELEM> result = reportDisequality(node1, node2, cc, modifiable);
 		final CongruenceClosure<ELEM> resultPp = postProcessCcResult(result);
@@ -502,9 +457,9 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	public CongruenceClosure<ELEM> getEmptyCc(final boolean modifiable) {
 		if (modifiable) {
 			return new CongruenceClosure<>(this);
-	 	} else {
-	 		return mEmptyFrozenCc;
-	 	}
+		} else {
+			return mEmptyFrozenCc;
+		}
 	}
 
 	public CongruenceClosure<ELEM> getInconsistentCc() {
@@ -512,9 +467,9 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public CongruenceClosure<ELEM> getCongruenceClosureFromTver(final ThreeValuedEquivalenceRelation<ELEM> tver,
-//			final CCLiteralSetConstraints<ELEM> literalConstraints,
+			// final CCLiteralSetConstraints<ELEM> literalConstraints,
 			final boolean modifiable) {
-		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(this, tver);//, literalConstraints);
+		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(this, tver);// , literalConstraints);
 		if (!modifiable) {
 			result.freezeAndClose();
 		}
@@ -522,11 +477,10 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public CongruenceClosure<ELEM> getCongruenceClosureFromTver(final ThreeValuedEquivalenceRelation<ELEM> tver,
-			final IRemovalInfo<ELEM> removeElementInfo,
-			final CCLiteralSetConstraints<ELEM> literalConstraints,
+			final IRemovalInfo<ELEM> removeElementInfo, final CCLiteralSetConstraints<ELEM> literalConstraints,
 			final boolean modifiable) {
-		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(this, tver, literalConstraints,
-				removeElementInfo);
+		final CongruenceClosure<ELEM> result =
+				new CongruenceClosure<>(this, tver, literalConstraints, removeElementInfo);
 		if (!modifiable) {
 			result.freezeAndClose();
 		}
@@ -549,10 +503,10 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (cc.isFrozen()) {
 			result.freezeAndClose();
 		}
-//		assert result.isFrozen() == cc.isFrozen();
-//		if (CcSettings.FREEZE_ALL_IN_MANAGER) {
-//			result.freeze();
-//		}
+		// assert result.isFrozen() == cc.isFrozen();
+		// if (CcSettings.FREEZE_ALL_IN_MANAGER) {
+		// result.freeze();
+		// }
 		return result;
 	}
 
@@ -565,7 +519,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		assert !CcSettings.FORBID_INPLACE || !inplace;
 		final CongruenceClosure<ELEM> result;
 		if (inplace) {
-//			assert false : "inplace does not seem to work, currently (problem with representatives...)";
+			// assert false : "inplace does not seem to work, currently (problem with representatives...)";
 			cc.transformElementsAndFunctions(transformer);
 			result = cc;
 		} else {
@@ -584,11 +538,13 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			final IRemovalInfo<ELEM> remInfo) {
 		bmStart(CcBmNames.PROJECT_TO_ELEMENTS);
 		if (CcSettings.PROJECTTOELEMENTS_INPLACE) {
-			throw new AssertionError("CongruenceClosure.projectToElements is currently not suited for inplace "
-					+ "operation");
+			throw new AssertionError(
+					"CongruenceClosure.projectToElements is currently not suited for inplace " + "operation");
 		} else {
-			/* the operation might be lossy, but here we treat a CongruenceClosure, so freezing for closing is not
-			 * needed */
+			/*
+			 * the operation might be lossy, but here we treat a CongruenceClosure, so freezing for closing is not
+			 * needed
+			 */
 			final CongruenceClosure<ELEM> unfrozen = unfreezeIfNecessary(cc);
 			final CongruenceClosure<ELEM> result = unfrozen.projectToElements(nodesToKeep, remInfo);
 			result.freezeAndClose();
@@ -646,8 +602,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	public CongruenceClosure<ELEM> getCopy(final CongruenceClosure<ELEM> congruenceClosure, final boolean modifiable) {
 		final CongruenceClosure<ELEM> copy = new CongruenceClosure<>(congruenceClosure);
 		/*
-		 * remark: if there were any closure operations during a CongruenceClosure.freeze, we would have to trigger
-		 *  them here.
+		 * remark: if there were any closure operations during a CongruenceClosure.freeze, we would have to trigger them
+		 * here.
 		 */
 		if (!modifiable) {
 			copy.freezeAndClose();
@@ -668,7 +624,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	/**
-		 * This is the "base" isStrongerThan insofar it is the backend to the cache, and does not use the cache!
+	 * This is the "base" isStrongerThan insofar it is the backend to the cache, and does not use the cache!
 	 *
 	 * @param cc1
 	 * @param cc2
@@ -695,11 +651,10 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			bmEnd(CcBmNames.IS_STRONGER_THAN_NO_CACHING);
 			return false;
 		}
-		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned = alignElements(cc1, cc2,
-				CcSettings.ALIGN_INPLACE && !cc1.isFrozen() && !cc2.isFrozen());
+		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned =
+				alignElements(cc1, cc2, CcSettings.ALIGN_INPLACE && !cc1.isFrozen() && !cc2.isFrozen());
 		final CongruenceClosure<ELEM> thisAligned = aligned.getFirst();
 		final CongruenceClosure<ELEM> otherAligned = aligned.getSecond();
-
 
 		assert assertElementsAreSuperset(thisAligned, otherAligned);
 		assert assertElementsAreSuperset(otherAligned, thisAligned);
@@ -710,11 +665,11 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	/**
-	 * We check for each equivalence representative in "other" if its equivalence
-	 * class is a subset of the equivalence class of the representative in "this".
+	 * We check for each equivalence representative in "other" if its equivalence class is a subset of the equivalence
+	 * class of the representative in "this".
 	 *
-	 * (going through the representatives in "this" would be unsound because we
-	 * might not see all relevant equivalence classes in "other")
+	 * (going through the representatives in "this" would be unsound because we might not see all relevant equivalence
+	 * classes in "other")
 	 *
 	 * assumes that this and other have the same elements and functions
 	 *
@@ -738,7 +693,6 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return false;
 		}
 
-
 		if (!thisAligned.getLiteralSetConstraints().isStrongerThan(otherAligned.getLiteralSetConstraints())) {
 			return false;
 		}
@@ -760,8 +714,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return false;
 		}
 
-		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned = alignElements(cc1, cc2,
-				CcSettings.ALIGN_INPLACE && !cc1.isFrozen() && !cc2.isFrozen());
+		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned =
+				alignElements(cc1, cc2, CcSettings.ALIGN_INPLACE && !cc1.isFrozen() && !cc2.isFrozen());
 		final CongruenceClosure<ELEM> thisAligned = aligned.getFirst();
 		final CongruenceClosure<ELEM> otherAligned = aligned.getSecond();
 		return checkIsStrongerThan(thisAligned, otherAligned) && checkIsStrongerThan(otherAligned, thisAligned);
@@ -774,10 +728,11 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (inplace) {
 			bmStart(CcBmNames.ALIGN_ELEMENTS);
 
-//			addAllElements(cc1, cc2.getAllElements(), null, true);
-//			addAllElements(cc2, cc1.getAllElements(), null, true);
+			// addAllElements(cc1, cc2.getAllElements(), null, true);
+			// addAllElements(cc2, cc1.getAllElements(), null, true);
 
-			/* this single call is not enough for aligning because constant arrays may introduce elements when other
+			/*
+			 * this single call is not enough for aligning because constant arrays may introduce elements when other
 			 * elements are added based on equalities in that constraint
 			 */
 			while (!cc1.getAllElements().containsAll(cc2.getAllElements())
@@ -796,10 +751,11 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			final CongruenceClosure<ELEM> cc1Aligned = copyNoRemInfoUnfrozen(cc1);
 			final CongruenceClosure<ELEM> cc2Aligned = copyNoRemInfoUnfrozen(cc2);
 
-//			addAllElements(cc1Aligned, cc2Aligned.getAllElements(), null, true);
-//			addAllElements(cc2Aligned, cc1Aligned.getAllElements(), null, true);
+			// addAllElements(cc1Aligned, cc2Aligned.getAllElements(), null, true);
+			// addAllElements(cc2Aligned, cc1Aligned.getAllElements(), null, true);
 
-			/* this single call is not enough for aligning because constant arrays may introduce elements when other
+			/*
+			 * this single call is not enough for aligning because constant arrays may introduce elements when other
 			 * elements are added based on equalities in that constraint
 			 */
 			while (!cc1Aligned.getAllElements().containsAll(cc2Aligned.getAllElements())
@@ -817,9 +773,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 	}
 
-	private static <E extends ICongruenceClosureElement<E>>
-			boolean areDisequalitiesStrongerThan(final CongruenceClosure<E> left,
-					final CongruenceClosure<E> right) {
+	private static <E extends ICongruenceClosureElement<E>> boolean
+			areDisequalitiesStrongerThan(final CongruenceClosure<E> left, final CongruenceClosure<E> right) {
 		for (final E rep : right.getAllRepresentatives()) {
 			for (final E disequalRep : right.getRepresentativesUnequalTo(rep)) {
 				if (left.getEqualityStatus(rep, disequalRep) != EqualityStatus.NOT_EQUAL) {
@@ -829,7 +784,6 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 		return true;
 	}
-
 
 	private boolean assertElementsAreSuperset(final Set<ELEM> a, final Set<ELEM> b) {
 		final Set<ELEM> difference = DataStructureUtils.difference(b, a);
@@ -843,12 +797,12 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	/**
 	 * check that elements in a are a superset of elements in b
+	 *
 	 * @param a
 	 * @param b
 	 * @return
 	 */
-	private boolean assertElementsAreSuperset(final CongruenceClosure<ELEM> a,
-			final CongruenceClosure<ELEM> b) {
+	private boolean assertElementsAreSuperset(final CongruenceClosure<ELEM> a, final CongruenceClosure<ELEM> b) {
 		final Set<ELEM> difference = DataStructureUtils.difference(b.getAllElements(), a.getAllElements());
 		if (!difference.isEmpty()) {
 			assert false;
@@ -857,8 +811,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return true;
 	}
 
-
-		/**
+	/**
 	 *
 	 * @param first
 	 * @param second
@@ -866,8 +819,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 */
 	static <E> boolean isPartitionStronger(final ThreeValuedEquivalenceRelation<E> first,
 			final ThreeValuedEquivalenceRelation<E> second) {
-		final Collection<E> representativesFromBoth = new ArrayList<>(first.getAllRepresentatives().size()
-				+ second.getAllRepresentatives().size());
+		final Collection<E> representativesFromBoth =
+				new ArrayList<>(first.getAllRepresentatives().size() + second.getAllRepresentatives().size());
 		representativesFromBoth.addAll(first.getAllRepresentatives());
 		representativesFromBoth.addAll(second.getAllRepresentatives());
 
@@ -891,26 +844,24 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return
 	 */
 	public SetConstraintConjunction<ELEM> buildSetConstraintConjunction(
-			final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
-			final ELEM constrainedElement,
+			final CCLiteralSetConstraints<ELEM> surroundingSetConstraints, final ELEM constrainedElement,
 			final Set<SetConstraint<ELEM>> setConstraintsIn) {
 		bmStart(CcBmNames.BUILD_SET_CONSTRAINT_CONJUNCTION);
 
-		final Set<SetConstraint<ELEM>> setConstraintsUpdRepr =
-				mSetConstraintManager.updateOnChangedRepresentative(setConstraintsIn,
-						surroundingSetConstraints.getCongruenceClosure());
-//		assert setConstraintsUpdRepr == setConstraintsIn : "if this never fails, we can remove that updaterep operation";
+		final Set<SetConstraint<ELEM>> setConstraintsUpdRepr = mSetConstraintManager
+				.updateOnChangedRepresentative(setConstraintsIn, surroundingSetConstraints.getCongruenceClosure());
+		// assert setConstraintsUpdRepr == setConstraintsIn : "if this never fails, we can remove that updaterep
+		// operation";
 
-		final Set<SetConstraint<ELEM>> filtered1 = normalizeSetConstraintConjunction(surroundingSetConstraints,
-				setConstraintsUpdRepr);
-
+		final Set<SetConstraint<ELEM>> filtered1 =
+				normalizeSetConstraintConjunction(surroundingSetConstraints, setConstraintsUpdRepr);
 
 		// throw away all singletons, as they were (must have been!) reported as equalities
 		// throw away all tautological constraints
-//		final Set<SetConstraint<ELEM>> filtered2 = filtered1.stream()
-//				.filter(sc -> !sc.isSingleton())
-//				.filter(sc -> !SetConstraint.isTautological(constrainedElement, sc))
-//				.collect(Collectors.toSet());
+		// final Set<SetConstraint<ELEM>> filtered2 = filtered1.stream()
+		// .filter(sc -> !sc.isSingleton())
+		// .filter(sc -> !SetConstraint.isTautological(constrainedElement, sc))
+		// .collect(Collectors.toSet());
 		final Set<SetConstraint<ELEM>> filtered2 = new HashSet<>();
 		for (final SetConstraint<ELEM> sc : filtered1) {
 			if (sc.isSingleton()) {
@@ -922,9 +873,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			filtered2.add(sc);
 		}
 
-
-		assert !filtered2.stream().anyMatch(sc -> sc.isInconsistent()) || filtered2.size() == 1
-				: "not correctly normalized: there is a 'false' conjunct, but it is not the only conjunct";
+		assert !filtered2.stream().anyMatch(sc -> sc.isInconsistent()) || filtered2
+				.size() == 1 : "not correctly normalized: there is a 'false' conjunct, but it is not the only conjunct";
 
 		if (filtered2.size() == 1 && filtered2.iterator().next().isInconsistent()) {
 			bmEnd(CcBmNames.BUILD_SET_CONSTRAINT_CONJUNCTION);
@@ -935,17 +885,18 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 				new SetConstraintConjunction<>(surroundingSetConstraints, constrainedElement, filtered2);
 
 		bmEnd(CcBmNames.BUILD_SET_CONSTRAINT_CONJUNCTION);
-		return  result;
+		return result;
 	}
 
 	/**
 	 * Apply normalizations, e.g.,
-	 *  <li> expansion of literals if possible according to surroundingSetConstraints
+	 * <li>expansion of literals if possible according to surroundingSetConstraints
 	 *
 	 * note that this normalization is not wrt any constrained element! (e.g. the filtering for x in {x} must happen
 	 * outside of this method)
 	 *
-	 * @param surroundingSetConstraints used to: expand literals, compute meet
+	 * @param surroundingSetConstraints
+	 *            used to: expand literals, compute meet
 	 * @param setConstraintsIn
 	 * @return
 	 */
@@ -958,7 +909,6 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
 			return Collections.emptySet();
 		}
-
 
 		// expand non-literals if possible (in-place on SetConstraints)
 		final Set<SetConstraint<ELEM>> expanded = new HashSet<>(setConstraintsIn);
@@ -975,18 +925,16 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			}
 		}
 
-
-//		//TODO: only instantiate SetConstraintComparator once??
-//		final PartialOrderCache<SetConstraint<ELEM>> poc1 = new PartialOrderCache<>(
-//				mSetConstraintManager.getSetConstraintComparator());
-//		final Set<SetConstraint<ELEM>> filtered1 = poc1.getMaximalRepresentatives(expanded);
-//
-//		// check for tautology
-//		if (filtered1.isEmpty()) {
-//			bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
-//			return Collections.emptySet();
-//		}
-
+		// //TODO: only instantiate SetConstraintComparator once??
+		// final PartialOrderCache<SetConstraint<ELEM>> poc1 = new PartialOrderCache<>(
+		// mSetConstraintManager.getSetConstraintComparator());
+		// final Set<SetConstraint<ELEM>> filtered1 = poc1.getMaximalRepresentatives(expanded);
+		//
+		// // check for tautology
+		// if (filtered1.isEmpty()) {
+		// bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
+		// return Collections.emptySet();
+		// }
 
 		Set<ELEM> intersectionOfLiteralOnlyConstraints = null;
 		// check for inconsistency
@@ -1009,17 +957,16 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			}
 
 			// bs -- example: x in {1} /\ x in {0}
-//			if (sc.isSingleton()) {
-//				return Collections.singleton(sc);
-//			}
+			// if (sc.isSingleton()) {
+			// return Collections.singleton(sc);
+			// }
 		}
-
 
 		final Set<SetConstraint<ELEM>> literalsMerged;
 		if (intersectionOfLiteralOnlyConstraints != null) {
 			literalsMerged = new HashSet<>();
-			literalsMerged.add(mSetConstraintManager.buildSetConstraint(
-					intersectionOfLiteralOnlyConstraints, Collections.emptySet()));
+			literalsMerged.add(mSetConstraintManager.buildSetConstraint(intersectionOfLiteralOnlyConstraints,
+					Collections.emptySet()));
 
 			for (final SetConstraint<ELEM> sc : expanded) {
 				if (sc.hasOnlyLiterals()) {
@@ -1034,45 +981,15 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			literalsMerged = expanded;
 		}
 
-//		final Set<SetConstraint<ELEM>> all = new HashSet<>();
-//		onlyLiterals = filtered1.stream().filter(sc -> sc.hasOnlyLiterals())
-//				.reduce((sc1, sc2) -> mSetConstraintManager.buildSetConstraint(DataStructure, nonLiterals);
-
-//		// introduce all the conjunctive constraints according to all the subsets..
-//		for (final Set<SetConstraint<ELEM>> subSet : DataStructureUtils.powerSet(filtered1)) {
-//			final SetConstraint<ELEM> meet = mSetConstraintManager.meet(surroundingSetConstraints, subSet);
-//
-//			if (meet == null) {
-//				// "Top" constraint, represented by "null", no need to add to a conjunction
-//				continue;
-//			}
-//
-//			if (meet.isInconsistent()) {
-//				// created inconsistent constraint
-//				bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
-//				return Collections.singleton(meet);
-//			}
-//
-//			all.add(meet);
-//		}
-
-		//TODO: only instantiate SetConstraintComparator once??
+		// TODO: only instantiate SetConstraintComparator once??
 		final PartialOrderCache<SetConstraint<ELEM>> poc =
 				new PartialOrderCache<>(mSetConstraintManager.getSetConstraintComparator());
 		final Set<SetConstraint<ELEM>> filtered = poc.getMaximalRepresentatives(literalsMerged);
-
-//		// check for tautology
-//		if (filtered.isEmpty()) {
-//			bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
-////			return null;
-//			return Collections.emptySet();
-//		}
 
 		assert SetConstraintConjunction.sanityCheck(filtered);
 		bmEnd(CcBmNames.NORMALIZE_SET_CONSTRAINT_CONJUNCTION);
 		return filtered;
 	}
-
 
 	public BenchmarkWithCounters getBenchmark() {
 		return mBenchmark;
@@ -1115,7 +1032,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		FILTERREDUNDANT, UNFREEZE, COPY, MEET, JOIN, REMOVE, IS_STRONGER_THAN_NO_CACHING, ADDNODE, REPORTCONTAINS,
 		REPORT_EQUALITY, REPORT_DISEQUALITY, PROJECT_TO_ELEMENTS, ADD_ALL_ELEMENTS, ALIGN_ELEMENTS, OVERALL,
 		IS_STRONGER_THAN_W_CACHING, BUILD_SET_CONSTRAINT_CONJUNCTION, NORMALIZE_SET_CONSTRAINT_CONJUNCTION,
-		GET_EQUALITY_STATUS, MEET_IS_INCONSISTENT ;
+		GET_EQUALITY_STATUS, MEET_IS_INCONSISTENT;
 
 		static String[] getNames() {
 			final String[] result = new String[values().length];
@@ -1143,13 +1060,13 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	/**
 	 *
-	 * @param ccWithBroaderPartition (broader == stronger == more constraining)
+	 * @param ccWithBroaderPartition
+	 *            (broader == stronger == more constraining)
 	 * @param ccWithFinerPartition
 	 * @return
 	 */
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> HashRelation<ELEM, ELEM> computeSplitInfo(
-			final CongruenceClosure<ELEM> ccWithBroaderPartition,
-			final CongruenceClosure<ELEM> ccWithFinerPartition) {
+			final CongruenceClosure<ELEM> ccWithBroaderPartition, final CongruenceClosure<ELEM> ccWithFinerPartition) {
 		assert CcManager.isPartitionStronger(ccWithBroaderPartition.mElementTVER,
 				ccWithFinerPartition.mElementTVER) : "assuming this has been checked already";
 
