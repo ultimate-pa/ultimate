@@ -35,7 +35,6 @@ import java.util.Set;
 import java.util.function.BinaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -76,7 +75,7 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 
 	@Override
 	public Term toTerm(final Script script) {
-		return SmtUtils.and(script, cachedSelectiveClosure().getTerm(script, getIndexToTermArray()));
+		return mMatrix.getTerm(script, getIndexToTermArray());
 	}
 
 	@Override

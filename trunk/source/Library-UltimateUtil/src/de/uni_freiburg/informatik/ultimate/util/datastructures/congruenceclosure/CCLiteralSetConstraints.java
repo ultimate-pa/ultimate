@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -41,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 /**
  * Handles "literal set" constraints. In addition to equalities and disequalities, A CongruenceClosure may have
- * constraints of the form "l in L", where l is a literal and L is a set of literals.
- * These constraints are handled through an instance of this class.
+ * constraints of the form "l in L", where l is a literal and L is a set of literals. These constraints are handled
+ * through an instance of this class.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -65,11 +66,12 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 		mContainsConstraints = new HashMap<>();
 		mIsInconsistent = false;
-//		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
+		// assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
 	}
 
 	/**
 	 * copy constructor
+	 *
 	 * @param manager
 	 * @param congruenceClosure
 	 * @param containsConstraints
@@ -87,18 +89,16 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			mContainsConstraints.put(en.getKey(), new SetConstraintConjunction<>(this, en.getValue()));
 		}
 		mIsInconsistent = false;
-//		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
+		// assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
 	}
 
 	public HashRelation<ELEM, ELEM> reportContains(final ELEM element, final Set<SetConstraint<ELEM>> constraintRaw) {
 		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
 
-
 		final ELEM elementRep = mCongruenceClosure.getRepresentativeElement(element);
 
 		final Set<SetConstraint<ELEM>> constraintUpdRep =
 				mSetConstraintManager.updateOnChangedRepresentative(constraintRaw, mCongruenceClosure);
-
 
 		final Set<SetConstraint<ELEM>> oldConstraint = getConstraint(element);
 		// just for analogy to reportEquality
@@ -125,7 +125,6 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			// nothing to do
 			return null;
 		}
-
 
 		mCcManager.addElement(mCongruenceClosure, element, true, false);
 		mCcManager.addAllElements(mCongruenceClosure, elements, null, true);
@@ -163,10 +162,8 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		final Set<SetConstraint<ELEM>> newConstraint1 =
 				mCcManager.normalizeSetConstraintConjunction(this, newConstraintFiltered);
 
-
 		/*
-		 * rule: e in {l} --> e ~ l
-		 * (containsConstraint is implicit in this case)
+		 * rule: e in {l} --> e ~ l (containsConstraint is implicit in this case)
 		 */
 		for (final ELEM sv : mSetConstraintManager.getSingletonValues(newConstraint1)) {
 			if (!constrainedElemRep.equals(sv)) {
@@ -193,16 +190,14 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 	/**
 	 * Call this when an equality is reported in mCongruenceClosure
-	 * <li> updates representatives
-	 * <li> applies the rule "e ~ l --> e in {l}" (if one of the elements is a literal)
-	 *    EDIT: this rule is automatically dealt with because we only store representatives here and literals are always
-	 *      the representatives of their equivalence class. We leave the containments l in {l} implicit.
+	 * <li>updates representatives
+	 * <li>applies the rule "e ~ l --> e in {l}" (if one of the elements is a literal) EDIT: this rule is automatically
+	 * dealt with because we only store representatives here and literals are always the representatives of their
+	 * equivalence class. We leave the containments l in {l} implicit.
 	 *
-	 * <li> EDIT (may18): what was not dealt with before:
-	 *   updating representatives may not be enough, because some propagation rules might trigger:
-	 *     e.g., if one of the newly equated elements has a disequality constraint, and one has a set constraint, they
-	 *      might interact
-	 *      (example: e1 in {l1, l2}, e2 != l1, e2 != l2 && e1 = e2 --> bottom)
+	 * <li>EDIT (may18): what was not dealt with before: updating representatives may not be enough, because some
+	 * propagation rules might trigger: e.g., if one of the newly equated elements has a disequality constraint, and one
+	 * has a set constraint, they might interact (example: e1 in {l1, l2}, e2 != l1, e2 != l2 && e1 = e2 --> bottom)
 	 *
 	 * @param elem1OldRep
 	 * @param elem2OldRep
@@ -224,18 +219,17 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		mContainsConstraints.remove(elem2OldRep);
 
 		if (elem1LiteralSet != null) {
-			elem1LiteralSet =
-					mSetConstraintManager.updateOnChangedRepresentative(elem1LiteralSet, elem1OldRep, elem2OldRep, newRep);
+			elem1LiteralSet = mSetConstraintManager.updateOnChangedRepresentative(elem1LiteralSet, elem1OldRep,
+					elem2OldRep, newRep);
 		}
 		if (elem2LiteralSet != null) {
-			elem2LiteralSet =
-					mSetConstraintManager.updateOnChangedRepresentative(elem2LiteralSet, elem1OldRep, elem2OldRep, newRep);
+			elem2LiteralSet = mSetConstraintManager.updateOnChangedRepresentative(elem2LiteralSet, elem1OldRep,
+					elem2OldRep, newRep);
 		}
 
 		Set<SetConstraint<ELEM>> newConstraint = null;
-		if (elem1LiteralSet != null && elem2LiteralSet != null)  {
-			newConstraint =
-					mSetConstraintManager.meet(this, elem1LiteralSet, elem2LiteralSet);
+		if (elem1LiteralSet != null && elem2LiteralSet != null) {
+			newConstraint = mSetConstraintManager.meet(this, elem1LiteralSet, elem2LiteralSet);
 		} else if (elem1LiteralSet != null) {
 			newConstraint = elem1LiteralSet;
 		} else if (elem2LiteralSet != null) {
@@ -251,8 +245,8 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 					mSetConstraintManager.updateOnChangedRepresentative(oldSc, elem1OldRep, elem2OldRep, newRep);
 
 			assert newSc == oldSc || mSetConstraintManager.getSingletonValues(newSc).isEmpty();
-			final SetConstraintConjunction<ELEM> updated = newSc == oldSc ? en.getValue() :
-					mCcManager.buildSetConstraintConjunction(this, en.getKey(), newSc);
+			final SetConstraintConjunction<ELEM> updated =
+					newSc == oldSc ? en.getValue() : mCcManager.buildSetConstraintConjunction(this, en.getKey(), newSc);
 			mContainsConstraints.put(en.getKey(), updated);
 		}
 
@@ -264,10 +258,9 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		return eqToProp;
 	}
 
-	public CCLiteralSetConstraints<ELEM> join(final CongruenceClosure<ELEM> newCc,
-			final HashRelation<ELEM, ELEM> thisSplitInfo,
-			final HashRelation<ELEM, ELEM> otherSplitInfo,
-			final CCLiteralSetConstraints<ELEM> other) {
+	public CCLiteralSetConstraints<ELEM> merge(final CongruenceClosure<ELEM> newCc,
+			final HashRelation<ELEM, ELEM> thisSplitInfo, final HashRelation<ELEM, ELEM> otherSplitInfo,
+			final CCLiteralSetConstraints<ELEM> other, final BinaryOperator<Set<SetConstraint<ELEM>>> literalMergeOperator) {
 		if (this.isInconsistent()) {
 			return other;
 		}
@@ -275,8 +268,8 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			return this;
 		}
 		/*
-		 * Note that we cannot do shortcut on (this.isTautological() || other.isTautological()) here, because if we
-		 *  join x = 1 and x = 2, the literal set constraints by themselves are tautological/empty..
+		 * Note that we cannot do shortcut on (this.isTautological() || other.isTautological()) here, because if we join
+		 * x = 1 and x = 2, the literal set constraints by themselves are tautological/empty..
 		 */
 
 		final CCLiteralSetConstraints<ELEM> newSetConstraints = new CCLiteralSetConstraints<>(mCcManager, newCc);
@@ -289,18 +282,16 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			final Set<SetConstraint<ELEM>> otherConstraint =
 					other.getConstraintWrtSplit(constrainedElem, newCc, otherSplitInfo);
 
-			final Set<SetConstraint<ELEM>> newConstraints =
-					mSetConstraintManager.join(newSetConstraints, thisConstraint, otherConstraint);
+			final Set<SetConstraint<ELEM>> newConstraints = literalMergeOperator.apply(thisConstraint, otherConstraint);
 
 			assert mSetConstraintManager.getSingletonValues(newConstraints).stream()
-				.filter(sv -> !newCc.getRepresentativeElement(sv).equals(constrainedElem))
-				.collect(Collectors.toSet()).isEmpty()
-					: "created non-tautological singleton set constraints "
-						+ "--> report them, befor buildSetConstraintConj.. throws them away!";
+					.filter(sv -> !newCc.getRepresentativeElement(sv).equals(constrainedElem))
+					.collect(Collectors.toSet()).isEmpty() : "created non-tautological singleton set constraints "
+							+ "--> report them, befor buildSetConstraintConj.. throws them away!";
 			final SetConstraintConjunction<ELEM> newConstraint =
 					mCcManager.buildSetConstraintConjunction(newSetConstraints, constrainedElem, newConstraints);
 
-			if (mSetConstraintManager.isTautological(newConstraint)) {
+			if (SetConstraintManager.isTautological(newConstraint)) {
 				// tautological constraint --> nothing to add
 			} else {
 				newContainsConstraints.put(constrainedElem, newConstraint);
@@ -317,30 +308,29 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		mContainsConstraints = newContainsConstraints;
 	}
 
-	public boolean isStrongerThan(
-			final CCLiteralSetConstraints<ELEM> other) {
+	public boolean isStrongerThan(final CCLiteralSetConstraints<ELEM> other) {
 		assert CcManager.isPartitionStronger(this.getCongruenceClosure().mElementTVER,
 				other.getCongruenceClosure().mElementTVER) : "assuming this has been checked already";
 
 		final Set<ELEM> constrainedElements = new HashSet<>();
-		constrainedElements.addAll(this.mContainsConstraints.keySet());
+		constrainedElements.addAll(mContainsConstraints.keySet());
 		constrainedElements.addAll(other.mContainsConstraints.keySet());
 
-
-		final HashRelation<ELEM, ELEM> splitInfo = CcManager.computeSplitInfo(this.getCongruenceClosure(),
-				other.getCongruenceClosure());
+		final HashRelation<ELEM, ELEM> splitInfo =
+				CcManager.computeSplitInfo(this.getCongruenceClosure(), other.getCongruenceClosure());
 
 		for (final ELEM elem : constrainedElements) {
 
-			// [old: the two constraints must be in terms of the same representatives --> adapt the first to the second..]
+			// [old: the two constraints must be in terms of the same representatives --> adapt the first to the
+			// second..]
 			/*
-			 *  update the literal constraints wrt the split that the congruenceclosure has between first and second
-			 *  (at this point we already know that the Cc of other is weaker or equal than the Cc of this, so the
-			 *  partition can only be finer.
+			 * update the literal constraints wrt the split that the congruenceclosure has between first and second (at
+			 * this point we already know that the Cc of other is weaker or equal than the Cc of this, so the partition
+			 * can only be finer.
 			 */
-			final Set<SetConstraint<ELEM>> firstConstraint = //this.getConstraint(elem);
-//				mSetConstraintManager.updateOnChangedRepresentative(this.getConstraint(elem),
-//						other.getCongruenceClosure());
+			final Set<SetConstraint<ELEM>> firstConstraint = // this.getConstraint(elem);
+					// mSetConstraintManager.updateOnChangedRepresentative(this.getConstraint(elem),
+					// other.getCongruenceClosure());
 					getConstraintWrtSplit(elem, other.getCongruenceClosure(), splitInfo);
 			final Set<SetConstraint<ELEM>> secondConstraint = other.getConstraint(elem);
 
@@ -362,10 +352,10 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 		/*
 		 * <li> we only store representatives in our set of constraints, i.e., for each explicitly stored constraint
-		 *  "e in L", e must be a representative in mCongruenceClosure.
-		 * <li> we leave the constraints of the form "l in {l}" implicit.
+		 * "e in L", e must be a representative in mCongruenceClosure. <li> we leave the constraints of the form
+		 * "l in {l}" implicit.
 		 */
-//		for (final ELEM el : mContainsConstraints.keySet()) {
+		// for (final ELEM el : mContainsConstraints.keySet()) {
 		for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : mContainsConstraints.entrySet()) {
 			if (!mCongruenceClosure.isRepresentative(en.getKey())) {
 				assert false;
@@ -376,10 +366,10 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 				return false;
 			}
 			// this is not a violation: e.g., 2 in {x, y} is a valid (in the sense of "sane") constraint
-//			if (en.getKey().isLiteral()) {
-//				assert false;
-//				return false;
-//			}
+			// if (en.getKey().isLiteral()) {
+			// assert false;
+			// return false;
+			// }
 		}
 
 		/*
@@ -395,20 +385,20 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 				assert false;
 				return false;
 			}
-//			if (literalSet.size() == 1) {
-//				// we leave constraints of the form l in {l} implicit
-//				assert false;
-//				return false;
-//			}
-//			if (!literalSet.stream().allMatch(ELEM::isLiteral)) {
-//				assert false;
-//				return false;
-//			}
+			// if (literalSet.size() == 1) {
+			// // we leave constraints of the form l in {l} implicit
+			// assert false;
+			// return false;
+			// }
+			// if (!literalSet.stream().allMatch(ELEM::isLiteral)) {
+			// assert false;
+			// return false;
+			// }
 		}
 
 		if (mCongruenceClosure.mLiteralSetConstraints != this) {
-				assert false;
-				return false;
+			assert false;
+			return false;
 		}
 
 		return true;
@@ -421,8 +411,7 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	/**
 	 * Return the constraint of the form "e in L U N" that the set constraints of mCongruenceClosure puts on elem.
 	 *
-	 * If there is a set constraint, return the set.
-	 * Otherwise return null (for "unconstrained")
+	 * If there is a set constraint, return the set. Otherwise return null (for "unconstrained")
 	 *
 	 * @param elem
 	 * @return
@@ -432,19 +421,18 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			return null;
 		}
 
-
 		final Set<SetConstraint<ELEM>> result = new HashSet<>();
 
 		final ELEM rep = mCongruenceClosure.getRepresentativeElement(elem);
 
 		/* an equality x ~ y implies a set constraint x in {y}, which we add to the conjunction. */
-//		if (!rep.equals(elem)) {
-			result.add(mSetConstraintManager.buildSetConstraint(Collections.singleton(rep)));
-//		}
+		// if (!rep.equals(elem)) {
+		result.add(mSetConstraintManager.buildSetConstraint(Collections.singleton(rep)));
+		// }
 		// dont do this: (only talk about representatives..)
-//		for (final ELEM eqMember : mCongruenceClosure.getEquivalenceClass(elem)) {
-//			result.add(mSetConstraintManager.buildSetConstraint(Collections.singleton(eqMember)));
-//		}
+		// for (final ELEM eqMember : mCongruenceClosure.getEquivalenceClass(elem)) {
+		// result.add(mSetConstraintManager.buildSetConstraint(Collections.singleton(eqMember)));
+		// }
 
 		{
 			final SetConstraintConjunction<ELEM> sccRep = mContainsConstraints.get(rep);
@@ -452,17 +440,14 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 				result.addAll(sccRep.getSetConstraints());
 			}
 			/*
-			 * for good measure: also check if there is a constraint stored under elem when elem is not rep (happens during
-			 *   CCLiteralSetConstraint.reportEquality
+			 * for good measure: also check if there is a constraint stored under elem when elem is not rep (happens
+			 * during CCLiteralSetConstraint.reportEquality
 			 */
 			final SetConstraintConjunction<ELEM> sccEl = mContainsConstraints.get(elem);
 			if (sccEl != null) {
 				result.addAll(sccEl.getSetConstraints());
 			}
 		}
-
-
-
 
 		if (result.isEmpty()) {
 			// could not find any elements for the set constraint
@@ -480,13 +465,13 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	 * constraint by x in {c, b} /\ x in {d, b}.
 	 *
 	 *
-	 * [old (wrt. that getConstraint takes into account equalities):
-	 * (e.g. mCongruenceClosure = {!x, y, z,a}, newCc = {x, !y, z}, {!a}, constrainedElem = x, (representatives are
-	 *  marked with "!"), then the result should be "x in {y} /\ x in {a}")
-	 *  ]
+	 * [old (wrt. that getConstraint takes into account equalities): (e.g. mCongruenceClosure = {!x, y, z,a}, newCc =
+	 * {x, !y, z}, {!a}, constrainedElem = x, (representatives are marked with "!"), then the result should be "x in {y}
+	 * /\ x in {a}") ]
 	 *
 	 * @param constrainedElem
-	 * @param ccWithFinerPartition TODO remove this param?
+	 * @param ccWithFinerPartition
+	 *            TODO remove this param?
 	 * @return
 	 */
 	private Set<SetConstraint<ELEM>> getConstraintWrtSplit(final ELEM constrainedElem,
@@ -504,12 +489,14 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		Set<SetConstraint<ELEM>> result = new HashSet<>(oldConstraint);
 
 		for (final ELEM oldRep : splitInfo.getDomain()) {
-			assert !mCongruenceClosure.hasElement(oldRep)|| mCongruenceClosure.isRepresentative(oldRep);
+			assert !mCongruenceClosure.hasElement(oldRep) || mCongruenceClosure.isRepresentative(oldRep);
 			final Set<SetConstraint<ELEM>> newResult = new HashSet<>();
 
 			for (final SetConstraint<ELEM> sc : result) {
-				/* add a constraint for each newRep corresponding to oldRep, where oldRep has been replaced with that
-				 * newRep */
+				/*
+				 * add a constraint for each newRep corresponding to oldRep, where oldRep has been replaced with that
+				 * newRep
+				 */
 				for (final ELEM newRep : splitInfo.getImage(oldRep)) {
 					assert ccWithFinerPartition.isRepresentative(newRep);
 					newResult.add(mSetConstraintManager.transformElements(sc, e -> e.equals(oldRep) ? newRep : e));
@@ -543,28 +530,28 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 	public void projectAway(final ELEM elem) {
 		// EDIT: makes no sense: this is called during removal, when elem may already have been removed from mCc
-//		if (!mCongruenceClosure.hasElement(elem)) {
-//			// element not present, do nothing
-//			return;
-//		}
-//		assert mCongruenceClosure.isRepresentative(elem) : "right?..";
+		// if (!mCongruenceClosure.hasElement(elem)) {
+		// // element not present, do nothing
+		// return;
+		// }
+		// assert mCongruenceClosure.isRepresentative(elem) : "right?..";
 
 		// remove constraints of the form "elem in S"
-		 mContainsConstraints.remove(elem);
+		mContainsConstraints.remove(elem);
 
-		 /*
-		  * remove constraints that have elem on their right hand side
-		  * (a more precise alternative would be to introduce a dummy element, effectively an existentially quantified
-		  *  variable.. but we would have to introduce one for every projected element, right?..)
-		  */
-		 for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : new HashSet<>(mContainsConstraints.entrySet())) {
-			 en.getValue().projectAway(elem);
+		/*
+		 * remove constraints that have elem on their right hand side (a more precise alternative would be to introduce
+		 * a dummy element, effectively an existentially quantified variable.. but we would have to introduce one for
+		 * every projected element, right?..)
+		 */
+		for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : new HashSet<>(mContainsConstraints.entrySet())) {
+			en.getValue().projectAway(elem);
 
-			 // clean up constraints that became tautological
-			 if (en.getValue().isTautological()) {
-				 mContainsConstraints.remove(en.getKey());
-			 }
-		 }
+			// clean up constraints that became tautological
+			if (en.getValue().isTautological()) {
+				mContainsConstraints.remove(en.getKey());
+			}
+		}
 	}
 
 	public void replaceRepresentative(final ELEM oldRep, final ELEM newRep) {
@@ -580,8 +567,8 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 					mSetConstraintManager.updateOnChangedRepresentative(oldSc, oldRep, newRep);
 
 			assert mSetConstraintManager.getSingletonValues(newSc).isEmpty();
-			final SetConstraintConjunction<ELEM> updated = newSc == oldSc ? en.getValue() :
-					mCcManager.buildSetConstraintConjunction(this, en.getKey(), newSc);
+			final SetConstraintConjunction<ELEM> updated =
+					newSc == oldSc ? en.getValue() : mCcManager.buildSetConstraintConjunction(this, en.getKey(), newSc);
 			putContainsConstraint(en.getKey(), updated);
 		}
 	}
@@ -602,7 +589,7 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 		// rule: e in L /\ e != l --> e in L\{l}
 		{
-			final Set<SetConstraint<ELEM>> elem2Constraint = getConstraint(elem2Rep);//mContainsConstraints.get(elem2Rep);
+			final Set<SetConstraint<ELEM>> elem2Constraint = getConstraint(elem2Rep);// mContainsConstraints.get(elem2Rep);
 			if (elem2Constraint != null) {
 				final Set<SetConstraint<ELEM>> elem2ConstraintFiltered =
 						mSetConstraintManager.filterWithDisequality(elem2Constraint, elem1Rep);
@@ -652,17 +639,14 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	/**
 	 *
 	 * @param constraintsToKeepReps
-	 * @return
-	 * 		CCliteralSetconstraints where all constraints constrain an element in the given set. CongrunceClosure field
-	 *   is left at null.
+	 * @return CCliteralSetconstraints where all constraints constrain an element in the given set. CongrunceClosure
+	 *         field is left at null.
 	 */
-	public CCLiteralSetConstraints<ELEM> filterAndKeepOnlyConstraintsThatIntersectWith(
-			final Set<ELEM> constraintsToKeepReps) {
+	public CCLiteralSetConstraints<ELEM>
+			filterAndKeepOnlyConstraintsThatIntersectWith(final Set<ELEM> constraintsToKeepReps) {
 		assert !isInconsistent() : "handle this case";
 
-
-		final CCLiteralSetConstraints<ELEM> result =
-				new CCLiteralSetConstraints<>(mCcManager, null);
+		final CCLiteralSetConstraints<ELEM> result = new CCLiteralSetConstraints<>(mCcManager, null);
 
 		for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : mContainsConstraints.entrySet()) {
 			if (constraintsToKeepReps.contains(en.getKey())) {
@@ -689,7 +673,7 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 			assert mSetConstraintManager.getSingletonValues(valueTransformedSet).isEmpty();
 			final SetConstraintConjunction<ELEM> valueTransformed =
-					 mCcManager.buildSetConstraintConjunction(this, keyTransformed, valueTransformedSet);
+					mCcManager.buildSetConstraintConjunction(this, keyTransformed, valueTransformedSet);
 
 			putContainsConstraint(keyTransformed, valueTransformed);
 		}
@@ -714,8 +698,8 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	/**
 	 *
 	 * @return true iff this is not inconsistent and no literal constraints are stored explicitly (note that if
-	 *  mCongruenceClosure has equalities there are non-tautological literal constraints which are not stored
-	 *  explicitly)
+	 *         mCongruenceClosure has equalities there are non-tautological literal constraints which are not stored
+	 *         explicitly)
 	 */
 	public boolean isEmpty() {
 		if (isInconsistent()) {
@@ -749,20 +733,21 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 	/**
 	 * method for queries from the outside
+	 *
 	 * @param elem
 	 * @return
 	 */
-//	public SetConstraintConjunction<ELEM> getContainsConstraint(final ELEM elem) {
+	// public SetConstraintConjunction<ELEM> getContainsConstraint(final ELEM elem) {
 	public Set<SetConstraint<ELEM>> getContainsConstraint(final ELEM elem) {
 		return getConstraint(elem);
-//		final ELEM rep = mCongruenceClosure.getRepresentativeElement(elem);
-//		return mContainsConstraints.get(rep);
+		// final ELEM rep = mCongruenceClosure.getRepresentativeElement(elem);
+		// return mContainsConstraints.get(rep);
 	}
 
 	public boolean isConstrained(final ELEM elem) {
 		if (elem != mCongruenceClosure.getRepresentativeElement(elem)) {
-			throw new AssertionError("this is only called when elem is "
-				+ "unconstrained on mCongruenceClosure.mElementTVER, right?");
+			throw new AssertionError(
+					"this is only called when elem is " + "unconstrained on mCongruenceClosure.mElementTVER, right?");
 		}
 		return mContainsConstraints.get(elem) != null;
 	}

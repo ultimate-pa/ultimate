@@ -101,6 +101,15 @@ public class ManagedScript {
 		return mLockOwner != null;
 	}
 
+	/**
+	 * Throw an AssertionError if this {@link ManagedScript} is currently locked.
+	 */
+	public void assertScriptNotLocked() throws AssertionError {
+		if (isLocked()) {
+			throw new AssertionError("Script currently locked by " + String.valueOf(mLockOwner));
+		}
+	}
+
 	public boolean requestLockRelease() {
 		if (mLockOwner == null) {
 			throw new IllegalStateException("ManagedScript not locked");
