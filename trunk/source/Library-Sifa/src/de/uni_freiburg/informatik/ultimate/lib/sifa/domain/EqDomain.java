@@ -29,18 +29,23 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.EqConstraint;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.EqDisjunctiveConstraint;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.EqNode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.FormulaToEqDisjunctiveConstraintConverter;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.FormulaToEqDisjunctiveConstraintConverter.StoreChainSquisher;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.WeqSettings;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.DnfStateProvider.IConjunctiveStateProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * Domain of equalities
@@ -52,32 +57,117 @@ public class EqDomain extends StateBasedDomain<EqState> {
 	// TODO: Make this a setting?
 	private static final boolean DISABLE_WEAK_EQUIVALENCES = true;
 
-	public EqDomain(final SymbolicTools tools, final int maxDisjuncts, final IUltimateServiceProvider services) {
-		super(tools, maxDisjuncts, new EqStateProvider(services, tools.getManagedScript()));
+	public EqDomain(final SymbolicTools tools, final int maxDisjuncts, final IUltimateServiceProvider services,
+			final ILogger logger, final Supplier<IProgressAwareTimer> timeout) {
+		super(tools, maxDisjuncts, new DnfStateProvider<>(new EqStateProvider(services, tools.getManagedScript()),
+				tools, logger, timeout));
 	}
 
-	private static class EqStateProvider implements IStateProvider<EqState> {
-		private final IUltimateServiceProvider mServices;
+	private static class EqStateProvider implements IConjunctiveStateProvider<EqState> {
 		private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 		private final EqNodeAndFunctionFactory mEqFactory;
 		private final ManagedScript mManagedScript;
+		private final StoreChainSquisher mTermTransformer;
+		private final EqState mTopState;
 
 		public EqStateProvider(final IUltimateServiceProvider services, final ManagedScript managedScript) {
-			mServices = services;
 			mManagedScript = managedScript;
 			mEqFactory = new EqNodeAndFunctionFactory(services, managedScript, Set.of(), null, Set.of());
 			final WeqSettings settings = new WeqSettings();
 			settings.setDeactivateWeakEquivalences(DISABLE_WEAK_EQUIVALENCES);
 			mEqConstraintFactory =
 					new EqConstraintFactory<>(mEqFactory, services, managedScript, settings, false, Set.of());
+			mTermTransformer = new StoreChainSquisher(managedScript);
+			mTopState = new EqState(mEqConstraintFactory.getEmptyConstraint(false));
 		}
 
 		@Override
-		public List<EqState> toStates(final IPredicate pred) {
-			// TODO: This does not use the timeout, should we add this?
-			final EqDisjunctiveConstraint<EqNode> converted = new FormulaToEqDisjunctiveConstraintConverter(mServices,
-					mManagedScript, mEqConstraintFactory, mEqFactory, pred.getFormula()).getResult();
-			return converted.getConstraints().stream().map(EqState::new).collect(Collectors.toList());
+		public EqState toState(final Term[] conjuncts) {
+			final EqConstraint<EqNode> constraint = mEqConstraintFactory.getEmptyConstraint(true);
+			for (final Term c : conjuncts) {
+				if (!(c instanceof ApplicationTerm)) {
+					continue;
+				}
+				final ApplicationTerm app = (ApplicationTerm) c;
+				final String functionName = app.getFunction().getName();
+				final Term[] params = app.getParameters();
+				if ("=".equals(functionName)) {
+					handleEquality(params[0], params[1], constraint);
+				} else if (List.of("<", ">", "distinct").contains(functionName)) {
+					handleDisequality(params[0], params[1], constraint);
+				} else if ("not".equals(functionName) && SmtUtils.isFunctionApplication(params[0], "=")) {
+					final Term[] subtermParams = ((ApplicationTerm) params[0]).getParameters();
+					handleDisequality(subtermParams[0], subtermParams[1], constraint);
+				}
+			}
+			constraint.freezeIfNecessary();
+			return new EqState(constraint);
+		}
+
+		private void handleEquality(final Term arg1, final Term arg2, final EqConstraint<EqNode> constraint) {
+			final ApplicationTerm storeTerm;
+			final EqNode simpleNode1;
+			final EqNode simpleNode2;
+
+			if (isStore(arg1)) {
+				assert !isStore(arg1);
+				storeTerm = (ApplicationTerm) arg1;
+				simpleNode1 = mEqFactory.getOrConstructNode(arg2);
+				simpleNode2 = mEqFactory.getOrConstructNode(storeTerm.getParameters()[0]);
+			} else if (isStore(arg2)) {
+				assert !isStore(arg1);
+				storeTerm = (ApplicationTerm) arg2;
+				simpleNode1 = mEqFactory.getOrConstructNode(arg1);
+				simpleNode2 = mEqFactory.getOrConstructNode(storeTerm.getParameters()[0]);
+			} else {
+				storeTerm = null;
+				simpleNode1 = mEqFactory.getOrConstructNode(arg1);
+				simpleNode2 = mEqFactory.getOrConstructNode(arg2);
+			}
+			if (storeTerm == null) {
+				// we have a strong equivalence
+				constraint.reportEqualityInPlace(simpleNode1, simpleNode2);
+				return;
+			}
+			final EqNode storeIndex = mEqFactory.getOrConstructNode(storeTerm.getParameters()[1]);
+			final EqNode storeValue = mEqFactory.getOrConstructNode(storeTerm.getParameters()[2]);
+
+			// we have a weak equivalence and an equality on the stored position
+			mManagedScript.lock(this);
+			final Term selectTerm =
+					mManagedScript.term(this, "select", simpleNode1.getTerm(), storeTerm.getParameters()[1]);
+			mManagedScript.unlock(this);
+			final EqNode selectEqNode = mEqFactory.getOrConstructNode(selectTerm);
+			constraint.reportWeakEquivalenceInPlace(selectEqNode, storeValue, storeIndex);
+		}
+
+		private void handleDisequality(final Term arg1, final Term arg2, final EqConstraint<EqNode> constraint) {
+			if (isStore(arg1) || isStore(arg2)) {
+				/*
+				 * the best approximation for the negation of a weak equivalence that we can express is a disequality on
+				 * the arrays. i.e. not ( a -- i -- b ) ~~> a != b However, here we need to negate a -- i -- b /\ a[i] =
+				 * x, thus we would need to return two EqConstraints --> TODO postponing this, overapproximating to
+				 * "true"..
+				 */
+				return;
+			}
+			final EqNode node1 = mEqFactory.getOrConstructNode(arg1);
+			final EqNode node2 = mEqFactory.getOrConstructNode(arg2);
+			constraint.reportDisequalityInPlace(node1, node2);
+		}
+
+		private static boolean isStore(final Term term) {
+			return SmtUtils.isFunctionApplication(term, "store");
+		}
+
+		@Override
+		public EqState getTopState() {
+			return mTopState;
+		}
+
+		@Override
+		public Term preprocessTerm(final Term term) {
+			return mTermTransformer.transform(term);
 		}
 	}
 }

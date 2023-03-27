@@ -136,7 +136,8 @@ public class SifaBuilder {
 			domain = new OctagonDomain(mLogger, tools,
 					mPrefs.getInt(SifaPreferences.LABEL_OCTAGONDOM_MAX_PARALLEL_STATES), () -> timer);
 		} else if (EqDomain.class.getSimpleName().equals(domainName)) {
-			domain = new EqDomain(tools, mPrefs.getInt(SifaPreferences.LABEL_EQDOM_MAX_PARALLEL_STATES), mServices);
+			domain = new EqDomain(tools, mPrefs.getInt(SifaPreferences.LABEL_EQDOM_MAX_PARALLEL_STATES), mServices,
+					mLogger, () -> timer);
 		} else {
 			throw new IllegalArgumentException("Unknown domain setting: " + domainName);
 		}
