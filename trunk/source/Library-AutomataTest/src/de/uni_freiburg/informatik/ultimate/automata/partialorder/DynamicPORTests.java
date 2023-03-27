@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * Copyright (C) 2021 University of Freiburg
+ * Copyright (C) 2023 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2023 University of Freiburg
  *
  * This file is part of the ULTIMATE Automata Library.
  *
@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.nio.file.Path;
-import java.util.Comparator;
 
 import org.junit.runner.RunWith;
 
@@ -40,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.DynamicPORVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.ReachabilityCheckVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
 
@@ -50,15 +48,14 @@ public class DynamicPORTests extends DynamicPORTestsBase {
 	@Override
 	protected void runTest(final Path path, final AutomataTestFileAST ast,
 			final NestedWordAutomaton<String, String> input, final NestedWordAutomaton<String, String> expected,
-			final IIndependenceRelation<?, String> independence, final IDisabling<String> dis,
-			final IMembranes<String, String> membrane, final IEnabling<String, String> enabling) throws AutomataLibraryException {
+			final IIndependenceRelation<?, String> independence, final IDisabling<String> disablingRelation,
+			final IMembranes<String, String> membranes, final IEnabling<String, String> enablingFunction)
+			throws AutomataLibraryException {
 		final var constructor = new AutomatonConstructingVisitor<>(input, mAutomataServices, () -> "###empty###");
 
-		final IDisabling<String> disablingRelation = dis;
-		final IMembranes<String, String> membranes = membrane;
-		final IEnabling<String, String> enablingFunction = enabling;
 		final IDfsVisitor<String, String> visitor = constructor;
-		final var dporvisitor = new DynamicPORVisitor<>(visitor, input, new AlphabeticOrder<>(), independence, disablingRelation, membranes, enablingFunction);
+		final var dporvisitor = new DynamicPORVisitor<>(visitor, input, new AlphabeticOrder<>(), independence,
+				disablingRelation, membranes, enablingFunction);
 
 		DepthFirstTraversal.traverse(mAutomataServices, input, new AlphabeticOrder<>(), dporvisitor);
 		final NestedWordAutomaton<String, String> actual = constructor.getReductionAutomaton();
@@ -111,17 +108,5 @@ public class DynamicPORTests extends DynamicPORTestsBase {
 		}
 
 		return true;
-	}
-
-	private class AlphabeticOrder<S> implements IDfsOrder<String, S> {
-		@Override
-		public Comparator<String> getOrder(final S state) {
-			return Comparator.naturalOrder();
-		}
-
-		@Override
-		public boolean isPositional() {
-			return false;
-		}
 	}
 }

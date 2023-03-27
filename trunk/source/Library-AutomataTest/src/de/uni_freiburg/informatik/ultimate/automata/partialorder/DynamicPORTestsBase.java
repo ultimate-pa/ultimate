@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -62,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Base class for Dynamic POR tests. Callers must only implemented the method
@@ -146,8 +146,12 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 
 		final HashIndependence indep = new HashIndependence(extractCommutativity(path));
 		final HashDisabling dis = new HashDisabling(extractDisabling(path));
+
 		final HashMembranes mem = new HashMembranes(extractMembranes(path));
+		// DPORInputChecker.checkLocalMembranes(input, mem);
+
 		final HashEnabling enab = new HashEnabling(extractEnabling(path));
+
 		runTest(path, parsed, input, expected, indep, dis, mem, enab);
 	}
 
@@ -224,7 +228,7 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 			return mRelation.containsPair(a, b) ? Dependence.INDEPENDENT : Dependence.DEPENDENT;
 		}
 	}
-	
+
 	private HashRelation<String, String> extractDisabling(final Path path) throws IOException {
 		final String prefix = "//@ disabling ";
 
@@ -251,10 +255,10 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 		mLogger.info("disabling: " + result.getSetOfPairs());
 		return result;
 	}
-	
+
 	private static final class HashDisabling implements IDisabling<String> {
 		private final HashRelation<String, String> mRelation;
-		//private final boolean mSymmetric;
+		// private final boolean mSymmetric;
 
 		public HashDisabling(final HashRelation<String, String> relation) {
 			mRelation = relation;
@@ -265,7 +269,7 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 			return mRelation.containsPair(a, b) ? true : false;
 		}
 	}
-	
+
 	private HashRelation<String, String> extractMembranes(final Path path) throws IOException {
 		final String prefix = "//@ membranes ";
 
@@ -292,10 +296,10 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 		mLogger.info("membranes: " + result.getSetOfPairs());
 		return result;
 	}
-	
+
 	private static final class HashMembranes implements IMembranes<String, String> {
 		private final HashRelation<String, String> mRelation;
-		//private final boolean mSymmetric;
+		// private final boolean mSymmetric;
 
 		public HashMembranes(final HashRelation<String, String> relation) {
 			mRelation = relation;
@@ -306,7 +310,7 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 			return mRelation.getImage(s);
 		}
 	}
-	
+
 	private HashRelation<Pair<String, String>, String> extractEnabling(final Path path) throws IOException {
 		final String prefix = "//@ enabling ";
 
@@ -329,7 +333,9 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 			final String letters = matcher.group(2).strip();
 			final String first = letters.split(", ")[0];
 			final String second = letters.split(", ")[1];
-			if (state == "E") {state = "eps";}
+			if (state == "E") {
+				state = "eps";
+			}
 			final Pair<String, String> pair = new Pair<>(state, first);
 			result.addPair(pair, second);
 		}
@@ -337,10 +343,10 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 		mLogger.info("enabling: " + result.getSetOfPairs());
 		return result;
 	}
-	
+
 	private static final class HashEnabling implements IEnabling<String, String> {
 		private final HashRelation<Pair<String, String>, String> mRelation;
-		//private final boolean mSymmetric;
+		// private final boolean mSymmetric;
 
 		public HashEnabling(final HashRelation<Pair<String, String>, String> relation) {
 			mRelation = relation;
@@ -348,8 +354,20 @@ public abstract class DynamicPORTestsBase implements IMessagePrinter {
 
 		@Override
 		public Set<String> getEnablingSet(final String s, final String a) {
-			Pair<String, String> searchPair = new Pair<>(s,a);
+			final Pair<String, String> searchPair = new Pair<>(s, a);
 			return mRelation.getImage(searchPair);
+		}
+	}
+
+	protected class AlphabeticOrder<S> implements IDfsOrder<String, S> {
+		@Override
+		public Comparator<String> getOrder(final S state) {
+			return Comparator.naturalOrder();
+		}
+
+		@Override
+		public boolean isPositional() {
+			return false;
 		}
 	}
 }
