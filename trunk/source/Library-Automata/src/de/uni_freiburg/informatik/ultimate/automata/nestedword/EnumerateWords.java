@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
+import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;
@@ -52,6 +53,12 @@ public final class EnumerateWords {
 		return () -> new WordIterator<>(automaton);
 	}
 
+	public static <L, S> Stream<Word<L>> stream(final INwaOutgoingTransitionProvider<L, S> automaton,
+			final S startState) {
+		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(
+				new WordIterator<>(automaton, Set.of(startState)), Spliterator.ORDERED | Spliterator.IMMUTABLE), false);
+	}
+
 	public static <L> Stream<Word<L>> stream(final INwaOutgoingTransitionProvider<L, ?> automaton) {
 		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(new WordIterator<>(automaton),
 				Spliterator.ORDERED | Spliterator.IMMUTABLE), false);
@@ -61,7 +68,11 @@ public final class EnumerateWords {
 		private final INwaOutgoingTransitionProvider<L, S> mAutomaton;
 
 		public WordIterator(final INwaOutgoingTransitionProvider<L, S> automaton) {
-			super(automaton.getInitialStates());
+			this(automaton, automaton.getInitialStates());
+		}
+
+		public WordIterator(final INwaOutgoingTransitionProvider<L, S> automaton, final Iterable<S> initial) {
+			super(initial);
 			assert NestedWordAutomataUtils.isFiniteAutomaton(automaton) : "only finite automata are supported";
 			mAutomaton = automaton;
 		}
