@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.FormulaToEqDisjunctiveConstraintConverter.StoreChainSquisher;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.WeqSettings;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.DnfStateProvider.IConjunctiveStateProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -59,11 +58,10 @@ public class EqDomain extends StateBasedDomain<EqState> {
 
 	public EqDomain(final SymbolicTools tools, final int maxDisjuncts, final IUltimateServiceProvider services,
 			final ILogger logger, final Supplier<IProgressAwareTimer> timeout) {
-		super(tools, maxDisjuncts, new DnfStateProvider<>(new EqStateProvider(services, tools.getManagedScript()),
-				tools, logger, timeout));
+		super(tools, maxDisjuncts, logger, timeout, new EqStateProvider(services, tools.getManagedScript()));
 	}
 
-	private static class EqStateProvider implements IConjunctiveStateProvider<EqState> {
+	private static class EqStateProvider implements IStateProvider<EqState> {
 		private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 		private final EqNodeAndFunctionFactory mEqFactory;
 		private final ManagedScript mManagedScript;

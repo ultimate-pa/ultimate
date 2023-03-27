@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.DnfStateProvider.IConjunctiveStateProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
@@ -61,11 +60,10 @@ public class IntervalDomain extends StateBasedDomain<NonrelationalState<Interval
 
 	public IntervalDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
 			final Supplier<IProgressAwareTimer> timeout) {
-		super(tools, maxDisjuncts, new DnfStateProvider<>(new IntervalStateProvider(timeout, logger, tools.getScript()),
-				tools, logger, timeout));
+		super(tools, maxDisjuncts, logger, timeout, new IntervalStateProvider(timeout, logger, tools.getScript()));
 	}
 
-	private static class IntervalStateProvider implements IConjunctiveStateProvider<NonrelationalState<Interval>> {
+	private static class IntervalStateProvider implements IStateProvider<NonrelationalState<Interval>> {
 		private final Supplier<IProgressAwareTimer> mTimeout;
 		private final ILogger mLogger;
 		private final Script mScript;
