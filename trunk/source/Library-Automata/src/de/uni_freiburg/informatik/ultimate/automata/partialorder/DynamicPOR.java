@@ -54,8 +54,8 @@ public final class DynamicPOR {
 			final IEnabling<L, U> enabling) throws AutomataOperationCanceledException {
 		final var unfolded = new UnfoldToTree<>(services, operand, stateFactory);
 		final var liftedOrder = new LiftedDfsOrder<>(dfsOrder, stateFactory);
-		final var combinedVisitor =
-				new DynamicPORVisitor<>(visitor, unfolded, liftedOrder, independence, disabling, membrane, enabling);
+		final var combinedVisitor = new DynamicPORVisitor<>(visitor, unfolded, liftedOrder, independence, disabling,
+				new FilteredMembranes<>(membrane, unfolded), enabling);
 		DepthFirstTraversal.traverse(services, unfolded, liftedOrder, combinedVisitor);
 	}
 
@@ -69,6 +69,23 @@ public final class DynamicPOR {
 				new MinimalSleepSetReduction<>(operand, sleepSetStateFactory, independence, dfsOrder);
 		applyWithoutSleepSets(services, sleepSetReduction, independence, dfsOrder, unfoldStateFactory, visitor,
 				disabling, membrane, enabling);
+	}
+
+	private static class FilteredMembranes<L, S> implements IMembranes<L, S> {
+		private final IMembranes<L, S> mUnderlying;
+		private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
+
+		public FilteredMembranes(final IMembranes<L, S> underlying,
+				final INwaOutgoingLetterAndTransitionProvider<L, S> operand) {
+			mUnderlying = underlying;
+			mOperand = operand;
+		}
+
+		@Override
+		public Set<L> getMembraneSet(final S s) {
+			return mUnderlying.getMembraneSet(s).stream()
+					.filter(x -> mOperand.internalSuccessors(s, x).iterator().hasNext()).collect(Collectors.toSet());
+		}
 	}
 
 	private static class LiftedDfsOrder<L, S, U> implements IDfsOrder<L, U> {
