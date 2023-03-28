@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Comparator;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
