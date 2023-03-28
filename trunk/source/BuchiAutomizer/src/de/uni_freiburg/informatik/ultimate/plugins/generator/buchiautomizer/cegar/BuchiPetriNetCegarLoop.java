@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.IntersectBuchiEager;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -85,7 +85,7 @@ public class BuchiPetriNetCegarLoop<L extends IIcfgTransition<?>>
 				new AutomataLibraryServices(mServices), mDefaultStateFactory, interpolantAutomaton, stateDeterminizer);
 		mBenchmarkGenerator.reportHighestRank(complNwa.getHighestRank());
 
-		final IntersectBuchiEager<L, IPredicate> intersection = new IntersectBuchiEager<>(
+		final BuchiIntersect<L, IPredicate> intersection = new BuchiIntersect<>(
 				new AutomataLibraryServices(mServices), mDefaultStateFactory, abstraction, complNwa.getResult());
 		return intersection.getResult();
 	}

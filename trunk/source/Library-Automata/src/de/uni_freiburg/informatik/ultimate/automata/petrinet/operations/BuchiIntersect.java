@@ -11,7 +11,6 @@ import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncludedBuchi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
@@ -32,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @param <LETTER>
  * @param <PLACE>
  */
-public class IntersectBuchiEager<LETTER, PLACE>
+public class BuchiIntersect<LETTER, PLACE>
 		extends GeneralOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 
 	private final IPetriNet<LETTER, PLACE> mPetriNet;
@@ -58,7 +57,7 @@ public class IntersectBuchiEager<LETTER, PLACE>
 
 	private final HashMap<PLACE, PLACE> looperAcptPlaceToEnablePlace = new HashMap<>();
 
-	public IntersectBuchiEager(final AutomataLibraryServices services, final IBlackWhiteStateFactory<PLACE> factory,
+	public BuchiIntersect(final AutomataLibraryServices services, final IBlackWhiteStateFactory<PLACE> factory,
 			final IPetriNet<LETTER, PLACE> petriNet, final INestedWordAutomaton<LETTER, PLACE> buchiAutomata) {
 		super(services);
 		mPetriNet = petriNet;
@@ -333,8 +332,9 @@ public class IntersectBuchiEager<LETTER, PLACE>
 				(new BuchiPetriNet2FiniteAutomaton<>(mServices, stateFactory,
 						(IBlackWhiteStateFactory<PLACE>) stateFactory, mIntersectionNet)).getResult();
 
-		final NestedWordAutomatonReachableStates<LETTER, PLACE> automatonIntersection = new BuchiIntersect<>(mServices,
-				(IBuchiIntersectStateFactory<PLACE>) stateFactory, operandAsNwa, mBuchiAutomata).getResult();
+		final NestedWordAutomatonReachableStates<LETTER, PLACE> automatonIntersection =
+				new de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersect<>(mServices,
+						(IBuchiIntersectStateFactory<PLACE>) stateFactory, operandAsNwa, mBuchiAutomata).getResult();
 
 		final IsIncludedBuchi<LETTER, PLACE> isSubset = new IsIncludedBuchi<>(mServices,
 				(INwaInclusionStateFactory<PLACE>) stateFactory, resultAsNwa, automatonIntersection);
