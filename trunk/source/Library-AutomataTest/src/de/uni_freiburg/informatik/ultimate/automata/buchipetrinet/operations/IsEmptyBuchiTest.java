@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.IsEmptyBuchi;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
@@ -38,7 +38,7 @@ public class IsEmptyBuchiTest {
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p0")), ImmutableSet.of(Set.of("p1")));
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p0")));
 
-		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
+		final BuchiIsEmpty<String, String> isempty = new BuchiIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
 	}
@@ -55,7 +55,7 @@ public class IsEmptyBuchiTest {
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p2")));
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p1")));
 
-		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
+		final BuchiIsEmpty<String, String> isempty = new BuchiIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
 	}
@@ -72,7 +72,7 @@ public class IsEmptyBuchiTest {
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p2", "p0")), ImmutableSet.of(Set.of("p3")));
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p1", "p0")));
 
-		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
+		final BuchiIsEmpty<String, String> isempty = new BuchiIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
 	}
@@ -90,7 +90,7 @@ public class IsEmptyBuchiTest {
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p3")));
 		petriNet.addTransition("e", ImmutableSet.of(Set.of("p4")), ImmutableSet.of(Set.of("p2")));
 
-		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
+		final BuchiIsEmpty<String, String> isempty = new BuchiIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
 	}
@@ -117,7 +117,7 @@ public class IsEmptyBuchiTest {
 		petriNet.addTransition("e", ImmutableSet.of(Set.of("p4")), ImmutableSet.of(Set.of("p5")));
 		petriNet.addTransition("f", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p4")));
 
-		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
+		final BuchiIsEmpty<String, String> isempty = new BuchiIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
 	}
@@ -146,7 +146,7 @@ public class IsEmptyBuchiTest {
 		petriNet.addTransition("f", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p6")));
 		petriNet.addTransition("g", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p5")));
 
-		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
+		final BuchiIsEmpty<String, String> isempty = new BuchiIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", !notEmpty);
 	}
@@ -166,7 +166,7 @@ public class IsEmptyBuchiTest {
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p2", "p3")));
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p4")));
 
-		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
+		final BuchiIsEmpty<String, String> isempty = new BuchiIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
 	}
@@ -189,7 +189,7 @@ public class IsEmptyBuchiTest {
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p2", "p3", "p4")), ImmutableSet.of(Set.of("p5", "p6")));
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p111")));
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p11")));
-		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
+		final BuchiIsEmpty<String, String> isempty = new BuchiIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
 	}
@@ -209,7 +209,7 @@ public class IsEmptyBuchiTest {
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p2", "p3")));
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p4")));
 
-		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
+		final BuchiIsEmpty<String, String> isempty = new BuchiIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
 
@@ -229,7 +229,7 @@ public class IsEmptyBuchiTest {
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p5")));
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p4", "p5")), ImmutableSet.of(Set.of("p2", "p3")));
 
-		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
+		final BuchiIsEmpty<String, String> isempty = new BuchiIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
 	}
@@ -252,7 +252,7 @@ public class IsEmptyBuchiTest {
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p4", "p5", "p7")),
 				ImmutableSet.of(Set.of("p2", "p3", "p6")));
 		petriNet.addTransition("a", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p7")));
-		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
+		final BuchiIsEmpty<String, String> isempty = new BuchiIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
 
@@ -275,7 +275,7 @@ public class IsEmptyBuchiTest {
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p3")));
 
 		petriNet.addTransition("u", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p6")));
-		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
+		final BuchiIsEmpty<String, String> isempty = new BuchiIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		isempty.checkResult(new StringFactory());
 		assertThat("Lasso should be found.", notEmpty);
@@ -298,7 +298,7 @@ public class IsEmptyBuchiTest {
 		petriNet.addTransition("a", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p2")));
 		petriNet.addTransition("aa", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p3")));
 
-		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
+		final BuchiIsEmpty<String, String> isempty = new BuchiIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		isempty.checkResult(new StringFactory());
 		assertThat("Lasso should be found.", notEmpty);
@@ -316,7 +316,7 @@ public class IsEmptyBuchiTest {
 		petriNet.addTransition("a", ImmutableSet.of(Set.of("p1", "p2")), ImmutableSet.of(Set.of("p1", "p4")));
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p3", "p4")), ImmutableSet.of(Set.of("p3", "p2")));
 
-		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
+		final BuchiIsEmpty<String, String> isempty = new BuchiIsEmpty<>(mServices, petriNet);
 
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
@@ -339,7 +339,7 @@ public class IsEmptyBuchiTest {
 		petriNet.addTransition("a", ImmutableSet.of(Set.of("p1", "p2")), ImmutableSet.of(Set.of("p1", "p4")));
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p3", "p4")), ImmutableSet.of(Set.of("p3", "p2")));
 
-		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
+		final BuchiIsEmpty<String, String> isempty = new BuchiIsEmpty<>(mServices, petriNet);
 
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
@@ -367,7 +367,7 @@ public class IsEmptyBuchiTest {
 		petriNet.addTransition("g", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p4")));
 		petriNet.addTransition("h", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p5")));
 
-		final IsEmptyBuchi<String, String> isempty = new IsEmptyBuchi<>(mServices, petriNet);
+		final BuchiIsEmpty<String, String> isempty = new BuchiIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		isempty.checkResult(new StringFactory());
 		assertThat("Lasso should be found.", notEmpty);

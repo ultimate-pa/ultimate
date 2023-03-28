@@ -19,13 +19,13 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  * @param <STATE>
  *            place content type
  */
-public final class IsEmptyRabin<LETTER, PLACE>
+public final class RabinIsEmpty<LETTER, PLACE>
 		extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 	private final IRabinPetriNet<LETTER, PLACE> mOperand;
 	private PetriNetLassoRun<LETTER, PLACE> mRun;
 	private final boolean mResult;
 
-	public IsEmptyRabin(final AutomataLibraryServices services, final IRabinPetriNet<LETTER, PLACE> operand)
+	public RabinIsEmpty(final AutomataLibraryServices services, final IRabinPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
@@ -53,7 +53,7 @@ public final class IsEmptyRabin<LETTER, PLACE>
 	 *             if operation was canceled
 	 * @throws PetriNetNot1SafeException
 	 */
-	public IsEmptyRabin(final AutomataLibraryServices services, final IRabinPetriNet<LETTER, PLACE> operand,
+	public RabinIsEmpty(final AutomataLibraryServices services, final IRabinPetriNet<LETTER, PLACE> operand,
 			final EventOrderEnum order, final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);

@@ -24,13 +24,13 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  * @param <STATE>
  *            place content type
  */
-public final class IsEmptyBuchi<LETTER, PLACE>
+public final class BuchiIsEmpty<LETTER, PLACE>
 		extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 	private final IPetriNetTransitionProvider<LETTER, PLACE> mOperand;
 	private PetriNetLassoRun<LETTER, PLACE> mRun;
 	private final boolean mResult;
 
-	public IsEmptyBuchi(final AutomataLibraryServices services,
+	public BuchiIsEmpty(final AutomataLibraryServices services,
 			final IPetriNetTransitionProvider<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
@@ -59,7 +59,7 @@ public final class IsEmptyBuchi<LETTER, PLACE>
 	 *             if operation was canceled
 	 * @throws PetriNetNot1SafeException
 	 */
-	public IsEmptyBuchi(final AutomataLibraryServices services,
+	public BuchiIsEmpty(final AutomataLibraryServices services,
 			final IPetriNetTransitionProvider<LETTER, PLACE> operand, final EventOrderEnum order,
 			final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {

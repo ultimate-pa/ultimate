@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IRabinPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferenceRabin;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.IsEmptyRabin;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.RabinIsEmpty;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -47,7 +47,7 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 	@Override
 	protected boolean isAbstractionEmpty(final IRabinPetriNet<L, IPredicate> abstraction)
 			throws AutomataLibraryException {
-		final var isempty = new IsEmptyRabin<>(new AutomataLibraryServices(mServices), abstraction, mPref.eventOrder(),
+		final var isempty = new RabinIsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mPref.eventOrder(),
 				mPref.cutOffRequiresSameTransition(), true);
 		final PetriNetLassoRun<L, IPredicate> run = isempty.getRun();
 		if (run == null) {

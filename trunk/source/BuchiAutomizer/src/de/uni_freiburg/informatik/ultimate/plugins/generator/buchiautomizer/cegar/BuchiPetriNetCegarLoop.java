@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.IntersectBuchiEager;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.IsEmptyBuchi;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -46,7 +46,7 @@ public class BuchiPetriNetCegarLoop<L extends IIcfgTransition<?>>
 
 	@Override
 	protected boolean isAbstractionEmpty(final IPetriNet<L, IPredicate> abstraction) throws AutomataLibraryException {
-		final var isempty = new IsEmptyBuchi<>(new AutomataLibraryServices(mServices), abstraction, mPref.eventOrder(),
+		final var isempty = new BuchiIsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mPref.eventOrder(),
 				mPref.cutOffRequiresSameTransition(), true);
 		final PetriNetLassoRun<L, IPredicate> run = isempty.getRun();
 		// assert isempty.checkResult(new PredicateFactoryResultChecking(mPredicateFactory));
