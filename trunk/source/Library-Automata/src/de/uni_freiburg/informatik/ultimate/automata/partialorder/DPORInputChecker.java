@@ -63,7 +63,7 @@ public final class DPORInputChecker {
 
 		// check it is a membrane
 		final var ctex = EnumerateWords.stream(aut, state)
-				.filter(w -> DataStructureUtils.haveEmptyIntersection(w.asSet(), membrane)).findAny();
+				.filter(w -> w.length() > 0 && DataStructureUtils.haveEmptyIntersection(w.asSet(), membrane)).findAny();
 		assert ctex.isEmpty() : "Accepted word " + ctex.get() + " does not go through membrane " + membrane
 				+ " at state " + state;
 	}
