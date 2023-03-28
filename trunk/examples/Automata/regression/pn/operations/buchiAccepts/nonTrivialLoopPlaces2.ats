@@ -1,0 +1,20 @@
+// Author: schuessf@informatik.uni-freiburg.de
+// Date: 2023-03-28
+
+PetriNet net = (
+  alphabet = {a b},
+  places = {p1 p2 p3 p4 p5 p6 p7},
+  transitions = {
+    ({p1} a {p2}) 
+    ({p2} b {p3}) 
+    ({p3} b {p4}) 
+    ({p4} b {p5}) 
+    ({p5} b {p6}) 
+    ({p6} b {p7}) 
+    ({p7} b {p6}) 
+  },
+  initialMarking = {p1},
+  acceptingPlaces = {p5}
+);
+
+assert(!buchiAccepts(net, [a, b]));
