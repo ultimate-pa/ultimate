@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.EpsilonNestedWord
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.rabin.RabinAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.StringRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
@@ -69,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.NestedwordAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetTransitionAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.RabinAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.RankedAlphabetEntryAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonRankedAST;
@@ -154,6 +156,8 @@ public class AutomataDefinitionInterpreter {
 					interpret((TreeAutomatonRankedAST) n);
 				} else if (n instanceof CountingAutomatonAST) {
 					interpret((CountingAutomatonAST) n);
+				} else if (n instanceof RabinAutomatonAST) {
+					interpret((RabinAutomatonAST) n);
 				} else {
 					throw new AssertionError("unsupported kind of automaton " + n);
 				}
@@ -474,6 +478,15 @@ public class AutomataDefinitionInterpreter {
 				countingAutomatonDataStructure);
 		Objects.nonNull(ca);
 		mAutomata.put(caAst.getName(), ca);
+	}
+
+	private void interpret(final RabinAutomatonAST raAst) throws InterpreterException {
+		final NestedMap2<String, String, Set<String>> transitions = new NestedMap2<>();
+		raAst.getTransitions().forEach((k, v) -> transitions.put(k.getFirst(), k.getSecond(), v));
+		final RabinAutomaton<String, String> ra = new RabinAutomaton<>(new HashSet<>(raAst.getAlphabet()),
+				new HashSet<>(raAst.getStates()), new HashSet<>(raAst.getInitialStates()),
+				new HashSet<>(raAst.getAcceptingStates()), new HashSet<>(raAst.getFiniteStates()), transitions);
+		mAutomata.put(raAst.getName(), ra);
 	}
 
 	/**
