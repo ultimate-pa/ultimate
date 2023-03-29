@@ -28,8 +28,11 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -40,13 +43,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.EqNode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.FormulaToEqDisjunctiveConstraintConverter.StoreChainSquisher;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.WeqSettings;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Domain of equalities
@@ -55,9 +61,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  */
 public class EqDomain extends StateBasedDomain<EqState> {
-	// TODO: Make this a setting?
-	private static final boolean DISABLE_WEAK_EQUIVALENCES = true;
-
 	public EqDomain(final SymbolicTools tools, final int maxDisjuncts, final IUltimateServiceProvider services,
 			final ILogger logger, final Supplier<IProgressAwareTimer> timeout) {
 		super(tools, maxDisjuncts, logger, timeout, new EqStateProvider(services, tools.getManagedScript()));
@@ -67,17 +70,15 @@ public class EqDomain extends StateBasedDomain<EqState> {
 		private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 		private final EqNodeAndFunctionFactory mEqFactory;
 		private final ManagedScript mManagedScript;
-		private final StoreChainSquisher mTermTransformer;
+		private final StoreOverapproximationTransformer mTermTransformer;
 		private final EqState mTopState;
 
 		public EqStateProvider(final IUltimateServiceProvider services, final ManagedScript managedScript) {
 			mManagedScript = managedScript;
 			mEqFactory = new EqNodeAndFunctionFactory(services, managedScript, Set.of(), null, Set.of());
-			final WeqSettings settings = new WeqSettings();
-			settings.setDeactivateWeakEquivalences(DISABLE_WEAK_EQUIVALENCES);
 			mEqConstraintFactory =
-					new EqConstraintFactory<>(mEqFactory, services, managedScript, settings, false, Set.of());
-			mTermTransformer = new StoreChainSquisher(managedScript);
+					new EqConstraintFactory<>(mEqFactory, services, managedScript, new WeqSettings(), false, Set.of());
+			mTermTransformer = new StoreOverapproximationTransformer(managedScript);
 			mTopState = new EqState(mEqConstraintFactory.getEmptyConstraint(false));
 		}
 
@@ -114,59 +115,15 @@ public class EqDomain extends StateBasedDomain<EqState> {
 		}
 
 		private void handleEquality(final Term arg1, final Term arg2, final EqConstraint<EqNode> constraint) {
-			final ApplicationTerm storeTerm;
-			final EqNode simpleNode1;
-			final EqNode simpleNode2;
-
-			if (isStore(arg1)) {
-				assert !isStore(arg2);
-				storeTerm = (ApplicationTerm) arg1;
-				simpleNode1 = mEqFactory.getOrConstructNode(arg2);
-				simpleNode2 = mEqFactory.getOrConstructNode(storeTerm.getParameters()[0]);
-			} else if (isStore(arg2)) {
-				assert !isStore(arg1);
-				storeTerm = (ApplicationTerm) arg2;
-				simpleNode1 = mEqFactory.getOrConstructNode(arg1);
-				simpleNode2 = mEqFactory.getOrConstructNode(storeTerm.getParameters()[0]);
-			} else {
-				storeTerm = null;
-				simpleNode1 = mEqFactory.getOrConstructNode(arg1);
-				simpleNode2 = mEqFactory.getOrConstructNode(arg2);
-			}
-			if (storeTerm == null) {
-				// we have a strong equivalence
-				constraint.reportEqualityInPlace(simpleNode1, simpleNode2);
-				return;
-			}
-			final EqNode storeIndex = mEqFactory.getOrConstructNode(storeTerm.getParameters()[1]);
-			final EqNode storeValue = mEqFactory.getOrConstructNode(storeTerm.getParameters()[2]);
-
-			// we have a weak equivalence and an equality on the stored position
-			mManagedScript.lock(this);
-			final Term selectTerm =
-					mManagedScript.term(this, "select", simpleNode1.getTerm(), storeTerm.getParameters()[1]);
-			mManagedScript.unlock(this);
-			final EqNode selectEqNode = mEqFactory.getOrConstructNode(selectTerm);
-			constraint.reportWeakEquivalenceInPlace(selectEqNode, storeValue, storeIndex);
+			final EqNode node1 = mEqFactory.getOrConstructNode(arg1);
+			final EqNode node2 = mEqFactory.getOrConstructNode(arg2);
+			constraint.reportEqualityInPlace(node1, node2);
 		}
 
 		private void handleDisequality(final Term arg1, final Term arg2, final EqConstraint<EqNode> constraint) {
-			if (isStore(arg1) || isStore(arg2)) {
-				/*
-				 * the best approximation for the negation of a weak equivalence that we can express is a disequality on
-				 * the arrays. i.e. not ( a -- i -- b ) ~~> a != b However, here we need to negate a -- i -- b /\ a[i] =
-				 * x, thus we would need to return two EqConstraints --> TODO postponing this, overapproximating to
-				 * "true"..
-				 */
-				return;
-			}
 			final EqNode node1 = mEqFactory.getOrConstructNode(arg1);
 			final EqNode node2 = mEqFactory.getOrConstructNode(arg2);
 			constraint.reportDisequalityInPlace(node1, node2);
-		}
-
-		private static boolean isStore(final Term term) {
-			return SmtUtils.isFunctionApplication(term, "store");
 		}
 
 		@Override
@@ -179,7 +136,58 @@ public class EqDomain extends StateBasedDomain<EqState> {
 			final List<Term> conjuncts = new ArrayList<>();
 			conjuncts.add(mTermTransformer.transform(term));
 			conjuncts.addAll(mTermTransformer.getReplacementEquations());
-			return SmtUtils.and(mManagedScript.getScript(), conjuncts);
+			final Term result = SmtUtils.and(mManagedScript.getScript(), conjuncts);
+			assert !new SubtermPropertyChecker(x -> SmtUtils.isFunctionApplication(x, "store"))
+					.isSatisfiedBySomeSubterm(result);
+			return result;
+		}
+	}
+
+	public static class StoreOverapproximationTransformer extends TermTransformer {
+		private final ManagedScript mMgdScript;
+		private final List<Term> mReplacementEquations;
+		private final Map<Term, TermVariable> mReplacedTermToReplacementTv;
+
+		public StoreOverapproximationTransformer(final ManagedScript mgdScript) {
+			mMgdScript = mgdScript;
+			mReplacementEquations = new ArrayList<>();
+			mReplacedTermToReplacementTv = new HashMap<>();
+		}
+
+		@Override
+		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
+			if (!"store".equals(appTerm.getFunction().getName())) {
+				super.convertApplicationTerm(appTerm, newArgs);
+				return;
+			}
+			// Replace (store a i v) with a fresh variable aux and add (select aux i) = v as a constraint
+			final TermVariable auxVar = mReplacedTermToReplacementTv.computeIfAbsent(appTerm,
+					x -> mMgdScript.constructFreshTermVariable("aux", x.getSort()));
+			final Term select = SmtUtils.select(mMgdScript.getScript(), auxVar, newArgs[1]);
+			// TODO: We do not consider the array of the store term at all.
+			// Can we add constraints without quantifiers?
+			mReplacementEquations.add(SmtUtils.binaryEquality(mMgdScript.getScript(), select, newArgs[2]));
+			setResult(auxVar);
+		}
+
+		@Override
+		public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
+			if (newBody == old.getSubformula()) {
+				super.postConvertQuantifier(old, newBody);
+				return;
+			}
+			// Use SmtUtils.quantifier, since it removes variables that are not contained in the body
+			// This could happen, if quantified variables are contained in store terms
+			setResult(SmtUtils.quantifier(mMgdScript.getScript(), old.getQuantifier(),
+					Arrays.asList(old.getVariables()), newBody));
+		}
+
+		public List<Term> getReplacementEquations() {
+			return mReplacementEquations;
+		}
+
+		public List<Term> getReplacementTermVariables() {
+			return new ArrayList<>(mReplacedTermToReplacementTv.values());
 		}
 	}
 }
