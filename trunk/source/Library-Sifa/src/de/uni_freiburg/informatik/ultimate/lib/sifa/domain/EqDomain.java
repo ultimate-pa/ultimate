@@ -111,7 +111,7 @@ public class EqDomain extends StateBasedDomain<EqState> {
 			final EqNode simpleNode2;
 
 			if (isStore(arg1)) {
-				assert !isStore(arg1);
+				assert !isStore(arg2);
 				storeTerm = (ApplicationTerm) arg1;
 				simpleNode1 = mEqFactory.getOrConstructNode(arg2);
 				simpleNode2 = mEqFactory.getOrConstructNode(storeTerm.getParameters()[0]);
