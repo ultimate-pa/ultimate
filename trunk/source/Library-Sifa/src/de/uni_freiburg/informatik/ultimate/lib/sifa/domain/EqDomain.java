@@ -104,13 +104,13 @@ public class EqDomain extends StateBasedDomain<EqState> {
 					return new EqState(mEqConstraintFactory.getBottomConstraint());
 				}
 			}
+			constraint.freezeIfNecessary();
 			final Collection<Term> auxVars = mTermTransformer.getReplacementTermVariables();
 			if (!auxVars.isEmpty()) {
 				// TODO: This does not seem to work with the inplace-argument set to true
 				// Therefore we create a new constraint and assign it instead
 				constraint = mEqConstraintFactory.projectExistentially(auxVars, constraint, false);
 			}
-			constraint.freezeIfNecessary();
 			return new EqState(constraint);
 		}
 
