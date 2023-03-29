@@ -97,6 +97,9 @@ public class EqDomain extends StateBasedDomain<EqState> {
 					final Term[] subtermParams = ((ApplicationTerm) params[0]).getParameters();
 					handleDisequality(subtermParams[0], subtermParams[1], constraint);
 				}
+				if (constraint.isInconsistent()) {
+					return new EqState(mEqConstraintFactory.getBottomConstraint());
+				}
 			}
 			constraint.freezeIfNecessary();
 			return new EqState(constraint);
