@@ -27,6 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -81,7 +83,7 @@ public class EqDomain extends StateBasedDomain<EqState> {
 
 		@Override
 		public EqState toState(final Term[] conjuncts) {
-			final EqConstraint<EqNode> constraint = mEqConstraintFactory.getEmptyConstraint(true);
+			EqConstraint<EqNode> constraint = mEqConstraintFactory.getEmptyConstraint(true);
 			for (final Term c : conjuncts) {
 				if (!(c instanceof ApplicationTerm)) {
 					continue;
@@ -100,6 +102,12 @@ public class EqDomain extends StateBasedDomain<EqState> {
 				if (constraint.isInconsistent()) {
 					return new EqState(mEqConstraintFactory.getBottomConstraint());
 				}
+			}
+			final Collection<Term> auxVars = mTermTransformer.getReplacementTermVariables();
+			if (!auxVars.isEmpty()) {
+				// TODO: This does not seem to work with the inplace-argument set to true
+				// Therefore we create a new constraint and assign it instead
+				constraint = mEqConstraintFactory.projectExistentially(auxVars, constraint, false);
 			}
 			constraint.freezeIfNecessary();
 			return new EqState(constraint);
@@ -168,7 +176,10 @@ public class EqDomain extends StateBasedDomain<EqState> {
 
 		@Override
 		public Term preprocessTerm(final Term term) {
-			return mTermTransformer.transform(term);
+			final List<Term> conjuncts = new ArrayList<>();
+			conjuncts.add(mTermTransformer.transform(term));
+			conjuncts.addAll(mTermTransformer.getReplacementEquations());
+			return SmtUtils.and(mManagedScript.getScript(), conjuncts);
 		}
 	}
 }
