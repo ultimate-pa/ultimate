@@ -327,6 +327,10 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 			if (logic.isDatatype()) {
 				continue;
 			}
+			if (logic.isFloatingPoint() && logic.hasReals()) {
+				// Difficult to detect, does not yet occur in Ultimate applications
+				continue;
+			}
 			if (logic.isNonLinearArithmetic() != tc.hasNonlinearArithmetic()) {
 				continue;
 			}
