@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -238,11 +239,35 @@ public class DynamicPORVisitor<L, S, V extends IDfsVisitor<L, S>> extends Wrappe
 	 *         empty
 	 */
 	private L getMembrane(final S state) {
+		Set<L> resultSet = new HashSet<>();
 		if (membraneSets == null) {
 			return null;
 		}
 		final Set<L> membraneSet = membraneSets.getMembraneSet(state);
-		return getMax(state, membraneSet);
+		for (L letter : membraneSet) {
+			if (!enabled(letter, state)) {
+				// if not enabled add enabling set
+				resultSet.addAll(enablingFunction.getEnablingSet(state, letter));
+			} else {
+				// add letter to resultSet
+				resultSet.add(letter);
+			}
+		}
+		return getMax(state, resultSet);
+	}
+	
+	/**
+	 * returns true if letter is enabled in state
+	 * @param letter
+	 * @param state
+	 * @return
+	 */
+	private boolean enabled(final L letter, final S state) {
+		boolean enabled = false;
+		for (final OutgoingInternalTransition<L, S> a : mAutomaton.internalSuccessors(state, letter)) {
+			enabled = true;
+		}
+		return enabled;
 	}
 
 	/**
