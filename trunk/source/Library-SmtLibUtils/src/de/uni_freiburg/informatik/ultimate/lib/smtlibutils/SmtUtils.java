@@ -1832,39 +1832,6 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Check if a divident of an modulo operation with constant divisor is itself a modulo operation. If this is the
-	 * case we might be able to apply some simplifications.
-	 *
-	 * @param divident
-	 *            Divident of an outer modulo operation
-	 * @param bigIntDivisor
-	 *            Divisor of an outer modulo operation
-	 * @return Simplified version of the outer modulo operation or null (null in case where we could not apply
-	 *         simplifications.)
-	 */
-	private static Term simplifyNestedModulo(final Script script, final Term divident, final BigInteger bigIntDivisor) {
-		if (divident instanceof ApplicationTerm) {
-			final ApplicationTerm appTerm = (ApplicationTerm) divident;
-			if ("mod".equals(appTerm.getFunction().getApplicationString())) {
-				final Term innerDivident = appTerm.getParameters()[1];
-				final AffineTerm affineInnerDivisor =
-						(AffineTerm) new AffineTermTransformer(script).transform(innerDivident);
-				if (!affineInnerDivisor.isErrorTerm() && affineInnerDivisor.isConstant()) {
-					// We take the absolut value since (mod x -k) is (mod x k) for all k>0.
-					final BigInteger bigIntInnerDivisor = toInt(affineInnerDivisor.getConstant()).abs();
-					if (bigIntInnerDivisor.mod(bigIntDivisor).equals(BigInteger.ZERO)
-							|| bigIntDivisor.mod(bigIntInnerDivisor).equals(BigInteger.ZERO)) {
-						final BigInteger min = bigIntInnerDivisor.min(bigIntDivisor);
-						final Term innerDivisor = appTerm.getParameters()[0];
-						return mod(script, innerDivisor, SmtUtils.constructIntValue(script, min));
-					}
-				}
-			}
-		}
-		return null;
-	}
-
-	/**
 	 * @return A BigDecimal if this rational is representable as a finite BigDecimal, nothing otherwise.
 	 */
 	public static Optional<BigDecimal> toDecimal(final Rational rational) {
