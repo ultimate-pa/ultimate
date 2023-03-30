@@ -3,43 +3,48 @@
 <benchmark tool="ultimateautomizer" timelimit="90s" hardtimelimit="90s" memlimit="8GB"
   cpuCores="2">
 
+  <rundefinition name="Automizer">
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+  </rundefinition>
+
   <rundefinition name="Sifa INT">
-    <option name="--force-no-wrapper" />
+    <option name="-s">../../../trunk/examples/settings/default/taipan/svcomp-Reach-32bit-Taipan_Default.epf</option>
     <option name="-tc">../../../trunk/examples/toolchains/SifaC.xml</option>
     <option name="--sifa.abstract.domain">IntervalDomain</option>
   </rundefinition>
 
   <rundefinition name="Sifa OCT">
-    <option name="--force-no-wrapper" />
+    <option name="-s">../../../trunk/examples/settings/default/taipan/svcomp-Reach-32bit-Taipan_Default.epf</option>
     <option name="-tc">../../../trunk/examples/toolchains/SifaC.xml</option>
     <option name="--sifa.abstract.domain">OctagonDomain</option>
   </rundefinition>
 
   <rundefinition name="Sifa EQ">
-    <option name="--force-no-wrapper" />
+    <option name="-s">../../../trunk/examples/settings/default/taipan/svcomp-Reach-32bit-Taipan_Default.epf</option>
     <option name="-tc">../../../trunk/examples/toolchains/SifaC.xml</option>
     <option name="--sifa.abstract.domain">EqDomain</option>
   </rundefinition>
 
   <rundefinition name="Taipan INT">
-    <option name="--force-no-wrapper" />
+    <option name="-s">../../../trunk/examples/settings/default/taipan/svcomp-Reach-32bit-Taipan_Default.epf</option>
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
     <option name="--sifa.abstract.domain">IntervalDomain</option>
   </rundefinition>
 
   <rundefinition name="Taipan OCT">
-    <option name="--force-no-wrapper" />
+    <option name="-s">../../../trunk/examples/settings/default/taipan/svcomp-Reach-32bit-Taipan_Default.epf</option>
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
     <option name="--sifa.abstract.domain">OctagonDomain</option>
   </rundefinition>
 
   <rundefinition name="Taipan EQ">
-    <option name="--force-no-wrapper" />
+    <option name="-s">../../../trunk/examples/settings/default/taipan/svcomp-Reach-32bit-Taipan_Default.epf</option>
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
     <option name="--sifa.abstract.domain">EqDomain</option>
   </rundefinition>
 
-  <tasks name="ReachSafety32">
+  <tasks name="ReachSafety">
     <includesfile>../sv-benchmarks/c/ReachSafety-Arrays.set</includesfile>
     <includesfile>../sv-benchmarks/c/ReachSafety-BitVectors.set</includesfile>
     <includesfile>../sv-benchmarks/c/ReachSafety-ControlFlow.set</includesfile>
@@ -50,14 +55,8 @@
     <includesfile>../sv-benchmarks/c/ReachSafety-ProductLines.set</includesfile>
     <includesfile>../sv-benchmarks/c/ReachSafety-Recursive.set</includesfile>
     <includesfile>../sv-benchmarks/c/ReachSafety-Sequentialized.set</includesfile>
-    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
-    <option name="-s">../../../trunk/examples/settings/default/taipan/svcomp-Reach-32bit-Taipan_Default.epf</option>
-  </tasks>
-
-  <tasks name="ReachSafety64">
     <includesfile>../sv-benchmarks/c/SoftwareSystems-DeviceDriversLinux64-ReachSafety.set</includesfile>
     <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
-    <option name="-s">../../../trunk/examples/settings/default/taipan/svcomp-Reach-64bit-Taipan_Default.epf</option>
   </tasks>
 
   <resultfiles></resultfiles>
