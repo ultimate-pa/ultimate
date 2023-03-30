@@ -452,17 +452,17 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			return false;
 		}
 
-		if (elem1.isLiteral() && elem2.isLiteral()) {
+		if (getRepresentativeElement(elem1).isLiteral() && getRepresentativeElement(elem2).isLiteral()) {
 
 			assert getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL;
 			// special case: don't add a literal disequality explicitly
-		} else {
-			// normal case
-			mElementTVER.reportDisequality(elem1, elem2);
+			return true;
+		}
+		// normal case
+		mElementTVER.reportDisequality(elem1, elem2);
 
-			if (mElementTVER.isInconsistent()) {
-				return true;
-			}
+		if (mElementTVER.isInconsistent()) {
+			return true;
 		}
 
 		mLiteralSetConstraints.reportDisequality(elem1, elem2);
