@@ -211,10 +211,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	 * i.e. pea 1 can not be in a terminal state if pea 2 is, and pea 1 can not be in a non-terminal state if pea 2 is. 
 	 * If this is the case, they have a word "in common" and are NOT complements of each other.
 	 *
-	 * @param req
-	 *            The requirement for which vacuity is checked.
-	 * @param aut
-	 *            The automaton for which vacuity is checked.
+	 * @param peas
+	 *            List of peas, should contain only two elements
 	 * @param bl
 	 *            A boogie location used for all statements.
 	 * @return The assertion for non-complementness
