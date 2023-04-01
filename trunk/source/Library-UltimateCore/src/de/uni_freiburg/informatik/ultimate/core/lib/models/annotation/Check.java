@@ -146,9 +146,9 @@ public class Check extends ModernAnnotations {
 		 */
 		INCOMPLETE,
 		/**
-		 * Check for requirements. Checks if intersection of two PEAs is not empty.
+		 * Check for requirements. Checks if two PEAs accept each others complement language.
 		 */
-		INTERSECTION_NOT_EMPTY,
+		COMPLEMENT,
 		/**
 		 * Check if a petrified ICFG does provide enough thread instances.
 		 */
@@ -265,8 +265,8 @@ public class Check extends ModernAnnotations {
 			return "consistent";
 		case INCOMPLETE:
 			return "complete";
-		case INTERSECTION_NOT_EMPTY:
-			return "the intersection is empty";
+		case COMPLEMENT:
+			return "the peas are complements of each other";
 		case SUFFICIENT_THREAD_INSTANCES:
 			return "petrification did provide enough thread instances (tool internal message, not intended for end users)";
 		case DATA_RACE:
@@ -322,8 +322,8 @@ public class Check extends ModernAnnotations {
 			return "inconsistent";
 		case INCOMPLETE:
 			return "incomplete";
-		case INTERSECTION_NOT_EMPTY:
-			return "the intersection is not empty";
+		case COMPLEMENT:
+			return "the peas are not complements of each other";
 		case SUFFICIENT_THREAD_INSTANCES:
 			return "petrification did not provide enough thread instances (tool internal message, not intended for end users)";
 		case DATA_RACE:

@@ -58,9 +58,9 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	private static final boolean DEF_CHECK_RT_INCONSISTENCY = true;
 	private static final String DESC_CHECK_RT_INCONSISTENCY = null;
 	
-	public static final String LABEL_CHECK_INTERSECTION_NOT_EMPTY = "Check emptiness of intersection";
-	private static final boolean DEF_CHECK_INTERSECTION_NOT_EMPTY = true;
-	private static final String DESC_CHECK_INTERSECTION_NOT_EMPTY = null;
+	public static final String LABEL_CHECK_COMPLEMENT = "Check if two PEAs are complements of each other";
+	private static final boolean DEF_CHECK_COMPLEMENT = true;
+	private static final String DESC_CHECK_COMPLEMENT_STRING = null;
 
 
 	public static final String LABEL_USE_EPSILON = "Use epsilon transformation during rt-inconsistency check";
@@ -127,6 +127,8 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 					PreferenceType.Boolean),
 			new UltimatePreferenceItem<>(LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, DEF_REPORT_TRIVIAL_RT_CONSISTENCY,
 					DESC_REPORT_TRIVIAL_RT_CONSISTENCY, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_CHECK_COMPLEMENT, DEF_CHECK_COMPLEMENT, DESC_CHECK_COMPLEMENT_STRING, 
+					PreferenceType.Boolean),
 			new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_RANGE, DEF_RT_INCONSISTENCY_RANGE,
 					DESC_RT_INCONSISTENCY_RANGE, PreferenceType.Integer,
 					IUltimatePreferenceItemValidator.ONLY_POSITIVE),
