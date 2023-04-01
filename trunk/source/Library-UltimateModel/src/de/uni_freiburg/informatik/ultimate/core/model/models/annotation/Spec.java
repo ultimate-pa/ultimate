@@ -199,11 +199,11 @@ public enum Spec {
 			"complete",
 			"incomplete");
 	/**
-	 * Checks if intersection of two PEAs is not empty.
+	 * Checks if two PEAs accept each others complement language.
 	 */
-	INTERSECTION_NOT_EMPTY(Group.REQUIREMENT,
-			"the intersection is empty",
-			"the intersection is not empty");
+	COMPLEMENT(Group.REQUIREMENT,
+			"the peas are complements of each other",
+			"the peas are not complements of each other");
 	// @formatter:on
 
 	/**
