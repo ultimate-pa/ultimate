@@ -270,7 +270,7 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 		final List<ISmtCommand<?>> result = new ArrayList<>();
 		result.add(new SetInfoCommand(":smt-lib-version", new BigDecimal("2.6")));
 		result.add(new SetLogicCommand(logic.name()));
-		result.add(new SetInfoCommand(":source", new QuotedObject(info)));
+		result.add(new SetInfoCommand(":source", info));
 		result.add(new SetInfoCommand(":license", new QuotedObject("https://creativecommons.org/licenses/by/4.0/")));
 		result.add(new SetInfoCommand(":category", new QuotedObject("industrial")));
 		result.add(new SetInfoCommand(":status", sat.toString()));
