@@ -92,7 +92,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private boolean mCheckVacuity;
 	private int mCombinationNum;
 	private boolean mCheckConsistency;
-	private boolean mCheckIntersectionNotEmpty;
+	private boolean mCheckComplement;
 	private boolean mReportTrivialConsistency;
 
 	private boolean mSeparateInvariantHandling;
@@ -133,7 +133,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mCheckConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
 		mReportTrivialConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY);
 		mSeparateInvariantHandling = prefs.getBoolean(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS);
-		mCheckIntersectionNotEmpty = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_INTERSECTION_NOT_EMPTY);
+		mCheckComplement = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_COMPLEMENT);
 
 		// log preferences
 		mLogger.info(String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s, %s=%s", Pea2BoogiePreferences.LABEL_CHECK_VACUITY,
@@ -141,7 +141,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 				Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY, mCheckConsistency,
 				Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, mReportTrivialConsistency,
 				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS, mSeparateInvariantHandling,
-				Pea2BoogiePreferences.LABEL_CHECK_INTERSECTION_NOT_EMPTY, mCheckIntersectionNotEmpty));
+				Pea2BoogiePreferences.LABEL_CHECK_COMPLEMENT, mCheckComplement));
 
 		final List<Declaration> decls = new ArrayList<>();
 		decls.addAll(mSymbolTable.getDeclarations());
@@ -172,8 +172,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		if (mCheckVacuity) {
 			annotations.addAll(genChecksNonVacuity(mUnitLocation));
 		}
-		if (mCheckIntersectionNotEmpty) {
-			annotations.addAll(genCheckIntersectionNotEmpty(mUnitLocation));
+		if (mCheckComplement) {
+			annotations.addAll(genCheckComplement(mUnitLocation));
 		}
 		annotations.addAll(genChecksRTInconsistency(mUnitLocation));
 		return annotations;
@@ -186,34 +186,79 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	}
 	
 
-	private List<Statement> genCheckIntersectionNotEmpty(final BoogieLocation bl) {
-		if (!mCheckVacuity) {
+	private List<Statement> genCheckComplement(final BoogieLocation bl) {
+		if (!mCheckComplement) {
 			return Collections.emptyList();
 		}
 		final List<Statement> stmtList = new ArrayList<>();
-		for (final ReqPeas reqpea : mReqPeas) {
-			 for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
-					final Statement assertTerminalPhase = genAssertIntersectionNotEmpty(pea.getValue(),bl);
-					if (assertTerminalPhase != null) {
-						stmtList.add(assertTerminalPhase);
-					}
-				}
+		ReqPeas reqPea = mReqPeas.get(0);
+		List<Entry<CounterTrace, PhaseEventAutomata>> peas = reqPea.getCounterTrace2Pea();
+		// we can only check for complement if we have exactly two PEAs
+		if (peas.size() != 2) {
+			return Collections.emptyList();
+		}
+		
+		final Statement assertComplement = genAssertComplement(peas, bl);
+		if (assertComplement != null) {
+			stmtList.add(assertComplement);
 		}
 		return stmtList;
 	}
 	
-	private Statement genAssertIntersectionNotEmpty(final PhaseEventAutomata aut, final BoogieLocation bl) {
-		Phase[] phases = aut.getPhases();
-		final List<Expression> checkTerminal = new ArrayList<>();
-		for (int i = 0; i < phases.length; i++) {
-			Phase phase = phases[i];
-			if (phase.getTerminal()) {
-				checkTerminal.add(genComparePhaseCounter(i, mSymbolTable.getPcName(aut), bl));
+	/**
+	 * Generate the assertion that is violated if the TWO given automata are NOT complements of each other. The
+	 * assertion expresses that the automata will never accept or reject the same words if one is the complement automaton of the other, 
+	 * i.e. pea 1 can not be in a terminal state if pea 2 is, and pea 1 can not be in a non-terminal state if pea 2 is. 
+	 * If this is the case, they have a word "in common" and are NOT complements of each other.
+	 *
+	 * @param req
+	 *            The requirement for which vacuity is checked.
+	 * @param aut
+	 *            The automaton for which vacuity is checked.
+	 * @param bl
+	 *            A boogie location used for all statements.
+	 * @return The assertion for non-complementness
+	 */
+	private Statement genAssertComplement(List<Entry<CounterTrace, PhaseEventAutomata>> peas, final BoogieLocation bl) {
+		final List<Expression> checkTerminal0 = new ArrayList<>();
+		final List<Expression> checkNonTerminal0 = new ArrayList<>();
+		final List<Expression> checkTerminal1 = new ArrayList<>();
+		final List<Expression> checkNonTerminal1 = new ArrayList<>();
+		
+		for (int i = 0; i < peas.size(); i++) {
+			Entry<CounterTrace, PhaseEventAutomata> entry = peas.get(i);
+			PhaseEventAutomata pea = entry.getValue();
+			Phase[] phases = pea.getPhases();
+			for (int j = 0; j < phases.length; j++) {
+				Phase phase = phases[j];
+				if (phase.getTerminal()) {
+					if (i == 0) {
+						checkTerminal0.add(genComparePhaseCounter(i, mSymbolTable.getPcName(pea), bl));
+					} else {
+						checkTerminal1.add(genComparePhaseCounter(i, mSymbolTable.getPcName(pea), bl));
+					}
+				} else {
+					if (i == 0) {
+						checkNonTerminal0.add(genComparePhaseCounter(i, mSymbolTable.getPcName(pea), bl));
+					} else {
+						checkNonTerminal1.add(genComparePhaseCounter(i, mSymbolTable.getPcName(pea), bl));
+					}
+				}
+				
 			}
 		}
-		final Expression disjunction = genDisjunction(checkTerminal, bl);
-		final ReqCheck check = new ReqCheck(Spec.INTERSECTION_NOT_EMPTY);
-		final String label = "INTERSECTION_NOT_EMPTY_" + aut.getName();
+		final Expression disjunctionTerminal0 = genDisjunction(checkTerminal0, bl);
+		final Expression disjunctionTerminal1 = genDisjunction(checkTerminal1, bl);
+		final Expression disjunctionNonTerminal0 = genDisjunction(checkNonTerminal0, bl);
+		final Expression disjunctionNonTerminal1 = genDisjunction(checkNonTerminal1, bl);
+		
+		final Expression conjunctionTerminal = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, disjunctionTerminal0, disjunctionTerminal1);
+		final Expression conjunctionNonTerminal = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, disjunctionNonTerminal0, disjunctionNonTerminal1);
+		
+		final Expression disjunction = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICOR, conjunctionTerminal, conjunctionNonTerminal);
+		
+		final ReqCheck check = new ReqCheck(Spec.COMPLEMENT);
+		final String label = "Complement_" + peas.get(0).getValue().getName() + "_" + peas.get(1).getValue().getName();
 		return createAssert(disjunction, check, label);
 	}
 
