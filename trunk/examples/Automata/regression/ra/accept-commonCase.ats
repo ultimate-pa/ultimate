@@ -12,3 +12,9 @@ RabinAutomaton automaton = (
 
 assert(accepts(automaton, [a a b , a b]));
 assert(!accepts(automaton, [, a a b]));
+assert(!accepts(automaton, [a a b ,]));
+assert(!accepts(automaton, [f g h,]));
+assert(!accepts(automaton, [, f g h]));
+assert(!accepts(automaton, [a a b , a f]));
+assert(!accepts(automaton, [a b f, a a b]));
+assert(!accepts(automaton, [,]));
