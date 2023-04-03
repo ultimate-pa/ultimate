@@ -24,20 +24,62 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		mResult = computeResult(automaton, word.getStem().asList(), word.getLoop().asList());
 	}
 
-	private boolean computeResult(final IRabinAutomaton<LETTER, STATE> automaton, final List<LETTER> loop) {
-		// TODO: Implement this;
-		return computeResult(automaton, new ArrayList<LETTER>(), loop);
-	}
-
+	/*
+	 * computes paths to accepting states with iterative letter evaluation and returns true iff if one of them has a
+	 * valid infinite loop returns false if no new situations with letter state pairs are found iff no true value was
+	 * returned first
+	 */
 	private boolean computeResult(final IRabinAutomaton<LETTER, STATE> automaton, final List<LETTER> stem,
 			final List<LETTER> loop) {
 
-		final HashSet<STATE> currentStateSet = new HashSet<>();
-		automaton.getInitialStates().forEach(x -> currentStateSet.add(x));
-		final HashSet<STATE> temp = new HashSet<>();
-		for (final LETTER letter : stem) {
+		final ArrayList<STATE> currentStateSet = stemEvaluation(automaton, stem);
+		final ArrayList<STATE> temp = new ArrayList<>();
+		int loopIndex = 0;
+		final HashSet<Pair<Integer, STATE>> uniqueSituations = new HashSet<>();
+		final HashSet<Pair<Integer, STATE>> visitedSituations = new HashSet<>();
+		currentStateSet.forEach(x -> uniqueSituations.add(new Pair<>(0, x)));
+		do {
 			if (currentStateSet.isEmpty()) {
 				return false;
+			}
+			for (final STATE state : currentStateSet) {
+
+				if (automaton.isAccepting(state) && !visitedSituations.contains(new Pair<>(loopIndex, state))
+						&& hasLoop(automaton, state, loop, loopIndex)) {
+					return true;
+				}
+
+				visitedSituations.add(new Pair<>(loopIndex, state));
+				for (final OutgoingInternalTransition<LETTER, STATE> possibleTransition : automaton.getSuccessors(state,
+						loop.get(loopIndex))) {
+					temp.add(possibleTransition.getSucc());
+				}
+			}
+			currentStateSet.clear();
+			currentStateSet.addAll(temp);
+			temp.clear();
+			loopIndex = (loopIndex + 1) % loop.size();
+			for (final STATE state : currentStateSet) {
+				uniqueSituations.add(new Pair<>(loopIndex, state));
+			}
+
+		} while (!uniqueSituations.equals(visitedSituations));
+
+		return false;
+
+	}
+
+	/*
+	 * Produces a new set of starting states that is valid after stem is read. Works similar to a NFA interpreter.
+	 */
+
+	private ArrayList<STATE> stemEvaluation(final IRabinAutomaton<LETTER, STATE> automaton, final List<LETTER> stem) {
+		final ArrayList<STATE> currentStateSet = new ArrayList<>();
+		automaton.getInitialStates().forEach(x -> currentStateSet.add(x));
+		final ArrayList<STATE> temp = new ArrayList<>();
+		for (final LETTER letter : stem) {
+			if (currentStateSet.isEmpty()) {
+				break;
 			}
 			for (final STATE currentState : currentStateSet) {
 				for (final OutgoingInternalTransition<LETTER, STATE> possibleTransition : automaton
@@ -50,74 +92,51 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 			currentStateSet.addAll(temp);
 			temp.clear();
 		}
+		return currentStateSet;
+	}
 
-		int loopIndex = 0;
+	/*
+	 * Tests if a loop exists from state to itself with input loop
+	 */
+	private boolean hasLoop(final IRabinAutomaton<LETTER, STATE> automaton, final STATE start, final List<LETTER> loop,
+			final int loopIndex) {
+
+		final ArrayList<STATE> currentStateSet = new ArrayList<>();
+		final ArrayList<STATE> temp = new ArrayList<>();
+		int localLoopIndex = loopIndex;
 		final HashSet<Pair<Integer, STATE>> uniqueSituations = new HashSet<>();
-		final HashSet<Pair<Integer, STATE>> knownSituations = new HashSet<>();
-		final HashSet<Pair<Integer, STATE>> exploredAcceptingSituations = new HashSet<>();
+		final HashSet<Pair<Integer, STATE>> visitedSituations = new HashSet<>();
+
+		currentStateSet.add(start);
+		uniqueSituations.add(new Pair<>(loopIndex, start));
+
 		do {
 			if (currentStateSet.isEmpty()) {
 				return false;
 			}
 			for (final STATE state : currentStateSet) {
-				knownSituations.add(new Pair<>(loopIndex, state));
 				for (final OutgoingInternalTransition<LETTER, STATE> possibleTransition : automaton.getSuccessors(state,
-						loop.get(loopIndex))) {
-					final STATE successor = possibleTransition.getSucc();
-					if (automaton.isAccepting(successor)
-							&& !exploredAcceptingSituations.contains(new Pair<>(loopIndex, successor))) {
-						for (final OutgoingInternalTransition<LETTER, STATE> acceptorTransition : automaton
-								.getSuccessors(successor, loop.get((loopIndex + 1) % loop.size()))) {
-
-							if (!automaton.isFinite(acceptorTransition.getSucc())
-									&& hasOmegaPathTo(automaton, acceptorTransition.getSucc(), successor, loop,
-											((loopIndex + 2) % loop.size()), new HashSet<>())) {
-								return true;
-							}
-							exploredAcceptingSituations.add(new Pair<>(loopIndex, successor));
-
-						}
-
+						loop.get(localLoopIndex))) {
+					final STATE sucessor = possibleTransition.getSucc();
+					if (loopIndex == (localLoopIndex + 1) % loop.size() && sucessor.equals(start)) {
+						return true;
+					}
+					if (!automaton.isFinite(sucessor)) {
+						temp.add(sucessor);
 					}
 				}
+				visitedSituations.add(new Pair<>(localLoopIndex, state));
 			}
 			currentStateSet.clear();
 			currentStateSet.addAll(temp);
 			temp.clear();
+
+			localLoopIndex = (localLoopIndex + 1) % loop.size();
 			for (final STATE state : currentStateSet) {
-				uniqueSituations.add(new Pair<>(loopIndex, state));
+				uniqueSituations.add(new Pair<>(localLoopIndex, state));
 			}
+		} while (!uniqueSituations.equals(visitedSituations));
 
-			loopIndex = (loopIndex + 1) % loop.size();
-
-		} while (!uniqueSituations.equals(knownSituations));
-
-		return false;
-	}
-
-	// Should use DFS to explore if there is at least one path from start to goal only using nonFinite states as
-	// intermediaries.
-	private boolean hasOmegaPathTo(final IRabinAutomaton<LETTER, STATE> automaton, final STATE start, final STATE goal,
-			final List<LETTER> omegaWord, final int wordIndex, final HashSet<Pair<Integer, STATE>> knownSituations) {
-		final HashSet<Pair<Integer, STATE>> uniqueSituations = new HashSet<>();
-		uniqueSituations.addAll(knownSituations);
-		final STATE current = start;
-		do {
-			for (final OutgoingInternalTransition<LETTER, STATE> possibleTransition : automaton.getSuccessors(current,
-					omegaWord.get(wordIndex))) {
-				final STATE succ = possibleTransition.getSucc();
-				if (!automaton.isFinite(succ)) {
-					if (goal.equals(succ)) {
-						return true;
-					}
-					uniqueSituations.add(new Pair<>(wordIndex, succ));
-					if (hasOmegaPathTo(automaton, succ, goal, omegaWord, ((wordIndex + 1) % omegaWord.size()),
-							uniqueSituations)) {
-						return true;
-					}
-				}
-			}
-		} while (uniqueSituations != knownSituations);
 		return false;
 	}
 

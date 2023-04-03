@@ -27,7 +27,7 @@ public interface IRabinAutomaton<LETTER, STATE> extends IAutomaton<LETTER, STATE
 	/**
 	 * @param state
 	 *            state
-	 * @return true iff the state is finite.
+	 * @return true iff the state is finite. (Should only be visited finitely often.)
 	 */
 	boolean isFinite(STATE state);
 
@@ -36,7 +36,7 @@ public interface IRabinAutomaton<LETTER, STATE> extends IAutomaton<LETTER, STATE
 	 *
 	 * @param state
 	 *            state
-	 * @return outgoing transitions
+	 * @return outgoing transitions all possible outgoing transitions for this state
 	 */
 	Iterable<OutgoingInternalTransition<LETTER, STATE>> getSuccessors(final STATE state);
 
@@ -47,7 +47,7 @@ public interface IRabinAutomaton<LETTER, STATE> extends IAutomaton<LETTER, STATE
 	 *            state
 	 * @param letter
 	 *            letter
-	 * @return outgoing transitions
+	 * @return resulting outgoing transitions for these parameters
 	 */
 	Iterable<OutgoingInternalTransition<LETTER, STATE>> getSuccessors(final STATE state, final LETTER letter);
 

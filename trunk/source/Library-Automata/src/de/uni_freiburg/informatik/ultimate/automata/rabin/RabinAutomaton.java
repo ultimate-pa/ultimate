@@ -21,11 +21,18 @@ public class RabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTER, ST
 
 	/**
 	 * @param alphabet
+	 *            The valid input characters for this automaton (should be a superset of the characters in transitions)
 	 * @param states
+	 *            The valid states of the automaton (should be a superset of the states in initialStates,
+	 *            acceptingStates, finiteStates and transitions)
 	 * @param initialStates
+	 *            The states that are active when no letter/word has been read
 	 * @param acceptingStates
-	 * @param initeStates
+	 *            States that when infinitely often visited lead to the acceptance of the input
+	 * @param finiteStates
+	 *            States that can only be visited a finite amount of times, iff the automaton accepts
 	 * @param transitions
+	 *            The transitions from one state to another for a one letter input
 	 */
 	public RabinAutomaton(final Set<LETTER> alphabet, final Set<STATE> states, final Set<STATE> initialStates,
 			final Set<STATE> acceptingStates, final Set<STATE> finiteStates,
