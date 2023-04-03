@@ -52,7 +52,10 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 				visitedSituations.add(new Pair<>(loopIndex, state));
 				for (final OutgoingInternalTransition<LETTER, STATE> possibleTransition : automaton.getSuccessors(state,
 						loop.get(loopIndex))) {
-					temp.add(possibleTransition.getSucc());
+					final STATE sucessor = possibleTransition.getSucc();
+					if (!visitedSituations.contains(new Pair<>((loopIndex + 1) % loop.size(), sucessor))) {
+						temp.add(sucessor);
+					}
 				}
 			}
 			currentStateSet.clear();
@@ -114,15 +117,18 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 			if (currentStateSet.isEmpty()) {
 				return false;
 			}
+
 			for (final STATE state : currentStateSet) {
 				for (final OutgoingInternalTransition<LETTER, STATE> possibleTransition : automaton.getSuccessors(state,
 						loop.get(localLoopIndex))) {
 					final STATE sucessor = possibleTransition.getSucc();
-					if (loopIndex == (localLoopIndex + 1) % loop.size() && sucessor.equals(start)) {
-						return true;
-					}
 					if (!automaton.isFinite(sucessor)) {
-						temp.add(sucessor);
+						if (loopIndex == (localLoopIndex + 1) % loop.size() && sucessor.equals(start)) {
+							return true;
+						}
+						if (!visitedSituations.contains(new Pair<>((localLoopIndex + 1) % loop.size(), sucessor))) {
+							temp.add(sucessor);
+						}
 					}
 				}
 				visitedSituations.add(new Pair<>(localLoopIndex, state));
