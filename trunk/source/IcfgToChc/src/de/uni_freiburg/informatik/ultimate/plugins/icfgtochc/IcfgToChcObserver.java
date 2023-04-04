@@ -64,7 +64,7 @@ public class IcfgToChcObserver extends BaseObserver {
 	private IElement mResult;
 
 	// TODO: Make this a setting
-	private static final boolean USE_LBE_FOR_CONCURRENT_PROGRAMS = true;
+	private static final boolean USE_LBE_FOR_CONCURRENT_PROGRAMS = false;
 
 	public IcfgToChcObserver(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
@@ -95,7 +95,9 @@ public class IcfgToChcObserver extends BaseObserver {
 		final ChcCategoryInfo chcCategoryInfo =
 				new ChcCategoryInfo(getLogics(resultChcs, mgdScript), hasNonLinearClauses);
 
-		assert resultChcs.stream().allMatch(chc -> chc.constructFormula(mgdScript, false).getFreeVars().length == 0);
+		final var bad = resultChcs.stream()
+				.filter(chc -> chc.constructFormula(mgdScript, false).getFreeVars().length != 0).findAny();
+		assert bad.isEmpty() : bad;
 
 		final HornAnnot annot = new HornAnnot(icfg.getIdentifier(), mgdScript, hcSymbolTable,
 				new ArrayList<>(resultChcs), true, chcCategoryInfo);
@@ -152,12 +154,12 @@ public class IcfgToChcObserver extends BaseObserver {
 
 	private IChcProvider getChcProvider(final IIcfg<IcfgLocation> icfg, final ManagedScript mgdScript,
 			final HcSymbolTable hcSymbolTable) {
-		if (IcfgUtils.isConcurrent(icfg)) {
+		if (true || IcfgUtils.isConcurrent(icfg)) {
 			assert !isReturnReachable(icfg);
 			if (USE_LBE_FOR_CONCURRENT_PROGRAMS) {
 				return new ChcProviderConcurrentWithLbe(mgdScript, hcSymbolTable, mServices);
 			} else {
-				return new ChcProviderConcurrent(mgdScript, hcSymbolTable);
+				return new ChcProviderConcurrent(mServices, mgdScript, hcSymbolTable);
 			}
 		}
 		return new ChcProviderForCalls(mgdScript, hcSymbolTable);

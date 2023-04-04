@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
@@ -17,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.IcfgToChcObserver.IChcProvider;
 
 /**
@@ -26,12 +28,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.IcfgToChcObserver.I
  *
  */
 public class ChcProviderConcurrent implements IChcProvider {
+	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
 	private final HcSymbolTable mHcSymbolTable;
 
 	private static final int MAXIMUM_NUMBER_OF_THREADS = 2;
 
-	public ChcProviderConcurrent(final ManagedScript mgdScript, final HcSymbolTable hcSymbolTable) {
+	public ChcProviderConcurrent(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final HcSymbolTable hcSymbolTable) {
+		mServices = services;
 		mMgdScript = mgdScript;
 		mHcSymbolTable = hcSymbolTable;
 	}
@@ -59,10 +64,20 @@ public class ChcProviderConcurrent implements IChcProvider {
 				}
 			}
 		}
+
+		numberOfThreads.clear();
+		numberOfThreads.put("thread", 2);
+		unboundedThreads.clear();
+		unboundedThreads.add("thread");
+
+		final var independence = new SemanticIndependenceRelation<>(mServices, mMgdScript, false, true);
+		final var locations = icfg.getProgramPoints().entrySet().stream()
+				.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().values()));
 		final IcfgToChcConcurrent factory = new IcfgToChcConcurrent(numberOfThreads, mMgdScript,
-				icfg.getCfgSmtToolkit(), mHcSymbolTable, x -> true);
+				icfg.getCfgSmtToolkit(), mHcSymbolTable, x -> true, locations, independence);
 		final List<HornClause> result = new ArrayList<>();
 		result.add(factory.getInitialClause(icfg.getInitialNodes()));
+		// result.add(factory.getIdUniquenessClause());
 		final Set<IcfgLocation> errorNodes =
 				icfg.getProcedureErrorNodes().values().stream().flatMap(Set::stream).collect(Collectors.toSet());
 		final Map<String, IcfgLocation> entryNodes = icfg.getProcedureEntryNodes();

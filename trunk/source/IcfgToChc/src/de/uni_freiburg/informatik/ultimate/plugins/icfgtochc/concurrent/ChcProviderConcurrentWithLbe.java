@@ -73,8 +73,10 @@ public class ChcProviderConcurrentWithLbe implements IChcProvider {
 		final List<HornClause> result = new ArrayList<>();
 		final List<IcfgLocation> errorLocs = getLocations(petriNet.getAcceptingPlaces()).stream()
 				.filter(x -> numberOfThreads.containsKey(x.getProcedure())).collect(Collectors.toList());
+		final var locations = icfg.getProgramPoints().entrySet().stream()
+				.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().values()));
 		final IcfgToChcConcurrent factory = new IcfgToChcConcurrent(numberOfThreads, mMgdScript,
-				petrified.getCfgSmtToolkit(), mHcSymbolTable, x -> true);
+				petrified.getCfgSmtToolkit(), mHcSymbolTable, x -> true, locations, null);
 		result.add(factory.getInitialClause(getLocations(petriNet.getInitialPlaces())));
 		result.addAll(factory.getSafetyClauses(errorLocs));
 		for (final Transition<IcfgEdge, IPredicate> transition : petriNet.getTransitions()) {
