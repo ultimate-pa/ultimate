@@ -1320,7 +1320,7 @@ const _CONFIG = {
 		},
 		{
 			name: "Petri Automizer",
-			id: "perti_automizer",
+			id: "petri_automizer",
 			description: "Petri net-based analysis of concurrent programs.",
 			languages: ["Boogie"],
 			workers: [
