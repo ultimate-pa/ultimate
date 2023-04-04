@@ -57,7 +57,7 @@ const _CONFIG = {
 	tools: [
 		{
 			// name: A Human readable name of this tool. Used as Heading in the frontend.
-			name: "ULTIMATE Automizer",
+			name: "Automizer",
 			// id: A mandatory unique id for the tool.
 			id: "automizer",
 			// description: Frontend description.
@@ -114,7 +114,7 @@ const _CONFIG = {
 			logo_url: "img/tool_logo.png",
 		},
 		{
-			name: "ULTIMATE Büchi Automizer",
+			name: "Büchi Automizer",
 			id: "buechi_automizer",
 			description: "Termination analysis based on Büchi automata.",
 			languages: ["Boogie", "C"],
@@ -134,7 +134,7 @@ const _CONFIG = {
 			]
 		},
 		{
-			name: "ULTIMATE Kojak",
+			name: "Kojak",
 			id: "kojak",
 			description: "A software model checker.",
 			languages: ["Boogie", "C"],
@@ -154,7 +154,7 @@ const _CONFIG = {
 			]
 		},
 		{
-			name: "ULTIMATE Taipan",
+			name: "Taipan",
 			id: "taipan",
 			description: "Verification of safety properties using trace abstraction and abstract interpretation on path programs.",
 			languages: ["Boogie", "C"],
@@ -1038,7 +1038,7 @@ const _CONFIG = {
 			]
 		},
 		{
-			name: "ULTIMATE LTL Automizer",
+			name: "LTL Automizer",
 			id: "ltl_automizer",
 			description: "An LTL software model checker based on Büchi programs.",
 			languages: ["C"],
@@ -1285,7 +1285,7 @@ const _CONFIG = {
 			]
 		},
 		{
-			name: "ULTIMATE Lasso Ranker",
+			name: "Lasso Ranker",
 			id: "lasso_ranker",
 			description: "Synthesis of ranking functions and nontermination arguments.",
 			languages: ["Boogie", "C"],
@@ -1305,7 +1305,7 @@ const _CONFIG = {
 			]
 		},
 		{
-			name: "ULTIMATE Automata Library",
+			name: "Automata Library",
 			id: "automata_library",
 			description: "Nested Word Automta, Büchi Nested Word Automta, Petri Net, Alternating Finite Automata, Tree Automata.",
 			languages: ["Automata_script"],
@@ -1319,7 +1319,7 @@ const _CONFIG = {
 			]
 		},
 		{
-			name: "ULTIMATE Petri Automizer",
+			name: "Petri Automizer",
 			id: "perti_automizer",
 			description: "Petri net-based analysis of concurrent programs.",
 			languages: ["Boogie"],
@@ -1333,7 +1333,7 @@ const _CONFIG = {
 			]
 		},
 		{
-			name: "ULTIMATE Referee",
+			name: "Referee",
 			id: "referee",
 			description: "Checking validity of given invariants.",
 			languages: ["Boogie", "C"],
@@ -1353,7 +1353,7 @@ const _CONFIG = {
 			]
 		},
 		{
-			name: "ULTIMATE Eliminator",
+			name: "Eliminator",
 			id: "eliminator",
 			description: "Run SMT script.",
 			languages: ["Smt"],
