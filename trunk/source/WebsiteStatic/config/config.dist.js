@@ -1358,20 +1358,6 @@ const _CONFIG = {
 			]
 		},
 		{
-			name: "Petri Automizer",
-			id: "petri_automizer",
-			description: "Petri net-based analysis of concurrent programs.",
-			languages: ["Boogie"],
-			workers: [
-				{
-					language: "boogie",
-					id: "boogieConcurrentTraceAbstr",
-					task_id: "CONCURRENT_BOOGIE",
-					frontend_settings: []
-				}
-			]
-		},
-		{
 			name: "Referee",
 			id: "referee",
 			description: "Checking validity of given invariants.",
