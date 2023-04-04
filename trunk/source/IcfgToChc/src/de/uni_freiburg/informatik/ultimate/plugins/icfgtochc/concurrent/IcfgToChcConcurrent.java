@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class to create horn-clauses for given edges to create thread-modular proofs.
@@ -51,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class IcfgToChcConcurrent {
 	private static final String FUNCTION_NAME = "Inv";
+	private static final int INTERFERING_INSTANCE_ID = -1;
 
 	private final ManagedScript mManagedScript;
 
@@ -138,20 +138,22 @@ public class IcfgToChcConcurrent {
 			final String proc = entry.getKey();
 			final List<IProgramVar> localVars = localVariables.get(proc);
 			for (int j = 0; j < entry.getValue(); j++) {
+				final var instance = new ThreadInstance(proc, j);
+
 				// thread ID
-				final var id = new HcThreadIdVar(getScript(), proc, j);
+				final var id = new HcThreadIdVar(instance, getScript());
 				mIdVars.put(proc, j, id);
 				mPositions2Vars.put(i, id);
 				i++;
 
 				// Location
-				final var loc = new HcLocationVar(proc, j, getIntSort());
+				final var loc = new HcLocationVar(instance, getIntSort());
 				mLocationsVars.put(proc, j, loc);
 				mPositions2Vars.put(i, loc);
 				i++;
 
 				// sleep set
-				final var sleep = new HcSleepVar(getScript(), proc, j);
+				final var sleep = new HcSleepVar(instance, getScript());
 				mSleepVars.put(proc, j, sleep);
 				mPositions2Vars.put(i, sleep);
 				i++;
@@ -190,18 +192,34 @@ public class IcfgToChcConcurrent {
 		return numeral(index);
 	}
 
-	// pc_0 = l_0 -> Inv(pc_0, ...)
-	public HornClause getInitialClause(final Collection<IcfgLocation> initialLocations) {
-		final NestedMap2<String, Integer, Term> locationMap = new NestedMap2<>();
+	private Collection<ThreadInstance> getInstances(final String template) {
+		final var result = new ArrayList<ThreadInstance>();
+		for (int i = 0; i < mNumberOfThreads.get(template); i++) {
+			result.add(new ThreadInstance(template, i));
+		}
+		return result;
+	}
+
+	private List<ThreadInstance> getInstances() {
+		final var result = new ArrayList<ThreadInstance>();
 		for (final Entry<String, Integer> entry : mNumberOfThreads.entrySet()) {
 			for (int i = 0; i < entry.getValue(); i++) {
-				locationMap.put(entry.getKey(), i, mBottomLocation);
+				result.add(new ThreadInstance(entry.getKey(), i));
 			}
+		}
+		return result;
+	}
+
+	// pc_0 = l_0 -> Inv(pc_0, ...)
+	public HornClause getInitialClause(final Collection<IcfgLocation> initialLocations) {
+		final Map<ThreadInstance, Term> locationMap = new HashMap<>();
+		for (final var instance : getInstances()) {
+			locationMap.put(instance, mBottomLocation);
 		}
 		for (final IcfgLocation loc : initialLocations) {
 			final String proc = loc.getProcedure();
 			for (int i = 0; i < mNumberOfThreads.get(proc); i++) {
-				locationMap.put(proc, i, getLocIndexTerm(loc, proc));
+				locationMap.put(new ThreadInstance(proc, i), getLocIndexTerm(loc, proc));
 			}
 		}
 		final var locConstraint = getConstraintFromLocationMap(locationMap);
@@ -263,10 +281,10 @@ public class IcfgToChcConcurrent {
 	 * @return A conjunction of equalities between the default variables for control locations
 	 *         ({@link #mDefaultHeadVars}) and the locations specified by the map
 	 */
-	private Term getConstraintFromLocationMap(final NestedMap2<String, Integer, Term> locationMap) {
+	private Term getConstraintFromLocationMap(final Map<ThreadInstance, Term> locationMap) {
 		final List<Term> constraints = new ArrayList<>();
-		for (final var triple : locationMap.entrySet()) {
-			final var constraint = getLocationConstraint(triple.getFirst(), triple.getSecond(), triple.getThird());
+		for (final var pair : locationMap.entrySet()) {
+			final var constraint = getLocationConstraint(pair.getKey(), pair.getValue());
 			constraints.add(constraint);
 		}
 		return SmtUtils.and(getScript(), constraints);
@@ -278,8 +296,8 @@ public class IcfgToChcConcurrent {
 	 * @return Equality between the default variable for the given thread's control location ({@link #mDefaultHeadVars})
 	 *         and the given location term
 	 */
-	private Term getLocationConstraint(final String proc, final int threadInstance, final Term location) {
-		final HcLocationVar locVar = new HcLocationVar(proc, threadInstance, getIntSort());
+	private Term getLocationConstraint(final ThreadInstance threadInstance, final Term location) {
+		final HcLocationVar locVar = new HcLocationVar(threadInstance, getIntSort());
 		final int index = mPositions2Vars.inverse().get(locVar);
 		final Term term = mDefaultHeadVars.get(index).getTerm();
 		return SmtUtils.binaryEquality(getScript(), term, location);
@@ -293,8 +311,8 @@ public class IcfgToChcConcurrent {
 		final List<Term> bodyArgs = getDefaultArgs();
 		for (final IcfgLocation loc : errorLocations) {
 			final String proc = loc.getProcedure();
-			for (int i = 0; i < mNumberOfThreads.get(proc); i++) {
-				final Term constraint = getLocationConstraint(proc, i, getLocIndexTerm(loc, proc));
+			for (final var instance : getInstances(proc)) {
+				final Term constraint = getLocationConstraint(instance, getLocIndexTerm(loc, proc));
 				result.add(new HornClause(mManagedScript, mHcSymbolTable, constraint, List.of(mPredicate),
 						List.of(bodyArgs), vars));
 			}
@@ -369,7 +387,7 @@ public class IcfgToChcConcurrent {
 				IProgramVar pv = null;
 				if (rv instanceof HcLocalVar) {
 					final HcLocalVar lv = (HcLocalVar) rv;
-					if (!Objects.equals(indexMap.get(lv.getProcedure()), lv.getIndex())) {
+					if (!Objects.equals(indexMap.get(lv.getThreadTemplateName()), lv.getInstanceIndex())) {
 						continue;
 					}
 					pv = lv.getVariable();
@@ -378,8 +396,8 @@ public class IcfgToChcConcurrent {
 					pv = gv.getVariable();
 				} else if (rv instanceof HcLocationVar) {
 					final HcLocationVar lv = (HcLocationVar) rv;
-					final String procedure = lv.getProcedure();
-					final int instanceIndex = lv.getIndex();
+					final String procedure = lv.getThreadTemplateName();
+					final int instanceIndex = lv.getInstanceIndex();
 					Term locIn = locMapIn.get(procedure, instanceIndex);
 					Term locOut = locMapOut.get(procedure, instanceIndex);
 					if (locIn == null && locOut == null) {
@@ -416,15 +434,14 @@ public class IcfgToChcConcurrent {
 						bodyArgs.set(index, oldSleep.getTerm());
 						final var newSleep = mDefaultHeadVars.get(index).getTerm();
 
-						final var hcLoc =
-								new HcLocationVar(sv.getThreadTemplateName(), sv.getInstanceIndex(), getIntSort());
+						final var hcLoc = new HcLocationVar(sv.getThreadInstance(), getIntSort());
 						final int locIndex = mPositions2Vars.inverse().get(hcLoc);
 						final var locVar = mDefaultHeadVars.get(locIndex);
 
-						final var currentId = mDefaultHeadVars.get(mPositions2Vars.inverse()
-								.get(new HcThreadIdVar(getScript(), activeProcedure, activeInstanceIndex)));
-						final var otherId = mDefaultHeadVars.get(mPositions2Vars.inverse().get(
-								new HcThreadIdVar(getScript(), sv.getThreadTemplateName(), sv.getInstanceIndex())));
+						final var currentId = mDefaultHeadVars.get(mPositions2Vars.inverse().get(new HcThreadIdVar(
+								new ThreadInstance(activeProcedure, activeInstanceIndex), getScript())));
+						final var otherId = mDefaultHeadVars.get(
+								mPositions2Vars.inverse().get(new HcThreadIdVar(sv.getThreadInstance(), getScript())));
 
 						// update sleep variable depending on commutativity and thread ID ordering
 						final Term nonCommConstr = getNonCommutativityConstraint(sv, locVar.getTerm(), edge);
@@ -498,19 +515,15 @@ public class IcfgToChcConcurrent {
 			}
 
 			// add ID constraints
-			final var instances = mNumberOfThreads.entrySet().stream()
-					.flatMap(e -> IntStream.range(0, e.getValue()).mapToObj(i -> new Pair<>(e.getKey(), i)))
-					.collect(Collectors.toList());
+			final var instances = getInstances();
 			for (int i = 0; i < instances.size(); ++i) {
 				final var first = instances.get(i);
-				final var firstIndex =
-						mPositions2Vars.inverse().get(new HcThreadIdVar(getScript(), first.getKey(), first.getValue()));
+				final var firstIndex = mPositions2Vars.inverse().get(new HcThreadIdVar(first, getScript()));
 				final var firstId = mDefaultHeadVars.get(firstIndex);
 
 				for (int j = i + 1; j < instances.size(); ++j) {
 					final var second = instances.get(j);
-					final var secondIndex = mPositions2Vars.inverse()
-							.get(new HcThreadIdVar(getScript(), second.getKey(), second.getValue()));
+					final var secondIndex = mPositions2Vars.inverse().get(new HcThreadIdVar(second, getScript()));
 					final var secondId = mDefaultHeadVars.get(secondIndex);
 
 					constraints.add(SmtUtils.less(getScript(), firstId.getTerm(), secondId.getTerm()));
@@ -560,20 +573,15 @@ public class IcfgToChcConcurrent {
 		final var bodyArgs = getDefaultArgs();
 		final var constraints = new ArrayList<Term>();
 
-		final var instances = mNumberOfThreads.entrySet().stream()
-				.flatMap(e -> IntStream.range(0, e.getValue()).mapToObj(i -> new Pair<>(e.getKey(), i)))
-				.collect(Collectors.toList());
-
+		final var instances = getInstances();
 		for (int i = 0; i < instances.size(); ++i) {
 			final var first = instances.get(i);
-			final var firstIndex =
-					mPositions2Vars.inverse().get(new HcThreadIdVar(getScript(), first.getKey(), first.getValue()));
+			final var firstIndex = mPositions2Vars.inverse().get(new HcThreadIdVar(first, getScript()));
 			final var firstId = bodyArgs.get(firstIndex);
 
 			for (int j = i + 1; j < instances.size(); ++j) {
 				final var second = instances.get(j);
-				final var secondIndex = mPositions2Vars.inverse()
-						.get(new HcThreadIdVar(getScript(), second.getKey(), second.getValue()));
+				final var secondIndex = mPositions2Vars.inverse().get(new HcThreadIdVar(second, getScript()));
 				final var secondId = bodyArgs.get(secondIndex);
 
 				constraints.add(SmtUtils.binaryEquality(getScript(), firstId, secondId));
@@ -586,6 +594,8 @@ public class IcfgToChcConcurrent {
 
 	public HornClause getNonInterferenceClause(final IIcfgTransition<?> edge) {
 		final String procedure = edge.getPrecedingProcedure();
+		final var interferingThread = new ThreadInstance(procedure, INTERFERING_INSTANCE_ID);
+
 		final int n = mNumberOfThreads.get(procedure);
 		final List<List<Term>> bodyArguments = new ArrayList<>();
 		for (int i = 0; i <= n; i++) {
@@ -600,7 +610,7 @@ public class IcfgToChcConcurrent {
 			final IHcReplacementVar rv = entry.getValue();
 			if (rv instanceof HcLocalVar) {
 				final HcLocalVar lv = (HcLocalVar) rv;
-				if (lv.getProcedure().equals(procedure)) {
+				if (lv.getThreadTemplateName().equals(procedure)) {
 					final IProgramVar pv = lv.getVariable();
 					final TermVariable inVar = transformula.getInVars().get(pv);
 					final TermVariable outVar = transformula.getOutVars().get(pv);
@@ -637,11 +647,11 @@ public class IcfgToChcConcurrent {
 				}
 			} else if (rv instanceof HcLocationVar) {
 				final HcLocationVar lv = (HcLocationVar) rv;
-				if (lv.getProcedure().equals(procedure)) {
+				if (lv.getThreadTemplateName().equals(procedure)) {
 					final Term loc = getLocIndexTerm(edge.getSource(), procedure);
 					for (int i = 0; i < n; i++) {
-						final int newIndex =
-								mPositions2Vars.inverse().get(new HcLocationVar(procedure, i, getIntSort()));
+						final int newIndex = mPositions2Vars.inverse()
+								.get(new HcLocationVar(new ThreadInstance(procedure, i), getIntSort()));
 						bodyArguments.get(i + 1).set(newIndex, loc);
 					}
 				}
@@ -657,15 +667,15 @@ public class IcfgToChcConcurrent {
 
 				final var newSleep = mDefaultHeadVars.get(index);
 
-				final var hcLoc = new HcLocationVar(sv.getThreadTemplateName(), sv.getInstanceIndex(), getIntSort());
+				final var hcLoc = new HcLocationVar(sv.getThreadInstance(), getIntSort());
 				final int locIndex = mPositions2Vars.inverse().get(hcLoc);
 				final var locVar = mDefaultHeadVars.get(locIndex);
 
 				final var currentId = mHcSymbolTable.getOrConstructBodyVar(mPredicate, -1, getIntSort(),
-						new HcThreadIdVar(getScript(), procedure, -1));
+						new HcThreadIdVar(interferingThread, getScript()));
 				bodyVars.add(currentId);
-				final var otherId = mDefaultHeadVars.get(mPositions2Vars.inverse()
-						.get(new HcThreadIdVar(getScript(), sv.getThreadTemplateName(), sv.getInstanceIndex())));
+				final var otherId = mDefaultHeadVars
+						.get(mPositions2Vars.inverse().get(new HcThreadIdVar(sv.getThreadInstance(), getScript())));
 
 				// update sleep variable depending on commutativity and thread ID ordering
 				final Term nonCommConstr = getNonCommutativityConstraint(sv, locVar.getTerm(), edge);
@@ -685,7 +695,7 @@ public class IcfgToChcConcurrent {
 					// for each non-interference premise, insert the variable in the index for the interfering thread
 					for (int i = 0; i < n; ++i) {
 						final int newIndex = mPositions2Vars.inverse()
-								.get(new HcSleepVar(getScript(), sv.getThreadTemplateName(), i));
+								.get(new HcSleepVar(new ThreadInstance(sv.getThreadTemplateName(), i), getScript()));
 						bodyArguments.get(i + 1).set(newIndex, bodyVar.getTerm());
 					}
 
@@ -697,11 +707,11 @@ public class IcfgToChcConcurrent {
 				final var iv = (HcThreadIdVar) rv;
 				if (iv.getThreadTemplateName().equals(procedure)) {
 					final var id = mHcSymbolTable.getOrConstructBodyVar(mPredicate, -1, getIntSort(),
-							new HcThreadIdVar(getScript(), procedure, -1));
+							new HcThreadIdVar(interferingThread, getScript()));
 					bodyVars.add(id);
 					for (int i = 0; i < n; ++i) {
 						final var newIndex = mPositions2Vars.inverse()
-								.get(new HcSleepVar(getScript(), iv.getThreadTemplateName(), i));
+								.get(new HcSleepVar(new ThreadInstance(iv.getThreadTemplateName(), i), getScript()));
 						bodyArguments.get(i + 1).set(newIndex, id.getTerm());
 					}
 				}
@@ -711,22 +721,18 @@ public class IcfgToChcConcurrent {
 		}
 
 		// add ID constraints
-		final var instances = mNumberOfThreads.entrySet().stream()
-				.flatMap(e -> IntStream.range(0, e.getValue()).mapToObj(i -> new Pair<>(e.getKey(), i)))
-				.collect(Collectors.toList());
+		final var instances = getInstances();
 		final var interferingId = mHcSymbolTable.getOrConstructBodyVar(mPredicate, -1, getIntSort(),
-				new HcThreadIdVar(getScript(), procedure, -1));
+				new HcThreadIdVar(interferingThread, getScript()));
 		assert bodyVars.contains(interferingId);
 		for (int i = 0; i < instances.size(); ++i) {
 			final var first = instances.get(i);
-			final var firstIndex =
-					mPositions2Vars.inverse().get(new HcThreadIdVar(getScript(), first.getKey(), first.getValue()));
+			final var firstIndex = mPositions2Vars.inverse().get(new HcThreadIdVar(first, getScript()));
 			final var firstId = mDefaultHeadVars.get(firstIndex);
 
 			for (int j = i + 1; j < instances.size(); ++j) {
 				final var second = instances.get(j);
-				final var secondIndex = mPositions2Vars.inverse()
-						.get(new HcThreadIdVar(getScript(), second.getKey(), second.getValue()));
+				final var secondIndex = mPositions2Vars.inverse().get(new HcThreadIdVar(second, getScript()));
 				final var secondId = mDefaultHeadVars.get(secondIndex);
 
 				constraints.add(SmtUtils.less(getScript(), firstId.getTerm(), secondId.getTerm()));

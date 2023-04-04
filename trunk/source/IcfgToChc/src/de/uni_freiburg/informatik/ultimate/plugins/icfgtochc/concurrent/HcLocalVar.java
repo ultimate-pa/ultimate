@@ -4,32 +4,28 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgToChcConcurrent.IHcReplacementVar;
 
 /**
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
  */
-public class HcLocalVar implements IHcReplacementVar {
+public class HcLocalVar implements IHcThreadSpecificVar {
 	private final IProgramVar mVariable;
-	private final int mIndex;
+	private final ThreadInstance mInstance;
 
-	public HcLocalVar(final IProgramVar variable, final int index) {
+	public HcLocalVar(final IProgramVar variable, final int instanceNumber) {
 		mVariable = variable;
-		mIndex = index;
+		mInstance = new ThreadInstance(mVariable.getProcedure(), instanceNumber);
 	}
 
 	public IProgramVar getVariable() {
 		return mVariable;
 	}
 
-	public int getIndex() {
-		return mIndex;
-	}
-
-	public String getProcedure() {
-		return mVariable.getProcedure();
+	@Override
+	public ThreadInstance getThreadInstance() {
+		return mInstance;
 	}
 
 	@Override
@@ -39,12 +35,13 @@ public class HcLocalVar implements IHcReplacementVar {
 
 	@Override
 	public String toString() {
-		return IcfgToChcConcurrentUtils.getReadableString(mVariable) + (mIndex + 1);
+		return IcfgToChcConcurrentUtils.getReadableString(mVariable) + (mInstance.getInstanceNumber() + 1);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mIndex, mVariable);
+		final int prime = 97;
+		return prime * Objects.hash(mInstance, mVariable);
 	}
 
 	@Override
@@ -52,10 +49,13 @@ public class HcLocalVar implements IHcReplacementVar {
 		if (this == obj) {
 			return true;
 		}
-		if (!(obj instanceof HcLocalVar)) {
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
 		}
 		final HcLocalVar other = (HcLocalVar) obj;
-		return mIndex == other.mIndex && mVariable.equals(other.mVariable);
+		return Objects.equals(mInstance, other.mInstance) && Objects.equals(mVariable, other.mVariable);
 	}
 }

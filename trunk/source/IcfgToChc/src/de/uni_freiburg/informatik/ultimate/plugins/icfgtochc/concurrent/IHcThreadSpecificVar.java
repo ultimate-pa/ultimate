@@ -26,56 +26,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
-import java.util.Objects;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgToChcConcurrent.IHcReplacementVar;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
+public interface IHcThreadSpecificVar extends IHcReplacementVar {
+	ThreadInstance getThreadInstance();
 
-public class HcSleepVar implements IHcThreadSpecificVar {
-	private static final String SORT = "Int";
-
-	private final Sort mSort;
-	private final ThreadInstance mInstance;
-
-	public HcSleepVar(final ThreadInstance instance, final Script script) {
-		mInstance = instance;
-		mSort = script.sort(SORT);
+	@Deprecated
+	default String getThreadTemplateName() {
+		return getThreadInstance().getTemplateName();
 	}
 
-	@Override
-	public Sort getSort() {
-		return mSort;
-	}
-
-	@Override
-	public ThreadInstance getThreadInstance() {
-		return mInstance;
-	}
-
-	@Override
-	public String toString() {
-		return "sleep_" + IcfgToChcConcurrentUtils.getReadableString(mInstance.getTemplateName()) + "_"
-				+ (mInstance.getInstanceNumber() + 1);
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		return prime * Objects.hash(mInstance);
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final HcSleepVar other = (HcSleepVar) obj;
-		return Objects.equals(mInstance, other.mInstance);
+	@Deprecated
+	default int getInstanceIndex() {
+		return getThreadInstance().getInstanceNumber();
 	}
 }

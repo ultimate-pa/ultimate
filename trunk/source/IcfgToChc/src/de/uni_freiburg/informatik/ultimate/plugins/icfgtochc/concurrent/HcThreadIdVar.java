@@ -30,19 +30,16 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgToChcConcurrent.IHcReplacementVar;
 
-public class HcThreadIdVar implements IHcReplacementVar {
+public class HcThreadIdVar implements IHcThreadSpecificVar {
 	private static final String SORT = "Int";
 
 	private final Sort mSort;
-	private final String mThreadTemplateName;
-	private final int mInstanceIndex;
+	private final ThreadInstance mInstance;
 
-	public HcThreadIdVar(final Script script, final String threadTemplateName, final int instanceIndex) {
+	public HcThreadIdVar(final ThreadInstance instance, final Script script) {
+		mInstance = instance;
 		mSort = script.sort(SORT);
-		mThreadTemplateName = threadTemplateName;
-		mInstanceIndex = instanceIndex;
 	}
 
 	@Override
@@ -50,22 +47,21 @@ public class HcThreadIdVar implements IHcReplacementVar {
 		return mSort;
 	}
 
-	public String getThreadTemplateName() {
-		return mThreadTemplateName;
-	}
-
-	public int getInstanceIndex() {
-		return mInstanceIndex;
+	@Override
+	public ThreadInstance getThreadInstance() {
+		return mInstance;
 	}
 
 	@Override
 	public String toString() {
-		return "id_" + IcfgToChcConcurrentUtils.getReadableString(mThreadTemplateName) + "_" + (mInstanceIndex + 1);
+		return "id_" + IcfgToChcConcurrentUtils.getReadableString(mInstance.getTemplateName()) + "_"
+				+ (mInstance.getInstanceNumber() + 1);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mInstanceIndex, mThreadTemplateName);
+		final int prime = 59;
+		return prime * Objects.hash(mInstance);
 	}
 
 	@Override
@@ -80,6 +76,6 @@ public class HcThreadIdVar implements IHcReplacementVar {
 			return false;
 		}
 		final HcThreadIdVar other = (HcThreadIdVar) obj;
-		return mInstanceIndex == other.mInstanceIndex && Objects.equals(mThreadTemplateName, other.mThreadTemplateName);
+		return Objects.equals(mInstance, other.mInstance);
 	}
 }
