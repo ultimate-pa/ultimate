@@ -85,7 +85,7 @@ const _CONFIG = {
 							// type: Setting type can be one of ("bool", "int", "string", "real")
 							type: "bool",
 							// default: Default state/value for the setting.
-							default: true,
+							default: false,
 							// range: If the type is "int" or "real", a slider will be generated in the frontend.
 							// range: [1, 12],
 							// options: If the type is "string", a selection field will be generated in the frontend.
@@ -101,6 +101,15 @@ const _CONFIG = {
 							type: "bool",
 							default: true,
 							visible: true
+						},
+						{
+							plugin_id: "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							default: true,
+							visible: true,
+							name: "Check absence of data races in concurrent programs",
+							id: "cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs",
+							type: "bool",
+							key: "Check absence of data races in concurrent programs"
 						}
 					]
 				},
@@ -143,7 +152,37 @@ const _CONFIG = {
 					language: "c",
 					id: "cKojak",
 					task_id: "KOJAK_C",
-					frontend_settings: []
+					frontend_settings: [
+						{
+							// name: Settings name displayed in the settings menu.
+							name: "Check for memory leak in main procedure",
+							// id: A mandatory unique id for this setting.
+							id: "chck_main_mem_leak",
+							// plugin_id: Ultimate plugin affected by this setting.
+							plugin_id: "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							// key: Setting key as used by the plugin.
+							key: "Check for the main procedure if all allocated memory was freed",
+							// type: Setting type can be one of ("bool", "int", "string", "real")
+							type: "bool",
+							// default: Default state/value for the setting.
+							default: false,
+							// range: If the type is "int" or "real", a slider will be generated in the frontend.
+							// range: [1, 12],
+							// options: If the type is "string", a selection field will be generated in the frontend.
+							// options: ["foo", "bar", "baz"]
+							// visible: If true, this setting is exposed to the user.
+							visible: true
+						},
+						{
+							name: "Check for overflows of signed integers",
+							id: "chck_signed_int_overflow",
+							plugin_id: "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							key: "Check absence of signed integer overflows",
+							type: "bool",
+							default: true,
+							visible: true
+						}
+					]
 				},
 				{
 					language: "boogie",
@@ -167,7 +206,7 @@ const _CONFIG = {
 						{
 							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
 							"default": true,
-							"visible": false,
+							"visible": true,
 							"name": "Check absence of data races in concurrent programs",
 							"id": "cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs",
 							"type": "bool",
@@ -190,7 +229,7 @@ const _CONFIG = {
 						{
 							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
 							"default": false,
-							"visible": false,
+							"visible": true,
 							"name": "Check if freed pointer was valid",
 							"id": "cacsl2boogietranslator.check.if.freed.pointer.was.valid",
 							"type": "bool",
