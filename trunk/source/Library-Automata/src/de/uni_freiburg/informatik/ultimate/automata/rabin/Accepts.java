@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -15,7 +16,7 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	private final boolean mResult;
 
 	public Accepts(final AutomataLibraryServices services, final IRabinAutomaton<LETTER, STATE> automaton,
-			final NestedLassoWord<LETTER> word) {
+			final NestedLassoWord<LETTER> word) throws AutomataOperationCanceledException {
 		super(services);
 		// TODO: Could we use another type of lasso-words here instead?
 		if (!word.getStem().hasEmptyNestingRelation() || !word.getLoop().hasEmptyNestingRelation()) {
@@ -30,7 +31,7 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	 * returned first
 	 */
 	private boolean computeResult(final IRabinAutomaton<LETTER, STATE> automaton, final List<LETTER> stem,
-			final List<LETTER> loop) {
+			final List<LETTER> loop) throws AutomataOperationCanceledException {
 
 		final ArrayList<STATE> currentStateSet = stemEvaluation(automaton, stem);
 		final ArrayList<STATE> temp = new ArrayList<>();
@@ -39,6 +40,9 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		final HashSet<Pair<Integer, STATE>> visitedSituations = new HashSet<>();
 		currentStateSet.forEach(x -> uniqueSituations.add(new Pair<>(0, x)));
 		do {
+			if (isCancellationRequested()) {
+				throw new AutomataOperationCanceledException(getClass());
+			}
 			if (currentStateSet.isEmpty()) {
 				return false;
 			}
@@ -102,7 +106,7 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	 * Tests if a loop exists from state to itself with input loop
 	 */
 	private boolean hasLoop(final IRabinAutomaton<LETTER, STATE> automaton, final STATE start, final List<LETTER> loop,
-			final int loopIndex) {
+			final int loopIndex) throws AutomataOperationCanceledException {
 
 		final ArrayList<STATE> currentStateSet = new ArrayList<>();
 		final ArrayList<STATE> temp = new ArrayList<>();
@@ -114,6 +118,9 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		uniqueSituations.add(new Pair<>(loopIndex, start));
 
 		do {
+			if (isCancellationRequested()) {
+				throw new AutomataOperationCanceledException(getClass());
+			}
 			if (currentStateSet.isEmpty()) {
 				return false;
 			}
