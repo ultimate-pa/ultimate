@@ -110,6 +110,29 @@ const _CONFIG = {
 							id: "cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs",
 							type: "bool",
 							key: "Check absence of data races in concurrent programs"
+						},
+						{
+							plugin_id: "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							default: "PETRI_NET",
+							visible: false,
+							name: "Automaton type used in concurrency analysis",
+							id: "traceabstraction.automaton.type.used.in.concurrency.analysis",
+							type: "string",
+							key: "Automaton type used in concurrency analysis",
+							options : [
+								"PETRI_NET",
+								"FINITE_AUTOMATA",
+								"PARTIAL_ORDER_FA"
+							]
+						},
+						{
+							plugin_id: "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							default: false,
+							visible: false,
+							name: "Apply one-shot large block encoding in concurrent analysis",
+							id: "traceabstraction.apply.one-shot.large.block.encoding.in.concurrent.analysis",
+							type: "string",
+							key: "Apply one-shot large block encoding in concurrent analysis"
 						}
 					]
 				},
@@ -117,7 +140,31 @@ const _CONFIG = {
 					language: "boogie",
 					id: "boogieAutomizer",
 					task_id: "AUTOMIZER_BOOGIE",
-					frontend_settings: []
+					frontend_settings: [
+						{
+							plugin_id: "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							default: "PETRI_NET",
+							visible: false,
+							name: "Automaton type used in concurrency analysis",
+							id: "traceabstraction.automaton.type.used.in.concurrency.analysis",
+							type: "string",
+							key: "Automaton type used in concurrency analysis",
+							options : [
+								"PETRI_NET",
+								"FINITE_AUTOMATA",
+								"PARTIAL_ORDER_FA"
+							]
+						},
+						{
+							plugin_id: "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							default: false,
+							visible: false,
+							name: "Apply one-shot large block encoding in concurrent analysis",
+							id: "traceabstraction.apply.one-shot.large.block.encoding.in.concurrent.analysis",
+							type: "string",
+							key: "Apply one-shot large block encoding in concurrent analysis"
+						}
+					]
 				}
 			],
 			logo_url: "img/tool_logo.png",
