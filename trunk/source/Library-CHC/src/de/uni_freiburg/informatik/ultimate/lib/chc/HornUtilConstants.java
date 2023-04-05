@@ -60,10 +60,14 @@ public final class HornUtilConstants {
 
 	public static String computeNameForHcVar(final String prefix, final HcPredicateSymbol predSym, final int index,
 			final String identifier) {
-
 		final String name = HornUtilConstants.sanitzePredName(predSym.getName());
 		final String identifierString = identifier.replaceAll(" ", "_").replaceAll("[()]", "");
 		return String.format("%s_%s_%s_%d", prefix, name, identifierString, index);
+	}
+
+	public static String computeNameForHcVar(final String prefix, final String identifier) {
+		final String identifierString = identifier.replaceAll(" ", "_").replaceAll("[()]", "");
+		return String.format("%s_%s", prefix, identifierString);
 	}
 
 	/**

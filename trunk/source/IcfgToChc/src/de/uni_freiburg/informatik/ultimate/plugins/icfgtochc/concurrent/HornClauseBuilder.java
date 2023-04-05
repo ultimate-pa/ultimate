@@ -72,24 +72,20 @@ public class HornClauseBuilder {
 	}
 
 	public HcBodyVar getFreshBodyVar(final Object identifier, final Sort sort) {
-		// TODO Using the number of bodyVars as index is a hack!
-		// TODO suitable parameters for getOrConstructBodyVar
-		final HcBodyVar auxVar = mSymbolTable.getOrConstructBodyVar(null, mBodyVars.size(), sort, identifier);
+		final HcBodyVar auxVar = mSymbolTable.getOrConstructBodyVar(identifier, sort);
 		mBodyVars.add(auxVar);
 		return auxVar;
 	}
 
 	public HcBodyVar getBodyVar(final IHcReplacementVar variable) {
-		// TODO suitable parameters for getOrConstructBodyVar
-		final var result = mSymbolTable.getOrConstructBodyVar(null, -1, variable.getSort(), variable);
+		final var result = mSymbolTable.getOrConstructBodyVar(variable, variable.getSort());
 		mBodyVars.add(result);
 		return result;
 	}
 
 	public HcHeadVar getHeadVar(final IHcReplacementVar variable) {
-		// TODO
 		assert mHeadPredicate.hasParameter(variable);
-		return null;
+		return mSymbolTable.getOrConstructHeadVar(variable, variable.getSort());
 	}
 
 	public void sameBodyHeadVar(final IHcReplacementVar variable) {

@@ -31,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
-
 /**
  *
  *
@@ -41,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 public class HcBodyVar extends HcPredVar implements ILocalProgramVar {
 
 	private static final long serialVersionUID = 4653727851496150630L;
-
 
 	/**
 	 * Identified by the first three parameters (headPredSymProcName, index, sort)
@@ -53,11 +51,10 @@ public class HcBodyVar extends HcPredVar implements ILocalProgramVar {
 	 * @param defaultConstant
 	 * @param primedConstant
 	 */
-	public HcBodyVar(final String globallyUniqueId, final HcPredicateSymbol headPredSym, final int index, final Sort sort,
+	public HcBodyVar(final String globallyUniqueId, final String procName, final int index, final Sort sort,
 			final ManagedScript script, final Object lockOwner) {
-		super(globallyUniqueId, false, headPredSym, index, sort, script, lockOwner);
+		super(globallyUniqueId, false, procName, index, sort, script, lockOwner);
 	}
-
 
 	@Override
 	public String getIdentifier() {
