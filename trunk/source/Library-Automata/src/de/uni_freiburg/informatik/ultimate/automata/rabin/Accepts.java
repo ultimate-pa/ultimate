@@ -48,7 +48,8 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 			}
 			for (final STATE state : currentStateSet) {
 
-				if (automaton.isAccepting(state) && !visitedSituations.contains(new Pair<>(loopIndex, state))
+				if (automaton.isAccepting(state) && !automaton.isFinite(state)
+						&& !visitedSituations.contains(new Pair<>(loopIndex, state))
 						&& hasLoop(automaton, state, loop, loopIndex)) {
 					return true;
 				}
