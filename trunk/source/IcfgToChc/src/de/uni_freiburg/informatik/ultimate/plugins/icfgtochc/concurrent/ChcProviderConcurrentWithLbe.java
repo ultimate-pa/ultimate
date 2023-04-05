@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.IcfgToChcObserver.IChcProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrent.Mode;
 
 /**
  * ChcProvider for concurrent programs based on the petri-net using LBE.
@@ -33,6 +34,7 @@ public class ChcProviderConcurrentWithLbe implements IChcProvider {
 	@Override
 	public Collection<HornClause> getHornClauses(final IIcfg<IcfgLocation> icfg) {
 		final var reduced = new IcfgLiptonReducer(mServices, icfg, MAXIMUM_NUMBER_OF_THREADS).getResult();
-		return new ChcProviderConcurrent(mServices, mMgdScript, mHcSymbolTable).getHornClauses(reduced);
+		return new ChcProviderConcurrent(mServices, mMgdScript, mHcSymbolTable, Mode.SINGLE_MAIN,
+				MAXIMUM_NUMBER_OF_THREADS).getHornClauses(reduced);
 	}
 }

@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrent;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrent.Mode;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrentWithLbe;
 
 /**
@@ -154,13 +155,15 @@ public class IcfgToChcObserver extends BaseObserver {
 
 	private IChcProvider getChcProvider(final IIcfg<IcfgLocation> icfg, final ManagedScript mgdScript,
 			final HcSymbolTable hcSymbolTable) {
-		if (true || IcfgUtils.isConcurrent(icfg)) {
+		final boolean isParametric = true;
+		if (isParametric || IcfgUtils.isConcurrent(icfg)) {
 			assert !isReturnReachable(icfg);
 			if (USE_LBE_FOR_CONCURRENT_PROGRAMS) {
+				assert !isParametric;
 				return new ChcProviderConcurrentWithLbe(mgdScript, hcSymbolTable, mServices);
-			} else {
-				return new ChcProviderConcurrent(mServices, mgdScript, hcSymbolTable);
 			}
+			return new ChcProviderConcurrent(mServices, mgdScript, hcSymbolTable,
+					isParametric ? Mode.PARAMETRIC : Mode.SINGLE_MAIN, 2);
 		}
 		return new ChcProviderForCalls(mgdScript, hcSymbolTable);
 	}

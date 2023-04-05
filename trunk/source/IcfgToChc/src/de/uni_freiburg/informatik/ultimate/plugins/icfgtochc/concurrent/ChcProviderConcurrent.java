@@ -28,17 +28,27 @@ import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.IcfgToChcObserver.I
  *
  */
 public class ChcProviderConcurrent implements IChcProvider {
+	public enum Mode {
+		SINGLE_MAIN, PARAMETRIC
+	}
+
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
 	private final HcSymbolTable mHcSymbolTable;
+	private final Mode mMode;
+	private final int mLevel;
 
 	private static final int MAXIMUM_NUMBER_OF_THREADS = 2;
 
 	public ChcProviderConcurrent(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final HcSymbolTable hcSymbolTable) {
+			final HcSymbolTable hcSymbolTable, final Mode mode, final int level) {
 		mServices = services;
 		mMgdScript = mgdScript;
 		mHcSymbolTable = hcSymbolTable;
+		mMode = mode;
+		mLevel = level;
+
+		assert level >= 1;
 	}
 
 	@Override
