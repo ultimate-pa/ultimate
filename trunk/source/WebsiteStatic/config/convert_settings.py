@@ -22,8 +22,10 @@ def epf_to_json(epf_file, overriden_settings_file=None):
             continue
         allowed_settings.remove((plugin, key))
         if "default" in s:
+            setting = s["default"]
             res.append(build_dict(plugin, s.get("name", key), key,
-                                  s.get("visible", False), s["default"]))
+                                  s.get("visible", False), setting,
+                                  get_type_string(setting)))
     with open(epf_file) as f:
         for l in f:
             m = re.match(r'/instance/(.*?)/(.*)=(.*)', l)
@@ -33,16 +35,26 @@ def epf_to_json(epf_file, overriden_settings_file=None):
             key = m.group(2).replace("\\", "")
             if (plugin, key) not in allowed_settings:
                 continue
-            res.append(build_dict(plugin, key, key, False, m.group(3).strip()))
+            setting, type = get_typed_setting(m.group(3).strip())
+            res.append(build_dict(plugin, key, key, False, setting, type))
     return json.dumps(res, indent=2)
 
     
-def build_dict(plugin, name, key, visible, setting):
-    setting_typed, type = get_typed_setting(setting)
+def build_dict(plugin, name, key, visible, setting, type):
     id = plugin.rpartition(".")[2] + "." + \
          ".".join(key.lower().replace(".", "").split())
     return {"plugin_id": plugin, "name": name, "key": key, "id": id,
-            "visible": visible, "default": setting_typed, "type": type}
+            "visible": visible, "default": setting, "type": type}
+
+
+def get_type_string(obj):
+    if isinstance(obj, bool):
+        return "bool"
+    if isinstance(obj, int):
+        return "int"
+    if isinstance(obj, float):
+        return "real"
+    return "string"
 
 
 def get_typed_setting(setting):
