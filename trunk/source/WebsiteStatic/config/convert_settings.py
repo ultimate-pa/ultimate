@@ -21,8 +21,9 @@ def epf_to_json(epf_file, overriden_settings_file=None):
         if (plugin, key) not in allowed_settings:
             continue
         allowed_settings.remove((plugin, key))
-        res.append(build_dict(plugin, s.get("name", key), key,
-                              s.get("visible", False), s["default"]))
+        if "default" in s:
+            res.append(build_dict(plugin, s.get("name", key), key,
+                                  s.get("visible", False), s["default"]))
     with open(epf_file) as f:
         for l in f:
             m = re.match(r'/instance/(.*?)/(.*)=(.*)', l)
