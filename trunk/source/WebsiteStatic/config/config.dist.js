@@ -475,6 +475,496 @@ const _CONFIG = {
 			]
 		},
 		{
+			name: "GemCutter",
+			id: "gemcutter",
+			description: "TODO",
+			languages: ["Boogie", "C"],
+			workers: [
+				{
+					language: "c",
+					id: "cGemCutter",
+					task_id: "GEMCUTTER_C",
+					frontend_settings: [
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Check absence of data races in concurrent programs",
+							"key": "Check absence of data races in concurrent programs",
+							"id": "cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs",
+							"visible": true,
+							"default": true,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Check absence of signed integer overflows",
+							"key": "Check absence of signed integer overflows",
+							"id": "cacsl2boogietranslator.check.absence.of.signed.integer.overflows",
+							"visible": true,
+							"default": true,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Check division by zero",
+							"key": "Check division by zero",
+							"id": "cacsl2boogietranslator.check.division.by.zero",
+							"visible": false,
+							"default": "IGNORE",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Check if freed pointer was valid",
+							"key": "Check if freed pointer was valid",
+							"id": "cacsl2boogietranslator.check.if.freed.pointer.was.valid",
+							"visible": false,
+							"default": false,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Pointer to allocated memory at dereference",
+							"key": "Pointer to allocated memory at dereference",
+							"id": "cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference",
+							"visible": false,
+							"default": "IGNORE",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Check array bounds for arrays that are off heap",
+							"key": "Check array bounds for arrays that are off heap",
+							"id": "cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap",
+							"visible": false,
+							"default": "IGNORE",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Check for the main procedure if all allocated memory was freed",
+							"key": "Check for the main procedure if all allocated memory was freed",
+							"id": "cacsl2boogietranslator.check.for.the.main.procedure.if.all.allocated.memory.was.freed",
+							"visible": false,
+							"default": false,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "If two pointers are subtracted or compared they have the same base address",
+							"key": "If two pointers are subtracted or compared they have the same base address",
+							"id": "cacsl2boogietranslator.if.two.pointers.are.subtracted.or.compared.they.have.the.same.base.address",
+							"visible": false,
+							"default": "IGNORE",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Pointer base address is valid at dereference",
+							"key": "Pointer base address is valid at dereference",
+							"id": "cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference",
+							"visible": false,
+							"default": "IGNORE",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Overapproximate operations on floating types",
+							"key": "Overapproximate operations on floating types",
+							"id": "cacsl2boogietranslator.overapproximate.operations.on.floating.types",
+							"visible": false,
+							"default": true,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Use constant arrays",
+							"key": "Use constant arrays",
+							"id": "cacsl2boogietranslator.use.constant.arrays",
+							"visible": false,
+							"default": true,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder",
+							"name": "Size of a code block",
+							"key": "Size of a code block",
+							"id": "rcfgbuilder.size.of.a.code.block",
+							"visible": false,
+							"default": "SequenceOfStatements",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder",
+							"name": "SMT solver",
+							"key": "SMT solver",
+							"id": "rcfgbuilder.smt.solver",
+							"visible": false,
+							"default": "External_DefaultMode",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "CEGAR restart behaviour",
+							"key": "CEGAR restart behaviour",
+							"id": "traceabstraction.cegar.restart.behaviour",
+							"visible": false,
+							"default": "ONE_CEGAR_PER_THREAD_INSTANCE",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "Compute Interpolants along a Counterexample",
+							"key": "Compute Interpolants along a Counterexample",
+							"id": "traceabstraction.compute.interpolants.along.a.counterexample",
+							"visible": false,
+							"default": "FPandBP",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "SMT solver",
+							"key": "SMT solver",
+							"id": "traceabstraction.smt.solver",
+							"visible": false,
+							"default": "External_ModelsAndUnsatCoreMode",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
+							"key": "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
+							"id": "traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg",
+							"visible": false,
+							"default": true,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "Positions where we compute the Hoare Annotation",
+							"key": "Positions where we compute the Hoare Annotation",
+							"id": "traceabstraction.positions.where.we.compute.the.hoare.annotation",
+							"visible": false,
+							"default": "LoopsAndPotentialCycles",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "Trace refinement strategy",
+							"key": "Trace refinement strategy",
+							"id": "traceabstraction.trace.refinement.strategy",
+							"visible": false,
+							"default": "CAMEL",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "Automaton type used in concurrency analysis",
+							"key": "Automaton type used in concurrency analysis",
+							"id": "traceabstraction.automaton.type.used.in.concurrency.analysis",
+							"visible": false,
+							"default": "PARTIAL_ORDER_FA",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "Apply one-shot large block encoding in concurrent analysis",
+							"key": "Apply one-shot large block encoding in concurrent analysis",
+							"id": "traceabstraction.apply.one-shot.large.block.encoding.in.concurrent.analysis",
+							"visible": false,
+							"default": false,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "Partial Order Reduction in concurrent analysis",
+							"key": "Partial Order Reduction in concurrent analysis",
+							"id": "traceabstraction.partial.order.reduction.in.concurrent.analysis",
+							"visible": false,
+							"default": "PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "DFS Order used in POR",
+							"key": "DFS Order used in POR",
+							"id": "traceabstraction.dfs.order.used.in.por",
+							"visible": false,
+							"default": "LOOP_LOCKSTEP",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.boogie.procedureinliner",
+							"name": "Ignore calls to procedures called more than once",
+							"key": "Ignore calls to procedures called more than once",
+							"id": "procedureinliner.ignore.calls.to.procedures.called.more.than.once",
+							"visible": false,
+							"default": "ONLY_FOR_SEQUENTIAL_PROGRAMS",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.blockencoding",
+							"name": "Create parallel compositions if possible",
+							"key": "Create parallel compositions if possible",
+							"id": "blockencoding.create.parallel.compositions.if.possible",
+							"visible": false,
+							"default": false,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.blockencoding",
+							"name": "Use SBE",
+							"key": "Use SBE",
+							"id": "blockencoding.use.sbe",
+							"visible": false,
+							"default": true,
+							"type": "bool"
+						}
+					]
+				},
+				{
+					language: "boogie",
+					id: "boogieGemCutter",
+					task_id: "GEMCUTTER_BOOGIE",
+					frontend_settings: [
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Check absence of data races in concurrent programs",
+							"key": "Check absence of data races in concurrent programs",
+							"id": "cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs",
+							"visible": true,
+							"default": true,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Check absence of signed integer overflows",
+							"key": "Check absence of signed integer overflows",
+							"id": "cacsl2boogietranslator.check.absence.of.signed.integer.overflows",
+							"visible": true,
+							"default": true,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Check division by zero",
+							"key": "Check division by zero",
+							"id": "cacsl2boogietranslator.check.division.by.zero",
+							"visible": false,
+							"default": "IGNORE",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Check if freed pointer was valid",
+							"key": "Check if freed pointer was valid",
+							"id": "cacsl2boogietranslator.check.if.freed.pointer.was.valid",
+							"visible": false,
+							"default": false,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Pointer to allocated memory at dereference",
+							"key": "Pointer to allocated memory at dereference",
+							"id": "cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference",
+							"visible": false,
+							"default": "IGNORE",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Check array bounds for arrays that are off heap",
+							"key": "Check array bounds for arrays that are off heap",
+							"id": "cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap",
+							"visible": false,
+							"default": "IGNORE",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Check for the main procedure if all allocated memory was freed",
+							"key": "Check for the main procedure if all allocated memory was freed",
+							"id": "cacsl2boogietranslator.check.for.the.main.procedure.if.all.allocated.memory.was.freed",
+							"visible": false,
+							"default": false,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "If two pointers are subtracted or compared they have the same base address",
+							"key": "If two pointers are subtracted or compared they have the same base address",
+							"id": "cacsl2boogietranslator.if.two.pointers.are.subtracted.or.compared.they.have.the.same.base.address",
+							"visible": false,
+							"default": "IGNORE",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Pointer base address is valid at dereference",
+							"key": "Pointer base address is valid at dereference",
+							"id": "cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference",
+							"visible": false,
+							"default": "IGNORE",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Overapproximate operations on floating types",
+							"key": "Overapproximate operations on floating types",
+							"id": "cacsl2boogietranslator.overapproximate.operations.on.floating.types",
+							"visible": false,
+							"default": true,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"name": "Use constant arrays",
+							"key": "Use constant arrays",
+							"id": "cacsl2boogietranslator.use.constant.arrays",
+							"visible": false,
+							"default": true,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder",
+							"name": "Size of a code block",
+							"key": "Size of a code block",
+							"id": "rcfgbuilder.size.of.a.code.block",
+							"visible": false,
+							"default": "SequenceOfStatements",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder",
+							"name": "SMT solver",
+							"key": "SMT solver",
+							"id": "rcfgbuilder.smt.solver",
+							"visible": false,
+							"default": "External_DefaultMode",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "CEGAR restart behaviour",
+							"key": "CEGAR restart behaviour",
+							"id": "traceabstraction.cegar.restart.behaviour",
+							"visible": false,
+							"default": "ONE_CEGAR_PER_THREAD_INSTANCE",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "Compute Interpolants along a Counterexample",
+							"key": "Compute Interpolants along a Counterexample",
+							"id": "traceabstraction.compute.interpolants.along.a.counterexample",
+							"visible": false,
+							"default": "FPandBP",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "SMT solver",
+							"key": "SMT solver",
+							"id": "traceabstraction.smt.solver",
+							"visible": false,
+							"default": "External_ModelsAndUnsatCoreMode",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
+							"key": "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
+							"id": "traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg",
+							"visible": false,
+							"default": true,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "Positions where we compute the Hoare Annotation",
+							"key": "Positions where we compute the Hoare Annotation",
+							"id": "traceabstraction.positions.where.we.compute.the.hoare.annotation",
+							"visible": false,
+							"default": "LoopsAndPotentialCycles",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "Trace refinement strategy",
+							"key": "Trace refinement strategy",
+							"id": "traceabstraction.trace.refinement.strategy",
+							"visible": false,
+							"default": "CAMEL",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "Automaton type used in concurrency analysis",
+							"key": "Automaton type used in concurrency analysis",
+							"id": "traceabstraction.automaton.type.used.in.concurrency.analysis",
+							"visible": false,
+							"default": "PARTIAL_ORDER_FA",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "Apply one-shot large block encoding in concurrent analysis",
+							"key": "Apply one-shot large block encoding in concurrent analysis",
+							"id": "traceabstraction.apply.one-shot.large.block.encoding.in.concurrent.analysis",
+							"visible": false,
+							"default": false,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "Partial Order Reduction in concurrent analysis",
+							"key": "Partial Order Reduction in concurrent analysis",
+							"id": "traceabstraction.partial.order.reduction.in.concurrent.analysis",
+							"visible": false,
+							"default": "PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
+							"name": "DFS Order used in POR",
+							"key": "DFS Order used in POR",
+							"id": "traceabstraction.dfs.order.used.in.por",
+							"visible": false,
+							"default": "LOOP_LOCKSTEP",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.boogie.procedureinliner",
+							"name": "Ignore calls to procedures called more than once",
+							"key": "Ignore calls to procedures called more than once",
+							"id": "procedureinliner.ignore.calls.to.procedures.called.more.than.once",
+							"visible": false,
+							"default": "ONLY_FOR_SEQUENTIAL_PROGRAMS",
+							"type": "string"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.blockencoding",
+							"name": "Create parallel compositions if possible",
+							"key": "Create parallel compositions if possible",
+							"id": "blockencoding.create.parallel.compositions.if.possible",
+							"visible": false,
+							"default": false,
+							"type": "bool"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.blockencoding",
+							"name": "Use SBE",
+							"key": "Use SBE",
+							"id": "blockencoding.use.sbe",
+							"visible": false,
+							"default": true,
+							"type": "bool"
+						}
+					]
+				}
+			]
+		},
+		{
 			name: "Kojak",
 			id: "kojak",
 			description: "A software model checker.",
