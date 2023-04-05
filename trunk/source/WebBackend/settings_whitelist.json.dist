@@ -6,7 +6,11 @@
 		"Positions where we compute the Hoare Annotation",
 		"Trace refinement exception blacklist",
 		"Trace refinement strategy",
-		"Abstract interpretation Mode"
+		"Abstract interpretation Mode",
+		"Automaton type used in concurrency analysis",
+		"Apply one-shot large block encoding in concurrent analysis",
+		"Partial Order Reduction in concurrent analysis",
+		"CEGAR restart behaviour"
 	],
 	"de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder": [
 		"SMT solver",
