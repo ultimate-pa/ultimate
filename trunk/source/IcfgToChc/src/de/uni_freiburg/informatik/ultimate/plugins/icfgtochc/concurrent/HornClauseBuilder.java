@@ -119,7 +119,14 @@ public class HornClauseBuilder {
 			substitutedBodyArgs.add(args.stream().map(this::substitute).collect(Collectors.toList()));
 		}
 
-		return new HornClause(mManagedScript, mSymbolTable, constraint, mBodyPreds, substitutedBodyArgs, mBodyVars);
+		if (mHeadPredicate == null) {
+			return new HornClause(mManagedScript, mSymbolTable, constraint, mBodyPreds, substitutedBodyArgs, mBodyVars);
+		}
+
+		final var headArgs = IntStream.range(0, mHeadPredicate.getParamCount())
+				.mapToObj(i -> getHeadVar(mHeadPredicate.getParameter(i))).collect(Collectors.toList());
+		return new HornClause(mManagedScript, mSymbolTable, constraint, mHeadPredicate.getPredicate(), headArgs,
+				mBodyPreds, substitutedBodyArgs, mBodyVars);
 	}
 
 	private Term substitute(final Term term) {
