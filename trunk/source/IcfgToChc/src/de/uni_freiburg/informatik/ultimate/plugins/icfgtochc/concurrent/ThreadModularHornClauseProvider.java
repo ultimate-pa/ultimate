@@ -262,7 +262,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		clause.addBodyPredicate(mInvariantPredicate, clause.getDefaultBodyArgs(mInvariantPredicate));
 
 		// location constraint
-		addOutLocationConstraint(clause, thread, errorLoc);
+		addInLocationConstraint(clause, thread, errorLoc);
 
 		return clause;
 	}
