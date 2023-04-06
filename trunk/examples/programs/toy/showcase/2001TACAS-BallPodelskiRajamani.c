@@ -6,8 +6,12 @@
  * http://link.springer.com/chapter/10.1007%2F3-540-45319-9_19
  */
 
+extern int __VERIFIER_nondet_short(void);
+
 int main() {
     int x, y, z, w;
+    y = __VERIFIER_nondet_short();
+    w = __VERIFIER_nondet_short();
     do {
         z = 0;
         x = y;

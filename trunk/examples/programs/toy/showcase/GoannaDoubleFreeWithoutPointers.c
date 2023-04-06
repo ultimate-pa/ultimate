@@ -16,9 +16,11 @@
  * 
  */
 
+extern int __VERIFIER_nondet_int(void);
+
 int main() {
-    int p, n;
-    p = 42;
+    int p = 42;
+    int n = __VERIFIER_nondet_int();
     while ( n>=0 ) {
         //@ assert p != 0;
         if (n == 0) {
