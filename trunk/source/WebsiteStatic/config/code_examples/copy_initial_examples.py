@@ -24,6 +24,10 @@ tool_examples_map = {
     {
       'path': osp.join(EXAMPLES_DIR, 'programs', 'toy', 'showcase'),  # path to a folder containing examples.
       'pattern': '*.bpl'  # File name pattern (regex). Matches will be included.
+    },
+    {
+      'path': osp.join(EXAMPLES_DIR, 'concurrent', 'bpl', 'regression', 'showcase'),
+      'pattern': '*.bpl'
     }
   ],
   'cAutomizer': [
@@ -106,12 +110,6 @@ tool_examples_map = {
     {
       'path': osp.join(EXAMPLES_DIR, 'Automata', 'website'),
       'pattern': '*.ats'
-    },
-  ],
-  'boogieConcurrentTraceAbstr': [
-    {
-      'path': osp.join(EXAMPLES_DIR, 'concurrent', 'concurrentBoogie', 'showcase'),
-      'pattern': '*.bpl'
     },
   ],
   'cReferee': [
