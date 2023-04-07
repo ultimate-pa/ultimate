@@ -271,9 +271,6 @@ public class RtInconcistencyConditionGenerator {
 
 		SolverSettings settings = SolverBuilder.constructSolverSettings()
 				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
-		// SolverSettings settings =
-		// SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.Internal_SMTInterpol)
-		// .setSolverLogics(Logics.ALL);
 		if (SOLVER_LOG_DIR != null) {
 			settings = settings.setDumpSmtScriptToFile(true, SOLVER_LOG_DIR,
 					RtInconcistencyConditionGenerator.class.getSimpleName(), false);
@@ -554,6 +551,9 @@ public class RtInconcistencyConditionGenerator {
 		mQelimQuery++;
 		final Term afterQelimFormula;
 		try {
+			// use this to generate test cases for quantifier elimination
+			// mLogger.warn(SmtTestGenerationUtils.generateQuantifierEliminationTest("nonDlc" + mQelimQuery,
+			// quantifiedFormula));
 			afterQelimFormula = tryToEliminate(quantifiedFormula);
 		} catch (final SMTLIBException ex) {
 			mLogger.fatal("Exception occured during PQE of " + term);
