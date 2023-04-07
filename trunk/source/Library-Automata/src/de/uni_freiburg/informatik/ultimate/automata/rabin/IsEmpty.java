@@ -77,8 +77,8 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	}
 
 	@Override
-	public Object getResult() {
+	public Boolean getResult() {
 		// TODO Auto-generated method stub
-		return null;
+		return !SZK.isEmpty();
 	}
 }
