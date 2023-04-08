@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -314,12 +313,9 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		public Pair<Integer, SR> findBestReplacementSbr(final ManagedScript mgdScript, final int quantifier,
 				final TermVariable eliminatee, final Term[] dualJuncts, final Set<TermVariable> bannedForDivCapture) {
 			for (int i = 0; i < dualJuncts.length; i++) {
-				if (Arrays.asList(dualJuncts[i]).contains(eliminatee)) {
-					final SR sbr = solveForSubject(mgdScript, quantifier, eliminatee, dualJuncts[i],
-							bannedForDivCapture);
-					if (sbr != null) {
-						return new Pair<Integer, SR>(i, sbr);
-					}
+				final SR sbr = solveForSubject(mgdScript, quantifier, eliminatee, dualJuncts[i], bannedForDivCapture);
+				if (sbr != null) {
+					return new Pair<Integer, SR>(i, sbr);
 				}
 			}
 			return null;
