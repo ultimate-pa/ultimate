@@ -10,7 +10,6 @@ import java.util.Stack;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -24,18 +23,16 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	private final Map<STATE, Integer> mDFS = new HashMap<>();
 	private final Map<STATE, Integer> mLowLink = new HashMap<>();
 	private final ArrayList<HashSet<STATE>> SZK = new ArrayList<>();
+	private final HashSet<STATE> visitedStates = new HashSet<>();
 
-	public IsEmpty(final AutomataLibraryServices services, final IRabinAutomaton<LETTER, STATE> automaton,
-			final NestedLassoWord<LETTER> word) throws AutomataOperationCanceledException {
+	public IsEmpty(final AutomataLibraryServices services, final IRabinAutomaton<LETTER, STATE> automaton)
+			throws AutomataOperationCanceledException {
 		super(services);
-		// TODO: Could we use another type of lasso-words here instead?
-		if (!word.getStem().hasEmptyNestingRelation() || !word.getLoop().hasEmptyNestingRelation()) {
-			throw new AssertionError("Rabin automata cannot handle calls/returns.");
-		}
 
 		automaton.getInitialStates().forEach(x -> U.add(x));
 		while (!U.isEmpty()) { // Solange es bis jetzt nicht erreichte Knoten gibt
-			tarjan(automaton, U.remove(U.size() - 1)); // Aufruf arbeitet alle von v0 erreichbaren Knoten ab
+			tarjan(automaton, U.remove(U.size() - 1));
+			// Aufruf arbeitet alle von v0 erreichbaren Knoten ab
 		}
 		// mResult = (mWordEvidence == null && mStateEvidence == null);
 	}
@@ -43,7 +40,12 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	/*
 	 * Implements: https://de.wikipedia.org/wiki/Algorithmus_von_Tarjan_zur_Bestimmung_starker_Zusammenhangskomponenten
 	 */
-	private void tarjan(final IRabinAutomaton<LETTER, STATE> automaton, final STATE v) {
+	private void tarjan(final IRabinAutomaton<LETTER, STATE> automaton, final STATE v)
+			throws AutomataOperationCanceledException {
+		if (isCancellationRequested()) {
+			throw new AutomataOperationCanceledException(getClass());
+		}
+		visitedStates.add(v);
 		mDFS.put(v, maxdfs); // Tiefensuchindex setzen
 		mLowLink.put(v, maxdfs); // v.lowlink <= v.dfs
 		maxdfs++; // Zähler erhöhen
@@ -51,15 +53,17 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		STATE vSucc = null;
 		for (final OutgoingInternalTransition<LETTER, STATE> transition : automaton.getSuccessors(v)) {
 			vSucc = transition.getSucc();
-			if (U.contains(vSucc)) {
+			if (!visitedStates.contains(vSucc)) {
 				tarjan(automaton, vSucc); // rekursiver Aufruf
-				mLowLink.put(v, Math.min(mLowLink.get(v), mLowLink.get(vSucc)));
+				final int temp = Math.min(mLowLink.get(v), mLowLink.get(vSucc));
+				mLowLink.put(v, temp);
 			}
 			// Abfragen, ob v' im Stack ist.
 			// Bei geschickter Realisierung in O(1).
 			// (z. B. Setzen eines Bits beim Knoten beim "push" und "pop")
 			else if (S.contains(vSucc)) {
-				mLowLink.put(v, Math.min(mLowLink.get(v), mDFS.get(v)));
+				final int temp = Math.min(mLowLink.get(v), mDFS.get(vSucc));
+				mLowLink.put(v, temp);
 			}
 		}
 
@@ -67,10 +71,10 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		{
 			final HashSet<STATE> pendingSZK = new HashSet<>();
 
-			while (!vSucc.equals(v)) {
+			do {
 				vSucc = S.pop();
 				pendingSZK.add(vSucc);
-			}
+			} while (!vSucc.equals(v));
 			SZK.add(pendingSZK);
 
 		}

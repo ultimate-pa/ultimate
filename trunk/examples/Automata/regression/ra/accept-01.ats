@@ -13,6 +13,7 @@ RabinAutomaton automaton = (
 assert(accepts(automaton, [a a b , a b]));
 assert(!accepts(automaton, [, a a b]));
 assert(accepts(automaton, [a a  , b a]));
+assert(isEmpty(automaton));
 
 RabinAutomaton bAutomaton = (
 	alphabet = {a b},
@@ -25,4 +26,5 @@ RabinAutomaton bAutomaton = (
 
 assert(accepts(bAutomaton, [a a b , a b]));
 assert(!accepts(bAutomaton, [, a a b]));
-assert(accepts(automaton, [a a  , b a]));
+assert(accepts(bAutomaton, [a a  , b a]));
+assert(isEmpty(bAutomaton));
