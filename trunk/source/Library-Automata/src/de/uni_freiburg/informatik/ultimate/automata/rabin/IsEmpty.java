@@ -23,6 +23,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	private final Map<STATE, Integer> mDFS = new HashMap<>();
 	private final Map<STATE, Integer> mLowLink = new HashMap<>();
 	private final ArrayList<HashSet<STATE>> SZK = new ArrayList<>();
+	private final ArrayList<HashSet<STATE>> acceptingSZK = new ArrayList<>();
 	private final HashSet<STATE> visitedStates = new HashSet<>();
 
 	public IsEmpty(final AutomataLibraryServices services, final IRabinAutomaton<LETTER, STATE> automaton)
@@ -61,6 +62,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 			// Abfragen, ob v' im Stack ist.
 			// Bei geschickter Realisierung in O(1).
 			// (z. B. Setzen eines Bits beim Knoten beim "push" und "pop")
+			// Idee: LinkedHashSet statt StackHashSet als Optimierung für S
 			else if (S.contains(vSucc)) {
 				final int temp = Math.min(mLowLink.get(v), mDFS.get(vSucc));
 				mLowLink.put(v, temp);
@@ -70,11 +72,18 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		if (mLowLink.get(v).equals(mDFS.get(v))) // Wurzel einer SZK
 		{
 			final HashSet<STATE> pendingSZK = new HashSet<>();
+			boolean isAccepting = false;
 
 			do {
 				vSucc = S.pop();
 				pendingSZK.add(vSucc);
+
+				isAccepting = isAccepting || automaton.isAccepting(vSucc);
+
 			} while (!vSucc.equals(v));
+			if (isAccepting) {
+				acceptingSZK.add(pendingSZK);
+			}
 			SZK.add(pendingSZK);
 
 		}
