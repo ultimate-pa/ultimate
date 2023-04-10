@@ -31,7 +31,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		super(services);
 
 		automaton.getInitialStates().forEach(x -> U.add(x));
-		U.sort((x, y) -> Boolean.compare(automaton.isAccepting(x), automaton.isAccepting(y)));
+		U.sort((x, y) -> Boolean.compare(automaton.isFinite(x), automaton.isFinite(y)));
 		while (!U.isEmpty()) { // Solange es bis jetzt nicht erreichte Knoten gibt
 			tarjan(automaton, U.remove(U.size() - 1));
 			// Aufruf arbeitet alle von v0 erreichbaren Knoten ab
