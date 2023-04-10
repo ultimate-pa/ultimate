@@ -1,6 +1,3 @@
-// Author: schuessf@informatik.uni-freiburg.de
-// Date: 2023-03-28
-
 RabinAutomaton proposalAutomaton = (
 	alphabet = {a b},
 	states = {q1 q2 q3},
@@ -73,12 +70,12 @@ RabinAutomaton vanishingPathAutomaton = (
 	transitions = { (s1 a s2) (s1 a s2) (s2 a s2) (s2 a s3) (s3 a s4) (s4 a s5) (s5 a s6) (s6 a s5) (s6 a s7) (s7 a s8) (s8 a s8) }
 );
 
-assert(isEmpty(proposalAutomaton));
-assert(isEmpty(proposalBuechiEquivalent));
-assert(isEmpty(multiInitialAutomaton));
-assert(isEmpty(paralellProposalAutomata));
-assert(isEmpty(acceptorAutomaton));
-assert(isEmpty(abcAutomaton));
+assert(!isEmpty(proposalAutomaton));
+assert(!isEmpty(proposalBuechiEquivalent));
+assert(!isEmpty(multiInitialAutomaton));
+assert(!isEmpty(paralellProposalAutomata));
+assert(!isEmpty(acceptorAutomaton));
+assert(!isEmpty(abcAutomaton));
 assert(isEmpty(rejctingAutomaton));
-assert(isEmpty(vanishingPathAutomaton));
+assert(!isEmpty(vanishingPathAutomaton));
 // assert(isEmpty());
