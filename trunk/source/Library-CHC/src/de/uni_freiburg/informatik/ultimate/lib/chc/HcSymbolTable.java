@@ -294,7 +294,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		return mHeadVars.computeIfAbsent(identifier, id -> {
 			final Sort transferredSort = transferSort(sort);
 			final String globallyUniqueId =
-					HornUtilConstants.computeNameForHcVar(HornUtilConstants.BODYVARPREFIX, id.toString());
+					HornUtilConstants.computeNameForHcVar(HornUtilConstants.HEADVARPREFIX, id.toString());
 			mManagedScript.lock(this);
 			final var result = new HcHeadVar(globallyUniqueId, DUMMY_PRED_NAME, DUMMY_PRED_INDEX, transferredSort,
 					mManagedScript, this);
