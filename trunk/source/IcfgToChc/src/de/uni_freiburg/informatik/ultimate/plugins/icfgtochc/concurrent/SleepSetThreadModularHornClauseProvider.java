@@ -80,7 +80,7 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 
 		// add thread ID and sleep set
 		result.add(0, new HcThreadIdVar(instance, mScript));
-		result.add(1, new HcSleepVar(instance, mScript));
+		result.add(1, new HcSleepVar(instance, getBoolSort()));
 
 		return result;
 	}
@@ -89,10 +89,10 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 	protected HornClauseBuilder buildInitialClause(final Map<ThreadInstance, IcfgLocation> initialLocations) {
 		final var clause = super.buildInitialClause(initialLocations);
 
-		// all sleep variables are initialized to 0
+		// all sleep variables are initialized to false
 		for (final var instance : mInstances) {
 			final var sleep = mSleepVars.get(instance);
-			clause.addConstraint(SmtUtils.binaryEquality(mScript, clause.getHeadVar(sleep).getTerm(), numeral(0)));
+			clause.addConstraint(SmtUtils.not(mScript, clause.getHeadVar(sleep).getTerm()));
 		}
 
 		return clause;
@@ -107,7 +107,7 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 		// active threads are not sleeping
 		for (final var active : preds.keySet()) {
 			final var sleep = mSleepVars.get(active);
-			clause.addConstraint(SmtUtils.binaryEquality(mScript, clause.getBodyVar(sleep).getTerm(), numeral(0)));
+			clause.addConstraint(SmtUtils.not(mScript, clause.getBodyVar(sleep).getTerm()));
 		}
 
 		// thread IDs are ordered
@@ -138,8 +138,8 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 		}
 
 		// interfering thread is not sleeping
-		final var sleep = new HcSleepVar(interferingThread, mScript);
-		clause.addConstraint(SmtUtils.binaryEquality(mScript, clause.getBodyVar(sleep).getTerm(), numeral(0)));
+		final var sleep = new HcSleepVar(interferingThread, getBoolSort());
+		clause.addConstraint(SmtUtils.not(mScript, clause.getBodyVar(sleep).getTerm()));
 
 		// update sleep variables
 		for (final var instance : mInstances) {
@@ -170,7 +170,7 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 			final Set<ThreadInstance> activeThreads, final ThreadInstance primaryActiveThread,
 			final ThreadInstance current) {
 		final var loc = clause.getBodyVar(mLocationVars.get(current));
-		final Term nonCommConstr = getNonCommutativityConstraint(current, loc.getTerm(), transition);
+		final Term commConstr = getCommutativityConstraint(current, loc.getTerm(), transition);
 
 		// for now, the preference order is non-positional, and given by the ordering in mInstances
 		final int ordering = Integer.compare(mInstances.indexOf(primaryActiveThread), mInstances.indexOf(current));
@@ -179,19 +179,18 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 		if (activeThreads.contains(current)) {
 			// no update of sleep variable
 		} else if (ordering < 0) {
+			// current thread is AFTER primary thread
 			// set sleep variable to false / leave unchanged
 			clause.differentBodyHeadVar(sleep);
 			final var oldSleep = clause.getBodyVar(sleep);
 			final var newSleep = clause.getHeadVar(sleep);
-			clause.addConstraint(SmtUtils.ite(mScript, nonCommConstr,
-					SmtUtils.binaryEquality(mScript, newSleep.getTerm(), numeral(0)),
-					SmtUtils.binaryEquality(mScript, newSleep.getTerm(), oldSleep.getTerm())));
+			clause.addConstraint(SmtUtils.binaryBooleanEquality(mScript, newSleep.getTerm(),
+					SmtUtils.and(mScript, oldSleep.getTerm(), commConstr)));
 		} else {
 			// set sleep variable to false / true
 			clause.differentBodyHeadVar(sleep);
 			final var newSleep = clause.getHeadVar(sleep);
-			clause.addConstraint(SmtUtils.binaryBooleanEquality(mScript,
-					SmtUtils.binaryEquality(mScript, newSleep.getTerm(), numeral(0)), nonCommConstr));
+			clause.addConstraint(SmtUtils.binaryBooleanEquality(mScript, newSleep.getTerm(), commConstr));
 		}
 	}
 
@@ -207,28 +206,29 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 		final var currentLoc = clause.getBodyVar(mLocationVars.get(current));
 		final var currentId = clause.getBodyVar(mIdVars.get(current));
 
-		final Term nonCommConstr = getNonCommutativityConstraint(current, currentLoc.getTerm(), transition);
-		clause.addConstraint(SmtUtils.binaryBooleanEquality(mScript,
-				SmtUtils.binaryEquality(mScript, newSleep.getTerm(), numeral(0)),
-				SmtUtils.or(mScript,
+		final Term commConstr = getCommutativityConstraint(current, currentLoc.getTerm(), transition);
+		// sleep' = (current < interfering \/ sleep) /\ commConstr
+		clause.addConstraint(
+				SmtUtils.binaryBooleanEquality(mScript, newSleep.getTerm(),
 						SmtUtils.and(mScript,
-								SmtUtils.greater(mScript, currentId.getTerm(),
-										clause.getBodyVar(interferingId).getTerm()),
-								SmtUtils.binaryEquality(mScript, oldSleep.getTerm(), numeral(0))),
-						nonCommConstr)));
+								SmtUtils.or(mScript,
+										SmtUtils.less(mScript, currentId.getTerm(),
+												clause.getBodyVar(interferingId).getTerm()),
+										oldSleep.getTerm()),
+								commConstr)));
 	}
 
-	protected Term getNonCommutativityConstraint(final ThreadInstance instance, final Term locVar,
+	protected Term getCommutativityConstraint(final ThreadInstance instance, final Term locVar,
 			final IIcfgTransition<?> currentEdge) {
 
-		final var nonCommLocations = new HashSet<Term>();
+		final var commLocations = new HashSet<Term>();
 		for (final var loc : mThreadLocations.get(instance.getTemplateName())) {
 			if (loc.getOutgoingEdges().stream()
-					.anyMatch(edge -> mIndependence.isIndependent(null, edge, currentEdge) != Dependence.INDEPENDENT)) {
-				nonCommLocations.add(getLocIndexTerm(loc, instance.getTemplateName()));
+					.allMatch(e -> mIndependence.isIndependent(null, e, currentEdge) == Dependence.INDEPENDENT)) {
+				commLocations.add(getLocIndexTerm(loc, instance.getTemplateName()));
 			}
 		}
-		return SmtUtils.or(mScript, nonCommLocations.stream().map(loc -> SmtUtils.binaryEquality(mScript, locVar, loc))
+		return SmtUtils.or(mScript, commLocations.stream().map(loc -> SmtUtils.binaryEquality(mScript, locVar, loc))
 				.collect(Collectors.toList()));
 	}
 }

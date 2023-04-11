@@ -28,18 +28,15 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
 public class HcSleepVar implements IHcThreadSpecificVar {
-	private static final String SORT = "Int";
-
 	private final Sort mSort;
 	private final ThreadInstance mInstance;
 
-	public HcSleepVar(final ThreadInstance instance, final Script script) {
+	public HcSleepVar(final ThreadInstance instance, final Sort sort) {
 		mInstance = instance;
-		mSort = script.sort(SORT);
+		mSort = sort;
 	}
 
 	@Override

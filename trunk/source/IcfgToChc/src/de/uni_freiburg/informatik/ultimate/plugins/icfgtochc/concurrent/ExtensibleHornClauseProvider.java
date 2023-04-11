@@ -71,4 +71,8 @@ public abstract class ExtensibleHornClauseProvider {
 	protected Sort getIntSort() {
 		return SmtSortUtils.getIntSort(mScript);
 	}
+
+	protected Sort getBoolSort() {
+		return SmtSortUtils.getBoolSort(mScript);
+	}
 }

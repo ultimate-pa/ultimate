@@ -148,7 +148,7 @@ public class IcfgToChcConcurrent {
 			addVariable(loc);
 
 			// sleep set
-			final var sleep = new HcSleepVar(instance, getScript());
+			final var sleep = new HcSleepVar(instance, getBoolSort());
 			mSleepVars.put(instance, sleep);
 			addVariable(sleep);
 
@@ -161,6 +161,10 @@ public class IcfgToChcConcurrent {
 
 	private Sort getIntSort() {
 		return SmtSortUtils.getIntSort(getScript());
+	}
+
+	private Sort getBoolSort() {
+		return SmtSortUtils.getBoolSort(getScript());
 	}
 
 	private List<Term> getDefaultArgs() {
@@ -688,7 +692,7 @@ public class IcfgToChcConcurrent {
 					// for each non-interference premise, insert the variable in the index for the interfering thread
 					for (int i = 0; i < n; ++i) {
 						final int newIndex = mPositions2Vars.inverse()
-								.get(new HcSleepVar(new ThreadInstance(sv.getThreadTemplateName(), i), getScript()));
+								.get(new HcSleepVar(new ThreadInstance(sv.getThreadTemplateName(), i), getBoolSort()));
 						bodyArguments.get(i + 1).set(newIndex, bodyVar.getTerm());
 					}
 
@@ -704,7 +708,7 @@ public class IcfgToChcConcurrent {
 					bodyVars.add(id);
 					for (int i = 0; i < n; ++i) {
 						final var newIndex = mPositions2Vars.inverse()
-								.get(new HcSleepVar(new ThreadInstance(iv.getThreadTemplateName(), i), getScript()));
+								.get(new HcSleepVar(new ThreadInstance(iv.getThreadTemplateName(), i), getBoolSort()));
 						bodyArguments.get(i + 1).set(newIndex, id.getTerm());
 					}
 				}
