@@ -57,7 +57,7 @@ public class PredicateInfo {
 
 	public IHcReplacementVar getParameter(final int index) {
 		final var result = mVariable2Index.inverse().get(index);
-		assert result != null;
+		assert result != null : "No parameter at index " + index + " (out of " + mPredicate.getArity() + ")";
 		return result;
 	}
 

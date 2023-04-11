@@ -34,7 +34,7 @@ public class ChcProviderConcurrentWithLbe implements IChcProvider {
 	@Override
 	public Collection<HornClause> getHornClauses(final IIcfg<IcfgLocation> icfg) {
 		final var reduced = new IcfgLiptonReducer(mServices, icfg, MAXIMUM_NUMBER_OF_THREADS).getResult();
-		return new ChcProviderConcurrent(mServices, mMgdScript, mHcSymbolTable, Mode.SINGLE_MAIN,
-				MAXIMUM_NUMBER_OF_THREADS).getHornClauses(reduced);
+		return new ChcProviderConcurrent(mMgdScript, mHcSymbolTable, Mode.SINGLE_MAIN_THREAD, MAXIMUM_NUMBER_OF_THREADS)
+				.getHornClauses(reduced);
 	}
 }

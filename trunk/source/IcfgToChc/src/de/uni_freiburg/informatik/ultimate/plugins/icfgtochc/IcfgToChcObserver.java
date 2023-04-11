@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrent.Mode;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrentWithLbe;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrentWithSleep;
 
 /**
  *
@@ -64,8 +65,11 @@ public class IcfgToChcObserver extends BaseObserver {
 
 	private IElement mResult;
 
-	// TODO: Make this a setting
+	// TODO: Make these into settings
+	private static final boolean TREAT_AS_PARAMETRIC_PROGRAM = true;
 	private static final boolean USE_LBE_FOR_CONCURRENT_PROGRAMS = false;
+	private static final boolean USE_SLEEP_SETS = true;
+	private static final int THREAD_MODULAR_PROOF_LEVEL = 2;
 
 	public IcfgToChcObserver(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
@@ -155,15 +159,24 @@ public class IcfgToChcObserver extends BaseObserver {
 
 	private IChcProvider getChcProvider(final IIcfg<IcfgLocation> icfg, final ManagedScript mgdScript,
 			final HcSymbolTable hcSymbolTable) {
-		final boolean isParametric = true;
-		if (isParametric || IcfgUtils.isConcurrent(icfg)) {
+		if (TREAT_AS_PARAMETRIC_PROGRAM || IcfgUtils.isConcurrent(icfg)) {
 			assert !isReturnReachable(icfg);
 			if (USE_LBE_FOR_CONCURRENT_PROGRAMS) {
-				assert !isParametric;
+				// TODO support LBE for parametric programs
+				assert !TREAT_AS_PARAMETRIC_PROGRAM;
+
+				// TODO support combination of LBE and sleep sets
+				assert !USE_SLEEP_SETS;
+
 				return new ChcProviderConcurrentWithLbe(mgdScript, hcSymbolTable, mServices);
 			}
-			return new ChcProviderConcurrent(mServices, mgdScript, hcSymbolTable,
-					isParametric ? Mode.PARAMETRIC : Mode.SINGLE_MAIN, 2);
+
+			final var mode = TREAT_AS_PARAMETRIC_PROGRAM ? Mode.PARAMETRIC : Mode.SINGLE_MAIN_THREAD;
+			if (USE_SLEEP_SETS) {
+				return new ChcProviderConcurrentWithSleep(mServices, mgdScript, hcSymbolTable, mode,
+						THREAD_MODULAR_PROOF_LEVEL);
+			}
+			return new ChcProviderConcurrent(mgdScript, hcSymbolTable, mode, THREAD_MODULAR_PROOF_LEVEL);
 		}
 		return new ChcProviderForCalls(mgdScript, hcSymbolTable);
 	}

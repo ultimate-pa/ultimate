@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgToChcConcurrent.IHcReplacementVar;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -71,9 +70,6 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 	private final IIcfgSymbolTable mCfgSymbolTable;
 	private final Predicate<IProgramVar> mVariableFilter;
-
-	private final Map<ThreadInstance, IcfgLocation> mInitialLocations;
-	private final HashRelation<ThreadInstance, IcfgLocation> mErrorLocations = new HashRelation<>();
 
 	// maps a procedure name and a location (in the procedure) to an integer, such that the location variable has this
 	// integer as value iff control is in the given location
@@ -93,23 +89,13 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 	public ThreadModularHornClauseProvider(final Map<String, Integer> numberOfThreads, final ManagedScript mgdScript,
 			final CfgSmtToolkit cfgSmtToolkit, final HcSymbolTable symbolTable,
-			final Predicate<IProgramVar> variableFilter, final Collection<IcfgLocation> initialLocations,
-			final Collection<IcfgLocation> errorLocations) {
+			final Predicate<IProgramVar> variableFilter) {
 		super(mgdScript, symbolTable);
 		mCfgSymbolTable = cfgSmtToolkit.getSymbolTable();
 		mVariableFilter = variableFilter;
 		mBottomLocation = numeral(-1);
 		mInstances = getInstances(numberOfThreads);
 		mInvariantPredicate = createInvariantPredicate();
-
-		// TODO also support the non-parametric setting, i.e., only set initial location for ID 0
-		mInitialLocations = createInstanceLocationMap(initialLocations);
-
-		for (final IcfgLocation loc : errorLocations) {
-			for (final var instance : getInstances(loc.getProcedure())) {
-				mErrorLocations.addPair(instance, loc);
-			}
-		}
 	}
 
 	// Initialization code and variable creation
@@ -125,18 +111,12 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		return result;
 	}
 
-	private List<ThreadInstance> getInstances(final String template) {
-		return mInstances.stream().filter(inst -> inst.getTemplateName().equals(template)).collect(Collectors.toList());
+	public List<ThreadInstance> getInstances() {
+		return mInstances;
 	}
 
-	private Map<ThreadInstance, IcfgLocation> createInstanceLocationMap(final Collection<IcfgLocation> locations) {
-		final var result = new HashMap<ThreadInstance, IcfgLocation>();
-		for (final IcfgLocation loc : locations) {
-			for (final var instance : getInstances(loc.getProcedure())) {
-				result.put(instance, loc);
-			}
-		}
-		return result;
+	public List<ThreadInstance> getInstances(final String template) {
+		return mInstances.stream().filter(inst -> inst.getTemplateName().equals(template)).collect(Collectors.toList());
 	}
 
 	private PredicateInfo createInvariantPredicate() {
@@ -220,10 +200,10 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	protected List<HornClauseBuilder> buildAllClauses() {
 		final var result = new ArrayList<HornClauseBuilder>();
 
-		result.add(buildInitialClause());
-		for (final var entry : mErrorLocations.getSetOfPairs()) {
-			result.add(buildSafetyClause(entry.getKey(), entry.getValue()));
-		}
+		// result.add(buildInitialClause());
+		// for (final var entry : mErrorLocations.getSetOfPairs()) {
+		// result.add(buildSafetyClause(entry.getKey(), entry.getValue()));
+		// }
 		// TODO inductive clauses
 		// TODO noninterference clauses
 
@@ -234,13 +214,13 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	 * Builds the initial clause that encodes the precondition. By default, this method only fixes the initial location
 	 * of the threads.
 	 */
-	protected HornClauseBuilder buildInitialClause() {
-		final var clause = createBuilder(mInvariantPredicate);
+	protected HornClauseBuilder buildInitialClause(final Map<ThreadInstance, IcfgLocation> initialLocations) {
+		final var clause = createBuilder(mInvariantPredicate, "initial clause");
 
 		// add location constraints
 		for (final var instance : mInstances) {
 			// If instance does not have an initial location, a constraint for mBottomLocation is added.
-			addOutLocationConstraint(clause, instance, mInitialLocations.get(instance));
+			addOutLocationConstraint(clause, instance, initialLocations.get(instance));
 		}
 
 		return clause;
@@ -256,12 +236,12 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	 */
 	protected HornClauseBuilder buildSafetyClause(final ThreadInstance thread, final IcfgLocation errorLoc) {
 		// create a clause with head "false"
-		final var clause = createBuilder();
+		final var clause = createBuilder("safety clause for location " + errorLoc + " in thread instance " + thread);
 
 		// add body clause
 		clause.addBodyPredicate(mInvariantPredicate, clause.getDefaultBodyArgs(mInvariantPredicate));
 
-		// location constraint
+		// location constraints
 		addInLocationConstraint(clause, thread, errorLoc);
 
 		return clause;
@@ -289,17 +269,22 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	protected HornClauseBuilder buildInductivityClause(final IIcfgTransition<?> transition,
 			final Map<ThreadInstance, IcfgLocation> preds, final Map<ThreadInstance, IcfgLocation> succs,
 			final ThreadInstance updatedThread) {
-		final var clause = createBuilder(mInvariantPredicate);
+		final var clause = createBuilder(mInvariantPredicate,
+				"inductivity clause for transition " + transition.hashCode() + " with transformula "
+						+ transition.getTransformula() + " and thread instance " + updatedThread);
 
 		// add body clause
 		clause.addBodyPredicate(mInvariantPredicate, clause.getDefaultBodyArgs(mInvariantPredicate));
 
 		// add location constraints
-		for (final var entry : preds.entrySet()) {
-			addInLocationConstraint(clause, entry.getKey(), entry.getValue());
-		}
-		for (final var entry : succs.entrySet()) {
-			addOutLocationConstraint(clause, entry.getKey(), entry.getValue());
+		for (final var instance : mInstances) {
+			final var isActive = preds.containsKey(instance) || succs.containsKey(instance);
+			if (isActive) {
+				// if instance only in preds or only in succs, the respective other location is mBottomLocation
+				clause.differentBodyHeadVar(mLocationVars.get(instance));
+				addInLocationConstraint(clause, instance, preds.get(instance));
+				addOutLocationConstraint(clause, instance, succs.get(instance));
+			}
 		}
 
 		// add transition constraint
@@ -313,7 +298,8 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	 * Builds a noninterference clause for the given transition.
 	 */
 	protected HornClauseBuilder buildNonInterferenceClause(final IIcfgTransition<?> transition) {
-		final var clause = createBuilder(mInvariantPredicate);
+		final var clause = createBuilder(mInvariantPredicate, "non-interference clause for transition "
+				+ transition.hashCode() + " with transformula " + transition.getTransformula());
 
 		// TODO support transitions with multiple predecessors (joins)
 		final var interferingThread = getInterferingThread(transition);
@@ -385,30 +371,23 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	protected void addTransitionConstraint(final HornClauseBuilder clause, final IIcfgTransition<?> transition,
 			final ThreadInstance updatedThread, final Collection<HcLocalVar> localVariables) {
 		final var tf = transition.getTransformula();
-		final var assigned = tf.getAssignedVars();
 		final var substitution = new HashMap<TermVariable, Term>();
 
 		// deal with global variables
 		for (final var global : mGlobalVars) {
-			if (assigned.contains(global.getVariable())) {
-				prepareSubstitution(clause, transition, substitution, global, global.getVariable());
-			} else {
-				clause.sameBodyHeadVar(global);
-			}
+			prepareSubstitution(clause, transition, substitution, global, global.getVariable(), true);
 		}
 
 		// deal with local variables
 		for (final HcLocalVar local : localVariables) {
-			if (local.getThreadInstance().equals(updatedThread) && assigned.contains(local.getVariable())) {
-				prepareSubstitution(clause, transition, substitution, local, local.getVariable());
-			} else {
-				clause.sameBodyHeadVar(local);
-			}
+			final var updatable = local.getThreadInstance().equals(updatedThread);
+			prepareSubstitution(clause, transition, substitution, local, local.getVariable(), updatable);
 		}
 
 		// replace all other variables with auxiliary variables
 		final Term formula = tf.getFormula();
 		for (final TermVariable v : formula.getFreeVars()) {
+			assert substitution.containsKey(v) || tf.getAuxVars().contains(v) : "not an auxiliary variable: " + v;
 			substitution.computeIfAbsent(v, variable -> clause.getFreshBodyVar(variable, variable.getSort()).getTerm());
 		}
 
@@ -417,13 +396,23 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	}
 
 	private static void prepareSubstitution(final HornClauseBuilder clause, final IIcfgTransition<?> transition,
-			final Map<TermVariable, Term> substitution, final IHcReplacementVar rv, final IProgramVar pv) {
-		final TermVariable inVar = transition.getTransformula().getInVars().get(pv);
-		final TermVariable outVar = transition.getTransformula().getOutVars().get(pv);
-		substitution.put(outVar, clause.getHeadVar(rv).getTerm());
+			final Map<TermVariable, Term> substitution, final IHcReplacementVar rv, final IProgramVar pv,
+			final boolean canBeUpdated) {
+		final var tf = transition.getTransformula();
 
-		assert !Objects.equals(inVar, outVar);
-		substitution.put(inVar, clause.getBodyVar(rv).getTerm());
+		final TermVariable inVar = tf.getInVars().get(pv);
+		if (inVar != null) {
+			substitution.put(inVar, clause.getBodyVar(rv).getTerm());
+		}
+
+		final TermVariable outVar = tf.getOutVars().get(pv);
+		if (outVar != null && !Objects.equals(inVar, outVar)) {
+			substitution.put(outVar, clause.getHeadVar(rv).getTerm());
+		}
+
+		if (canBeUpdated && tf.getAssignedVars().contains(pv)) {
+			clause.differentBodyHeadVar(rv);
+		}
 	}
 
 	protected ThreadInstance getInterferingThread(final IIcfgTransition<?> transition) {

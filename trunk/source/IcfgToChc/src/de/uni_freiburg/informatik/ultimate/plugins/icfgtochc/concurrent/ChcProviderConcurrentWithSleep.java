@@ -26,49 +26,32 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation;
 
-public abstract class ExtensibleHornClauseProvider {
-	protected final ManagedScript mManagedScript;
-	protected final Script mScript;
-	protected final HcSymbolTable mSymbolTable;
+public class ChcProviderConcurrentWithSleep extends ChcProviderConcurrent {
+	private final IUltimateServiceProvider mServices;
 
-	public ExtensibleHornClauseProvider(final ManagedScript mgdScript, final HcSymbolTable symbolTable) {
-		mManagedScript = mgdScript;
-		mScript = mgdScript.getScript();
-		mSymbolTable = symbolTable;
+	public ChcProviderConcurrentWithSleep(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final HcSymbolTable hcSymbolTable, final Mode mode, final int level) {
+		super(mgdScript, hcSymbolTable, mode, level);
+		mServices = services;
 	}
 
-	protected final HornClauseBuilder createBuilder(final PredicateInfo predicate, final String comment) {
-		return new HornClauseBuilder(mManagedScript, mSymbolTable, Objects.requireNonNull(predicate), comment);
-	}
-
-	protected final HornClauseBuilder createBuilder(final String comment) {
-		return new HornClauseBuilder(mManagedScript, mSymbolTable, comment);
-	}
-
-	protected abstract List<HornClauseBuilder> buildAllClauses();
-
-	public final List<HornClause> getClauses() {
-		return buildAllClauses().stream().map(HornClauseBuilder::build).collect(Collectors.toList());
-	}
-
-	protected final Term numeral(final long n) {
-		return mScript.numeral(BigInteger.valueOf(n));
-	}
-
-	protected Sort getIntSort() {
-		return SmtSortUtils.getIntSort(mScript);
+	@Override
+	protected ThreadModularHornClauseProvider createFactory(final Map<String, Integer> numberOfThreads,
+			final IIcfg<IcfgLocation> icfg) {
+		final var independence = new SemanticIndependenceRelation<>(mServices, mMgdScript, false, true);
+		final var locations = icfg.getProgramPoints().entrySet().stream()
+				.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().values()));
+		return new SleepSetThreadModularHornClauseProvider(numberOfThreads, mMgdScript, icfg.getCfgSmtToolkit(),
+				mHcSymbolTable, x -> true, independence, locations);
 	}
 }

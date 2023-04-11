@@ -27,10 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -45,45 +45,49 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornClauseProvider {
 	private final IIndependenceRelation<?, ? super IIcfgTransition<?>> mIndependence;
 	private final Map<String, Collection<IcfgLocation>> mThreadLocations;
 
-	private final Map<ThreadInstance, HcThreadIdVar> mIdVars = new HashMap<>();
-	private final Map<ThreadInstance, HcSleepVar> mSleepVars = new HashMap<>();
+	private final Map<ThreadInstance, HcThreadIdVar> mIdVars;
+	private final Map<ThreadInstance, HcSleepVar> mSleepVars;
 
 	public SleepSetThreadModularHornClauseProvider(final Map<String, Integer> numberOfThreads,
 			final ManagedScript mgdScript, final CfgSmtToolkit cfgSmtToolkit, final HcSymbolTable symbolTable,
-			final Predicate<IProgramVar> variableFilter, final Collection<IcfgLocation> initialLocations,
-			final Collection<IcfgLocation> errorLocations,
+			final Predicate<IProgramVar> variableFilter,
 			final IIndependenceRelation<?, ? super IIcfgTransition<?>> independence,
 			final Map<String, Collection<IcfgLocation>> threadLocations) {
-		super(numberOfThreads, mgdScript, cfgSmtToolkit, symbolTable, variableFilter, initialLocations, errorLocations);
+		super(numberOfThreads, mgdScript, cfgSmtToolkit, symbolTable, variableFilter);
 		mIndependence = independence;
 		mThreadLocations = threadLocations;
+
+		mIdVars = extractThreadVars(HcThreadIdVar.class);
+		mSleepVars = extractThreadVars(HcSleepVar.class);
+	}
+
+	private <V> Map<ThreadInstance, V> extractThreadVars(final Class<V> varClass) {
+		return mThreadSpecificVars.entrySet().stream()
+				.map(entry -> new Pair<>(entry.getKey(),
+						entry.getValue().stream().filter(varClass::isInstance).map(varClass::cast).findFirst().get()))
+				.collect(Collectors.toMap(Pair::getKey, Pair::getValue));
 	}
 
 	@Override
 	protected List<IHcThreadSpecificVar> createThreadSpecificVars(final ThreadInstance instance) {
 		final var result = super.createThreadSpecificVars(instance);
 
-		// thread ID
-		final var id = new HcThreadIdVar(instance, mScript);
-		mIdVars.put(instance, id);
-		result.add(0, id);
-
-		// sleep set
-		final var sleep = new HcSleepVar(instance, mScript);
-		mSleepVars.put(instance, sleep);
-		result.add(1, sleep);
+		// add thread ID and sleep set
+		result.add(0, new HcThreadIdVar(instance, mScript));
+		result.add(1, new HcSleepVar(instance, mScript));
 
 		return result;
 	}
 
 	@Override
-	protected HornClauseBuilder buildInitialClause() {
-		final var clause = super.buildInitialClause();
+	protected HornClauseBuilder buildInitialClause(final Map<ThreadInstance, IcfgLocation> initialLocations) {
+		final var clause = super.buildInitialClause(initialLocations);
 
 		// all sleep variables are initialized to 0
 		for (final var instance : mInstances) {
@@ -150,9 +154,6 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 			final var instance = mInstances.get(i);
 			final var id = mIdVars.get(instance);
 
-			// thread ID must not change
-			clause.sameBodyHeadVar(id);
-
 			// fix ordering between thread IDs
 			if (i + 1 < mInstances.size()) {
 				final var next = mInstances.get(i + 1);
@@ -174,11 +175,12 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 		// for now, the preference order is non-positional, and given by the ordering in mInstances
 		final int ordering = Integer.compare(mInstances.indexOf(primaryActiveThread), mInstances.indexOf(current));
 
+		final var sleep = mSleepVars.get(current);
 		if (activeThreads.contains(current)) {
 			// no update of sleep variable
 		} else if (ordering < 0) {
 			// set sleep variable to false / leave unchanged
-			final var sleep = mSleepVars.get(current);
+			clause.differentBodyHeadVar(sleep);
 			final var oldSleep = clause.getBodyVar(sleep);
 			final var newSleep = clause.getHeadVar(sleep);
 			clause.addConstraint(SmtUtils.ite(mScript, nonCommConstr,
@@ -186,7 +188,7 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 					SmtUtils.binaryEquality(mScript, newSleep.getTerm(), oldSleep.getTerm())));
 		} else {
 			// set sleep variable to false / true
-			final var sleep = mSleepVars.get(current);
+			clause.differentBodyHeadVar(sleep);
 			final var newSleep = clause.getHeadVar(sleep);
 			clause.addConstraint(SmtUtils.binaryBooleanEquality(mScript,
 					SmtUtils.binaryEquality(mScript, newSleep.getTerm(), numeral(0)), nonCommConstr));
@@ -197,8 +199,10 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 	// Here the ordering can only be resolved at runtime, so we treat it statically
 	private void updateSleepNonInterference(final HornClauseBuilder clause, final IIcfgTransition<?> transition,
 			final HcThreadIdVar interferingId, final ThreadInstance current) {
-		final var oldSleep = clause.getBodyVar(mSleepVars.get(current));
-		final var newSleep = clause.getHeadVar(mSleepVars.get(current));
+		final var sleep = mSleepVars.get(current);
+		clause.differentBodyHeadVar(sleep);
+		final var oldSleep = clause.getBodyVar(sleep);
+		final var newSleep = clause.getHeadVar(sleep);
 
 		final var currentLoc = clause.getBodyVar(mLocationVars.get(current));
 		final var currentId = clause.getBodyVar(mIdVars.get(current));
@@ -224,7 +228,7 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 				nonCommLocations.add(getLocIndexTerm(loc, instance.getTemplateName()));
 			}
 		}
-		return SmtUtils.and(mScript, nonCommLocations.stream().map(loc -> SmtUtils.binaryEquality(mScript, locVar, loc))
+		return SmtUtils.or(mScript, nonCommLocations.stream().map(loc -> SmtUtils.binaryEquality(mScript, locVar, loc))
 				.collect(Collectors.toList()));
 	}
 }

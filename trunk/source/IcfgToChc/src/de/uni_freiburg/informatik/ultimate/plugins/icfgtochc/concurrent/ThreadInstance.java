@@ -46,6 +46,11 @@ public final class ThreadInstance {
 	}
 
 	@Override
+	public String toString() {
+		return mTemplateName + "_" + mInstanceNumber;
+	}
+
+	@Override
 	public int hashCode() {
 		return Objects.hash(mInstanceNumber, mTemplateName);
 	}
