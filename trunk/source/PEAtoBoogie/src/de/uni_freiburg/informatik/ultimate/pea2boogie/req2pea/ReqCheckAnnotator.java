@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -197,8 +198,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		if (peas.size() != 2) {
 			return Collections.emptyList();
 		}
-		
-		final Statement assertComplement = genAssertComplement(peas, bl);
+		PhaseEventAutomata a0 = peas.get(0).getValue();
+		PhaseEventAutomata a1 = peas.get(1).getValue();
+		final Statement assertComplement = genAssertComplement(a0, a1, bl);
 		if (assertComplement != null) {
 			stmtList.add(assertComplement);
 		}
@@ -217,38 +219,14 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	 *            A boogie location used for all statements.
 	 * @return The assertion for non-complementness
 	 */
-	private Statement genAssertComplement(List<Entry<CounterTrace, PhaseEventAutomata>> peas, final BoogieLocation bl) {
-		final List<Expression> checkTerminal0 = new ArrayList<>();
-		final List<Expression> checkNonTerminal0 = new ArrayList<>();
-		final List<Expression> checkTerminal1 = new ArrayList<>();
-		final List<Expression> checkNonTerminal1 = new ArrayList<>();
+	private Statement genAssertComplement(PhaseEventAutomata a0, PhaseEventAutomata a1, final BoogieLocation bl) {
+		final Pair<List<Expression>, List<Expression>> expressionsA0 = getExpressions(a0, bl);
+		final Pair<List<Expression>, List<Expression>> expressionsA1 = getExpressions(a1, bl);
 		
-		for (int i = 0; i < peas.size(); i++) {
-			Entry<CounterTrace, PhaseEventAutomata> entry = peas.get(i);
-			PhaseEventAutomata pea = entry.getValue();
-			Phase[] phases = pea.getPhases();
-			for (int j = 0; j < phases.length; j++) {
-				Phase phase = phases[j];
-				if (phase.getTerminal()) {
-					if (i == 0) {
-						checkTerminal0.add(genComparePhaseCounter(i, mSymbolTable.getPcName(pea), bl));
-					} else {
-						checkTerminal1.add(genComparePhaseCounter(i, mSymbolTable.getPcName(pea), bl));
-					}
-				} else {
-					if (i == 0) {
-						checkNonTerminal0.add(genComparePhaseCounter(i, mSymbolTable.getPcName(pea), bl));
-					} else {
-						checkNonTerminal1.add(genComparePhaseCounter(i, mSymbolTable.getPcName(pea), bl));
-					}
-				}
-				
-			}
-		}
-		final Expression disjunctionTerminal0 = genDisjunction(checkTerminal0, bl);
-		final Expression disjunctionTerminal1 = genDisjunction(checkTerminal1, bl);
-		final Expression disjunctionNonTerminal0 = genDisjunction(checkNonTerminal0, bl);
-		final Expression disjunctionNonTerminal1 = genDisjunction(checkNonTerminal1, bl);
+		final Expression disjunctionTerminal0 = genDisjunction(expressionsA0.getFirst(), bl);
+		final Expression disjunctionTerminal1 = genDisjunction(expressionsA1.getFirst(), bl);
+		final Expression disjunctionNonTerminal0 = genDisjunction(expressionsA0.getSecond(), bl);
+		final Expression disjunctionNonTerminal1 = genDisjunction(expressionsA0.getSecond(), bl);
 		
 		final Expression conjunctionTerminal = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, disjunctionTerminal0, disjunctionTerminal1);
 		final Expression conjunctionNonTerminal = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, disjunctionNonTerminal0, disjunctionNonTerminal1);
@@ -256,8 +234,24 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final Expression disjunction = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICOR, conjunctionTerminal, conjunctionNonTerminal);
 		
 		final ReqCheck check = new ReqCheck(Spec.COMPLEMENT);
-		final String label = "Complement_" + peas.get(0).getValue().getName() + "_" + peas.get(1).getValue().getName();
+		final String label = "Complement_" + a0.getName() + "_" + a1.getName();
 		return createAssert(disjunction, check, label);
+	}
+	
+	private Pair<List<Expression>, List<Expression>>  getExpressions(PhaseEventAutomata pea, BoogieLocation bl) {
+		List<Expression>  terminalExpressions = new ArrayList<>();
+		List<Expression>  nonTerminalExpressions = new ArrayList<>();
+		Pair<List<Expression>, List<Expression>> result = new Pair<List<Expression>, List<Expression>>(terminalExpressions, nonTerminalExpressions);
+		Phase[] phases = pea.getPhases();
+		for (int i = 0; i < phases.length; i++) {
+			Expression expression = genComparePhaseCounter(i, mSymbolTable.getPcName(pea), bl);
+			if (phases[i].getTerminal() ) {
+				result.getFirst().add(expression);
+			} else {
+				result.getSecond().add(expression);
+			}
+		}
+		return result;
 	}
 
 	@SuppressWarnings("unchecked")

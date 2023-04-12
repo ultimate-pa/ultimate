@@ -104,7 +104,7 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			+ "step independend of length or usefulness.";
 
 	public enum PEATransformerMode {
-		REQ_CHECK, REQ_TEST
+		REQ_CHECK, REQ_TEST, REQ_COMP
 	}
 
 	public Pea2BoogiePreferences() {

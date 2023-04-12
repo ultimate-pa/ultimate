@@ -498,7 +498,7 @@ public class RangeDecision extends Decision<RangeDecision> {
 	 * Example: 
 	 * 		- toFilter: (c1 <= 5 && c2 >= 5 && c4 < 5) || (c1 <= 5 && c3 > 5 && c4 < 5)
 	 * 		- toRemove: reset = ["c3". "c4"]
-	 * 		- result: (c1 && c2) || (c1) = c1
+	 * 		- result: (c1 && c2) || c1 = c1
 	 * 
 	 * @param toFilter	the CDD
 	 * @param toRemove	the list of names to remove from toFilter
@@ -548,6 +548,7 @@ public class RangeDecision extends Decision<RangeDecision> {
 	 * @return the CDD with all non-strict RangeDecisions changed into strict ones
 	 */
 	public static CDD strict(CDD toStrict) {
+		// get list of atomic CDDs and their corresponding true child indices
 		ArrayList<ArrayList<Pair<Decision<?>, int[]>>> decisionDNF = toStrict.getDecisionsDNF();
 		ArrayList<CDD> newConjunctions =  new ArrayList<>();
 		CDD newDisjunction = CDD.FALSE;
@@ -564,18 +565,16 @@ public class RangeDecision extends Decision<RangeDecision> {
 				int op = rangeDecision.getOp(trueChild);
 				int[] limits = rangeDecision.getLimits();
 				assert limits.length == 1;
-				int limit = limits[0];
 				// check if limit is uneven. if it is, c <= T or c > T
 				// if trueChild is also 0, then it is c <= T and must be strictified
-				if (limit % 2 == 1 && trueChild == 0) {
-					//int newOp = strictOp(rangeDecision.getOp(trueChild));
+				if (op == OP_LTEQ) {
 					// create new atomic CDD with strict operation
 					CDD newRangeDecision = RangeDecision.create(var, OP_LT, rangeDecision.getVal(trueChild));
 					newConjunction  = newConjunction.and(newRangeDecision);
 					}
 				// check if limit is even. if it is, c >= T or c < T
 				// if trueChild is also 1, then it is c >= T and must be strictified
-				else if (limit % 2 == 0 && trueChild ==1) {
+				else if (op == OP_GTEQ) {
 					CDD newRangeDecision = RangeDecision.create(var, OP_GT, rangeDecision.getVal(trueChild));
 					newConjunction  = newConjunction.and(newRangeDecision);
 				} else { 
