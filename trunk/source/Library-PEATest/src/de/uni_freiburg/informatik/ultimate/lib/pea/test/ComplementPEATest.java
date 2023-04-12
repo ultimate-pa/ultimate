@@ -146,7 +146,7 @@ public class ComplementPEATest {
 	public void testComplementResponseDelayGlobally() {
 		PhaseEventAutomata testPEA = mTestAutomata.get(0);
 		ComplementPEA complementPEA = new ComplementPEA(testPEA);
-		PhaseEventAutomata complementAutomaton = complementPEA.complement();
+		PhaseEventAutomata complementAutomaton = complementPEA.getComplementPEA();
 		Phase[] originalPhases = testPEA.getPhases();
 		Phase[] phases = complementAutomaton.getPhases();
 		assertEquals(originalPhases.length, phases.length - 1);
@@ -170,7 +170,7 @@ public class ComplementPEATest {
 	public void testComplementUniversalityGlobally() {
 		PhaseEventAutomata testPEA = mTestAutomata.get(1);
 		ComplementPEA complementPEA = new ComplementPEA(testPEA);
-		PhaseEventAutomata complementAutomaton = complementPEA.complement();
+		PhaseEventAutomata complementAutomaton = complementPEA.getComplementPEA();
 		Phase[] phases = complementAutomaton.getPhases();
 		Phase sink = phases[0];
 		assertTrue(sink.getInitialTransition().isPresent());
@@ -189,7 +189,7 @@ public class ComplementPEATest {
 	public void testComplementDurationBoundUGlobally() {
 		PhaseEventAutomata testPEA = mTestAutomata.get(2);
 		ComplementPEA complementPEA = new ComplementPEA(testPEA);
-		PhaseEventAutomata complementAutomaton = complementPEA.complement();
+		PhaseEventAutomata complementAutomaton = complementPEA.getComplementPEA();
 		Phase[] phases = complementAutomaton.getPhases();
 		assertTrue(phases.length == testPEA.getPhases().length + 1);
 		Phase sink = phases[0];
