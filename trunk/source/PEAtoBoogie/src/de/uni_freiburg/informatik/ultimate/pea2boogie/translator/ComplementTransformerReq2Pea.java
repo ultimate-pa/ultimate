@@ -1,24 +1,34 @@
 package de.uni_freiburg.informatik.ultimate.pea2boogie.translator;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.ComplementPEA;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2Pea;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaAnnotator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqCheckAnnotator;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.Req2CauseTrackingCDD;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.ReqEffectStore;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.ReqTestAnnotator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+
+/**
+* This class constructs from a ReqPea containing one non-composite PEA two ReqPeas, 
+* one that represents the totalised PEA and one that represents the complement PEA
+* 
+* The purpose of this class is to enable the complement check, a check to determine 
+* wether or not two PEAs are complements of each other.
+* 
+* @author lena
+*
+*/
 
 public class ComplementTransformerReq2Pea implements IReq2Pea {
 	private final ILogger mLogger;
@@ -27,7 +37,6 @@ public class ComplementTransformerReq2Pea implements IReq2Pea {
 	private IReqSymbolTable mSymbolTable;
 	private boolean mHasErrors;
 	private final IUltimateServiceProvider mServices;
-	private final Req2CauseTrackingCDD mCddTransformer;
 	private final Durations mDurations;
 
 
@@ -37,18 +46,45 @@ public class ComplementTransformerReq2Pea implements IReq2Pea {
 		mLogger = logger;
 		mInitPattern = init;
 		mReqPeas = new ArrayList<>();
-		mCddTransformer = new Req2CauseTrackingCDD(mLogger);
 		mDurations = new Durations();
 	}
 
 
 	@Override
 	public void transform(IReq2Pea req2pea) {
-		final List<ReqPeas> simplePeas = req2pea.getReqPeas();
+		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
+		final List<ReqPeas> peas = req2pea.getReqPeas();
+		if (peas.size() != 1) {
+			mLogger.error("Number of PEAs must be exactly 1.");
+		}
 		final IReqSymbolTable symbolTable = req2pea.getSymboltable();
-		PhaseEventAutomata peaToComplement = simplePeas.get(0).getCounterTrace2Pea().get(0).getValue();
-		ComplementPEA complementPEA = new ComplementPEA(peaToComplement);
-		PhaseEventAutomata complementAutomaton = complementPEA.complement();
+		// was soll das? 
+		for (final DeclarationPattern p : mInitPattern) {
+			builder.addInitPattern(p);
+			mDurations.addInitPattern(p);
+		}
+		ReqPeas reqPeas =  peas.get(0); 
+		final List<Entry<CounterTrace, PhaseEventAutomata>> ct2pea = reqPeas.getCounterTrace2Pea();
+		if (ct2pea.size() != 1) {
+			mLogger.error("Composite PEAs not yet implemented");
+		}
+		final Entry<CounterTrace, PhaseEventAutomata> pea = ct2pea.get(0);
+		final PatternType<?> pattern = peas.get(0).getPattern();
+		PhaseEventAutomata peaToComplement = pea.getValue();
+		ComplementPEA complementPea= new ComplementPEA(peaToComplement);
+		PhaseEventAutomata totalisedPea = complementPea.getTotalisedPEA();
+		PhaseEventAutomata complementedPEA = complementPea.getComplementPEA();
+		
+		
+		final List<Entry<CounterTrace, PhaseEventAutomata>> totalCt2pea = new ArrayList<>();
+		totalCt2pea.add(new Pair<>(pea.getKey(), totalisedPea));
+		mReqPeas.add(new ReqPeas(pattern, totalCt2pea));
+		
+		final List<Entry<CounterTrace, PhaseEventAutomata>> complementCt2pea = new ArrayList<>();
+		// The countertrace is wrong for the complemented Pea. I dont know how to negate a DC formula.
+		complementCt2pea.add(new Pair<>(pea.getKey(), complementedPEA));
+		mReqPeas.add(new ReqPeas(pattern, complementCt2pea));
+		mSymbolTable = builder.constructSymbolTable();
 		
 	}
 
