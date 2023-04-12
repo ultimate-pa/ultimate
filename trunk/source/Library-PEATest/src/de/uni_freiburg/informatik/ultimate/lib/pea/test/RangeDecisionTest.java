@@ -182,7 +182,7 @@ public class RangeDecisionTest {
 	}
 	
 	/**
-	 * Test 0 (Contains all binary operators#
+	 * Test 0 (Contains all binary operators)
 	 * 
 	 * TestCdd (DNF):  (c1 <= 5 && c2 >= 5 && c4 < 5) || (c1 <= 5 && c3 > 5 && c4 < 5)
 	 * expected: (c1 < 5 && c2 > 5 && c4 < 5) || (c1 < 5 && c3 > 5 && c4 < 5)

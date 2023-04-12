@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePref
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.PEATransformerMode;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.Req2CauseTrackingPeaTransformer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.ReqTestResultUtil;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ComplementTransformer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
 
 public class PEAtoBoogieObserver extends BaseObserver {
@@ -58,6 +59,9 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		if (mode == PEATransformerMode.REQ_TEST) {
 			return generateReqTestBoogie(patterns);
 		}
+		if (mode == PEATransformerMode.REQ_COMP) {
+			return  generateReqComplementCheckBoogie(patterns);
+		}
 		return null;
 	}
 
@@ -74,6 +78,7 @@ public class PEAtoBoogieObserver extends BaseObserver {
 
 	private IElement generateReqTestBoogie(final List<PatternType<?>> patterns) {
 		// TODO: would it be nicer to get the symbol table via annotations?
+		// Req2CauseTrackingPeaTransformer baut automaten um 
 		final Req2CauseTrackingPeaTransformer transformer = new Req2CauseTrackingPeaTransformer(mServices, mLogger);
 		final Req2BoogieTranslator translator =
 				new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.singletonList(transformer));
@@ -81,6 +86,21 @@ public class PEAtoBoogieObserver extends BaseObserver {
 				new ReqTestResultUtil(mLogger, mServices, translator.getReqSymbolTable(), transformer.getEffectStore());
 		// register CEX transformer that removes program executions from CEX.
 		final UnaryOperator<IResult> resultTransformer = mReporter::convertTraceAbstractionResult;
+		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
+		return translator.getUnit();
+	}
+	
+	private IElement generateReqComplementCheckBoogie(final List<PatternType<?>> patterns) {
+		if (patterns.size() > 1) {
+			mLogger.error("only one pattern please");
+		}
+		final ComplementTransformer transformer = new ComplementTransformer(mServices, mLogger);
+		final Req2BoogieTranslator translator =
+				new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.singletonList(transformer));
+		final VerificationResultTransformer reporter =
+				new VerificationResultTransformer(mLogger, mServices, translator.getReqSymbolTable());
+		// register CEX transformer that removes program executions from CEX.
+		final UnaryOperator<IResult> resultTransformer = reporter::convertTraceAbstractionResult;
 		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
 		return translator.getUnit();
 	}

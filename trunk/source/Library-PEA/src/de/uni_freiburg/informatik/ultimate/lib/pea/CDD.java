@@ -870,6 +870,7 @@ public final class CDD {
 	 * 
 	 * Assertions: 
 	 *  1. The CDD given as the parameter must be a pure conjunction 
+	 *  (this assertion is commented out because inequality-decisions contain ||)
 	 *  
 	 *  Example:
 	 *  	cdd:  a && !b && c5 >= 5 && c6 <= 5 && c7 == 5  && c8 != 5
