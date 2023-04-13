@@ -62,6 +62,7 @@ public class EldaricaBridge {
 			final var solution = result.left().get();
 		} else {
 			System.out.println("UNSAT");
+			final var derivation = result.right().get();
 		}
 	}
 
