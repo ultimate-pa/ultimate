@@ -16,9 +16,11 @@ import ap.parser.IFormula;
 import ap.parser.IIntLit;
 import ap.parser.ITerm;
 import ap.terfor.preds.Predicate;
+import de.uni_freiburg.informatik.ultimate.lib.chc.Derivation;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -26,18 +28,23 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import lazabs.horn.bottomup.HornClauses;
 import lazabs.horn.bottomup.HornClauses.Clause;
 import lazabs.horn.bottomup.SimpleWrapper;
+import lazabs.prover.Tree;
+import scala.Tuple2;
 import scala.collection.JavaConverters;
+import scala.collection.Seq;
 import scala.collection.immutable.List;
 import scala.runtime.AbstractFunction1;
 
 public class EldaricaBridge {
 	private final SimpleAPI mEldarica;
 
-	private final Map<HcPredicateSymbol, Predicate> mPredicateMap = new HashMap<>();
-	private final Map<TermVariable, IExpression> mVariableMap = new HashMap<>();
+	private final Map<Clause, HornClause> mClauseMap = new HashMap<>();
+	private final BidirectionalMap<HcPredicateSymbol, Predicate> mPredicateMap = new BidirectionalMap<>();
+	private final Map<TermVariable, ITerm> mVariableMap = new HashMap<>();
 
 	public static void doStuff(final Script script, final java.util.Collection<HornClause> clauses) {
 		SimpleAPI.<Object> withProver(new AbstractFunction1<>() {
@@ -62,8 +69,27 @@ public class EldaricaBridge {
 			final var solution = result.left().get();
 		} else {
 			System.out.println("UNSAT");
-			final var derivation = result.right().get();
+			final var derivation = backTranslateDerivation(result.right().get().toTree());
 		}
+	}
+
+	private Derivation backTranslateDerivation(final Tree<Tuple2<IAtom, Clause>> tree) {
+		final var atom = tree.d()._1();
+		final var pred = atom.pred();
+		final var hcPred = mPredicateMap.inverse().get(pred);
+
+		final var args = new ArrayList<Term>(atom.args().length());
+		int i = 0;
+		for (final var arg : ofList(atom.args())) {
+			final var sort = hcPred.getParameterSorts().get(i);
+			final var term = backTranslateTerm(arg, sort);
+			args.add(term);
+			i++;
+		}
+
+		final var children =
+				ofList(tree.children()).stream().map(this::backTranslateDerivation).collect(Collectors.toList());
+		return new Derivation(hcPred, args, mClauseMap.get(tree.d()._2()), children);
 	}
 
 	private Clause translateClause(final HornClause clause) {
@@ -87,11 +113,17 @@ public class EldaricaBridge {
 
 		final var constraint = translateFormula(clause.getConstraintFormula());
 
-		return new Clause(head, toList(body), constraint);
+		final var newClause = new Clause(head, toList(body), constraint);
+		mClauseMap.put(newClause, clause);
+		return newClause;
 	}
 
 	private static <X> List<X> toList(final java.util.List<X> list) {
 		return JavaConverters.asScalaIteratorConverter(list.iterator()).asScala().toList();
+	}
+
+	private static <X> java.util.List<X> ofList(final Seq<X> list) {
+		return JavaConverters.seqAsJavaListConverter(list).asJava();
 	}
 
 	private Predicate getPredicateSymbol(final HcPredicateSymbol pred) {
@@ -143,7 +175,7 @@ public class EldaricaBridge {
 		return mVariableMap.computeIfAbsent(variable, this::createVariable);
 	}
 
-	private IExpression createVariable(final TermVariable variable) {
+	private ITerm createVariable(final TermVariable variable) {
 		final var sort = variable.getSort();
 		// if (SmtSortUtils.isBoolSort(sort)) {
 		// return mEldarica.createBooleanVariable(variable.getName());
@@ -206,5 +238,20 @@ public class EldaricaBridge {
 			throw new IllegalArgumentException(constant.toString());
 		}
 		return new IIntLit(IdealInt.apply(bigint));
+	}
+
+	private Term backTranslateTerm(final ITerm term, final Sort sort) {
+		if (!(term instanceof IIntLit)) {
+			throw new IllegalArgumentException(term.toString());
+		}
+
+		final var lit = (IIntLit) term;
+		final var value = lit.value();
+		if (!SmtSortUtils.isBoolSort(sort)) {
+			// TODO convert
+			new ap.types.Sort.MultipleValueBool$();
+		}
+		// TODO
+		return null;
 	}
 }
