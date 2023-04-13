@@ -26,7 +26,7 @@ public class EagerRabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTE
 	/**
 	 * @param automaton
 	 *            The automaton that should be optimized
-	 * 
+	 *
 	 *            This automaton constructs the minimal Automaton containing all reachable transitions and states from
 	 *            the initials of the given IRabinAutomaton
 	 */
@@ -58,7 +58,11 @@ public class EagerRabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTE
 
 				for (final OutgoingInternalTransition<LETTER, STATE> transition : automaton
 						.getSuccessors(currentState)) {
-					mAlphabet.add(transition.getLetter());
+					final LETTER letter = transition.getLetter();
+					mAlphabet.add(letter);
+					if (!mTransitions.containsKey(currentState, letter)) {
+						mTransitions.put(currentState, letter, new HashSet<>());
+					}
 					mTransitions.get(currentState, transition.getLetter()).add(transition.getSucc());
 
 					temp.add(transition.getSucc());
