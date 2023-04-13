@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.chc.eldarica;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -8,15 +9,19 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import ap.SimpleAPI;
+import ap.basetypes.IdealInt;
 import ap.parser.IAtom;
 import ap.parser.IExpression;
 import ap.parser.IFormula;
+import ap.parser.IIntLit;
 import ap.parser.ITerm;
 import ap.terfor.preds.Predicate;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -32,7 +37,7 @@ public class EldaricaBridge {
 	private final SimpleAPI mEldarica;
 
 	private final Map<HcPredicateSymbol, Predicate> mPredicateMap = new HashMap<>();
-	private final Map<TermVariable, ITerm> mVariableMap = new HashMap<>();
+	private final Map<TermVariable, IExpression> mVariableMap = new HashMap<>();
 
 	public static void doStuff(final Script script, final java.util.Collection<HornClause> clauses) {
 		SimpleAPI.<Object> withProver(new AbstractFunction1<>() {
@@ -63,7 +68,7 @@ public class EldaricaBridge {
 	private Clause translateClause(final HornClause clause) {
 		final IAtom head;
 		if (clause.isHeadFalse()) {
-			head = new IAtom(HornClauses.FALSE(), null);
+			head = new IAtom(HornClauses.FALSE(), toList(java.util.List.of()));
 		} else {
 			final var headPred = getPredicateSymbol(clause.getHeadPredicate());
 			final var headArgs = clause.getTermVariablesForHeadPred().stream().map(HcHeadVar::getTermVariable)
@@ -109,6 +114,10 @@ public class EldaricaBridge {
 	}
 
 	private IFormula translateFormula(final Term term) {
+		final var expr = translateExpression(term);
+		if (expr instanceof ITerm) {
+			return new ap.types.Sort.MultipleValueBool$().isTrue((ITerm) expr);
+		}
 		return (IFormula) translateExpression(term);
 	}
 
@@ -123,12 +132,22 @@ public class EldaricaBridge {
 		if (term instanceof ApplicationTerm) {
 			return translateApplication((ApplicationTerm) term);
 		}
+		if (term instanceof ConstantTerm) {
+			return translateConstant((ConstantTerm) term);
+		}
 		throw new IllegalArgumentException(term.toString());
 	}
 
 	private IExpression translateVariable(final TermVariable variable) {
-		return mVariableMap.computeIfAbsent(variable,
-				v -> mEldarica.createConstant(v.getName(), translateSort(v.getSort())));
+		return mVariableMap.computeIfAbsent(variable, this::createVariable);
+	}
+
+	private IExpression createVariable(final TermVariable variable) {
+		final var sort = variable.getSort();
+		// if (SmtSortUtils.isBoolSort(sort)) {
+		// return mEldarica.createBooleanVariable(variable.getName());
+		// }
+		return mEldarica.createConstant(variable.getName(), translateSort(sort));
 	}
 
 	private IExpression translateApplication(final ApplicationTerm term) {
@@ -159,6 +178,8 @@ public class EldaricaBridge {
 			return translateBinaryExpression(term, ITerm::$greater);
 		case ">=":
 			return translateBinaryExpression(term, ITerm::$greater$eq);
+		case "+":
+			return translateBinaryExpression(term, ITerm::$plus);
 		default:
 			throw new IllegalArgumentException(term.toString());
 		}
@@ -170,5 +191,19 @@ public class EldaricaBridge {
 		final var first = translateTerm(term.getParameters()[0]);
 		final var second = translateTerm(term.getParameters()[1]);
 		return combinator.apply(first, second);
+	}
+
+	private static ITerm translateConstant(final ConstantTerm constant) {
+		final var value = constant.getValue();
+		BigInteger bigint;
+		if (value instanceof Rational) {
+			assert ((Rational) value).denominator().equals(BigInteger.ONE);
+			bigint = ((Rational) value).numerator();
+		} else if (value instanceof BigInteger) {
+			bigint = (BigInteger) value;
+		} else {
+			throw new IllegalArgumentException(constant.toString());
+		}
+		return new IIntLit(IdealInt.apply(bigint));
 	}
 }
