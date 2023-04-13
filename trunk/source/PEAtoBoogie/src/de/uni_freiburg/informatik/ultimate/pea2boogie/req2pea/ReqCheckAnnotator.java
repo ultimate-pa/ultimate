@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea;
 
+import java.security.AlgorithmConstraints;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -188,18 +190,13 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	
 
 	private List<Statement> genCheckComplement(final BoogieLocation bl) {
-		if (!mCheckComplement) {
-			return Collections.emptyList();
-		}
 		final List<Statement> stmtList = new ArrayList<>();
-		ReqPeas reqPea = mReqPeas.get(0);
-		List<Entry<CounterTrace, PhaseEventAutomata>> peas = reqPea.getCounterTrace2Pea();
+		ReqPeas reqPeaTotal = mReqPeas.get(0);
+		ReqPeas reqPeaComplement = mReqPeas.get(1);
+		// List<Entry<CounterTrace, PhaseEventAutomata>> peas = reqPea.getCounterTrace2Pea();
 		// we can only check for complement if we have exactly two PEAs
-		if (peas.size() != 2) {
-			return Collections.emptyList();
-		}
-		PhaseEventAutomata a0 = peas.get(0).getValue();
-		PhaseEventAutomata a1 = peas.get(1).getValue();
+		PhaseEventAutomata a0 = reqPeaTotal.getCounterTrace2Pea().get(0).getValue();
+		PhaseEventAutomata a1 = reqPeaComplement.getCounterTrace2Pea().get(0).getValue();
 		final Statement assertComplement = genAssertComplement(a0, a1, bl);
 		if (assertComplement != null) {
 			stmtList.add(assertComplement);
@@ -226,16 +223,17 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final Expression disjunctionTerminal0 = genDisjunction(expressionsA0.getFirst(), bl);
 		final Expression disjunctionTerminal1 = genDisjunction(expressionsA1.getFirst(), bl);
 		final Expression disjunctionNonTerminal0 = genDisjunction(expressionsA0.getSecond(), bl);
-		final Expression disjunctionNonTerminal1 = genDisjunction(expressionsA0.getSecond(), bl);
+		final Expression disjunctionNonTerminal1 = genDisjunction(expressionsA1.getSecond(), bl);
 		
 		final Expression conjunctionTerminal = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, disjunctionTerminal0, disjunctionTerminal1);
 		final Expression conjunctionNonTerminal = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, disjunctionNonTerminal0, disjunctionNonTerminal1);
 		
 		final Expression disjunction = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICOR, conjunctionTerminal, conjunctionNonTerminal);
+		final Expression assertion = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, disjunction);
 		
 		final ReqCheck check = new ReqCheck(Spec.COMPLEMENT);
 		final String label = "Complement_" + a0.getName() + "_" + a1.getName();
-		return createAssert(disjunction, check, label);
+		return createAssert(assertion, check, label);
 	}
 	
 	private Pair<List<Expression>, List<Expression>>  getExpressions(PhaseEventAutomata pea, BoogieLocation bl) {

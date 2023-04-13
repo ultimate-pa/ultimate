@@ -114,6 +114,7 @@ public class ComplementPEA {
 		PhaseEventAutomata totalisedPEA = new PhaseEventAutomata(mPEAtoComplement.getName() + "_t", phases.toArray(new Phase[phases.size()]), mPEAtoComplement.mInit);
 		totalisedPEA.setInit(newInitArray);
 		totalisedPEA.mVariables = mPEAtoComplement.mVariables;
+		totalisedPEA.mClocks = mPEAtoComplement.mClocks;
 		return totalisedPEA;
 	}
 	
@@ -138,6 +139,7 @@ public class ComplementPEA {
 		}
 		PhaseEventAutomata complementPEA = new PhaseEventAutomata(mPEAtoComplement.getName() + "_c", phases.toArray(new Phase[phases.size()]), mTotalisedPEA.mInit);
 		complementPEA.mVariables = mPEAtoComplement.mVariables;
+		complementPEA.mClocks = mPEAtoComplement.mClocks;
 		return complementPEA;
 	}
 	
