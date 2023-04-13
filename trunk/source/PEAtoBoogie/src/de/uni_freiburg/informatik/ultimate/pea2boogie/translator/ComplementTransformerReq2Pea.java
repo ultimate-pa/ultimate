@@ -58,7 +58,8 @@ public class ComplementTransformerReq2Pea implements IReq2Pea {
 			mLogger.error("Number of PEAs must be exactly 1.");
 		}
 		final IReqSymbolTable symbolTable = req2pea.getSymboltable();
-		// was soll das? 
+		mSymbolTable = symbolTable;
+
 		for (final DeclarationPattern p : mInitPattern) {
 			builder.addInitPattern(p);
 			mDurations.addInitPattern(p);
@@ -76,12 +77,16 @@ public class ComplementTransformerReq2Pea implements IReq2Pea {
 		PhaseEventAutomata complementedPEA = complementPea.getComplementPEA();
 		
 		
+		
+		
 		final List<Entry<CounterTrace, PhaseEventAutomata>> totalCt2pea = new ArrayList<>();
 		totalCt2pea.add(new Pair<>(pea.getKey(), totalisedPea));
+		builder.addPea(pattern, totalisedPea);
 		mReqPeas.add(new ReqPeas(pattern, totalCt2pea));
 		
 		final List<Entry<CounterTrace, PhaseEventAutomata>> complementCt2pea = new ArrayList<>();
 		// The countertrace is wrong for the complemented Pea. I dont know how to negate a DC formula.
+		builder.addPea(pattern, complementedPEA);
 		complementCt2pea.add(new Pair<>(pea.getKey(), complementedPEA));
 		mReqPeas.add(new ReqPeas(pattern, complementCt2pea));
 		mSymbolTable = builder.constructSymbolTable();
