@@ -13,9 +13,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 public class EagerRabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE> {
 
-	/**
-	 *
-	 */
 	private final Set<LETTER> mAlphabet;
 	private final Set<STATE> mStates;
 	private final Set<STATE> mInitialStates;
