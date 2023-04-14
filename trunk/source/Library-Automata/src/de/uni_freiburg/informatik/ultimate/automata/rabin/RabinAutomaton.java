@@ -104,6 +104,9 @@ public class RabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTER, ST
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> getSuccessors(final STATE state) {
 		final Set<OutgoingInternalTransition<LETTER, STATE>> result = new HashSet<>();
+		if (mTransitions.get(state) == null) {
+			return result;
+		}
 		for (final Entry<LETTER, Set<STATE>> entry : mTransitions.get(state).entrySet()) {
 			for (final STATE succ : entry.getValue()) {
 				result.add(new OutgoingInternalTransition<>(entry.getKey(), succ));
