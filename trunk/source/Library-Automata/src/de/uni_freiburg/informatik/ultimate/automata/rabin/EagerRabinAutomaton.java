@@ -25,9 +25,22 @@ public class EagerRabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTE
 	 *            The automaton that should be optimized
 	 *
 	 *            This automaton constructs the minimal Automaton containing all reachable transitions and states from
-	 *            the initials of the given IRabinAutomaton
+	 *            the initials of the given IRabinAutomaton. Finite States are allowed.
 	 */
 	public EagerRabinAutomaton(final IRabinAutomaton<LETTER, STATE> automaton) {
+		this(automaton, true);
+	}
+
+	/**
+	 * @param automaton
+	 *            The automaton that should be optimized
+	 * @param allowFinites
+	 *            if set to false all finite states and transitions to/from them are ignored
+	 *
+	 *            This automaton constructs the minimal Automaton containing all reachable transitions and states from
+	 *            the initials of the given IRabinAutomaton
+	 */
+	public EagerRabinAutomaton(final IRabinAutomaton<LETTER, STATE> automaton, final boolean allowFinites) {
 
 		mInitialStates = new HashSet<>();
 		mStates = new HashSet<>();
@@ -41,9 +54,14 @@ public class EagerRabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTE
 		final ArrayList<STATE> currentStateSet = new ArrayList<>();
 		final ArrayList<STATE> temp = new ArrayList<>();
 
+		if (!allowFinites) {
+			mInitialStates.removeIf(x -> automaton.isFinite(x));
+		}
+
 		currentStateSet.addAll(mInitialStates);
 
 		while (!currentStateSet.isEmpty()) {
+
 			mStates.addAll(currentStateSet);
 
 			for (final STATE currentState : currentStateSet) {
@@ -55,15 +73,17 @@ public class EagerRabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTE
 
 				for (final OutgoingInternalTransition<LETTER, STATE> transition : automaton
 						.getSuccessors(currentState)) {
-					final LETTER letter = transition.getLetter();
-					mAlphabet.add(letter);
-					if (!mTransitions.containsKey(currentState, letter)) {
-						mTransitions.put(currentState, letter, new HashSet<>());
+					if (allowFinites || !automaton.isFinite(transition.getSucc())) {
+
+						final LETTER letter = transition.getLetter();
+						mAlphabet.add(letter);
+						if (!mTransitions.containsKey(currentState, letter)) {
+							mTransitions.put(currentState, letter, new HashSet<>());
+						}
+						mTransitions.get(currentState, transition.getLetter()).add(transition.getSucc());
+
+						temp.add(transition.getSucc());
 					}
-					mTransitions.get(currentState, transition.getLetter()).add(transition.getSucc());
-
-					temp.add(transition.getSucc());
-
 				}
 			}
 			currentStateSet.clear();
@@ -145,6 +165,14 @@ public class EagerRabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTE
 
 		}
 		return result;
+	}
+
+	public EagerRabinAutomaton<LETTER, STATE> getStemlessNonFiniteAutomaton() {
+		final RabinAutomaton<LETTER, STATE> stemlessAutomaton = new RabinAutomaton<>(mAlphabet, mStates,
+				mAcceptingStates, mAcceptingStates, mFiniteStates, mTransitions);
+		final EagerRabinAutomaton<LETTER, STATE> result = new EagerRabinAutomaton<>(stemlessAutomaton, false);
+		return result;
+
 	}
 
 }
