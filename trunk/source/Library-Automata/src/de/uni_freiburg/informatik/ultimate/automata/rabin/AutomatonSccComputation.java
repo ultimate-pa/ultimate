@@ -93,6 +93,15 @@ public class AutomatonSccComputation<LETTER, STATE> {
 	}
 
 	/**
+	 * Returns the first ball of the computed SCC.
+	 *
+	 * @return ball
+	 */
+	public Set<STATE> getExampleBall() {
+		return mSccComputation.getBalls().iterator().next().getNodes();
+	}
+
+	/**
 	 * Provides - for a given state - all states that are
 	 * <ul>
 	 * <li>successors of internal transitions and
