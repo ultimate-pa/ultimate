@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -38,19 +39,20 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  */
 public class FunctionDefinition {
-	private final String mName;
+	private final FunctionSymbol mName;
 	private final TermVariable[] mParams;
 	private final Sort mReturnSort;
 	private final Term mBody;
 
-	public FunctionDefinition(final String name, final TermVariable[] params, final Sort returnSort, final Term body) {
+	public FunctionDefinition(final FunctionSymbol name, final TermVariable[] params, final Sort returnSort,
+			final Term body) {
 		mName = name;
 		mParams = params;
 		mReturnSort = returnSort;
 		mBody = body;
 	}
 
-	public String getName() {
+	public FunctionSymbol getName() {
 		return mName;
 	}
 

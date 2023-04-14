@@ -597,7 +597,7 @@ funDef ::= LPAR DEFINEFUN {: localVars.beginScope(); :} symbol:fun
                        // For example, z3 often uses such auxiliary function symbols to give values of array variables.
                        // This will require special support, otherwise the parser crashes when such an auxiliary
                        // function symbol is used.
-                       RESULT = new FunctionDefinition(fun, vars, resultSort, body);
+                       RESULT = new FunctionDefinition(parser.getScript().getFunctionSymbol(fun), vars, resultSort, body);
                    } catch (SMTLIBException se) {
                        parser.report_error(se.getMessage(), fun$);
                        throw se;

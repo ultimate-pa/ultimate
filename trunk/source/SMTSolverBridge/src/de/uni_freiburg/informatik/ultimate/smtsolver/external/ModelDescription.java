@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  */
 public class ModelDescription implements Model {
-	private final Map<String, FunctionDefinition> mDefinitions;
+	private final Map<FunctionSymbol, FunctionDefinition> mDefinitions;
 
 	public ModelDescription(final Set<FunctionDefinition> definitions) {
 		mDefinitions = definitions.stream().collect(Collectors.toMap(FunctionDefinition::getName, Function.identity()));
@@ -63,9 +63,7 @@ public class ModelDescription implements Model {
 
 	@Override
 	public Set<FunctionSymbol> getDefinedFunctions() {
-		// TODO how to go from function name strings to FunctionSymbols?
-		// return mDefinitions.keySet();
-		throw new UnsupportedOperationException();
+		return mDefinitions.keySet();
 	}
 
 	@Override
