@@ -67,9 +67,14 @@ public class AutomatonSccComputation<LETTER, STATE> {
 	public AutomatonSccComputation(final AutomataLibraryServices services,
 			final IRabinAutomaton<LETTER, STATE> automaton) {
 
-		final EagerRabinAutomaton<LETTER, STATE> eagerAutomaton = new EagerRabinAutomaton<>(automaton);
-		// Reduces the automaton to its traversable core
+		final EagerRabinAutomaton<LETTER, STATE> eagerAutomaton;
 
+		if (EagerRabinAutomaton.class == automaton.getClass()) {
+			eagerAutomaton = (EagerRabinAutomaton<LETTER, STATE>) automaton;
+		} else {
+			eagerAutomaton = new EagerRabinAutomaton<>(automaton);
+			// Reduces the automaton to its traversable core
+		}
 		final Set<STATE> init = new HashSet<>();
 		eagerAutomaton.getInitialStates().forEach(x -> init.add(x));
 
