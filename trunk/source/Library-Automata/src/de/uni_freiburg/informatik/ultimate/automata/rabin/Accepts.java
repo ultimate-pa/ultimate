@@ -25,6 +25,14 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		mResult = computeResult(automaton, word.getStem().asList(), word.getLoop().asList());
 	}
 
+	public Accepts(final AutomataLibraryServices services, final IRabinAutomaton<LETTER, STATE> automaton,
+			final List<LETTER> stem, final List<LETTER> loop) throws AutomataOperationCanceledException {
+		super(services);
+		// TODO: Could we use another type of lasso-words here instead?
+
+		mResult = computeResult(automaton, stem, loop);
+	}
+
 	/*
 	 * computes paths to accepting states with iterative letter evaluation and returns true iff if one of them has a
 	 * valid infinite loop returns false if no new situations with letter state pairs are found iff no true value was
