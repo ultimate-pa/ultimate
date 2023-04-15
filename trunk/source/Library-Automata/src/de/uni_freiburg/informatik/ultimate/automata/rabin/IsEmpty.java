@@ -50,7 +50,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		return mResult;
 	}
 
-	public Pair<List<LETTER>, List<LETTER>> getCounterexample() {
+	public Pair<List<LETTER>, List<LETTER>> getCounterexample() throws AutomataOperationCanceledException {
 		List<LETTER> stem = null;
 		List<LETTER> loop = null;
 		if (!evidence.isEmpty()) {
@@ -67,6 +67,9 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 			wordStateMap.put(new ArrayList<>(), initialSet);
 
 			loopComputation: while (true) {
+				if (isCancellationRequested()) {
+					throw new AutomataOperationCanceledException(getClass());
+				}
 				final HashMap<List<LETTER>, HashSet<STATE>> temp = new HashMap<>();
 				for (final List<LETTER> word : wordStateMap.keySet()) {
 					for (final STATE state : wordStateMap.get(word)) {
@@ -99,6 +102,9 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 			wordStateMap.put(new ArrayList<LETTER>(), initialSet);
 
 			stemComputation: while (true) {
+				if (isCancellationRequested()) {
+					throw new AutomataOperationCanceledException(getClass());
+				}
 				final HashMap<List<LETTER>, HashSet<STATE>> temp = new HashMap<>();
 
 				for (final List<LETTER> word : wordStateMap.keySet()) {
