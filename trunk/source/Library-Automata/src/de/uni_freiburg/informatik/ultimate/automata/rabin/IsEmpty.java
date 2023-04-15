@@ -77,7 +77,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 								missingStates.remove(succ);
 								final ArrayList<LETTER> newWord = new ArrayList<>(word);
 								newWord.add(transition.getLetter());
-								if (temp.get(newWord).isEmpty()) {
+								if (!temp.containsKey(newWord)) {
 									temp.put(newWord, new HashSet<>());
 								}
 								if (succ.equals(hondaState)) {
@@ -92,7 +92,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 				wordStateMap = temp;
 			}
 
-			final HashSet<STATE> exploredStates = new HashSet<>(evidence);
+			final HashSet<STATE> exploredStates = new HashSet<>();
 			wordStateMap.clear();
 			initialSet.clear();
 			eagerAutomaton.getInitialStates().forEach(x -> initialSet.add(x));
@@ -110,7 +110,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 								exploredStates.add(succ);
 								final ArrayList<LETTER> newWord = new ArrayList<>(word);
 								newWord.add(transition.getLetter());
-								if (temp.get(newWord).isEmpty()) {
+								if (!temp.containsKey(newWord)) {
 									temp.put(newWord, new HashSet<>());
 								}
 								if (succ.equals(hondaState)) {
