@@ -30,6 +30,12 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
+/**
+ * A derivation showing unsatisfiability of a CHC system.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ */
 public class Derivation {
 	private final HcPredicateSymbol mPredicate;
 	private final List<Term> mArguments;

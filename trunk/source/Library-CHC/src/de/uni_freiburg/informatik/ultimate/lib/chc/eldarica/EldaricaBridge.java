@@ -1,35 +1,45 @@
+/*
+ * Copyright (C) 2023 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2023 University of Freiburg
+ *
+ * This file is part of the ULTIMATE CHC Library.
+ *
+ * The ULTIMATE CHC Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE CHC Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE CHC Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE CHC Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CHC Library grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.lib.chc.eldarica;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import ap.SimpleAPI;
-import ap.basetypes.IdealInt;
 import ap.parser.IAtom;
-import ap.parser.IExpression;
 import ap.parser.IFormula;
-import ap.parser.IIntLit;
-import ap.parser.ITerm;
 import ap.terfor.preds.Predicate;
 import de.uni_freiburg.informatik.ultimate.lib.chc.Derivation;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
-import lazabs.horn.bottomup.HornClauses;
 import lazabs.horn.bottomup.HornClauses.Clause;
 import lazabs.horn.bottomup.SimpleWrapper;
 import lazabs.prover.Tree;
@@ -40,11 +50,8 @@ import scala.collection.immutable.List;
 import scala.runtime.AbstractFunction1;
 
 public class EldaricaBridge {
-	private final SimpleAPI mEldarica;
-
+	private final Translator mTranslator;
 	private final Map<Clause, HornClause> mClauseMap = new HashMap<>();
-	private final BidirectionalMap<HcPredicateSymbol, Predicate> mPredicateMap = new BidirectionalMap<>();
-	private final Map<TermVariable, ITerm> mVariableMap = new HashMap<>();
 
 	public static void doStuff(final Script script, final java.util.Collection<HornClause> clauses) {
 		SimpleAPI.<Object> withProver(new AbstractFunction1<>() {
@@ -57,65 +64,62 @@ public class EldaricaBridge {
 
 	public EldaricaBridge(final Script script, final SimpleAPI eldarica,
 			final java.util.Collection<HornClause> clauses) {
-		mEldarica = eldarica;
+		mTranslator = new Translator(eldarica);
 
-		final var translated = clauses.stream().map(this::translateClause).collect(Collectors.toList());
-		final var result = SimpleWrapper.solve(toList(translated), SimpleWrapper.solve$default$2(),
+		final var translatedClauses = translateSystem(clauses);
+		final var result = SimpleWrapper.solve(translatedClauses, SimpleWrapper.solve$default$2(),
 				SimpleWrapper.solve$default$3(), SimpleWrapper.solve$default$4(), SimpleWrapper.solve$default$5(),
 				SimpleWrapper.solve$default$6());
 
+		final var backtranslator = mTranslator.createBacktranslator(script);
+
 		if (result.isLeft()) {
 			System.out.println("SAT");
-			final var solution = result.left().get();
+			final var solution = translateModel(backtranslator, result.left().get());
 		} else {
 			System.out.println("UNSAT");
-			final var derivation = backTranslateDerivation(result.right().get().toTree());
+			final var derivation = translateDerivation(backtranslator, result.right().get().toTree());
 		}
 	}
 
-	private Derivation backTranslateDerivation(final Tree<Tuple2<IAtom, Clause>> tree) {
+	private List<Clause> translateSystem(final java.util.Collection<HornClause> system) {
+		final var translatedClauses = new ArrayList<Clause>(system.size());
+		for (final var clause : system) {
+			final var translated = mTranslator.translateClause(clause);
+			mClauseMap.put(translated, clause);
+			translatedClauses.add(translated);
+		}
+		return toList(translatedClauses);
+	}
+
+	private static Map<HcPredicateSymbol, Term> translateModel(final Backtranslator backtranslator,
+			final scala.collection.Map<Predicate, IFormula> model) {
+		final var translatedModel = new HashMap<HcPredicateSymbol, Term>();
+		for (final var entry : ofMap(model).entrySet()) {
+			final var pred = backtranslator.translatePredicate(entry.getKey());
+			final var body = backtranslator.translateFormula(entry.getValue());
+			translatedModel.put(pred, body);
+		}
+		return translatedModel;
+	}
+
+	private Derivation translateDerivation(final Backtranslator backtranslator,
+			final Tree<Tuple2<IAtom, Clause>> tree) {
 		final var atom = tree.d()._1();
-		final var pred = atom.pred();
-		final var hcPred = mPredicateMap.inverse().get(pred);
+		final var pred = backtranslator.translatePredicate(atom.pred());
 
 		final var args = new ArrayList<Term>(atom.args().length());
 		int i = 0;
 		for (final var arg : ofList(atom.args())) {
-			final var sort = hcPred.getParameterSorts().get(i);
-			final var term = backTranslateTerm(arg, sort);
+			final var sort = pred.getParameterSorts().get(i);
+			final var term = backtranslator.translateTerm(arg, sort);
 			args.add(term);
 			i++;
 		}
 
-		final var children =
-				ofList(tree.children()).stream().map(this::backTranslateDerivation).collect(Collectors.toList());
-		return new Derivation(hcPred, args, mClauseMap.get(tree.d()._2()), children);
-	}
-
-	private Clause translateClause(final HornClause clause) {
-		final IAtom head;
-		if (clause.isHeadFalse()) {
-			head = new IAtom(HornClauses.FALSE(), toList(java.util.List.of()));
-		} else {
-			final var headPred = getPredicateSymbol(clause.getHeadPredicate());
-			final var headArgs = clause.getTermVariablesForHeadPred().stream().map(HcHeadVar::getTermVariable)
-					.map(this::translateTerm).collect(Collectors.toList());
-			head = new IAtom(headPred, toList(headArgs));
-		}
-
-		final ArrayList<IAtom> body = new ArrayList<>(clause.getRank());
-		for (int i = 0; i < clause.getRank(); ++i) {
-			final var pred = getPredicateSymbol(clause.getBodyPredicates().get(i));
-			final var args =
-					clause.getBodyPredToArgs().get(i).stream().map(this::translateTerm).collect(Collectors.toList());
-			body.add(new IAtom(pred, toList(args)));
-		}
-
-		final var constraint = translateFormula(clause.getConstraintFormula());
-
-		final var newClause = new Clause(head, toList(body), constraint);
-		mClauseMap.put(newClause, clause);
-		return newClause;
+		final var children = ofList(tree.children()).stream().map(c -> translateDerivation(backtranslator, c))
+				.collect(Collectors.toList());
+		return new Derivation(pred, args, mClauseMap.get(tree.d()._2()), children);
 	}
 
 	private static <X> List<X> toList(final java.util.List<X> list) {
@@ -126,132 +130,7 @@ public class EldaricaBridge {
 		return JavaConverters.seqAsJavaListConverter(list).asJava();
 	}
 
-	private Predicate getPredicateSymbol(final HcPredicateSymbol pred) {
-		return mPredicateMap.computeIfAbsent(pred, this::createPredicate);
-	}
-
-	private Predicate createPredicate(final HcPredicateSymbol pred) {
-		final var sorts = pred.getParameterSorts().stream().map(this::translateSort).collect(Collectors.toList());
-		return mEldarica.createRelation(pred.getName(), toList(sorts));
-	}
-
-	private ap.types.Sort translateSort(final Sort sort) {
-		switch (sort.getName()) {
-		case "Int":
-			return new ap.types.Sort.Integer$();
-		case "Bool":
-			return new ap.types.Sort.MultipleValueBool$();
-		default:
-			throw new IllegalArgumentException(sort.getName());
-		}
-	}
-
-	private IFormula translateFormula(final Term term) {
-		final var expr = translateExpression(term);
-		if (expr instanceof ITerm) {
-			return new ap.types.Sort.MultipleValueBool$().isTrue((ITerm) expr);
-		}
-		return (IFormula) translateExpression(term);
-	}
-
-	private ITerm translateTerm(final Term term) {
-		return (ITerm) translateExpression(term);
-	}
-
-	private IExpression translateExpression(final Term term) {
-		if (term instanceof TermVariable) {
-			return translateVariable((TermVariable) term);
-		}
-		if (term instanceof ApplicationTerm) {
-			return translateApplication((ApplicationTerm) term);
-		}
-		if (term instanceof ConstantTerm) {
-			return translateConstant((ConstantTerm) term);
-		}
-		throw new IllegalArgumentException(term.toString());
-	}
-
-	private IExpression translateVariable(final TermVariable variable) {
-		return mVariableMap.computeIfAbsent(variable, this::createVariable);
-	}
-
-	private ITerm createVariable(final TermVariable variable) {
-		final var sort = variable.getSort();
-		// if (SmtSortUtils.isBoolSort(sort)) {
-		// return mEldarica.createBooleanVariable(variable.getName());
-		// }
-		return mEldarica.createConstant(variable.getName(), translateSort(sort));
-	}
-
-	private IExpression translateApplication(final ApplicationTerm term) {
-		switch (term.getFunction().getName()) {
-		case "and":
-			final var conjuncts =
-					Arrays.stream(term.getParameters()).map(this::translateFormula).collect(Collectors.toList());
-			return IExpression.and(toList(conjuncts));
-		case "or":
-			final var disjuncts =
-					Arrays.stream(term.getParameters()).map(this::translateFormula).collect(Collectors.toList());
-			return IExpression.or(toList(disjuncts));
-		case "=>":
-			final var first = translateFormula(term.getParameters()[0]);
-			final var second = translateFormula(term.getParameters()[1]);
-			return first.$eq$eq$greater(second);
-		case "not":
-			return translateFormula(term.getParameters()[0]).unary_$bang();
-		case "=":
-			return translateBinaryExpression(term, ITerm::$eq$eq$eq);
-		case "distinct":
-			return translateBinaryExpression(term, ITerm::$eq$div$eq);
-		case "<":
-			return translateBinaryExpression(term, ITerm::$less);
-		case "<=":
-			return translateBinaryExpression(term, ITerm::$less$eq);
-		case ">":
-			return translateBinaryExpression(term, ITerm::$greater);
-		case ">=":
-			return translateBinaryExpression(term, ITerm::$greater$eq);
-		case "+":
-			return translateBinaryExpression(term, ITerm::$plus);
-		default:
-			throw new IllegalArgumentException(term.toString());
-		}
-	}
-
-	private IExpression translateBinaryExpression(final ApplicationTerm term,
-			final BiFunction<ITerm, ITerm, IExpression> combinator) {
-		assert term.getParameters().length == 2;
-		final var first = translateTerm(term.getParameters()[0]);
-		final var second = translateTerm(term.getParameters()[1]);
-		return combinator.apply(first, second);
-	}
-
-	private static ITerm translateConstant(final ConstantTerm constant) {
-		final var value = constant.getValue();
-		BigInteger bigint;
-		if (value instanceof Rational) {
-			assert ((Rational) value).denominator().equals(BigInteger.ONE);
-			bigint = ((Rational) value).numerator();
-		} else if (value instanceof BigInteger) {
-			bigint = (BigInteger) value;
-		} else {
-			throw new IllegalArgumentException(constant.toString());
-		}
-		return new IIntLit(IdealInt.apply(bigint));
-	}
-
-	private Term backTranslateTerm(final ITerm term, final Sort sort) {
-		if (!(term instanceof IIntLit)) {
-			throw new IllegalArgumentException(term.toString());
-		}
-
-		final var lit = (IIntLit) term;
-		final var value = lit.value();
-		if (!SmtSortUtils.isBoolSort(sort)) {
-			// TODO convert
-			new ap.types.Sort.MultipleValueBool$();
-		}
-		// TODO
-		return null;
+	private static <K, V> Map<K, V> ofMap(final scala.collection.Map<K, V> map) {
+		return JavaConverters.mapAsJavaMapConverter(map).asJava();
 	}
 }
