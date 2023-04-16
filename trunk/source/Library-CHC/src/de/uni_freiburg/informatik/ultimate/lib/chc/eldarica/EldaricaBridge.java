@@ -26,9 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.chc.eldarica;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import ap.SimpleAPI;
@@ -38,8 +41,12 @@ import ap.terfor.preds.Predicate;
 import de.uni_freiburg.informatik.ultimate.lib.chc.Derivation;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
+import de.uni_freiburg.informatik.ultimate.lib.chc.IChcScript;
+import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import lazabs.horn.bottomup.HornClauses.Clause;
 import lazabs.horn.bottomup.SimpleWrapper;
 import lazabs.prover.Tree;
@@ -49,37 +56,91 @@ import scala.collection.Seq;
 import scala.collection.immutable.List;
 import scala.runtime.AbstractFunction1;
 
-public class EldaricaBridge {
-	private final Translator mTranslator;
-	private final Map<Clause, HornClause> mClauseMap = new HashMap<>();
+/**
+ * Provides access to the eldarica constraint Horn solver.
+ *
+ * https://github.com/uuverifiers/eldarica/
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ */
+public class EldaricaBridge implements IChcScript {
+	private final Script mScript;
+	private final SimpleAPI mPrincess;
 
-	public static void doStuff(final Script script, final java.util.Collection<HornClause> clauses) {
+	private boolean mProduceModels = false;
+	private boolean mProduceDerivations = false;
+	private boolean mProduceUnsatCores = false;
+
+	private Translator mTranslator;
+	private Map<Clause, HornClause> mClauseMap;
+
+	private Lazy<Map<HcPredicateSymbol, Term>> mLastModel;
+	private Lazy<Derivation> mLastDerivation;
+	private Lazy<Set<HornClause>> mLastUnsatCore;
+
+	@Deprecated
+	public static void doStuff(final Script script, final java.util.List<HornClause> clauses) {
 		SimpleAPI.<Object> withProver(new AbstractFunction1<>() {
 			@Override
 			public Object apply(final SimpleAPI princess) {
-				return new EldaricaBridge(script, princess, clauses);
+				return new EldaricaBridge(script, princess).solve(clauses);
 			}
 		});
 	}
 
-	public EldaricaBridge(final Script script, final SimpleAPI princess,
-			final java.util.Collection<HornClause> clauses) {
-		mTranslator = new Translator(princess);
+	public EldaricaBridge(final Script script, final SimpleAPI princess) {
+		// TODO allow setting a timeout (see eldarica's GlobalParameters object)
+		mScript = script;
+		mPrincess = princess;
+	}
 
-		final var translatedClauses = translateSystem(clauses);
-		final var result = SimpleWrapper.solve(translatedClauses, SimpleWrapper.solve$default$2(),
-				SimpleWrapper.solve$default$3(), SimpleWrapper.solve$default$4(), SimpleWrapper.solve$default$5(),
-				SimpleWrapper.solve$default$6());
+	private static <X> List<X> toList(final java.util.List<X> list) {
+		return JavaConverters.asScalaIteratorConverter(list.iterator()).asScala().toList();
+	}
 
-		final var backtranslator = mTranslator.createBacktranslator(script);
+	private static <X> java.util.List<X> ofList(final Seq<X> list) {
+		return JavaConverters.seqAsJavaListConverter(list).asJava();
+	}
+
+	private static <K, V> Map<K, V> ofMap(final scala.collection.Map<K, V> map) {
+		return JavaConverters.mapAsJavaMapConverter(map).asJava();
+	}
+
+	@Override
+	public Script getScript() {
+		return mScript;
+	}
+
+	@Override
+	public LBool solve(final java.util.List<HornClause> system) {
+		reset();
+
+		final var translatedClauses = translateSystem(system);
+		final var result = SimpleWrapper.solveLazily(translatedClauses, SimpleWrapper.solve$default$2(),
+				SimpleWrapper.solve$default$3(), SimpleWrapper.solve$default$4(), SimpleWrapper.solve$default$6());
+
+		final var backtranslator = mTranslator.createBacktranslator(mScript);
 
 		if (result.isLeft()) {
-			System.out.println("SAT");
-			final var solution = translateModel(backtranslator, result.left().get());
-		} else {
-			System.out.println("UNSAT");
-			final var derivation = translateDerivation(backtranslator, result.right().get().toTree());
+			if (mProduceModels) {
+				final var modelBuilder = result.left().get();
+				mLastModel = new Lazy<>(() -> translateModel(backtranslator, modelBuilder.apply()));
+			}
+			return LBool.SAT;
 		}
+
+		if (mProduceDerivations || mProduceUnsatCores) {
+			final var derivationBuilder = result.right().get();
+			final var clauseMap = mClauseMap;
+			if (mProduceDerivations) {
+				mLastDerivation = new Lazy<>(
+						() -> translateDerivation(backtranslator, clauseMap, derivationBuilder.apply().toTree()));
+			}
+			if (mProduceUnsatCores) {
+				mLastUnsatCore = new Lazy<>(() -> extractUnsatCore(clauseMap, derivationBuilder.apply().toTree()));
+			}
+		}
+		return LBool.UNSAT;
 	}
 
 	private List<Clause> translateSystem(final java.util.Collection<HornClause> system) {
@@ -90,6 +151,27 @@ public class EldaricaBridge {
 			translatedClauses.add(translated);
 		}
 		return toList(translatedClauses);
+	}
+
+	@Override
+	public boolean supportsModelProduction() {
+		return true;
+	}
+
+	@Override
+	public void produceModels(final boolean enable) {
+		mProduceModels = enable;
+	}
+
+	@Override
+	public Model getModel() {
+		if (mLastModel == null) {
+			throw new UnsupportedOperationException(
+					"No CHC model known. Was the last query UNSAT, or did you forget to enable model production?");
+		}
+		// TODO from map to model -- see other branch
+		mLastModel.get();
+		return null;
 	}
 
 	private static Map<HcPredicateSymbol, Term> translateModel(final Backtranslator backtranslator,
@@ -103,8 +185,27 @@ public class EldaricaBridge {
 		return translatedModel;
 	}
 
-	private Derivation translateDerivation(final Backtranslator backtranslator,
-			final Tree<Tuple2<IAtom, Clause>> tree) {
+	@Override
+	public boolean supportsDerivationProduction() {
+		return true;
+	}
+
+	@Override
+	public void produceDerivations(final boolean enable) {
+		mProduceDerivations = enable;
+	}
+
+	@Override
+	public Derivation getDerivation() {
+		if (mLastDerivation == null) {
+			throw new UnsupportedOperationException(
+					"No derivation known. Was the last query SAT, or did you forget to enable derivation production?");
+		}
+		return mLastDerivation.get();
+	}
+
+	private static Derivation translateDerivation(final Backtranslator backtranslator,
+			final Map<Clause, HornClause> clauseMap, final Tree<Tuple2<IAtom, Clause>> tree) {
 		final var atom = tree.d()._1();
 		final var pred = backtranslator.translatePredicate(atom.pred());
 
@@ -117,20 +218,51 @@ public class EldaricaBridge {
 			i++;
 		}
 
-		final var children = ofList(tree.children()).stream().map(c -> translateDerivation(backtranslator, c))
-				.collect(Collectors.toList());
-		return new Derivation(pred, args, mClauseMap.get(tree.d()._2()), children);
+		final var children = ofList(tree.children()).stream()
+				.map(c -> translateDerivation(backtranslator, clauseMap, c)).collect(Collectors.toList());
+		return new Derivation(pred, args, clauseMap.get(tree.d()._2()), children);
 	}
 
-	private static <X> List<X> toList(final java.util.List<X> list) {
-		return JavaConverters.asScalaIteratorConverter(list.iterator()).asScala().toList();
+	@Override
+	public boolean supportsUnsatCores() {
+		return true;
 	}
 
-	private static <X> java.util.List<X> ofList(final Seq<X> list) {
-		return JavaConverters.seqAsJavaListConverter(list).asJava();
+	@Override
+	public void produceUnsatCores(final boolean enable) {
+		mProduceUnsatCores = enable;
 	}
 
-	private static <K, V> Map<K, V> ofMap(final scala.collection.Map<K, V> map) {
-		return JavaConverters.mapAsJavaMapConverter(map).asJava();
+	@Override
+	public Set<HornClause> getUnsatCore() {
+		if (mLastUnsatCore == null) {
+			throw new UnsupportedOperationException(
+					"No UNSAT core known. Was the last query SAT, or did you forget to enable UNSAT core production?");
+		}
+		return mLastUnsatCore.get();
+	}
+
+	private static Set<HornClause> extractUnsatCore(final Map<Clause, HornClause> clauseMap,
+			final Tree<Tuple2<IAtom, Clause>> derivation) {
+		final var worklist = new ArrayDeque<Tree<Tuple2<IAtom, Clause>>>();
+		worklist.add(derivation);
+
+		final var result = new HashSet<HornClause>();
+		while (!worklist.isEmpty()) {
+			final var tree = worklist.pop();
+			final var clause = tree.d()._2();
+			result.add(clauseMap.get(clause));
+			worklist.addAll(ofList(tree.children()));
+		}
+		return result;
+	}
+
+	private void reset() {
+		mClauseMap = new HashMap<>();
+		mTranslator = new Translator(mPrincess);
+
+		mLastModel = null;
+		mLastDerivation = null;
+		mLastUnsatCore = null;
 	}
 }
