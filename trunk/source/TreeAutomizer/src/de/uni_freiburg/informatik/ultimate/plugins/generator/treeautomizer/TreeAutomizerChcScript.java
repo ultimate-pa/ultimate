@@ -26,10 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer;
 
+import java.util.ArrayDeque;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerSatResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerUnsatResult;
@@ -55,6 +58,10 @@ public class TreeAutomizerChcScript implements IChcScript {
 	private final TAPreferences mPrefs;
 	private final ILogger mLogger;
 
+	private boolean mProduceUnsatCores = false;
+
+	private Set<HornClause> mUnsatCore;
+
 	public TreeAutomizerChcScript(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final TAPreferences prefs) {
 		mServices = services;
@@ -71,6 +78,8 @@ public class TreeAutomizerChcScript implements IChcScript {
 
 	@Override
 	public LBool solve(final List<HornClause> system) {
+		reset();
+
 		// TODO missing parameters: symbol table, category info
 		final var annot = new HornAnnot(DUMMY_FILENAME, mMgdScript, null, system, true, null);
 		final var cegar = new TreeAutomizerCEGAR(mServices, annot, mPrefs, mLogger);
@@ -82,11 +91,15 @@ public class TreeAutomizerChcScript implements IChcScript {
 		}
 	}
 
-	private static LBool resultToLBool(final IResult result) {
+	private LBool resultToLBool(final IResult result) {
 		if (result instanceof TreeAutomizerSatResult) {
 			return LBool.SAT;
 		}
 		if (result instanceof TreeAutomizerUnsatResult) {
+			if (mProduceUnsatCores) {
+				final var tree = (Tree<HornClause>) ((TreeAutomizerUnsatResult) result).getWitness();
+				mUnsatCore = extractUnsatCore(tree);
+			}
 			return LBool.UNSAT;
 		}
 		if (result instanceof TimeoutResult) {
@@ -128,20 +141,38 @@ public class TreeAutomizerChcScript implements IChcScript {
 
 	@Override
 	public boolean supportsUnsatCores() {
-		// TODO TreeAutomizer has a counterexample Tree of predicates and clauses.
-		// This should allow extraction of an unsat core.
-		// (It is not a derivation because variable values are missing)
-		// Currently, the tree is only logged, not returned.
-		return false;
+		return true;
 	}
 
 	@Override
 	public void produceUnsatCores(final boolean enable) {
-		throw new UnsupportedOperationException();
+		mProduceUnsatCores = enable;
 	}
 
 	@Override
 	public Set<HornClause> getUnsatCore() {
-		throw new UnsupportedOperationException();
+		if (mUnsatCore == null) {
+			throw new UnsupportedOperationException(
+					"No UNSAT core known. Was the last query SAT, or did you forget to enable UNSAT cores?");
+		}
+		return mUnsatCore;
+	}
+
+	private static Set<HornClause> extractUnsatCore(final Tree<HornClause> tree) {
+		final var worklist = new ArrayDeque<Tree<HornClause>>();
+		worklist.add(tree);
+
+		final var result = new HashSet<HornClause>();
+		while (!worklist.isEmpty()) {
+			final var node = worklist.pop();
+			result.add(node.getSymbol());
+			worklist.addAll(node.getChildren());
+		}
+
+		return result;
+	}
+
+	private void reset() {
+		mUnsatCore = null;
 	}
 }

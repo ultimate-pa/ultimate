@@ -44,10 +44,14 @@ public class TreeAutomizerUnsatResult implements IResult {
 	private String mShortDescription;
 	private String mPlugin;
 
-	public TreeAutomizerUnsatResult(String plugin, String shortDescription, String longDescription) {
+	private final Object mWitness;
+
+	public TreeAutomizerUnsatResult(final String plugin, final String shortDescription, final String longDescription,
+			final Object witness) {
 		mPlugin = plugin;
 		mShortDescription = shortDescription;
 		mLongDescription = longDescription;
+		mWitness = witness;
 	}
 
 	@Override
@@ -65,4 +69,7 @@ public class TreeAutomizerUnsatResult implements IResult {
 		return mLongDescription;
 	}
 
+	public Object getWitness() {
+		return mWitness;
+	}
 }

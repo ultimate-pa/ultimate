@@ -193,7 +193,8 @@ public class TreeAutomizerCEGAR {
 				mLogger.info(counterExample.getTree());
 				mBackendSmtSolverScript.pop(this, 1);
 				mBackendSmtSolverScript.unlock(this);
-				return new TreeAutomizerUnsatResult(Activator.PLUGIN_ID, "UNSAT", "The given horn clause set is UNSAT");
+				return new TreeAutomizerUnsatResult(Activator.PLUGIN_ID, "UNSAT", "The given horn clause set is UNSAT",
+						counterExample.getTree());
 			}
 			mLogger.debug("Getting Interpolants...");
 			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap = retrieveInterpolantsMap(
