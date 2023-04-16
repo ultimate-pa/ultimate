@@ -317,5 +317,25 @@
 		<plugin id="org.eclipse.cdt.make.core.source"/>
 		<plugin id="org.eclipse.cdt.build.gcc.core"/>
 		<plugin id="org.eclipse.cdt.build.gcc.core.source"/>
+		<plugin id="org.eclipse.jetty.util"/>
+		<plugin id="org.eclipse.jetty.util.source"/>
+		<plugin id="org.eclipse.jetty.servlet"/>
+		<plugin id="org.eclipse.jetty.servlet.source"/>
+		<plugin id="org.eclipse.jetty.server"/>
+		<plugin id="org.eclipse.jetty.server.source"/>
+		<plugin id="org.eclipse.jetty.security"/>
+		<plugin id="org.eclipse.jetty.security.source"/>
+		<plugin id="org.eclipse.jetty.io"/>
+		<plugin id="org.eclipse.jetty.io.source"/>
+		<plugin id="org.eclipse.jetty.http"/>
+		<plugin id="org.eclipse.jetty.http.source"/>
+		<plugin id="javax.xml.bind.source"/>
+		<plugin id="org.apache.batik.constants.source"/>
+		<plugin id="org.apache.batik.css.source"/>
+		<plugin id="org.apache.batik.i18n.source"/>
+		<plugin id="org.apache.batik.util.source"/>
+		<plugin id="org.eclipse.equinox.security.source"/>
+		<plugin id="org.eclipse.help.source"/>
+		<plugin id="org.eclipse.osgi.services.source"/>
 	</includeBundles>
 </target>
