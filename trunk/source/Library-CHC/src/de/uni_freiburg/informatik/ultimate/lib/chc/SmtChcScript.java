@@ -78,7 +78,7 @@ public class SmtChcScript implements IChcScript {
 			// record name mapping for backtranslation later
 			if (mProduceUnsatCores) {
 				final var namedTerm = new NamedTermWrapper(term);
-				assert namedTerm.isIsNamed();
+				assert namedTerm.isNamed();
 				mName2Clause.put(namedTerm.getName(), clause);
 			}
 		}
@@ -133,7 +133,7 @@ public class SmtChcScript implements IChcScript {
 		final var result = new HashSet<HornClause>();
 		for (final var term : core) {
 			final var namedTerm = new NamedTermWrapper(term);
-			assert namedTerm.isIsNamed();
+			assert namedTerm.isNamed();
 			result.add(mName2Clause.get(namedTerm.getName()));
 		}
 		return result;
