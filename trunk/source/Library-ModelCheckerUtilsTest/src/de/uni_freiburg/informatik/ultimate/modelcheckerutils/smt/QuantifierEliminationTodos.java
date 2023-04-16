@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.categories.NoRegression;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  *
@@ -66,15 +67,14 @@ public class QuantifierEliminationTodos {
 	private static final LogLevel LOG_LEVEL = LogLevel.DEBUG;
 	private static final LogLevel LOG_LEVEL_SOLVER = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
-//	private static final String SOLVER_COMMAND = "INTERNAL_SMTINTERPOL:10000";
-//	private static final String SOLVER_COMMAND = "cvc5 --incremental --lang smt";
+	// private static final String SOLVER_COMMAND = "INTERNAL_SMTINTERPOL:10000";
+	// private static final String SOLVER_COMMAND = "cvc5 --incremental --lang smt";
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private ILogger mLogger;
 	private static QuantifierEliminationTestCsvWriter mCsvWriter;
-
 
 	@BeforeClass
 	public static void beforeAllTests() {
@@ -98,8 +98,8 @@ public class QuantifierEliminationTodos {
 		mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + TEST_TIMEOUT_MILLISECONDS);
 		mLogger = mServices.getLoggingService().getLogger("lol");
 
-		final Script solverInstance = new HistoryRecordingScript(
-				UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL_SOLVER));
+		final Script solverInstance =
+				new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL_SOLVER));
 		if (WRITE_SMT_SCRIPTS_TO_FILE) {
 			mScript = new LoggingScript(solverInstance, "QuantifierEliminationTest.smt2", true);
 		} else {
@@ -116,8 +116,49 @@ public class QuantifierEliminationTodos {
 		mCsvWriter.reportTestFinished();
 	}
 
-	//@formatter:off
+	@Test
+	public void nonDlc1() throws IOException {
+		final FunDecl[] funDecls = new FunDecl[] {};
+		final String formulaAsString =
+				CoreUtil.readFile("src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/nonDlc1");
+		final String expectedResult = "true";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
+	@Test
+	public void nonDlc2() throws IOException {
+		final FunDecl[] funDecls =
+				new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "Gen_SWCS_2255_ISS_5161_0_ct0_X2"), };
+		final String formulaAsString =
+				CoreUtil.readFile("src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/nonDlc2");
+		final String expectedResult = "true";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void nonDlc3() throws IOException {
+		final FunDecl[] funDecls = new FunDecl[] {};
+		final String formulaAsString =
+				CoreUtil.readFile("src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/nonDlc3");
+		final String expectedResult = "true";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void nonDlc4() throws IOException {
+		final FunDecl[] funDecls =
+				new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "Gen_SWCS_2255_ISS_4650_0_ct0_X2"), };
+		final String formulaAsString =
+				CoreUtil.readFile("src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/nonDlc4");
+		final String expectedResult = "true";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	//@formatter:off
 	@Test
 	public void plrTest3() {
 		final FunDecl[] funDecls = new FunDecl[] {

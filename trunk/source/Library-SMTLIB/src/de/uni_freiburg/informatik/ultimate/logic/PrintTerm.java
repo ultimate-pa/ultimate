@@ -103,7 +103,12 @@ public class PrintTerm {
 	 */
 	public static Object quoteObjectIfString(final Object value) {
 		if (value instanceof String) {
-			return quoteIdentifier((String) value);
+			final String valueAsString = String.valueOf(value);
+			if (valueAsString.charAt(0) == '|' && valueAsString.charAt(valueAsString.length() - 1) == '|') {
+				return value;
+			} else {
+				return quoteIdentifier(valueAsString);
+			}
 		} else {
 			return value;
 		}

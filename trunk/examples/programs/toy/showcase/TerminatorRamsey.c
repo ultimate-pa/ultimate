@@ -13,29 +13,29 @@
  *
  */
 
-int nondet() {
-    int x;
-    return x;
-}
+extern int __VERIFIER_nondet_int(void);
 
 int main() {
     int copied = 0;
-    int x,y, oldx, oldy;
+    int x = __VERIFIER_nondet_int();
+    int y = __VERIFIER_nondet_int();
+    int oldx = __VERIFIER_nondet_int();
+    int oldy = __VERIFIER_nondet_int();
     while (x>0 && y>0) {
         if (copied == 1) {
             //@ assert ( (x<oldx && 0<=oldx) || (y<oldy && 0<=oldy));
         } else {
-            if (nondet()) {
+            if (__VERIFIER_nondet_int()) {
                 copied = 1;
                 oldx = x;
                 oldy = y;
             }
         }
         
-        if (nondet()) {
+        if (__VERIFIER_nondet_int()) {
             x = x -1;
         } else {
-            x = nondet();
+            x = __VERIFIER_nondet_int();
             y = y -1;
         }
     }

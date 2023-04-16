@@ -606,7 +606,7 @@ public class ExpressionResultTransformer {
 	private static ExpressionResult replaceEnumByInt(final ExpressionResult old) {
 		if (old.getLrValue() instanceof RValue) {
 			final RValue oldRValue = (RValue) old.getLrValue();
-			if (oldRValue.getCType() instanceof CEnum) {
+			if (oldRValue.getCType().getUnderlyingType() instanceof CEnum) {
 				final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 				return new ExpressionResultBuilder(old).setOrResetLrValue(new RValue(oldRValue.getValue(), intType,
 						oldRValue.isBoogieBool(), oldRValue.isIntFromPointer())).build();
