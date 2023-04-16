@@ -56,15 +56,15 @@ public class EldaricaBridge {
 	public static void doStuff(final Script script, final java.util.Collection<HornClause> clauses) {
 		SimpleAPI.<Object> withProver(new AbstractFunction1<>() {
 			@Override
-			public Object apply(final SimpleAPI p) {
-				return new EldaricaBridge(script, p, clauses);
+			public Object apply(final SimpleAPI princess) {
+				return new EldaricaBridge(script, princess, clauses);
 			}
 		});
 	}
 
-	public EldaricaBridge(final Script script, final SimpleAPI eldarica,
+	public EldaricaBridge(final Script script, final SimpleAPI princess,
 			final java.util.Collection<HornClause> clauses) {
-		mTranslator = new Translator(eldarica);
+		mTranslator = new Translator(princess);
 
 		final var translatedClauses = translateSystem(clauses);
 		final var result = SimpleWrapper.solve(translatedClauses, SimpleWrapper.solve$default$2(),
