@@ -128,6 +128,10 @@ public class TreeAutomizerChcScript implements IChcScript {
 
 	@Override
 	public boolean supportsUnsatCores() {
+		// TODO TreeAutomizer has a counterexample Tree of predicates and clauses.
+		// This should allow extraction of an unsat core.
+		// (It is not a derivation because variable values are missing)
+		// Currently, the tree is only logged, not returned.
 		return false;
 	}
 
