@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -71,21 +72,20 @@ public class ModelDescription implements Model {
 	public Term getFunctionDefinition(final String func, final TermVariable[] args) {
 		final var def = getFunctionDefinition(func);
 		final var params = def.getParams();
+		assert params.length == args.length : "Number of parameters does not match arity of " + func;
 
 		final var substitution = new HashMap<TermVariable, Term>();
-
-		assert params.length == args.length;
 		for (int i = 0; i < args.length; ++i) {
 			assert Objects.equals(params[i].getSort(), args[i].getSort());
 			substitution.put(params[i], args[i]);
 		}
 
-		// TODO no access to PureSubstitution
-		// return PureSubstitution.apply(def.getBody(), substitution);
-		throw new UnsupportedOperationException();
+		final var unletter = new FormulaUnLet();
+		unletter.addSubstitutions(substitution);
+		return unletter.transform(def.getBody());
 	}
 
-	public FunctionDefinition getFunctionDefinition(final String func) {
+	private FunctionDefinition getFunctionDefinition(final String func) {
 		return mDefinitions.get(func);
 	}
 
