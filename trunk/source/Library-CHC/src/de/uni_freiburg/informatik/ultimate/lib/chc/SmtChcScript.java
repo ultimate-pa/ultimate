@@ -34,11 +34,13 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.NamedTermWrapper;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
 /**
  * Used to access a constraint Horn solver via the {@link Script} interface. This can e.g. be used to access Z3's CHC
@@ -68,7 +70,11 @@ public class SmtChcScript implements IChcScript {
 	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system) {
 		reset();
 
-		// TODO extract and declare functions -- should we take a HcSymbolTable?
+		// declare predicate symbols
+		for (final var predSym : symbolTable.getHcPredicateSymbols()) {
+			mMgdScript.declareFun(this, predSym.getName(), predSym.getParameterSorts().toArray(Sort[]::new),
+					SmtSortUtils.getBoolSort(mMgdScript));
+		}
 
 		// translate clauses to SMT and assert them
 		for (final var clause : system) {
