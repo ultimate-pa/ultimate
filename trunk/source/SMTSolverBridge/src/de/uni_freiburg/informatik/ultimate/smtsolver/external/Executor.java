@@ -283,6 +283,10 @@ class Executor {
 		return (Object[]) parse(LexerSymbols.GETINFO).value;
 	}
 
+	public ModelDescription parseGetModelResult() {
+		return (ModelDescription) parse(LexerSymbols.GETMODEL).value;
+	}
+
 	public Object parseGetOptionResult() {
 		return parse(LexerSymbols.GETOPTION).value;
 	}

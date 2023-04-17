@@ -1,13 +1,17 @@
 package de.uni_freiburg.informatik.ultimate.web.backend;
 
 import java.io.FileInputStream;
+import java.io.IOError;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Properties;
 import java.util.function.Function;
 
 import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 
 /**
  * @formatter:off
@@ -65,18 +69,35 @@ public class Config {
 		loadSettings();
 	}
 
+	public static Path tryGetAbsolutePath(String path) {
+
+		try {
+			return FileSystems.getDefault().getPath(path).normalize().toAbsolutePath().normalize();
+		} catch (final InvalidPathException | IOError | SecurityException ex) {
+			final Logger logger = Log.getRootLogger();
+			logger.warn(String.format("Could not convert %s to absolute path: %s", path, ex.getMessage()));
+		}
+		return null;
+	}
+
 	/**
 	 * Load settings file into Properties object.
 	 */
 	private static void loadSettingsFile() {
 		final String settingsFilePath = loadString("SETTINGS_FILE", SETTINGS_FILE);
-		try (final FileInputStream fileInputStream = new FileInputStream(settingsFilePath)) {
+		final Logger logger = Log.getRootLogger();
+		final Path absolutePath = tryGetAbsolutePath(settingsFilePath);
+		if (absolutePath == null) {
+			logger.warn(String.format("Could not load settings file from '%s', using defaults", settingsFilePath));
+			return;
+		}
+
+		try (final FileInputStream fileInputStream = new FileInputStream(absolutePath.toFile())) {
 			APP_SETTINGS.load(fileInputStream);
-			Log.getRootLogger().info(String.format("Loaded settings file from %s", settingsFilePath));
+			logger.info(String.format("Loaded settings file from %s", settingsFilePath));
 		} catch (final IOException e) {
-			Log.getRootLogger()
-					.warn(String.format("Could not load settings file from '%s', using defaults", settingsFilePath));
-			Log.getRootLogger().warn(e.getMessage());
+			logger.warn(String.format("Could not load settings file from '%s', using defaults", settingsFilePath));
+			logger.warn(e.getMessage());
 		}
 	}
 
