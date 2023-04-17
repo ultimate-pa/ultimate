@@ -56,7 +56,7 @@ public interface IChcScript {
 	 *            The list of Horn clauses forming the CHC system
 	 * @return
 	 */
-	LBool solve(List<HornClause> system);
+	LBool solve(HcSymbolTable symbolTable, List<HornClause> system);
 
 	/**
 	 * Determines if the solver can output a model for {@code SAT} queries.
@@ -66,7 +66,7 @@ public interface IChcScript {
 	boolean supportsModelProduction();
 
 	/**
-	 * Enable or disable model production for future calls to {@link #solve(List)}.
+	 * Enable or disable model production for future calls to {@link #solve(HcSymbolTable, List)}.
 	 *
 	 * @param enable
 	 *            {@code true} to enable model production, {@code false} to disable it.
@@ -74,10 +74,10 @@ public interface IChcScript {
 	void produceModels(boolean enable);
 
 	/**
-	 * If the last invocation of {@link #solve(List)} returned {@code SAT}, returns a satisfying model.
+	 * If the last invocation of {@link #solve(HcSymbolTable, List)} returned {@code SAT}, returns a satisfying model.
 	 *
 	 * Model production must have been enabled via {@link #produceModels(boolean)} prior to the call to
-	 * {@link #solve(List)}.
+	 * {@link #solve(HcSymbolTable, List)}.
 	 *
 	 * @return
 	 */
@@ -91,7 +91,7 @@ public interface IChcScript {
 	boolean supportsDerivationProduction();
 
 	/**
-	 * Enable or disable derivation production for future calls to {@link #solve(List)}.
+	 * Enable or disable derivation production for future calls to {@link #solve(HcSymbolTable, List)}.
 	 *
 	 * @param enable
 	 *            {@code true} to enable derivation production, {@code false} to disable it.
@@ -99,11 +99,11 @@ public interface IChcScript {
 	void produceDerivations(boolean enable);
 
 	/**
-	 * If the last invocation of {@link #solve(List)} returned {@code UNSAT}, returns a derivation proving
-	 * unsatisfiability.
+	 * If the last invocation of {@link #solve(HcSymbolTable, List)} returned {@code UNSAT}, returns a derivation
+	 * proving unsatisfiability.
 	 *
 	 * Derivation production must have been enabled via {@link #produceDerivations(boolean)} prior to the call to
-	 * {@link #solve(List)}.
+	 * {@link #solve(HcSymbolTable, List)}.
 	 *
 	 * @return
 	 */
@@ -117,7 +117,7 @@ public interface IChcScript {
 	boolean supportsUnsatCores();
 
 	/**
-	 * Enable or disable UNSAT core production for future calls to {@link #solve(List)}.
+	 * Enable or disable UNSAT core production for future calls to {@link #solve(HcSymbolTable, List)}.
 	 *
 	 * @param enable
 	 *            {@code true} to enable UNSAT core production, {@code false} to disable it.
@@ -125,10 +125,11 @@ public interface IChcScript {
 	void produceUnsatCores(boolean enable);
 
 	/**
-	 * If the last invocation of {@link #solve(List)} returned {@code UNSAT}, returns an unsatisfiable core.
+	 * If the last invocation of {@link #solve(HcSymbolTable, List)} returned {@code UNSAT}, returns an unsatisfiable
+	 * core.
 	 *
 	 * UNSAT core production must have been enabled via {@link #produceUnsatCores(boolean)} prior to the call to
-	 * {@link #solve(List)}.
+	 * {@link #solve(HcSymbolTable, List)}.
 	 *
 	 * @return
 	 */

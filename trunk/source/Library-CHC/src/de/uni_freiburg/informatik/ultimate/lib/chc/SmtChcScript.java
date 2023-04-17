@@ -65,7 +65,7 @@ public class SmtChcScript implements IChcScript {
 	}
 
 	@Override
-	public LBool solve(final List<HornClause> system) {
+	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system) {
 		reset();
 
 		// TODO extract and declare functions -- should we take a HcSymbolTable?

@@ -40,6 +40,7 @@ import ap.parser.IFormula;
 import ap.terfor.preds.Predicate;
 import de.uni_freiburg.informatik.ultimate.lib.chc.Derivation;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.IChcScript;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
@@ -79,11 +80,12 @@ public class EldaricaBridge implements IChcScript {
 	private Lazy<Set<HornClause>> mLastUnsatCore;
 
 	@Deprecated
-	public static void doStuff(final Script script, final java.util.List<HornClause> clauses) {
+	public static void doStuff(final Script script, final HcSymbolTable symbolTable,
+			final java.util.List<HornClause> clauses) {
 		SimpleAPI.<Object> withProver(new AbstractFunction1<>() {
 			@Override
 			public Object apply(final SimpleAPI princess) {
-				return new EldaricaBridge(script, princess).solve(clauses);
+				return new EldaricaBridge(script, princess).solve(symbolTable, clauses);
 			}
 		});
 	}
@@ -112,7 +114,7 @@ public class EldaricaBridge implements IChcScript {
 	}
 
 	@Override
-	public LBool solve(final java.util.List<HornClause> system) {
+	public LBool solve(final HcSymbolTable symbolTable, final java.util.List<HornClause> system) {
 		reset();
 
 		final var translatedClauses = translateSystem(system);

@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.Derivation;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.IChcScript;
@@ -77,11 +78,11 @@ public class TreeAutomizerChcScript implements IChcScript {
 	}
 
 	@Override
-	public LBool solve(final List<HornClause> system) {
+	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system) {
 		reset();
 
 		// TODO missing parameters: symbol table, category info
-		final var annot = new HornAnnot(DUMMY_FILENAME, mMgdScript, null, system, true, null);
+		final var annot = new HornAnnot(DUMMY_FILENAME, mMgdScript, symbolTable, system, true, null);
 		final var cegar = new TreeAutomizerCEGAR(mServices, annot, mPrefs, mLogger);
 		try {
 			final var result = cegar.iterate();
