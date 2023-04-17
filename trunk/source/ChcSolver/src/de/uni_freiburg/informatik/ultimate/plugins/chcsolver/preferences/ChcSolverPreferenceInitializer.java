@@ -36,9 +36,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.Activator;
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  */
-public class ChcSolverPreferences extends UltimatePreferenceInitializer {
+public class ChcSolverPreferenceInitializer extends UltimatePreferenceInitializer {
 
-	public ChcSolverPreferences() {
+	// select backend
+	// enable models
+	// enable derivations (if available)
+	// enable unsat cores
+
+	public enum SolverBackend {
+		Eldarica, Z3, TreeAutomizer
+	}
+
+	public ChcSolverPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
 

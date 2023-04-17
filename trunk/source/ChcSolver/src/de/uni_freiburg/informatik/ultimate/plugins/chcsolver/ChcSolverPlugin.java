@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.preferences.ChcSolverPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.preferences.ChcSolverPreferenceInitializer;
 
 /**
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.preferences.ChcSolv
 public class ChcSolverPlugin implements IGenerator {
 
 	private ILogger mLogger;
-	// private IcfgToChcObserver mObserver;
+	private ChcSolverObserver mObserver;
 	private IUltimateServiceProvider mServices;
 	private ModelType mOldGraphType;
 
@@ -72,8 +72,8 @@ public class ChcSolverPlugin implements IGenerator {
 	@Override
 	public List<IObserver> getObservers() {
 		final List<IObserver> observers = new ArrayList<>();
-		// mObserver = new IcfgToChcObserver(mLogger, mServices);
-		// observers.add(mObserver);
+		mObserver = new ChcSolverObserver(mServices, mLogger);
+		observers.add(mObserver);
 		return observers;
 	}
 
@@ -104,7 +104,7 @@ public class ChcSolverPlugin implements IGenerator {
 
 	@Override
 	public IPreferenceInitializer getPreferences() {
-		return new ChcSolverPreferences();
+		return new ChcSolverPreferenceInitializer();
 	}
 
 	@Override
