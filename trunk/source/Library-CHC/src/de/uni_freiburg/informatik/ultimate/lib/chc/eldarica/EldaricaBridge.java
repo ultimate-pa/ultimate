@@ -55,7 +55,6 @@ import scala.Tuple2;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 import scala.collection.immutable.List;
-import scala.runtime.AbstractFunction1;
 
 /**
  * Provides access to the eldarica constraint Horn solver.
@@ -64,7 +63,7 @@ import scala.runtime.AbstractFunction1;
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-public class EldaricaBridge implements IChcScript {
+public class EldaricaBridge implements IChcScript, AutoCloseable {
 	private final Script mScript;
 	private final SimpleAPI mPrincess;
 
@@ -82,18 +81,16 @@ public class EldaricaBridge implements IChcScript {
 	@Deprecated
 	public static void doStuff(final Script script, final HcSymbolTable symbolTable,
 			final java.util.List<HornClause> clauses) {
-		SimpleAPI.<Object> withProver(new AbstractFunction1<>() {
-			@Override
-			public Object apply(final SimpleAPI princess) {
-				return new EldaricaBridge(script, princess).solve(symbolTable, clauses);
-			}
-		});
+		new EldaricaBridge(script).solve(symbolTable, clauses);
 	}
 
-	public EldaricaBridge(final Script script, final SimpleAPI princess) {
+	public EldaricaBridge(final Script script) {
 		// TODO allow setting a timeout (see eldarica's GlobalParameters object)
 		mScript = script;
-		mPrincess = princess;
+		mPrincess = SimpleAPI.apply(SimpleAPI.apply$default$1(), SimpleAPI.apply$default$2(),
+				SimpleAPI.apply$default$3(), SimpleAPI.apply$default$4(), SimpleAPI.apply$default$5(),
+				SimpleAPI.apply$default$6(), SimpleAPI.apply$default$7(), SimpleAPI.apply$default$8(),
+				SimpleAPI.apply$default$9(), SimpleAPI.apply$default$10());
 	}
 
 	private static <X> List<X> toList(final java.util.List<X> list) {
@@ -266,5 +263,10 @@ public class EldaricaBridge implements IChcScript {
 		mLastModel = null;
 		mLastDerivation = null;
 		mLastUnsatCore = null;
+	}
+
+	@Override
+	public void close() throws Exception {
+		mPrincess.shutDown();
 	}
 }
