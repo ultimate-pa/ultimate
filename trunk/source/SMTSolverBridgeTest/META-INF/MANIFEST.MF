@@ -7,3 +7,4 @@ Fragment-Host: de.uni_freiburg.informatik.ultimate.smtsolver.external
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.test
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.smtsolver.external.test
+Import-Package: org.junit

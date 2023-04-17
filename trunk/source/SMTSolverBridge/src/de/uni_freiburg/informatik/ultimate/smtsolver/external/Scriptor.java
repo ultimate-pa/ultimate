@@ -236,7 +236,8 @@ public class Scriptor extends NoopScript {
 
 	@Override
 	public Model getModel() throws SMTLIBException, UnsupportedOperationException {
-		throw new UnsupportedOperationException();
+		mExecutor.input("(get-model)");
+		return mExecutor.parseGetModelResult();
 	}
 
 	/** This method is used in the output parser, to support (get-info :status) **/
