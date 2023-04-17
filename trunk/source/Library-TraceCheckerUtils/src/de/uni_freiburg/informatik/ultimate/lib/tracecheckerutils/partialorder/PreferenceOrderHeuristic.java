@@ -72,8 +72,12 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 	public PreferenceOrderHeuristic(final IIcfg<?> icfg, final List<String> allProcedures,
 			final Set<IProgramVar> effectiveGlobalVars, final HashMap<String, Set<IProgramVar>> sharedVars,
 			final ManagedScript mgdScript) {
-		this(icfg.getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream()).collect(Collectors.toSet()),
-				mgdScript);
+		final Collection<IcfgEdge> edges = 
+				icfg.getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream()).collect(Collectors.toSet());
+		mBFSWorklist = new ArrayDeque<>();
+		mBFSWorklist.addAll(edges);
+		mFinished = new HashSet<>(mBFSWorklist);
+		mMgdScript = mgdScript;
 		mIcfg = icfg;
 		mAllProcedures = allProcedures;
 		mAllLoopProcedures = new ArrayList<>();
@@ -81,14 +85,6 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 		mLoopPathVarsMap = new HashMap<>();
 		mEffectiveGlobalVars = effectiveGlobalVars;
 		mSharedVarsMap = sharedVars;
-	}
-
-	// TODO Why are there 2 constructors? And why does one of them only initialize some of the fields? Dangerous!
-	public <T extends IcfgEdge> PreferenceOrderHeuristic(final Collection<T> edges, final ManagedScript mgdScript) {
-		mBFSWorklist = new ArrayDeque<>();
-		mBFSWorklist.addAll(edges);
-		mFinished = new HashSet<>(mBFSWorklist);
-		mMgdScript = mgdScript;
 	}
 
 	private void applyBFS(final IcfgLocation start, final SearchType searchType, final IcfgLocation goal) {
@@ -130,6 +126,7 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 					// extract the loopEntryEdge and continue the search
 					final IcfgEdge loopEntryEdge = buildPath(parentMap, current).getFirst();
 					if (loopEntryEdge.getSource().equals(start)) {
+						//mFinished.add(loopEntryEdge);
 						applyBFS(loopEntryEdge.getSource(), SearchType.LOOPBUILDPATH, loopEntryEdge.getSource());
 					} else {
 						mFinished.add(loopEntryEdge);

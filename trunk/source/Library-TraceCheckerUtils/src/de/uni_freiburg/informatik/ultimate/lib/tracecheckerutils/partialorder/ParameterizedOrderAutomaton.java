@@ -121,22 +121,13 @@ public class ParameterizedOrderAutomaton<L extends IAction>
 	public Iterable<OutgoingInternalTransition<L, State>> internalSuccessors(final State state, final L letter) {
 		if (mIsStep.test(letter)) {
 			if (letter.getPrecedingProcedure() != state.getThread()) {
-
+				
+				//return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(mThreads.get(mThreads.size()-1), mThreads.size()-1 , 0)));
+ 
 				// return Set.of(new OutgoingInternalTransition<>(letter, state));
-
-				/*
-				 * String nextThread = letter.getPrecedingProcedure(); List<String> shiftedThreadList = new
-				 * ArrayList<>(); shiftedThreadList.addAll(mThreads.subList(state.getIndex(), mThreads.size()));
-				 * shiftedThreadList.addAll(mThreads.subList(0, state.getIndex())); int nextIndex =
-				 * (shiftedThreadList.indexOf(nextThread)+state.getIndex()) % mThreads.size();
-				 */
-
+ 
 				final String nextThread = letter.getPrecedingProcedure();
 				int nextIndex = DataStructureUtils.indexOf(mThreads, nextThread, state.getIndex());
-
-				/*
-				 * return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(nextThread, nextIndex,0)));
-				 */
 
 				if (mMaxSteps.get(nextIndex) == 1) {
 					nextIndex = (nextIndex + 1) % mThreads.size();
@@ -144,6 +135,7 @@ public class ParameterizedOrderAutomaton<L extends IAction>
 							getOrCreateState(mThreads.get(nextIndex), nextIndex, 0)));
 				}
 				return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(nextThread, nextIndex, 1)));
+				
 
 			} else if (state.getCounter() == mMaxSteps.get(state.getIndex()) - 1) {
 				final int nextThreadIndex = ((state.getIndex() + 1) % mThreads.size());
