@@ -58,6 +58,10 @@ public class WebBackend implements IApplication {
 		// Set log level
 		System.setProperty("org.eclipse.jetty.LEVEL", Config.LOG_LEVEL);
 
+		if (Config.LOG_FILE_PATH.isEmpty()) {
+			Log.getRootLogger().info("Logging to stdout/stderr");
+			return;
+		}
 		// Redirect logging to file.
 		FileOutputStream outStream;
 		try {
@@ -65,6 +69,7 @@ public class WebBackend implements IApplication {
 			final PrintStream logStream = new PrintStream(outStream);
 			System.setOut(logStream);
 			System.setErr(logStream);
+			Log.getRootLogger().info("Logging to '" + Config.LOG_FILE_PATH + "'");
 		} catch (final FileNotFoundException e) {
 			Log.getRootLogger().warn("Not able to log to '" + Config.LOG_FILE_PATH + "'");
 		}
@@ -80,9 +85,10 @@ public class WebBackend implements IApplication {
 
 		// Serve the website (front-end) as static content.
 		if (Config.SERVE_WEBSITE) {
-			addStaticPathToContext(contexts, Paths.get(Config.FRONTEND_PATH), Config.FRONTEND_ROUTE);
-			Log.getRootLogger().info(
-					"Serving frontend (" + Paths.get(Config.FRONTEND_PATH) + ") at route: " + Config.FRONTEND_ROUTE);
+			final Path absPath = Config.tryGetAbsolutePath(Config.FRONTEND_PATH);
+			addStaticPathToContext(contexts, absPath, Config.FRONTEND_ROUTE);
+			Log.getRootLogger()
+					.info("Serving frontend (" + absPath.toString() + ") at route: " + Config.FRONTEND_ROUTE);
 		}
 
 		// Serve the API.
