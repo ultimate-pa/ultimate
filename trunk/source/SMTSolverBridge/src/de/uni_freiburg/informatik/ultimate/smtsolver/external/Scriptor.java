@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -234,7 +235,7 @@ public class Scriptor extends NoopScript {
 	}
 
 	@Override
-	public ModelDescription getModel() throws SMTLIBException, UnsupportedOperationException {
+	public Model getModel() throws SMTLIBException, UnsupportedOperationException {
 		mExecutor.input("(get-model)");
 		return mExecutor.parseGetModelResult();
 	}
