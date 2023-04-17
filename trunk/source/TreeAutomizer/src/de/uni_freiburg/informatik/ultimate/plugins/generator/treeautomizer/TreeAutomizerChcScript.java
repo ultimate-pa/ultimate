@@ -81,7 +81,7 @@ public class TreeAutomizerChcScript implements IChcScript {
 	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system) {
 		reset();
 
-		// TODO missing parameters: symbol table, category info
+		// TODO missing parameter: category info
 		final var annot = new HornAnnot(DUMMY_FILENAME, mMgdScript, symbolTable, system, true, null);
 		final var cegar = new TreeAutomizerCEGAR(mServices, annot, mPrefs, mLogger);
 		try {
