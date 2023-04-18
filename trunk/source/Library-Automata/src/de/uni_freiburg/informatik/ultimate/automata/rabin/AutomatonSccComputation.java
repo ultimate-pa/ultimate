@@ -34,7 +34,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
-import de.uni_freiburg.informatik.ultimate.util.scc.DefaultSccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
@@ -53,8 +52,8 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  *            state type
  */
 public class AutomatonSccComputation<LETTER, STATE> {
-	// result
-	private final DefaultSccComputation<STATE> mSccComputation;
+
+	Collection<StronglyConnectedComponent<STATE>> mBalls;
 
 	/**
 	 * Computes accepting SCCs of an automaton.
@@ -78,9 +77,11 @@ public class AutomatonSccComputation<LETTER, STATE> {
 		final Set<STATE> init = new HashSet<>();
 		eagerAutomaton.getInitialStates().forEach(x -> init.add(x));
 
-		mSccComputation =
-				new DefaultSccComputation<>(services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
+		final RabinSccComputation<STATE> sccComputation =
+				new RabinSccComputation<>(services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
 						new RabinSuccessorProvider(eagerAutomaton), eagerAutomaton.size(), init);
+
+		mBalls = sccComputation.getBalls();
 	}
 
 	/**
@@ -89,7 +90,7 @@ public class AutomatonSccComputation<LETTER, STATE> {
 	 * @return balls
 	 */
 	public Collection<StronglyConnectedComponent<STATE>> getBalls() {
-		return mSccComputation.getBalls();
+		return mBalls;
 	}
 
 	/**
@@ -98,7 +99,7 @@ public class AutomatonSccComputation<LETTER, STATE> {
 	 * @return ball
 	 */
 	public Set<STATE> getExampleBall() {
-		return mSccComputation.getBalls().iterator().next().getNodes();
+		return getBalls().iterator().next().getNodes();
 	}
 
 	/**
