@@ -27,4 +27,4 @@ for folder in os.walk(HERE):
         })
 
 with open(osp.join(HERE, 'code_examples.json'), mode='w') as out_file:
-    json.dump(code_examples, out_file)
+    json.dump(code_examples, out_file, indent=2)
