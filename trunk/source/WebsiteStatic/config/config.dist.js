@@ -1540,7 +1540,7 @@ const _CONFIG = {
 		{
 			name: "Automata Library",
 			id: "automata_library",
-			description: "Nested Word Automta, Büchi Nested Word Automta, Petri Net, Alternating Finite Automata, Tree Automata.",
+			description: "Nested Word Automata, Büchi Nested Word Automata, Petri Net, Alternating Finite Automata, Tree Automata.",
 			languages: ["Automata_script"],
 			workers: [
 				{
