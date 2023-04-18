@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2023 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  * Copyright (C) 2023 University of Freiburg
  *
  * This file is part of the ULTIMATE IcfgToChc plug-in.
@@ -26,52 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
-import java.util.Objects;
-
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
-public class HcSleepVar implements IHcThreadSpecificVar {
-	private final Sort mSort;
-	private final ThreadInstance mInstance;
-
-	public HcSleepVar(final ThreadInstance instance, final Sort sort) {
-		mInstance = instance;
-		mSort = sort;
-	}
-
-	@Override
-	public Sort getSort() {
-		return mSort;
-	}
-
-	@Override
-	public ThreadInstance getThreadInstance() {
-		return mInstance;
-	}
-
-	@Override
-	public String toString() {
-		return "sleep_" + mInstance;
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		return prime * Objects.hash(mInstance);
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final HcSleepVar other = (HcSleepVar) obj;
-		return Objects.equals(mInstance, other.mInstance);
-	}
+public interface IHcReplacementVar {
+	Sort getSort();
 }

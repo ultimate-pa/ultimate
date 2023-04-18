@@ -54,8 +54,7 @@ public class HcThreadIdVar implements IHcThreadSpecificVar {
 
 	@Override
 	public String toString() {
-		return "id_" + IcfgToChcConcurrentUtils.getReadableString(mInstance.getTemplateName()) + "_"
-				+ (mInstance.getInstanceNumber() + 1);
+		return "id_" + mInstance;
 	}
 
 	@Override

@@ -26,18 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgToChcConcurrent.IHcReplacementVar;
-
 public interface IHcThreadSpecificVar extends IHcReplacementVar {
 	ThreadInstance getThreadInstance();
-
-	@Deprecated
-	default String getThreadTemplateName() {
-		return getThreadInstance().getTemplateName();
-	}
-
-	@Deprecated
-	default int getInstanceIndex() {
-		return getThreadInstance().getInstanceNumber();
-	}
 }

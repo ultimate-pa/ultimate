@@ -14,9 +14,10 @@ public class HcLocalVar implements IHcThreadSpecificVar {
 	private final IProgramVar mVariable;
 	private final ThreadInstance mInstance;
 
-	public HcLocalVar(final IProgramVar variable, final int instanceNumber) {
+	public HcLocalVar(final IProgramVar variable, final ThreadInstance instance) {
+		assert variable.getProcedure().equals(instance.getTemplateName());
 		mVariable = variable;
-		mInstance = new ThreadInstance(mVariable.getProcedure(), instanceNumber);
+		mInstance = instance;
 	}
 
 	public IProgramVar getVariable() {

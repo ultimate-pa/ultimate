@@ -30,8 +30,7 @@ public class HcLocationVar implements IHcThreadSpecificVar {
 
 	@Override
 	public String toString() {
-		return "loc_" + IcfgToChcConcurrentUtils.getReadableString(mInstance.getTemplateName()) + "_"
-				+ (mInstance.getInstanceNumber() + 1);
+		return "loc_" + mInstance;
 	}
 
 	@Override

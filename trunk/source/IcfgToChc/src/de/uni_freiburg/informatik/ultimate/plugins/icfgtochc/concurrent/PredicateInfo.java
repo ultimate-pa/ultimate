@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgToChcConcurrent.IHcReplacementVar;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 
 public class PredicateInfo {

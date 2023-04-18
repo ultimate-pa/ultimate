@@ -47,7 +47,7 @@ public final class ThreadInstance {
 
 	@Override
 	public String toString() {
-		return mTemplateName + "_" + mInstanceNumber;
+		return IcfgToChcConcurrentUtils.getReadableString(mTemplateName) + "_" + (mInstanceNumber + 1);
 	}
 
 	@Override

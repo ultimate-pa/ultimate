@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgToChcConcurrent.IHcReplacementVar;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -208,7 +207,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		final List<IProgramVar> localVars = mCfgSymbolTable.getLocals(instance.getTemplateName()).stream()
 				.filter(mVariableFilter).collect(Collectors.toList());
 		for (final IProgramVar pv : localVars) {
-			final var local = new HcLocalVar(pv, instance.getInstanceNumber());
+			final var local = new HcLocalVar(pv, instance);
 			mLocalVars.put(instance, pv, local);
 			result.add(local);
 		}
@@ -507,6 +506,6 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 	private Stream<HcLocalVar> getInterferingLocals(final ThreadInstance interferingThread) {
 		return mCfgSymbolTable.getLocals(interferingThread.getTemplateName()).stream().filter(mVariableFilter)
-				.map(pv -> new HcLocalVar(pv, INTERFERING_INSTANCE_ID));
+				.map(pv -> new HcLocalVar(pv, interferingThread));
 	}
 }
