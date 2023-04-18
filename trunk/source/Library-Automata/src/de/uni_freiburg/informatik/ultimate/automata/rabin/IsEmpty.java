@@ -138,7 +138,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	public boolean checkResult(final CRSF stateFactory) throws AutomataOperationCanceledException {
 		boolean result = true;
 		if (!mResult) {
-			final Pair<List<LETTER>, List<LETTER>> counterExample = this.getCounterexample();
+			final Pair<List<LETTER>, List<LETTER>> counterExample = getCounterexample();
 			result = new Accepts<>(mServices, eagerAutomaton, counterExample.getFirst(), counterExample.getSecond())
 					.getResult();
 		}
