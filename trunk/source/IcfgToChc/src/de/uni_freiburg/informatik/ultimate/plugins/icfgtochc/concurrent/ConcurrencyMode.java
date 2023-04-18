@@ -27,10 +27,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
@@ -61,12 +62,12 @@ public enum ConcurrencyMode {
 	 * @return a pair, where the first component maps each thread template to the number of instances to consider, and
 	 *         the second component contains all threads that may have more than {@code level} instances.
 	 */
-	public Pair<Map<String, Integer>, List<String>> getThreadNumbersAndUnboundedThreads(final IIcfg<IcfgLocation> icfg,
+	public Pair<Map<String, Integer>, Set<String>> getThreadNumbersAndUnboundedThreads(final IIcfg<?> icfg,
 			final int level) {
 		if (this == ConcurrencyMode.PARAMETRIC) {
 			final var numberOfThreads =
 					icfg.getInitialNodes().stream().collect(Collectors.toMap(loc -> loc.getProcedure(), loc -> level));
-			final var unbounded = List.copyOf(numberOfThreads.keySet());
+			final var unbounded = Set.copyOf(numberOfThreads.keySet());
 			return new Pair<>(numberOfThreads, unbounded);
 		}
 
@@ -76,7 +77,7 @@ public enum ConcurrencyMode {
 		final var instanceMap = icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap();
 		final Map<String, Integer> numberOfThreads = new HashMap<>();
 		icfg.getInitialNodes().forEach(x -> numberOfThreads.put(x.getProcedure(), 1));
-		final List<String> unboundedThreads = new ArrayList<>();
+		final Set<String> unboundedThreads = new HashSet<>();
 		// TODO: This needs to be more accurate in general
 		for (final var fork : instanceMap.keySet()) {
 			final String procedure = fork.getNameOfForkedProcedure();
@@ -106,7 +107,7 @@ public enum ConcurrencyMode {
 	 *            The set of thread instances considered by the analyis
 	 * @return A mapping from initially running thread instances to their initial locations
 	 */
-	public Map<ThreadInstance, IcfgLocation> getInitialLocations(final IIcfg<IcfgLocation> icfg,
+	public Map<ThreadInstance, IcfgLocation> getInitialLocations(final IIcfg<?> icfg,
 			final List<ThreadInstance> instances) {
 		switch (this) {
 		case PARAMETRIC:

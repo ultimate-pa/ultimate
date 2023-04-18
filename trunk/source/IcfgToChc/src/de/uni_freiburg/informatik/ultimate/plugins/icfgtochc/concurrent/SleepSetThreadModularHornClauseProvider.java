@@ -30,21 +30,19 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornClauseProvider {
@@ -54,14 +52,13 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 	private final Map<ThreadInstance, HcThreadIdVar> mIdVars;
 	private final Map<ThreadInstance, HcSleepVar> mSleepVars;
 
-	public SleepSetThreadModularHornClauseProvider(final Map<String, Integer> numberOfThreads,
-			final ManagedScript mgdScript, final CfgSmtToolkit cfgSmtToolkit, final HcSymbolTable symbolTable,
-			final Predicate<IProgramVar> variableFilter,
-			final IIndependenceRelation<?, ? super IIcfgTransition<?>> independence,
-			final Map<String, Collection<IcfgLocation>> threadLocations) {
-		super(numberOfThreads, mgdScript, cfgSmtToolkit, symbolTable, variableFilter);
+	public SleepSetThreadModularHornClauseProvider(final ManagedScript mgdScript, final IIcfg<IcfgLocation> icfg,
+			final HcSymbolTable symbolTable, final IIndependenceRelation<?, ? super IIcfgTransition<?>> independence,
+			final IcfgToChcPreferences prefs) {
+		super(mgdScript, icfg, symbolTable, prefs);
 		mIndependence = independence;
-		mThreadLocations = threadLocations;
+		mThreadLocations = icfg.getProgramPoints().entrySet().stream()
+				.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().values()));
 
 		mIdVars = extractThreadVars(HcThreadIdVar.class);
 		mSleepVars = extractThreadVars(HcSleepVar.class);
@@ -86,8 +83,8 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 	}
 
 	@Override
-	protected HornClauseBuilder buildInitialClause(final Map<ThreadInstance, IcfgLocation> initialLocations) {
-		final var clause = super.buildInitialClause(initialLocations);
+	protected HornClauseBuilder buildInitialClause() {
+		final var clause = super.buildInitialClause();
 
 		// all sleep variables are initialized to false
 		for (final var instance : mInstances) {

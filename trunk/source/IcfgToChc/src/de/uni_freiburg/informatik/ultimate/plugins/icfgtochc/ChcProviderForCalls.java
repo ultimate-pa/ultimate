@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.IcfgToChcObserver.IChcProvider;
 
 /**
  *
@@ -49,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.IcfgToChcObserver.I
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
  */
-public class ChcProviderForCalls implements IChcProvider {
+public class ChcProviderForCalls {
 	private final ManagedScript mMgdScript;
 	private final HcSymbolTable mHcSymbolTable;
 	private IIcfg<IcfgLocation> mIcfg;
@@ -71,7 +70,6 @@ public class ChcProviderForCalls implements IChcProvider {
 				mMgdScript.constructFreshTermVariable(ASSERTIONVIOLATEDVARNAME, SmtSortUtils.getBoolSort(mMgdScript));
 	}
 
-	@Override
 	@SuppressWarnings("unchecked")
 	public Collection<HornClause> getHornClauses(final IIcfg<IcfgLocation> icfg) {
 		/* add chcs for the icfg's edges */

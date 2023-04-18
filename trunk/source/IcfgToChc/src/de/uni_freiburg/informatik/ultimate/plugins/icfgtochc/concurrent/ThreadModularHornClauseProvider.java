@@ -41,9 +41,13 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -53,9 +57,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgToChcConcurrent.IHcReplacementVar;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Generates Horn clauses for a thread-modular proof.
@@ -68,6 +74,8 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	private static final String FUNCTION_NAME = "Inv";
 	private static final int INTERFERING_INSTANCE_ID = -1;
 
+	protected final IIcfg<?> mIcfg;
+	protected final IcfgToChcPreferences mPrefs;
 	private final IIcfgSymbolTable mCfgSymbolTable;
 	private final Predicate<IProgramVar> mVariableFilter;
 
@@ -78,7 +86,9 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	// used as location for threads that are not currently running
 	private final Term mBottomLocation;
 
+	protected final Set<String> mTemplates;
 	protected final List<ThreadInstance> mInstances;
+	protected final Set<String> mUnboundedTemplates;
 
 	protected final PredicateInfo mInvariantPredicate;
 
@@ -87,14 +97,27 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	protected final Map<ThreadInstance, HcLocationVar> mLocationVars = new HashMap<>();
 	protected final NestedMap2<ThreadInstance, IProgramVar, HcLocalVar> mLocalVars = new NestedMap2<>();
 
-	public ThreadModularHornClauseProvider(final Map<String, Integer> numberOfThreads, final ManagedScript mgdScript,
-			final CfgSmtToolkit cfgSmtToolkit, final HcSymbolTable symbolTable,
-			final Predicate<IProgramVar> variableFilter) {
+	public ThreadModularHornClauseProvider(final ManagedScript mgdScript, final IIcfg<?> icfg,
+			final HcSymbolTable symbolTable, final IcfgToChcPreferences prefs) {
+		this(mgdScript, icfg, symbolTable, x -> true, prefs);
+	}
+
+	public ThreadModularHornClauseProvider(final ManagedScript mgdScript, final IIcfg<?> icfg,
+			final HcSymbolTable symbolTable, final Predicate<IProgramVar> variableFilter,
+			final IcfgToChcPreferences prefs) {
 		super(mgdScript, symbolTable);
-		mCfgSymbolTable = cfgSmtToolkit.getSymbolTable();
+		mIcfg = icfg;
+		mPrefs = prefs;
+		mCfgSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 		mVariableFilter = variableFilter;
+
+		final var threadInfo =
+				mPrefs.concurrencyMode().getThreadNumbersAndUnboundedThreads(icfg, mPrefs.getThreadModularProofLevel());
+		mTemplates = Set.copyOf(threadInfo.getFirst().keySet());
+		mInstances = getInstances(threadInfo.getFirst());
+		mUnboundedTemplates = threadInfo.getSecond();
+
 		mBottomLocation = numeral(-1);
-		mInstances = getInstances(numberOfThreads);
 		mInvariantPredicate = createInvariantPredicate();
 	}
 
@@ -193,34 +216,93 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		return result;
 	}
 
-	// Horn clause generation
+	// IIcfg iteration
 	// -----------------------------------------------------------------------------------------------------------------
 
 	@Override
 	protected List<HornClauseBuilder> buildAllClauses() {
 		final var result = new ArrayList<HornClauseBuilder>();
 
-		// result.add(buildInitialClause());
-		// for (final var entry : mErrorLocations.getSetOfPairs()) {
-		// result.add(buildSafetyClause(entry.getKey(), entry.getValue()));
-		// }
-		// TODO inductive clauses
-		// TODO noninterference clauses
+		final var initialClause = buildInitialClause();
+		result.add(initialClause);
+
+		final var entryNodes = mIcfg.getProcedureEntryNodes();
+		for (final String proc : mTemplates) {
+			final IcfgEdgeIterator edges = new IcfgEdgeIterator(entryNodes.get(proc).getOutgoingEdges());
+			while (edges.hasNext()) {
+				final IcfgEdge edge = edges.next();
+				for (final var prePost : getCartesianPrePostProduct(edge)) {
+					final var clause =
+							buildInductivityClause(edge, prePost.getFirst(), prePost.getSecond(), prePost.getThird());
+					result.add(clause);
+				}
+
+				if (mUnboundedTemplates.contains(proc)) {
+					result.add(buildNonInterferenceClause(edge));
+				}
+			}
+		}
+
+		final var errorLocs = getErrorLocations();
+		for (final var pair : errorLocs) {
+			final var safetyClause = buildSafetyClause(pair.getFirst(), pair.getSecond());
+			result.add(safetyClause);
+		}
 
 		return result;
 	}
+
+	private List<Triple<Map<ThreadInstance, IcfgLocation>, Map<ThreadInstance, IcfgLocation>, ThreadInstance>>
+			getCartesianPrePostProduct(final IcfgEdge edge) {
+		if (edge instanceof IIcfgForkTransitionThreadCurrent<?>) {
+			final var forkCurrent = (IIcfgForkTransitionThreadCurrent<?>) edge;
+			final var forkEntry = mIcfg.getProcedureEntryNodes().get(forkCurrent.getNameOfForkedProcedure());
+			final var result =
+					new ArrayList<Triple<Map<ThreadInstance, IcfgLocation>, Map<ThreadInstance, IcfgLocation>, ThreadInstance>>();
+			for (final var instance : getInstances(edge.getPrecedingProcedure())) {
+				final var preds = Map.of(instance, edge.getSource());
+				for (final var forked : getInstances(forkCurrent.getNameOfForkedProcedure())) {
+					if (Objects.equals(instance, forked)) {
+						continue;
+					}
+					final var succs = Map.of(instance, edge.getTarget(), forked, forkEntry);
+					result.add(new Triple<>(preds, succs, instance));
+				}
+			}
+			return result;
+		}
+		if (edge instanceof IIcfgJoinTransitionThreadCurrent<?>) {
+			assert false : "Joins not supported";
+		}
+
+		return getInstances(edge.getPrecedingProcedure()).stream()
+				.map(t -> new Triple<>(Map.of(t, edge.getSource()), Map.of(t, edge.getTarget()), t))
+				.collect(Collectors.toList());
+	}
+
+	private List<Pair<ThreadInstance, IcfgLocation>> getErrorLocations() {
+		return mIcfg.getProcedureErrorNodes().entrySet().stream()
+				.flatMap(e -> e.getValue().stream().map(l -> new Pair<>(e.getKey(), l)))
+				.flatMap(e -> mInstances.stream().filter(i -> i.getTemplateName().equals(e.getKey()))
+						.<Pair<ThreadInstance, IcfgLocation>> map(i -> new Pair<>(i, e.getValue())))
+				.collect(Collectors.toList());
+	}
+
+	// Horn clause generation
+	// -----------------------------------------------------------------------------------------------------------------
 
 	/**
 	 * Builds the initial clause that encodes the precondition. By default, this method only fixes the initial location
 	 * of the threads.
 	 */
-	protected HornClauseBuilder buildInitialClause(final Map<ThreadInstance, IcfgLocation> initialLocations) {
+	protected HornClauseBuilder buildInitialClause() {
 		final var clause = createBuilder(mInvariantPredicate, "initial clause");
 
 		// add location constraints
+		final var initialLocs = getInitialLocations();
 		for (final var instance : mInstances) {
 			// If instance does not have an initial location, a constraint for mBottomLocation is added.
-			addOutLocationConstraint(clause, instance, initialLocations.get(instance));
+			addOutLocationConstraint(clause, instance, initialLocs.get(instance));
 		}
 
 		return clause;
@@ -339,6 +421,10 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 	// Auxiliary methods
 	// -----------------------------------------------------------------------------------------------------------------
+
+	protected Map<ThreadInstance, IcfgLocation> getInitialLocations() {
+		return mPrefs.concurrencyMode().getInitialLocations(mIcfg, mInstances);
+	}
 
 	protected void addInLocationConstraint(final HornClauseBuilder clause, final ThreadInstance threadInstance,
 			final IcfgLocation location) {

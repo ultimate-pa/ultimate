@@ -47,11 +47,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrent;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrentWithLbe;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrentWithSleep;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ConcurrencyMode;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgLiptonReducer;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.SleepSetThreadModularHornClauseProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ThreadModularHornClauseProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences;
 
 /**
@@ -91,10 +92,11 @@ public class IcfgToChcObserver extends BaseObserver {
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final HcSymbolTable hcSymbolTable = new HcSymbolTable(mgdScript);
-		final Collection<HornClause> resultChcs = getChcProvider(icfg, mgdScript, hcSymbolTable).getHornClauses(icfg);
+		final Collection<HornClause> resultChcs = getHornClauses(icfg, mgdScript, hcSymbolTable);
 
 		final boolean isReturnReachable = isReturnReachable(icfg);
-		final boolean hasNonLinearClauses = isReturnReachable || !IcfgUtils.getForksInLoop(icfg).isEmpty();
+		final boolean hasNonLinearClauses = isReturnReachable || !IcfgUtils.getForksInLoop(icfg).isEmpty()
+				|| mPrefs.concurrencyMode() == ConcurrencyMode.PARAMETRIC;
 		final ChcCategoryInfo chcCategoryInfo =
 				new ChcCategoryInfo(getLogics(resultChcs, mgdScript), hasNonLinearClauses);
 
@@ -155,7 +157,7 @@ public class IcfgToChcObserver extends BaseObserver {
 		return new IcfgEdgeIterator(icfg).asStream().anyMatch(IIcfgSummaryTransition.class::isInstance);
 	}
 
-	private IChcProvider getChcProvider(final IIcfg<IcfgLocation> icfg, final ManagedScript mgdScript,
+	private Collection<HornClause> getHornClauses(IIcfg<IcfgLocation> icfg, final ManagedScript mgdScript,
 			final HcSymbolTable hcSymbolTable) {
 		if (mPrefs.concurrencyMode() == ConcurrencyMode.PARAMETRIC || IcfgUtils.isConcurrent(icfg)) {
 			assert !isReturnReachable(icfg);
@@ -166,20 +168,20 @@ public class IcfgToChcObserver extends BaseObserver {
 				// TODO support combination of LBE and sleep sets
 				assert !mPrefs.useSleepSets();
 
-				return new ChcProviderConcurrentWithLbe(mgdScript, hcSymbolTable, mServices);
+				// Create 2 instances of every thread, to ensure the reduction checks mover properties of each thread
+				// template against another copy of the same template.
+				final int instanceCount = 2;
+
+				icfg = new IcfgLiptonReducer(mServices, icfg, instanceCount).getResult();
 			}
 
 			if (mPrefs.useSleepSets()) {
-				return new ChcProviderConcurrentWithSleep(mServices, mgdScript, hcSymbolTable, mPrefs.concurrencyMode(),
-						mPrefs.getThreadModularProofLevel());
+				final var independence = new SemanticIndependenceRelation<>(mServices, mgdScript, false, true);
+				return new SleepSetThreadModularHornClauseProvider(mgdScript, icfg, hcSymbolTable, independence, mPrefs)
+						.getClauses();
 			}
-			return new ChcProviderConcurrent(mgdScript, hcSymbolTable, mPrefs.concurrencyMode(),
-					mPrefs.getThreadModularProofLevel());
+			return new ThreadModularHornClauseProvider(mgdScript, icfg, hcSymbolTable, mPrefs).getClauses();
 		}
-		return new ChcProviderForCalls(mgdScript, hcSymbolTable);
-	}
-
-	public interface IChcProvider {
-		Collection<HornClause> getHornClauses(final IIcfg<IcfgLocation> icfg);
+		return new ChcProviderForCalls(mgdScript, hcSymbolTable).getHornClauses(icfg);
 	}
 }
