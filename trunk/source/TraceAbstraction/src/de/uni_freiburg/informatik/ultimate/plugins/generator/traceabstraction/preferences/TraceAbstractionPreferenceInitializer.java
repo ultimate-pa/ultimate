@@ -176,8 +176,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_STOP_AFTER_FIRST_VIOLATION = "Stop after first violation was found";
 	public static final String LABEL_CEGAR_RESTART_BEHAVIOUR = "CEGAR restart behaviour";
 	public static final String LABEL_ERROR_AUTOMATON_MODE = "Error locations removal mode";
-	public static final String LABEL_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS =
-			"When to check the insufficient erros location relative to the other error locations";
+	public static final String LABEL_ORDER_OF_ERROR_LOCATIONS = "Order of the error locations to be checked";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE = "Reuse of Floyd-Hoare automata";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
 			"Enhance during reuse of Floyd-Hoare automata";
@@ -283,7 +282,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final ErrorAutomatonType DEF_ERROR_AUTOMATON_MODE = ErrorAutomatonType.SIMPLE_ERROR_AUTOMATON;
 
-	public static final InsufficientError DEF_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS = InsufficientError.TOGETHER;
+	public static final OrderOfErrorLocations DEF_ORDER_OF_ERROR_LOCATIONS = OrderOfErrorLocations.TOGETHER;
 	public static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY =
 			CounterexampleSearchStrategy.BFS;
 	public static final RefinementStrategy DEF_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
@@ -338,7 +337,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			+ "\"ONE_CEGAR_PER_ERROR_LOCATION\", i.e., if one CEGAR loop analyzes multiple error locations, reachable "
 			+ "error locations are removed by refinining the abstraction with an error automaton specified by this mode.";
 
-	private static final String DESC_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS = null;
+	private static final String DESC_ORDER_OF_ERROR_LOCATIONS =
+			"Order to check the reachability for different types of error locations (for concurrent programs). "
+					+ "With " + OrderOfErrorLocations.INSUFFICIENT_FIRST
+					+ " we first check, if there are enough threads in our translation, before checking for errors in the program. "
+					+ OrderOfErrorLocations.PROGRAM_FIRST + " and " + OrderOfErrorLocations.TOGETHER
+					+ " work accordingly.";
 
 	private static final String DESC_COMPUTE_COUNTEREXAMPLE = null;
 	private static final String DESC_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS = null;
@@ -451,10 +455,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						DESC_CEGAR_RESTART_BEHAVIOUR, PreferenceType.Combo, CegarRestartBehaviour.values()),
 				new UltimatePreferenceItem<>(LABEL_ERROR_AUTOMATON_MODE, DEF_ERROR_AUTOMATON_MODE,
 						DESC_ERROR_AUTOMATON_MODE, PreferenceType.Combo, ErrorAutomatonType.values()),
-				new UltimatePreferenceItem<>(LABEL_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS,
-						DEF_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS,
-						DESC_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS, PreferenceType.Combo,
-						InsufficientError.values()),
+				new UltimatePreferenceItem<>(LABEL_ORDER_OF_ERROR_LOCATIONS, DEF_ORDER_OF_ERROR_LOCATIONS,
+						DESC_ORDER_OF_ERROR_LOCATIONS, PreferenceType.Combo, OrderOfErrorLocations.values()),
 
 				new UltimatePreferenceItem<>(LABEL_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE,
 						DEF_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE, PreferenceType.Boolean),
@@ -972,8 +974,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		WP, SP
 	}
 
-	public enum InsufficientError {
-		BEFORE, TOGETHER, AFTER
+	public enum OrderOfErrorLocations {
+		INSUFFICIENT_FIRST, PROGRAM_FIRST, TOGETHER
 	}
 
 	public enum PathProgramDumpStop {

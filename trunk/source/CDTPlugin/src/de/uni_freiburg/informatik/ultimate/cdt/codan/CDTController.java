@@ -132,12 +132,13 @@ public class CDTController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public IToolchainData<RunDefinition> selectTools(final List<ITool> tools) {
+	public IToolchainData<RunDefinition> selectTools(final IToolchain<RunDefinition> toolchain,
+			final List<ITool> tools) {
 		return mToolchainData;
 	}
 
 	@Override
-	public List<String> selectModel(final List<String> modelNames) {
+	public List<String> selectModel(final IToolchain<RunDefinition> toolchain, final List<String> modelNames) {
 		final ArrayList<String> returnList = new ArrayList<>();
 		for (final String model : modelNames) {
 			if (model.contains(
@@ -162,7 +163,7 @@ public class CDTController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public ISource selectParser(final Collection<ISource> parser) {
+	public ISource selectParser(final IToolchain<RunDefinition> toolchain, final Collection<ISource> parser) {
 		throw new UnsupportedOperationException("This method should never be called for this controller!");
 	}
 
@@ -173,14 +174,14 @@ public class CDTController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
+	public void displayToolchainResults(final IToolchain<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
+	public void displayException(final IToolchain<RunDefinition> toolchain, final String description,
 			final Throwable ex) {
 		// TODO Auto-generated method stub
 	}
@@ -250,7 +251,7 @@ public class CDTController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public IToolchainData<RunDefinition> prerun(final IToolchainData<RunDefinition> tcData) {
-		return tcData;
+	public IToolchainData<RunDefinition> prerun(final IToolchain<RunDefinition> toolchain) {
+		return toolchain.getCurrentToolchainData();
 	}
 }

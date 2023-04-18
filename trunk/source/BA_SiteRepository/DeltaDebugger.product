@@ -43,10 +43,9 @@
    </plugins>
 
    <features>
-      <feature id="BA_FeatureDependenciesCommandlineE4" version="0.2.3"/>
-      <feature id="BA_FeatureUltimateDeltaDebugger" version="0.2.3"/>
-      <feature id="BA_FeatureUltimateCommon" version="0.2.3"/>
-      <feature id="BA_FeatureDependenciesCommon" installMode="root"/>
+      <feature id="BA_FeatureUltimateDeltaDebugger"/>
+      <feature id="BA_FeatureUltimateCommon"/>
+      <feature id="BA_FeatureDependenciesCommon"/>
    </features>
 
    <configurations>

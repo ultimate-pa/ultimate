@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.cli.exceptions.InvalidFileArgumentExc
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -85,18 +86,18 @@ public class DeltaDebuggerController extends CommandLineController {
 	}
 
 	@Override
-	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
+	public void displayException(final IToolchain<RunDefinition> toolchain, final String description,
 			final Throwable ex) {
 		mException = Optional.of(new ToolchainException(description, ex));
 	}
 
 	@Override
-	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
+	public void displayToolchainResults(final IToolchain<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
 		// The copy is necessary, because otherwise the map is empty after
 		// executeToolchain returns?!?
 		mResults = Optional.of(new HashMap<>(results));
-		mServices = toolchain.getServices();
+		mServices = toolchain.getCurrentToolchainData().getServices();
 	}
 
 	@Override

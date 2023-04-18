@@ -75,8 +75,22 @@ public interface IPreferenceProvider {
 	void put(String key, Object value);
 
 	/**
-	 * * @return All settings represented by this preference provider on a single line.
+	 * @deprecated Was only required by Sifa, is not really necessary
+	 * @return All settings represented by this preference provider on a single line.
 	 */
+	@Deprecated
 	String getSingleLinePreferenceString();
+
+	/**
+	 * @return A map between keys and default values of this {@link IPreferenceProvider}. Changes in this map do not
+	 *         change the {@link IPreferenceProvider}.
+	 */
+	Map<String, Object> getDefaultPreferences();
+
+	/**
+	 * @return A map between keys and actual values of this {@link IPreferenceProvider}. Changes in this map do not
+	 *         change the {@link IPreferenceProvider}.
+	 */
+	Map<String, Object> getPreferences();
 
 }

@@ -83,7 +83,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InsufficientError;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.OrderOfErrorLocations;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
@@ -371,14 +371,14 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final Set<IcfgLocation> errNodesOfAllProc = IcfgUtils.getErrorLocations(icfg);
 		if (restartBehaviour == CegarRestartBehaviour.ONE_CEGAR_PER_ERROR_LOCATION) {
 			Stream<IcfgLocation> errorLocs = errNodesOfAllProc.stream();
-			if (mIsConcurrent && mPrefs.insufficientThreadErrorsVsProgramErrors() == InsufficientError.AFTER) {
-				switch (mPrefs.insufficientThreadErrorsVsProgramErrors()) {
-				case AFTER:
+			if (mIsConcurrent && mPrefs.getOrderOfErrorLocations() == OrderOfErrorLocations.PROGRAM_FIRST) {
+				switch (mPrefs.getOrderOfErrorLocations()) {
+				case PROGRAM_FIRST:
 					// Sort the errorLocs by their type, i.e. isInsufficientThreadsLocations last
 					errorLocs = errorLocs.sorted((x, y) -> Boolean.compare(isInsufficientThreadsLocation(x),
 							isInsufficientThreadsLocation(y)));
 					break;
-				case BEFORE:
+				case INSUFFICIENT_FIRST:
 					// Sort the errorLocs by their type, i.e. isInsufficientThreadsLocations first
 					errorLocs = errorLocs.sorted((x, y) -> Boolean.compare(isInsufficientThreadsLocation(y),
 							isInsufficientThreadsLocation(x)));
@@ -391,7 +391,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		}
 
 		assert restartBehaviour == CegarRestartBehaviour.ONLY_ONE_CEGAR : "unsupported CEGAR restart behaviour";
-		if (mIsConcurrent && mPrefs.insufficientThreadErrorsVsProgramErrors() != InsufficientError.TOGETHER
+		if (mIsConcurrent && mPrefs.getOrderOfErrorLocations() != OrderOfErrorLocations.TOGETHER
 				&& !IcfgUtils.getForksInLoop(icfg).isEmpty()) {
 			final Set<IcfgLocation> inUseErrors = new HashSet<>(getInUseErrorNodeMap(icfg).values());
 			final Set<IcfgLocation> otherErrors = DataStructureUtils.difference(errNodesOfAllProc, inUseErrors);
@@ -399,7 +399,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 					new Pair<>(AllErrorsAtOnceDebugIdentifier.INSTANCE, otherErrors);
 			final Pair<DebugIdentifier, Set<IcfgLocation>> inUse =
 					new Pair<>(InUseDebugIdentifier.INSTANCE, inUseErrors);
-			if (mPrefs.insufficientThreadErrorsVsProgramErrors() == InsufficientError.BEFORE) {
+			if (mPrefs.getOrderOfErrorLocations() == OrderOfErrorLocations.INSUFFICIENT_FIRST) {
 				return List.of(inUse, other);
 			}
 			return List.of(other, inUse);

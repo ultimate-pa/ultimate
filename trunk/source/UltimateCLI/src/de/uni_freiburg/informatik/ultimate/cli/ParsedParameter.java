@@ -140,6 +140,22 @@ public class ParsedParameter {
 		return mCli.hasOption(CommandLineOptions.OPTION_LONG_NAME_VERSION);
 	}
 
+	public boolean isFrontendSettingsRequested() {
+		return mCli.hasOption(CommandLineOptions.OPTION_LONG_NAME_FRONTEND_JSON_FROM_DEFAULTS);
+	}
+
+	public boolean isBackendWhitelistRequested() {
+		return mCli.hasOption(CommandLineOptions.OPTION_LONG_NAME_BACKEND_WHITELIST_JSON_FROM_DEFAULTS);
+	}
+
+	public boolean isFrontendSettingsDeltaRequested() {
+		return mCli.hasOption(CommandLineOptions.OPTION_LONG_NAME_FRONTEND_JSON_FROM_DELTA);
+	}
+
+	public boolean isBackendWhitelistDeltaRequested() {
+		return mCli.hasOption(CommandLineOptions.OPTION_LONG_NAME_BACKEND_WHITELIST_JSON_FROM_DELTA);
+	}
+
 	public boolean showExperimentals() {
 		return mCli.hasOption(CommandLineOptions.OPTION_LONG_NAME_EXPERIMENTAL);
 	}
@@ -224,8 +240,7 @@ public class ParsedParameter {
 			dir = new File(".").getAbsolutePath();
 		}
 
-		final List<File> files = new ArrayList<>();
-		files.addAll(Arrays.asList(getInputFiles()));
+		final List<File> files = new ArrayList<>(Arrays.asList(getInputFiles()));
 		if (hasSettings()) {
 			files.add(new File(getSettingsFile()));
 		}

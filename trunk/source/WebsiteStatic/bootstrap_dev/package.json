@@ -1,0 +1,27 @@
+{
+  "name": "bootstrap_dev_scratch",
+  "version": "1.0.0",
+  "description": "",
+  "main": ".",
+  "scripts": {
+    "css:prefix": "postcss --config build/postcss.config.js --replace \"*.css\" \"!*.min.css\"",
+    "css:compile": "node-sass --output-style expanded --source-map true --source-map-contents true --precision 6 scss/main.scss bootstrap.css",
+    "css:minify": "cleancss -O 1 --source-map --source-map-inline-sources --output bootstrap.min.css bootstrap.css",
+    "css:copy-dist": "copyfiles bootstrap.min.css bootstrap.min.css.map ../css",
+    "css": "npm run css:compile && npm run css:prefix && npm run css:minify && npm run css:copy-dist",
+    "watch": "watch \"npm run css\" scss"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "autoprefixer": "^10.4.14",
+    "clean-css-cli": "^5.6.2",
+    "node-sass": "^8.0.0",
+    "postcss-cli": "^10.1.0",
+    "watch": "^0.13.0"
+  },
+  "dependencies": {
+    "bootstrap": "^5.2.3",
+    "copyfiles": "^2.4.1"
+  }
+}

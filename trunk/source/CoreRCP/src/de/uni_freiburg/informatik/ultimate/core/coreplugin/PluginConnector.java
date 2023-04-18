@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -88,19 +90,16 @@ public class PluginConnector {
 	private final IToolchainStorage mStorage;
 	private final IUltimateServiceProvider mServices;
 
-	public PluginConnector(final IModelManager modelmanager, final ITool tool, final IController<RunDefinition> control,
-			final IToolchainStorage storage, final IUltimateServiceProvider services) {
-		assert storage != null;
-		assert control != null;
-		assert modelmanager != null;
-		assert tool != null;
-		assert services != null;
+	private final IToolchain<RunDefinition> mToolchain;
 
-		mModelManager = modelmanager;
-		mController = control;
-		mTool = tool;
-		mStorage = storage;
-		mServices = services;
+	public PluginConnector(final IToolchain<RunDefinition> toolchain, final IModelManager modelManager,
+			final ITool tool, final IController<RunDefinition> controller) {
+		mModelManager = Objects.requireNonNull(modelManager);
+		mController = Objects.requireNonNull(controller);
+		mTool = Objects.requireNonNull(tool);
+		mToolchain = Objects.requireNonNull(toolchain);
+		mStorage = Objects.requireNonNull(toolchain.getCurrentToolchainData().getStorage());
+		mServices = Objects.requireNonNull(toolchain.getCurrentToolchainData().getServices());
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		init();
 	}
@@ -217,7 +216,7 @@ public class PluginConnector {
 			break;
 		case USER:
 			if (mModelManager.size() > 1) {
-				for (final String s : mController.selectModel(mModelManager.getItemNames())) {
+				for (final String s : mController.selectModel(mToolchain, mModelManager.getItemNames())) {
 					final ModelType t = mModelManager.getGraphTypeById(s);
 					if (t != null) {
 						models.add(t);

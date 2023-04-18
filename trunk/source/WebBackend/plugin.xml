@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         id="WebBackend"
+         point="org.eclipse.core.runtime.applications">
+      <application
+            cardinality="*"
+            thread="main"
+            visible="true">
+            <run
+     	class="de.uni_freiburg.informatik.ultimate.web.backend.WebBackend">
+    	</run>
+      </application>
+   </extension>
+   <extension
+         id="WebBackendProduct"
+         point="org.eclipse.core.runtime.products">
+      <product
+            application="de.uni_freiburg.informatik.ultimate.web.backend.WebBackend"
+            name="WebBackend">
+         <property
+               name="appName"
+               value="WebBackend">
+         </property>
+      </product>
+   </extension>
+
+</plugin>

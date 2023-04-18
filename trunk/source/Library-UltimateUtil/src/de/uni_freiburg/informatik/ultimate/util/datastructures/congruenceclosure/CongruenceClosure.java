@@ -447,27 +447,23 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		freshElem |= mManager.addElementReportChange(this, elem1, true);
 		freshElem |= mManager.addElementReportChange(this, elem2, true);
 
-		if (!freshElem && getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL) {
-			// nothing to do
-			return false;
+		if (getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL) {
+			// No need to report existing equalities
+			return freshElem;
 		}
 
-		if (elem1.isLiteral() && elem2.isLiteral()) {
+		mElementTVER.reportDisequality(elem1, elem2);
 
-			assert getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL;
-			// special case: don't add a literal disequality explicitly
-		} else {
-			// normal case
-			mElementTVER.reportDisequality(elem1, elem2);
+		if (mElementTVER.isInconsistent()) {
+			return true;
+		}
 
-			if (mElementTVER.isInconsistent()) {
+		// Add literals equalities, if not both representatives are literals
+		if (!getRepresentativeElement(elem1).isLiteral() || !getRepresentativeElement(elem2).isLiteral()) {
+			mLiteralSetConstraints.reportDisequality(elem1, elem2);
+			if (mLiteralSetConstraints.isInconsistent()) {
 				return true;
 			}
-		}
-
-		mLiteralSetConstraints.reportDisequality(elem1, elem2);
-		if (mLiteralSetConstraints.isInconsistent()) {
-			return true;
 		}
 
 		final HashRelation<ELEM, ELEM> propDeqs = getAuxData().getPropagationsOnReportDisequality(elem1, elem2);

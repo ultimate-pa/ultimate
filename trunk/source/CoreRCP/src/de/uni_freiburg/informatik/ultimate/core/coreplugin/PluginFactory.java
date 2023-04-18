@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author dietsch
  *
  */
-final class PluginFactory implements IServiceFactoryFactory {
+public final class PluginFactory implements IServiceFactoryFactory {
 
 	private static final Class<?>[] ITOOLCHAIN_PLUGIN_CLASSES =
 			{ IAnalysis.class, IGenerator.class, IOutput.class, ISource.class };
@@ -83,7 +83,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 	private List<IToolchainPlugin> mToolchainPluginCache;
 	private List<ITool> mToolCache;
 
-	PluginFactory(final SettingsManager settingsManager, final ILogger logger) {
+	public PluginFactory(final SettingsManager settingsManager, final ILogger logger) {
 		mLogger = logger;
 		mRegistry = Platform.getExtensionRegistry();
 		mAvailableToolsByClass = new HashMap<>();
@@ -123,7 +123,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		return rtr;
 	}
 
-	List<String> getPluginIds() {
+	public List<String> getPluginIds() {
 		return new ArrayList<>(mPluginIDToClassName.keySet());
 	}
 
@@ -158,7 +158,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 	 *
 	 * @return
 	 */
-	List<IToolchainPlugin> getAllAvailableToolchainPlugins() {
+	public List<IToolchainPlugin> getAllAvailableToolchainPlugins() {
 		if (mToolchainPluginCache == null) {
 			mToolchainPluginCache = loadAdmissiblePlugins();
 		}
@@ -167,7 +167,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		return rtr;
 	}
 
-	List<ITool> getAllAvailableTools() {
+	public List<ITool> getAllAvailableTools() {
 		final List<ITool> rtr = new ArrayList<>();
 		if (mToolCache != null) {
 			rtr.addAll(mToolCache);
@@ -263,7 +263,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		}
 		final Pair<IConfigurationElement, Integer> preferredElem = preferredElemOptional.get();
 		final int minValue = preferredElem.getSecond();
-
+ 
 		// check if the minimum is unambiguous
 		final List<Pair<IConfigurationElement, Integer>> preferredElements =
 				elemsWithPreference.stream().filter(a -> a.getSecond().equals(minValue)).collect(Collectors.toList());

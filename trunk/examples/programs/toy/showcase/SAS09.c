@@ -10,12 +10,7 @@
  *
  */
 
-
-int nondet() {
-    int x;
-    return x;
-}
-
+extern int __VERIFIER_nondet_int(void);
 
 int main() {
     int x, y;
@@ -23,7 +18,7 @@ int main() {
     x = 0;
     y = 0;
 
-    while (nondet()) {
+    while (__VERIFIER_nondet_int()) {
         x = x + 1;
     }
 

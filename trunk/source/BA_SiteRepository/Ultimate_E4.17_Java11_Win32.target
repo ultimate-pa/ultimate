@@ -82,8 +82,8 @@
 		<plugin id="org.apache.commons.jxpath.source" version="1.3.0.v200911051830"/>
 		<plugin id="org.apache.commons.logging" version="1.2.0.v20180409-1502"/>
 		<plugin id="org.apache.commons.logging.source" version="1.2.0.v20180409-1502"/>
-		<plugin id="org.apache.felix.scr" />
-		<plugin id="org.apache.felix.scr.source" />
+		<plugin id="org.apache.felix.scr"/>
+		<plugin id="org.apache.felix.scr.source"/>
 		<plugin id="org.apache.xalan"/>
 		<plugin id="org.apache.xerces"/>
 		<plugin id="org.apache.xml.resolver"/>
@@ -183,8 +183,8 @@
 		<plugin id="org.eclipse.equinox.common" version="3.13.0.v20200828-1034"/>
 		<plugin id="org.eclipse.equinox.ds.source"/>
 		<plugin id="org.eclipse.equinox.ds"/>
-		<plugin id="org.eclipse.equinox.event.source" />
-		<plugin id="org.eclipse.equinox.event" />
+		<plugin id="org.eclipse.equinox.event.source"/>
+		<plugin id="org.eclipse.equinox.event"/>
 		<plugin id="org.eclipse.equinox.preferences" version="3.8.0.v20200422-1833"/>
 		<plugin id="org.eclipse.equinox.preferences.source" version="3.8.0.v20200422-1833"/>
 		<plugin id="org.eclipse.equinox.registry" version="3.9.0.v20200625-1425"/>
@@ -305,7 +305,6 @@
 		<plugin id="org.eclipse.tools.templates.core.source"/>
 		<plugin id="org.eclipse.ui.views.properties.tabbed" version="3.8.1000.v20200609-0849"/>
 		<plugin id="org.eclipse.ui.views.properties.tabbed.source" version="3.8.1000.v20200609-0849"/>
-		<plugin id="org.eclipse.pde.core"/>
 		<plugin id="org.eclipse.jdt.junit.runtime"/>
 		<plugin id="org.eclipse.pde.junit.runtime"/>
 		<plugin id="org.eclipse.jdt.junit4.runtime"/>
@@ -318,5 +317,25 @@
 		<plugin id="org.eclipse.cdt.make.core.source"/>
 		<plugin id="org.eclipse.cdt.build.gcc.core"/>
 		<plugin id="org.eclipse.cdt.build.gcc.core.source"/>
+		<plugin id="org.eclipse.jetty.util"/>
+		<plugin id="org.eclipse.jetty.util.source"/>
+		<plugin id="org.eclipse.jetty.servlet"/>
+		<plugin id="org.eclipse.jetty.servlet.source"/>
+		<plugin id="org.eclipse.jetty.server"/>
+		<plugin id="org.eclipse.jetty.server.source"/>
+		<plugin id="org.eclipse.jetty.security"/>
+		<plugin id="org.eclipse.jetty.security.source"/>
+		<plugin id="org.eclipse.jetty.io"/>
+		<plugin id="org.eclipse.jetty.io.source"/>
+		<plugin id="org.eclipse.jetty.http"/>
+		<plugin id="org.eclipse.jetty.http.source"/>
+		<plugin id="javax.xml.bind.source"/>
+		<plugin id="org.apache.batik.constants.source"/>
+		<plugin id="org.apache.batik.css.source"/>
+		<plugin id="org.apache.batik.i18n.source"/>
+		<plugin id="org.apache.batik.util.source"/>
+		<plugin id="org.eclipse.equinox.security.source"/>
+		<plugin id="org.eclipse.help.source"/>
+		<plugin id="org.eclipse.osgi.services.source"/>
 	</includeBundles>
 </target>
