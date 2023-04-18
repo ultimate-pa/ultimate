@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.NamedTermWrapper;
@@ -103,8 +104,8 @@ public class SmtChcScript implements IChcScript {
 	}
 
 	@Override
-	public Model getModel() {
-		return getScript().getModel();
+	public Optional<Model> getModel() {
+		return Optional.ofNullable(getScript().getModel());
 	}
 
 	@Override
@@ -118,7 +119,7 @@ public class SmtChcScript implements IChcScript {
 	}
 
 	@Override
-	public Derivation getDerivation() {
+	public Optional<Derivation> getDerivation() {
 		throw new UnsupportedOperationException("Derivations are not supported");
 	}
 
@@ -134,7 +135,7 @@ public class SmtChcScript implements IChcScript {
 	}
 
 	@Override
-	public Set<HornClause> getUnsatCore() {
+	public Optional<Set<HornClause>> getUnsatCore() {
 		final var core = mMgdScript.getUnsatCore(this);
 		final var result = new HashSet<HornClause>();
 		for (final var term : core) {
@@ -142,7 +143,7 @@ public class SmtChcScript implements IChcScript {
 			assert namedTerm.isNamed();
 			result.add(mName2Clause.get(namedTerm.getName()));
 		}
-		return result;
+		return Optional.of(result);
 	}
 
 	private void reset() {

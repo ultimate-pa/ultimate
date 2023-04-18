@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.chc;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Model;
@@ -52,6 +53,8 @@ public interface IChcScript {
 	/**
 	 * Try to solve the given system of Horn clauses.
 	 *
+	 * @param symbolTable
+	 *            A symbol table describing the predicates and other symbols used by the given CHC system
 	 * @param system
 	 *            The list of Horn clauses forming the CHC system
 	 * @return
@@ -59,7 +62,14 @@ public interface IChcScript {
 	LBool solve(HcSymbolTable symbolTable, List<HornClause> system);
 
 	/**
-	 * Determines if the solver can output a model for {@code SAT} queries.
+	 * Determines if the solver class implements retrieval of models for {@code SAT} queries.
+	 *
+	 * If this method returns {@code false}, then any call to {@link #produceModels(boolean)} or {@link #getModel()}
+	 * will throw an {@link UnsupportedOperationException}.
+	 *
+	 * If this method returns {@code true}, individual calls to {@link #getModel()} may still return nothing, e.g.
+	 * depending on the constraint logic used by the solved CHC system, or various characteristics of the underlying
+	 * solver.
 	 *
 	 * @return {@code true} if producing models is generally supported.
 	 */
@@ -74,17 +84,25 @@ public interface IChcScript {
 	void produceModels(boolean enable);
 
 	/**
-	 * If the last invocation of {@link #solve(HcSymbolTable, List)} returned {@code SAT}, returns a satisfying model.
+	 * If the last invocation of {@link #solve(HcSymbolTable, List)} returned {@code SAT}, tries to retrieve and return
+	 * a satisfying model. If no model can be retrieved, returns an empty {@link Optional}.
 	 *
 	 * Model production must have been enabled via {@link #produceModels(boolean)} prior to the call to
 	 * {@link #solve(HcSymbolTable, List)}.
 	 *
 	 * @return
 	 */
-	Model getModel();
+	Optional<Model> getModel();
 
 	/**
-	 * Determines if the solver can output a derivation for {@code UNSAT} queries.
+	 * Determines if the solver class implements retrieval of derivations for {@code UNSAT} queries.
+	 *
+	 * If this method returns {@code false}, then any call to {@link #produceDerivations(boolean)} or
+	 * {@link #getDerivation()} will throw an {@link UnsupportedOperationException}.
+	 *
+	 * If this method returns {@code true}, individual calls to {@link #getDerivation()} may still return nothing, e.g.
+	 * depending on the constraint logic used by the solved CHC system, or various characteristics of the underlying
+	 * solver.
 	 *
 	 * @return if producing derivations is generally supported.
 	 */
@@ -99,18 +117,26 @@ public interface IChcScript {
 	void produceDerivations(boolean enable);
 
 	/**
-	 * If the last invocation of {@link #solve(HcSymbolTable, List)} returned {@code UNSAT}, returns a derivation
-	 * proving unsatisfiability.
+	 * If the last invocation of {@link #solve(HcSymbolTable, List)} returned {@code UNSAT}, tries to retrieve and
+	 * return a derivation proving unsatisfiability. If no derivation can be retrieved, returns an empty
+	 * {@link Optional}.
 	 *
 	 * Derivation production must have been enabled via {@link #produceDerivations(boolean)} prior to the call to
 	 * {@link #solve(HcSymbolTable, List)}.
 	 *
 	 * @return
 	 */
-	Derivation getDerivation();
+	Optional<Derivation> getDerivation();
 
 	/**
-	 * Determines if the solver can output an unsatisfiable core for {@code UNSAT} queries.
+	 * Determines if the solver class implements retrieval of unsatisfiable cores for {@code UNSAT} queries.
+	 *
+	 * If this method returns {@code false}, then any call to {@link #produceUnsatCores(boolean)} or
+	 * {@link #getUnsatCore()} will throw an {@link UnsupportedOperationException}.
+	 *
+	 * If this method returns {@code true}, individual calls to {@link #getUnsatCore()} may still return nothing, e.g.
+	 * depending on the constraint logic used by the solved CHC system, or various characteristics of the underlying
+	 * solver.
 	 *
 	 * @return if producing UNSAT cores is generally supported.
 	 */
@@ -125,13 +151,13 @@ public interface IChcScript {
 	void produceUnsatCores(boolean enable);
 
 	/**
-	 * If the last invocation of {@link #solve(HcSymbolTable, List)} returned {@code UNSAT}, returns an unsatisfiable
-	 * core.
+	 * If the last invocation of {@link #solve(HcSymbolTable, List)} returned {@code UNSAT}, tries to retrieve and
+	 * return an unsatisfiable core. If no UNSAT core can be retrieved, returns an empty {@link Optional}.
 	 *
 	 * UNSAT core production must have been enabled via {@link #produceUnsatCores(boolean)} prior to the call to
 	 * {@link #solve(HcSymbolTable, List)}.
 	 *
 	 * @return
 	 */
-	Set<HornClause> getUnsatCore();
+	Optional<Set<HornClause>> getUnsatCore();
 }

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -61,6 +62,7 @@ public class TreeAutomizerChcScript implements IChcScript {
 
 	private boolean mProduceUnsatCores = false;
 
+	private LBool mLastResult = null;
 	private Set<HornClause> mUnsatCore;
 
 	public TreeAutomizerChcScript(final IUltimateServiceProvider services, final ManagedScript mgdScript,
@@ -86,7 +88,8 @@ public class TreeAutomizerChcScript implements IChcScript {
 		final var cegar = new TreeAutomizerCEGAR(mServices, annot, mPrefs, mLogger);
 		try {
 			final var result = cegar.iterate();
-			return resultToLBool(result);
+			mLastResult = resultToLBool(result);
+			return mLastResult;
 		} catch (final AutomataLibraryException e) {
 			throw new IllegalStateException(e);
 		}
@@ -121,7 +124,7 @@ public class TreeAutomizerChcScript implements IChcScript {
 	}
 
 	@Override
-	public Model getModel() {
+	public Optional<Model> getModel() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -136,7 +139,7 @@ public class TreeAutomizerChcScript implements IChcScript {
 	}
 
 	@Override
-	public Derivation getDerivation() {
+	public Optional<Derivation> getDerivation() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -151,12 +154,11 @@ public class TreeAutomizerChcScript implements IChcScript {
 	}
 
 	@Override
-	public Set<HornClause> getUnsatCore() {
-		if (mUnsatCore == null) {
-			throw new UnsupportedOperationException(
-					"No UNSAT core known. Was the last query SAT, or did you forget to enable UNSAT cores?");
+	public Optional<Set<HornClause>> getUnsatCore() {
+		if (mLastResult != LBool.UNSAT) {
+			throw new UnsupportedOperationException("No UNSAT core available: last query was " + mLastResult);
 		}
-		return mUnsatCore;
+		return Optional.ofNullable(mUnsatCore);
 	}
 
 	private static Set<HornClause> extractUnsatCore(final Tree<HornClause> tree) {

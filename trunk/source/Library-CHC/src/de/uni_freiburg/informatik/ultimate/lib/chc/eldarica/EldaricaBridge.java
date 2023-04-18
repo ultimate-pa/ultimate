@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -74,6 +75,7 @@ public class EldaricaBridge implements IChcScript, AutoCloseable {
 	private Translator mTranslator;
 	private Map<Clause, HornClause> mClauseMap;
 
+	private LBool mLastResult = null;
 	private Lazy<Map<HcPredicateSymbol, Term>> mLastModel;
 	private Lazy<Derivation> mLastDerivation;
 	private Lazy<Set<HornClause>> mLastUnsatCore;
@@ -121,25 +123,26 @@ public class EldaricaBridge implements IChcScript, AutoCloseable {
 		final var backtranslator = mTranslator.createBacktranslator(mScript);
 
 		if (result.isLeft()) {
+			mLastResult = LBool.SAT;
 			if (mProduceModels) {
 				final var modelBuilder = result.left().get();
 				mLastModel = new Lazy<>(() -> translateModel(backtranslator, modelBuilder.apply()));
 			}
-			return LBool.SAT;
-		}
-
-		if (mProduceDerivations || mProduceUnsatCores) {
-			final var derivationBuilder = result.right().get();
-			final var clauseMap = mClauseMap;
-			if (mProduceDerivations) {
-				mLastDerivation = new Lazy<>(
-						() -> translateDerivation(backtranslator, clauseMap, derivationBuilder.apply().toTree()));
+		} else {
+			mLastResult = LBool.UNSAT;
+			if (mProduceDerivations || mProduceUnsatCores) {
+				final var derivationBuilder = result.right().get();
+				final var clauseMap = mClauseMap;
+				if (mProduceDerivations) {
+					mLastDerivation = new Lazy<>(
+							() -> translateDerivation(backtranslator, clauseMap, derivationBuilder.apply().toTree()));
+				}
+				if (mProduceUnsatCores) {
+					mLastUnsatCore = new Lazy<>(() -> extractUnsatCore(clauseMap, derivationBuilder.apply().toTree()));
+				}
 			}
-			if (mProduceUnsatCores) {
-				mLastUnsatCore = new Lazy<>(() -> extractUnsatCore(clauseMap, derivationBuilder.apply().toTree()));
-			}
 		}
-		return LBool.UNSAT;
+		return mLastResult;
 	}
 
 	private List<Clause> translateSystem(final java.util.Collection<HornClause> system) {
@@ -163,10 +166,12 @@ public class EldaricaBridge implements IChcScript, AutoCloseable {
 	}
 
 	@Override
-	public Model getModel() {
+	public Optional<Model> getModel() {
+		if (mLastResult != LBool.SAT) {
+			throw new UnsupportedOperationException("No model available: last query was " + mLastResult);
+		}
 		if (mLastModel == null) {
-			throw new UnsupportedOperationException(
-					"No CHC model known. Was the last query UNSAT, or did you forget to enable model production?");
+			return Optional.empty();
 		}
 		// TODO from map to model -- see other branch
 		mLastModel.get();
@@ -195,12 +200,14 @@ public class EldaricaBridge implements IChcScript, AutoCloseable {
 	}
 
 	@Override
-	public Derivation getDerivation() {
-		if (mLastDerivation == null) {
-			throw new UnsupportedOperationException(
-					"No derivation known. Was the last query SAT, or did you forget to enable derivation production?");
+	public Optional<Derivation> getDerivation() {
+		if (mLastResult != LBool.UNSAT) {
+			throw new UnsupportedOperationException("No derivation available: last query was " + mLastResult);
 		}
-		return mLastDerivation.get();
+		if (mLastDerivation == null) {
+			return Optional.empty();
+		}
+		return Optional.of(mLastDerivation.get());
 	}
 
 	private static Derivation translateDerivation(final Backtranslator backtranslator,
@@ -233,12 +240,14 @@ public class EldaricaBridge implements IChcScript, AutoCloseable {
 	}
 
 	@Override
-	public Set<HornClause> getUnsatCore() {
-		if (mLastUnsatCore == null) {
-			throw new UnsupportedOperationException(
-					"No UNSAT core known. Was the last query SAT, or did you forget to enable UNSAT core production?");
+	public Optional<Set<HornClause>> getUnsatCore() {
+		if (mLastResult != LBool.UNSAT) {
+			throw new UnsupportedOperationException("No UNSAT core available: last query was " + mLastResult);
 		}
-		return mLastUnsatCore.get();
+		if (mLastUnsatCore == null) {
+			return Optional.empty();
+		}
+		return Optional.of(mLastUnsatCore.get());
 	}
 
 	private static Set<HornClause> extractUnsatCore(final Map<Clause, HornClause> clauseMap,
