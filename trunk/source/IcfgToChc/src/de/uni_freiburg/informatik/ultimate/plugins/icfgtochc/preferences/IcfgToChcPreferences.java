@@ -27,11 +27,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrent.ConcurrencyMode;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrent.SpecMode;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ConcurrencyMode;
 
 public class IcfgToChcPreferences {
 	private final IPreferenceProvider mPrefs;
+
+	public enum SpecMode {
+		ASSERT_VIOLATIONS, PRE_POST
+	}
 
 	public IcfgToChcPreferences(final IPreferenceProvider prefs) {
 		mPrefs = prefs;

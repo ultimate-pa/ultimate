@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -10,7 +9,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
@@ -29,13 +27,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public class ChcProviderConcurrent implements IChcProvider {
-	public enum ConcurrencyMode {
-		SINGLE_MAIN_THREAD, PARAMETRIC
-	}
-
-	public enum SpecMode {
-		ASSERT_VIOLATIONS, PRE_POST
-	}
 
 	protected final ManagedScript mMgdScript;
 	protected final HcSymbolTable mHcSymbolTable;
@@ -54,14 +45,15 @@ public class ChcProviderConcurrent implements IChcProvider {
 
 	@Override
 	public Collection<HornClause> getHornClauses(final IIcfg<IcfgLocation> icfg) {
-		final var threadBounds = getThreadNumbersAndUnboundedThreads(icfg);
+		final var threadBounds = mMode.getThreadNumbersAndUnboundedThreads(icfg, mLevel);
 		final var numberOfThreads = threadBounds.getFirst();
 		final var unboundedThreads = threadBounds.getSecond();
 
 		final var factory = createFactory(numberOfThreads, icfg);
 		final List<HornClause> result = new ArrayList<>();
 
-		final var initialClause = factory.buildInitialClause(getInitialLocations(icfg, factory.getInstances())).build();
+		final var initialClause =
+				factory.buildInitialClause(mMode.getInitialLocations(icfg, factory.getInstances())).build();
 		result.add(initialClause);
 
 		final Map<String, IcfgLocation> entryNodes = icfg.getProcedureEntryNodes();
@@ -120,60 +112,7 @@ public class ChcProviderConcurrent implements IChcProvider {
 				.collect(Collectors.toList());
 	}
 
-	protected Pair<Map<String, Integer>, List<String>>
-			getThreadNumbersAndUnboundedThreads(final IIcfg<IcfgLocation> icfg) {
-		if (mMode == ConcurrencyMode.PARAMETRIC) {
-			final var numberOfThreads =
-					icfg.getInitialNodes().stream().collect(Collectors.toMap(loc -> loc.getProcedure(), loc -> mLevel));
-			final var unbounded = List.copyOf(numberOfThreads.keySet());
-			return new Pair<>(numberOfThreads, unbounded);
-		}
-
-		assert mMode == ConcurrencyMode.SINGLE_MAIN_THREAD : "Unknown mode: " + mMode;
-
-		final var forksInLoops = IcfgUtils.getForksInLoop(icfg);
-		final var instanceMap = icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap();
-		final Map<String, Integer> numberOfThreads = new HashMap<>();
-		icfg.getInitialNodes().forEach(x -> numberOfThreads.put(x.getProcedure(), 1));
-		final List<String> unboundedThreads = new ArrayList<>();
-		// TODO: This needs to be more accurate in general
-		for (final var fork : instanceMap.keySet()) {
-			final String procedure = fork.getNameOfForkedProcedure();
-			// TODO: Only add if fork is reachable
-			if (forksInLoops.contains(fork)) {
-				numberOfThreads.put(procedure, mLevel);
-				unboundedThreads.add(procedure);
-			} else {
-				final Integer oldCount = numberOfThreads.getOrDefault(procedure, 0);
-				if (oldCount == mLevel) {
-					unboundedThreads.add(procedure);
-				} else {
-					numberOfThreads.put(procedure, oldCount + 1);
-				}
-			}
-		}
-
-		return new Pair<>(numberOfThreads, unboundedThreads);
-	}
-
-	protected Map<ThreadInstance, IcfgLocation> getInitialLocations(final IIcfg<IcfgLocation> icfg,
-			final List<ThreadInstance> instances) {
-		switch (mMode) {
-		case PARAMETRIC:
-			// combine each initial location (usually there is only one) with ALL instances of its template
-			return icfg
-					.getInitialNodes().stream().flatMap(l -> instances.stream()
-							.filter(i -> i.getTemplateName().equals(l.getProcedure())).map(i -> new Pair<>(i, l)))
-					.collect(Collectors.toMap(Pair::getKey, Pair::getValue));
-		case SINGLE_MAIN_THREAD:
-			// combine each initial location (usually there is only one) with instance 0 of its template
-			return icfg.getInitialNodes().stream()
-					.collect(Collectors.toMap(l -> new ThreadInstance(l.getProcedure(), 0), l -> l));
-		}
-		throw new UnsupportedOperationException("Unknown mode: " + mMode);
-	}
-
-	protected List<Pair<ThreadInstance, IcfgLocation>> getErrorLocations(final IIcfg<IcfgLocation> icfg,
+	private static List<Pair<ThreadInstance, IcfgLocation>> getErrorLocations(final IIcfg<IcfgLocation> icfg,
 			final List<ThreadInstance> instances) {
 		return icfg.getProcedureErrorNodes().entrySet().stream()
 				.flatMap(e -> e.getValue().stream().map(l -> new Pair<>(e.getKey(), l))).flatMap(e -> instances.stream()
