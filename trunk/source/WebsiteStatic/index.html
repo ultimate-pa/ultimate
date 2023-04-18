@@ -138,10 +138,11 @@
   <div class="row" id="description"></div>
   <div class="row tools">
     <h3>Tools</h3>
-    <div class="col-12">
-      <div class="card-deck">
+    <div class="col-12 mb-4">
+      <div class="row row-cols-1 row-cols-md-5 g-4">
         {{#each tools}}
-        <div class="card border-secondary shadow mb-3 tool-card">
+        <div class="col">
+        <div class="card border-secondary shadow mb-3 tool-card h-100">
           <div class="card-header"><a href="?ui=tool&tool={{this.id}}">{{this.name}}</a></div>
           <div class="card-body text-black-70">
             <h5 class="card-title">Description</h5>
@@ -155,6 +156,7 @@
             <a href="?ui=tool&tool={{this.id}}" class="btn btn-secondary">Read more</a>
             <a href="?ui=int&tool={{this.id}}" class="btn btn-secondary">Try online</a>
           </div>
+        </div>
         </div>
         {{~/each}}
       </div>
