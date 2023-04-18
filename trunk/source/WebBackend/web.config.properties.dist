@@ -21,3 +21,6 @@ LOG_FILE_PATH=C:\\path\\to\\var\\log\\logfile.log
 LOG_LEVEL=INFO
 
 TMP_DIR=
+
+# Timeout in seconds for any request
+FORCED_TIMEOUT=90
