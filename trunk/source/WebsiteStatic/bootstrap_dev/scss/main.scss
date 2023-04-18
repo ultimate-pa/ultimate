@@ -32,6 +32,11 @@ $dark:      $gray-700 !default;
 
 $yiq-contrasted-threshold:  175 !default;
 
+// Recognizable links
+$link-color: blue;
+$link-decoration: none;
+$link-hover-decoration: underline;
+
 // Fonts
 $font-size-base: 1rem !default;
 $h1-font-size: 2rem !default;
