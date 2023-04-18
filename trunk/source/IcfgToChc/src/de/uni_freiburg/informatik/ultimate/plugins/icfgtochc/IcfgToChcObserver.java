@@ -49,9 +49,10 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrent;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrent.Mode;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrent.ConcurrencyMode;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrentWithLbe;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrentWithSleep;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences;
 
 /**
  *
@@ -62,18 +63,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProvi
 public class IcfgToChcObserver extends BaseObserver {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private final IcfgToChcPreferences mPrefs;
 
 	private IElement mResult;
 
-	// TODO: Make these into settings
-	private static final boolean TREAT_AS_PARAMETRIC_PROGRAM = true;
-	private static final boolean USE_LBE_FOR_CONCURRENT_PROGRAMS = false;
-	private static final boolean USE_SLEEP_SETS = true;
-	private static final int THREAD_MODULAR_PROOF_LEVEL = 2;
-
-	public IcfgToChcObserver(final ILogger logger, final IUltimateServiceProvider services) {
+	public IcfgToChcObserver(final ILogger logger, final IUltimateServiceProvider services,
+			final IcfgToChcPreferences prefs) {
 		mLogger = logger;
 		mServices = services;
+		mPrefs = prefs;
 	}
 
 	public IElement getModel() {
@@ -111,7 +109,7 @@ public class IcfgToChcObserver extends BaseObserver {
 		ModelUtils.copyAnnotations(icfg, mResult);
 	}
 
-	private Logics getLogics(final Collection<HornClause> resultChcs, final ManagedScript mgdScript) {
+	private static Logics getLogics(final Collection<HornClause> resultChcs, final ManagedScript mgdScript) {
 		final TermClassifier termClassifierChcs = new TermClassifier();
 		resultChcs.forEach(chc -> termClassifierChcs.checkTerm(chc.constructFormula(mgdScript, false)));
 		final TermClassifier termClassifierConstraints = new TermClassifier();
@@ -159,24 +157,24 @@ public class IcfgToChcObserver extends BaseObserver {
 
 	private IChcProvider getChcProvider(final IIcfg<IcfgLocation> icfg, final ManagedScript mgdScript,
 			final HcSymbolTable hcSymbolTable) {
-		if (TREAT_AS_PARAMETRIC_PROGRAM || IcfgUtils.isConcurrent(icfg)) {
+		if (mPrefs.concurrencyMode() == ConcurrencyMode.PARAMETRIC || IcfgUtils.isConcurrent(icfg)) {
 			assert !isReturnReachable(icfg);
-			if (USE_LBE_FOR_CONCURRENT_PROGRAMS) {
+			if (mPrefs.useLiptonReduction()) {
 				// TODO support LBE for parametric programs
-				assert !TREAT_AS_PARAMETRIC_PROGRAM;
+				assert mPrefs.concurrencyMode() == ConcurrencyMode.SINGLE_MAIN_THREAD;
 
 				// TODO support combination of LBE and sleep sets
-				assert !USE_SLEEP_SETS;
+				assert !mPrefs.useSleepSets();
 
 				return new ChcProviderConcurrentWithLbe(mgdScript, hcSymbolTable, mServices);
 			}
 
-			final var mode = TREAT_AS_PARAMETRIC_PROGRAM ? Mode.PARAMETRIC : Mode.SINGLE_MAIN_THREAD;
-			if (USE_SLEEP_SETS) {
-				return new ChcProviderConcurrentWithSleep(mServices, mgdScript, hcSymbolTable, mode,
-						THREAD_MODULAR_PROOF_LEVEL);
+			if (mPrefs.useSleepSets()) {
+				return new ChcProviderConcurrentWithSleep(mServices, mgdScript, hcSymbolTable, mPrefs.concurrencyMode(),
+						mPrefs.getThreadModularProofLevel());
 			}
-			return new ChcProviderConcurrent(mgdScript, hcSymbolTable, mode, THREAD_MODULAR_PROOF_LEVEL);
+			return new ChcProviderConcurrent(mgdScript, hcSymbolTable, mPrefs.concurrencyMode(),
+					mPrefs.getThreadModularProofLevel());
 		}
 		return new ChcProviderForCalls(mgdScript, hcSymbolTable);
 	}

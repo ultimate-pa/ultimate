@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2019 Alexander Nutz (nutz@informatik.uni-freiburg.de)
- * Copyright (C) 2019 University of Freiburg
+ * Copyright (C) 2023 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2023 University of Freiburg
  *
  * This file is part of the ULTIMATE IcfgToChc plug-in.
  *
@@ -26,41 +26,34 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrent.ConcurrencyMode;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrent.SpecMode;
 
-/**
- *
- * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
- *
- */
-public class IcfgToChcPreferences extends UltimatePreferenceInitializer {
+public class IcfgToChcPreferences {
+	private final IPreferenceProvider mPrefs;
 
-//	public static final String LABEL_TRANSFORMATION_TYPE = "TransformationType";
-//	private static final String DESC_TRANSFORMATION_TYPE = "";
-
-	/**
-	 * Default constructor.
-	 */
-	public IcfgToChcPreferences() {
-		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	public IcfgToChcPreferences(final IPreferenceProvider prefs) {
+		mPrefs = prefs;
 	}
 
-	@Override
-	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] {
-
-//				new UltimatePreferenceItem<>(LABEL_TRANSFORMATION_TYPE,
-//						TransformationTestType.LOOP_ACCELERATION_EXAMPLE, DESC_TRANSFORMATION_TYPE,
-//						PreferenceType.Combo, TransformationTestType.values()),
-
-		};
+	public ConcurrencyMode concurrencyMode() {
+		return mPrefs.getEnum(IcfgToChcPreferenceInitializer.LABEL_CONCURRENCY_MODE, ConcurrencyMode.class);
 	}
 
-	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {
-		return services.getPreferenceProvider(Activator.PLUGIN_ID);
+	public SpecMode specMode() {
+		return mPrefs.getEnum(IcfgToChcPreferenceInitializer.LABEL_SPEC_MODE, SpecMode.class);
+	}
+
+	public int getThreadModularProofLevel() {
+		return mPrefs.getInt(IcfgToChcPreferenceInitializer.LABEL_THREADMODULAR_LEVEL);
+	}
+
+	public boolean useLiptonReduction() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_LIPTON_REDUCTION);
+	}
+
+	public boolean useSleepSets() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_SLEEP_SET_REDUCTION);
 	}
 }

@@ -29,17 +29,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public class ChcProviderConcurrent implements IChcProvider {
-	public enum Mode {
+	public enum ConcurrencyMode {
 		SINGLE_MAIN_THREAD, PARAMETRIC
+	}
+
+	public enum SpecMode {
+		ASSERT_VIOLATIONS, PRE_POST
 	}
 
 	protected final ManagedScript mMgdScript;
 	protected final HcSymbolTable mHcSymbolTable;
-	protected final Mode mMode;
+	protected final ConcurrencyMode mMode;
 	protected final int mLevel;
 
-	public ChcProviderConcurrent(final ManagedScript mgdScript, final HcSymbolTable hcSymbolTable, final Mode mode,
-			final int level) {
+	public ChcProviderConcurrent(final ManagedScript mgdScript, final HcSymbolTable hcSymbolTable,
+			final ConcurrencyMode mode, final int level) {
 		mMgdScript = mgdScript;
 		mHcSymbolTable = hcSymbolTable;
 		mMode = mode;
@@ -118,14 +122,14 @@ public class ChcProviderConcurrent implements IChcProvider {
 
 	protected Pair<Map<String, Integer>, List<String>>
 			getThreadNumbersAndUnboundedThreads(final IIcfg<IcfgLocation> icfg) {
-		if (mMode == Mode.PARAMETRIC) {
+		if (mMode == ConcurrencyMode.PARAMETRIC) {
 			final var numberOfThreads =
 					icfg.getInitialNodes().stream().collect(Collectors.toMap(loc -> loc.getProcedure(), loc -> mLevel));
 			final var unbounded = List.copyOf(numberOfThreads.keySet());
 			return new Pair<>(numberOfThreads, unbounded);
 		}
 
-		assert mMode == Mode.SINGLE_MAIN_THREAD : "Unknown mode: " + mMode;
+		assert mMode == ConcurrencyMode.SINGLE_MAIN_THREAD : "Unknown mode: " + mMode;
 
 		final var forksInLoops = IcfgUtils.getForksInLoop(icfg);
 		final var instanceMap = icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap();

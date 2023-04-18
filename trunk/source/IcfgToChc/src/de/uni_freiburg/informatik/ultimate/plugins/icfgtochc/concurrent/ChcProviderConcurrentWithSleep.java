@@ -40,7 +40,7 @@ public class ChcProviderConcurrentWithSleep extends ChcProviderConcurrent {
 	private final IUltimateServiceProvider mServices;
 
 	public ChcProviderConcurrentWithSleep(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final HcSymbolTable hcSymbolTable, final Mode mode, final int level) {
+			final HcSymbolTable hcSymbolTable, final ConcurrencyMode mode, final int level) {
 		super(mgdScript, hcSymbolTable, mode, level);
 		mServices = services;
 	}
