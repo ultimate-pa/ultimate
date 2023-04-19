@@ -65,7 +65,3 @@ get_git_root() {
     exit 1
   fi
 }
-
-### Shared settings 
-
-
