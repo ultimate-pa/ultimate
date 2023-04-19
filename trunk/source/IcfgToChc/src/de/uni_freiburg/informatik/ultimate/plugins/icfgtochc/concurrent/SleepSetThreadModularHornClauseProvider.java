@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -52,10 +53,10 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 	private final Map<ThreadInstance, HcThreadIdVar> mIdVars;
 	private final Map<ThreadInstance, HcSleepVar> mSleepVars;
 
-	public SleepSetThreadModularHornClauseProvider(final ManagedScript mgdScript, final IIcfg<IcfgLocation> icfg,
-			final HcSymbolTable symbolTable, final IIndependenceRelation<?, ? super IIcfgTransition<?>> independence,
-			final IcfgToChcPreferences prefs) {
-		super(mgdScript, icfg, symbolTable, prefs);
+	public SleepSetThreadModularHornClauseProvider(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final IIcfg<IcfgLocation> icfg, final HcSymbolTable symbolTable,
+			final IIndependenceRelation<?, ? super IIcfgTransition<?>> independence, final IcfgToChcPreferences prefs) {
+		super(services, mgdScript, icfg, symbolTable, prefs);
 		mIndependence = independence;
 		mThreadLocations = icfg.getProgramPoints().entrySet().stream()
 				.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().values()));
@@ -217,10 +218,11 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 
 	protected Term getCommutativityConstraint(final ThreadInstance instance, final Term locVar,
 			final IIcfgTransition<?> currentEdge) {
-
 		final var commLocations = new HashSet<Term>();
 		for (final var loc : mThreadLocations.get(instance.getTemplateName())) {
 			if (loc.getOutgoingEdges().stream()
+					// ignore spec edges: the original edges are replaced, and the replacing transitions commute
+					.filter(e -> !isPreConditionSpecEdge(e) && !isPostConditionSpecEdge(e))
 					.allMatch(e -> mIndependence.isIndependent(null, e, currentEdge) == Dependence.INDEPENDENT)) {
 				commLocations.add(getLocIndexTerm(loc, instance.getTemplateName()));
 			}

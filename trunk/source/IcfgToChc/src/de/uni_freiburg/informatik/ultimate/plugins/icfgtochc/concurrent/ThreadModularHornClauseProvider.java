@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -49,6 +50,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -57,13 +61,19 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences.SpecMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Generates Horn clauses for a thread-modular proof.
+ *
+ * This class supports two modes of specification: Either we prove absence of assertion violations in all threads, or we
+ * prove a precondition-postcondition pair (the postcondition holds once all initially running threads have terminated).
+ * The specification mode is set via the preferences (passed to the constructor).
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
@@ -73,6 +83,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	private static final String FUNCTION_NAME = "Inv";
 	private static final int INTERFERING_INSTANCE_ID = -1;
 
+	protected final IUltimateServiceProvider mServices;
 	protected final IIcfg<?> mIcfg;
 	protected final IcfgToChcPreferences mPrefs;
 	private final IIcfgSymbolTable mCfgSymbolTable;
@@ -92,19 +103,22 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	protected final PredicateInfo mInvariantPredicate;
 
 	protected final Set<HcGlobalVar> mGlobalVars = new HashSet<>();
+	protected final HcThreadCounterVar mStartedVar;
+	protected final HcThreadCounterVar mTerminatedVar;
 	protected final Map<ThreadInstance, List<IHcThreadSpecificVar>> mThreadSpecificVars = new HashMap<>();
 	protected final Map<ThreadInstance, HcLocationVar> mLocationVars = new HashMap<>();
 	protected final NestedMap2<ThreadInstance, IProgramVar, HcLocalVar> mLocalVars = new NestedMap2<>();
 
-	public ThreadModularHornClauseProvider(final ManagedScript mgdScript, final IIcfg<?> icfg,
-			final HcSymbolTable symbolTable, final IcfgToChcPreferences prefs) {
-		this(mgdScript, icfg, symbolTable, x -> true, prefs);
+	public ThreadModularHornClauseProvider(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final IIcfg<?> icfg, final HcSymbolTable symbolTable, final IcfgToChcPreferences prefs) {
+		this(services, mgdScript, icfg, symbolTable, x -> true, prefs);
 	}
 
-	public ThreadModularHornClauseProvider(final ManagedScript mgdScript, final IIcfg<?> icfg,
-			final HcSymbolTable symbolTable, final Predicate<IProgramVar> variableFilter,
+	public ThreadModularHornClauseProvider(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final IIcfg<?> icfg, final HcSymbolTable symbolTable, final Predicate<IProgramVar> variableFilter,
 			final IcfgToChcPreferences prefs) {
 		super(mgdScript, symbolTable);
+		mServices = services;
 		mIcfg = icfg;
 		mPrefs = prefs;
 		mCfgSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
@@ -117,6 +131,13 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		mUnboundedTemplates = threadInfo.getSecond();
 
 		mBottomLocation = numeral(-1);
+		if (mPrefs.specMode() == SpecMode.PRE_POST) {
+			mStartedVar = new HcThreadCounterVar(true, getIntSort());
+			mTerminatedVar = new HcThreadCounterVar(false, getIntSort());
+		} else {
+			mStartedVar = null;
+			mTerminatedVar = null;
+		}
 		mInvariantPredicate = createInvariantPredicate();
 	}
 
@@ -163,6 +184,13 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	 */
 	protected List<IHcReplacementVar> getInvariantParameters() {
 		final var result = new ArrayList<IHcReplacementVar>();
+
+		// add variables for thread-modular encoding of postconditions
+		if (mPrefs.specMode() == SpecMode.PRE_POST) {
+			result.add(mStartedVar);
+			result.add(mTerminatedVar);
+		}
+
 		result.addAll(createGlobalVars());
 		for (final var instance : mInstances) {
 			final var threadSpecific = createThreadSpecificVars(instance);
@@ -229,26 +257,96 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		for (final String proc : mTemplates) {
 			final IcfgEdgeIterator edges = new IcfgEdgeIterator(entryNodes.get(proc).getOutgoingEdges());
 			while (edges.hasNext()) {
-				final IcfgEdge edge = edges.next();
+				final IcfgEdge original = edges.next();
+
+				// replace spec edges by dummy transitions that do nothing (actual constraints are added later)
+				IcfgEdge edge;
+				if (isPreConditionSpecEdge(original) || isPostConditionSpecEdge(original)) {
+					edge = createDummyEdge(original);
+				} else {
+					edge = original;
+				}
+
+				// add inductivity clauses
 				for (final var prePost : getCartesianPrePostProduct(edge)) {
 					final var clause =
 							buildInductivityClause(edge, prePost.getFirst(), prePost.getSecond(), prePost.getThird());
+					transformSpecEdgeClause(original, clause);
 					result.add(clause);
 				}
 
+				// add non-interference clause
 				if (mUnboundedTemplates.contains(proc)) {
-					result.add(buildNonInterferenceClause(edge));
+					final var clause = buildNonInterferenceClause(edge);
+					transformSpecEdgeClause(original, clause);
+					result.add(clause);
 				}
 			}
 		}
 
-		final var errorLocs = getErrorLocations();
-		for (final var pair : errorLocs) {
-			final var safetyClause = buildSafetyClause(pair.getFirst(), pair.getSecond());
-			result.add(safetyClause);
+		// add safety clauses
+		switch (mPrefs.specMode()) {
+		case ASSERT_VIOLATIONS:
+			for (final var pair : getErrorLocations()) {
+				final var safetyClause = buildErrorSafetyClause(pair.getFirst(), pair.getSecond());
+				result.add(safetyClause);
+			}
+			break;
+		case PRE_POST:
+			for (final var thread : getInitialLocations().keySet()) {
+				final var safetyClause = buildPostconditionSafetyClause(thread);
+				result.add(safetyClause);
+			}
+			break;
 		}
 
 		return result;
+	}
+
+	protected IcfgEdge createDummyEdge(final IcfgEdge original) {
+		final var tf = TransFormulaBuilder.getTrivialTransFormula(mManagedScript);
+		return new IcfgEdge(original.getSource(), original.getTarget(), original.getPayload()) {
+			@Override
+			public UnmodifiableTransFormula getTransformula() {
+				return tf;
+			}
+		};
+	}
+
+	// add actual constraints for spec edges, do nothing if not a spec edge
+	protected void transformSpecEdgeClause(final IcfgEdge edge, final HornClauseBuilder clause) {
+		if (isPreConditionSpecEdge(edge)) {
+			incrementThreadCounter(clause, mStartedVar);
+		} else if (isPostConditionSpecEdge(edge)) {
+			incrementThreadCounter(clause, mTerminatedVar);
+		}
+	}
+
+	protected void incrementThreadCounter(final HornClauseBuilder clause, final HcThreadCounterVar counter) {
+		// add constraint counter' = counter + 1
+		clause.differentBodyHeadVar(counter);
+		clause.addConstraint(SmtUtils.binaryEquality(mScript, clause.getHeadVar(counter).getTerm(),
+				SmtUtils.sum(mScript, getIntSort(), clause.getBodyVar(counter).getTerm(), numeral(1L))));
+	}
+
+	protected boolean isPreConditionSpecEdge(final IcfgEdge edge) {
+		if (mPrefs.specMode() != SpecMode.PRE_POST) {
+			return false;
+		}
+
+		final var template = edge.getPrecedingProcedure();
+		final var entryLoc = mIcfg.getProcedureEntryNodes().get(template);
+		return edge.getSource().equals(entryLoc);
+	}
+
+	protected boolean isPostConditionSpecEdge(final IcfgEdge edge) {
+		if (mPrefs.specMode() != SpecMode.PRE_POST) {
+			return false;
+		}
+
+		final var template = edge.getPrecedingProcedure();
+		final var exitLoc = mIcfg.getProcedureExitNodes().get(template);
+		return edge.getTarget().equals(exitLoc);
 	}
 
 	private List<Triple<Map<ThreadInstance, IcfgLocation>, Map<ThreadInstance, IcfgLocation>, ThreadInstance>>
@@ -291,17 +389,35 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	// -----------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Builds the initial clause that encodes the precondition. By default, this method only fixes the initial location
-	 * of the threads.
+	 * Builds the initial clause that encodes the precondition.
 	 */
 	protected HornClauseBuilder buildInitialClause() {
 		final var clause = createBuilder(mInvariantPredicate, "initial clause");
+		final var initialLocs = getInitialLocations();
 
 		// add location constraints
-		final var initialLocs = getInitialLocations();
 		for (final var instance : mInstances) {
-			// If instance does not have an initial location, a constraint for mBottomLocation is added.
+			// If an instance does not have an initial location, a constraint for mBottomLocation is added.
 			addOutLocationConstraint(clause, instance, initialLocs.get(instance));
+		}
+
+		if (mPrefs.specMode() == SpecMode.PRE_POST) {
+			// add constraints that thread counters (for thread-modular encoding of postconditions) are initially 0
+			clause.addConstraint(
+					SmtUtils.binaryEquality(mScript, clause.getHeadVar(mStartedVar).getTerm(), numeral(0)));
+			clause.addConstraint(
+					SmtUtils.binaryEquality(mScript, clause.getHeadVar(mTerminatedVar).getTerm(), numeral(0)));
+
+			// add precondition constraint
+			final var locals = mLocalVars.values().collect(Collectors.toList());
+			for (final var entry : initialLocs.entrySet()) {
+				// The (only) outgoing edge of the initial location should be an assumption of the precondition
+				final var precond = DataStructureUtils
+						.getOneAndOnly(entry.getValue().getOutgoingEdges(), "outgoing edge of initial location")
+						.getTransformula();
+				assert precond.getAssignedVars().isEmpty() : "Precondition must not modify variables";
+				addTransitionConstraint(clause, precond, entry.getKey(), locals);
+			}
 		}
 
 		return clause;
@@ -315,7 +431,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	 * @param errorLoc
 	 *            The error location that shall be proven unreachable
 	 */
-	protected HornClauseBuilder buildSafetyClause(final ThreadInstance thread, final IcfgLocation errorLoc) {
+	protected HornClauseBuilder buildErrorSafetyClause(final ThreadInstance thread, final IcfgLocation errorLoc) {
 		// create a clause with head "false"
 		final var clause = createBuilder("safety clause for location " + errorLoc + " in thread instance " + thread);
 
@@ -324,6 +440,40 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 		// location constraints
 		addInLocationConstraint(clause, thread, errorLoc);
+
+		return clause;
+	}
+
+	/**
+	 * Builds a safety clause specifying that if a given thread exits, and the numbers of started and exited threads are
+	 * equal, the postcondition holds.
+	 *
+	 * @param thread
+	 *            The thread for which the clause should be generated. This must be a thread that runs initially.
+	 */
+	protected HornClauseBuilder buildPostconditionSafetyClause(final ThreadInstance thread) {
+		// create a clause with head "false"
+		final var clause = createBuilder("safety clause for postcondition in thread instance " + thread);
+
+		// add body clause
+		clause.addBodyPredicate(mInvariantPredicate, clause.getDefaultBodyArgs(mInvariantPredicate));
+
+		// location constraints
+		final var exitLoc = mIcfg.getProcedureExitNodes().get(thread.getTemplateName());
+		addInLocationConstraint(clause, thread, exitLoc);
+
+		// add thread counter constraint: started == terminated
+		clause.addConstraint(SmtUtils.binaryEquality(mScript, clause.getBodyVar(mStartedVar).getTerm(),
+				clause.getBodyVar(mTerminatedVar).getTerm()));
+
+		// add negated postcondition
+		final var postcondition = DataStructureUtils
+				.getOneAndOnly(exitLoc.getIncomingEdges(), "transition to exit location").getTransformula();
+		assert postcondition.getAssignedVars().isEmpty() : "postcondition cannot modify variables";
+		final var negated = TransFormulaUtils.negate(
+				TransFormulaUtils.computeGuard(postcondition, mManagedScript, mServices), mManagedScript, mServices);
+		final var locals = mLocalVars.values().collect(Collectors.toList());
+		addTransitionConstraint(clause, negated, null, locals);
 
 		return clause;
 	}
@@ -455,18 +605,22 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 	protected void addTransitionConstraint(final HornClauseBuilder clause, final IIcfgTransition<?> transition,
 			final ThreadInstance updatedThread, final Collection<HcLocalVar> localVariables) {
-		final var tf = transition.getTransformula();
+		addTransitionConstraint(clause, transition.getTransformula(), updatedThread, localVariables);
+	}
+
+	protected void addTransitionConstraint(final HornClauseBuilder clause, final UnmodifiableTransFormula tf,
+			final ThreadInstance updatedThread, final Collection<HcLocalVar> localVariables) {
 		final var substitution = new HashMap<TermVariable, Term>();
 
 		// deal with global variables
 		for (final var global : mGlobalVars) {
-			prepareSubstitution(clause, transition, substitution, global, global.getVariable(), true);
+			prepareSubstitution(clause, tf, substitution, global, global.getVariable(), true);
 		}
 
 		// deal with local variables
 		for (final HcLocalVar local : localVariables) {
 			final var updatable = local.getThreadInstance().equals(updatedThread);
-			prepareSubstitution(clause, transition, substitution, local, local.getVariable(), updatable);
+			prepareSubstitution(clause, tf, substitution, local, local.getVariable(), updatable);
 		}
 
 		// replace all other variables with auxiliary variables
@@ -480,11 +634,9 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		clause.addConstraint(Substitution.apply(mManagedScript, substitution, formula));
 	}
 
-	private static void prepareSubstitution(final HornClauseBuilder clause, final IIcfgTransition<?> transition,
+	private static void prepareSubstitution(final HornClauseBuilder clause, final UnmodifiableTransFormula tf,
 			final Map<TermVariable, Term> substitution, final IHcReplacementVar rv, final IProgramVar pv,
 			final boolean canBeUpdated) {
-		final var tf = transition.getTransformula();
-
 		final TermVariable inVar = tf.getInVars().get(pv);
 		if (inVar != null) {
 			substitution.put(inVar, clause.getBodyVar(rv).getTerm());

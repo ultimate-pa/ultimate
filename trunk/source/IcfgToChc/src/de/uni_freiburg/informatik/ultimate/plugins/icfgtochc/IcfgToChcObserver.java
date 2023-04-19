@@ -177,10 +177,10 @@ public class IcfgToChcObserver extends BaseObserver {
 
 			if (mPrefs.useSleepSets()) {
 				final var independence = new SemanticIndependenceRelation<>(mServices, mgdScript, false, true);
-				return new SleepSetThreadModularHornClauseProvider(mgdScript, icfg, hcSymbolTable, independence, mPrefs)
-						.getClauses();
+				return new SleepSetThreadModularHornClauseProvider(mServices, mgdScript, icfg, hcSymbolTable,
+						independence, mPrefs).getClauses();
 			}
-			return new ThreadModularHornClauseProvider(mgdScript, icfg, hcSymbolTable, mPrefs).getClauses();
+			return new ThreadModularHornClauseProvider(mServices, mgdScript, icfg, hcSymbolTable, mPrefs).getClauses();
 		}
 		return new ChcProviderForCalls(mgdScript, hcSymbolTable).getHornClauses(icfg);
 	}
