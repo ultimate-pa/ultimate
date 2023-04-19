@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.rabin;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -129,4 +131,21 @@ public class RabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTER, ST
 		return result;
 	}
 
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("alphabet = ").append(mAlphabet.toString()).append(",\n");
+		sb.append("states = ").append(mStates.toString()).append(",\n");
+		sb.append("initialStates = ").append(mInitialStates.toString()).append(",\n");
+		sb.append("acceptingStates = ").append(mAcceptingStates.toString()).append(",\n");
+		sb.append("finiteStates = ").append(mFiniteStates.toString()).append(",\n");
+		final List<String> transitions = new ArrayList<>();
+		for (final var triple : mTransitions.entrySet()) {
+			for (final STATE succ : triple.getThird()) {
+				transitions.add(String.format("(%s %s %s)", triple.getFirst(), triple.getSecond(), succ));
+			}
+		}
+		sb.append("transitions = ").append(transitions);
+		return sb.toString();
+	}
 }
