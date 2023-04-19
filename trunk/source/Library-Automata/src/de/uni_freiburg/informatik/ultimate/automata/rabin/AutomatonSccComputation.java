@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  */
 public class AutomatonSccComputation<LETTER, STATE> {
 
-	Collection<StronglyConnectedComponent<STATE>> mBalls;
+	private final Collection<StronglyConnectedComponent<STATE>> mBalls;
 
 	/**
 	 * Computes accepting SCCs of an automaton.
@@ -64,22 +64,13 @@ public class AutomatonSccComputation<LETTER, STATE> {
 	 *            Rabin automaton
 	 */
 	public AutomatonSccComputation(final AutomataLibraryServices services,
-			final IRabinAutomaton<LETTER, STATE> automaton) {
-
-		final EagerRabinAutomaton<LETTER, STATE> eagerAutomaton;
-
-		if (EagerRabinAutomaton.class == automaton.getClass()) {
-			eagerAutomaton = (EagerRabinAutomaton<LETTER, STATE>) automaton;
-		} else {
-			eagerAutomaton = new EagerRabinAutomaton<>(automaton);
-			// Reduces the automaton to its traversable core
-		}
+			final EagerRabinAutomaton<LETTER, STATE> automaton) {
 		final Set<STATE> init = new HashSet<>();
-		eagerAutomaton.getInitialStates().forEach(x -> init.add(x));
+		automaton.getInitialStates().forEach(init::add);
 
 		final RabinSccComputation<STATE> sccComputation =
 				new RabinSccComputation<>(services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
-						new RabinSuccessorProvider(eagerAutomaton), eagerAutomaton.size(), init);
+						new RabinSuccessorProvider(automaton), automaton.size(), init);
 
 		mBalls = sccComputation.getBalls();
 	}
@@ -138,12 +129,7 @@ public class AutomatonSccComputation<LETTER, STATE> {
 
 		@Override
 		public Iterator<STATE> getSuccessors(final STATE state) {
-
-			final Iterator<STATE> transitionsIterator =
-					getStateContainerIterator(mAutomaton.getSuccessors(state).iterator());
-
-			return transitionsIterator;
-
+			return getStateContainerIterator(mAutomaton.getSuccessors(state).iterator());
 		}
 	}
 }
