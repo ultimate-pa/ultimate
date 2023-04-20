@@ -40,8 +40,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 /**
  * Compute SCCs of an automaton. Allows to restrict computation to a subgraph (subset of states with corresponding
  * edges) of the automaton. This computation should work for each {@link IRabinAutomaton}, however, it is only sound if
- * each return transition is reachable (i.e., each transition can actually be taken). To enforce soundness we transform
- * the given automaton to a {@link EagerRabinAutomaton}.
+ * each return transition is reachable (i.e., each transition can actually be taken).
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Philipp Müller (pm251@venus.uni-freiburg.de)
@@ -64,7 +63,7 @@ public class AutomatonSccComputation<LETTER, STATE> {
 	 *            Rabin automaton
 	 */
 	public AutomatonSccComputation(final AutomataLibraryServices services,
-			final EagerRabinAutomaton<LETTER, STATE> automaton) {
+			final IRabinAutomaton<LETTER, STATE> automaton) {
 		final Set<STATE> init = new HashSet<>();
 		automaton.getInitialStates().forEach(init::add);
 
@@ -105,9 +104,9 @@ public class AutomatonSccComputation<LETTER, STATE> {
 	 */
 	private class RabinSuccessorProvider implements ISuccessorProvider<STATE> {
 
-		private final EagerRabinAutomaton<LETTER, STATE> mAutomaton;
+		private final IRabinAutomaton<LETTER, STATE> mAutomaton;
 
-		public RabinSuccessorProvider(final EagerRabinAutomaton<LETTER, STATE> automaton) {
+		public RabinSuccessorProvider(final IRabinAutomaton<LETTER, STATE> automaton) {
 			mAutomaton = automaton;
 		}
 
