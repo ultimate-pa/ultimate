@@ -36,44 +36,44 @@ public class RabinAutomataUtils {
 	public static <LETTER, STATE> RabinAutomaton<LETTER, STATE>
 			eagerAutomaton(final IRabinAutomaton<LETTER, STATE> automaton, final Set<STATE> toRemove) {
 
-		final Set<STATE> mInitialStates = new HashSet<>();
-		final Set<STATE> mStates = new HashSet<>();
-		final NestedMap2<STATE, LETTER, Set<STATE>> mTransitions = new NestedMap2<>();
-		final Set<LETTER> mAlphabet = new HashSet<>();
-		final Set<STATE> mFiniteStates = new HashSet<>();
-		final Set<STATE> mAcceptingStates = new HashSet<>();
+		final Set<STATE> initialStates = new HashSet<>();
+		final Set<STATE> states = new HashSet<>();
+		final NestedMap2<STATE, LETTER, Set<STATE>> transitions = new NestedMap2<>();
+		final Set<LETTER> alphabet = new HashSet<>();
+		final Set<STATE> finiteStates = new HashSet<>();
+		final Set<STATE> acceptingStates = new HashSet<>();
 
-		automaton.getInitialStates().forEach(x -> mInitialStates.add(x));
-		mInitialStates.removeAll(toRemove);
+		automaton.getInitialStates().forEach(x -> initialStates.add(x));
+		initialStates.removeAll(toRemove);
 
 		final ArrayDeque<STATE> currentStateSet = new ArrayDeque<>();
-		currentStateSet.addAll(mInitialStates);
+		currentStateSet.addAll(initialStates);
 
 		while (!currentStateSet.isEmpty()) {
 			final STATE currentState = currentStateSet.pop();
-			mStates.add(currentState);
+			states.add(currentState);
 			if (automaton.isFinite(currentState)) {
-				mFiniteStates.add(currentState);
+				finiteStates.add(currentState);
 			} else if (automaton.isAccepting(currentState)) {
-				mAcceptingStates.add(currentState);
+				acceptingStates.add(currentState);
 			}
 
 			for (final OutgoingInternalTransition<LETTER, STATE> transition : automaton.getSuccessors(currentState)) {
 				if (!toRemove.contains(transition.getSucc())) {
 
 					final LETTER letter = transition.getLetter();
-					mAlphabet.add(letter);
-					if (!mTransitions.containsKey(currentState, letter)) {
-						mTransitions.put(currentState, letter, new HashSet<>());
+					alphabet.add(letter);
+					if (!transitions.containsKey(currentState, letter)) {
+						transitions.put(currentState, letter, new HashSet<>());
 					}
-					mTransitions.get(currentState, transition.getLetter()).add(transition.getSucc());
-					if (!mStates.contains(transition.getSucc())) {
+					transitions.get(currentState, transition.getLetter()).add(transition.getSucc());
+					if (!states.contains(transition.getSucc())) {
 						currentStateSet.add(transition.getSucc());
 					}
 				}
 			}
 		}
-		return new RabinAutomaton<>(mAlphabet, mStates, mInitialStates, mAcceptingStates, mFiniteStates, mTransitions);
+		return new RabinAutomaton<>(alphabet, states, initialStates, acceptingStates, finiteStates, transitions);
 	}
 
 }
