@@ -10,17 +10,31 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class RabinAutomataUtils {
 
 	/**
-	 * Removes all states that either are:
-	 * <ul>
-	 * <li>not present in the collection State of @param automaton
-	 * <li>are not reachable by initialization or traversal @param automaton
-	 * </ul>
+	 * Removes all states that are not reachable by initialization or traversal of @param automaton
 	 *
 	 * @param automaton
 	 *            The automaton that should be optimized
 	 */
 	public static <LETTER, STATE> RabinAutomaton<LETTER, STATE>
-			eagerAutomaton(final RabinAutomaton<LETTER, STATE> automaton) {
+			eagerAutomaton(final IRabinAutomaton<LETTER, STATE> automaton) {
+		return eagerAutomaton(automaton, Set.of());
+	}
+
+	/**
+	 * Removes all states that either are:
+	 * <ul>
+	 * <li>present in @param toRemove or only reachable from them
+	 * <li>not reachable by initialization or traversal @param automaton
+	 * </ul>
+	 *
+	 * @param automaton
+	 *            The automaton that should be optimized
+	 * @param toRemove
+	 *            States which should be removed from the resulting Rabin automaton (including (in)direct successors)
+	 *
+	 */
+	public static <LETTER, STATE> RabinAutomaton<LETTER, STATE>
+			eagerAutomaton(final IRabinAutomaton<LETTER, STATE> automaton, final Set<STATE> toRemove) {
 
 		final Set<LETTER> mAlphabet;
 		final Set<STATE> mStates;
@@ -40,7 +54,7 @@ public class RabinAutomataUtils {
 
 		final ArrayDeque<STATE> currentStateSet = new ArrayDeque<>();
 
-		mInitialStates.retainAll(automaton.getStates());
+		mInitialStates.removeAll(toRemove);
 
 		currentStateSet.addAll(mInitialStates);
 
@@ -54,7 +68,7 @@ public class RabinAutomataUtils {
 			}
 
 			for (final OutgoingInternalTransition<LETTER, STATE> transition : automaton.getSuccessors(currentState)) {
-				if (automaton.getStates().contains(transition.getSucc())) {
+				if (!toRemove.contains(transition.getSucc())) {
 
 					final LETTER letter = transition.getLetter();
 					mAlphabet.add(letter);

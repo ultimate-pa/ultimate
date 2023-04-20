@@ -22,7 +22,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 
 	final AutomatonSccComputation<LETTER, STATE> acceptingSccComputation;
 
-	public IsEmpty(final AutomataLibraryServices services, final RabinAutomaton<LETTER, STATE> automaton) {
+	public IsEmpty(final AutomataLibraryServices services, final IRabinAutomaton<LETTER, STATE> automaton) {
 		super(services);
 
 		// Reduces the automaton to its traversable core
@@ -63,8 +63,8 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 
 	private List<LETTER> getLoop(final STATE hondaState) throws AutomataOperationCanceledException {
 
-		// get one random accepting State from
-		final HashSet<STATE> initialSet = new HashSet<>(); // evidence
+		// get one random accepting State from evidence
+		final HashSet<STATE> initialSet = new HashSet<>();
 		initialSet.add(hondaState);
 
 		final HashSet<STATE> missingStates = new HashSet<>(mEvidence);
@@ -110,13 +110,11 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	 */
 	private RabinAutomaton<LETTER, STATE> getStemlessNonFiniteAutomaton(final RabinAutomaton<LETTER, STATE> automaton) {
 
-		final HashSet<STATE> nonFiniteStates = new HashSet<>(automaton.getStates());
-		nonFiniteStates.removeAll(automaton.getFiniteStates());
-
 		final RabinAutomaton<LETTER, STATE> nonReducedAutomaton =
-				new RabinAutomaton<>(automaton.getAlphabet(), nonFiniteStates, automaton.getAcceptingStates(),
+				new RabinAutomaton<>(automaton.getAlphabet(), automaton.getStates(), automaton.getAcceptingStates(),
 						automaton.getAcceptingStates(), automaton.getFiniteStates(), automaton.getTransitions());
-		final RabinAutomaton<LETTER, STATE> result = RabinAutomataUtils.eagerAutomaton(nonReducedAutomaton);
+		final RabinAutomaton<LETTER, STATE> result =
+				RabinAutomataUtils.eagerAutomaton(nonReducedAutomaton, automaton.getFiniteStates());
 
 		return result;
 
