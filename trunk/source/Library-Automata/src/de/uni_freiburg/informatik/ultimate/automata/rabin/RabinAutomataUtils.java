@@ -36,26 +36,17 @@ public class RabinAutomataUtils {
 	public static <LETTER, STATE> RabinAutomaton<LETTER, STATE>
 			eagerAutomaton(final IRabinAutomaton<LETTER, STATE> automaton, final Set<STATE> toRemove) {
 
-		final Set<LETTER> mAlphabet;
-		final Set<STATE> mStates;
-		final Set<STATE> mInitialStates;
-		final Set<STATE> mAcceptingStates;
-		final Set<STATE> mFiniteStates;
-		final NestedMap2<STATE, LETTER, Set<STATE>> mTransitions;
-
-		mInitialStates = new HashSet<>();
-		mStates = new HashSet<>();
-		mTransitions = new NestedMap2<>();
-		mAlphabet = new HashSet<>();
-		mFiniteStates = new HashSet<>();
-		mAcceptingStates = new HashSet<>();
+		final Set<STATE> mInitialStates = new HashSet<>();
+		final Set<STATE> mStates = new HashSet<>();
+		final NestedMap2<STATE, LETTER, Set<STATE>> mTransitions = new NestedMap2<>();
+		final Set<LETTER> mAlphabet = new HashSet<>();
+		final Set<STATE> mFiniteStates = new HashSet<>();
+		final Set<STATE> mAcceptingStates = new HashSet<>();
 
 		automaton.getInitialStates().forEach(x -> mInitialStates.add(x));
-
-		final ArrayDeque<STATE> currentStateSet = new ArrayDeque<>();
-
 		mInitialStates.removeAll(toRemove);
 
+		final ArrayDeque<STATE> currentStateSet = new ArrayDeque<>();
 		currentStateSet.addAll(mInitialStates);
 
 		while (!currentStateSet.isEmpty()) {
