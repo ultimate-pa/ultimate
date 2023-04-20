@@ -7,7 +7,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
-public class RabinAutomataUtils<LETTER, STATE> {
+public class RabinAutomataUtils {
 
 	/**
 	 * @param automaton
@@ -20,7 +20,8 @@ public class RabinAutomataUtils<LETTER, STATE> {
 	 */
 	// TODO: Move this to a static method that returns a RabinAutomaton without allowFinites
 
-	public RabinAutomaton<LETTER, STATE> eagerAutomaton(final IRabinAutomaton<LETTER, STATE> automaton) {
+	public static <LETTER, STATE> RabinAutomaton<LETTER, STATE>
+			eagerAutomaton(final IRabinAutomaton<LETTER, STATE> automaton) {
 
 		final Set<LETTER> mAlphabet;
 		final Set<STATE> mStates;
