@@ -33,7 +33,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		}
 
 		acceptingSccComputation =
-				new AutomatonSccComputation<>(services, mEagerAutomaton.getStemlessNonFiniteAutomaton());
+				new AutomatonSccComputation<>(services, getStemlessNonFiniteAutomaton(mEagerAutomaton));
 
 		mResult = acceptingSccComputation.getBalls().isEmpty();
 		if (!mResult) {
@@ -103,6 +103,16 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 			wordStateMap = temp;
 		}
 		throw new AutomataOperationCanceledException(getClass());
+	}
+
+	private EagerRabinAutomaton<LETTER, STATE>
+			getStemlessNonFiniteAutomaton(final EagerRabinAutomaton<LETTER, STATE> automaton) {
+		final RabinAutomaton<LETTER, STATE> stemlessAutomaton =
+				new RabinAutomaton<>(automaton.getAlphabet(), automaton.getStates(), automaton.getAcceptingStates(),
+						automaton.getAcceptingStates(), automaton.getFiniteStates(), automaton.getTransitions());
+		final EagerRabinAutomaton<LETTER, STATE> result = new EagerRabinAutomaton<>(stemlessAutomaton, false);
+		return result;
+
 	}
 
 	private List<LETTER> getStem(final STATE hondaState) throws AutomataOperationCanceledException {

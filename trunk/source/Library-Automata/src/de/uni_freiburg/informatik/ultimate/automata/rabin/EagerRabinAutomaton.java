@@ -163,13 +163,20 @@ public class EagerRabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTE
 		return result;
 	}
 
-	// TODO: Wrap this automaton instead (s.t. it makes all accepting states initial and removes finite states)
-	public EagerRabinAutomaton<LETTER, STATE> getStemlessNonFiniteAutomaton() {
-		final RabinAutomaton<LETTER, STATE> stemlessAutomaton = new RabinAutomaton<>(mAlphabet, mStates,
-				mAcceptingStates, mAcceptingStates, mFiniteStates, mTransitions);
-		final EagerRabinAutomaton<LETTER, STATE> result = new EagerRabinAutomaton<>(stemlessAutomaton, false);
-		return result;
+	public Set<STATE> getStates() {
+		return mStates;
+	}
 
+	public Set<STATE> getAcceptingStates() {
+		return mAcceptingStates;
+	}
+
+	public Set<STATE> getFiniteStates() {
+		return mFiniteStates;
+	}
+
+	public NestedMap2<STATE, LETTER, Set<STATE>> getTransitions() {
+		return mTransitions;
 	}
 
 }
