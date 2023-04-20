@@ -129,4 +129,8 @@ public class RabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTER, ST
 		return result;
 	}
 
+	public NestedMap2<STATE, LETTER, Set<STATE>> getTransitions() {
+		return mTransitions;
+	}
+
 }

@@ -17,20 +17,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends GeneralOperation<LETTER, STATE, CRSF> {
 
 	private final Boolean mResult;
-	private final EagerRabinAutomaton<LETTER, STATE> mEagerAutomaton;
+	private final RabinAutomaton<LETTER, STATE> mEagerAutomaton;
 	private final Set<STATE> mEvidence;
 
 	final AutomatonSccComputation<LETTER, STATE> acceptingSccComputation;
 
-	public IsEmpty(final AutomataLibraryServices services, final IRabinAutomaton<LETTER, STATE> automaton) {
+	public IsEmpty(final AutomataLibraryServices services, final RabinAutomaton<LETTER, STATE> automaton) {
 		super(services);
 
-		if (EagerRabinAutomaton.class == automaton.getClass()) {
-			mEagerAutomaton = (EagerRabinAutomaton<LETTER, STATE>) automaton;
-		} else {
-			mEagerAutomaton = new EagerRabinAutomaton<>(automaton);
-			// Reduces the automaton to its traversable core
-		}
+		// Reduces the automaton to its traversable core
+		// cuts off non reachable final states
+		mEagerAutomaton = RabinAutomataUtils.eagerAutomaton(automaton);
 
 		acceptingSccComputation =
 				new AutomatonSccComputation<>(services, getStemlessNonFiniteAutomaton(mEagerAutomaton));
@@ -46,7 +43,6 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 
 	@Override
 	public Boolean getResult() {
-		// TODO Auto-generated method stub
 		return mResult;
 	}
 
@@ -105,12 +101,23 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		throw new AutomataOperationCanceledException(getClass());
 	}
 
-	private EagerRabinAutomaton<LETTER, STATE>
-			getStemlessNonFiniteAutomaton(final EagerRabinAutomaton<LETTER, STATE> automaton) {
-		final RabinAutomaton<LETTER, STATE> stemlessAutomaton =
-				new RabinAutomaton<>(automaton.getAlphabet(), automaton.getStates(), automaton.getAcceptingStates(),
+	/**
+	 * @param automaton
+	 *            a fully traversable Rabin automaton
+	 *
+	 *            Generates a automaton that starts from the Honda/accepting states of this automaton and removes all
+	 *            finite states
+	 */
+	private RabinAutomaton<LETTER, STATE> getStemlessNonFiniteAutomaton(final RabinAutomaton<LETTER, STATE> automaton) {
+
+		final HashSet<STATE> nonFiniteStates = new HashSet<>(automaton.getStates());
+		nonFiniteStates.removeAll(automaton.getFiniteStates());
+
+		final RabinAutomaton<LETTER, STATE> nonReducedAutomaton =
+				new RabinAutomaton<>(automaton.getAlphabet(), nonFiniteStates, automaton.getAcceptingStates(),
 						automaton.getAcceptingStates(), automaton.getFiniteStates(), automaton.getTransitions());
-		final EagerRabinAutomaton<LETTER, STATE> result = new EagerRabinAutomaton<>(stemlessAutomaton, false);
+		final RabinAutomaton<LETTER, STATE> result = RabinAutomataUtils.eagerAutomaton(nonReducedAutomaton);
+
 		return result;
 
 	}

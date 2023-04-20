@@ -8,7 +8,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.DefaultSccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /*
- * RabinSccs are only that, which loop back to their beginning
+ * Removes all Sccs which do not have a loop back to their beginning
  */
 public class RabinSccComputation<NODE> extends DefaultSccComputation<NODE> {
 

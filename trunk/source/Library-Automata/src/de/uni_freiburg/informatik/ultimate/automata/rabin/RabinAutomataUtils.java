@@ -10,18 +10,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class RabinAutomataUtils {
 
 	/**
+	 * Removes all states that either are:
+	 * <ul>
+	 * <li>not present in the collection State of @param automaton
+	 * <li>are not reachable by initialization or traversal @param automaton
+	 * </ul>
+	 *
 	 * @param automaton
 	 *            The automaton that should be optimized
-	 * @param allowFinites
-	 *            if set to false all finite states and transitions to/from them are ignored
-	 *
-	 *            This automaton constructs the minimal Automaton containing all reachable transitions and states from
-	 *            the initials of the given IRabinAutomaton
 	 */
-	// TODO: Move this to a static method that returns a RabinAutomaton without allowFinites
-
 	public static <LETTER, STATE> RabinAutomaton<LETTER, STATE>
-			eagerAutomaton(final IRabinAutomaton<LETTER, STATE> automaton) {
+			eagerAutomaton(final RabinAutomaton<LETTER, STATE> automaton) {
 
 		final Set<LETTER> mAlphabet;
 		final Set<STATE> mStates;
@@ -41,9 +40,8 @@ public class RabinAutomataUtils {
 
 		final ArrayDeque<STATE> currentStateSet = new ArrayDeque<>();
 
-		/*
-		 * if (!allowFinites) { mInitialStates.removeIf(x -> automaton.isFinite(x)); }
-		 */
+		mInitialStates.retainAll(automaton.getStates());
+
 		currentStateSet.addAll(mInitialStates);
 
 		while (!currentStateSet.isEmpty()) {
@@ -56,7 +54,7 @@ public class RabinAutomataUtils {
 			}
 
 			for (final OutgoingInternalTransition<LETTER, STATE> transition : automaton.getSuccessors(currentState)) {
-				if (/* allowFinites || */ !automaton.isFinite(transition.getSucc())) {
+				if (automaton.getStates().contains(transition.getSucc())) {
 
 					final LETTER letter = transition.getLetter();
 					mAlphabet.add(letter);
