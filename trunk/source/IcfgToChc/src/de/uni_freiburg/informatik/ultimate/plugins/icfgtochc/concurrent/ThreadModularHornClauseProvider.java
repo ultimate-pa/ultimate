@@ -131,7 +131,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		mUnboundedTemplates = threadInfo.getSecond();
 
 		mBottomLocation = numeral(-1);
-		if (mPrefs.specMode() == SpecMode.PRE_POST) {
+		if (mPrefs.specMode() == SpecMode.POSTCONDITION) {
 			mStartedVar = new HcThreadCounterVar(true, getIntSort());
 			mTerminatedVar = new HcThreadCounterVar(false, getIntSort());
 		} else {
@@ -186,7 +186,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		final var result = new ArrayList<IHcReplacementVar>();
 
 		// add variables for thread-modular encoding of postconditions
-		if (mPrefs.specMode() == SpecMode.PRE_POST) {
+		if (mPrefs.specMode() == SpecMode.POSTCONDITION) {
 			result.add(mStartedVar);
 			result.add(mTerminatedVar);
 		}
@@ -292,7 +292,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 				result.add(safetyClause);
 			}
 			break;
-		case PRE_POST:
+		case POSTCONDITION:
 			for (final var thread : getInitialLocations().keySet()) {
 				final var safetyClause = buildPostconditionSafetyClause(thread);
 				result.add(safetyClause);
@@ -315,7 +315,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 	// add actual constraints for spec edges, do nothing if not a spec edge
 	protected void transformSpecEdgeClause(final IcfgEdge edge, final HornClauseBuilder clause) {
-		if (isPreConditionSpecEdge(edge)) {
+		if (isPreConditionSpecEdge(edge) && mPrefs.specMode() == SpecMode.POSTCONDITION) {
 			incrementThreadCounter(clause, mStartedVar);
 		} else if (isPostConditionSpecEdge(edge)) {
 			incrementThreadCounter(clause, mTerminatedVar);
@@ -330,7 +330,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	}
 
 	protected boolean isPreConditionSpecEdge(final IcfgEdge edge) {
-		if (mPrefs.specMode() != SpecMode.PRE_POST) {
+		if (!mPrefs.hasPreconditions()) {
 			return false;
 		}
 
@@ -340,7 +340,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	}
 
 	protected boolean isPostConditionSpecEdge(final IcfgEdge edge) {
-		if (mPrefs.specMode() != SpecMode.PRE_POST) {
+		if (mPrefs.specMode() != SpecMode.POSTCONDITION) {
 			return false;
 		}
 
@@ -401,13 +401,15 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 			addOutLocationConstraint(clause, instance, initialLocs.get(instance));
 		}
 
-		if (mPrefs.specMode() == SpecMode.PRE_POST) {
+		if (mPrefs.specMode() == SpecMode.POSTCONDITION) {
 			// add constraints that thread counters (for thread-modular encoding of postconditions) are initially 0
 			clause.addConstraint(
 					SmtUtils.binaryEquality(mScript, clause.getHeadVar(mStartedVar).getTerm(), numeral(0)));
 			clause.addConstraint(
 					SmtUtils.binaryEquality(mScript, clause.getHeadVar(mTerminatedVar).getTerm(), numeral(0)));
+		}
 
+		if (mPrefs.hasPreconditions()) {
 			// add precondition constraint
 			final var locals = mLocalVars.values().collect(Collectors.toList());
 			for (final var entry : initialLocs.entrySet()) {

@@ -51,9 +51,14 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 					+ "all starting at once.";
 	public static final ConcurrencyMode DEF_CONCURRENCY_MODE = ConcurrencyMode.PARAMETRIC;
 
+	public static final String LABEL_HAS_PRECONDITION = "Assume program has a precondition";
+	public static final String DESC_HAS_PRECONDITION =
+			"Use if the thread templates have a precondition annotated as a 'free requires'.";
+	public static final boolean DEF_HAS_PRECONDITION = true;
+
 	public static final String LABEL_SPEC_MODE = "Specification mode";
 	public static final String DESC_SPEC_MODE = "Describes how the specification for the program is given.";
-	public static final SpecMode DEF_SPEC_MODE = SpecMode.PRE_POST;
+	public static final SpecMode DEF_SPEC_MODE = SpecMode.POSTCONDITION;
 
 	public static final String LABEL_THREADMODULAR_LEVEL = "Thread-Modular Proof Level";
 	public static final String DESC_THREADMODULAR_LEVEL = "The level at which thread-modular proofs should be computed";
@@ -82,6 +87,8 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 				// Settings for thread-modular proofs
 				new UltimatePreferenceItem<>(LABEL_CONCURRENCY_MODE, DEF_CONCURRENCY_MODE, DESC_CONCURRENCY_MODE,
 						PreferenceType.Combo, ConcurrencyMode.values()),
+				new UltimatePreferenceItem<>(LABEL_HAS_PRECONDITION, DEF_HAS_PRECONDITION, DESC_HAS_PRECONDITION,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SPEC_MODE, DEF_SPEC_MODE, DESC_SPEC_MODE, PreferenceType.Combo,
 						SpecMode.values()),
 				new UltimatePreferenceItem<>(LABEL_THREADMODULAR_LEVEL, DEF_THREADMODULAR_LEVEL,

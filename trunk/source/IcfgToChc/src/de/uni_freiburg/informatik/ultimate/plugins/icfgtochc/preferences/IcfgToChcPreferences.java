@@ -33,7 +33,7 @@ public class IcfgToChcPreferences {
 	private final IPreferenceProvider mPrefs;
 
 	public enum SpecMode {
-		ASSERT_VIOLATIONS, PRE_POST
+		ASSERT_VIOLATIONS, POSTCONDITION
 	}
 
 	public IcfgToChcPreferences(final IPreferenceProvider prefs) {
@@ -42,6 +42,10 @@ public class IcfgToChcPreferences {
 
 	public ConcurrencyMode concurrencyMode() {
 		return mPrefs.getEnum(IcfgToChcPreferenceInitializer.LABEL_CONCURRENCY_MODE, ConcurrencyMode.class);
+	}
+
+	public boolean hasPreconditions() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_HAS_PRECONDITION);
 	}
 
 	public SpecMode specMode() {
