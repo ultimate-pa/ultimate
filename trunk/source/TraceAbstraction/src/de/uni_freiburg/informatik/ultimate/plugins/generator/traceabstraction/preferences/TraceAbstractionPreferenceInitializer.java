@@ -161,7 +161,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			
 	public static final String LABEL_POR_ORDER_MAXSTEP =
 			"Maximal amount of steps the threads are allowed to take successively";
-	private static final int DEF_POR_ORDER_MAXSTEP = 1;	
+	private static final int DEF_POR_ORDER_MAXSTEP = 1;
+	
+	public static final String LABEL_POR_ORDER_HEURISTIC =
+			"Enable heuristic with loops as step type";
+	private static final boolean DEF_POR_ORDER_HEURISTIC = true;
 
 	public static final String LABEL_POR_COINFLIP_MODE = "Coinflip budget determination mode";
 	private static final CoinflipMode DEF_POR_COINFLIP_MODE = CoinflipMode.OFF;
@@ -648,6 +652,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						StepType.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_ORDER_THREADS, DEF_POR_ORDER_THREADS, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_POR_ORDER_MAXSTEP, DEF_POR_ORDER_MAXSTEP, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_POR_ORDER_HEURISTIC, DEF_POR_ORDER_HEURISTIC, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_MODE, DEF_POR_COINFLIP_MODE, PreferenceType.Combo,
 						CoinflipMode.values()),
 				new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_PROB, DEF_POR_COINFLIP_PROB, PreferenceType.Integer,

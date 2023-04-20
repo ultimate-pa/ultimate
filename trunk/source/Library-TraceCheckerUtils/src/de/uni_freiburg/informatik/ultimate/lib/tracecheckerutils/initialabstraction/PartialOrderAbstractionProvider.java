@@ -68,6 +68,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 	private final StepType mStepType;
 	private final String mThreadList;
 	private final int mMaxStep;
+	private final boolean mEnableHeuristic;
 
 	/**
 	 * Create a new instance of the provider.
@@ -94,7 +95,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 			final IUltimateServiceProvider services, final IEmptyStackStateFactory<IPredicate> stateFactory,
 			final PredicateFactory predicateFactory, final PartialOrderMode partialOrderMode, final OrderType orderType,
 			final long dfsOrderSeed, final StepType stepType, final String threadList, final int maxStep,
-			final String pluginId) {
+			final boolean enableHeuristic, final String pluginId) {
 		mUnderlying = underlying;
 		mServices = services;
 		mStateFactory = stateFactory;
@@ -105,6 +106,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 		mStepType = stepType;
 		mThreadList = threadList;
 		mMaxStep = maxStep;
+		mEnableHeuristic = enableHeuristic;
 		mPluginId = pluginId;
 	}
 
@@ -120,7 +122,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 						.withSyntacticCheck().cached().threadSeparated().build();
 		final PartialOrderReductionFacade<L> por =
 				new PartialOrderReductionFacade<>(mServices, mPredicateFactory, icfg, errorLocs, mPartialOrderMode,
-						mOrderType, mDfsOrderSeed, mStepType, mThreadList, mMaxStep, List.of(indep), null, null);
+						mOrderType, mDfsOrderSeed, mStepType, mThreadList, mMaxStep, mEnableHeuristic, List.of(indep), null, null);
 
 		// actually apply POR to automaton
 		final NestedWordAutomaton<L, IPredicate> result = por.constructReduction(input, mStateFactory);

@@ -415,6 +415,10 @@ public final class TAPreferences {
 	public int getOrderMaxStep() {
 		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_ORDER_MAXSTEP);
 	}
+	
+	public boolean getOrderHeuristic() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_POR_ORDER_HEURISTIC);
+	}
 
 	public CoinflipMode useCoinflip() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_MODE, CoinflipMode.class);

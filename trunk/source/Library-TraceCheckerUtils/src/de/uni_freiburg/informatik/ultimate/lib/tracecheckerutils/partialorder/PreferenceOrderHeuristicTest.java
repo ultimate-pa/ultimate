@@ -90,11 +90,11 @@ public class PreferenceOrderHeuristicTest<L extends IIcfgTransition<?>> {
 						path.addFirst(predecessor);
 						predecessor = pathMap.get(predecessor);
 					}
-					/*
-					//enable to remove the while-condition from the path, problem: doesn't work for loops with while(true)
+					
+					//remove the while-condition from the path
 					if (path.getFirst().getTransformula().getAssignedVars().isEmpty()) {
 						path.removeFirst();
-					}*/
+					}
 					mPathMap.put(currentEdge.getPrecedingProcedure(), path);
 					worklist.clear();
 					

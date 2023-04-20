@@ -137,8 +137,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
-			final OrderType orderType, final long randomOrderSeed, final StepType steptype, final String threads,
-			final int maxStep, final List<IIndependenceRelation<IPredicate, L>> independenceRelations,
+			final OrderType orderType, final long randomOrderSeed, StepType steptype, final String threads, final int maxStep,
+			final boolean enableHeuristic, final List<IIndependenceRelation<IPredicate, L>> independenceRelations,
 			final Function<SleepMapReduction<L, IPredicate, IPredicate>, IBudgetFunction<L, IPredicate>> getBudget,
 			final Function<StateSplitter<IPredicate>, IDeadEndStore<?, IPredicate>> getDeadEndStore) {
 		mServices = services;
@@ -157,7 +157,10 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 		mSleepFactory = createSleepFactory(predicateFactory);
 		mSleepMapFactory = createSleepMapFactory(predicateFactory);
-		final boolean enableHeuristic = true;
+		//final boolean enableHeuristic = true;
+		if (enableHeuristic) {
+			steptype = StepType.LOOP;
+		}
 		mPreferenceOrder = getPreferenceOrder(steptype, threads, maxStep, icfg, enableHeuristic);
 		// mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
 

@@ -177,7 +177,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs, mPartialOrderMode,
 				mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), mPref.getOrderStepType(), mPref.getOrderThreads(),
-				mPref.getOrderMaxStep(), relations, this::makeBudget,
+				mPref.getOrderMaxStep(), mPref.getOrderHeuristic(), relations, this::makeBudget,
 				mSupportsDeadEnds ? this::createDeadEndStore : null);
 		assert mSupportsDeadEnds == (mDeadEndStore != null);
 

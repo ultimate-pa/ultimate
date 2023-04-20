@@ -279,7 +279,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(netProvider, stateFactory,
 						new AutomataLibraryServices(services)),
 				services, stateFactory, predicateFactory, mPrefs.getPartialOrderMode(), mPrefs.getDfsOrderType(),
-				mPrefs.getDfsOrderSeed(), mPrefs.getOrderStepType(), mPrefs.getOrderThreads(), mPrefs.getOrderMaxStep(), Activator.PLUGIN_ID);
+				mPrefs.getDfsOrderSeed(), mPrefs.getOrderStepType(), mPrefs.getOrderThreads(), mPrefs.getOrderMaxStep(),
+				mPrefs.getOrderHeuristic(), Activator.PLUGIN_ID);
 	}
 
 	@Deprecated
