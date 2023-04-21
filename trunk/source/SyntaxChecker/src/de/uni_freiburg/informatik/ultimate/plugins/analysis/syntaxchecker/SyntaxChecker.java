@@ -149,7 +149,7 @@ public class SyntaxChecker implements IAnalysis {
 				// everything fine, do nothing
 			} else {
 				final String longMessage =
-						generateLongDescription(toolCommandError, outputWarnings, filename, removeFilename);
+						generateLongDescription(toolCommandWarnings, outputWarnings, filename, removeFilename);
 				final String shortDescription = "Syntax checker warnings";
 				final Severity severity = Severity.WARNING;
 				final GenericResult res =
