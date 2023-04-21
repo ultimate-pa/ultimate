@@ -79,7 +79,6 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 			final List<LETTER> loop) throws AutomataOperationCanceledException {
 
 		final ArrayList<STATE> currentStateSet = stemEvaluation(automaton, stem);
-		final ArrayList<STATE> temp = new ArrayList<>();
 		int loopIndex = 0;
 		final HashSet<Pair<Integer, STATE>> uniqueSituations = new HashSet<>();
 		final HashSet<Pair<Integer, STATE>> visitedSituations = new HashSet<>();
@@ -91,6 +90,7 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 			if (currentStateSet.isEmpty()) {
 				return false;
 			}
+			final ArrayList<STATE> temp = new ArrayList<>();
 			for (final STATE state : currentStateSet) {
 
 				if (automaton.isAccepting(state) && !automaton.isFinite(state)
@@ -110,7 +110,6 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 			}
 			currentStateSet.clear();
 			currentStateSet.addAll(temp);
-			temp.clear();
 			loopIndex = (loopIndex + 1) % loop.size();
 			for (final STATE state : currentStateSet) {
 				uniqueSituations.add(new Pair<>(loopIndex, state));
@@ -131,10 +130,11 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		automaton.getInitialStates().forEach(x -> currentStateSet.add(x));
 
 		for (final LETTER letter : stem) {
-			final ArrayList<STATE> temp = new ArrayList<>();
 			if (currentStateSet.isEmpty()) {
 				break;
 			}
+
+			final ArrayList<STATE> temp = new ArrayList<>();
 			for (final STATE currentState : currentStateSet) {
 				for (final OutgoingInternalTransition<LETTER, STATE> possibleTransition : automaton
 						.getSuccessors(currentState, letter)) {
@@ -155,7 +155,7 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 			final int loopIndex) throws AutomataOperationCanceledException {
 
 		final ArrayList<STATE> currentStateSet = new ArrayList<>();
-		final ArrayList<STATE> temp = new ArrayList<>();
+
 		int localLoopIndex = loopIndex;
 		final HashSet<Pair<Integer, STATE>> uniqueSituations = new HashSet<>();
 		final HashSet<Pair<Integer, STATE>> visitedSituations = new HashSet<>();
@@ -171,6 +171,7 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 				return false;
 			}
 
+			final ArrayList<STATE> temp = new ArrayList<>();
 			for (final STATE state : currentStateSet) {
 				for (final OutgoingInternalTransition<LETTER, STATE> possibleTransition : automaton.getSuccessors(state,
 						loop.get(localLoopIndex))) {
@@ -188,7 +189,6 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 			}
 			currentStateSet.clear();
 			currentStateSet.addAll(temp);
-			temp.clear();
 
 			localLoopIndex = (localLoopIndex + 1) % loop.size();
 			for (final STATE state : currentStateSet) {
