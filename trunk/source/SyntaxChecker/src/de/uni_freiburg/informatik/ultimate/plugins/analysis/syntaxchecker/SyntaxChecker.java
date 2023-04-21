@@ -163,7 +163,7 @@ public class SyntaxChecker implements IAnalysis {
 			final String filename, final boolean replaceFilename) {
 		final String toolOutput;
 		if (replaceFilename) {
-			toolOutput = outputError.replaceAll(filename, "");
+			toolOutput = outputError.replace(filename, "");
 		} else {
 			toolOutput = outputError;
 		}
