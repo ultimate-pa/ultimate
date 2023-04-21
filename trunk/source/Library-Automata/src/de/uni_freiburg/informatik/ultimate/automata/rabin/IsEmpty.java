@@ -101,17 +101,16 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 					for (final OutgoingInternalTransition<LETTER, STATE> transition : mEagerAutomaton
 							.getSuccessors(state)) {
 						final STATE succ = transition.getSucc();
-						if (missingStates.contains(succ)) {
-							missingStates.remove(succ);
+
+						if (missingStates.remove(succ)) {
+
 							final ArrayList<LETTER> newWord = new ArrayList<>(word.getKey());
 							newWord.add(transition.getLetter());
-							if (!temp.containsKey(newWord)) {
-								temp.put(newWord, new HashSet<>());
-							}
 							if (succ.equals(hondaState)) {
-
 								return newWord;
 							}
+
+							temp.computeIfAbsent(newWord, x -> new HashSet<>());
 							temp.get(newWord).add(succ);
 						}
 					}
@@ -156,16 +155,16 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 					for (final OutgoingInternalTransition<LETTER, STATE> transition : mEagerAutomaton
 							.getSuccessors(state)) {
 						final STATE succ = transition.getSucc();
-						if (!exploredStates.contains(succ)) {
-							exploredStates.add(succ);
+
+						if (exploredStates.add(succ)) {
+
 							final ArrayList<LETTER> newWord = new ArrayList<>(word.getKey());
 							newWord.add(transition.getLetter());
-							if (!temp.containsKey(newWord)) {
-								temp.put(newWord, new HashSet<>());
-							}
 							if (succ.equals(hondaState)) {
 								return newWord;
 							}
+
+							temp.computeIfAbsent(newWord, x -> new HashSet<>());
 							temp.get(newWord).add(succ);
 						}
 					}
