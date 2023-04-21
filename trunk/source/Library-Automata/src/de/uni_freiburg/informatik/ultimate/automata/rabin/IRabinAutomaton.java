@@ -3,6 +3,16 @@ package de.uni_freiburg.informatik.ultimate.automata.rabin;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 
+/**
+ * Interface describing minimal operation set of Rabin automata
+ *
+ * @author Philipp Müller (pm251@venus.uni-freiburg.de)
+ *
+ * @param <LETTER>
+ *            letter
+ * @param <STATE>
+ *            state
+ */
 public interface IRabinAutomaton<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
 
 	/**
@@ -11,6 +21,8 @@ public interface IRabinAutomaton<LETTER, STATE> extends IAutomaton<LETTER, STATE
 	Iterable<STATE> getInitialStates();
 
 	/**
+	 * checks if state is initial
+	 *
 	 * @param state
 	 *            state
 	 * @return true iff the state is initial.
@@ -18,6 +30,8 @@ public interface IRabinAutomaton<LETTER, STATE> extends IAutomaton<LETTER, STATE
 	boolean isInitial(STATE state);
 
 	/**
+	 * checks if state is accepting
+	 *
 	 * @param state
 	 *            state
 	 * @return true iff the state is accepting.
@@ -25,6 +39,8 @@ public interface IRabinAutomaton<LETTER, STATE> extends IAutomaton<LETTER, STATE
 	boolean isAccepting(STATE state);
 
 	/**
+	 * checks if state is finite
+	 *
 	 * @param state
 	 *            state
 	 * @return true iff the state is finite. (Should only be visited finitely often.)

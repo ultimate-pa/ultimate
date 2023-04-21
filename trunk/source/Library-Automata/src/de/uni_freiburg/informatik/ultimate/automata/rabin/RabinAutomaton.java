@@ -10,6 +10,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
+/**
+ *
+ * @author Philipp Müller (pm251@venus.uni-freiburg.de)
+ *
+ * @param <LETTER>
+ * @param <STATE>
+ */
 public class RabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE> {
 
 	private final Set<LETTER> mAlphabet;
@@ -20,6 +27,8 @@ public class RabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTER, ST
 	private final NestedMap2<STATE, LETTER, Set<STATE>> mTransitions;
 
 	/**
+	 * A Rabin Automaton explicitly defined by the parameters
+	 *
 	 * @param alphabet
 	 *            The valid input characters for this automaton (should be a superset of the characters in transitions)
 	 * @param states

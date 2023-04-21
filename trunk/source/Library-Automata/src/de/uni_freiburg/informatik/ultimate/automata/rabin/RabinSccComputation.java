@@ -7,8 +7,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.scc.DefaultSccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
-/*
+/**
  * Removes all Sccs which do not have a loop back to their beginning
+ *
+ * @author Philipp Müller (pm251@venus.uni-freiburg.de)
+ *
+ * @param <NODE>
+ *            The node type Sccs are constructed on
  */
 public class RabinSccComputation<NODE> extends DefaultSccComputation<NODE> {
 

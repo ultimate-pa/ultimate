@@ -12,9 +12,33 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * Computes the acceptance of an infinite word for a Rabin automaton
+ *
+ * @author Philipp Müller (pm251@venus.uni-freiburg.de)
+ *
+ * @param <LETTER>
+ *            letter
+ * @param <STATE>
+ *            state
+ * @param <CRSF>
+ *            crsf
+ */
 public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends GeneralOperation<LETTER, STATE, CRSF> {
 	private final boolean mResult;
 
+	/**
+	 * Checks acceptance of a Word split into stem and loop on IRabinAutomaton
+	 *
+	 * @param services
+	 *            services
+	 * @param automaton
+	 *            The Rabin automaton which is simulated for acceptance purposes
+	 * @param word
+	 *            The word that is evaluated on automaton
+	 * @throws AutomataOperationCanceledException
+	 *             exception if isCancellationRequested
+	 */
 	public Accepts(final AutomataLibraryServices services, final IRabinAutomaton<LETTER, STATE> automaton,
 			final NestedLassoWord<LETTER> word) throws AutomataOperationCanceledException {
 		super(services);
@@ -25,10 +49,23 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		mResult = computeResult(automaton, word.getStem().asList(), word.getLoop().asList());
 	}
 
+	/**
+	 * Checks acceptance of a NestedLassoWord on IRabinAutomaton
+	 *
+	 * @param services
+	 *            services
+	 * @param automaton
+	 *            The Rabin automaton which is simulated for acceptance purposes
+	 * @param stem
+	 *            The stem of the word that is evaluated on automaton
+	 * @param loop
+	 *            The loop of the word that is evaluated on automaton
+	 * @throws AutomataOperationCanceledException
+	 *             exception if isCancellationRequested
+	 */
 	public Accepts(final AutomataLibraryServices services, final IRabinAutomaton<LETTER, STATE> automaton,
 			final List<LETTER> stem, final List<LETTER> loop) throws AutomataOperationCanceledException {
 		super(services);
-		// TODO: Could we use another type of lasso-words here instead?
 
 		mResult = computeResult(automaton, stem, loop);
 	}
@@ -92,8 +129,9 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	private ArrayList<STATE> stemEvaluation(final IRabinAutomaton<LETTER, STATE> automaton, final List<LETTER> stem) {
 		final ArrayList<STATE> currentStateSet = new ArrayList<>();
 		automaton.getInitialStates().forEach(x -> currentStateSet.add(x));
-		final ArrayList<STATE> temp = new ArrayList<>();
+
 		for (final LETTER letter : stem) {
+			final ArrayList<STATE> temp = new ArrayList<>();
 			if (currentStateSet.isEmpty()) {
 				break;
 			}
@@ -106,7 +144,6 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 			}
 			currentStateSet.clear();
 			currentStateSet.addAll(temp);
-			temp.clear();
 		}
 		return currentStateSet;
 	}

@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -14,14 +15,34 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * A class to check emptiness of IRabinAutomaton
+ *
+ * @author Philipp Müller (pm251@venus.uni-freiburg.de)
+ *
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ * @param <CRSF>
+ *            crsf type
+ */
 public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends GeneralOperation<LETTER, STATE, CRSF> {
 
 	private final Boolean mResult;
 	private final RabinAutomaton<LETTER, STATE> mEagerAutomaton;
 	private final Set<STATE> mEvidence;
 
-	final AutomatonSccComputation<LETTER, STATE> acceptingSccComputation;
+	final AutomatonSccComputation<LETTER, STATE> mAcceptingSccComputation;
 
+	/**
+	 * Computes the emptiness of automaton and holds information about the emptiness
+	 *
+	 * @param services
+	 *            services
+	 * @param automaton
+	 *            automaton
+	 */
 	public IsEmpty(final AutomataLibraryServices services, final IRabinAutomaton<LETTER, STATE> automaton) {
 		super(services);
 
@@ -29,12 +50,12 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		// cuts off non reachable final states
 		mEagerAutomaton = RabinAutomataUtils.eagerAutomaton(automaton);
 
-		acceptingSccComputation =
+		mAcceptingSccComputation =
 				new AutomatonSccComputation<>(services, getStemlessNonFiniteAutomaton(mEagerAutomaton));
 
-		mResult = acceptingSccComputation.getBalls().isEmpty();
-		if (!mResult) {
-			mEvidence = acceptingSccComputation.getExampleBall();
+		mResult = mAcceptingSccComputation.getBalls().isEmpty();
+		if (Boolean.FALSE.equals(mResult)) {
+			mEvidence = mAcceptingSccComputation.getExampleBall();
 		} else {
 			mEvidence = new HashSet<>();
 		}
@@ -75,14 +96,14 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		while (!isCancellationRequested()) {
 
 			final HashMap<List<LETTER>, HashSet<STATE>> temp = new HashMap<>();
-			for (final List<LETTER> word : wordStateMap.keySet()) {
-				for (final STATE state : wordStateMap.get(word)) {
+			for (final Entry<List<LETTER>, HashSet<STATE>> word : wordStateMap.entrySet()) {
+				for (final STATE state : word.getValue()) {
 					for (final OutgoingInternalTransition<LETTER, STATE> transition : mEagerAutomaton
 							.getSuccessors(state)) {
 						final STATE succ = transition.getSucc();
 						if (missingStates.contains(succ)) {
 							missingStates.remove(succ);
-							final ArrayList<LETTER> newWord = new ArrayList<>(word);
+							final ArrayList<LETTER> newWord = new ArrayList<>(word.getKey());
 							newWord.add(transition.getLetter());
 							if (!temp.containsKey(newWord)) {
 								temp.put(newWord, new HashSet<>());
@@ -130,14 +151,14 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		while (!isCancellationRequested()) {
 			final HashMap<List<LETTER>, HashSet<STATE>> temp = new HashMap<>();
 
-			for (final List<LETTER> word : wordStateMap.keySet()) {
-				for (final STATE state : wordStateMap.get(word)) {
+			for (final Entry<List<LETTER>, HashSet<STATE>> word : wordStateMap.entrySet()) {
+				for (final STATE state : word.getValue()) {
 					for (final OutgoingInternalTransition<LETTER, STATE> transition : mEagerAutomaton
 							.getSuccessors(state)) {
 						final STATE succ = transition.getSucc();
 						if (!exploredStates.contains(succ)) {
 							exploredStates.add(succ);
-							final ArrayList<LETTER> newWord = new ArrayList<>(word);
+							final ArrayList<LETTER> newWord = new ArrayList<>(word.getKey());
 							newWord.add(transition.getLetter());
 							if (!temp.containsKey(newWord)) {
 								temp.put(newWord, new HashSet<>());
@@ -158,7 +179,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	@Override
 	public boolean checkResult(final CRSF stateFactory) throws AutomataOperationCanceledException {
 		boolean result = true;
-		if (!mResult) {
+		if (Boolean.FALSE.equals(mResult)) {
 			final Pair<List<LETTER>, List<LETTER>> counterExample = getCounterexample();
 			result = new Accepts<>(mServices, mEagerAutomaton, counterExample.getFirst(), counterExample.getSecond())
 					.getResult();
