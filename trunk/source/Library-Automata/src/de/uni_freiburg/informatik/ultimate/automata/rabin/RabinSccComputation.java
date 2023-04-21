@@ -30,8 +30,7 @@ public class RabinSccComputation<NODE> extends DefaultSccComputation<NODE> {
 			}
 		}
 
-		mBalls.clear();
-		mBalls.addAll(temp);
+		mBalls.retainAll(temp);
 	}
 
 }

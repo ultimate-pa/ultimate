@@ -57,7 +57,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		if (Boolean.FALSE.equals(mResult)) {
 			mEvidence = mAcceptingSccComputation.getExampleBall();
 		} else {
-			mEvidence = new HashSet<>();
+			mEvidence = Set.of();
 		}
 
 	}
@@ -68,18 +68,15 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	}
 
 	public Pair<List<LETTER>, List<LETTER>> getCounterexample() throws AutomataOperationCanceledException {
-		List<LETTER> stem = null;
-		List<LETTER> loop = null;
-
-		if (!mEvidence.isEmpty()) {
-			final Collection<STATE> possibleHondaStates = new ArrayList<>(mEvidence);
-			possibleHondaStates.removeIf(x -> !mEagerAutomaton.isAccepting(x));
-			final STATE hondaState = possibleHondaStates.iterator().next();
-
-			loop = getLoop(hondaState);
-			stem = getStem(hondaState);
+		if (mEvidence.isEmpty()) {
+			return null;
 		}
-		return new Pair<>(stem, loop);
+
+		final Collection<STATE> possibleHondaStates = new ArrayList<>(mEvidence);
+		possibleHondaStates.removeIf(x -> !mEagerAutomaton.isAccepting(x));
+		final STATE hondaState = possibleHondaStates.iterator().next();
+
+		return new Pair<>(getStem(hondaState), getLoop(hondaState));
 	}
 
 	private List<LETTER> getLoop(final STATE hondaState) throws AutomataOperationCanceledException {
