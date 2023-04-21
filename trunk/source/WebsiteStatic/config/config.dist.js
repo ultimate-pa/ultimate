@@ -477,7 +477,7 @@ const _CONFIG = {
 		{
 			name: "GemCutter",
 			id: "gemcutter",
-			description: "GemCutter is a verifier for concurrent programs based on commutativity – the observation that for certain statements, the execution order does not matter.",
+			description: "A verifier for concurrent programs based on commutativity – the observation that for certain statements, the execution order does not matter.",
 			languages: ["Boogie", "C"],
 			workers: [
 				{
