@@ -138,7 +138,7 @@ public class SyntaxChecker implements IAnalysis {
 				.getBoolean(PreferenceInitializer.LABEL_DoSyntaxWarningCheck);
 		if (doSyntaxWarningCheck) {
 			final String toolCommandWarnings = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getString(PreferenceInitializer.LABEL_SyntaxErrorCommand);
+					.getString(PreferenceInitializer.LABEL_SyntaxWarningCommand);
 			final String outputWarnings;
 			if (Objects.equals(toolCommandError, toolCommandWarnings)) {
 				outputWarnings = outputError;
