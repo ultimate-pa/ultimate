@@ -15,21 +15,25 @@
   white-space: nowrap;
 }
 
-.toast {
-  max-width: 100%;
-}
-
 #messages {
   overflow: auto;
   flex-flow: column;
   flex-shrink: 1;
   flex-grow: 0;
-  flex-basis: 400px;
+  flex-basis: 30%;
   z-index: 4;
 }
 
 .oi{
   top: 0;
+}
+
+.mr-1 {
+  margin-right: .5rem !important;
+}
+
+.number{
+  width: 50px;
 }
 
 .messages-actions {
