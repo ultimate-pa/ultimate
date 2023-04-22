@@ -1074,8 +1074,8 @@ public class JordanLoopAcceleration {
 		} else {
 			substitutionMapping2.put(it, (ConstantTerm) script.numeral(BigInteger.ONE));
 		}
-		final PureSubstitution subst2 = new PureSubstitution(script, substitutionMapping2);
-		final Term notGuardOfClosedForm2 = Util.not(script, subst2.transform(guardOfClosedFormEven));
+		final Term notGuardOfClosedForm2 = Util.not(script,
+				PureSubstitution.apply(script, substitutionMapping2, guardOfClosedFormEven));
 
 		if (Util.checkSat(script, Util.and(script, sequentialCompositionSubst, notGuardOfClosedForm2,
 				notLoopAccFormula)) == LBool.UNKNOWN) {

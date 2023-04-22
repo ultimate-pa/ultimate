@@ -51,10 +51,10 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HornClauseAST;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.CnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
@@ -340,12 +340,12 @@ public class HornClauseParserScript extends HistoryRecordingScript implements IN
 			assert !subsInverse.containsValue(freshTv);
 			subsInverse.put(freshTv, c);
 		}
-		final Term bodyWithConstraintsReplaced = new PureSubstitution(this, subs).transform(snfBody);
+		final Term bodyWithConstraintsReplaced = PureSubstitution.apply(this, subs, snfBody);
 
 		final Term cnfWConstraintsReplaced = new CnfTransformer(mManagedScript, mServices)
 				.transform(bodyWithConstraintsReplaced);
 
-		final Term cnf = new PureSubstitution(this, subsInverse).transform(cnfWConstraintsReplaced);
+		final Term cnf = PureSubstitution.apply(this, subsInverse, cnfWConstraintsReplaced);
 
 		Term normalizedTerm;
 		if (snfTerm instanceof QuantifiedFormula) {

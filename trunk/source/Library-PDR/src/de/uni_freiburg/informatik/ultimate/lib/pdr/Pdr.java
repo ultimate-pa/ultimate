@@ -1280,8 +1280,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 			}
 			substitutionMapping.put(bv.getTermVariable(), constant);
 		}
-		final PureSubstitution priming = new PureSubstitution(script, substitutionMapping);
-		final Term result = priming.transform(pred.getFormula());
+		final Term result = PureSubstitution.apply(script, substitutionMapping, pred.getFormula());
 		return result;
 	}
 

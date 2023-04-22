@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -220,15 +220,14 @@ public class HCSSABuilder {
 		 *  --> including the closing, i.e., constants instead of variables
 		 *  it contains fresh constants (unless all variabels from the head are unchanged in the body pos)
 		 */
-		final PureSubstitution substitutionTtf = new PureSubstitution(mScript, headVarSubsMapping);
 		final Term withSsaEqualities = SmtUtils.and(mScript.getScript(), constraintWithSsaConstantEqualities);
-		final Term headVarsSubstituted = substitutionTtf.transform(withSsaEqualities);
+		final Term headVarsSubstituted = PureSubstitution.apply(mScript, headVarSubsMapping, withSsaEqualities);
 
 		final Map<Term, Term> bodyVarSubstitutionMap = new HashMap<>();
 		for (final TermVariable bv : headVarsSubstituted.getFreeVars()) {
 			bodyVarSubstitutionMap.put(bv, getFreshConstant(bv, HornUtilConstants.BODYVARPREFIX));
 		}
-		final Term closed = new PureSubstitution(mScript, bodyVarSubstitutionMap).transform(headVarsSubstituted);
+		final Term closed = PureSubstitution.apply(mScript, bodyVarSubstitutionMap, headVarsSubstituted);
 
 
 
@@ -278,9 +277,8 @@ public class HCSSABuilder {
 		final HornClause currentHornClause = currentSubTree.getRootSymbol();
 
 		// the interpolant term in terms of the TermVariabels of the HornClause
-		final Term backSubstitutedTerm = new PureSubstitution(mScript, currentSsaSubtree.getRoot().getBackSubstitution())
-				.transform(currentInterpolantTermInSsa);
-
+		final Term backSubstitutedTerm = PureSubstitution.apply(mScript,
+				currentSsaSubtree.getRoot().getBackSubstitution(), currentInterpolantTermInSsa);
 
 		final IPredicate backSubstitutedPredicate = mPredicateUnifier.getOrConstructPredicate(backSubstitutedTerm);
 

@@ -39,8 +39,8 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -169,8 +169,7 @@ public class HornClauseBody {
 	 * @param mgdScript
 	 */
 	public void applySubstitution(final Map<Term, Term> mapping) {
-		final PureSubstitution substitution = new PureSubstitution(mParserScript, mapping);
-		transformTerms(substitution::transform);
+		transformTerms(x -> PureSubstitution.apply(mParserScript, mapping, x));
 	}
 
 	public void transformTerms(final Function<Term, Term> transformer) {

@@ -65,7 +65,7 @@ public class PureSubstitution extends TermTransformer {
 	protected final ManagedScript mMgdScript;
 	private final ScopedHashMap<Term, Term> mScopedSubstitutionMapping;
 
-	public PureSubstitution(final Script script, final Map<? extends Term, ? extends Term> substitutionMapping) {
+	private PureSubstitution(final Script script, final Map<? extends Term, ? extends Term> substitutionMapping) {
 		super();
 		mMgdScript = null;
 		mScript = script;
@@ -73,12 +73,23 @@ public class PureSubstitution extends TermTransformer {
 		mScopedSubstitutionMapping.putAll(substitutionMapping);
 	}
 
-	public PureSubstitution(final ManagedScript mgdScript, final Map<? extends Term, ? extends Term> substitutionMapping) {
+	protected PureSubstitution(final ManagedScript mgdScript,
+			final Map<? extends Term, ? extends Term> substitutionMapping) {
 		super();
 		mMgdScript = mgdScript;
 		mScript = mgdScript.getScript();
 		mScopedSubstitutionMapping = new ScopedHashMap<>();
 		mScopedSubstitutionMapping.putAll(substitutionMapping);
+	}
+
+	public static Term apply(final Script script,
+			final Map<? extends Term, ? extends Term> substitutionMapping, final Term term) {
+		return new PureSubstitution(script, substitutionMapping).transform(term);
+	}
+
+	public static Term apply(final ManagedScript mgdScript,
+			final Map<? extends Term, ? extends Term> substitutionMapping, final Term term) {
+		return new PureSubstitution(mgdScript, substitutionMapping).transform(term);
 	}
 
 	@Override

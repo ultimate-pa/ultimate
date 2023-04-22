@@ -1920,7 +1920,7 @@ public final class SmtUtils {
 			final Map<Term, Term> ucMapping = new HashMap<>();
 			final Term[] conjuncts = getConjuncts(term);
 			for (int i = 0; i < conjuncts.length; i++) {
-				final Term conjunct = new PureSubstitution(script, substitutionMapping).transform(conjuncts[i]);
+				final Term conjunct = PureSubstitution.apply(script, substitutionMapping, conjuncts[i]);
 				final String name = "conjunct" + i;
 				final Annotation annot = new Annotation(":named", name);
 				final Term annotTerm = script.annotate(conjunct, annot);
