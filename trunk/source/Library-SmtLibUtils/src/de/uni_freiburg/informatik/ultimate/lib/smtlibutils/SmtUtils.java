@@ -2071,35 +2071,6 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Given a quantified formula, rename all variables that are bound by the quantifier and occur in the set toRename
-	 * to fresh variables.
-	 *
-	 * @param freshVarPrefix
-	 *            prefix of the fresh variables
-	 */
-	public static Term renameQuantifiedVariables(final ManagedScript mgdScript, final QuantifiedFormula qFormula,
-			final Set<TermVariable> toRename, final String freshVarPrefix) {
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final TermVariable var : toRename) {
-			final TermVariable freshVariable = mgdScript.constructFreshTermVariable(freshVarPrefix, var.getSort());
-			substitutionMapping.put(var, freshVariable);
-		}
-		final Term newBody = Substitution.apply(mgdScript, substitutionMapping, qFormula.getSubformula());
-
-		final TermVariable[] vars = new TermVariable[qFormula.getVariables().length];
-		for (int i = 0; i < vars.length; i++) {
-			final TermVariable renamed = (TermVariable) substitutionMapping.get(qFormula.getVariables()[i]);
-			if (renamed != null) {
-				vars[i] = renamed;
-			} else {
-				vars[i] = qFormula.getVariables()[i];
-			}
-		}
-		final Term result = mgdScript.getScript().quantifier(qFormula.getQuantifier(), vars, newBody);
-		return result;
-	}
-
-	/**
 	 * @return true iff term is {@link ApplicationTerm} with functionName.
 	 */
 	public static boolean isFunctionApplication(final Term term, final String functionName) {

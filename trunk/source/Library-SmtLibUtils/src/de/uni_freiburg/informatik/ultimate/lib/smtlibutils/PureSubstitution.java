@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -127,7 +128,7 @@ public class PureSubstitution extends TermTransformer {
 					+ "containes quantified variable. This (rare) case is "
 					+ "only supported if you call substitution with fresh " + "variable construction.");
 		}
-		return SmtUtils.renameQuantifiedVariables(mMgdScript, qFormula, toRename, "subst");
+		return renameQuantifiedVariables(mMgdScript, qFormula, toRename, "subst");
 
 	}
 
@@ -214,5 +215,34 @@ public class PureSubstitution extends TermTransformer {
 	@Override
 	public String toString() {
 		return "Substitution " + mScopedSubstitutionMapping.toString();
+	}
+
+	/**
+	 * Given a quantified formula, rename all variables that are bound by the quantifier and occur in the set toRename
+	 * to fresh variables.
+	 *
+	 * @param freshVarPrefix
+	 *            prefix of the fresh variables
+	 */
+	public static Term renameQuantifiedVariables(final ManagedScript mgdScript, final QuantifiedFormula qFormula,
+			final Set<TermVariable> toRename, final String freshVarPrefix) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final TermVariable var : toRename) {
+			final TermVariable freshVariable = mgdScript.constructFreshTermVariable(freshVarPrefix, var.getSort());
+			substitutionMapping.put(var, freshVariable);
+		}
+		final Term newBody = Substitution.apply(mgdScript, substitutionMapping, qFormula.getSubformula());
+
+		final TermVariable[] vars = new TermVariable[qFormula.getVariables().length];
+		for (int i = 0; i < vars.length; i++) {
+			final TermVariable renamed = (TermVariable) substitutionMapping.get(qFormula.getVariables()[i]);
+			if (renamed != null) {
+				vars[i] = renamed;
+			} else {
+				vars[i] = qFormula.getVariables()[i];
+			}
+		}
+		final Term result = mgdScript.getScript().quantifier(qFormula.getQuantifier(), vars, newBody);
+		return result;
 	}
 }
