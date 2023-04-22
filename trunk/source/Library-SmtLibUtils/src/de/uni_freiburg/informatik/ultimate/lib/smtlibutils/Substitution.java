@@ -59,6 +59,13 @@ public class Substitution extends PureSubstitution {
 		return new Substitution(mgdScript, substitutionMapping).transform(term);
 	}
 
+	@Override
+	protected Term applySubsititution(final Map<Term, Term> substitutionMapping, final Term term) {
+		return apply(mMgdScript, substitutionMapping, term);
+	}
+
+
+
 
 
 }

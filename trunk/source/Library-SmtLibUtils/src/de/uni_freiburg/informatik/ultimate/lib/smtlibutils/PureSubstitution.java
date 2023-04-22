@@ -224,14 +224,14 @@ public class PureSubstitution extends TermTransformer {
 	 * @param freshVarPrefix
 	 *            prefix of the fresh variables
 	 */
-	public static Term renameQuantifiedVariables(final ManagedScript mgdScript, final QuantifiedFormula qFormula,
+	private Term renameQuantifiedVariables(final ManagedScript mgdScript, final QuantifiedFormula qFormula,
 			final Set<TermVariable> toRename, final String freshVarPrefix) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final TermVariable var : toRename) {
-			final TermVariable freshVariable = mgdScript.constructFreshTermVariable(freshVarPrefix, var.getSort());
-			substitutionMapping.put(var, freshVariable);
+		for (final TermVariable tv : toRename) {
+			final TermVariable freshVariable = mgdScript.constructFreshTermVariable(freshVarPrefix, tv.getSort());
+			substitutionMapping.put(tv, freshVariable);
 		}
-		final Term newBody = Substitution.apply(mgdScript, substitutionMapping, qFormula.getSubformula());
+		final Term newBody = applySubsititution(substitutionMapping, qFormula.getSubformula());
 
 		final TermVariable[] vars = new TermVariable[qFormula.getVariables().length];
 		for (int i = 0; i < vars.length; i++) {
@@ -242,7 +242,14 @@ public class PureSubstitution extends TermTransformer {
 				vars[i] = qFormula.getVariables()[i];
 			}
 		}
-		final Term result = mgdScript.getScript().quantifier(qFormula.getQuantifier(), vars, newBody);
-		return result;
+		return mgdScript.getScript().quantifier(qFormula.getQuantifier(), vars, newBody);
+	}
+
+	protected Term applySubsititution(final Map<Term, Term> substitutionMapping, final Term term) {
+		if (mMgdScript == null) {
+			return PureSubstitution.apply(mScript, substitutionMapping, term);
+		} else {
+			return PureSubstitution.apply(mMgdScript, substitutionMapping, term);
+		}
 	}
 }
