@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
 
 	private final IRabinAutomaton<LETTER, STATE> mRabinAutomaton;
-	// black states ~ accepting, white states ~ NonAccepting
+	// black states ~ nonFinite, white states ~ Finite
 	private final IBlackWhiteStateFactory<STATE> mFiniteOrNonFiniteStateFactory;
 	private final HashMap<STATE, STATE> mBuchi2Rabin = new HashMap<>();
 	final HashMap<Pair<STATE, LETTER>, Iterable<OutgoingInternalTransition<LETTER, STATE>>> mTransitions =
@@ -145,6 +145,35 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 		});
 
 		mTransitions.put(transitionKey, result);
+		return result;
+	}
+
+	@Override
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
+
+		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
+
+		final STATE rabinState = mBuchi2Rabin.get(state);
+		if (mNonFiniteSet.contains(state)) {
+			mRabinAutomaton.getSuccessors(rabinState).forEach(x -> {
+				final STATE succ = exploreFromNonFinite(x.getSucc());
+				if (succ != null) {
+					result.add(new OutgoingInternalTransition<>(x.getLetter(), succ));
+
+				}
+			});
+
+			return result;
+		}
+
+		mRabinAutomaton.getSuccessors(rabinState).forEach(x -> {
+			final Iterator<STATE> successors = explore(x.getSucc()).iterator();
+			result.add(new OutgoingInternalTransition<>(x.getLetter(), successors.next()));
+			if (successors.hasNext()) {
+				result.add(new OutgoingInternalTransition<>(x.getLetter(), successors.next()));
+			}
+		});
+
 		return result;
 	}
 
