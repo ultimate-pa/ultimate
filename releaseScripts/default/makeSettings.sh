@@ -66,6 +66,15 @@ get_git_root() {
   fi
 }
 
+# move to root of current git directory, execute command
+# abort if no git directory
+run_in_git_root() {
+  root_dir=$(get_git_root)
+  spushd "$root_dir"
+  "$@"
+  spopd
+}
+
 is_ming() {
   uname | grep -q "MING"
 }
