@@ -10,7 +10,9 @@ import java.util.Iterator;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -45,8 +47,6 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 	public VpAlphabet<LETTER> getVpAlphabet() {
 		return new VpAlphabet<>(mRabinAutomaton.getAlphabet());
 	}
-
-	// There is no stack in Rabin automata
 
 	@Override
 	public Iterable<STATE> getInitialStates() {
@@ -87,7 +87,7 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 
 	/**
 	 * Computes if a state is accepting (Final means accepting in this context) only returns a boolean iff the state is
-	 * reached through lazy construction, returns null if the state is not known
+	 * reached through lazy construction
 	 *
 	 * @param state
 	 *            state which acceptance should be evaluated
@@ -146,10 +146,6 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 		return null;
 	}
 
-	// There are no call Transitions in Rabin automata
-
-	// There are no return Transitions in Rabin automata
-
 	@SuppressWarnings("deprecation")
 	@Override
 	public IStateFactory<STATE> getStateFactory() {
@@ -203,6 +199,25 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 			}
 			return nonFiniteVariant;
 		}
+		return null;
+	}
+
+	@Override
+	public STATE getEmptyStackState() {
+		// There is no stack in Rabin automata
+		return null;
+	}
+
+	@Override
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
+		// There are no call Transitions in Rabin automata
+		return null;
+	}
+
+	@Override
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
+			final LETTER letter) {
+		// There are no return Transitions in Rabin automata
 		return null;
 	}
 
