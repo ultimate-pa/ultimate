@@ -6,8 +6,6 @@ DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 . "$DIR/makeSettings.sh"
 
-
-
 build() {
   spushd "../../trunk/source/BA_MavenParentUltimate/"
   exit_on_fail mvn -T 1C clean install -Pmaterialize
@@ -45,6 +43,7 @@ create_webbackend_dir() {
   local target="$(readlink -f WebBackend)"
   if [ -d "$target" ] ; then rm -r "$target" ; fi
   mkdir "$target"
+  echo "Copying WebBackend"
   cp -r "$source/"* "$target"
 }
 
@@ -53,6 +52,7 @@ create_webfrontend_dir() {
   local target="$(readlink -f WebFrontend)"
   if [ -d "$target" ] ; then rm -r "$target" ; fi
   mkdir "$target"
+  echo "Copying WebFrontend"
   cp -r "$source/"* "$target"
 }
 

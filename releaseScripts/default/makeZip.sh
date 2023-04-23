@@ -48,14 +48,14 @@ if [ "$2" == "linux" ]; then
   echo "Building .zip for linux..."
   ARCH="linux"
   ARCHPATH="products/CLI-E4/linux/gtk/x86_64"
-  ADDS+=("adds/z3" "adds/cvc4nyu" "adds/cvc4" "adds/mathsat") 
+  ADDS+=("adds/z3" "adds/cvc4nyu" "adds/cvc4" "adds/mathsat")
 elif [ "$2" == "win32" ]; then
   echo "Building .zip for win32..."
   ARCH="win32"
   ARCHPATH="products/CLI-E4/win32/win32/x86_64"
-  ADDS+=("adds/z3.exe" "adds/cvc4nyu.exe" "adds/cvc4.exe" "adds/mathsat.exe" "adds/mpir.dll" "adds/mathsat.dll") 
+  ADDS+=("adds/z3.exe" "adds/cvc4nyu.exe" "adds/cvc4.exe" "adds/mathsat.exe" "adds/mpir.dll" "adds/mathsat.dll")
 else
-  echo "Wrong argument: ""$2"" -- use 'linux' or 'win32'"		
+  echo "Wrong argument: ""$2"" -- use 'linux' or 'win32'"
   exit 1
 fi
 
@@ -82,7 +82,7 @@ fi
 if [ ! -z "$4" -a ! "NONE" = "$4" ]; then
   TERMTOOLCHAIN=../../trunk/examples/toolchains/${4}
 else
-  echo "No termination toolchain specified, ommitting..." 
+  echo "No termination toolchain specified, ommitting..."
   TERMTOOLCHAIN=
 fi
 
@@ -138,15 +138,15 @@ copy_if_non_empty "$VALTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"ReachWitnessValidation
 copy_if_non_empty "$MEMDEREFMEMTRACKTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"MemDerefMemtrack.xml
 copy_if_non_empty "$LTLTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"LTL.xml
 copy_if_non_empty "$TERMVALTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"TerminationWitnessValidation.xml
-exit_on_fail cp "${SETTINGS}" "$CONFIGDIR"/.
+exit_on_fail cp ${SETTINGS} "$CONFIGDIR"/.
 
 ## copy all adds to target dir 
 for add in "${ADDS[@]}" ; do 
-  if ! readlink -fe "$add" > /dev/null ; then 
-    echo "$add does not exist, aborting..." 
+  if ! readlink -fe $add > /dev/null ; then
+    echo "$add does not exist, aborting..."
     exit 1
-  fi 
-  exit_on_fail cp "$add" "$TARGETDIR"/
+  fi
+  exit_on_fail cp $add "$TARGETDIR"/
 done 
 
 
