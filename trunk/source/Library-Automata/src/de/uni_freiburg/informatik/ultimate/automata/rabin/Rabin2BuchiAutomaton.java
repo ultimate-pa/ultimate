@@ -15,9 +15,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * lazy translation of a Rabin automaton into an equivalent Büchi automaton
+ * lazy translation of a Rabin automaton into an equivalent Büchi automaton Do not use Rabin States for operations on
+ * this automaton!
  *
  * @author Philipp Müller (pm251@venus.uni-freiburg.de)
  *
@@ -28,14 +30,22 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 	// black states ~ accepting, white states ~ NonAccepting
 	private final IBlackWhiteStateFactory<STATE> mFiniteOrNonFiniteStateFactory;
 	private final HashMap<STATE, STATE> mBuchi2Rabin = new HashMap<>();
+	final HashMap<Pair<STATE, LETTER>, Iterable<OutgoingInternalTransition<LETTER, STATE>>> mTransitions =
+			new HashMap<>();
 
 	private final HashSet<STATE> mInitialSet = new HashSet<>();
 	private boolean mInitialComplete;
+
 	private final HashSet<STATE> mNonFiniteSet = new HashSet<>();
 	private final HashSet<STATE> mAcceptingSet = new HashSet<>();
 
 	/**
+	 * Initializes lazy Buchi conversion for a Rabin automaton using the given BWStateFactory
 	 *
+	 * @param automaton
+	 *            the Rabin automaton to be converted
+	 * @param finiteOrNonFiniteStateFactory
+	 *            a factory mapping a set of states to two non intersecting sets of states
 	 */
 	public Rabin2BuchiAutomaton(final IRabinAutomaton<LETTER, STATE> automaton,
 			final IBlackWhiteStateFactory<STATE> finiteOrNonFiniteStateFactory) {
@@ -52,17 +62,15 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 	public Iterable<STATE> getInitialStates() {
 		if (!mInitialComplete) {
 
-			if (mRabinAutomaton.getInitialStates().spliterator().estimateSize() != (2 * mInitialSet.size())) {
+			mRabinAutomaton.getInitialStates().forEach(x -> {
+				final Iterator<STATE> relatedStates = explore(x).iterator();
 
-				mRabinAutomaton.getInitialStates().forEach(x -> {
-					final Iterator<STATE> relatedStates = explore(x).iterator();
-
+				mInitialSet.add(relatedStates.next());
+				if (relatedStates.hasNext()) {
 					mInitialSet.add(relatedStates.next());
-					if (relatedStates.hasNext()) {
-						mInitialSet.add(relatedStates.next());
-					}
-				});
-			}
+				}
+			});
+
 			mInitialComplete = true;
 		}
 		return mInitialSet;
@@ -70,18 +78,8 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 
 	@Override
 	public boolean isInitial(final STATE state) {
-		if (mInitialSet.contains(state)) {
-			return true;
-		}
-		if (mBuchi2Rabin.containsKey(state)) {
 
-			if (mRabinAutomaton.isInitial(mBuchi2Rabin.get(state))) {
-				mInitialSet.add(state);
-				return true;
-			}
-		}
-		return false;
-
+		return mInitialSet.contains(state);
 	}
 
 	/**
@@ -95,56 +93,58 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 	@Override
 	public boolean isFinal(final STATE state) {
 
-		if (mAcceptingSet.contains(state)) {
-			return true;
-		}
-		return false;
-		// exception if state not known
+		return mAcceptingSet.contains(state);
 	}
 
 	@Override
 	public int size() {
-		// Maybe compute this eager
+		// Maybe compute this eager ?
 		return mBuchi2Rabin.size();
 	}
 
 	@Override
 	public String sizeInformation() {
-		return "Number of cached states: " + size();
+		return "Number of distinct computed states: " + size();
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
 			final LETTER letter) {
+		final Pair<STATE, LETTER> transitionKey = new Pair<>(state, letter);
+		if (mTransitions.containsKey(transitionKey)) {
+			return mTransitions.get(transitionKey);
+		}
+
 		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
+
 		final STATE rabinState = mBuchi2Rabin.get(state);
 		if (mNonFiniteSet.contains(state)) {
 			mRabinAutomaton.getSuccessors(rabinState, letter).forEach(x -> {
 				final STATE succ = exploreFromNonFinite(x.getSucc());
 				if (succ != null) {
 					result.add(new OutgoingInternalTransition<>(letter, succ));
+
 				}
 			});
 
+			mTransitions.put(transitionKey, result);
 			return result;
 		}
-		if (mBuchi2Rabin.containsKey(state)) {
-			mRabinAutomaton.getSuccessors(rabinState, letter).forEach(x -> {
-				final Iterator<STATE> successors = explore(x.getSucc()).iterator();
+
+		mRabinAutomaton.getSuccessors(rabinState, letter).forEach(x -> {
+			final Iterator<STATE> successors = explore(x.getSucc()).iterator();
+			result.add(new OutgoingInternalTransition<>(letter, successors.next()));
+			if (successors.hasNext()) {
 				result.add(new OutgoingInternalTransition<>(letter, successors.next()));
-				if (successors.hasNext()) {
-					result.add(new OutgoingInternalTransition<>(letter, successors.next()));
-				}
-			});
+			}
+		});
 
-			return result;
-		}
-
-		return null;
+		mTransitions.put(transitionKey, result);
+		return result;
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
+	@Deprecated
 	public IStateFactory<STATE> getStateFactory() {
 		return mFiniteOrNonFiniteStateFactory;
 	}
@@ -182,7 +182,7 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 
 		final STATE nonFiniteVariant = mFiniteOrNonFiniteStateFactory.getBlackContent(rabinState);
 
-		if (mBuchi2Rabin.containsKey(nonFiniteVariant)) {
+		if (mNonFiniteSet.contains(nonFiniteVariant)) {
 
 			return nonFiniteVariant;
 		}
