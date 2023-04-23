@@ -18,10 +18,15 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * lazy translation of a Rabin automaton into an equivalent Büchi automaton Do not use Rabin States for operations on
+ * lazy translation of a Rabin automaton into an equivalent Büchi automaton. Do not use Rabin States for operations on
  * this automaton!
  *
  * @author Philipp Müller (pm251@venus.uni-freiburg.de)
+ *
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  *
  */
 public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
@@ -144,7 +149,6 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 	}
 
 	@Override
-	@Deprecated
 	public IStateFactory<STATE> getStateFactory() {
 		return mFiniteOrNonFiniteStateFactory;
 	}
