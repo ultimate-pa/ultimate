@@ -79,10 +79,9 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 				mInitialSet.add(state);
 				return true;
 			}
-			return false;
 		}
+		return false;
 
-		// exception if state not known
 	}
 
 	/**
@@ -99,9 +98,7 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 		if (mAcceptingSet.contains(state)) {
 			return true;
 		}
-		if (mBuchi2Rabin.containsKey(state)) {
-			return false;
-		}
+		return false;
 		// exception if state not known
 	}
 
