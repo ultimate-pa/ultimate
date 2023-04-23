@@ -65,3 +65,15 @@ get_git_root() {
     exit 1
   fi
 }
+
+is_ming() {
+  uname | grep -q "MING"
+}
+
+run_python() {
+  if is_ming ; then
+    py -3 "$@"
+  else
+    python "$@"
+  fi
+}

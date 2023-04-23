@@ -18,7 +18,7 @@ from functools import lru_cache
 
 # quoting style is important here
 # fmt: off
-version = '839c364b'
+version = '4f54f8f5'
 toolname = 'Automizer'
 # fmt: on
 
@@ -230,18 +230,29 @@ def check_string_contains(strings, words):
 
 @lru_cache(maxsize=1)
 def get_java():
-    candidates = [
-        "java",
-        "/usr/bin/java",
-        "/opt/oracle-jdk-bin-*/bin/java",
-        "/opt/openjdk-*/bin/java",
-        "/usr/lib/jvm/java-*-openjdk-amd64/bin/java",
-    ]
+    if os.name == "nt":  # Windows
+        candidates = [
+            "java.exe",
+            r"C:\Program Files\Java\jdk-11\bin\java.exe",
+        ]
+    else:  # Unix-like
+        candidates = [
+            "java",
+            "/usr/bin/java",
+            "/opt/oracle-jdk-bin-*/bin/java",
+            "/opt/openjdk-*/bin/java",
+            "/usr/lib/jvm/java-*-openjdk-amd64/bin/java",
+        ]
 
-    candidates = [c for entry in candidates for c in glob.glob(entry)]
-    pattern = r'"(\d+\.\d+).*"'
-
+    candidates_extended = []
     for c in candidates:
+        if "*" in c:
+            candidates_extended += [glob.glob(c)]
+        else:
+            candidates_extended += [c]
+
+    pattern = r'"(\d+\.\d+).*"'
+    for c in candidates_extended:
         candidate = shutil.which(c)
         if not candidate:
             continue
