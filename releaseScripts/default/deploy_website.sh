@@ -46,7 +46,7 @@ deploy(){
   put -r WebFrontend/* ${TARGET_DIR}/frontend/
   rm ${TARGET_DIR}/config
   mkdir ${TARGET_DIR}/config
-  put -r ../config/* ${TARGET_DIR}/config/
+  put -r ../website-config/* ${TARGET_DIR}/config/
   put adds/z3 ${TARGET_DIR}/solver/
   put adds/cvc4 ${TARGET_DIR}/solver/
   put adds/mathsat ${TARGET_DIR}/solver/
