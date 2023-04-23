@@ -38,4 +38,4 @@ deploy(){
 }
 
 get_ult_version
-# deploy
+deploy
