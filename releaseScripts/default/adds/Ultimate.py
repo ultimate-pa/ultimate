@@ -233,7 +233,8 @@ def get_java():
     if os.name == "nt":  # Windows
         candidates = [
             "java.exe",
-            r"C:\Program Files\Java\jdk-11\bin\java.exe",
+            "C:\\Program Files\\Java\\jdk-11\\bin\\java.exe",
+            "C:\\Program Files\\Eclipse Adoptium\\jdk-11*-hotspot\\bin\\java.exe",
         ]
     else:  # Unix-like
         candidates = [
@@ -247,7 +248,7 @@ def get_java():
     candidates_extended = []
     for c in candidates:
         if "*" in c:
-            candidates_extended += [glob.glob(c)]
+            candidates_extended += glob.glob(c)
         else:
             candidates_extended += [c]
 
