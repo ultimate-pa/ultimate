@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.mso.MSODSolver.MSODLogic;
 public class SmtParserPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public enum SmtParserMode {
-		GenericSmtSolver, MSODSolver, UltimateEliminator, UltimateTreeAutomizer,
+		GenericSmtSolver, MSODSolver, UltimateEliminator, UltimateTreeAutomizer, IntBlastingWrapper,
 	}
 
 	public static final String LABEL_SMT_PARSER_MODE = "SmtParser Mode";
@@ -52,6 +52,7 @@ public class SmtParserPreferenceInitializer extends UltimatePreferenceInitialize
 			SmtParserMode.GenericSmtSolver.toString() + ": Apply some SMT solver." + System.lineSeparator() +
 			SmtParserMode.MSODSolver.toString() + ": Presume that input uses our MSO logic, apply our MSO Solver." + System.lineSeparator() +
 			SmtParserMode.UltimateEliminator.toString() + ": Run UltimateElimintor. " + System.lineSeparator() +
+			SmtParserMode.IntBlastingWrapper.toString() + ": Translate bitvectors to integers. " + System.lineSeparator() +
 			SmtParserMode.UltimateTreeAutomizer.toString() + ": Presume that input contains Horn clauses, run UltimateTreeAutomizer.";
 	// @formatter:on
 
