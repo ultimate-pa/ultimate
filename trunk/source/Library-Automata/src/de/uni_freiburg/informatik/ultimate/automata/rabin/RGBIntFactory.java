@@ -10,7 +10,7 @@ public class RGBIntFactory implements IRedGreenBlueStateFactory<Integer> {
 	@Override
 	public Integer getRedContent(final Integer content) {
 
-		return content * mBASE;
+		return (content * mBASE);
 	}
 
 	@Override
@@ -31,4 +31,9 @@ public class RGBIntFactory implements IRedGreenBlueStateFactory<Integer> {
 		return Math.floorDiv(content, mBASE);
 	}
 
+	@Override
+	public Integer getRedContent(final int content) {
+
+		return content * mBASE;
+	}
 }
