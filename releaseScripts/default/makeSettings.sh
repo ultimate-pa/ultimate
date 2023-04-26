@@ -83,7 +83,7 @@ run_python() {
   if is_ming ; then
     py -3 "$@"
   else
-    python "$@"
+    python3 "$@"
   fi
 }
 
