@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -14,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -33,6 +35,7 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 
 	private final IRabinAutomaton<LETTER, STATE> mRabinAutomaton;
 	// black states ~ nonFinite, white states ~ Finite
+	private final IEmptyStackStateFactory<STATE> mEmptyStateFactory;
 	private final IBlackWhiteStateFactory<STATE> mFiniteOrNonFiniteStateFactory;
 	private final HashMap<STATE, STATE> mBuchi2Rabin = new HashMap<>();
 	final HashMap<Pair<STATE, LETTER>, Iterable<OutgoingInternalTransition<LETTER, STATE>>> mTransitions =
@@ -53,9 +56,11 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 	 *            a factory mapping a set of states to two non intersecting sets of states
 	 */
 	public Rabin2BuchiAutomaton(final IRabinAutomaton<LETTER, STATE> automaton,
-			final IBlackWhiteStateFactory<STATE> finiteOrNonFiniteStateFactory) {
+			final IBlackWhiteStateFactory<STATE> finiteOrNonFiniteStateFactory,
+			final IEmptyStackStateFactory<STATE> emptyStateFactory) {
 		mRabinAutomaton = automaton;
 		mFiniteOrNonFiniteStateFactory = finiteOrNonFiniteStateFactory;
+		mEmptyStateFactory = emptyStateFactory;
 	}
 
 	@Override
@@ -235,20 +240,20 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 	@Override
 	public STATE getEmptyStackState() {
 		// There is no stack in Rabin automata
-		return null;
+		return mEmptyStateFactory.createEmptyStackState();
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
 		// There are no call Transitions in Rabin automata
-		return null;
+		return Set.of();
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
 			final LETTER letter) {
 		// There are no return Transitions in Rabin automata
-		return null;
+		return Set.of();
 	}
 
 }
