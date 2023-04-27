@@ -15,13 +15,13 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  * @param <CRSF>
  */
-public class Rabin2BuchiTest<LETTER, STATE, CRSF extends IBlackWhiteStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
+public class Rabin2BuchiOperation<LETTER, STATE, CRSF extends IBlackWhiteStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
 		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final Rabin2BuchiAutomaton<LETTER, STATE, CRSF> mConversionAutomaton;
 
 	@SuppressWarnings("unused")
-	public Rabin2BuchiTest(final AutomataLibraryServices services, final CRSF factory,
+	public Rabin2BuchiOperation(final AutomataLibraryServices services, final CRSF factory,
 			final IRabinAutomaton<LETTER, STATE> automaton) throws AutomataOperationCanceledException {
 		super(services);
 		mConversionAutomaton = new Rabin2BuchiAutomaton<>(automaton, factory);
