@@ -31,18 +31,18 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  *
  */
-public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
+public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
+		implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
 
 	private final IRabinAutomaton<LETTER, STATE> mRabinAutomaton;
 	// black states ~ nonFinite, white states ~ Finite
-	private final FiniteOrNonFiniteStateFactory<STATE> mFiniteOrNonFiniteStateFactory;
+	private final FACTORY mFiniteOrNonFiniteStateFactory;
 	private final HashMap<STATE, STATE> mBuchi2Rabin = new HashMap<>();
 	final HashMap<Pair<STATE, LETTER>, Iterable<OutgoingInternalTransition<LETTER, STATE>>> mTransitions =
 			new HashMap<>();
 
 	private final HashSet<STATE> mInitialSet = new HashSet<>();
 	private boolean mInitialComplete;
-
 	private final HashSet<STATE> mNonFiniteSet = new HashSet<>();
 	private final HashSet<STATE> mAcceptingSet = new HashSet<>();
 
@@ -55,7 +55,7 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 	 *            a factory mapping a set of states to two non intersecting sets of states
 	 */
 	public Rabin2BuchiAutomaton(final IRabinAutomaton<LETTER, STATE> automaton,
-			final FiniteOrNonFiniteStateFactory<STATE> finiteOrNonFiniteStateFactory) {
+			final FACTORY finiteOrNonFiniteStateFactory) {
 		mRabinAutomaton = automaton;
 		mFiniteOrNonFiniteStateFactory = finiteOrNonFiniteStateFactory;
 	}
@@ -252,18 +252,4 @@ public class Rabin2BuchiAutomaton<LETTER, STATE> implements INwaOutgoingLetterAn
 		// There are no return Transitions in Rabin automata
 		return Set.of();
 	}
-
-	/**
-	 * This interface is used to combine the IBlackWhiteStateFactory and IEmptyStackStateFactory, both are required for
-	 * this way of conversion
-	 *
-	 * @author Philipp Müller (pm251@venus.uni-freiburg.de)
-	 *
-	 * @param <STATE>
-	 *            type of STATE
-	 */
-	public interface FiniteOrNonFiniteStateFactory<STATE>
-			extends IBlackWhiteStateFactory<STATE>, IEmptyStackStateFactory<STATE> {
-	}
-
 }
