@@ -29,6 +29,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            letter type
  * @param <STATE>
  *            state type
+ * @param <FACTORY>
+ *            state factory with IBlackWhiteState & IEmptyStackState functionality
  *
  */
 public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStateFactory<STATE> & IEmptyStackStateFactory<STATE>>

@@ -26,3 +26,5 @@ RabinAutomaton bAutomaton = (
 assert(accepts(bAutomaton, [a a b , a b]));
 assert(!accepts(bAutomaton, [, a a b]));
 assert(accepts(bAutomaton, [a a  , b a]));
+assert(!isEmpty(rabin2BuchiOperation(bAutomaton)));
+assert(!isEmpty(buchi2RabinOperation(rabin2BuchiOperation(bAutomaton))));

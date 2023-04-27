@@ -11,11 +11,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
+ * A class for explicitly declaring a Rabin automaton by declaring the relevant sets
  *
  * @author Philipp Müller (pm251@venus.uni-freiburg.de)
  *
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
 public class RabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE> {
 

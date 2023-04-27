@@ -16,19 +16,19 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class Buchi2RabinOperation<LETTER, STATE, CRSF> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 
-	private final Buchi2RabinAutomaton<LETTER, STATE> mConversionAutomaton;
+	private final IRabinAutomaton<LETTER, STATE> mConversionAutomaton;
 
 	@SuppressWarnings("unused")
 	public Buchi2RabinOperation(final AutomataLibraryServices services, final CRSF factory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton)
 			throws AutomataOperationCanceledException {
 		super(services);
-		mConversionAutomaton = new Buchi2RabinAutomaton<>(automaton);
+		mConversionAutomaton = new Buchi2RabinAutomaton<LETTER, STATE>(automaton);
 
 	}
 
 	@Override
-	public Object getResult() {
+	public IRabinAutomaton<LETTER, STATE> getResult() {
 
 		return mConversionAutomaton;
 	}
