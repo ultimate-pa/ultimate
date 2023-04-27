@@ -1,0 +1,81 @@
+RabinAutomaton proposalAutomaton = (
+	alphabet = {a b},
+	states = {q1 q2 q3},
+	initialStates = {q1},
+	acceptingStates = {q2},
+	finiteStates = {q3},
+	transitions = { (q1 a q2) (q2 b q1) (q2 a q3) (q3 b q1) }
+);
+
+RabinAutomaton proposalBuechiEquivalent = (
+	alphabet = {a b},
+	states = {q1 q2 q3 s1 s2},
+	initialStates = {q1},
+	acceptingStates = {s2},
+	finiteStates = {},
+	transitions = { (q1 a q2) (q2 b q1) (q2 a q3) (q3 b q1) (q1 a s2) (s2 b s1) (s1 a s2) }
+);
+
+RabinAutomaton multiInitialAutomaton = (
+	alphabet = {a b},
+	states = {s1 s2 s3},
+	initialStates = {s1 s2},
+	acceptingStates = {s3},
+	finiteStates = {},
+	transitions = { (s1 a s2) (s2 a s3) (s1 a s3) (s3 b s2) (s3 a s1)}
+);
+
+RabinAutomaton paralellProposalAutomata = (
+	alphabet = {a b},
+	states = {q1 q2 q3 q4 q5 q6},
+	initialStates = {q1 q4},
+	acceptingStates = {q2 q5},
+	finiteStates = {q3 q6},
+	transitions = { (q1 a q2) (q2 b q1) (q2 a q3) (q3 b q1) (q4 a q5) (q5 b q4) (q5 a q6) (q6 b q4) }
+);
+
+RabinAutomaton acceptorAutomaton = (
+	alphabet = {a b c},
+	states = {s1},
+	initialStates = {s1},
+	acceptingStates = {s1},
+	finiteStates = {},
+	transitions = { (s1 a s1) (s1 b s1) (s1 c s1) }
+);
+
+RabinAutomaton abcAutomaton = (
+	alphabet = {a b c},
+	states = {s1 s2 s3 s4 s5},
+	initialStates = {s1 s2 s3 s4 s5},
+	acceptingStates = {s1 s3 s5},
+	finiteStates = {s2 s4},
+	transitions = { (s1 a s2) (s1 a s3) (s2 b s3) (s3 c s4) (s3 b s5) (s4 a s4) (s4 b s5) (s5 c s1) }
+);
+
+RabinAutomaton rejctingAutomaton = (
+	alphabet = {a b},
+	states = {s1 s2},
+	initialStates = {s1},
+	acceptingStates = {s2},
+	finiteStates = {s2},
+	transitions = { (s1 a s2) (s1 a s1) (s1 b s1) (s2 a s2) (s2 b s2) }
+);
+
+RabinAutomaton vanishingPathAutomaton = (
+	alphabet = {a},
+	states = {s1 s8 s2 s3 s4 s5 s6 s7 s10 s14 s19 s23 s29 s17 s20 s22 s27 s13 s18 s12 s25 s28 s15 s30 s16 s21 s9 s26 s11 s24},
+	initialStates = {s1},
+	acceptingStates = {s8},
+	finiteStates = {s2 s3 s4 s5 s6 s7},
+	transitions = { (s1 a s2) (s1 a s2) (s2 a s2) (s2 a s3) (s3 a s4) (s4 a s5) (s5 a s6) (s6 a s5) (s6 a s7) (s7 a s8) (s8 a s8) }
+);
+
+assert(!isEmpty(rabin2BuchiOperation(proposalAutomaton)));
+assert(!isEmpty(rabin2BuchiOperation(proposalBuechiEquivalent)));
+assert(!isEmpty(rabin2BuchiOperation(multiInitialAutomaton)));
+assert(!isEmpty(rabin2BuchiOperation(paralellProposalAutomata)));
+assert(!isEmpty(rabin2BuchiOperation(acceptorAutomaton)));
+assert(!isEmpty(rabin2BuchiOperation(abcAutomaton)));
+assert(isEmpty(rabin2BuchiOperation(rejctingAutomaton)));
+assert(!isEmpty(rabin2BuchiOperation(vanishingPathAutomaton)));
+// assert(isEmpty());

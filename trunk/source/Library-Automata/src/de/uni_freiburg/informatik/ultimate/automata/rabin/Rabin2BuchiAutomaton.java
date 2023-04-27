@@ -75,9 +75,7 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 				final Iterator<STATE> relatedStates = explore(x).iterator();
 
 				mInitialSet.add(relatedStates.next());
-				if (relatedStates.hasNext()) {
-					mInitialSet.add(relatedStates.next());
-				}
+
 			});
 
 			mInitialComplete = true;
@@ -144,7 +142,10 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 			final Iterator<STATE> successors = explore(x.getSucc()).iterator();
 			result.add(new OutgoingInternalTransition<>(letter, successors.next()));
 			if (successors.hasNext()) {
-				result.add(new OutgoingInternalTransition<>(letter, successors.next()));
+				final STATE next = successors.next();
+				if (isFinal(next)) {
+					result.add(new OutgoingInternalTransition<>(x.getLetter(), next));
+				}
 			}
 		});
 
@@ -174,7 +175,10 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 			final Iterator<STATE> successors = explore(x.getSucc()).iterator();
 			result.add(new OutgoingInternalTransition<>(x.getLetter(), successors.next()));
 			if (successors.hasNext()) {
-				result.add(new OutgoingInternalTransition<>(x.getLetter(), successors.next()));
+				final STATE next = successors.next();
+				if (isFinal(next)) {
+					result.add(new OutgoingInternalTransition<>(x.getLetter(), next));
+				}
 			}
 		});
 
