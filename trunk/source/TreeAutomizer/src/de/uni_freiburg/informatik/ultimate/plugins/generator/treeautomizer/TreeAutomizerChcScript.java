@@ -95,6 +95,12 @@ public class TreeAutomizerChcScript implements IChcScript {
 		}
 	}
 
+	@Override
+	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system, final long timeout) {
+		// TODO use child service provider with given timeout
+		throw new UnsupportedOperationException();
+	}
+
 	private LBool resultToLBool(final IResult result) {
 		if (result instanceof TreeAutomizerSatResult) {
 			return LBool.SAT;

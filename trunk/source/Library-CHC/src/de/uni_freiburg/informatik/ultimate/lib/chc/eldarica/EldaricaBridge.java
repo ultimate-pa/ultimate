@@ -114,6 +114,11 @@ public class EldaricaBridge implements IChcScript, AutoCloseable {
 
 	@Override
 	public LBool solve(final HcSymbolTable symbolTable, final java.util.List<HornClause> system) {
+		return solve(symbolTable, system, -1L);
+	}
+
+	@Override
+	public LBool solve(final HcSymbolTable symbolTable, final java.util.List<HornClause> system, final long timeout) {
 		reset();
 
 		final var translatedClauses = translateSystem(system);

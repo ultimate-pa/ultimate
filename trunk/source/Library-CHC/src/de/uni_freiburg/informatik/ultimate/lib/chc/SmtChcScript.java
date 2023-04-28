@@ -77,6 +77,12 @@ public class SmtChcScript implements IChcScript {
 	}
 
 	@Override
+	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system, final long timeout) {
+		// TODO use "set-timeout", reset afterwards
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public boolean supportsModelProduction() {
 		return true;
 	}

@@ -53,13 +53,28 @@ public interface IChcScript {
 	/**
 	 * Try to solve the given system of Horn clauses.
 	 *
+	 * The instance may have an internal timeout, after which {@code UNKNOWN} is returned.
+	 *
 	 * @param symbolTable
 	 *            A symbol table describing the predicates and other symbols used by the given CHC system
 	 * @param system
 	 *            The list of Horn clauses forming the CHC system
-	 * @return
+	 * @return the satisfiability of the system
 	 */
 	LBool solve(HcSymbolTable symbolTable, List<HornClause> system);
+
+	/**
+	 * Try to solve the given system of Horn clauses, within the given time.
+	 *
+	 * @param symbolTable
+	 *            A symbol table describing the predicates and other symbols used by the given CHC system
+	 * @param system
+	 *            The list of Horn clauses forming the CHC system
+	 * @param timeout
+	 *            The maximum time to be used for solving the system, in milliseconds.
+	 * @return the satisfiability of the system
+	 */
+	LBool solve(HcSymbolTable symbolTable, List<HornClause> system, long timeout);
 
 	/**
 	 * Determines if the solver class implements retrieval of models for {@code SAT} queries.
