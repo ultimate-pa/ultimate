@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.automata.rabin;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -23,6 +25,7 @@ public class Rabin2BuchiOperation<LETTER, STATE, CRSF extends IBlackWhiteStateFa
 		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final Rabin2BuchiAutomaton<LETTER, STATE, CRSF> mConversionAutomaton;
+	private final IRabinAutomaton<LETTER, STATE> mRabinAutomaton;
 
 	/**
 	 * constructor finalizing a Rabin Automaton and State Factory for this conversion
@@ -39,12 +42,18 @@ public class Rabin2BuchiOperation<LETTER, STATE, CRSF extends IBlackWhiteStateFa
 			final IRabinAutomaton<LETTER, STATE> automaton) {
 		super(services);
 		mConversionAutomaton = new Rabin2BuchiAutomaton<>(automaton, factory);
-
+		mRabinAutomaton = automaton;
 	}
 
 	@Override
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getResult() {
 
 		return mConversionAutomaton;
+	}
+
+	public boolean checkResult(final CRSF stateFactory) throws AutomataOperationCanceledException {
+
+		return (new IsEmpty<LETTER, STATE, CRSF>(mServices, mRabinAutomaton)
+				.getResult() == new BuchiIsEmpty<>(mServices, mConversionAutomaton).getResult());
 	}
 }
