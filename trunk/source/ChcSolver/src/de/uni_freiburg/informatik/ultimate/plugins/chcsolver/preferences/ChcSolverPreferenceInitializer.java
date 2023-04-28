@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.chcsolver.preferences;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.Activator;
@@ -38,14 +39,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.Activator;
  */
 public class ChcSolverPreferenceInitializer extends UltimatePreferenceInitializer {
 
-	// select backend
-	// enable models
-	// enable derivations (if available)
-	// enable unsat cores
-
 	public enum SolverBackend {
-		Eldarica, Z3, TreeAutomizer
+		ELDARICA, Z3, TREEAUTOMIZER, GOLEM
 	}
+
+	public static final String LABEL_CHC_BACKEND = "CHC solver backend";
+	private static final SolverBackend DEF_CHC_BACKEND = SolverBackend.ELDARICA;
+
+	public static final String LABEL_PRODUCE_MODEL = "Produce CHC model if query is SAT";
+	private static final boolean DEF_PRODUCE_MODEL = true;
+
+	public static final String LABEL_PRODUCE_DERIVATION = "Produce derivation if query is UNSAT";
+	private static final boolean DEF_PRODUCE_DERIVATION = true;
+
+	public static final String LABEL_PRODUCE_UNSAT_CORES = "Produce UNSAT core if query is UNSAT";
+	private static final boolean DEF_PRODUCE_UNSAT_CORES = false;
 
 	public ChcSolverPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -53,7 +61,13 @@ public class ChcSolverPreferenceInitializer extends UltimatePreferenceInitialize
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] {};
+		return new UltimatePreferenceItem<?>[] {
+				new UltimatePreferenceItem<>(LABEL_CHC_BACKEND, DEF_CHC_BACKEND, PreferenceType.Combo,
+						SolverBackend.values()),
+				new UltimatePreferenceItem<>(LABEL_PRODUCE_MODEL, DEF_PRODUCE_MODEL, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_PRODUCE_DERIVATION, DEF_PRODUCE_DERIVATION, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_PRODUCE_UNSAT_CORES, DEF_PRODUCE_UNSAT_CORES,
+						PreferenceType.Boolean) };
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {

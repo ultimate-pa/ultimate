@@ -30,23 +30,25 @@ import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.chc.GolemChcScript;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClauseAST;
 import de.uni_freiburg.informatik.ultimate.lib.chc.IChcScript;
 import de.uni_freiburg.informatik.ultimate.lib.chc.SmtChcScript;
 import de.uni_freiburg.informatik.ultimate.lib.chc.eldarica.EldaricaBridge;
-import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.preferences.ChcSolverPreferenceInitializer.SolverBackend;
+import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.preferences.ChcSolverPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.TreeAutomizerChcScript;
 
 public class ChcSolverObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+	private final ChcSolverPreferences mPrefs;
 
-	private final SolverBackend mBackendMode = SolverBackend.Eldarica;
-
-	public ChcSolverObserver(final IUltimateServiceProvider services, final ILogger logger) {
+	public ChcSolverObserver(final IUltimateServiceProvider services, final ILogger logger,
+			final ChcSolverPreferences prefs) {
 		mServices = services;
 		mLogger = logger;
+		mPrefs = prefs;
 	}
 
 	@Override
@@ -54,23 +56,10 @@ public class ChcSolverObserver extends BaseObserver {
 		if (!(root instanceof HornClauseAST)) {
 			return true;
 		}
-
 		final HornAnnot annot = HornAnnot.getAnnotation(root);
 
-		IChcScript chcScript;
-		switch (mBackendMode) {
-		case Eldarica:
-			chcScript = new EldaricaBridge(null);
-			break;
-		case Z3:
-			chcScript = new SmtChcScript(null);
-			break;
-		case TreeAutomizer:
-			chcScript = new TreeAutomizerChcScript(mServices, null, null);
-			break;
-		default:
-			throw new UnsupportedOperationException();
-		}
+		final IChcScript chcScript = getBackend(annot);
+		configureBackend(chcScript);
 
 		final var result = chcScript.solve(annot.getSymbolTable(), annot.getHornClauses());
 		switch (result) {
@@ -79,12 +68,48 @@ public class ChcSolverObserver extends BaseObserver {
 			break;
 		case UNSAT:
 			chcScript.getDerivation();
+			chcScript.getUnsatCore();
 			break;
 		case UNKNOWN:
-			chcScript.getUnsatCore();
+			break;
 		}
 
-		// TODO Auto-generated method stub
 		return false;
+	}
+
+	private IChcScript getBackend(final HornAnnot annotation) {
+		switch (mPrefs.getBackend()) {
+		case ELDARICA:
+			return new EldaricaBridge(annotation.getScript().getScript());
+		case Z3:
+			return new SmtChcScript(null);
+		case TREEAUTOMIZER:
+			// TODO settings
+			return new TreeAutomizerChcScript(mServices, annotation.getScript(), null);
+		case GOLEM:
+			return new GolemChcScript(mServices, annotation.getScript());
+		default:
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	private void configureBackend(final IChcScript backend) {
+		if (backend.supportsModelProduction()) {
+			backend.produceModels(mPrefs.produceModels());
+		} else if (mPrefs.produceModels()) {
+			mLogger.warn("Model production is not supported by backend");
+		}
+
+		if (backend.supportsDerivationProduction()) {
+			backend.produceDerivations(mPrefs.produceDerivation());
+		} else if (mPrefs.produceDerivation()) {
+			mLogger.warn("Derivation production is not supported by backend");
+		}
+
+		if (backend.supportsUnsatCores()) {
+			backend.produceUnsatCores(mPrefs.produceUnsatCore());
+		} else if (mPrefs.produceUnsatCore()) {
+			mLogger.warn("UNSAT core production is not supported by backend");
+		}
 	}
 }

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.preferences.ChcSolverPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.preferences.ChcSolverPreferences;
 
 /**
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
@@ -72,7 +73,8 @@ public class ChcSolverPlugin implements IGenerator {
 	@Override
 	public List<IObserver> getObservers() {
 		final List<IObserver> observers = new ArrayList<>();
-		mObserver = new ChcSolverObserver(mServices, mLogger);
+		final var prefs = new ChcSolverPreferences(mServices.getPreferenceProvider(Activator.PLUGIN_ID));
+		mObserver = new ChcSolverObserver(mServices, mLogger, prefs);
 		observers.add(mObserver);
 		return observers;
 	}
@@ -117,5 +119,4 @@ public class ChcSolverPlugin implements IGenerator {
 	public void finish() {
 		// not needed
 	}
-
 }
