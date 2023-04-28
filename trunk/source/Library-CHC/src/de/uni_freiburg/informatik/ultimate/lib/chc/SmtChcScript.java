@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.chc;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -136,6 +135,6 @@ public class SmtChcScript implements IChcScript {
 	}
 
 	private void reset() {
-		mName2Clause = new HashMap<>();
+		mName2Clause = null;
 	}
 }
