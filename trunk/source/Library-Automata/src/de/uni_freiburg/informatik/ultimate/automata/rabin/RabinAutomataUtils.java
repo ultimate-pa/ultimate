@@ -7,6 +7,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -128,4 +129,10 @@ public class RabinAutomataUtils {
 		return result;
 	}
 
+	public static <LETTER, STATE> RabinAutomaton<LETTER, STATE> productAutomaton(
+			final IRabinAutomaton<LETTER, STATE> firstAutomaton, final IRabinAutomaton<LETTER, STATE> secondAutomaton,
+			final IConcurrentProductStateFactory<STATE> factory) {
+		// TODO: Implement this!
+		return null;
+	}
 }
