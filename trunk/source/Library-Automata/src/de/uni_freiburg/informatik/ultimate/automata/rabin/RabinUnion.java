@@ -134,6 +134,13 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 				mAutomatonMap.putIfAbsent(newSucc, new Pair<>(true, originalSucc));
 				result.add(new OutgoingInternalTransition<>(x.getLetter(), newSucc));
 
+				if (mFirstAutomaton.isFinite(originalSucc)) {
+					mFiniteStates.add(newSucc);
+				}
+				if (mFirstAutomaton.isAccepting(originalSucc)) {
+					mAcceptingStates.add(newSucc);
+				}
+
 			});
 		} else {
 			mSecondAutomaton.getSuccessors(originalStateInformation.getSecond()).forEach(x -> {
@@ -142,6 +149,13 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 
 				mAutomatonMap.putIfAbsent(newSucc, new Pair<>(false, originalSucc));
 				result.add(new OutgoingInternalTransition<>(x.getLetter(), newSucc));
+
+				if (mFirstAutomaton.isFinite(originalSucc)) {
+					mFiniteStates.add(newSucc);
+				}
+				if (mFirstAutomaton.isAccepting(originalSucc)) {
+					mAcceptingStates.add(newSucc);
+				}
 
 			});
 		}
