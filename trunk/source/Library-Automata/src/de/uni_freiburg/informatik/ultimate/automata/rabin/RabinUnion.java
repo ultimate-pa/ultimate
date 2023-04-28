@@ -24,13 +24,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE> {
 
-	IRabinAutomaton<LETTER, STATE> mFirstAutomaton;
-	IRabinAutomaton<LETTER, STATE> mSecondAutomaton;
-	IBlackWhiteStateFactory<STATE> mFactory;
-	HashSet<LETTER> mAlphabet;
-	HashSet<STATE> mInitialStates;
-	HashSet<STATE> mFiniteStates;
-	HashSet<STATE> mAcceptingStates;
+	private final IRabinAutomaton<LETTER, STATE> mFirstAutomaton;
+	private final IRabinAutomaton<LETTER, STATE> mSecondAutomaton;
+	private final IBlackWhiteStateFactory<STATE> mFactory;
+	private HashSet<LETTER> mAlphabet;
+	private HashSet<STATE> mInitialStates;
+	private HashSet<STATE> mFiniteStates;
+	private HashSet<STATE> mAcceptingStates;
 	// 1 ~ firstAutomaton ~ Black, 0 ~ secondAutomaton ~ White
 	HashMap<STATE, Pair<Boolean, STATE>> mAutomatonMap = new HashMap<>();
 
