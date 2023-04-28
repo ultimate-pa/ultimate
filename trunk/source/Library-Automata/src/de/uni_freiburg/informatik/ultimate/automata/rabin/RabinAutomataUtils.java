@@ -2,10 +2,13 @@ package de.uni_freiburg.informatik.ultimate.automata.rabin;
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * A collection of methods on IRabinAutomaton
@@ -81,6 +84,48 @@ public class RabinAutomataUtils {
 			}
 		}
 		return new RabinAutomaton<>(alphabet, states, initialStates, acceptingStates, finiteStates, transitions);
+	}
+
+	/**
+	 * A method to compute a general Rabin automaton with multiple accepting sets and corresponding finite sets
+	 *
+	 * @param <LETTER>
+	 *            type of letter
+	 * @param <STATE>
+	 *            type of state
+	 * @param alphabet
+	 *            alphabet
+	 * @param states
+	 *            all states
+	 * @param initialStates
+	 *            initial states
+	 * @param acceptingConditions
+	 *            A list of Pairs with first being a list of final states and second being a list of corresponding
+	 *            finite states
+	 * @param transitions
+	 *            transitions
+	 * @param factory
+	 *            a BlackWhiteStateFactory
+	 * @return a parallel automaton that allows multiple different accepting conditions
+	 */
+	public static <LETTER, STATE> IRabinAutomaton<LETTER, STATE> generalAutomaton(final Set<LETTER> alphabet,
+			final Set<STATE> states, final Set<STATE> initialStates,
+			final Iterable<Pair<Set<STATE>, Set<STATE>>> acceptingConditions,
+			final NestedMap2<STATE, LETTER, Set<STATE>> transitions, final IBlackWhiteStateFactory<STATE> factory) {
+		final Iterator<Pair<Set<STATE>, Set<STATE>>> remainingAcceptanceConditions = acceptingConditions.iterator();
+
+		Pair<Set<STATE>, Set<STATE>> temp = remainingAcceptanceConditions.next();
+
+		IRabinAutomaton<LETTER, STATE> result =
+				new RabinAutomaton<>(alphabet, states, initialStates, temp.getFirst(), temp.getSecond(), transitions);
+
+		while (remainingAcceptanceConditions.hasNext()) {
+			temp = remainingAcceptanceConditions.next();
+			result = new RabinUnion<>(result, new RabinAutomaton<>(alphabet, states, initialStates, temp.getFirst(),
+					temp.getSecond(), transitions), factory);
+		}
+
+		return result;
 	}
 
 }
