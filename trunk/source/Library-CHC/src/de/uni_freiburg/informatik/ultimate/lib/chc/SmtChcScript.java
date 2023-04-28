@@ -35,13 +35,11 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.NamedTermWrapper;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
 /**
  * Used to access a constraint Horn solver via the {@link Script} interface. This can e.g. be used to access Z3's CHC
@@ -49,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-// TODO avoid code duplication between this class and ChcSmtPrinterObserver
 public class SmtChcScript implements IChcScript {
+	private static final boolean ADD_COMMENTS = false;
 
 	private final ManagedScript mMgdScript;
 	private boolean mProduceUnsatCores;
@@ -71,24 +69,9 @@ public class SmtChcScript implements IChcScript {
 	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system) {
 		reset();
 
-		// declare predicate symbols
-		for (final var predSym : symbolTable.getHcPredicateSymbols()) {
-			mMgdScript.declareFun(this, predSym.getName(), predSym.getParameterSorts().toArray(Sort[]::new),
-					SmtSortUtils.getBoolSort(mMgdScript));
-		}
-
-		// translate clauses to SMT and assert them
-		for (final var clause : system) {
-			final var term = clause.constructFormula(mMgdScript, mProduceUnsatCores);
-			mMgdScript.assertTerm(this, term);
-
-			// record name mapping for backtranslation later
-			if (mProduceUnsatCores) {
-				final var namedTerm = new NamedTermWrapper(term);
-				assert namedTerm.isNamed();
-				mName2Clause.put(namedTerm.getName(), clause);
-			}
-		}
+		final var asserter = new ChcAsserter(mMgdScript, getScript(), mProduceUnsatCores, ADD_COMMENTS);
+		asserter.assertClauses(symbolTable, system);
+		mName2Clause = asserter.getName2Clause();
 
 		return mMgdScript.checkSat(this);
 	}
