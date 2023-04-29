@@ -64,7 +64,7 @@ import scala.collection.immutable.List;
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-public class EldaricaBridge implements IChcScript, AutoCloseable {
+public class EldaricaChcScript implements IChcScript, AutoCloseable {
 	private final Script mScript;
 	private final SimpleAPI mPrincess;
 
@@ -80,13 +80,7 @@ public class EldaricaBridge implements IChcScript, AutoCloseable {
 	private Lazy<Derivation> mLastDerivation;
 	private Lazy<Set<HornClause>> mLastUnsatCore;
 
-	@Deprecated
-	public static void doStuff(final Script script, final HcSymbolTable symbolTable,
-			final java.util.List<HornClause> clauses) {
-		new EldaricaBridge(script).solve(symbolTable, clauses);
-	}
-
-	public EldaricaBridge(final Script script) {
+	public EldaricaChcScript(final Script script) {
 		// TODO allow setting a timeout (see eldarica's GlobalParameters object)
 		mScript = script;
 		mPrincess = SimpleAPI.apply(SimpleAPI.apply$default$1(), SimpleAPI.apply$default$2(),

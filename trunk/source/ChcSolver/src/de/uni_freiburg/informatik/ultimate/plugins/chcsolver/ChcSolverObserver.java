@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClauseAST;
 import de.uni_freiburg.informatik.ultimate.lib.chc.IChcScript;
 import de.uni_freiburg.informatik.ultimate.lib.chc.SmtChcScript;
-import de.uni_freiburg.informatik.ultimate.lib.chc.eldarica.EldaricaBridge;
+import de.uni_freiburg.informatik.ultimate.lib.chc.eldarica.EldaricaChcScript;
 import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.preferences.ChcSolverPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.TreeAutomizerChcScript;
 
@@ -80,7 +80,7 @@ public class ChcSolverObserver extends BaseObserver {
 	private IChcScript getBackend(final HornAnnot annotation) {
 		switch (mPrefs.getBackend()) {
 		case ELDARICA:
-			return new EldaricaBridge(annotation.getScript().getScript());
+			return new EldaricaChcScript(annotation.getScript().getScript());
 		case Z3:
 			return new SmtChcScript(null);
 		case TREEAUTOMIZER:
