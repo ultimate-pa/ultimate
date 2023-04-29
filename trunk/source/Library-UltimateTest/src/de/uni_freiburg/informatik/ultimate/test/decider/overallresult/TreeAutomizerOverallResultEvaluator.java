@@ -33,10 +33,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ChcSatResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ChcUnsatResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcSatResult;
+import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcUnsatResult;
 
 public class TreeAutomizerOverallResultEvaluator implements IOverallResultEvaluator<TreeAutomizerOverallResult> {
 

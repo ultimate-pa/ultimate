@@ -51,8 +51,6 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.operations.difference.L
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.Minimize;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.hopcroft.MinimizeNftaHopcroft;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ChcSatResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ChcUnsatResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -62,6 +60,8 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
+import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcSatResult;
+import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcUnsatResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
