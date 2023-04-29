@@ -30,7 +30,9 @@ import java.math.BigInteger;
 
 import ap.parser.IBinFormula;
 import ap.parser.IBinJunctor;
+import ap.parser.IEquation;
 import ap.parser.IFormula;
+import ap.parser.IFunApp;
 import ap.parser.IIntFormula;
 import ap.parser.IIntLit;
 import ap.parser.IIntRelation;
@@ -43,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -74,7 +77,17 @@ class Backtranslator {
 		if (formula instanceof IIntFormula) {
 			return translateIntFormula((IIntFormula) formula, ctx);
 		}
-		throw new UnsupportedOperationException();
+		if (formula instanceof IEquation) {
+			return translateEquation((IEquation) formula, ctx);
+		}
+		throw new UnsupportedOperationException(formula.toString());
+	}
+
+	private Term translateEquation(final IEquation equation, final IBoundVariableContext ctx) {
+		// We don't know the intended sort of the terms here. But it does not matter, equality works for all sorts.
+		final var left = translateTermInternal(equation.left(), ctx);
+		final var right = translateTermInternal(equation.right(), ctx);
+		return SmtUtils.binaryEquality(mScript, left, right);
 	}
 
 	private Term translateIntFormula(final IIntFormula formula, final IBoundVariableContext ctx) {
@@ -138,11 +151,46 @@ class Backtranslator {
 			final var variable = (ISortedVariable) term;
 			return ctx.getBoundVariable(variable.index());
 		}
+		if (term instanceof IFunApp) {
+			final var app = (IFunApp) term;
+			final var storeTerm = translateStore(app, ctx);
+			if (storeTerm != null) {
+				return storeTerm;
+			}
+			final var constTerm = translateConstArray(app, ctx);
+			if (constTerm != null) {
+				return constTerm;
+			}
+		}
 		if (term instanceof IIntLit) {
 			final var value = ((IIntLit) term).value();
 			return numeral(value.bigIntValue());
 		}
 		throw new IllegalArgumentException(term.toString());
+	}
+
+	private Term translateStore(final IFunApp store, final IBoundVariableContext ctx) {
+		if (!SMTLIBConstants.STORE.equals(store.fun().name()) || store.fun().arity() != 3) {
+			return null;
+		}
+
+		final var array = translateTermInternal(store.args().apply(0), ctx);
+		final var index = translateTermInternal(store.args().apply(1), ctx);
+		final var value = translateTermInternal(store.args().apply(2), ctx);
+
+		return SmtUtils.store(mScript, array, index, value);
+	}
+
+	private Term translateConstArray(final IFunApp constArray, final IBoundVariableContext ctx) {
+		if (!SMTLIBConstants.CONST.equals(constArray.fun().name()) || constArray.fun().arity() != 1) {
+			return null;
+		}
+
+		final var value = translateTermInternal(constArray.args().apply(0), ctx);
+		final var function = mScript.getTheory().getFunctionWithResult(SMTLIBConstants.CONST, null,
+				SmtSortUtils.getArraySort(mScript, getIntSort(), value.getSort()), value.getSort());
+		return mScript.term(SMTLIBConstants.CONST, null,
+				SmtSortUtils.getArraySort(mScript, getIntSort(), value.getSort()), value);
 	}
 
 	private Term numeral(final BigInteger value) {

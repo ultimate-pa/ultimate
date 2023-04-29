@@ -38,9 +38,11 @@ import ap.basetypes.IdealInt;
 import ap.parser.IAtom;
 import ap.parser.IExpression;
 import ap.parser.IFormula;
+import ap.parser.IFunApp;
 import ap.parser.IIntLit;
 import ap.parser.ITerm;
 import ap.terfor.preds.Predicate;
+import ap.theories.ExtArray;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
@@ -53,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import lazabs.horn.bottomup.HornClauses;
 import lazabs.horn.bottomup.HornClauses.Clause;
 import scala.collection.JavaConverters;
@@ -86,6 +89,7 @@ class Translator {
 	private final SimpleAPI mPrincess;
 	private final BidirectionalMap<HcPredicateSymbol, Predicate> mPredicateMap = new BidirectionalMap<>();
 	private final BidirectionalMap<TermVariable, ITerm> mVariableMap = new BidirectionalMap<>();
+	private final NestedMap2<List<ap.types.Sort>, ap.types.Sort, ExtArray> mArrayTheories = new NestedMap2<>();
 
 	public Translator(final SimpleAPI princess) {
 		mPrincess = princess;
@@ -127,18 +131,37 @@ class Translator {
 	}
 
 	private Predicate createPredicate(final HcPredicateSymbol pred) {
-		final var sorts = pred.getParameterSorts().stream().map(Translator::translateSort).collect(Collectors.toList());
+		final var sorts = pred.getParameterSorts().stream().map(this::translateSort).collect(Collectors.toList());
 		return mPrincess.createRelation(pred.getName(), toList(sorts));
 	}
 
-	private static ap.types.Sort translateSort(final Sort sort) {
+	private ap.types.Sort translateSort(final Sort sort) {
 		if (SmtSortUtils.isIntSort(sort)) {
 			return new ap.types.Sort.Integer$();
 		}
 		if (SmtSortUtils.isBoolSort(sort)) {
 			return new ap.types.Sort.MultipleValueBool$();
 		}
+		if (SmtSortUtils.isArraySort(sort)) {
+			return getArrayTheory(sort).sort();
+		}
 		throw new IllegalArgumentException(sort.getName());
+	}
+
+	private ExtArray getArrayTheory(final Sort arraySort) {
+		final var params = arraySort.getArguments();
+		assert params.length >= 2 : "arrays should have at least one index sort, and one domain sort";
+
+		final var indices = toList(
+				Arrays.stream(params).limit(params.length - 1).map(this::translateSort).collect(Collectors.toList()));
+		final var range = translateSort(params[params.length - 1]);
+
+		var theory = mArrayTheories.get(indices, range);
+		if (theory == null) {
+			theory = new ExtArray(indices, range);
+			mArrayTheories.put(indices, range, theory);
+		}
+		return theory;
 	}
 
 	public IFormula translateFormula(final Term term) {
@@ -201,6 +224,22 @@ class Translator {
 			return first.$eq$eq$greater(second);
 		case "not":
 			return translateFormula(term.getParameters()[0]).unary_$bang();
+		case "ite":
+			final var cond = translateFormula(term.getParameters()[0]);
+			final var thenCase = translateTerm(term.getParameters()[1]);
+			final var elseCase = translateTerm(term.getParameters()[2]);
+			return IExpression.ite(cond, thenCase, elseCase);
+		case "store":
+			final var array = translateTerm(term.getParameters()[0]);
+			final var index = translateTerm(term.getParameters()[1]);
+			final var value = translateTerm(term.getParameters()[2]);
+			return new IFunApp(getArrayTheory(term.getParameters()[0].getSort()).store(),
+					toList(java.util.List.of(array, index, value)));
+		case "select":
+			final var selectArray = translateTerm(term.getParameters()[0]);
+			final var selectIndex = translateTerm(term.getParameters()[1]);
+			return new IFunApp(getArrayTheory(term.getParameters()[0].getSort()).select(),
+					toList(java.util.List.of(selectArray, selectIndex)));
 		default:
 			throw new IllegalArgumentException(term.toString());
 		}
