@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.IChcScript;
+import de.uni_freiburg.informatik.ultimate.lib.chc.eldarica.Backtranslator.IBoundVariableContext;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -177,12 +178,13 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 		return null;
 	}
 
-	private static Map<HcPredicateSymbol, Term> translateModel(final Backtranslator backtranslator,
+	private Map<HcPredicateSymbol, Term> translateModel(final Backtranslator backtranslator,
 			final scala.collection.Map<Predicate, IFormula> model) {
 		final var translatedModel = new HashMap<HcPredicateSymbol, Term>();
 		for (final var entry : ofMap(model).entrySet()) {
 			final var pred = backtranslator.translatePredicate(entry.getKey());
-			final var body = backtranslator.translateFormula(entry.getValue());
+			final var ctx = new PredicateContext(mScript, pred);
+			final var body = backtranslator.translateFormula(entry.getValue(), ctx);
 			translatedModel.put(pred, body);
 		}
 		return translatedModel;
@@ -218,7 +220,7 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 		int i = 0;
 		for (final var arg : ofList(atom.args())) {
 			final var sort = pred.getParameterSorts().get(i);
-			final var term = backtranslator.translateTerm(arg, sort);
+			final var term = backtranslator.translateTerm(arg, sort, null);
 			args.add(term);
 			i++;
 		}
@@ -276,5 +278,21 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 	@Override
 	public void close() throws Exception {
 		mPrincess.shutDown();
+	}
+
+	private static class PredicateContext implements IBoundVariableContext {
+		private final Script mScript;
+		private final HcPredicateSymbol mPredicate;
+
+		public PredicateContext(final Script script, final HcPredicateSymbol predicate) {
+			mScript = script;
+			mPredicate = predicate;
+		}
+
+		@Override
+		public Term getBoundVariable(final int index) {
+			final var sort = mPredicate.getParameterSorts().get(index);
+			return mScript.variable("~~" + mPredicate.getFunctionSymbol() + "~" + index, sort);
+		}
 	}
 }

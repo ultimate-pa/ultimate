@@ -26,12 +26,23 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.chc.eldarica;
 
+import java.math.BigInteger;
+
+import ap.parser.IBinFormula;
+import ap.parser.IBinJunctor;
 import ap.parser.IFormula;
+import ap.parser.IIntFormula;
 import ap.parser.IIntLit;
+import ap.parser.IIntRelation;
+import ap.parser.IPlus;
+import ap.parser.ISortedVariable;
 import ap.parser.ITerm;
+import ap.parser.ITimes;
 import ap.terfor.preds.Predicate;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -56,20 +67,93 @@ class Backtranslator {
 		return mPredicateMap.inverse().get(predicate);
 	}
 
-	public Term translateFormula(final IFormula formula) {
+	public Term translateFormula(final IFormula formula, final IBoundVariableContext ctx) {
+		if (formula instanceof IBinFormula) {
+			return translateBinFormula((IBinFormula) formula, ctx);
+		}
+		if (formula instanceof IIntFormula) {
+			return translateIntFormula((IIntFormula) formula, ctx);
+		}
 		throw new UnsupportedOperationException();
 	}
 
-	public Term translateTerm(final ITerm term, final Sort sort) {
-		if (!(term instanceof IIntLit)) {
-			throw new IllegalArgumentException(term.toString());
+	private Term translateIntFormula(final IIntFormula formula, final IBoundVariableContext ctx) {
+		final var operand = translateTerm(formula.t(), getIntSort(), ctx);
+		final var rel = formula.rel();
+		if (IIntRelation.EqZero().equals(rel)) {
+			return SmtUtils.binaryEquality(mScript, operand, numeral(BigInteger.ZERO));
 		}
+		if (IIntRelation.GeqZero().equals(rel)) {
+			return SmtUtils.geq(mScript, operand, numeral(BigInteger.ZERO));
+		}
+		throw new UnsupportedOperationException("Unknown integer relation: " + rel);
+	}
 
-		final var value = ((IIntLit) term).value();
-		if (!SmtSortUtils.isBoolSort(sort)) {
-			// TODO convert
+	private Term translateBinFormula(final IBinFormula formula, final IBoundVariableContext ctx) {
+		final var left = translateFormula(formula.f1(), ctx);
+		final var right = translateFormula(formula.f2(), ctx);
+
+		final var op = formula.j();
+		if (IBinJunctor.Or().equals(op)) {
+			return SmtUtils.or(mScript, left, right);
+		}
+		if (IBinJunctor.And().equals(op)) {
+			return SmtUtils.and(mScript, left, right);
+		}
+		if (IBinJunctor.Eqv().equals(op)) {
+			return SmtUtils.binaryBooleanEquality(mScript, left, right);
+		}
+		throw new UnsupportedOperationException("Unknown binary operator: " + op);
+	}
+
+	public Term translateTerm(final ITerm term, final Sort sort, final IBoundVariableContext ctx) {
+		final var translated = translateTermInternal(term, ctx);
+
+		// sort conversion for booleans
+		final var actualSort = translated.getSort();
+		if (SmtSortUtils.isBoolSort(sort)) {
+			assert SmtSortUtils.isIntSort(actualSort) : "Boolean term has unexpected sort " + actualSort;
+			// TODO actually convert and return
 			new ap.types.Sort.MultipleValueBool$();
 		}
-		return mScript.numeral(value.bigIntValue());
+
+		assert actualSort.equals(sort) : "Translated term has sort " + actualSort + " instead of " + sort;
+		return translated;
+	}
+
+	private Term translateTermInternal(final ITerm term, final IBoundVariableContext ctx) {
+		if (term instanceof IPlus) {
+			final var plus = (IPlus) term;
+			final var left = translateTerm(plus.t1(), getIntSort(), ctx);
+			final var right = translateTerm(plus.t2(), getIntSort(), ctx);
+			return SmtUtils.sum(mScript, getIntSort(), left, right);
+		}
+		if (term instanceof ITimes) {
+			final var times = (ITimes) term;
+			final var left = Rational.valueOf(times.coeff().bigIntValue(), BigInteger.ONE);
+			final var right = translateTerm(times.subterm(), getIntSort(), ctx);
+			return SmtUtils.mul(mScript, left, right);
+		}
+		if (term instanceof ISortedVariable) {
+			final var variable = (ISortedVariable) term;
+			return ctx.getBoundVariable(variable.index());
+		}
+		if (term instanceof IIntLit) {
+			final var value = ((IIntLit) term).value();
+			return numeral(value.bigIntValue());
+		}
+		throw new IllegalArgumentException(term.toString());
+	}
+
+	private Term numeral(final BigInteger value) {
+		return SmtUtils.constructIntegerValue(mScript, getIntSort(), BigInteger.ZERO);
+	}
+
+	private Sort getIntSort() {
+		return SmtSortUtils.getIntSort(mScript);
+	}
+
+	public interface IBoundVariableContext {
+		Term getBoundVariable(int index);
 	}
 }
