@@ -39,6 +39,7 @@ import ap.SimpleAPI;
 import ap.parser.IAtom;
 import ap.parser.IFormula;
 import ap.terfor.preds.Predicate;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.Derivation;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
@@ -50,9 +51,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
+import lazabs.GlobalParameters;
 import lazabs.horn.bottomup.HornClauses.Clause;
 import lazabs.horn.bottomup.SimpleWrapper;
 import lazabs.prover.Tree;
+import scala.Option;
 import scala.Tuple2;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
@@ -66,9 +69,11 @@ import scala.collection.immutable.List;
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public class EldaricaChcScript implements IChcScript, AutoCloseable {
+	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
 	private final SimpleAPI mPrincess;
 
+	private final long mDefaultQueryTimeout;
 	private boolean mProduceModels = false;
 	private boolean mProduceDerivations = false;
 	private boolean mProduceUnsatCores = false;
@@ -81,25 +86,19 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 	private Lazy<Derivation> mLastDerivation;
 	private Lazy<Set<HornClause>> mLastUnsatCore;
 
-	public EldaricaChcScript(final Script script) {
-		// TODO allow setting a timeout (see eldarica's GlobalParameters object)
+	public EldaricaChcScript(final IUltimateServiceProvider services, final Script script) {
+		this(services, script, -1L);
+	}
+
+	public EldaricaChcScript(final IUltimateServiceProvider services, final Script script,
+			final long defaultQueryTimeout) {
+		mServices = services;
 		mScript = script;
 		mPrincess = SimpleAPI.apply(SimpleAPI.apply$default$1(), SimpleAPI.apply$default$2(),
 				SimpleAPI.apply$default$3(), SimpleAPI.apply$default$4(), SimpleAPI.apply$default$5(),
 				SimpleAPI.apply$default$6(), SimpleAPI.apply$default$7(), SimpleAPI.apply$default$8(),
 				SimpleAPI.apply$default$9(), SimpleAPI.apply$default$10());
-	}
-
-	private static <X> List<X> toList(final java.util.List<X> list) {
-		return JavaConverters.asScalaIteratorConverter(list.iterator()).asScala().toList();
-	}
-
-	private static <X> java.util.List<X> ofList(final Seq<X> list) {
-		return JavaConverters.seqAsJavaListConverter(list).asJava();
-	}
-
-	private static <K, V> Map<K, V> ofMap(final scala.collection.Map<K, V> map) {
-		return JavaConverters.mapAsJavaMapConverter(map).asJava();
+		mDefaultQueryTimeout = defaultQueryTimeout;
 	}
 
 	@Override
@@ -115,6 +114,7 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 	@Override
 	public LBool solve(final HcSymbolTable symbolTable, final java.util.List<HornClause> system, final long timeout) {
 		reset();
+		setupTimeout(timeout);
 
 		final var translatedClauses = translateSystem(system);
 		final var result = SimpleWrapper.solveLazily(translatedClauses, SimpleWrapper.solve$default$2(),
@@ -278,6 +278,49 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 	@Override
 	public void close() throws Exception {
 		mPrincess.shutDown();
+	}
+
+	private void setupTimeout(final long queryTimeout) {
+		// set the timeout parameter itself
+		final var actualTimeout = determineTimeout(queryTimeout);
+		GlobalParameters.get().timeout_$eq((Option) actualTimeout);
+
+		// we need to override the timeout checking logic, because eldarica only does this in its main() method
+		final long startTime = System.currentTimeMillis();
+		GlobalParameters.get().timeoutChecker_$eq(new scala.runtime.AbstractFunction0<>() {
+			@Override
+			public scala.runtime.BoxedUnit apply() {
+				if (actualTimeout.isDefined() && System.currentTimeMillis() - startTime > actualTimeout.get()) {
+					// Nasty hack to trick java into throwing TimeoutException, a checked exception.
+					// (This is necessary, because scala does not declare checked exceptions.)
+					throwUnchecked(new lazabs.Main.TimeoutException$());
+				}
+				return scala.runtime.BoxedUnit.UNIT;
+			}
+		});
+	}
+
+	private Option<Integer> determineTimeout(final long queryTimeout) {
+		final var globalTimeout = mServices.getProgressMonitorService().remainingTime();
+		final var currentTimeout = queryTimeout < 0 ? mDefaultQueryTimeout : queryTimeout;
+		final var actualTimeout = currentTimeout < 0 ? globalTimeout : Long.min(currentTimeout, globalTimeout);
+		return Option.apply((int) actualTimeout);
+	}
+
+	private static <T extends Throwable> void throwUnchecked(final Throwable e) throws T {
+		throw (T) e;
+	}
+
+	private static <X> List<X> toList(final java.util.List<X> list) {
+		return JavaConverters.asScalaIteratorConverter(list.iterator()).asScala().toList();
+	}
+
+	private static <X> java.util.List<X> ofList(final Seq<X> list) {
+		return JavaConverters.seqAsJavaListConverter(list).asJava();
+	}
+
+	private static <K, V> Map<K, V> ofMap(final scala.collection.Map<K, V> map) {
+		return JavaConverters.mapAsJavaMapConverter(map).asJava();
 	}
 
 	private static class PredicateContext implements IBoundVariableContext {

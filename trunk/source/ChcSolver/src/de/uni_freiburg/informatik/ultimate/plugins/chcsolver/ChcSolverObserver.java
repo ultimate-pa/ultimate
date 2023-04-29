@@ -95,7 +95,7 @@ public class ChcSolverObserver extends BaseObserver {
 	private IChcScript getBackend(final HornAnnot annotation) {
 		switch (mPrefs.getBackend()) {
 		case ELDARICA:
-			return new EldaricaChcScript(annotation.getScript().getScript());
+			return new EldaricaChcScript(mServices, annotation.getScript().getScript());
 		case Z3:
 			return new SmtChcScript(null);
 		case TREEAUTOMIZER:
