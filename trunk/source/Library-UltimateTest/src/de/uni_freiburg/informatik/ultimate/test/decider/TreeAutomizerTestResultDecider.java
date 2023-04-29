@@ -76,8 +76,8 @@ public class TreeAutomizerTestResultDecider extends ThreeTierTestResultDecider<T
 			}
 
 			if (expectedResult == actualResult) {
-				mCategory = "precise match of results (and results are not both UNKOWN..)";
-				mMessage = "both results are" + expectedResult;
+				mCategory = "precise match of results (and results are not both UNKOWN).";
+				mMessage = "both results are " + expectedResult;
 				mTestResult = TestResult.SUCCESS;
 				return;
 			}
