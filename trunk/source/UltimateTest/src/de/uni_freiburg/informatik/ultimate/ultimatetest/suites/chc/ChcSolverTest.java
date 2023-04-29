@@ -95,7 +95,7 @@ public class ChcSolverTest extends AbstractModelCheckerTestSuiteWithIncrementalL
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
-		return new TreeAutomizerTestResultDecider(urd, true);
+		return new TreeAutomizerTestResultDecider(urd, false);
 	}
 
 	@Override
