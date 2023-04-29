@@ -26,18 +26,28 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.chcsolver;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.chc.Derivation;
 import de.uni_freiburg.informatik.ultimate.lib.chc.GolemChcScript;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClauseAST;
 import de.uni_freiburg.informatik.ultimate.lib.chc.IChcScript;
 import de.uni_freiburg.informatik.ultimate.lib.chc.SmtChcScript;
 import de.uni_freiburg.informatik.ultimate.lib.chc.eldarica.EldaricaChcScript;
+import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcSatResult;
+import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcUnsatResult;
+import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.preferences.ChcSolverPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.TreeAutomizerChcScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ChcSolverObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
@@ -61,19 +71,24 @@ public class ChcSolverObserver extends BaseObserver {
 		final IChcScript chcScript = getBackend(annot);
 		configureBackend(chcScript);
 
-		final var result = chcScript.solve(annot.getSymbolTable(), annot.getHornClauses());
-		switch (result) {
+		final var satisfiability = chcScript.solve(annot.getSymbolTable(), annot.getHornClauses());
+
+		final IResult result;
+		switch (satisfiability) {
 		case SAT:
-			chcScript.getModel();
+			result = createSatResult(chcScript);
 			break;
 		case UNSAT:
-			chcScript.getDerivation();
-			chcScript.getUnsatCore();
+			result = createUnSatResult(chcScript);
 			break;
 		case UNKNOWN:
+			result = new UnprovableResult<>(Activator.PLUGIN_ID, null, null, null);
 			break;
+		default:
+			throw new IllegalStateException();
 		}
 
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		return false;
 	}
 
@@ -111,5 +126,35 @@ public class ChcSolverObserver extends BaseObserver {
 		} else if (mPrefs.produceUnsatCore()) {
 			mLogger.warn("UNSAT core production is not supported by backend");
 		}
+	}
+
+	private ChcSatResult createSatResult(final IChcScript chcScript) {
+		final Model model;
+		if (mPrefs.produceModels() && chcScript.supportsModelProduction()) {
+			model = chcScript.getModel().orElse(null);
+		} else {
+			model = null;
+		}
+		// TODO pass model to result
+		return new ChcSatResult(Activator.PLUGIN_ID, "SAT", "The given horn clause set is SAT");
+	}
+
+	private ChcUnsatResult createUnSatResult(final IChcScript chcScript) {
+		final Derivation derivation;
+		if (mPrefs.produceDerivation() && chcScript.supportsDerivationProduction()) {
+			derivation = chcScript.getDerivation().orElse(null);
+		} else {
+			derivation = null;
+		}
+
+		final Set<HornClause> core;
+		if (mPrefs.produceUnsatCore() && chcScript.supportsUnsatCores()) {
+			core = chcScript.getUnsatCore().orElse(null);
+		} else {
+			core = null;
+		}
+
+		return new ChcUnsatResult(Activator.PLUGIN_ID, "UNSAT", "The given horn clause set is UNSAT",
+				new Pair<>(derivation, core));
 	}
 }
