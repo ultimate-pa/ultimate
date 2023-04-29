@@ -31,22 +31,27 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 
 /**
- * If TreeAutomizer finds out "SAT", it will report this result.
- * In the future this may contain a model.
+ * If TreeAutomizer finds out "UNSAT", it will report this result.
+ * In the future this may contain a counterexample to SAT, i.e., a derivation tree that can be built in the input Horn
+ * clause set.
  * 
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class TreeAutomizerSatResult implements IResult {
-
+public class ChcUnsatResult implements IResult {
+	
 	private String mLongDescription;
 	private String mShortDescription;
 	private String mPlugin;
 
-	public TreeAutomizerSatResult(String plugin, String shortDescription, String longDescription) {
+	private final Object mWitness;
+
+	public ChcUnsatResult(final String plugin, final String shortDescription, final String longDescription,
+			final Object witness) {
 		mPlugin = plugin;
 		mShortDescription = shortDescription;
 		mLongDescription = longDescription;
+		mWitness = witness;
 	}
 
 	@Override
@@ -62,5 +67,9 @@ public class TreeAutomizerSatResult implements IResult {
 	@Override
 	public String getLongDescription() {
 		return mLongDescription;
+	}
+
+	public Object getWitness() {
+		return mWitness;
 	}
 }

@@ -35,8 +35,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerSatResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerUnsatResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ChcSatResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ChcUnsatResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -102,12 +102,12 @@ public class TreeAutomizerChcScript implements IChcScript {
 	}
 
 	private LBool resultToLBool(final IResult result) {
-		if (result instanceof TreeAutomizerSatResult) {
+		if (result instanceof ChcSatResult) {
 			return LBool.SAT;
 		}
-		if (result instanceof TreeAutomizerUnsatResult) {
+		if (result instanceof ChcUnsatResult) {
 			if (mProduceUnsatCores) {
-				final var tree = (Tree<HornClause>) ((TreeAutomizerUnsatResult) result).getWitness();
+				final var tree = (Tree<HornClause>) ((ChcUnsatResult) result).getWitness();
 				mUnsatCore = extractUnsatCore(tree);
 			}
 			return LBool.UNSAT;

@@ -51,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.operations.difference.L
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.Minimize;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.hopcroft.MinimizeNftaHopcroft;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerSatResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerUnsatResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ChcSatResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ChcUnsatResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -181,7 +181,7 @@ public class TreeAutomizerCEGAR {
 					mLogger.info(state.toString());
 				}
 
-				return new TreeAutomizerSatResult(Activator.PLUGIN_ID, "SAT", "The given horn clause set is SAT");
+				return new ChcSatResult(Activator.PLUGIN_ID, "SAT", "The given horn clause set is SAT");
 			}
 
 			mBackendSmtSolverScript.lock(this);
@@ -193,7 +193,7 @@ public class TreeAutomizerCEGAR {
 				mLogger.info(counterExample.getTree());
 				mBackendSmtSolverScript.pop(this, 1);
 				mBackendSmtSolverScript.unlock(this);
-				return new TreeAutomizerUnsatResult(Activator.PLUGIN_ID, "UNSAT", "The given horn clause set is UNSAT",
+				return new ChcUnsatResult(Activator.PLUGIN_ID, "UNSAT", "The given horn clause set is UNSAT",
 						counterExample.getTree());
 			}
 			mLogger.debug("Getting Interpolants...");
