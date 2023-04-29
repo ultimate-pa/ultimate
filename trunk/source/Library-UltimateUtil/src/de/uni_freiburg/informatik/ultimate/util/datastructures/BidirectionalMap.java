@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * A bidirectional map is a 1:1 mapping, having unique keys and unique values.
@@ -181,6 +182,15 @@ public class BidirectionalMap<K, V> extends HashMap<K, V> {
 		for (final Map.Entry<? extends K,? extends V> e : m.entrySet()) {
 			put(e.getKey(), e.getValue());
 		}
+	}
+
+	@Override
+	public V computeIfAbsent(final K key, final Function<? super K, ? extends V> mappingFunction) {
+		final var value = super.computeIfAbsent(key, mappingFunction);
+		if (value != null) {
+			mInverse.putAsymmetric(value, key);
+		}
+		return value;
 	}
 
 	// equals() and hashCode() from super class work for this implementation
