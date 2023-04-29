@@ -175,7 +175,7 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 		}
 		// TODO from map to model -- see other branch
 		mLastModel.get();
-		return null;
+		return Optional.empty();
 	}
 
 	private Map<HcPredicateSymbol, Term> translateModel(final Backtranslator backtranslator,
