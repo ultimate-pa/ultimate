@@ -62,8 +62,15 @@ public class ChcSolverTest extends AbstractModelCheckerTestSuiteWithIncrementalL
 	private static final long TIMEOUT = 90_000L;
 
 	private static final String TOOLCHAIN = "examples/toolchains/ChcSolver.xml";
-	// TODO suitable settings, for different backends
-	private static final String[] SETTINGS_FILES = { "examples/settings/chc/AutomizerCHC/AutomizerCHC_Goto.epf" };
+
+	// @formatter:off
+	private static final String[] SETTINGS_FILES = {
+			"examples/settings/chc/ChcSolver/Eldarica.epf",
+			"examples/settings/chc/ChcSolver/Golem.epf",
+			"examples/settings/chc/ChcSolver/TreeAutomizer.epf",
+			"examples/settings/chc/ChcSolver/Z3.epf",
+	};
+	// @formatter:on
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
