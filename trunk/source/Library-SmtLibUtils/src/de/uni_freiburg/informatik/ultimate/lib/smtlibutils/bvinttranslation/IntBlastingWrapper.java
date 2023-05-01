@@ -27,41 +27,33 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayDeque;
 import java.util.Map;
-import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtTestGenerationUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
+import de.uni_freiburg.informatik.ultimate.logic.Assignments;
+import de.uni_freiburg.informatik.ultimate.logic.DataType;
+import de.uni_freiburg.informatik.ultimate.logic.DataType.Constructor;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Model;
+import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.logic.WrapperScript;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 /**
- * 
+ *
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Max Barth (Max.Barth95@gmx.de)
@@ -69,215 +61,405 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
  */
 public class IntBlastingWrapper extends WrapperScript {
 
-	private static final boolean WRAP_BACKEND_SOLVER_WITH_QUANTIFIER_OVERAPPROXIMATION = true;
-	private static final boolean APPLY_SIMPLE_E_SKOLEMIZATION = true;
-	private static final boolean LOG_JUNIT_TEST = false;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final ManagedScript mMgdScript;
 	private LBool mExpectedResult;
-	private long mTreeSizeOfAssertedTerms = 0;
-	private final Script mScript;
-	/**
-	 * Number of terms that were ever asserted (some might have been already popped
-	 * from the assertion stack).
-	 */
-	private int mNumberOfAssertedTerms = 0;
+	private final Script mBvScript = new NoopScript();
+	private final Script mIntScript;
+	private final ManagedScript mMgdIntScript;
+	private final ArrayDeque<Boolean> mOverapproximationTrackingStack = new ArrayDeque<>();
 
 	public IntBlastingWrapper(final IUltimateServiceProvider services, final ILogger logger, final Script script) {
 		super(script);
 		mServices = services;
 		mLogger = logger;
-		mScript = script;
-		mMgdScript = new ManagedScript(services, mScript);
+		mIntScript = script;
+		mMgdIntScript = new ManagedScript(services, mIntScript);
 
 	}
 
-//	private static Script wrapIfNecessary(final IUltimateServiceProvider services, final ILogger logger,
-//			final Script script) {
-//		if (WRAP_BACKEND_SOLVER_WITH_QUANTIFIER_OVERAPPROXIMATION) {
-//			return new QuantifierOverapproximatingSolver(services, logger, script);
-//		}
-//		return script;
-//	}
-
 	@Override
 	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException {
-		// do not pass the original logic but the corresponding quantifier-free logic
-		if (logic.startsWith("QF_")) {
-			mScript.setLogic(logic);
-		} else if (WRAP_BACKEND_SOLVER_WITH_QUANTIFIER_OVERAPPROXIMATION) {
-			final String qFLogic = "QF_" + logic;
-			if (Logics.valueOf(qFLogic) != null) {
-				mScript.setLogic(qFLogic);
-			} else {
-				throw new AssertionError("No Quantifier Free Logic found for Overapproximation");
-			}
-		} else {
-			mScript.setLogic(logic);
-		}
+		mBvScript.setLogic(logic);
+		// no need to do something, calls the other `setLogic` anyway
 	}
 
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
-		if (logic.isQuantified() && WRAP_BACKEND_SOLVER_WITH_QUANTIFIER_OVERAPPROXIMATION) {
-			final Logics qFLogic = Logics.valueOf("QF_" + logic.toString());
-			mScript.setLogic(qFLogic);
-		} else {
-			mScript.setLogic(logic);
-		}
+		mBvScript.setLogic(logic);
+		// TODO: Exception for unsupported logics
+		mIntScript.setLogic(Logics.ALL);
+	}
+
+	@Override
+	public void setOption(final String opt, final Object value) throws UnsupportedOperationException, SMTLIBException {
+		// We pass all options to mIntScript.
+		mIntScript.setOption(opt, value);
+
 	}
 
 	@Override
 	public void setInfo(final String info, final Object value) {
+		// We pass all info strings to mIntScript.
+		mIntScript.setInfo(info, value);
+
+		// If the status of the script is known we store in order to ease debugging.
 		if (info.equals(":status")) {
 			final String valueAsString = (String) value;
 			mExpectedResult = LBool.valueOf(valueAsString.toUpperCase());
-		} else {
-			mScript.setInfo(info, value);
 		}
+	}
+
+	@Override
+	public FunctionSymbol getFunctionSymbol(final String constructor) {
+		// TODO: Probably unsupported, we will see...
+		return mBvScript.getFunctionSymbol(constructor);
+	}
+
+	@Override
+	public Constructor constructor(final String name, final String[] selectors, final Sort[] argumentSorts)
+			throws SMTLIBException {
+		// TODO: Probably unsupported, we will see...
+		return mBvScript.constructor(name, selectors, argumentSorts);
+	}
+
+	@Override
+	public DataType datatype(final String typename, final int numParams) throws SMTLIBException {
+		// TODO: Probably unsupported, we will see...
+		return mBvScript.datatype(typename, numParams);
+	}
+
+	@Override
+	public void declareDatatype(final DataType datatype, final Constructor[] constrs) throws SMTLIBException {
+		// TODO: Probably unsupported, we will see...
+		mBvScript.declareDatatype(datatype, constrs);
+	}
+
+	@Override
+	public void declareDatatypes(final DataType[] datatypes, final Constructor[][] constrs, final Sort[][] sortParams)
+			throws SMTLIBException {
+		// TODO: Probably unsupported, we will see...
+		mBvScript.declareDatatypes(datatypes, constrs, sortParams);
+	}
+
+	@Override
+	public void declareSort(final String sort, final int arity) throws SMTLIBException {
+		mBvScript.declareSort(sort, arity);
+		// We declare new sorts also in the int solver
+		mIntScript.declareSort(sort, arity);
+	}
+
+	@Override
+	public void defineSort(final String sort, final Sort[] sortParams, final Sort definition) throws SMTLIBException {
+		mBvScript.defineSort(sort, sortParams, definition);
+		// TODO: For Sort definitions we have to translate the parameter sorts
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) throws SMTLIBException {
+		mBvScript.declareFun(fun, paramSorts, resultSort);
+		// FIXME: Declare new function also in Int solver
+		// FIXME: Assert in-range assumption immediately
 	}
 
 	@Override
 	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
 			throws SMTLIBException {
-		if (!QuantifierUtils.isQuantifierFree(definition)) {
-			throw new UnsupportedOperationException(
-					"Cannot handle define-fun with quantified definition " + definition);
+		mBvScript.defineFun(fun, params, resultSort, definition);
+		// TODO: Define function also in int script
+	}
+
+	@Override
+	public void push(final int levels) throws SMTLIBException {
+		mBvScript.push(levels);
+		mIntScript.push(levels);
+		for (int i = 0; i < levels; i++) {
+			mOverapproximationTrackingStack.add(false);
 		}
-		mScript.defineFun(fun, params, resultSort, definition);
 	}
 
-//	@Override
-//	public LBool assertTerm(final Term term) throws SMTLIBException {
-//		mNumberOfAssertedTerms++;
-//		final NamedTermWrapper ntw = new NamedTermWrapper(term);
-//		if (ntw.isIsNamed()) {
-//			// we alredy removed quantifiers
-//			mTreeSizeOfAssertedTerms += new DAGSize().treesize(ntw.getUnnamedTerm());
-//			return mScript.assertTerm(term);
-//		}
-//		final Term hopfullyQuantifierFree = makeQuantifierFree(ntw.getUnnamedTerm());
-//		mTreeSizeOfAssertedTerms += new DAGSize().treesize(hopfullyQuantifierFree);
-//		return mScript.assertTerm(hopfullyQuantifierFree);
-//	}
-
-//	private Term makeQuantifierFree(final Term term) {
-//		final Term letFree = new FormulaUnLet().transform(term);
-//		final Term annotationFree = new AnnotationRemover().transform(letFree);
-//		final Term unf = new UnfTransformer(mMgdScript.getScript()).transform(annotationFree);
-//		if (LOG_JUNIT_TEST) {
-//			mLogger.info("Copy this to one of our JUnit test files:\n"
-//					+ SmtTestGenerationUtils.generateStringForTestfile(unf));
-//		}
-//		final Term lessQuantifier = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript, SimplificationTechnique.SIMPLIFY_DDA, unf);
-//		// TODO futher optimizations. E.g., overapproximation by replacing all
-//		// quantified formulas.
-//		if (!QuantifierUtils.isQuantifierFree(lessQuantifier)) {
-//			final Term pnf = new PrenexNormalForm(mMgdScript).transform(lessQuantifier);
-//			final QuantifierSequence qs = new QuantifierSequence(mMgdScript, pnf);
-//			if (APPLY_SIMPLE_E_SKOLEMIZATION && qs.getNumberOfQuantifierBlocks() == 1
-//					&& qs.getQuantifierBlocks().get(0).getQuantifier() == QuantifiedFormula.EXISTS) {
-//				return doSimpleESkolemization(lessQuantifier, qs);
-//			}
-//			throw new AssertionError("Result of partial quantifier elimination is not quantifier-free but an "
-//					+ qs.buildQuantifierSequenceStringRepresentation() + " term.");
-//		}
-//		return lessQuantifier;
-//	}
-
-	private Term doSimpleESkolemization(final Term lessQuantifier, final QuantifierSequence qs) {
-		final QuantifiedVariables firstBlock = qs.getQuantifierBlocks().get(0);
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final TermVariable tv : firstBlock.getVariables()) {
-			final String identifier = generateIdentifierForESkolemization(tv);
-			mMgdScript.getScript().declareFun(identifier, new Sort[0], tv.getSort());
-			final Term constant = mMgdScript.getScript().term(identifier);
-			substitutionMapping.put(tv, constant);
+	@Override
+	public void pop(final int levels) throws SMTLIBException {
+		mBvScript.pop(levels);
+		mIntScript.pop(levels);
+		for (int i = 0; i < levels; i++) {
+			mOverapproximationTrackingStack.removeLast();
 		}
-		final Term result = Substitution.apply(mMgdScript, substitutionMapping, qs.getInnerTerm());
-		return result;
+
 	}
 
-	/**
-	 * Workaround, does not guarantee that identifier is unique. Techniques for that
-	 * are difficult because we do not yet know which symbols will be declared in
-	 * the future. Rationale
-	 * <ul>
-	 * <li>UltimateSkolemizationId should occur seldomly.
-	 * <li>Add mNumberOfAssertedTerms because similar variables may be used in
-	 * different assert commands.
-	 * <li>The original variable name can be helpful for debugging.
-	 * </ul>
-	 */
-	private String generateIdentifierForESkolemization(final TermVariable tv) {
-		return "UltimateSkolemizationId" + mNumberOfAssertedTerms + "_" + tv.getName();
+	@Override
+	public LBool assertTerm(final Term bvTerm) throws SMTLIBException {
+		// No need to assert term in mBvScript.
+		// FIXME: translate to bv by using an instance of the TermTransferrer
+		final Term intTerm = null;
+		final boolean weDidAnOverapproximation = false;
+		if (weDidAnOverapproximation) {
+			mOverapproximationTrackingStack.removeLast();
+			mOverapproximationTrackingStack.add(true);
+		}
+		return mIntScript.assertTerm(intTerm);
 	}
 
-//	@Override
-//	public LBool checkSat() throws SMTLIBException {
-//		final LBool result = mScript.checkSat();
-//		if (mExpectedResult != null) {
-//			mLogger.info("Expected result: " + result);
-//			if (mExpectedResult == LBool.UNKNOWN) {
-//				if (result != LBool.UNKNOWN) {
-//					throw new AssertionError("Congratulations! We solved a difficult benchmark");
-//				}
-//			} else {
-//				if (result != LBool.UNKNOWN && result != mExpectedResult) {
-//					throw new AssertionError("Result incorrect: expected " + mExpectedResult + " obtained " + result
-//							+ ". Treesize of asserted terms " + mTreeSizeOfAssertedTerms);
-//				}
-//
-//			}
-//		}
-//		mLogger.info("Computed result: " + result);
-//		final IResult ultimateOutput = constructResult("check-sat", String.valueOf(result));
-//		mServices.getResultService().reportResult(Activator.PLUGIN_ID, ultimateOutput );
-//		return result;
-//
-//	}
+	@Override
+	public LBool checkSat() throws SMTLIBException {
+		final LBool intSolverResult = mIntScript.checkSat();
+		// TODO: Compare with mExpectedResult
+		if (intSolverResult == LBool.SAT && mOverapproximationTrackingStack.contains(true)) {
+			// Maybe the result in only SAT because we overapproximated.
+			return LBool.UNKNOWN;
+		} else {
+			return intSolverResult;
+		}
+	}
 
-//	@Override
-//	public Term[] getUnsatCore() throws SMTLIBException, UnsupportedOperationException {
-//		if (WRAP_BACKEND_SOLVER_WITH_QUANTIFIER_OVERAPPROXIMATION) {
-//			final QuantifierOverapproximatingSolver qos = (QuantifierOverapproximatingSolver) mScript;
-//			assert qos.isInUsatCoreMode();
-//			final Term[] uc = mScript.getUnsatCore();
-//			final Set<Term> result = new HashSet<>();
-//			result.addAll(qos.getAdditionalUnsatCoreContent());
-//			result.addAll(Arrays.asList(uc));
-//			final IResult ultimateOutput = constructResult("get-unsat-core", String.valueOf(result));
-//			mServices.getResultService().reportResult(Activator.PLUGIN_ID, ultimateOutput );
-//			return result.toArray(new Term[result.size()]);
-//		}
-//		throw new AssertionError("Unsat-core only available in combination with QuantifierOverapproximatingSolver");
-//	}
+	@Override
+	public LBool checkSatAssuming(final Term... assumptions) throws SMTLIBException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Term[] getAssertions() throws SMTLIBException {
+		// TODO: Probably unsupported, we will see...
+		return mBvScript.getAssertions();
+	}
+
+	@Override
+	public Term getProof() throws SMTLIBException, UnsupportedOperationException {
+		// TODO: Probably unsupported, we will see...
+		return mBvScript.getProof();
+	}
+
+	@Override
+	public Term[] getUnsatCore() throws SMTLIBException, UnsupportedOperationException {
+		// TODO: Complicated, but we want to support that in the future.
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Term[] getUnsatAssumptions() throws SMTLIBException, UnsupportedOperationException {
+		// TODO: Probably unsupported, we will see...
+		return mBvScript.getUnsatAssumptions();
+	}
+
+	@Override
+	public Map<Term, Term> getValue(final Term[] terms) throws SMTLIBException, UnsupportedOperationException {
+		// TODO: Complicated, but we want to support that in the future.
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Assignments getAssignment() throws SMTLIBException, UnsupportedOperationException {
+		// TODO: Probably unsupported, we will see...
+		return mBvScript.getAssignment();
+	}
+
+	@Override
+	public Object getOption(final String opt) throws UnsupportedOperationException {
+		// We ask the mIntSolver for the option
+		return mIntScript.getOption(opt);
+	}
+
+	@Override
+	public Object getInfo(final String info) throws UnsupportedOperationException, SMTLIBException {
+		// We ask the mIntSolver for the info
+		return mIntScript.getInfo(info);
+	}
 
 	@Override
 	public void exit() {
-		// mSmtSolver.exit();
+		mBvScript.exit();
+		mIntScript.exit();
 	}
 
-//	@Override
-//	public Term annotate(final Term t, final Annotation... annotations) throws SMTLIBException {
-//		if (Arrays.stream(annotations).anyMatch(x -> x.getKey().equals(":named"))) {
-//			final Term hopfullyQuantifierFree = makeQuantifierFree(t);
-//			return mScript.annotate(hopfullyQuantifierFree, annotations);
-//		}
-//		return mScript.annotate(t, annotations);
-//	}
+	@Override
+	public Theory getTheory() {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.getTheory();
+	}
 
+	@Override
+	public Sort sort(final String sortname, final Sort... params) throws SMTLIBException {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.sort(sortname, params);
+	}
 
+	@Override
+	public Sort sort(final String sortname, final String[] indices, final Sort... params) throws SMTLIBException {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.sort(sortname, indices, params);
+	}
 
-//	private IResult constructResult(final String command, final String response) {
-//		final String shortDescription = "Response to " + command + " command";
-//		final String longDescription = "Response to " + command + " command is: " + response;
-//		final Severity severity = Severity.INFO;
-//		final IResult ultimateOutput = new GenericResult(Activator.PLUGIN_ID, shortDescription, longDescription,
-//				severity);
-//		return ultimateOutput;
-//	}
+	@Override
+	public Sort[] sortVariables(final String... names) throws SMTLIBException {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.sortVariables(names);
+	}
 
+	@Override
+	public Term term(final String funcname, final Term... params) throws SMTLIBException {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.term(funcname, params);
+	}
+
+	@Override
+	public Term term(final String funcname, final String[] indices, final Sort returnSort, final Term... params)
+			throws SMTLIBException {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.term(funcname, indices, returnSort, params);
+	}
+
+	@Override
+	public TermVariable variable(final String varname, final Sort sort) throws SMTLIBException {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.variable(varname, sort);
+	}
+
+	@Override
+	public Term quantifier(final int quantor, final TermVariable[] vars, final Term body, final Term[]... patterns)
+			throws SMTLIBException {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.quantifier(quantor, vars, body, patterns);
+	}
+
+	@Override
+	public Term let(final TermVariable[] vars, final Term[] values, final Term body) throws SMTLIBException {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.let(vars, values, body);
+	}
+
+	@Override
+	public Term match(final Term dataArg, final TermVariable[][] vars, final Term[] cases,
+			final Constructor[] constructors) throws SMTLIBException {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.match(dataArg, vars, cases, constructors);
+	}
+
+	@Override
+	public Term annotate(final Term t, final Annotation... annotations) throws SMTLIBException {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.annotate(t, annotations);
+	}
+
+	@Override
+	public Term numeral(final String num) throws SMTLIBException {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.numeral(num);
+	}
+
+	@Override
+	public Term numeral(final BigInteger num) throws SMTLIBException {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.numeral(num);
+	}
+
+	@Override
+	public Term decimal(final String decimal) throws SMTLIBException {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.decimal(decimal);
+	}
+
+	@Override
+	public Term decimal(final BigDecimal decimal) throws SMTLIBException {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.decimal(decimal);
+	}
+
+	@Override
+	public Term hexadecimal(final String hex) throws SMTLIBException {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.hexadecimal(hex);
+	}
+
+	@Override
+	public Term binary(final String bin) throws SMTLIBException {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.binary(bin);
+	}
+
+	@Override
+	public Term string(final QuotedObject str) throws SMTLIBException {
+		// Methods for construction of Term/Sort should only be called by the parser.
+		// Unfortunately, we cannot enforce this.
+		return mBvScript.string(str);
+	}
+
+	@Override
+	public Term simplify(final Term term) throws SMTLIBException {
+		// TODO: In the future probably an opportunity to set the backtranslation
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void reset() {
+		mBvScript.reset();
+		mIntScript.reset();
+	}
+
+	@Override
+	public void resetAssertions() {
+		// TODO: Probably unsupported, we will see...
+		mBvScript.resetAssertions();
+	}
+
+	@Override
+	public Term[] getInterpolants(final Term[] partition) throws SMTLIBException, UnsupportedOperationException {
+		// TODO: Complicated, but we want to support that in the future.
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree)
+			throws SMTLIBException, UnsupportedOperationException {
+		// TODO: Complicated, but we want to support that in the future.
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree)
+			throws SMTLIBException, UnsupportedOperationException {
+		// TODO: Complicated, but we want to support that in the future.
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Model getModel() throws SMTLIBException, UnsupportedOperationException {
+		// TODO: Complicated, but we want to support that in the future.
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Iterable<Term[]> checkAllsat(final Term[] predicates) throws SMTLIBException, UnsupportedOperationException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Term[] findImpliedEquality(final Term[] x, final Term[] y) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public QuotedObject echo(final QuotedObject msg) {
+		// We pass echos directly to mIntScript
+		return mIntScript.echo(msg);
+	}
 
 }
