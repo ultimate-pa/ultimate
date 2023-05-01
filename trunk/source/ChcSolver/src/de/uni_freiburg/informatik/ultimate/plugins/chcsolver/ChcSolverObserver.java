@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.chcsolver;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -43,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.IChcScript;
 import de.uni_freiburg.informatik.ultimate.lib.chc.SmtChcScript;
 import de.uni_freiburg.informatik.ultimate.lib.chc.eldarica.EldaricaChcScript;
 import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcSatResult;
+import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcUnknownResult;
 import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcUnsatResult;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.preferences.ChcSolverPreferences;
@@ -82,7 +82,7 @@ public class ChcSolverObserver extends BaseObserver {
 			result = createUnSatResult(chcScript);
 			break;
 		case UNKNOWN:
-			result = new UnprovableResult<>(Activator.PLUGIN_ID, null, null, null);
+			result = new ChcUnknownResult(Activator.PLUGIN_ID, "CHC solver returned UNKNOWN.");
 			break;
 		default:
 			throw new IllegalStateException();
