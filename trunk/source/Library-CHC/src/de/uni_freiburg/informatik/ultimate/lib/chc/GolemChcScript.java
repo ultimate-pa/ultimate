@@ -45,6 +45,10 @@ public class GolemChcScript implements IChcScript {
 	// TODO
 	private static final String SCRIPT_PATH = "/tmp/golem-script.smt2";
 
+	private static final boolean ADD_CLAUSE_NAMES = false;
+	private static final boolean ADD_COMMENTS = false;
+	private static final boolean DECLARE_FUNCTIONS = true;
+
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
 
@@ -67,7 +71,8 @@ public class GolemChcScript implements IChcScript {
 			final var dumperScript = new LoggingScript(SCRIPT_PATH, false);
 			dumperScript.setLogic(Logics.HORN);
 
-			new ChcAsserter(mMgdScript, dumperScript, false, false).assertClauses(symbolTable, system);
+			new ChcAsserter(mMgdScript, dumperScript, ADD_CLAUSE_NAMES, ADD_COMMENTS, DECLARE_FUNCTIONS)
+					.assertClauses(symbolTable, system);
 
 			dumperScript.exit();
 		} catch (final IOException e) {

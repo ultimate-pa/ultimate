@@ -117,7 +117,7 @@ public class ChcSmtPrinterObserver extends BaseObserver {
 		}
 
 		// declare functions and assert clauses
-		new ChcAsserter(mgdScript, loggingScript, PRODUCE_UNSAT_CORES, ADD_COMMENTS).assertClauses(symbolTable,
+		new ChcAsserter(mgdScript, loggingScript, PRODUCE_UNSAT_CORES, ADD_COMMENTS, true).assertClauses(symbolTable,
 				hornClauses);
 
 		// check-sat

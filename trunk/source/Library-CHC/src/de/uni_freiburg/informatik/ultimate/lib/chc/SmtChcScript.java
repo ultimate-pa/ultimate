@@ -48,6 +48,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 public class SmtChcScript implements IChcScript {
 	private static final boolean ADD_COMMENTS = false;
 
+	// We assume the function symbols are already declared in the script, as the Horn clause terms use the same script.
+	// To support different scripts for creating and solving Horn clauses, we would have to transfer terms and declare
+	// the necessary function symbols.
+	private static final boolean DECLARE_FUNCTIONS = false;
+
 	private final ManagedScript mMgdScript;
 	private boolean mProduceUnsatCores;
 	private Map<String, HornClause> mName2Clause;
@@ -67,7 +72,8 @@ public class SmtChcScript implements IChcScript {
 		reset();
 
 		mMgdScript.unlock(this);
-		final var asserter = new ChcAsserter(mMgdScript, getScript(), mProduceUnsatCores, ADD_COMMENTS);
+		final var asserter =
+				new ChcAsserter(mMgdScript, getScript(), mProduceUnsatCores, ADD_COMMENTS, DECLARE_FUNCTIONS);
 		asserter.assertClauses(symbolTable, system);
 		mMgdScript.lock(this);
 

@@ -54,6 +54,7 @@ public class ChcAsserter {
 
 	private final boolean mAddClauseNames;
 	private final boolean mAddComments;
+	private final boolean mDeclareFunctions;
 
 	private Map<String, HornClause> mName2Clause;
 
@@ -70,11 +71,12 @@ public class ChcAsserter {
 	 *            {@link LoggingScript}.
 	 */
 	public ChcAsserter(final ManagedScript mgdScript, final Script outputScript, final boolean addClauseNames,
-			final boolean addComments) {
+			final boolean addComments, final boolean declareFunctions) {
 		mMgdScript = mgdScript;
 		mOutputScript = outputScript;
 		mAddClauseNames = addClauseNames;
 		mAddComments = addComments;
+		mDeclareFunctions = declareFunctions;
 
 		assert !mAddComments || outputScript instanceof LoggingScript;
 	}
@@ -94,12 +96,14 @@ public class ChcAsserter {
 		}
 
 		// declare functions
-		for (final HcPredicateSymbol hcPred : symbolTable.getHcPredicateSymbols()) {
-			final FunctionSymbol fsym = hcPred.getFunctionSymbol();
-			mOutputScript.declareFun(fsym.getName(), fsym.getParameterSorts(), fsym.getReturnSort());
-		}
-		for (final Triple<String, Sort[], Sort> sf : symbolTable.getSkolemFunctions()) {
-			mOutputScript.declareFun(sf.getFirst(), sf.getSecond(), sf.getThird());
+		if (mDeclareFunctions) {
+			for (final HcPredicateSymbol hcPred : symbolTable.getHcPredicateSymbols()) {
+				final FunctionSymbol fsym = hcPred.getFunctionSymbol();
+				mOutputScript.declareFun(fsym.getName(), fsym.getParameterSorts(), fsym.getReturnSort());
+			}
+			for (final Triple<String, Sort[], Sort> sf : symbolTable.getSkolemFunctions()) {
+				mOutputScript.declareFun(sf.getFirst(), sf.getSecond(), sf.getThird());
+			}
 		}
 
 		// assert constraints
