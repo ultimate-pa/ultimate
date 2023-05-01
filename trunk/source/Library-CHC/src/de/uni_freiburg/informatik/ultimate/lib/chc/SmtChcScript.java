@@ -32,9 +32,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.NamedTermWrapper;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -56,7 +55,6 @@ public class SmtChcScript implements IChcScript {
 	public SmtChcScript(final ManagedScript mgdScript) {
 		mMgdScript = mgdScript;
 		mMgdScript.lock(this);
-		mMgdScript.getScript().setLogic(Logics.HORN);
 	}
 
 	@Override
@@ -68,8 +66,11 @@ public class SmtChcScript implements IChcScript {
 	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system) {
 		reset();
 
+		mMgdScript.unlock(this);
 		final var asserter = new ChcAsserter(mMgdScript, getScript(), mProduceUnsatCores, ADD_COMMENTS);
 		asserter.assertClauses(symbolTable, system);
+		mMgdScript.lock(this);
+
 		mName2Clause = asserter.getName2Clause();
 
 		return mMgdScript.checkSat(this);
@@ -127,9 +128,9 @@ public class SmtChcScript implements IChcScript {
 		final var core = mMgdScript.getUnsatCore(this);
 		final var result = new HashSet<HornClause>();
 		for (final var term : core) {
-			final var namedTerm = new NamedTermWrapper(term);
-			assert namedTerm.isNamed();
-			result.add(mName2Clause.get(namedTerm.getName()));
+			assert term instanceof ApplicationTerm : "Expected only term names in UNSAT core, but got " + term;
+			final var name = ((ApplicationTerm) term).getFunction().getName();
+			result.add(mName2Clause.get(name));
 		}
 		return Optional.of(result);
 	}
