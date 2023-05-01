@@ -97,7 +97,9 @@ public class ChcSolverObserver extends BaseObserver {
 		case ELDARICA:
 			return new EldaricaChcScript(mServices, annotation.getScript().getScript());
 		case Z3:
-			return new SmtChcScript(null);
+			// We use the script given in the annotation. For this to work, that script should use Z3.
+			// To use a fresh Z3 instance for solving instead, one has to transfer the Horn clause terms to that script.
+			return new SmtChcScript(annotation.getScript());
 		case TREEAUTOMIZER:
 			// TODO settings
 			return new TreeAutomizerChcScript(mServices, annotation.getScript(), null);
