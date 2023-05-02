@@ -51,9 +51,10 @@ public class Rabin2BuchiOperation<LETTER, STATE, CRSF extends IBlackWhiteStateFa
 		return mConversionAutomaton;
 	}
 
-	public boolean checkResult(final CRSF stateFactory) throws AutomataOperationCanceledException {
+	@Override
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
 
-		return (new IsEmpty<LETTER, STATE, CRSF>(mServices, mRabinAutomaton)
+		return (new IsEmpty<>(mServices, mRabinAutomaton)
 				.getResult() == new BuchiIsEmpty<>(mServices, mConversionAutomaton).getResult());
 	}
 }

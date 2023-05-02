@@ -27,7 +27,6 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 	private final IRabinAutomaton<LETTER, STATE> mFirstAutomaton;
 	private final IRabinAutomaton<LETTER, STATE> mSecondAutomaton;
 	private final IBlackWhiteStateFactory<STATE> mFactory;
-	private HashSet<LETTER> mAlphabet;
 	private HashSet<STATE> mInitialStates;
 	private HashSet<STATE> mFiniteStates;
 	private HashSet<STATE> mAcceptingStates;
@@ -53,12 +52,9 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 
 	@Override
 	public Set<LETTER> getAlphabet() {
-		if (mAlphabet == null) {
-			mAlphabet = new HashSet<>();
-			mAlphabet.addAll(mFirstAutomaton.getAlphabet());
-			mAlphabet.addAll(mSecondAutomaton.getAlphabet());
-		}
-		return mAlphabet;
+		assert mFirstAutomaton.getAlphabet().equals(mSecondAutomaton.getAlphabet());
+
+		return mFirstAutomaton.getAlphabet();
 	}
 
 	@Override
