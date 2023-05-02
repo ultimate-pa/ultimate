@@ -30,20 +30,28 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.DataType;
 import de.uni_freiburg.informatik.ultimate.logic.DataType.Constructor;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -51,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.logic.WrapperScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  *
@@ -68,6 +77,9 @@ public class IntBlastingWrapper extends WrapperScript {
 	private final Script mIntScript;
 	private final ManagedScript mMgdIntScript;
 	private final ArrayDeque<Boolean> mOverapproximationTrackingStack = new ArrayDeque<>();
+	private BvToIntTransferrer mBvToInt;
+	private TranslationManager mTm;
+	private boolean mUseNutzTransformation;
 
 	public IntBlastingWrapper(final IUltimateServiceProvider services, final ILogger logger, final Script script) {
 		super(script);
@@ -75,7 +87,9 @@ public class IntBlastingWrapper extends WrapperScript {
 		mLogger = logger;
 		mIntScript = script;
 		mMgdIntScript = new ManagedScript(services, mIntScript);
+		mIntScript.setLogic(Logics.ALL);
 
+		mTm = new TranslationManager(mMgdIntScript, ConstraintsForBitwiseOperations.SUM, mUseNutzTransformation);
 	}
 
 	@Override
@@ -83,6 +97,7 @@ public class IntBlastingWrapper extends WrapperScript {
 		mBvScript.setLogic(logic);
 		// no need to do something, calls the other `setLogic` anyway
 	}
+	
 
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
@@ -157,17 +172,89 @@ public class IntBlastingWrapper extends WrapperScript {
 	}
 
 	@Override
-	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) throws SMTLIBException {
-		mBvScript.declareFun(fun, paramSorts, resultSort);
-		// FIXME: Declare new function also in Int solver
-		// FIXME: Assert in-range assumption immediately
+	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
+			throws SMTLIBException {
+		// TODO: Define function also in int script
+		Sort newSort;
+		if (SmtSortUtils.isBitvecSort(resultSort)) {
+			newSort = SmtSortUtils.getIntSort(mMgdIntScript);
+		} else {
+			newSort = resultSort;
+		}
+		
+		TermVariable[] intParams = new TermVariable[params.length];
+		for (int i = 0; i < params.length; i++) {
+			intParams[i] = (TermVariable) mTm.translateBvtoInt(params[i]).getFirst(); // TODO
+		}
+
+		Term intDefinition = mTm.translateBvtoInt(definition).getFirst();// TODO
+
+		mIntScript.defineFun(fun, intParams, newSort, intDefinition);
+		mBvScript.defineFun(fun, params, resultSort, definition);
 	}
 
 	@Override
-	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
-			throws SMTLIBException {
-		mBvScript.defineFun(fun, params, resultSort, definition);
-		// TODO: Define function also in int script
+	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) throws SMTLIBException {
+		// FIXME: Declare new function also in Int solver
+		// FIXME: Assert in-range assumption immediately
+		Sort newSort;
+		if (SmtSortUtils.isBitvecSort(resultSort)) {
+			newSort = SmtSortUtils.getIntSort(mMgdIntScript);
+		} else {
+			newSort = resultSort;
+		}
+		
+		
+	
+
+		Sort[] newParamSorts = new Sort[paramSorts.length];
+		for (int i = 0; i < paramSorts.length; i++) {
+			newParamSorts[i] = translateSort(mScript, paramSorts[i]);
+		}
+
+		mIntScript.declareFun(fun, newParamSorts, newSort);
+		mBvScript.declareFun(fun, paramSorts, resultSort);
+		
+		
+		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+		Term funTerm = mIntScript.term(fun, new Term[0]);
+		final int width = Integer.valueOf(resultSort.getIndices()[0]);
+		final Rational twoPowWidth = Rational.valueOf(BigInteger.valueOf(2).pow(width), BigInteger.ONE);
+
+		Term lowerBound = mScript.term("<=", Rational.ZERO.toTerm(intSort), funTerm);
+		Term upperBound = mScript.term("<", funTerm, SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
+		mIntScript.assertTerm(lowerBound);
+		mIntScript.assertTerm(upperBound);
+	}
+
+	public Sort translateSort(final Script script, final Sort sort) {
+		final Sort result;
+		if (sort.getName().equals("BitVec")) {
+
+			result = SmtSortUtils.getIntSort(script);
+		} else if (SmtSortUtils.isArraySort(sort)) {
+			result = translateArraySort(sort);
+		} else {
+			return sort;
+		}
+		return result;
+	}
+
+	private Sort translateArraySort(final Sort sort) {
+		if (SmtSortUtils.isBitvecSort(sort)) {
+			return SmtSortUtils.getIntSort(mMgdIntScript);
+		} else if (SmtSortUtils.isArraySort(sort)) {
+			final Sort[] newArgsSort = new Sort[sort.getArguments().length];
+			for (int i = 0; i < sort.getArguments().length; i++) {
+				newArgsSort[i] = translateArraySort(sort.getArguments()[i]);
+			}
+			assert newArgsSort.length == 2;
+			final Sort domainSort = newArgsSort[0];
+			final Sort rangeSort = newArgsSort[1];
+			return SmtSortUtils.getArraySort(mMgdIntScript.getScript(), domainSort, rangeSort);
+		} else {
+			throw new AssertionError("Unexpected Sort: " + sort);
+		}
 	}
 
 	@Override
@@ -190,11 +277,14 @@ public class IntBlastingWrapper extends WrapperScript {
 	}
 
 	@Override
-	public LBool assertTerm(final Term bvTerm) throws SMTLIBException {
+	public LBool assertTerm( Term bvTerm) throws SMTLIBException {
 		// No need to assert term in mBvScript.
 		// FIXME: translate to bv by using an instance of the TermTransferrer
-		final Term intTerm = null;
-		final boolean weDidAnOverapproximation = false;
+		bvTerm = new FormulaUnLet().unlet(bvTerm);
+		Triple<Term, Set<TermVariable>, Boolean> translationResult = mTm.translateBvtoIntTransferrer(bvTerm,
+				new HistoryRecordingScript(mBvScript), new HistoryRecordingScript(mIntScript));
+		final Term intTerm = translationResult.getFirst();
+		final boolean weDidAnOverapproximation = translationResult.getThird();
 		if (weDidAnOverapproximation) {
 			mOverapproximationTrackingStack.removeLast();
 			mOverapproximationTrackingStack.add(true);
