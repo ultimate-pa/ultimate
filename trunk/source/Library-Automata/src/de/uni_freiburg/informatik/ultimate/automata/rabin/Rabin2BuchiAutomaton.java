@@ -17,7 +17,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * lazy translation of a Rabin automaton into an equivalent Büchi automaton. Do not use Rabin States for operations on
@@ -40,11 +39,8 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 	// black states ~ nonFinite, white states ~ Finite
 	private final FACTORY mFiniteOrNonFiniteStateFactory;
 	private final HashMap<STATE, STATE> mBuchi2Rabin = new HashMap<>();
-	final HashMap<Pair<STATE, LETTER>, Iterable<OutgoingInternalTransition<LETTER, STATE>>> mTransitions =
-			new HashMap<>();
 
 	private final HashSet<STATE> mInitialSet = new HashSet<>();
-	private boolean mInitialComplete;
 	private final HashSet<STATE> mNonFiniteSet = new HashSet<>();
 	private final HashSet<STATE> mAcceptingSet = new HashSet<>();
 
@@ -60,6 +56,7 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 			final FACTORY finiteOrNonFiniteStateFactory) {
 		mRabinAutomaton = automaton;
 		mFiniteOrNonFiniteStateFactory = finiteOrNonFiniteStateFactory;
+		mRabinAutomaton.getInitialStates().forEach(x -> mInitialSet.add(explore(x).get(0)));
 	}
 
 	@Override
@@ -69,17 +66,7 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 
 	@Override
 	public Iterable<STATE> getInitialStates() {
-		if (!mInitialComplete) {
 
-			mRabinAutomaton.getInitialStates().forEach(x -> {
-				final Iterator<STATE> relatedStates = explore(x).iterator();
-
-				mInitialSet.add(relatedStates.next());
-
-			});
-
-			mInitialComplete = true;
-		}
 		return mInitialSet;
 	}
 
@@ -117,10 +104,6 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
 			final LETTER letter) {
-		final Pair<STATE, LETTER> transitionKey = new Pair<>(state, letter);
-		if (mTransitions.containsKey(transitionKey)) {
-			return mTransitions.get(transitionKey);
-		}
 
 		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
 
@@ -134,7 +117,6 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 				}
 			});
 
-			mTransitions.put(transitionKey, result);
 			return result;
 		}
 
@@ -149,7 +131,6 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 			}
 		});
 
-		mTransitions.put(transitionKey, result);
 		return result;
 	}
 
@@ -190,6 +171,7 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 		return mFiniteOrNonFiniteStateFactory;
 	}
 
+	// TODO: Write comment.
 	private ArrayList<STATE> explore(final STATE rabinState) {
 
 		final STATE finiteVariant = mFiniteOrNonFiniteStateFactory.getWhiteContent(rabinState);
