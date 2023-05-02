@@ -11,13 +11,12 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *
  * @param <LETTER>
  * @param <STATE>
- * @param <CRSF>
  */
-public class Buchi2RabinOperation<LETTER, STATE, CRSF> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class Buchi2RabinOperation<LETTER, STATE> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final IRabinAutomaton<LETTER, STATE> mConversionAutomaton;
 
-	public Buchi2RabinOperation(final AutomataLibraryServices services, final CRSF factory,
+	public Buchi2RabinOperation(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton) {
 		super(services);
 		mConversionAutomaton = new Buchi2RabinAutomaton<>(automaton);
