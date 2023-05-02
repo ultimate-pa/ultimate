@@ -94,10 +94,10 @@ public class IntBlastingWrapper extends WrapperScript {
 
 	@Override
 	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException {
-		mBvScript.setLogic(logic);
+		super.setLogic(logic);
 		// no need to do something, calls the other `setLogic` anyway
 	}
-	
+
 
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
