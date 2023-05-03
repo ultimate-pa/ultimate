@@ -1,0 +1,23 @@
+RabinAutomaton automaton = (
+	alphabet = {a},
+	states = {s0 s1},
+	initialStates = {s0},
+	acceptingStates = {s1},
+	finiteStates = {s0},
+	transitions = { (s0 a s1) (s1 a s0) }
+);
+
+RabinAutomaton automatonWithSelfLoop = (
+	alphabet = {a},
+	states = {s0 s1},
+	initialStates = {s0},
+	acceptingStates = {s1},
+	finiteStates = {s0},
+	transitions = { (s0 a s1) (s1 a s0) (s1 a s1) }
+);
+
+assert(buchiIsEmpty(rabin2BuchiOperation(automaton)));
+assert(isEmpty(buchi2RabinOperation(rabin2BuchiOperation(automaton))));
+
+assert(!buchiIsEmpty(rabin2BuchiOperation(automatonWithSelfLoop)));
+assert(!isEmpty(buchi2RabinOperation(rabin2BuchiOperation(automatonWithSelfLoop))));

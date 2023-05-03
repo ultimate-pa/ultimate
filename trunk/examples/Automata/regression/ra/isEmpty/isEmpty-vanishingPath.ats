@@ -7,4 +7,15 @@ RabinAutomaton vanishingPathAutomaton = (
 	transitions = { (s1 a s2) (s1 a s2) (s2 a s2) (s2 a s3) (s3 a s4) (s4 a s5) (s5 a s6) (s6 a s5) (s6 a s7) (s7 a s8) (s8 a s8) }
 );
 
-assert(!isEmpty(buchi2RabinOperation(rabin2BuchiOperation(vanishingPathAutomaton))));
+RabinAutomaton remainingSelfLoopAutomaton = (
+	alphabet = {a},
+	states = {s1 s2 s3 s4 s5},
+	initialStates = {s1},
+	acceptingStates = {s5},
+	finiteStates = {s4},
+	transitions = { (s1 a s2) (s2 a s4) (s4 a s5) (s5 a s3) (s5 a s5) (s3 a s1) }
+);
+
+
+assert(!isEmpty(vanishingPathAutomaton));
+assert(!isEmpty(remainingSelfLoopAutomaton));
