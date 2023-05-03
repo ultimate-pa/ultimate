@@ -6,7 +6,6 @@ package de.uni_freiburg.informatik.ultimate.automata.rabin;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -38,6 +37,7 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 	private final IRabinAutomaton<LETTER, STATE> mRabinAutomaton;
 	// black states ~ nonFinite, white states ~ Finite
 	private final FACTORY mFiniteOrNonFiniteStateFactory;
+	// references for a reversal of the BlackWhite modification
 	private final HashMap<STATE, STATE> mBuchi2Rabin = new HashMap<>();
 
 	private final HashSet<STATE> mInitialSet = new HashSet<>();
@@ -56,7 +56,13 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 			final FACTORY finiteOrNonFiniteStateFactory) {
 		mRabinAutomaton = automaton;
 		mFiniteOrNonFiniteStateFactory = finiteOrNonFiniteStateFactory;
-		mRabinAutomaton.getInitialStates().forEach(x -> mInitialSet.add(explore(x).get(0)));
+		mRabinAutomaton.getInitialStates().forEach(x -> {
+			mInitialSet.add(getFiniteVariant(x));
+			final STATE nonFiniteCandidate = getNonFiniteVariant(x);
+			if (nonFiniteCandidate != null) {
+				mInitialSet.add(nonFiniteCandidate);
+			}
+		});
 	}
 
 	@Override
@@ -110,10 +116,9 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 		final STATE rabinState = mBuchi2Rabin.get(state);
 		if (mNonFiniteSet.contains(state)) {
 			mRabinAutomaton.getSuccessors(rabinState, letter).forEach(x -> {
-				final STATE succ = exploreFromNonFinite(x.getSucc());
+				final STATE succ = getNonFiniteVariant(x.getSucc());
 				if (succ != null) {
 					result.add(new OutgoingInternalTransition<>(letter, succ));
-
 				}
 			});
 
@@ -121,12 +126,13 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 		}
 
 		mRabinAutomaton.getSuccessors(rabinState, letter).forEach(x -> {
-			final Iterator<STATE> successors = explore(x.getSucc()).iterator();
-			result.add(new OutgoingInternalTransition<>(letter, successors.next()));
-			if (successors.hasNext()) {
-				final STATE next = successors.next();
-				if (isFinal(next)) {
-					result.add(new OutgoingInternalTransition<>(x.getLetter(), next));
+			final STATE rabinSucc = x.getSucc();
+			result.add(new OutgoingInternalTransition<>(letter, getFiniteVariant(rabinSucc)));
+			final STATE nonFiniteVariant = getNonFiniteVariant(rabinSucc);
+
+			if (nonFiniteVariant != null) {
+				if (isFinal(nonFiniteVariant)) {
+					result.add(new OutgoingInternalTransition<>(letter, nonFiniteVariant));
 				}
 			}
 		});
@@ -142,10 +148,9 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 		final STATE rabinState = mBuchi2Rabin.get(state);
 		if (mNonFiniteSet.contains(state)) {
 			mRabinAutomaton.getSuccessors(rabinState).forEach(x -> {
-				final STATE succ = exploreFromNonFinite(x.getSucc());
+				final STATE succ = getNonFiniteVariant(x.getSucc());
 				if (succ != null) {
 					result.add(new OutgoingInternalTransition<>(x.getLetter(), succ));
-
 				}
 			});
 
@@ -153,12 +158,13 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 		}
 
 		mRabinAutomaton.getSuccessors(rabinState).forEach(x -> {
-			final Iterator<STATE> successors = explore(x.getSucc()).iterator();
-			result.add(new OutgoingInternalTransition<>(x.getLetter(), successors.next()));
-			if (successors.hasNext()) {
-				final STATE next = successors.next();
-				if (isFinal(next)) {
-					result.add(new OutgoingInternalTransition<>(x.getLetter(), next));
+			final STATE rabinSucc = x.getSucc();
+			result.add(new OutgoingInternalTransition<>(x.getLetter(), getFiniteVariant(rabinSucc)));
+			final STATE nonFiniteVariant = getNonFiniteVariant(rabinSucc);
+
+			if (nonFiniteVariant != null) {
+				if (isFinal(nonFiniteVariant)) {
+					result.add(new OutgoingInternalTransition<>(x.getLetter(), nonFiniteVariant));
 				}
 			}
 		});
@@ -171,37 +177,34 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 		return mFiniteOrNonFiniteStateFactory;
 	}
 
-	// TODO: Write comment.
-	private ArrayList<STATE> explore(final STATE rabinState) {
+	/**
+	 * creates a finite variant of a state if not already created and returns this variant
+	 *
+	 * @param rabinState
+	 *            a state from the original Rabin automaton
+	 * @return the finite variant in the here computed Buchi automaton
+	 */
+	private STATE getFiniteVariant(final STATE rabinState) {
 
 		final STATE finiteVariant = mFiniteOrNonFiniteStateFactory.getWhiteContent(rabinState);
-		final STATE nonFiniteVariant = mFiniteOrNonFiniteStateFactory.getBlackContent(rabinState);
-
-		final ArrayList<STATE> result = new ArrayList<>(2);
-		result.add(finiteVariant);
 
 		if (mBuchi2Rabin.containsKey(finiteVariant)) {
-			if (mBuchi2Rabin.containsKey(nonFiniteVariant)) {
-				result.add(nonFiniteVariant);
-			}
-			return result;
-		}
 
+			return finiteVariant;
+		}
 		mBuchi2Rabin.put(finiteVariant, rabinState);
 
-		if (!mRabinAutomaton.isFinite(rabinState)) {
-			mBuchi2Rabin.put(nonFiniteVariant, rabinState);
-			mNonFiniteSet.add(nonFiniteVariant);
-			result.add(nonFiniteVariant);
-
-			if (mRabinAutomaton.isAccepting(rabinState)) {
-				mAcceptingSet.add(nonFiniteVariant);
-			}
-		}
-		return result;
+		return finiteVariant;
 	}
 
-	private STATE exploreFromNonFinite(final STATE rabinState) {
+	/**
+	 * creates a nonFinite variant of a state if not already created and returns this variant
+	 *
+	 * @param rabinState
+	 *            a state from the original Rabin automaton
+	 * @return the nonFinite variant in the here computed Buchi automaton
+	 */
+	private STATE getNonFiniteVariant(final STATE rabinState) {
 
 		final STATE nonFiniteVariant = mFiniteOrNonFiniteStateFactory.getBlackContent(rabinState);
 
@@ -219,6 +222,7 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 			}
 			return nonFiniteVariant;
 		}
+		// A Finite state can never produce a nonFinite Buchi variant
 		return null;
 	}
 
