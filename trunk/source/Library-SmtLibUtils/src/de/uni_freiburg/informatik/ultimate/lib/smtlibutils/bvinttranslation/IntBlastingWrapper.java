@@ -94,7 +94,14 @@ public class IntBlastingWrapper extends WrapperScript {
 
 	@Override
 	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException {
-		super.setLogic(logic);
+		// copy&paste from NoopScript
+		try {
+			setLogic(Logics.valueOf(logic));
+		} catch (final IllegalArgumentException eLogicUnsupported) {
+			/* Logic is not in enumeration */
+			throw new UnsupportedOperationException("Logic " + logic
+					+ " not supported");
+		}
 		// no need to do something, calls the other `setLogic` anyway
 	}
 
