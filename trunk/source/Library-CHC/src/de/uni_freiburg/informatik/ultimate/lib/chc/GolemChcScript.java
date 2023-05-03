@@ -66,6 +66,11 @@ public class GolemChcScript implements IChcScript {
 
 	@Override
 	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system) {
+		return solve(symbolTable, system, -1L);
+	}
+
+	@Override
+	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system, final long timeout) {
 		// generate file with Horn clauses
 		try {
 			final var dumperScript = new LoggingScript(SCRIPT_PATH, false);
@@ -83,6 +88,9 @@ public class GolemChcScript implements IChcScript {
 			// run golem on file
 			final var golem = MonitoredProcess.exec(getCommand(), null, mServices);
 			golem.setTerminationAfterTimeout(0);
+			if (timeout >= 0L) {
+				golem.setCountdownToTermination(timeout);
+			}
 
 			// TODO parse output
 			final var stdout = golem.getInputStream();
@@ -94,12 +102,6 @@ public class GolemChcScript implements IChcScript {
 		} catch (final IOException e) {
 			throw new IllegalStateException(e);
 		}
-	}
-
-	@Override
-	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system, final long timeout) {
-		// TODO golem.setCountdownToTermination(timeout);
-		throw new UnsupportedOperationException();
 	}
 
 	private String getCommand() {
