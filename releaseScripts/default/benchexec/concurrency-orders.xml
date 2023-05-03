@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="900" hardtimelimit="920" cpuCores="2">
+  <resultfiles></resultfiles>
+
+  <option name="--force-no-wrapper" />
+  <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+  <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_THREAD_INSTANCE</option>
+  <option name="--traceabstraction.maximal.amount.of.steps.the.threads.are.allowed.to.take.successively">1</option>
+
+  <rundefinition name="heuristic">
+    <option name="--traceabstraction.enable.heuristic.with.loops.as.step.type">true</option>
+  </rundefinition>
+
+  <rundefinition name="Arbitrary-AllRW">
+    <option name="--traceabstraction.enable.heuristic.with.loops.as.step.type">false</option>
+    <option name="--traceabstraction.considered.threads.and.their.maximal.amount.of.steps">"3,2 1,1 2,2"</option>
+    <option name="--traceabstraction.defines.what.statements.are.considered.a.step.in.por">ALL_READ_WRITE</option>
+  </rundefinition>
+
+  <rundefinition name="Arbitrary-GlobalRW">
+    <option name="--traceabstraction.enable.heuristic.with.loops.as.step.type">false</option>
+    <option name="--traceabstraction.considered.threads.and.their.maximal.amount.of.steps">"3,2 1,1 2,2"</option>
+    <option name="--traceabstraction.defines.what.statements.are.considered.a.step.in.por">GLOBAL_READ_WRITE</option>
+  </rundefinition>
+
+  <rundefinition name="Arbitrary-Loop">
+    <option name="--traceabstraction.enable.heuristic.with.loops.as.step.type">false</option>
+    <option name="--traceabstraction.considered.threads.and.their.maximal.amount.of.steps">"3,2 1,1 2,2"</option>
+    <option name="--traceabstraction.defines.what.statements.are.considered.a.step.in.por">LOOP</option>
+  </rundefinition>
+
+  <rundefinition name="Lockstep-AllRW">
+    <option name="--traceabstraction.enable.heuristic.with.loops.as.step.type">false</option>
+    <option name="--traceabstraction.considered.threads.and.their.maximal.amount.of.steps">X</option>
+    <option name="--traceabstraction.defines.what.statements.are.considered.a.step.in.por">ALL_READ_WRITE</option>
+  </rundefinition>
+
+  <rundefinition name="Lockstep-GlobalRW">
+    <option name="--traceabstraction.enable.heuristic.with.loops.as.step.type">false</option>
+    <option name="--traceabstraction.considered.threads.and.their.maximal.amount.of.steps">X</option>
+    <option name="--traceabstraction.defines.what.statements.are.considered.a.step.in.por">GLOBAL_READ_WRITE</option>
+  </rundefinition>
+
+  <rundefinition name="Lockstep-Loop">
+    <option name="--traceabstraction.enable.heuristic.with.loops.as.step.type">false</option>
+    <option name="--traceabstraction.considered.threads.and.their.maximal.amount.of.steps">X</option>
+    <option name="--traceabstraction.defines.what.statements.are.considered.a.step.in.por">LOOP</option>
+  </rundefinition>
+
+  <!-- =============================================================================================================== -->
+  <!-- ==================================================== TASKS ==================================================== -->
+  <!-- =============================================================================================================== -->
+
+  <tasks name="SVCOMP-ConcurrencySafety-Main">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="Weaver Benchmarks: Boogie">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+    <includesfile>../../../trunk/examples/concurrent/bpl/weaver-benchmarks/WeaverBenchmarks.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+</benchmark>
