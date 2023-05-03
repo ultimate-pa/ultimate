@@ -99,12 +99,10 @@ public class IntBlastingWrapper extends WrapperScript {
 			setLogic(Logics.valueOf(logic));
 		} catch (final IllegalArgumentException eLogicUnsupported) {
 			/* Logic is not in enumeration */
-			throw new UnsupportedOperationException("Logic " + logic
-					+ " not supported");
+			throw new UnsupportedOperationException("Logic " + logic + " not supported");
 		}
 		// no need to do something, calls the other `setLogic` anyway
 	}
-
 
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
@@ -188,7 +186,7 @@ public class IntBlastingWrapper extends WrapperScript {
 		} else {
 			newSort = resultSort;
 		}
-		
+
 		TermVariable[] intParams = new TermVariable[params.length];
 		for (int i = 0; i < params.length; i++) {
 			intParams[i] = (TermVariable) mTm.translateBvtoInt(params[i]).getFirst(); // TODO
@@ -210,9 +208,6 @@ public class IntBlastingWrapper extends WrapperScript {
 		} else {
 			newSort = resultSort;
 		}
-		
-		
-	
 
 		Sort[] newParamSorts = new Sort[paramSorts.length];
 		for (int i = 0; i < paramSorts.length; i++) {
@@ -221,17 +216,20 @@ public class IntBlastingWrapper extends WrapperScript {
 
 		mIntScript.declareFun(fun, newParamSorts, newSort);
 		mBvScript.declareFun(fun, paramSorts, resultSort);
-		
-		
-		final Sort intSort = SmtSortUtils.getIntSort(mScript);
-		Term funTerm = mIntScript.term(fun, new Term[0]);
-		final int width = Integer.valueOf(resultSort.getIndices()[0]);
-		final Rational twoPowWidth = Rational.valueOf(BigInteger.valueOf(2).pow(width), BigInteger.ONE);
 
-		Term lowerBound = mScript.term("<=", Rational.ZERO.toTerm(intSort), funTerm);
-		Term upperBound = mScript.term("<", funTerm, SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
-		mIntScript.assertTerm(lowerBound);
-		mIntScript.assertTerm(upperBound);
+	
+		if (SmtSortUtils.isBitvecSort(resultSort)) {
+			final Sort intSort = SmtSortUtils.getIntSort(mScript);
+			Term funTerm = mIntScript.term(fun, new Term[0]);
+			final int width = Integer.valueOf(resultSort.getIndices()[0]);
+			final Rational twoPowWidth = Rational.valueOf(BigInteger.valueOf(2).pow(width), BigInteger.ONE);
+
+			Term lowerBound = mScript.term("<=", Rational.ZERO.toTerm(intSort), funTerm);
+			Term upperBound = mScript.term("<", funTerm, SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
+			mIntScript.assertTerm(lowerBound);
+			mIntScript.assertTerm(upperBound);
+		}
+
 	}
 
 	public Sort translateSort(final Script script, final Sort sort) {
@@ -284,7 +282,7 @@ public class IntBlastingWrapper extends WrapperScript {
 	}
 
 	@Override
-	public LBool assertTerm( Term bvTerm) throws SMTLIBException {
+	public LBool assertTerm(Term bvTerm) throws SMTLIBException {
 		// No need to assert term in mBvScript.
 		// FIXME: translate to bv by using an instance of the TermTransferrer
 		bvTerm = new FormulaUnLet().unlet(bvTerm);

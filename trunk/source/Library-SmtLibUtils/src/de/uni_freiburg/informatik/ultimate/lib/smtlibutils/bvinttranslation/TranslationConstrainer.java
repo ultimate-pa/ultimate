@@ -74,9 +74,10 @@ public class TranslationConstrainer {
 	private final HashSet<Term> mTvConstraintSet; // Set of all constraints for quantified variables
 
 	/*
-	 * This Class contains of the methods to create constraints for the translation of bit-wise-AND and variables.
-	 * The constraints for uninterpreted constants and bit-wise-AND can be accessed via getConstraints().
-	 * The constraints for TermVariables can be accessed via getTvConstraints().
+	 * This Class contains of the methods to create constraints for the translation
+	 * of bit-wise-AND and variables. The constraints for uninterpreted constants
+	 * and bit-wise-AND can be accessed via getConstraints(). The constraints for
+	 * TermVariables can be accessed via getTvConstraints().
 	 */
 	public TranslationConstrainer(final ManagedScript mgdscript, final ConstraintsForBitwiseOperations mode) {
 		mMgdScript = mgdscript;
@@ -130,12 +131,13 @@ public class TranslationConstrainer {
 		final Rational twoPowWidth = Rational.valueOf(BigInteger.valueOf(2).pow(width), BigInteger.ONE);
 		final Rational twoPowWidthSubOne = twoPowWidth.sub(Rational.ONE);
 		// Strict upper Bound
-		final Term upperBoundPaper =
-				mScript.term("<", translatedVar, SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
-		final Term upperBound =
-				mScript.term("<=", translatedVar, SmtUtils.rational2Term(mScript, twoPowWidthSubOne, intSort));
+		final Term upperBoundPaper = mScript.term("<", translatedVar,
+				SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
+		final Term upperBound = mScript.term("<=", translatedVar,
+				SmtUtils.rational2Term(mScript, twoPowWidthSubOne, intSort));
 		return upperBoundPaper;
 	}
+
 	public void varConstraint(final Term bvterm, final Term intTerm) {
 		mConstraintSet.add(getLowerVarBounds(bvterm, intTerm));
 		mConstraintSet.add(getUpperVarBounds(bvterm, intTerm));
@@ -158,8 +160,7 @@ public class TranslationConstrainer {
 
 	/**
 	 *
-	 * @return true iff the constraints define only an overapproximation of
-	 * bvand.
+	 * @return true iff the constraints define only an overapproximation of bvand.
 	 */
 	public boolean bvandConstraint(final Term intTerm, final int width) {
 		if (mMode.equals(ConstraintsForBitwiseOperations.NONE)) {
@@ -185,8 +186,8 @@ public class TranslationConstrainer {
 			}
 			case BITWISE: {
 				final Term lowerBound = mScript.term("<=", Rational.ZERO.toTerm(intSort), apterm);
-				final Term upperBound =
-						mScript.term("<", apterm, SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
+				final Term upperBound = mScript.term("<", apterm,
+						SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
 				mConstraintSet.add(lowerBound);
 				mConstraintSet.add(upperBound);
 				modeConstraint = bvandBITWISEConstraints(width, translatedLHS, translatedRHS);
@@ -194,8 +195,8 @@ public class TranslationConstrainer {
 			}
 			case LAZY: {
 				final Term lowerBound = mScript.term("<=", Rational.ZERO.toTerm(intSort), apterm);
-				final Term upperBound =
-						mScript.term("<", apterm, SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
+				final Term upperBound = mScript.term("<", apterm,
+						SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
 				lazy = bvandLAZYConstraints(width, translatedLHS, translatedRHS);
 				mConstraintSet.add(lowerBound);
 				mConstraintSet.add(upperBound);
@@ -211,8 +212,8 @@ public class TranslationConstrainer {
 			}
 			}
 
-
-			// Important, to match with the backtranslation we also need to bring it in the same form here
+			// Important, to match with the backtranslation we also need to bring it in the
+			// same form here
 			final UnfTransformer unfT = new UnfTransformer(mScript);
 			final Term unfModeConstraint = unfT.transform(modeConstraint);
 			mConstraintSet.add(unfModeConstraint);
@@ -234,7 +235,15 @@ public class TranslationConstrainer {
 			final Term mul = mScript.term("*", twoPowI, ite);
 			sum[i] = mul;
 		}
-		return mScript.term("=", mScript.term(mIntand.getName(), translatedLHS, translatedRHS), mScript.term("+", sum));
+		if (width == 1) {
+			return SmtUtils.binaryBooleanEquality(mScript,
+					mScript.term(mIntand.getName(), translatedLHS, translatedRHS), sum[0]);
+
+		} else {
+			return SmtUtils.binaryBooleanEquality(mScript,
+					mScript.term(mIntand.getName(), translatedLHS, translatedRHS), mScript.term("+", sum));
+
+		}
 	}
 
 	private Term bvandBITWISEConstraints(final int width, final Term translatedLHS, final Term translatedRHS) {
@@ -245,8 +254,8 @@ public class TranslationConstrainer {
 			final Term zero = SmtUtils.rational2Term(mScript, Rational.ZERO, intSort);
 			final Term ite = mScript.term("ite", mScript.term("=", isel(i, translatedLHS), isel(i, translatedRHS), one),
 					one, zero);
-			final Term equals =
-					mScript.term("=", isel(i, mScript.term(mIntand.getName(), translatedLHS, translatedRHS)), ite);
+			final Term equals = mScript.term("=",
+					isel(i, mScript.term(mIntand.getName(), translatedLHS, translatedRHS)), ite);
 			and[i] = equals;
 		}
 		return SmtUtils.and(mScript, and);
@@ -269,11 +278,11 @@ public class TranslationConstrainer {
 		// Symmetry
 		lazyConstraints[3] = mScript.term("=", intand, mScript.term(mIntand.getName(), translatedRHS, translatedLHS));
 		// LHS Zero
-		lazyConstraints[4] =
-				mScript.term("=>", mScript.term("=", translatedLHS, zero), mScript.term("=", intand, zero));
+		lazyConstraints[4] = mScript.term("=>", mScript.term("=", translatedLHS, zero),
+				mScript.term("=", intand, zero));
 		// RHS Zero
-		lazyConstraints[5] =
-				mScript.term("=>", mScript.term("=", zero, translatedRHS), mScript.term("=", intand, zero));
+		lazyConstraints[5] = mScript.term("=>", mScript.term("=", zero, translatedRHS),
+				mScript.term("=", intand, zero));
 		// LHS max number
 		lazyConstraints[6] = mScript.term("=>", mScript.term("=", translatedLHS, maxNumber),
 				mScript.term("=", intand, translatedRHS));
@@ -283,11 +292,12 @@ public class TranslationConstrainer {
 		return mScript.term("and", lazyConstraints);
 	}
 
-	// Term that picks the bit at position "i" of integer term "term" interpreted as binary
+	// Term that picks the bit at position "i" of integer term "term" interpreted as
+	// binary
 	private Term isel(final int i, final Term term) {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
-		final Term two =
-				SmtUtils.rational2Term(mScript, Rational.valueOf(BigInteger.valueOf(2), BigInteger.ONE), intSort);
+		final Term two = SmtUtils.rational2Term(mScript, Rational.valueOf(BigInteger.valueOf(2), BigInteger.ONE),
+				intSort);
 		final Term twoPowI = SmtUtils.rational2Term(mScript,
 				Rational.valueOf(BigInteger.valueOf(2).pow(i), BigInteger.ONE), intSort);
 		return mScript.term("mod", mScript.term("div", term, twoPowI), two);
