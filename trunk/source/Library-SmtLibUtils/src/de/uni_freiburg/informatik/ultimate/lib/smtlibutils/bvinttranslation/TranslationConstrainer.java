@@ -236,11 +236,11 @@ public class TranslationConstrainer {
 			sum[i] = mul;
 		}
 		if (width == 1) {
-			return SmtUtils.binaryBooleanEquality(mScript,
+			return SmtUtils.binaryEquality(mScript,
 					mScript.term(mIntand.getName(), translatedLHS, translatedRHS), sum[0]);
 
 		} else {
-			return SmtUtils.binaryBooleanEquality(mScript,
+			return SmtUtils.binaryEquality(mScript,
 					mScript.term(mIntand.getName(), translatedLHS, translatedRHS), mScript.term("+", sum));
 
 		}
