@@ -48,7 +48,7 @@ public class TranslationManager {
 	private LinkedHashMap<Term, Term> mReversedVarMap;
 	private final TranslationConstrainer mTc;
 
-	private final HashSet<Term> mConstraintSet; // Set of all constraints
+	private HashSet<Term> mConstraintSet; // Set of all constraints
 	private final boolean mNutzTransformation;
 
 	/*
@@ -98,7 +98,8 @@ public class TranslationManager {
 
 	}
 
-	public Triple<Term, Set<TermVariable>, Boolean> translateBvtoIntTransferrer(final Term bitvecFromula, Script scriptA, Script scriptB) {
+	public Triple<Term, Set<TermVariable>, Boolean> translateBvtoIntTransferrer(final Term bitvecFromula, final Script scriptA, final Script scriptB) {
+		mConstraintSet = new HashSet<>();
 		final BvToIntTransferrer bvToInt =
 				new BvToIntTransferrer(scriptA, scriptB, mMgdScript, mVariableMap, mTc, bitvecFromula.getFreeVars(), mNutzTransformation);
 		final Term integerFormulaNoConstraint = bvToInt.transform(bitvecFromula);
@@ -116,8 +117,8 @@ public class TranslationManager {
 		return new Triple<>(integerFormula, overapproxVariables, isOverapproximation);
 
 	}
-	
-	
+
+
 	/*
 	 * Method to translate from integer back to bit-vector requires mReversedVarMap to be filled returns the translation
 	 * result
