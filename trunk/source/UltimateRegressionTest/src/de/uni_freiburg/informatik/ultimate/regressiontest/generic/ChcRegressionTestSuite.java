@@ -42,11 +42,11 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class TreeAutomizerRegressionTestSuite extends AbstractRegressionTestSuite {
+public class ChcRegressionTestSuite extends AbstractRegressionTestSuite {
 
 	private static final long DEFAULT_TIMEOUT = 20 * 1000L;
 
-	public TreeAutomizerRegressionTestSuite() {
+	public ChcRegressionTestSuite() {
 		super();
 		mTimeout = DEFAULT_TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/smtlib/horn/regression");
