@@ -289,7 +289,7 @@ public class IntBlastingWrapper extends WrapperScript {
 	@Override
 	public LBool assertTerm(Term bvTerm) throws SMTLIBException {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
-			throw new ToolchainCanceledException(QuantifierPusher.class,
+			throw new ToolchainCanceledException(IntBlastingWrapper.class,
 					String.format("assertTerm"));
 		}
 		// No need to assert term in mBvScript.
