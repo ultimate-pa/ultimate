@@ -34,6 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
@@ -287,10 +288,14 @@ public class IntBlastingWrapper extends WrapperScript {
 
 	@Override
 	public LBool assertTerm(Term bvTerm) throws SMTLIBException {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			throw new ToolchainCanceledException(QuantifierPusher.class,
+					String.format("assertTerm"));
+		}
 		// No need to assert term in mBvScript.
 		// FIXME: translate to bv by using an instance of the TermTransferrer
 		bvTerm = new FormulaUnLet().unlet(bvTerm);
-		Triple<Term, Set<TermVariable>, Boolean> translationResult = mTm.translateBvtoIntTransferrer(bvTerm,
+		final Triple<Term, Set<TermVariable>, Boolean> translationResult = mTm.translateBvtoIntTransferrer(bvTerm,
 				new HistoryRecordingScript(mBvScript), new HistoryRecordingScript(mIntScript));
 		final Term intTerm = translationResult.getFirst();
 		final boolean weDidAnOverapproximation = translationResult.getThird();
