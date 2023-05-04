@@ -55,6 +55,6 @@ public class Union<LETTER, STATE, CRSF extends IBlackWhiteStateFactory<STATE>>
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
 
 		return (new IsEmpty<>(mServices, mResult).getResult() == (new IsEmpty<>(mServices, mFirst).getResult()
-				|| new IsEmpty<>(mServices, mSecond).getResult()));
+				&& new IsEmpty<>(mServices, mSecond).getResult()));
 	}
 }
