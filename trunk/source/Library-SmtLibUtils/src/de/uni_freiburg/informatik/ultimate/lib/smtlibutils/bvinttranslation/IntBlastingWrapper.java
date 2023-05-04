@@ -314,12 +314,17 @@ public class IntBlastingWrapper extends WrapperScript {
 	public LBool checkSat() throws SMTLIBException {
 		final LBool intSolverResult = mIntScript.checkSat();
 		// TODO: Compare with mExpectedResult
+		final LBool result;
 		if (intSolverResult == LBool.SAT && mOverapproximationTrackingStack.contains(true)) {
 			// Maybe the result in only SAT because we overapproximated.
-			return LBool.UNKNOWN;
+			result = LBool.UNKNOWN;
 		} else {
-			return intSolverResult;
+			result = intSolverResult;
 		}
+		if (result != LBool.UNKNOWN && result != mExpectedResult) {
+			throw new AssertionError("Result incorrect: expected " + mExpectedResult + " obtained " + result);
+		}
+		return result;
 	}
 
 	@Override
