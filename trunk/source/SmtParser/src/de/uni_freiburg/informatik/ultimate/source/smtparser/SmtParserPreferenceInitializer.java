@@ -90,7 +90,7 @@ public class SmtParserPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String LABEL_IntBlastingMode = "IntBlasting translation mode";
 	public static final IntBlastingMode DEF_IntBlastingMode = IntBlastingMode.CongruenceBased;
 	public static final String LABEL_IntBlastingConstraintsForBitwiseOperations = "IntBlasting constraints for bitwise operations";
-	public static final ConstraintsForBitwiseOperations DEF_IntBlastingConstraintsForBitwiseOperations = ConstraintsForBitwiseOperations.SUM;
+	public static final ConstraintsForBitwiseOperations DEF_IntBlastingConstraintsForBitwiseOperations = ConstraintsForBitwiseOperations.NONE;
 
 	/*
 	 * taken from TreeAutomizerPreferenceInitializer (probably taken from RcfgBuilderPreferences..)
