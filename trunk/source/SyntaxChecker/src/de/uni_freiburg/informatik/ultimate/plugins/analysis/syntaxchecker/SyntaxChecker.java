@@ -138,7 +138,7 @@ public class SyntaxChecker implements IAnalysis {
 				.getBoolean(PreferenceInitializer.LABEL_DoSyntaxWarningCheck);
 		if (doSyntaxWarningCheck) {
 			final String toolCommandWarnings = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getString(PreferenceInitializer.LABEL_SyntaxErrorCommand);
+					.getString(PreferenceInitializer.LABEL_SyntaxWarningCommand);
 			final String outputWarnings;
 			if (Objects.equals(toolCommandError, toolCommandWarnings)) {
 				outputWarnings = outputError;
@@ -149,7 +149,7 @@ public class SyntaxChecker implements IAnalysis {
 				// everything fine, do nothing
 			} else {
 				final String longMessage =
-						generateLongDescription(toolCommandError, outputWarnings, filename, removeFilename);
+						generateLongDescription(toolCommandWarnings, outputWarnings, filename, removeFilename);
 				final String shortDescription = "Syntax checker warnings";
 				final Severity severity = Severity.WARNING;
 				final GenericResult res =
@@ -163,7 +163,7 @@ public class SyntaxChecker implements IAnalysis {
 			final String filename, final boolean replaceFilename) {
 		final String toolOutput;
 		if (replaceFilename) {
-			toolOutput = outputError.replaceAll(filename, "");
+			toolOutput = outputError.replace(filename + ":", "").strip();
 		} else {
 			toolOutput = outputError;
 		}

@@ -44,38 +44,35 @@
     <div class="toast-header">
       <span class="oi mr-1 {{oi_icon}}"></span>
       <strong class="mr-auto">{{shortDesc}}</strong>
-      <small>{{type}}</small>
-      <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
       </button>
     </div>
     <div class="toast-body">
       <div class="row">
-        <div class="col-1">
+        <div class="number">
           <span>Line</span>
         </div>
-        <div class="col-1">
+        <div class="number">
           <span>Col</span>
         </div>
-        <div class="col-10">
+        <div class="col">
           <span>Description</span>
         </div>
       </div>
       <hr>
       <div class="row">
-        <div class="col-1">
+        <div class="number">
           <span>
   			{{#ifCond startLNr '!==' -1}}{{startLNr}}{{/ifCond}}
             {{#ifCond startLNr '===' -1}}-{{/ifCond}}
   		  </span>
         </div>
-        <div class="col-1">
+        <div class="number">
           <span>
             {{#ifCond startCol '!==' -1}}{{startCol}}{{/ifCond}}
             {{#ifCond startCol '===' -1}}-{{/ifCond}}
           </span>
         </div>
-        <div class="col-10">
+        <div class="col">
           <pre><code class="text-break break-spaces">{{longDesc}}</code></pre>
         </div>
       </div>
@@ -85,7 +82,7 @@
 	<script id="tool-interface-template" type="text/x-handlebars-template">
   <div id="editor" class="flex-grow-1 flex-shrink-1"></div>
   <div id="messages" class="bg-light border-top top-shaddow p-1">
-    <div class="btn col-12 float-right">
+    <div class="text-end">
       <span id="move-messages" class="oi oi-collapse-right pr-1 float-right messages-actions close"></span>
     </div>
     <div id="messages-toasts"></div>
@@ -138,13 +135,12 @@
   <div class="row" id="description"></div>
   <div class="row tools">
     <h3>Tools</h3>
-    <div class="col-12">
-      <div class="card-deck">
+    <div class="col-12 mb-4">
+      <div class="card-group">
         {{#each tools}}
-        <div class="card border-secondary shadow mb-3 tool-card">
-          <div class="card-header"><a href="?ui=tool&tool={{this.id}}">{{this.name}}</a></div>
+        <div class="card border-secondary shadow mb-3 tool-card border-start">
+          <div class="card-header"><a class="link-primary" href="?ui=tool&tool={{this.id}}">{{this.name}}</a></div>
           <div class="card-body text-black-70">
-            <h5 class="card-title">Description</h5>
             <p class="card-text text-justify">{{this.description}}</p>
             <h5 class="card-title">Languages</h5>
             <p class="card-text">
@@ -214,7 +210,7 @@
         </div>
         <div class="dropdown-divider"></div>
         <div class="px-0">
-          <a id="create_persistence_link" class="dropdown-item" href="#">Create sharable link.</a>
+          <a id="create_persistence_link" class="dropdown-item" href="#">Create sharable link</a>
         </div>
         <div class="dropdown-divider"></div>
         <p id="version_info_text" class="px-4 text-secondary"></p>

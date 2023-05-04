@@ -98,6 +98,26 @@ public class TranslationManager {
 
 	}
 
+	public Triple<Term, Set<TermVariable>, Boolean> translateBvtoIntTransferrer(final Term bitvecFromula, Script scriptA, Script scriptB) {
+		final BvToIntTransferrer bvToInt =
+				new BvToIntTransferrer(scriptA, scriptB, mMgdScript, mVariableMap, mTc, bitvecFromula.getFreeVars(), mNutzTransformation);
+		final Term integerFormulaNoConstraint = bvToInt.transform(bitvecFromula);
+		mVariableMap = bvToInt.getVarMap();
+		mReversedVarMap = bvToInt.getReversedVarMap();
+		final Set<TermVariable> overapproxVariables = bvToInt.getOverapproxVariables();
+		final boolean isOverapproximation = bvToInt.wasOverapproximation();
+		if (!mNutzTransformation) {
+			mConstraintSet.addAll(mTc.getConstraints());
+			mConstraintSet.addAll(bvToInt.mArraySelectConstraintMap.values());
+		}
+		// TODO: Also add the constraints with mNutzTransformation=true, maybe we need to be more careful there
+		final Term integerFormula =
+				SmtUtils.and(mScript, integerFormulaNoConstraint, SmtUtils.and(mScript, mConstraintSet));
+		return new Triple<>(integerFormula, overapproxVariables, isOverapproximation);
+
+	}
+	
+	
 	/*
 	 * Method to translate from integer back to bit-vector requires mReversedVarMap to be filled returns the translation
 	 * result

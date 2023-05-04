@@ -55,6 +55,7 @@ public class Config {
 	public static String LOG_FILE_PATH = "ultimate_web_backend.log";
 	public static String LOG_LEVEL = "INFO";
 	public static String TMP_DIR = "";
+	public static int FORCED_TIMEOUT = 90;
 
 	private static final String SETTINGS_FILE = "web.config.properties";
 	private static final String PROPERTY_PREFIX = "WebBackend.";
@@ -115,6 +116,7 @@ public class Config {
 		USER_SETTINGS_WHITELIST = new UserSettingsWhitelist(loadString("SETTINGS_WHITELIST", SETTINGS_WHITELIST));
 		LOG_FILE_PATH = loadString("LOG_FILE_PATH", LOG_FILE_PATH);
 		LOG_LEVEL = loadString("LOG_LEVEL", LOG_LEVEL);
+		FORCED_TIMEOUT = loadInteger("FORCED_TIMEOUT", FORCED_TIMEOUT);
 		try {
 			TMP_DIR = loadPathString("TMP_DIR", Files.createTempDirectory("ultimate_webbackend").toString());
 		} catch (final IOException ex) {

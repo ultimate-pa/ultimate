@@ -204,9 +204,8 @@ public class HornClause implements IRankedLetter {
 			for (int i = 0; i < mBodyPredToArgs.size(); ++i) {
 				bodySb.append(" ");
 				bodySb.append(mBodyPreds.get(i));
-				bodySb.append(mBodyPredToArgs.get(i).stream().map(
-						t -> new PureSubstitution(mHornClauseSymbolTable.getManagedScript(), prettyVariableSubstitution)
-								.transform(t))
+				bodySb.append(mBodyPredToArgs.get(i).stream().map(t -> PureSubstitution
+						.apply(mHornClauseSymbolTable.getManagedScript(), prettyVariableSubstitution, t))
 						.collect(Collectors.toList()));
 				// bodySb.append(")");
 			}
@@ -223,13 +222,12 @@ public class HornClause implements IRankedLetter {
 			final String headPred = mHeadIsFalse ? "false" : mHeadPredicate.getName();
 			head = headPred
 					+ mHeadPredVariables.stream()
-							.map(t -> new PureSubstitution(mHornClauseSymbolTable.getManagedScript(),
-									prettyVariableSubstitution).transform(t.getTermVariable()))
+							.map(t -> PureSubstitution.apply(mHornClauseSymbolTable.getManagedScript(),
+									prettyVariableSubstitution, t.getTermVariable()))
 							.collect(Collectors.toList());
 		}
-		return String.format("%s(%s) /\\ (%s) --> %s", hasComment() ? (getComment() + "| ") : "", body,
-				new PureSubstitution(mHornClauseSymbolTable.getManagedScript(), prettyVariableSubstitution)
-						.transform(mFormula).toString(),
+		return String.format("%s(%s) /\\ (%s) --> %s", hasComment() ? (getComment() + "| ") : "", body, PureSubstitution
+				.apply(mHornClauseSymbolTable.getManagedScript(), prettyVariableSubstitution, mFormula).toString(),
 				head);
 	}
 

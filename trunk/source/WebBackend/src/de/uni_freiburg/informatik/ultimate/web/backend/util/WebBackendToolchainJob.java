@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.RcpProgressMonitorWrapper;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.ParserInitializationException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
@@ -20,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.IToolchain.ReturnCode;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.web.backend.dto.ToolchainResponse;
 import de.uni_freiburg.informatik.ultimate.web.backend.dto.UltimateResult;
 
@@ -64,9 +66,12 @@ public class WebBackendToolchainJob extends DefaultToolchainJob {
 			mToolchain.runParsers();
 			tpm.worked(1);
 
-			return convert(mToolchain.processToolchain(tpm));
+			final ReturnCode tcReturnCode = mToolchain.processToolchain(tpm);
+			storeToolchainResult(tcReturnCode, null);
+			return convert(tcReturnCode);
 		} catch (final Throwable e) {
 			mServletLogger.error("Error running the Toolchain: " + e.getMessage());
+			storeToolchainResult(ReturnCode.Error, e);
 			return handleException(e);
 		} finally {
 			tpm.done();
@@ -74,17 +79,22 @@ public class WebBackendToolchainJob extends DefaultToolchainJob {
 		}
 	}
 
-	@Override
-	protected IStatus convert(final ReturnCode result) {
+	private void storeToolchainResult(final ReturnCode result, final Throwable e) {
 		final ToolchainResponse tcResponse = new ToolchainResponse(getId());
+		final IUltimateServiceProvider tcServices = mToolchain.getCurrentToolchainData().getServices();
+		final List<UltimateResult> results = UltimateResultConverter.processUltimateResults(mServletLogger, tcServices);
+		if (e != null && tcServices.getResultService().getResults().entrySet().stream()
+				.noneMatch(a -> a.getValue().stream().anyMatch(ExceptionOrErrorResult.class::isInstance))) {
+			results.add(UltimateResultConverter.processResult(mServletLogger,
+					new ExceptionOrErrorResult(Activator.PLUGIN_ID, e)));
+		}
+		tcResponse.setResults(results);
 		switch (result) {
 		case Ok:
 		case Cancel:
 		case Error:
-			final List<UltimateResult> results = UltimateResultConverter.processUltimateResults(mServletLogger,
-					mToolchain.getCurrentToolchainData().getServices());
+			// every exit of Ultimate is ok from the POV of the WebBackend
 			tcResponse.setStatus("done");
-			tcResponse.setResults(results);
 			break;
 		default:
 			tcResponse.setStatusError();
@@ -97,8 +107,6 @@ public class WebBackendToolchainJob extends DefaultToolchainJob {
 		} catch (final IOException ex) {
 			mServletLogger.error("Could not store toolchain result", ex);
 		}
-
-		return super.convert(result);
 	}
 
 	@Override

@@ -13,15 +13,13 @@
  *
  */
 
-int nondet() {
-    int x;
-    return x;
-}
+extern int __VERIFIER_nondet_int(void);
 
 int main() {
     int t = 0, d = 0, s = 0;
-    int sec, met;
-    while (nondet()) {
+    int sec = __VERIFIER_nondet_int();
+    int met = __VERIFIER_nondet_int();
+    while (__VERIFIER_nondet_int()) {
         if (sec) {
             s = 0;
             if (t++ == 4) {

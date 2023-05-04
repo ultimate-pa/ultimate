@@ -183,7 +183,7 @@ public class ToolchainManager {
 			final ProgressMonitorService monitorService =
 					new ProgressMonitorService(monitor, mLogger, mToolchainWalker);
 			mToolchainData.getStorage().putStorable(ProgressMonitorService.getServiceKey(), monitorService);
-
+			mToolchainData = mCurrentController.prerun(this);
 		}
 
 		@Override
@@ -313,7 +313,6 @@ public class ToolchainManager {
 				}
 
 				final Collection<ISource> parsers = mFiles2Parser.values();
-				mToolchainData = mCurrentController.prerun(this);
 				final CompleteToolchainData data = new CompleteToolchainData(this,
 						parsers.toArray(new ISource[parsers.size()]), mCurrentController);
 				currentToolchainServices = data.getServices();

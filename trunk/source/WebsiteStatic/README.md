@@ -16,6 +16,16 @@ All configuration is set in `config/config.js`.
 * Copy [config/config.dist.js](config/config.dist.js) to `config/config.js`.
 * Edit `config/config.js` to your needs. The `config/config.dist.js` file is commented to guide the configuration.
 
+You can generate the `frontend_settings` part of the configuration file for some settings using the Ultimate command line.
+
+Example:
+
+``` bash
+./Ultimate -tc config/AutomizerReach.xml -s config/svcomp-Overflow-64bit-Automizer_Default.epf -i dummy --generate-frontend-json-from-delta
+...
+{"frontend_settings":[...]}
+```
+
 ### Toolchain configuration
 For each worker in `config.tools.worker` a toolchain named `<worker.id>.xml` must be available in
 `config/ultimate_toolchain_xmls`. This toolchain XML can be edited to alter the toolchain.
@@ -31,8 +41,7 @@ To recreate the initial examples available, go to `config/code_examples` and run
  `refresh_index.py`.
 
 ### Tool details page
-Each tool is associated with a details page. To alter its content, edit the page matching the `tool_id` in the
-[config/too_pages](config/tool_pages) folder.
+Each tool is associated with a details page. To alter its content, edit the page matching the `tool_id` in the [config/tool_pages](config/tool_pages) folder.
 
 ### Homepage contents
 The content sections are determined by the files in [config/home_page](config/home_page).
@@ -41,7 +50,8 @@ The content sections are determined by the files in [config/home_page](config/ho
 
 ### Setup development environment
 * Download a node package manager (for Windows, use <https://github.com/coreybutler/nvm-windows/releases>)
-*
+* Run `npm install` in `bootstrap_dev/`
+
 ### Expected result response example
 
 ```json
@@ -59,6 +69,7 @@ The content sections are determined by the files in [config/home_page](config/ho
     ...
 ]
 ```
+
 
 ### Configure theme & style
 #### Bootstrap theming

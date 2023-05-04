@@ -63,7 +63,7 @@ public class UltimateResultConverter {
 		return rtr;
 	}
 
-	private static UltimateResult processResult(final ILogger logger, final IResult r) {
+	public static UltimateResult processResult(final ILogger logger, final IResult r) {
 		logger.info("Processing result " + r.getShortDescription());
 		final String type;
 		final String logLvl;

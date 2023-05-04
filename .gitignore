@@ -20,6 +20,8 @@ hs_err_pid*
 /releaseScripts/default/UTaipan-win32/*
 /releaseScripts/default/UTaipan-win32/
 /releaseScripts/default/*.zip
+/releaseScripts/default/WebBackend
+/releaseScripts/default/WebFrontend
 /releaseScripts/2018chccomp/Unihorn/StarExecArchive/*
 /releaseScripts/2018chccomp/Unihorn/StarExecArchive
 /releaseScripts/2018chccomp/Unihorn/UltimateCommandline.zip
@@ -304,3 +306,5 @@ trunk/examples/concurrent/bpl/weaver-benchmarks/weaver
 /trunk/runtime-Debug-E4.product
 /trunk/runtime-WebBackend.product
 
+trunk/source/WebsiteStatic/bootstrap_dev/node_modules/
+trunk/source/WebsiteStatic/config/config.js

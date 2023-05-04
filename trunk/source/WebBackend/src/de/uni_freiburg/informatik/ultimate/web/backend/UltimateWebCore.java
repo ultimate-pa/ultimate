@@ -113,8 +113,8 @@ public class UltimateWebCore implements ICore<RunDefinition>, IController<RunDef
 		final IToolchain<RunDefinition> toolchain = requestToolchain(new File[] { prepareInputFile(request) });
 		mJobMetadata.put(toolchain.getId(), new JobMetdata(request.getRequestId(), toolchain.getId(),
 				prepareToolchainFile(request), getUserSettingsFromRequest(request)));
-		try {
 
+		try {
 			final WebBackendToolchainJob job = new WebBackendToolchainJob("WebBackendToolchainJob for request " + jobId,
 					this, this, mLogger, toolchain, jobId);
 			job.schedule();
@@ -169,12 +169,15 @@ public class UltimateWebCore implements ICore<RunDefinition>, IController<RunDef
 	 * @param toolchain
 	 * @return Updated UltimateServiceProvider
 	 */
-	private IUltimateServiceProvider addUserSettings(final IToolchain<RunDefinition> toolchain) {
+	public IUltimateServiceProvider addUserSettings(final IToolchain<RunDefinition> toolchain) {
 		// TODO: Add timeout to the API request and use it.
 
 		mLogger.info("Apply user settings to run configuration.");
 		final List<Map<String, Object>> userSettings = mJobMetadata.get(toolchain.getId()).getUserSettings();
 		final IUltimateServiceProvider services = toolchain.getCurrentToolchainData().getServices();
+		if (Config.FORCED_TIMEOUT > 0) {
+			services.getProgressMonitorService().setDeadline(System.currentTimeMillis() + Config.FORCED_TIMEOUT * 1000);
+		}
 		if (userSettings.isEmpty()) {
 			return services;
 		}
