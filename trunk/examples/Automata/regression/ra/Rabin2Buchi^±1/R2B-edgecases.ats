@@ -16,7 +16,7 @@ RabinAutomaton acceptorAutomaton = (
 	transitions = { (s1 a s1) (s1 b s1) (s1 c s1) }
 );
 
-RabinAutomaton rejctingAutomaton = (
+RabinAutomaton rejectingAutomaton = (
 	alphabet = {a b},
 	states = {s1 s2},
 	initialStates = {s1},
@@ -32,19 +32,19 @@ assert(!isEmpty(buchi2RabinOperation(rabin2BuchiOperation(multiInitialAutomaton)
 assert(!buchiIsEmpty(rabin2BuchiOperation(acceptorAutomaton)));
 assert(!isEmpty(buchi2RabinOperation(rabin2BuchiOperation(acceptorAutomaton))));
 
-assert(buchiIsEmpty(rabin2BuchiOperation(rejctingAutomaton)));
-assert(isEmpty(buchi2RabinOperation(rabin2BuchiOperation(rejctingAutomaton))));
+assert(buchiIsEmpty(rabin2BuchiOperation(rejectingAutomaton)));
+assert(isEmpty(buchi2RabinOperation(rabin2BuchiOperation(rejectingAutomaton))));
 
 
 assert(buchiAccepts(rabin2BuchiOperation(multiInitialAutomaton), [a a b , a b]));
 assert(!buchiAccepts(rabin2BuchiOperation(multiInitialAutomaton), [, a a b]));
 assert(buchiAccepts(rabin2BuchiOperation(multiInitialAutomaton), [a a, b a a a a]));
 
-assert(!buchiAccepts(rabin2BuchiOperation(rejctingAutomaton), [a a, a b]));
-assert(!buchiAccepts(rabin2BuchiOperation(rejctingAutomaton), [a a a a a a a a a b , a b]));
-assert(!buchiAccepts(rabin2BuchiOperation(rejctingAutomaton), [, a b]));
-assert(!buchiAccepts(rabin2BuchiOperation(rejctingAutomaton), [, b a]));
-assert(!buchiAccepts(rabin2BuchiOperation(rejctingAutomaton), [, a b]));
+assert(!buchiAccepts(rabin2BuchiOperation(rejectingAutomaton), [a a, a b]));
+assert(!buchiAccepts(rabin2BuchiOperation(rejectingAutomaton), [a a a a a a a a a b , a b]));
+assert(!buchiAccepts(rabin2BuchiOperation(rejectingAutomaton), [, a b]));
+assert(!buchiAccepts(rabin2BuchiOperation(rejectingAutomaton), [, b a]));
+assert(!buchiAccepts(rabin2BuchiOperation(rejectingAutomaton), [, a b]));
 
 assert(buchiAccepts(rabin2BuchiOperation(acceptorAutomaton), [a a b , a b]));
 assert(buchiAccepts(rabin2BuchiOperation(acceptorAutomaton), [, a a b]));
