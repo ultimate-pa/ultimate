@@ -61,7 +61,7 @@ public class IntBlastingWrapperSmtcomp2023 extends AbstractModelCheckerTestSuite
 	 * of the interval that we take and FILE_OFFSET defines which interval
 	 * we take.
 	 */
-	 private static final int FILES_PER_DIRECTORY_LIMIT = 10;
+	 private static final int FILES_PER_DIRECTORY_LIMIT = 100;
 	 private static final int FILE_OFFSET = 0;
 
 	// @formatter:off
@@ -80,7 +80,7 @@ public class IntBlastingWrapperSmtcomp2023 extends AbstractModelCheckerTestSuite
 	 */
 	@Override
 	public long getTimeout() {
-		return 30 * 1000;
+		return 10 * 1000;
 	}
 
 	/**
@@ -90,7 +90,8 @@ public class IntBlastingWrapperSmtcomp2023 extends AbstractModelCheckerTestSuite
 	 *
 	 */
 	private static final String[] mSettings = {
-			"UltimateEliminator/smtinterpol.epf",
+			"IntBlastingWrapper/smtinterpolRangeBased.epf",
+			"IntBlastingWrapper/smtinterpolCongruenceBased.epf",
 	};
 
 	private static final String[] mCToolchains = {
