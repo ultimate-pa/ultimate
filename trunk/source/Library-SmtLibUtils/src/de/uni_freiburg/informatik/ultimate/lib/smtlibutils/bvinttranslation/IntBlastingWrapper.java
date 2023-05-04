@@ -303,7 +303,11 @@ public class IntBlastingWrapper extends WrapperScript {
 			mOverapproximationTrackingStack.removeLast();
 			mOverapproximationTrackingStack.add(true);
 		}
-		return mIntScript.assertTerm(intTerm);
+		try {
+			return mIntScript.assertTerm(intTerm);
+		} catch (final SMTLIBException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 	@Override
