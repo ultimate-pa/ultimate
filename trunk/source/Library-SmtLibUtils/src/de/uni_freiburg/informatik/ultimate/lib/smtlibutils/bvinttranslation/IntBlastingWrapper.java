@@ -108,7 +108,6 @@ public class IntBlastingWrapper extends WrapperScript {
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
 		mBvScript.setLogic(logic);
 		// TODO: Exception for unsupported logics
-		mIntScript.setLogic(Logics.ALL);
 	}
 
 	@Override
