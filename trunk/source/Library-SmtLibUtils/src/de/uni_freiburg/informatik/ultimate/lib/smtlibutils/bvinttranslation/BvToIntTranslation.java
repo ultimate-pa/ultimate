@@ -399,10 +399,10 @@ public class BvToIntTranslation extends TermTransformer {
 			for (int i = 0; i < old.getVariables().length; i++) {
 				if (SmtSortUtils.isBitvecSort(old.getVariables()[i].getSort())) {
 					newTermVars.add((TermVariable) mVariableMap.get(old.getVariables()[i]));
-					if (!mNutzTransformation) {
+					
 						tvConstraints.add(
 								mTc.getTvConstraint(old.getVariables()[i], mVariableMap.get(old.getVariables()[i])));
-					}
+				
 				} else if (SmtSortUtils.isArraySort(old.getVariables()[i].getSort())) {
 					final Term newQuantifiedVar = mVariableMap.get(old.getVariables()[i]);
 					newTermVars.add((TermVariable) newQuantifiedVar);
@@ -710,7 +710,7 @@ public class BvToIntTranslation extends TermTransformer {
 		}
 		final Term ifTerm = SmtUtils.unfTerm(mScript, "=", null,
 				SmtSortUtils.getIntSort(mMgdScript), rhs, SmtUtils.rational2Term(mScript, Rational.ZERO, intSort));
-		final Term thenTerm = lhs;
+		final Term thenTerm = translatedLHS; //Congruence Based doesnt need mod here.
 		final Term elseTerm = SmtUtils.mod(mScript, lhs, rhs);
 		return SmtUtils.ite(mScript, ifTerm, thenTerm, elseTerm);
 	}
