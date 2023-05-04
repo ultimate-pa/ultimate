@@ -28,9 +28,11 @@
 package de.uni_freiburg.informatik.ultimate.source.smtparser;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.IntBlastingWrapper.IntBlastingMode;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.mso.MSODSolver.MSODLogic;
 
 /**
@@ -84,6 +86,11 @@ public class SmtParserPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String LABEL_FilterUnusedDeclarationsMode =
 			"Remove only unused declarations from SMT file (experimental)";
 	public static final boolean DEF_FilterUnusedDeclarationsMode = false;
+
+	public static final String LABEL_IntBlastingMode = "IntBlasting translation mode";
+	public static final IntBlastingMode DEF_IntBlastingMode = IntBlastingMode.CongruenceBased;
+	public static final String LABEL_IntBlastingConstraintsForBitwiseOperations = "IntBlasting constraints for bitwise operations";
+	public static final ConstraintsForBitwiseOperations DEF_IntBlastingConstraintsForBitwiseOperations = ConstraintsForBitwiseOperations.SUM;
 
 	/*
 	 * taken from TreeAutomizerPreferenceInitializer (probably taken from RcfgBuilderPreferences..)
@@ -146,6 +153,12 @@ public class SmtParserPreferenceInitializer extends UltimatePreferenceInitialize
 				new UltimatePreferenceItem<>(LABEL_ExtSolverLogic, DEF_ExtSolverLogic, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_SMT_DUMP_PATH, DEF_SmtDumpPath, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_AutomataDumpPath, DEF_AutomataDumpPath, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_IntBlastingMode, DEF_IntBlastingMode, PreferenceType.Combo,
+						IntBlastingMode.values()),
+				new UltimatePreferenceItem<>(LABEL_IntBlastingConstraintsForBitwiseOperations,
+						DEF_IntBlastingConstraintsForBitwiseOperations, PreferenceType.Combo,
+						ConstraintsForBitwiseOperations.values()),
+
 				// new UltimatePreferenceItem<TaMinimization>(LABEL_MinimizationAlgorithm, DEF_MinimizationAlgorithm,
 				// PreferenceType.Combo, TaMinimization.values()),
 

@@ -45,6 +45,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ExceptionThrowingParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.UltimateEliminator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.IntBlastingWrapper;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.IntBlastingWrapper.IntBlastingMode;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
@@ -251,7 +253,7 @@ public class SmtParser implements ISource {
 			script = new UltimateEliminator(mServices, mLogger, backEnd);
 		}
 			break;
-			
+
 		case IntBlastingWrapper: {
 			mLogger.info("Expecting script with bitvectors, will translate to integers");
 			final String command = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
@@ -271,9 +273,14 @@ public class SmtParser implements ISource {
 				solverSettings = solverSettings.setDumpSmtScriptToFile(true, folderOfDumpedFile,
 						"IntBlastingWrapperBackEndSolverInput.smt2", false);
 			}
-
+			final IntBlastingMode intBlastingMode = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getEnum(SmtParserPreferenceInitializer.LABEL_IntBlastingMode, IntBlastingMode.class);
+			final ConstraintsForBitwiseOperations constraintsForBitwiseOperations = mServices
+					.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getEnum(SmtParserPreferenceInitializer.LABEL_IntBlastingConstraintsForBitwiseOperations,
+							ConstraintsForBitwiseOperations.class);
 			final Script backEnd = SolverBuilder.buildScript(mServices, solverSettings);
-			script = new IntBlastingWrapper(mServices, mLogger, backEnd);
+			script = new IntBlastingWrapper(mServices, mLogger, backEnd, intBlastingMode, constraintsForBitwiseOperations);
 		}
 			break;
 		case UltimateTreeAutomizer: {

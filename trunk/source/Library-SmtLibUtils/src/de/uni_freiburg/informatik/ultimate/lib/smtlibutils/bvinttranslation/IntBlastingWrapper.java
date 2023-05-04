@@ -70,6 +70,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class IntBlastingWrapper extends WrapperScript {
 
+	public enum IntBlastingMode { RangeBased, CongruenceBased };
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private LBool mExpectedResult;
@@ -78,18 +80,21 @@ public class IntBlastingWrapper extends WrapperScript {
 	private final ManagedScript mMgdIntScript;
 	private final ArrayDeque<Boolean> mOverapproximationTrackingStack = new ArrayDeque<>();
 	private BvToIntTransferrer mBvToInt;
-	private TranslationManager mTm;
-	private boolean mUseNutzTransformation;
+	private final TranslationManager mTm;
 
-	public IntBlastingWrapper(final IUltimateServiceProvider services, final ILogger logger, final Script script) {
+	public IntBlastingWrapper(final IUltimateServiceProvider services, final ILogger logger, final Script script,
+			final IntBlastingMode intBlastingMode,
+			final ConstraintsForBitwiseOperations constraintsForBitwiseOperations) {
 		super(script);
 		mServices = services;
 		mLogger = logger;
 		mIntScript = script;
 		mMgdIntScript = new ManagedScript(services, mIntScript);
 		mIntScript.setLogic(Logics.ALL);
+		mOverapproximationTrackingStack.add(false);
 
-		mTm = new TranslationManager(mMgdIntScript, ConstraintsForBitwiseOperations.SUM, mUseNutzTransformation);
+		mTm = new TranslationManager(mMgdIntScript, constraintsForBitwiseOperations,
+				(intBlastingMode == IntBlastingMode.CongruenceBased));
 	}
 
 	@Override
