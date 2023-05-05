@@ -327,7 +327,7 @@ public class TreeAutomizerCEGAR {
 			for (final TreeAutomatonRule<HornClause, IPredicate> rule : automaton.getSuccessors(source)) {
 				final Validity validity = mHoareTripleChecker.check(rule.getSource(), rule.getLetter(), rule.getDest());
 				if (validity != Validity.VALID) {
-					assert false;
+					assert false : "Rule is not inductive: " + rule;
 					return false;
 				}
 			}
