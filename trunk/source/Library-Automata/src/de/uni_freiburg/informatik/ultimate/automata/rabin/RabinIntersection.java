@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.rabin;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -8,7 +9,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * A class that lazyly constructs the intersection production from Udi Boker: “Why these automata types?,” in LPAR-22.
@@ -26,14 +29,26 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  *            a factory that can return the product of two state{@link IConcurrentProductStateFactory} and label states
  *            binaray ({@link IBlackWhiteStateFactory}
  */
-public class RabinIntersection<LETTER, STATE, FACTORY extends IBlackWhiteStateFactory<STATE> & IConcurrentProductStateFactory<STATE>>
+public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFactory<STATE> & IIntersectionStateFactory<STATE>>
 		implements IRabinAutomaton<LETTER, STATE> {
 	private final IRabinAutomaton<LETTER, STATE> mFirstAutomaton;
 	private final IRabinAutomaton<LETTER, STATE> mSecondAutomaton;
 	private final FACTORY mFactory;
 
-	private HashSet<LETTER> mAlphabet;
-	private HashSet<STATE> mInitialStates;
+	private final HashSet<STATE> mInitialStates = new HashSet<>();
+	private final HashSet<STATE> mFiniteStates = new HashSet<>();
+	private final HashSet<STATE> mAcceptingStates = new HashSet<>();
+	private final HashMap<STATE, Triple<STATE, STATE, mComponent>> mAutomatonMap = new HashMap<>();
+
+	private enum mComponent {
+		ZERO(1), ONE(2), TWO(3), THREE(4);
+
+		private byte mIndex;
+
+		mComponent(final int i) {
+			mIndex = (byte) i;
+		}
+	}
 
 	/**
 	 * implementation that lazyly constructs the intersection of two Rabin automata
@@ -50,22 +65,24 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IBlackWhiteStateFa
 		mFirstAutomaton = firstAutomaton;
 		mSecondAutomaton = secondAutomaton;
 		mFactory = factory;
+
+		for (final STATE firstInitial : mFirstAutomaton.getInitialStates()) {
+			for (final STATE secondInitial : mSecondAutomaton.getInitialStates()) {
+				mInitialStates.add(getProducedState(firstInitial, secondInitial, mComponent.ZERO));
+			}
+		}
 	}
 
 	@Override
 	public Set<LETTER> getAlphabet() {
-		if (mAlphabet == null) {
-			mAlphabet = new HashSet<>();
-			mAlphabet.addAll(mFirstAutomaton.getAlphabet());
-			mAlphabet.retainAll(mSecondAutomaton.getAlphabet());
-		}
+		assert mFirstAutomaton.getAlphabet().equals(mSecondAutomaton.getAlphabet());
 
-		return mAlphabet;
+		return mFirstAutomaton.getAlphabet();
 	}
 
 	@Override
 	public int size() {
-		return (mFirstAutomaton.size() * mSecondAutomaton.size()) * 4;
+		return (mFirstAutomaton.size() * mSecondAutomaton.size()) * mComponent.values().length;
 	}
 
 	@Override
@@ -84,14 +101,6 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IBlackWhiteStateFa
 
 	@Override
 	public Iterable<STATE> getInitialStates() {
-		if (mInitialStates == null) {
-			mInitialStates = new HashSet<>();
-			for (final STATE firstInitial : mFirstAutomaton.getInitialStates()) {
-				for (final STATE secondInitial : mSecondAutomaton.getInitialStates()) {
-					mInitialStates.add(getProducedState(firstInitial, secondInitial, 0));
-				}
-			}
-		}
 
 		return mInitialStates;
 	}
@@ -105,13 +114,13 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IBlackWhiteStateFa
 	@Override
 	public boolean isAccepting(final STATE state) {
 
-		return false;
+		return mAcceptingStates.contains(state);
 	}
 
 	@Override
 	public boolean isFinite(final STATE state) {
-		// TODO Auto-generated method stub
-		return false;
+
+		return mFiniteStates.contains(state);
 	}
 
 	@Override
@@ -126,29 +135,21 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IBlackWhiteStateFa
 		return null;
 	}
 
-	private STATE getProducedState(final STATE first, final STATE second, final int subsetIndex) {
-		STATE result = mFactory.concurrentProduct(first, second);
+	/**
+	 * Constructs product states for different subautomata used in this product construction
+	 *
+	 * @param first
+	 *            state from mFirstAutomaton
+	 * @param second
+	 *            state from mSecondAutomaton
+	 * @param component
+	 *            a component referencing the subautomaton
+	 * @return a state which uniquely incorporates all parameters
+	 */
+	private STATE getProducedState(final STATE first, final STATE second, final mComponent component) {
 
-		// The four subautomata from the "Why These Automata Types?" - Udi Boker page 7 Theorem 1 are labeled in Binary
-		// where White corresponds to 0 and Black to 1
-
-		switch (subsetIndex) {
-		case 0:
-			result = mFactory.getWhiteContent(mFactory.getWhiteContent(result));
-			break;
-		case 1:
-			result = mFactory.getWhiteContent(mFactory.getBlackContent(result));
-			break;
-		case 2:
-
-			result = mFactory.getBlackContent(mFactory.getWhiteContent(result));
-			break;
-		case 3:
-			result = mFactory.getBlackContent(mFactory.getBlackContent(result));
-			break;
-		default:
-			return null;
-		}
+		STATE result = mFactory.intersection(first, second);
+		result = mFactory.getColoredState(result, component.mIndex);
 
 		return result;
 	}
