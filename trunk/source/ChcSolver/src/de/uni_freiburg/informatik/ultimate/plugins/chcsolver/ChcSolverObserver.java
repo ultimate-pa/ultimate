@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.chc.ChcSolution;
 import de.uni_freiburg.informatik.ultimate.lib.chc.Derivation;
 import de.uni_freiburg.informatik.ultimate.lib.chc.GolemChcScript;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcSatResult;
 import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcUnknownResult;
 import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcUnsatResult;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.preferences.ChcSolverPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.TreeAutomizerChcScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -53,6 +55,8 @@ public class ChcSolverObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ChcSolverPreferences mPrefs;
+
+	private ChcSolution mSolution;
 
 	public ChcSolverObserver(final IUltimateServiceProvider services, final ILogger logger,
 			final ChcSolverPreferences prefs) {
@@ -66,29 +70,15 @@ public class ChcSolverObserver extends BaseObserver {
 		if (!(root instanceof HornClauseAST)) {
 			return true;
 		}
-		final HornAnnot annot = HornAnnot.getAnnotation(root);
 
+		final HornAnnot annot = HornAnnot.getAnnotation(root);
 		final IChcScript chcScript = getBackend(annot);
 		configureBackend(chcScript);
 
 		final var satisfiability = chcScript.solve(annot.getSymbolTable(), annot.getHornClauses());
-
-		final IResult result;
-		switch (satisfiability) {
-		case SAT:
-			result = createSatResult(chcScript);
-			break;
-		case UNSAT:
-			result = createUnSatResult(chcScript);
-			break;
-		case UNKNOWN:
-			result = new ChcUnknownResult(Activator.PLUGIN_ID, "CHC solver returned UNKNOWN.");
-			break;
-		default:
-			throw new IllegalStateException();
-		}
-
+		final IResult result = createResult(chcScript, satisfiability);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
+
 		return false;
 	}
 
@@ -130,6 +120,20 @@ public class ChcSolverObserver extends BaseObserver {
 		}
 	}
 
+	private IResult createResult(final IChcScript chcScript, final LBool satisfiability) {
+		switch (satisfiability) {
+		case SAT:
+			return createSatResult(chcScript);
+		case UNSAT:
+			return createUnSatResult(chcScript);
+		case UNKNOWN:
+			mSolution = ChcSolution.unknown();
+			return new ChcUnknownResult(Activator.PLUGIN_ID, "CHC solver returned UNKNOWN.");
+		default:
+			throw new IllegalStateException();
+		}
+	}
+
 	private ChcSatResult createSatResult(final IChcScript chcScript) {
 		final Model model;
 		if (mPrefs.produceModels() && chcScript.supportsModelProduction()) {
@@ -137,7 +141,8 @@ public class ChcSolverObserver extends BaseObserver {
 		} else {
 			model = null;
 		}
-		// TODO pass model to result
+		mSolution = ChcSolution.sat(model);
+		// TODO include model in result
 		return new ChcSatResult(Activator.PLUGIN_ID, "SAT", "The given horn clause set is SAT");
 	}
 
@@ -156,7 +161,12 @@ public class ChcSolverObserver extends BaseObserver {
 			core = null;
 		}
 
+		mSolution = ChcSolution.unsat(derivation, core);
 		return new ChcUnsatResult(Activator.PLUGIN_ID, "UNSAT", "The given horn clause set is UNSAT",
 				new Pair<>(derivation, core));
+	}
+
+	public ChcSolution getSolution() {
+		return mSolution;
 	}
 }

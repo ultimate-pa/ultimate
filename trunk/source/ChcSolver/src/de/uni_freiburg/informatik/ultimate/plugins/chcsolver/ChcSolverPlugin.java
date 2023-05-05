@@ -96,7 +96,7 @@ public class ChcSolverPlugin implements IGenerator {
 
 	@Override
 	public IElement getModel() {
-		return null; // mObserver.getModel();
+		return mObserver.getSolution();
 	}
 
 	@Override
