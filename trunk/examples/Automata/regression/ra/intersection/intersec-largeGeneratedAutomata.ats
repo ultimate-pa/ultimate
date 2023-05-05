@@ -18,4 +18,4 @@ RabinAutomaton automaton2 = (
 
 assert(isEmpty(intersection(automaton1, automaton1)));
 assert(!isEmpty(intersection(automaton2, automaton2)));
-assert(!isEmpty(intersection(automaton1, automaton2)));
+assert(isEmpty(intersection(automaton1, automaton2)));

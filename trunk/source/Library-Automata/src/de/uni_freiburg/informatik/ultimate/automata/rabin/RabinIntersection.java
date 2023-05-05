@@ -148,7 +148,7 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 
 			result = getProductSuccessor(originalFirstState, originalSecondState, originalComponent);
 			result.addAll(getProductSuccessor(originalFirstState, originalSecondState,
-					mComponent.values()[(originalComponent.ordinal() % mComponent.values().length)]));
+					mComponent.values()[((originalComponent.ordinal() + 1) % mComponent.values().length)]));
 			break;
 		}
 
@@ -178,7 +178,7 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 
 			result = getProductSuccessor(originalFirstState, originalSecondState, originalComponent, letter);
 			result.addAll(getProductSuccessor(originalFirstState, originalSecondState,
-					mComponent.values()[(originalComponent.ordinal() % mComponent.values().length)], letter));
+					mComponent.values()[((originalComponent.ordinal() + 1) % mComponent.values().length)], letter));
 			break;
 		}
 
@@ -200,7 +200,7 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 
 		STATE result = mFactory.intersection(first, second);
 		result = mFactory.getColoredState(result, component.mColor);
-		if (mAutomatonMap.containsKey(result)) {
+		if (!mAutomatonMap.containsKey(result)) {
 			if (component.equals(mComponent.ONE) && mFirstAutomaton.isAccepting(first)) {
 				mAcceptingStates.add(result);
 			}
