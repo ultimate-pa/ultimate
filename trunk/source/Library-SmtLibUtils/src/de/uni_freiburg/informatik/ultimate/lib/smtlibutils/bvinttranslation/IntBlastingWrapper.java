@@ -185,22 +185,25 @@ public class IntBlastingWrapper extends WrapperScript {
 	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
 			throws SMTLIBException {
 		// TODO: Define function also in int script
-		Sort newSort;
-		if (SmtSortUtils.isBitvecSort(resultSort)) {
-			newSort = SmtSortUtils.getIntSort(mMgdIntScript);
-		} else {
-			newSort = resultSort;
-		}
-
-		TermVariable[] intParams = new TermVariable[params.length];
-		for (int i = 0; i < params.length; i++) {
-			intParams[i] = (TermVariable) mTm.translateBvtoInt(params[i]).getFirst(); // TODO
-		}
-
-		Term intDefinition = mTm.translateBvtoInt(definition).getFirst();// TODO
-
-		mIntScript.defineFun(fun, intParams, newSort, intDefinition);
-		mBvScript.defineFun(fun, params, resultSort, definition);
+		throw new UnsupportedOperationException("defineFun not supported in intBlastingWrapper");
+//		Sort newSort;
+//		if (SmtSortUtils.isBitvecSort(resultSort)) {
+//			newSort = SmtSortUtils.getIntSort(mMgdIntScript);
+//		} else {
+//			newSort = resultSort;
+//		}
+//
+//		TermVariable[] intParams = new TermVariable[params.length];
+//		for (int i = 0; i < params.length; i++) {
+//			intParams[i] = (TermVariable) mTm.translateBvtoIntTransferrer(params[i], new HistoryRecordingScript(mBvScript), new HistoryRecordingScript(mIntScript)).getFirst(); // TODO
+//		}
+//
+//		Term intDefinition = mTm.translateBvtoIntTransferrer(definition, new HistoryRecordingScript(mBvScript), new HistoryRecordingScript(mIntScript)).getFirst();// TODO
+//		
+//		
+//		mIntScript.defineFun(fun, intParams, newSort, intDefinition);
+//		mBvScript.defineFun(fun, params, resultSort, definition);
+	
 	}
 
 	@Override
@@ -223,17 +226,7 @@ public class IntBlastingWrapper extends WrapperScript {
 		mBvScript.declareFun(fun, paramSorts, resultSort);
 
 	
-		if (SmtSortUtils.isBitvecSort(resultSort)) {
-			final Sort intSort = SmtSortUtils.getIntSort(mScript);
-			Term funTerm = mIntScript.term(fun, new Term[0]);
-			final int width = Integer.valueOf(resultSort.getIndices()[0]);
-			final Rational twoPowWidth = Rational.valueOf(BigInteger.valueOf(2).pow(width), BigInteger.ONE);
-
-			Term lowerBound = mScript.term("<=", Rational.ZERO.toTerm(intSort), funTerm);
-			Term upperBound = mScript.term("<", funTerm, SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
-			mIntScript.assertTerm(lowerBound);
-			mIntScript.assertTerm(upperBound);
-		}
+	
 
 	}
 
@@ -295,7 +288,7 @@ public class IntBlastingWrapper extends WrapperScript {
 		// No need to assert term in mBvScript.
 		// FIXME: translate to bv by using an instance of the TermTransferrer
 		bvTerm = new FormulaUnLet().unlet(bvTerm);
-		final Triple<Term, Set<TermVariable>, Boolean> translationResult = mTm.translateBvtoIntTransferrer(bvTerm,
+		final Triple<Term, Set<Term>, Boolean> translationResult = mTm.translateBvtoIntTransferrer(bvTerm,
 				new HistoryRecordingScript(mBvScript), new HistoryRecordingScript(mIntScript));
 		final Term intTerm = translationResult.getFirst();
 		final boolean weDidAnOverapproximation = translationResult.getThird();

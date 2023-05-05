@@ -60,7 +60,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 	private final LinkedHashMap<Term, Term> mVariableMap; // Maps BV Var to Integer Var
 	private final LinkedHashMap<Term, Term> mReversedVarMap;
 	public final LinkedHashMap<Term, Term> mArraySelectConstraintMap;
-	private final Set<TermVariable> mOverapproxVariables;
+	private final Set<Term> mOverapproxVariables;
 	private boolean mIsOverapproximation;
 
 	/*
@@ -125,9 +125,10 @@ public class BvToIntTransferrer extends TermTransferrer {
 			if (mTc.mMode.equals(ConstraintsForBitwiseOperations.NONE) && overaproxWithVars(appTerm)) {
 				final Sort newSort = translateSort(mScript, appTerm.getSort());
 				final TermVariable overaproxVar = mMgdScript.constructFreshTermVariable("overaproxVar", newSort);
-				mOverapproxVariables.add(overaproxVar);
+				Term overaproxConst = SmtUtils.termVariable2constant(mScript, overaproxVar, true);
+				mOverapproxVariables.add(overaproxConst);
 				mIsOverapproximation = true;
-				setResult(overaproxVar);
+				setResult(overaproxConst);
 				return;
 			}
 
@@ -361,6 +362,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 	 * new variable (translation results)
 	 */
 	private Term translateVars(final Term term, final boolean addToVarMap) {
+
 		if (mVariableMap.containsKey(term)) {
 			mReversedVarMap.put(mVariableMap.get(term), term);
 			return mVariableMap.get(term);
@@ -378,6 +380,13 @@ public class BvToIntTransferrer extends TermTransferrer {
 				}
 				return arrayVar;
 			} else if (SmtSortUtils.isBitvecSort(sort)) {
+				boolean declareFun = true;
+				if (declareFun) {
+					Term intVar = mScript.term(term.toString());
+					mVariableMap.put(term, intVar);
+					mReversedVarMap.put(intVar, term);
+					return intVar;
+				}
 				Term intVar;
 				intVar = mMgdScript.constructFreshTermVariable("intVar", SmtSortUtils.getIntSort(mScript));
 				if (!(term instanceof TermVariable)) {
@@ -471,8 +480,6 @@ public class BvToIntTransferrer extends TermTransferrer {
 			case "and":
 			case "or":
 			case "not":
-				setResult(mScript.term(fsym.getName(), args));
-				return;
 			case "=>":
 			case "store":
 				setResult(mScript.term(fsym.getName(), args));
@@ -539,12 +546,25 @@ public class BvToIntTransferrer extends TermTransferrer {
 				case "extract": {
 					if (mNutzTransformation) {
 						// TODO not sure if we need to do sth here
+//						final Term maxNumber = SmtUtils.rational2Term(mScript,
+//								Rational.valueOf(two.pow(width), BigInteger.ONE), intSort);
+//
+//						setResult(translateExtract(appTerm,
+//								SmtUtils.mod(mScript, translatedLHS, maxNumber)));
+//						return;
 					}
 
 					setResult(translateExtract(appTerm, translatedLHS));
 					return;
 				}
 				case "zero_extend":
+					if (mNutzTransformation) {
+						final Term maxNumber = SmtUtils.rational2Term(mScript,
+								Rational.valueOf(two.pow(width), BigInteger.ONE), intSort);
+						setResult(SmtUtils.mod(mScript, args[0], maxNumber));
+						return;
+					}
+
 					setResult(args[0]);
 					return;
 				case "const":
@@ -635,9 +655,13 @@ public class BvToIntTransferrer extends TermTransferrer {
 					case "concat": {
 						final Term multiplication = SmtUtils.unfTerm(mScript, "*", null,
 								SmtSortUtils.getIntSort(mMgdScript), translatedLHS, maxNumber);
-						if (mNutzTransformation) {
-							// TODO not sure if we need to do sth here
-						}
+//						if (mNutzTransformation) {
+//							// TODO not sure if we need to do sth here
+//							SmtUtils.unfTerm(mScript, "+", null, SmtSortUtils.getIntSort(mMgdScript),
+//									SmtUtils.mod(mScript, multiplication, maxNumber),
+//									SmtUtils.mod(mScript, translatedRHS, maxNumber));
+//							return;
+//						}
 						setResult(SmtUtils.unfTerm(mScript, "+", null, SmtSortUtils.getIntSort(mMgdScript),
 								multiplication, translatedRHS));
 						return;
@@ -723,9 +747,18 @@ public class BvToIntTransferrer extends TermTransferrer {
 		return SmtUtils.ite(mScript, ifTerm, thenTerm, elseTerm);
 	}
 
-	private Term translateBvshl(final Term translatedLHS, final Term translatedRHS, final int width,
-			final Term maxNumber) {
+	private Term translateBvshl(Term translatedLHS, Term translatedRHS, final int width, final Term maxNumber) {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+
+		if (mNutzTransformation) {
+			translatedRHS = SmtUtils.mod(mScript, translatedRHS, maxNumber);
+			translatedLHS = SmtUtils.mod(mScript, translatedLHS, maxNumber); // TODO here mod as well? Doesnt seem like
+																				// it
+		} else {
+			translatedRHS = translatedRHS;
+			translatedLHS = translatedLHS;
+		}
+
 		if (translatedRHS instanceof ConstantTerm) {
 			final Term shift = SmtUtils.unfTerm(mScript, "*", null, SmtSortUtils.getIntSort(mMgdScript), translatedLHS,
 					pow2(translatedRHS));
@@ -753,9 +786,17 @@ public class BvToIntTransferrer extends TermTransferrer {
 		}
 	}
 
-	private Term translateBvlshr(final Term translatedLHS, final Term translatedRHS, final int width,
-			final Term maxNumber) {
+	private Term translateBvlshr(Term translatedLHS, Term translatedRHS, final int width, final Term maxNumber) {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+
+		if (mNutzTransformation) {
+			translatedRHS = SmtUtils.mod(mScript, translatedRHS, maxNumber);
+			translatedLHS = SmtUtils.mod(mScript, translatedLHS, maxNumber);
+		} else {
+			translatedRHS = translatedRHS;
+			translatedLHS = translatedLHS;
+		}
+
 		if (translatedRHS instanceof ConstantTerm) {
 			final Term shift = SmtUtils.unfTerm(mScript, "div", null, SmtSortUtils.getIntSort(mMgdScript),
 					translatedLHS, pow2(translatedRHS));
@@ -879,6 +920,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 	// unsigned to signed for relations
 	private final Term uts(final int width, final Term term, final boolean nutz) {
 		// 2 * (x mod 2^(k - 1) ) - x
+
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
 		final Term two = SmtUtils.rational2Term(mScript, Rational.valueOf(BigInteger.valueOf(2), BigInteger.ONE),
@@ -953,7 +995,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 		return mReversedVarMap;
 	}
 
-	public Set<TermVariable> getOverapproxVariables() {
+	public Set<Term> getOverapproxVariables() {
 		return mOverapproxVariables;
 	}
 

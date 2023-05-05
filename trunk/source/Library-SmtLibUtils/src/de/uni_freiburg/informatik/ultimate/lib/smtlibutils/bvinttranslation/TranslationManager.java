@@ -98,18 +98,20 @@ public class TranslationManager {
 
 	}
 
-	public Triple<Term, Set<TermVariable>, Boolean> translateBvtoIntTransferrer(final Term bitvecFromula, final Script scriptA, final Script scriptB) {
+	public Triple<Term, Set<Term>, Boolean> translateBvtoIntTransferrer(final Term bitvecFromula, final Script scriptBV, final Script scriptINT) {
 		mConstraintSet = new HashSet<>();
 		final BvToIntTransferrer bvToInt =
-				new BvToIntTransferrer(scriptA, scriptB, mMgdScript, mVariableMap, mTc, bitvecFromula.getFreeVars(), mNutzTransformation);
+				new BvToIntTransferrer(scriptBV, scriptINT, mMgdScript, mVariableMap, mTc, bitvecFromula.getFreeVars(), mNutzTransformation);
 		final Term integerFormulaNoConstraint = bvToInt.transform(bitvecFromula);
 		mVariableMap = bvToInt.getVarMap();
 		mReversedVarMap = bvToInt.getReversedVarMap();
-		final Set<TermVariable> overapproxVariables = bvToInt.getOverapproxVariables();
+		final Set<Term> overapproxVariables = bvToInt.getOverapproxVariables();
 		final boolean isOverapproximation = bvToInt.wasOverapproximation();
 		if (!mNutzTransformation) {
 			mConstraintSet.addAll(mTc.getConstraints());
 			mConstraintSet.addAll(bvToInt.mArraySelectConstraintMap.values());
+		}else {
+			mConstraintSet.addAll(mTc.getBvandConstraints());
 		}
 		// TODO: Also add the constraints with mNutzTransformation=true, maybe we need to be more careful there
 		final Term integerFormula =

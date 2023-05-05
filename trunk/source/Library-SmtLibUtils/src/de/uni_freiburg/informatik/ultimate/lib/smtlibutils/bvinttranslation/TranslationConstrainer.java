@@ -72,7 +72,7 @@ public class TranslationConstrainer {
 
 	private final HashSet<Term> mConstraintSet; // Set of all constraints
 	private final HashSet<Term> mTvConstraintSet; // Set of all constraints for quantified variables
-
+	private final HashSet<Term>  mBvandConstraintSet; //Only the constraints for bvand for congruence based translation
 	/*
 	 * This Class contains of the methods to create constraints for the translation
 	 * of bit-wise-AND and variables. The constraints for uninterpreted constants
@@ -85,6 +85,7 @@ public class TranslationConstrainer {
 		mMode = mode;
 
 		mConstraintSet = new HashSet<Term>();
+		mBvandConstraintSet = new HashSet<Term>();
 		mTvConstraintSet = new HashSet<Term>();
 		// mTranslatedTerms = new HashMap<>();
 		// mReversedTranslationMap = new HashMap<>();
@@ -107,6 +108,10 @@ public class TranslationConstrainer {
 		return mConstraintSet;
 	}
 
+	public HashSet<Term> getBvandConstraints() {
+		return mBvandConstraintSet;
+	}
+	
 	// returns the Set of constraints for TermVariables
 	public HashSet<Term> getTvConstraints() {
 		return mTvConstraintSet;
@@ -190,6 +195,8 @@ public class TranslationConstrainer {
 						SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
 				mConstraintSet.add(lowerBound);
 				mConstraintSet.add(upperBound);
+				mBvandConstraintSet.add(lowerBound);
+				mBvandConstraintSet.add(upperBound);
 				modeConstraint = bvandBITWISEConstraints(width, translatedLHS, translatedRHS);
 				break;
 			}
@@ -201,6 +208,10 @@ public class TranslationConstrainer {
 				mConstraintSet.add(lowerBound);
 				mConstraintSet.add(upperBound);
 				mConstraintSet.add(lazy);
+				
+				mBvandConstraintSet.add(lowerBound);
+				mBvandConstraintSet.add(upperBound);
+				mBvandConstraintSet.add(lazy);
 				return true;
 			}
 
@@ -217,6 +228,7 @@ public class TranslationConstrainer {
 			final UnfTransformer unfT = new UnfTransformer(mScript);
 			final Term unfModeConstraint = unfT.transform(modeConstraint);
 			mConstraintSet.add(unfModeConstraint);
+			mBvandConstraintSet.add(unfModeConstraint);
 			return false;
 		}
 		throw new AssertionError("method must be called on IntAnd");
