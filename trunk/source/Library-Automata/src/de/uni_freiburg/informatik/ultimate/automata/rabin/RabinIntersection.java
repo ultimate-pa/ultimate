@@ -127,29 +127,19 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> getSuccessors(final STATE state) {
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result;
 
 		final Triple<STATE, STATE, mComponent> originalStateInformation = mAutomatonMap.get(state);
 		final STATE originalFirstState = originalStateInformation.getFirst();
 		final STATE originalSecondState = originalStateInformation.getSecond();
 		final mComponent originalComponent = originalStateInformation.getThird();
 
-		switch (originalComponent) {
-		case ONE:
-			result = getProductSuccessor(originalFirstState, originalSecondState, mComponent.TWO);
-			break;
+		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result =
+				getProductSuccessor(originalFirstState, originalSecondState,
+						mComponent.values()[((originalComponent.ordinal() + 1) % mComponent.values().length)]);
 
-		case THREE:
-			result = getProductSuccessor(originalFirstState, originalSecondState, mComponent.ZERO);
-			break;
+		if (originalComponent.equals(mComponent.ZERO) || originalComponent.equals(mComponent.TWO)) {
 
-		// even components are default
-		default:
-
-			result = getProductSuccessor(originalFirstState, originalSecondState, originalComponent);
-			result.addAll(getProductSuccessor(originalFirstState, originalSecondState,
-					mComponent.values()[((originalComponent.ordinal() + 1) % mComponent.values().length)]));
-			break;
+			result.addAll(getProductSuccessor(originalFirstState, originalSecondState, originalComponent));
 		}
 
 		return result;
@@ -157,29 +147,19 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> getSuccessors(final STATE state, final LETTER letter) {
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result;
 
 		final Triple<STATE, STATE, mComponent> originalStateInformation = mAutomatonMap.get(state);
 		final STATE originalFirstState = originalStateInformation.getFirst();
 		final STATE originalSecondState = originalStateInformation.getSecond();
 		final mComponent originalComponent = originalStateInformation.getThird();
 
-		switch (originalComponent) {
-		case ONE:
-			result = getProductSuccessor(originalFirstState, originalSecondState, mComponent.TWO, letter);
-			break;
+		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result =
+				getProductSuccessor(originalFirstState, originalSecondState,
+						mComponent.values()[((originalComponent.ordinal() + 1) % mComponent.values().length)], letter);
 
-		case THREE:
-			result = getProductSuccessor(originalFirstState, originalSecondState, mComponent.ZERO, letter);
-			break;
+		if (originalComponent.equals(mComponent.ZERO) || originalComponent.equals(mComponent.TWO)) {
 
-		// even components are default
-		default:
-
-			result = getProductSuccessor(originalFirstState, originalSecondState, originalComponent, letter);
-			result.addAll(getProductSuccessor(originalFirstState, originalSecondState,
-					mComponent.values()[((originalComponent.ordinal() + 1) % mComponent.values().length)], letter));
-			break;
+			result.addAll(getProductSuccessor(originalFirstState, originalSecondState, originalComponent, letter));
 		}
 
 		return result;
