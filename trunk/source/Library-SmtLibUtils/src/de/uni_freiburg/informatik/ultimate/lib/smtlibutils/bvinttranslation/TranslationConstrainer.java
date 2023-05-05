@@ -186,6 +186,11 @@ public class TranslationConstrainer {
 			Term lazy = mScript.term("true");
 			switch (mMode) {
 			case SUM: {
+				final Term lowerBound = mScript.term("<=", Rational.ZERO.toTerm(intSort), apterm);
+				final Term upperBound = mScript.term("<", apterm,
+						SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
+				mBvandConstraintSet.add(lowerBound);
+				mBvandConstraintSet.add(upperBound);
 				modeConstraint = bvandSUMConstraints(width, translatedLHS, translatedRHS);
 				break;
 			}
