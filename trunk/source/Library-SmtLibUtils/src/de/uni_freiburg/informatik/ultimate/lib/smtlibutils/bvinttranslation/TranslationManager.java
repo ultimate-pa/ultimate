@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -102,7 +103,12 @@ public class TranslationManager {
 		mConstraintSet = new HashSet<>();
 		final BvToIntTransferrer bvToInt =
 				new BvToIntTransferrer(scriptBV, scriptINT, mMgdScript, mVariableMap, mTc, bitvecFromula.getFreeVars(), mNutzTransformation);
-		final Term integerFormulaNoConstraint = bvToInt.transform(bitvecFromula);
+		final Term integerFormulaNoConstraint;
+		try {
+			integerFormulaNoConstraint = bvToInt.transform(bitvecFromula);
+		} catch (final SMTLIBException e) {
+			throw new AssertionError("Translation error " + e);
+		}
 		mVariableMap = bvToInt.getVarMap();
 		mReversedVarMap = bvToInt.getReversedVarMap();
 		final Set<Term> overapproxVariables = bvToInt.getOverapproxVariables();
