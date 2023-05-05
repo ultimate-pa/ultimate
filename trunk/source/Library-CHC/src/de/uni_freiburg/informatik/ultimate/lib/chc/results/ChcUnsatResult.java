@@ -2,7 +2,8 @@
  * Copyright (C) 2017 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2023 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2023 University of Freiburg
  *
  * This file is part of the ULTIMATE CHC Library.
  *
@@ -35,25 +36,34 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.Derivation;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 
 /**
- * If TreeAutomizer finds out "UNSAT", it will report this result. In the future this may contain a counterexample to
- * SAT, i.e., a derivation tree that can be built in the input Horn clause set.
+ * If a CHC solver (e.g. TreeAutomizer) finds out "UNSAT", it will report this result.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
- *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public class ChcUnsatResult implements IResult {
 
 	private final String mLongDescription;
-	private final String mShortDescription;
 	private final String mPlugin;
 
 	private final Derivation mDerivation;
 	private final Set<HornClause> mUnsatCore;
 
-	public ChcUnsatResult(final String plugin, final String shortDescription, final String longDescription,
-			final Derivation derivation, final Set<HornClause> unsatCore) {
+	/**
+	 * Create a new result
+	 *
+	 * @param plugin
+	 *            The ID of the plugin that produced this result
+	 * @param longDescription
+	 *            A description of the result
+	 * @param derivation
+	 *            Optionally, a derivation tree showing unsatisfiability of the CHC system. Can be null.
+	 * @param unsatCore
+	 *            Optionally, a subset of Horn clauses that is already unsatisfiable. Can be null.
+	 */
+	public ChcUnsatResult(final String plugin, final String longDescription, final Derivation derivation,
+			final Set<HornClause> unsatCore) {
 		mPlugin = plugin;
-		mShortDescription = shortDescription;
 		mLongDescription = longDescription;
 		mDerivation = derivation;
 		mUnsatCore = unsatCore;
@@ -66,7 +76,7 @@ public class ChcUnsatResult implements IResult {
 
 	@Override
 	public String getShortDescription() {
-		return mShortDescription;
+		return "UNSAT";
 	}
 
 	@Override

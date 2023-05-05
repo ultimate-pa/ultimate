@@ -183,7 +183,7 @@ public class TreeAutomizerCEGAR {
 					mLogger.info(state.toString());
 				}
 
-				return new ChcSatResult(Activator.PLUGIN_ID, "SAT", "The given horn clause set is SAT");
+				return new ChcSatResult(Activator.PLUGIN_ID, "The given horn clause set is SAT", null);
 			}
 
 			mBackendSmtSolverScript.lock(this);
@@ -196,7 +196,7 @@ public class TreeAutomizerCEGAR {
 				mBackendSmtSolverScript.pop(this, 1);
 				mBackendSmtSolverScript.unlock(this);
 
-				return new ChcUnsatResult(Activator.PLUGIN_ID, "UNSAT", "The given horn clause set is UNSAT", null,
+				return new ChcUnsatResult(Activator.PLUGIN_ID, "The given horn clause set is UNSAT", null,
 						extractUnsatCore(counterExample.getTree()));
 			}
 			mLogger.debug("Getting Interpolants...");

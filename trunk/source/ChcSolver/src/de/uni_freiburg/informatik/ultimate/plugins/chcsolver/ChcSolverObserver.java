@@ -141,8 +141,7 @@ public class ChcSolverObserver extends BaseObserver {
 			model = null;
 		}
 		mSolution = ChcSolution.sat(model);
-		// TODO include model in result
-		return new ChcSatResult(Activator.PLUGIN_ID, "SAT", "The given horn clause set is SAT");
+		return new ChcSatResult(Activator.PLUGIN_ID, "The given horn clause set is SAT", model);
 	}
 
 	private ChcUnsatResult createUnSatResult(final IChcScript chcScript) {
@@ -161,7 +160,7 @@ public class ChcSolverObserver extends BaseObserver {
 		}
 
 		mSolution = ChcSolution.unsat(derivation, core);
-		return new ChcUnsatResult(Activator.PLUGIN_ID, "UNSAT", "The given horn clause set is UNSAT", derivation, core);
+		return new ChcUnsatResult(Activator.PLUGIN_ID, "The given horn clause set is UNSAT", derivation, core);
 	}
 
 	public ChcSolution getSolution() {

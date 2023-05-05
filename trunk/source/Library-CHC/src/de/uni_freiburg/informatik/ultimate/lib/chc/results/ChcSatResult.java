@@ -2,7 +2,8 @@
  * Copyright (C) 2017 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2023 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2023 University of Freiburg
  *
  * This file is part of the ULTIMATE CHC Library.
  *
@@ -29,23 +30,35 @@
 package de.uni_freiburg.informatik.ultimate.lib.chc.results;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.logic.Model;
 
 /**
- * If TreeAutomizer finds out "SAT", it will report this result. In the future this may contain a model.
+ * If a CHC solver (e.g. TreeAutomizer) finds out "SAT", it will report this result.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  */
 public class ChcSatResult implements IResult {
 
-	private final String mLongDescription;
-	private final String mShortDescription;
 	private final String mPlugin;
+	private final String mLongDescription;
+	private final Model mModel;
 
-	public ChcSatResult(final String plugin, final String shortDescription, final String longDescription) {
+	/**
+	 * Create a new result.
+	 *
+	 * @param plugin
+	 *            The ID of the plugin that produced this result.
+	 * @param longDescription
+	 *            A description of the result.
+	 * @param model
+	 *            Optionally, a model of the CHC system. Can be null.
+	 */
+	public ChcSatResult(final String plugin, final String longDescription, final Model model) {
 		mPlugin = plugin;
-		mShortDescription = shortDescription;
 		mLongDescription = longDescription;
+		mModel = model;
 	}
 
 	@Override
@@ -55,11 +68,15 @@ public class ChcSatResult implements IResult {
 
 	@Override
 	public String getShortDescription() {
-		return mShortDescription;
+		return "SAT";
 	}
 
 	@Override
 	public String getLongDescription() {
 		return mLongDescription;
+	}
+
+	public Model getModel() {
+		return mModel;
 	}
 }
