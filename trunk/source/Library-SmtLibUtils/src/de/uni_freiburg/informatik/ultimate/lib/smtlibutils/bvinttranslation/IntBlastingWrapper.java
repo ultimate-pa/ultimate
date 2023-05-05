@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
@@ -52,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -125,13 +122,15 @@ public class IntBlastingWrapper extends WrapperScript {
 
 	@Override
 	public void setInfo(final String info, final Object value) {
-		// We pass all info strings to mIntScript.
-		mIntScript.setInfo(info, value);
-
 		// If the status of the script is known we store in order to ease debugging.
 		if (info.equals(":status")) {
 			final String valueAsString = (String) value;
 			mExpectedResult = LBool.valueOf(valueAsString.toUpperCase());
+		} else {
+			// We do not pass the status. Because of overapproximation
+			// the status may not be correct for the underlying Int solver.
+			// We pass all other info strings to mIntScript.
+			mIntScript.setInfo(info, value);
 		}
 	}
 
@@ -199,46 +198,43 @@ public class IntBlastingWrapper extends WrapperScript {
 //		}
 //
 //		Term intDefinition = mTm.translateBvtoIntTransferrer(definition, new HistoryRecordingScript(mBvScript), new HistoryRecordingScript(mIntScript)).getFirst();// TODO
-//		
-//		
+//
+//
 //		mIntScript.defineFun(fun, intParams, newSort, intDefinition);
 //		mBvScript.defineFun(fun, params, resultSort, definition);
-	
+
 	}
 
 	@Override
 	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) throws SMTLIBException {
 		// FIXME: Declare new function also in Int solver
 		// FIXME: Assert in-range assumption immediately
-		Sort newSort;
-		if (SmtSortUtils.isBitvecSort(resultSort)) {
-			newSort = SmtSortUtils.getIntSort(mMgdIntScript);
-		} else {
-			newSort = resultSort;
-		}
 
-		Sort[] newParamSorts = new Sort[paramSorts.length];
+		final Sort[] newParamSorts = new Sort[paramSorts.length];
 		for (int i = 0; i < paramSorts.length; i++) {
-			newParamSorts[i] = translateSort(mScript, paramSorts[i]);
+			newParamSorts[i] = translateSort(mIntScript, paramSorts[i]);
 		}
+		final Sort newResultSort = translateSort(mIntScript, resultSort);
 
-		mIntScript.declareFun(fun, newParamSorts, newSort);
+		mIntScript.declareFun(fun, newParamSorts, newResultSort);
 		mBvScript.declareFun(fun, paramSorts, resultSort);
-
-	
-	
-
 	}
+
+
 
 	public Sort translateSort(final Script script, final Sort sort) {
 		final Sort result;
 		if (sort.getName().equals("BitVec")) {
-
 			result = SmtSortUtils.getIntSort(script);
 		} else if (SmtSortUtils.isArraySort(sort)) {
 			result = translateArraySort(sort);
 		} else {
-			return sort;
+			final Sort[] oldSorts = sort.getArguments();
+			final Sort[] newSorts = new Sort[oldSorts.length];
+			for (int i = 0; i < oldSorts.length; i++) {
+				newSorts[i] = translateSort(script, oldSorts[i]);
+			}
+			return script.sort(sort.getName(), sort.getIndices(), newSorts);
 		}
 		return result;
 	}
