@@ -7,7 +7,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * A GeneralOperation for a Union over two Rabin automata
+ * A GeneralOperation for a Intersection of two Rabin automata
  *
  * @author Philipp Müller (pm251@venus.uni-freiburg.de)
  *
@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            type of state
  * @param <CRSF>
- *            a StateFactory implementing {@link IRainbowStateFactory}
+ *            a StateFactory implementing {@link IRainbowStateFactory} & {@link IIntersectionStateFactory}
  */
 public class Intersection<LETTER, STATE, CRSF extends IRainbowStateFactory<STATE> & IIntersectionStateFactory<STATE>>
 		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
@@ -26,12 +26,12 @@ public class Intersection<LETTER, STATE, CRSF extends IRainbowStateFactory<STATE
 	private final IRabinAutomaton<LETTER, STATE> mSecond;
 
 	/**
-	 * Constructs a GeneralOperation for uniting two declared Rabin automata
+	 * Constructs a GeneralOperation for intersecting two declared Rabin automata
 	 *
 	 * @param services
 	 *            services
 	 * @param factory
-	 *            some IBlackWhiteStateFactory for STATE
+	 *            some IStateFactory implementing IIntersectionStateFactory & IRainbowStateFactory for STATE
 	 * @param firstAutomaton
 	 *            first Rabin automaton
 	 * @param secondAutomaton
