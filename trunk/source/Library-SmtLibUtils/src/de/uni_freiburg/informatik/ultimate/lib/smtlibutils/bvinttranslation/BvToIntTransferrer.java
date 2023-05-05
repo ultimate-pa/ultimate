@@ -673,13 +673,15 @@ public class BvToIntTransferrer extends TermTransferrer {
 					case "concat": {
 						final Term multiplication = SmtUtils.unfTerm(mScript, "*", null,
 								SmtSortUtils.getIntSort(mMgdScript), translatedLHS, maxNumber);
-//						if (mNutzTransformation) {
-//							// TODO not sure if we need to do sth here
-//							SmtUtils.unfTerm(mScript, "+", null, SmtSortUtils.getIntSort(mMgdScript),
-//									SmtUtils.mod(mScript, multiplication, maxNumber),
-//									SmtUtils.mod(mScript, translatedRHS, maxNumber));
-//							return;
-//						}
+						if (mNutzTransformation) {
+							// TODO not sure if we need to do sth here
+							
+							
+							setResult(SmtUtils.unfTerm(mScript, "+", null, SmtSortUtils.getIntSort(mMgdScript),
+									multiplication,
+									SmtUtils.mod(mScript, translatedRHS, maxNumber)));
+							return;
+						}
 						setResult(SmtUtils.unfTerm(mScript, "+", null, SmtSortUtils.getIntSort(mMgdScript),
 								multiplication, translatedRHS));
 						return;
