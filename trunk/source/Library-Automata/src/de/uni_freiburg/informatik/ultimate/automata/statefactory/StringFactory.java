@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
+import de.uni_freiburg.informatik.ultimate.automata.rabin.IRainbowStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -55,11 +56,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteStateFactory<String>,
 		IFinitePrefix2PetriNetStateFactory<String>, IBuchiComplementDeterministicStateFactory<String>,
 		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementSvwStateFactory<String>,
-		IPetriNet2FiniteAutomatonStateFactory<String>, IIncrementalInclusionStateFactory<String>,
-		IMinimizationStateFactory<String>, IMinimizationCheckResultStateFactory<String>, IUnionStateFactory<String>,
+		IIncrementalInclusionStateFactory<String>, IMinimizationStateFactory<String>,
+		IMinimizationCheckResultStateFactory<String>, IUnionStateFactory<String>,
 		IBuchiComplementNcsbSimpleStateFactory<String>, IRelabelStateFactory<String>,
 		IConcurrentProductStateFactory<String>, IPetriNetAndAutomataInclusionStateFactory<String>,
-		ICaUnionStateFactory<String> {
+		ICaUnionStateFactory<String>, IRainbowStateFactory<String> {
 
 	public static final String INFINITY = "∞";
 	private static final String EMPTY_STRING = "";
@@ -73,6 +74,7 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 	private static final char CLOSE_BRACE = '}';
 	private static final char OPEN_BRACKET = '[';
 	private static final char CLOSE_BRACKET = ']';
+	private static final char MINIMUM_COLOR = '⠀';
 
 	private static final int RANK_ONE = 1;
 	private static final int RANK_TWO = 2;
@@ -233,17 +235,17 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 					throw new IllegalArgumentException("must have rank");
 				}
 				switch (upState.getRank()) {
-					case RANK_THREE:
-						listN.add(new Pair<>(downState, upState.getState()));
-						break;
-					case RANK_TWO:
-						buchiComplementNcsbHelperRankTwo(listC, listB, downState, upState);
-						break;
-					case RANK_ONE:
-						listS.add(new Pair<>(downState, upState.getState()));
-						break;
-					default:
-						throw new IllegalArgumentException("Only ranks 1, 2, 3 are allowed.");
+				case RANK_THREE:
+					listN.add(new Pair<>(downState, upState.getState()));
+					break;
+				case RANK_TWO:
+					buchiComplementNcsbHelperRankTwo(listC, listB, downState, upState);
+					break;
+				case RANK_ONE:
+					listS.add(new Pair<>(downState, upState.getState()));
+					break;
+				default:
+					throw new IllegalArgumentException("Only ranks 1, 2, 3 are allowed.");
 				}
 			}
 		}
@@ -380,7 +382,7 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 
 	/**
 	 * @author Yong Li (liyong@ios.ac.cn)
-	 * */
+	 */
 	@Override
 	public String buchiComplementNcsbSimple(final int id) {
 		return "s" + id;
@@ -396,6 +398,16 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 		return "UnionInitialState";
 	}
 
+	/**
+	 * @author Philipp Müller (pm251@venus.uni-freiburg.de)
+	 */
+	@Override
+	public String getColoredState(final String state, final byte color) {
 
+		short unicodeColor = color;
+		unicodeColor += MINIMUM_COLOR;
+
+		return state + (char) unicodeColor;
+	}
 
 }
