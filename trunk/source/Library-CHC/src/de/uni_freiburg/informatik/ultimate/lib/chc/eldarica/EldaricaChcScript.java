@@ -39,6 +39,7 @@ import ap.SimpleAPI;
 import ap.parser.IAtom;
 import ap.parser.IFormula;
 import ap.terfor.preds.Predicate;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.Derivation;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
@@ -117,32 +118,46 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 		setupTimeout(timeout);
 
 		final var translatedClauses = translateSystem(system);
-		final var result = SimpleWrapper.solveLazily(translatedClauses, SimpleWrapper.solve$default$2(),
-				SimpleWrapper.solve$default$3(), SimpleWrapper.solve$default$4(), SimpleWrapper.solve$default$6());
-
-		final var backtranslator = mTranslator.createBacktranslator(mScript);
-
-		if (result.isLeft()) {
-			mLastResult = LBool.SAT;
-			if (mProduceModels) {
-				final var modelBuilder = result.left().get();
-				mLastModel = new Lazy<>(() -> translateModel(backtranslator, modelBuilder.apply()));
+		try {
+			if (0 == 1) {
+				// Unreachable dummy code so Java doesn't think the catch block is unreachable.
+				// Necessary because the scala API does not declare checked exceptions.
+				throw new lazabs.Main.TimeoutException$();
 			}
-		} else {
-			mLastResult = LBool.UNSAT;
-			if (mProduceDerivations || mProduceUnsatCores) {
-				final var derivationBuilder = result.right().get();
-				final var clauseMap = mClauseMap;
-				if (mProduceDerivations) {
-					mLastDerivation = new Lazy<>(
-							() -> translateDerivation(backtranslator, clauseMap, derivationBuilder.apply().toTree()));
+
+			final var result = SimpleWrapper.solveLazily(translatedClauses, SimpleWrapper.solve$default$2(),
+					SimpleWrapper.solve$default$3(), SimpleWrapper.solve$default$4(), SimpleWrapper.solve$default$6());
+
+			final var backtranslator = mTranslator.createBacktranslator(mScript);
+
+			if (result.isLeft()) {
+				mLastResult = LBool.SAT;
+				if (mProduceModels) {
+					final var modelBuilder = result.left().get();
+					mLastModel = new Lazy<>(() -> translateModel(backtranslator, modelBuilder.apply()));
 				}
-				if (mProduceUnsatCores) {
-					mLastUnsatCore = new Lazy<>(() -> extractUnsatCore(clauseMap, derivationBuilder.apply().toTree()));
+			} else {
+				mLastResult = LBool.UNSAT;
+				if (mProduceDerivations || mProduceUnsatCores) {
+					final var derivationBuilder = result.right().get();
+					final var clauseMap = mClauseMap;
+					if (mProduceDerivations) {
+						mLastDerivation = new Lazy<>(() -> translateDerivation(backtranslator, clauseMap,
+								derivationBuilder.apply().toTree()));
+					}
+					if (mProduceUnsatCores) {
+						mLastUnsatCore =
+								new Lazy<>(() -> extractUnsatCore(clauseMap, derivationBuilder.apply().toTree()));
+					}
 				}
 			}
+			return mLastResult;
+		} catch (final lazabs.Main.TimeoutException$ e) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(getClass(), "solving CHC system");
+			}
+			return LBool.UNKNOWN;
 		}
-		return mLastResult;
 	}
 
 	private List<Clause> translateSystem(final java.util.Collection<HornClause> system) {
