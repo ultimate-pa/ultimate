@@ -404,7 +404,7 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 	@Override
 	public String getColoredState(final String state, final byte color) {
 
-		short unicodeColor = color;
+		int unicodeColor = Byte.toUnsignedInt(color);
 		unicodeColor += MINIMUM_COLOR;
 
 		return state + (char) unicodeColor;
