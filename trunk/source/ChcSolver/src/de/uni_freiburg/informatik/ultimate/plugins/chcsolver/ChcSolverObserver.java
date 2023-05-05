@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.preferences.ChcSolverPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.TreeAutomizerChcScript;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ChcSolverObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
@@ -162,8 +161,7 @@ public class ChcSolverObserver extends BaseObserver {
 		}
 
 		mSolution = ChcSolution.unsat(derivation, core);
-		return new ChcUnsatResult(Activator.PLUGIN_ID, "UNSAT", "The given horn clause set is UNSAT",
-				new Pair<>(derivation, core));
+		return new ChcUnsatResult(Activator.PLUGIN_ID, "UNSAT", "The given horn clause set is UNSAT", derivation, core);
 	}
 
 	public ChcSolution getSolution() {

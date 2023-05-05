@@ -28,7 +28,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.chc.results;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.lib.chc.Derivation;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 
 /**
  * If TreeAutomizer finds out "UNSAT", it will report this result. In the future this may contain a counterexample to
@@ -43,14 +47,16 @@ public class ChcUnsatResult implements IResult {
 	private final String mShortDescription;
 	private final String mPlugin;
 
-	private final Object mWitness;
+	private final Derivation mDerivation;
+	private final Set<HornClause> mUnsatCore;
 
 	public ChcUnsatResult(final String plugin, final String shortDescription, final String longDescription,
-			final Object witness) {
+			final Derivation derivation, final Set<HornClause> unsatCore) {
 		mPlugin = plugin;
 		mShortDescription = shortDescription;
 		mLongDescription = longDescription;
-		mWitness = witness;
+		mDerivation = derivation;
+		mUnsatCore = unsatCore;
 	}
 
 	@Override
@@ -68,7 +74,11 @@ public class ChcUnsatResult implements IResult {
 		return mLongDescription;
 	}
 
-	public Object getWitness() {
-		return mWitness;
+	public Derivation getDerivation() {
+		return mDerivation;
+	}
+
+	public Set<HornClause> getUnsatCore() {
+		return mUnsatCore;
 	}
 }

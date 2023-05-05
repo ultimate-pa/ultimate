@@ -26,14 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer;
 
-import java.util.ArrayDeque;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -107,8 +104,7 @@ public class TreeAutomizerChcScript implements IChcScript {
 		}
 		if (result instanceof ChcUnsatResult) {
 			if (mProduceUnsatCores) {
-				final var tree = (Tree<HornClause>) ((ChcUnsatResult) result).getWitness();
-				mUnsatCore = extractUnsatCore(tree);
+				mUnsatCore = ((ChcUnsatResult) result).getUnsatCore();
 			}
 			return LBool.UNSAT;
 		}
@@ -165,20 +161,6 @@ public class TreeAutomizerChcScript implements IChcScript {
 			throw new UnsupportedOperationException("No UNSAT core available: last query was " + mLastResult);
 		}
 		return Optional.ofNullable(mUnsatCore);
-	}
-
-	private static Set<HornClause> extractUnsatCore(final Tree<HornClause> tree) {
-		final var worklist = new ArrayDeque<Tree<HornClause>>();
-		worklist.add(tree);
-
-		final var result = new HashSet<HornClause>();
-		while (!worklist.isEmpty()) {
-			final var node = worklist.pop();
-			result.add(node.getSymbol());
-			worklist.addAll(node.getChildren());
-		}
-
-		return result;
 	}
 
 	private void reset() {

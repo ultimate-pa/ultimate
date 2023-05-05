@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
+import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
@@ -193,8 +195,9 @@ public class TreeAutomizerCEGAR {
 				mLogger.info(counterExample.getTree());
 				mBackendSmtSolverScript.pop(this, 1);
 				mBackendSmtSolverScript.unlock(this);
-				return new ChcUnsatResult(Activator.PLUGIN_ID, "UNSAT", "The given horn clause set is UNSAT",
-						counterExample.getTree());
+
+				return new ChcUnsatResult(Activator.PLUGIN_ID, "UNSAT", "The given horn clause set is UNSAT", null,
+						extractUnsatCore(counterExample.getTree()));
 			}
 			mLogger.debug("Getting Interpolants...");
 			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap = retrieveInterpolantsMap(
@@ -213,6 +216,19 @@ public class TreeAutomizerCEGAR {
 		}
 		mLogger.info("The program is not decieded...");
 		return new TimeoutResult(Activator.PLUGIN_ID, "TreeAutomizer says UNKNOWN/TIMEOUT");
+	}
+
+	private static Set<HornClause> extractUnsatCore(final Tree<HornClause> tree) {
+		final var result = new HashSet<HornClause>();
+		final var worklist = new ArrayDeque<Tree<HornClause>>();
+		worklist.push(tree);
+
+		while (!worklist.isEmpty()) {
+			final var current = worklist.pop();
+			result.add(current.getSymbol());
+			worklist.addAll(current.getChildren());
+		}
+		return result;
 	}
 
 	protected void getInitialAbstraction() throws AutomataLibraryException {
