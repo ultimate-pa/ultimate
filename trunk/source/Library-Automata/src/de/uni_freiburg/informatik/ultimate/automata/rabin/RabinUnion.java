@@ -165,7 +165,6 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 			}
 		} else {
 			newState = mFactory.getWhiteContent(originalState);
-
 			if (mAutomatonMap.containsKey(newState)) {
 				return newState;
 			}

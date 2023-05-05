@@ -40,13 +40,14 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	private final HashSet<STATE> mAcceptingStates = new HashSet<>();
 	private final HashMap<STATE, Triple<STATE, STATE, mComponent>> mAutomatonMap = new HashMap<>();
 
+	// This references the components from the Boker construction and maps them to colors for IRainbowStateFactory
 	private enum mComponent {
 		ZERO(1), ONE(2), TWO(3), THREE(4);
 
-		private byte mIndex;
+		private byte mColor;
 
 		mComponent(final int i) {
-			mIndex = (byte) i;
+			mColor = (byte) i;
 		}
 	}
 
@@ -149,7 +150,24 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	private STATE getProducedState(final STATE first, final STATE second, final mComponent component) {
 
 		STATE result = mFactory.intersection(first, second);
-		result = mFactory.getColoredState(result, component.mIndex);
+		result = mFactory.getColoredState(result, component.mColor);
+		if (mAutomatonMap.containsKey(result)) {
+			if (component.equals(mComponent.ONE) && mFirstAutomaton.isAccepting(first)) {
+				mAcceptingStates.add(result);
+			}
+
+			// With the used construction Finite states are either in B' or B"
+			// Check if in B'
+			boolean isBad = mFirstAutomaton.isFinite(first) || mSecondAutomaton.isFinite(second);
+			// if false, check if in B"
+			isBad = isBad || (component.equals(mComponent.ONE) && !mFirstAutomaton.isAccepting(first));
+			isBad = isBad || (component.equals(mComponent.THREE) && !mSecondAutomaton.isAccepting(second));
+			if (isBad) {
+				mFiniteStates.add(result);
+			}
+
+			mAutomatonMap.put(result, new Triple<>(first, second, component));
+		}
 
 		return result;
 	}
