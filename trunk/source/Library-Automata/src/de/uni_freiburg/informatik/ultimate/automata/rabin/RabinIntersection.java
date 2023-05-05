@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.rabin;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -126,14 +127,62 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> getSuccessors(final STATE state) {
-		// TODO Auto-generated method stub
-		return null;
+		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result;
+
+		final Triple<STATE, STATE, mComponent> originalStateInformation = mAutomatonMap.get(state);
+		final STATE originalFirstState = originalStateInformation.getFirst();
+		final STATE originalSecondState = originalStateInformation.getSecond();
+		final mComponent originalComponent = originalStateInformation.getThird();
+
+		switch (originalComponent) {
+		case ONE:
+			result = getProductSuccessor(originalFirstState, originalSecondState, mComponent.TWO);
+			break;
+
+		case THREE:
+			result = getProductSuccessor(originalFirstState, originalSecondState, mComponent.ZERO);
+			break;
+
+		// even components are default
+		default:
+
+			result = getProductSuccessor(originalFirstState, originalSecondState, originalComponent);
+			result.addAll(getProductSuccessor(originalFirstState, originalSecondState,
+					mComponent.values()[(originalComponent.ordinal() % mComponent.values().length)]));
+			break;
+		}
+
+		return result;
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> getSuccessors(final STATE state, final LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result;
+
+		final Triple<STATE, STATE, mComponent> originalStateInformation = mAutomatonMap.get(state);
+		final STATE originalFirstState = originalStateInformation.getFirst();
+		final STATE originalSecondState = originalStateInformation.getSecond();
+		final mComponent originalComponent = originalStateInformation.getThird();
+
+		switch (originalComponent) {
+		case ONE:
+			result = getProductSuccessor(originalFirstState, originalSecondState, mComponent.TWO, letter);
+			break;
+
+		case THREE:
+			result = getProductSuccessor(originalFirstState, originalSecondState, mComponent.ZERO, letter);
+			break;
+
+		// even components are default
+		default:
+
+			result = getProductSuccessor(originalFirstState, originalSecondState, originalComponent, letter);
+			result.addAll(getProductSuccessor(originalFirstState, originalSecondState,
+					mComponent.values()[(originalComponent.ordinal() % mComponent.values().length)], letter));
+			break;
+		}
+
+		return result;
 	}
 
 	/**
@@ -172,4 +221,35 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 		return result;
 	}
 
+	private ArrayList<OutgoingInternalTransition<LETTER, STATE>> getProductSuccessor(final STATE first,
+			final STATE second, final mComponent successorComponent) {
+		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
+
+		for (final OutgoingInternalTransition<LETTER, STATE> transitionFirst : mFirstAutomaton.getSuccessors(first)) {
+			final LETTER letter = transitionFirst.getLetter();
+			for (final OutgoingInternalTransition<LETTER, STATE> transitionSecond : mSecondAutomaton
+					.getSuccessors(second, letter)) {
+				result.add(new OutgoingInternalTransition<>(letter,
+						getProducedState(transitionFirst.getSucc(), transitionSecond.getSucc(), successorComponent)));
+			}
+		}
+
+		return result;
+	}
+
+	private ArrayList<OutgoingInternalTransition<LETTER, STATE>> getProductSuccessor(final STATE first,
+			final STATE second, final mComponent successorComponent, final LETTER letter) {
+		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
+
+		for (final OutgoingInternalTransition<LETTER, STATE> transitionFirst : mFirstAutomaton.getSuccessors(first,
+				letter)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> transitionSecond : mSecondAutomaton
+					.getSuccessors(second, letter)) {
+				result.add(new OutgoingInternalTransition<>(letter,
+						getProducedState(transitionFirst.getSucc(), transitionSecond.getSucc(), successorComponent)));
+			}
+		}
+
+		return result;
+	}
 }
