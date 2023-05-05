@@ -61,7 +61,7 @@ public class IntBlastingWrapperSmtcomp2023 extends AbstractModelCheckerTestSuite
 	 * of the interval that we take and FILE_OFFSET defines which interval
 	 * we take.
 	 */
-	 private static final int FILES_PER_DIRECTORY_LIMIT = 100;
+	 private static final int FILES_PER_DIRECTORY_LIMIT = 10;
 	 private static final int FILE_OFFSET = 0;
 
 	// @formatter:off
@@ -69,9 +69,76 @@ public class IntBlastingWrapperSmtcomp2023 extends AbstractModelCheckerTestSuite
 
 
 	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs = {
-			new DirectoryFileEndingsPair("examples/local/2022smtcomp/BV", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
-			new DirectoryFileEndingsPair("examples/local/2022smtcomp/ABV", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
-			new DirectoryFileEndingsPair("examples/local/2022smtcomp/UFBV", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/20170501-Heizmann-UltimateAutomizer", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/20170531-Hansen-Check", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/2017-BuchwaldFried", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/2018-Goel-hwbench", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/2018-Mann", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/20190311-bv-term-small-rw-Noetzli", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/20190429-UltimateAutomizerSvcomp2019", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/2019-Mann", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/2019-Wolf-fmbench", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/20200328-Favaro", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/20200415-Yurichev", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/2020-Weber", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/20210219-Sydr", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/20210312-Bouvier", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/20220315-ecrw", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/asp", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/bench_ab", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/bmc-bv", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/bmc-bv-svcomp14", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/brummayerbiere", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/brummayerbiere2", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/brummayerbiere3", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/brummayerbiere4", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/bruttomesso", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/calypto", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/challenge", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/check2", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/crafted", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/dwp_formulas", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/ecc", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/fft", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/float", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/galois", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/gulwani-pldi08", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/log-slicing", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/mcm", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/pipe", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/pspace", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/rubik", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/RWS", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/sage", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/Sage2", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/spear", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/stp", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/stp_samples", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/tacas07", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/uclid", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/uclid_contrib_smtcomp09", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/uum", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/VS3", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2022smtcomp/QF_BV/wienand-cav2008", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+
+//			new DirectoryFileEndingsPair("examples/local/2022smtcomp/BV/20170501-Heizmann-UltimateAutomizer", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2022smtcomp/BV/2017-Preiner-keymaera", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2022smtcomp/BV/2017-Preiner-psyco", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2022smtcomp/BV/2017-Preiner-scholl-smt08", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2022smtcomp/BV/2017-Preiner-tptp", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2022smtcomp/BV/2017-Preiner-UltimateAutomizer", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2022smtcomp/BV/2018-Preiner-cav18", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2022smtcomp/BV/20190429-UltimateAutomizerSvcomp2019", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2022smtcomp/BV/2020-Preiner-fmcad20", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2022smtcomp/BV/20210301-Alive2", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2022smtcomp/BV/20210301-Alive2-partial-undef", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2022smtcomp/BV/20210330-PEak", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2022smtcomp/BV/llvm13-smtlib", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2022smtcomp/BV/wintersteiger", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+
+//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/QF_BV", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/ABV", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+//			new DirectoryFileEndingsPair("examples/local/2019smtcomp/QF_UFBV", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
 	};
 
 
