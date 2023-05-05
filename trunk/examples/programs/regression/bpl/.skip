@@ -4,5 +4,11 @@ BugNestedSsaWithPendingContexts.bpl AutomizerBpl-forwardPredicates.epf Automizer
 BugNoPredecessorOfReturnTransition.bpl PdrAutomizerBpl.epf PdrAutomizerBpl.xml TIMEOUT
 nestedWhileSimple-Safe.bpl PdrAutomizerBpl.epf PdrAutomizerBpl.xml TIMEOUT
 
+// Overapproximation
+Overapproximation.bpl AutomizerBpl-nestedInterpolants.epf AutomizerBpl.xml UNKNOWN
+Overapproximation.bpl AutomizerBpl-forwardPredicates.epf AutomizerBpl.xml UNKNOWN
+Overapproximation.bpl AutomizerBpl-FPandBP.epf AutomizerBpl.xml UNKNOWN
+Overapproximation.bpl PdrAutomizerBpl.epf PdrAutomizerBpl.xml UNKNOWN
+
 // The solver is unable to evaluate the formula, PDR cannot handle this
 BugLiveVariables04-Safe.bpl PdrAutomizerBpl.epf PdrAutomizerBpl.xml EXCEPTION_OR_ERROR
