@@ -11,9 +11,11 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * A class to check emptiness of IRabinAutomaton
@@ -67,7 +69,8 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		return mResult;
 	}
 
-	public Pair<List<LETTER>, List<LETTER>> getCounterexample() throws AutomataOperationCanceledException {
+	@SuppressWarnings("unchecked")
+	public NestedLassoWord<LETTER> getCounterexample() throws AutomataOperationCanceledException {
 		if (mEvidence.isEmpty()) {
 			return null;
 		}
@@ -76,7 +79,8 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		possibleHondaStates.removeIf(x -> !mEagerAutomaton.isAccepting(x));
 		final STATE hondaState = possibleHondaStates.iterator().next();
 
-		return new Pair<>(getStem(hondaState), getLoop(hondaState));
+		return new NestedLassoWord<>(NestedWord.nestedWord(new Word<>((LETTER[]) getStem(hondaState).toArray())),
+				NestedWord.nestedWord(new Word<>((LETTER[]) getLoop(hondaState).toArray())));
 	}
 
 	private List<LETTER> getLoop(final STATE hondaState) throws AutomataOperationCanceledException {
@@ -176,9 +180,8 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	public boolean checkResult(final CRSF stateFactory) throws AutomataOperationCanceledException {
 		boolean result = true;
 		if (Boolean.FALSE.equals(mResult)) {
-			final Pair<List<LETTER>, List<LETTER>> counterExample = getCounterexample();
-			result = new Accepts<>(mServices, mEagerAutomaton, counterExample.getFirst(), counterExample.getSecond())
-					.getResult();
+			final NestedLassoWord<LETTER> counterExample = getCounterexample();
+			result = new Accepts<>(mServices, mEagerAutomaton, counterExample).getResult();
 		}
 		return result;
 	}
