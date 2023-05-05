@@ -27,12 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.lib.chc;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
@@ -40,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.Executor;
 
 public class GolemChcScript implements IChcScript {
 	// TODO
@@ -50,13 +50,25 @@ public class GolemChcScript implements IChcScript {
 	private static final boolean DECLARE_FUNCTIONS = true;
 
 	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 	private final ManagedScript mMgdScript;
+	private final long mDefaultQueryTimeout;
 
 	private boolean mProduceModels = false;
 
+	private LBool mLastResult;
+	private Model mLastModel = null;
+
 	public GolemChcScript(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
+		this(services, mgdScript, -1L);
+	}
+
+	public GolemChcScript(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final long defaultTimeout) {
 		mServices = services;
+		mLogger = services.getLoggingService().getLogger(getClass());
 		mMgdScript = mgdScript;
+		mDefaultQueryTimeout = defaultTimeout;
 	}
 
 	@Override
@@ -78,6 +90,7 @@ public class GolemChcScript implements IChcScript {
 
 			new ChcAsserter(mMgdScript, dumperScript, ADD_CLAUSE_NAMES, ADD_COMMENTS, DECLARE_FUNCTIONS)
 					.assertClauses(symbolTable, system);
+			dumperScript.checkSat();
 
 			dumperScript.exit();
 		} catch (final IOException e) {
@@ -86,18 +99,20 @@ public class GolemChcScript implements IChcScript {
 
 		try {
 			// run golem on file
-			final var golem = MonitoredProcess.exec(getCommand(), null, mServices);
-			golem.setTerminationAfterTimeout(0);
-			if (timeout >= 0L) {
-				golem.setCountdownToTermination(timeout);
+			final var executor = new Executor(getCommand(), mMgdScript.getScript(), mLogger, mServices, "golem", null,
+					null, null, determineTimeout(timeout));
+
+			mLastResult = executor.parseCheckSatResult();
+			switch (mLastResult) {
+			case SAT:
+				mLastModel = mProduceModels ? executor.parseGetModelResult() : null;
+				break;
+			default:
+				mLastModel = null;
+				break;
 			}
 
-			// TODO parse output
-			final var stdout = golem.getInputStream();
-			final var stdoutReader = new InputStreamReader(stdout);
-			stdoutReader.read();
-
-			throw new UnsupportedOperationException();
+			return mLastResult;
 
 		} catch (final IOException e) {
 			throw new IllegalStateException(e);
@@ -114,21 +129,20 @@ public class GolemChcScript implements IChcScript {
 
 	@Override
 	public boolean supportsModelProduction() {
-		// TODO
-		return false;
+		return true;
 	}
 
 	@Override
 	public void produceModels(final boolean enable) {
 		mProduceModels = enable;
-		// TODO
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Optional<Model> getModel() {
-		// TODO
-		throw new UnsupportedOperationException();
+		if (mLastResult != LBool.SAT) {
+			throw new UnsupportedOperationException("No model available: last query was " + mLastResult);
+		}
+		return Optional.ofNullable(mLastModel);
 	}
 
 	@Override
@@ -159,5 +173,12 @@ public class GolemChcScript implements IChcScript {
 	@Override
 	public Optional<Set<HornClause>> getUnsatCore() {
 		throw new UnsupportedOperationException();
+	}
+
+	private long determineTimeout(final long queryTimeout) {
+		final var globalTimeout = mServices.getProgressMonitorService().remainingTime();
+		final var currentTimeout = queryTimeout <= 0 ? mDefaultQueryTimeout : queryTimeout;
+		final var actualTimeout = currentTimeout <= 0 ? globalTimeout : Long.min(currentTimeout, globalTimeout);
+		return actualTimeout;
 	}
 }
