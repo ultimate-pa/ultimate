@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class BvToIntTransferrer extends TermTransferrer {
@@ -67,7 +66,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 	/*
 	 * Translates a formula over bit-vector to a formula over integers. Can
 	 * translate arrays and quantifiers.
-	 * 
+	 *
 	 * Everything that works with pushTerm needs the BvScript and everything that works with SetResult needs the IntScript
 	 */
 
@@ -127,7 +126,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 			if (mTc.mMode.equals(ConstraintsForBitwiseOperations.NONE) && overaproxWithVars(appTerm)) {
 				final Sort newSort = translateSort(mScript, appTerm.getSort());
 				final TermVariable overaproxVar = mMgdScript.constructFreshTermVariable("overaproxVar", newSort);
-				Term overaproxConst = SmtUtils.termVariable2constant(mScript, overaproxVar, true);
+				final Term overaproxConst = SmtUtils.termVariable2constant(mScript, overaproxVar, true);
 				mOverapproxVariables.add(overaproxConst);
 				mIsOverapproximation = true;
 				setResult(overaproxConst);
@@ -259,9 +258,9 @@ public class BvToIntTransferrer extends TermTransferrer {
 		final Term msbRhs = BitvectorUtils.termWithLocalSimplification(mBvScript, "extract", indices,
 				appTerm.getParameters()[1]);
 
-		final Term zeroVec = SmtUtils.rational2Term(mBvScript, Rational.ZERO, SmtSortUtils.getBitvectorSort(mScript, 1));
-		final Term oneVec = SmtUtils.rational2Term(mBvScript, Rational.ONE, SmtSortUtils.getBitvectorSort(mScript, 1));
-		final Term ifterm1 = SmtUtils.and(mBvScript, SmtUtils.equality(mScript, zeroVec, msbLhs),
+		final Term zeroVec = SmtUtils.rational2Term(mBvScript, Rational.ZERO, SmtSortUtils.getBitvectorSort(mBvScript, 1));
+		final Term oneVec = SmtUtils.rational2Term(mBvScript, Rational.ONE, SmtSortUtils.getBitvectorSort(mBvScript, 1));
+		final Term ifterm1 = SmtUtils.and(mBvScript, SmtUtils.equality(mBvScript, zeroVec, msbLhs),
 				SmtUtils.equality(mBvScript, zeroVec, msbRhs));
 		final Term ifterm2 = SmtUtils.and(mBvScript, SmtUtils.equality(mBvScript, oneVec, msbLhs),
 				SmtUtils.equality(mBvScript, zeroVec, msbRhs));
@@ -364,6 +363,13 @@ public class BvToIntTransferrer extends TermTransferrer {
 	 * new variable (translation results)
 	 */
 	private Term translateVars(final Term term, final boolean addToVarMap) {
+		final boolean declareFun = true;
+		if (declareFun) {
+			final Term intVar = mScript.term(term.toString());
+			mVariableMap.put(term, intVar);
+			mReversedVarMap.put(intVar, term);
+			return intVar;
+		}
 
 		if (mVariableMap.containsKey(term)) {
 			mReversedVarMap.put(mVariableMap.get(term), term);
@@ -382,13 +388,6 @@ public class BvToIntTransferrer extends TermTransferrer {
 				}
 				return arrayVar;
 			} else if (SmtSortUtils.isBitvecSort(sort)) {
-				boolean declareFun = true;
-				if (declareFun) {
-					Term intVar = mScript.term(term.toString());
-					mVariableMap.put(term, intVar);
-					mReversedVarMap.put(intVar, term);
-					return intVar;
-				}
 				Term intVar;
 				intVar = mMgdScript.constructFreshTermVariable("intVar", SmtSortUtils.getIntSort(mScript));
 				if (!(term instanceof TermVariable)) {
@@ -629,7 +628,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 					return;
 				}
 				case "bvsub": {
-				
+
 					final Term substraction = SmtUtils.unfTerm(mScript, "-", null, SmtSortUtils.getIntSort(mMgdScript),
 							translatedArgs);
 					if (mNutzTransformation) {
