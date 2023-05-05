@@ -586,7 +586,9 @@ goResponse ::= TRUE {: RESULT = true; :}
 			 | errorResponse;
 
 /* get-model response, currently only for Horn solvers */
-gmResponse ::= LPAR funDef*:d {: RESULT = new ModelDescription(Set.of(d)); :} RPAR;
+gmResponse ::= LPAR funDef*:d {: RESULT = new ModelDescription(Set.of(d)); :} RPAR
+               /* CHC solver golem does not output enclosing parentheses */
+             | funDef*:d {: RESULT = new ModelDescription(Set.of(d)); :};
 
 funDef ::= LPAR DEFINEFUN {: localVars.beginScope(); :} symbol:fun
                       LPAR sortedVar*:vars RPAR sort:resultSort term:body RPAR
