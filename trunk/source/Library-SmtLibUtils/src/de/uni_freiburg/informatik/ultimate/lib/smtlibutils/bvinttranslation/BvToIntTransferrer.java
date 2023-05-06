@@ -365,7 +365,18 @@ public class BvToIntTransferrer extends TermTransferrer {
 	private Term translateVars(final Term term, final boolean addToVarMap) {
 		final boolean declareFun = true;
 		if (declareFun) {
-			final Term intVar = mScript.term(term.toString());
+			String name;
+			if (term instanceof TermVariable) {
+				name = ((TermVariable) term).getName();
+			} else if (term instanceof ApplicationTerm) {
+				name = ((ApplicationTerm) term).getFunction().getName();
+				if (((ApplicationTerm) term).getParameters().length > 0) {
+					throw new AssertionError("We support only constant symbols, not general function symbols");
+				}
+			} else {
+				throw new AssertionError("Unsupported term");
+			}
+			final Term intVar = mScript.term(name);
 			mVariableMap.put(term, intVar);
 			mReversedVarMap.put(intVar, term);
 			return intVar;
@@ -675,8 +686,8 @@ public class BvToIntTransferrer extends TermTransferrer {
 								SmtSortUtils.getIntSort(mMgdScript), translatedLHS, maxNumber);
 						if (mNutzTransformation) {
 							// TODO not sure if we need to do sth here
-							
-							
+
+
 							setResult(SmtUtils.unfTerm(mScript, "+", null, SmtSortUtils.getIntSort(mMgdScript),
 									multiplication,
 									SmtUtils.mod(mScript, translatedRHS, maxNumber)));
