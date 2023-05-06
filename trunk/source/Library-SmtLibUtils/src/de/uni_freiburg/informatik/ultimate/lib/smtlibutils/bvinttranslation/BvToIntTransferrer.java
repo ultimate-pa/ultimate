@@ -808,7 +808,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 					iteChain = SmtUtils.ite(mScript, ifTerm, thenTerm, iteChain);
 				}
 			}
-			return iteChain;
+			return SmtUtils.mod(mScript, iteChain, maxNumber);
 		}
 	}
 
@@ -841,7 +841,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 					iteChain = SmtUtils.ite(mScript, ifTerm, thenTerm, iteChain);
 				}
 			}
-			return iteChain;
+			return SmtUtils.mod(mScript, iteChain, maxNumber);
 		}
 	}
 
