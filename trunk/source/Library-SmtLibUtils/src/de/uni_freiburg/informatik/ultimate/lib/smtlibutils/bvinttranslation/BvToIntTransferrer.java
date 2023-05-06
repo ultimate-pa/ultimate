@@ -862,7 +862,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 				return SmtUtils.unfTerm(mScript, "=", null, SmtSortUtils.getIntSort(mMgdScript), translatedArgs);
 			}
 			case "distinct": {
-				if (mNutzTransformation) {
+				if (mNutzTransformation && SmtSortUtils.isNumericSort(args[0].getSort())) {
 					for (int i = 0; i < args.length; i++) {
 						translatedArgs[i] = SmtUtils.mod(mScript, args[i], maxNumberPlusOne);
 
