@@ -980,12 +980,12 @@ public class BvToIntTransferrer extends TermTransferrer {
 			if (constTerm.getValue() instanceof Rational) {
 				final Rational ratint = (Rational) constTerm.getValue();
 				twoPow = SmtUtils.rational2Term(mScript,
-						Rational.valueOf(BigInteger.valueOf(2).pow(ratint.numerator().intValue()), BigInteger.ONE),
+						Rational.valueOf(BigInteger.valueOf(2).pow(ratint.numerator().intValueExact()), BigInteger.ONE),
 						intSort);
 			} else {
 				final BigInteger bigint = (BigInteger) constTerm.getValue();
 				twoPow = SmtUtils.rational2Term(mScript,
-						Rational.valueOf(BigInteger.valueOf(2).pow(bigint.intValue()), BigInteger.ONE), intSort);
+						Rational.valueOf(BigInteger.valueOf(2).pow(bigint.intValueExact()), BigInteger.ONE), intSort);
 			}
 			return twoPow;
 		}
