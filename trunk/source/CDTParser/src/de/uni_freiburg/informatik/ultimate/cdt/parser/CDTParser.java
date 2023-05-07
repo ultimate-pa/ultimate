@@ -31,6 +31,8 @@
 package de.uni_freiburg.informatik.ultimate.cdt.parser;
 
 import java.io.File;
+import java.io.FileFilter;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -122,14 +124,30 @@ public class CDTParser implements ISource {
 
 	private static final IProgressMonitor NULL_MONITOR = new NullProgressMonitor();
 	private final String[] mFileTypes;
+	private final String mIncludeFileType;
+	private final FilenameFilter mIncludeFilesFilter;
+	private final FileFilter mIncludeDirectoriesFilter;
 	private ILogger mLogger;
 	private List<String> mFileNames;
 	private IUltimateServiceProvider mServices;
 	private IProject mProject;
 
 	public CDTParser() {
-		mFileTypes = new String[] { ".c", ".i", ".h", ".inl" };
+		mIncludeFileType = new String(".h");
+		mFileTypes = new String[] { ".c", ".i", mIncludeFileType, ".inl" };
 		mCdtPProjectHierachyFlag = "FLAG" + UUID.randomUUID().toString().substring(0, 10).replace("-", "");
+		mIncludeFilesFilter = new FilenameFilter() {
+			@Override
+			public boolean accept(File directory, String name) {
+				return name.toLowerCase().endsWith(mIncludeFileType);
+			}
+		};
+		mIncludeDirectoriesFilter = new FileFilter() {
+			@Override
+			public boolean accept(File pathname) {
+				return pathname.isDirectory();
+			}
+		};
 	}
 
 	@Override
@@ -243,19 +261,14 @@ public class CDTParser implements ISource {
 		final ICProject cProject = CoreModel.getDefault().create(mProject);
 		cProject.setRawPathEntries(new IPathEntry[] { sourceEntry }, NULL_MONITOR);
 
-		// TODO: this adds includes and makes them resolvable, but seems like the wrong way
 		final String includes =
 				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.INCLUDE_PATHS);
-		for (final String includePath : includes.split(";")) {
-			if (!new File(includePath).exists()) {
-				continue;
-			}
-			mLogger.info("Adding includes from " + includePath + " as file ");
-			final File[] includeFiles = new File(includePath).listFiles();
-			for (final File f : includeFiles) {
-				addLinkToFolder(sourceFolder, f);
-			}
-		}
+		final boolean recursive =
+				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceInitializer.RECURSIVE);
+		final File[] includePaths = Arrays.stream(includes.split(File.pathSeparator))
+				.map(include -> new File(include))
+				.toArray(File[]::new);
+		addIncludeFiles(sourceFolder, includePaths, recursive);
 
 		// TODO: The indexer is empty and I dont know why -- reindexing does not help
 		// CCorePlugin.getIndexManager().reindex(cProject);
@@ -268,6 +281,39 @@ public class CDTParser implements ISource {
 			printLanguageSettingsEntries(cProject);
 		}
 		return cProject;
+	}
+
+	/**
+	 * Add files from specified include paths to the project source folder.
+	 *
+	 * @param sourceFolder project source folder
+	 * @param includePaths absolute path names where include files are located
+	 * @param recursive determines whether include files in sub directories of each include path should be added
+	 */
+	private void addIncludeFiles(final IFolder sourceFolder, final File[] includePaths, boolean recursive) throws CoreException {
+		for (final File includePath : includePaths) {
+			// check if current include path is valid
+			final boolean includePathValid = includePath.exists() && includePath.isDirectory();
+			if (!includePathValid) {
+				// skip adding invalid include path
+				continue;
+			}
+
+			mLogger.info("Adding include files from include path " + includePath);
+
+			// add all include files from the current include path
+			final File[] includeFiles = includePath.listFiles(mIncludeFilesFilter);
+			for (final File includeFile : includeFiles) {
+				mLogger.info("Adding include file " + includeFile);
+				addLinkToFolder(sourceFolder, includeFile);
+			}
+
+			// recursively add include files from all subdirectories as well
+			if (recursive) {
+				final File[] includeSubPaths = includePath.listFiles(mIncludeDirectoriesFilter);
+				addIncludeFiles(sourceFolder, includeSubPaths, recursive);
+			}
+		}
 	}
 
 	/**
