@@ -800,10 +800,11 @@ public class BvToIntTransferrer extends TermTransferrer {
 					final Rational powResult = Rational.valueOf(i, 1);
 					final Term ifTerm = SmtUtils.unfTerm(mScript, "=", null, SmtSortUtils.getIntSort(mMgdScript),
 							translatedRHS, SmtUtils.rational2Term(mScript, powResult, intSort));
-					final int pow = (int) Math.pow(2, i);
+					final BigInteger pow = BigInteger.valueOf(2).pow(i);
 					final Term thenTerm = SmtUtils.mod(mScript,
 							SmtUtils.unfTerm(mScript, "*", null, SmtSortUtils.getIntSort(mMgdScript),
-									SmtUtils.rational2Term(mScript, Rational.valueOf(pow, 1), intSort), translatedLHS),
+									SmtUtils.rational2Term(mScript, Rational.valueOf(pow, BigInteger.ONE), intSort),
+									translatedLHS),
 							maxNumber);
 					iteChain = SmtUtils.ite(mScript, ifTerm, thenTerm, iteChain);
 				}
@@ -835,9 +836,10 @@ public class BvToIntTransferrer extends TermTransferrer {
 					final Rational powResult = Rational.valueOf(i, 1);
 					final Term ifTerm = SmtUtils.unfTerm(mScript, "=", null, SmtSortUtils.getIntSort(mMgdScript),
 							translatedRHS, SmtUtils.rational2Term(mScript, powResult, intSort));
-					final int pow = (int) Math.pow(2, i);
+					final BigInteger pow = BigInteger.valueOf(2).pow(i);
 					final Term thenTerm = SmtUtils.unfTerm(mScript, "div", null, SmtSortUtils.getIntSort(mMgdScript),
-							translatedLHS, SmtUtils.rational2Term(mScript, Rational.valueOf(pow, 1), intSort));
+							translatedLHS,
+							SmtUtils.rational2Term(mScript, Rational.valueOf(pow, BigInteger.ONE), intSort));
 					iteChain = SmtUtils.ite(mScript, ifTerm, thenTerm, iteChain);
 				}
 			}
