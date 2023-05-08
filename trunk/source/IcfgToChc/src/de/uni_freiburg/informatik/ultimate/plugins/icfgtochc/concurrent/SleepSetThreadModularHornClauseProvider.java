@@ -78,7 +78,7 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 
 		// add thread ID and sleep set
 		result.add(0, new HcThreadIdVar(instance, mScript));
-		result.add(1, new HcSleepVar(instance, getBoolSort()));
+		result.add(1, new HcSleepVar(instance, mScript));
 
 		return result;
 	}
@@ -136,7 +136,7 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 		}
 
 		// interfering thread is not sleeping
-		final var sleep = new HcSleepVar(interferingThread, getBoolSort());
+		final var sleep = new HcSleepVar(interferingThread, mScript);
 		clause.addConstraint(SmtUtils.not(mScript, clause.getBodyVar(sleep).getTerm()));
 
 		// update sleep variables

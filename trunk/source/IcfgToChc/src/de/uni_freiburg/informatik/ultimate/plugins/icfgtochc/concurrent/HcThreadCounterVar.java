@@ -28,6 +28,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
 /**
@@ -51,9 +53,9 @@ public class HcThreadCounterVar implements IHcReplacementVar {
 	private final boolean mIsStarted;
 	private final Sort mSort;
 
-	public HcThreadCounterVar(final boolean isStarted, final Sort sort) {
+	public HcThreadCounterVar(final boolean isStarted, final Script script) {
 		mIsStarted = isStarted;
-		mSort = sort;
+		mSort = SmtSortUtils.getIntSort(script);
 	}
 
 	@Override

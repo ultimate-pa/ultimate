@@ -132,8 +132,8 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 		mBottomLocation = numeral(-1);
 		if (mPrefs.specMode() == SpecMode.POSTCONDITION) {
-			mStartedVar = new HcThreadCounterVar(true, getIntSort());
-			mTerminatedVar = new HcThreadCounterVar(false, getIntSort());
+			mStartedVar = new HcThreadCounterVar(true, mScript);
+			mTerminatedVar = new HcThreadCounterVar(false, mScript);
 		} else {
 			mStartedVar = null;
 			mTerminatedVar = null;
@@ -228,7 +228,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	protected List<IHcThreadSpecificVar> createThreadSpecificVars(final ThreadInstance instance) {
 		final var result = new ArrayList<IHcThreadSpecificVar>();
 
-		final var location = new HcLocationVar(instance, getIntSort());
+		final var location = new HcLocationVar(instance, mScript);
 		mLocationVars.put(instance, location);
 		result.add(location);
 

@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
 /**
@@ -13,9 +15,9 @@ public class HcLocationVar implements IHcThreadSpecificVar {
 	private final ThreadInstance mInstance;
 	private final Sort mSort;
 
-	public HcLocationVar(final ThreadInstance instance, final Sort sort) {
+	public HcLocationVar(final ThreadInstance instance, final Script script) {
 		mInstance = instance;
-		mSort = sort;
+		mSort = SmtSortUtils.getIntSort(script);
 	}
 
 	@Override
