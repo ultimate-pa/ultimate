@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -61,7 +62,8 @@ public abstract class ExtensibleHornClauseProvider {
 	protected abstract List<HornClauseBuilder> buildAllClauses();
 
 	public final List<HornClause> getClauses() {
-		return buildAllClauses().stream().map(HornClauseBuilder::build).collect(Collectors.toList());
+		return buildAllClauses().stream().map(HornClauseBuilder::build)
+				.filter(c -> !SmtUtils.isFalseLiteral(c.getConstraintFormula())).collect(Collectors.toList());
 	}
 
 	protected final Term numeral(final long n) {
