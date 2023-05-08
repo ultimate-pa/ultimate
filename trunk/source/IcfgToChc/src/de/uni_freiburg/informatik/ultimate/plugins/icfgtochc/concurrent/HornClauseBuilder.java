@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
@@ -98,8 +97,7 @@ public class HornClauseBuilder {
 	}
 
 	public List<Term> getDefaultBodyArgs(final PredicateInfo predicate) {
-		return IntStream.range(0, predicate.getParamCount())
-				.mapToObj(i -> getBodyVar(predicate.getParameter(i)).getTerm())
+		return predicate.getParameters().stream().map(param -> getBodyVar(param).getTerm())
 				.collect(Collectors.toCollection(ArrayList::new));
 	}
 
@@ -126,8 +124,8 @@ public class HornClauseBuilder {
 			clause = new HornClause(mManagedScript, mSymbolTable, constraint, mBodyPreds, substitutedBodyArgs,
 					mBodyVars);
 		} else {
-			final var headArgs = IntStream.range(0, mHeadPredicate.getParamCount())
-					.mapToObj(i -> getHeadVar(mHeadPredicate.getParameter(i))).collect(Collectors.toList());
+			final var headArgs =
+					mHeadPredicate.getParameters().stream().map(this::getHeadVar).collect(Collectors.toList());
 			clause = new HornClause(mManagedScript, mSymbolTable, constraint, mHeadPredicate.getPredicate(), headArgs,
 					mBodyPreds, substitutedBodyArgs, mBodyVars);
 		}
@@ -143,8 +141,7 @@ public class HornClauseBuilder {
 		}
 
 		mSubstitution.clear();
-		for (int i = 0; i < mHeadPredicate.getParamCount(); ++i) {
-			final var variable = mHeadPredicate.getParameter(i);
+		for (final var variable : mHeadPredicate.getParameters()) {
 			if (!mModifiedVars.contains(variable)) {
 				mSubstitution.put(getBodyVar(variable).getTermVariable(), getHeadVar(variable).getTerm());
 			}

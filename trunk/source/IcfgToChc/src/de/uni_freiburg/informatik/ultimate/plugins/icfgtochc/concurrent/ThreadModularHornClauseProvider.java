@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,7 +38,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -62,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences.SpecMode;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -168,10 +167,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		final List<Sort> sorts = parameters.stream().map(IHcReplacementVar::getSort).collect(Collectors.toList());
 		final var predicate = mSymbolTable.getOrConstructHornClausePredicateSymbol(FUNCTION_NAME, sorts);
 
-		final var paramMap = IntStream.range(0, parameters.size()).mapToObj(i -> new Pair<>(parameters.get(i), i))
-				.collect(Collectors.toMap(Pair::getKey, Pair::getValue, (i, j) -> i, BidirectionalMap::new));
-
-		return new PredicateInfo(predicate, paramMap);
+		return new PredicateInfo(predicate, parameters);
 	}
 
 	/**
@@ -549,10 +545,11 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 			final var interferingVars = createThreadSpecificVars(interferingThread);
 			for (int i = 0; i < instanceVars.size(); ++i) {
 				final var original = instanceVars.get(i);
-				final var replaced = interferingVars.get(i);
 				if (mInvariantPredicate.hasParameter(original)) {
-					final int index = mInvariantPredicate.getIndex(original);
-					bodyArgs.set(index, clause.getBodyVar(replaced).getTerm());
+					final var originalTerm = clause.getBodyVar(original).getTerm();
+					final var replaced = interferingVars.get(i);
+					final var replacedTerm = clause.getBodyVar(replaced).getTerm();
+					Collections.replaceAll(bodyArgs, originalTerm, replacedTerm);
 				}
 			}
 

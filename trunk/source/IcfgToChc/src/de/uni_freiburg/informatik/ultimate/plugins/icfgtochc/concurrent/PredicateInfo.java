@@ -26,47 +26,40 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 
 public class PredicateInfo {
 	private final HcPredicateSymbol mPredicate;
-	private final BidirectionalMap<IHcReplacementVar, Integer> mVariable2Index;
+	protected final List<IHcReplacementVar> mParameters;
 
-	public PredicateInfo(final HcPredicateSymbol predicate,
-			final BidirectionalMap<IHcReplacementVar, Integer> variable2Index) {
+	public PredicateInfo(final HcPredicateSymbol predicate, final List<IHcReplacementVar> parameters) {
 		mPredicate = predicate;
-		mVariable2Index = variable2Index;
+		mParameters = parameters;
 	}
 
 	public HcPredicateSymbol getPredicate() {
 		return mPredicate;
 	}
 
+	public Collection<IHcReplacementVar> getParameters() {
+		return mParameters;
+	}
+
 	public boolean hasParameter(final IHcReplacementVar variable) {
-		return mVariable2Index.containsKey(variable);
-	}
-
-	public int getIndex(final IHcReplacementVar variable) {
-		assert mVariable2Index.containsKey(variable);
-		return mVariable2Index.get(variable);
-	}
-
-	public IHcReplacementVar getParameter(final int index) {
-		final var result = mVariable2Index.inverse().get(index);
-		assert result != null : "No parameter at index " + index + " (out of " + mPredicate.getArity() + ")";
-		return result;
+		return mParameters.contains(variable);
 	}
 
 	public int getParamCount() {
-		return mVariable2Index.size();
+		return mParameters.size();
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mPredicate, mVariable2Index);
+		return Objects.hash(mPredicate, mParameters);
 	}
 
 	@Override
@@ -81,6 +74,6 @@ public class PredicateInfo {
 			return false;
 		}
 		final PredicateInfo other = (PredicateInfo) obj;
-		return Objects.equals(mPredicate, other.mPredicate) && Objects.equals(mVariable2Index, other.mVariable2Index);
+		return Objects.equals(mPredicate, other.mPredicate) && Objects.equals(mParameters, other.mParameters);
 	}
 }
