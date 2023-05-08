@@ -1,5 +1,5 @@
 (set-logic HORN)
-(set-info :status unsat)
+(set-info :status sat)
 
 ; Args: c (program variable), m (mutex), l (loc counter for l1) location (0/1)
 (declare-fun I (Bool Bool Int Int) Bool)
@@ -21,3 +21,4 @@
 (assert (forall ((c Bool) (m Bool) (c1 Bool) (m1 Bool) (l Int)) (=> (and (>= l 2) (I c m l 1) m (not m1) (not c1)) (I c1 m1 (- l 1) 1))))
 
 (check-sat)
+(get-model)
