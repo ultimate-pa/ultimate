@@ -26,63 +26,24 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
-import java.util.Objects;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-public class HcSleepVar implements IHcThreadSpecificVar, IHcFiniteReplacementVar {
-	private final Sort mSort;
-	private final ThreadInstance mInstance;
-	private final Set<Term> mValues;
-
-	public HcSleepVar(final ThreadInstance instance, final Script script) {
-		mInstance = instance;
-		mSort = SmtSortUtils.getBoolSort(script);
-		mValues = Set.of(script.term("true"), script.term("false"));
-	}
-
-	@Override
-	public Sort getSort() {
-		return mSort;
-	}
-
-	@Override
-	public ThreadInstance getThreadInstance() {
-		return mInstance;
-	}
-
-	@Override
-	public Set<Term> getAllValues() {
-		return mValues;
-	}
-
-	@Override
-	public String toString() {
-		return "sleep_" + mInstance;
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		return prime * Objects.hash(mInstance);
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final HcSleepVar other = (HcSleepVar) obj;
-		return Objects.equals(mInstance, other.mInstance);
-	}
+/**
+ * An interface for variables that can only take finitely many distinct values.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ */
+public interface IHcFiniteReplacementVar extends IHcReplacementVar {
+	/**
+	 * The set of all possible values this variable can take. All terms must have the sort returned by
+	 * {@link #getSort()}. The terms must not have free variables, nor refer to uninterpreted function symbols.
+	 *
+	 * For any two terms <code>t1</code> and <code>t2</code> in the returned set, either
+	 * <code>Objects.equals(t1, t2)</code> must return <code>true</code>, or the equation <code>(= t1 t2)</code> must be
+	 * unsatisfiable.
+	 */
+	Set<Term> getAllValues();
 }
