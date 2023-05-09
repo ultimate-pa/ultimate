@@ -32,6 +32,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFactory<STATE> & IIntersectionStateFactory<STATE>>
 		implements IRabinAutomaton<LETTER, STATE> {
+	private static final int NUMBER_OF_COMPONENTS = 4;
+
 	private final IRabinAutomaton<LETTER, STATE> mFirstAutomaton;
 	private final IRabinAutomaton<LETTER, STATE> mSecondAutomaton;
 	private final FACTORY mFactory;
@@ -40,8 +42,6 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	private final HashSet<STATE> mFiniteStates = new HashSet<>();
 	private final HashSet<STATE> mAcceptingStates = new HashSet<>();
 	private final HashMap<STATE, Triple<STATE, STATE, Integer>> mAutomatonMap = new HashMap<>();
-
-	private final int NUMBER_OF_COMPONENTS = 4;
 
 	/**
 	 * implementation that lazyly constructs the intersection of two Rabin automata
