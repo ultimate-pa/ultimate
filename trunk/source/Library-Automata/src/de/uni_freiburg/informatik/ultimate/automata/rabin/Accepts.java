@@ -126,8 +126,10 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	 */
 
 	private ArrayList<STATE> stemEvaluation(final IRabinAutomaton<LETTER, STATE> automaton, final List<LETTER> stem) {
-		final ArrayList<STATE> currentStateSet = new ArrayList<>();
-		automaton.getInitialStates().forEach(x -> currentStateSet.add(x));
+		ArrayList<STATE> currentStateSet = new ArrayList<>();
+		for (final STATE initialState : automaton.getInitialStates()) {
+			currentStateSet.add(initialState);
+		}
 
 		for (final LETTER letter : stem) {
 			if (currentStateSet.isEmpty()) {
@@ -142,8 +144,7 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 				}
 
 			}
-			currentStateSet.clear();
-			currentStateSet.addAll(temp);
+			currentStateSet = temp;
 		}
 		return currentStateSet;
 	}
@@ -154,7 +155,7 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	private boolean hasLoop(final IRabinAutomaton<LETTER, STATE> automaton, final STATE start, final List<LETTER> loop,
 			final int loopIndex) throws AutomataOperationCanceledException {
 
-		final ArrayList<STATE> currentStateSet = new ArrayList<>();
+		ArrayList<STATE> currentStateSet = new ArrayList<>();
 
 		int localLoopIndex = loopIndex;
 		final HashSet<Pair<Integer, STATE>> uniqueSituations = new HashSet<>();
@@ -187,8 +188,7 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 				}
 				visitedSituations.add(new Pair<>(localLoopIndex, state));
 			}
-			currentStateSet.clear();
-			currentStateSet.addAll(temp);
+			currentStateSet = temp;
 
 			localLoopIndex = (localLoopIndex + 1) % loop.size();
 			for (final STATE state : currentStateSet) {
