@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -11,11 +12,16 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.scc.DefaultSccComputation;
+import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
  * A class to check emptiness of IRabinAutomaton
@@ -35,8 +41,6 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	private final RabinAutomaton<LETTER, STATE> mEagerAutomaton;
 	private final Set<STATE> mEvidence;
 
-	final AutomatonSccComputation<LETTER, STATE> mAcceptingSccComputation;
-
 	/**
 	 * Computes the emptiness of automaton and holds information about the emptiness
 	 *
@@ -52,15 +56,18 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		// cuts off non reachable final states
 		mEagerAutomaton = RabinAutomataUtils.eagerAutomaton(automaton);
 
-		mAcceptingSccComputation =
-				new AutomatonSccComputation<>(services, getStemlessNonFiniteAutomaton(mEagerAutomaton));
+		final IRabinAutomaton<LETTER, STATE> stemlessAutomaton = getStemlessNonFiniteAutomaton(mEagerAutomaton);
 
-		mResult = mAcceptingSccComputation.getBalls().isEmpty();
-		if (Boolean.FALSE.equals(mResult)) {
-			mEvidence = mAcceptingSccComputation.getExampleBall();
-		} else {
-			mEvidence = Set.of();
-		}
+		final Set<STATE> init = new HashSet<>();
+		stemlessAutomaton.getInitialStates().forEach(init::add);
+
+		final DefaultSccComputation<STATE> sccComputation =
+				new DefaultSccComputation<>(services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
+						new RabinSuccessorProvider(stemlessAutomaton), stemlessAutomaton.size(), init);
+
+		mEvidence = getEvidence(init, sccComputation.getBalls());
+
+		mResult = mEvidence.isEmpty();
 
 	}
 
@@ -186,4 +193,54 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		return result;
 	}
 
+	/**
+	 * Provides - for a given state - all states that are
+	 * <ul>
+	 * <li>successors of internal transitions and
+	 * <li>contained in the initial state set.
+	 * </ul>
+	 *
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 * @author Philipp Müller (pm251@venus.uni-freiburg.de)
+	 */
+	public class RabinSuccessorProvider implements ISuccessorProvider<STATE> {
+
+		private final IRabinAutomaton<LETTER, STATE> mAutomaton;
+
+		RabinSuccessorProvider(final IRabinAutomaton<LETTER, STATE> automaton) {
+			mAutomaton = automaton;
+		}
+
+		public <E extends IOutgoingTransitionlet<LETTER, STATE>> Iterator<STATE>
+				getStateContainerIterator(final Iterator<E> iterator) {
+			return new Iterator<>() {
+
+				@Override
+				public boolean hasNext() {
+					return iterator.hasNext();
+				}
+
+				@Override
+				public STATE next() {
+					return iterator.next().getSucc();
+				}
+			};
+		}
+
+		@Override
+		public Iterator<STATE> getSuccessors(final STATE state) {
+			return getStateContainerIterator(mAutomaton.getSuccessors(state).iterator());
+		}
+	}
+
+	private Set<STATE> getEvidence(final Set<STATE> init, final Collection<StronglyConnectedComponent<STATE>> balls) {
+		for (final StronglyConnectedComponent<STATE> ball : balls) {
+			for (final STATE node : init) {
+				if (ball.getNodes().contains(node)) {
+					return ball.getNodes();
+				}
+			}
+		}
+		return Set.of();
+	}
 }
