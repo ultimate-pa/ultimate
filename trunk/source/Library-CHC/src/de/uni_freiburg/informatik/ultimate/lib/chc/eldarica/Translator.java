@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import ap.SimpleAPI;
 import ap.basetypes.IdealInt;
 import ap.parser.IAtom;
+import ap.parser.IBoolLit;
 import ap.parser.IExpression;
 import ap.parser.IFormula;
 import ap.parser.IFunApp;
@@ -210,6 +211,11 @@ class Translator {
 		}
 
 		switch (term.getFunction().getName()) {
+		case "true":
+		case "false":
+			final var name = term.getFunction().getName();
+			assert term.getParameters().length == 0 : "Unexpected parameters for function " + name;
+			return new IBoolLit(Boolean.parseBoolean(name));
 		case "and":
 			final var conjuncts =
 					Arrays.stream(term.getParameters()).map(this::translateFormula).collect(Collectors.toList());
