@@ -157,6 +157,39 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true,
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+	
+
+	@Test
+	public void cinderella_ae_iter_0_2() throws IOException {
+		final FunDecl[] funDecls =
+				new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "b1", "b2", "b3", "b4", "b5"), };
+		final String formulaAsString = CoreUtil.readFile("src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/cinderella_ae_iter_0_2.smt2");
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	
+
+	@Test
+	public void cinderella_ae_iter_0_3() throws IOException {
+		final FunDecl[] funDecls =
+				new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "b1", "b2", "b3", "b4", "b5"), };
+		final String formulaAsString = CoreUtil.readFile("src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/cinderella_ae_iter_0_3.smt2");
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	
+	
+	@Test
+	public void cinderella_ea_iter_0_3() throws IOException {
+		final FunDecl[] funDecls =
+				new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "b1", "b2", "b3", "b4", "b5"), };
+		final String formulaAsString = CoreUtil.readFile("src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/cinderella_ea_iter_0_3.smt2");
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
 	//@formatter:off
 	@Test
