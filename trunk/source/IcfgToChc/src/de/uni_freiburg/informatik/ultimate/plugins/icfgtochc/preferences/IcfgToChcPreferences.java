@@ -68,6 +68,10 @@ public class IcfgToChcPreferences {
 		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_SLEEP_SET_REDUCTION);
 	}
 
+	public boolean breakPreferenceOrderSymmetry() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.DESC_BREAK_PREFORDER_SYMMETRY);
+	}
+
 	public boolean explicitSleep() {
 		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_EXPLICIT_SLEEP);
 	}

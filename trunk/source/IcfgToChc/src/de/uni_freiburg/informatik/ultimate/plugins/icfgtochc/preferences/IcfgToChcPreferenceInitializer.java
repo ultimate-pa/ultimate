@@ -79,6 +79,11 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 			+ "program. This allows for more programs to be proven correct.";
 	public static final boolean DEF_SLEEP_SET_REDUCTION = true;
 
+	public static final String LABEL_BREAK_PREFORDER_SYMMETRY = "Break symmetry of preference order";
+	public static final String DESC_BREAK_PREFORDER_SYMMETRY = "A straightforward encoding forces proofs to consider "
+			+ "all symmetric preference orders. If we break symmetry, more proofs are accepted.";
+	public static final boolean DEF_BREAK_PREFORDER_SYMMETRY = true;
+
 	public static final String LABEL_EXPLICIT_SLEEP = "Encode sleep sets explicitly";
 	public static final String DESC_EXPLICIT_SLEEP = "Sleep sets can be encoded symbolically (as CHC variables), "
 			+ "or explicitly (by using different predicate symbols).";
@@ -109,6 +114,8 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SLEEP_SET_REDUCTION, DEF_SLEEP_SET_REDUCTION,
 						DESC_SLEEP_SET_REDUCTION, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_BREAK_PREFORDER_SYMMETRY, DESC_BREAK_PREFORDER_SYMMETRY,
+						DESC_BREAK_PREFORDER_SYMMETRY, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_EXPLICIT_SLEEP, DEF_EXPLICIT_SLEEP, DESC_EXPLICIT_SLEEP,
 						PreferenceType.Boolean) };
 	}
