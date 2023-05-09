@@ -161,6 +161,10 @@ class Backtranslator {
 			if (constTerm != null) {
 				return constTerm;
 			}
+			final var boolLit = translateBoolLit(app);
+			if (boolLit != null) {
+				return boolLit;
+			}
 		}
 		if (term instanceof IIntLit) {
 			final var value = ((IIntLit) term).value();
@@ -187,10 +191,18 @@ class Backtranslator {
 		}
 
 		final var value = translateTermInternal(constArray.args().apply(0), ctx);
-		final var function = mScript.getTheory().getFunctionWithResult(SMTLIBConstants.CONST, null,
-				SmtSortUtils.getArraySort(mScript, getIntSort(), value.getSort()), value.getSort());
 		return mScript.term(SMTLIBConstants.CONST, null,
 				SmtSortUtils.getArraySort(mScript, getIntSort(), value.getSort()), value);
+	}
+
+	private Term translateBoolLit(final IFunApp boolLit) {
+		final var name = boolLit.fun().name();
+		if (!"true".equals(name) && !"false".equals(name)) {
+			return null;
+		}
+
+		assert boolLit.args().isEmpty() : "unexpected parameters for function " + name;
+		return mScript.term(name);
 	}
 
 	private Term numeral(final BigInteger value) {
