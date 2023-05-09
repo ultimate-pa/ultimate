@@ -31,6 +31,7 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
@@ -38,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 
 /**
  * Complements a given treeAutomaton.
@@ -66,10 +68,16 @@ public class Complement<LETTER extends IRankedLetter, STATE>
 	 * @param tree
 	 */
 	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> Complement(
-			final AutomataLibraryServices services, final SF factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
+			final AutomataLibraryServices services, final SF factory, final ITreeAutomatonBU<LETTER, STATE> tree)
+			throws AutomataOperationCanceledException {
 		super(services);
 		mAlphabet = new HashSet<>();
-		mTreeAutomaton = new Totalize<>(mServices, factory, tree).getResult();
+		try {
+			mTreeAutomaton = new Totalize<>(mServices, factory, tree).getResult();
+		} catch (final AutomataOperationCanceledException e) {
+			e.addRunningTaskInfo(new RunningTaskInfo(getClass(), "complementing tree automaton"));
+			throw e;
+		}
 
 		mResult = computeResult(factory);
 	}
@@ -83,11 +91,16 @@ public class Complement<LETTER extends IRankedLetter, STATE>
 	 */
 	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> Complement(
 			final AutomataLibraryServices services, final SF factory, final ITreeAutomatonBU<LETTER, STATE> tree,
-			final Collection<LETTER> alphabet) {
+			final Collection<LETTER> alphabet) throws AutomataOperationCanceledException {
 		super(services);
 		mAlphabet = new HashSet<>();
 		mAlphabet.addAll(alphabet);
-		mTreeAutomaton = new Totalize<>(mServices, factory, tree, alphabet).getResult();
+		try {
+			mTreeAutomaton = new Totalize<>(mServices, factory, tree, alphabet).getResult();
+		} catch (final AutomataOperationCanceledException e) {
+			e.addRunningTaskInfo(new RunningTaskInfo(getClass(), "complementing tree automaton"));
+			throw e;
+		}
 		mResult = computeResult(factory);
 	}
 

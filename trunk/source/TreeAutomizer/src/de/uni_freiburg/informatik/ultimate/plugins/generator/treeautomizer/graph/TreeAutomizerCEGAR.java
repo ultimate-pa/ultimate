@@ -52,6 +52,8 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.operations.difference.D
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.difference.LazyDifference;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.Minimize;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.hopcroft.MinimizeNftaHopcroft;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -380,8 +382,12 @@ public class TreeAutomizerCEGAR {
 
 		if (mPreferences.getEnum(TreeAutomizerPreferenceInitializer.LABEL_MinimizationAlgorithm, TaMinimization.class)
 				== TaMinimization.NAIVE) {
-			mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Minimize<>(mAutomataLibraryServices,
-					mStateFactory, mAbstraction)).getResult();
+			try {
+				mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Minimize<>(mAutomataLibraryServices,
+						mStateFactory, mAbstraction)).getResult();
+			} catch (final AutomataOperationCanceledException e) {
+				throw new ToolchainCanceledException(e, new RunningTaskInfo(getClass(), "refining abstraction"));
+			}
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(String.format("Abstraction after naive minimization has  %d states, %d rules.",
 						mAbstraction.getStates().size(),
