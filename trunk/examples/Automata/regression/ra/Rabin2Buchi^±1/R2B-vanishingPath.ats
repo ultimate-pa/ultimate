@@ -17,8 +17,8 @@ RabinAutomaton remainingSelfLoopAutomaton = (
 );
 
 
-assert(!buchiIsEmpty(rabin2BuchiOperation(vanishingPathAutomaton)));
-assert(!isEmpty(buchi2RabinOperation(rabin2BuchiOperation(vanishingPathAutomaton))));
+assert(!buchiIsEmpty(toBuchi(vanishingPathAutomaton)));
+assert(!isEmpty(toRabin(toBuchi(vanishingPathAutomaton))));
 
-assert(!buchiIsEmpty(rabin2BuchiOperation(remainingSelfLoopAutomaton)));
-assert(!isEmpty(buchi2RabinOperation(rabin2BuchiOperation(remainingSelfLoopAutomaton))));
+assert(!buchiIsEmpty(toBuchi(remainingSelfLoopAutomaton)));
+assert(!isEmpty(toRabin(toBuchi(remainingSelfLoopAutomaton))));

@@ -25,24 +25,24 @@ RabinAutomaton abc4Automaton = (
 );
 
 
-assert(!buchiIsEmpty(rabin2BuchiOperation(abcAutomaton)));
-assert(!isEmpty(buchi2RabinOperation(rabin2BuchiOperation(abcAutomaton))));
+assert(!buchiIsEmpty(toBuchi(abcAutomaton)));
+assert(!isEmpty(toRabin(toBuchi(abcAutomaton))));
 
-assert(!buchiIsEmpty(rabin2BuchiOperation(abc2Automaton)));
-assert(!isEmpty(buchi2RabinOperation(rabin2BuchiOperation(abc2Automaton))));
+assert(!buchiIsEmpty(toBuchi(abc2Automaton)));
+assert(!isEmpty(toRabin(toBuchi(abc2Automaton))));
 
-assert(!buchiIsEmpty(rabin2BuchiOperation(abc4Automaton)));
-assert(!isEmpty(buchi2RabinOperation(rabin2BuchiOperation(abc4Automaton))));
+assert(!buchiIsEmpty(toBuchi(abc4Automaton)));
+assert(!isEmpty(toRabin(toBuchi(abc4Automaton))));
 
-assert(buchiAccepts(rabin2BuchiOperation(abcAutomaton), [a a , a b c]));
-assert(buchiAccepts(rabin2BuchiOperation(abcAutomaton), [a c a, a b c]));
-assert(buchiAccepts(rabin2BuchiOperation(abcAutomaton), [a a a a a a a a a b , c a b]));
-assert(buchiAccepts(rabin2BuchiOperation(abcAutomaton), [, a b c]));
-assert(buchiAccepts(rabin2BuchiOperation(abcAutomaton), [, b c a]));
-assert(buchiAccepts(rabin2BuchiOperation(abcAutomaton), [, c a b]));
-assert(!buchiAccepts(rabin2BuchiOperation(abcAutomaton), [, c b a]));
-assert(!buchiAccepts(rabin2BuchiOperation(abcAutomaton), [, c a b b]));
-assert(!buchiAccepts(rabin2BuchiOperation(abcAutomaton), [b, c a b b]));
-assert(!buchiAccepts(rabin2BuchiOperation(abcAutomaton), [a a a a a a a a b, c a b b]));
-assert(!buchiAccepts(rabin2BuchiOperation(abcAutomaton), [c c c c c c c c c c c, c a b b]));
-assert(!buchiAccepts(rabin2BuchiOperation(abcAutomaton), [c c c c c c c c c c c, a b c]));
+assert(buchiAccepts(toBuchi(abcAutomaton), [a a , a b c]));
+assert(buchiAccepts(toBuchi(abcAutomaton), [a c a, a b c]));
+assert(buchiAccepts(toBuchi(abcAutomaton), [a a a a a a a a a b , c a b]));
+assert(buchiAccepts(toBuchi(abcAutomaton), [, a b c]));
+assert(buchiAccepts(toBuchi(abcAutomaton), [, b c a]));
+assert(buchiAccepts(toBuchi(abcAutomaton), [, c a b]));
+assert(!buchiAccepts(toBuchi(abcAutomaton), [, c b a]));
+assert(!buchiAccepts(toBuchi(abcAutomaton), [, c a b b]));
+assert(!buchiAccepts(toBuchi(abcAutomaton), [b, c a b b]));
+assert(!buchiAccepts(toBuchi(abcAutomaton), [a a a a a a a a b, c a b b]));
+assert(!buchiAccepts(toBuchi(abcAutomaton), [c c c c c c c c c c c, c a b b]));
+assert(!buchiAccepts(toBuchi(abcAutomaton), [c c c c c c c c c c c, a b c]));

@@ -16,8 +16,8 @@ RabinAutomaton automatonWithSelfLoop = (
 	transitions = { (s0 a s1) (s1 a s0) (s1 a s1) }
 );
 
-assert(buchiIsEmpty(rabin2BuchiOperation(automaton)));
-assert(isEmpty(buchi2RabinOperation(rabin2BuchiOperation(automaton))));
+assert(buchiIsEmpty(toBuchi(automaton)));
+assert(isEmpty(toRabin(toBuchi(automaton))));
 
-assert(!buchiIsEmpty(rabin2BuchiOperation(automatonWithSelfLoop)));
-assert(!isEmpty(buchi2RabinOperation(rabin2BuchiOperation(automatonWithSelfLoop))));
+assert(!buchiIsEmpty(toBuchi(automatonWithSelfLoop)));
+assert(!isEmpty(toRabin(toBuchi(automatonWithSelfLoop))));

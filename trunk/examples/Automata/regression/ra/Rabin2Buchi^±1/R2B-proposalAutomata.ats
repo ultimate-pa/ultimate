@@ -26,20 +26,20 @@ RabinAutomaton paralellProposalAutomata = (
 );
 
 
-assert(!buchiIsEmpty(rabin2BuchiOperation(proposalAutomaton)));
-assert(!isEmpty(buchi2RabinOperation(rabin2BuchiOperation(proposalAutomaton))));
+assert(!buchiIsEmpty(toBuchi(proposalAutomaton)));
+assert(!isEmpty(toRabin(toBuchi(proposalAutomaton))));
 
-assert(!buchiIsEmpty(rabin2BuchiOperation(proposalBuechiEquivalent)));
-assert(!isEmpty(buchi2RabinOperation(rabin2BuchiOperation(proposalBuechiEquivalent))));
+assert(!buchiIsEmpty(toBuchi(proposalBuechiEquivalent)));
+assert(!isEmpty(toRabin(toBuchi(proposalBuechiEquivalent))));
 
-assert(!buchiIsEmpty(rabin2BuchiOperation(proposalBuechiEquivalent)));
-assert(!isEmpty(buchi2RabinOperation(rabin2BuchiOperation(proposalBuechiEquivalent))));
+assert(!buchiIsEmpty(toBuchi(proposalBuechiEquivalent)));
+assert(!isEmpty(toRabin(toBuchi(proposalBuechiEquivalent))));
 
-assert(buchiAccepts(rabin2BuchiOperation(proposalAutomaton), [a a b , a b]));
-assert(!buchiAccepts(rabin2BuchiOperation(proposalAutomaton), [, a a b]));
-assert(buchiAccepts(rabin2BuchiOperation(proposalAutomaton), [a a  , b a]));
-assert(buchiAccepts(rabin2BuchiOperation(proposalBuechiEquivalent), [a a b , a b]));
-assert(!buchiAccepts(rabin2BuchiOperation(proposalBuechiEquivalent), [, a a b]));
-assert(buchiAccepts(rabin2BuchiOperation(proposalBuechiEquivalent), [a a  , b a]));
-assert(buchiAccepts(rabin2BuchiOperation(paralellProposalAutomata), [a a b , a b]));
-assert(!buchiAccepts(rabin2BuchiOperation(paralellProposalAutomata), [, a a b]));
+assert(buchiAccepts(toBuchi(proposalAutomaton), [a a b , a b]));
+assert(!buchiAccepts(toBuchi(proposalAutomaton), [, a a b]));
+assert(buchiAccepts(toBuchi(proposalAutomaton), [a a  , b a]));
+assert(buchiAccepts(toBuchi(proposalBuechiEquivalent), [a a b , a b]));
+assert(!buchiAccepts(toBuchi(proposalBuechiEquivalent), [, a a b]));
+assert(buchiAccepts(toBuchi(proposalBuechiEquivalent), [a a  , b a]));
+assert(buchiAccepts(toBuchi(paralellProposalAutomata), [a a b , a b]));
+assert(!buchiAccepts(toBuchi(paralellProposalAutomata), [, a a b]));

@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            type of state
  */
-public class Buchi2RabinOperation<LETTER, STATE> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class ToRabin<LETTER, STATE> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final IRabinAutomaton<LETTER, STATE> mConversionAutomaton;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mBuchiAutomaton;
@@ -31,7 +31,7 @@ public class Buchi2RabinOperation<LETTER, STATE> extends GeneralOperation<LETTER
 	 * @param automaton
 	 *            Buchi automaton
 	 */
-	public Buchi2RabinOperation(final AutomataLibraryServices services,
+	public ToRabin(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton) {
 		super(services);
 		mConversionAutomaton = new Buchi2RabinAutomaton<>(automaton);

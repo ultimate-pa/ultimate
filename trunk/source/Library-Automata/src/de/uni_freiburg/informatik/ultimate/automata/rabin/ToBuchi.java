@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <CRSF>
  *            state factory with IBlackWhiteState & IEmptyStackState functionality
  */
-public class Rabin2BuchiOperation<LETTER, STATE, CRSF extends IBlackWhiteStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
+public class ToBuchi<LETTER, STATE, CRSF extends IBlackWhiteStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
 		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final Rabin2BuchiAutomaton<LETTER, STATE, CRSF> mConversionAutomaton;
@@ -38,7 +38,7 @@ public class Rabin2BuchiOperation<LETTER, STATE, CRSF extends IBlackWhiteStateFa
 	 *            Rabin automaton
 	 */
 
-	public Rabin2BuchiOperation(final AutomataLibraryServices services, final CRSF factory,
+	public ToBuchi(final AutomataLibraryServices services, final CRSF factory,
 			final IRabinAutomaton<LETTER, STATE> automaton) {
 		super(services);
 		mConversionAutomaton = new Rabin2BuchiAutomaton<>(automaton, factory);

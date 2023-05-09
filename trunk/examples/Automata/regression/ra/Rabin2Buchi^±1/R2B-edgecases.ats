@@ -26,25 +26,25 @@ RabinAutomaton rejectingAutomaton = (
 );
 
 
-assert(!buchiIsEmpty(rabin2BuchiOperation(multiInitialAutomaton)));
-assert(!isEmpty(buchi2RabinOperation(rabin2BuchiOperation(multiInitialAutomaton))));
+assert(!buchiIsEmpty(toBuchi(multiInitialAutomaton)));
+assert(!isEmpty(toRabin(toBuchi(multiInitialAutomaton))));
 
-assert(!buchiIsEmpty(rabin2BuchiOperation(acceptorAutomaton)));
-assert(!isEmpty(buchi2RabinOperation(rabin2BuchiOperation(acceptorAutomaton))));
+assert(!buchiIsEmpty(toBuchi(acceptorAutomaton)));
+assert(!isEmpty(toRabin(toBuchi(acceptorAutomaton))));
 
-assert(buchiIsEmpty(rabin2BuchiOperation(rejectingAutomaton)));
-assert(isEmpty(buchi2RabinOperation(rabin2BuchiOperation(rejectingAutomaton))));
+assert(buchiIsEmpty(toBuchi(rejectingAutomaton)));
+assert(isEmpty(toRabin(toBuchi(rejectingAutomaton))));
 
 
-assert(buchiAccepts(rabin2BuchiOperation(multiInitialAutomaton), [a a b , a b]));
-assert(!buchiAccepts(rabin2BuchiOperation(multiInitialAutomaton), [, a a b]));
-assert(buchiAccepts(rabin2BuchiOperation(multiInitialAutomaton), [a a, b a a a a]));
+assert(buchiAccepts(toBuchi(multiInitialAutomaton), [a a b , a b]));
+assert(!buchiAccepts(toBuchi(multiInitialAutomaton), [, a a b]));
+assert(buchiAccepts(toBuchi(multiInitialAutomaton), [a a, b a a a a]));
 
-assert(!buchiAccepts(rabin2BuchiOperation(rejectingAutomaton), [a a, a b]));
-assert(!buchiAccepts(rabin2BuchiOperation(rejectingAutomaton), [a a a a a a a a a b , a b]));
-assert(!buchiAccepts(rabin2BuchiOperation(rejectingAutomaton), [, a b]));
-assert(!buchiAccepts(rabin2BuchiOperation(rejectingAutomaton), [, b a]));
-assert(!buchiAccepts(rabin2BuchiOperation(rejectingAutomaton), [, a b]));
+assert(!buchiAccepts(toBuchi(rejectingAutomaton), [a a, a b]));
+assert(!buchiAccepts(toBuchi(rejectingAutomaton), [a a a a a a a a a b , a b]));
+assert(!buchiAccepts(toBuchi(rejectingAutomaton), [, a b]));
+assert(!buchiAccepts(toBuchi(rejectingAutomaton), [, b a]));
+assert(!buchiAccepts(toBuchi(rejectingAutomaton), [, a b]));
 
-assert(buchiAccepts(rabin2BuchiOperation(acceptorAutomaton), [a a b , a b]));
-assert(buchiAccepts(rabin2BuchiOperation(acceptorAutomaton), [, a a b]));
+assert(buchiAccepts(toBuchi(acceptorAutomaton), [a a b , a b]));
+assert(buchiAccepts(toBuchi(acceptorAutomaton), [, a a b]));
