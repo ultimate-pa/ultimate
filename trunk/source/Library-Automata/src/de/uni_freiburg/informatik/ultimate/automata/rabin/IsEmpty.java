@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLasso
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.scc.DefaultSccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
@@ -78,10 +79,8 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		if (mEvidence.isEmpty()) {
 			return null;
 		}
-
-		final Collection<STATE> possibleHondaStates = new ArrayList<>(mEvidence);
-		possibleHondaStates.removeIf(x -> !mEagerAutomaton.isAccepting(x));
-		final STATE hondaState = possibleHondaStates.iterator().next();
+		// get one random accepting State from evidence
+		final STATE hondaState = mEvidence.stream().filter(mEagerAutomaton::isAccepting).findAny().get();
 
 		return new NestedLassoWord<>(NestedWord.nestedWord(new Word<>((LETTER[]) getStem(hondaState).toArray())),
 				NestedWord.nestedWord(new Word<>((LETTER[]) getLoop(hondaState).toArray())));
@@ -95,12 +94,12 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 
 		final HashSet<STATE> missingStates = new HashSet<>(mEvidence);
 
-		HashMap<List<LETTER>, HashSet<STATE>> wordStateMap = new HashMap<>();
-		wordStateMap.put(new ArrayList<>(), initialSet);
+		HashRelation<List<LETTER>, STATE> wordStateMap = new HashRelation<>();
+		wordStateMap.addAllPairs(new ArrayList<>(), initialSet);
 
 		while (!isCancellationRequested()) {
 
-			final HashMap<List<LETTER>, HashSet<STATE>> temp = new HashMap<>();
+			final HashRelation<List<LETTER>, STATE> temp = new HashRelation<>();
 			for (final Entry<List<LETTER>, HashSet<STATE>> word : wordStateMap.entrySet()) {
 				for (final STATE state : word.getValue()) {
 					for (final OutgoingInternalTransition<LETTER, STATE> transition : mEagerAutomaton
@@ -114,9 +113,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 							if (succ.equals(hondaState)) {
 								return newWord;
 							}
-
-							temp.computeIfAbsent(newWord, x -> new HashSet<>());
-							temp.get(newWord).add(succ);
+							temp.addPair(newWord, succ);
 						}
 					}
 				}
