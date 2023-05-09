@@ -51,24 +51,21 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	 */
 	public IsEmpty(final AutomataLibraryServices services, final IRabinAutomaton<LETTER, STATE> automaton) {
 		super(services);
-
 		// Reduces the automaton to its traversable core
 		// cuts off non reachable final states
 		mEagerAutomaton = RabinAutomataUtils.eagerAutomaton(automaton);
 
-		final IRabinAutomaton<LETTER, STATE> stemlessAutomaton = getStemlessNonFiniteAutomaton(mEagerAutomaton);
+		final IRabinAutomaton<LETTER, STATE> suffixAutomaton = getSuffixAutomaton(mEagerAutomaton);
 
 		final Set<STATE> init = new HashSet<>();
-		stemlessAutomaton.getInitialStates().forEach(init::add);
+		suffixAutomaton.getInitialStates().forEach(init::add);
 
 		final DefaultSccComputation<STATE> sccComputation =
 				new DefaultSccComputation<>(services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
-						new RabinSuccessorProvider(stemlessAutomaton), stemlessAutomaton.size(), init);
+						new RabinSuccessorProvider(suffixAutomaton), suffixAutomaton.size(), init);
 
 		mEvidence = getEvidence(init, sccComputation.getBalls());
-
 		mResult = mEvidence.isEmpty();
-
 	}
 
 	@Override
@@ -136,7 +133,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	 *            Generates a automaton that starts from the Honda/accepting states of this automaton and removes all
 	 *            finite states
 	 */
-	private RabinAutomaton<LETTER, STATE> getStemlessNonFiniteAutomaton(final RabinAutomaton<LETTER, STATE> automaton) {
+	private RabinAutomaton<LETTER, STATE> getSuffixAutomaton(final RabinAutomaton<LETTER, STATE> automaton) {
 
 		final RabinAutomaton<LETTER, STATE> nonReducedAutomaton =
 				new RabinAutomaton<>(automaton.getAlphabet(), automaton.getStates(), automaton.getAcceptingStates(),
