@@ -39,18 +39,9 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	private final HashSet<STATE> mInitialStates = new HashSet<>();
 	private final HashSet<STATE> mFiniteStates = new HashSet<>();
 	private final HashSet<STATE> mAcceptingStates = new HashSet<>();
-	private final HashMap<STATE, Triple<STATE, STATE, mComponent>> mAutomatonMap = new HashMap<>();
+	private final HashMap<STATE, Triple<STATE, STATE, Integer>> mAutomatonMap = new HashMap<>();
 
-	// This references the components from the Boker construction and maps them to colors for IRainbowStateFactory
-	private enum mComponent {
-		ZERO(1), ONE(2), TWO(3), THREE(4);
-
-		private byte mColor;
-
-		mComponent(final int i) {
-			mColor = (byte) i;
-		}
-	}
+	private final int NUMBER_OF_COMPONENTS = 4;
 
 	/**
 	 * implementation that lazyly constructs the intersection of two Rabin automata
@@ -70,7 +61,7 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 
 		for (final STATE firstInitial : mFirstAutomaton.getInitialStates()) {
 			for (final STATE secondInitial : mSecondAutomaton.getInitialStates()) {
-				mInitialStates.add(getProducedState(firstInitial, secondInitial, mComponent.ZERO));
+				mInitialStates.add(getProducedState(firstInitial, secondInitial, 0));
 			}
 		}
 	}
@@ -84,7 +75,7 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 
 	@Override
 	public int size() {
-		return (mFirstAutomaton.size() * mSecondAutomaton.size()) * mComponent.values().length;
+		return (mFirstAutomaton.size() * mSecondAutomaton.size()) * NUMBER_OF_COMPONENTS;
 	}
 
 	@Override
@@ -128,16 +119,15 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> getSuccessors(final STATE state) {
 
-		final Triple<STATE, STATE, mComponent> originalStateInformation = mAutomatonMap.get(state);
+		final Triple<STATE, STATE, Integer> originalStateInformation = mAutomatonMap.get(state);
 		final STATE originalFirstState = originalStateInformation.getFirst();
 		final STATE originalSecondState = originalStateInformation.getSecond();
-		final mComponent originalComponent = originalStateInformation.getThird();
+		final int originalComponent = originalStateInformation.getThird();
 
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result =
-				getProductSuccessor(originalFirstState, originalSecondState,
-						mComponent.values()[((originalComponent.ordinal() + 1) % mComponent.values().length)]);
+		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = getProductSuccessor(originalFirstState,
+				originalSecondState, (originalComponent + 1) % NUMBER_OF_COMPONENTS);
 
-		if (originalComponent.equals(mComponent.ZERO) || originalComponent.equals(mComponent.TWO)) {
+		if ((originalComponent % 2) == 0) {
 
 			result.addAll(getProductSuccessor(originalFirstState, originalSecondState, originalComponent));
 		}
@@ -148,16 +138,15 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> getSuccessors(final STATE state, final LETTER letter) {
 
-		final Triple<STATE, STATE, mComponent> originalStateInformation = mAutomatonMap.get(state);
+		final Triple<STATE, STATE, Integer> originalStateInformation = mAutomatonMap.get(state);
 		final STATE originalFirstState = originalStateInformation.getFirst();
 		final STATE originalSecondState = originalStateInformation.getSecond();
-		final mComponent originalComponent = originalStateInformation.getThird();
+		final int originalComponent = originalStateInformation.getThird();
 
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result =
-				getProductSuccessor(originalFirstState, originalSecondState,
-						mComponent.values()[((originalComponent.ordinal() + 1) % mComponent.values().length)], letter);
+		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = getProductSuccessor(originalFirstState,
+				originalSecondState, (originalComponent + 1) % NUMBER_OF_COMPONENTS, letter);
 
-		if (originalComponent.equals(mComponent.ZERO) || originalComponent.equals(mComponent.TWO)) {
+		if ((originalComponent % 2) == 0) {
 
 			result.addAll(getProductSuccessor(originalFirstState, originalSecondState, originalComponent, letter));
 		}
@@ -176,12 +165,12 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	 *            a component referencing the subautomaton
 	 * @return a state which uniquely incorporates all parameters
 	 */
-	private STATE getProducedState(final STATE first, final STATE second, final mComponent component) {
+	private STATE getProducedState(final STATE first, final STATE second, final int component) {
 
 		STATE result = mFactory.intersection(first, second);
-		result = mFactory.getColoredState(result, component.mColor);
+		result = mFactory.getColoredState(result, (byte) component);
 		if (!mAutomatonMap.containsKey(result)) {
-			if (component.equals(mComponent.ONE) && mFirstAutomaton.isAccepting(first)) {
+			if ((component == 1) && mFirstAutomaton.isAccepting(first)) {
 				mAcceptingStates.add(result);
 			}
 
@@ -189,8 +178,8 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 			// Check if in B'
 			boolean isBad = mFirstAutomaton.isFinite(first) || mSecondAutomaton.isFinite(second);
 			// if false, check if in B"
-			isBad = isBad || (component.equals(mComponent.ONE) && !mFirstAutomaton.isAccepting(first));
-			isBad = isBad || (component.equals(mComponent.THREE) && !mSecondAutomaton.isAccepting(second));
+			isBad = isBad || ((component == 1) && !mFirstAutomaton.isAccepting(first));
+			isBad = isBad || ((component == 3) && !mSecondAutomaton.isAccepting(second));
 			if (isBad) {
 				mFiniteStates.add(result);
 			}
@@ -202,7 +191,7 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	}
 
 	private ArrayList<OutgoingInternalTransition<LETTER, STATE>> getProductSuccessor(final STATE first,
-			final STATE second, final mComponent successorComponent) {
+			final STATE second, final int successorComponent) {
 		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
 
 		for (final OutgoingInternalTransition<LETTER, STATE> transitionFirst : mFirstAutomaton.getSuccessors(first)) {
@@ -218,7 +207,7 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	}
 
 	private ArrayList<OutgoingInternalTransition<LETTER, STATE>> getProductSuccessor(final STATE first,
-			final STATE second, final mComponent successorComponent, final LETTER letter) {
+			final STATE second, final int successorComponent, final LETTER letter) {
 		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
 
 		for (final OutgoingInternalTransition<LETTER, STATE> transitionFirst : mFirstAutomaton.getSuccessors(first,
