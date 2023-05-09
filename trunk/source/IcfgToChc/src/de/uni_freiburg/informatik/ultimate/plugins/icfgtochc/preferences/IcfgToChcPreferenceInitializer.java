@@ -64,6 +64,11 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String DESC_THREADMODULAR_LEVEL = "The level at which thread-modular proofs should be computed";
 	public static final int DEF_THREADMODULAR_LEVEL = 2;
 
+	public static final String LABEL_EXPLICIT_LOCATIONS = "Encode control locations explicitly";
+	public static final String DESC_EXPLICIT_LOCATIONS = "Control locations can be encoded symbolically "
+			+ "(as CHC variables), or explicitly (by using different predicate symbols).";
+	public static final boolean DEF_EXPLICIT_LOCATIONS = false;
+
 	public static final String LABEL_LIPTON_REDUCTION = "Apply Lipton reduction";
 	public static final String DESC_LIPTON_REDUCTION = "If enabled, Lipton reduction is applied to simplify thread "
 			+ "templates, before a thread-modular proof is computed.";
@@ -73,6 +78,11 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String DESC_SLEEP_SET_REDUCTION = "If enabled, symbolic sleep set reduction is applied to the "
 			+ "program. This allows for more programs to be proven correct.";
 	public static final boolean DEF_SLEEP_SET_REDUCTION = true;
+
+	public static final String LABEL_EXPLICIT_SLEEP = "Encode sleep sets explicitly";
+	public static final String DESC_EXPLICIT_SLEEP = "Sleep sets can be encoded symbolically (as CHC variables), "
+			+ "or explicitly (by using different predicate symbols).";
+	public static final boolean DEF_EXPLICIT_SLEEP = false;
 
 	/**
 	 * Default constructor.
@@ -93,10 +103,14 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 						SpecMode.values()),
 				new UltimatePreferenceItem<>(LABEL_THREADMODULAR_LEVEL, DEF_THREADMODULAR_LEVEL,
 						DESC_THREADMODULAR_LEVEL, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_EXPLICIT_LOCATIONS, DESC_EXPLICIT_LOCATIONS, DESC_EXPLICIT_LOCATIONS,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_LIPTON_REDUCTION, DEF_LIPTON_REDUCTION, DESC_LIPTON_REDUCTION,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SLEEP_SET_REDUCTION, DEF_SLEEP_SET_REDUCTION,
-						DESC_SLEEP_SET_REDUCTION, PreferenceType.Boolean) };
+						DESC_SLEEP_SET_REDUCTION, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_EXPLICIT_SLEEP, DEF_EXPLICIT_SLEEP, DESC_EXPLICIT_SLEEP,
+						PreferenceType.Boolean) };
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {

@@ -56,11 +56,19 @@ public class IcfgToChcPreferences {
 		return mPrefs.getInt(IcfgToChcPreferenceInitializer.LABEL_THREADMODULAR_LEVEL);
 	}
 
+	public boolean explicitLocations() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_EXPLICIT_LOCATIONS);
+	}
+
 	public boolean useLiptonReduction() {
 		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_LIPTON_REDUCTION);
 	}
 
 	public boolean useSleepSets() {
 		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_SLEEP_SET_REDUCTION);
+	}
+
+	public boolean explicitSleep() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_EXPLICIT_SLEEP);
 	}
 }
