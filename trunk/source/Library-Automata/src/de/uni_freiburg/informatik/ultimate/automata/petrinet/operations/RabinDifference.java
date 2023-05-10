@@ -18,14 +18,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * Eager difference of Rabin-Petri-net minuend and Buchi automata subtrahend. Buchi automata must be complete.
  *
  */
-public class DifferenceRabin<LETTER, PLACE>
+public class RabinDifference<LETTER, PLACE>
 		extends GeneralOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 
 	private final IRabinPetriNet<LETTER, PLACE> mPetriNet;
 	private final INestedWordAutomaton<LETTER, PLACE> mBuchiAutomata;
 	private final BoundedRabinPetriNet<LETTER, PLACE> mDifferenceNet;
 
-	public DifferenceRabin(final IRabinPetriNet<LETTER, PLACE> petriNet,
+	public RabinDifference(final IRabinPetriNet<LETTER, PLACE> petriNet,
 			final INestedWordAutomaton<LETTER, PLACE> buchiAutomata, final AutomataLibraryServices services) {
 		super(services);
 		mPetriNet = petriNet;
