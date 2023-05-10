@@ -16,13 +16,22 @@ public class HcLocationVar implements IHcThreadSpecificVar {
 	private final Sort mSort;
 
 	public HcLocationVar(final ThreadInstance instance, final Script script) {
+		this(instance, SmtSortUtils.getIntSort(script));
+	}
+
+	private HcLocationVar(final ThreadInstance instance, final Sort sort) {
 		mInstance = instance;
-		mSort = SmtSortUtils.getIntSort(script);
+		mSort = sort;
 	}
 
 	@Override
 	public ThreadInstance getThreadInstance() {
 		return mInstance;
+	}
+
+	@Override
+	public IHcThreadSpecificVar forInstance(final int instanceId) {
+		return new HcLocationVar(new ThreadInstance(mInstance.getTemplateName(), instanceId), mSort);
 	}
 
 	@Override

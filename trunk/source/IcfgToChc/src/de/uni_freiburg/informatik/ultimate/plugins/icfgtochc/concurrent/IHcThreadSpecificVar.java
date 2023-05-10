@@ -28,4 +28,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
 public interface IHcThreadSpecificVar extends IHcReplacementVar {
 	ThreadInstance getThreadInstance();
+
+	/**
+	 * Retrieves the corresponding variable for the given thread instance ID.
+	 *
+	 * @param instanceId
+	 *            the instance number
+	 */
+	IHcThreadSpecificVar forInstance(int instanceId);
 }

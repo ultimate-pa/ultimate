@@ -40,14 +40,13 @@ public class HcSleepVar implements IHcThreadSpecificVar, IHcFiniteReplacementVar
 	private final Set<Term> mValues;
 
 	public HcSleepVar(final ThreadInstance instance, final Script script) {
-		mInstance = instance;
-		mSort = SmtSortUtils.getBoolSort(script);
-		mValues = Set.of(script.term("true"), script.term("false"));
+		this(instance, SmtSortUtils.getBoolSort(script), Set.of(script.term("true"), script.term("false")));
 	}
 
-	@Override
-	public Sort getSort() {
-		return mSort;
+	private HcSleepVar(final ThreadInstance instance, final Sort sort, final Set<Term> values) {
+		mInstance = instance;
+		mSort = sort;
+		mValues = values;
 	}
 
 	@Override
@@ -56,8 +55,19 @@ public class HcSleepVar implements IHcThreadSpecificVar, IHcFiniteReplacementVar
 	}
 
 	@Override
+	public IHcThreadSpecificVar forInstance(final int instanceId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
 	public Set<Term> getAllValues() {
 		return mValues;
+	}
+
+	@Override
+	public Sort getSort() {
+		return mSort;
 	}
 
 	@Override

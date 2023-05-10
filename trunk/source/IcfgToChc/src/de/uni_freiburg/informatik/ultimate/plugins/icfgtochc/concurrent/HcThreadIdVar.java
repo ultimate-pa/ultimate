@@ -37,18 +37,27 @@ public class HcThreadIdVar implements IHcThreadSpecificVar {
 	private final ThreadInstance mInstance;
 
 	public HcThreadIdVar(final ThreadInstance instance, final Script script) {
-		mInstance = instance;
-		mSort = SmtSortUtils.getIntSort(script);
+		this(instance, SmtSortUtils.getIntSort(script));
 	}
 
-	@Override
-	public Sort getSort() {
-		return mSort;
+	private HcThreadIdVar(final ThreadInstance instance, final Sort sort) {
+		mInstance = instance;
+		mSort = sort;
 	}
 
 	@Override
 	public ThreadInstance getThreadInstance() {
 		return mInstance;
+	}
+
+	@Override
+	public IHcThreadSpecificVar forInstance(final int instanceId) {
+		return new HcThreadIdVar(new ThreadInstance(mInstance.getTemplateName(), instanceId), mSort);
+	}
+
+	@Override
+	public Sort getSort() {
+		return mSort;
 	}
 
 	@Override

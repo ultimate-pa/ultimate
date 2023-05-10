@@ -30,6 +30,11 @@ public class HcLocalVar implements IHcThreadSpecificVar {
 	}
 
 	@Override
+	public IHcThreadSpecificVar forInstance(final int instanceId) {
+		return new HcLocalVar(mVariable, new ThreadInstance(mInstance.getTemplateName(), instanceId));
+	}
+
+	@Override
 	public Sort getSort() {
 		return mVariable.getSort();
 	}
