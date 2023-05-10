@@ -17,7 +17,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Given stem and loop events of supposed accepting lasso word, if valid, {@link PetriNetLassoRun} is built.
@@ -72,79 +71,60 @@ public class Events2PetriNetLassoRunBuchi<LETTER, PLACE> {
 
 		final Marking<PLACE> startMarking = new Marking<>(ImmutableSet.of(mUnfolding.getNet().getInitialPlaces()));
 
-		final var pair = constructFeasibleLetterAndMarkingSequence(startMarking, stemTransitions);
-		final List<LETTER> stemLetters = pair.getFirst();
-		final List<Marking<PLACE>> sequenceOfStemMarkings = pair.getSecond();
+		final PetriNetRun<LETTER, PLACE> stemRun = constructRun(startMarking, stemTransitions);
+		final PetriNetRun<LETTER, PLACE> loopRun =
+				constructRun(stemRun.getMarking(stemRun.getLength() - 1), loopTransitions);
 
-		final var pair2 = constructFeasibleLetterAndMarkingSequence(
-				sequenceOfStemMarkings.get(sequenceOfStemMarkings.size() - 1), loopTransitions);
-		final List<LETTER> loopLetters = pair2.getFirst();
-		final List<Marking<PLACE>> sequenceOfLassoMarkings = pair2.getSecond();
-
-		return createAndCheckLassoRun(stemLetters, sequenceOfStemMarkings, stemTransitions, loopLetters,
-				sequenceOfLassoMarkings, loopTransitions);
+		return createAndCheckLassoRun(stemRun, loopRun);
 	}
 
-	private final Pair<List<LETTER>, List<Marking<PLACE>>> constructFeasibleLetterAndMarkingSequence(
-			Marking<PLACE> startMarking, final List<Transition<LETTER, PLACE>> loopTransitions)
-			throws PetriNetNot1SafeException {
+	@SuppressWarnings("unchecked")
+	private final PetriNetRun<LETTER, PLACE> constructRun(final Marking<PLACE> initialMarking,
+			final List<Transition<LETTER, PLACE>> transitions) throws PetriNetNot1SafeException {
 		// TODO: Check this method for theroetical correctness
 		// Since some number of events might be in concurrency the sorting might have not returned the correct
 		// order of events. We thus juggle non enabled events in this stack always trying if they are enabled
 		// in the next iteration.
-		final List<LETTER> loopLetters = new ArrayList<>();
-		final List<Marking<PLACE>> sequenceOfLassoMarkings = new ArrayList<>();
+		final List<LETTER> word = new ArrayList<>();
+		final List<Marking<PLACE>> markings = new ArrayList<>();
+		final List<Transition<LETTER, PLACE>> resultTransitions = new ArrayList<>();
 		final Deque<Transition<LETTER, PLACE>> waitingLoopTransitionStack = new ArrayDeque<>();
-		sequenceOfLassoMarkings.add(startMarking);
-		for (final Transition<LETTER, PLACE> transition : loopTransitions) {
+		markings.add(initialMarking);
+		Marking<PLACE> currentMarking = initialMarking;
+		for (final Transition<LETTER, PLACE> transition : transitions) {
 			for (int i = 0; i < waitingLoopTransitionStack.size(); i++) {
 				final var waitingTransition = waitingLoopTransitionStack.pop();
-				if (startMarking.isTransitionEnabled(waitingTransition)) {
-					loopLetters.add(waitingTransition.getSymbol());
-					startMarking = startMarking.fireTransition(waitingTransition);
-					sequenceOfLassoMarkings.add(startMarking);
+				if (currentMarking.isTransitionEnabled(waitingTransition)) {
+					word.add(waitingTransition.getSymbol());
+					currentMarking = currentMarking.fireTransition(waitingTransition);
+					markings.add(currentMarking);
+					resultTransitions.add(waitingTransition);
 				} else {
 					waitingLoopTransitionStack.addFirst(transition);
 				}
 			}
 
-			if (!startMarking.isTransitionEnabled(transition)) {
+			if (!currentMarking.isTransitionEnabled(transition)) {
 				waitingLoopTransitionStack.push(transition);
 				continue;
 			}
-			loopLetters.add(transition.getSymbol());
-			startMarking = startMarking.fireTransition(transition);
-			sequenceOfLassoMarkings.add(startMarking);
+			word.add(transition.getSymbol());
+			currentMarking = currentMarking.fireTransition(transition);
+			markings.add(currentMarking);
+			resultTransitions.add(transition);
 		}
-
-		return new Pair<>(loopLetters, sequenceOfLassoMarkings);
+		return new PetriNetRun<>(markings, new Word<>((LETTER[]) (word.toArray())), resultTransitions);
 	}
 
-	private final boolean createAndCheckLassoRun(final List<LETTER> stemLetters,
-			final List<Marking<PLACE>> sequenceOfStemMarkings, final List<Transition<LETTER, PLACE>> stemTransitions,
-			final List<LETTER> loopLetters, final List<Marking<PLACE>> sequenceOfLassoMarkings,
-			final List<Transition<LETTER, PLACE>> loopTransitions) throws PetriNetNot1SafeException {
-		@SuppressWarnings("unchecked")
-		final LETTER[] stem = (LETTER[]) stemLetters.toArray();
-		final Word<LETTER> stemWord = new Word<>(stem);
-		@SuppressWarnings("unchecked")
-		final LETTER[] loop = (LETTER[]) loopLetters.toArray();
-		final Word<LETTER> loopWord = new Word<>(loop);
-
-		final NestedWord<LETTER> nestedstemWord = NestedWord.nestedWord(stemWord);
-		final NestedWord<LETTER> nestedloopWord = NestedWord.nestedWord(loopWord);
-
-		final NestedLassoWord<LETTER> nestedLassoWord = new NestedLassoWord<>(nestedstemWord, nestedloopWord);
-		final PetriNetRun<LETTER, PLACE> stemRun =
-				new PetriNetRun<>(sequenceOfStemMarkings, nestedstemWord, stemTransitions);
-		final PetriNetRun<LETTER, PLACE> loopRun =
-				new PetriNetRun<>(sequenceOfLassoMarkings, nestedloopWord, loopTransitions);
+	private final boolean createAndCheckLassoRun(final PetriNetRun<LETTER, PLACE> stemRun,
+			final PetriNetRun<LETTER, PLACE> loopRun) throws PetriNetNot1SafeException {
+		final NestedLassoWord<LETTER> nestedLassoWord = new NestedLassoWord<>(NestedWord.nestedWord(stemRun.getWord()),
+				NestedWord.nestedWord(loopRun.getWord()));
 		final PetriNetLassoRun<LETTER, PLACE> lassoRun = new PetriNetLassoRun<>(stemRun, loopRun);
-		// this BuchiAccepts should not be needed, but acts as a last correctness check for unknown edge cases
+		// TODO: this BuchiAccepts should not be needed, but acts as a last correctness check for unknown edge cases
 		final BuchiAccepts<LETTER, PLACE> accepts = new BuchiAccepts<>(mServices,
 				(IPetriNetTransitionProvider<LETTER, PLACE>) mUnfolding.getNet(), nestedLassoWord);
-		final boolean accpted = accepts.getResult();
-		if (accpted) {
+		if (accepts.getResult()) {
 			mLassoRun = lassoRun;
 			return true;
 		}
