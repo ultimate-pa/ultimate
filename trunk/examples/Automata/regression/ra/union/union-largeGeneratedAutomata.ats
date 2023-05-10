@@ -19,3 +19,6 @@ RabinAutomaton automaton2 = (
 assert(isEmpty(union(automaton1, automaton1)));
 assert(!isEmpty(union(automaton2, automaton2)));
 assert(!isEmpty(union(automaton1, automaton2)));
+
+assert(accepts(union(automaton1, automaton2), [t3 t4, t3 t3 t5 t2 t3]));
+assert(accepts(union(automaton2, automaton1), [t3 t4, t3 t3 t5 t2 t3]));
