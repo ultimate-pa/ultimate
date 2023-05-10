@@ -173,7 +173,8 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 
 		// update sleep variables
 		for (final var instance : mInstances) {
-			updateSleepNonInterference(clause, transition, interferingId, instance);
+			final var prefOrder = symbolicPreferenceOrderConstraint(clause, instance, interferingThread);
+			updateSleep(clause, transition, instance, prefOrder);
 		}
 
 		return clause;
@@ -268,15 +269,6 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 			// We resolve the preference order symbolically, using ID variables.
 			prefOrder = symbolicPreferenceOrderConstraint(clause, current, primaryActiveThread);
 		}
-
-		updateSleep(clause, transition, current, prefOrder);
-	}
-
-	// update sleep variable depending on commutativity and preference order
-	private void updateSleepNonInterference(final HornClauseBuilder clause, final IIcfgTransition<?> transition,
-			final HcThreadIdVar interferingId, final ThreadInstance current) {
-		// TODO if breaking symmetry, do this statically!
-		final var prefOrder = symbolicPreferenceOrderConstraint(clause, current, interferingId.getThreadInstance());
 
 		updateSleep(clause, transition, current, prefOrder);
 	}
