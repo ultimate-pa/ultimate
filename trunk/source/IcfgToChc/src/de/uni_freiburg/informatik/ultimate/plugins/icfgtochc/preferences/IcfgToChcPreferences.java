@@ -69,7 +69,7 @@ public class IcfgToChcPreferences {
 	}
 
 	public boolean breakPreferenceOrderSymmetry() {
-		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.DESC_BREAK_PREFORDER_SYMMETRY);
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_BREAK_PREFORDER_SYMMETRY);
 	}
 
 	public boolean explicitSleep() {
