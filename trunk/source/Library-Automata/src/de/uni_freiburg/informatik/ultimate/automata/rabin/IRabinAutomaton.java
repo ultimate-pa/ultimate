@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  *            state
  */
 public interface IRabinAutomaton<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
-
 	/**
 	 * @return All initial states of the automaton.
 	 */
@@ -93,5 +92,4 @@ public interface IRabinAutomaton<LETTER, STATE> extends IAutomaton<LETTER, STATE
 	 * @return resulting outgoing transitions for these parameters
 	 */
 	Iterable<OutgoingInternalTransition<LETTER, STATE>> getSuccessors(final STATE state, final LETTER letter);
-
 }

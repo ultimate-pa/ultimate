@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class Intersection<LETTER, STATE, CRSF extends IRainbowStateFactory<STATE> & IIntersectionStateFactory<STATE>>
 		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
-
 	private final IRabinAutomaton<LETTER, STATE> mResult;
 	private final IRabinAutomaton<LETTER, STATE> mFirst;
 	private final IRabinAutomaton<LETTER, STATE> mSecond;
@@ -74,7 +73,6 @@ public class Intersection<LETTER, STATE, CRSF extends IRainbowStateFactory<STATE
 
 	@Override
 	public IRabinAutomaton<LETTER, STATE> getResult() {
-
 		return mResult;
 	}
 
@@ -86,7 +84,6 @@ public class Intersection<LETTER, STATE, CRSF extends IRainbowStateFactory<STATE
 			check = check && (new Accepts<>(mServices, mFirst, isEmpty.getCounterexample()).getResult());
 			check = check && (new Accepts<>(mServices, mSecond, isEmpty.getCounterexample()).getResult());
 		}
-
 		return check;
 	}
 }

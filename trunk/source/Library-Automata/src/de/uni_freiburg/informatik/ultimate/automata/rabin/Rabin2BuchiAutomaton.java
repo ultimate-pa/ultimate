@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
 		implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
-
 	private final IRabinAutomaton<LETTER, STATE> mRabinAutomaton;
 	// black states ~ nonFinite, white states ~ Finite
 	private final FACTORY mFiniteOrNonFiniteStateFactory;
@@ -79,7 +78,6 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 			final FACTORY finiteOrNonFiniteStateFactory) {
 		mRabinAutomaton = automaton;
 		mFiniteOrNonFiniteStateFactory = finiteOrNonFiniteStateFactory;
-
 		for (final STATE init : automaton.getInitialStates()) {
 			mInitialSet.add(getFiniteVariant(init));
 			final STATE nonFiniteCandidate = getNonFiniteVariant(init);

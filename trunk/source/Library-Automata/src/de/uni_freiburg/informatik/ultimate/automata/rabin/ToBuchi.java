@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class ToBuchi<LETTER, STATE, CRSF extends IBlackWhiteStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
 		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
-
 	private final Rabin2BuchiAutomaton<LETTER, STATE, CRSF> mConversionAutomaton;
 	private final IRabinAutomaton<LETTER, STATE> mRabinAutomaton;
 
@@ -74,13 +73,11 @@ public class ToBuchi<LETTER, STATE, CRSF extends IBlackWhiteStateFactory<STATE> 
 
 	@Override
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getResult() {
-
 		return mConversionAutomaton;
 	}
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
-
 		return (new IsEmpty<>(mServices, mRabinAutomaton)
 				.getResult() == new BuchiIsEmpty<>(mServices, mConversionAutomaton).getResult());
 	}

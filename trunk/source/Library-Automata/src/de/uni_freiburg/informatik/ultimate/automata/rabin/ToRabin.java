@@ -68,13 +68,11 @@ public class ToRabin<LETTER, STATE> extends GeneralOperation<LETTER, STATE, ISta
 
 	@Override
 	public IRabinAutomaton<LETTER, STATE> getResult() {
-
 		return mConversionAutomaton;
 	}
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
-
 		return (new IsEmpty<>(mServices, mConversionAutomaton)
 				.getResult() == new BuchiIsEmpty<>(mServices, mBuchiAutomaton).getResult());
 	}

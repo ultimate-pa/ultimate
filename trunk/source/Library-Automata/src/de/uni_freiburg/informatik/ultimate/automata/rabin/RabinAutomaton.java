@@ -158,12 +158,9 @@ public class RabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTER, ST
 		if (mTransitions.get(state, letter) == null) {
 			return Set.of();
 		}
-
 		final Set<OutgoingInternalTransition<LETTER, STATE>> result = new HashSet<>();
 		for (final STATE succ : mTransitions.get(state, letter)) {
-
 			result.add(new OutgoingInternalTransition<>(letter, succ));
-
 		}
 		return result;
 	}

@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public class RabinAutomataUtils {
-
 	/**
 	 * Removes all states that are not reachable by initialization or traversal of automaton
 	 *
@@ -72,7 +71,6 @@ public class RabinAutomataUtils {
 	 */
 	public static <LETTER, STATE> RabinAutomaton<LETTER, STATE>
 			eagerAutomaton(final IRabinAutomaton<LETTER, STATE> automaton, final Set<STATE> toRemove) {
-
 		final Set<STATE> initialStates = new HashSet<>();
 		final Set<STATE> states = new HashSet<>();
 		final NestedMap2<STATE, LETTER, Set<STATE>> transitions = new NestedMap2<>();
@@ -85,7 +83,6 @@ public class RabinAutomataUtils {
 
 		final ArrayDeque<STATE> currentStateSet = new ArrayDeque<>();
 		currentStateSet.addAll(initialStates);
-
 		while (!currentStateSet.isEmpty()) {
 			final STATE currentState = currentStateSet.pop();
 			states.add(currentState);
@@ -94,10 +91,8 @@ public class RabinAutomataUtils {
 			} else if (automaton.isAccepting(currentState)) {
 				acceptingStates.add(currentState);
 			}
-
 			for (final OutgoingInternalTransition<LETTER, STATE> transition : automaton.getSuccessors(currentState)) {
 				if (!toRemove.contains(transition.getSucc())) {
-
 					final LETTER letter = transition.getLetter();
 					alphabet.add(letter);
 					if (!transitions.containsKey(currentState, letter)) {
@@ -142,16 +137,13 @@ public class RabinAutomataUtils {
 		final Iterator<Pair<Set<STATE>, Set<STATE>>> remainingAcceptanceConditions = acceptingConditions.iterator();
 
 		Pair<Set<STATE>, Set<STATE>> temp = remainingAcceptanceConditions.next();
-
 		IRabinAutomaton<LETTER, STATE> result =
 				new RabinAutomaton<>(alphabet, states, initialStates, temp.getFirst(), temp.getSecond(), transitions);
-
 		while (remainingAcceptanceConditions.hasNext()) {
 			temp = remainingAcceptanceConditions.next();
 			result = new RabinUnion<>(result, new RabinAutomaton<>(alphabet, states, initialStates, temp.getFirst(),
 					temp.getSecond(), transitions), factory);
 		}
-
 		return result;
 	}
 }

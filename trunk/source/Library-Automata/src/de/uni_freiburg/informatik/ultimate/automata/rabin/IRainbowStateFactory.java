@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            type of state
  */
 public interface IRainbowStateFactory<STATE> extends IStateFactory<STATE> {
-
 	/**
 	 * Modifies state so that each value of color results in a unique coloredState being returned
 	 *

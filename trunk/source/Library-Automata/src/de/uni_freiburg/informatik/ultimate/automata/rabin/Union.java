@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class Union<LETTER, STATE, CRSF extends IBlackWhiteStateFactory<STATE>>
 		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
-
 	private final IRabinAutomaton<LETTER, STATE> mResult;
 	private final IRabinAutomaton<LETTER, STATE> mFirst;
 	private final IRabinAutomaton<LETTER, STATE> mSecond;
@@ -74,13 +73,11 @@ public class Union<LETTER, STATE, CRSF extends IBlackWhiteStateFactory<STATE>>
 
 	@Override
 	public IRabinAutomaton<LETTER, STATE> getResult() {
-
 		return mResult;
 	}
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
-
 		return (new IsEmpty<>(mServices, mResult).getResult() == (new IsEmpty<>(mServices, mFirst).getResult()
 				&& new IsEmpty<>(mServices, mSecond).getResult()));
 	}

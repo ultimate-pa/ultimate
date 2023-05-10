@@ -47,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * 16-21 November 2018 (G. Barthe, G. Sutcliffe, and M. Veanes, eds.), vol. 57 of EPiC Series in Computing, pp. 143–163,
  * EasyChair, 2018. !The construction is found page 7, Theorem 1!
  *
- * This class reduces the reachable state size by enforcing the acceptance of the first automaton being always tested
- * before that of the second. Runtime can be different for switching the automata to be intersected
+ * This class reduces the reachable state size by enforcing the acceptance of the first automaton before transitioning
+ * to another component. Runtime can be different for switching the automata parameters.
  *
  * @author Philipp Müller (pm251@venus.uni-freiburg.de)
  *

@@ -55,7 +55,7 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	private final boolean mResult;
 
 	/**
-	 * Checks acceptance of a Word split into stem and loop on IRabinAutomaton
+	 * Checks acceptance of a NestedLassoWord on IRabinAutomaton
 	 *
 	 * @param services
 	 *            services
@@ -77,7 +77,7 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	}
 
 	/**
-	 * Checks acceptance of a NestedLassoWord on IRabinAutomaton
+	 * Checks acceptance of a Word split into stem and loop on IRabinAutomaton
 	 *
 	 * @param services
 	 *            services

@@ -178,8 +178,7 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 		final IRabinAutomaton<LETTER, STATE> subautomaton = getSubautomaton(isFirst);
 		if (subautomaton.isFinite(originalState)) {
 			mFiniteStates.add(newState);
-		}
-		if (subautomaton.isAccepting(originalState)) {
+		} else if (subautomaton.isAccepting(originalState)) {
 			mAcceptingStates.add(newState);
 		}
 		mAutomatonMap.put(newState, new Pair<>(isFirst, originalState));
