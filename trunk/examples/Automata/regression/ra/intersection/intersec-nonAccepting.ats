@@ -17,6 +17,7 @@ RabinAutomaton rejectingAutomaton = (
 );
 
 assert(isEmpty(intersection(automaton1, rejectingAutomaton)));
+assert(isEmpty(intersection(rejectingAutomaton, automaton1)));
 
 assert(!accepts(intersection(rejectingAutomaton, automaton1), [t1 t1, t1 t2]));
 assert(!accepts(intersection(automaton1, rejectingAutomaton), [t1 t1 t1 t1 t1 t1 t1 t1 t1 t2 , t1 t2]));

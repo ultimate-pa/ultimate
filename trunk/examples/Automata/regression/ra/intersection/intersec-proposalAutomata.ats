@@ -27,7 +27,12 @@ RabinAutomaton paralellProposalAutomata = (
 
 
 assert(!isEmpty(intersection(intersection(proposalAutomaton,proposalBuechiEquivalent), paralellProposalAutomata)));
+assert(!isEmpty(intersection(intersection(proposalBuechiEquivalent, proposalAutomaton), paralellProposalAutomata)));
 
 assert(accepts(intersection(intersection(proposalAutomaton,proposalBuechiEquivalent), paralellProposalAutomata), [a a b , a b]));
 assert(!accepts(intersection(intersection(proposalAutomaton,proposalBuechiEquivalent), paralellProposalAutomata), [, a a b]));
 assert(accepts(intersection(intersection(proposalAutomaton,proposalBuechiEquivalent), paralellProposalAutomata), [a a  , b a]));
+
+assert(accepts(intersection(intersection(proposalBuechiEquivalent, proposalAutomaton), paralellProposalAutomata), [a a b , a b]));
+assert(!accepts(intersection(intersection(proposalBuechiEquivalent, proposalAutomaton), paralellProposalAutomata), [, a a b]));
+assert(accepts(intersection(intersection(proposalBuechiEquivalent, proposalAutomaton), paralellProposalAutomata), [a a  , b a]));

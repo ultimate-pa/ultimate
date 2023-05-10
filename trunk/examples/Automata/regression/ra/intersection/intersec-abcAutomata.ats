@@ -28,6 +28,9 @@ RabinAutomaton abc4Automaton = (
 assert(!isEmpty(intersection(abcAutomaton, abc2Automaton)));
 assert(!isEmpty(intersection(abc4Automaton, abcAutomaton)));
 assert(!isEmpty(intersection(abc4Automaton, abc2Automaton)));
+assert(!isEmpty(intersection(abc2Automaton, abc4Automaton)));
+assert(!isEmpty(intersection(abc2Automaton, abcAutomaton)));
+assert(!isEmpty(intersection(abcAutomaton, abc4Automaton)));
 
 assert(!accepts(intersection(abc4Automaton, abc2Automaton), [a , b c a]));
 assert(!accepts(intersection(abc4Automaton, abc2Automaton), [c, b c a]));
