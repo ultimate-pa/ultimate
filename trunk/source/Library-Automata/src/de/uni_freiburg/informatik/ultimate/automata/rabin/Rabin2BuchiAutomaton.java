@@ -73,13 +73,11 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 
 	@Override
 	public Iterable<STATE> getInitialStates() {
-
 		return mInitialSet;
 	}
 
 	@Override
 	public boolean isInitial(final STATE state) {
-
 		return mInitialSet.contains(state);
 	}
 
@@ -93,7 +91,6 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 	 */
 	@Override
 	public boolean isFinal(final STATE state) {
-
 		return mAcceptingSet.contains(state);
 	}
 
@@ -105,70 +102,50 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 
 	@Override
 	public String sizeInformation() {
-		return "Number of distinct computed states: " + size();
+		return "Number of distinct computed states so far: " + size();
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
 			final LETTER letter) {
-
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
-
-		final STATE rabinState = mBuchi2Rabin.get(state);
-		if (mNonFiniteSet.contains(state)) {
-
-			for (final OutgoingInternalTransition<LETTER, STATE> transition : mRabinAutomaton.getSuccessors(rabinState,
-					letter)) {
-
-				final STATE succ = getNonFiniteVariant(transition.getSucc());
-				if (succ != null) {
-					result.add(new OutgoingInternalTransition<>(letter, succ));
-				}
-			}
-
-			return result;
-		}
-
-		for (final OutgoingInternalTransition<LETTER, STATE> transition : mRabinAutomaton.getSuccessors(rabinState,
-				letter)) {
-			final STATE rabinSucc = transition.getSucc();
-			result.add(new OutgoingInternalTransition<>(letter, getFiniteVariant(rabinSucc)));
-			final STATE nonFiniteVariant = getNonFiniteVariant(rabinSucc);
-
-			if (nonFiniteVariant != null) {
-				if (isFinal(nonFiniteVariant)) {
-					result.add(new OutgoingInternalTransition<>(letter, nonFiniteVariant));
-				}
-			}
-		}
-
-		return result;
+		return getSucessors(state, mRabinAutomaton.getSuccessors(mBuchi2Rabin.get(state), letter));
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
+		return getSucessors(state, mRabinAutomaton.getSuccessors(mBuchi2Rabin.get(state)));
+	}
 
+	/**
+	 * a helper method for internalSucessors
+	 *
+	 * @param buchiState
+	 *            the state which is the root for all transitions in the Buchi automaton
+	 * @param rabinTransitions
+	 *            the transitions for the parent of this buchiState in the Rabin automaton which should be considered
+	 * @return the derived transitions for the Buchi automaton
+	 */
+	private Iterable<OutgoingInternalTransition<LETTER, STATE>> getSucessors(final STATE buchiState,
+			final Iterable<OutgoingInternalTransition<LETTER, STATE>> rabinTransitions) {
 		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
-
-		final STATE rabinState = mBuchi2Rabin.get(state);
-		if (mNonFiniteSet.contains(state)) {
-			for (final OutgoingInternalTransition<LETTER, STATE> transition : mRabinAutomaton
-					.getSuccessors(rabinState)) {
+		// if the state is non-finite it can only have nonFinite successors
+		if (mNonFiniteSet.contains(buchiState)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> transition : rabinTransitions) {
 				final STATE succ = getNonFiniteVariant(transition.getSucc());
 				if (succ != null) {
 					result.add(new OutgoingInternalTransition<>(transition.getLetter(), succ));
 				}
 			}
-
 			return result;
 		}
-
-		for (final OutgoingInternalTransition<LETTER, STATE> transition : mRabinAutomaton.getSuccessors(rabinState)) {
+		for (final OutgoingInternalTransition<LETTER, STATE> transition : rabinTransitions) {
 			final STATE rabinSucc = transition.getSucc();
 			result.add(new OutgoingInternalTransition<>(transition.getLetter(), getFiniteVariant(rabinSucc)));
-			final STATE nonFiniteVariant = getNonFiniteVariant(rabinSucc);
 
+			final STATE nonFiniteVariant = getNonFiniteVariant(rabinSucc);
 			if (nonFiniteVariant != null) {
+				// we only consider accepting states as entries into the non-finite subautomaton, this removes
+				// cul-de-sac paths without accepting components from being computed without necessity
 				if (isFinal(nonFiniteVariant)) {
 					result.add(new OutgoingInternalTransition<>(transition.getLetter(), nonFiniteVariant));
 				}
@@ -190,15 +167,11 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 	 * @return the finite variant in the here computed Buchi automaton
 	 */
 	private STATE getFiniteVariant(final STATE rabinState) {
-
 		final STATE finiteVariant = mFiniteOrNonFiniteStateFactory.getWhiteContent(rabinState);
-
 		if (mBuchi2Rabin.containsKey(finiteVariant)) {
-
 			return finiteVariant;
 		}
 		mBuchi2Rabin.put(finiteVariant, rabinState);
-
 		return finiteVariant;
 	}
 
@@ -210,18 +183,13 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 	 * @return the nonFinite variant in the here computed Buchi automaton
 	 */
 	private STATE getNonFiniteVariant(final STATE rabinState) {
-
 		final STATE nonFiniteVariant = mFiniteOrNonFiniteStateFactory.getBlackContent(rabinState);
-
 		if (mNonFiniteSet.contains(nonFiniteVariant)) {
-
 			return nonFiniteVariant;
 		}
-
 		if (!mRabinAutomaton.isFinite(rabinState)) {
 			mBuchi2Rabin.put(nonFiniteVariant, rabinState);
 			mNonFiniteSet.add(nonFiniteVariant);
-
 			if (mRabinAutomaton.isAccepting(rabinState)) {
 				mAcceptingSet.add(nonFiniteVariant);
 			}

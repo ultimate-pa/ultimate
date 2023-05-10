@@ -21,7 +21,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  *            state type
  */
 public class RabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE> {
-
 	private final Set<LETTER> mAlphabet;
 	private final Set<STATE> mStates;
 	private final Set<STATE> mInitialStates;
@@ -145,5 +144,4 @@ public class RabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTER, ST
 	public NestedMap2<STATE, LETTER, Set<STATE>> getTransitions() {
 		return mTransitions;
 	}
-
 }

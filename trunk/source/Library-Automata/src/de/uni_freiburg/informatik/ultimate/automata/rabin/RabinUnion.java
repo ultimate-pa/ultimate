@@ -23,7 +23,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            type of state
  */
 public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE> {
-
 	private final IRabinAutomaton<LETTER, STATE> mFirstAutomaton;
 	private final IRabinAutomaton<LETTER, STATE> mSecondAutomaton;
 	private final IBlackWhiteStateFactory<STATE> mFactory;
@@ -48,7 +47,6 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 		mFirstAutomaton = firstAutomaton;
 		mSecondAutomaton = secondAutomaton;
 		mFactory = factory;
-
 		mFirstAutomaton.getInitialStates().forEach(x -> mInitialStates.add(getUnionState(x, true)));
 		mSecondAutomaton.getInitialStates().forEach(x -> mInitialStates.add(getUnionState(x, false)));
 	}
@@ -56,19 +54,16 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 	@Override
 	public Set<LETTER> getAlphabet() {
 		assert mFirstAutomaton.getAlphabet().equals(mSecondAutomaton.getAlphabet());
-
 		return mFirstAutomaton.getAlphabet();
 	}
 
 	@Override
 	public int size() {
-
 		return mFirstAutomaton.size() + mSecondAutomaton.size();
 	}
 
 	@Override
 	public String sizeInformation() {
-
 		return "Number of states: " + size() + "\n" + "of these there are: " + mFirstAutomaton.size()
 				+ " from firstAutomaton and: " + mSecondAutomaton.size() + " from secondAutomaton";
 	}
@@ -82,58 +77,52 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 
 	@Override
 	public Iterable<STATE> getInitialStates() {
-
 		return mInitialStates;
 	}
 
 	@Override
 	public boolean isInitial(final STATE state) {
-
 		return mInitialStates.contains(state);
 	}
 
 	@Override
 	public boolean isAccepting(final STATE state) {
-
 		return mAcceptingStates.contains(state);
 	}
 
 	@Override
 	public boolean isFinite(final STATE state) {
-
 		return mFiniteStates.contains(state);
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> getSuccessors(final STATE state) {
-
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
-
 		final Pair<Boolean, STATE> originalStateInformation = mAutomatonMap.get(state);
+		final boolean isFirst = originalStateInformation.getFirst();
 
-		if (Boolean.TRUE.equals(originalStateInformation.getFirst())) {
-			mFirstAutomaton.getSuccessors(originalStateInformation.getSecond()).forEach(
-					x -> result.add(new OutgoingInternalTransition<>(x.getLetter(), getUnionState(x.getSucc(), true))));
-		} else {
-			mSecondAutomaton.getSuccessors(originalStateInformation.getSecond()).forEach(x -> result
-					.add(new OutgoingInternalTransition<>(x.getLetter(), getUnionState(x.getSucc(), false))));
-		}
-		return result;
+		return constructSuccessors(getSubautomaton(isFirst).getSuccessors(originalStateInformation.getSecond()),
+				isFirst);
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> getSuccessors(final STATE state, final LETTER letter) {
+		final Pair<Boolean, STATE> originalStateInformation = mAutomatonMap.get(state);
+		final boolean isFirst = originalStateInformation.getFirst();
 
+		return constructSuccessors(getSubautomaton(isFirst).getSuccessors(originalStateInformation.getSecond(), letter),
+				isFirst);
+	}
+
+	/**
+	 * a helper function for getSucessors
+	 */
+	private Iterable<OutgoingInternalTransition<LETTER, STATE>> constructSuccessors(
+			final Iterable<OutgoingInternalTransition<LETTER, STATE>> subautomatonTransitions, final boolean isFirst) {
 		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
 
-		final Pair<Boolean, STATE> originalStateInformation = mAutomatonMap.get(state);
-
-		if (Boolean.TRUE.equals(originalStateInformation.getFirst())) {
-			mFirstAutomaton.getSuccessors(originalStateInformation.getSecond(), letter).forEach(
-					x -> result.add(new OutgoingInternalTransition<>(letter, getUnionState(x.getSucc(), true))));
-		} else {
-			mFirstAutomaton.getSuccessors(originalStateInformation.getSecond(), letter).forEach(
-					x -> result.add(new OutgoingInternalTransition<>(letter, getUnionState(x.getSucc(), false))));
+		for (final OutgoingInternalTransition<LETTER, STATE> transition : subautomatonTransitions) {
+			result.add(new OutgoingInternalTransition<>(transition.getLetter(),
+					getUnionState(transition.getSucc(), isFirst)));
 		}
 		return result;
 	}
@@ -153,31 +142,34 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 		final STATE newState;
 		if (isFirst) {
 			newState = mFactory.getBlackContent(originalState);
-			if (mAutomatonMap.containsKey(newState)) {
-				return newState;
-			}
-
-			if (mFirstAutomaton.isFinite(originalState)) {
-				mFiniteStates.add(newState);
-			}
-			if (mFirstAutomaton.isAccepting(originalState)) {
-				mAcceptingStates.add(newState);
-			}
 		} else {
 			newState = mFactory.getWhiteContent(originalState);
-			if (mAutomatonMap.containsKey(newState)) {
-				return newState;
-			}
-
-			if (mSecondAutomaton.isFinite(originalState)) {
-				mFiniteStates.add(newState);
-			}
-			if (mSecondAutomaton.isAccepting(originalState)) {
-				mAcceptingStates.add(newState);
-			}
+		}
+		if (mAutomatonMap.containsKey(newState)) {
+			return newState;
+		}
+		final IRabinAutomaton<LETTER, STATE> subautomaton = getSubautomaton(isFirst);
+		if (subautomaton.isFinite(originalState)) {
+			mFiniteStates.add(newState);
+		}
+		if (subautomaton.isAccepting(originalState)) {
+			mAcceptingStates.add(newState);
 		}
 		mAutomatonMap.put(newState, new Pair<>(isFirst, originalState));
-
 		return newState;
+	}
+
+	/**
+	 * a mapping function from a boolean to both subautomata
+	 *
+	 * @param isFirst
+	 *            a key, true maps to the mFirstAutomaton, second to mSecondAutomaton
+	 * @return the corresponding subautomaton
+	 */
+	private IRabinAutomaton<LETTER, STATE> getSubautomaton(final boolean isFirst) {
+		if (isFirst) {
+			return mFirstAutomaton;
+		}
+		return mSecondAutomaton;
 	}
 }

@@ -69,7 +69,6 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	@Override
 	public Set<LETTER> getAlphabet() {
 		assert mFirstAutomaton.getAlphabet().equals(mSecondAutomaton.getAlphabet());
-
 		return mFirstAutomaton.getAlphabet();
 	}
 
@@ -80,7 +79,6 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 
 	@Override
 	public String sizeInformation() {
-
 		return "Number of states: " + size() + "\n"
 				+ "The number of lazyly constructed reachable states may be smaller";
 	}
@@ -94,64 +92,36 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 
 	@Override
 	public Iterable<STATE> getInitialStates() {
-
 		return mInitialStates;
 	}
 
 	@Override
 	public boolean isInitial(final STATE state) {
-
 		return mInitialStates.contains(state);
 	}
 
 	@Override
 	public boolean isAccepting(final STATE state) {
-
 		return mAcceptingStates.contains(state);
 	}
 
 	@Override
 	public boolean isFinite(final STATE state) {
-
 		return mFiniteStates.contains(state);
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> getSuccessors(final STATE state) {
-
 		final Triple<STATE, STATE, Integer> originalStateInformation = mAutomatonMap.get(state);
-		final STATE originalFirstState = originalStateInformation.getFirst();
-		final STATE originalSecondState = originalStateInformation.getSecond();
-		final int originalComponent = originalStateInformation.getThird();
-
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = getProductSuccessor(originalFirstState,
-				originalSecondState, (originalComponent + 1) % NUMBER_OF_COMPONENTS);
-
-		if ((originalComponent % 2) == 0) {
-
-			result.addAll(getProductSuccessor(originalFirstState, originalSecondState, originalComponent));
-		}
-
-		return result;
+		return getComponentalSuccessors(mFirstAutomaton.getSuccessors(originalStateInformation.getFirst()),
+				originalStateInformation.getSecond(), originalStateInformation.getThird());
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> getSuccessors(final STATE state, final LETTER letter) {
-
 		final Triple<STATE, STATE, Integer> originalStateInformation = mAutomatonMap.get(state);
-		final STATE originalFirstState = originalStateInformation.getFirst();
-		final STATE originalSecondState = originalStateInformation.getSecond();
-		final int originalComponent = originalStateInformation.getThird();
-
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = getProductSuccessor(originalFirstState,
-				originalSecondState, (originalComponent + 1) % NUMBER_OF_COMPONENTS, letter);
-
-		if ((originalComponent % 2) == 0) {
-
-			result.addAll(getProductSuccessor(originalFirstState, originalSecondState, originalComponent, letter));
-		}
-
-		return result;
+		return getComponentalSuccessors(mFirstAutomaton.getSuccessors(originalStateInformation.getFirst(), letter),
+				originalStateInformation.getSecond(), originalStateInformation.getThird());
 	}
 
 	/**
@@ -166,14 +136,12 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	 * @return a state which uniquely incorporates all parameters
 	 */
 	private STATE getProducedState(final STATE first, final STATE second, final int component) {
-
 		STATE result = mFactory.intersection(first, second);
 		result = mFactory.getColoredState(result, (byte) component);
 		if (!mAutomatonMap.containsKey(result)) {
 			if ((component == 1) && mFirstAutomaton.isAccepting(first)) {
 				mAcceptingStates.add(result);
 			}
-
 			// With the used construction Finite states are either in B' or B"
 			// Check if in B'
 			boolean isBad = mFirstAutomaton.isFinite(first) || mSecondAutomaton.isFinite(second);
@@ -183,42 +151,57 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 			if (isBad) {
 				mFiniteStates.add(result);
 			}
-
 			mAutomatonMap.put(result, new Triple<>(first, second, component));
 		}
-
 		return result;
 	}
 
-	private ArrayList<OutgoingInternalTransition<LETTER, STATE>> getProductSuccessor(final STATE first,
-			final STATE second, final int successorComponent) {
+	/**
+	 * a indirect helper function for getSuccessors, this contains the logic for the product subautomaton construction
+	 *
+	 * @param firstTransitionList
+	 *            a subset of valid transitions for one (active) state in the first automaton
+	 * @param secondState
+	 *            a active state in the second automaton
+	 * @param successorComponent
+	 *            the component in the intersection which should be reached by the computed transitions
+	 * @return a list of corresponding transitions in the intersection automaton
+	 */
+	private ArrayList<OutgoingInternalTransition<LETTER, STATE>> getRelatedSuccessors(
+			final Iterable<OutgoingInternalTransition<LETTER, STATE>> firstTransitionList, final STATE secondState,
+			final int successorComponent) {
 		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
 
-		for (final OutgoingInternalTransition<LETTER, STATE> transitionFirst : mFirstAutomaton.getSuccessors(first)) {
+		for (final OutgoingInternalTransition<LETTER, STATE> transitionFirst : firstTransitionList) {
 			final LETTER letter = transitionFirst.getLetter();
 			for (final OutgoingInternalTransition<LETTER, STATE> transitionSecond : mSecondAutomaton
-					.getSuccessors(second, letter)) {
+					.getSuccessors(secondState, letter)) {
 				result.add(new OutgoingInternalTransition<>(letter,
 						getProducedState(transitionFirst.getSucc(), transitionSecond.getSucc(), successorComponent)));
 			}
 		}
-
 		return result;
 	}
 
-	private ArrayList<OutgoingInternalTransition<LETTER, STATE>> getProductSuccessor(final STATE first,
-			final STATE second, final int successorComponent, final LETTER letter) {
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
-
-		for (final OutgoingInternalTransition<LETTER, STATE> transitionFirst : mFirstAutomaton.getSuccessors(first,
-				letter)) {
-			for (final OutgoingInternalTransition<LETTER, STATE> transitionSecond : mSecondAutomaton
-					.getSuccessors(second, letter)) {
-				result.add(new OutgoingInternalTransition<>(letter,
-						getProducedState(transitionFirst.getSucc(), transitionSecond.getSucc(), successorComponent)));
-			}
+	/**
+	 * a helper method for getSuccessors, this contains the logic on the connections in and between components
+	 *
+	 * @param transitionsFromFirst
+	 *            a list with transitions that are valid for one (active) state in the first automaton
+	 * @param originalSecondState
+	 *            a state in the second automaton which is active
+	 * @param originalComponent
+	 *            the component from which transitions start
+	 * @return a list of corresponding transitions in the intersection automaton
+	 */
+	private ArrayList<OutgoingInternalTransition<LETTER, STATE>> getComponentalSuccessors(
+			final Iterable<OutgoingInternalTransition<LETTER, STATE>> transitionsFromFirst,
+			final STATE originalSecondState, final int originalComponent) {
+		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = getRelatedSuccessors(transitionsFromFirst,
+				originalSecondState, (originalComponent + 1) % NUMBER_OF_COMPONENTS);
+		if ((originalComponent % 2) == 0) {
+			result.addAll(getRelatedSuccessors(transitionsFromFirst, originalSecondState, originalComponent));
 		}
-
 		return result;
 	}
 }
