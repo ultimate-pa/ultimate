@@ -113,12 +113,12 @@ public final class PetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P> {
 	}
 
 	@Override
-	boolean unfoldingSearchSuccessful(final Event<L, P> event) throws PetriNetNot1SafeException {
+	protected boolean unfoldingSearchSuccessful(final Event<L, P> event) throws PetriNetNot1SafeException {
 		return mUnfolding.addEvent(event);
 	}
 
 	@Override
-	void createOrUpdateRunIfWanted(final Event<L, P> event) {
+	protected void createOrUpdateRunIfWanted(final Event<L, P> event) {
 		if (mRun == null) {
 			mRun = constructRun(event);
 		}

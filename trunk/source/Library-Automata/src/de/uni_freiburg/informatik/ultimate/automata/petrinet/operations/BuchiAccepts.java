@@ -48,12 +48,12 @@ public final class BuchiAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETT
 			throws PetriNetNot1SafeException {
 		int firingInAcceptingPlaceIndex;
 		if (transition.getSuccessors().stream().anyMatch(mOperand::isAccepting)) {
-			firingInAcceptingPlaceIndex = mfireSequenceIndex;
+			firingInAcceptingPlaceIndex = mFireSequenceIndex;
 		} else {
 			firingInAcceptingPlaceIndex = predecessor.getLastIndexOfShootingAcceptingStateInFireSequence();
 		}
 		return new MarkingOfFireSequence<>(predecessor.getMarking().fireTransition(transition),
-				predecessor.getHondaMarkingsOfFireSequence(), mfireSequenceIndex, firingInAcceptingPlaceIndex, 0);
+				predecessor.getHondaMarkingsOfFireSequence(), mFireSequenceIndex, firingInAcceptingPlaceIndex, 0);
 	}
 
 	@Override

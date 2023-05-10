@@ -175,8 +175,10 @@ public abstract class PetriNetUnfolderBase<L, P> {
 		mLogger.info("Searched whole Unfolding.");
 	}
 
+	// TODO: Add documentation
 	protected abstract void createInitialRun() throws PetriNetNot1SafeException;
 
+	// TODO: Add documentation
 	protected abstract boolean checkInitialPlaces();
 
 	private boolean computeUnfoldingHelper(final Event<L, P> event) throws PetriNetNot1SafeException {
@@ -211,9 +213,11 @@ public abstract class PetriNetUnfolderBase<L, P> {
 		return false;
 	}
 
-	abstract boolean unfoldingSearchSuccessful(Event<L, P> event) throws PetriNetNot1SafeException;
+	// TODO: Add documentation
+	protected abstract boolean unfoldingSearchSuccessful(Event<L, P> event) throws PetriNetNot1SafeException;
 
-	abstract void createOrUpdateRunIfWanted(Event<L, P> event) throws PetriNetNot1SafeException;
+	// TODO: Add documentation
+	protected abstract void createOrUpdateRunIfWanted(Event<L, P> event) throws PetriNetNot1SafeException;
 
 	private boolean parentIsCutoffEvent(final Event<L, P> event) {
 		for (final Condition<L, P> c : event.getPredecessorConditions()) {

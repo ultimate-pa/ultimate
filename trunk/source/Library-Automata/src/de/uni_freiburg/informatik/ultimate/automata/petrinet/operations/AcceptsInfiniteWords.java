@@ -47,7 +47,7 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 	/**
 	 * Keeps track of the index of the FIreSequenceTree that is created during the isWordAcceptedByOmegaNet() method.
 	 */
-	protected int mfireSequenceIndex;
+	protected int mFireSequenceIndex;
 	protected final boolean mResult;
 
 	/**
@@ -70,7 +70,7 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 		mInitialMarking = new Marking<>(ImmutableSet.of(operand.getInitialPlaces()));
 		mLassoWord = word;
 		mFireSequenceTreeMarkings = new HashSet<>();
-		mfireSequenceIndex = 0;
+		mFireSequenceIndex = 0;
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
@@ -125,7 +125,7 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 			// After a firing of the Loop part of the word, we store those produced hondamarkings in the firing
 			// sequences.
 			for (final MarkingOfFireSequence<LETTER, PLACE> marking : mFireSequenceTreeMarkings) {
-				marking.addHondaMarkingOfFireSequence(marking.getMarking(), mfireSequenceIndex);
+				marking.addHondaMarkingOfFireSequence(marking.getMarking(), mFireSequenceIndex);
 			}
 			for (final LETTER symbol : mLassoWord.getLoop()) {
 				produceSuccessorMarkingsOfFireSequenceOfSet(symbol);
@@ -163,7 +163,7 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 		// Remove firesequences with same marking as others
 		removeRedundantMarkings();
 
-		mfireSequenceIndex++;
+		mFireSequenceIndex++;
 	}
 
 	private void removeRedundantMarkings() {

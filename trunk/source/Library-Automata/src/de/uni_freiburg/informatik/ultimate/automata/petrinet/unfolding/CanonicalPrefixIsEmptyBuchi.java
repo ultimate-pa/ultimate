@@ -17,14 +17,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  *
  */
 public class CanonicalPrefixIsEmptyBuchi<LETTER, PLACE> {
-	BranchingProcess<LETTER, PLACE> mCompletePrefix;
-	Set<Event<LETTER, PLACE>> mCutoffEventsWithDistantCompanion = new HashSet<>();
-	Set<Event<LETTER, PLACE>> mLoopCutoffEvents = new HashSet<>();
-	Set<Event<LETTER, PLACE>> mOriginLoopCutoffEvents = new HashSet<>();
-	private PetriNetLassoRun<LETTER, PLACE> mRun = null;
-	AutomataLibraryServices mServices;
-	protected final ILogger mLogger;
-	Boolean searchAllLassoTypes = true;
+	private static final boolean SEARCH_ALL_LASSO_TYPES = true;
+
+	private final BranchingProcess<LETTER, PLACE> mCompletePrefix;
+	private final Set<Event<LETTER, PLACE>> mCutoffEventsWithDistantCompanion = new HashSet<>();
+	private final Set<Event<LETTER, PLACE>> mLoopCutoffEvents = new HashSet<>();
+	private final Set<Event<LETTER, PLACE>> mOriginLoopCutoffEvents = new HashSet<>();
+	private PetriNetLassoRun<LETTER, PLACE> mRun;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 
 	public CanonicalPrefixIsEmptyBuchi(final AutomataLibraryServices services,
 			final BranchingProcess<LETTER, PLACE> completePrefix) throws PetriNetNot1SafeException {
@@ -63,7 +64,7 @@ public class CanonicalPrefixIsEmptyBuchi<LETTER, PLACE> {
 		investigateTypeOneLassos();
 
 		// Type two lassos are already searched in PetrinetUnfolderBuchi.
-		if (searchAllLassoTypes) {
+		if (SEARCH_ALL_LASSO_TYPES) {
 			investigateTypeTwoLassos();
 		}
 
@@ -151,10 +152,7 @@ public class CanonicalPrefixIsEmptyBuchi<LETTER, PLACE> {
 		mLogger.info("Type 1 Lasso search started.");
 		for (final Event<LETTER, PLACE> event : mOriginLoopCutoffEvents) {
 			final List<Event<LETTER, PLACE>> configLoopEvents = new ArrayList<>();
-			for (final Event<LETTER, PLACE> configEvent : event.getLocalConfiguration()
-					.getSortedConfiguration(mCompletePrefix.getOrder())) {
-				configLoopEvents.add(configEvent);
-			}
+			configLoopEvents.addAll(event.getLocalConfiguration().getSortedConfiguration(mCompletePrefix.getOrder()));
 			if (checkIfLassoConfigurationAccepted(configLoopEvents, new ArrayList<>())) {
 				return;
 			}

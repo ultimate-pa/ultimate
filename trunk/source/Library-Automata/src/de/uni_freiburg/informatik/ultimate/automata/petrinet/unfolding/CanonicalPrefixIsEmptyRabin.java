@@ -23,15 +23,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public class CanonicalPrefixIsEmptyRabin<LETTER, PLACE> {
-	BranchingProcess<LETTER, PLACE> mCompletePrefix;
-	Set<Event<LETTER, PLACE>> mCutoffEventsWithDistantCompanion = new HashSet<>();
-	Set<Event<LETTER, PLACE>> mLoopCutoffEvents = new HashSet<>();
-	Set<Event<LETTER, PLACE>> mOriginLoopCutoffEvents = new HashSet<>();
-	private PetriNetLassoRun<LETTER, PLACE> mRun = null;
-	AutomataLibraryServices mServices;
-	protected final ILogger mLogger;
-	Boolean searchAllLassoTypes = false;
-	Set<Event<LETTER, PLACE>> mFiniteEvents = new HashSet<>();
+	private static final boolean SEARCH_ALL_LASSO_TYPES = false;
+
+	private final BranchingProcess<LETTER, PLACE> mCompletePrefix;
+	private final Set<Event<LETTER, PLACE>> mCutoffEventsWithDistantCompanion = new HashSet<>();
+	private final Set<Event<LETTER, PLACE>> mLoopCutoffEvents = new HashSet<>();
+	private final Set<Event<LETTER, PLACE>> mOriginLoopCutoffEvents = new HashSet<>();
+	private PetriNetLassoRun<LETTER, PLACE> mRun;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
+	private final Set<Event<LETTER, PLACE>> mFiniteEvents = new HashSet<>();
 
 	public CanonicalPrefixIsEmptyRabin(final AutomataLibraryServices services,
 			final BranchingProcess<LETTER, PLACE> completePrefix) throws PetriNetNot1SafeException {
@@ -78,7 +79,7 @@ public class CanonicalPrefixIsEmptyRabin<LETTER, PLACE> {
 		investigateTypeOneLassos();
 
 		// Type two lassos are already searched in PetrinetUnfolderBuchi.
-		if (searchAllLassoTypes) {
+		if (SEARCH_ALL_LASSO_TYPES) {
 			investigateTypeTwoLassos();
 		}
 
@@ -95,10 +96,7 @@ public class CanonicalPrefixIsEmptyRabin<LETTER, PLACE> {
 		mLogger.info("Type 1 Lasso search started.");
 		for (final Event<LETTER, PLACE> event : mOriginLoopCutoffEvents) {
 			final List<Event<LETTER, PLACE>> configLoopEvents = new ArrayList<>();
-			for (final Event<LETTER, PLACE> configEvent : event.getLocalConfiguration()
-					.getSortedConfiguration(mCompletePrefix.getOrder())) {
-				configLoopEvents.add(configEvent);
-			}
+			configLoopEvents.addAll(event.getLocalConfiguration().getSortedConfiguration(mCompletePrefix.getOrder()));
 			for (final Event<LETTER, PLACE> loopEvent : configLoopEvents) {
 				for (final Condition<LETTER, PLACE> condition : loopEvent.getSuccessorConditions()) {
 					if (((IRabinPetriNet<LETTER, PLACE>) mCompletePrefix.getNet()).isFinite(condition.getPlace())) {
@@ -239,7 +237,7 @@ public class CanonicalPrefixIsEmptyRabin<LETTER, PLACE> {
 			}
 		}
 		for (final Event<LETTER, PLACE> configEvent : event.getLocalConfiguration()) {
-			if (!(configEvent == event) && needReachableInformation.contains(configEvent)) {
+			if (configEvent != event && needReachableInformation.contains(configEvent)) {
 				if (reachableMap.get(configEvent) != null) {
 					final var newSet = reachableMap.get(configEvent);
 					newSet.add(new Pair<>(event, new ArrayList<>()));
@@ -366,10 +364,7 @@ public class CanonicalPrefixIsEmptyRabin<LETTER, PLACE> {
 				loopEvents.add(configEvent);
 			}
 		}
-		if (checkIfLassoConfigurationAccepted(loopEvents, stemEvents)) {
-			return true;
-		}
-		return false;
+		return checkIfLassoConfigurationAccepted(loopEvents, stemEvents);
 	}
 
 	private final boolean checkIfLassoConfigurationAccepted(final List<Event<LETTER, PLACE>> configLoopPart,

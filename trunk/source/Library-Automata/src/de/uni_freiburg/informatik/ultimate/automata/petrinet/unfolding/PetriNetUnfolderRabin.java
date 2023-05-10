@@ -35,7 +35,7 @@ public class PetriNetUnfolderRabin<LETTER, PLACE> extends PetriNetUnfolderBase<L
 	}
 
 	@Override
-	boolean unfoldingSearchSuccessful(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
+	protected boolean unfoldingSearchSuccessful(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
 
 		mUnfolding.addEvent(event);
 
@@ -76,7 +76,7 @@ public class PetriNetUnfolderRabin<LETTER, PLACE> extends PetriNetUnfolderBase<L
 	}
 
 	@Override
-	void createOrUpdateRunIfWanted(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
+	protected void createOrUpdateRunIfWanted(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
 		return;
 	}
 

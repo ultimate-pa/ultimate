@@ -45,19 +45,19 @@ public final class RabinAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETT
 			throws PetriNetNot1SafeException {
 		int firingInAcceptingPlaceIndex;
 		if (transition.getSuccessors().stream().anyMatch(mOperand::isAccepting)) {
-			firingInAcceptingPlaceIndex = mfireSequenceIndex;
+			firingInAcceptingPlaceIndex = mFireSequenceIndex;
 		} else {
 			firingInAcceptingPlaceIndex = predecessor.getLastIndexOfShootingAcceptingStateInFireSequence();
 		}
 		int firingInLimitedPlaceIndex;
 		if (transition.getSuccessors().stream()
 				.anyMatch(((IRabinPetriNet<LETTER, PLACE>) mOperand).getFinitePlaces()::contains)) {
-			firingInLimitedPlaceIndex = mfireSequenceIndex;
+			firingInLimitedPlaceIndex = mFireSequenceIndex;
 		} else {
 			firingInLimitedPlaceIndex = predecessor.getLastIndexOfShootingFinitePlaceInFireSequence();
 		}
 		return new MarkingOfFireSequence<>(predecessor.getMarking().fireTransition(transition),
-				predecessor.getHondaMarkingsOfFireSequence(), mfireSequenceIndex, firingInAcceptingPlaceIndex,
+				predecessor.getHondaMarkingsOfFireSequence(), mFireSequenceIndex, firingInAcceptingPlaceIndex,
 				firingInLimitedPlaceIndex);
 	}
 

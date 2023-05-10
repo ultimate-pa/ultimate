@@ -36,7 +36,7 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE> extends PetriNetUnfolderBase<L
 	}
 
 	@Override
-	boolean unfoldingSearchSuccessful(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
+	protected boolean unfoldingSearchSuccessful(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
 
 		mUnfolding.addEvent(event);
 
@@ -63,13 +63,14 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE> extends PetriNetUnfolderBase<L
 
 	private final boolean checkIfLassoConfigurationAccepted(final List<Event<LETTER, PLACE>> configLoopPart,
 			final List<Event<LETTER, PLACE>> configStemPart) throws PetriNetNot1SafeException {
-		final var buildAndCheck = new Events2PetriNetLassoRunBuchi<>(mServices, configLoopPart, configStemPart, mUnfolding);
+		final var buildAndCheck =
+				new Events2PetriNetLassoRunBuchi<>(mServices, configLoopPart, configStemPart, mUnfolding);
 		mLassoRun = buildAndCheck.getLassoRun();
 		return (mLassoRun != null);
 	}
 
 	@Override
-	void createOrUpdateRunIfWanted(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
+	protected void createOrUpdateRunIfWanted(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
 		return;
 	}
 
