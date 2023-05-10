@@ -56,8 +56,7 @@ public class HcSleepVar implements IHcThreadSpecificVar, IHcFiniteReplacementVar
 
 	@Override
 	public IHcThreadSpecificVar forInstance(final int instanceId) {
-		// TODO Auto-generated method stub
-		return null;
+		return new HcSleepVar(new ThreadInstance(mInstance.getTemplateName(), instanceId), mSort, mValues);
 	}
 
 	@Override
