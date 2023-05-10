@@ -208,8 +208,9 @@ public final class PluginFactory implements IServiceFactoryFactory {
 					}
 					rtr.add(tool);
 				} catch (final Exception ex) {
-					mLogger.fatal("Exception during admissibility check of plugin " + elem.getName() + ": "
-							+ ex.getMessage());
+					mLogger.fatal(
+							"Exception during admissibility check of plugin " + elem.getName() + ": " + ex.getMessage(),
+							ex);
 				}
 			}
 		}
