@@ -85,10 +85,11 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		final Set<STATE> init = new HashSet<>();
 		suffixAutomaton.getInitialStates().forEach(init::add);
 
-		final DefaultSccComputation<STATE> sccComputation = new DefaultSccComputation<>(
-				services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
-				x -> new TransformIterator<>(mAutomaton.getSuccessors(x).iterator(), IOutgoingTransitionlet::getSucc),
-				suffixAutomaton.size(), init);
+		final DefaultSccComputation<STATE> sccComputation =
+				new DefaultSccComputation<>(services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
+						x -> new TransformIterator<>(suffixAutomaton.getSuccessors(x).iterator(),
+								IOutgoingTransitionlet::getSucc),
+						suffixAutomaton.size(), init);
 		mEvidence = getEvidence(init, sccComputation.getBalls());
 		mResult = mEvidence.isEmpty();
 	}
