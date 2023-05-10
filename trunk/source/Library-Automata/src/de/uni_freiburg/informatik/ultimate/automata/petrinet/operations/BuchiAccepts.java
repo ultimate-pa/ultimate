@@ -19,7 +19,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <STATE>
  *            Content. Type of the labels ("the content") of the automata states.
  */
-// TODO prefix nur buchi bei allen, alle in petri net operatins
 public final class BuchiAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETTER, PLACE> {
 
 	/**

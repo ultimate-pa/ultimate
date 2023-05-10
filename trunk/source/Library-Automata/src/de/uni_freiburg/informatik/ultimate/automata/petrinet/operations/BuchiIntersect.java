@@ -51,11 +51,11 @@ public class BuchiIntersect<LETTER, PLACE>
 
 	private PLACE mCurrentNewPlace;
 
-	private final Set<Transition<LETTER, PLACE>> toBeDoneStateOneOnlyTransitions = new HashSet<>();
+	private final Set<Transition<LETTER, PLACE>> mToBeDoneStateOneOnlyTransitions = new HashSet<>();
 
-	private final Set<Transition<LETTER, PLACE>> toBeDoneTransitions = new HashSet<>();
+	private final Set<Transition<LETTER, PLACE>> mToBeDoneTransitions = new HashSet<>();
 
-	private final HashMap<PLACE, PLACE> looperAcptPlaceToEnablePlace = new HashMap<>();
+	private final HashMap<PLACE, PLACE> mLooperAcptPlaceToEnablePlace = new HashMap<>();
 
 	public BuchiIntersect(final AutomataLibraryServices services, final IBlackWhiteStateFactory<PLACE> factory,
 			final IPetriNet<LETTER, PLACE> petriNet, final INestedWordAutomaton<LETTER, PLACE> buchiAutomata) {
@@ -109,7 +109,7 @@ public class BuchiIntersect<LETTER, PLACE>
 			for (final PLACE buchiPlace : mBuchiAutomata.getStates()) {
 				for (final OutgoingInternalTransition<LETTER, PLACE> buchiTransition : mBuchiAutomata
 						.internalSuccessors(buchiPlace, transitionSymbol)) {
-					if (!(buchiTransition.getSucc() == buchiPlace)) {
+					if (buchiTransition.getSucc() != buchiPlace) {
 						isLooper = false;
 						break;
 					}
@@ -140,10 +140,10 @@ public class BuchiIntersect<LETTER, PLACE>
 			if (!mLooperSymbols.contains(petriTransition.getSymbol())) {
 				// normal construction
 				addTransitionsNormally(petriTransition);
-			} else if (toBeDoneTransitions.contains(petriTransition)) {
+			} else if (mToBeDoneTransitions.contains(petriTransition)) {
 				// is looper but no optimization possible
 				addTransitionsNormally(petriTransition);
-			} else if (toBeDoneStateOneOnlyTransitions.contains(petriTransition)) {
+			} else if (mToBeDoneStateOneOnlyTransitions.contains(petriTransition)) {
 				// is looper and only state two transitions could be optimized
 				addStateOneTransitionsNormally(petriTransition);
 			}
@@ -179,10 +179,10 @@ public class BuchiIntersect<LETTER, PLACE>
 			addPurePetriTransition(petriTransition);
 		} else if (leadsIntoAcceptingPetri) {
 			// theoretically we cannot optimize here ? since we dont know which Q-state has a token right now.
-			toBeDoneTransitions.add(petriTransition);
+			mToBeDoneTransitions.add(petriTransition);
 		} else if (loopsInAcceptingBuchi) {
 			// can only optimize state two transition
-			toBeDoneStateOneOnlyTransitions.add(petriTransition);
+			mToBeDoneStateOneOnlyTransitions.add(petriTransition);
 			buildLooperOptimizationStateTwo(petriTransition);
 		}
 	}
@@ -196,13 +196,14 @@ public class BuchiIntersect<LETTER, PLACE>
 		addPurePetriTransition(petriTransition);
 
 		for (final PLACE buchiPlace : mBuchiAutomata.getFinalStates()) {
+			// TODO: Does this work properly? The loop variable is not used!
 			for (final OutgoingInternalTransition<LETTER, PLACE> buchiTransition : mBuchiAutomata
 					.internalSuccessors(buchiPlace, petriTransition.getSymbol())) {
 				// second for loop for the case that buchi automata is not complete or nondeterministic
 				final PLACE newPlace = getNewPlace();
 				mStateTwoEnablerSet.add(newPlace);
 				mIntersectionNet.addPlace(newPlace, false, false);
-				looperAcptPlaceToEnablePlace.put(buchiPlace, newPlace);
+				mLooperAcptPlaceToEnablePlace.put(buchiPlace, newPlace);
 
 				final Set<PLACE> predecessorSet = new HashSet<>(petriTransition.getPredecessors());
 				predecessorSet.add(newPlace);
@@ -258,9 +259,9 @@ public class BuchiIntersect<LETTER, PLACE>
 			predecessorSet.add(mInputQGetQ1.get(buchiPredecessor));
 		} else {
 			predecessorSet.add(mInputQGetQ2.get(buchiPredecessor));
-			for (final PLACE place : looperAcptPlaceToEnablePlace.keySet()) {
+			for (final PLACE place : mLooperAcptPlaceToEnablePlace.keySet()) {
 				if (predecessorSet.contains(place)) {
-					predecessorSet.add(looperAcptPlaceToEnablePlace.get(place));
+					predecessorSet.add(mLooperAcptPlaceToEnablePlace.get(place));
 				}
 			}
 		}
@@ -276,9 +277,9 @@ public class BuchiIntersect<LETTER, PLACE>
 			successorSet.add(getQSuccesorForStateOneTransition(petriTransition, buchiTransition));
 		} else {
 			successorSet.add(getQSuccesorForStateTwoTransition(predecessorSet, buchiTransition));
-			for (final PLACE place : looperAcptPlaceToEnablePlace.keySet()) {
+			for (final PLACE place : mLooperAcptPlaceToEnablePlace.keySet()) {
 				if (successorSet.contains(place)) {
-					successorSet.add(looperAcptPlaceToEnablePlace.get(place));
+					successorSet.add(mLooperAcptPlaceToEnablePlace.get(place));
 				}
 			}
 		}
