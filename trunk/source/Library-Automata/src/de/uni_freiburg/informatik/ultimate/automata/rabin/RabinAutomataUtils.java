@@ -92,16 +92,20 @@ public class RabinAutomataUtils {
 				acceptingStates.add(currentState);
 			}
 			for (final OutgoingInternalTransition<LETTER, STATE> transition : automaton.getSuccessors(currentState)) {
-				if (!toRemove.contains(transition.getSucc())) {
-					final LETTER letter = transition.getLetter();
-					alphabet.add(letter);
-					if (!transitions.containsKey(currentState, letter)) {
-						transitions.put(currentState, letter, new HashSet<>());
-					}
-					transitions.get(currentState, transition.getLetter()).add(transition.getSucc());
-					if (!states.contains(transition.getSucc())) {
-						currentStateSet.add(transition.getSucc());
-					}
+				final STATE succ = transition.getSucc();
+				if (toRemove.contains(succ)) {
+					continue;
+				}
+				final LETTER letter = transition.getLetter();
+				alphabet.add(letter);
+				Set<STATE> successors = transitions.get(currentState, letter);
+				if (successors == null) {
+					successors = new HashSet<>();
+					transitions.put(currentState, letter, successors);
+				}
+				successors.add(succ);
+				if (!states.contains(succ)) {
+					currentStateSet.add(succ);
 				}
 			}
 		}

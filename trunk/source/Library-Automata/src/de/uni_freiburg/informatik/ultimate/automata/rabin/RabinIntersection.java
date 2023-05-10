@@ -166,19 +166,17 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	 * @return a state which uniquely incorporates all parameters
 	 */
 	private STATE getProducedState(final STATE first, final STATE second, final int component) {
-		STATE result = mFactory.intersection(first, second);
-		result = mFactory.getColoredState(result, (byte) component);
+		final STATE result = mFactory.getColoredState(mFactory.intersection(first, second), (byte) component);
 		// since we already need this map we can use it as a cache
 		if (!mAutomatonMap.containsKey(result)) {
 			// This checks for B" instead of making states finite we can delete them to reduce the state size
 			// it also makes all remaining states in component 1 accepting
 			if (component == 1) {
-				if (mFirstAutomaton.isAccepting(first)) {
-					mAcceptingStates.add(result);
-				} else {
+				if (!mFirstAutomaton.isAccepting(first)) {
 					return null;
 				}
-			} else if ((component == 3) && !mSecondAutomaton.isAccepting(second)) {
+				mAcceptingStates.add(result);
+			} else if (component == 3 && !mSecondAutomaton.isAccepting(second)) {
 				return null;
 			}
 			// This checks for B', these are all states derived from finite states
