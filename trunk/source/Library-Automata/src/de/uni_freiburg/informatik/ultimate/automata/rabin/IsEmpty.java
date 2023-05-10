@@ -110,30 +110,29 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		return mResult;
 	}
 
-	@SuppressWarnings("unchecked")
 	public NestedLassoWord<LETTER> getCounterexample() throws AutomataOperationCanceledException {
 		if (mEvidence.isEmpty()) {
 			return null;
 		}
 		// get one random accepting State from evidence
 		final STATE hondaState = mEvidence.stream().filter(mAutomaton::isAccepting).findAny().get();
-		return new NestedLassoWord<>(NestedWord.nestedWord(new Word<>((LETTER[]) getStem(hondaState).toArray())),
-				NestedWord.nestedWord(new Word<>((LETTER[]) getLoop(hondaState).toArray())));
+		return new NestedLassoWord<>(getStem(hondaState), getLoop(hondaState));
 	}
 
-	private List<LETTER> getStem(final STATE hondaState) throws AutomataOperationCanceledException {
+	private NestedWord<LETTER> getStem(final STATE hondaState) throws AutomataOperationCanceledException {
 		final HashSet<STATE> exploredStates = new HashSet<>();
 		final Set<STATE> initialStates = new HashSet<>();
 		mAutomaton.getInitialStates().forEach(initialStates::add);
 		return computeWord(initialStates, hondaState, exploredStates::add);
 	}
 
-	private List<LETTER> getLoop(final STATE hondaState) throws AutomataOperationCanceledException {
+	private NestedWord<LETTER> getLoop(final STATE hondaState) throws AutomataOperationCanceledException {
 		final HashSet<STATE> missingStates = new HashSet<>(mEvidence);
 		return computeWord(Set.of(hondaState), hondaState, missingStates::remove);
 	}
 
-	private List<LETTER> computeWord(final Set<STATE> initialStates, final STATE goalState,
+	@SuppressWarnings("unchecked")
+	private NestedWord<LETTER> computeWord(final Set<STATE> initialStates, final STATE goalState,
 			final Predicate<STATE> statePredicate) throws AutomataOperationCanceledException {
 		HashRelation<List<LETTER>, STATE> wordStateMap = new HashRelation<>();
 		wordStateMap.addAllPairs(List.of(), initialStates);
@@ -148,7 +147,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 							final ArrayList<LETTER> newWord = new ArrayList<>(word.getKey());
 							newWord.add(transition.getLetter());
 							if (succ.equals(goalState)) {
-								return newWord;
+								return NestedWord.nestedWord(new Word<>((LETTER[]) (newWord.toArray())));
 							}
 							temp.addPair(newWord, succ);
 						}
