@@ -29,11 +29,11 @@ package de.uni_freiburg.informatik.ultimate.automata.rabin;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -121,13 +121,22 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 				NestedWord.nestedWord(new Word<>((LETTER[]) getLoop(hondaState).toArray())));
 	}
 
-	private List<LETTER> getLoop(final STATE hondaState) throws AutomataOperationCanceledException {
-		final HashSet<STATE> initialSet = new HashSet<>();
-		initialSet.add(hondaState);
+	private List<LETTER> getStem(final STATE hondaState) throws AutomataOperationCanceledException {
+		final HashSet<STATE> exploredStates = new HashSet<>();
+		final Set<STATE> initialStates = new HashSet<>();
+		mAutomaton.getInitialStates().forEach(initialStates::add);
+		return computeWord(initialStates, hondaState, exploredStates::add);
+	}
 
+	private List<LETTER> getLoop(final STATE hondaState) throws AutomataOperationCanceledException {
 		final HashSet<STATE> missingStates = new HashSet<>(mEvidence);
+		return computeWord(Set.of(hondaState), hondaState, missingStates::remove);
+	}
+
+	private List<LETTER> computeWord(final Set<STATE> initialStates, final STATE goalState,
+			final Predicate<STATE> statePredicate) throws AutomataOperationCanceledException {
 		HashRelation<List<LETTER>, STATE> wordStateMap = new HashRelation<>();
-		wordStateMap.addAllPairs(new ArrayList<>(), initialSet);
+		wordStateMap.addAllPairs(List.of(), initialStates);
 
 		while (!isCancellationRequested()) {
 			final HashRelation<List<LETTER>, STATE> temp = new HashRelation<>();
@@ -135,12 +144,10 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 				for (final STATE state : word.getValue()) {
 					for (final OutgoingInternalTransition<LETTER, STATE> transition : mAutomaton.getSuccessors(state)) {
 						final STATE succ = transition.getSucc();
-
-						if (missingStates.remove(succ)) {
-
+						if (statePredicate.test(succ)) {
 							final ArrayList<LETTER> newWord = new ArrayList<>(word.getKey());
 							newWord.add(transition.getLetter());
-							if (succ.equals(hondaState)) {
+							if (succ.equals(goalState)) {
 								return newWord;
 							}
 							temp.addPair(newWord, succ);
@@ -166,40 +173,6 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 				new RabinAutomaton<>(reachable.getAlphabet(), reachable.getStates(), reachable.getAcceptingStates(),
 						reachable.getAcceptingStates(), reachable.getFiniteStates(), reachable.getTransitions());
 		return RabinAutomataUtils.computeReachableIgnoredStates(nonReducedAutomaton, reachable.getFiniteStates());
-	}
-
-	private List<LETTER> getStem(final STATE hondaState) throws AutomataOperationCanceledException {
-		final HashSet<STATE> exploredStates = new HashSet<>();
-		HashMap<List<LETTER>, HashSet<STATE>> wordStateMap = new HashMap<>();
-		final HashSet<STATE> initialSet = new HashSet<>();
-		mAutomaton.getInitialStates().forEach(x -> initialSet.add(x));
-		wordStateMap.put(new ArrayList<LETTER>(), initialSet);
-
-		while (!isCancellationRequested()) {
-			final HashMap<List<LETTER>, HashSet<STATE>> temp = new HashMap<>();
-
-			for (final Entry<List<LETTER>, HashSet<STATE>> word : wordStateMap.entrySet()) {
-				for (final STATE state : word.getValue()) {
-					for (final OutgoingInternalTransition<LETTER, STATE> transition : mAutomaton.getSuccessors(state)) {
-						final STATE succ = transition.getSucc();
-
-						if (exploredStates.add(succ)) {
-
-							final ArrayList<LETTER> newWord = new ArrayList<>(word.getKey());
-							newWord.add(transition.getLetter());
-							if (succ.equals(hondaState)) {
-								return newWord;
-							}
-
-							temp.computeIfAbsent(newWord, x -> new HashSet<>());
-							temp.get(newWord).add(succ);
-						}
-					}
-				}
-			}
-			wordStateMap = temp;
-		}
-		throw new AutomataOperationCanceledException(getClass());
 	}
 
 	@Override
