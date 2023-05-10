@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -254,29 +255,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 			final IcfgEdgeIterator edges = new IcfgEdgeIterator(entryNodes.get(proc).getOutgoingEdges());
 			while (edges.hasNext()) {
 				final IcfgEdge original = edges.next();
-
-				// replace spec edges by dummy transitions that do nothing (actual constraints are added later)
-				IcfgEdge edge;
-				if (isPreConditionSpecEdge(original) || isPostConditionSpecEdge(original)) {
-					edge = createDummyEdge(original);
-				} else {
-					edge = original;
-				}
-
-				// add inductivity clauses
-				for (final var prePost : getCartesianPrePostProduct(edge)) {
-					final var clause =
-							buildInductivityClause(edge, prePost.getFirst(), prePost.getSecond(), prePost.getThird());
-					transformSpecEdgeClause(original, clause);
-					result.add(clause);
-				}
-
-				// add non-interference clause
-				if (mUnboundedTemplates.contains(proc)) {
-					final var clause = buildNonInterferenceClause(edge);
-					transformSpecEdgeClause(original, clause);
-					result.add(clause);
-				}
+				result.addAll(buildClausesForTransition(original));
 			}
 		}
 
@@ -294,6 +273,37 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 				result.add(safetyClause);
 			}
 			break;
+		}
+
+		return result;
+	}
+
+	protected List<HornClauseBuilder> buildClausesForTransition(final IcfgEdge original) {
+		final var result = new ArrayList<HornClauseBuilder>();
+
+		// replace spec edges by dummy transitions that do nothing (actual constraints are added later)
+		IcfgEdge edge;
+		if (isPreConditionSpecEdge(original) || isPostConditionSpecEdge(original)) {
+			edge = createDummyEdge(original);
+		} else {
+			edge = original;
+		}
+
+		// add inductivity clauses
+		for (final var prePost : getCartesianPrePostProduct(edge)) {
+			final var clause =
+					buildInductivityClause(edge, prePost.getFirst(), prePost.getSecond(), prePost.getThird());
+			transformSpecEdgeClause(original, clause);
+			result.add(clause);
+		}
+
+		// add non-interference clause
+		if (mUnboundedTemplates.contains(edge.getPrecedingProcedure())) {
+			final var clauses = buildNonInterferenceClauses(edge);
+			for (final var clause : clauses) {
+				transformSpecEdgeClause(original, clause);
+			}
+			result.addAll(clauses);
 		}
 
 		return result;
@@ -523,10 +533,29 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		return clause;
 	}
 
+	protected List<HornClauseBuilder> buildNonInterferenceClauses(final IIcfgTransition<?> transition) {
+		final var result = new ArrayList<HornClauseBuilder>();
+		result.add(buildNonInterferenceClause(transition));
+		return result;
+	}
+
 	/**
 	 * Builds a noninterference clause for the given transition.
 	 */
 	protected HornClauseBuilder buildNonInterferenceClause(final IIcfgTransition<?> transition) {
+		// TODO support transitions with multiple predecessors (joins)
+		final var interferingThread = getInterferingThread(transition);
+		final var interferingVars = createThreadSpecificVars(interferingThread);
+
+		return buildNonInterferenceClause(transition, (clause, instance) -> {
+			final var bodyArgs = new ArrayList<>(mInvariantPredicate.getParameters());
+			replaceThreadVariables(bodyArgs, instance, interferingVars);
+			return bodyArgs.stream().map(v -> clause.getBodyVar(v).getTerm()).collect(Collectors.toList());
+		});
+	}
+
+	protected HornClauseBuilder buildNonInterferenceClause(final IIcfgTransition<?> transition,
+			final BiFunction<HornClauseBuilder, ThreadInstance, List<Term>> getInterferencePrecondition) {
 		final var clause = createBuilder(mInvariantPredicate, "non-interference clause for transition "
 				+ transition.hashCode() + " with transformula " + transition.getTransformula());
 
@@ -538,21 +567,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 		// add precondition clauses
 		for (final var instance : getInstances(interferingThread.getTemplateName())) {
-			final var bodyArgs = clause.getDefaultBodyArgs(mInvariantPredicate);
-
-			// replace thread-specific variables with those for the interfering thread
-			final var instanceVars = mThreadSpecificVars.get(instance);
-			final var interferingVars = createThreadSpecificVars(interferingThread);
-			for (int i = 0; i < instanceVars.size(); ++i) {
-				final var original = instanceVars.get(i);
-				if (mInvariantPredicate.hasParameter(original)) {
-					final var originalTerm = clause.getBodyVar(original).getTerm();
-					final var replaced = interferingVars.get(i);
-					final var replacedTerm = clause.getBodyVar(replaced).getTerm();
-					Collections.replaceAll(bodyArgs, originalTerm, replacedTerm);
-				}
-			}
-
+			final var bodyArgs = getInterferencePrecondition.apply(clause, instance);
 			clause.addBodyPredicate(mInvariantPredicate, bodyArgs);
 		}
 
@@ -567,6 +582,17 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		return clause;
 	}
 
+	protected void replaceThreadVariables(final List<IHcReplacementVar> parameters, final ThreadInstance oldInstance,
+			final List<IHcThreadSpecificVar> newVariables) {
+		final var oldVariables = mThreadSpecificVars.get(oldInstance);
+		assert oldVariables.size() == newVariables.size();
+		for (int i = 0; i < oldVariables.size(); ++i) {
+			final var original = oldVariables.get(i);
+			final var replaced = newVariables.get(i);
+			Collections.replaceAll(parameters, original, replaced);
+		}
+	}
+
 	// Auxiliary methods
 	// -----------------------------------------------------------------------------------------------------------------
 
@@ -578,7 +604,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 			final IcfgLocation location) {
 		final var locTerm =
 				location == null ? mBottomLocation : getLocIndexTerm(location, threadInstance.getTemplateName());
-		final HcLocationVar locVar = mLocationVars.get(threadInstance);
+		final HcLocationVar locVar = new HcLocationVar(threadInstance, mScript);
 		final Term term = clause.getBodyVar(locVar).getTerm();
 		clause.addConstraint(SmtUtils.binaryEquality(mScript, term, locTerm));
 	}
@@ -655,7 +681,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		return new ThreadInstance(transition.getPrecedingProcedure(), INTERFERING_INSTANCE_ID);
 	}
 
-	private Stream<HcLocalVar> getInterferingLocals(final ThreadInstance interferingThread) {
+	protected Stream<HcLocalVar> getInterferingLocals(final ThreadInstance interferingThread) {
 		return mCfgSymbolTable.getLocals(interferingThread.getTemplateName()).stream().filter(mVariableFilter)
 				.map(pv -> new HcLocalVar(pv, interferingThread));
 	}

@@ -30,6 +30,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -40,7 +41,8 @@ public class HcSleepVar implements IHcThreadSpecificVar, IHcFiniteReplacementVar
 	private final Set<Term> mValues;
 
 	public HcSleepVar(final ThreadInstance instance, final Script script) {
-		this(instance, SmtSortUtils.getBoolSort(script), Set.of(script.term("true"), script.term("false")));
+		this(instance, SmtSortUtils.getBoolSort(script),
+				Set.of(script.term(SMTLIBConstants.TRUE), script.term(SMTLIBConstants.FALSE)));
 	}
 
 	private HcSleepVar(final ThreadInstance instance, final Sort sort, final Set<Term> values) {
