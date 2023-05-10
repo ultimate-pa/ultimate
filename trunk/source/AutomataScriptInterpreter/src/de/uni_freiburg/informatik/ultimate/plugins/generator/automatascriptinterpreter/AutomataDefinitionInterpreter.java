@@ -2,7 +2,8 @@
  * Copyright (C) 2013-2015 Betim Musa (musab@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Carl Kuesters
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2023 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2023 University of Freiburg
  *
  * This file is part of the ULTIMATE AutomataScriptInterpreter plug-in.
  *
