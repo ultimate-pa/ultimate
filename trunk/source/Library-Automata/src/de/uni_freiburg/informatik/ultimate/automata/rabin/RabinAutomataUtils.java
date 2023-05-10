@@ -52,8 +52,8 @@ public class RabinAutomataUtils {
 	 * @return reduced automaton
 	 */
 	public static <LETTER, STATE> RabinAutomaton<LETTER, STATE>
-			eagerAutomaton(final IRabinAutomaton<LETTER, STATE> automaton) {
-		return eagerAutomaton(automaton, Set.of());
+			computeReachableStates(final IRabinAutomaton<LETTER, STATE> automaton) {
+		return computeReachableIgnoredStates(automaton, Set.of());
 	}
 
 	/**
@@ -70,7 +70,7 @@ public class RabinAutomataUtils {
 	 * @return reduced automaton
 	 */
 	public static <LETTER, STATE> RabinAutomaton<LETTER, STATE>
-			eagerAutomaton(final IRabinAutomaton<LETTER, STATE> automaton, final Set<STATE> toRemove) {
+			computeReachableIgnoredStates(final IRabinAutomaton<LETTER, STATE> automaton, final Set<STATE> toRemove) {
 		final Set<STATE> initialStates = new HashSet<>();
 		final Set<STATE> states = new HashSet<>();
 		final NestedMap2<STATE, LETTER, Set<STATE>> transitions = new NestedMap2<>();
@@ -130,7 +130,7 @@ public class RabinAutomataUtils {
 	 *            a BlackWhiteStateFactory
 	 * @return a parallel automaton that allows multiple different accepting conditions
 	 */
-	public static <LETTER, STATE> IRabinAutomaton<LETTER, STATE> generalAutomaton(final Set<LETTER> alphabet,
+	public static <LETTER, STATE> IRabinAutomaton<LETTER, STATE> disjunctiveAutomaton(final Set<LETTER> alphabet,
 			final Set<STATE> states, final Set<STATE> initialStates,
 			final Iterable<Pair<Set<STATE>, Set<STATE>>> acceptingConditions,
 			final NestedMap2<STATE, LETTER, Set<STATE>> transitions, final IBlackWhiteStateFactory<STATE> factory) {

@@ -80,7 +80,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		super(services);
 		// Reduces the automaton to its traversable core
 		// cuts off non reachable final states
-		mEagerAutomaton = RabinAutomataUtils.eagerAutomaton(automaton);
+		mEagerAutomaton = RabinAutomataUtils.computeReachableStates(automaton);
 		final IRabinAutomaton<LETTER, STATE> suffixAutomaton = getSuffixAutomaton(mEagerAutomaton);
 
 		final Set<STATE> init = new HashSet<>();
@@ -153,10 +153,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		final RabinAutomaton<LETTER, STATE> nonReducedAutomaton =
 				new RabinAutomaton<>(automaton.getAlphabet(), automaton.getStates(), automaton.getAcceptingStates(),
 						automaton.getAcceptingStates(), automaton.getFiniteStates(), automaton.getTransitions());
-		final RabinAutomaton<LETTER, STATE> result =
-				RabinAutomataUtils.eagerAutomaton(nonReducedAutomaton, automaton.getFiniteStates());
-
-		return result;
+		return RabinAutomataUtils.computeReachableIgnoredStates(nonReducedAutomaton, automaton.getFiniteStates());
 
 	}
 
