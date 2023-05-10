@@ -73,21 +73,16 @@ public class Events2PetriNetLassoRunBuchi<LETTER, PLACE> {
 		final Marking<PLACE> startMarking = new Marking<>(ImmutableSet.of(mUnfolding.getNet().getInitialPlaces()));
 
 		final var pair = constructFeasibleLetterAndMarkingSequence(startMarking, stemTransitions);
-		if (pair == null) {
-			return false;
-		}
 		final List<LETTER> stemLetters = pair.getFirst();
 		final List<Marking<PLACE>> sequenceOfStemMarkings = pair.getSecond();
 
 		final var pair2 = constructFeasibleLetterAndMarkingSequence(
 				sequenceOfStemMarkings.get(sequenceOfStemMarkings.size() - 1), loopTransitions);
-		if (pair2 == null) {
-			return false;
-		}
 		final List<LETTER> loopLetters = pair2.getFirst();
 		final List<Marking<PLACE>> sequenceOfLassoMarkings = pair2.getSecond();
 
-		return createAndCheckLassoRun(stemLetters, sequenceOfStemMarkings, loopLetters, sequenceOfLassoMarkings);
+		return createAndCheckLassoRun(stemLetters, sequenceOfStemMarkings, stemTransitions, loopLetters,
+				sequenceOfLassoMarkings, loopTransitions);
 	}
 
 	private final Pair<List<LETTER>, List<Marking<PLACE>>> constructFeasibleLetterAndMarkingSequence(
@@ -126,8 +121,9 @@ public class Events2PetriNetLassoRunBuchi<LETTER, PLACE> {
 	}
 
 	private final boolean createAndCheckLassoRun(final List<LETTER> stemLetters,
-			final List<Marking<PLACE>> sequenceOfStemMarkings, final List<LETTER> loopLetters,
-			final List<Marking<PLACE>> sequenceOfLassoMarkings) throws PetriNetNot1SafeException {
+			final List<Marking<PLACE>> sequenceOfStemMarkings, final List<Transition<LETTER, PLACE>> stemTransitions,
+			final List<LETTER> loopLetters, final List<Marking<PLACE>> sequenceOfLassoMarkings,
+			final List<Transition<LETTER, PLACE>> loopTransitions) throws PetriNetNot1SafeException {
 		@SuppressWarnings("unchecked")
 		final LETTER[] stem = (LETTER[]) stemLetters.toArray();
 		final Word<LETTER> stemWord = new Word<>(stem);
@@ -139,8 +135,10 @@ public class Events2PetriNetLassoRunBuchi<LETTER, PLACE> {
 		final NestedWord<LETTER> nestedloopWord = NestedWord.nestedWord(loopWord);
 
 		final NestedLassoWord<LETTER> nestedLassoWord = new NestedLassoWord<>(nestedstemWord, nestedloopWord);
-		final PetriNetRun<LETTER, PLACE> stemRun = new PetriNetRun<>(sequenceOfStemMarkings, nestedstemWord);
-		final PetriNetRun<LETTER, PLACE> loopRun = new PetriNetRun<>(sequenceOfLassoMarkings, nestedloopWord);
+		final PetriNetRun<LETTER, PLACE> stemRun =
+				new PetriNetRun<>(sequenceOfStemMarkings, nestedstemWord, stemTransitions);
+		final PetriNetRun<LETTER, PLACE> loopRun =
+				new PetriNetRun<>(sequenceOfLassoMarkings, nestedloopWord, loopTransitions);
 		final PetriNetLassoRun<LETTER, PLACE> lassoRun = new PetriNetLassoRun<>(stemRun, loopRun);
 		// this BuchiAccepts should not be needed, but acts as a last correctness check for unknown edge cases
 		final BuchiAccepts<LETTER, PLACE> accepts = new BuchiAccepts<>(mServices,

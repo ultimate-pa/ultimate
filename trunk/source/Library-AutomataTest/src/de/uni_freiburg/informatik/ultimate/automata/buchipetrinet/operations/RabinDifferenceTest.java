@@ -16,8 +16,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedRabinPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferenceRabin;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RabinAccepts;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RabinDifference;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
@@ -62,7 +62,7 @@ public class RabinDifferenceTest {
 		buchiAutomata.addInternalTransition("q2", "b", "q2");
 		buchiAutomata.addInternalTransition("q2", "a", "q1");
 
-		final DifferenceRabin<String, String> rabinDiff = new DifferenceRabin<>(petriNet, buchiAutomata, mServices);
+		final RabinDifference<String, String> rabinDiff = new RabinDifference<>(petriNet, buchiAutomata, mServices);
 
 		final var dif = rabinDiff.getResult();
 
@@ -119,7 +119,7 @@ public class RabinDifferenceTest {
 		buchiAutomata.addInternalTransition("q3", "b", "q3");
 		buchiAutomata.addInternalTransition("q3", "c", "q2");
 
-		final DifferenceRabin<String, String> rabinDiff = new DifferenceRabin<>(petriNet, buchiAutomata, mServices);
+		final RabinDifference<String, String> rabinDiff = new RabinDifference<>(petriNet, buchiAutomata, mServices);
 
 		final var dif = rabinDiff.getResult();
 
@@ -176,7 +176,7 @@ public class RabinDifferenceTest {
 		buchiAutomata.addInternalTransition("q3", "b", "q3");
 		buchiAutomata.addInternalTransition("q3", "c", "q3");
 
-		final DifferenceRabin<String, String> rabinDiff = new DifferenceRabin<>(petriNet, buchiAutomata, mServices);
+		final RabinDifference<String, String> rabinDiff = new RabinDifference<>(petriNet, buchiAutomata, mServices);
 
 		final var dif = rabinDiff.getResult();
 
@@ -234,7 +234,7 @@ public class RabinDifferenceTest {
 		buchiAutomata.addInternalTransition("q2", "b", "q2");
 		buchiAutomata.addInternalTransition("q2", "c", "q2");
 
-		final DifferenceRabin<String, String> rabinDiff = new DifferenceRabin<>(petriNet, buchiAutomata, mServices);
+		final RabinDifference<String, String> rabinDiff = new RabinDifference<>(petriNet, buchiAutomata, mServices);
 
 		final var dif = rabinDiff.getResult();
 
