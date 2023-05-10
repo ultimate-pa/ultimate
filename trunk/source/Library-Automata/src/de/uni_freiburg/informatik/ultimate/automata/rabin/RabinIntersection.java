@@ -20,6 +20,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * 16-21 November 2018 (G. Barthe, G. Sutcliffe, and M. Veanes, eds.), vol. 57 of EPiC Series in Computing, pp. 143–163,
  * EasyChair, 2018. !The construction is found page 7, Theorem 1!
  *
+ * This class reduces the reachable state size by enforcing the acceptance of the first automaton being always tested
+ * before that of the second. Runtime can be different for switching the automata to be intersected
+ *
  * @author Philipp Müller (pm251@venus.uni-freiburg.de)
  *
  * @param <LETTER>
@@ -138,17 +141,18 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	private STATE getProducedState(final STATE first, final STATE second, final int component) {
 		STATE result = mFactory.intersection(first, second);
 		result = mFactory.getColoredState(result, (byte) component);
+		// since we already need this map we can use it as a cache
 		if (!mAutomatonMap.containsKey(result)) {
+			// This checks for B" instead of making states finite we can delete them to reduce the state size
+			if (((component == 1) && !mFirstAutomaton.isAccepting(first))
+					|| ((component == 3) && !mSecondAutomaton.isAccepting(second))) {
+				return null;
+			}
 			if ((component == 1) && mFirstAutomaton.isAccepting(first)) {
 				mAcceptingStates.add(result);
 			}
-			// With the used construction Finite states are either in B' or B"
-			// Check if in B'
-			boolean isBad = mFirstAutomaton.isFinite(first) || mSecondAutomaton.isFinite(second);
-			// if false, check if in B"
-			isBad = isBad || ((component == 1) && !mFirstAutomaton.isAccepting(first));
-			isBad = isBad || ((component == 3) && !mSecondAutomaton.isAccepting(second));
-			if (isBad) {
+			// This checks for B', these are all states derived from finite states
+			if (mFirstAutomaton.isFinite(first) || mSecondAutomaton.isFinite(second)) {
 				mFiniteStates.add(result);
 			}
 			mAutomatonMap.put(result, new Triple<>(first, second, component));
@@ -176,8 +180,11 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 			final LETTER letter = transitionFirst.getLetter();
 			for (final OutgoingInternalTransition<LETTER, STATE> transitionSecond : mSecondAutomaton
 					.getSuccessors(secondState, letter)) {
-				result.add(new OutgoingInternalTransition<>(letter,
-						getProducedState(transitionFirst.getSucc(), transitionSecond.getSucc(), successorComponent)));
+				final STATE producedState =
+						getProducedState(transitionFirst.getSucc(), transitionSecond.getSucc(), successorComponent);
+				if (producedState != null) {
+					result.add(new OutgoingInternalTransition<>(letter, producedState));
+				}
 			}
 		}
 		return result;
