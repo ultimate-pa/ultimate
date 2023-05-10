@@ -144,12 +144,15 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 		// since we already need this map we can use it as a cache
 		if (!mAutomatonMap.containsKey(result)) {
 			// This checks for B" instead of making states finite we can delete them to reduce the state size
-			if (((component == 1) && !mFirstAutomaton.isAccepting(first))
-					|| ((component == 3) && !mSecondAutomaton.isAccepting(second))) {
+			// it also makes all remaining states in component 1 accepting
+			if (component == 1) {
+				if (mFirstAutomaton.isAccepting(first)) {
+					mAcceptingStates.add(result);
+				} else {
+					return null;
+				}
+			} else if ((component == 3) && !mSecondAutomaton.isAccepting(second)) {
 				return null;
-			}
-			if ((component == 1) && mFirstAutomaton.isAccepting(first)) {
-				mAcceptingStates.add(result);
 			}
 			// This checks for B', these are all states derived from finite states
 			if (mFirstAutomaton.isFinite(first) || mSecondAutomaton.isFinite(second)) {
