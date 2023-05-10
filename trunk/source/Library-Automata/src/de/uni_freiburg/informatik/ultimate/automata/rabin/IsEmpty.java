@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  */
 public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends GeneralOperation<LETTER, STATE, CRSF> {
 	private final Boolean mResult;
-	private final RabinAutomaton<LETTER, STATE> mEagerAutomaton;
+	private final IRabinAutomaton<LETTER, STATE> mAutomaton;
 	private final Set<STATE> mEvidence;
 
 	/**
@@ -80,8 +80,8 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		super(services);
 		// Reduces the automaton to its traversable core
 		// cuts off non reachable final states
-		mEagerAutomaton = RabinAutomataUtils.computeReachableStates(automaton);
-		final IRabinAutomaton<LETTER, STATE> suffixAutomaton = getSuffixAutomaton(mEagerAutomaton);
+		mAutomaton = automaton;
+		final IRabinAutomaton<LETTER, STATE> suffixAutomaton = getSuffixAutomaton(mAutomaton);
 
 		final Set<STATE> init = new HashSet<>();
 		suffixAutomaton.getInitialStates().forEach(init::add);
@@ -104,7 +104,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 			return null;
 		}
 		// get one random accepting State from evidence
-		final STATE hondaState = mEvidence.stream().filter(mEagerAutomaton::isAccepting).findAny().get();
+		final STATE hondaState = mEvidence.stream().filter(mAutomaton::isAccepting).findAny().get();
 		return new NestedLassoWord<>(NestedWord.nestedWord(new Word<>((LETTER[]) getStem(hondaState).toArray())),
 				NestedWord.nestedWord(new Word<>((LETTER[]) getLoop(hondaState).toArray())));
 	}
@@ -121,8 +121,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 			final HashRelation<List<LETTER>, STATE> temp = new HashRelation<>();
 			for (final Entry<List<LETTER>, HashSet<STATE>> word : wordStateMap.entrySet()) {
 				for (final STATE state : word.getValue()) {
-					for (final OutgoingInternalTransition<LETTER, STATE> transition : mEagerAutomaton
-							.getSuccessors(state)) {
+					for (final OutgoingInternalTransition<LETTER, STATE> transition : mAutomaton.getSuccessors(state)) {
 						final STATE succ = transition.getSucc();
 
 						if (missingStates.remove(succ)) {
@@ -149,19 +148,19 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	 *            Generates a automaton that starts from the Honda/accepting states of this automaton and removes all
 	 *            finite states
 	 */
-	private RabinAutomaton<LETTER, STATE> getSuffixAutomaton(final RabinAutomaton<LETTER, STATE> automaton) {
+	private RabinAutomaton<LETTER, STATE> getSuffixAutomaton(final IRabinAutomaton<LETTER, STATE> automaton) {
+		final RabinAutomaton<LETTER, STATE> reachable = RabinAutomataUtils.computeReachableStates(automaton);
 		final RabinAutomaton<LETTER, STATE> nonReducedAutomaton =
-				new RabinAutomaton<>(automaton.getAlphabet(), automaton.getStates(), automaton.getAcceptingStates(),
-						automaton.getAcceptingStates(), automaton.getFiniteStates(), automaton.getTransitions());
-		return RabinAutomataUtils.computeReachableIgnoredStates(nonReducedAutomaton, automaton.getFiniteStates());
-
+				new RabinAutomaton<>(reachable.getAlphabet(), reachable.getStates(), reachable.getAcceptingStates(),
+						reachable.getAcceptingStates(), reachable.getFiniteStates(), reachable.getTransitions());
+		return RabinAutomataUtils.computeReachableIgnoredStates(nonReducedAutomaton, reachable.getFiniteStates());
 	}
 
 	private List<LETTER> getStem(final STATE hondaState) throws AutomataOperationCanceledException {
 		final HashSet<STATE> exploredStates = new HashSet<>();
 		HashMap<List<LETTER>, HashSet<STATE>> wordStateMap = new HashMap<>();
 		final HashSet<STATE> initialSet = new HashSet<>();
-		mEagerAutomaton.getInitialStates().forEach(x -> initialSet.add(x));
+		mAutomaton.getInitialStates().forEach(x -> initialSet.add(x));
 		wordStateMap.put(new ArrayList<LETTER>(), initialSet);
 
 		while (!isCancellationRequested()) {
@@ -169,8 +168,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 
 			for (final Entry<List<LETTER>, HashSet<STATE>> word : wordStateMap.entrySet()) {
 				for (final STATE state : word.getValue()) {
-					for (final OutgoingInternalTransition<LETTER, STATE> transition : mEagerAutomaton
-							.getSuccessors(state)) {
+					for (final OutgoingInternalTransition<LETTER, STATE> transition : mAutomaton.getSuccessors(state)) {
 						final STATE succ = transition.getSucc();
 
 						if (exploredStates.add(succ)) {
@@ -197,7 +195,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		boolean result = true;
 		if (Boolean.FALSE.equals(mResult)) {
 			final NestedLassoWord<LETTER> counterExample = getCounterexample();
-			result = new Accepts<>(mServices, mEagerAutomaton, counterExample).getResult();
+			result = new Accepts<>(mServices, mAutomaton, counterExample).getResult();
 		}
 		return result;
 	}
