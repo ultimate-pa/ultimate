@@ -231,6 +231,7 @@ public class PreferenceOrderHeuristicTest<L extends IIcfgTransition<?>> {
 			mMgdScript.checkSat(this);
 		}
 
+		/*
 		final var termValues = mMgdScript.getValue(this, termEvaluationMap.keySet().toArray(Term[]::new));
 		for (final Term term : termEvaluationMap.keySet()) {
 			final Term value = termValues.get(term);
@@ -239,12 +240,23 @@ public class PreferenceOrderHeuristicTest<L extends IIcfgTransition<?>> {
 
 			termEvaluationMap.put(term, rational.numerator().intValue());
 		}
-
 		if (!mLoopProcedures.isEmpty()) {
 			for (final Term term : termEvaluationMap.keySet()) {
 				final int value = termEvaluationMap.get(term);
 				final int maxStep = value;
 				sequence += String.format("%d,%d ", mAllProcedures.indexOf(term.toString()), maxStep);
+			}
+		}*/
+
+		if (!mLoopProcedures.isEmpty()) {
+			final var termValues = mMgdScript.getValue(this, termEvaluationMap.keySet().toArray(Term[]::new));
+			for (final Term term : termEvaluationMap.keySet()) {
+				final Term value = termValues.get(term);
+				final var rational = SmtUtils.tryToConvertToLiteral(value);
+				assert rational != null && rational.isIntegral();
+				final int maxStep = rational.numerator().intValue();
+				sequence += String.format("%d,%d ", mAllProcedures.indexOf(term.toString()), maxStep);
+				termEvaluationMap.put(term, rational.numerator().intValue());			
 			}
 		}
 
