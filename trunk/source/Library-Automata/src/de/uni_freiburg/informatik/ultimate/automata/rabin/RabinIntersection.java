@@ -147,11 +147,12 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	 * @param second
 	 *            state from mSecondAutomaton
 	 * @param component
-	 *            a component referencing the subautomaton
+	 *            a component referencing the subautomaton; component 4 refers to the nonfinite version of component 0
 	 * @return a state which uniquely incorporates all parameters
 	 */
 	private STATE getProducedState(final STATE first, final STATE second, final int component) {
-		final STATE result = mFactory.getColoredState(mFactory.intersection(first, second), (byte) component);
+		final int equivalentComponent = component % NUMBER_OF_COMPONENTS;
+		final STATE result = mFactory.getColoredState(mFactory.intersection(first, second), (byte) equivalentComponent);
 		// since we already need this map we can use it as a cache
 		if (!mAutomatonMap.containsKey(result)) {
 
@@ -176,7 +177,7 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 				return null;
 			}
 
-			mAutomatonMap.put(result, new Triple<>(first, second, component));
+			mAutomatonMap.put(result, new Triple<>(first, second, equivalentComponent));
 		}
 		return result;
 	}
@@ -225,8 +226,8 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	private ArrayList<OutgoingInternalTransition<LETTER, STATE>> getComponentalSuccessors(
 			final Iterable<OutgoingInternalTransition<LETTER, STATE>> transitionsFromFirst,
 			final STATE originalSecondState, final int originalComponent) {
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = getRelatedSuccessors(transitionsFromFirst,
-				originalSecondState, (originalComponent + 1) % NUMBER_OF_COMPONENTS);
+		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result =
+				getRelatedSuccessors(transitionsFromFirst, originalSecondState, originalComponent + 1);
 		if ((originalComponent % 2) == 0) {
 			result.addAll(getRelatedSuccessors(transitionsFromFirst, originalSecondState, originalComponent));
 		}
