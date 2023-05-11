@@ -27,7 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.automata.rabin;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -38,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
 
 /**
  * class to lazyly construct the union of two Rabin automata
@@ -145,13 +145,8 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 	 */
 	private Iterable<OutgoingInternalTransition<LETTER, STATE>> constructSuccessors(
 			final Iterable<OutgoingInternalTransition<LETTER, STATE>> subautomatonTransitions, final boolean isFirst) {
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
-
-		for (final OutgoingInternalTransition<LETTER, STATE> transition : subautomatonTransitions) {
-			result.add(new OutgoingInternalTransition<>(transition.getLetter(),
-					getUnionState(transition.getSucc(), isFirst)));
-		}
-		return result;
+		return () -> new TransformIterator<>(subautomatonTransitions.iterator(),
+				x -> new OutgoingInternalTransition<>(x.getLetter(), getUnionState(x.getSucc(), isFirst)));
 	}
 
 	/**
