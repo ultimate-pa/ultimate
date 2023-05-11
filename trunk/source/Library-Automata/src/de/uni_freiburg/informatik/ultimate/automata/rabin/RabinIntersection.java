@@ -154,6 +154,17 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 		final STATE result = mFactory.getColoredState(mFactory.intersection(first, second), (byte) component);
 		// since we already need this map we can use it as a cache
 		if (!mAutomatonMap.containsKey(result)) {
+
+			// This checks for B', these are all states derived from finite states
+			// only component 0 retains finite states, this should reduce the state set without changing the accepted
+			// language!
+			if (mFirstAutomaton.isFinite(first) || mSecondAutomaton.isFinite(second)) {
+				if (component == 0) {
+					mFiniteStates.add(result);
+				} else {
+					return null;
+				}
+			} else
 			// This checks for B" instead of making states finite we can delete them to reduce the state size
 			// it also makes all remaining states in component 1 accepting
 			if (component == 1) {
@@ -164,10 +175,7 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 			} else if (component == 3 && !mSecondAutomaton.isAccepting(second)) {
 				return null;
 			}
-			// This checks for B', these are all states derived from finite states
-			if (mFirstAutomaton.isFinite(first) || mSecondAutomaton.isFinite(second)) {
-				mFiniteStates.add(result);
-			}
+
 			mAutomatonMap.put(result, new Triple<>(first, second, component));
 		}
 		return result;
