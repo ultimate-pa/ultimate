@@ -156,10 +156,7 @@ public class Accepts<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 	 * Produces a new set of starting states that is valid after stem is read. Works similar to a NFA interpreter.
 	 */
 	private ArrayList<STATE> stemEvaluation(final IRabinAutomaton<LETTER, STATE> automaton, final List<LETTER> stem) {
-		ArrayList<STATE> currentStateSet = new ArrayList<>();
-		for (final STATE initialState : automaton.getInitialStates()) {
-			currentStateSet.add(initialState);
-		}
+		ArrayList<STATE> currentStateSet = new ArrayList<>(automaton.getInitialStates());
 		// we consume each letter from the stem in a step and derive from it a new situation with a respective stateSet
 		for (final LETTER letter : stem) {
 			if (currentStateSet.isEmpty()) {

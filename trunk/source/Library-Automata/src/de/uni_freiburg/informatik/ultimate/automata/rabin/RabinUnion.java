@@ -103,13 +103,8 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 	}
 
 	@Override
-	public Iterable<STATE> getInitialStates() {
+	public Set<STATE> getInitialStates() {
 		return mInitialStates;
-	}
-
-	@Override
-	public boolean isInitial(final STATE state) {
-		return mInitialStates.contains(state);
 	}
 
 	@Override

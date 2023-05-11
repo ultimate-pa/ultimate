@@ -27,6 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.automata.rabin;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 
@@ -44,7 +46,7 @@ public interface IRabinAutomaton<LETTER, STATE> extends IAutomaton<LETTER, STATE
 	/**
 	 * @return All initial states of the automaton.
 	 */
-	Iterable<STATE> getInitialStates();
+	Set<STATE> getInitialStates();
 
 	/**
 	 * checks if state is initial
@@ -53,7 +55,9 @@ public interface IRabinAutomaton<LETTER, STATE> extends IAutomaton<LETTER, STATE
 	 *            state
 	 * @return true iff the state is initial.
 	 */
-	boolean isInitial(STATE state);
+	default boolean isInitial(final STATE state) {
+		return getInitialStates().contains(state);
+	}
 
 	/**
 	 * checks if state is accepting

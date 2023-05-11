@@ -121,13 +121,8 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	}
 
 	@Override
-	public Iterable<STATE> getInitialStates() {
+	public Set<STATE> getInitialStates() {
 		return mInitialStates;
-	}
-
-	@Override
-	public boolean isInitial(final STATE state) {
-		return mInitialStates.contains(state);
 	}
 
 	@Override

@@ -82,8 +82,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 		mAutomaton = automaton;
 		final IRabinAutomaton<LETTER, STATE> suffixAutomaton = getSuffixAutomaton(mAutomaton);
 
-		final Set<STATE> init = new HashSet<>();
-		suffixAutomaton.getInitialStates().forEach(init::add);
+		final Set<STATE> init = suffixAutomaton.getInitialStates();
 
 		final DefaultSccComputation<STATE> sccComputation =
 				new DefaultSccComputation<>(services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
@@ -121,9 +120,7 @@ public class IsEmpty<LETTER, STATE, CRSF extends IStateFactory<STATE>> extends G
 
 	private NestedWord<LETTER> getStem(final STATE hondaState) throws AutomataOperationCanceledException {
 		final HashSet<STATE> exploredStates = new HashSet<>();
-		final Set<STATE> initialStates = new HashSet<>();
-		mAutomaton.getInitialStates().forEach(initialStates::add);
-		return computeWord(initialStates, hondaState, exploredStates::add);
+		return computeWord(mAutomaton.getInitialStates(), hondaState, exploredStates::add);
 	}
 
 	private NestedWord<LETTER> getLoop(final STATE hondaState) throws AutomataOperationCanceledException {

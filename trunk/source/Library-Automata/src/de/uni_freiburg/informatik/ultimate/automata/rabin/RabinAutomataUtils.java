@@ -34,6 +34,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -71,15 +72,12 @@ public class RabinAutomataUtils {
 	 */
 	public static <LETTER, STATE> RabinAutomaton<LETTER, STATE>
 			computeReachableIgnoredStates(final IRabinAutomaton<LETTER, STATE> automaton, final Set<STATE> toRemove) {
-		final Set<STATE> initialStates = new HashSet<>();
+		final Set<STATE> initialStates = DataStructureUtils.difference(automaton.getInitialStates(), toRemove);
 		final Set<STATE> states = new HashSet<>();
 		final NestedMap2<STATE, LETTER, Set<STATE>> transitions = new NestedMap2<>();
 		final Set<LETTER> alphabet = new HashSet<>();
 		final Set<STATE> finiteStates = new HashSet<>();
 		final Set<STATE> acceptingStates = new HashSet<>();
-
-		automaton.getInitialStates().forEach(x -> initialStates.add(x));
-		initialStates.removeAll(toRemove);
 
 		final ArrayDeque<STATE> currentStateSet = new ArrayDeque<>();
 		currentStateSet.addAll(initialStates);

@@ -28,6 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.rabin;
 
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -74,8 +76,8 @@ public class Buchi2RabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETT
 	}
 
 	@Override
-	public Iterable<STATE> getInitialStates() {
-		return mUnderlying.getInitialStates();
+	public Set<STATE> getInitialStates() {
+		return StreamSupport.stream(mUnderlying.getInitialStates().spliterator(), false).collect(Collectors.toSet());
 	}
 
 	@Override
