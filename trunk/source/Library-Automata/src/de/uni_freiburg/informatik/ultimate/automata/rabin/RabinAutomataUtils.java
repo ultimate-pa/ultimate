@@ -75,7 +75,6 @@ public class RabinAutomataUtils {
 		final Set<STATE> initialStates = DataStructureUtils.difference(automaton.getInitialStates(), toRemove);
 		final Set<STATE> states = new HashSet<>();
 		final NestedMap2<STATE, LETTER, Set<STATE>> transitions = new NestedMap2<>();
-		final Set<LETTER> alphabet = new HashSet<>();
 		final Set<STATE> finiteStates = new HashSet<>();
 		final Set<STATE> acceptingStates = new HashSet<>();
 
@@ -95,7 +94,6 @@ public class RabinAutomataUtils {
 					continue;
 				}
 				final LETTER letter = transition.getLetter();
-				alphabet.add(letter);
 				Set<STATE> successors = transitions.get(currentState, letter);
 				if (successors == null) {
 					successors = new HashSet<>();
@@ -107,7 +105,8 @@ public class RabinAutomataUtils {
 				}
 			}
 		}
-		return new RabinAutomaton<>(alphabet, states, initialStates, acceptingStates, finiteStates, transitions);
+		return new RabinAutomaton<>(automaton.getAlphabet(), states, initialStates, acceptingStates, finiteStates,
+				transitions);
 	}
 
 	/**
