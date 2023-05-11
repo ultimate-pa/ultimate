@@ -105,8 +105,8 @@ public class RabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTER, ST
 
 	@Override
 	public String sizeInformation() {
-		// TODO Implement more information on return.
-		return "Number of states: " + size();
+		return "Number of states: " + size() + ", number of transitions: "
+				+ mTransitions.values().mapToInt(Set::size).sum();
 	}
 
 	@Override
