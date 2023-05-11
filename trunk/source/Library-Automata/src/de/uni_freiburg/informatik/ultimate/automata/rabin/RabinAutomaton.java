@@ -31,10 +31,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
 
@@ -110,13 +107,6 @@ public class RabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTER, ST
 	public String sizeInformation() {
 		// TODO Implement more information on return.
 		return "Number of states: " + size();
-	}
-
-	@Override
-	public IElement transformToUltimateModel(final AutomataLibraryServices services)
-			throws AutomataOperationCanceledException {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override

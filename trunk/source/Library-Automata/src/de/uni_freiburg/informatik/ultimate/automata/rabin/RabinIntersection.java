@@ -32,13 +32,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -111,13 +108,6 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	public String sizeInformation() {
 		return "Number of states: " + size() + "\n"
 				+ "The number of lazyly constructed reachable states may be smaller";
-	}
-
-	@Override
-	public IElement transformToUltimateModel(final AutomataLibraryServices services)
-			throws AutomataOperationCanceledException {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override

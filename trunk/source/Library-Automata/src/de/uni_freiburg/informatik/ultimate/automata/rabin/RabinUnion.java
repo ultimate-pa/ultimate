@@ -31,11 +31,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
 
@@ -93,13 +90,6 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 	public String sizeInformation() {
 		return "Number of states: " + size() + "\n" + "of these there are: " + mFirstAutomaton.size()
 				+ " from firstAutomaton and: " + mSecondAutomaton.size() + " from secondAutomaton";
-	}
-
-	@Override
-	public IElement transformToUltimateModel(final AutomataLibraryServices services)
-			throws AutomataOperationCanceledException {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override

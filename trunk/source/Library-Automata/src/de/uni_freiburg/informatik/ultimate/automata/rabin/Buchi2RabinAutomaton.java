@@ -31,11 +31,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
  * Wraps a Büchi-automton (represented by {@link INwaOutgoingLetterAndTransitionProvider}) into an
@@ -67,12 +64,6 @@ public class Buchi2RabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETT
 	@Override
 	public String sizeInformation() {
 		return mUnderlying.sizeInformation();
-	}
-
-	@Override
-	public IElement transformToUltimateModel(final AutomataLibraryServices services)
-			throws AutomataOperationCanceledException {
-		return mUnderlying.transformToUltimateModel(services);
 	}
 
 	@Override

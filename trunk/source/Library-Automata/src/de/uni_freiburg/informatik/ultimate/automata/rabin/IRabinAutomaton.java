@@ -29,8 +29,11 @@ package de.uni_freiburg.informatik.ultimate.automata.rabin;
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
  * Interface describing minimal operation set of Rabin automata
@@ -96,4 +99,10 @@ public interface IRabinAutomaton<LETTER, STATE> extends IAutomaton<LETTER, STATE
 	 * @return resulting outgoing transitions for these parameters
 	 */
 	Iterable<OutgoingInternalTransition<LETTER, STATE>> getSuccessors(final STATE state, final LETTER letter);
+
+	@Override
+	default IElement transformToUltimateModel(final AutomataLibraryServices services)
+			throws AutomataOperationCanceledException {
+		throw new UnsupportedOperationException("Rabin automata are not yet implemented as Ultimate model.");
+	}
 }
