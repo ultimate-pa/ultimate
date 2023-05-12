@@ -142,8 +142,10 @@ public class ParameterizedPreferenceOrderUtils<L extends IIcfgTransition<?>> {
 				effectiveGlobalVars.add(var);
 				for (final String procedure : sharedVarsMap.get(var)) {
 					final Set<IProgramVar> vars = sharedVarsMapReversed.get(procedure);
-					vars.add(var);
-					sharedVarsMapReversed.put(procedure, vars);
+					if (vars != null) {
+						vars.add(var);
+						sharedVarsMapReversed.put(procedure, vars);
+					}
 				}
 			}
 		}
