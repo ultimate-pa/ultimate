@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFactory<STATE> & IIntersectionStateFactory<STATE>>
 		implements IRabinAutomaton<LETTER, STATE> {
-	private static final int NUMBER_OF_COMPONENTS = 4;
+	private static final int NUMBER_OF_COMPONENTS = 3;
 
 	private final IRabinAutomaton<LETTER, STATE> mFirstAutomaton;
 	private final IRabinAutomaton<LETTER, STATE> mSecondAutomaton;
@@ -147,15 +147,25 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	 * @param second
 	 *            state from mSecondAutomaton
 	 * @param component
-	 *            a component referencing the subautomaton; component 4 refers to the nonfinite version of component 0
+	 *            a component referencing the subautomaton
 	 * @return a state which uniquely incorporates all parameters
 	 */
 	private STATE getProducedState(final STATE first, final STATE second, final int component) {
-		final int equivalentComponent = component % NUMBER_OF_COMPONENTS;
-		final STATE result = mFactory.getColoredState(mFactory.intersection(first, second), (byte) equivalentComponent);
+		final STATE result;
+		// acceptance of the second automaton is a necessary condition for all transitions from 2->0 using transitions
+		// instead of atates for this evidence reduces the automaton by the size of component 3
+		if (component == NUMBER_OF_COMPONENTS) {
+			if (!mSecondAutomaton.isAccepting(second) || mFirstAutomaton.isFinite(first)
+					|| mSecondAutomaton.isFinite(second)) {
+				return null;
+			}
+			result = mFactory.getColoredState(mFactory.intersection(first, second), (byte) 0);
+			mAutomatonMap.computeIfAbsent(result, x -> new Triple<>(first, second, 0));
+			return result;
+		}
+		result = mFactory.getColoredState(mFactory.intersection(first, second), (byte) component);
 		// since we already need this map we can use it as a cache
 		if (!mAutomatonMap.containsKey(result)) {
-
 			// This checks for B', these are all states derived from finite states
 			// only component 0 retains finite states, this should reduce the state set without changing the accepted
 			// language!
@@ -173,11 +183,8 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 					return null;
 				}
 				mAcceptingStates.add(result);
-			} else if (component == 3 && !mSecondAutomaton.isAccepting(second)) {
-				return null;
 			}
-
-			mAutomatonMap.put(result, new Triple<>(first, second, equivalentComponent));
+			mAutomatonMap.put(result, new Triple<>(first, second, component));
 		}
 		return result;
 	}
@@ -228,7 +235,7 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 			final STATE originalSecondState, final int originalComponent) {
 		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result =
 				getRelatedSuccessors(transitionsFromFirst, originalSecondState, originalComponent + 1);
-		if ((originalComponent % 2) == 0) {
+		if (originalComponent != 1) {
 			result.addAll(getRelatedSuccessors(transitionsFromFirst, originalSecondState, originalComponent));
 		}
 		return result;
