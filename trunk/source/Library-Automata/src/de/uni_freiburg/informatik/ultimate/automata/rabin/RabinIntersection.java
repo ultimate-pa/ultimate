@@ -33,8 +33,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -54,8 +52,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @param <STATE>
  *            type of state
  * @param <FACTORY>
- *            a factory that can return the product of two state{@link IConcurrentProductStateFactory} and label states
- *            binaray ({@link IBlackWhiteStateFactory}
+ *            a factory that can return the product of two state{@link IIntersectionStateFactory} and label states
+ *            binaray ({@link IRainbowStateFactory}
  */
 public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFactory<STATE> & IIntersectionStateFactory<STATE>>
 		implements IRabinAutomaton<LETTER, STATE> {
@@ -78,7 +76,7 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	 * @param secondAutomaton
 	 *            second Rabin automaton to intersect
 	 * @param factory
-	 *            some (BlackWhiteStateFactory & ConcurrentProductStateFactory) for STATE
+	 *            some (RainbowStateFactory & ConcurrentProductStateFactory) for STATE
 	 */
 	public RabinIntersection(final IRabinAutomaton<LETTER, STATE> firstAutomaton,
 			final IRabinAutomaton<LETTER, STATE> secondAutomaton, final FACTORY factory) {
@@ -153,7 +151,7 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	private STATE getProducedState(final STATE first, final STATE second, final int component) {
 		final STATE result;
 		// acceptance of the second automaton is a necessary condition for all transitions from 2->0 using transitions
-		// instead of atates for this evidence reduces the automaton by the size of component 3
+		// instead of states for this evidence reduces the automaton by the size of component 3
 		if (component == NUMBER_OF_COMPONENTS) {
 			if (!mSecondAutomaton.isAccepting(second) || mFirstAutomaton.isFinite(first)
 					|| mSecondAutomaton.isFinite(second)) {
