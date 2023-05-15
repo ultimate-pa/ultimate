@@ -67,7 +67,6 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	private final FACTORY mFactory;
 
 	private Set<STATE> mInitialStates;
-	private final HashSet<STATE> mFiniteStates = new HashSet<>();
 	private final HashMap<STATE, Triple<STATE, STATE, Integer>> mAutomatonMap = new HashMap<>();
 
 	/**
@@ -183,7 +182,6 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 				if (component != 0) {
 					return null;
 				}
-				mFiniteStates.add(result);
 			} else
 			// This checks for B" instead of making states finite we can delete them to reduce the state size
 			// it also makes all remaining states in component 1 accepting
