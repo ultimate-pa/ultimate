@@ -51,8 +51,6 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 	private final IRabinAutomaton<LETTER, STATE> mSecondAutomaton;
 	private final IBlackWhiteStateFactory<STATE> mFactory;
 	private final HashSet<STATE> mInitialStates = new HashSet<>();
-	private final HashSet<STATE> mFiniteStates = new HashSet<>();
-	private final HashSet<STATE> mAcceptingStates = new HashSet<>();
 	// 1 ~ firstAutomaton ~ Black, 0 ~ secondAutomaton ~ White
 	HashMap<STATE, Pair<Boolean, STATE>> mAutomatonMap = new HashMap<>();
 
@@ -99,12 +97,14 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 
 	@Override
 	public boolean isAccepting(final STATE state) {
-		return mAcceptingStates.contains(state);
+		final Pair<Boolean, STATE> originalStateInformation = mAutomatonMap.get(state);
+		return getSubautomaton(originalStateInformation.getFirst()).isAccepting(originalStateInformation.getSecond());
 	}
 
 	@Override
 	public boolean isFinite(final STATE state) {
-		return mFiniteStates.contains(state);
+		final Pair<Boolean, STATE> originalStateInformation = mAutomatonMap.get(state);
+		return getSubautomaton(originalStateInformation.getFirst()).isFinite(originalStateInformation.getSecond());
 	}
 
 	@Override
@@ -136,8 +136,7 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 
 	/**
 	 * this method creates different states, even if states in mFirstAutomaton and mSecondAutomaton have the same name,
-	 * furthermore it checks if they are finite or accepting and adds them to the respective set. if a UnionState was
-	 * already created this method returns its value without further computation
+	 * if a UnionState was already created this method returns its value without further computation
 	 *
 	 * @param originalState
 	 *            a state from either of mFirstAutomaton or mSecondAutomaton
@@ -154,12 +153,6 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 		}
 		if (mAutomatonMap.containsKey(newState)) {
 			return newState;
-		}
-		final IRabinAutomaton<LETTER, STATE> subautomaton = getSubautomaton(isFirst);
-		if (subautomaton.isFinite(originalState)) {
-			mFiniteStates.add(newState);
-		} else if (subautomaton.isAccepting(originalState)) {
-			mAcceptingStates.add(newState);
 		}
 		mAutomatonMap.put(newState, new Pair<>(isFirst, originalState));
 		return newState;

@@ -60,8 +60,6 @@ public class RabinIntersectionWorstCaseOptimal<LETTER, STATE, FACTORY extends IB
 	private final FACTORY mFactory;
 
 	private final HashSet<STATE> mInitialStates = new HashSet<>();
-	private final HashSet<STATE> mFiniteStates = new HashSet<>();
-	private final HashSet<STATE> mAcceptingStates = new HashSet<>();
 	private final HashMap<STATE, Triple<STATE, STATE, Boolean>> mAutomatonMap = new HashMap<>();
 
 	/**
@@ -111,12 +109,16 @@ public class RabinIntersectionWorstCaseOptimal<LETTER, STATE, FACTORY extends IB
 
 	@Override
 	public boolean isAccepting(final STATE state) {
-		return mAcceptingStates.contains(state);
+		final Triple<STATE, STATE, Boolean> originalStateInformation = mAutomatonMap.get(state);
+		return (!originalStateInformation.getThird()
+				&& mFirstAutomaton.isAccepting(originalStateInformation.getFirst()));
 	}
 
 	@Override
 	public boolean isFinite(final STATE state) {
-		return mFiniteStates.contains(state);
+		final Triple<STATE, STATE, Boolean> originalStateInformation = mAutomatonMap.get(state);
+		return (mFirstAutomaton.isFinite(originalStateInformation.getFirst())
+				|| mSecondAutomaton.isFinite(originalStateInformation.getSecond()));
 	}
 
 	@Override
@@ -151,16 +153,8 @@ public class RabinIntersectionWorstCaseOptimal<LETTER, STATE, FACTORY extends IB
 			result = mFactory.getBlackContent(mFactory.intersection(first, second));
 		} else {
 			result = mFactory.getWhiteContent(mFactory.intersection(first, second));
-			if (mFirstAutomaton.isAccepting(first)) {
-				mAcceptingStates.add(result);
-			}
 		}
-		if (!mAutomatonMap.containsKey(result)) {
-			if (mFirstAutomaton.isFinite(first) || mSecondAutomaton.isFinite(second)) {
-				mFiniteStates.add(result);
-			}
-			mAutomatonMap.put(result, new Triple<>(first, second, acceptedOnlyFirst));
-		}
+		mAutomatonMap.computeIfAbsent(result, x -> new Triple<>(first, second, acceptedOnlyFirst));
 		return result;
 	}
 

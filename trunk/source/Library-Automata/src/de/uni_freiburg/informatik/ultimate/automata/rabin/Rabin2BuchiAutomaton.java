@@ -64,7 +64,6 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 
 	private final HashSet<STATE> mInitialSet = new HashSet<>();
 	private final HashSet<STATE> mNonFiniteSet = new HashSet<>();
-	private final HashSet<STATE> mAcceptingSet = new HashSet<>();
 
 	/**
 	 * Initializes lazy Buchi conversion for a Rabin automaton using the given BWStateFactory
@@ -112,7 +111,7 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 	 */
 	@Override
 	public boolean isFinal(final STATE state) {
-		return mAcceptingSet.contains(state);
+		return mNonFiniteSet.contains(state) && mRabinAutomaton.isAccepting(mBuchi2Rabin.get(state));
 	}
 
 	@Override
@@ -211,9 +210,6 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 		if (!mRabinAutomaton.isFinite(rabinState)) {
 			mBuchi2Rabin.put(nonFiniteVariant, rabinState);
 			mNonFiniteSet.add(nonFiniteVariant);
-			if (mRabinAutomaton.isAccepting(rabinState)) {
-				mAcceptingSet.add(nonFiniteVariant);
-			}
 			return nonFiniteVariant;
 		}
 		// A Finite state can never produce a nonFinite Buchi variant
