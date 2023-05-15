@@ -124,6 +124,11 @@ public final class PetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P> {
 		}
 	}
 
+	@Override
+	protected boolean postprocess() {
+		return false;
+	}
+
 	/**
 	 * constructs a run over the unfolding which leads to the marking corresponding with the local configuration of the
 	 * specified event e.

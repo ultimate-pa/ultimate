@@ -28,7 +28,6 @@ public final class BuchiIsEmpty<LETTER, PLACE>
 		extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 	private final IPetriNetTransitionProvider<LETTER, PLACE> mOperand;
 	private PetriNetLassoRun<LETTER, PLACE> mRun;
-	private final boolean mResult;
 
 	public BuchiIsEmpty(final AutomataLibraryServices services,
 			final IPetriNetTransitionProvider<LETTER, PLACE> operand)
@@ -57,12 +56,6 @@ public final class BuchiIsEmpty<LETTER, PLACE>
 		final PetriNetUnfolderBuchi<LETTER, PLACE> unfolder =
 				new PetriNetUnfolderBuchi<>(mServices, operand, order, sameTransitionCutOff, stopIfAcceptingRunFound);
 		mRun = unfolder.getAcceptingRun();
-		if (mRun == null) {
-			final CanonicalPrefixIsEmptyBuchi<LETTER, PLACE> checkBuchi =
-					new CanonicalPrefixIsEmptyBuchi<>(services, unfolder.getFinitePrefix());
-			mRun = checkBuchi.getLassoRun();
-		}
-		mResult = mRun == null;
 		mLogger.info(exitMessage());
 	}
 
@@ -82,7 +75,7 @@ public final class BuchiIsEmpty<LETTER, PLACE>
 
 	@Override
 	public Boolean getResult() {
-		return mResult;
+		return mRun == null;
 	}
 
 	@Override

@@ -210,8 +210,11 @@ public abstract class PetriNetUnfolderBase<L, P> {
 		mLogger.debug("Possible Extension size: " + mPossibleExtensions.size() + ", total #Events: "
 				+ mUnfolding.getEvents().size() + ", total #Conditions: " + mUnfolding.getConditions().size());
 		mStatistics.add(event);
-		return false;
+		return postprocess();
 	}
+
+	// TODO: Add documentation
+	protected abstract boolean postprocess() throws PetriNetNot1SafeException;
 
 	// TODO: Add documentation
 	protected abstract boolean unfoldingSearchSuccessful(Event<L, P> event) throws PetriNetNot1SafeException;

@@ -75,9 +75,17 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE> extends PetriNetUnfolderBase<L
 	}
 
 	@Override
+	protected boolean postprocess() throws PetriNetNot1SafeException {
+		// TODO: This is currently only done after building the whole unfolding. Can this be done more efficient?
+		final CanonicalPrefixIsEmptyBuchi<LETTER, PLACE> checkBuchi =
+				new CanonicalPrefixIsEmptyBuchi<>(mServices, mUnfolding);
+		mLassoRun = checkBuchi.getLassoRun();
+		return mLassoRun != null;
+	}
+
+	@Override
 	boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		return true;
 	}
-
 }
