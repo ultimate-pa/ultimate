@@ -40,10 +40,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * A class that lazyly constructs the intersection production from Udi Boker: “Why these automata types?,” in LPAR-22.
  * 22nd International Conference on Logic for Programming, Artificial Intelligence and Reasoning, Awassa, Ethiopia,
  * 16-21 November 2018 (G. Barthe, G. Sutcliffe, and M. Veanes, eds.), vol. 57 of EPiC Series in Computing, pp. 143–163,
- * EasyChair, 2018. !The construction is found page 7, Theorem 1!
+ * EasyChair, 2018. The construction is found page 7, Theorem 1!
  *
  * This class reduces the reachable state size by enforcing the acceptance of the first automaton before transitioning
  * to another component. Runtime can be different for switching the automata parameters.
+ *
+ * This construction has less states than the 2 component one, if the first automaton has only few accepting states and
+ * relatively many finite states in at least one automaton.
  *
  * @author Philipp Müller (pm251@venus.uni-freiburg.de)
  *
@@ -64,8 +67,6 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	private final FACTORY mFactory;
 
 	private final HashSet<STATE> mInitialStates = new HashSet<>();
-	private final HashSet<STATE> mFiniteStates = new HashSet<>();
-	private final HashSet<STATE> mAcceptingStates = new HashSet<>();
 	private final HashMap<STATE, Triple<STATE, STATE, Integer>> mAutomatonMap = new HashMap<>();
 
 	/**
@@ -115,12 +116,15 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 
 	@Override
 	public boolean isAccepting(final STATE state) {
-		return mAcceptingStates.contains(state);
+		return (mAutomatonMap.get(state).getThird() == 1);
 	}
 
 	@Override
 	public boolean isFinite(final STATE state) {
-		return mFiniteStates.contains(state);
+		final Triple<STATE, STATE, Integer> originalStateInformation = mAutomatonMap.get(state);
+		return (originalStateInformation.getThird() == 0
+				&& (mFirstAutomaton.isFinite(originalStateInformation.getFirst())
+						|| mSecondAutomaton.isFinite(originalStateInformation.getSecond())));
 	}
 
 	@Override
@@ -168,23 +172,19 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 			// only component 0 retains finite states, this should reduce the state set without changing the accepted
 			// language!
 			if (mFirstAutomaton.isFinite(first) || mSecondAutomaton.isFinite(second)) {
-				if (component == 0) {
-					mFiniteStates.add(result);
-				} else {
+				if (component != 0) {
 					return null;
 				}
 			} else
 			// This checks for B" instead of making states finite we can delete them to reduce the state size
 			// it also makes all remaining states in component 1 accepting
-			if (component == 1) {
-				if (!mFirstAutomaton.isAccepting(first)) {
-					return null;
-				}
-				mAcceptingStates.add(result);
+			if (component == 1 && !mFirstAutomaton.isAccepting(first)) {
+				return null;
 			}
 			mAutomatonMap.put(result, new Triple<>(first, second, component));
 		}
 		return result;
+
 	}
 
 	/**
