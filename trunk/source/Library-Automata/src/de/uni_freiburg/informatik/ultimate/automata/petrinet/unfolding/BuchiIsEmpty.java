@@ -103,28 +103,18 @@ public final class BuchiIsEmpty<LETTER, PLACE>
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> finiteAutomaton =
 				(new BuchiPetriNet2FiniteAutomaton<>(mServices, stateFactory,
 						(IBlackWhiteStateFactory<PLACE>) stateFactory, mOperand, null)).getResult();
-		final var emptyCheck =
+		final var automatonResult =
 				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty<>(mServices,
 						finiteAutomaton));
-		final boolean automatonEmpty = emptyCheck.getResult();
-		// final var run2 = emptyCheck.getAcceptingNestedLassoRun();
-		// if (getRun() != null) {
-		// mLogger.info("stem mine: " + getRun().getStem());
-		// mLogger.info("loop mine: " + getRun().getLoop());
-		// }
-		// if (run2 != null) {
-		// mLogger.info("stem theirs: " + run2.getStem());
-		// mLogger.info("loop theirs: " + run2.getLoop());
-		// }
-
-		boolean isAcceptedWord = true;
-		if (getRun() != null) {
-			final NestedWord<LETTER> nestedstemWord = NestedWord.nestedWord(getRun().getStem().getWord());
-			final NestedWord<LETTER> nestedloopWord = NestedWord.nestedWord(getRun().getLoop().getWord());
-			final NestedLassoWord<LETTER> nestedLassoWord = new NestedLassoWord<>(nestedstemWord, nestedloopWord);
-			final var accepts = new BuchiAccepts<>(mServices, finiteAutomaton, nestedLassoWord);
-			isAcceptedWord = accepts.getResult();
+		if (getResult() != automatonResult.getResult()) {
+			return false;
 		}
-		return getResult() == automatonEmpty && isAcceptedWord;
+		if (getResult()) {
+			return true;
+		}
+		final NestedWord<LETTER> nestedstemWord = NestedWord.nestedWord(getRun().getStem().getWord());
+		final NestedWord<LETTER> nestedloopWord = NestedWord.nestedWord(getRun().getLoop().getWord());
+		final NestedLassoWord<LETTER> nestedLassoWord = new NestedLassoWord<>(nestedstemWord, nestedloopWord);
+		return new BuchiAccepts<>(mServices, finiteAutomaton, nestedLassoWord).getResult();
 	}
 }
