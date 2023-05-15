@@ -25,16 +25,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @param <PLACE>
  */
 public class Events2PetriNetLassoRunBuchi<LETTER, PLACE> {
-	BranchingProcess<LETTER, PLACE> mUnfolding;
-	AutomataLibraryServices mServices;
-	PetriNetLassoRun<LETTER, PLACE> mLassoRun;
+	private final BranchingProcess<LETTER, PLACE> mUnfolding;
+	private final AutomataLibraryServices mServices;
+	private final PetriNetLassoRun<LETTER, PLACE> mLassoRun;
 
 	public Events2PetriNetLassoRunBuchi(final AutomataLibraryServices services,
 			final List<Event<LETTER, PLACE>> configLoopPart, final List<Event<LETTER, PLACE>> configStemPart,
 			final BranchingProcess<LETTER, PLACE> unfolding) throws PetriNetNot1SafeException {
 		mServices = services;
 		mUnfolding = unfolding;
-		checkIfLassoConfigurationAccepted(configLoopPart, configStemPart);
+		mLassoRun = checkIfLassoConfigurationAccepted(configLoopPart, configStemPart);
 	}
 
 	public final PetriNetLassoRun<LETTER, PLACE> getLassoRun() {
@@ -49,8 +49,9 @@ public class Events2PetriNetLassoRunBuchi<LETTER, PLACE> {
 	 * @return
 	 * @throws PetriNetNot1SafeException
 	 */
-	private final boolean checkIfLassoConfigurationAccepted(final List<Event<LETTER, PLACE>> configLoopPart,
-			final List<Event<LETTER, PLACE>> configStemPart) throws PetriNetNot1SafeException {
+	private final PetriNetLassoRun<LETTER, PLACE> checkIfLassoConfigurationAccepted(
+			final List<Event<LETTER, PLACE>> configLoopPart, final List<Event<LETTER, PLACE>> configStemPart)
+			throws PetriNetNot1SafeException {
 		final List<Transition<LETTER, PLACE>> stemTransitions = new ArrayList<>();
 		final List<Transition<LETTER, PLACE>> loopTransitions = new ArrayList<>();
 
@@ -62,7 +63,7 @@ public class Events2PetriNetLassoRunBuchi<LETTER, PLACE> {
 			loopTransitions.add(loopEvent.getTransition());
 		}
 		if (!acceptingPlaceShotintoInLoop) {
-			return false;
+			return null;
 		}
 
 		for (final Event<LETTER, PLACE> stemEvent : configStemPart) {
@@ -113,10 +114,10 @@ public class Events2PetriNetLassoRunBuchi<LETTER, PLACE> {
 			markings.add(currentMarking);
 			resultTransitions.add(transition);
 		}
-		return new PetriNetRun<>(markings, new Word<>((LETTER[]) (word.toArray())), resultTransitions);
+		return new PetriNetRun<>(markings, new Word<>((LETTER[]) word.toArray()), resultTransitions);
 	}
 
-	private final boolean createAndCheckLassoRun(final PetriNetRun<LETTER, PLACE> stemRun,
+	private final PetriNetLassoRun<LETTER, PLACE> createAndCheckLassoRun(final PetriNetRun<LETTER, PLACE> stemRun,
 			final PetriNetRun<LETTER, PLACE> loopRun) throws PetriNetNot1SafeException {
 		final NestedLassoWord<LETTER> nestedLassoWord = new NestedLassoWord<>(NestedWord.nestedWord(stemRun.getWord()),
 				NestedWord.nestedWord(loopRun.getWord()));
@@ -125,9 +126,8 @@ public class Events2PetriNetLassoRunBuchi<LETTER, PLACE> {
 		final BuchiAccepts<LETTER, PLACE> accepts = new BuchiAccepts<>(mServices,
 				(IPetriNetTransitionProvider<LETTER, PLACE>) mUnfolding.getNet(), nestedLassoWord);
 		if (accepts.getResult()) {
-			mLassoRun = lassoRun;
-			return true;
+			return lassoRun;
 		}
-		return false;
+		return null;
 	}
 }
