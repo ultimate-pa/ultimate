@@ -59,7 +59,7 @@ public class RabinIntersectionWorstCaseOptimal<LETTER, STATE, FACTORY extends IB
 	private final IRabinAutomaton<LETTER, STATE> mSecondAutomaton;
 	private final FACTORY mFactory;
 
-	private final HashSet<STATE> mInitialStates = new HashSet<>();
+	private Set<STATE> mInitialStates;
 	private final HashMap<STATE, Triple<STATE, STATE, Boolean>> mAutomatonMap = new HashMap<>();
 
 	/**
@@ -77,12 +77,6 @@ public class RabinIntersectionWorstCaseOptimal<LETTER, STATE, FACTORY extends IB
 		mFirstAutomaton = firstAutomaton;
 		mSecondAutomaton = secondAutomaton;
 		mFactory = factory;
-
-		for (final STATE firstInitial : mFirstAutomaton.getInitialStates()) {
-			for (final STATE secondInitial : mSecondAutomaton.getInitialStates()) {
-				mInitialStates.add(getProducedState(firstInitial, secondInitial, false));
-			}
-		}
 	}
 
 	@Override
@@ -102,8 +96,21 @@ public class RabinIntersectionWorstCaseOptimal<LETTER, STATE, FACTORY extends IB
 				+ "The number of lazyly constructed reachable states may be smaller";
 	}
 
+	private Set<STATE> constructInitialStates() {
+		final Set<STATE> result = new HashSet<>();
+		for (final STATE firstInitial : mFirstAutomaton.getInitialStates()) {
+			for (final STATE secondInitial : mSecondAutomaton.getInitialStates()) {
+				result.add(getProducedState(firstInitial, secondInitial, false));
+			}
+		}
+		return result;
+	}
+
 	@Override
 	public Set<STATE> getInitialStates() {
+		if (mInitialStates == null) {
+			mInitialStates = constructInitialStates();
+		}
 		return mInitialStates;
 	}
 
@@ -208,8 +215,6 @@ public class RabinIntersectionWorstCaseOptimal<LETTER, STATE, FACTORY extends IB
 				&& !mSecondAutomaton.isAccepting(originalStateInformation.getSecond())) {
 			hasAcceptedFirst = true;
 		}
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result =
-				getRelatedSuccessors(transitionsFromFirst, originalStateInformation.getSecond(), hasAcceptedFirst);
-		return result;
+		return getRelatedSuccessors(transitionsFromFirst, originalStateInformation.getSecond(), hasAcceptedFirst);
 	}
 }

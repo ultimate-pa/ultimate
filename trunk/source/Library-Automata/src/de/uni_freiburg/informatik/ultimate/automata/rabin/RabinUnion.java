@@ -50,7 +50,7 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 	private final IRabinAutomaton<LETTER, STATE> mFirstAutomaton;
 	private final IRabinAutomaton<LETTER, STATE> mSecondAutomaton;
 	private final IBlackWhiteStateFactory<STATE> mFactory;
-	private final HashSet<STATE> mInitialStates = new HashSet<>();
+	private Set<STATE> mInitialStates;
 	// 1 ~ firstAutomaton ~ Black, 0 ~ secondAutomaton ~ White
 	HashMap<STATE, Pair<Boolean, STATE>> mAutomatonMap = new HashMap<>();
 
@@ -69,8 +69,6 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 		mFirstAutomaton = firstAutomaton;
 		mSecondAutomaton = secondAutomaton;
 		mFactory = factory;
-		mFirstAutomaton.getInitialStates().forEach(x -> mInitialStates.add(getUnionState(x, true)));
-		mSecondAutomaton.getInitialStates().forEach(x -> mInitialStates.add(getUnionState(x, false)));
 	}
 
 	@Override
@@ -90,8 +88,22 @@ public class RabinUnion<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE>
 				+ " from firstAutomaton and: " + mSecondAutomaton.size() + " from secondAutomaton";
 	}
 
+	private Set<STATE> constructInitialStates() {
+		final Set<STATE> result = new HashSet<>();
+		for (final STATE state : mFirstAutomaton.getInitialStates()) {
+			result.add(getUnionState(state, true));
+		}
+		for (final STATE state : mSecondAutomaton.getInitialStates()) {
+			result.add(getUnionState(state, false));
+		}
+		return result;
+	}
+
 	@Override
 	public Set<STATE> getInitialStates() {
+		if (mInitialStates == null) {
+			mInitialStates = constructInitialStates();
+		}
 		return mInitialStates;
 	}
 

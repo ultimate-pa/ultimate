@@ -66,7 +66,9 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	private final IRabinAutomaton<LETTER, STATE> mSecondAutomaton;
 	private final FACTORY mFactory;
 
-	private final HashSet<STATE> mInitialStates = new HashSet<>();
+	private Set<STATE> mInitialStates;
+	private final HashSet<STATE> mFiniteStates = new HashSet<>();
+	private final HashSet<STATE> mAcceptingStates = new HashSet<>();
 	private final HashMap<STATE, Triple<STATE, STATE, Integer>> mAutomatonMap = new HashMap<>();
 
 	/**
@@ -84,12 +86,6 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 		mFirstAutomaton = firstAutomaton;
 		mSecondAutomaton = secondAutomaton;
 		mFactory = factory;
-
-		for (final STATE firstInitial : mFirstAutomaton.getInitialStates()) {
-			for (final STATE secondInitial : mSecondAutomaton.getInitialStates()) {
-				mInitialStates.add(getProducedState(firstInitial, secondInitial, 0));
-			}
-		}
 	}
 
 	@Override
@@ -109,8 +105,21 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 				+ "The number of lazyly constructed reachable states may be smaller";
 	}
 
+	private Set<STATE> constructInitialStates() {
+		final Set<STATE> result = new HashSet<>();
+		for (final STATE firstInitial : mFirstAutomaton.getInitialStates()) {
+			for (final STATE secondInitial : mSecondAutomaton.getInitialStates()) {
+				result.add(getProducedState(firstInitial, secondInitial, 0));
+			}
+		}
+		return result;
+	}
+
 	@Override
 	public Set<STATE> getInitialStates() {
+		if (mInitialStates == null) {
+			mInitialStates = constructInitialStates();
+		}
 		return mInitialStates;
 	}
 
@@ -175,6 +184,7 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 				if (component != 0) {
 					return null;
 				}
+				mFiniteStates.add(result);
 			} else
 			// This checks for B" instead of making states finite we can delete them to reduce the state size
 			// it also makes all remaining states in component 1 accepting
