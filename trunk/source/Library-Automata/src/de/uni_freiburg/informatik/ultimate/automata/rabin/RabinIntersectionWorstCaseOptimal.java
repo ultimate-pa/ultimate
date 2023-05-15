@@ -184,11 +184,8 @@ public class RabinIntersectionWorstCaseOptimal<LETTER, STATE, FACTORY extends IB
 			final LETTER letter = transitionFirst.getLetter();
 			for (final OutgoingInternalTransition<LETTER, STATE> transitionSecond : mSecondAutomaton
 					.getSuccessors(secondState, letter)) {
-				final STATE producedState =
-						getProducedState(transitionFirst.getSucc(), transitionSecond.getSucc(), acceptedOnlyFirst);
-				if (producedState != null) {
-					result.add(new OutgoingInternalTransition<>(letter, producedState));
-				}
+				result.add(new OutgoingInternalTransition<>(letter,
+						getProducedState(transitionFirst.getSucc(), transitionSecond.getSucc(), acceptedOnlyFirst)));
 			}
 		}
 		return result;
