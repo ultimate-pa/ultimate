@@ -33,19 +33,7 @@ public final class BuchiIsEmpty<LETTER, PLACE>
 	public BuchiIsEmpty(final AutomataLibraryServices services,
 			final IPetriNetTransitionProvider<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		super(services);
-		mOperand = operand;
-		mLogger.info(startMessage());
-		final PetriNetUnfolderBuchi<LETTER, PLACE> unfolder =
-				new PetriNetUnfolderBuchi<>(mServices, operand, PetriNetUnfolder.EventOrderEnum.ERV, false, true);
-		mRun = unfolder.getAcceptingRun();
-		if (mRun == null) {
-			final CanonicalPrefixIsEmptyBuchi<LETTER, PLACE> checkBuchi =
-					new CanonicalPrefixIsEmptyBuchi<>(services, unfolder.getFinitePrefix());
-			mRun = checkBuchi.getLassoRun();
-		}
-		mResult = mRun == null;
-		mLogger.info(exitMessage());
+		this(services, operand, EventOrderEnum.ERV, false, true);
 	}
 
 	/**
@@ -67,7 +55,7 @@ public final class BuchiIsEmpty<LETTER, PLACE>
 		mOperand = operand;
 		mLogger.info(startMessage());
 		final PetriNetUnfolderBuchi<LETTER, PLACE> unfolder =
-				new PetriNetUnfolderBuchi<>(mServices, operand, order, sameTransitionCutOff, true);
+				new PetriNetUnfolderBuchi<>(mServices, operand, order, sameTransitionCutOff, stopIfAcceptingRunFound);
 		mRun = unfolder.getAcceptingRun();
 		if (mRun == null) {
 			final CanonicalPrefixIsEmptyBuchi<LETTER, PLACE> checkBuchi =
