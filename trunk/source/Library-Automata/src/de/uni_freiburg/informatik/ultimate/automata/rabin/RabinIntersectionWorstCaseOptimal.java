@@ -39,12 +39,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * A class that lazyly constructs the intersection production with the method described in: J. Esparza, “Automata theory
- * - an algorithmic approach.” https://www7.in.tum.de/ esparza/ autoskript.pdf. Aug 26, 2017. The construction is found
- * on page 247. All product-states that have at least one finite state as a parent are finite in Rabin automata. You can
+ * - an algorithmic approach.” https://www7.in.tum.de/esparza/autoskript.pdf. Aug 26, 2017. The construction is found on
+ * page 247. All product-states that have at least one finite state as a parent are finite in Rabin automata. You can
  * imagine removing all finite parents at one point, this results in removing their children at the same point.
- *
- * This class reduces the reachable state size by enforcing the acceptance of the first automaton before transitioning
- * to another component. Runtime can be different for switching the automata parameters.
  *
  * @author Philipp Müller (pm251@venus.uni-freiburg.de)
  *
@@ -75,7 +72,7 @@ public class RabinIntersectionWorstCaseOptimal<LETTER, STATE, FACTORY extends IB
 	 * @param secondAutomaton
 	 *            second Rabin automaton to intersect
 	 * @param factory
-	 *            some (RainbowStateFactory & ConcurrentProductStateFactory) for STATE
+	 *            some {@link IBlackWhiteStateFactory} & {@link IIntersectionStateFactory} for STATE
 	 */
 	public RabinIntersectionWorstCaseOptimal(final IRabinAutomaton<LETTER, STATE> firstAutomaton,
 			final IRabinAutomaton<LETTER, STATE> secondAutomaton, final FACTORY factory) {
@@ -144,8 +141,8 @@ public class RabinIntersectionWorstCaseOptimal<LETTER, STATE, FACTORY extends IB
 	 * @param second
 	 *            state from mSecondAutomaton
 	 * @param acceptedOnlyFirst
-	 *            referencing the subautomaton, if true then the first automaton has accepted upon reaching this state,
-	 *            but we await acceptance of the second automaton
+	 *            referencing the subautomaton, if true then the first automaton has accepted before reaching this
+	 *            state, but we await acceptance of the second automaton
 	 * @return a state which uniquely incorporates all parameters
 	 */
 	private STATE getProducedState(final STATE first, final STATE second, final boolean acceptedOnlyFirst) {
@@ -174,8 +171,8 @@ public class RabinIntersectionWorstCaseOptimal<LETTER, STATE, FACTORY extends IB
 	 *            a subset of valid transitions for one (active) state in the first automaton
 	 * @param secondState
 	 *            a active state in the second automaton
-	 * @param successorComponent
-	 *            the component in the intersection which should be reached by the computed transitions
+	 * @param acceptedOnlyFirst
+	 *            referencing the subautomaton in which the successors will be
 	 * @return a list of corresponding transitions in the intersection automaton
 	 */
 	private ArrayList<OutgoingInternalTransition<LETTER, STATE>> getRelatedSuccessors(
@@ -201,10 +198,8 @@ public class RabinIntersectionWorstCaseOptimal<LETTER, STATE, FACTORY extends IB
 	 *
 	 * @param transitionsFromFirst
 	 *            a list with transitions that are valid for one (active) state in the first automaton
-	 * @param originalSecondState
-	 *            a state in the second automaton which is active
-	 * @param originalComponent
-	 *            the component from which transitions start
+	 * @param originalStateInformation
+	 *            the content of mAutomatonMap for the origin
 	 * @return a list of corresponding transitions in the intersection automaton
 	 */
 	private ArrayList<OutgoingInternalTransition<LETTER, STATE>> getComponentalSuccessors(

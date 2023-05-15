@@ -76,7 +76,7 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 	 * @param secondAutomaton
 	 *            second Rabin automaton to intersect
 	 * @param factory
-	 *            some (RainbowStateFactory & ConcurrentProductStateFactory) for STATE
+	 *            some {@link IRainbowStateFactory} & {@link IIntersectionStateFactory} for STATE
 	 */
 	public RabinIntersection(final IRabinAutomaton<LETTER, STATE> firstAutomaton,
 			final IRabinAutomaton<LETTER, STATE> secondAutomaton, final FACTORY factory) {
