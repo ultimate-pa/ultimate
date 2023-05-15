@@ -68,7 +68,6 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 
 	private Set<STATE> mInitialStates;
 	private final HashSet<STATE> mFiniteStates = new HashSet<>();
-	private final HashSet<STATE> mAcceptingStates = new HashSet<>();
 	private final HashMap<STATE, Triple<STATE, STATE, Integer>> mAutomatonMap = new HashMap<>();
 
 	/**
