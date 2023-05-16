@@ -452,6 +452,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi01() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"), new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~j~0#1", "ULTIMATE.start_main_~i~0#1", "ULTIMATE.start_main_~k~0#1", "ULTIMATE.start_main_~#a~0#1.offset", "ULTIMATE.start_main_~#a~0#1.base"),
@@ -461,6 +462,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi02() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -471,6 +473,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi03() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -481,6 +484,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi04() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -491,6 +495,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi05() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -501,6 +506,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi06() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -511,6 +517,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi07() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -521,6 +528,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi08() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -531,6 +539,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi09() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -541,6 +550,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi10() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -551,6 +561,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi11() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -561,6 +572,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi12() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -571,6 +583,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi13() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -581,6 +594,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi14() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -591,6 +605,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi15() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~sn~0#1"),
@@ -600,6 +615,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi16() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
@@ -611,6 +627,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi17() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
@@ -622,6 +639,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi18() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
@@ -633,6 +651,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi19() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
@@ -644,6 +663,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi20() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base", "#memory_$Pointer$.offset"),
@@ -654,6 +674,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi21() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base"),
@@ -664,6 +685,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi22() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base", "#memory_$Pointer$.offset"),
@@ -674,6 +696,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi23() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
@@ -685,6 +708,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi24() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
@@ -696,6 +720,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi25() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -706,6 +731,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi26() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
@@ -717,6 +743,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi27() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "old(#valid)", "#valid"),
@@ -728,7 +755,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
+	@Test
 	public void sgi28() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~y~0#1", "ULTIMATE.start_main_~x~0#1"),
@@ -738,6 +765,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi29() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -748,6 +776,7 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
 	public void sgi30() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
