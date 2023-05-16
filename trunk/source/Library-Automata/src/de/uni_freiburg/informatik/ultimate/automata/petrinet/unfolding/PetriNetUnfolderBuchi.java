@@ -21,17 +21,12 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE>
 	}
 
 	@Override
-	protected void createInitialRun() throws PetriNetNot1SafeException {
-		return;
-	}
-
-	@Override
-	protected boolean checkInitialPlaces() {
+	protected boolean checkInitialPlacesAndCreateRun() {
 		return false;
 	}
 
 	@Override
-	protected boolean unfoldingSearchSuccessful(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
+	protected boolean addAndCheck(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
 
 		mUnfolding.addEvent(event);
 
@@ -49,9 +44,7 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE>
 					configStemEvents.add(configEvent);
 				}
 			}
-			if (checkIfLassoConfigurationAccepted(configLoopEvents, configStemEvents)) {
-				return true;
-			}
+			return checkIfLassoConfigurationAccepted(configLoopEvents, configStemEvents);
 		}
 		return false;
 	}
@@ -61,26 +54,23 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE>
 		final var buildAndCheck =
 				new Events2PetriNetLassoRunBuchi<>(mServices, configLoopPart, configStemPart, mUnfolding);
 		mRun = buildAndCheck.getLassoRun();
-		return (mRun != null);
-	}
-
-	@Override
-	protected void createOrUpdateRunIfWanted(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
-		return;
-	}
-
-	@Override
-	protected boolean postprocess() throws PetriNetNot1SafeException {
-		// TODO: This is currently only done after building the whole unfolding. Can this be done more efficient?
-		final CanonicalPrefixIsEmptyBuchi<LETTER, PLACE> checkBuchi =
-				new CanonicalPrefixIsEmptyBuchi<>(mServices, mUnfolding);
-		mRun = checkBuchi.getLassoRun();
 		return mRun != null;
+	}
+
+	@Override
+	protected void updateRunIfWanted(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
+		// Nothing to do, the run was already created in checkIfLassoConfigurationAccepted
+	}
+
+	@Override
+	protected void createRunFromWholeUnfolding() throws PetriNetNot1SafeException {
+		mRun = new CanonicalPrefixIsEmptyBuchi<>(mServices, mUnfolding).getLassoRun();
 	}
 
 	@Override
 	boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		// Not implemented yet
 		return true;
 	}
 }

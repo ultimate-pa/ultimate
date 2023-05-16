@@ -147,13 +147,17 @@ public abstract class PetriNetUnfolderBase<L, P, R> {
 		return mRun;
 	}
 
+	protected abstract boolean checkInitialPlacesAndCreateRun() throws PetriNetNot1SafeException;
+
+	protected abstract boolean addAndCheck(final Event<L, P> event) throws PetriNetNot1SafeException;
+
+	protected abstract void updateRunIfWanted(final Event<L, P> event) throws PetriNetNot1SafeException;
+
+	protected abstract void createRunFromWholeUnfolding() throws PetriNetNot1SafeException;
+
 	private void computeUnfolding() throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		final boolean initialPlacesContainWanted = checkInitialPlaces();
-		if (initialPlacesContainWanted) {
-			createInitialRun();
-			if (mStopIfAcceptingRunFound) {
-				return;
-			}
+		if (checkInitialPlacesAndCreateRun() && mStopIfAcceptingRunFound) {
+			return;
 		}
 		mPossibleExtensions.update(mUnfolding.getDummyRoot());
 
@@ -180,14 +184,9 @@ public abstract class PetriNetUnfolderBase<L, P, R> {
 				throw new AutomataOperationCanceledException(rti);
 			}
 		}
+		createRunFromWholeUnfolding();
 		mLogger.info("Searched whole Unfolding.");
 	}
-
-	// TODO: Add documentation
-	protected abstract void createInitialRun() throws PetriNetNot1SafeException;
-
-	// TODO: Add documentation
-	protected abstract boolean checkInitialPlaces();
 
 	private boolean computeUnfoldingHelper(final Event<L, P> event) throws PetriNetNot1SafeException {
 		assert !parentIsCutoffEvent(event) : "We must not construct successors of cut-off events.";
@@ -197,10 +196,8 @@ public abstract class PetriNetUnfolderBase<L, P, R> {
 		} else {
 			isCutOffEvent = event.isCutoffEvent();
 		}
-		final boolean searchSuccessful = unfoldingSearchSuccessful(event);
-		// assert !unfolding.pairwiseConflictOrCausalRelation(e.getPredecessorConditions());
-		if (searchSuccessful) {
-			createOrUpdateRunIfWanted(event);
+		if (addAndCheck(event)) {
+			updateRunIfWanted(event);
 			if (mStopIfAcceptingRunFound) {
 				return true;
 			}
@@ -218,17 +215,8 @@ public abstract class PetriNetUnfolderBase<L, P, R> {
 		mLogger.debug("Possible Extension size: " + mPossibleExtensions.size() + ", total #Events: "
 				+ mUnfolding.getEvents().size() + ", total #Conditions: " + mUnfolding.getConditions().size());
 		mStatistics.add(event);
-		return postprocess();
+		return false;
 	}
-
-	// TODO: Add documentation
-	protected abstract boolean postprocess() throws PetriNetNot1SafeException;
-
-	// TODO: Add documentation
-	protected abstract boolean unfoldingSearchSuccessful(Event<L, P> event) throws PetriNetNot1SafeException;
-
-	// TODO: Add documentation
-	protected abstract void createOrUpdateRunIfWanted(Event<L, P> event) throws PetriNetNot1SafeException;
 
 	private boolean parentIsCutoffEvent(final Event<L, P> event) {
 		for (final Condition<L, P> c : event.getPredecessorConditions()) {

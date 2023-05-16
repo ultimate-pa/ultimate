@@ -87,37 +87,32 @@ public final class PetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P, Pet
 	}
 
 	@Override
-	protected boolean checkInitialPlaces() {
-		boolean someInitialPlaceIsAccepting = false;
+	protected boolean checkInitialPlacesAndCreateRun() throws PetriNetNot1SafeException {
 		for (final Condition<L, P> c : mUnfolding.getDummyRoot().getSuccessorConditions()) {
 			if (mOperand.isAccepting(c.getPlace())) {
-				someInitialPlaceIsAccepting = true;
+				mRun = new PetriNetRun<>(
+						new ConditionMarking<>(mUnfolding.getDummyRoot().getSuccessorConditions()).getMarking());
+				return true;
 			}
 		}
-		return someInitialPlaceIsAccepting;
+		return false;
 	}
 
 	@Override
-	protected void createInitialRun() throws PetriNetNot1SafeException {
-		mRun = new PetriNetRun<>(
-				new ConditionMarking<>(mUnfolding.getDummyRoot().getSuccessorConditions()).getMarking());
-	}
-
-	@Override
-	protected boolean unfoldingSearchSuccessful(final Event<L, P> event) throws PetriNetNot1SafeException {
+	protected boolean addAndCheck(final Event<L, P> event) throws PetriNetNot1SafeException {
 		return mUnfolding.addEvent(event);
 	}
 
 	@Override
-	protected void createOrUpdateRunIfWanted(final Event<L, P> event) {
+	protected void updateRunIfWanted(final Event<L, P> event) {
 		if (mRun == null) {
 			mRun = constructRun(event);
 		}
 	}
 
 	@Override
-	protected boolean postprocess() {
-		return false;
+	protected void createRunFromWholeUnfolding() {
+		// Nothing to do
 	}
 
 	/**
