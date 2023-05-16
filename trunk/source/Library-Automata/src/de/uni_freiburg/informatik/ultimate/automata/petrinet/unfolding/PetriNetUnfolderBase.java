@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHash
  * @param <P>
  *            place content type
  */
-public abstract class PetriNetUnfolderBase<L, P> {
+public abstract class PetriNetUnfolderBase<L, P, R> {
 	protected static final boolean EXTENDED_ASSERTION_CHECKING = false;
 	private static final boolean B32_OPTIMIZATION = true;
 
@@ -74,8 +74,9 @@ public abstract class PetriNetUnfolderBase<L, P> {
 	private final ConfigurationOrder<L, P> mOrder;
 	private final IPossibleExtensions<L, P> mPossibleExtensions;
 	protected final BranchingProcess<L, P> mUnfolding;
+	protected R mRun;
 
-	private final PetriNetUnfolderBase<L, P>.Statistics mStatistics = new Statistics();
+	private final Statistics mStatistics = new Statistics();
 
 	/**
 	 * Build the finite Prefix of PetriNet net.
@@ -135,8 +136,15 @@ public abstract class PetriNetUnfolderBase<L, P> {
 		}
 	}
 
-	public PetriNetUnfolderBase<L, P>.Statistics getUnfoldingStatistics() {
+	public Statistics getUnfoldingStatistics() {
 		return mStatistics;
+	}
+
+	/**
+	 * @return Some accepting run of PetriNet net, return null if net does not have an accepting run.
+	 */
+	public R getAcceptingRun() {
+		return mRun;
 	}
 
 	private void computeUnfolding() throws AutomataOperationCanceledException, PetriNetNot1SafeException {

@@ -51,9 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  * @param <P>
  *            place content type
  */
-public final class PetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P> {
-	private PetriNetRun<L, P> mRun;
-
+public final class PetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P, PetriNetRun<L, P>> {
 	/**
 	 * Build the finite Prefix of PetriNet net.
 	 *
@@ -86,13 +84,6 @@ public final class PetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P> {
 		public String getDescription() {
 			return mDescription;
 		}
-	}
-
-	/**
-	 * @return Some accepting run of PetriNet net, return null if net does not have an accepting run.
-	 */
-	public PetriNetRun<L, P> getAcceptingRun() {
-		return mRun;
 	}
 
 	@Override

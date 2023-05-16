@@ -11,18 +11,13 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 
-public class PetriNetUnfolderBuchi<LETTER, PLACE> extends PetriNetUnfolderBase<LETTER, PLACE> {
-	PetriNetLassoRun<LETTER, PLACE> mLassoRun;
-
+public class PetriNetUnfolderBuchi<LETTER, PLACE>
+		extends PetriNetUnfolderBase<LETTER, PLACE, PetriNetLassoRun<LETTER, PLACE>> {
 	public PetriNetUnfolderBuchi(final AutomataLibraryServices services,
 			final IPetriNetSuccessorProvider<LETTER, PLACE> operand, final EventOrderEnum order,
 			final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services, operand, order, sameTransitionCutOff, stopIfAcceptingRunFound);
-	}
-
-	public PetriNetLassoRun<LETTER, PLACE> getAcceptingRun() {
-		return mLassoRun;
 	}
 
 	@Override
@@ -65,8 +60,8 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE> extends PetriNetUnfolderBase<L
 			final List<Event<LETTER, PLACE>> configStemPart) throws PetriNetNot1SafeException {
 		final var buildAndCheck =
 				new Events2PetriNetLassoRunBuchi<>(mServices, configLoopPart, configStemPart, mUnfolding);
-		mLassoRun = buildAndCheck.getLassoRun();
-		return (mLassoRun != null);
+		mRun = buildAndCheck.getLassoRun();
+		return (mRun != null);
 	}
 
 	@Override
@@ -79,8 +74,8 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE> extends PetriNetUnfolderBase<L
 		// TODO: This is currently only done after building the whole unfolding. Can this be done more efficient?
 		final CanonicalPrefixIsEmptyBuchi<LETTER, PLACE> checkBuchi =
 				new CanonicalPrefixIsEmptyBuchi<>(mServices, mUnfolding);
-		mLassoRun = checkBuchi.getLassoRun();
-		return mLassoRun != null;
+		mRun = checkBuchi.getLassoRun();
+		return mRun != null;
 	}
 
 	@Override
