@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 /*
  * Copyright (C) 2020 Marcel Ebbinghaus

@@ -5,7 +5,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.MarkingOfFireSequence;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -108,7 +107,7 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 	}
 
 	private void computeMarkingsFromFirstWordRun() throws PetriNetNot1SafeException {
-		mFireSequenceTreeMarkings.add(new MarkingOfFireSequence<>(mInitialMarking, new HashSet<>(), 0, 0, 0));
+		mFireSequenceTreeMarkings.add(new MarkingOfFireSequence<>(mInitialMarking, new HashSet<>(), 0));
 		for (final LETTER symbol : mLassoWord.getStem()) {
 			produceSuccessorMarkingsOfFireSequenceOfSet(symbol);
 		}
@@ -244,5 +243,61 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 			}
 		}
 		return loopingFiringSequences;
+	}
+
+	/**
+	 * Object containing the marking at some index of some (imagined) firing sequence, the (indexed) honda marking(s) of
+	 * that fire sequence and an index denoting when in the firing sequence an accpeting place was last fired into with
+	 * a token.
+	 *
+	 * @param <LETTER>
+	 *            Symbol. Type of the symbols used as alphabet.
+	 * @param <PLACE>
+	 *            Content. Type of the labels ("the content") of the automata states.
+	 */
+	protected static class MarkingOfFireSequence<LETTER, PLACE> {
+		private final Marking<PLACE> mMarking;
+		/*
+		 * Indexed hondamarkings of firing sequence of marking.
+		 */
+		private final Set<Pair<Marking<PLACE>, Integer>> mHondaMarkingsOfFireSequence;
+		private final int mLastIndexOfShootingAcceptingStateInFireSequence;
+
+		/**
+		 * Constructor.
+		 *
+		 * @param <marking>
+		 *            The marking with {@link Marking}.
+		 *
+		 * @param <hondaMarking>
+		 *            A marking which is produced after the firing of the loop part of a word during the a fire
+		 *            sequence. We also denote the index of the firing sequence when this marking is produced.
+		 *
+		 * @param <lastIndexOfShootingAcceptingStateInFireSequence>
+		 *            denoting at what index of a firing sequence an accepting place was last shot with a token.
+		 */
+		public MarkingOfFireSequence(final Marking<PLACE> marking,
+				final Set<Pair<Marking<PLACE>, Integer>> hondaMarkings,
+				final int lastIndexOfShootingAcceptingStateInFireSequence) {
+			mMarking = marking;
+			mHondaMarkingsOfFireSequence = hondaMarkings;
+			mLastIndexOfShootingAcceptingStateInFireSequence = lastIndexOfShootingAcceptingStateInFireSequence;
+		}
+
+		public final Marking<PLACE> getMarking() {
+			return mMarking;
+		}
+
+		public Set<Pair<Marking<PLACE>, Integer>> getHondaMarkingsOfFireSequence() {
+			return new HashSet<>(mHondaMarkingsOfFireSequence);
+		}
+
+		public void addHondaMarkingOfFireSequence(final Marking<PLACE> newHondaMarking, final int hondaMarkingIndex) {
+			mHondaMarkingsOfFireSequence.add(new Pair<>(newHondaMarking, hondaMarkingIndex));
+		}
+
+		public final int getLastIndexOfShootingAcceptingStateInFireSequence() {
+			return mLastIndexOfShootingAcceptingStateInFireSequence;
+		}
 	}
 }

@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.buchipetrinet.operations.MarkingOfFireSequence;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
@@ -53,7 +52,7 @@ public final class BuchiAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETT
 			firingInAcceptingPlaceIndex = predecessor.getLastIndexOfShootingAcceptingStateInFireSequence();
 		}
 		return new MarkingOfFireSequence<>(predecessor.getMarking().fireTransition(transition),
-				predecessor.getHondaMarkingsOfFireSequence(), mFireSequenceIndex, firingInAcceptingPlaceIndex, 0);
+				predecessor.getHondaMarkingsOfFireSequence(), firingInAcceptingPlaceIndex);
 	}
 
 	@Override
