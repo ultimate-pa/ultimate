@@ -83,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvider {
 	private static final String FUNCTION_NAME = "Inv";
 	private static final int INTERFERING_INSTANCE_ID = -1;
+	protected static final boolean SKIP_ASSERTION_EDGES = true;
 
 	protected final IUltimateServiceProvider mServices;
 	protected final IIcfg<?> mIcfg;
@@ -254,18 +255,29 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		final var entryNodes = mIcfg.getProcedureEntryNodes();
 		for (final String proc : mTemplates) {
 			final IcfgEdgeIterator edges = new IcfgEdgeIterator(entryNodes.get(proc).getOutgoingEdges());
+			final var errorNodes = mIcfg.getProcedureErrorNodes().get(proc);
 			while (edges.hasNext()) {
 				final IcfgEdge original = edges.next();
-				result.addAll(buildClausesForTransition(original));
+				if (!SKIP_ASSERTION_EDGES || !errorNodes.contains(original.getTarget())) {
+					result.addAll(buildClausesForTransition(original));
+				}
 			}
 		}
 
 		// add safety clauses
 		switch (mPrefs.specMode()) {
 		case ASSERT_VIOLATIONS:
-			for (final var pair : getErrorLocations()) {
-				final var safetyClause = buildErrorSafetyClause(pair.getFirst(), pair.getSecond());
-				result.add(safetyClause);
+			if (SKIP_ASSERTION_EDGES) {
+				for (final var triple : getErrorConditions()) {
+					final var safetyClause =
+							buildErrorSafetyClause(triple.getFirst(), triple.getSecond(), triple.getThird());
+					result.add(safetyClause);
+				}
+			} else {
+				for (final var pair : getErrorLocations()) {
+					final var safetyClause = buildErrorSafetyClause(pair.getFirst(), pair.getSecond());
+					result.add(safetyClause);
+				}
 			}
 			break;
 		case POSTCONDITION:
@@ -392,6 +404,17 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 				.collect(Collectors.toList());
 	}
 
+	private List<Triple<ThreadInstance, IcfgLocation, UnmodifiableTransFormula>> getErrorConditions() {
+		return mIcfg.getProcedureErrorNodes().entrySet().stream()
+				.flatMap(e -> e.getValue().stream().map(l -> new Pair<>(e.getKey(), l)))
+				.flatMap(e -> e.getValue().getIncomingEdges().stream()
+						.map(t -> new Triple<>(e.getKey(), t.getSource(), t.getTransformula())))
+				.flatMap(e -> mInstances.stream().filter(i -> i.getTemplateName().equals(e.getFirst()))
+						.<Triple<ThreadInstance, IcfgLocation, UnmodifiableTransFormula>> map(
+								i -> new Triple<>(i, e.getSecond(), e.getThird())))
+				.collect(Collectors.toList());
+	}
+
 	// Horn clause generation
 	// -----------------------------------------------------------------------------------------------------------------
 
@@ -449,6 +472,24 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 		// location constraints
 		addInLocationConstraint(clause, thread, errorLoc);
+
+		return clause;
+	}
+
+	protected HornClauseBuilder buildErrorSafetyClause(final ThreadInstance thread, final IcfgLocation loc,
+			final UnmodifiableTransFormula guard) {
+		// create a clause with head "false"
+		final var clause = createBuilder("safety clause for location " + loc + " in thread instance " + thread);
+
+		// add body clause
+		clause.addBodyPredicate(mInvariantPredicate, clause.getDefaultBodyArgs(mInvariantPredicate));
+
+		// location constraints
+		addInLocationConstraint(clause, thread, loc);
+
+		// add transition guard
+		final var locals = mLocalVars.values().collect(Collectors.toList());
+		addTransitionConstraint(clause, guard, thread, locals);
 
 		return clause;
 	}

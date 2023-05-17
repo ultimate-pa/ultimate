@@ -316,6 +316,9 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 			if (loc.getOutgoingEdges().stream()
 					// ignore spec edges: the original edges are replaced, and the replacing transitions commute
 					.filter(e -> !isPreConditionSpecEdge(e) && !isPostConditionSpecEdge(e))
+					// ignore assert edges if option is set
+					.filter(e -> SKIP_ASSERTION_EDGES
+							&& mIcfg.getProcedureErrorNodes().get(e.getSucceedingProcedure()).contains(e.getTarget()))
 					.allMatch(e -> mIndependence.isIndependent(null, e, currentEdge) == Dependence.INDEPENDENT)) {
 				commLocations.add(getLocIndexTerm(loc, instance.getTemplateName()));
 			}
