@@ -170,7 +170,7 @@ class Backtranslator {
 			final var value = ((IIntLit) term).value();
 			return numeral(value.bigIntValue());
 		}
-		throw new IllegalArgumentException(term.toString());
+		throw new IllegalArgumentException("Unknown term: " + term.toString());
 	}
 
 	private Term translateStore(final IFunApp store, final IBoundVariableContext ctx) {
