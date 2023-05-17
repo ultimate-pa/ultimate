@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import ap.SimpleAPI;
 import ap.parser.IAtom;
@@ -52,6 +53,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.FunctionDefinition;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.ModelDescription;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import lazabs.GlobalParameters;
 import lazabs.horn.bottomup.HornClauses.Clause;
@@ -85,7 +89,7 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 	private Map<Clause, HornClause> mClauseMap;
 
 	private LBool mLastResult = null;
-	private Lazy<Map<HcPredicateSymbol, Term>> mLastModel;
+	private Lazy<ModelDescription> mLastModel;
 	private Lazy<Derivation> mLastDerivation;
 	private Lazy<Set<HornClause>> mLastUnsatCore;
 
@@ -194,21 +198,19 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 		if (mLastModel == null) {
 			return Optional.empty();
 		}
-		// TODO from map to model -- see other branch
-		mLastModel.get();
-		return Optional.empty();
+		return Optional.of(mLastModel.get());
 	}
 
-	private Map<HcPredicateSymbol, Term> translateModel(final Backtranslator backtranslator,
+	private ModelDescription translateModel(final Backtranslator backtranslator,
 			final scala.collection.Map<Predicate, IFormula> model) {
-		final var translatedModel = new HashMap<HcPredicateSymbol, Term>();
+		final var translatedDefs = new HashSet<FunctionDefinition>();
 		for (final var entry : ofMap(model).entrySet()) {
 			final var pred = backtranslator.translatePredicate(entry.getKey());
 			final var ctx = new PredicateContext(mScript, pred);
 			final var body = backtranslator.translateFormula(entry.getValue(), ctx);
-			translatedModel.put(pred, body);
+			translatedDefs.add(new FunctionDefinition(pred.getFunctionSymbol(), ctx.getParameters(), body));
 		}
-		return translatedModel;
+		return new ModelDescription(translatedDefs);
 	}
 
 	@Override
@@ -355,9 +357,14 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 		}
 
 		@Override
-		public Term getBoundVariable(final int index) {
+		public TermVariable getBoundVariable(final int index) {
 			final var sort = mPredicate.getParameterSorts().get(index);
 			return mScript.variable("~~" + mPredicate.getFunctionSymbol() + "~" + index, sort);
+		}
+
+		public TermVariable[] getParameters() {
+			return IntStream.range(0, mPredicate.getArity()).mapToObj(this::getBoundVariable)
+					.toArray(TermVariable[]::new);
 		}
 	}
 }
