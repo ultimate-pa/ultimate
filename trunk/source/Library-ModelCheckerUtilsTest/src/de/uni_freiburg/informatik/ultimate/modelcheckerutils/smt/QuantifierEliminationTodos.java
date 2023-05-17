@@ -453,7 +453,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi01() {
+	public void sgiCandidate01() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"), new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~j~0#1", "ULTIMATE.start_main_~i~0#1", "ULTIMATE.start_main_~k~0#1", "ULTIMATE.start_main_~#a~0#1.offset", "ULTIMATE.start_main_~#a~0#1.base"),
 		};
@@ -463,7 +463,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi02() {
+	public void sgiCandidate02() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~j~0#1", "ULTIMATE.start_main_~i~0#1", "ULTIMATE.start_main_~k~0#1", "ULTIMATE.start_main_~#b~0#1.offset", "ULTIMATE.start_main_~#a~0#1.offset", "ULTIMATE.start_main_~#b~0#1.base", "ULTIMATE.start_main_~N~0#1", "ULTIMATE.start_main_~#a~0#1.base"),
@@ -474,7 +474,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi03() {
+	public void sgiCandidate03() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~i~0#1", "ULTIMATE.start_main_~#a~0#1.offset", "ULTIMATE.start_main_~#a~0#1.base"),
@@ -485,7 +485,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi04() {
+	public void sgiCandidate04() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~#x~0#1.offset", "~N~0", "ULTIMATE.start_main_#t~ret11#1", "ULTIMATE.start_main_~ret~0#1", "ULTIMATE.start_main_~#x~0#1.base"),
@@ -496,7 +496,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi05() {
+	public void sgiCandidate05() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~i~0#1", "ULTIMATE.start_main_~#sum~0#1.base", "ULTIMATE.start_main_~a~0#1.offset", "ULTIMATE.start_main_~a~0#1.base", "~N~0", "ULTIMATE.start_main_~#sum~0#1.offset"),
@@ -507,7 +507,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi06() {
+	public void sgiCandidate06() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~i~0#1", "ULTIMATE.start_main_~a~0#1.offset", "ULTIMATE.start_main_~#sum~0#1.base", "ULTIMATE.start_main_~a~0#1.base", "~N~0", "ULTIMATE.start_main_~#sum~0#1.offset"),
@@ -518,7 +518,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi07() {
+	public void sgiCandidate07() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~b~0#1.offset", "ULTIMATE.start_main_~i~0#1", "ULTIMATE.start_main_~b~0#1.base"),
@@ -529,7 +529,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi08() {
+	public void sgiCandidate08() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~num~0#1", "ULTIMATE.start_main_~#array~0#1.base", "~ARR_SIZE~0", "ULTIMATE.start_main_~index1~0#1", "ULTIMATE.start_main_~#array~0#1.offset", "ULTIMATE.start_main_~sum~0#1"),
@@ -540,7 +540,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi09() {
+	public void sgiCandidate09() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~num~0#1", "ULTIMATE.start_main_~#array~0#1.base", "~ARR_SIZE~0", "ULTIMATE.start_main_~index1~0#1", "ULTIMATE.start_main_~sum~0#1", "ULTIMATE.start_main_~#array~0#1.offset"),
@@ -551,7 +551,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi10() {
+	public void sgiCandidate10() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~#array~0#1.base", "~ARR_SIZE~0", "ULTIMATE.start_main_~sum~0#1", "ULTIMATE.start_main_~#array~0#1.offset"),
@@ -562,7 +562,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi11() {
+	public void sgiCandidate11() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~num~0#1", "ULTIMATE.start_main_~#array~0#1.base", "~ARR_SIZE~0", "ULTIMATE.start_main_~index1~0#1", "ULTIMATE.start_main_~index2~0#1", "ULTIMATE.start_main_~sum~0#1", "ULTIMATE.start_main_~#array~0#1.offset"),
@@ -573,7 +573,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi12() {
+	public void sgiCandidate12() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~num~0#1", "ULTIMATE.start_main_~#array~0#1.base", "~ARR_SIZE~0", "ULTIMATE.start_main_~index1~0#1", "ULTIMATE.start_main_~index2~0#1", "ULTIMATE.start_main_~sum~0#1", "ULTIMATE.start_main_~#array~0#1.offset"),
@@ -584,7 +584,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi13() {
+	public void sgiCandidate13() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~num~0#1", "~ARR_SIZE~0", "ULTIMATE.start_main_~#array1~0#1.offset", "ULTIMATE.start_main_~#array2~0#1.offset", "ULTIMATE.start_main_~#array2~0#1.base", "ULTIMATE.start_main_~index~0#1", "ULTIMATE.start_main_~sum~0#1", "ULTIMATE.start_main_~#array1~0#1.base"),
@@ -595,7 +595,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi14() {
+	public void sgiCandidate14() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~i~0#1", "ULTIMATE.start_main_~a~0#1.offset", "ULTIMATE.start_main_~a~0#1.base", "~SIZE~0"),
@@ -606,7 +606,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi15() {
+	public void sgiCandidate15() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~sn~0#1"),
 		};
@@ -616,7 +616,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi16() {
+	public void sgiCandidate16() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -628,7 +628,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi17() {
+	public void sgiCandidate17() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -640,7 +640,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi18() {
+	public void sgiCandidate18() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int", "#memory_$Pointer$.base", "#memory_$Pointer$.offset"),
@@ -652,7 +652,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi19() {
+	public void sgiCandidate19() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int", "#memory_$Pointer$.base", "#memory_$Pointer$.offset"),
@@ -664,7 +664,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi20() {
+	public void sgiCandidate20() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base", "#memory_$Pointer$.offset"),
 				new FunDecl(SmtSortUtils::getIntSort, "~#mutexes~0.base", "ULTIMATE.start_foo_~m2~0#1.base", "~#mutexes~0.offset"),
@@ -675,7 +675,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi21() {
+	public void sgiCandidate21() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base"),
 				new FunDecl(SmtSortUtils::getIntSort, "__ldv_list_add_#in~new.base", "~#drvlist~0.offset", "__ldv_list_add_#in~prev.base", "~#drvlist~0.base", "__ldv_list_add_#in~prev.offset"),
@@ -686,7 +686,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi22() {
+	public void sgiCandidate22() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base", "#memory_$Pointer$.offset"),
 				new FunDecl(SmtSortUtils::getIntSort, "~#mutexes~0.base", "ULTIMATE.start_foo_~m2~0#1.base", "~#mutexes~0.offset"),
@@ -697,7 +697,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi23() {
+	public void sgiCandidate23() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -709,7 +709,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi24() {
+	public void sgiCandidate24() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base", "#memory_$Pointer$.offset"),
@@ -721,7 +721,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi25() {
+	public void sgiCandidate25() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~data_init~0#1", "ULTIMATE.start_sll_circular_create_~last~0#1.offset", "ULTIMATE.start_sll_circular_create_~head~0#1.offset", "ULTIMATE.start_sll_circular_create_~head~0#1.base"),
@@ -732,7 +732,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi26() {
+	public void sgiCandidate26() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -744,7 +744,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi27() {
+	public void sgiCandidate27() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "old(#valid)", "#valid"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int", "#memory_$Pointer$.base", "#memory_$Pointer$.offset", "old(#memory_$Pointer$.offset)", "old(#memory_int)", "old(#memory_$Pointer$.base)"),
@@ -756,7 +756,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi28() {
+	public void sgiCandidate28() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~y~0#1", "ULTIMATE.start_main_~x~0#1"),
 		};
@@ -766,7 +766,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi29() {
+	public void sgiCandidate29() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~a~0#1.offset", "ULTIMATE.start_main_~a~0#1.base", "ULTIMATE.start_mkdup_~i~0#1", "ULTIMATE.start_mkdup_~a#1.base", "ULTIMATE.start_main_~n~0#1", "ULTIMATE.start_mkdup_~a#1.offset", "ULTIMATE.start_mkdup_~n#1"),
@@ -777,7 +777,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void sgi30() {
+	public void sgiCandidate30() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
