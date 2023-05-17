@@ -41,14 +41,11 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class FunctionDefinition {
 	private final FunctionSymbol mName;
 	private final TermVariable[] mParams;
-	private final Sort mReturnSort;
 	private final Term mBody;
 
-	public FunctionDefinition(final FunctionSymbol name, final TermVariable[] params, final Sort returnSort,
-			final Term body) {
+	public FunctionDefinition(final FunctionSymbol name, final TermVariable[] params, final Term body) {
 		mName = name;
 		mParams = params;
-		mReturnSort = returnSort;
 		mBody = body;
 	}
 
@@ -61,7 +58,7 @@ public class FunctionDefinition {
 	}
 
 	public Sort getReturnSort() {
-		return mReturnSort;
+		return mName.getReturnSort();
 	}
 
 	public Term getBody() {
@@ -80,7 +77,7 @@ public class FunctionDefinition {
 			builder.append(")");
 		}
 		builder.append(") ");
-		builder.append(mReturnSort);
+		builder.append(getReturnSort());
 		builder.append(" ");
 		builder.append(mBody);
 		builder.append(")");
