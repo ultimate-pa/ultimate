@@ -197,9 +197,6 @@ class Translator {
 
 	private ITerm createVariable(final TermVariable variable) {
 		final var sort = variable.getSort();
-		// if (SmtSortUtils.isBoolSort(sort)) {
-		// return mEldarica.createBooleanVariable(variable.getName());
-		// }
 		return mPrincess.createConstant(variable.getName(), translateSort(sort));
 	}
 
