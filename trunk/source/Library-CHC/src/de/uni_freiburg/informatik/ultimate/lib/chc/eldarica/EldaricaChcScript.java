@@ -317,9 +317,9 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 
 	private Option<Integer> determineTimeout(final long queryTimeout) {
 		final var globalTimeout = mServices.getProgressMonitorService().remainingTime();
-		final var currentTimeout = queryTimeout < 0 ? mDefaultQueryTimeout : queryTimeout;
-		final var actualTimeout = currentTimeout < 0 ? globalTimeout : Long.min(currentTimeout, globalTimeout);
-		return Option.apply((int) actualTimeout);
+		final var currentTimeout = queryTimeout <= 0 ? mDefaultQueryTimeout : queryTimeout;
+		final var actualTimeout = currentTimeout <= 0 ? globalTimeout : Long.min(currentTimeout, globalTimeout);
+		return actualTimeout < 0 ? Option.empty() : Option.apply((int) actualTimeout);
 	}
 
 	private static <T extends Throwable> void throwUnchecked(final Throwable e) throws T {
