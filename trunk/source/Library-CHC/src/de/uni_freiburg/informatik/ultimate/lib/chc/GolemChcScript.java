@@ -96,7 +96,7 @@ public class GolemChcScript implements IChcScript {
 
 			dumperScript.exit();
 		} catch (final IOException e) {
-			throw new IllegalStateException(e);
+			throw new RuntimeException(e);
 		}
 
 		try {
@@ -117,7 +117,7 @@ public class GolemChcScript implements IChcScript {
 			return mLastResult;
 
 		} catch (final IOException e) {
-			throw new IllegalStateException(e);
+			throw new RuntimeException(e);
 		}
 	}
 

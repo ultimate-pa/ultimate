@@ -95,7 +95,7 @@ public class ChcSolverObserver extends BaseObserver {
 		case GOLEM:
 			return new GolemChcScript(mServices, annotation.getScript());
 		default:
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Unsupported CHC backend: " + mPrefs.getBackend());
 		}
 	}
 
@@ -129,7 +129,7 @@ public class ChcSolverObserver extends BaseObserver {
 			mSolution = ChcSolution.unknown();
 			return new ChcUnknownResult(Activator.PLUGIN_ID, "CHC solver returned UNKNOWN.");
 		default:
-			throw new IllegalStateException();
+			throw new AssertionError("Unknown CHC result: " + satisfiability);
 		}
 	}
 
