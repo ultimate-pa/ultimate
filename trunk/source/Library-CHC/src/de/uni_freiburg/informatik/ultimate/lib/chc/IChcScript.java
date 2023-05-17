@@ -45,8 +45,6 @@ public interface IChcScript {
 	 * The script which should be used to build terms for this solver.
 	 *
 	 * No other commands should be invoked on this script.
-	 *
-	 * @return
 	 */
 	Script getScript();
 
@@ -71,13 +69,15 @@ public interface IChcScript {
 	 * @param system
 	 *            The list of Horn clauses forming the CHC system
 	 * @param timeout
-	 *            The maximum time to be used for solving the system, in milliseconds.
+	 *            The maximum time to be used for solving the system, in milliseconds. The timeout must be greater than
+	 *            zero. If the timeout is reached before a solution is found, {@code UNKNOWN} is returned.
 	 * @return the satisfiability of the system
 	 */
 	LBool solve(HcSymbolTable symbolTable, List<HornClause> system, long timeout);
 
 	/**
-	 * Determines if the solver class implements retrieval of models for {@code SAT} queries.
+	 * Determines if the solver class implements retrieval of models for {@link #solve(HcSymbolTable, List)} calls that
+	 * returned {@code SAT}.
 	 *
 	 * If this method returns {@code false}, then any call to {@link #produceModels(boolean)} or {@link #getModel()}
 	 * will throw an {@link UnsupportedOperationException}.
@@ -104,13 +104,12 @@ public interface IChcScript {
 	 *
 	 * Model production must have been enabled via {@link #produceModels(boolean)} prior to the call to
 	 * {@link #solve(HcSymbolTable, List)}.
-	 *
-	 * @return
 	 */
 	Optional<Model> getModel();
 
 	/**
-	 * Determines if the solver class implements retrieval of derivations for {@code UNSAT} queries.
+	 * Determines if the solver class implements retrieval of derivations for {@link #solve(HcSymbolTable, List)} calls
+	 * that returned {@code UNSAT}.
 	 *
 	 * If this method returns {@code false}, then any call to {@link #produceDerivations(boolean)} or
 	 * {@link #getDerivation()} will throw an {@link UnsupportedOperationException}.
@@ -138,13 +137,12 @@ public interface IChcScript {
 	 *
 	 * Derivation production must have been enabled via {@link #produceDerivations(boolean)} prior to the call to
 	 * {@link #solve(HcSymbolTable, List)}.
-	 *
-	 * @return
 	 */
 	Optional<Derivation> getDerivation();
 
 	/**
-	 * Determines if the solver class implements retrieval of unsatisfiable cores for {@code UNSAT} queries.
+	 * Determines if the solver class implements retrieval of unsatisfiable cores for
+	 * {@link #solve(HcSymbolTable, List)} calls that returned {@code UNSAT}.
 	 *
 	 * If this method returns {@code false}, then any call to {@link #produceUnsatCores(boolean)} or
 	 * {@link #getUnsatCore()} will throw an {@link UnsupportedOperationException}.
@@ -171,8 +169,6 @@ public interface IChcScript {
 	 *
 	 * UNSAT core production must have been enabled via {@link #produceUnsatCores(boolean)} prior to the call to
 	 * {@link #solve(HcSymbolTable, List)}.
-	 *
-	 * @return
 	 */
 	Optional<Set<HornClause>> getUnsatCore();
 }
