@@ -26,7 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.regressiontest;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -48,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.test.logs.summaries.TraceAbstractionT
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 /**
  * An {@link AbstractRegressionTestSuite} is a {@link UltimateTestSuite} that automatically generates tests from folders
@@ -62,6 +67,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	private static final Predicate<File> FILTER_XML = TestUtil.getFileEndingTest(".xml");
 	private static final Predicate<File> FILTER_EPF = TestUtil.getFileEndingTest(".epf");
+	private static final String SKIPPED_FILENAME = ".skip";
 
 	protected long mTimeout;
 	protected String mRootFolder;
@@ -110,15 +116,77 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		final Predicate<File> filesRegexFilter = getFilesRegexFilter();
 		for (final Config runConfiguration : runConfigurations) {
 			final Collection<File> inputFiles = getInputFiles(filesRegexFilter, runConfiguration);
-
+			final NestedMap3<String, String, String, String> skippedTests = getSkippedTests(runConfiguration);
 			for (final File inputFile : inputFiles) {
 				final UltimateRunDefinition urd =
 						new UltimateRunDefinition(inputFile, runConfiguration.getSettingsFile(),
 								runConfiguration.getToolchainFile(), getTimeout(runConfiguration, inputFile));
-				rtr.add(buildTestCase(urd, getTestResultDecider(urd)));
+				final String overridenVerdict = skippedTests.get(inputFile.getName(),
+						runConfiguration.getSettingsFile().getName(), runConfiguration.getToolchainFile().getName());
+				rtr.add(buildTestCase(urd, getTestResultDecider(urd, overridenVerdict)));
 			}
 		}
 		return rtr;
+	}
+
+	private static NestedMap3<String, String, String, String> getSkippedTests(final Config runConfiguration) {
+		final NestedMap3<String, String, String, String> result = new NestedMap3<>();
+		final File settingsDir = runConfiguration.getSettingsFile().getParentFile();
+		final File toolchainDir = runConfiguration.getToolchainFile().getParentFile();
+		if (settingsDir.equals(toolchainDir)) {
+			addSkippedTest(new File(settingsDir, SKIPPED_FILENAME), result);
+		} else if (settingsDir.toString().length() < toolchainDir.toString().length()) {
+			addSkippedTest(new File(settingsDir, SKIPPED_FILENAME), result);
+			addSkippedTest(new File(toolchainDir, SKIPPED_FILENAME), result);
+		} else {
+			addSkippedTest(new File(toolchainDir, SKIPPED_FILENAME), result);
+			addSkippedTest(new File(settingsDir, SKIPPED_FILENAME), result);
+		}
+		return result;
+	}
+
+	private static void addSkippedTest(final File ignoreFile, final NestedMap3<String, String, String, String> map) {
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(ignoreFile)))) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				addSkipLine(line, map);
+			}
+		} catch (final IOException e) {
+			// Just skip
+		}
+	}
+
+	private static void addSkipLine(final String line, final NestedMap3<String, String, String, String> map) {
+		if (line.startsWith("//")) {
+			return;
+		}
+		String settings = null;
+		String toolchain = null;
+		String file = null;
+		final String[] args = line.split("\\s+");
+		if (args.length != 4) {
+			return;
+		}
+		for (int i = 0; i < 3; i++) {
+			final String arg = args[i];
+			if (arg.endsWith(".epf")) {
+				if (settings != null) {
+					return;
+				}
+				settings = arg;
+			} else if (arg.endsWith(".xml")) {
+				if (toolchain != null) {
+					return;
+				}
+				toolchain = arg;
+			} else {
+				if (file != null) {
+					return;
+				}
+				file = arg;
+			}
+		}
+		map.put(file, settings, toolchain, args[3]);
 	}
 
 	protected long getTimeout(final Config rundef, final File file) {
@@ -264,7 +332,8 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 				.collect(Collectors.toList());
 	}
 
-	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition);
+	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition,
+			String overridenExpectedVerdict);
 
 	public static final class Config
 			extends de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair<File, File> {

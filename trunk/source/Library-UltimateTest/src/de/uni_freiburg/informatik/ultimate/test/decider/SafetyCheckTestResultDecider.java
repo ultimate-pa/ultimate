@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE UnitTest Library.
- * 
+ *
  * The ULTIMATE UnitTest Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE UnitTest Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE UnitTest Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -38,31 +38,46 @@ import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.SafetyChec
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 /**
- * Use keywords in filename and first line to decide correctness of safety
- * checker results.
- * 
+ * Use keywords in filename and first line to decide correctness of safety checker results.
+ *
  * @author heizmann@informatik.uni-freiburg.de
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * 
+ *
  */
 public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<SafetyCheckerOverallResult> {
 
 	/**
-	 * 
+	 *
 	 * @param ultimateRunDefinition
-	 * 
+	 *
 	 * @param unknownIsJUnitSuccess
-	 *            if true the TestResult UNKNOWN is a success for JUnit, if
-	 *            false, the TestResult UNKNOWN is a failure for JUnit.
+	 *            if true the TestResult UNKNOWN is a success for JUnit, if false, the TestResult UNKNOWN is a failure
+	 *            for JUnit.
+	 *
+	 * @param overridenExpectedVerdict
+	 *            The expected verdict overridden in a separate file, null if not present.
 	 */
-	public SafetyCheckTestResultDecider(final UltimateRunDefinition ultimateRunDefinition, final boolean unknownIsJUnitSuccess) {
+	public SafetyCheckTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
+			final boolean unknownIsJUnitSuccess, final String overridenExpectedVerdict) {
+		super(ultimateRunDefinition, unknownIsJUnitSuccess, overridenExpectedVerdict);
+	}
+
+	/**
+	 *
+	 * @param ultimateRunDefinition
+	 *
+	 * @param unknownIsJUnitSuccess
+	 *            if true the TestResult UNKNOWN is a success for JUnit, if false, the TestResult UNKNOWN is a failure
+	 *            for JUnit.
+	 */
+	public SafetyCheckTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
+			final boolean unknownIsJUnitSuccess) {
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
 	}
 
 	@Override
 	public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
-		return new KeywordBasedExpectedResultFinder<>(
-				TestUtil.constructFilenameKeywordMap_AllSafetyChecker(), null,
+		return new KeywordBasedExpectedResultFinder<>(TestUtil.constructFilenameKeywordMap_AllSafetyChecker(), null,
 				TestUtil.constructFirstlineKeywordMap_SafetyChecker());
 	}
 
@@ -76,6 +91,18 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 		return new SafetyCheckerTestResultEvaluation();
 	}
 
+	private SafetyCheckerOverallResult getOverridenExpectedVerdict() {
+		if (mOverridenExpectedVerdict == null) {
+			return null;
+		}
+		try {
+			return SafetyCheckerOverallResult.valueOf(mOverridenExpectedVerdict);
+		} catch (final IllegalArgumentException e) {
+			// Cannot convert to SafetyCheckerOverallResult, fall back to provided expected result
+			return null;
+		}
+	}
+
 	public class SafetyCheckerTestResultEvaluation implements ITestResultEvaluation<SafetyCheckerOverallResult> {
 		private String mCategory;
 		private String mMessage;
@@ -84,13 +111,19 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 		@Override
 		public void evaluateTestResult(final IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder,
 				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
+			final SafetyCheckerOverallResult expectedVerdict = getOverridenExpectedVerdict();
+			if (expectedVerdict != null) {
+				mMessage = "ExpectedResult (overriden): " + expectedVerdict;
+				compareToOverallResult(expectedVerdict, overallResultDeterminer, true);
+				return;
+			}
 			evaluateExpectedResult(expectedResultFinder);
 			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
 			case ERROR:
 				// we will not evaluate overall result;
 				return;
 			case EXPECTED_RESULT_FOUND:
-				compareToOverallResult(expectedResultFinder.getExpectedResult(), overallResultDeterminer);
+				compareToOverallResult(expectedResultFinder.getExpectedResult(), overallResultDeterminer, false);
 				return;
 			case NO_EXPECTED_RESULT_FOUND:
 				evaluateOverallResultWithoutExpectedResult(overallResultDeterminer);
@@ -130,7 +163,8 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 		}
 
 		private void compareToOverallResult(final SafetyCheckerOverallResult expectedResult,
-				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
+				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer,
+				final boolean skipOnSuccess) {
 			final SafetyCheckerOverallResult overallResult = overallResultDeterminer.getOverallResult();
 			final String overallResultMsg = overallResultDeterminer.generateOverallResultMessage();
 
@@ -139,7 +173,7 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 			switch (overallResult) {
 			case EXCEPTION_OR_ERROR:
 				mCategory = overallResult + " (Expected:" + expectedResult + ") " + overallResultMsg;
-				mTestResult = TestResult.FAIL;
+				mTestResult = skipOnSuccess && expectedResult == overallResult ? TestResult.IGNORE : TestResult.FAIL;
 				break;
 			case SAFE:
 				if (expectedResult == SafetyCheckerOverallResult.SAFE) {
@@ -162,7 +196,7 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				break;
 			case UNSAFE_OVERAPPROXIMATED:
 				if (expectedResult == overallResult) {
-					mTestResult = TestResult.SUCCESS;
+					mTestResult = skipOnSuccess ? TestResult.IGNORE : TestResult.SUCCESS;
 				} else if (expectedResult == SafetyCheckerOverallResult.UNSAFE) {
 					mTestResult = TestResult.SUCCESS;
 				} else {
@@ -170,9 +204,12 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				}
 				break;
 			case UNKNOWN:
+			case TIMEOUT:
 				// syntax error should always have been found
 				if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
 					mTestResult = TestResult.FAIL;
+				} else if (skipOnSuccess && expectedResult == overallResult) {
+					mTestResult = TestResult.IGNORE;
 				} else {
 					mTestResult = TestResult.UNKNOWN;
 				}
@@ -182,14 +219,6 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 					mTestResult = TestResult.SUCCESS;
 				} else {
 					mTestResult = TestResult.FAIL;
-				}
-				break;
-			case TIMEOUT:
-				// syntax error should always have been found
-				if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
-					mTestResult = TestResult.FAIL;
-				} else {
-					mTestResult = TestResult.UNKNOWN;
 				}
 				break;
 			case UNSUPPORTED_SYNTAX:
