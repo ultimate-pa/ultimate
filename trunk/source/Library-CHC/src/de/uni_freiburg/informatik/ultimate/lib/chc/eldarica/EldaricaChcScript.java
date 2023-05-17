@@ -40,6 +40,7 @@ import ap.parser.IAtom;
 import ap.parser.IFormula;
 import ap.terfor.preds.Predicate;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.Derivation;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
@@ -71,6 +72,7 @@ import scala.collection.immutable.List;
  */
 public class EldaricaChcScript implements IChcScript, AutoCloseable {
 	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 	private final Script mScript;
 	private final SimpleAPI mPrincess;
 
@@ -94,6 +96,7 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 	public EldaricaChcScript(final IUltimateServiceProvider services, final Script script,
 			final long defaultQueryTimeout) {
 		mServices = services;
+		mLogger = services.getLoggingService().getLogger(getClass());
 		mScript = script;
 		mPrincess = SimpleAPI.apply(SimpleAPI.apply$default$1(), SimpleAPI.apply$default$2(),
 				SimpleAPI.apply$default$3(), SimpleAPI.apply$default$4(), SimpleAPI.apply$default$5(),
@@ -125,8 +128,10 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 				throw new lazabs.Main.TimeoutException$();
 			}
 
+			mLogger.info("starting eldarica solver...");
 			final var result = SimpleWrapper.solveLazily(translatedClauses, SimpleWrapper.solve$default$2(),
 					SimpleWrapper.solve$default$3(), SimpleWrapper.solve$default$4(), SimpleWrapper.solve$default$6());
+			mLogger.info("eldarica has returned successfully.");
 
 			final var backtranslator = mTranslator.createBacktranslator(mScript);
 
@@ -155,6 +160,7 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException(getClass(), "solving CHC system");
 			}
+			mLogger.warn("Eldarica timed out, returning UNKNOWN: %s", e);
 			mLastResult = LBool.UNKNOWN;
 		}
 		return mLastResult;
@@ -298,6 +304,7 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 	private void setupTimeout(final long queryTimeout) {
 		// set the timeout parameter itself
 		final var actualTimeout = determineTimeout(queryTimeout);
+		mLogger.info("setting eldarica timeout (in ms) to %s", actualTimeout);
 		GlobalParameters.get().timeout_$eq((Option) actualTimeout);
 
 		// we need to override the timeout checking logic, because eldarica only does this in its main() method
