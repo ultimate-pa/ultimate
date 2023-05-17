@@ -197,12 +197,14 @@ class Backtranslator {
 
 	private Term translateBoolLit(final IFunApp boolLit) {
 		final var name = boolLit.fun().name();
-		if (!"true".equals(name) && !"false".equals(name)) {
+		switch (name) {
+		case SMTLIBConstants.TRUE:
+		case SMTLIBConstants.FALSE:
+			assert boolLit.args().isEmpty() : "unexpected parameters for function " + name;
+			return mScript.term(name);
+		default:
 			return null;
 		}
-
-		assert boolLit.args().isEmpty() : "unexpected parameters for function " + name;
-		return mScript.term(name);
 	}
 
 	private Term numeral(final BigInteger value) {

@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -71,21 +72,21 @@ import scala.collection.immutable.List;
 class Translator {
 	private static final Map<String, BiFunction<ITerm, ITerm, IExpression>> BINARY_EXPRESSION_TRANSLATION = Map.of(
 			// equality
-			"=", ITerm::$eq$eq$eq,
+			SMTLIBConstants.EQUALS, ITerm::$eq$eq$eq,
 			// disequality
-			"distinct", ITerm::$eq$div$eq,
+			SMTLIBConstants.DISTINCT, ITerm::$eq$div$eq,
 			// less-than
-			"<", ITerm::$less,
+			SMTLIBConstants.LT, ITerm::$less,
 			// less-or-equal
-			"<=", ITerm::$less$eq,
+			SMTLIBConstants.LEQ, ITerm::$less$eq,
 			// greater-than
-			">", ITerm::$greater,
+			SMTLIBConstants.GT, ITerm::$greater,
 			// greater-or-equal
-			">=", ITerm::$greater$eq,
+			SMTLIBConstants.GEQ, ITerm::$greater$eq,
 			// addition
-			"+", ITerm::$plus,
+			SMTLIBConstants.PLUS, ITerm::$plus,
 			// subtraction
-			"-", ITerm::$minus);
+			SMTLIBConstants.MINUS, ITerm::$minus);
 
 	private final SimpleAPI mPrincess;
 	private final BidirectionalMap<HcPredicateSymbol, Predicate> mPredicateMap = new BidirectionalMap<>();
@@ -211,37 +212,37 @@ class Translator {
 		}
 
 		switch (term.getFunction().getName()) {
-		case "true":
-		case "false":
+		case SMTLIBConstants.TRUE:
+		case SMTLIBConstants.FALSE:
 			final var name = term.getFunction().getName();
 			assert term.getParameters().length == 0 : "Unexpected parameters for function " + name;
 			return new IBoolLit(Boolean.parseBoolean(name));
-		case "and":
+		case SMTLIBConstants.AND:
 			final var conjuncts =
 					Arrays.stream(term.getParameters()).map(this::translateFormula).collect(Collectors.toList());
 			return IExpression.and(toList(conjuncts));
-		case "or":
+		case SMTLIBConstants.OR:
 			final var disjuncts =
 					Arrays.stream(term.getParameters()).map(this::translateFormula).collect(Collectors.toList());
 			return IExpression.or(toList(disjuncts));
-		case "=>":
+		case SMTLIBConstants.IMPLIES:
 			final var first = translateFormula(term.getParameters()[0]);
 			final var second = translateFormula(term.getParameters()[1]);
 			return first.$eq$eq$greater(second);
-		case "not":
+		case SMTLIBConstants.NOT:
 			return translateFormula(term.getParameters()[0]).unary_$bang();
-		case "ite":
+		case SMTLIBConstants.ITE:
 			final var cond = translateFormula(term.getParameters()[0]);
 			final var thenCase = translateTerm(term.getParameters()[1]);
 			final var elseCase = translateTerm(term.getParameters()[2]);
 			return IExpression.ite(cond, thenCase, elseCase);
-		case "store":
+		case SMTLIBConstants.STORE:
 			final var array = translateTerm(term.getParameters()[0]);
 			final var index = translateTerm(term.getParameters()[1]);
 			final var value = translateTerm(term.getParameters()[2]);
 			return new IFunApp(getArrayTheory(term.getParameters()[0].getSort()).store(),
 					toList(java.util.List.of(array, index, value)));
-		case "select":
+		case SMTLIBConstants.SELECT:
 			final var selectArray = translateTerm(term.getParameters()[0]);
 			final var selectIndex = translateTerm(term.getParameters()[1]);
 			return new IFunApp(getArrayTheory(term.getParameters()[0].getSort()).select(),
