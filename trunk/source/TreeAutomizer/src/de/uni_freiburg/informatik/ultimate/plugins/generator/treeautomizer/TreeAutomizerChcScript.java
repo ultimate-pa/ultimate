@@ -78,11 +78,23 @@ public class TreeAutomizerChcScript implements IChcScript {
 
 	@Override
 	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system) {
+		return solve(mServices, symbolTable, system);
+	}
+
+	@Override
+	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system, final long timeout) {
+		final var timer = mServices.getProgressMonitorService().getChildTimer(timeout);
+		final var services = mServices.getProgressMonitorService().registerChildTimer(mServices, timer);
+		return solve(services, symbolTable, system);
+	}
+
+	private LBool solve(final IUltimateServiceProvider services, final HcSymbolTable symbolTable,
+			final List<HornClause> system) {
 		reset();
 
 		// TODO missing parameter: category info
 		final var annot = new HornAnnot(DUMMY_FILENAME, mMgdScript, symbolTable, system, true, null);
-		final var cegar = new TreeAutomizerCEGAR(mServices, annot, mPrefs, mLogger);
+		final var cegar = new TreeAutomizerCEGAR(services, annot, mPrefs, mLogger);
 		try {
 			final var result = cegar.iterate();
 			mLastResult = resultToLBool(result);
@@ -90,12 +102,6 @@ public class TreeAutomizerChcScript implements IChcScript {
 		} catch (final AutomataLibraryException e) {
 			throw new IllegalStateException(e);
 		}
-	}
-
-	@Override
-	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system, final long timeout) {
-		// TODO use child service provider with given timeout
-		throw new UnsupportedOperationException();
 	}
 
 	private LBool resultToLBool(final IResult result) {
