@@ -105,14 +105,7 @@ public class GolemChcScript implements IChcScript {
 					null, null, null, determineTimeout(timeout));
 
 			mLastResult = executor.parseCheckSatResult();
-			switch (mLastResult) {
-			case SAT:
-				mLastModel = mProduceModels ? executor.parseGetModelResult() : null;
-				break;
-			default:
-				mLastModel = null;
-				break;
-			}
+			mLastModel = (mLastResult == LBool.SAT && mProduceModels) ? executor.parseGetModelResult() : null;
 
 			return mLastResult;
 
