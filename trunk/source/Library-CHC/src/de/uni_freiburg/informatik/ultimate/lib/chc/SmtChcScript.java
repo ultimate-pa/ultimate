@@ -84,8 +84,18 @@ public class SmtChcScript implements IChcScript {
 
 	@Override
 	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system, final long timeout) {
-		// TODO use "set-timeout", reset afterwards
-		throw new UnsupportedOperationException();
+		mMgdScript.getScript().setOption(":timeout", timeout);
+		try {
+			return solve(symbolTable, system);
+		} finally {
+			try {
+				// reset timeout
+				mMgdScript.getScript().setOption(":timeout", 0L);
+			} catch (final Throwable e) {
+				// swallow exception
+				e.printStackTrace();
+			}
+		}
 	}
 
 	@Override
