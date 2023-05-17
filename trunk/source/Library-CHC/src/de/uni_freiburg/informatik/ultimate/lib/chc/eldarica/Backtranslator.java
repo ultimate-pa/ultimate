@@ -120,17 +120,15 @@ class Backtranslator {
 	}
 
 	public Term translateTerm(final ITerm term, final Sort sort, final IBoundVariableContext ctx) {
-		final var translated = translateTermInternal(term, ctx);
-
 		// sort conversion for booleans
-		final var actualSort = translated.getSort();
 		if (SmtSortUtils.isBoolSort(sort)) {
-			assert SmtSortUtils.isIntSort(actualSort) : "Boolean term has unexpected sort " + actualSort;
-			// TODO actually convert and return
-			new ap.types.Sort.MultipleValueBool$();
+			final var formula = new ap.types.Sort.MultipleValueBool$().isTrue(term);
+			return translateFormula(formula, ctx);
 		}
 
-		assert actualSort.equals(sort) : "Translated term has sort " + actualSort + " instead of " + sort;
+		final var translated = translateTermInternal(term, ctx);
+		assert translated.getSort().equals(sort) : "Translated term has sort " + translated.getSort() + " instead of "
+				+ sort;
 		return translated;
 	}
 
