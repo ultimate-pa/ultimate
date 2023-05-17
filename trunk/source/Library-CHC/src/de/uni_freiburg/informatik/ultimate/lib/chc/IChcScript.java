@@ -49,9 +49,7 @@ public interface IChcScript {
 	Script getScript();
 
 	/**
-	 * Try to solve the given system of Horn clauses.
-	 *
-	 * The instance may have an internal timeout, after which {@code UNKNOWN} is returned.
+	 * Try to solve the given system of Horn clauses. If the system cannot be solved, {@code UNKNOWN} is returned.
 	 *
 	 * @param symbolTable
 	 *            A symbol table describing the predicates and other symbols used by the given CHC system
