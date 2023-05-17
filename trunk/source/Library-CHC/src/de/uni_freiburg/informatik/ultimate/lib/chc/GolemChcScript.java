@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.chc;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -42,9 +43,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Executor;
 
 public class GolemChcScript implements IChcScript {
-	// TODO
-	private static final String SCRIPT_PATH = "/tmp/golem-script.smt2";
-
 	private static final boolean ADD_CLAUSE_NAMES = false;
 	private static final boolean ADD_COMMENTS = false;
 	private static final boolean DECLARE_FUNCTIONS = true;
@@ -84,8 +82,12 @@ public class GolemChcScript implements IChcScript {
 	@Override
 	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system, final long timeout) {
 		// generate file with Horn clauses
+		final File tmpFile;
 		try {
-			final var dumperScript = new LoggingScript(SCRIPT_PATH, false);
+			tmpFile = File.createTempFile("golem_", ".smt2");
+			mLogger.info("Writing script to file " + tmpFile.getAbsolutePath());
+
+			final var dumperScript = new LoggingScript(tmpFile.getAbsolutePath(), false);
 			dumperScript.setLogic(Logics.HORN);
 
 			new ChcAsserter(mMgdScript, dumperScript, ADD_CLAUSE_NAMES, ADD_COMMENTS, DECLARE_FUNCTIONS)
@@ -99,8 +101,8 @@ public class GolemChcScript implements IChcScript {
 
 		try {
 			// run golem on file
-			final var executor = new Executor(getCommand(), mMgdScript.getScript(), mLogger, mServices, "golem", null,
-					null, null, determineTimeout(timeout));
+			final var executor = new Executor(getCommand(tmpFile), mMgdScript.getScript(), mLogger, mServices, "golem",
+					null, null, null, determineTimeout(timeout));
 
 			mLastResult = executor.parseCheckSatResult();
 			switch (mLastResult) {
@@ -119,12 +121,12 @@ public class GolemChcScript implements IChcScript {
 		}
 	}
 
-	private String getCommand() {
+	private String getCommand(final File file) {
 		var command = "golem";
 		if (mProduceModels) {
 			command += " --print-witness";
 		}
-		return command + " " + SCRIPT_PATH;
+		return command + " " + file.getAbsolutePath();
 	}
 
 	@Override
