@@ -151,13 +151,13 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 					}
 				}
 			}
-			return mLastResult;
 		} catch (final lazabs.Main.TimeoutException$ e) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException(getClass(), "solving CHC system");
 			}
-			return LBool.UNKNOWN;
+			mLastResult = LBool.UNKNOWN;
 		}
+		return mLastResult;
 	}
 
 	private List<Clause> translateSystem(final java.util.Collection<HornClause> system) {
