@@ -90,7 +90,7 @@ public class ChcSolverObserver extends BaseObserver {
 			// To use a fresh Z3 instance for solving instead, one has to transfer the Horn clause terms to that script.
 			return new SmtChcScript(annotation.getScript());
 		case TREEAUTOMIZER:
-			// TODO settings
+			// NOTE: TAPreferences (last parameter) currently unused by TreeAutomizer
 			return new TreeAutomizerChcScript(mServices, annotation.getScript(), null);
 		case GOLEM:
 			return new GolemChcScript(mServices, annotation.getScript());
