@@ -33,8 +33,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -49,15 +48,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *            type of letter
  * @param <STATE>
  *            type of state
- * @param <FACTORY>
- *            a factory that can return the product of two state{@link IIntersectionStateFactory} and label states
- *            binaray ({@link IBlackWhiteStateFactory}
  */
-public class RabinIntersectionWorstCaseOptimal<LETTER, STATE, FACTORY extends IBlackWhiteStateFactory<STATE> & IIntersectionStateFactory<STATE>>
-		implements IRabinAutomaton<LETTER, STATE> {
+public class RabinIntersectionWorstCaseOptimal<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE> {
 	private final IRabinAutomaton<LETTER, STATE> mFirstAutomaton;
 	private final IRabinAutomaton<LETTER, STATE> mSecondAutomaton;
-	private final FACTORY mFactory;
+	private final IBuchiIntersectStateFactory<STATE> mFactory;
 
 	private Set<STATE> mInitialStates;
 	private final HashMap<STATE, Triple<STATE, STATE, Boolean>> mAutomatonMap = new HashMap<>();
@@ -70,10 +65,10 @@ public class RabinIntersectionWorstCaseOptimal<LETTER, STATE, FACTORY extends IB
 	 * @param secondAutomaton
 	 *            second Rabin automaton to intersect
 	 * @param factory
-	 *            some {@link IBlackWhiteStateFactory} & {@link IIntersectionStateFactory} for STATE
+	 *            some factory
 	 */
 	public RabinIntersectionWorstCaseOptimal(final IRabinAutomaton<LETTER, STATE> firstAutomaton,
-			final IRabinAutomaton<LETTER, STATE> secondAutomaton, final FACTORY factory) {
+			final IRabinAutomaton<LETTER, STATE> secondAutomaton, final IBuchiIntersectStateFactory<STATE> factory) {
 		mFirstAutomaton = firstAutomaton;
 		mSecondAutomaton = secondAutomaton;
 		mFactory = factory;
@@ -155,12 +150,7 @@ public class RabinIntersectionWorstCaseOptimal<LETTER, STATE, FACTORY extends IB
 	 * @return a state which uniquely incorporates all parameters
 	 */
 	private STATE getProducedState(final STATE first, final STATE second, final boolean acceptedOnlyFirst) {
-		STATE result;
-		if (acceptedOnlyFirst) {
-			result = mFactory.getBlackContent(mFactory.intersection(first, second));
-		} else {
-			result = mFactory.getWhiteContent(mFactory.intersection(first, second));
-		}
+		final STATE result = mFactory.intersectBuchi(first, second, acceptedOnlyFirst ? 1 : 2);
 		mAutomatonMap.computeIfAbsent(result, x -> new Triple<>(first, second, acceptedOnlyFirst));
 		return result;
 	}

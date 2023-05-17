@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -44,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
-import de.uni_freiburg.informatik.ultimate.automata.rabin.IRainbowStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -60,7 +58,7 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 		IMinimizationCheckResultStateFactory<String>, IUnionStateFactory<String>,
 		IBuchiComplementNcsbSimpleStateFactory<String>, IRelabelStateFactory<String>,
 		IConcurrentProductStateFactory<String>, IPetriNetAndAutomataInclusionStateFactory<String>,
-		ICaUnionStateFactory<String>, IRainbowStateFactory<String> {
+		ICaUnionStateFactory<String> {
 
 	public static final String INFINITY = "∞";
 	private static final String EMPTY_STRING = "";
@@ -74,7 +72,6 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 	private static final char CLOSE_BRACE = '}';
 	private static final char OPEN_BRACKET = '[';
 	private static final char CLOSE_BRACKET = ']';
-	private static final char MINIMUM_COLOR = '⠀';
 
 	private static final int RANK_ONE = 1;
 	private static final int RANK_TWO = 2;
@@ -131,10 +128,8 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 		builder.append(OPEN_BRACE);
 		for (final Entry<String, Set<String>> entry : down2up.entrySet()) {
 			final String downState = entry.getKey();
-			final Iterator<String> iterator = entry.getValue().iterator();
 			String separator = EMPTY_STRING;
-			while (iterator.hasNext()) {
-				final String upState = iterator.next();
+			for (final String upState : entry.getValue()) {
 				// @formatter:off
 				builder.append(separator)
 						.append(OPEN_PARENTHESIS)
@@ -397,17 +392,4 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 	public String constructInitialState() {
 		return "UnionInitialState";
 	}
-
-	/**
-	 * @author Philipp Müller (pm251@venus.uni-freiburg.de)
-	 */
-	@Override
-	public String getColoredState(final String state, final byte color) {
-
-		int unicodeColor = Byte.toUnsignedInt(color);
-		unicodeColor += MINIMUM_COLOR;
-
-		return state + (char) unicodeColor;
-	}
-
 }

@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.rabin;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <CRSF>
  *            a StateFactory implementing {@link IRainbowStateFactory} & {@link IIntersectionStateFactory}
  */
-public class Intersection<LETTER, STATE, CRSF extends IBlackWhiteStateFactory<STATE> & IIntersectionStateFactory<STATE>>
+public class Intersection<LETTER, STATE, CRSF extends IBuchiIntersectStateFactory<STATE>>
 		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final IRabinAutomaton<LETTER, STATE> mResult;
 	private final IRabinAutomaton<LETTER, STATE> mFirst;

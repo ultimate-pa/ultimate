@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -55,10 +56,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @param <STATE>
  *            type of state
  * @param <FACTORY>
- *            a factory that can return the product of two state{@link IIntersectionStateFactory} and label states
- *            binaray ({@link IRainbowStateFactory}
+ *            type of factory
  */
-public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFactory<STATE> & IIntersectionStateFactory<STATE>>
+public class RabinIntersection<LETTER, STATE, FACTORY extends IBuchiIntersectStateFactory<STATE>>
 		implements IRabinAutomaton<LETTER, STATE> {
 	private static final int NUMBER_OF_COMPONENTS = 3;
 
@@ -168,11 +168,11 @@ public class RabinIntersection<LETTER, STATE, FACTORY extends IRainbowStateFacto
 					|| mSecondAutomaton.isFinite(second)) {
 				return null;
 			}
-			result = mFactory.getColoredState(mFactory.intersection(first, second), (byte) 0);
+			result = mFactory.intersectBuchi(first, second, 0);
 			mAutomatonMap.computeIfAbsent(result, x -> new Triple<>(first, second, 0));
 			return result;
 		}
-		result = mFactory.getColoredState(mFactory.intersection(first, second), (byte) component);
+		result = mFactory.intersectBuchi(first, second, component);
 		// since we already need this map we can use it as a cache
 		if (!mAutomatonMap.containsKey(result)) {
 			// This checks for B', these are all states derived from finite states
