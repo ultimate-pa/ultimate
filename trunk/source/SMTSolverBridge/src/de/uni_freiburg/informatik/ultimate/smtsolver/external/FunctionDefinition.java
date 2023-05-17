@@ -72,9 +72,10 @@ public class FunctionDefinition {
 		builder.append(" (");
 		for (final var param : mParams) {
 			builder.append("(");
-			builder.append(param.getName());
+			builder.append(param.toString());
+			builder.append(" ");
 			builder.append(param.getSort());
-			builder.append(")");
+			builder.append(") ");
 		}
 		builder.append(") ");
 		builder.append(getReturnSort());
