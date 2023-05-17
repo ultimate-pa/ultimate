@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -668,8 +669,15 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		}
 
 		final TermVariable outVar = tf.getOutVars().get(pv);
+		final var dummyOutVars = new HashMap<IHcReplacementVar, HcBodyVar>();
 		if (outVar != null && !Objects.equals(inVar, outVar)) {
-			substitution.put(outVar, clause.getHeadVar(rv).getTerm());
+			final var headPred = clause.getHeadPredicate();
+			if (headPred != null && headPred.hasParameter(rv)) {
+				substitution.put(outVar, clause.getHeadVar(rv).getTerm());
+			} else {
+				final var bodyVar = dummyOutVars.computeIfAbsent(rv, x -> clause.getFreshBodyVar(x, x.getSort()));
+				substitution.put(outVar, bodyVar.getTerm());
+			}
 		}
 
 		if (canBeUpdated && tf.getAssignedVars().contains(pv)) {

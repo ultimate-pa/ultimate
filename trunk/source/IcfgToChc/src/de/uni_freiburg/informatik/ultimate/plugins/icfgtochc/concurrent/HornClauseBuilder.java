@@ -72,6 +72,10 @@ public class HornClauseBuilder {
 		this(mgdScript, symbolTable, null, comment);
 	}
 
+	public PredicateInfo getHeadPredicate() {
+		return mHeadPredicate;
+	}
+
 	public HcBodyVar getFreshBodyVar(final Object identifier, final Sort sort) {
 		final HcBodyVar auxVar = mSymbolTable.getOrConstructBodyVar(identifier, sort);
 		mBodyVars.add(auxVar);
