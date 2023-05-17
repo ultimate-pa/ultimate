@@ -39,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcSatResult;
 import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcUnsatResult;
 
-public class TreeAutomizerOverallResultEvaluator implements IOverallResultEvaluator<TreeAutomizerOverallResult> {
+public class ChcOverallResultEvaluator implements IOverallResultEvaluator<ChcOverallResult> {
 
-	private TreeAutomizerOverallResult mOverallResult;
+	private ChcOverallResult mOverallResult;
 	private final Set<IResult> mMostSignificantResults = new HashSet<>();
 
 	@Override
@@ -71,20 +71,20 @@ public class TreeAutomizerOverallResultEvaluator implements IOverallResultEvalua
 		}
 
 		if (satResult != null) {
-			mOverallResult = TreeAutomizerOverallResult.SAT;
+			mOverallResult = ChcOverallResult.SAT;
 		} else if (unsatResult != null) {
-			mOverallResult = TreeAutomizerOverallResult.UNSAT;
+			mOverallResult = ChcOverallResult.UNSAT;
 		} else if (errorResult != null) {
-			mOverallResult = TreeAutomizerOverallResult.CRASH;
+			mOverallResult = ChcOverallResult.CRASH;
 		} else if (timeoutResult != null) {
-			mOverallResult = TreeAutomizerOverallResult.TIMEOUT;
+			mOverallResult = ChcOverallResult.TIMEOUT;
 		} else {
-			mOverallResult = TreeAutomizerOverallResult.UNKNOWN;
+			mOverallResult = ChcOverallResult.UNKNOWN;
 		}
 	}
 
 	@Override
-	public TreeAutomizerOverallResult getOverallResult() {
+	public ChcOverallResult getOverallResult() {
 		assert mOverallResult != null;
 		return mOverallResult;
 	}

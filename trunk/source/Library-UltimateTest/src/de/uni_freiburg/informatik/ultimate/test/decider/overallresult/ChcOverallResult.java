@@ -33,7 +33,7 @@ package de.uni_freiburg.informatik.ultimate.test.decider.overallresult;
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public enum TreeAutomizerOverallResult {
+public enum ChcOverallResult {
 	SAT,
 	UNSAT,
 	UNKNOWN,

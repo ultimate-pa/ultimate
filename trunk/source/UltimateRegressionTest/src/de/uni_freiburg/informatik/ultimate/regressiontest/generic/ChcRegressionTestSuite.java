@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.regressiontest.generic;
 import de.uni_freiburg.informatik.ultimate.regressiontest.AbstractRegressionTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.TreeAutomizerTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.ChcTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 /**
@@ -59,6 +59,6 @@ public class ChcRegressionTestSuite extends AbstractRegressionTestSuite {
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition) {
 		boolean unknownIsSuccess = false;
-		return new TreeAutomizerTestResultDecider(runDefinition, unknownIsSuccess);
+		return new ChcTestResultDecider(runDefinition, unknownIsSuccess);
 	}
 }

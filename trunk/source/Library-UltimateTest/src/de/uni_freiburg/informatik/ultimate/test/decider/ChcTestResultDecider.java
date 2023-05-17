@@ -31,45 +31,45 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.SMTLibExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.IOverallResultEvaluator;
-import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.TreeAutomizerOverallResult;
-import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.TreeAutomizerOverallResultEvaluator;
+import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.ChcOverallResult;
+import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.ChcOverallResultEvaluator;
 
-public class TreeAutomizerTestResultDecider extends ThreeTierTestResultDecider<TreeAutomizerOverallResult> {
+public class ChcTestResultDecider extends ThreeTierTestResultDecider<ChcOverallResult> {
 
-	public TreeAutomizerTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
+	public ChcTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
 			final boolean unknownIsJUnitSuccess) {
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
 	}
 
 	@Override
-	public SMTLibExpectedResultFinder<TreeAutomizerOverallResult> constructExpectedResultFinder() {
-		return new SMTLibExpectedResultFinder<>(TreeAutomizerOverallResult.UNKNOWN, TreeAutomizerOverallResult.SAT,
-				TreeAutomizerOverallResult.UNSAT);
+	public SMTLibExpectedResultFinder<ChcOverallResult> constructExpectedResultFinder() {
+		return new SMTLibExpectedResultFinder<>(ChcOverallResult.UNKNOWN, ChcOverallResult.SAT,
+				ChcOverallResult.UNSAT);
 	}
 
 	@Override
-	public TreeAutomizerOverallResultEvaluator constructUltimateResultEvaluation() {
-		return new TreeAutomizerOverallResultEvaluator();
+	public ChcOverallResultEvaluator constructUltimateResultEvaluation() {
+		return new ChcOverallResultEvaluator();
 	}
 
 	@Override
-	public TreeAutomizerTestResultEvaluation constructTestResultEvaluation() {
-		return new TreeAutomizerTestResultEvaluation();
+	public ChcTestResultEvaluation constructTestResultEvaluation() {
+		return new ChcTestResultEvaluation();
 	}
 
-	public class TreeAutomizerTestResultEvaluation implements ITestResultEvaluation<TreeAutomizerOverallResult> {
+	public class ChcTestResultEvaluation implements ITestResultEvaluation<ChcOverallResult> {
 
 		private TestResult mTestResult;
 		private String mCategory;
 		private String mMessage;
 
 		@Override
-		public void evaluateTestResult(final IExpectedResultFinder<TreeAutomizerOverallResult> expectedResultEvaluation,
-				final IOverallResultEvaluator<TreeAutomizerOverallResult> overallResultDeterminer) {
-			final TreeAutomizerOverallResult expectedResult = expectedResultEvaluation.getExpectedResult();
-			final TreeAutomizerOverallResult actualResult = overallResultDeterminer.getOverallResult();
+		public void evaluateTestResult(final IExpectedResultFinder<ChcOverallResult> expectedResultEvaluation,
+				final IOverallResultEvaluator<ChcOverallResult> overallResultDeterminer) {
+			final ChcOverallResult expectedResult = expectedResultEvaluation.getExpectedResult();
+			final ChcOverallResult actualResult = overallResultDeterminer.getOverallResult();
 
-			if (expectedResult == TreeAutomizerOverallResult.UNKNOWN) {
+			if (expectedResult == ChcOverallResult.UNKNOWN) {
 				mCategory = "expected result unknown";
 				mMessage = "expected: " + expectedResult + " actual: " + actualResult;
 				mTestResult = TestResult.UNKNOWN;
@@ -88,9 +88,9 @@ public class TreeAutomizerTestResultDecider extends ThreeTierTestResultDecider<T
 		}
 
 		@Override
-		public void evaluateTestResult(final IExpectedResultFinder<TreeAutomizerOverallResult> expectedResultEvaluation,
+		public void evaluateTestResult(final IExpectedResultFinder<ChcOverallResult> expectedResultEvaluation,
 				final Throwable e) {
-			final TreeAutomizerOverallResult expectedResult = expectedResultEvaluation.getExpectedResult();
+			final ChcOverallResult expectedResult = expectedResultEvaluation.getExpectedResult();
 
 			mCategory = "threw an exception";
 			mMessage = "expected: " + expectedResult + " actual: threw an exception";
