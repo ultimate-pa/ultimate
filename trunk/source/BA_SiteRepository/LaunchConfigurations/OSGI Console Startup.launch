@@ -241,6 +241,7 @@
 <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker@default:default"/>
 <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.blockencoding@default:default"/>
 <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.chctoboogie@default:default"/>
+<setEntry value="de.uni_freiburg.informatik.ultimate.plugins.chcsolver@default:default"/>
 <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter@default:default"/>
 <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding@default:default"/>
 <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer@default:default"/>

@@ -1,0 +1,25 @@
+#Mon Aug 07 19:03:14 CEST 2017
+\!/instance/de.uni_freiburg.informatik.ultimate.source.smtparser=
+/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/SmtParser\ Mode=UltimateTreeAutomizer
+@de.uni_freiburg.informatik.ultimate.source.smtparser=0.1.20
+file_export_version=3.0
+
+#Sat Apr 29 18:11:02 CEST 2023
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.chcsolver=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.chcsolver/CHC\ solver\ backend=TREEAUTOMIZER
+/instance/de.uni_freiburg.informatik.ultimate.plugins.chcsolver/Produce\ CHC\ model\ if\ query\ is\ SAT=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.chcsolver/Produce\ UNSAT\ core\ if\ query\ is\ UNSAT=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.chcsolver/Produce\ derivation\ if\ query\ is\ UNSAT=true
+@de.uni_freiburg.informatik.ultimate.plugins.chcsolver=0.2.3
+file_export_version=3.0
+
+#Sat Apr 29 18:08:31 CEST 2023
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:1024 -smt2 -in -t\:12000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer/Dump\ automata\ to=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer/Dump\ smtlib\ scripts\ to=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer/Logic\ for\ external\ solver=ALL
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer/SMT\ solver=External_ModelsAndUnsatCoreMode
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer/Type\ of\ minimization\ to\ use=NAIVE
+@de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer=0.2.3
+file_export_version=3.0

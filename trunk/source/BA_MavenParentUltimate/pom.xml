@@ -499,6 +499,7 @@
 		<module>../CDTParser</module>
 		<module>../CDTPlugin</module>
 		<module>../ChcSmtPrinter</module>
+		<module>../ChcSolver</module>
 		<module>../ChcToBoogie</module>
 		<module>../CodeCheck</module>
 		<module>../CoreRCP</module>
