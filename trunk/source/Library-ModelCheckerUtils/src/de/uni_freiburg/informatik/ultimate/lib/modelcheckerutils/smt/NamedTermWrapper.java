@@ -71,7 +71,7 @@ public final class NamedTermWrapper {
 		return mUnnamedTerm;
 	}
 
-	public boolean isIsNamed() {
+	public boolean isNamed() {
 		return mIsNamed;
 	}
 

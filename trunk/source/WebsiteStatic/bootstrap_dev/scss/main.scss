@@ -32,6 +32,11 @@ $dark:      $gray-700 !default;
 
 $yiq-contrasted-threshold:  175 !default;
 
+// Recognizable links
+$link-color: navy;
+$link-decoration: none;
+$link-hover-decoration: underline;
+
 // Fonts
 $font-size-base: 1rem !default;
 $h1-font-size: 2rem !default;
@@ -49,6 +54,8 @@ $border-radius: 0px !default;
 $border-radius-lg: 0px !default;
 $border-radius-sm: 0px !default;
 $card-inner-border-radius: 0px !default;
+
+$toast-max-width: 100%;
 
 .text-black-70 {
   color: $gray-700 !important;

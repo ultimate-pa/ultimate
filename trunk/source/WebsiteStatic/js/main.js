@@ -38,8 +38,7 @@ function load_backend_version() {
     $.get(_CONFIG.backend.web_bridge_url + "/version", function (response) {
         try {
             $('#version_info_text').html(
-                "Using Ultimate version " +
-                response.ultimate_version
+                "Ultimate version " + response.ultimate_version
             );
         } catch (e) {
             console.log("Could not read backend ultimate version.");

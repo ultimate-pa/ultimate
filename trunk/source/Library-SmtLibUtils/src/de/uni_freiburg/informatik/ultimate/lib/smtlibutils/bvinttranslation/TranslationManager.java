@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -48,7 +49,7 @@ public class TranslationManager {
 	private LinkedHashMap<Term, Term> mReversedVarMap;
 	private final TranslationConstrainer mTc;
 
-	private final HashSet<Term> mConstraintSet; // Set of all constraints
+	private HashSet<Term> mConstraintSet; // Set of all constraints
 	private final boolean mNutzTransformation;
 
 	/*
@@ -97,6 +98,34 @@ public class TranslationManager {
 		return new Triple<>(integerFormula, overapproxVariables, isOverapproximation);
 
 	}
+
+	public Triple<Term, Set<Term>, Boolean> translateBvtoIntTransferrer(final Term bitvecFromula, final Script scriptBV, final Script scriptINT) {
+		mConstraintSet = new HashSet<>();
+		final BvToIntTransferrer bvToInt =
+				new BvToIntTransferrer(scriptBV, scriptINT, mMgdScript, mVariableMap, mTc, bitvecFromula.getFreeVars(), mNutzTransformation);
+		final Term integerFormulaNoConstraint;
+		try {
+			integerFormulaNoConstraint = bvToInt.transform(bitvecFromula);
+		} catch (final SMTLIBException e) {
+			throw new AssertionError("Translation error " + e);
+		}
+		mVariableMap = bvToInt.getVarMap();
+		mReversedVarMap = bvToInt.getReversedVarMap();
+		final Set<Term> overapproxVariables = bvToInt.getOverapproxVariables();
+		final boolean isOverapproximation = bvToInt.wasOverapproximation();
+		if (!mNutzTransformation) {
+			mConstraintSet.addAll(mTc.getConstraints());
+			mConstraintSet.addAll(bvToInt.mArraySelectConstraintMap.values());
+		}else {
+			mConstraintSet.addAll(mTc.getBvandConstraints());
+		}
+		// TODO: Also add the constraints with mNutzTransformation=true, maybe we need to be more careful there
+		final Term integerFormula =
+				SmtUtils.and(mScript, integerFormulaNoConstraint, SmtUtils.and(mScript, mConstraintSet));
+		return new Triple<>(integerFormula, overapproxVariables, isOverapproximation);
+
+	}
+
 
 	/*
 	 * Method to translate from integer back to bit-vector requires mReversedVarMap to be filled returns the translation

@@ -1,0 +1,28 @@
+// Author: schuessf@informatik.uni-freiburg.de
+// Date: 2023-03-28
+
+RabinAutomaton automaton = (
+	alphabet = {a b},
+	states = {q1 q2 q3},
+	initialStates = {q1},
+	acceptingStates = {q2},
+	finiteStates = {q3},
+	transitions = { (q1 a q2) (q2 b q1) (q2 a q3) (q3 b q1) }
+);
+
+assert(accepts(automaton, [a a b , a b]));
+assert(!accepts(automaton, [, a a b]));
+assert(accepts(automaton, [a a  , b a]));
+
+RabinAutomaton bAutomaton = (
+	alphabet = {a b},
+	states = {q1 q2 q3 s1 s2},
+	initialStates = {q1},
+	acceptingStates = {s2},
+	finiteStates = {},
+	transitions = { (q1 a q2) (q2 b q1) (q2 a q3) (q3 b q1) (q1 a s2) (s2 b s1) (s1 a s2) }
+);
+
+assert(accepts(bAutomaton, [a a b , a b]));
+assert(!accepts(bAutomaton, [, a a b]));
+assert(accepts(bAutomaton, [a a  , b a]));

@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.chcprinter;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.chcprinter.preferences.ChcSmtPrinterPreferenceInitializer;
@@ -37,19 +36,17 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.chc.ChcAsserter;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClauseAST;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 
 /**
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
@@ -69,6 +66,8 @@ public class ChcSmtPrinterObserver extends BaseObserver {
 	 * This flag decides if they are printed as comments inside the smt2 file.
 	 */
 	private static final boolean ADD_COMMENTS = false;
+
+	private static final boolean USE_CSE = true;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -95,29 +94,15 @@ public class ChcSmtPrinterObserver extends BaseObserver {
 		final HcSymbolTable symbolTable = annot.getSymbolTable();
 		final ManagedScript mgdScript = annot.getScript();
 
-		// do some categorisation of the clauses
-		final List<HornClause> rules = new ArrayList<>();
-		final List<HornClause> queries = new ArrayList<>();
-		for (final HornClause hc : hornClauses) {
-			if (hc.isHeadFalse()) {
-				queries.add(hc);
-			} else {
-				rules.add(hc);
-			}
-		}
-
-		final LoggingScript loggingScript;
 		final File file = openTempFile(root);
-		// TODO make an option for cse
-		final boolean useCse = true;
-		loggingScript = new LoggingScript(new NoopScript(), file.getAbsolutePath(), true, useCse);
+		final LoggingScript loggingScript = new LoggingScript(new NoopScript(), file.getAbsolutePath(), true, USE_CSE);
 
 		/*
 		 * Write file using loggingScript
 		 */
 
 		// set logic
-		loggingScript.setLogic("HORN");
+		loggingScript.setLogic(Logics.HORN);
 
 		// add info
 		{
@@ -128,34 +113,12 @@ public class ChcSmtPrinterObserver extends BaseObserver {
 		}
 
 		if (PRODUCE_UNSAT_CORES) {
-			loggingScript.setOption(":produce-unsat-cores", "true");
+			loggingScript.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, "true");
 		}
 
-		// declare functions
-		for (final HcPredicateSymbol hcPred : symbolTable.getHcPredicateSymbols()) {
-			final FunctionSymbol fsym = hcPred.getFunctionSymbol();
-			loggingScript.declareFun(fsym.getName(), fsym.getParameterSorts(), fsym.getReturnSort());
-		}
-		for (final Triple<String, Sort[], Sort> sf : symbolTable.getSkolemFunctions()) {
-			loggingScript.declareFun(sf.getFirst(), sf.getSecond(), sf.getThird());
-		}
-
-		// assert constraints
-		for (final HornClause hc : rules) {
-			final Term formula = hc.constructFormula(mgdScript, PRODUCE_UNSAT_CORES);
-			if (ADD_COMMENTS) {
-				loggingScript.comment(hc.toString());
-			}
-			loggingScript.assertTerm(formula);
-		}
-
-		for (final HornClause hc : queries) {
-			if (ADD_COMMENTS) {
-				loggingScript.comment(hc.toString());
-			}
-			final Term formula = hc.constructFormula(mgdScript, PRODUCE_UNSAT_CORES);
-			loggingScript.assertTerm(formula);
-		}
+		// declare functions and assert clauses
+		new ChcAsserter(mgdScript, loggingScript, PRODUCE_UNSAT_CORES, ADD_COMMENTS, true).assertClauses(symbolTable,
+				hornClauses);
 
 		// check-sat
 		loggingScript.checkSat();

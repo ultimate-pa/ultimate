@@ -115,6 +115,7 @@ textarea {
 .tool-card {
   min-width: 18rem;
   max-width: 18rem;
+  margin-right: 3rem;
 }
 
 /* ==========================================================================

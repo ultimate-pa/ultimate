@@ -6,13 +6,14 @@ DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 . "$DIR/makeSettings.sh"
 
+build() {
+  spushd "../../trunk/source/BA_MavenParentUltimate/"
+  exit_on_fail mvn -T 1C clean install -Pmaterialize
+  spopd
+}
 
-## start the actual script
-spushd ../../trunk/source/BA_MavenParentUltimate/ 
-exit_on_fail mvn -T 1C clean install -Pmaterialize
-spopd 
-
-for platform in {linux,win32}; do
+create_tool_zips() {
+  for platform in {linux,win32}; do
     # makeZip <toolname> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc> <ltlc> <termwitnessvaltc>
     # Taipan
     exit_on_fail bash makeZip.sh Taipan $platform AutomizerCInline_WitnessPrinter.xml NONE AutomizerCInline.xml AutomizerCInline_WitnessPrinter.xml NONE NONE
@@ -34,6 +35,28 @@ for platform in {linux,win32}; do
 
     # ReqCheck
     exit_on_fail bash createReqCheckZip.sh ReqCheck $platform ReqCheck.xml ReqCheck.xml
-done
+  done
+}
 
-exit 0
+create_webbackend_dir() {
+  local source="../../trunk/source/BA_SiteRepository/target/products/WebBackend/linux/gtk/x86_64"
+  local target="$(readlink -f WebBackend)"
+  if [ -d "$target" ] ; then rm -r "$target" ; fi
+  mkdir "$target"
+  echo "Copying WebBackend"
+  cp -r "$source/"* "$target"
+}
+
+create_webfrontend_dir() {
+  local source="../../trunk/source/BA_SiteRepository/target/products/WebsiteStatic"
+  local target="$(readlink -f WebFrontend)"
+  if [ -d "$target" ] ; then rm -r "$target" ; fi
+  mkdir "$target"
+  echo "Copying WebFrontend"
+  cp -r "$source/"* "$target"
+}
+
+build
+create_tool_zips
+create_webbackend_dir
+create_webfrontend_dir

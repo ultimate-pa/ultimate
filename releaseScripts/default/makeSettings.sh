@@ -66,6 +66,43 @@ get_git_root() {
   fi
 }
 
-### Shared settings 
+# move to root of current git directory, execute command
+# abort if no git directory
+run_in_git_root() {
+  root_dir=$(get_git_root)
+  spushd "$root_dir"
+  "$@"
+  spopd
+}
 
+is_ming() {
+  uname | grep -q "MING"
+}
 
+run_python() {
+  if is_ming ; then
+    py -3 "$@"
+  else
+    python3 "$@"
+  fi
+}
+
+# populate ULT_VERSION
+get_ult_version(){
+  spushd "$(get_git_root)/releaseScripts/default/UAutomizer-linux"
+  ULT_VERSION=$(run_python Ultimate.py --ultversion)
+  local rtr_code="$?"
+  if ! [[ "$rtr_code" -eq "0" ]] ; then
+    echo "./Ultimate.py --ultversion failed with $rtr_code"
+    echo "Output was:"
+    echo "$ULT_VERSION"
+    exit $rtr_code
+  fi
+  ULT_VERSION=$(echo "$ULT_VERSION" | head -n 1 | sed 's/This is Ultimate //g ; s/origin.//g')
+  if [ -z "$ULT_VERSION" ] ; then
+    echo "Could not extract version string from './Ultimate.py --ultversion' output:"
+    echo "$ULT_VERSION"
+    exit 1
+  fi
+  spopd
+}

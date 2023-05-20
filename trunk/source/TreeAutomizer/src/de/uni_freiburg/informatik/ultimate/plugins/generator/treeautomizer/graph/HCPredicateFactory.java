@@ -165,7 +165,7 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 			final ApplicationTerm defaultConstantForFv = mSymbolTable.getProgramVar(fv).getDefaultConstant();
 			substitutionMapping.put(fv, defaultConstantForFv);
 		}
-		return new PureSubstitution(mMgdScript, substitutionMapping).transform(formula);
+		return PureSubstitution.apply(mMgdScript, substitutionMapping, formula);
 	}
 
 	/**

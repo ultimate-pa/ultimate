@@ -105,6 +105,7 @@ StringCharacter = [^\r\n\"\\]
   "NestedWordAutomaton"         { m_LastToken = m_CurToken; m_CurToken = "NestedWordAutomaton"; return symbol(sym.NESTEDWORD_AUTOMATA); }
   "EpsilonNestedWordAutomaton"  { m_LastToken = m_CurToken; m_CurToken = "EpsilonNestedWordAutomaton"; return symbol(sym.EPSILON_NESTEDWORD_AUTOMATA); }
   "FiniteAutomaton"             { m_LastToken = m_CurToken; m_CurToken = "FiniteAutomaton"; return symbol(sym.FINITE_AUTOMATON); }
+  "RabinAutomaton"              { m_LastToken = m_CurToken; m_CurToken = "RabinAutomaton"; return symbol(sym.RABIN_AUTOMATON); }
   "CountingAutomaton"           { m_LastToken = m_CurToken; m_CurToken = "CountingAutomaton"; return symbol(sym.COUNTING_AUTOMATON); }
   "PetriNet"                    { m_LastToken = m_CurToken; m_CurToken = "PetriNet"; return symbol(sym.PETRINET_AUTOMATA); }
   "BranchingProcess"            { m_LastToken = m_CurToken; m_CurToken = "PetriNet"; return symbol(sym.BRANCHINGPROCESS_AUTOMATA); }
@@ -114,6 +115,8 @@ StringCharacter = [^\r\n\"\\]
   "returnAlphabet"              { m_LastToken = m_CurToken; m_CurToken = "returnAlphabet"; return symbol(sym.RETURN_ALPHABET); }
   "states"                      { m_LastToken = m_CurToken; m_CurToken = "states"; return symbol(sym.STATES); }
   "initialStates"               { m_LastToken = m_CurToken; m_CurToken = "initialStates"; return symbol(sym.INITIAL_STATES); }
+  "acceptingStates"             { m_LastToken = m_CurToken; m_CurToken = "finalStates"; return symbol(sym.ACCEPTING_STATES); }
+  "finiteStates"                { m_LastToken = m_CurToken; m_CurToken = "finalStates"; return symbol(sym.FINITE_STATES); }
   "finalStates"                 { m_LastToken = m_CurToken; m_CurToken = "finalStates"; return symbol(sym.FINAL_STATES); }
   "transitions"                 { m_LastToken = m_CurToken; m_CurToken = "transitions"; return symbol(sym.TRANSITIONS); }
   "callTransitions"             { m_LastToken = m_CurToken; m_CurToken = "callTransitions"; return symbol(sym.CALL_TRANSITIONS); }

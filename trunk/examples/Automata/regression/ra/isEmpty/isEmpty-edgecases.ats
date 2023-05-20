@@ -1,0 +1,31 @@
+RabinAutomaton multiInitialAutomaton = (
+	alphabet = {a b},
+	states = {s1 s2 s3},
+	initialStates = {s1 s2},
+	acceptingStates = {s3},
+	finiteStates = {},
+	transitions = { (s1 a s2) (s2 a s3) (s1 a s3) (s3 b s2) (s3 a s1)}
+);
+
+RabinAutomaton acceptorAutomaton = (
+	alphabet = {a b c},
+	states = {s1},
+	initialStates = {s1},
+	acceptingStates = {s1},
+	finiteStates = {},
+	transitions = { (s1 a s1) (s1 b s1) (s1 c s1) }
+);
+
+RabinAutomaton rejctingAutomaton = (
+	alphabet = {a b},
+	states = {s1 s2},
+	initialStates = {s1},
+	acceptingStates = {s2},
+	finiteStates = {s2},
+	transitions = { (s1 a s2) (s1 a s1) (s1 b s1) (s2 a s2) (s2 b s2) }
+);
+
+
+assert(!isEmpty(multiInitialAutomaton));
+assert(!isEmpty(acceptorAutomaton));
+assert(isEmpty(rejctingAutomaton));

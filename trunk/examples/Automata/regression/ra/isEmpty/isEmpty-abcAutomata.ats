@@ -1,0 +1,30 @@
+RabinAutomaton abcAutomaton = (
+	alphabet = {a b c},
+	states = {s1 s2 s3 s4 s5},
+	initialStates = {s1 s2 s3 s4 s5},
+	acceptingStates = {s1 s3 s5},
+	finiteStates = {s2 s4},
+	transitions = { (s1 a s2) (s1 a s3) (s2 b s3) (s3 c s4) (s3 b s5) (s4 a s4) (s4 b s5) (s5 c s1) }
+);
+RabinAutomaton abc2Automaton = (
+	alphabet = {a b c},
+	states = {s1 s2 s3 s4 s5},
+	initialStates = {s2},
+	acceptingStates = {s1 s3 s5},
+	finiteStates = {s2 s4},
+	transitions = { (s1 a s2) (s1 a s3) (s2 b s3) (s3 c s4) (s3 b s5) (s4 a s4) (s4 b s5) (s5 c s1) }
+);
+
+RabinAutomaton abc4Automaton = (
+	alphabet = {a b c},
+	states = {s1 s2 s3 s4 s5},
+	initialStates = {s4},
+	acceptingStates = {s1 s3 s5},
+	finiteStates = {s2 s4},
+	transitions = { (s1 a s2) (s1 a s3) (s2 b s3) (s3 c s4) (s3 b s5) (s4 a s4) (s4 b s5) (s5 c s1) }
+);
+
+
+assert(!isEmpty(abcAutomaton));
+assert(!isEmpty(abc2Automaton));
+assert(!isEmpty(abc4Automaton));

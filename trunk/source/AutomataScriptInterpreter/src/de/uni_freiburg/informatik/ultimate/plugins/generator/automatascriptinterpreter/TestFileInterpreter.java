@@ -1176,7 +1176,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 				"de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi",
 				"de.uni_freiburg.informatik.ultimate.automata.nestedword.operations",
 				"de.uni_freiburg.informatik.ultimate.automata.petrinet",
-				"de.uni_freiburg.informatik.ultimate.automata.tree.operations" };
+				"de.uni_freiburg.informatik.ultimate.automata.tree.operations",
+				"de.uni_freiburg.informatik.ultimate.automata.rabin" };
 		for (final String packageName : packages) {
 			final Collection<File> files = filesInDirectory(getPathFromPackageName(packageName));
 

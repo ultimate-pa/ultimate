@@ -151,7 +151,7 @@ public class UltimateEliminator extends WrapperScript {
 	public LBool assertTerm(final Term term) throws SMTLIBException {
 		mNumberOfAssertedTerms++;
 		final NamedTermWrapper ntw = new NamedTermWrapper(term);
-		if (ntw.isIsNamed()) {
+		if (ntw.isNamed()) {
 			// we alredy removed quantifiers
 			mTreeSizeOfAssertedTerms += new DAGSize().treesize(ntw.getUnnamedTerm());
 			return mScript.assertTerm(term);

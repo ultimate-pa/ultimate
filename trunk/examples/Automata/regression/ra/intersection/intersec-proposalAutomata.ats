@@ -1,0 +1,38 @@
+RabinAutomaton proposalAutomaton = (
+	alphabet = {a b},
+	states = {q1 q2 q3},
+	initialStates = {q1},
+	acceptingStates = {q2},
+	finiteStates = {q3},
+	transitions = { (q1 a q2) (q2 b q1) (q2 a q3) (q3 b q1) }
+);
+
+RabinAutomaton proposalBuechiEquivalent = (
+	alphabet = {a b},
+	states = {q1 q2 q3 s1 s2},
+	initialStates = {q1},
+	acceptingStates = {s2},
+	finiteStates = {},
+	transitions = { (q1 a q2) (q2 b q1) (q2 a q3) (q3 b q1) (q1 a s2) (s2 b s1) (s1 a s2) }
+);
+
+RabinAutomaton paralellProposalAutomata = (
+	alphabet = {a b},
+	states = {q1 q2 q3 q4 q5 q6},
+	initialStates = {q1 q4},
+	acceptingStates = {q2 q5},
+	finiteStates = {q3 q6},
+	transitions = { (q1 a q2) (q2 b q1) (q2 a q3) (q3 b q1) (q4 a q5) (q5 b q4) (q5 a q6) (q6 b q4) }
+);
+
+
+assert(!isEmpty(intersection(intersection(proposalAutomaton,proposalBuechiEquivalent), paralellProposalAutomata)));
+assert(!isEmpty(intersection(intersection(proposalBuechiEquivalent, proposalAutomaton), paralellProposalAutomata)));
+
+assert(accepts(intersection(intersection(proposalAutomaton,proposalBuechiEquivalent), paralellProposalAutomata), [a a b , a b]));
+assert(!accepts(intersection(intersection(proposalAutomaton,proposalBuechiEquivalent), paralellProposalAutomata), [, a a b]));
+assert(accepts(intersection(intersection(proposalAutomaton,proposalBuechiEquivalent), paralellProposalAutomata), [a a  , b a]));
+
+assert(accepts(intersection(intersection(proposalBuechiEquivalent, proposalAutomaton), paralellProposalAutomata), [a a b , a b]));
+assert(!accepts(intersection(intersection(proposalBuechiEquivalent, proposalAutomaton), paralellProposalAutomata), [, a a b]));
+assert(accepts(intersection(intersection(proposalBuechiEquivalent, proposalAutomaton), paralellProposalAutomata), [a a  , b a]));

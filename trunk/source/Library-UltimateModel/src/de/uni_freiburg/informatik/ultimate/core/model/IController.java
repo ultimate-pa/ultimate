@@ -85,8 +85,8 @@ public interface IController<T> extends IUltimatePlugin {
 	List<String> selectModel(IToolchain<T> toolchain, List<String> modelNames);
 
 	/**
-	 * {@link IController#prerun(IToolchainData)} is called just before the selected toolchain is executed by the core.
-	 * This allows the controller to modify {@link IToolchainStorage} or to abort toolchain execution with an exception.
+	 * {@link IController#prerun(IToolchainData)} is called after initialisation. This allows the controller to modify
+	 * {@link IToolchainStorage} or to abort the toolchain execution with an exception.
 	 *
 	 * @param tcData
 	 *            The toolchain that is about to be executed.

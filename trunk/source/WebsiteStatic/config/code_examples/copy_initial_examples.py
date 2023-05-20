@@ -30,6 +30,12 @@ tool_examples_map = {
       'pattern': '*.bpl'
     }
   ],
+  'boogieGemCutter': [
+    {
+      'path': osp.join(EXAMPLES_DIR, 'concurrent', 'bpl', 'regression', 'showcase'),
+      'pattern': '*.bpl'
+    }
+  ],
   'cAutomizer': [
     {
       'path': osp.join(EXAMPLES_DIR, 'programs', 'toy', 'showcase'),

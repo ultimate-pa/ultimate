@@ -51,12 +51,40 @@
   ],
   "boogieAutomizer": [
     {
+      "name": "Bakery.bpl",
+      "source": "Bakery.bpl"
+    },
+    {
+      "name": "Fischer.bpl",
+      "source": "Fischer.bpl"
+    },
+    {
+      "name": "FischerWithBug.bpl",
+      "source": "FischerWithBug.bpl"
+    },
+    {
+      "name": "ForkJoinExplained.bpl",
+      "source": "ForkJoinExplained.bpl"
+    },
+    {
       "name": "GoannaDoubleFreeWithoutPointer...",
       "source": "GoannaDoubleFreeWithoutPointers.bpl"
     },
     {
       "name": "LockingExample.bpl",
       "source": "LockingExample.bpl"
+    },
+    {
+      "name": "NonAtomicIncrement_2Threads.bp...",
+      "source": "NonAtomicIncrement_2Threads.bpl"
+    },
+    {
+      "name": "Peterson.bpl",
+      "source": "Peterson.bpl"
+    },
+    {
+      "name": "PetersonWithBug.bpl",
+      "source": "PetersonWithBug.bpl"
     }
   ],
   "boogieBuchiAutomizer": [
@@ -91,6 +119,36 @@
     {
       "name": "MicrosoftZuneBug_false-termina...",
       "source": "MicrosoftZuneBug_false-termination.bpl"
+    }
+  ],
+  "boogieGemCutter": [
+    {
+      "name": "Bakery.bpl",
+      "source": "Bakery.bpl"
+    },
+    {
+      "name": "Fischer.bpl",
+      "source": "Fischer.bpl"
+    },
+    {
+      "name": "FischerWithBug.bpl",
+      "source": "FischerWithBug.bpl"
+    },
+    {
+      "name": "ForkJoinExplained.bpl",
+      "source": "ForkJoinExplained.bpl"
+    },
+    {
+      "name": "NonAtomicIncrement_2Threads.bp...",
+      "source": "NonAtomicIncrement_2Threads.bpl"
+    },
+    {
+      "name": "Peterson.bpl",
+      "source": "Peterson.bpl"
+    },
+    {
+      "name": "PetersonWithBug.bpl",
+      "source": "PetersonWithBug.bpl"
     }
   ],
   "boogieKojak": [
@@ -501,6 +559,10 @@
       "source": "Nangang-FakeDisjunction.bpl"
     },
     {
+      "name": "NewYork01.bpl",
+      "source": "NewYork01.bpl"
+    },
+    {
       "name": "NonTermination1.bpl",
       "source": "NonTermination1.bpl"
     },
@@ -717,6 +779,10 @@
       "source": "SyntaxSupportFunctions01.bpl"
     },
     {
+      "name": "SyntaxSupportMixedIntReal2.bpl",
+      "source": "SyntaxSupportMixedIntReal2.bpl"
+    },
+    {
       "name": "SyntaxSupportUserDefinedTypes0...",
       "source": "SyntaxSupportUserDefinedTypes01.bpl"
     },
@@ -801,6 +867,14 @@
     {
       "name": "2019ProgVerif-Sheet12Ex05-Sele...",
       "source": "2019ProgVerif-Sheet12Ex05-SelectionSort.bpl"
+    },
+    {
+      "name": "2020ProgVerif-Sheet09Ex01.bpl",
+      "source": "2020ProgVerif-Sheet09Ex01.bpl"
+    },
+    {
+      "name": "2020ProgVerif-Sheet10Ex04-Squa...",
+      "source": "2020ProgVerif-Sheet10Ex04-Square.bpl"
     },
     {
       "name": "ArrayInitialization01.bpl",

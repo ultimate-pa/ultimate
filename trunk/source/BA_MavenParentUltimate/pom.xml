@@ -363,6 +363,11 @@
 							<ws>gtk</ws>
 							<arch>x86_64</arch>
 						</environment>
+						<environment>
+							<os>macosx</os>
+							<ws>cocoa</ws>
+							<arch>x86_64</arch>
+						</environment>
 					</environments>
 				</configuration>
 			</plugin>
@@ -494,6 +499,7 @@
 		<module>../CDTParser</module>
 		<module>../CDTPlugin</module>
 		<module>../ChcSmtPrinter</module>
+		<module>../ChcSolver</module>
 		<module>../ChcToBoogie</module>
 		<module>../CodeCheck</module>
 		<module>../CoreRCP</module>

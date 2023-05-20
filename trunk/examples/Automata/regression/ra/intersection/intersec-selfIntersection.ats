@@ -1,0 +1,15 @@
+RabinAutomaton proposalAutomaton = (
+	alphabet = {a b},
+	states = {q1 q2 q3},
+	initialStates = {q1},
+	acceptingStates = {q2},
+	finiteStates = {q3},
+	transitions = { (q1 a q2) (q2 b q1) (q2 a q3) (q3 b q1) }
+);
+
+
+assert(!isEmpty(intersection(proposalAutomaton,proposalAutomaton)));
+
+assert(accepts(intersection(proposalAutomaton,proposalAutomaton), [a a b , a b]));
+assert(!accepts(intersection(proposalAutomaton,proposalAutomaton), [, a a b]));
+assert(accepts(intersection(proposalAutomaton,proposalAutomaton), [a a  , b a]));
