@@ -319,7 +319,7 @@ public class IntBlastingWrapper extends WrapperScript {
 		} else {
 			result = intSolverResult;
 		}
-		if (result != LBool.UNKNOWN && result != mExpectedResult) {
+		if (mExpectedResult != null && result != LBool.UNKNOWN && result != mExpectedResult) {
 			throw new AssertionError("Result incorrect: expected " + mExpectedResult + " obtained " + result);
 		}
 		return result;
