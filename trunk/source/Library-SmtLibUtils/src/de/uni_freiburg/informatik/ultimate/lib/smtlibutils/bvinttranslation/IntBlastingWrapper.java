@@ -81,7 +81,6 @@ public class IntBlastingWrapper extends WrapperScript {
 	private final Script mIntScript;
 	private final ManagedScript mMgdIntScript;
 	private final ArrayDeque<Boolean> mOverapproximationTrackingStack = new ArrayDeque<>();
-	private BvToIntTransferrer mBvToInt;
 	private final TranslationManager mTm;
 
 	/**
