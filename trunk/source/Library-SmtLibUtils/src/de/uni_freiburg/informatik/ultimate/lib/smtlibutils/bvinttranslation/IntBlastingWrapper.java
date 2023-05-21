@@ -27,6 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -86,6 +90,12 @@ public class IntBlastingWrapper extends WrapperScript {
 	 */
 	private final String mBenchmarkFilename;
 	private final IntBlastingMode mIntBlastingMode;
+
+	/**
+	 * If set to true we write a CSV to the current working directory.
+	 */
+	private static final boolean WRITE_EVALUATION = false;
+	private static final String EVALUATION_FILENAME = "IntBlastingWrapper.csv";
 
 	private static final boolean DEBUG_ERROR_IF_UNKNOWN = false;
 
@@ -289,14 +299,21 @@ public class IntBlastingWrapper extends WrapperScript {
 	@Override
 	public LBool assertTerm(Term bvTerm) throws SMTLIBException {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			writeEvalRow(0, "Timeout at beginning of assertTerm");
 			throw new ToolchainCanceledException(IntBlastingWrapper.class,
 					String.format("assertTerm"));
 		}
 		// No need to assert term in mBvScript.
 		// FIXME: translate to bv by using an instance of the TermTransferrer
 		bvTerm = new FormulaUnLet().unlet(bvTerm);
-		final Triple<Term, Set<Term>, Boolean> translationResult = mTm.translateBvtoIntTransferrer(bvTerm,
-				new HistoryRecordingScript(mBvScript), new HistoryRecordingScript(mIntScript));
+		final Triple<Term, Set<Term>, Boolean> translationResult;
+		try {
+			translationResult = mTm.translateBvtoIntTransferrer(bvTerm, new HistoryRecordingScript(mBvScript),
+					new HistoryRecordingScript(mIntScript));
+		} catch (final Throwable th) {
+			writeEvalRow(0, th.toString());
+			throw th;
+		}
 		final Term intTerm = translationResult.getFirst();
 		final boolean weDidAnOverapproximation = translationResult.getThird();
 		if (weDidAnOverapproximation) {
@@ -305,14 +322,18 @@ public class IntBlastingWrapper extends WrapperScript {
 		}
 		try {
 			return mIntScript.assertTerm(intTerm);
-		} catch (final SMTLIBException e) {
-			throw new AssertionError(e);
+		} catch (final Throwable th) {
+			writeEvalRow(0, th.toString());
+			throw new AssertionError(th);
 		}
 	}
 
 	@Override
 	public LBool checkSat() throws SMTLIBException {
+		final long startTime = System.nanoTime();
 		final LBool intSolverResult = mIntScript.checkSat();
+		final long durationNs = System.nanoTime() - startTime;
+		final long durationMs = durationNs / 1_000_000;
 		// TODO: Compare with mExpectedResult
 		final LBool result;
 		if (intSolverResult == LBool.SAT && mOverapproximationTrackingStack.contains(true)) {
@@ -330,7 +351,21 @@ public class IntBlastingWrapper extends WrapperScript {
 		if (DEBUG_ERROR_IF_UNKNOWN && result == LBool.UNKNOWN) {
 			throw new AssertionError("Int solver returned UNKNOWN");
 		}
+		writeEvalRow(durationMs, result.toString());
 		return result;
+	}
+
+	private void writeEvalRow(final long durationMs, final String result) {
+		if (!WRITE_EVALUATION) {
+			return;
+		}
+		try (FileWriter fw = new FileWriter(EVALUATION_FILENAME, true);
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter out = new PrintWriter(bw)) {
+			out.println(String.format("%s,%s,%s,%s", mBenchmarkFilename, mIntBlastingMode, durationMs, result));
+		} catch (final IOException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 	@Override
