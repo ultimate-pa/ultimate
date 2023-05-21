@@ -80,9 +80,16 @@ public class IntBlastingWrapper extends WrapperScript {
 	private BvToIntTransferrer mBvToInt;
 	private final TranslationManager mTm;
 
+	/**
+	 * When we use this wrapper for processing SMT files, and want to write
+	 * evaluation results, we store the name of the SMT file here.
+	 */
+	private final String mBenchmarkFilename;
+	private final IntBlastingMode mIntBlastingMode;
+
 	public IntBlastingWrapper(final IUltimateServiceProvider services, final ILogger logger, final Script script,
 			final IntBlastingMode intBlastingMode,
-			final ConstraintsForBitwiseOperations constraintsForBitwiseOperations) {
+			final ConstraintsForBitwiseOperations constraintsForBitwiseOperations, final String benchmarkFilename) {
 		super(script);
 		mServices = services;
 		mLogger = logger;
@@ -93,6 +100,8 @@ public class IntBlastingWrapper extends WrapperScript {
 
 		mTm = new TranslationManager(mMgdIntScript, constraintsForBitwiseOperations,
 				(intBlastingMode == IntBlastingMode.CongruenceBased));
+		mBenchmarkFilename = benchmarkFilename;
+		mIntBlastingMode = intBlastingMode;
 	}
 
 	@Override

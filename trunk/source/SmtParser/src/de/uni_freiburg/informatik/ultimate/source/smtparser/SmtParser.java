@@ -280,7 +280,8 @@ public class SmtParser implements ISource {
 					.getEnum(SmtParserPreferenceInitializer.LABEL_IntBlastingConstraintsForBitwiseOperations,
 							ConstraintsForBitwiseOperations.class);
 			final Script backEnd = SolverBuilder.buildScript(mServices, solverSettings);
-			script = new IntBlastingWrapper(mServices, mLogger, backEnd, intBlastingMode, constraintsForBitwiseOperations);
+			script = new IntBlastingWrapper(mServices, mLogger, backEnd, intBlastingMode,
+					constraintsForBitwiseOperations, file.getAbsolutePath());
 		}
 			break;
 		case UltimateTreeAutomizer: {
