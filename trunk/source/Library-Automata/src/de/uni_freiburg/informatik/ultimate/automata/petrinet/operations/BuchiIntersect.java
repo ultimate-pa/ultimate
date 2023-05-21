@@ -33,29 +33,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  */
 public class BuchiIntersect<LETTER, PLACE>
 		extends GeneralOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
-
 	private final IPetriNet<LETTER, PLACE> mPetriNet;
 	private final INestedWordAutomaton<LETTER, PLACE> mBuchiAutomata;
-
 	private final IBlackWhiteStateFactory<PLACE> mLabeledBuchiPlaceFactory;
-
 	private final Map<PLACE, PLACE> mInputQGetQ1 = new HashMap<>();
 	private final Map<PLACE, PLACE> mInputQGetQ2 = new HashMap<>();
 	private final Map<PLACE, PLACE> mInputQ2GetQ = new HashMap<>();
 
 	private final BoundedPetriNet<LETTER, PLACE> mIntersectionNet;
-
-	private final Set<LETTER> mLooperSymbols = new HashSet<>();
-
-	private final Set<PLACE> mStateTwoEnablerSet = new HashSet<>();
-
-	private PLACE mCurrentNewPlace;
-
-	private final Set<Transition<LETTER, PLACE>> mToBeDoneStateOneOnlyTransitions = new HashSet<>();
-
-	private final Set<Transition<LETTER, PLACE>> mToBeDoneTransitions = new HashSet<>();
-
-	private final HashMap<PLACE, PLACE> mLooperAcptPlaceToEnablePlace = new HashMap<>();
 
 	public BuchiIntersect(final AutomataLibraryServices services, final IBlackWhiteStateFactory<PLACE> factory,
 			final IPetriNet<LETTER, PLACE> petriNet, final INestedWordAutomaton<LETTER, PLACE> buchiAutomata) {
@@ -67,7 +52,6 @@ public class BuchiIntersect<LETTER, PLACE>
 			throw new IllegalArgumentException("Buchi with multiple initial states not supported.");
 		}
 		mLabeledBuchiPlaceFactory = factory;
-		mCurrentNewPlace = mPetriNet.getAcceptingPlaces().iterator().next();
 		mIntersectionNet = new BoundedPetriNet<>(services, petriNet.getAlphabet(), false);
 		constructIntersectionNet();
 		mLogger.info(exitMessage());
@@ -75,9 +59,7 @@ public class BuchiIntersect<LETTER, PLACE>
 
 	private final void constructIntersectionNet() {
 		addPlacesToIntersectionNet();
-		calculateLoopers();
-		addLooperPlacesAndTransitions();
-		addNonLooperTransitionsToIntersectionNet();
+		addTransitionsToIntersectionNet();
 	}
 
 	private final void addPlacesToIntersectionNet() {
@@ -103,140 +85,15 @@ public class BuchiIntersect<LETTER, PLACE>
 		}
 	}
 
-	private final void calculateLoopers() {
-		for (final LETTER transitionSymbol : mBuchiAutomata.getAlphabet()) {
-			boolean isLooper = true;
+	private final void addTransitionsToIntersectionNet() {
+		for (final Transition<LETTER, PLACE> petriTransition : mPetriNet.getTransitions()) {
 			for (final PLACE buchiPlace : mBuchiAutomata.getStates()) {
 				for (final OutgoingInternalTransition<LETTER, PLACE> buchiTransition : mBuchiAutomata
-						.internalSuccessors(buchiPlace, transitionSymbol)) {
-					if (buchiTransition.getSucc() != buchiPlace) {
-						isLooper = false;
-						break;
-					}
-				}
-
-				if (!isLooper) {
-					break;
+						.internalSuccessors(buchiPlace, petriTransition.getSymbol())) {
+					addStateOneAndTwoTransition(petriTransition, buchiTransition, buchiPlace);
 				}
 			}
-			if (isLooper) {
-				mLooperSymbols.add(transitionSymbol);
-			}
 		}
-		// mLogger.info("From " + mBuchiAutomata.getAlphabet().size() + " symbols, " + mLooperSymbols.size()
-		// + " are looper symbols.");
-	}
-
-	private final void addLooperPlacesAndTransitions() {
-		for (final Transition<LETTER, PLACE> petriTransition : mPetriNet.getTransitions()) {
-			if (mLooperSymbols.contains(petriTransition.getSymbol())) {
-				addLooperOptimizedTransitions(petriTransition);
-			}
-		}
-	}
-
-	private final void addNonLooperTransitionsToIntersectionNet() {
-		for (final Transition<LETTER, PLACE> petriTransition : mPetriNet.getTransitions()) {
-			if (!mLooperSymbols.contains(petriTransition.getSymbol())) {
-				// normal construction
-				addTransitionsNormally(petriTransition);
-			} else if (mToBeDoneTransitions.contains(petriTransition)) {
-				// is looper but no optimization possible
-				addTransitionsNormally(petriTransition);
-			} else if (mToBeDoneStateOneOnlyTransitions.contains(petriTransition)) {
-				// is looper and only state two transitions could be optimized
-				addStateOneTransitionsNormally(petriTransition);
-			}
-		}
-	}
-
-	private final void addTransitionsNormally(final Transition<LETTER, PLACE> petriTransition) {
-		for (final PLACE buchiPlace : mBuchiAutomata.getStates()) {
-			for (final OutgoingInternalTransition<LETTER, PLACE> buchiTransition : mBuchiAutomata
-					.internalSuccessors(buchiPlace, petriTransition.getSymbol())) {
-				addStateOneAndTwoTransition(petriTransition, buchiTransition, buchiPlace);
-			}
-		}
-	}
-
-	private final void addLooperOptimizedTransitions(final Transition<LETTER, PLACE> petriTransition) {
-		boolean leadsIntoAcceptingPetri = false;
-		boolean loopsInAcceptingBuchi = false;
-
-		if (petriTransition.getSuccessors().stream().anyMatch(mPetriNet.getAcceptingPlaces()::contains)) {
-			leadsIntoAcceptingPetri = true;
-		}
-
-		for (final PLACE state : mBuchiAutomata.getStates()) {
-			if (mBuchiAutomata.internalSuccessors(state, petriTransition.getSymbol()).iterator().hasNext()) {
-				loopsInAcceptingBuchi = true;
-				break;
-			}
-		}
-
-		if (!leadsIntoAcceptingPetri && !loopsInAcceptingBuchi) {
-			// full looper optimization possible
-			addPurePetriTransition(petriTransition);
-		} else if (leadsIntoAcceptingPetri) {
-			// theoretically we cannot optimize here ? since we dont know which Q-state has a token right now.
-			mToBeDoneTransitions.add(petriTransition);
-		} else if (loopsInAcceptingBuchi) {
-			// can only optimize state two transition
-			mToBeDoneStateOneOnlyTransitions.add(petriTransition);
-			buildLooperOptimizationStateTwo(petriTransition);
-		}
-	}
-
-	private final void addPurePetriTransition(final Transition<LETTER, PLACE> petriTransition) {
-		mIntersectionNet.addTransition(petriTransition.getSymbol(), petriTransition.getPredecessors(),
-				petriTransition.getSuccessors());
-	}
-
-	private final void buildLooperOptimizationStateTwo(final Transition<LETTER, PLACE> petriTransition) {
-		addPurePetriTransition(petriTransition);
-
-		for (final PLACE buchiPlace : mBuchiAutomata.getFinalStates()) {
-			// TODO: Does this work properly? The loop variable is not used!
-			for (final OutgoingInternalTransition<LETTER, PLACE> buchiTransition : mBuchiAutomata
-					.internalSuccessors(buchiPlace, petriTransition.getSymbol())) {
-				// second for loop for the case that buchi automata is not complete or nondeterministic
-				final PLACE newPlace = getNewPlace();
-				mStateTwoEnablerSet.add(newPlace);
-				mIntersectionNet.addPlace(newPlace, false, false);
-				mLooperAcptPlaceToEnablePlace.put(buchiPlace, newPlace);
-
-				final Set<PLACE> predecessorSet = new HashSet<>(petriTransition.getPredecessors());
-				predecessorSet.add(newPlace);
-				final Set<PLACE> successorSet = petriTransition.getSuccessors();
-				mIntersectionNet.addTransition(petriTransition.getSymbol(), ImmutableSet.of(predecessorSet),
-						ImmutableSet.of(successorSet));
-				break;
-			}
-		}
-
-	}
-
-	private final PLACE getNewPlace() {
-		// TODO: Replace this if there exists a better way to create a new place.
-		mCurrentNewPlace = mLabeledBuchiPlaceFactory.getBlackContent(mCurrentNewPlace);
-		return (mCurrentNewPlace);
-	}
-
-	private final void addStateOneTransitionsNormally(final Transition<LETTER, PLACE> petriTransition) {
-		for (final PLACE buchiPlace : mBuchiAutomata.getStates()) {
-			for (final OutgoingInternalTransition<LETTER, PLACE> buchiTransition : mBuchiAutomata
-					.internalSuccessors(buchiPlace, petriTransition.getSymbol())) {
-				addStateOneTransition(petriTransition, buchiTransition, buchiPlace);
-			}
-		}
-	}
-
-	private final void addStateOneTransition(final Transition<LETTER, PLACE> petriTransition,
-			final OutgoingInternalTransition<LETTER, PLACE> buchiTransition, final PLACE buchiPredecessor) {
-		final Set<PLACE> predecessorSet = getTransitionPredecessors(petriTransition, buchiPredecessor, true);
-		final Set<PLACE> successorSet = getTransitionSuccessors(petriTransition, buchiTransition, predecessorSet, true);
-		mIntersectionNet.addTransition(petriTransition.getSymbol(), ImmutableSet.of(predecessorSet),
-				ImmutableSet.of(successorSet));
 	}
 
 	private final void addStateOneAndTwoTransition(final Transition<LETTER, PLACE> petriTransition,
@@ -254,16 +111,10 @@ public class BuchiIntersect<LETTER, PLACE>
 	private final Set<PLACE> getTransitionPredecessors(final Transition<LETTER, PLACE> petriTransition,
 			final PLACE buchiPredecessor, final boolean mBuildingStateOneTransition) {
 		final Set<PLACE> predecessorSet = new HashSet<>(petriTransition.getPredecessors());
-
 		if (mBuildingStateOneTransition) {
 			predecessorSet.add(mInputQGetQ1.get(buchiPredecessor));
 		} else {
 			predecessorSet.add(mInputQGetQ2.get(buchiPredecessor));
-			for (final PLACE place : mLooperAcptPlaceToEnablePlace.keySet()) {
-				if (predecessorSet.contains(place)) {
-					predecessorSet.add(mLooperAcptPlaceToEnablePlace.get(place));
-				}
-			}
 		}
 
 		return predecessorSet;
@@ -277,11 +128,6 @@ public class BuchiIntersect<LETTER, PLACE>
 			successorSet.add(getQSuccesorForStateOneTransition(petriTransition, buchiTransition));
 		} else {
 			successorSet.add(getQSuccesorForStateTwoTransition(predecessorSet, buchiTransition));
-			for (final PLACE place : mLooperAcptPlaceToEnablePlace.keySet()) {
-				if (successorSet.contains(place)) {
-					successorSet.add(mLooperAcptPlaceToEnablePlace.get(place));
-				}
-			}
 		}
 
 		return successorSet;

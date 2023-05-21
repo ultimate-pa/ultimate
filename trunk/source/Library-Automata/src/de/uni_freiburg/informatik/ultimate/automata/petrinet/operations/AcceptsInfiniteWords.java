@@ -44,19 +44,19 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 	 */
 	protected Set<MarkingOfFireSequence<LETTER, PLACE>> mFireSequenceTreeMarkings;
 	/**
-	 * Keeps track of the index of the FIreSequenceTree that is created during the isWordAcceptedByOmegaNet() method.
+	 * Keeps track of the index of the FireSequenceTree that is created during the isWordAcceptedByOmegaNet() method.
 	 */
 	protected int mFireSequenceIndex;
 	protected final boolean mResult;
 
 	/**
-	 * Constructor. Check if given Buchi-Petri Net accepts given word.
+	 * Constructor. Check if given infinite-Petri Net accepts given word.
 	 *
 	 * @param <services>
 	 *            Ultimare services.
 	 *
 	 * @param <operand>
-	 *            Input Petri Net.
+	 *            Input infinite Net.
 	 *
 	 * @param <word>
 	 *            Input word.
@@ -93,7 +93,7 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 	}
 
 	/**
-	 * Calculates all fire sequences of input word on the Buchi-Petrinet (multiple because of possible nondeterminism of
+	 * Calculates all fire sequences of input word on the infinite-Petrinet (multiple because of possible nondeterminism of
 	 * the net) and checks if one of those fire sequences is accepting.
 	 *
 	 * @return boolean representing if word is accepted by net.
