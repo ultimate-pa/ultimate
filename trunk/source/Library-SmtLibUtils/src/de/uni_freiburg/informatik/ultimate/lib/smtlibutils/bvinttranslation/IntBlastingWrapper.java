@@ -87,6 +87,8 @@ public class IntBlastingWrapper extends WrapperScript {
 	private final String mBenchmarkFilename;
 	private final IntBlastingMode mIntBlastingMode;
 
+	private static final boolean DEBUG_ERROR_IF_UNKNOWN = false;
+
 	public IntBlastingWrapper(final IUltimateServiceProvider services, final ILogger logger, final Script script,
 			final IntBlastingMode intBlastingMode,
 			final ConstraintsForBitwiseOperations constraintsForBitwiseOperations, final String benchmarkFilename) {
@@ -316,11 +318,17 @@ public class IntBlastingWrapper extends WrapperScript {
 		if (intSolverResult == LBool.SAT && mOverapproximationTrackingStack.contains(true)) {
 			// Maybe the result in only SAT because we overapproximated.
 			result = LBool.UNKNOWN;
+			if (DEBUG_ERROR_IF_UNKNOWN) {
+				throw new AssertionError("Overapproximation and SAT, we have to return UNKNOWN!");
+			}
 		} else {
 			result = intSolverResult;
 		}
 		if (mExpectedResult != null && result != LBool.UNKNOWN && result != mExpectedResult) {
 			throw new AssertionError("Result incorrect: expected " + mExpectedResult + " obtained " + result);
+		}
+		if (DEBUG_ERROR_IF_UNKNOWN && result == LBool.UNKNOWN) {
+			throw new AssertionError("Int solver returned UNKNOWN");
 		}
 		return result;
 	}
