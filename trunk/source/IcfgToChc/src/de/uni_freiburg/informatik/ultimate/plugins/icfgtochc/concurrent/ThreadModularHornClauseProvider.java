@@ -254,14 +254,11 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 		final var entryNodes = mIcfg.getProcedureEntryNodes();
 		for (final String proc : mTemplates) {
-			final var errorNodes = mIcfg.getProcedureErrorNodes().get(proc);
-			if (errorNodes == null) {
-				continue;
-			}
 			final IcfgEdgeIterator edges = new IcfgEdgeIterator(entryNodes.get(proc).getOutgoingEdges());
+			final var errorNodes = mIcfg.getProcedureErrorNodes().get(proc);
 			while (edges.hasNext()) {
 				final IcfgEdge original = edges.next();
-				if (!SKIP_ASSERTION_EDGES || !errorNodes.contains(original.getTarget())) {
+				if (!SKIP_ASSERTION_EDGES || errorNodes == null || !errorNodes.contains(original.getTarget())) {
 					result.addAll(buildClausesForTransition(original));
 				}
 			}
