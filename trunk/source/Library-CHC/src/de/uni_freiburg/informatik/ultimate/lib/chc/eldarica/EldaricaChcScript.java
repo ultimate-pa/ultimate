@@ -310,11 +310,13 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 		GlobalParameters.get().timeout_$eq((Option) actualTimeout);
 
 		// we need to override the timeout checking logic, because eldarica only does this in its main() method
+		final var pms = mServices.getProgressMonitorService();
 		final long startTime = System.currentTimeMillis();
 		GlobalParameters.get().timeoutChecker_$eq(new scala.runtime.AbstractFunction0<>() {
 			@Override
 			public scala.runtime.BoxedUnit apply() {
-				if (actualTimeout.isDefined() && System.currentTimeMillis() - startTime > actualTimeout.get()) {
+				if (!pms.continueProcessing() || (actualTimeout.isDefined()
+						&& System.currentTimeMillis() - startTime > actualTimeout.get())) {
 					// Nasty hack to trick java into throwing TimeoutException, a checked exception.
 					// (This is necessary, because scala does not declare checked exceptions.)
 					throwUnchecked(new lazabs.Main.TimeoutException$());
