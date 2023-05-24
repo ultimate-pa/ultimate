@@ -257,10 +257,9 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		final var entryNodes = mIcfg.getProcedureEntryNodes();
 		for (final String proc : mTemplates) {
 			final IcfgEdgeIterator edges = new IcfgEdgeIterator(entryNodes.get(proc).getOutgoingEdges());
-			final var errorNodes = mIcfg.getProcedureErrorNodes().get(proc);
 			while (edges.hasNext()) {
 				final IcfgEdge original = edges.next();
-				if (!SKIP_ASSERTION_EDGES || errorNodes == null || !errorNodes.contains(original.getTarget())) {
+				if (!isSkippableAssertEdge(original)) {
 					result.addAll(buildClausesForTransition(original));
 				}
 			}
@@ -368,6 +367,17 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		final var template = edge.getPrecedingProcedure();
 		final var exitLoc = mIcfg.getProcedureExitNodes().get(template);
 		return edge.getTarget().equals(exitLoc);
+	}
+
+	protected boolean isSkippableAssertEdge(final IcfgEdge edge) {
+		if (!SKIP_ASSERTION_EDGES) {
+			return false;
+		}
+		final var errorLocs = mIcfg.getProcedureErrorNodes().get(edge.getSucceedingProcedure());
+		if (errorLocs == null) {
+			return false;
+		}
+		return errorLocs.contains(edge.getTarget());
 	}
 
 	private List<Triple<Map<ThreadInstance, IcfgLocation>, Map<ThreadInstance, IcfgLocation>, ThreadInstance>>
