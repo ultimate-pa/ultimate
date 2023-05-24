@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.ChcSolution;
 import de.uni_freiburg.informatik.ultimate.lib.chc.Derivation;
 import de.uni_freiburg.informatik.ultimate.lib.chc.GolemChcScript;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot.IChcBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClauseAST;
 import de.uni_freiburg.informatik.ultimate.lib.chc.IChcScript;
@@ -75,7 +76,7 @@ public class ChcSolverObserver extends BaseObserver {
 		configureBackend(chcScript);
 
 		final var satisfiability = chcScript.solve(annot.getSymbolTable(), annot.getHornClauses());
-		final IResult result = createResult(chcScript, satisfiability);
+		final IResult result = createResult(chcScript, satisfiability, annot.getBacktranslator());
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 
 		return false;
@@ -119,12 +120,13 @@ public class ChcSolverObserver extends BaseObserver {
 		}
 	}
 
-	private IResult createResult(final IChcScript chcScript, final LBool satisfiability) {
+	private IResult createResult(final IChcScript chcScript, final LBool satisfiability,
+			final IChcBacktranslator backtranslator) {
 		switch (satisfiability) {
 		case SAT:
-			return createSatResult(chcScript);
+			return createSatResult(chcScript, backtranslator);
 		case UNSAT:
-			return createUnSatResult(chcScript);
+			return createUnSatResult(chcScript, backtranslator);
 		case UNKNOWN:
 			mSolution = ChcSolution.unknown();
 			return new ChcUnknownResult(Activator.PLUGIN_ID, "CHC solver returned UNKNOWN.");
@@ -133,18 +135,18 @@ public class ChcSolverObserver extends BaseObserver {
 		}
 	}
 
-	private ChcSatResult createSatResult(final IChcScript chcScript) {
+	private ChcSatResult createSatResult(final IChcScript chcScript, final IChcBacktranslator backtranslator) {
 		final Model model;
 		if (mPrefs.produceModels() && chcScript.supportsModelProduction()) {
 			model = chcScript.getModel().orElse(null);
 		} else {
 			model = null;
 		}
-		mSolution = ChcSolution.sat(model);
+		mSolution = ChcSolution.sat(model, backtranslator);
 		return new ChcSatResult(Activator.PLUGIN_ID, "The given horn clause set is SAT", model);
 	}
 
-	private ChcUnsatResult createUnSatResult(final IChcScript chcScript) {
+	private ChcUnsatResult createUnSatResult(final IChcScript chcScript, final IChcBacktranslator backtranslator) {
 		final Derivation derivation;
 		if (mPrefs.produceDerivation() && chcScript.supportsDerivationProduction()) {
 			derivation = chcScript.getDerivation().orElse(null);
@@ -159,7 +161,7 @@ public class ChcSolverObserver extends BaseObserver {
 			core = null;
 		}
 
-		mSolution = ChcSolution.unsat(derivation, core);
+		mSolution = ChcSolution.unsat(derivation, core, backtranslator);
 		return new ChcUnsatResult(Activator.PLUGIN_ID, "The given horn clause set is UNSAT", derivation, core);
 	}
 

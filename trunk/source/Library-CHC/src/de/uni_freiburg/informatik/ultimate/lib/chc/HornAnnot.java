@@ -33,7 +33,9 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnno
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
@@ -52,6 +54,7 @@ public class HornAnnot extends ModernAnnotations {
 	private final List<HornClause> mHornClauses;
 	private final boolean mHasCheckSat;
 	private final ChcCategoryInfo mChcCategoryInfo;
+	private final IChcBacktranslator mBacktranslator;
 
 	/***
 	 * An annotation of horn clauses.
@@ -63,12 +66,27 @@ public class HornAnnot extends ModernAnnotations {
 	 */
 	public HornAnnot(final String filename, final ManagedScript backendSolver, final HcSymbolTable symbolTable,
 			final List<HornClause> clauses, final boolean hasCheckSat, final ChcCategoryInfo chcCategoryInfo) {
+		this(filename, backendSolver, symbolTable, clauses, hasCheckSat, chcCategoryInfo, null);
+	}
+
+	/***
+	 * An annotation of horn clauses.
+	 *
+	 * @param filename
+	 * @param clauses
+	 * @param backendSolver
+	 * @param symbolTable
+	 */
+	public HornAnnot(final String filename, final ManagedScript backendSolver, final HcSymbolTable symbolTable,
+			final List<HornClause> clauses, final boolean hasCheckSat, final ChcCategoryInfo chcCategoryInfo,
+			final IChcBacktranslator backtranslator) {
 		mFileName = filename;
 		mHornClauses = clauses;
 		mBackendSolverScript = backendSolver;
 		mSymbolTable = symbolTable;
 		mHasCheckSat = hasCheckSat;
 		mChcCategoryInfo = chcCategoryInfo;
+		mBacktranslator = backtranslator;
 	}
 
 	public ManagedScript getScript() {
@@ -124,5 +142,15 @@ public class HornAnnot extends ModernAnnotations {
 
 	public ChcCategoryInfo getChcCategoryInfo() {
 		return mChcCategoryInfo;
+	}
+
+	public IChcBacktranslator getBacktranslator() {
+		return mBacktranslator;
+	}
+
+	public interface IChcBacktranslator {
+		ProgramAnnot backtranslate(Model model);
+
+		IIcfg<?> getIcfg();
 	}
 }

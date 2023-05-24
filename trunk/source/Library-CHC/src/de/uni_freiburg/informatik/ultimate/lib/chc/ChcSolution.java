@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.chc;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot.IChcBacktranslator;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
@@ -39,25 +40,28 @@ public class ChcSolution extends BasePayloadContainer {
 	private final Model mModel;
 	private final Derivation mDerivation;
 	private final Set<HornClause> mUnsatCore;
+	private final IChcBacktranslator mBacktranslator;
 
 	private ChcSolution(final LBool satisfiability, final Model model, final Derivation derivation,
-			final Set<HornClause> unsatCore) {
+			final Set<HornClause> unsatCore, final IChcBacktranslator backtranslator) {
 		mSatisfiability = satisfiability;
 		mModel = model;
 		mDerivation = derivation;
 		mUnsatCore = unsatCore;
+		mBacktranslator = backtranslator;
 	}
 
-	public static ChcSolution sat(final Model model) {
-		return new ChcSolution(LBool.SAT, model, null, null);
+	public static ChcSolution sat(final Model model, final IChcBacktranslator backtranslator) {
+		return new ChcSolution(LBool.SAT, model, null, null, backtranslator);
 	}
 
-	public static ChcSolution unsat(final Derivation derivation, final Set<HornClause> unsatCore) {
-		return new ChcSolution(LBool.UNSAT, null, derivation, unsatCore);
+	public static ChcSolution unsat(final Derivation derivation, final Set<HornClause> unsatCore,
+			final IChcBacktranslator backtranslator) {
+		return new ChcSolution(LBool.UNSAT, null, derivation, unsatCore, backtranslator);
 	}
 
 	public static ChcSolution unknown() {
-		return new ChcSolution(LBool.UNKNOWN, null, null, null);
+		return new ChcSolution(LBool.UNKNOWN, null, null, null, null);
 	}
 
 	public LBool getSatisfiability() {
@@ -74,5 +78,9 @@ public class ChcSolution extends BasePayloadContainer {
 
 	public Set<HornClause> getUnsatCore() {
 		return mUnsatCore;
+	}
+
+	public IChcBacktranslator getBacktranslator() {
+		return mBacktranslator;
 	}
 }

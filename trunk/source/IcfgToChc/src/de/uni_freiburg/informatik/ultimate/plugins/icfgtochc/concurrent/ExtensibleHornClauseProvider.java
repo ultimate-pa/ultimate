@@ -39,8 +39,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.IChcProvider;
 
-public abstract class ExtensibleHornClauseProvider {
+public abstract class ExtensibleHornClauseProvider implements IChcProvider {
 	protected final ManagedScript mManagedScript;
 	protected final Script mScript;
 	protected final HcSymbolTable mSymbolTable;
@@ -61,6 +62,7 @@ public abstract class ExtensibleHornClauseProvider {
 
 	protected abstract List<HornClauseBuilder> buildAllClauses();
 
+	@Override
 	public final List<HornClause> getClauses() {
 		return buildAllClauses().stream().map(HornClauseBuilder::build)
 				.filter(c -> !SmtUtils.isFalseLiteral(c.getConstraintFormula())).collect(Collectors.toList());

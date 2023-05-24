@@ -95,7 +95,8 @@ public class IcfgToChcObserver extends BaseObserver {
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final HcSymbolTable hcSymbolTable = new HcSymbolTable(mgdScript);
-		final Collection<HornClause> resultChcs = getHornClauses(icfg, mgdScript, hcSymbolTable);
+		final IChcProvider chcProvider = getChcProvider(icfg, mgdScript, hcSymbolTable);
+		final Collection<HornClause> resultChcs = chcProvider.getClauses();
 
 		final var chcCategoryInfo = ChcCategorizer.categorize(resultChcs, mgdScript);
 		assert !chcCategoryInfo.containsNonLinearHornClauses() || isReturnReachable(icfg)
@@ -107,7 +108,7 @@ public class IcfgToChcObserver extends BaseObserver {
 		assert bad.isEmpty() : bad;
 
 		final HornAnnot annot = new HornAnnot(icfg.getIdentifier(), mgdScript, hcSymbolTable,
-				new ArrayList<>(resultChcs), true, chcCategoryInfo);
+				new ArrayList<>(resultChcs), true, chcCategoryInfo, chcProvider.getBacktranslator());
 
 		mResult = HornClauseAST.create(annot);
 		ModelUtils.copyAnnotations(icfg, mResult);
@@ -117,7 +118,7 @@ public class IcfgToChcObserver extends BaseObserver {
 		return new IcfgEdgeIterator(icfg).asStream().anyMatch(IIcfgSummaryTransition.class::isInstance);
 	}
 
-	private Collection<HornClause> getHornClauses(IIcfg<IcfgLocation> icfg, final ManagedScript mgdScript,
+	private IChcProvider getChcProvider(IIcfg<IcfgLocation> icfg, final ManagedScript mgdScript,
 			final HcSymbolTable hcSymbolTable) {
 		if (mPrefs.concurrencyMode() == ConcurrencyMode.PARAMETRIC || IcfgUtils.isConcurrent(icfg)) {
 			assert !isReturnReachable(icfg);
@@ -138,11 +139,11 @@ public class IcfgToChcObserver extends BaseObserver {
 			if (mPrefs.useSleepSets()) {
 				final var independence = getIndependence(icfg, mgdScript);
 				return new SleepSetThreadModularHornClauseProvider(mServices, mgdScript, icfg, hcSymbolTable,
-						independence, mPrefs).getClauses();
+						independence, mPrefs);
 			}
-			return new ThreadModularHornClauseProvider(mServices, mgdScript, icfg, hcSymbolTable, mPrefs).getClauses();
+			return new ThreadModularHornClauseProvider(mServices, mgdScript, icfg, hcSymbolTable, mPrefs);
 		}
-		return new ChcProviderForCalls(mgdScript, hcSymbolTable).getHornClauses(icfg);
+		return new ChcProviderForCalls(mgdScript, hcSymbolTable, icfg);
 	}
 
 	private ISymbolicIndependenceRelation<IAction> getIndependence(final IIcfg<?> icfg, final ManagedScript mgdScript) {

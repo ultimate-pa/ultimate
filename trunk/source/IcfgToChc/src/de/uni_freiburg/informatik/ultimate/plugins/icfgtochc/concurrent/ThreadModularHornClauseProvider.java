@@ -44,6 +44,7 @@ import java.util.stream.Stream;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot.IChcBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
@@ -751,5 +752,10 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	protected Stream<HcLocalVar> getInterferingLocals(final ThreadInstance interferingThread) {
 		return mCfgSymbolTable.getLocals(interferingThread.getTemplateName()).stream().filter(mVariableFilter)
 				.map(pv -> new HcLocalVar(pv, interferingThread));
+	}
+
+	@Override
+	public IChcBacktranslator getBacktranslator() {
+		return null;
 	}
 }

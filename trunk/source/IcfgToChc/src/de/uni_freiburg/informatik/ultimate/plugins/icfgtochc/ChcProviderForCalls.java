@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcVar;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot.IChcBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -48,10 +49,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
  */
-public class ChcProviderForCalls {
+public class ChcProviderForCalls implements IChcProvider {
 	private final ManagedScript mMgdScript;
 	private final HcSymbolTable mHcSymbolTable;
-	private IIcfg<IcfgLocation> mIcfg;
+	private final IIcfg<IcfgLocation> mIcfg;
 
 	private final Map<String, List<IProgramVar>> mProcToVarList;
 
@@ -60,7 +61,8 @@ public class ChcProviderForCalls {
 
 	private static final String ASSERTIONVIOLATEDVARNAME = "V";
 
-	public ChcProviderForCalls(final ManagedScript mgdScript, final HcSymbolTable hcSymbolTable) {
+	public ChcProviderForCalls(final ManagedScript mgdScript, final HcSymbolTable hcSymbolTable,
+			final IIcfg<IcfgLocation> icfg) {
 		mProcToVarList = new LinkedHashMap<>();
 		mTermVarToProgVar = new LinkedHashMap<>();
 		mMgdScript = mgdScript;
@@ -68,13 +70,13 @@ public class ChcProviderForCalls {
 		mMgdScript.lock(this);
 		mAssertionViolatedVar =
 				mMgdScript.constructFreshTermVariable(ASSERTIONVIOLATEDVARNAME, SmtSortUtils.getBoolSort(mMgdScript));
+		mIcfg = icfg;
 	}
 
-	@SuppressWarnings("unchecked")
-	public Collection<HornClause> getHornClauses(final IIcfg<IcfgLocation> icfg) {
+	@Override
+	public List<HornClause> getClauses() {
 		/* add chcs for the icfg's edges */
-		mIcfg = icfg;
-		final Collection<HornClause> resultChcs = new ArrayList<>();
+		final List<HornClause> resultChcs = new ArrayList<>();
 		final IcfgEdgeIterator edgeIt = new IcfgEdgeIterator(mIcfg);
 
 		while (edgeIt.hasNext()) {
@@ -878,5 +880,11 @@ public class ChcProviderForCalls {
 
 	private String computePredicateNameForIcfgLocation(final IcfgLocation loc) {
 		return loc.getProcedure() + "_" + loc.toString();
+	}
+
+	@Override
+	public IChcBacktranslator getBacktranslator() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
