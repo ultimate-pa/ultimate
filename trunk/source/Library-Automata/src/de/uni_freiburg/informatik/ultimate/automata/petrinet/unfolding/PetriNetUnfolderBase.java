@@ -147,13 +147,24 @@ public abstract class PetriNetUnfolderBase<L, P, R> {
 		return mRun;
 	}
 
+	/**
+	 * Checks the initial places of the Unfolding for a valid run/word.
+	 *
+	 * @return bool if word is found
+	 * @throws PetriNetNot1SafeException
+	 */
 	protected abstract boolean checkInitialPlacesAndCreateRun() throws PetriNetNot1SafeException;
 
+	/**
+	 * Adds the event to the Unfolding and then checks if a word can be found in this new Unfolding.
+	 *
+	 * @param event
+	 * @return bool if word is found
+	 * @throws PetriNetNot1SafeException
+	 */
 	protected abstract boolean addAndCheck(final Event<L, P> event) throws PetriNetNot1SafeException;
 
 	protected abstract void updateRunIfWanted(final Event<L, P> event) throws PetriNetNot1SafeException;
-
-	protected abstract void createRunFromWholeUnfolding() throws PetriNetNot1SafeException;
 
 	private void computeUnfolding() throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		if (checkInitialPlacesAndCreateRun() && mStopIfAcceptingRunFound) {
@@ -184,8 +195,6 @@ public abstract class PetriNetUnfolderBase<L, P, R> {
 				throw new AutomataOperationCanceledException(rti);
 			}
 		}
-		createRunFromWholeUnfolding();
-		mLogger.info("Searched whole Unfolding.");
 	}
 
 	private boolean computeUnfoldingHelper(final Event<L, P> event) throws PetriNetNot1SafeException {

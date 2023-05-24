@@ -110,11 +110,6 @@ public final class PetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P, Pet
 		}
 	}
 
-	@Override
-	protected void createRunFromWholeUnfolding() {
-		// Nothing to do
-	}
-
 	/**
 	 * constructs a run over the unfolding which leads to the marking corresponding with the local configuration of the
 	 * specified event e.

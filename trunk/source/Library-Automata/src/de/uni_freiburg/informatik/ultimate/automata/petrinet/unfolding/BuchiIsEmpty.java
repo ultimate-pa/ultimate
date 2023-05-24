@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStat
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 
 /**
- * Emptiness check for Buchi Petri nets.
+ * Emptiness check for Buchi-Petri-Nets.
  *
  * @param <LETTER>
  *            letter type
