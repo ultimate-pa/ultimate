@@ -51,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ConcurrencyMode;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgLiptonReducer;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.SleepSetThreadModularHornClauseProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ThreadModularHornClauseProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.SleepSetThreadModularHornClauseProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences;
 
 /**

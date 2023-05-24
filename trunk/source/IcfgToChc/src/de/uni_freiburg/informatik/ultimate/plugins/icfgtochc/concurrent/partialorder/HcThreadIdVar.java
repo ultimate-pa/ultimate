@@ -24,31 +24,27 @@
  * licensors of the ULTIMATE IcfgToChc plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
+package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder;
 
 import java.util.Objects;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IHcThreadSpecificVar;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ThreadInstance;
 
-public class HcSleepVar implements IHcThreadSpecificVar, IHcFiniteReplacementVar {
+public class HcThreadIdVar implements IHcThreadSpecificVar {
 	private final Sort mSort;
 	private final ThreadInstance mInstance;
-	private final Set<Term> mValues;
 
-	public HcSleepVar(final ThreadInstance instance, final Script script) {
-		this(instance, SmtSortUtils.getBoolSort(script),
-				Set.of(script.term(SMTLIBConstants.TRUE), script.term(SMTLIBConstants.FALSE)));
+	public HcThreadIdVar(final ThreadInstance instance, final Script script) {
+		this(instance, SmtSortUtils.getIntSort(script));
 	}
 
-	private HcSleepVar(final ThreadInstance instance, final Sort sort, final Set<Term> values) {
+	private HcThreadIdVar(final ThreadInstance instance, final Sort sort) {
 		mInstance = instance;
 		mSort = sort;
-		mValues = values;
 	}
 
 	@Override
@@ -58,12 +54,7 @@ public class HcSleepVar implements IHcThreadSpecificVar, IHcFiniteReplacementVar
 
 	@Override
 	public IHcThreadSpecificVar forInstance(final int instanceId) {
-		return new HcSleepVar(new ThreadInstance(mInstance.getTemplateName(), instanceId), mSort, mValues);
-	}
-
-	@Override
-	public Set<Term> getAllValues() {
-		return mValues;
+		return new HcThreadIdVar(new ThreadInstance(mInstance.getTemplateName(), instanceId), mSort);
 	}
 
 	@Override
@@ -73,12 +64,12 @@ public class HcSleepVar implements IHcThreadSpecificVar, IHcFiniteReplacementVar
 
 	@Override
 	public String toString() {
-		return "sleep_" + mInstance;
+		return "id_" + mInstance;
 	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
+		final int prime = 59;
 		return prime * Objects.hash(mInstance);
 	}
 
@@ -93,7 +84,7 @@ public class HcSleepVar implements IHcThreadSpecificVar, IHcFiniteReplacementVar
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final HcSleepVar other = (HcSleepVar) obj;
+		final HcThreadIdVar other = (HcThreadIdVar) obj;
 		return Objects.equals(mInstance, other.mInstance);
 	}
 }
