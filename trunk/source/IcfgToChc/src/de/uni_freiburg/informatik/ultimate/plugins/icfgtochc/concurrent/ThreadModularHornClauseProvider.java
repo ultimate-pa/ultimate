@@ -693,13 +693,15 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 		// deal with global variables
 		for (final var global : mGlobalVars) {
-			prepareSubstitution(clause, tf, substitution, global, global.getVariable(), true);
+			prepareSubstitution(clause, tf, substitution, global, global.getVariable());
 		}
 
 		// deal with local variables
 		for (final HcLocalVar local : localVariables) {
 			final var updatable = local.getThreadInstance().equals(updatedThread);
-			prepareSubstitution(clause, tf, substitution, local, local.getVariable(), updatable);
+			if (updatable) {
+				prepareSubstitution(clause, tf, substitution, local, local.getVariable());
+			}
 		}
 
 		// replace all other variables with auxiliary variables
@@ -714,8 +716,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	}
 
 	private static void prepareSubstitution(final HornClauseBuilder clause, final UnmodifiableTransFormula tf,
-			final Map<TermVariable, Term> substitution, final IHcReplacementVar rv, final IProgramVar pv,
-			final boolean canBeUpdated) {
+			final Map<TermVariable, Term> substitution, final IHcReplacementVar rv, final IProgramVar pv) {
 		final TermVariable inVar = tf.getInVars().get(pv);
 		if (inVar != null) {
 			substitution.put(inVar, clause.getBodyVar(rv).getTerm());
@@ -733,7 +734,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 			}
 		}
 
-		if (canBeUpdated && tf.getAssignedVars().contains(pv)) {
+		if (tf.getAssignedVars().contains(pv)) {
 			clause.differentBodyHeadVar(rv);
 		}
 	}
