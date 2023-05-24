@@ -179,7 +179,7 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		return Collections.unmodifiableSet(mFuncVals.keySet());
 	}
 
-	Term generateCondition(final Index index, final TermVariable[] vars) {
+	Term generateCondition(final Index index, final Term[] vars) {
 		final Term[] idx = index.toArray();
 		assert vars.length == idx.length;
 		final Term[] conj = new Term[vars.length];
@@ -194,7 +194,7 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		return fs.isIntern() && (name == "/" || name == "div" || name == "mod");
 	}
 
-	public Term getFunctionDefinition(final FunctionSymbol fs, final TermVariable[] vars) {
+	public Term getFunctionDefinition(final FunctionSymbol fs, final Term[] vars) {
 		final FunctionValue value = mFuncVals.get(fs);
 		if (value == null) {
 			throw new IllegalArgumentException("No model for " + fs);
@@ -232,7 +232,7 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 	}
 
 	@Override
-	public Term getFunctionDefinition(final String func, final TermVariable[] args) {
+	public Term getFunctionDefinition(final String func, final Term[] args) {
 		final Sort[] argTypes = new Sort[args.length];
 		for (int i = 0; i < args.length; i++) {
 			argTypes[i] = args[i].getSort();
