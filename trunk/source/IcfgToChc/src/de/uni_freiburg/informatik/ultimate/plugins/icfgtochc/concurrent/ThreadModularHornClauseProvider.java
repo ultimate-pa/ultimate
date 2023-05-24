@@ -249,9 +249,11 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	protected List<HornClauseBuilder> buildAllClauses() {
 		final var result = new ArrayList<HornClauseBuilder>();
 
+		// add initial clause
 		final var initialClause = buildInitialClause();
 		result.add(initialClause);
 
+		// add inductivity and non-interference clauses
 		final var entryNodes = mIcfg.getProcedureEntryNodes();
 		for (final String proc : mTemplates) {
 			final IcfgEdgeIterator edges = new IcfgEdgeIterator(entryNodes.get(proc).getOutgoingEdges());
