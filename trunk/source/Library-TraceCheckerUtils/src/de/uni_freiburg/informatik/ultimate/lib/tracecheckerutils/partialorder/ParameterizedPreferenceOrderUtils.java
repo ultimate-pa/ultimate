@@ -41,6 +41,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 
+/**
+ * An utilization class for Parameterized Preference Orders
+ * 
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ * 		The type of Icfg transitions
+ */
 public class ParameterizedPreferenceOrderUtils<L extends IIcfgTransition<?>> {
 	private Set<IProgramVar> mEffectiveGlobalVars;
 	private final List<Integer> mMaxSteps;
@@ -63,7 +71,7 @@ public class ParameterizedPreferenceOrderUtils<L extends IIcfgTransition<?>> {
 
 		String[] pairList;
 		if (heuristicEnabled) {
-			final PreferenceOrderHeuristicTest<L> heuristic = new PreferenceOrderHeuristicTest<>(icfg, allThreads,
+			final PreferenceOrderHeuristic<L> heuristic = new PreferenceOrderHeuristic<>(icfg, allThreads,
 					mEffectiveGlobalVars, mSharedVarsMapReversed, icfg.getCfgSmtToolkit().getManagedScript());
 			heuristic.computeParameterizedOrder();
 			
@@ -74,7 +82,7 @@ public class ParameterizedPreferenceOrderUtils<L extends IIcfgTransition<?>> {
 
 		List<Integer> maxSteps = new ArrayList<>();
 		final List<String> threadList = new ArrayList<>();
-		if (pairList[0].equals("X")) {
+		if ("X".equals(pairList[0])) {
 			threadList.addAll(allThreads);
 			maxSteps = Collections.nCopies(threadList.size(), maxStep);
 		} else {
@@ -98,8 +106,6 @@ public class ParameterizedPreferenceOrderUtils<L extends IIcfgTransition<?>> {
 				}
 			}
 		}
-		//mMaxSteps = null;
-		//mThreadList = null;
 		mMaxSteps = maxSteps;
 		mThreadList = threadList;
 	}
@@ -116,7 +122,7 @@ public class ParameterizedPreferenceOrderUtils<L extends IIcfgTransition<?>> {
 			final IcfgEdge current = iterator.next();
 			final String currentProcedure = current.getPrecedingProcedure();
 			// only mark with procedures different from "ULTIMATE.start"
-			if (!currentProcedure.equals("ULTIMATE.start")) {
+			if (!"ULTIMATE.start".equals(currentProcedure)) {
 				final Set<IProgramVar> currentVars = new HashSet<>();
 				currentVars.addAll(current.getTransformula().getInVars().keySet());
 				currentVars.addAll(current.getTransformula().getOutVars().keySet());

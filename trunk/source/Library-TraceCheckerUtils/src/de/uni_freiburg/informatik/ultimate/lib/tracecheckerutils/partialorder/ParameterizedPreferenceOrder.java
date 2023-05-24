@@ -37,6 +37,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedOrderAutomaton.State;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
+/**
+ * Implementation of the Parameterized Preference Order.
+ * 
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ * 			The type of letters
+ * @param <S1>
+ * 			The type of states
+ */
 public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPreferenceOrder<L, S1, State> {
 	private final List<Integer> mMaxSteps;
 	private final List<String> mThreads;
@@ -44,6 +54,18 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 	private final Comparator<L> mDefaultComparator =
 			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
 
+	/**
+	 * Construct a new Parameterized Preference Order.
+	 * 
+	 * @param maxSteps
+	 * 			List representing the sequence of maximal steps
+	 * @param threads
+	 * 			List representing the sequence of threads
+	 * @param alphabet
+	 * 			The alphabet
+	 * @param isStep
+	 * 			Function that determines the step type
+	 */
 	public ParameterizedPreferenceOrder(final List<Integer> maxSteps, final List<String> threads,
 			final VpAlphabet<L> alphabet, final java.util.function.Predicate<L> isStep) {
 		mMaxSteps = maxSteps;
@@ -68,12 +90,32 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 		return mMonitor;
 	}
 
+	/**
+	 * Comparator for the Preference Order.
+	 * 
+	 * @author Marcel Ebbinghaus
+	 *
+	 * @param <L>
+	 * 		The type of letters
+	 */
 	public static final class PreferenceOrderComparator<L extends IAction> implements Comparator<L> {
 		private final String mLastThread;
 		private final Integer mLastIndex;
 		private final Comparator<L> mFallback;
 		private final List<String> mThreads;
 
+		/**
+		 * Construct a new Comparator.
+		 * 
+		 * @param lastThread
+		 * 		The previous thread
+		 * @param lastIndex
+		 * 		The index of the previous thread
+		 * @param fallback
+		 * 		A fallback comparator
+		 * @param threads
+		 * 		List representing the sequence of threads
+		 */
 		public PreferenceOrderComparator(final String lastThread, final Integer lastIndex, final Comparator<L> fallback,
 				final List<String> threads) {
 			mLastThread = Objects.requireNonNull(lastThread);

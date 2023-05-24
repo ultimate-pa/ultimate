@@ -2,6 +2,7 @@
  * Copyright (C) 2022 Marcel Ebbinghaus
  * Copyright (C) 2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Copyright (C) 2022 University of Freiburg
+ *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
  *
  * The ULTIMATE TraceCheckerUtils Library is free software: you can redistribute it and/or modify
@@ -47,175 +48,159 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
+/**
+ * Implementation of the heuristic calculating a Parameterized Preference Order.
+ *
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ *            The type of Icfg transitions.
+ */
 public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
-
-	private Deque<IcfgEdge> mBFSWorklist;
+	
 	private Set<IcfgEdge> mFinished;
 	private IIcfg<?> mIcfg;
 	private List<String> mAllProcedures;
-	private List<String> mAllLoopProcedures;
+	private List<String> mLoopProcedures;
+	private HashMap<String, Deque<IcfgEdge>> mPathMap;
 	private Set<IProgramVar> mEffectiveGlobalVars;
-	private HashMap<String, ArrayList<Deque<IcfgEdge>>> mPathMap;
-	private HashMap<String, HashMap<IProgramVar, Integer>> mLoopPathVarsMap;
-	private HashMap<String, Set<IProgramVar>> mSharedVarsMap;
+	private Map<String, Set<IProgramVar>> mSharedVarsMap;
 	private String mSequence;
-
 	private final ManagedScript mMgdScript;
+	private HashMap<String, HashMap<IProgramVar, Integer>> mLoopVarsMap;
 
-	private enum SearchType {
-		MAIN, THREAD, LOOPSEARCH, LOOPBUILDPATH
-	}
-
+	/**
+	 * Construct a new heuristic
+	 * 
+	 * @param icfg
+	 * 			the icfg of the program
+	 * @param allProcedures
+	 * 			list of all program procedures
+	 * @param effectiveGlobalVars
+	 * 			set of all effective global variables
+	 * @param sharedVars
+	 * 			set of all shared variables
+	 * @param mgdScript
+	 * 			SMT Script
+	 */
 	public PreferenceOrderHeuristic(final IIcfg<?> icfg, final List<String> allProcedures,
-			final Set<IProgramVar> effectiveGlobalVars, final HashMap<String, Set<IProgramVar>> sharedVars,
+			final Set<IProgramVar> effectiveGlobalVars, final Map<String, Set<IProgramVar>> sharedVars,
 			final ManagedScript mgdScript) {
-		final Collection<IcfgEdge> edges = 
-				icfg.getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream()).collect(Collectors.toSet());
-		mBFSWorklist = new ArrayDeque<>();
-		mBFSWorklist.addAll(edges);
-		mFinished = new HashSet<>(mBFSWorklist);
+		mFinished = new HashSet<>();
 		mMgdScript = mgdScript;
 		mIcfg = icfg;
 		mAllProcedures = allProcedures;
-		mAllLoopProcedures = new ArrayList<>();
+		mLoopProcedures = new ArrayList<>();
 		mPathMap = new HashMap<>();
-		mLoopPathVarsMap = new HashMap<>();
 		mEffectiveGlobalVars = effectiveGlobalVars;
 		mSharedVarsMap = sharedVars;
+		mLoopVarsMap = new HashMap<>();
 	}
-
-	private void applyBFS(final IcfgLocation start, final SearchType searchType, final IcfgLocation goal) {
-		final Deque<IcfgEdge> worklist = new ArrayDeque<>();
-		final Set<IcfgEdge> outgoingStartEdges = new HashSet<>();
-		// for the Loop-Search, only search within the body without marking the nodes as finished
-		/*
-		 * if (searchType.equals(SearchType.THREAD) && mIcfg.getLoopLocations().contains(start)) { BFS(start,
-		 * SearchType.LOOPSEARCH, start); }
-		 */
-		if (searchType.equals(SearchType.LOOPSEARCH)) {
-			start.getOutgoingEdges().stream().forEachOrdered(outgoingStartEdges::add);
-		} else {
-			start.getOutgoingEdges().stream().filter(mFinished::add).forEachOrdered(outgoingStartEdges::add);
-		}
-		worklist.addAll(outgoingStartEdges);
-		final HashMap<IcfgEdge, IcfgEdge> parentMap = new HashMap<>();
-		for (final IcfgEdge edge : outgoingStartEdges) {
-			parentMap.put(edge, null);
-		}
-		final String currentProcedure = start.getProcedure();
-		while (!worklist.isEmpty()) {
-			final IcfgEdge current = worklist.removeFirst();
-			// remember which variables were accessed to determine the shared variables
-			final Set<IProgramVar> currentVars = new HashSet<>();
-			currentVars.addAll(current.getTransformula().getInVars().keySet());
-			currentVars.addAll(current.getTransformula().getOutVars().keySet());
-			final IcfgLocation target = current.getTarget();
-			if (isGoal(current, searchType, goal)) {
-				switch (searchType) {
-				case MAIN:
-					applyBFS(target, SearchType.THREAD, null);
-					break;
-				case THREAD:
-					// only search for the loopEntryEdge first
-					applyBFS(target, SearchType.LOOPSEARCH, target);
-					break;
-				case LOOPSEARCH:
-					// extract the loopEntryEdge and continue the search
-					final IcfgEdge loopEntryEdge = buildPath(parentMap, current).getFirst();
-					if (loopEntryEdge.getSource().equals(start)) {
-						//mFinished.add(loopEntryEdge);
-						applyBFS(loopEntryEdge.getSource(), SearchType.LOOPBUILDPATH, loopEntryEdge.getSource());
-					} else {
-						mFinished.add(loopEntryEdge);
-						applyBFS(loopEntryEdge.getTarget(), SearchType.LOOPBUILDPATH, loopEntryEdge.getSource());
-					}
-					break;
-				case LOOPBUILDPATH:
-					// save the path and do the computation at the end
-					final Deque<IcfgEdge> path = buildPath(parentMap, current);
-					ArrayList<Deque<IcfgEdge>> pathList = new ArrayList<>();
-					if (mPathMap.get(currentProcedure) != null) {
-						pathList = mPathMap.get(currentProcedure);
-
-					}
-					pathList.add(path);
-					mPathMap.put(currentProcedure, pathList);
-
-					applyBFS(target, SearchType.THREAD, null);
-					break;
-				default:
-
-				}
-			} else if (target.getProcedure() == currentProcedure) {
-				// continue the search within the current Procedure
-				final Set<IcfgEdge> outgoingEdges = new HashSet<>();
-				if (searchType.equals(SearchType.LOOPSEARCH)) {
-					target.getOutgoingEdges().stream().forEachOrdered(outgoingEdges::add);
-				} else {
-					target.getOutgoingEdges().stream().filter(mFinished::add).forEachOrdered(outgoingEdges::add);
-				}
-				worklist.addAll(outgoingEdges);
-				for (final IcfgEdge edge : outgoingEdges) {
-					parentMap.put(edge, current);
-				}
-			}
-		}
-	}
-
-	private boolean isGoal(final IcfgEdge current, final SearchType searchType, final IcfgLocation goal) {
-		switch (searchType) {
-		case MAIN:
-			return !current.getSucceedingProcedure().equals(current.getPrecedingProcedure());
-		case THREAD:
-			return mIcfg.getLoopLocations().contains(current.getTarget());
-		default:
-			return current.getTarget().equals(goal);
-		}
-	}
-
-	private Deque<IcfgEdge> buildPath(final HashMap<IcfgEdge, IcfgEdge> parentMap, IcfgEdge current) {
-		final Deque<IcfgEdge> path = new ArrayDeque<>();
-		while (current != null) {
-			path.addFirst(current);
-			current = parentMap.get(current);
-		}
-		return path;
-	}
-
+	
+	/**
+	 * Compute the Parameterized Preference Order
+	 */
 	public void computeParameterizedOrder() {
-		for (final String Procedure : mAllProcedures) {
-			final IcfgLocation initialLocation = mIcfg.getProcedureEntryNodes().get(Procedure);
-			if (mIcfg.getLoopLocations().contains(initialLocation)) {
-				// covers the case where the thread starts with a loop
-				applyBFS(initialLocation, SearchType.LOOPSEARCH, initialLocation);
+		for (final String procedure : mAllProcedures) {
+			final IcfgLocation entryNode = mIcfg.getProcedureEntryNodes().get(procedure);
+			findLoop(entryNode);
+		}
+		solveLES();
+	}
+
+
+	private void findLoop(IcfgLocation entryNode) {
+		IcfgLocation goal = null;
+		Map<IcfgEdge, IcfgEdge> pathMap = new HashMap<>();
+		Deque<IcfgEdge> worklist = new ArrayDeque<>();
+		Collection<IcfgEdge> initialEdges = entryNode.getOutgoingEdges().stream()
+				.filter(mFinished::add).collect(Collectors.toSet());
+		initialEdges.forEach(worklist::add);
+		if (mIcfg.getLoopLocations().contains(entryNode)) {
+			goal = entryNode;
+			for (IcfgEdge edge : initialEdges) {
+				pathMap.put(edge, null);
+			}
+		}		
+		while(!worklist.isEmpty()) {
+			final IcfgEdge currentEdge = worklist.removeFirst();
+			final IcfgLocation currentTarget = currentEdge.getTarget();
+			//skip edges that leave the current procedure
+			if (!currentTarget.getProcedure().equals(currentEdge.getPrecedingProcedure())) {
+				continue;
+			}
+			if (goal != null) {
+				if (goal.equals(currentTarget)) {
+					//loop found, backtrack and construct path
+					final Deque<IcfgEdge> path = new ArrayDeque<>();
+					IcfgEdge predecessor = pathMap.get(currentEdge);
+					path.addFirst(currentEdge);
+					while (predecessor != null) {
+						path.addFirst(predecessor);
+						predecessor = pathMap.get(predecessor);
+					}
+					
+					//remove the while-condition from the path
+					if (path.getFirst().getTransformula().getAssignedVars().isEmpty()) {
+						path.removeFirst();
+					}
+					mPathMap.put(currentEdge.getPrecedingProcedure(), path);
+					worklist.clear();
+					
+				} else {
+					//continue searching
+					Collection<IcfgEdge> newEdges = currentTarget.getOutgoingEdges().stream()
+							.filter(mFinished::add).collect(Collectors.toSet());
+					for (IcfgEdge edge : newEdges) {
+						worklist.add(edge);
+						pathMap.put(edge, currentEdge);
+					}
+				}
 			} else {
-				// covers all other cases
-				applyBFS(initialLocation, SearchType.THREAD, null);
+				if (mIcfg.getLoopLocations().contains(currentTarget)) {
+					//loophead found, start searching for the loop path
+					goal = currentTarget;
+					worklist.clear();
+					Collection<IcfgEdge> newEdges = currentTarget.getOutgoingEdges().stream()
+							.filter(mFinished::add).collect(Collectors.toSet());
+					for (IcfgEdge edge : newEdges) {
+						worklist.add(edge);
+						pathMap.put(edge, null);
+					}
+				} else {
+					//continue searching
+					currentTarget.getOutgoingEdges().stream().filter(mFinished::add).forEachOrdered(worklist::add);
+				}
 			}
 		}
-
-		computeLoopVarAccesses();
+		
+	}
+	
+	private void solveLES() {
+		// compute variable accesses
+		computeVariableAccesses();
+		
+		//construct the LES
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
-		//String SMTScriptString = "(set-logic QF_LIA)\r\n";
-		var procConstants = declareProcedureConstants(mAllLoopProcedures);
+		var procConstants = declareProcedureConstants(mLoopProcedures);
 		final var script = mMgdScript.getScript();
-
 		final HashMap<Term, Integer> termEvaluationMap = new HashMap<>();
+		
 
-		for (final String fstProcedure : mAllLoopProcedures) {
-			final int fstIndex = mAllLoopProcedures.indexOf(fstProcedure);
-			if (fstIndex < mAllLoopProcedures.size() - 1) {
-				for (int sndIndex = fstIndex + 1; sndIndex < mAllLoopProcedures.size(); sndIndex++) {
+		for (final String fstProcedure : mLoopProcedures) {
+			final int fstIndex = mLoopProcedures.indexOf(fstProcedure);
+			if (fstIndex < mLoopProcedures.size() - 1) {
+				for (int sndIndex = fstIndex + 1; sndIndex < mLoopProcedures.size(); sndIndex++) {
 					// calculate the accesses on shared vars
-					final String sndProcedure = mAllLoopProcedures.get(sndIndex);
+					final String sndProcedure = mLoopProcedures.get(sndIndex);
 					int fstSharedAccesses = 0;
 					int sndSharedAccesses = 0;
-					final HashMap<IProgramVar, Integer> fstVarMap = mLoopPathVarsMap.get(fstProcedure);
-					final HashMap<IProgramVar, Integer> sndVarMap = mLoopPathVarsMap.get(sndProcedure);
+					final HashMap<IProgramVar, Integer> fstVarMap = mLoopVarsMap.get(fstProcedure);
+					final HashMap<IProgramVar, Integer> sndVarMap = mLoopVarsMap.get(sndProcedure);
 					final Set<IProgramVar> sharedVars = new HashSet<>(mSharedVarsMap.get(fstProcedure));
 					sharedVars.retainAll(mSharedVarsMap.get(sndProcedure));
 					for (final IProgramVar var : sharedVars) {
@@ -226,8 +211,6 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 							sndSharedAccesses += sndVarMap.get(var);
 						}
 					}
-					 //SMTScriptString += String.format("(assert (= (* %d %s) (* %d %s)))\r\n", fstSharedAccesses,
-					 //fstProcedure, sndSharedAccesses, sndProcedure);
 
 					final Rational fstSA = SmtUtils.toRational(fstSharedAccesses);
 					final Rational sndSA = SmtUtils.toRational(sndSharedAccesses);
@@ -237,7 +220,6 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 					mMgdScript.assertTerm(this, equation);
 				}
 			}
-			 //SMTScriptString += String.format("(assert (< 0 %s))\r\n", fstProcedure);
 
 			// final Term procedure = script.term(fstProcedure);
 			final Term zero = SmtUtils.toRational(0).toTerm(script.sort(SmtSortUtils.INT_SORT));
@@ -246,8 +228,8 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 
 			termEvaluationMap.put(procConstants.get(fstProcedure), null);
 		}
+		
 		// try to solve equation system
-		//SMTScriptString += "(check-sat)\r\n" + "(get-model)";
 		String sequence = "";
 		final var result = mMgdScript.checkSat(this);
 
@@ -257,12 +239,12 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 			mMgdScript.pop(this, 1);
 			mMgdScript.push(this, 1);
 
-			procConstants = declareProcedureConstants(mAllLoopProcedures);
+			procConstants = declareProcedureConstants(mLoopProcedures);
 			final var dummy = SmtUtils.buildNewConstant(script, "dummy", SmtSortUtils.INT_SORT);
 
-			for (final String procedure : mAllLoopProcedures) {
+			for (final String procedure : mLoopProcedures) {
 				int sharedAccesses = 0;
-				final HashMap<IProgramVar, Integer> varMap = mLoopPathVarsMap.get(procedure);
+				final HashMap<IProgramVar, Integer> varMap = mLoopVarsMap.get(procedure);
 				for (final IProgramVar var : varMap.keySet()) {
 					if (mEffectiveGlobalVars.contains(var)) {
 						sharedAccesses += varMap.get(var);
@@ -283,25 +265,20 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 			mMgdScript.checkSat(this);
 		}
 
-		final var termValues = mMgdScript.getValue(this, termEvaluationMap.keySet().toArray(Term[]::new));
-		for (final Term term : termEvaluationMap.keySet()) {
-			final Term value = termValues.get(term);
-			final var rational = SmtUtils.tryToConvertToLiteral(value);
-			assert rational != null && rational.isIntegral();
-
-			termEvaluationMap.put(term, rational.numerator().intValue());
-		}
-
-		if (!mAllLoopProcedures.isEmpty()) {
+		if (!mLoopProcedures.isEmpty()) {
+			final var termValues = mMgdScript.getValue(this, termEvaluationMap.keySet().toArray(Term[]::new));
 			for (final Term term : termEvaluationMap.keySet()) {
-				final int value = termEvaluationMap.get(term);
-				final int maxStep = value;
+				final Term value = termValues.get(term);
+				final var rational = SmtUtils.tryToConvertToLiteral(value);
+				assert rational != null && rational.isIntegral();
+				final int maxStep = rational.numerator().intValue();
 				sequence += String.format("%d,%d ", mAllProcedures.indexOf(term.toString()), maxStep);
+				termEvaluationMap.put(term, rational.numerator().intValue());			
 			}
 		}
 
 		final var remainingProcedures =
-				mAllProcedures.stream().filter(p -> !mAllLoopProcedures.contains(p)).collect(Collectors.toList());
+				mAllProcedures.stream().filter(p -> !mLoopProcedures.contains(p)).collect(Collectors.toList());
 		for (final String procedure : remainingProcedures) {
 			sequence += String.format("%d,1 ", mAllProcedures.indexOf(procedure));
 		}
@@ -309,6 +286,29 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 		mSequence = sequence;
 		mMgdScript.pop(this, 1);
 		mMgdScript.unlock(this);
+		
+	}
+	
+	private void computeVariableAccesses() {
+		for (String procedure : mPathMap.keySet()) {
+			final Deque<IcfgEdge> path = mPathMap.get(procedure);
+			mLoopProcedures.add(procedure);
+			HashMap<IProgramVar, Integer> varMap = new HashMap<>();
+			for (IcfgEdge edge : path) {
+				Set<IProgramVar> edgeVars = new HashSet<>();
+				edgeVars.addAll(edge.getTransformula().getInVars().keySet());
+				edgeVars.addAll(edge.getTransformula().getOutVars().keySet());
+				for (final IProgramVar var : edgeVars) {
+					if (varMap.containsKey(var)) {
+						final Integer value = varMap.get(var) + 1;
+						varMap.put(var, value);
+					} else {
+						varMap.put(var, 1);
+					}
+				}
+			}
+			mLoopVarsMap.put(procedure, varMap);
+		}		
 	}
 
 	private Map<String, Term> declareProcedureConstants(final List<String> procedures) {
@@ -317,32 +317,6 @@ public class PreferenceOrderHeuristic<L extends IIcfgTransition<?>> {
 
 	private Term makeProcedureConstant(final String name) {
 		return SmtUtils.buildNewConstant(mMgdScript.getScript(), name, SmtSortUtils.INT_SORT);
-	}
-
-	private void computeLoopVarAccesses() {
-		// compute the amount of variable accesses in the loop for each procedure
-		for (final String procedure : mAllProcedures) {
-			final ArrayList<Deque<IcfgEdge>> pathList = mPathMap.get(procedure);
-			if (pathList != null) {
-				mAllLoopProcedures.add(procedure);
-				final Deque<IcfgEdge> loopPath = pathList.get(0);
-				final HashMap<IProgramVar, Integer> varMap = new HashMap<>();
-				for (final IcfgEdge edge : loopPath) {
-					final Set<IProgramVar> edgeVars = new HashSet<>();
-					edgeVars.addAll(edge.getTransformula().getInVars().keySet());
-					edgeVars.addAll(edge.getTransformula().getOutVars().keySet());
-					for (final IProgramVar var : edgeVars) {
-						if (varMap.containsKey(var)) {
-							final Integer value = varMap.get(var) + 1;
-							varMap.put(var, value);
-						} else {
-							varMap.put(var, 1);
-						}
-					}
-				}
-				mLoopPathVarsMap.put(procedure, varMap);
-			}
-		}
 	}
 
 	public String getParameterizedOrderSequence() {
