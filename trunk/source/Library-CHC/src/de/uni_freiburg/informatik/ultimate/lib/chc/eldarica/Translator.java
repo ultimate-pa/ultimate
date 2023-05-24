@@ -175,6 +175,11 @@ class Translator {
 	}
 
 	public ITerm translateTerm(final Term term) {
+		final var expr = translateExpression(term);
+		if (expr instanceof IFormula) {
+			final var bool = new ap.types.Sort.MultipleValueBool$();
+			return IExpression.ite((IFormula) expr, bool.True(), bool.False());
+		}
 		return (ITerm) translateExpression(term);
 	}
 
