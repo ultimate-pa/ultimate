@@ -46,6 +46,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToC
  */
 public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitializer {
 
+	// SETTINGS FOR CONCURRENT PROGRAMS
+	// ------------------------------------------------------------------------
+
 	public static final String LABEL_CONCURRENCY_MODE = "Concurrency mode";
 	public static final String DESC_CONCURRENCY_MODE =
 			"Whether the program starts as a single thread, which may dynamically fork and join new threads, "
@@ -62,6 +65,9 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String DESC_SPEC_MODE = "Describes how the specification for the program is given.";
 	public static final SpecMode DEF_SPEC_MODE = SpecMode.POSTCONDITION;
 
+	// SETTINGS FOR THREAD-MODULAR PROOFS
+	// ------------------------------------------------------------------------
+
 	public static final String LABEL_THREADMODULAR_LEVEL = "Thread-Modular Proof Level";
 	public static final String DESC_THREADMODULAR_LEVEL = "The level at which thread-modular proofs should be computed";
 	public static final int DEF_THREADMODULAR_LEVEL = 2;
@@ -75,6 +81,9 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String DESC_LIPTON_REDUCTION = "If enabled, Lipton reduction is applied to simplify thread "
 			+ "templates, before a thread-modular proof is computed.";
 	public static final boolean DEF_LIPTON_REDUCTION = false;
+
+	// SETTINGS FOR SLEEP SET REDUCTION
+	// ------------------------------------------------------------------------
 
 	public static final String LABEL_SLEEP_SET_REDUCTION = "Enable sleep set reduction";
 	public static final String DESC_SLEEP_SET_REDUCTION = "If enabled, symbolic sleep set reduction is applied to the "
@@ -91,8 +100,15 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 			+ "or explicitly (by using different predicate symbols).";
 	public static final boolean DEF_EXPLICIT_SLEEP = false;
 
+	public static final String LABEL_PREFERENCE_ORDER = "Preference order used for reduction";
+	public static final PreferenceOrder DEF_PREFERENCE_ORDER = PreferenceOrder.SEQ_COMP;
+
 	public static final String LABEL_CONDITIONAL_INDEPENDENCE = "Conditional Independence";
 	public static final ConditionalIndependence DEF_CONDITIONAL_INDEPENDENCE = ConditionalIndependence.OFF;
+
+	public enum PreferenceOrder {
+		SEQ_COMP, LOCKSTEP
+	}
 
 	public enum ConditionalIndependence {
 		OFF, PRECOMPUTED_CONDITIONS
@@ -107,7 +123,6 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 
 	@Override
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
-
 		return new BaseUltimatePreferenceItem[] {
 				// Settings for thread-modular proofs
 				new UltimatePreferenceItem<>(LABEL_CONCURRENCY_MODE, DEF_CONCURRENCY_MODE, DESC_CONCURRENCY_MODE,
@@ -122,11 +137,10 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_LIPTON_REDUCTION, DEF_LIPTON_REDUCTION, DESC_LIPTON_REDUCTION,
 						PreferenceType.Boolean),
-
 				getSleepSetSettings() };
 	}
 
-	private UltimatePreferenceItemContainer getSleepSetSettings() {
+	private static UltimatePreferenceItemContainer getSleepSetSettings() {
 		final var container = new UltimatePreferenceItemContainer("Sleep Set Reduction");
 		container.addItem(new UltimatePreferenceItem<>(LABEL_SLEEP_SET_REDUCTION, DEF_SLEEP_SET_REDUCTION,
 				DESC_SLEEP_SET_REDUCTION, PreferenceType.Boolean));
@@ -134,6 +148,8 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 				DESC_BREAK_PREFORDER_SYMMETRY, PreferenceType.Boolean));
 		container.addItem(new UltimatePreferenceItem<>(LABEL_EXPLICIT_SLEEP, DEF_EXPLICIT_SLEEP, DESC_EXPLICIT_SLEEP,
 				PreferenceType.Boolean));
+		container.addItem(new UltimatePreferenceItem<>(LABEL_PREFERENCE_ORDER, DEF_PREFERENCE_ORDER,
+				PreferenceType.Combo, PreferenceOrder.values()));
 		container.addItem(new UltimatePreferenceItem<>(LABEL_CONDITIONAL_INDEPENDENCE, DEF_CONDITIONAL_INDEPENDENCE,
 				PreferenceType.Combo, ConditionalIndependence.values()));
 		return container;

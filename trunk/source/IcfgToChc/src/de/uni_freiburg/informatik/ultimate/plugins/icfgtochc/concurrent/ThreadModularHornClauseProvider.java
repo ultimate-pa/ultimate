@@ -91,9 +91,9 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	private final IIcfgSymbolTable mCfgSymbolTable;
 	private final Predicate<IProgramVar> mVariableFilter;
 
-	// maps a procedure name and a location (in the procedure) to an integer, such that the location variable has this
-	// integer as value iff control is in the given location
-	private final NestedMap2<String, IcfgLocation, Integer> mLocationIndices = new NestedMap2<>();
+	// Maps each location to an integer, such that the location variable has this integer as value iff control is in the
+	// given location. Locations in different procedures may be mapped to the same value.
+	protected final Map<IcfgLocation, Integer> mLocationIndices;
 
 	// used as location for threads that are not currently running
 	private final Term mBottomLocation;
@@ -131,7 +131,9 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		mInstances = getInstances(threadInfo.getFirst());
 		mUnboundedTemplates = threadInfo.getSecond();
 
+		mLocationIndices = createLocationMap(icfg);
 		mBottomLocation = numeral(-1);
+
 		if (mPrefs.specMode() == SpecMode.POSTCONDITION) {
 			mRunningThreadsVar = new HcThreadCounterVar(mScript);
 		} else {
@@ -168,6 +170,25 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		final var predicate = mSymbolTable.getOrConstructHornClausePredicateSymbol(FUNCTION_NAME, sorts);
 
 		return new PredicateInfo(predicate, parameters);
+	}
+
+	protected Map<IcfgLocation, Integer> createLocationMap(final IIcfg<?> icfg) {
+		final var result = new HashMap<IcfgLocation, Integer>();
+		for (final var entry : icfg.getProcedureEntryNodes().values()) {
+			int counter = 0;
+			result.put(entry, counter);
+			counter++;
+			final var iterator = new IcfgEdgeIterator(entry.getOutgoingEdges());
+			while (iterator.hasNext()) {
+				final var edge = iterator.next();
+				assert result.containsKey(edge.getSource()) : "edge with unknown source loc";
+				if (!result.containsKey(edge.getTarget())) {
+					result.put(edge.getTarget(), counter);
+					counter++;
+				}
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -656,8 +677,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 	protected void addInLocationConstraint(final HornClauseBuilder clause, final ThreadInstance threadInstance,
 			final IcfgLocation location) {
-		final var locTerm =
-				location == null ? mBottomLocation : getLocIndexTerm(location, threadInstance.getTemplateName());
+		final var locTerm = location == null ? mBottomLocation : getLocIndexTerm(location);
 		final HcLocationVar locVar = new HcLocationVar(threadInstance, mScript);
 		final Term term = clause.getBodyVar(locVar).getTerm();
 		clause.addConstraint(SmtUtils.binaryEquality(mScript, term, locTerm));
@@ -665,20 +685,14 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 	protected void addOutLocationConstraint(final HornClauseBuilder clause, final ThreadInstance threadInstance,
 			final IcfgLocation location) {
-		final var locTerm =
-				location == null ? mBottomLocation : getLocIndexTerm(location, threadInstance.getTemplateName());
+		final var locTerm = location == null ? mBottomLocation : getLocIndexTerm(location);
 		final HcLocationVar locVar = mLocationVars.get(threadInstance);
 		final Term term = clause.getHeadVar(locVar).getTerm();
 		clause.addConstraint(SmtUtils.binaryEquality(mScript, term, locTerm));
 	}
 
-	protected Term getLocIndexTerm(final IcfgLocation loc, final String proc) {
-		Integer index = mLocationIndices.get(proc, loc);
-		if (index == null) {
-			final Map<IcfgLocation, Integer> otherIndices = mLocationIndices.get(proc);
-			index = otherIndices == null ? 0 : otherIndices.size();
-			mLocationIndices.put(proc, loc, index);
-		}
+	protected Term getLocIndexTerm(final IcfgLocation loc) {
+		final int index = mLocationIndices.get(loc);
 		return numeral(index);
 	}
 
