@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partial
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -36,12 +35,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -55,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToC
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornClauseProvider {
-	private final IIndependenceRelation<?, ? super IIcfgTransition<?>> mIndependence;
+	private final IndependenceChecker mIndependenceChecker;
 	private final Map<String, Collection<IcfgLocation>> mThreadLocations;
 
 	private final Map<ThreadInstance, HcThreadIdVar> mIdVars;
@@ -63,9 +61,10 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 
 	public SleepSetThreadModularHornClauseProvider(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final IIcfg<IcfgLocation> icfg, final HcSymbolTable symbolTable,
-			final IIndependenceRelation<?, ? super IIcfgTransition<?>> independence, final IcfgToChcPreferences prefs) {
+			final ISymbolicIndependenceRelation<? super IIcfgTransition<?>> independence,
+			final IcfgToChcPreferences prefs) {
 		super(services, mgdScript, icfg, symbolTable, prefs);
-		mIndependence = independence;
+		mIndependenceChecker = new IndependenceChecker(services, icfg.getCfgSmtToolkit(), independence);
 		mThreadLocations = icfg.getProgramPoints().entrySet().stream()
 				.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().values()));
 
@@ -118,7 +117,7 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 	}
 
 	@Override
-	protected HornClauseBuilder buildInductivityClause(final IIcfgTransition<?> transition,
+	protected HornClauseBuilder buildInductivityClause(final IcfgEdge transition,
 			final Map<ThreadInstance, IcfgLocation> preds, final Map<ThreadInstance, IcfgLocation> succs,
 			final ThreadInstance updatedThread) {
 		final var clause = super.buildInductivityClause(transition, preds, succs, updatedThread);
@@ -138,7 +137,7 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 	}
 
 	@Override
-	protected List<HornClauseBuilder> buildNonInterferenceClauses(final IIcfgTransition<?> transition) {
+	protected List<HornClauseBuilder> buildNonInterferenceClauses(final IcfgEdge transition) {
 		if (!mPrefs.breakPreferenceOrderSymmetry()) {
 			return super.buildNonInterferenceClauses(transition);
 		}
@@ -154,7 +153,7 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 
 	// This overload constructs non-interference clauses where the preference order is treated symbolically.
 	@Override
-	protected HornClauseBuilder buildNonInterferenceClause(final IIcfgTransition<?> transition) {
+	protected HornClauseBuilder buildNonInterferenceClause(final IcfgEdge transition) {
 		if (mPrefs.breakPreferenceOrderSymmetry()) {
 			throw new UnsupportedOperationException("This method does not support breaking preference order symmetry. "
 					+ "Call the other overload of this method instead.");
@@ -176,9 +175,9 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 		clause.addConstraint(SmtUtils.not(mScript, clause.getBodyVar(sleep).getTerm()));
 
 		// update sleep variables
-		for (final var instance : mInstances) {
-			final var prefOrder = symbolicPreferenceOrderConstraint(clause, instance, interferingThread);
-			updateSleep(clause, transition, instance, prefOrder);
+		for (final var sleepingThread : mInstances) {
+			final var prefOrder = symbolicPreferenceOrderConstraint(clause, sleepingThread, interferingThread);
+			updateSleep(clause, interferingThread, transition, sleepingThread, prefOrder);
 		}
 
 		return clause;
@@ -186,7 +185,7 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 
 	// This overload constructs non-interference clauses where preference order symmetry is broken, and the preference
 	// order is resolved statically.
-	protected HornClauseBuilder buildNonInterferenceClause(final IIcfgTransition<?> transition, final int index) {
+	protected HornClauseBuilder buildNonInterferenceClause(final IcfgEdge transition, final int index) {
 		if (!mPrefs.breakPreferenceOrderSymmetry()) {
 			throw new UnsupportedOperationException("This method breaks preference order symmetry, which is turned off."
 					+ " Call the other overload of this method instead.");
@@ -232,10 +231,10 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 		clause.addConstraint(SmtUtils.not(mScript, clause.getBodyVar(sleep).getTerm()));
 
 		// update sleep variables
-		for (final var instance : mInstances) {
-			final var prefOrder = index < instance.getInstanceNumber() ? mScript.term(SMTLIBConstants.FALSE)
+		for (final var sleepingThread : mInstances) {
+			final var prefOrder = index < sleepingThread.getInstanceNumber() ? mScript.term(SMTLIBConstants.FALSE)
 					: mScript.term(SMTLIBConstants.TRUE);
-			updateSleep(clause, transition, instance, prefOrder);
+			updateSleep(clause, interferingThread, transition, sleepingThread, prefOrder);
 		}
 
 		return clause;
@@ -254,10 +253,10 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 	}
 
 	// update sleep variable depending on commutativity and preference order
-	private void updateSleepInductive(final HornClauseBuilder clause, final IIcfgTransition<?> transition,
+	private void updateSleepInductive(final HornClauseBuilder clause, final IcfgEdge transition,
 			final Set<ThreadInstance> activeThreads, final ThreadInstance primaryActiveThread,
-			final ThreadInstance current) {
-		if (activeThreads.contains(current)) {
+			final ThreadInstance updatedThread) {
+		if (activeThreads.contains(updatedThread)) {
 			// no update of sleep variable
 			return;
 		}
@@ -266,21 +265,22 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 		if (mPrefs.breakPreferenceOrderSymmetry()) {
 			// We resolve the preference order statically.
 			// For now, the preference order is non-positional, and given by the ordering in mInstances.
-			final int ordering = Integer.compare(mInstances.indexOf(primaryActiveThread), mInstances.indexOf(current));
+			final int ordering =
+					Integer.compare(mInstances.indexOf(primaryActiveThread), mInstances.indexOf(updatedThread));
 			// Formula expressing whether current thread is BEFORE primary thread.
 			prefOrder = ordering < 0 ? mScript.term(SMTLIBConstants.FALSE) : mScript.term(SMTLIBConstants.TRUE);
 		} else {
 			// We resolve the preference order symbolically, using ID variables.
-			prefOrder = symbolicPreferenceOrderConstraint(clause, current, primaryActiveThread);
+			prefOrder = symbolicPreferenceOrderConstraint(clause, updatedThread, primaryActiveThread);
 		}
 
-		updateSleep(clause, transition, current, prefOrder);
+		updateSleep(clause, primaryActiveThread, transition, updatedThread, prefOrder);
 	}
 
 	// update sleep variable depending on commutativity and preference order
-	private void updateSleep(final HornClauseBuilder clause, final IIcfgTransition<?> transition,
-			final ThreadInstance current, final Term prefOrder) {
-		final var sleep = mSleepVars.get(current);
+	private void updateSleep(final HornClauseBuilder clause, final ThreadInstance activeThread,
+			final IcfgEdge activeEdge, final ThreadInstance updatedThread, final Term prefOrder) {
+		final var sleep = mSleepVars.get(updatedThread);
 		clause.differentBodyHeadVar(sleep);
 
 		final var oldSleep = clause.getBodyVar(sleep);
@@ -297,8 +297,9 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 		}
 
 		// get constraint describing commutativity
-		final var currentLoc = clause.getBodyVar(mLocationVars.get(current));
-		final Term commConstr = getCommutativityConstraint(current, currentLoc.getTerm(), transition);
+		final var currentLoc = clause.getBodyVar(mLocationVars.get(updatedThread));
+		final Term commConstr =
+				getCommutativityConstraint(clause, activeThread, activeEdge, updatedThread, currentLoc.getTerm());
 
 		// sleep' = (current < interfering \/ sleep) /\ commConstr
 		clause.addConstraint(SmtUtils.binaryBooleanEquality(mScript, newSleep.getTerm(),
@@ -312,22 +313,54 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 		return SmtUtils.less(mScript, currentId.getTerm(), activeId.getTerm());
 	}
 
-	protected Term getCommutativityConstraint(final ThreadInstance instance, final Term locVar,
-			final IIcfgTransition<?> currentEdge) {
-		final var commLocations = new HashSet<Term>();
-		for (final var loc : mThreadLocations.get(instance.getTemplateName())) {
-			// TODO can be optimized: if (= locVar loc) is false, don't check independence
-			if (loc.getOutgoingEdges().stream()
-					// ignore spec edges: the original edges are replaced, and the replacing transitions commute
-					.filter(e -> !isPreConditionSpecEdge(e) && !isPostConditionSpecEdge(e))
-					// ignore assert edges if option is set
-					.filter(e -> SKIP_ASSERTION_EDGES
-							&& mIcfg.getProcedureErrorNodes().get(e.getSucceedingProcedure()).contains(e.getTarget()))
-					.allMatch(e -> mIndependence.isIndependent(null, e, currentEdge) == Dependence.INDEPENDENT)) {
-				commLocations.add(getLocIndexTerm(loc, instance.getTemplateName()));
+	protected Term getCommutativityConstraint(final HornClauseBuilder clause, final ThreadInstance activeThread,
+			final IcfgEdge activeEdge, final ThreadInstance otherThread, final Term otherLocVar) {
+		final var disjuncts = new ArrayList<Term>();
+		for (final var loc : mThreadLocations.get(otherThread.getTemplateName())) {
+			final var locEquality =
+					SmtUtils.binaryEquality(mScript, otherLocVar, getLocIndexTerm(loc, otherThread.getTemplateName()));
+			if (SmtUtils.isFalseLiteral(locEquality)) {
+				continue;
 			}
+
+			final var commConstraint = getCommutativityConstraint(clause, activeThread, activeEdge, otherThread, loc);
+			if (SmtUtils.isFalseLiteral(commConstraint)) {
+				continue;
+			}
+
+			final var disjunct = SmtUtils.and(mScript, locEquality, commConstraint);
+			if (SmtUtils.isTrueLiteral(disjunct)) {
+				// escape early if commutativity is guaranteed
+				return mScript.term(SMTLIBConstants.TRUE);
+			}
+
+			disjuncts.add(disjunct);
 		}
-		return SmtUtils.or(mScript, commLocations.stream().map(loc -> SmtUtils.binaryEquality(mScript, locVar, loc))
-				.collect(Collectors.toList()));
+		return SmtUtils.or(mScript, disjuncts);
+	}
+
+	protected Term getCommutativityConstraint(final HornClauseBuilder clause, final ThreadInstance activeThread,
+			final IcfgEdge activeEdge, final ThreadInstance otherThread, final IcfgLocation otherLoc) {
+		final var conjuncts = new ArrayList<Term>();
+		for (final var edge : otherLoc.getOutgoingEdges()) {
+			if (isPreConditionSpecEdge(edge) || isPostConditionSpecEdge(edge)) {
+				// ignore spec edges: the original edges are replaced, and the replacing edges commute with everything
+				continue;
+			}
+
+			if (isSkippableAssertEdge(edge)) {
+				// ignore assert edges if option is set
+				continue;
+			}
+
+			final var conjunct =
+					mIndependenceChecker.getIndependenceCondition(clause, otherThread, edge, activeThread, activeEdge);
+			if (SmtUtils.isFalseLiteral(conjunct)) {
+				// escape early if one outgoing edge does not commute under any circumstances
+				return mScript.term(SMTLIBConstants.FALSE);
+			}
+			conjuncts.add(conjunct);
+		}
+		return SmtUtils.and(mScript, conjuncts);
 	}
 }

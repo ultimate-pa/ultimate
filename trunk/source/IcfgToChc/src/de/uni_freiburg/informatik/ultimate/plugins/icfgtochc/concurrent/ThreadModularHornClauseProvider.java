@@ -564,7 +564,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	 * @param updatedThread
 	 *            The primary active thread, whose local variables are updated by the transition.
 	 */
-	protected HornClauseBuilder buildInductivityClause(final IIcfgTransition<?> transition,
+	protected HornClauseBuilder buildInductivityClause(final IcfgEdge transition,
 			final Map<ThreadInstance, IcfgLocation> preds, final Map<ThreadInstance, IcfgLocation> succs,
 			final ThreadInstance updatedThread) {
 		final var clause = createBuilder(mInvariantPredicate,
@@ -592,7 +592,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		return clause;
 	}
 
-	protected List<HornClauseBuilder> buildNonInterferenceClauses(final IIcfgTransition<?> transition) {
+	protected List<HornClauseBuilder> buildNonInterferenceClauses(final IcfgEdge transition) {
 		final var result = new ArrayList<HornClauseBuilder>();
 		result.add(buildNonInterferenceClause(transition));
 		return result;
@@ -601,7 +601,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	/**
 	 * Builds a noninterference clause for the given transition.
 	 */
-	protected HornClauseBuilder buildNonInterferenceClause(final IIcfgTransition<?> transition) {
+	protected HornClauseBuilder buildNonInterferenceClause(final IcfgEdge transition) {
 		// TODO support transitions with multiple predecessors (joins)
 		final var interferingThread = getInterferingThread(transition);
 		final var interferingVars = createThreadSpecificVars(interferingThread);

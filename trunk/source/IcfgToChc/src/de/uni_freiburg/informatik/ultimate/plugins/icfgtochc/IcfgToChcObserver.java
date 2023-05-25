@@ -40,18 +40,24 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClauseAST;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgSummaryTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ConcurrencyMode;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgLiptonReducer;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ThreadModularHornClauseProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.ConditionSynthesizingIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.ExplicitSymbolicIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.ISymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.SleepSetThreadModularHornClauseProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences;
 
@@ -176,12 +182,29 @@ public class IcfgToChcObserver extends BaseObserver {
 			}
 
 			if (mPrefs.useSleepSets()) {
-				final var independence = new SemanticIndependenceRelation<>(mServices, mgdScript, false, true);
+				final var independence = getIndependence(icfg, mgdScript);
 				return new SleepSetThreadModularHornClauseProvider(mServices, mgdScript, icfg, hcSymbolTable,
 						independence, mPrefs).getClauses();
 			}
 			return new ThreadModularHornClauseProvider(mServices, mgdScript, icfg, hcSymbolTable, mPrefs).getClauses();
 		}
 		return new ChcProviderForCalls(mgdScript, hcSymbolTable).getHornClauses(icfg);
+	}
+
+	private ISymbolicIndependenceRelation<IAction> getIndependence(final IIcfg<?> icfg, final ManagedScript mgdScript) {
+		final boolean symmetric = true;
+		final var independence = new SemanticIndependenceRelation<>(mServices, mgdScript, false, symmetric);
+
+		switch (mPrefs.conditionalIndependence()) {
+		case OFF:
+			return new ExplicitSymbolicIndependenceRelation<>(independence, mgdScript.getScript());
+		case PRECOMPUTED_CONDITIONS:
+			final var factory =
+					new BasicPredicateFactory(mServices, mgdScript, icfg.getCfgSmtToolkit().getSymbolTable());
+			final var generator = new SemanticIndependenceConditionGenerator(mServices, mgdScript, factory, symmetric);
+			return new ConditionSynthesizingIndependenceRelation<>(independence, generator, mgdScript.getScript());
+		}
+
+		throw new AssertionError("Unknown conditional independence setting: " + mPrefs.conditionalIndependence());
 	}
 }

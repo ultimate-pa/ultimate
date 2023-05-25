@@ -89,6 +89,13 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 			+ "or explicitly (by using different predicate symbols).";
 	public static final boolean DEF_EXPLICIT_SLEEP = false;
 
+	public static final String LABEL_CONDITIONAL_INDEPENDENCE = "Conditional Independence";
+	public static final ConditionalIndependence DEF_CONDITIONAL_INDEPENDENCE = ConditionalIndependence.OFF;
+
+	public enum ConditionalIndependence {
+		OFF, PRECOMPUTED_CONDITIONS
+	}
+
 	/**
 	 * Default constructor.
 	 */
@@ -117,7 +124,9 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 				new UltimatePreferenceItem<>(LABEL_BREAK_PREFORDER_SYMMETRY, DEF_BREAK_PREFORDER_SYMMETRY,
 						DESC_BREAK_PREFORDER_SYMMETRY, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_EXPLICIT_SLEEP, DEF_EXPLICIT_SLEEP, DESC_EXPLICIT_SLEEP,
-						PreferenceType.Boolean) };
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CONDITIONAL_INDEPENDENCE, DEF_CONDITIONAL_INDEPENDENCE,
+						PreferenceType.Combo, ConditionalIndependence.values()) };
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {
