@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot.IChcBacktranslator;
+import de.uni_freiburg.informatik.ultimate.lib.chc.ProgramAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
@@ -60,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -84,7 +86,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvider {
 	private static final String FUNCTION_NAME = "Inv";
 	private static final int INTERFERING_INSTANCE_ID = -1;
-	protected static final boolean SKIP_ASSERTION_EDGES = true;
+	protected static final boolean SKIP_ASSERTION_EDGES = false;
 
 	protected final IUltimateServiceProvider mServices;
 	protected final IIcfg<?> mIcfg;
@@ -756,6 +758,60 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 	@Override
 	public IChcBacktranslator getBacktranslator() {
-		return null;
+		return new IChcBacktranslator() {
+
+			@Override
+			public IIcfg<?> getIcfg() {
+				return mIcfg;
+			}
+
+			@Override
+			public ProgramAnnot backtranslate(final Model model) {
+				return new ProgramAnnot(model) {
+					private static final long serialVersionUID = -3660389229111179778L;
+
+					@Override
+					protected String getFunctionSymbol(final List<IcfgLocation> locactions) {
+						// TODO: check for mPrefs.explicitLocations(), if it is used to create multiple function symbols
+						return FUNCTION_NAME;
+					}
+
+					@Override
+					protected Term[] getArguments(final List<IcfgLocation> locations,
+							final List<Map<IProgramVar, Term>> localVarSubstitutions) {
+						final List<IHcReplacementVar> vars = getInvariantParameters();
+						final Term[] result = new Term[vars.size()];
+						int i = 0;
+						for (final var rv : vars) {
+							if (rv instanceof HcGlobalVar) {
+								result[i] = ((HcGlobalVar) rv).getVariable().getTermVariable();
+							}
+							if (rv instanceof HcLocalVar) {
+								final HcLocalVar lv = (HcLocalVar) rv;
+								result[i] = localVarSubstitutions.get(lv.getThreadInstance().getInstanceNumber())
+										.get(lv.getVariable());
+							}
+							if (rv instanceof HcLocationVar) {
+								final ThreadInstance instance = ((HcLocationVar) rv).getThreadInstance();
+								int locCounter = 0;
+								for (final IcfgLocation loc : locations) {
+									if (loc.getProcedure().equals(instance.getTemplateName())) {
+										if (locCounter == instance.getInstanceNumber()) {
+											result[i] = getLocIndexTerm(loc, instance.getTemplateName());
+											break;
+										}
+										locCounter++;
+									}
+
+								}
+							}
+							// TODO: What should we do with the other types?
+							i++;
+						}
+						return result;
+					}
+				};
+			}
+		};
 	}
 }
