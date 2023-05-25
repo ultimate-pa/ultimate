@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
@@ -106,15 +107,25 @@ public class IcfgToChcObserver extends BaseObserver {
 				|| !IcfgUtils.getForksInLoop(icfg).isEmpty()
 				|| mPrefs.concurrencyMode() == ConcurrencyMode.PARAMETRIC : "Unexpected non-linear clauses";
 
-		final var bad = resultChcs.stream()
-				.filter(chc -> chc.constructFormula(mgdScript, false).getFreeVars().length != 0).findAny();
-		assert bad.isEmpty() : bad;
+		assert checkFreeVariables(resultChcs, mgdScript) : "Some clauses have free variables";
 
 		final HornAnnot annot = new HornAnnot(icfg.getIdentifier(), mgdScript, hcSymbolTable,
 				new ArrayList<>(resultChcs), true, chcCategoryInfo);
 
 		mResult = HornClauseAST.create(annot);
 		ModelUtils.copyAnnotations(icfg, mResult);
+	}
+
+	private static boolean checkFreeVariables(final Collection<HornClause> system, final ManagedScript mgdScript) {
+		for (final var clause : system) {
+			final var formula = clause.constructFormula(mgdScript, false);
+			final var freevars = formula.getFreeVars();
+			if (freevars.length > 0) {
+				assert false : "free variables " + Arrays.toString(freevars) + " in clause " + clause;
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private static boolean isReturnReachable(final IIcfg<IcfgLocation> icfg) {
