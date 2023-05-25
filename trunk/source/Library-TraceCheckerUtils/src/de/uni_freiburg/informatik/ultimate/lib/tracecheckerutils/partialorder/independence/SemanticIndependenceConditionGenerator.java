@@ -90,6 +90,10 @@ public class SemanticIndependenceConditionGenerator {
 		mSymmetric = symmetric;
 	}
 
+	public boolean isSymmetric() {
+		return mSymmetric;
+	}
+
 	/**
 	 * Generate a condition under which the given transitions are independent.
 	 *
