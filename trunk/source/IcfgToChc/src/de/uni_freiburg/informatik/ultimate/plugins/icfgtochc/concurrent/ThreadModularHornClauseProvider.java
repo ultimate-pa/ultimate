@@ -330,6 +330,11 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 			public UnmodifiableTransFormula getTransformula() {
 				return tf;
 			}
+
+			@Override
+			public String toString() {
+				return "<[ dummy edge: assume true; ]>";
+			}
 		};
 	}
 
