@@ -120,13 +120,23 @@ class Backtranslator {
 	}
 
 	public Term translateTerm(final ITerm term, final Sort sort, final IBoundVariableContext ctx) {
-		// sort conversion for booleans
+		// sort conversion for booleans: bool expected, but term given
 		if (SmtSortUtils.isBoolSort(sort)) {
 			final var formula = new ap.types.Sort.MultipleValueBool$().isTrue(term);
 			return translateFormula(formula, ctx);
 		}
 
 		final var translated = translateTermInternal(term, ctx);
+
+		// sort conversion for booleans: term expected, but translated sort is bool
+		if (SmtSortUtils.isBoolSort(translated.getSort())) {
+			// zero is true, non-zero is false
+			// http://www.philipp.ruemmer.org/princess/doc/#ap.types.Sort$$MultipleValueBool$
+			final var trueTerm = numeral(BigInteger.ZERO);
+			final var falseTerm = numeral(BigInteger.ONE);
+			return SmtUtils.ite(mScript, translated, trueTerm, falseTerm);
+		}
+
 		assert translated.getSort().equals(sort) : "Translated term has sort " + translated.getSort() + " instead of "
 				+ sort;
 		return translated;
