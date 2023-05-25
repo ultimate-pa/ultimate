@@ -299,6 +299,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 			final var result = new HcHeadVar(globallyUniqueId, DUMMY_PRED_NAME, DUMMY_PRED_INDEX, transferredSort,
 					mManagedScript, this);
 			mManagedScript.unlock(this);
+			mTermVarToProgramVar.put(result.getTermVariable(), result);
 			return result;
 		});
 	}
