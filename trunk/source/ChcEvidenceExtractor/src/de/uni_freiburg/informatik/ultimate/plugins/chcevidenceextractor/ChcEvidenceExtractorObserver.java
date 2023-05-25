@@ -81,9 +81,8 @@ public class ChcEvidenceExtractorObserver extends BaseObserver {
 				return progVar.getTerm();
 			}
 			throw new UnsupportedOperationException("Local variables for multiple threads are not supported yet.");
-		});
+		}, backtranslator.getIcfg().getCfgSmtToolkit().getManagedScript(), mServices);
 		for (final Entry<List<IcfgLocation>, Term> entry : map.entrySet()) {
-			// TODO: Simplify the invariants here or during the backtranslation?
 			mLogger.info("Invariant at " + entry);
 		}
 		// TODO: Annotate the icfg?

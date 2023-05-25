@@ -7,8 +7,12 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -22,8 +26,11 @@ public abstract class ProgramAnnot extends BasePayloadContainer {
 	}
 
 	public Term getFormula(final List<IcfgLocation> locactions,
-			final BiFunction<IProgramVar, Integer, Term> localVarProvider) {
-		return mModel.getFunctionDefinition(getFunctionSymbol(locactions), getArguments(locactions, localVarProvider));
+			final BiFunction<IProgramVar, Integer, Term> localVarProvider, final ManagedScript managedScript,
+			final IUltimateServiceProvider services) {
+		final Term term =
+				mModel.getFunctionDefinition(getFunctionSymbol(locactions), getArguments(locactions, localVarProvider));
+		return SmtUtils.simplify(managedScript, term, services, SimplificationTechnique.SIMPLIFY_DDA);
 	}
 
 	protected abstract String getFunctionSymbol(List<IcfgLocation> locactions);
@@ -34,9 +41,10 @@ public abstract class ProgramAnnot extends BasePayloadContainer {
 	// TODO: How should we indicate that a thread is not started, by providing lists of different sizes?
 	protected abstract Collection<List<IcfgLocation>> getReachableProductLocations();
 
-	public Map<List<IcfgLocation>, Term> toProductMap(final BiFunction<IProgramVar, Integer, Term> localVarProvider) {
+	public Map<List<IcfgLocation>, Term> toProductMap(final BiFunction<IProgramVar, Integer, Term> localVarProvider,
+			final ManagedScript managedScript, final IUltimateServiceProvider services) {
 		return getReachableProductLocations().stream()
-				.collect(Collectors.toMap(x -> x, x -> getFormula(x, localVarProvider)));
+				.collect(Collectors.toMap(x -> x, x -> getFormula(x, localVarProvider, managedScript, services)));
 	}
 
 	// TODO: Add a method to create an Ashcroft invariant
