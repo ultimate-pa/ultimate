@@ -28,9 +28,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ConcurrencyMode;
@@ -104,8 +106,9 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 	}
 
 	@Override
-	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] {
+	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
+
+		return new BaseUltimatePreferenceItem[] {
 				// Settings for thread-modular proofs
 				new UltimatePreferenceItem<>(LABEL_CONCURRENCY_MODE, DEF_CONCURRENCY_MODE, DESC_CONCURRENCY_MODE,
 						PreferenceType.Combo, ConcurrencyMode.values()),
@@ -119,14 +122,21 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_LIPTON_REDUCTION, DEF_LIPTON_REDUCTION, DESC_LIPTON_REDUCTION,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SLEEP_SET_REDUCTION, DEF_SLEEP_SET_REDUCTION,
-						DESC_SLEEP_SET_REDUCTION, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_BREAK_PREFORDER_SYMMETRY, DEF_BREAK_PREFORDER_SYMMETRY,
-						DESC_BREAK_PREFORDER_SYMMETRY, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_EXPLICIT_SLEEP, DEF_EXPLICIT_SLEEP, DESC_EXPLICIT_SLEEP,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_CONDITIONAL_INDEPENDENCE, DEF_CONDITIONAL_INDEPENDENCE,
-						PreferenceType.Combo, ConditionalIndependence.values()) };
+
+				getSleepSetSettings() };
+	}
+
+	private UltimatePreferenceItemContainer getSleepSetSettings() {
+		final var container = new UltimatePreferenceItemContainer("Sleep Set Reduction");
+		container.addItem(new UltimatePreferenceItem<>(LABEL_SLEEP_SET_REDUCTION, DEF_SLEEP_SET_REDUCTION,
+				DESC_SLEEP_SET_REDUCTION, PreferenceType.Boolean));
+		container.addItem(new UltimatePreferenceItem<>(LABEL_BREAK_PREFORDER_SYMMETRY, DEF_BREAK_PREFORDER_SYMMETRY,
+				DESC_BREAK_PREFORDER_SYMMETRY, PreferenceType.Boolean));
+		container.addItem(new UltimatePreferenceItem<>(LABEL_EXPLICIT_SLEEP, DEF_EXPLICIT_SLEEP, DESC_EXPLICIT_SLEEP,
+				PreferenceType.Boolean));
+		container.addItem(new UltimatePreferenceItem<>(LABEL_CONDITIONAL_INDEPENDENCE, DEF_CONDITIONAL_INDEPENDENCE,
+				PreferenceType.Combo, ConditionalIndependence.values()));
+		return container;
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {

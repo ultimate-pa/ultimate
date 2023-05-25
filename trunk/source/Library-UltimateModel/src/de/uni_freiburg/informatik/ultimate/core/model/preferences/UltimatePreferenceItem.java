@@ -32,7 +32,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 
 /**
- * An UltimatePReferenceItem describes exactly one setting of a preference. Based on its {@link PreferenceType}, the
+ * An UltimatePreferenceItem describes exactly one setting of a preference. Based on its {@link PreferenceType}, the
  * active {@link IController} will present it to users for modification.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
