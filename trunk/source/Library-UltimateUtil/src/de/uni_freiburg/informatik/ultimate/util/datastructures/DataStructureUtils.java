@@ -450,4 +450,22 @@ public class DataStructureUtils {
 			return Collections.unmodifiableSet(set);
 		}
 	}
+
+	public static <T> Set<List<T>> cartesianProduct(final List<Set<T>> elements) {
+		if (elements.isEmpty()) {
+			return Set.of(List.of());
+		}
+		final Set<T> firstElements = elements.get(0);
+		final Set<List<T>> cartesianProductOfRest = cartesianProduct(elements.subList(1, elements.size()));
+		final Set<List<T>> result = new HashSet<>(firstElements.size() * cartesianProductOfRest.size());
+		for (final T elem : firstElements) {
+			for (final List<T> product : cartesianProductOfRest) {
+				final List<T> newProduct = new ArrayList<>(product.size() + 1);
+				newProduct.add(elem);
+				newProduct.addAll(product);
+				result.add(newProduct);
+			}
+		}
+		return result;
+	}
 }

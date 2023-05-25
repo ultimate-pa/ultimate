@@ -778,7 +778,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 					@Override
 					protected Term[] getArguments(final List<IcfgLocation> locations,
-							final List<Map<IProgramVar, Term>> localVarSubstitutions) {
+							final BiFunction<IProgramVar, Integer, Term> localVarProvider) {
 						final List<IHcReplacementVar> vars = getInvariantParameters();
 						final Term[] result = new Term[vars.size()];
 						int i = 0;
@@ -788,8 +788,8 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 							}
 							if (rv instanceof HcLocalVar) {
 								final HcLocalVar lv = (HcLocalVar) rv;
-								result[i] = localVarSubstitutions.get(lv.getThreadInstance().getInstanceNumber())
-										.get(lv.getVariable());
+								result[i] = localVarProvider.apply(lv.getVariable(),
+										lv.getThreadInstance().getInstanceNumber());
 							}
 							if (rv instanceof HcLocationVar) {
 								final ThreadInstance instance = ((HcLocationVar) rv).getThreadInstance();
@@ -809,6 +809,13 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 							i++;
 						}
 						return result;
+					}
+
+					@Override
+					protected Collection<List<IcfgLocation>> getReachableProductLocations() {
+						return DataStructureUtils.cartesianProduct(
+								mInstances.stream().map(x -> mLocationIndices.get(x.getTemplateName()).keySet())
+										.collect(Collectors.toList()));
 					}
 				};
 			}

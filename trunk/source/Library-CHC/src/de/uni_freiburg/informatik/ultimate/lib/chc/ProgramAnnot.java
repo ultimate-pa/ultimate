@@ -1,7 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.chc;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -19,13 +22,22 @@ public abstract class ProgramAnnot extends BasePayloadContainer {
 	}
 
 	public Term getFormula(final List<IcfgLocation> locactions,
-			final List<Map<IProgramVar, Term>> localVarSubstitutions) {
-		return mModel.getFunctionDefinition(getFunctionSymbol(locactions),
-				getArguments(locactions, localVarSubstitutions));
+			final BiFunction<IProgramVar, Integer, Term> localVarProvider) {
+		return mModel.getFunctionDefinition(getFunctionSymbol(locactions), getArguments(locactions, localVarProvider));
 	}
 
 	protected abstract String getFunctionSymbol(List<IcfgLocation> locactions);
 
 	protected abstract Term[] getArguments(List<IcfgLocation> locactions,
-			List<Map<IProgramVar, Term>> localVarSubstitutions);
+			BiFunction<IProgramVar, Integer, Term> localVarProvider);
+
+	// TODO: How should we indicate that a thread is not started, by providing lists of different sizes?
+	protected abstract Collection<List<IcfgLocation>> getReachableProductLocations();
+
+	public Map<List<IcfgLocation>, Term> toProductMap(final BiFunction<IProgramVar, Integer, Term> localVarProvider) {
+		return getReachableProductLocations().stream()
+				.collect(Collectors.toMap(x -> x, x -> getFormula(x, localVarProvider)));
+	}
+
+	// TODO: Add a method to create an Ashcroft invariant
 }
