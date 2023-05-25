@@ -107,6 +107,20 @@ public class SemanticIndependenceConditionGenerator {
 	/**
 	 * Generate a condition under which the given transitions are independent.
 	 *
+	 * @param a
+	 *            The first transition
+	 * @param b
+	 *            The second transition
+	 *
+	 * @return a sufficient condition for independence
+	 */
+	public Term generateConditionTerm(final UnmodifiableTransFormula a, final UnmodifiableTransFormula b) {
+		return generateConditionTerm(null, a, b);
+	}
+
+	/**
+	 * Generate a condition under which the given transitions are independent.
+	 *
 	 * @param context
 	 *            A context that is already known, but not sufficient for commutativity
 	 * @param a
@@ -117,6 +131,23 @@ public class SemanticIndependenceConditionGenerator {
 	 * @return a sufficient condition for independence
 	 */
 	public IPredicate generateCondition(final IPredicate context, final UnmodifiableTransFormula a,
+			final UnmodifiableTransFormula b) {
+		return mFactory.newPredicate(generateConditionTerm(context, a, b));
+	}
+
+	/**
+	 * Generate a condition term under which the given transitions are independent.
+	 *
+	 * @param context
+	 *            A context that is already known, but not sufficient for commutativity
+	 * @param a
+	 *            The first transition
+	 * @param b
+	 *            The second transition
+	 *
+	 * @return a sufficient condition for independence
+	 */
+	public Term generateConditionTerm(final IPredicate context, final UnmodifiableTransFormula a,
 			final UnmodifiableTransFormula b) {
 		// Generate both compositions, possibly adding a guard where applicable
 		final UnmodifiableTransFormula ab = withGuard(context, compose(a, b));
@@ -146,10 +177,7 @@ public class SemanticIndependenceConditionGenerator {
 			assert !substitution.containsKey(entry.getValue());
 			substitution.put(entry.getValue(), entry.getKey().getTermVariable());
 		}
-		final Term restoredCondition = Substitution.apply(mMgdScript, substitution, condition);
-
-		// Create a predicate
-		return mFactory.newPredicate(restoredCondition);
+		return Substitution.apply(mMgdScript, substitution, condition);
 	}
 
 	private final UnmodifiableTransFormula compose(final UnmodifiableTransFormula first,
