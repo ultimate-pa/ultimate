@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.chc.ChcCategorizer;
 import de.uni_freiburg.informatik.ultimate.lib.chc.Derivation;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
@@ -92,8 +93,8 @@ public class TreeAutomizerChcScript implements IChcScript {
 			final List<HornClause> system) {
 		reset();
 
-		// TODO missing parameter: category info
-		final var annot = new HornAnnot(DUMMY_FILENAME, mMgdScript, symbolTable, system, true, null);
+		final var categoryInfo = ChcCategorizer.categorize(system, mMgdScript);
+		final var annot = new HornAnnot(DUMMY_FILENAME, mMgdScript, symbolTable, system, true, categoryInfo);
 		final var cegar = new TreeAutomizerCEGAR(services, annot, mPrefs, mLogger);
 		try {
 			final var result = cegar.iterate();
