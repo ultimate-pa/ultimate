@@ -206,7 +206,7 @@ class Backtranslator {
 	}
 
 	private Term numeral(final BigInteger value) {
-		return SmtUtils.constructIntegerValue(mScript, getIntSort(), BigInteger.ZERO);
+		return SmtUtils.constructIntegerValue(mScript, getIntSort(), value);
 	}
 
 	private Sort getIntSort() {
