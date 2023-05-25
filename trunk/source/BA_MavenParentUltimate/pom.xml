@@ -498,6 +498,7 @@
 		<module>../CACSL2BoogieTranslator</module>
 		<module>../CDTParser</module>
 		<module>../CDTPlugin</module>
+		<module>../ChcEvidenceExtractor</module>
 		<module>../ChcSmtPrinter</module>
 		<module>../ChcSolver</module>
 		<module>../ChcToBoogie</module>
