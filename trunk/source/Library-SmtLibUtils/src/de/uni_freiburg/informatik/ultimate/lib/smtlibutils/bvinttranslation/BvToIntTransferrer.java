@@ -387,20 +387,20 @@ public class BvToIntTransferrer extends TermTransferrer {
 				name = ((TermVariable) term).getName();
 				if(SmtSortUtils.isBitvecSort(term.getSort())) {
 					intVar = mScript.variable(name, SmtSortUtils.getIntSort(mMgdScript));
-				} else {	
+				} else {
 					intVar =  mScript.variable(name, translateSort(mScript, term.getSort()));
 				}
-				
+
 			} else if (term instanceof ApplicationTerm) {
 				name = ((ApplicationTerm) term).getFunction().getName();
 				if (((ApplicationTerm) term).getParameters().length > 0) {
 					throw new AssertionError("We support only constant symbols, not general function symbols");
 				}
-				intVar = mScript.term(name);	
+				intVar = mScript.term(name);
 			} else {
 				throw new AssertionError("Unsupported term");
 			}
-			
+
 			mVariableMap.put(term, intVar);
 			mReversedVarMap.put(intVar, term);
 			return intVar;
@@ -452,14 +452,14 @@ public class BvToIntTransferrer extends TermTransferrer {
 		if (newBody != old.getSubformula()) {
 			for (int i = 0; i < old.getVariables().length; i++) {
 				if (SmtSortUtils.isBitvecSort(old.getVariables()[i].getSort())) {
-					
-					TermVariable freshQVar = mScript.variable(old.getVariables()[i].getName(), SmtSortUtils.getIntSort(mMgdScript));
+
+					final TermVariable freshQVar = mScript.variable(old.getVariables()[i].getName(), SmtSortUtils.getIntSort(mMgdScript));
 					newTermVars.add(freshQVar);
 					if(!mNutzTransformation) {
 						tvConstraints
 						.add(mTc.getTvConstraint(old.getVariables()[i], freshQVar));
 					}
-			
+
 
 				} else if (SmtSortUtils.isArraySort(old.getVariables()[i].getSort())) {
 					final Term newQuantifiedVar = mVariableMap.get(old.getVariables()[i]);
@@ -473,7 +473,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 
 					mArraySelectConstraintMap.remove(newQuantifiedVar);
 				} else {
-					TermVariable freshQVar = mScript.variable(old.getVariables()[i].getName(), 
+					final TermVariable freshQVar = mScript.variable(old.getVariables()[i].getName(),
 							translateSort(mScript, old.getVariables()[i].getSort()));
 					newTermVars.add(freshQVar);
 				}
@@ -544,7 +544,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 					// maximal representable number by a bit-vector of width "width" plus one
 					final Term maxNumberPlusOne = SmtUtils.rational2Term(mScript,
 							Rational.valueOf(two.pow(width), BigInteger.ONE), intSort);
-					Term mod = SmtUtils.mod(mScript, args[1], maxNumberPlusOne);
+					final Term mod = SmtUtils.mod(mScript, args[1], maxNumberPlusOne);
 					setResult(SmtUtils.store(mNewScript, args[0], mod, args[2]));
 					return;
 				} else {
@@ -567,7 +567,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 						// maximal representable number by a bit-vector of width "width" plus one
 						final Term maxNumberPlusOne = SmtUtils.rational2Term(mScript,
 								Rational.valueOf(two.pow(width), BigInteger.ONE), intSort);
-						Term mod = SmtUtils.mod(mScript, args[1], maxNumberPlusOne);
+						final Term mod = SmtUtils.mod(mScript, args[1], maxNumberPlusOne);
 						index = mod;
 					}
 
