@@ -537,20 +537,47 @@ public class BvToIntTransferrer extends TermTransferrer {
 				setResult(SmtUtils.implies(mNewScript, args[0], args[1]));
 				return;
 			}
-			case "store":
+			case "store": {
 				assert args.length == 3;
-//TODO mod um index around store and select
-				setResult(SmtUtils.store(mNewScript, args[0], args[1], args[2]));
-				return;
-			case "select": {
-				// select terms can act as variables
-				if (SmtSortUtils.isBitvecSort(appTerm.getSort()) && !mNutzTransformation) {
-					mArraySelectConstraintMap.put(args[0],
-							mTc.getSelectConstraint(appTerm, mScript.term(fsym.getName(), args)));
+				if (mNutzTransformation && SmtSortUtils.isBitvecSort(appTerm.getParameters()[1].getSort())) {
+					final int width = Integer.valueOf(appTerm.getParameters()[1].getSort().getIndices()[0]);
+					// maximal representable number by a bit-vector of width "width" plus one
+					final Term maxNumberPlusOne = SmtUtils.rational2Term(mScript,
+							Rational.valueOf(two.pow(width), BigInteger.ONE), intSort);
+					Term mod = SmtUtils.mod(mScript, args[1], maxNumberPlusOne);
+					setResult(SmtUtils.store(mNewScript, args[0], mod, args[2]));
+					return;
+				} else {
+					setResult(SmtUtils.store(mNewScript, args[0], args[1], args[2]));
+					return;
 				}
+			}
+			case "select": {
 				assert args.length == 2;
-				setResult(SmtUtils.select(mNewScript, args[0], args[1]));
-				return;
+				if (SmtSortUtils.isBitvecSort(appTerm.getSort())) {
+					Term index;
+					if (!mNutzTransformation) {
+						// select terms can act as variables
+
+						mArraySelectConstraintMap.put(args[0],
+								mTc.getSelectConstraint(appTerm, mScript.term(fsym.getName(), args)));
+						index = args[1];
+					} else {
+						final int width = Integer.valueOf(appTerm.getParameters()[1].getSort().getIndices()[0]);
+						// maximal representable number by a bit-vector of width "width" plus one
+						final Term maxNumberPlusOne = SmtUtils.rational2Term(mScript,
+								Rational.valueOf(two.pow(width), BigInteger.ONE), intSort);
+						Term mod = SmtUtils.mod(mScript, args[1], maxNumberPlusOne);
+						index = mod;
+					}
+
+					setResult(SmtUtils.select(mNewScript, args[0], index));
+					return;
+				} else {
+					setResult(SmtUtils.select(mNewScript, args[0], args[1]));
+					return;
+				}
+
 			}
 			}
 		}
