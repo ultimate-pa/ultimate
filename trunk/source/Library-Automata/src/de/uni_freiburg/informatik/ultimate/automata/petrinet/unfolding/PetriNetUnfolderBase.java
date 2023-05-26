@@ -74,7 +74,7 @@ public abstract class PetriNetUnfolderBase<L, P, R> {
 	private final ConfigurationOrder<L, P> mOrder;
 	private final IPossibleExtensions<L, P> mPossibleExtensions;
 	protected final BranchingProcess<L, P> mUnfolding;
-	protected R mRun;
+	private R mRun;
 
 	private final Statistics mStatistics = new Statistics();
 
@@ -153,7 +153,9 @@ public abstract class PetriNetUnfolderBase<L, P, R> {
 	 * @return bool if word is found
 	 * @throws PetriNetNot1SafeException
 	 */
-	protected abstract boolean checkInitialPlacesAndCreateRun() throws PetriNetNot1SafeException;
+	protected abstract boolean checkInitialPlaces();
+
+	protected abstract R constructInitialRun() throws PetriNetNot1SafeException;
 
 	/**
 	 * Adds the event to the Unfolding and then checks if a word can be found in this new Unfolding.
@@ -164,11 +166,14 @@ public abstract class PetriNetUnfolderBase<L, P, R> {
 	 */
 	protected abstract boolean addAndCheck(final Event<L, P> event) throws PetriNetNot1SafeException;
 
-	protected abstract void updateRunIfWanted(final Event<L, P> event) throws PetriNetNot1SafeException;
+	protected abstract R constructRun(final Event<L, P> event) throws PetriNetNot1SafeException;
 
 	private void computeUnfolding() throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		if (checkInitialPlacesAndCreateRun() && mStopIfAcceptingRunFound) {
-			return;
+		if (checkInitialPlaces()) {
+			mRun = constructInitialRun();
+			if (mStopIfAcceptingRunFound) {
+				return;
+			}
 		}
 		mPossibleExtensions.update(mUnfolding.getDummyRoot());
 
@@ -206,7 +211,9 @@ public abstract class PetriNetUnfolderBase<L, P, R> {
 			isCutOffEvent = event.isCutoffEvent();
 		}
 		if (addAndCheck(event)) {
-			updateRunIfWanted(event);
+			if (mRun == null) {
+				mRun = constructRun(event);
+			}
 			if (mStopIfAcceptingRunFound) {
 				return true;
 			}
@@ -247,7 +254,12 @@ public abstract class PetriNetUnfolderBase<L, P, R> {
 		return mUnfolding;
 	}
 
-	abstract boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<P> stateFactory)
+	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<P> stateFactory)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		return checkRun(stateFactory, mRun);
+	}
+
+	protected abstract boolean checkRun(IPetriNet2FiniteAutomatonStateFactory<P> stateFactory, R run)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException;
 
 	/**

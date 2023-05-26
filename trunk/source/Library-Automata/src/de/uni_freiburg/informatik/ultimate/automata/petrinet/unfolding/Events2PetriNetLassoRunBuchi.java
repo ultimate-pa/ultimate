@@ -2,8 +2,8 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
@@ -20,50 +20,30 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  */
 public class Events2PetriNetLassoRunBuchi<LETTER, PLACE> {
 	private final BranchingProcess<LETTER, PLACE> mUnfolding;
-	private final AutomataLibraryServices mServices;
-	private final PetriNetLassoRun<LETTER, PLACE> mLassoRun;
+	private final List<Event<LETTER, PLACE>> mConfigStemPart;
+	private final List<Event<LETTER, PLACE>> mConfigLoopPart;
 
-	public Events2PetriNetLassoRunBuchi(final AutomataLibraryServices services,
-			final List<Event<LETTER, PLACE>> configLoopPart, final List<Event<LETTER, PLACE>> configStemPart,
-			final BranchingProcess<LETTER, PLACE> unfolding) throws PetriNetNot1SafeException {
-		mServices = services;
+	public Events2PetriNetLassoRunBuchi(final List<Event<LETTER, PLACE>> configLoopPart,
+			final List<Event<LETTER, PLACE>> configStemPart, final BranchingProcess<LETTER, PLACE> unfolding) {
 		mUnfolding = unfolding;
-		mLassoRun = checkIfLassoConfigurationAccepted(configLoopPart, configStemPart);
+		mConfigStemPart = configStemPart;
+		mConfigLoopPart = configLoopPart;
 	}
 
-	public final PetriNetLassoRun<LETTER, PLACE> getLassoRun() {
-		return mLassoRun;
+	public boolean isAccepted() {
+		return mConfigLoopPart.stream().flatMap(x -> x.getTransition().getSuccessors().stream())
+				.anyMatch(mUnfolding.getNet()::isAccepting);
 	}
 
 	/**
 	 * Given loop and stem events, checks if the respective Transitions actually build a valid lasso-run in the
 	 * Petri-Net.
-	 *
-	 * @param configLoopPart
-	 * @param configStemPart
-	 * @return PetriNetLassoRun
-	 * @throws PetriNetNot1SafeException
 	 */
-	private final PetriNetLassoRun<LETTER, PLACE> checkIfLassoConfigurationAccepted(
-			final List<Event<LETTER, PLACE>> configLoopPart, final List<Event<LETTER, PLACE>> configStemPart)
-			throws PetriNetNot1SafeException {
-		final List<Transition<LETTER, PLACE>> stemTransitions = new ArrayList<>();
-		final List<Transition<LETTER, PLACE>> loopTransitions = new ArrayList<>();
-
-		boolean acceptingPlaceShotintoInLoop = false;
-		for (final Event<LETTER, PLACE> loopEvent : configLoopPart) {
-			if (loopEvent.getTransition().getSuccessors().stream().anyMatch(mUnfolding.getNet()::isAccepting)) {
-				acceptingPlaceShotintoInLoop = true;
-			}
-			loopTransitions.add(loopEvent.getTransition());
-		}
-		if (!acceptingPlaceShotintoInLoop) {
-			return null;
-		}
-
-		for (final Event<LETTER, PLACE> stemEvent : configStemPart) {
-			stemTransitions.add(stemEvent.getTransition());
-		}
+	public PetriNetLassoRun<LETTER, PLACE> constructLassoRun() throws PetriNetNot1SafeException {
+		final List<Transition<LETTER, PLACE>> stemTransitions =
+				mConfigStemPart.stream().map(Event::getTransition).collect(Collectors.toList());
+		final List<Transition<LETTER, PLACE>> loopTransitions =
+				mConfigLoopPart.stream().map(Event::getTransition).collect(Collectors.toList());
 
 		final Marking<PLACE> startMarking = new Marking<>(ImmutableSet.of(mUnfolding.getNet().getInitialPlaces()));
 

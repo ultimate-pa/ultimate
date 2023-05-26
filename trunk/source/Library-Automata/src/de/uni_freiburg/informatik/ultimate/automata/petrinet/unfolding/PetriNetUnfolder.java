@@ -87,15 +87,15 @@ public final class PetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P, Pet
 	}
 
 	@Override
-	protected boolean checkInitialPlacesAndCreateRun() throws PetriNetNot1SafeException {
-		for (final Condition<L, P> c : mUnfolding.getDummyRoot().getSuccessorConditions()) {
-			if (mOperand.isAccepting(c.getPlace())) {
-				mRun = new PetriNetRun<>(
-						new ConditionMarking<>(mUnfolding.getDummyRoot().getSuccessorConditions()).getMarking());
-				return true;
-			}
-		}
-		return false;
+	protected boolean checkInitialPlaces() {
+		return mUnfolding.getDummyRoot().getSuccessorConditions().stream()
+				.anyMatch(c -> mOperand.isAccepting(c.getPlace()));
+	}
+
+	@Override
+	protected PetriNetRun<L, P> constructInitialRun() throws PetriNetNot1SafeException {
+		return new PetriNetRun<>(
+				new ConditionMarking<>(mUnfolding.getDummyRoot().getSuccessorConditions()).getMarking());
 	}
 
 	@Override
@@ -104,19 +104,13 @@ public final class PetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P, Pet
 	}
 
 	@Override
-	protected void updateRunIfWanted(final Event<L, P> event) {
-		if (mRun == null) {
-			mRun = constructRun(event);
-		}
-	}
-
-	/**
-	 * constructs a run over the unfolding which leads to the marking corresponding with the local configuration of the
-	 * specified event e.
-	 * <p>
-	 * uses the recursive helper-method {@code #constructRun(Event, Marking)}
-	 */
-	private PetriNetRun<L, P> constructRun(final Event<L, P> event) {
+	protected PetriNetRun<L, P> constructRun(final Event<L, P> event) {
+		/**
+		 * constructs a run over the unfolding which leads to the marking corresponding with the local configuration of
+		 * the specified event e.
+		 * <p>
+		 * uses the recursive helper-method {@code #constructRun(Event, Marking)}
+		 */
 		mLogger.debug("Marking: " + mUnfolding.getDummyRoot().getMark());
 		try {
 			return constructRun(event, mUnfolding.getDummyRoot().getConditionMark()).mRunInner;
@@ -172,7 +166,7 @@ public final class PetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P, Pet
 	}
 
 	@Override
-	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<P> stateFactory)
+	protected boolean checkRun(final IPetriNet2FiniteAutomatonStateFactory<P> stateFactory, final PetriNetRun<L, P> run)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger.info("Testing correctness of emptinessCheck");
 		if (!(mOperand instanceof IPetriNetTransitionProvider)) {
@@ -181,7 +175,7 @@ public final class PetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P, Pet
 		}
 
 		boolean correct;
-		if (mRun == null) {
+		if (run == null) {
 			final NestedRun<L, P> automataRun = (new IsEmpty<>(mServices, (new PetriNet2FiniteAutomaton<>(mServices,
 					stateFactory, (IPetriNetTransitionProvider<L, P>) mOperand)).getResult())).getNestedRun();
 			if (automataRun != null) {
@@ -191,7 +185,7 @@ public final class PetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P, Pet
 			}
 			correct = automataRun == null;
 		} else {
-			final Word<L> word = mRun.getWord();
+			final Word<L> word = run.getWord();
 			if (new Accepts<>(mServices, (IPetriNetTransitionProvider<L, P>) mOperand, word).getResult()) {
 				correct = true;
 			} else {

@@ -25,6 +25,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class PetriNetUnfolderBuchi<LETTER, PLACE>
 		extends PetriNetUnfolderBase<LETTER, PLACE, PetriNetLassoRun<LETTER, PLACE>> {
+
+	private Events2PetriNetLassoRunBuchi<LETTER, PLACE> mEvents2PetriNetLassoRunBuchi;
+
 	public PetriNetUnfolderBuchi(final AutomataLibraryServices services,
 			final IPetriNetSuccessorProvider<LETTER, PLACE> operand, final EventOrderEnum order,
 			final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
@@ -33,8 +36,13 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE>
 	}
 
 	@Override
-	protected boolean checkInitialPlacesAndCreateRun() {
+	protected boolean checkInitialPlaces() {
 		return false;
+	}
+
+	@Override
+	protected PetriNetLassoRun<LETTER, PLACE> constructInitialRun() throws PetriNetNot1SafeException {
+		return null;
 	}
 
 	@Override
@@ -140,22 +148,22 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE>
 	}
 
 	private final boolean checkIfLassoConfigurationAccepted(final List<Event<LETTER, PLACE>> configLoopPart,
-			final List<Event<LETTER, PLACE>> configStemPart) throws PetriNetNot1SafeException {
-		final var buildAndCheck =
-				new Events2PetriNetLassoRunBuchi<>(mServices, configLoopPart, configStemPart, mUnfolding);
-		mRun = buildAndCheck.getLassoRun();
-		return mRun != null;
+			final List<Event<LETTER, PLACE>> configStemPart) {
+		mEvents2PetriNetLassoRunBuchi = new Events2PetriNetLassoRunBuchi<>(configLoopPart, configStemPart, mUnfolding);
+		return mEvents2PetriNetLassoRunBuchi.isAccepted();
 	}
 
 	@Override
-	protected void updateRunIfWanted(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
-		// Nothing to do, the run was already created in checkIfLassoConfigurationAccepted
+	protected PetriNetLassoRun<LETTER, PLACE> constructRun(final Event<LETTER, PLACE> event)
+			throws PetriNetNot1SafeException {
+		return mEvents2PetriNetLassoRunBuchi.constructLassoRun();
 	}
 
 	@Override
-	boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory)
+	protected boolean checkRun(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory,
+			final PetriNetLassoRun<LETTER, PLACE> run)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		// Not implemented yet
+		// TODO: Not implemented yet
 		return true;
 	}
 }
