@@ -1,9 +1,8 @@
-package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
-
 /*
  * Copyright (C) 2020 Marcel Ebbinghaus
  * Copyright (C) 2020 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * Copyright (C) 2020 University of Freiburg
+ * Copyright (C) 2022-2023 Daniel Küchler (kuechlerdaniel33@gmail.com)
+ * Copyright (C) 2020-2023 University of Freiburg
  *
  * This file is part of the ULTIMATE Automata Library.
  *
@@ -27,6 +26,8 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
+
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import java.util.Collections;
 import java.util.HashMap;

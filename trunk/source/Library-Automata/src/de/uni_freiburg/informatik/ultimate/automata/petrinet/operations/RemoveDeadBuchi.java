@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2018 schaetzc@tf.uni-freiburg.de
- * Copyright (C) 2009-2018 University of Freiburg
+ * Copyright (C) 2022-2023 Daniel Küchler (kuechlerdaniel33@gmail.com)
+ * Copyright (C) 2009-2023 University of Freiburg
  *
  * This file is part of the ULTIMATE Automata Library.
  *
