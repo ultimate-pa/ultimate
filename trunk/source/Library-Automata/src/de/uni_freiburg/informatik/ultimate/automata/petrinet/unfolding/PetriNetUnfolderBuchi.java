@@ -141,34 +141,34 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE>
 			Collections.reverse(reversesortedList);
 			final List<Event<LETTER, PLACE>> newList = new ArrayList<>();
 			for (final Event<LETTER, PLACE> event2 : reversesortedList) {
-				if (event2.isCompanion()) {
-					nextPair.getFirst().add(newList);
-					if (event2.getCutoffEventsThisIsCompanionTo().contains(event)) {
-						Collections.reverse(nextPair.getFirst());
-						final List<Event<LETTER, PLACE>> configLoopEvents =
-								nextPair.getFirst().stream().flatMap(List::stream).collect(Collectors.toList());
-						final List<Event<LETTER, PLACE>> configStemEvents =
-								event.getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder());
-
-						if (checkIfLassoConfigurationAccepted(configLoopEvents, configStemEvents)) {
-							return true;
-						}
-					}
-					// New backtrack-tree-path found through another companion event. We don't add event2 to the
-					// list of events because it is not part of the word.
-					for (final Event<LETTER, PLACE> cutoffEvent : event2.getCutoffEventsThisIsCompanionTo()) {
-						if (seenEvents.contains(cutoffEvent)) {
-							// to avoid looping
-							continue;
-						}
-						seenEvents.add(cutoffEvent);
-						wordBeingBuilt.add(new Pair<>(new ArrayList<>(nextPair.getFirst()), cutoffEvent));
-					}
-					break;
-
+				if (!event2.isCompanion()) {
+					// adding events we pass through, because they will build the lasso-word.
+					newList.add(0, event2);
+					continue;
 				}
-				// adding events we pass through, because they will build the lasso-word.
-				newList.add(0, event2);
+				nextPair.getFirst().add(newList);
+				if (event2.getCutoffEventsThisIsCompanionTo().contains(event)) {
+					Collections.reverse(nextPair.getFirst());
+					final List<Event<LETTER, PLACE>> configLoopEvents =
+							nextPair.getFirst().stream().flatMap(List::stream).collect(Collectors.toList());
+					final List<Event<LETTER, PLACE>> configStemEvents =
+							event.getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder());
+
+					if (checkIfLassoConfigurationAccepted(configLoopEvents, configStemEvents)) {
+						return true;
+					}
+				}
+				// New backtrack-tree-path found through another companion event. We don't add event2 to the
+				// list of events because it is not part of the word.
+				for (final Event<LETTER, PLACE> cutoffEvent : event2.getCutoffEventsThisIsCompanionTo()) {
+					if (!seenEvents.add(cutoffEvent)) {
+						// to avoid looping
+						continue;
+					}
+					wordBeingBuilt.add(new Pair<>(new ArrayList<>(nextPair.getFirst()), cutoffEvent));
+				}
+				break;
+
 			}
 		}
 		return false;
