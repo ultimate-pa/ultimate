@@ -132,7 +132,7 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 
 		// update sleep variables
 		for (final var instance : mInstances) {
-			if (preds.containsKey(updatedThread)) {
+			if (preds.containsKey(instance)) {
 				// no update of sleep variable
 				continue;
 			}
