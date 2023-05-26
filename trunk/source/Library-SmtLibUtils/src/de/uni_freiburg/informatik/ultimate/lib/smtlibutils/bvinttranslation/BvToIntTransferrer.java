@@ -791,7 +791,10 @@ public class BvToIntTransferrer extends TermTransferrer {
 			}
 
 		}
-		super.convertApplicationTerm(appTerm, args);
+		// TODO: This is the intended translation for uninterpreted function symbols
+		// currently it is applied to all functions that are not handled above.
+		final Term result = mNewScript.term(appTerm.getFunction().getName(), args);
+		setResult(result);
 	}
 
 	private Term translateExtract(final ApplicationTerm appTerm, final Term translatedLHS) {
