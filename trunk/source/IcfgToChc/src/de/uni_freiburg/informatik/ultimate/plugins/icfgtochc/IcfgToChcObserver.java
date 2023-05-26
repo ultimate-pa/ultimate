@@ -162,7 +162,7 @@ public class IcfgToChcObserver extends BaseObserver {
 	}
 
 	private ISymbolicIndependenceRelation<IAction> getIndependence(final IIcfg<?> icfg, final ManagedScript mgdScript) {
-		final boolean symmetric = true;
+		final boolean symmetric = !mPrefs.useSemicommutativity();
 		final var independence = new SemanticIndependenceRelation<>(mServices, mgdScript, false, symmetric);
 
 		switch (mPrefs.conditionalIndependence()) {

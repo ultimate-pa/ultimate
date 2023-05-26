@@ -106,6 +106,9 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String LABEL_CONDITIONAL_INDEPENDENCE = "Conditional Independence";
 	public static final ConditionalIndependence DEF_CONDITIONAL_INDEPENDENCE = ConditionalIndependence.OFF;
 
+	public static final String LABEL_SEMICOMMUTATIVITY = "Use semi-commutativity";
+	public static final boolean DEF_SEMICOMMUTATIVITY = true;
+
 	public enum PreferenceOrder {
 		SEQ_COMP, LOCKSTEP
 	}
@@ -152,6 +155,8 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 				PreferenceType.Combo, PreferenceOrder.values()));
 		container.addItem(new UltimatePreferenceItem<>(LABEL_CONDITIONAL_INDEPENDENCE, DEF_CONDITIONAL_INDEPENDENCE,
 				PreferenceType.Combo, ConditionalIndependence.values()));
+		container.addItem(
+				new UltimatePreferenceItem<>(LABEL_SEMICOMMUTATIVITY, DEF_SEMICOMMUTATIVITY, PreferenceType.Boolean));
 		return container;
 	}
 

@@ -86,4 +86,8 @@ public class IcfgToChcPreferences {
 		return mPrefs.getEnum(IcfgToChcPreferenceInitializer.LABEL_CONDITIONAL_INDEPENDENCE,
 				ConditionalIndependence.class);
 	}
+
+	public boolean useSemicommutativity() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_SEMICOMMUTATIVITY);
+	}
 }
