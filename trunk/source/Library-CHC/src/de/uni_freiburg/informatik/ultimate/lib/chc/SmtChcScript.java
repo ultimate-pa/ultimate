@@ -59,7 +59,6 @@ public class SmtChcScript implements IChcScript {
 
 	public SmtChcScript(final ManagedScript mgdScript) {
 		mMgdScript = mgdScript;
-		mMgdScript.lock(this);
 	}
 
 	@Override
@@ -71,15 +70,16 @@ public class SmtChcScript implements IChcScript {
 	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system) {
 		reset();
 
-		mMgdScript.unlock(this);
 		final var asserter =
 				new ChcAsserter(mMgdScript, getScript(), mProduceUnsatCores, ADD_COMMENTS, DECLARE_FUNCTIONS);
 		asserter.assertClauses(symbolTable, system);
 		mMgdScript.lock(this);
 
 		mName2Clause = asserter.getName2Clause();
+		final LBool result = mMgdScript.checkSat(this);
 
-		return mMgdScript.checkSat(this);
+		mMgdScript.unlock(this);
+		return result;
 	}
 
 	@Override
