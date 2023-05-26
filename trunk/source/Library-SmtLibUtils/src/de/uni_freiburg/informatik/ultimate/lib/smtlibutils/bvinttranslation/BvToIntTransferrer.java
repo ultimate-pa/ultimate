@@ -382,17 +382,25 @@ public class BvToIntTransferrer extends TermTransferrer {
 		final boolean declareFun = true;
 		if (declareFun) {
 			String name;
+			final Term intVar;
 			if (term instanceof TermVariable) {
 				name = ((TermVariable) term).getName();
+				if(SmtSortUtils.isBitvecSort(term.getSort())) {
+					intVar = mScript.variable(name, SmtSortUtils.getIntSort(mMgdScript));
+				} else {	
+					intVar =  mScript.variable(name, translateSort(mScript, term.getSort()));
+				}
+				
 			} else if (term instanceof ApplicationTerm) {
 				name = ((ApplicationTerm) term).getFunction().getName();
 				if (((ApplicationTerm) term).getParameters().length > 0) {
 					throw new AssertionError("We support only constant symbols, not general function symbols");
 				}
+				intVar = mScript.term(name);	
 			} else {
 				throw new AssertionError("Unsupported term");
 			}
-			final Term intVar = mScript.term(name);
+			
 			mVariableMap.put(term, intVar);
 			mReversedVarMap.put(intVar, term);
 			return intVar;
@@ -439,18 +447,23 @@ public class BvToIntTransferrer extends TermTransferrer {
 	 */
 	@Override
 	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
-		final HashSet<TermVariable> newTermVars = new HashSet();
-		final HashSet<Term> tvConstraints = new HashSet();
+		final HashSet<TermVariable> newTermVars = new HashSet<TermVariable>();
+		final HashSet<Term> tvConstraints = new HashSet<Term>();
 		if (newBody != old.getSubformula()) {
 			for (int i = 0; i < old.getVariables().length; i++) {
 				if (SmtSortUtils.isBitvecSort(old.getVariables()[i].getSort())) {
-					newTermVars.add((TermVariable) mVariableMap.get(old.getVariables()[i]));
-
-					tvConstraints
-							.add(mTc.getTvConstraint(old.getVariables()[i], mVariableMap.get(old.getVariables()[i])));
+					
+					TermVariable freshQVar = mScript.variable(old.getVariables()[i].getName(), SmtSortUtils.getIntSort(mMgdScript));
+					newTermVars.add(freshQVar);
+					if(!mNutzTransformation) {
+						tvConstraints
+						.add(mTc.getTvConstraint(old.getVariables()[i], freshQVar));
+					}
+			
 
 				} else if (SmtSortUtils.isArraySort(old.getVariables()[i].getSort())) {
 					final Term newQuantifiedVar = mVariableMap.get(old.getVariables()[i]);
+					assert mVariableMap.get(old.getVariables()[i]) != null;
 					newTermVars.add((TermVariable) newQuantifiedVar);
 
 					final Term arrayConstraint = mArraySelectConstraintMap.get(newQuantifiedVar);
@@ -460,7 +473,9 @@ public class BvToIntTransferrer extends TermTransferrer {
 
 					mArraySelectConstraintMap.remove(newQuantifiedVar);
 				} else {
-					newTermVars.add(old.getVariables()[i]);
+					TermVariable freshQVar = mScript.variable(old.getVariables()[i].getName(), 
+							translateSort(mScript, old.getVariables()[i].getSort()));
+					newTermVars.add(freshQVar);
 				}
 			}
 
@@ -524,12 +539,12 @@ public class BvToIntTransferrer extends TermTransferrer {
 			}
 			case "store":
 				assert args.length == 3;
-
+//TODO mod um index around store and select
 				setResult(SmtUtils.store(mNewScript, args[0], args[1], args[2]));
 				return;
 			case "select": {
 				// select terms can act as variables
-				if (SmtSortUtils.isBitvecSort(appTerm.getSort())) {
+				if (SmtSortUtils.isBitvecSort(appTerm.getSort()) && !mNutzTransformation) {
 					mArraySelectConstraintMap.put(args[0],
 							mTc.getSelectConstraint(appTerm, mScript.term(fsym.getName(), args)));
 				}
@@ -1045,14 +1060,20 @@ public class BvToIntTransferrer extends TermTransferrer {
 		return false;
 	}
 
-	private Sort translateSort(final Script script, final Sort sort) {
+	//Duplicated Method from IntBlastingWrapper
+	public Sort translateSort(final Script script, final Sort sort) {
 		final Sort result;
-		if (isBitVecSort(sort)) {
+		if (sort.getName().equals("BitVec")) {
 			result = SmtSortUtils.getIntSort(script);
 		} else if (SmtSortUtils.isArraySort(sort)) {
 			result = translateArraySort(sort);
 		} else {
-			throw new UnsupportedOperationException("Unsupported sort: " + sort);
+			final Sort[] oldSorts = sort.getArguments();
+			final Sort[] newSorts = new Sort[oldSorts.length];
+			for (int i = 0; i < oldSorts.length; i++) {
+				newSorts[i] = translateSort(script, oldSorts[i]);
+			}
+			return script.sort(sort.getName(), sort.getIndices(), newSorts);
 		}
 		return result;
 	}
