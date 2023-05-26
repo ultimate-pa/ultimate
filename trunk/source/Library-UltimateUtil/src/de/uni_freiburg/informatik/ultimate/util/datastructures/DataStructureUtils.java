@@ -453,11 +453,11 @@ public class DataStructureUtils {
 
 	public static <T> Set<List<T>> cartesianProduct(final List<Set<T>> elements) {
 		Set<List<T>> result = Set.of(List.of());
-		for (final Set<T> firstElements : elements) {
-			final Set<List<T>> newResult = new HashSet<>(firstElements.size() * result.size());
+		for (final Set<T> lastElements : elements) {
+			final Set<List<T>> newResult = new HashSet<>(lastElements.size() * result.size());
 			for (final List<T> product : result) {
-				for (final T elem : firstElements) {
-					newResult.add(concat(List.of(elem), product));
+				for (final T elem : lastElements) {
+					newResult.add(concat(product, List.of(elem)));
 				}
 			}
 			result = newResult;
