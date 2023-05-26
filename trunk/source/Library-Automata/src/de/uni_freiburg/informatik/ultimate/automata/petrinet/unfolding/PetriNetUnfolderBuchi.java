@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -143,15 +144,12 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE>
 				if (event2.isCompanion()) {
 					nextPair.getFirst().add(newList);
 					if (event2.getCutoffEventsThisIsCompanionTo().contains(event)) {
-						final List<Event<LETTER, PLACE>> configLoopEvents = new ArrayList<>();
-						final List<Event<LETTER, PLACE>> configStemEvents = new ArrayList<>();
-
 						Collections.reverse(nextPair.getFirst());
-						for (final List<Event<LETTER, PLACE>> localconfigList : nextPair.getFirst()) {
-							configLoopEvents.addAll(localconfigList);
-						}
-						configStemEvents
-								.addAll(event.getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder()));
+						final List<Event<LETTER, PLACE>> configLoopEvents =
+								nextPair.getFirst().stream().flatMap(List::stream).collect(Collectors.toList());
+						final List<Event<LETTER, PLACE>> configStemEvents =
+								event.getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder());
+
 						if (checkIfLassoConfigurationAccepted(configLoopEvents, configStemEvents)) {
 							return true;
 						}
