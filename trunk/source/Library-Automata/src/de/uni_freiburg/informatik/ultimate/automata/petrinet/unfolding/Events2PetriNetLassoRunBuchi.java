@@ -69,15 +69,13 @@ public class Events2PetriNetLassoRunBuchi<LETTER, PLACE> {
 			final List<Transition<LETTER, PLACE>> transitions) throws PetriNetNot1SafeException {
 		final List<LETTER> word = new ArrayList<>();
 		final List<Marking<PLACE>> markings = new ArrayList<>();
-		final List<Transition<LETTER, PLACE>> resultTransitions = new ArrayList<>();
 		markings.add(initialMarking);
 		Marking<PLACE> currentMarking = initialMarking;
 		for (final Transition<LETTER, PLACE> transition : transitions) {
 			word.add(transition.getSymbol());
 			currentMarking = currentMarking.fireTransition(transition);
 			markings.add(currentMarking);
-			resultTransitions.add(transition);
 		}
-		return new PetriNetRun<>(markings, new Word<>((LETTER[]) word.toArray()), resultTransitions);
+		return new PetriNetRun<>(markings, new Word<>((LETTER[]) word.toArray()), transitions);
 	}
 }
