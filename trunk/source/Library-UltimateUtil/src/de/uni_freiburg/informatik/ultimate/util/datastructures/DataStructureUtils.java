@@ -452,19 +452,15 @@ public class DataStructureUtils {
 	}
 
 	public static <T> Set<List<T>> cartesianProduct(final List<Set<T>> elements) {
-		if (elements.isEmpty()) {
-			return Set.of(List.of());
-		}
-		final Set<T> firstElements = elements.get(0);
-		final Set<List<T>> cartesianProductOfRest = cartesianProduct(elements.subList(1, elements.size()));
-		final Set<List<T>> result = new HashSet<>(firstElements.size() * cartesianProductOfRest.size());
-		for (final T elem : firstElements) {
-			for (final List<T> product : cartesianProductOfRest) {
-				final List<T> newProduct = new ArrayList<>(product.size() + 1);
-				newProduct.add(elem);
-				newProduct.addAll(product);
-				result.add(newProduct);
+		Set<List<T>> result = Set.of(List.of());
+		for (final Set<T> firstElements : elements) {
+			final Set<List<T>> newResult = new HashSet<>(firstElements.size() * result.size());
+			for (final List<T> product : result) {
+				for (final T elem : firstElements) {
+					newResult.add(concat(List.of(elem), product));
+				}
 			}
+			result = newResult;
 		}
 		return result;
 	}
