@@ -31,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
@@ -118,6 +119,9 @@ public class TranslationManager {
 			mConstraintSet.addAll(bvToInt.mArraySelectConstraintMap.values());
 		}else {
 			mConstraintSet.addAll(mTc.getBvandConstraints());
+		}
+		if (!mConstraintSet.isEmpty() && !SmtSortUtils.isBoolSort(integerFormulaNoConstraint.getSort())) {
+			throw new AssertionError("Cannot add constraints to non-Boolean formula.");
 		}
 		// TODO: Also add the constraints with mNutzTransformation=true, maybe we need to be more careful there
 		final Term integerFormula =
