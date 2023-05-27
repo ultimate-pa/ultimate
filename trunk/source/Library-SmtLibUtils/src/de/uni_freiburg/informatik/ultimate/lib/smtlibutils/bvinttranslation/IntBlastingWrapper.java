@@ -311,7 +311,7 @@ public class IntBlastingWrapper extends WrapperScript {
 					new HistoryRecordingScript(mIntScript));
 		} catch (final Throwable th) {
 			writeEvalRow(0, th.toString());
-			throw th;
+			throw new AssertionError(th);
 		}
 		final Term intTerm = translationResult.getFirst();
 		final boolean weDidAnOverapproximation = translationResult.getThird();
