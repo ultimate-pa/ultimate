@@ -203,26 +203,32 @@ public class IntBlastingWrapper extends WrapperScript {
 	@Override
 	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
 			throws SMTLIBException {
-		// TODO: Define function also in int script
-		throw new UnsupportedOperationException("defineFun not supported in intBlastingWrapper");
-//		Sort newSort;
-//		if (SmtSortUtils.isBitvecSort(resultSort)) {
-//			newSort = SmtSortUtils.getIntSort(mMgdIntScript);
-//		} else {
-//			newSort = resultSort;
-//		}
-//
-//		TermVariable[] intParams = new TermVariable[params.length];
-//		for (int i = 0; i < params.length; i++) {
-//			intParams[i] = (TermVariable) mTm.translateBvtoIntTransferrer(params[i], new HistoryRecordingScript(mBvScript), new HistoryRecordingScript(mIntScript)).getFirst(); // TODO
-//		}
-//
-//		Term intDefinition = mTm.translateBvtoIntTransferrer(definition, new HistoryRecordingScript(mBvScript), new HistoryRecordingScript(mIntScript)).getFirst();// TODO
-//
-//
-//		mIntScript.defineFun(fun, intParams, newSort, intDefinition);
-//		mBvScript.defineFun(fun, params, resultSort, definition);
+		mBvScript.defineFun(fun, params, resultSort, definition);
 
+		final TermVariable[] newParams = new TermVariable[params.length];
+		for (int i = 0; i < params.length; i++) {
+			final Sort newParamSort = translateSort(mIntScript, params[i].getSort());
+			final TermVariable newTermVariable = mIntScript.variable(params[i].getName(), newParamSort);
+			newParams[i] = newTermVariable;
+		}
+		final Sort newResultSort = translateSort(mIntScript, resultSort);
+		final Triple<Term, Set<Term>, Boolean> triple;
+		try {
+			triple = mTm.translateBvtoIntTransferrer(definition,
+				new HistoryRecordingScript(mBvScript), new HistoryRecordingScript(mIntScript));
+		} catch (final Throwable th) {
+			throw new AssertionError(th);
+		}
+		final Term newDefinition = triple.getFirst();
+		if (triple.getThird()) {
+			// there was an overapproximation
+			throw new UnsupportedOperationException("We cannot overapproximate in definition of defineFun");
+		} else {
+			if (!triple.getSecond().isEmpty()) {
+				throw new AssertionError("Unknown additional auxiliary variables " + triple.getSecond());
+			}
+		}
+		mIntScript.defineFun(fun, newParams, newResultSort, newDefinition);
 	}
 
 	@Override
