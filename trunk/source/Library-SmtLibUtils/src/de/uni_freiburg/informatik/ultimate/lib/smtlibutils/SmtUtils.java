@@ -1465,7 +1465,6 @@ public final class SmtUtils {
 			break;
 		case "zero_extend":
 		case "extract":
-			// case "bvmul":
 		case "bvudiv":
 		case "bvurem":
 		case "bvsdiv":
