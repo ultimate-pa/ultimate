@@ -328,27 +328,6 @@ public class BvToIntTranslation extends TermTransformer {
 	}
 
 	/*
-	 * Gets as Input an ArraySort, if domain Sort or range Sort is bit-vector the method returns a new array where this
-	 * Sort is replaced by integer Sort. Iterates through nested arrays.
-	 */
-	private Sort translateArraySort(final Sort sort) {
-		if (SmtSortUtils.isBitvecSort(sort)) {
-			return SmtSortUtils.getIntSort(mMgdScript);
-		} else if (SmtSortUtils.isArraySort(sort)) {
-			final Sort[] newArgsSort = new Sort[sort.getArguments().length];
-			for (int i = 0; i < sort.getArguments().length; i++) {
-				newArgsSort[i] = translateArraySort(sort.getArguments()[i]);
-			}
-			assert newArgsSort.length == 2;
-			final Sort domainSort = newArgsSort[0];
-			final Sort rangeSort = newArgsSort[1];
-			return SmtSortUtils.getArraySort(mMgdScript.getScript(), domainSort, rangeSort);
-		} else {
-			throw new AssertionError("Unexpected Sort: " + sort);
-		}
-	}
-
-	/*
 	 * translate variables and uninterpreted constants of bit-vector sort or array sort adds bv and int variable to
 	 * mVariableMap and mReversedVarMap returns the new variable (translation results)
 	 */
@@ -360,7 +339,7 @@ public class BvToIntTranslation extends TermTransformer {
 			final Sort sort = term.getSort();
 			if (SmtSortUtils.isArraySort(sort)) {
 				Term arrayVar;
-				arrayVar = mMgdScript.constructFreshTermVariable("arrayVar", translateArraySort(sort));
+				arrayVar = mMgdScript.constructFreshTermVariable("arrayVar", IntBlastingWrapper.translateSort(mMgdScript.getScript(), sort));
 				if (!(term instanceof TermVariable)) {
 					arrayVar = SmtUtils.termVariable2constant(mScript, (TermVariable) arrayVar, true);
 				}
@@ -399,10 +378,10 @@ public class BvToIntTranslation extends TermTransformer {
 			for (int i = 0; i < old.getVariables().length; i++) {
 				if (SmtSortUtils.isBitvecSort(old.getVariables()[i].getSort())) {
 					newTermVars.add((TermVariable) mVariableMap.get(old.getVariables()[i]));
-					
+
 						tvConstraints.add(
 								mTc.getTvConstraint(old.getVariables()[i], mVariableMap.get(old.getVariables()[i])));
-				
+
 				} else if (SmtSortUtils.isArraySort(old.getVariables()[i].getSort())) {
 					final Term newQuantifiedVar = mVariableMap.get(old.getVariables()[i]);
 					newTermVars.add((TermVariable) newQuantifiedVar);
@@ -538,7 +517,7 @@ public class BvToIntTranslation extends TermTransformer {
 					setResult(args[0]);
 					return;
 				case "const":
-					setResult(mScript.term("const", null, translateArraySort(appTerm.getSort()), args));
+					setResult(mScript.term("const", null, IntBlastingWrapper.translateSort(mMgdScript.getScript(), appTerm.getSort()), args));
 					return;
 				case "repeat":
 				case "rotate_left":
@@ -939,7 +918,7 @@ public class BvToIntTranslation extends TermTransformer {
 		if (isBitVecSort(sort)) {
 			result = SmtSortUtils.getIntSort(script);
 		} else if (SmtSortUtils.isArraySort(sort)) {
-			result = translateArraySort(sort);
+			result = IntBlastingWrapper.translateSort(mMgdScript.getScript(), sort);
 		} else {
 			throw new UnsupportedOperationException("Unsupported sort: " + sort);
 		}

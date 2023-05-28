@@ -196,8 +196,13 @@ public class IntBlastingWrapper extends WrapperScript {
 	@Override
 	public void defineSort(final String sort, final Sort[] sortParams, final Sort definition) throws SMTLIBException {
 		mBvScript.defineSort(sort, sortParams, definition);
-		// TODO: For Sort definitions we have to translate the parameter sorts
-		throw new UnsupportedOperationException();
+
+		final Sort[] newSortParams = new Sort[sortParams.length];
+		for (int i = 0; i < sortParams.length; i++) {
+			newSortParams[i] = translateSort(mIntScript, sortParams[i]);
+		}
+		final Sort newDefinition = translateSort(mIntScript, definition);
+		mIntScript.defineSort(sort, newSortParams, newDefinition);
 	}
 
 	@Override
@@ -246,17 +251,22 @@ public class IntBlastingWrapper extends WrapperScript {
 		mBvScript.declareFun(fun, paramSorts, resultSort);
 	}
 
-	public Sort translateSort(final Script script, final Sort sort) {
+	/**
+	 * Translates a bitvector sort to sort Int. Translates parameterized sorts
+	 * recursively. E.g., `(Array (_ BitVec 3) Bool)` is translated to `(Array Int
+	 * Bool)`.
+	 */
+	public static Sort translateSort(final Script intScript, final Sort sort) {
 		final Sort result;
 		if (sort.getName().equals("BitVec")) {
-			result = SmtSortUtils.getIntSort(script);
+			result = SmtSortUtils.getIntSort(intScript);
 		} else {
 			final Sort[] oldSorts = sort.getArguments();
 			final Sort[] newSorts = new Sort[oldSorts.length];
 			for (int i = 0; i < oldSorts.length; i++) {
-				newSorts[i] = translateSort(script, oldSorts[i]);
+				newSorts[i] = translateSort(intScript, oldSorts[i]);
 			}
-			return script.sort(sort.getName(), sort.getIndices(), newSorts);
+			return intScript.sort(sort.getName(), sort.getIndices(), newSorts);
 		}
 		return result;
 	}

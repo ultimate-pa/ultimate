@@ -138,7 +138,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 			}
 			// NONE Overapproximation
 			if (mTc.mMode.equals(ConstraintsForBitwiseOperations.NONE) && overaproxWithVars(appTerm)) {
-				final Sort newSort = translateSort(mScript, appTerm.getSort());
+				final Sort newSort = IntBlastingWrapper.translateSort(mScript, appTerm.getSort());
 				final TermVariable overaproxVar = mMgdScript.constructFreshTermVariable("overaproxVar", newSort);
 				final Term overaproxConst = SmtUtils.termVariable2constant(mScript, overaproxVar, true);
 				mOverapproxVariables.add(overaproxConst);
@@ -360,20 +360,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 	 * Sort. Iterates through nested arrays.
 	 */
 	private Sort translateArraySort(final Sort sort) {
-		if (SmtSortUtils.isBitvecSort(sort)) {
-			return SmtSortUtils.getIntSort(mMgdScript);
-		} else if (SmtSortUtils.isArraySort(sort)) {
-			final Sort[] newArgsSort = new Sort[sort.getArguments().length];
-			for (int i = 0; i < sort.getArguments().length; i++) {
-				newArgsSort[i] = translateArraySort(sort.getArguments()[i]);
-			}
-			assert newArgsSort.length == 2;
-			final Sort domainSort = newArgsSort[0];
-			final Sort rangeSort = newArgsSort[1];
-			return SmtSortUtils.getArraySort(mMgdScript.getScript(), domainSort, rangeSort);
-		} else {
-			throw new AssertionError("Unexpected Sort: " + sort);
-		}
+		return IntBlastingWrapper.translateSort(mMgdScript.getScript(), sort);
 	}
 
 	/*
@@ -391,7 +378,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 				if (SmtSortUtils.isBitvecSort(term.getSort())) {
 					intVar = mScript.variable(name, SmtSortUtils.getIntSort(mMgdScript));
 				} else {
-					intVar = mScript.variable(name, translateSort(mScript, term.getSort()));
+					intVar = mScript.variable(name, IntBlastingWrapper.translateSort(mScript, term.getSort()));
 				}
 
 			} else if (term instanceof ApplicationTerm) {
@@ -476,7 +463,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 					mArraySelectConstraintMap.remove(newQuantifiedVar);
 				} else {
 					final TermVariable freshQVar = mScript.variable(old.getVariables()[i].getName(),
-							translateSort(mScript, old.getVariables()[i].getSort()));
+							IntBlastingWrapper.translateSort(mScript, old.getVariables()[i].getSort()));
 					newTermVars.add(freshQVar);
 				}
 			}
@@ -1103,24 +1090,6 @@ public class BvToIntTransferrer extends TermTransferrer {
 			return true;
 		}
 		return false;
-	}
-
-	// Duplicated Method from IntBlastingWrapper
-	public Sort translateSort(final Script script, final Sort sort) {
-		final Sort result;
-		if (sort.getName().equals("BitVec")) {
-			result = SmtSortUtils.getIntSort(script);
-		} else if (SmtSortUtils.isArraySort(sort)) {
-			result = translateArraySort(sort);
-		} else {
-			final Sort[] oldSorts = sort.getArguments();
-			final Sort[] newSorts = new Sort[oldSorts.length];
-			for (int i = 0; i < oldSorts.length; i++) {
-				newSorts[i] = translateSort(script, oldSorts[i]);
-			}
-			return script.sort(sort.getName(), sort.getIndices(), newSorts);
-		}
-		return result;
 	}
 
 	public LinkedHashMap<Term, Term> getVarMap() {
