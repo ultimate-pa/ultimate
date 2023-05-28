@@ -206,6 +206,11 @@
         <a class="nav-link" href="?ui=awards">Awards <span class="sr-only">(current)</span></a>
       </li>
     {{/ifCond}}
+    {{#ifCond context.url.ui '===' 'developers'}}
+      <li class="nav-item active">
+        <a class="nav-link" href="?ui=developers">Developers <span class="sr-only">(current)</span></a>
+      </li>
+    {{/ifCond}}
     {{#ifCond context.url.ui '!==' 'home'}}
       <li class="nav-item active">
         <a class="nav-link" href="?ui=tool&tool={{context.url.tool}}">{{context.tool.name}} <span class="sr-only">(current)</span></a>

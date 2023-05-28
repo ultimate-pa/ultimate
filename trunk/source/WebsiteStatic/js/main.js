@@ -17,6 +17,7 @@ function render_landing_page() {
   });
 }
 
+
 /**
  * Parse the awards page from config/awards_page/awards.js and add the result to the content container.
  */
@@ -27,6 +28,18 @@ function render_awards_page() {
     $("#awards-page-template").html()
   );
   content.append(awards_page_template(_AWARDS));
+}
+
+
+/**
+ * Load HTML for developers page from config/developers_page/developers.html and add it to the content container.
+ */
+function render_developers_page() {
+  const content = $('#content');
+  content.addClass('p-5');
+  $.get("./config/developers_page/developers.html", function (data) {
+    content.append(data);
+  });
 }
 
 
@@ -169,6 +182,10 @@ function bootstrap() {
     case "awards":
       // load the awards page
       render_awards_page();
+      break;
+    case "developers":
+      // load the developers page
+      render_developers_page();
       break;
     default:
       // load the landing page.
