@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -270,10 +271,15 @@ public final class BitvectorUtils {
 
 		public final Term simplifiedResult(final Script script, final String funcname, final BigInteger[] indices,
 				final Term... params) {
-			assert getFunctionName().equals(funcname) : "wrong function name";
-			assert getNumberOfIndices() == 0 && indices == null
-					|| getNumberOfIndices() == indices.length : "wrong number of indices";
-			assert getNumberOfParams() == params.length : "wrong number of params";
+			if (!getFunctionName().equals(funcname)) {
+				throw new AssertionError("Wrong function name: " + funcname);
+			}
+			assert (getNumberOfIndices() == 0 && indices == null
+					|| getNumberOfIndices() == indices.length) : "Wrong number of indices:" + Arrays.toString(indices);
+			if (getNumberOfParams() != params.length) {
+				throw new AssertionError(String.format("%s: params expected %s, params provided %s", funcname,
+						getNumberOfParams(), params.length));
+			}
 			final BitvectorConstant[] bvs = new BitvectorConstant[params.length];
 			boolean allConstant = true;
 			for (int i = 0; i < params.length; i++) {
