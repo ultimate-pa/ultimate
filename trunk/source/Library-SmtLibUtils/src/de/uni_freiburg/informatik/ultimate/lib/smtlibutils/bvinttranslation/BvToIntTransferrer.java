@@ -173,20 +173,20 @@ public class BvToIntTransferrer extends TermTransferrer {
 					return;
 				}
 				case "bvashr": {
-					pushTerm(bvashrAbbriviation(appTerm));
+					pushTerm(bvashrAbbreviation(appTerm));
 					return;
 				}
 				case "sign_extend": {
-					pushTerm(signextendAbbriviation(appTerm));
+					pushTerm(signextendAbbreviation(appTerm));
 					return;
 				}
 				case "bvsrem": {
-					pushTerm(bvsremAbbriviation(appTerm));
+					pushTerm(bvsremAbbreviation(appTerm));
 					return;
 				}
 
 				case "bvsdiv": {
-					pushTerm(bvsdivAbbriviation(appTerm));
+					pushTerm(bvsdivAbbreviation(appTerm));
 					return;
 				}
 				}
@@ -222,7 +222,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 
 	}
 
-	private Term bvashrAbbriviation(final ApplicationTerm appTerm) {
+	private Term bvashrAbbreviation(final ApplicationTerm appTerm) {
 		final BigInteger[] indices = new BigInteger[2];
 		indices[0] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
 		indices[1] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
@@ -245,7 +245,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 		return ite;
 	}
 
-	private Term signextendAbbriviation(final ApplicationTerm appTerm) {
+	private Term signextendAbbreviation(final ApplicationTerm appTerm) {
 		final BigInteger[] indices = new BigInteger[2];
 		indices[0] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
 		indices[1] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
@@ -264,7 +264,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 	 * This method gets as input an application term with function symbol bvsrem
 	 * and returns the definition of bvsrem.
 	 */
-	private Term bvsremAbbriviation(final ApplicationTerm appTerm) {
+	private Term bvsremAbbreviation(final ApplicationTerm appTerm) {
 		final BigInteger[] indices = new BigInteger[2];
 		indices[0] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
 		indices[1] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
@@ -313,7 +313,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 	 * This method gets as input an application term with function symbol bvsdiv
 	 * and returns the definition of bvsdiv.
 	 */
-	private Term bvsdivAbbriviation(final ApplicationTerm appTerm) {
+	private Term bvsdivAbbreviation(final ApplicationTerm appTerm) {
 		final BigInteger[] indices = new BigInteger[2];
 		indices[0] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
 		indices[1] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
