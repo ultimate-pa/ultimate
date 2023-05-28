@@ -109,7 +109,7 @@ function set_context() {
   }
 
   // Redirect non existing tools to home page.
-  if (!tool_config_key_value_exists("id", url_params.tool)) {
+  if ((url_params.ui === "tool" || url_params.ui === "int") && !tool_config_key_value_exists("id", url_params.tool)) {
     url_params.ui = "home";
   }
 
