@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Quantifier
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -795,6 +796,13 @@ public class BvToIntTransferrer extends TermTransferrer {
 		// currently it is applied to all functions that are not handled above.
 		final Term result = mNewScript.term(appTerm.getFunction().getName(), args);
 		setResult(result);
+	}
+
+
+
+	@Override
+	public void postConvertLet(final LetTerm oldLet, final Term[] newValues, final Term newBody) {
+		throw new UnsupportedOperationException("Let terms are not yet supported.");
 	}
 
 	private Term translateExtract(final ApplicationTerm appTerm, final Term translatedLHS) {
