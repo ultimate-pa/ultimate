@@ -139,13 +139,14 @@
       <div class="card-group">
         {{#each tools}}
         <div class="card border-secondary shadow mb-3 tool-card border-start">
-          <div class="card-header"><a class="link-primary" href="?ui=tool&tool={{this.id}}">{{this.name}}</a></div>
+          <div class="card-header">
+            <a class="link-primary" href="?ui=tool&tool={{this.id}}">{{this.name}}</a>
+            <span class="float-end">
+            {{#each this.languages}}
+            <span class="badge bg-secondary">{{this}}</span>
+            {{~/each}}</span></div>
           <div class="card-body text-black-70">
             <p class="card-text text-justify">{{this.description}}</p>
-            <h5 class="card-title">Languages</h5>
-            <p class="card-text">
-              <span>{{joinStr this.languages}}</span>
-            </p>
           </div>
           <div class="card-footer text-right">
             <a href="?ui=tool&tool={{this.id}}" class="btn btn-secondary">Read more</a>
