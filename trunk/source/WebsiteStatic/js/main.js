@@ -17,6 +17,18 @@ function render_landing_page() {
   });
 }
 
+/**
+ * Parse the awards page from config/awards_page/awards.js and add the result to the content container.
+ */
+function render_awards_page() {
+  const content = $('#content');
+  content.addClass('p-5');
+  const awards_page_template = Handlebars.compile(
+    $("#awards-page-template").html()
+  );
+  content.append(awards_page_template(_AWARDS));
+}
+
 
 /**
  * Fetch and parse the tool info page.
@@ -153,6 +165,10 @@ function bootstrap() {
     case "tool":
       // load the tool info page.
       render_tool_page(_CONFIG.context.tool.id);
+      break;
+    case "awards":
+      // load the awards page
+      render_awards_page();
       break;
     default:
       // load the landing page.
