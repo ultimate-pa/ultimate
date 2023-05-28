@@ -45,14 +45,17 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplemen
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Buchi Complementation based on the algorithm proposed by Frantisek Blahoudek and Jan Stejcek. This complementation is
- * only sound for a special class of automata whose working title is TABA (termination analysis Büchi automata).
+ * Buchi Complementation based on the following paper: <br>
+ * 2016TACAS - Blahoudek,Heizmann,Schewe,Strejček,Tsai - Complementing
+ * Semi-deterministic Büchi Automata <br>
+ * The "lazy S optimization" is explained in the following paper <br>
+ * 2018PLDI - Chen,Heizmann,Lengál,Li,Tsai,Turrini,Zhang - Advanced
+ * automata-based algorithms for program termination checking <br>
+ * This algorithm is only sound for semi-deterministic Büchi automata.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <LETTER>
- *            letter type
- * @param <STATE>
- *            state type
+ * @param <LETTER> letter type
+ * @param <STATE>  state type
  */
 public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
