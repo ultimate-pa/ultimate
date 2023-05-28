@@ -27,7 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -273,20 +275,47 @@ public final class BitvectorUtils {
 			}
 			assert (getNumberOfIndices() == 0 && indices == null
 					|| getNumberOfIndices() == indices.length) : "Wrong number of indices:" + Arrays.toString(indices);
-			if (getNumberOfParams() != params.length) {
+			if (getNumberOfParams() != params.length && !isCommutative()) {
 				throw new AssertionError(String.format("%s: params expected %s, params provided %s", funcname,
 						getNumberOfParams(), params.length));
 			}
-			final BitvectorConstant[] bvs = new BitvectorConstant[params.length];
-			boolean allConstant = true;
+			final List<BitvectorConstant> literals = new ArrayList<>();
+			final List<Term> nonLiterals = new ArrayList<>();
 			for (int i = 0; i < params.length; i++) {
-				bvs[i] = constructBitvectorConstant(params[i]);
-				allConstant &= (bvs[i] != null);
+				final BitvectorConstant literal = constructBitvectorConstant(params[i]);
+				if (literal != null) {
+					literals.add(literal);
+				} else {
+					nonLiterals.add(params[i]);
+				}
 			}
-			if (allConstant) {
-				return simplify_ConstantCase(script, indices, bvs);
+			final BitvectorConstant aggregatedLiterals;
+			if (literals.isEmpty()) {
+				aggregatedLiterals = null;
+			} else if (literals.size() == 1) {
+				aggregatedLiterals = literals.get(0);
+			} else {
+				final Term aggregatedLiteralsAsTerm = simplify_ConstantCase(script, indices,
+						literals.toArray(new BitvectorConstant[literals.size()]));
+				aggregatedLiterals = constructBitvectorConstant(aggregatedLiteralsAsTerm);
 			}
-			return simplify_NonConstantCase(script, indices, params, bvs);
+			if (nonLiterals.isEmpty()) {
+				return BitvectorUtils.constructTerm(script, aggregatedLiterals);
+			}
+			if (literals.isEmpty() || !isCommutative()) {
+				// If the bitvector operation is not commutative, the aggregation of literals
+				// was unsound and we cannot
+				// utilize them. Nontheless we pass all literals the we found, they can trigger
+				// a simplification (e.g., absorbing element).
+				return simplify_NonConstantCase(script, indices, params,
+						literals.toArray(new BitvectorConstant[literals.size()]));
+			}
+			// Add the aggregated literal to the list of arguments.
+			nonLiterals.add(BitvectorUtils.constructTerm(script, aggregatedLiterals));
+			// Additionally, we pass the aggregated literal because this can trigger a
+			// simplification (e.g., absorbing element).
+			return simplify_NonConstantCase(script, indices, nonLiterals.toArray(new Term[nonLiterals.size()]),
+					new BitvectorConstant[] { aggregatedLiterals });
 		}
 
 		protected Term simplify_NonConstantCase(final Script script, final BigInteger[] indices, final Term[] params,
