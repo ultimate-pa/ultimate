@@ -246,14 +246,10 @@ public class IntBlastingWrapper extends WrapperScript {
 		mBvScript.declareFun(fun, paramSorts, resultSort);
 	}
 
-
-
 	public Sort translateSort(final Script script, final Sort sort) {
 		final Sort result;
 		if (sort.getName().equals("BitVec")) {
 			result = SmtSortUtils.getIntSort(script);
-		} else if (SmtSortUtils.isArraySort(sort)) {
-			result = translateArraySort(sort);
 		} else {
 			final Sort[] oldSorts = sort.getArguments();
 			final Sort[] newSorts = new Sort[oldSorts.length];
@@ -263,23 +259,6 @@ public class IntBlastingWrapper extends WrapperScript {
 			return script.sort(sort.getName(), sort.getIndices(), newSorts);
 		}
 		return result;
-	}
-
-	private Sort translateArraySort(final Sort sort) {
-		if (SmtSortUtils.isBitvecSort(sort)) {
-			return SmtSortUtils.getIntSort(mMgdIntScript);
-		} else if (SmtSortUtils.isArraySort(sort)) {
-			final Sort[] newArgsSort = new Sort[sort.getArguments().length];
-			for (int i = 0; i < sort.getArguments().length; i++) {
-				newArgsSort[i] = translateArraySort(sort.getArguments()[i]);
-			}
-			assert newArgsSort.length == 2;
-			final Sort domainSort = newArgsSort[0];
-			final Sort rangeSort = newArgsSort[1];
-			return SmtSortUtils.getArraySort(mMgdIntScript.getScript(), domainSort, rangeSort);
-		} else {
-			throw new AssertionError("Unexpected Sort: " + sort);
-		}
 	}
 
 	@Override
