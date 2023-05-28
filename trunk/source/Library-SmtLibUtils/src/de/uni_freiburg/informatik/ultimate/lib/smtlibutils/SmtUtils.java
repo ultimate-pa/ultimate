@@ -627,7 +627,7 @@ public final class SmtUtils {
 			return unaryNumericMinus(script, operand);
 		}
 		if (SmtSortUtils.isBitvecSort(sort)) {
-			return BitvectorUtils.termWithLocalSimplification(script, "bvneg", null, operand);
+			return BitvectorUtils.unfTerm(script, "bvneg", null, operand);
 		}
 		throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 	}
@@ -1486,7 +1486,7 @@ public final class SmtUtils {
 		case "bvsle":
 		case "bvsgt":
 		case "bvsge":
-			result = BitvectorUtils.termWithLocalSimplification(script, funcname, toBigIntegerArray(indices), params);
+			result = BitvectorUtils.unfTerm(script, funcname, toBigIntegerArray(indices), params);
 			break;
 		default:
 			result = script.term(funcname, indices, resultSort, params);

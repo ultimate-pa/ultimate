@@ -147,7 +147,7 @@ public final class BitvectorUtils {
 		return true;
 	}
 
-	public static Term termWithLocalSimplification(final Script script, final String funcname,
+	public static Term unfTerm(final Script script, final String funcname,
 			final BigInteger[] indices, final Term... params) {
 		final Term result;
 		final BvOp bvop = BvOp.valueOf(funcname);
