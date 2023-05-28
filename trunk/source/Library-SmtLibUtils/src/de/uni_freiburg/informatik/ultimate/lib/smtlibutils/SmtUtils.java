@@ -1420,20 +1420,16 @@ public final class SmtUtils {
 			result = SmtUtils.ite(script, params[0], params[1], params[2]);
 			break;
 		case "+":
-		case "bvadd":
 			result = SmtUtils.sum(script, funcname, params);
 			break;
 		case "-":
-		case "bvsub":
 			if (params.length == 1) {
-				assert !funcname.equals("bvsub");
 				result = SmtUtils.unaryNumericMinus(script, params[0]);
 			} else {
 				result = SmtUtils.minus(script, params);
 			}
 			break;
 		case "*":
-		case "bvmul":
 			result = SmtUtils.mul(script, funcname, params);
 			break;
 		case "div":
@@ -1465,6 +1461,9 @@ public final class SmtUtils {
 			break;
 		case "zero_extend":
 		case "extract":
+		case "bvadd":
+		case "bvsub":
+		case "bvmul":
 		case "bvudiv":
 		case "bvurem":
 		case "bvsdiv":

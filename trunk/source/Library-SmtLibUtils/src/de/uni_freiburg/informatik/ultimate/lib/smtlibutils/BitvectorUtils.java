@@ -165,12 +165,10 @@ public final class BitvectorUtils {
 			result = new Concat().simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvadd:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvadd(x, y))
-					.simplifiedResult(script, funcname, indices, params);
+			result = SmtUtils.sum(script, funcname, params);
 			break;
 		case bvsub:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvsub(x, y))
-					.simplifiedResult(script, funcname, indices, params);
+			result = SmtUtils.minus(script, params);
 			break;
 		case bvudiv:
 			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvudiv(x, y))
@@ -193,8 +191,7 @@ public final class BitvectorUtils {
 					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvmul:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvmul(x, y))
-					.simplifiedResult(script, funcname, indices, params);
+			result = SmtUtils.mul(script, funcname, params);
 			break;
 		case bvand:
 			result = new Bvand().simplifiedResult(script, funcname, indices, params);
