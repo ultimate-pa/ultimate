@@ -453,7 +453,8 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 				if (SmtSortUtils.isIntSort(mSort)) {
 					current = current.divInt(script, divisor.getConstant().numerator(), Collections.emptySet());
 				} else if (SmtSortUtils.isBitvecSort(mSort)) {
-					throw new UnsupportedOperationException();
+					throw new UnsupportedOperationException(
+							"Cannot apply div (meant for integers) to term whose sort is bitvector.");
 				} else if (SmtSortUtils.isRealSort(mSort)) {
 					current = current.divReal(script, divisor.getConstant());
 				} else {
