@@ -787,6 +787,11 @@ public class BvToIntTransferrer extends TermTransferrer {
 						throw new UnsupportedOperationException("unexpected function: " + fsym.getName());
 
 					}
+				} else {
+					if (fsym.getName().equals("bvand") || fsym.getName().equals("bvnand")) {
+						throw new UnsupportedOperationException(
+								"Bitvector-to-integer translation does not support bvand with more than 2 parameters.");
+					}
 				}
 			}
 
