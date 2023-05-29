@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
@@ -224,7 +226,8 @@ public class IntBlastingWrapper extends WrapperScript {
 		} catch (final Throwable th) {
 			throw new AssertionError(th);
 		}
-		final Term newDefinition = triple.getFirst();
+		final Term newDefinition = SmtUtils.simplify(mMgdIntScript, triple.getFirst(), mServices,
+				SimplificationTechnique.POLY_PAC);
 		if (triple.getThird()) {
 			// there was an overapproximation
 			throw new UnsupportedOperationException("We cannot overapproximate in definition of defineFun");
@@ -315,7 +318,9 @@ public class IntBlastingWrapper extends WrapperScript {
 			mOverapproximationTrackingStack.add(true);
 		}
 		try {
-			return mIntScript.assertTerm(intTerm);
+			final Term simplifiedIntTerm = SmtUtils.simplify(mMgdIntScript, intTerm, mServices,
+					SimplificationTechnique.POLY_PAC);
+			return mIntScript.assertTerm(simplifiedIntTerm);
 		} catch (final Throwable th) {
 			writeEvalRow(0, th.toString());
 			throw new AssertionError(th);
