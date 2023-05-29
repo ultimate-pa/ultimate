@@ -1,0 +1,3 @@
+#!/bin/sh
+
+./smtlib2_trace_executor --continue-after-unknown ./starexec_run_default "$1"
