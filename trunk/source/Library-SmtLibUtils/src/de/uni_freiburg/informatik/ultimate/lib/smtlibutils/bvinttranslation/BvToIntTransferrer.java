@@ -200,10 +200,21 @@ public class BvToIntTransferrer extends TermTransferrer {
 					pushTerm(bvsmodAbbreviation(appTerm));
 					return;
 				}
-
+				// TODO BitvectorUtils doesnt support rotate
+				// case "rotate_left": {
+				// pushTerm(rotateLeftAbbreviation(appTerm));
+				// return;
+				// }
+				// TODO BitvectorUtils doesnt support rotate
+				// case "rotate_right": {
+				// pushTerm(rotateRightAbbreviation(appTerm));
+				// return;
+				// }
 				}
 			}
-		} else if (term instanceof ConstantTerm) {
+		} else if (term instanceof ConstantTerm)
+
+		{
 			if (SmtSortUtils.isBitvecSort(term.getSort())) {
 				final ConstantTerm constTerm = (ConstantTerm) term;
 				assert isBitVecSort(constTerm.getSort());
@@ -323,7 +334,11 @@ public class BvToIntTransferrer extends TermTransferrer {
 
 		final Term bvurem = BitvectorUtils.unfTerm(mBvScript, "bvurem", null, absLhs, absRhs);
 
-		final Term ifTerm1 = SmtUtils.equality(mBvScript, bvurem, zeroVec);
+		final int width = Integer.valueOf(appTerm.getSort().getIndices()[0]);
+		final Term zeroVecOfWidth =
+				SmtUtils.rational2Term(mBvScript, Rational.ZERO, SmtSortUtils.getBitvectorSort(mBvScript, width));
+
+		final Term ifTerm1 = SmtUtils.equality(mBvScript, bvurem, zeroVecOfWidth);
 
 		final Term ifTerm2 = SmtUtils.and(mBvScript, mbsLhsEqualsZero, mbsRhsEqualsZero);
 
@@ -345,6 +360,61 @@ public class BvToIntTransferrer extends TermTransferrer {
 		final Term ite1 = SmtUtils.ite(mBvScript, ifTerm1, bvurem, ite2);
 		final Term bvsmod = ite1;
 		return bvsmod;
+	}
+
+	// TODO BitvectorUtils doesnt support rotate
+	private Term rotateLeftAbbreviation(final ApplicationTerm appTerm) {
+		final Term rotateL;
+		final int width = Integer.valueOf(appTerm.getSort().getIndices()[0]);
+		if (width == 1) { // width = 1
+			rotateL = appTerm.getParameters()[0];
+		} else {
+			final BigInteger[] indices = new BigInteger[2];
+			indices[0] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 2);
+			indices[1] = BigInteger.ZERO;
+			final BigInteger[] indicesMSB = new BigInteger[2];
+			indicesMSB[0] =
+					BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+			indicesMSB[1] =
+					BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+			final BigInteger[] rotateRest = new BigInteger[1];
+			rotateRest[0] = BigInteger.valueOf(width - 1);
+			rotateL = BitvectorUtils.unfTerm(mBvScript, "rotate_left", rotateRest,
+
+					BitvectorUtils.unfTerm(mBvScript, "concat", null,
+							BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[0]),
+							BitvectorUtils.unfTerm(mBvScript, "extract", indicesMSB, appTerm.getParameters()[0])));
+
+		}
+
+		return rotateL;
+	}
+
+	// TODO BitvectorUtils doesnt support rotate
+	private Term rotateRightAbbreviation(final ApplicationTerm appTerm) {
+		final Term rotateR;
+		final int width = Integer.valueOf(appTerm.getSort().getIndices()[0]);
+		if (width == 1) { // width = 1
+			rotateR = appTerm.getParameters()[0];
+		} else {
+			final BigInteger[] indices = new BigInteger[2];
+			indices[0] = BigInteger.ZERO;
+			indices[1] = BigInteger.ZERO;
+			final BigInteger[] indicesMSB = new BigInteger[2];
+			indicesMSB[0] =
+					BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+			indicesMSB[1] = BigInteger.ONE;
+			final BigInteger[] rotateRest = new BigInteger[1];
+			rotateRest[0] = BigInteger.valueOf(width - 1);
+			rotateR = BitvectorUtils.unfTerm(mBvScript, "rotate_right", rotateRest,
+
+					BitvectorUtils.unfTerm(mBvScript, "concat", null,
+							BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[0]),
+							BitvectorUtils.unfTerm(mBvScript, "extract", indicesMSB, appTerm.getParameters()[0])));
+
+		}
+
+		return rotateR;
 	}
 
 	private Term signextendAbbreviation(final ApplicationTerm appTerm) {
