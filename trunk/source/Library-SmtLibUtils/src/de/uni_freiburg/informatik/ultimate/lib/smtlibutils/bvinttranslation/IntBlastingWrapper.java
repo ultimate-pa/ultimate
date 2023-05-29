@@ -179,6 +179,7 @@ public class IntBlastingWrapper extends WrapperScript {
 	public void declareDatatype(final DataType datatype, final Constructor[] constrs) throws SMTLIBException {
 		// TODO: Probably unsupported, we will see...
 		mBvScript.declareDatatype(datatype, constrs);
+		throw new UnsupportedOperationException("Cannot yet translate algebraic datatypes");
 	}
 
 	@Override
@@ -186,6 +187,7 @@ public class IntBlastingWrapper extends WrapperScript {
 			throws SMTLIBException {
 		// TODO: Probably unsupported, we will see...
 		mBvScript.declareDatatypes(datatypes, constrs, sortParams);
+		throw new UnsupportedOperationException("Cannot yet translate algebraic datatypes");
 	}
 
 	@Override
