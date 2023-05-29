@@ -192,10 +192,11 @@ public class BvToIntTransferrer extends TermTransferrer {
 					pushTerm(bvnandAbbreviation(appTerm));
 					return;
 				}
-				case "bvcomp": {
-					pushTerm(bvcompAbbreviation(appTerm));
-					return;
-				}
+				// TODO BitvectorUtils doesnt support rotate
+				// case "bvcomp": {
+				// pushTerm(bvcompAbbreviation(appTerm));
+				// return;
+				// }
 				case "bvsmod": {
 					pushTerm(bvsmodAbbreviation(appTerm));
 					return;
@@ -302,7 +303,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 			final Term extractRest = BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[0]);
 
 			final Term bvxnor = BitvectorUtils.unfTerm(mBvScript, "bvxnor", null, msbLhs, msbRhs);
-			final Term bvcompRest = BitvectorUtils.unfTerm(mBvScript, "bvxnor", null, extractRest);
+			final Term bvcompRest = BitvectorUtils.unfTerm(mBvScript, "bvcomp", null, extractRest);
 			final Term bvand = BitvectorUtils.unfTerm(mBvScript, "bvxnor", null, bvxnor, bvcompRest);
 			bvcomp = bvand;
 		}
