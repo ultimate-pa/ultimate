@@ -153,22 +153,17 @@ public class BvToIntTransferrer extends TermTransferrer {
 				case "bvor": {
 					// bvor = bvsub(bvadd, bvand)
 					final Term bvor = BitvectorUtils.unfTerm(mBvScript, "bvsub", null,
-							BitvectorUtils.unfTerm(mBvScript, "bvadd", null,
-									appTerm.getParameters()),
-							BitvectorUtils.unfTerm(mBvScript, "bvand", null,
-									appTerm.getParameters()));
+							BitvectorUtils.unfTerm(mBvScript, "bvadd", null, appTerm.getParameters()),
+							BitvectorUtils.unfTerm(mBvScript, "bvand", null, appTerm.getParameters()));
 					pushTerm(bvor);
 					return;
 				}
 				case "bvxor": {
 					final Term bvxor = BitvectorUtils.unfTerm(mBvScript, "bvsub", null,
 							BitvectorUtils.unfTerm(mBvScript, "bvsub", null,
-									BitvectorUtils.unfTerm(mBvScript, "bvadd", null,
-											appTerm.getParameters()),
-									BitvectorUtils.unfTerm(mBvScript, "bvand", null,
-											appTerm.getParameters())),
-							BitvectorUtils.unfTerm(mBvScript, "bvand", null,
-									appTerm.getParameters()));
+									BitvectorUtils.unfTerm(mBvScript, "bvadd", null, appTerm.getParameters()),
+									BitvectorUtils.unfTerm(mBvScript, "bvand", null, appTerm.getParameters())),
+							BitvectorUtils.unfTerm(mBvScript, "bvand", null, appTerm.getParameters()));
 					pushTerm(bvxor);
 					return;
 				}
@@ -189,6 +184,23 @@ public class BvToIntTransferrer extends TermTransferrer {
 					pushTerm(bvsdivAbbreviation(appTerm));
 					return;
 				}
+				case "bvxnor": {
+					pushTerm(bvxnorAbbreviation(appTerm));
+					return;
+				}
+				case "bvnand": {
+					pushTerm(bvnandAbbreviation(appTerm));
+					return;
+				}
+				case "bvcomp": {
+					pushTerm(bvcompAbbreviation(appTerm));
+					return;
+				}
+				case "bvsmod": {
+					pushTerm(bvsmodAbbreviation(appTerm));
+					return;
+				}
+
 				}
 			}
 		} else if (term instanceof ConstantTerm) {
@@ -228,21 +240,111 @@ public class BvToIntTransferrer extends TermTransferrer {
 		indices[1] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
 		final Term zeroVec =
 				SmtUtils.rational2Term(mBvScript, Rational.ZERO, SmtSortUtils.getBitvectorSort(mBvScript, 1));
-		final Term extract =
-				BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[0]);
+		final Term extract = BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[0]);
 
 		final Term ifTerm = SmtUtils.binaryEquality(mBvScript, extract, zeroVec);
 
-		final Term thenTerm =
-				BitvectorUtils.unfTerm(mBvScript, "bvlshr", null, appTerm.getParameters());
+		final Term thenTerm = BitvectorUtils.unfTerm(mBvScript, "bvlshr", null, appTerm.getParameters());
 
 		final Term elseTerm = BitvectorUtils.unfTerm(mBvScript, "bvnot", null,
-				BitvectorUtils.unfTerm(mBvScript, "bvlshr", null, BitvectorUtils
-						.unfTerm(mBvScript, "bvnot", null, appTerm.getParameters()[0]),
+				BitvectorUtils.unfTerm(mBvScript, "bvlshr", null,
+						BitvectorUtils.unfTerm(mBvScript, "bvnot", null, appTerm.getParameters()[0]),
 						appTerm.getParameters()[1]));
 
 		final Term ite = SmtUtils.ite(mBvScript, ifTerm, thenTerm, elseTerm);
 		return ite;
+	}
+
+	private Term bvxnorAbbreviation(final ApplicationTerm appTerm) {
+		final Term bvxnor = BitvectorUtils.unfTerm(mBvScript, "bvor", null,
+				BitvectorUtils.unfTerm(mBvScript, "bvor", null,
+						BitvectorUtils.unfTerm(mBvScript, "bvand", null, appTerm.getParameters()),
+						BitvectorUtils.unfTerm(mBvScript, "bvand", null,
+								BitvectorUtils.unfTerm(mBvScript, "bvnot", null, appTerm.getParameters()[0]),
+								BitvectorUtils.unfTerm(mBvScript, "bvnot", null, appTerm.getParameters()[1]))));
+		return bvxnor;
+	}
+
+	private Term bvnandAbbreviation(final ApplicationTerm appTerm) {
+		final Term bvnand = BitvectorUtils.unfTerm(mBvScript, "bvnot", null,
+				BitvectorUtils.unfTerm(mBvScript, "bvand", null, appTerm.getParameters()));
+		return bvnand;
+	}
+
+	private Term bvcompAbbreviation(final ApplicationTerm appTerm) {
+		final Term bvcomp;
+		final int width = Integer.valueOf(appTerm.getSort().getIndices()[0]);
+		if (width == 1) { // width = 1
+			final Term bvxnor = BitvectorUtils.unfTerm(mBvScript, "bvxnor", null, appTerm.getParameters());
+			bvcomp = bvxnor;
+		} else {
+			final BigInteger[] indices = new BigInteger[2];
+			indices[0] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+			indices[1] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+			final Term msbLhs = BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[0]);
+			final Term msbRhs = BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[1]);
+
+			final BigInteger[] indicesRest = new BigInteger[2];
+			indicesRest[0] =
+					BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 2);
+			indicesRest[1] = BigInteger.ZERO;
+			final Term extractRest = BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[0]);
+
+			final Term bvxnor = BitvectorUtils.unfTerm(mBvScript, "bvxnor", null, msbLhs, msbRhs);
+			final Term bvcompRest = BitvectorUtils.unfTerm(mBvScript, "bvxnor", null, extractRest);
+			final Term bvand = BitvectorUtils.unfTerm(mBvScript, "bvxnor", null, bvxnor, bvcompRest);
+			bvcomp = bvand;
+		}
+
+		return bvcomp;
+	}
+
+	private Term bvsmodAbbreviation(final ApplicationTerm appTerm) {
+		final BigInteger[] indices = new BigInteger[2];
+		indices[0] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+		indices[1] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
+		final Term msbLhs = BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[0]);
+		final Term msbRhs = BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[1]);
+
+		final Term zeroVec =
+				SmtUtils.rational2Term(mBvScript, Rational.ZERO, SmtSortUtils.getBitvectorSort(mBvScript, 1));
+		final Term oneVec =
+				SmtUtils.rational2Term(mBvScript, Rational.ONE, SmtSortUtils.getBitvectorSort(mBvScript, 1));
+
+		final Term mbsLhsEqualsZero = SmtUtils.equality(mBvScript, zeroVec, msbLhs);
+		final Term mbsRhsEqualsZero = SmtUtils.equality(mBvScript, zeroVec, msbRhs);
+		final Term mbsLhsEqualsOne = SmtUtils.equality(mBvScript, oneVec, msbLhs);
+		final Term mbsRhsEqualsOne = SmtUtils.equality(mBvScript, oneVec, msbRhs);
+
+		final Term absLhs = SmtUtils.ite(mBvScript, mbsLhsEqualsZero, appTerm.getParameters()[0],
+				BitvectorUtils.unfTerm(mBvScript, "bvneg", null, appTerm.getParameters()[0]));
+		final Term absRhs = SmtUtils.ite(mBvScript, mbsRhsEqualsZero, appTerm.getParameters()[1],
+				BitvectorUtils.unfTerm(mBvScript, "bvneg", null, appTerm.getParameters()[1]));
+
+		final Term bvurem = BitvectorUtils.unfTerm(mBvScript, "bvurem", null, absLhs, absRhs);
+
+		final Term ifTerm1 = SmtUtils.equality(mBvScript, bvurem, zeroVec);
+
+		final Term ifTerm2 = SmtUtils.and(mBvScript, mbsLhsEqualsZero, mbsRhsEqualsZero);
+
+		final Term ifTerm3 = SmtUtils.and(mBvScript, mbsLhsEqualsOne, mbsRhsEqualsZero);
+
+		final Term ifTerm4 = SmtUtils.and(mBvScript, mbsLhsEqualsZero, mbsRhsEqualsOne);
+
+		final Term thenTerm3 = BitvectorUtils.unfTerm(mBvScript, "bvadd", null,
+				BitvectorUtils.unfTerm(mBvScript, "bvneg", null, bvurem), appTerm.getParameters()[1]);
+
+		final Term thenTerm4 = BitvectorUtils.unfTerm(mBvScript, "bvadd", null, appTerm.getParameters()[0],
+				appTerm.getParameters()[1]);
+
+		final Term elseTerm = BitvectorUtils.unfTerm(mBvScript, "bvneg", null, bvurem);
+
+		final Term ite4 = SmtUtils.ite(mBvScript, ifTerm4, thenTerm4, elseTerm);
+		final Term ite3 = SmtUtils.ite(mBvScript, ifTerm3, thenTerm3, ite4);
+		final Term ite2 = SmtUtils.ite(mBvScript, ifTerm2, bvurem, ite3);
+		final Term ite1 = SmtUtils.ite(mBvScript, ifTerm1, bvurem, ite2);
+		final Term bvsmod = ite1;
+		return bvsmod;
 	}
 
 	private Term signextendAbbreviation(final ApplicationTerm appTerm) {
@@ -254,8 +356,8 @@ public class BvToIntTransferrer extends TermTransferrer {
 		final int difference = Integer.valueOf(appTerm.getSort().getIndices()[0])
 				- Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]);
 		for (int i = 0; i < difference; i++) {
-			repeat = BitvectorUtils.unfTerm(mBvScript, "concat", null, BitvectorUtils
-					.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[0]), repeat);
+			repeat = BitvectorUtils.unfTerm(mBvScript, "concat", null,
+					BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[0]), repeat);
 		}
 		return repeat;
 	}
@@ -268,10 +370,8 @@ public class BvToIntTransferrer extends TermTransferrer {
 		final BigInteger[] indices = new BigInteger[2];
 		indices[0] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
 		indices[1] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
-		final Term msbLhs =
-				BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[0]);
-		final Term msbRhs =
-				BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[1]);
+		final Term msbLhs = BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[0]);
+		final Term msbRhs = BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[1]);
 
 		final Term zeroVec =
 				SmtUtils.rational2Term(mBvScript, Rational.ZERO, SmtSortUtils.getBitvectorSort(mBvScript, 1));
@@ -284,23 +384,19 @@ public class BvToIntTransferrer extends TermTransferrer {
 		final Term ifterm3 = SmtUtils.and(mBvScript, SmtUtils.equality(mBvScript, zeroVec, msbLhs),
 				SmtUtils.equality(mBvScript, oneVec, msbRhs));
 
-		final Term bvurem =
-				BitvectorUtils.unfTerm(mBvScript, "bvurem", null, appTerm.getParameters());
+		final Term bvurem = BitvectorUtils.unfTerm(mBvScript, "bvurem", null, appTerm.getParameters());
 		final Term thenTerm2 = BitvectorUtils.unfTerm(mBvScript, "bvneg", null,
-				BitvectorUtils.unfTerm(mBvScript, "bvurem", null, BitvectorUtils
-						.unfTerm(mBvScript, "bvneg", null, appTerm.getParameters()[0]),
+				BitvectorUtils.unfTerm(mBvScript, "bvurem", null,
+						BitvectorUtils.unfTerm(mBvScript, "bvneg", null, appTerm.getParameters()[0]),
 						appTerm.getParameters()[1]));
 		final Term thenTerm3 = BitvectorUtils.unfTerm(mBvScript, "bvneg", null,
 				BitvectorUtils.unfTerm(mBvScript, "bvurem", null, appTerm.getParameters()[0],
-						BitvectorUtils.unfTerm(mBvScript, "bvneg", null,
-								appTerm.getParameters()[1])));
+						BitvectorUtils.unfTerm(mBvScript, "bvneg", null, appTerm.getParameters()[1])));
 
 		final Term elseTerm = BitvectorUtils.unfTerm(mBvScript, "bvneg", null,
 				BitvectorUtils.unfTerm(mBvScript, "bvurem", null,
-						BitvectorUtils.unfTerm(mBvScript, "bvneg", null,
-								appTerm.getParameters()[0]),
-						BitvectorUtils.unfTerm(mBvScript, "bvneg", null,
-								appTerm.getParameters()[1])));
+						BitvectorUtils.unfTerm(mBvScript, "bvneg", null, appTerm.getParameters()[0]),
+						BitvectorUtils.unfTerm(mBvScript, "bvneg", null, appTerm.getParameters()[1])));
 
 		final Term iteChain2 = SmtUtils.ite(mBvScript, ifterm3, thenTerm3, elseTerm);
 		final Term iteChain1 = SmtUtils.ite(mBvScript, ifterm2, thenTerm2, iteChain2);
@@ -317,15 +413,14 @@ public class BvToIntTransferrer extends TermTransferrer {
 		final BigInteger[] indices = new BigInteger[2];
 		indices[0] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
 		indices[1] = BigInteger.valueOf(Integer.valueOf(appTerm.getParameters()[0].getSort().getIndices()[0]) - 1);
-		final Term msbLhs =
-				BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[0]);
-		final Term msbRhs =
-				BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[1]);
+		final Term msbLhs = BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[0]);
+		final Term msbRhs = BitvectorUtils.unfTerm(mBvScript, "extract", indices, appTerm.getParameters()[1]);
 
 		final Term zeroVec =
 				SmtUtils.rational2Term(mBvScript, Rational.ZERO, SmtSortUtils.getBitvectorSort(mBvScript, 1));
 		final Term oneVec =
 				SmtUtils.rational2Term(mBvScript, Rational.ONE, SmtSortUtils.getBitvectorSort(mBvScript, 1));
+
 		final Term ifterm1 = SmtUtils.and(mBvScript, SmtUtils.equality(mBvScript, zeroVec, msbLhs),
 				SmtUtils.equality(mBvScript, zeroVec, msbRhs));
 		final Term ifterm2 = SmtUtils.and(mBvScript, SmtUtils.equality(mBvScript, oneVec, msbLhs),
@@ -333,16 +428,14 @@ public class BvToIntTransferrer extends TermTransferrer {
 		final Term ifterm3 = SmtUtils.and(mBvScript, SmtUtils.equality(mBvScript, zeroVec, msbLhs),
 				SmtUtils.equality(mBvScript, oneVec, msbRhs));
 
-		final Term bvudiv =
-				BitvectorUtils.unfTerm(mBvScript, "bvudiv", null, appTerm.getParameters());
+		final Term bvudiv = BitvectorUtils.unfTerm(mBvScript, "bvudiv", null, appTerm.getParameters());
 		final Term thenTerm2 = BitvectorUtils.unfTerm(mBvScript, "bvneg", null,
-				BitvectorUtils.unfTerm(mBvScript, "bvudiv", null, BitvectorUtils
-						.unfTerm(mBvScript, "bvneg", null, appTerm.getParameters()[0]),
+				BitvectorUtils.unfTerm(mBvScript, "bvudiv", null,
+						BitvectorUtils.unfTerm(mBvScript, "bvneg", null, appTerm.getParameters()[0]),
 						appTerm.getParameters()[1]));
 		final Term thenTerm3 = BitvectorUtils.unfTerm(mBvScript, "bvneg", null,
 				BitvectorUtils.unfTerm(mBvScript, "bvudiv", null, appTerm.getParameters()[0],
-						BitvectorUtils.unfTerm(mBvScript, "bvneg", null,
-								appTerm.getParameters()[1])));
+						BitvectorUtils.unfTerm(mBvScript, "bvneg", null, appTerm.getParameters()[1])));
 
 		final Term elseTerm = BitvectorUtils.unfTerm(mBvScript, "bvudiv", null,
 				BitvectorUtils.unfTerm(mBvScript, "bvneg", null, appTerm.getParameters()[0]),
@@ -802,8 +895,6 @@ public class BvToIntTransferrer extends TermTransferrer {
 		final Term result = mNewScript.term(appTerm.getFunction().getName(), args);
 		setResult(result);
 	}
-
-
 
 	@Override
 	public void postConvertLet(final LetTerm oldLet, final Term[] newValues, final Term newBody) {
