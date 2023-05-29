@@ -219,9 +219,10 @@ public class IntBlastingWrapper extends WrapperScript {
 			newParams[i] = newTermVariable;
 		}
 		final Sort newResultSort = translateSort(mIntScript, resultSort);
+		final Term definitionWithoutLet = new FormulaUnLet().unlet(definition);
 		final Triple<Term, Set<Term>, Boolean> triple;
 		try {
-			triple = mTm.translateBvtoIntTransferrer(definition,
+			triple = mTm.translateBvtoIntTransferrer(definitionWithoutLet,
 				new HistoryRecordingScript(mBvScript), new HistoryRecordingScript(mIntScript));
 		} catch (final Throwable th) {
 			throw new AssertionError(th);
@@ -294,18 +295,16 @@ public class IntBlastingWrapper extends WrapperScript {
 	}
 
 	@Override
-	public LBool assertTerm(Term bvTerm) throws SMTLIBException {
+	public LBool assertTerm(final Term bvTerm) throws SMTLIBException {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			writeEvalRow(0, "Timeout at beginning of assertTerm");
 			throw new ToolchainCanceledException(IntBlastingWrapper.class,
 					String.format("assertTerm"));
 		}
-		// No need to assert term in mBvScript.
-		// FIXME: translate to bv by using an instance of the TermTransferrer
-		bvTerm = new FormulaUnLet().unlet(bvTerm);
+		final Term bvTermWithoutLet = new FormulaUnLet().unlet(bvTerm);
 		final Triple<Term, Set<Term>, Boolean> translationResult;
 		try {
-			translationResult = mTm.translateBvtoIntTransferrer(bvTerm, new HistoryRecordingScript(mBvScript),
+			translationResult = mTm.translateBvtoIntTransferrer(bvTermWithoutLet, new HistoryRecordingScript(mBvScript),
 					new HistoryRecordingScript(mIntScript));
 		} catch (final Throwable th) {
 			writeEvalRow(0, th.toString());
