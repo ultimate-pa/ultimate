@@ -279,6 +279,17 @@ public final class BitvectorUtils {
 				throw new AssertionError(String.format("%s: params expected %s, params provided %s", funcname,
 						getNumberOfParams(), params.length));
 			}
+			if (getNumberOfParams() == 1) {
+				if (params.length != 1) {
+					throw new AssertionError("Param missmatch");
+				}
+				final BitvectorConstant literal = constructBitvectorConstant(params[0]);
+				if (literal == null) {
+					return simplify_NonConstantCase(script, indices, params, new BitvectorConstant[0]);
+				} else {
+					return simplify_ConstantCase(script, indices, new BitvectorConstant[] { literal });
+				}
+			}
 			final List<BitvectorConstant> literals = new ArrayList<>();
 			final List<Term> nonLiterals = new ArrayList<>();
 			for (int i = 0; i < params.length; i++) {
