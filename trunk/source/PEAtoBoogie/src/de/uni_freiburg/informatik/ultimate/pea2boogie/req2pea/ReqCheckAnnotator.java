@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea;
 
-import java.security.AlgorithmConstraints;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
