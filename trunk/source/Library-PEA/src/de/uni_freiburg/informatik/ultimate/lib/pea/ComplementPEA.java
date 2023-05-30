@@ -13,6 +13,7 @@ import java.util.List;
  * This class implements an algorithm for complementing Phase Event Automata as described in my bachelors thesis.
  * Documentation to be continued...
  *
+ *aa
  * TODO: split Alg up in multiple methods
  *
  * @author Lena Funk
