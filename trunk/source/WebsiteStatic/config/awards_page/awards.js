@@ -340,7 +340,7 @@ const _AWARDS = [
                 }
             ]
         }]
-    }
+    },
     {
         id: "svcomp2017",
         competition: "SV-COMP 2017",
