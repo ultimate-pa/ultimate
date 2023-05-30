@@ -50,12 +50,12 @@ const _AWARDS = [
                 id: "taipan",
                 awards: [
                     {
-                        category: "MemSafety",
-                        medal: "bronze"
-                    },
-                    {
                         category: "NoOverflows",
                         medal: "silver"
+                    },
+                    {
+                        category: "MemSafety",
+                        medal: "bronze"
                     }
                 ]
             },
@@ -77,16 +77,16 @@ const _AWARDS = [
                         medal: "gold"
                     },
                     {
-                        category: "ConcurrencySafety",
-                        medal: "bronze"
-                    },
-                    {
                         category: "NoOverflows",
                         medal: "gold"
                     },
                     {
                         category: "Termination",
                         medal: "gold"
+                    },
+                    {
+                        category: "ConcurrencySafety",
+                        medal: "bronze"
                     }
                 ]
             },
@@ -247,6 +247,22 @@ const _AWARDS = [
         }]
     },
     {
+        competition: "Termination Competition 2019",
+        competition_link: "http://termination-portal.org/wiki/Termination_Competition_2019",
+        image: "termcomp2019.svg",
+        text: "ULTIMATE Büchi Automizer has won the <em>C Programs</em></a> category on the <em>Termination of Programs</em> track of the Termination Competition 2019.",
+        tools: [{
+            name: "Büchi Automizer",
+            id: "buechi_automizer",
+            awards: [
+                {
+                    category: "C Programs (Termination of Programs)",
+                    medal: "gold"
+                }
+            ]
+        }]
+    },
+    {
         id: "svcomp2019",
         competition: "SV-COMP 2019",
         competition_link: "http://sv-comp.sosy-lab.org/2019/",
@@ -324,7 +340,7 @@ const _AWARDS = [
                 }
             ]
         }]
-    },
+    }
     {
         id: "svcomp2017",
         competition: "SV-COMP 2017",
