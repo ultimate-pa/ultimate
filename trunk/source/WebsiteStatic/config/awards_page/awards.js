@@ -123,7 +123,7 @@ const _AWARDS = [
         id: "svcomp2022",
         competition: "SV-COMP 2022",
         competition_link: "http://sv-comp.sosy-lab.org/2022/",
-        image: "svcomp2022.jpg",
+        image: "svcomp2022.svg",
         text: "The ULTIMATE team participated in the 11th Competition on Software Verification (SV-COMP 2022) with four verification tools: Automizer, Kojak, Taipan and, for the first time, GemCutter. We collected several medals and won the demo category <em>NoDataRace</em>.",
         tools: [{
             name: "Automizer",
@@ -172,7 +172,7 @@ const _AWARDS = [
         id: "svcomp2021",
         competition: "SV-COMP 2021",
         competition_link: "http://sv-comp.sosy-lab.org/2021/",
-        image: "svcomp2021.jpg",
+        image: "svcomp2021.svg",
         text: "In the 10th Competition on Software Verification (SV-COMP 2021), the ULTIMATE team competed with the verification tools Automizer, Kojak and Taipan. We collected several medals, including (for the fifth time in a row) the gold medal in the category <em>Termination</em>.",
         tools: [{
             name: "Automizer",
@@ -215,7 +215,7 @@ const _AWARDS = [
         id: "svcomp2020",
         competition: "SV-COMP 2020",
         competition_link: "http://sv-comp.sosy-lab.org/2020/",
-        image: "svcomp2020.png",
+        image: "svcomp2020.svg",
         text: "ULTIMATE Automizer won second place in the <em>Overall</em> ranking of the 9th Competition on Software Verification (SV-COMP 2020). The ULTIMATE team competed with the verification tools Automizer, Kojak and Taipan.",
         tools: [{
             name: "Automizer",
@@ -250,7 +250,7 @@ const _AWARDS = [
         id: "svcomp2019",
         competition: "SV-COMP 2019",
         competition_link: "http://sv-comp.sosy-lab.org/2019/",
-        image: "svcomp2019.png",
+        image: "svcomp2019.svg",
         text: "Three ULTIMATE verification tools participated in the 8th Competition on Software Verification (SV-COMP 2019): Automizer, Kojak and Taipan. The ULTIMATE team won two gold medals.",
         tools: [{
             name: "Automizer",
@@ -410,7 +410,7 @@ const _AWARDS = [
         id: "termcomp2015",
         competition: "Termination Competition 2015",
         competition_link: "http://termination-portal.org/wiki/Termination_Competition_2015",
-        image: "termcomp2015.png",
+        image: "termcomp2015.svg",
         text: "ULTIMATE Büchi Automizer has won the <a href=\"http://nfa.imn.htwk-leipzig.de/termcomp-2015/competitions/4\"><em>Termination of Programming Languages</em></a> category of the Termination Competition 2015.",
         tools: [{
             name: "Büchi Automizer",
@@ -427,7 +427,7 @@ const _AWARDS = [
         id: "svcomp2015",
         competition: "SV-COMP 2015",
         competition_link: "http://sv-comp.sosy-lab.org/2015/",
-        image: "svcomp2015.png",
+        image: "svcomp2015.svg",
         text: "The ULTIMATE team participated in the 4th Competition on Software Verification (SV-COMP 2015) with the verification tools Automizer and Kojak.",
         tools: [{
             name: "Automizer",
@@ -472,7 +472,7 @@ const _AWARDS = [
         id: "termcomp2014",
         competition: "Termination Competition 2014",
         competition_link: "https://termination-portal.org/wiki/Termination_Competition_2014",
-        image: "termcomp2014.png",
+        image: "termcomp2014.svg",
         text: "ULTIMATE Büchi Automizer has won second place in the <a href=\"http://nfa.imn.htwk-leipzig.de/termcomp-2014/competition/20\"><em>Termination of Programming Languages</em></a> category of the Termination Competition 2014.",
         tools: [{
             name: "Büchi Automizer",
@@ -489,7 +489,7 @@ const _AWARDS = [
         id: "svcomp2014",
         competition: "SV-COMP 2014",
         competition_link: "http://sv-comp.sosy-lab.org/2014/",
-        image: "svcomp2014.png",
+        image: "svcomp2014.svg",
         text: "The ULTIMATE team participated in the 3rd Competition on Software Verification (SV-COMP 2014) with the verification tools Automizer and Kojak.",
         tools: [{
             name: "Automizer",
