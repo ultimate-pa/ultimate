@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="15GB" timelimit="1800" hardtimelimit="1820" cpuCores="2">
-  <resultfiles>${inputfile_path}/CHC_*.smt2</resultfiles>
+  <resultfiles>${taskdef_path}/CHC_*.smt2</resultfiles>
 
   <option name="--force-no-wrapper" />
-  <option name="-s">${inputfile_path}/ThreadModularVerifier.Settings.epf</option>
+  <option name="-s">${taskdef_path}/ThreadModularVerifier.Settings.epf</option>
 
   <rundefinition name="Eldarica">
     <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
