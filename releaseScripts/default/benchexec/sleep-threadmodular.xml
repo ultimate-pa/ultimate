@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="15GB" timelimit="1800" hardtimelimit="1820" cpuCores="2">
+  <resultfiles>${inputfile_path}/CHC_*.smt2</resultfiles>
+
+  <option name="--force-no-wrapper" />
+  <option name="-s">${inputfile_path}/ThreadModularVerifier.Settings.epf</option>
+
+  <rundefinition name="Eldarica">
+    <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
+    <option name="--chcsolver.chc.solver.backend">ELDARICA</option>
+    <option name="--chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <option name="--chcsolver.produce.derivation.if.query.is.unsat">true</option>
+    <option name="--chcsolver.produce.unsat.core.if.query.is.unsat">true</option>
+  </rundefinition>
+
+  <rundefinition name="Z3">
+    <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
+    <option name="--chcsolver.chc.solver.backend">Z3</option>
+    <option name="--chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <option name="--chcsolver.produce.derivation.if.query.is.unsat">false</option>
+    <option name="--chcsolver.produce.unsat.core.if.query.is.unsat">false</option>
+  </rundefinition>
+
+  <rundefinition name="Golem">
+    <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
+    <option name="--chcsolver.chc.solver.backend">GOLEM</option>
+    <option name="--chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <option name="--chcsolver.produce.derivation.if.query.is.unsat">false</option>
+    <option name="--chcsolver.produce.unsat.core.if.query.is.unsat">false</option>
+  </rundefinition>
+
+  <rundefinition name="TreeAutomizer">
+    <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
+    <option name="--chcsolver.chc.solver.backend">TREEAUTOMIZER</option>
+    <option name="--chcsolver.produce.chc.model.if.query.is.sat">false</option>
+    <option name="--chcsolver.produce.derivation.if.query.is.unsat">false</option>
+    <option name="--chcsolver.produce.unsat.core.if.query.is.unsat">true</option>
+  </rundefinition>
+
+  <rundefinition name="UniHorn">
+    <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularUniHorn.xml</option>
+  </rundefinition>
+
+  <tasks name="threadmodular-examples">
+    <include>../../../trunk/examples/threadmodular/regression/*/*.yml</include>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+</benchmark>
