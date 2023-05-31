@@ -35,6 +35,7 @@
     <option name="--chcsolver.produce.chc.model.if.query.is.sat">false</option>
     <option name="--chcsolver.produce.derivation.if.query.is.unsat">false</option>
     <option name="--chcsolver.produce.unsat.core.if.query.is.unsat">true</option>
+    <option name="--treeautomizer.smt.solver">Internal_SMTInterpol</option>
   </rundefinition>
 
   <rundefinition name="UniHorn">
