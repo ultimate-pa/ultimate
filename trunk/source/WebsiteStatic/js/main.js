@@ -44,6 +44,18 @@ function render_developers_page() {
 
 
 /**
+ * Load HTML for imprint page from config/imprint_page/imprint.html and add it to the content container.
+ */
+function render_imprint_page() {
+  const content = $('#content');
+  content.addClass('p-5');
+  $.get("./config/imprint_page/imprint.html", function (data) {
+    content.append(data);
+  });
+}
+
+
+/**
  * Fetch and parse the tool info page.
  * @param tool_id
  */
@@ -186,6 +198,9 @@ function bootstrap() {
     case "developers":
       // load the developers page
       render_developers_page();
+      break;
+    case "imprint":
+      render_imprint_page();
       break;
     default:
       // load the landing page.

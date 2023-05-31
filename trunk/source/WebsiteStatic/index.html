@@ -36,6 +36,7 @@
 		</nav>
 		<div id="content" class="d-flex flex-column flex-grow-1"></div>
 	</div>
+	<footer class="bg-light py-2"><a class="float-end mx-2" href="?ui=imprint">Imprint</a></footer>
 
 	<script id="editor-message" type="text/x-handlebars-template">
   <div class="toast  {{toast_classes}}" data-type="{{logLvl}}" data-start-line="{{startLNr}}"
@@ -210,6 +211,11 @@
     {{#ifCond context.url.ui '===' 'developers'}}
       <li class="nav-item active">
         <a class="nav-link" href="?ui=developers">Developers <span class="sr-only">(current)</span></a>
+      </li>
+    {{/ifCond}}
+    {{#ifCond context.url.ui '===' 'imprint'}}
+      <li class="nav-item active">
+        <a class="nav-link" href="?ui=imprint">Imprint <span class="sr-only">(current)</span></a>
       </li>
     {{/ifCond}}
     {{#ifCond context.url.ui '!==' 'home'}}
