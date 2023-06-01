@@ -80,39 +80,25 @@ public class PartialQuantifierElimination {
 	private static final boolean DEBUG_APPLY_ARRAY_PQE_ALSO_TO_NEGATION = false;
 	private static final boolean THROW_ERROR_IF_NOT_ALL_QUANTIFIERS_REMOVED = false;
 
-	private static final boolean CORONA_QUANTIFIER_ELIMINATION = true;
-
 
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final Term term, final SimplificationTechnique simplificationTechnique) {
-		if (CORONA_QUANTIFIER_ELIMINATION) {
-			final Term tmp = eliminateLight(services, mgdScript, term);
-			return QuantifierPushTermWalker.eliminate(services, mgdScript, true, PqeTechniques.ALL,
-					simplificationTechnique, tmp);
-		} else {
-			final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
-			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
-			final Term chnf = new CommuhashNormalForm(services, mgdScript.getScript()).transform(nnf);
-			final ILogger logger = services.getLoggingService().getLogger(PartialQuantifierElimination.class);
-			return tryToEliminate(services, logger, mgdScript, chnf, simplificationTechnique,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		}
+		final Term tmp = eliminateLight(services, mgdScript, term);
+		return QuantifierPushTermWalker.eliminate(services, mgdScript, true, PqeTechniques.ALL, simplificationTechnique,
+				tmp);
 	}
 
 	public static Term eliminateLight(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final Term term) {
 		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
+		// FIXME 20230601 Matthias: The following line seems useless. The input should
+		// always be in CommuHash Normal Form.
 		final Term chnf = new CommuhashNormalForm(services, mgdScript.getScript()).transform(nnf);
-		final Term result;
-		if (CORONA_QUANTIFIER_ELIMINATION) {
-			result = QuantifierPushTermWalker.eliminate(services, mgdScript, false, PqeTechniques.LIGHT,
-					SimplificationTechnique.NONE, chnf);
-		} else {
-			result = QuantifierPusher.eliminate(services, mgdScript, false, PqeTechniques.ONLY_DER,
-					SimplificationTechnique.NONE, chnf);
-		}
-		assert (CommuhashUtils.isInCommuhashNormalForm(result, CommuhashUtils.COMMUTATIVE_OPERATORS)) : "Output not in commuhash form";
+		final Term result = QuantifierPushTermWalker.eliminate(services, mgdScript, false, PqeTechniques.LIGHT,
+				SimplificationTechnique.NONE, chnf);
+		assert (CommuhashUtils.isInCommuhashNormalForm(result, CommuhashUtils.COMMUTATIVE_OPERATORS))
+				: "Output not in commuhash form";
 		return result;
 	}
 
