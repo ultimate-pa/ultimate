@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimension
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskPlain;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTask;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskSimple;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
@@ -169,14 +169,15 @@ public class Elim1Store {
 		mLogger = mServices.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 	}
 
-	public EliminationTaskPlain elim1(final EliminationTaskPlain input) throws ElimStorePlainException {
+	public EliminationTask elim1(final EliminationTask input) throws ElimStorePlainException {
 		assert UltimateNormalFormUtils.respectsUltimateNormalForm(input.getTerm()) : "invalid input";
 		if (input.getEliminatees().size() != 1) {
 			throw new IllegalArgumentException("Can only eliminate one variable");
 		}
 		final int quantifier = input.getQuantifier();
 		final TermVariable eliminatee = input.getEliminatees().iterator().next();
-		final Term polarizedContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier, input.getContext());
+		final Term polarizedContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier,
+				input.getContext().getCriticalConstraint());
 
 		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(mMgdScript.getScript(), input.getTerm(), eliminatee)
 				.downgradeDimensionsIfNecessary(mMgdScript.getScript());
@@ -191,7 +192,7 @@ public class Elim1Store {
 		if (equalityInformation == null) {
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
-			return new EliminationTaskPlain(quantifier, Collections.emptySet(), absobingElement, input.getContext());
+			return new EliminationTask(quantifier, Collections.emptySet(), absobingElement, input.getContext());
 		}
 
 		final Set<ArrayIndex> selectIndices = new HashSet<>();
@@ -205,7 +206,7 @@ public class Elim1Store {
 			aiem.unlockSolver();
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
-			return new EliminationTaskPlain(quantifier, Collections.emptySet(), absobingElement,
+			return new EliminationTask(quantifier, Collections.emptySet(), absobingElement,
 					input.getContext());
 		}
 
@@ -314,7 +315,8 @@ public class Elim1Store {
 			final Term doubleCaseTermMod;
 			if (APPLY_DOUBLE_CASE_SIMPLIFICATION) {
 				final Term criticalConstraint = SmtUtils.and(mScript,
-						QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier, result), input.getContext());
+						QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier, result),
+						input.getContext().getCriticalConstraint());
 				final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, doubleCaseTerm,
 						criticalConstraint, mServices,
 						SimplificationTechnique.SIMPLIFY_DDA);
@@ -349,7 +351,7 @@ public class Elim1Store {
 					new DAGSize().treesize(result)));
 			mLogger.info(sb.toString());
 		}
-		final EliminationTaskPlain resultEt;
+		final EliminationTask resultEt;
 		if (APPLY_RESULT_SIMPLIFICATION) {
 			if (DEBUG_CRASH_ON_LARGE_SIMPLIFICATION_POTENTIAL) {
 				final ExtendedSimplificationResult esrQuick = SmtUtils.simplifyWithStatistics(mMgdScript, result,
@@ -372,9 +374,9 @@ public class Elim1Store {
 				mLogger.info(sizeMessage);
 			}
 			mLogger.info("treesize after simplification " + new DAGSize().treesize(simplified));
-			resultEt = new EliminationTaskPlain(quantifier, newAuxVars, simplified, input.getContext());
+			resultEt = new EliminationTask(quantifier, newAuxVars, simplified, input.getContext());
 		} else {
-			resultEt = new EliminationTaskPlain(quantifier, newAuxVars, result, input.getContext());
+			resultEt = new EliminationTask(quantifier, newAuxVars, result, input.getContext());
 		}
 		assert !DEBUG_EXTENDED_RESULT_CHECK
 				|| EliminationTaskSimple
