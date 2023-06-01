@@ -266,7 +266,7 @@ public class Check extends ModernAnnotations {
 		case INCOMPLETE:
 			return "complete";
 		case COMPLEMENT:
-			return "the peas are not complements of each other";
+			return "not complements of each other";
 		case SUFFICIENT_THREAD_INSTANCES:
 			return "petrification did provide enough thread instances (tool internal message, not intended for end users)";
 		case DATA_RACE:
@@ -323,7 +323,7 @@ public class Check extends ModernAnnotations {
 		case INCOMPLETE:
 			return "incomplete";
 		case COMPLEMENT:
-			return "the peas are complements of each other";
+			return "complements of each other";
 		case SUFFICIENT_THREAD_INSTANCES:
 			return "petrification did not provide enough thread instances (tool internal message, not intended for end users)";
 		case DATA_RACE:
