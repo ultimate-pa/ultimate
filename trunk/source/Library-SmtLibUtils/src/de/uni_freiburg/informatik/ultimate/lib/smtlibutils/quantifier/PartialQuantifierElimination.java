@@ -124,46 +124,6 @@ public class PartialQuantifierElimination {
 	}
 
 	/**
-	 * @deprecated Use {@link PartialQuantifierElimination#eliminate} instead.
-	 */
-	@Deprecated
-	public static Term tryToEliminate(final IUltimateServiceProvider services, final ILogger logger,
-			final ManagedScript mgdScript, final Term term, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
-		final Term pushed = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ALL_LOCAL,
-				simplificationTechnique, term);
-		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
-		final QuantifierSequence qs = new QuantifierSequence(mgdScript, pnf);
-		final Term matrix = qs.getInnerTerm();
-		final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
-		Term result = matrix;
-		// if (qvs.size() > 1) {
-		// throw new AssertionError("Attention!!! quantifier alternation " + qvs.size());
-		// }
-		for (int i = qvs.size() - 1; i >= 0; i--) {
-			final QuantifiedVariables qv = qvs.get(i);
-			final Set<TermVariable> eliminatees = new HashSet<>(qv.getVariables());
-			try {
-				result = elim(mgdScript, qv.getQuantifier(), eliminatees, result, services, logger,
-						simplificationTechnique, xnfConversionTechnique);
-			} catch (final ToolchainCanceledException tce) {
-				final RunningTaskInfo rti = new RunningTaskInfo(PartialQuantifierElimination.class,
-						"eliminating quantifiers from formula with " + (qvs.size() - 1) + " quantifier alternations");
-				tce.addRunningTaskInfo(rti);
-				throw tce;
-			}
-			result = SmtUtils.quantifier(mgdScript.getScript(), qv.getQuantifier(), eliminatees, result);
-			if (THROW_ERROR_IF_NOT_ALL_QUANTIFIERS_REMOVED && (result instanceof QuantifiedFormula)) {
-				throw new AssertionError("Not all eliminated: " + result);
-			}
-			result = QuantifierPusher.eliminate(services, mgdScript, true, PqeTechniques.ONLY_DER,
-					simplificationTechnique, result);
-		}
-		return result;
-	}
-
-
-	/**
 	 * Returns equivalent formula. Quantifier is dropped if quantified variable not
 	 * in formula. Quantifier is eliminated if this can be done by the complete
 	 * quantifier elimination.
