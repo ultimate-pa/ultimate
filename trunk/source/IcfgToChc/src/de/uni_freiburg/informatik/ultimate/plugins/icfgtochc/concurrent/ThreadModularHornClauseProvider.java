@@ -806,7 +806,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 								for (final IcfgLocation loc : locations) {
 									if (loc.getProcedure().equals(instance.getTemplateName())) {
 										if (locCounter == instance.getInstanceNumber()) {
-											result[i] = getLocIndexTerm(loc, instance.getTemplateName());
+											result[i] = numeral(mLocationIndices.get(loc));
 											break;
 										}
 										locCounter++;
@@ -822,9 +822,11 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 					@Override
 					protected Collection<List<IcfgLocation>> getReachableProductLocations() {
-						return DataStructureUtils.cartesianProduct(
-								mInstances.stream().map(x -> mLocationIndices.get(x.getTemplateName()).keySet())
-										.collect(Collectors.toList()));
+						return DataStructureUtils.cartesianProduct(mInstances.stream()
+								.map(x -> mLocationIndices.keySet().stream()
+										.filter(l -> l.getProcedure().equals(x.getTemplateName()))
+										.collect(Collectors.toSet()))
+								.collect(Collectors.toList()));
 					}
 				};
 			}
