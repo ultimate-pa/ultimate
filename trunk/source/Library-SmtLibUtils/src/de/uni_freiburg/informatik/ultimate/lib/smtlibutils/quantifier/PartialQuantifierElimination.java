@@ -109,23 +109,9 @@ public class PartialQuantifierElimination {
 	public static Term eliminateCompat(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
 			final SimplificationTechnique simplificationTechnique, final Term term) {
-		if (CORONA_QUANTIFIER_ELIMINATION) {
-			final Term tmp = eliminateLight(services, mgdScript, term);
-			return QuantifierPushTermWalker.eliminate(services, mgdScript, applyDistributivity,
-					quantifierEliminationTechniques, simplificationTechnique, tmp);
-		} else {
-			final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
-			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
-			final Term chnf = new CommuhashNormalForm(services, mgdScript.getScript()).transform(nnf);
-			if (quantifierEliminationTechniques == PqeTechniques.ALL) {
-				final ILogger logger = services.getLoggingService().getLogger(PartialQuantifierElimination.class);
-				return tryToEliminate(services, logger, mgdScript, chnf, simplificationTechnique,
-						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-			} else {
-				return QuantifierPusher.eliminate(services, mgdScript, applyDistributivity,
-						quantifierEliminationTechniques, simplificationTechnique, chnf);
-			}
-		}
+		final Term tmp = eliminateLight(services, mgdScript, term);
+		return QuantifierPushTermWalker.eliminate(services, mgdScript, applyDistributivity,
+				quantifierEliminationTechniques, simplificationTechnique, tmp);
 	}
 
 	/**
