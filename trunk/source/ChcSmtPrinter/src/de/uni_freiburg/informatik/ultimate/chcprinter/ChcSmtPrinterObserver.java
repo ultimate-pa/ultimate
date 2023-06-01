@@ -167,8 +167,13 @@ public class ChcSmtPrinterObserver extends BaseObserver {
 		try {
 			if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 					.getBoolean(ChcSmtPrinterPreferenceInitializer.UNIQUE_NAME_LABEL)) {
+				String prefix = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+						.getString(ChcSmtPrinterPreferenceInitializer.FILE_NAME_LABEL);
+				if (prefix.endsWith(".smt2")) {
+					prefix = prefix.substring(0, prefix.length() - ".smt2".length());
+				}
 				file = File.createTempFile(
-						"ChcSmtPrinter_" + new File(ILocation.getAnnotation(root).getFileName()).getName() + "_UID",
+						prefix + "_" + new File(ILocation.getAnnotation(root).getFileName()).getName() + "_UID",
 						".smt2", new File(path));
 			} else {
 				filename = mServices.getPreferenceProvider(Activator.PLUGIN_ID)

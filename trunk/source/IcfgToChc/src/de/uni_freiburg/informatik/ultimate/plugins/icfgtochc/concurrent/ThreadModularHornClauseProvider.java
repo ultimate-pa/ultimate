@@ -94,9 +94,9 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	private final IIcfgSymbolTable mCfgSymbolTable;
 	private final Predicate<IProgramVar> mVariableFilter;
 
-	// maps a procedure name and a location (in the procedure) to an integer, such that the location variable has this
-	// integer as value iff control is in the given location
-	private final NestedMap2<String, IcfgLocation, Integer> mLocationIndices = new NestedMap2<>();
+	// Maps each location to an integer, such that the location variable has this integer as value iff control is in the
+	// given location. Locations in different procedures may be mapped to the same value.
+	protected final Map<IcfgLocation, Integer> mLocationIndices;
 
 	// used as location for threads that are not currently running
 	private final Term mBottomLocation;
@@ -108,8 +108,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	protected final PredicateInfo mInvariantPredicate;
 
 	protected final Set<HcGlobalVar> mGlobalVars = new HashSet<>();
-	protected final HcThreadCounterVar mStartedVar;
-	protected final HcThreadCounterVar mTerminatedVar;
+	protected final HcThreadCounterVar mRunningThreadsVar;
 	protected final Map<ThreadInstance, List<IHcThreadSpecificVar>> mThreadSpecificVars = new HashMap<>();
 	protected final Map<ThreadInstance, HcLocationVar> mLocationVars = new HashMap<>();
 	protected final NestedMap2<ThreadInstance, IProgramVar, HcLocalVar> mLocalVars = new NestedMap2<>();
@@ -135,13 +134,13 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		mInstances = getInstances(threadInfo.getFirst());
 		mUnboundedTemplates = threadInfo.getSecond();
 
+		mLocationIndices = createLocationMap(icfg);
 		mBottomLocation = numeral(-1);
+
 		if (mPrefs.specMode() == SpecMode.POSTCONDITION) {
-			mStartedVar = new HcThreadCounterVar(true, mScript);
-			mTerminatedVar = new HcThreadCounterVar(false, mScript);
+			mRunningThreadsVar = new HcThreadCounterVar(mScript);
 		} else {
-			mStartedVar = null;
-			mTerminatedVar = null;
+			mRunningThreadsVar = null;
 		}
 		mInvariantPredicate = createInvariantPredicate();
 	}
@@ -176,6 +175,25 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		return new PredicateInfo(predicate, parameters);
 	}
 
+	protected Map<IcfgLocation, Integer> createLocationMap(final IIcfg<?> icfg) {
+		final var result = new HashMap<IcfgLocation, Integer>();
+		for (final var entry : icfg.getProcedureEntryNodes().values()) {
+			int counter = 0;
+			result.put(entry, counter);
+			counter++;
+			final var iterator = new IcfgEdgeIterator(entry.getOutgoingEdges());
+			while (iterator.hasNext()) {
+				final var edge = iterator.next();
+				assert result.containsKey(edge.getSource()) : "edge with unknown source loc";
+				if (!result.containsKey(edge.getTarget())) {
+					result.put(edge.getTarget(), counter);
+					counter++;
+				}
+			}
+		}
+		return result;
+	}
+
 	/**
 	 * Constructs the sequence of parameters for the invariant predicate.
 	 *
@@ -189,8 +207,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 		// add variables for thread-modular encoding of postconditions
 		if (mPrefs.specMode() == SpecMode.POSTCONDITION) {
-			result.add(mStartedVar);
-			result.add(mTerminatedVar);
+			result.add(mRunningThreadsVar);
 		}
 
 		result.addAll(createGlobalVars());
@@ -344,17 +361,18 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	// add actual constraints for spec edges, do nothing if not a spec edge
 	protected void transformSpecEdgeClause(final IcfgEdge edge, final HornClauseBuilder clause) {
 		if (isPreConditionSpecEdge(edge) && mPrefs.specMode() == SpecMode.POSTCONDITION) {
-			incrementThreadCounter(clause, mStartedVar);
+			incrementThreadCounter(clause, mRunningThreadsVar, 1L);
 		} else if (isPostConditionSpecEdge(edge)) {
-			incrementThreadCounter(clause, mTerminatedVar);
+			incrementThreadCounter(clause, mRunningThreadsVar, -1L);
 		}
 	}
 
-	protected void incrementThreadCounter(final HornClauseBuilder clause, final HcThreadCounterVar counter) {
-		// add constraint counter' = counter + 1
+	protected void incrementThreadCounter(final HornClauseBuilder clause, final HcThreadCounterVar counter,
+			final long delta) {
+		// add constraint counter' = counter + delta
 		clause.differentBodyHeadVar(counter);
 		clause.addConstraint(SmtUtils.binaryEquality(mScript, clause.getHeadVar(counter).getTerm(),
-				SmtUtils.sum(mScript, getIntSort(), clause.getBodyVar(counter).getTerm(), numeral(1L))));
+				SmtUtils.sum(mScript, getIntSort(), clause.getBodyVar(counter).getTerm(), numeral(delta))));
 	}
 
 	protected boolean isPreConditionSpecEdge(final IcfgEdge edge) {
@@ -452,11 +470,9 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		}
 
 		if (mPrefs.specMode() == SpecMode.POSTCONDITION) {
-			// add constraints that thread counters (for thread-modular encoding of postconditions) are initially 0
+			// add constraints that thread counter (for thread-modular encoding of postconditions) is initially 0
 			clause.addConstraint(
-					SmtUtils.binaryEquality(mScript, clause.getHeadVar(mStartedVar).getTerm(), numeral(0)));
-			clause.addConstraint(
-					SmtUtils.binaryEquality(mScript, clause.getHeadVar(mTerminatedVar).getTerm(), numeral(0)));
+					SmtUtils.binaryEquality(mScript, clause.getHeadVar(mRunningThreadsVar).getTerm(), numeral(0)));
 		}
 
 		if (mPrefs.hasPreconditions()) {
@@ -532,9 +548,9 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		final var exitLoc = mIcfg.getProcedureExitNodes().get(thread.getTemplateName());
 		addInLocationConstraint(clause, thread, exitLoc);
 
-		// add thread counter constraint: started == terminated
-		clause.addConstraint(SmtUtils.binaryEquality(mScript, clause.getBodyVar(mStartedVar).getTerm(),
-				clause.getBodyVar(mTerminatedVar).getTerm()));
+		// add thread counter constraint: running == 0
+		clause.addConstraint(
+				SmtUtils.binaryEquality(mScript, clause.getBodyVar(mRunningThreadsVar).getTerm(), numeral(0L)));
 
 		// add negated postcondition
 		final var postcondition = DataStructureUtils
@@ -664,8 +680,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 	protected void addInLocationConstraint(final HornClauseBuilder clause, final ThreadInstance threadInstance,
 			final IcfgLocation location) {
-		final var locTerm =
-				location == null ? mBottomLocation : getLocIndexTerm(location, threadInstance.getTemplateName());
+		final var locTerm = location == null ? mBottomLocation : getLocIndexTerm(location);
 		final HcLocationVar locVar = new HcLocationVar(threadInstance, mScript);
 		final Term term = clause.getBodyVar(locVar).getTerm();
 		clause.addConstraint(SmtUtils.binaryEquality(mScript, term, locTerm));
@@ -673,20 +688,14 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 	protected void addOutLocationConstraint(final HornClauseBuilder clause, final ThreadInstance threadInstance,
 			final IcfgLocation location) {
-		final var locTerm =
-				location == null ? mBottomLocation : getLocIndexTerm(location, threadInstance.getTemplateName());
+		final var locTerm = location == null ? mBottomLocation : getLocIndexTerm(location);
 		final HcLocationVar locVar = mLocationVars.get(threadInstance);
 		final Term term = clause.getHeadVar(locVar).getTerm();
 		clause.addConstraint(SmtUtils.binaryEquality(mScript, term, locTerm));
 	}
 
-	protected Term getLocIndexTerm(final IcfgLocation loc, final String proc) {
-		Integer index = mLocationIndices.get(proc, loc);
-		if (index == null) {
-			final Map<IcfgLocation, Integer> otherIndices = mLocationIndices.get(proc);
-			index = otherIndices == null ? 0 : otherIndices.size();
-			mLocationIndices.put(proc, loc, index);
-		}
+	protected Term getLocIndexTerm(final IcfgLocation loc) {
+		final int index = mLocationIndices.get(loc);
 		return numeral(index);
 	}
 

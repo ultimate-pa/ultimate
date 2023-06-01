@@ -28,10 +28,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partial
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.HcLocationVar;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.HornClauseBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IHcThreadSpecificVar;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ThreadInstance;
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornClauseProvider {
 	private final IndependenceChecker mIndependenceChecker;
+	private final IPreferenceOrderManager mPreferenceManager;
 	private final Map<String, Collection<IcfgLocation>> mThreadLocations;
 
 	private final Map<ThreadInstance, HcThreadIdVar> mIdVars;
@@ -62,16 +64,18 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 	public SleepSetThreadModularHornClauseProvider(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final IIcfg<IcfgLocation> icfg, final HcSymbolTable symbolTable,
 			final ISymbolicIndependenceRelation<? super IIcfgTransition<?>> independence,
-			final IcfgToChcPreferences prefs) {
+			final IThreadModularPreferenceOrder preferenceOrder, final IcfgToChcPreferences prefs) {
 		super(services, mgdScript, icfg, symbolTable, prefs);
 		mIndependenceChecker = new IndependenceChecker(services, icfg.getCfgSmtToolkit(), independence);
 		mThreadLocations = icfg.getProgramPoints().entrySet().stream()
 				.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().values()));
 
-		if (!mPrefs.breakPreferenceOrderSymmetry()) {
-			mIdVars = extractThreadVars(HcThreadIdVar.class);
-		} else {
+		if (mPrefs.breakPreferenceOrderSymmetry()) {
 			mIdVars = null;
+			mPreferenceManager = new ExplicitPreferenceOrderManager(preferenceOrder, mScript, mLocationIndices);
+		} else {
+			mIdVars = extractThreadVars(HcThreadIdVar.class);
+			mPreferenceManager = new SymbolicPreferenceOrderManager(preferenceOrder, mScript, mLocationIndices);
 		}
 		mSleepVars = extractThreadVars(HcSleepVar.class);
 	}
@@ -103,9 +107,7 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 		final var clause = super.buildInitialClause();
 
 		// thread IDs are pairwise different
-		if (!mPrefs.breakPreferenceOrderSymmetry()) {
-			ensureUniqueThreadIDs(clause);
-		}
+		mPreferenceManager.ensureUniqueThreadIDs(clause, mInstances);
 
 		// all sleep variables are initialized to false
 		for (final var instance : mInstances) {
@@ -130,7 +132,11 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 
 		// update sleep variables
 		for (final var instance : mInstances) {
-			updateSleepInductive(clause, transition, preds.keySet(), updatedThread, instance);
+			if (preds.containsKey(instance)) {
+				// no update of sleep variable
+				continue;
+			}
+			updateSleep(clause, updatedThread, transition, instance, Comparator.naturalOrder());
 		}
 
 		return clause;
@@ -176,8 +182,7 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 
 		// update sleep variables
 		for (final var sleepingThread : mInstances) {
-			final var prefOrder = symbolicPreferenceOrderConstraint(clause, sleepingThread, interferingThread);
-			updateSleep(clause, interferingThread, transition, sleepingThread, prefOrder);
+			updateSleep(clause, interferingThread, transition, sleepingThread, null);
 		}
 
 		return clause;
@@ -193,7 +198,6 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 
 		// TODO support transitions with multiple predecessors (joins)
 		final var interferingThread = getInterferingThread(transition);
-		// final var interferingVars = createThreadSpecificVars(interferingThread);
 		final var instances = getInstances(interferingThread.getTemplateName());
 
 		final var clause = buildNonInterferenceClause(transition, (c, replacedInstance) -> {
@@ -232,93 +236,59 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 
 		// update sleep variables
 		for (final var sleepingThread : mInstances) {
-			final var prefOrder = index < sleepingThread.getInstanceNumber() ? mScript.term(SMTLIBConstants.FALSE)
-					: mScript.term(SMTLIBConstants.TRUE);
-			updateSleep(clause, interferingThread, transition, sleepingThread, prefOrder);
+			updateSleep(clause, interferingThread, transition, sleepingThread,
+					ThreadInstance.getNonInterferenceComparator(index));
 		}
 
 		return clause;
 	}
 
-	private void ensureUniqueThreadIDs(final HornClauseBuilder clause) {
-		for (final var first : mInstances) {
-			final var firstId = clause.getHeadVar(mIdVars.get(first));
-			for (final var second : mInstances) {
-				if (!Objects.equals(first, second)) {
-					final var secondId = clause.getHeadVar(mIdVars.get(second));
-					clause.addConstraint(SmtUtils.distinct(mScript, firstId.getTerm(), secondId.getTerm()));
-				}
-			}
-		}
-	}
-
-	// update sleep variable depending on commutativity and preference order
-	private void updateSleepInductive(final HornClauseBuilder clause, final IcfgEdge transition,
-			final Set<ThreadInstance> activeThreads, final ThreadInstance primaryActiveThread,
-			final ThreadInstance updatedThread) {
-		if (activeThreads.contains(updatedThread)) {
-			// no update of sleep variable
-			return;
-		}
-
-		final Term prefOrder;
-		if (mPrefs.breakPreferenceOrderSymmetry()) {
-			// We resolve the preference order statically.
-			// For now, the preference order is non-positional, and given by the ordering in mInstances.
-			final int ordering =
-					Integer.compare(mInstances.indexOf(primaryActiveThread), mInstances.indexOf(updatedThread));
-			// Formula expressing whether current thread is BEFORE primary thread.
-			prefOrder = ordering < 0 ? mScript.term(SMTLIBConstants.FALSE) : mScript.term(SMTLIBConstants.TRUE);
-		} else {
-			// We resolve the preference order symbolically, using ID variables.
-			prefOrder = symbolicPreferenceOrderConstraint(clause, updatedThread, primaryActiveThread);
-		}
-
-		updateSleep(clause, primaryActiveThread, transition, updatedThread, prefOrder);
-	}
-
 	// update sleep variable depending on commutativity and preference order
 	private void updateSleep(final HornClauseBuilder clause, final ThreadInstance activeThread,
-			final IcfgEdge activeEdge, final ThreadInstance updatedThread, final Term prefOrder) {
+			final IcfgEdge activeEdge, final ThreadInstance updatedThread,
+			final Comparator<ThreadInstance> comparator) {
+		// The sleep variable of updatedThread is modified.
 		final var sleep = mSleepVars.get(updatedThread);
 		clause.differentBodyHeadVar(sleep);
-
 		final var oldSleep = clause.getBodyVar(sleep);
 		final var newSleep = clause.getHeadVar(sleep);
 
+		// Determine the preference order constraint, expressing that updatedThread is preferable to activeThread.
+		// updatedThread < activeThread
+		final var updatedLocTerm = clause.getBodyVar(new HcLocationVar(updatedThread, mScript)).getTerm();
+		final var activeLoc = activeEdge.getSource();
+		final var activeLocTerm = getLocIndexTerm(activeLoc);
+		final var prefOrder = mPreferenceManager.getOrderConstraint(clause, comparator, updatedThread, null,
+				updatedLocTerm, activeThread, activeLoc, activeLocTerm);
+
+		// Determine if updatedThread can be put to sleep (or continue to sleep).
+		// (updatedThread < activeThread) \/ sleep
 		final var canBePutToSleep = SmtUtils.or(mScript, prefOrder, oldSleep.getTerm());
 
 		if (SmtUtils.isFalseLiteral(canBePutToSleep)) {
-			// optimization: If commutativity does not play a role, skip computation of commutativity constraint
+			// Optimization: If commutativity does not play a role, skip computation of commutativity constraint.
 			// sleep' = false
 			clause.addConstraint(
 					SmtUtils.binaryBooleanEquality(mScript, newSleep.getTerm(), mScript.term(SMTLIBConstants.FALSE)));
 			return;
 		}
 
-		// get constraint describing commutativity
+		// Get constraint describing commutativity.
 		final var currentLoc = clause.getBodyVar(mLocationVars.get(updatedThread));
 		final Term commConstr =
 				getCommutativityConstraint(clause, activeThread, activeEdge, updatedThread, currentLoc.getTerm());
 
-		// sleep' = (current < interfering \/ sleep) /\ commConstr
+		// Update the sleep variable of updatedThread, according to the sleep set rule.
+		// sleep' = ((updatedThread < activeThread) \/ sleep) /\ commConstr
 		clause.addConstraint(SmtUtils.binaryBooleanEquality(mScript, newSleep.getTerm(),
 				SmtUtils.and(mScript, canBePutToSleep, commConstr)));
-	}
-
-	private Term symbolicPreferenceOrderConstraint(final HornClauseBuilder clause, final ThreadInstance current,
-			final ThreadInstance active) {
-		final var currentId = clause.getBodyVar(new HcThreadIdVar(current, mScript));
-		final var activeId = clause.getBodyVar(new HcThreadIdVar(active, mScript));
-		return SmtUtils.less(mScript, currentId.getTerm(), activeId.getTerm());
 	}
 
 	protected Term getCommutativityConstraint(final HornClauseBuilder clause, final ThreadInstance activeThread,
 			final IcfgEdge activeEdge, final ThreadInstance otherThread, final Term otherLocVar) {
 		final var disjuncts = new ArrayList<Term>();
 		for (final var loc : mThreadLocations.get(otherThread.getTemplateName())) {
-			final var locEquality =
-					SmtUtils.binaryEquality(mScript, otherLocVar, getLocIndexTerm(loc, otherThread.getTemplateName()));
+			final var locEquality = SmtUtils.binaryEquality(mScript, otherLocVar, getLocIndexTerm(loc));
 			if (SmtUtils.isFalseLiteral(locEquality)) {
 				continue;
 			}

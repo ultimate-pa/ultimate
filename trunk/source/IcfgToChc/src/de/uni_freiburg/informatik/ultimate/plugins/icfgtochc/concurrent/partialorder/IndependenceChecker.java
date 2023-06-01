@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.HcGlobalVar;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.HcLocalVar;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.HornClauseBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ThreadInstance;
@@ -127,6 +128,13 @@ class IndependenceChecker {
 		final var backSubstitution = new HashMap<TermVariable, Term>();
 		addBackSubstitutionMappings(clause, mLeftSubstitution, backSubstitution, thread1);
 		addBackSubstitutionMappings(clause, mRightSubstitution, backSubstitution, thread2);
+
+		for (final var global : mSymbolTable.getGlobals()) {
+			final var hcVar = new HcGlobalVar(global);
+			final var bodyVar = clause.getBodyVar(hcVar);
+			backSubstitution.put(global.getTermVariable(), bodyVar.getTermVariable());
+		}
+
 		return Substitution.apply(mMgdScript, backSubstitution, term);
 	}
 

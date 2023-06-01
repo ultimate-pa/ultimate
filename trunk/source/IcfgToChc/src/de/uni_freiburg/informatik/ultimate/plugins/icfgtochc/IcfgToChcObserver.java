@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
@@ -49,12 +50,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ConcurrencyMode;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgLiptonReducer;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ThreadModularHornClauseProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.ApproximateLockstepPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.ConditionSynthesizingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.ExplicitSymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.ISymbolicIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.IThreadModularPreferenceOrder;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.SequentialCompositionPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.SleepSetThreadModularHornClauseProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences;
 
@@ -103,15 +108,25 @@ public class IcfgToChcObserver extends BaseObserver {
 				|| !IcfgUtils.getForksInLoop(icfg).isEmpty()
 				|| mPrefs.concurrencyMode() == ConcurrencyMode.PARAMETRIC : "Unexpected non-linear clauses";
 
-		final var bad = resultChcs.stream()
-				.filter(chc -> chc.constructFormula(mgdScript, false).getFreeVars().length != 0).findAny();
-		assert bad.isEmpty() : bad;
+		assert checkFreeVariables(resultChcs, mgdScript) : "Some clauses have free variables";
 
 		final HornAnnot annot = new HornAnnot(icfg.getIdentifier(), mgdScript, hcSymbolTable,
 				new ArrayList<>(resultChcs), true, chcCategoryInfo, chcProvider.getBacktranslator());
 
 		mResult = HornClauseAST.create(annot);
 		ModelUtils.copyAnnotations(icfg, mResult);
+	}
+
+	private static boolean checkFreeVariables(final Collection<HornClause> system, final ManagedScript mgdScript) {
+		for (final var clause : system) {
+			final var formula = clause.constructFormula(mgdScript, false);
+			final var freevars = formula.getFreeVars();
+			if (freevars.length > 0) {
+				assert false : "free variables " + Arrays.toString(freevars) + " in clause " + clause;
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private static boolean isReturnReachable(final IIcfg<IcfgLocation> icfg) {
@@ -138,8 +153,9 @@ public class IcfgToChcObserver extends BaseObserver {
 
 			if (mPrefs.useSleepSets()) {
 				final var independence = getIndependence(icfg, mgdScript);
+				final var preforder = getPreferenceOrder(mgdScript.getScript(), icfg);
 				return new SleepSetThreadModularHornClauseProvider(mServices, mgdScript, icfg, hcSymbolTable,
-						independence, mPrefs);
+						independence, preforder, mPrefs);
 			}
 			return new ThreadModularHornClauseProvider(mServices, mgdScript, icfg, hcSymbolTable, mPrefs);
 		}
@@ -147,7 +163,7 @@ public class IcfgToChcObserver extends BaseObserver {
 	}
 
 	private ISymbolicIndependenceRelation<IAction> getIndependence(final IIcfg<?> icfg, final ManagedScript mgdScript) {
-		final boolean symmetric = true;
+		final boolean symmetric = !mPrefs.useSemicommutativity();
 		final var independence = new SemanticIndependenceRelation<>(mServices, mgdScript, false, symmetric);
 
 		switch (mPrefs.conditionalIndependence()) {
@@ -161,5 +177,16 @@ public class IcfgToChcObserver extends BaseObserver {
 		}
 
 		throw new AssertionError("Unknown conditional independence setting: " + mPrefs.conditionalIndependence());
+	}
+
+	private IThreadModularPreferenceOrder getPreferenceOrder(final Script script, final IIcfg<?> icfg) {
+		switch (mPrefs.preferenceOrder()) {
+		case SEQ_COMP:
+			return new SequentialCompositionPreferenceOrder(script);
+		case LOCKSTEP:
+			return ApproximateLockstepPreferenceOrder.create(script, icfg);
+		}
+
+		throw new AssertionError("Unknown preference order setting: " + mPrefs.preferenceOrder());
 	}
 }

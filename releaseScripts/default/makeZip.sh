@@ -48,7 +48,7 @@ if [ "$2" == "linux" ]; then
   echo "Building .zip for linux..."
   ARCH="linux"
   ARCHPATH="products/CLI-E4/linux/gtk/x86_64"
-  ADDS+=("adds/z3" "adds/cvc4nyu" "adds/cvc4" "adds/mathsat")
+  ADDS+=("adds/z3" "adds/cvc4nyu" "adds/cvc4" "adds/mathsat" "adds/golem")
 elif [ "$2" == "win32" ]; then
   echo "Building .zip for win32..."
   ARCH="win32"

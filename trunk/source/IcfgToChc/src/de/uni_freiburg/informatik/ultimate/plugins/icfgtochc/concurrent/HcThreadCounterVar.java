@@ -26,35 +26,30 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
-import java.util.Objects;
-
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
 /**
- * A variable that counts the number of started resp. of terminated threads. These variables are used for a
- * thread-modular encoding of postconditions.
+ * A variable that counts the number of running threads. This variable is used for a thread-modular encoding of
+ * postconditions.
  *
  * The thread-modular encoding of postconditions works as follows:
  * <ol>
- * <li>The number of started threads is incremented each time one of the initially running threads takes its first
+ * <li>The number of running threads is incremented each time one of the initially running threads takes its first
  * step.</li>
- * <li>The number of terminated threads is incremented each time one of the initially running threads terminates.</li>
- * <li>If an initially running thread has terminated, and the numbers of started and terminated threads are equal, then
- * the postcondition must hold.</li>
+ * <li>The number of running threads is decremented each time one of the initially running threads terminates.</li>
+ * <li>If an initially running thread has terminated, and the number of running threads is 0, then the postcondition
+ * must hold.</li>
  * </ol>
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public class HcThreadCounterVar implements IHcReplacementVar {
 
-	// An instance either represents the number of started threads (if this boolean is true) or of terminated threads
-	private final boolean mIsStarted;
 	private final Sort mSort;
 
-	public HcThreadCounterVar(final boolean isStarted, final Script script) {
-		mIsStarted = isStarted;
+	public HcThreadCounterVar(final Script script) {
 		mSort = SmtSortUtils.getIntSort(script);
 	}
 
@@ -63,22 +58,14 @@ public class HcThreadCounterVar implements IHcReplacementVar {
 		return mSort;
 	}
 
-	public boolean isStarted() {
-		return mIsStarted;
-	}
-
-	public boolean isTerminated() {
-		return !mIsStarted;
-	}
-
 	@Override
 	public String toString() {
-		return mIsStarted ? "~started" : "~terminated";
+		return "~running";
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mIsStarted);
+		return 79;
 	}
 
 	@Override
@@ -89,10 +76,6 @@ public class HcThreadCounterVar implements IHcReplacementVar {
 		if (obj == null) {
 			return false;
 		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final HcThreadCounterVar other = (HcThreadCounterVar) obj;
-		return mIsStarted == other.mIsStarted;
+		return getClass() == obj.getClass();
 	}
 }

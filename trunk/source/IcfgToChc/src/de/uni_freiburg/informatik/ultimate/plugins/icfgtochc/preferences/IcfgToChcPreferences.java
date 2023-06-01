@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ConcurrencyMode;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferenceInitializer.ConditionalIndependence;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferenceInitializer.PreferenceOrder;
 
 public class IcfgToChcPreferences {
 	private final IPreferenceProvider mPrefs;
@@ -77,8 +78,16 @@ public class IcfgToChcPreferences {
 		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_EXPLICIT_SLEEP);
 	}
 
+	public PreferenceOrder preferenceOrder() {
+		return mPrefs.getEnum(IcfgToChcPreferenceInitializer.LABEL_PREFERENCE_ORDER, PreferenceOrder.class);
+	}
+
 	public ConditionalIndependence conditionalIndependence() {
 		return mPrefs.getEnum(IcfgToChcPreferenceInitializer.LABEL_CONDITIONAL_INDEPENDENCE,
 				ConditionalIndependence.class);
+	}
+
+	public boolean useSemicommutativity() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_SEMICOMMUTATIVITY);
 	}
 }

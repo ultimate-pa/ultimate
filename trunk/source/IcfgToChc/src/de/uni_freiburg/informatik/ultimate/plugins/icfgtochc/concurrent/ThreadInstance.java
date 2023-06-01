@@ -26,9 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
+import java.util.Comparator;
 import java.util.Objects;
 
-public final class ThreadInstance {
+public final class ThreadInstance implements Comparable<ThreadInstance> {
 	private final String mTemplateName;
 	private final int mInstanceNumber;
 
@@ -43,6 +44,18 @@ public final class ThreadInstance {
 
 	public int getInstanceNumber() {
 		return mInstanceNumber;
+	}
+
+	@Override
+	public int compareTo(final ThreadInstance o) {
+		if (mInstanceNumber < 0 || o.mInstanceNumber < 0) {
+			throw new UnsupportedOperationException("Must not compare interfering thread with this method.");
+		}
+		final var templateComparison = mTemplateName.compareTo(o.mTemplateName);
+		if (templateComparison != 0) {
+			return templateComparison;
+		}
+		return Integer.compare(mInstanceNumber, o.mInstanceNumber);
 	}
 
 	@Override
@@ -68,5 +81,30 @@ public final class ThreadInstance {
 		}
 		final ThreadInstance other = (ThreadInstance) obj;
 		return mInstanceNumber == other.mInstanceNumber && Objects.equals(mTemplateName, other.mTemplateName);
+	}
+
+	public static Comparator<ThreadInstance> getNonInterferenceComparator(final int interferingIndex) {
+		return (t1, t2) -> {
+			if (t1.getInstanceNumber() >= 0 && t2.getInstanceNumber() >= 0) {
+				// If not considering an interfering thread, use the usual ordering
+				return t1.compareTo(t2);
+			}
+
+			// between threads of different templates, keep the same ordering as #compareTo
+			// (i.e. order by template name)
+			if (!t1.getTemplateName().equals(t2.getTemplateName())) {
+				return t1.getTemplateName().compareTo(t2.getTemplateName());
+			}
+			if (t1.getInstanceNumber() >= 0) {
+				// t2 is the interfering thread
+				return t1.getInstanceNumber() < interferingIndex ? -1 : 1;
+			}
+			if (t2.getInstanceNumber() >= 0) {
+				// t1 is the interfering thread
+				return interferingIndex <= t2.getInstanceNumber() ? -1 : 1;
+			}
+			assert t1.equals(t2);
+			return 0;
+		};
 	}
 }
