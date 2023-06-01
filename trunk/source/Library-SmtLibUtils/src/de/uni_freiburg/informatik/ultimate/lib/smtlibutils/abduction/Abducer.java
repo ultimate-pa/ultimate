@@ -166,9 +166,14 @@ public class Abducer {
 	}
 
 	private Term tryEliminateForall(final Set<TermVariable> vars, final Term formula) {
-		return PartialQuantifierElimination.quantifier(mServices, mLogger, mScript,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-				QuantifiedFormula.FORALL, vars, formula);
+		Term quantified = SmtUtils.quantifier(mScript.getScript(), QuantifiedFormula.EXISTS, vars, formula);
+		final boolean eliminateLight = true;
+		if (eliminateLight) {
+			return PartialQuantifierElimination.eliminateLight(mServices, mScript, quantified);
+		} else {
+			return PartialQuantifierElimination.eliminate(mServices, mScript, quantified,
+					SimplificationTechnique.SIMPLIFY_DDA);
+		}
 	}
 
 	private boolean checkResult(final Term lhs, final Term rhs, final Term solution, final boolean equiv) {
