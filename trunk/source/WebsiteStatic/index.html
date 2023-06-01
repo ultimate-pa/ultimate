@@ -36,6 +36,7 @@
 		</nav>
 		<div id="content" class="d-flex flex-column flex-grow-1"></div>
 	</div>
+	<footer class="bg-light py-2"><a class="float-end mx-2" href="?ui=imprint">Imprint</a></footer>
 
 	<script id="editor-message" type="text/x-handlebars-template">
   <div class="toast  {{toast_classes}}" data-type="{{logLvl}}" data-start-line="{{startLNr}}"
@@ -139,13 +140,14 @@
       <div class="card-group">
         {{#each tools}}
         <div class="card border-secondary shadow mb-3 tool-card border-start">
-          <div class="card-header"><a class="link-primary" href="?ui=tool&tool={{this.id}}">{{this.name}}</a></div>
+          <div class="card-header">
+            <a class="link-primary" href="?ui=tool&tool={{this.id}}">{{this.name}}</a>
+            <span class="float-end">
+            {{#each this.languages}}
+            <span class="badge bg-secondary">{{this}}</span>
+            {{~/each}}</span></div>
           <div class="card-body text-black-70">
             <p class="card-text text-justify">{{this.description}}</p>
-            <h5 class="card-title">Languages</h5>
-            <p class="card-text">
-              <span>{{joinStr this.languages}}</span>
-            </p>
           </div>
           <div class="card-footer text-right">
             <a href="?ui=tool&tool={{this.id}}" class="btn btn-secondary">Read more</a>
@@ -161,8 +163,61 @@
   <div class="row" id="developers"></div>
   <div class="row" id="dependencies"></div>
 </script>
+  <script id="awards-page-template" type="text/x-handlebars-template">
+  <h1>Awards</h1>
+  {{#each this}}
+    <div class="card mb-3">
+      <div class="row g-0 border-bottom">
+        <div class="col-md-2">
+          <img src="img/awards/{{this.image}}" class="img-fluid rounded-start"/>
+        </div>
+        <div class="col-md-10">
+          <div class="card-body">
+            <h4 class="card-title"><a href="{{this.competition_link}}">{{this.competition}}</a></h4>
+            <p class="card-text">{{{this.text}}}</p>
+            <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#{{this.id}}-award-details" aria-expanded="false" aria-controls="{{this.id}}-award-details">
+              <span class="text-collapsed">Show</span><span class="text-expanded">Hide</span> details
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div id="{{this.id}}-award-details" class="collapse">
+        <ul class="list-group list-group-flush">
+          {{#each this.tools}}
+          <li class="list-group-item">
+            <h6><a href="?ui=tool&tool={{this.id}}">Ultimate {{this.name}}</a></h6>
+            {{#each this.awards}}
+              <span class="m-1 d-inline-block" style="{{#if this.important}}font-size:2em;{{~/if}}">
+                <img class="img-fluid d-inline-block" src="img/awards/medals/{{this.medal}}.svg" style="max-height: 2em; max-width: auto" />
+                {{this.category}}
+              </span>
+            {{~/each}}
+          </li>
+          {{~/each}}
+        </ul>
+        </div>
+      </div>
+    </div>
+  {{~/each}}
+</script>
 	<script id="navbar-template" type="text/x-handlebars-template">
   <ul class="navbar-nav">
+    {{#ifCond context.url.ui '===' 'awards'}}
+      <li class="nav-item active">
+        <a class="nav-link" href="?ui=awards">Awards <span class="sr-only">(current)</span></a>
+      </li>
+    {{/ifCond}}
+    {{#ifCond context.url.ui '===' 'developers'}}
+      <li class="nav-item active">
+        <a class="nav-link" href="?ui=developers">Developers <span class="sr-only">(current)</span></a>
+      </li>
+    {{/ifCond}}
+    {{#ifCond context.url.ui '===' 'imprint'}}
+      <li class="nav-item active">
+        <a class="nav-link" href="?ui=imprint">Imprint <span class="sr-only">(current)</span></a>
+      </li>
+    {{/ifCond}}
     {{#ifCond context.url.ui '!==' 'home'}}
       <li class="nav-item active">
         <a class="nav-link" href="?ui=tool&tool={{context.url.tool}}">{{context.tool.name}} <span class="sr-only">(current)</span></a>
@@ -221,6 +276,7 @@
 </script>
 
 	<script type="text/javascript" charset="utf-8" src="config/config.js"></script>
+	<script type="text/javascript" charset="utf-8" src="config/awards_page/awards.js"></script>
 	<script src="js/vendor/modernizr-3.7.1.min.js"></script>
 	<script src="js/vendor/jquery-3.4.1.min.js"></script>
 	<script src="js/vendor/bootstrap.bundle.min.js"></script>
