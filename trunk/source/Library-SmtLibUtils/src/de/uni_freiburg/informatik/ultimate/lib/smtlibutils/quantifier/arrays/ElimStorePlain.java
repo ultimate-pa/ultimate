@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -45,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexEqua
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayOccurrenceAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverStoreEliminationUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskPlain;
@@ -58,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Quantifier
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHashRelation;
 
 /**
  * TODO 2017-10-17 Matthias: The following documentation is outdated.
@@ -109,9 +106,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHash
  *
  */
 public class ElimStorePlain {
-
-	private static final boolean RETURN_AFTER_SOS = false;
-
 
 	public static EliminationTaskPlain applyComplexEliminationRules(final IUltimateServiceProvider services,
 			final ILogger logger, final ManagedScript mgdScript, final EliminationTaskPlain eTask)
@@ -215,7 +209,7 @@ public class ElimStorePlain {
 			final Term replacedInNnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(replaced);
 			sosTerm = replacedInNnf;
 			sosAoa = new ArrayOccurrenceAnalysis(mgdScript.getScript(), sosTerm, eliminatee);
-			if(!varOccurs(eliminatee, replacedInNnf) || RETURN_AFTER_SOS) {
+			if(!varOccurs(eliminatee, replacedInNnf)) {
 				aiem.unlockSolver();
 				return new EliminationTaskPlain(eTask.getQuantifier(), newAuxVars,
 						replacedInNnf, eTask.getContext());
@@ -244,15 +238,7 @@ public class ElimStorePlain {
 		return Arrays.stream(term.getFreeVars()).anyMatch(x -> (x == var));
 	}
 
-	private String printVarInfo(final TreeHashRelation<Integer, TermVariable> tr) {
-		final StringBuilder sb = new StringBuilder();
-		for (final Integer dim : tr.getDomain()) {
-			sb.append(tr.getImage(dim).size() + " dim-" + dim + " vars, ");
-		}
-		return sb.toString();
-	}
-
-	public static EliminationTaskPlain applyNonSddEliminations(final IUltimateServiceProvider services,
+	private static EliminationTaskPlain applyNonSddEliminations(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final EliminationTaskPlain eTask, final PqeTechniques techniques)
 			throws ElimStorePlainException {
 		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), eTask.getQuantifier(),
@@ -280,31 +266,6 @@ public class ElimStorePlain {
 		}
 		return new EliminationTaskPlain(eTask.getQuantifier(), eliminatees1, matrix, eTask.getContext());
 	}
-
-	private LinkedHashSet<TermVariable> getArrayTvSmallDimensionsFirst(final TreeHashRelation<Integer, TermVariable> tr) {
-		final LinkedHashSet<TermVariable> result = new LinkedHashSet<>();
-		for (final Integer dim : tr.getDomain()) {
-			if (dim != 0) {
-				result.addAll(tr.getImage(dim));
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Given a set of {@link TermVariables} a_1,...,a_n, let dim(a_i) be the "array
-	 * dimension" of variable a_i. Returns a tree relation that contains (dim(a_i),
-	 * a_i) for all i\in{1,...,n}.
-	 */
-	private static TreeHashRelation<Integer, TermVariable> classifyEliminatees(final Collection<TermVariable> eliminatees) {
-		final TreeHashRelation<Integer, TermVariable> tr = new TreeHashRelation<>();
-		for (final TermVariable eliminatee : eliminatees) {
-			final MultiDimensionalSort mds = new MultiDimensionalSort(eliminatee.getSort());
-			tr.addPair(mds.getDimension(), eliminatee);
-		}
-		return tr;
-	}
-
 
 	public static class ElimStorePlainException extends Exception {
 		private static final long serialVersionUID = 7719170889993834143L;
