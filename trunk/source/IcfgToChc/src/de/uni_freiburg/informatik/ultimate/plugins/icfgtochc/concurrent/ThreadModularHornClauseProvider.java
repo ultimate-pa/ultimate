@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.HcSleepVar;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences.SpecMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -814,6 +815,11 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 								}
 							}
+							if (rv instanceof HcSleepVar || rv instanceof HcThreadCounterVar) {
+								// TODO figure out how to handle these properly
+								result[i] = mScript.variable(rv.toString(), rv.getSort());
+							}
+
 							// TODO: What should we do with the other types?
 							i++;
 						}
