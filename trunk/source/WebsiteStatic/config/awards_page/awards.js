@@ -345,7 +345,7 @@ const _AWARDS = [
         id: "rers2018",
         competition: "RERS Challenge 2018",
         competition_link: "http://www.rers-challenge.org/2018/index.php?page=results",
-        image: "rers2018.svg",
+        image: "rers2018.jpg",
         text: "The ULTIMATE team participated with several tools and won the <em>Sequential Reachability</em> track.",
         tools: [{
             name: "Ultimate Automizer, Ultimate Brutalizer, Frama-C",
@@ -548,7 +548,7 @@ const _AWARDS = [
         id: "termcomp2014",
         competition: "Termination Competition 2014",
         competition_link: "https://termination-portal.org/wiki/Termination_Competition_2014",
-        image: "termcomp2014.svg",
+        image: "termcomp2014.jpg",
         text: "ULTIMATE Büchi Automizer has won second place in the <a href=\"http://nfa.imn.htwk-leipzig.de/termcomp-2014/competition/20\"><em>Termination of Programming Languages</em></a> category of the Termination Competition 2014.",
         tools: [{
             name: "Büchi Automizer",
