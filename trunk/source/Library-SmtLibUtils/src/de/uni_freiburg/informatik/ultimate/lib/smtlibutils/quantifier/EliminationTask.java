@@ -29,7 +29,9 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -37,8 +39,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -51,25 +56,55 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class EliminationTask extends EliminationTaskSimple {
+public class EliminationTask {
+	private static final boolean DEBUG_USE_TO_STRING_DIRECT = false;
+	
+	private final int mQuantifier;
+	private final LinkedHashSet<TermVariable> mEliminatees;
+	private final Term mTerm;
 	private final Context mContext;
 
 	public EliminationTask(final int quantifier, final Set<TermVariable> eliminatees, final Term term,
 			final Context context) {
-		super(quantifier, eliminatees, term, context.getBoundByAncestors());
+		assert (quantifier == QuantifiedFormula.EXISTS || quantifier == QuantifiedFormula.FORALL);
+		mQuantifier = quantifier;
+		mEliminatees = QuantifierUtils.projectToFreeVars(eliminatees, term);
+		mTerm = term;
 		mContext = context;
 	}
 
 	public EliminationTask(final QuantifiedFormula quantifiedFormula, final Context context) {
-		super(quantifiedFormula, context.getBoundByAncestors());
+		mQuantifier = quantifiedFormula.getQuantifier();
+		mEliminatees = QuantifierUtils.projectToFreeVars(Arrays.asList(quantifiedFormula.getVariables()),
+				quantifiedFormula.getSubformula());
+		mTerm = quantifiedFormula.getSubformula();
 		mContext = context;
+	}
+	
+	public int getQuantifier() {
+		return mQuantifier;
+	}
+
+	public Set<TermVariable> getEliminatees() {
+		return Collections.unmodifiableSet(mEliminatees);
+	}
+
+	public Term getTerm() {
+		return mTerm;
+	}
+
+	public Term toTerm(final Script script) {
+		if (mEliminatees.isEmpty()) {
+			return mTerm;
+		} else {
+			return script.quantifier(mQuantifier, mEliminatees.toArray(new TermVariable[mEliminatees.size()]), mTerm);
+		}
 	}
 
 	public Context getContext() {
 		return mContext;
 	}
-
-	@Override
+	
 	public EliminationTask integrateNewEliminatees(final Collection<TermVariable> additionalEliminatees) {
 		final Set<TermVariable> additionalOccuringEliminatees = QuantifierUtils.projectToFreeVars(additionalEliminatees,
 				getTerm());
@@ -82,12 +117,10 @@ public class EliminationTask extends EliminationTaskSimple {
 		}
 	}
 
-	@Override
 	public EliminationTask update(final Set<TermVariable> newEliminatees, final Term term) {
 		return new EliminationTask(getQuantifier(), newEliminatees, term, mContext);
 	}
 
-	@Override
 	public EliminationTask update(final Term term) {
 		return new EliminationTask(getQuantifier(), getEliminatees(), term, mContext);
 	}
@@ -118,6 +151,25 @@ public class EliminationTask extends EliminationTaskSimple {
 			return new Pair<>(dualJunctionWithoutEliminatee,
 					new EliminationTask(getQuantifier(), getEliminatees(), dualJunctionWithEliminatee, newContext));
 		}
+	}
+	
+	@Override
+	public String toString() {
+		final String quantifier = (getQuantifier() == QuantifiedFormula.EXISTS ? "∃" : "∀");
+		final String vars = getEliminatees().toString();
+		final String term = (DEBUG_USE_TO_STRING_DIRECT ? getTerm().toStringDirect() : getTerm().toString());
+		return quantifier + " " + vars + ". " + term;
+	}
+	
+	/**
+	 * Check if the terms of two {@link EliminationTasks} can be disjoint. Return
+	 * sat if disjoint, unsat if equivalent.
+	 */
+	public static LBool areDistinct(final Script script, final EliminationTask et1, final EliminationTask et2) {
+		final Term espTerm = et1.toTerm(script);
+		final Term sosTerm = et2.toTerm(script);
+		final LBool sat = Util.checkSat(script, script.term("distinct", espTerm, sosTerm));
+		return sat;
 	}
 
 }

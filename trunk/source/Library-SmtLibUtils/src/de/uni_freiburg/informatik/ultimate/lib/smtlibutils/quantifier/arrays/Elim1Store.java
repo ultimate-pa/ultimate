@@ -62,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimension
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTask;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTaskSimple;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain.ElimStorePlainException;
@@ -378,12 +377,9 @@ public class Elim1Store {
 		} else {
 			resultEt = new EliminationTask(quantifier, newAuxVars, result, input.getContext());
 		}
-		assert !DEBUG_EXTENDED_RESULT_CHECK
-				|| EliminationTaskSimple
-						.areDistinct(mMgdScript.getScript(), resultEt,
-								new EliminationTaskSimple(quantifier, Collections.singleton(eliminatee),
-										 input.getTerm())) != LBool.SAT : "Bug array QE Input: " +  input.getTerm() + " Result:"
-												+ resultEt;
+		assert !DEBUG_EXTENDED_RESULT_CHECK || EliminationTask.areDistinct(mMgdScript.getScript(), resultEt,
+				new EliminationTask(quantifier, Collections.singleton(eliminatee), input.getTerm(), input.getContext())) != LBool.SAT
+				: "Bug array QE Input: " + input.getTerm() + " Result:" + resultEt;
 		assert !mMgdScript.isLocked() : "Solver still locked";
 		return resultEt;
 
