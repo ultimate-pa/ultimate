@@ -117,7 +117,6 @@ public class QuantifierEliminationSgi {
 	public void simpleSgiExample() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "y"),
-				new FunDecl(QuantifierEliminationTest::getArrayIntBoolSort, "a"),
 			};
 		final String formulaAsString = "(exists ((x Int)) (and (= x y) (= 5 y)))";
 		final String expectedResult = null;
