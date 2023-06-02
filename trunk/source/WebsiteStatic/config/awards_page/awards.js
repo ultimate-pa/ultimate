@@ -342,6 +342,36 @@ const _AWARDS = [
         }]
     },
     {
+        id: "rers2018",
+        competition: "RERS Challenge 2018",
+        competition_link: "http://www.rers-challenge.org/2018/index.php?page=results",
+        image: "rers2018.svg",
+        text: "The ULTIMATE team participated with several tools and won the <em>Sequential Reachability</em> track.",
+        tools: [{
+            name: "Ultimate Automizer, Ultimate Brutalizer, Frama-C",
+            id: "automizer",
+            awards: [
+                {
+                    category: "Sequential Reachability",
+                    important: true,
+                    medal: "gold"
+                },
+                {
+                    category: "Reachability-Plain",
+                    medal: "gold"
+                },
+                {
+                    category: "Reachability-Arithmetic",
+                    medal: "gold"
+                },
+                {
+                    category: "Reachability-Data Structures",
+                    medal: "silver"
+                }
+            ]
+        }]
+    },
+    {
         id: "svcomp2017",
         competition: "SV-COMP 2017",
         competition_link: "http://sv-comp.sosy-lab.org/2017/",
@@ -421,6 +451,36 @@ const _AWARDS = [
         links: {
             "Pressemitteilung": "https://kommunikation.uni-freiburg.de/pm/2017/pm.2017-02-07.16"
         }
+    },
+    {
+        id: "rers2016",
+        competition: "RERS Challenge 2016",
+        competition_link: "http://www.rers-challenge.org/2016/index.php?page=results",
+        image: "rers2016.svg",
+        text: "The ULTIMATE team participated with several tools and won the <em>Reachability</em> track.",
+        tools: [{
+            name: "Ultimate Automizer, Ultimate Brutalizer, Frama-C",
+            id: "automizer",
+            awards: [
+                {
+                    category: "Reachability",
+                    important: true,
+                    medal: "gold"
+                },
+                {
+                    category: "Reachability-Plain",
+                    medal: "gold"
+                },
+                {
+                    category: "Reachability-Arithmetic",
+                    medal: "gold"
+                },
+                {
+                    category: "Reachability-Data Structures",
+                    medal: "silver"
+                }
+            ]
+        }]
     },
     {
         id: "termcomp2015",
