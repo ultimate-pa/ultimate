@@ -311,7 +311,7 @@ public class HornClauseParserScript extends HistoryRecordingScript implements IN
 
 		final Term unl = new FormulaUnLet(UnletType.SMTLIB).unlet(nrmlized);
 
-		final Term nnf = new NnfTransformer(mManagedScript, mServices, QuantifierHandling.KEEP, true).transform(unl);
+		final Term nnf = new NnfTransformer(mManagedScript, mServices, QuantifierHandling.KEEP).transform(unl);
 
 		final Term qnfTerm = new PrenexNormalForm(mManagedScript).transform(nnf);
 		final SkolemNormalForm snf = new SkolemNormalForm(mManagedScript, qnfTerm);
