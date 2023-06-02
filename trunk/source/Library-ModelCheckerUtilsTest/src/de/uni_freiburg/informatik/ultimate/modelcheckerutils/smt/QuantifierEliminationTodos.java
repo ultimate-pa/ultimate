@@ -432,6 +432,18 @@ public class QuantifierEliminationTodos {
 		final String expectedResultAsString = "(= (+ main_result (* main_m 1)) (* main_n main_m))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+	
+
+	@Test
+	public void simpleSgiExample() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "y"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntBoolSort, "a"),
+			};
+		final String formulaAsString = "(exists ((x Int)) (and (= x y) (= 5 y)))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
 
 	@Test
