@@ -12,7 +12,7 @@ SETTINGS_WHITELIST=C:\\path\\to\\settings_whitelist.json
 # FRONTEND_ROUTE (string) . : The URL prefix, the FRONTEND will be served at.
 #                             E.g. /website results in http://localhost:PORT/website
 SERVE_WEBSITE=True
-FRONTEND_PATH=C:\\path\\to\\WebsiteStatic
+FRONTEND_PATH=C:\\path\\to\\WebsiteStatic\\_site
 FRONTEND_ROUTE=/website
 
 # LOG_FILE_PATH (string) .. : Absolute (or relative from java.class.path) path to the log file.
