@@ -1,0 +1,49 @@
+---
+title: Awards
+layout: default
+permalink: /awards/
+---
+
+<h1>Awards</h1>
+{% for award in site.awards reversed %}
+  <div class="card mb-3">
+    <div class="row g-0 border-bottom">
+      <div class="col-md-2">
+        <img src="{{ 'img/awards/' | append: award.image | relative_url }}" class="img-fluid rounded-start"/>
+      </div>
+      <div class="col-md-10">
+        <div class="card-body">
+          <h4 class="card-title"><a href="{{award.competition_link}}">{{award.competition}}</a></h4>
+          <p class="card-text">{{award.content}}</p>
+          <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#{{award.award_id}}-award-details" aria-expanded="false" aria-controls="{{award.id}}-award-details">
+            <span class="text-collapsed">Show</span><span class="text-expanded">Hide</span> details
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div id="{{award.award_id}}-award-details" class="collapse">
+        <ul class="list-group list-group-flush">
+          {% for award in award.awards %}
+            <li class="list-group-item">
+              <h6>
+                {% if award.tool_id %}
+                  {% assign tool = site.tools | find: 'tool_id', award.tool_id %}
+                  <a href="{{ tool.url }}">{{award.name}}</a>
+                {% else %}
+                  {{award.name}}
+                {% endif %}
+              </h6>
+              {% for medal in award.medals %}
+                <span class="m-1 d-inline-block" style="{% if medal.important %}font-size:2em;{% endif %}">
+                  <img class="img-fluid d-inline-block" src="{{ 'img/awards/medals/' | append: medal.medal | append: '.svg' | relative_url }}" style="max-height: 2em; max-width: auto" />
+                  {{medal.category}}
+                </span>
+              {% endfor %}
+            </li>
+            {% endfor %}
+          </ul>
+          </div>
+        </div>
+      </div>
+    {% endfor %}

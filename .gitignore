@@ -309,5 +309,7 @@ trunk/examples/concurrent/bpl/weaver-benchmarks/weaver
 /trunk/runtime-Debug-E4.product
 /trunk/runtime-WebBackend.product
 
+trunk/source/WebsiteStatic/_site
+trunk/source/WebsiteStatic/.jekyll-cache
 trunk/source/WebsiteStatic/bootstrap_dev/node_modules/
-trunk/source/WebsiteStatic/config/config.js
+trunk/source/WebsiteStatic/js/webinterface/config.js

@@ -1,0 +1,78 @@
+---
+# A Human readable name of this tool. Used as Heading in the frontend.
+title: "GemCutter"
+
+# A mandatory unique id for the tool.
+tool_id: "gemcutter"
+
+# Frontend description.
+description: "A verifier for concurrent programs based on commutativity – the observation that for certain statements, the execution order does not matter."
+
+# Supported languages to be displayed in the frontend.
+languages: ["Boogie", "C"]
+---
+
+<h1><span style="font-variant: small-caps">Ultimate</span>  GemCutter</h1>
+<p><span style="font-variant: small-caps">Ultimate</span>  GemCutter is a software model checker for concurrent programs.</p>
+<p>
+  In order to verify a concurrent program, all possible interleavings of actions by different threads must be considered.
+  GemCutter combines the abstraction refinement-based verification algorithm <em>trace abstraction</em>
+  with reasoning based on the principle of <em>commutativity</em>,
+  i.e., the observation that some actions of different threads can be reordered without affecting program correctness.
+  Based on commutativity, GemCutter reduces a given program (using <em>partial order reduction</em> algorithms)
+  to a sound subset of interleavings, and verifies the reduced program.
+</p>
+<p>
+  Commutativity-based reduction both speeds up the verification,
+  and allows GemCutter to verify programs that would otherwise require complicated invariants.
+</p>
+
+<h2>Awards</h2>
+<ul>
+  <li>Ultimate GemCutter won 3<sup>rd</sup> place in the <em>ConcurrencySafety</em> category at the <a href="http://sv-comp.sosy-lab.org/2023/">SV-COMP 2023</a></li>
+  <li>Ultimate GemCutter won 3<sup>rd</sup> place in the <em>ConcurrencySafety</em> category at the <a href="http://sv-comp.sosy-lab.org/2022/">SV-COMP 2022</a>.<br/>
+    GemCutter also won 1<sup>st</sup> place in the <a href="https://sv-comp.sosy-lab.org/2022/demo.php">NoDataRace</a> demo category.
+  </li>
+</ul>
+
+<h2>Web interface</h2>
+<p>
+	<span style="font-variant: small-caps">Ultimate</span> GemCutter is
+	available via a <a href="{{ 'webinterface/?tool=gemcutter' | relative_url }}">web interface</a>.
+</p>
+
+<h2>Developers</h2>
+<p><span style="font-variant: small-caps">Ultimate</span> GemCutter is maintained by <a
+      href="http://swt.informatik.uni-freiburg.de/staff/klumpp">Dominik Klumpp</a>.</p>
+
+  <p>
+  Since <span style="font-variant: small-caps">Ultimate</span> GemCutter
+  is a toolchain of the <a
+      href="https://ultimate-pa.org"><span
+      style="font-variant: small-caps">Ultimate</span> software analysis
+  framework</a>, <a href="http://ultimate.informatik.uni-freiburg.de#developers">many
+  people</a> were involved in the development (especially our bachelor and
+  master students). If you are a student at our university and you like
+  to contribute to <span style="font-variant: small-caps">Ultimate</span>
+  in a project, laboratory, or thesis then contact <a
+      href="http://swt.informatik.uni-freiburg.de/staff/klumpp">Dominik Klumpp</a> or any other <span style="font-variant: small-caps">Ultimate</span>
+  developer.
+</p>
+
+<h2>Download</h2>
+<p>
+	We try to provide regular releases for Windows and Linux at <a
+		href="https://github.com/ultimate-pa/ultimate/releases">our
+		GitHub release page</a>.
+</p>
+
+<h2>Related Publications</h2>
+<p>
+  [1] <a href="https://dl.acm.org/doi/10.1145/3519939.3523727">Azadeh Farzan, Dominik Klumpp, Andreas Podelski: Sound Sequentialization for Concurrent Program Verification. PLDI 2022</a>
+  <br />
+  [2] <a href="https://link.springer.com/chapter/10.1007/978-3-030-99527-0_35">Dominik Klumpp, Daniel Dietsch, Matthias Heizmann, Frank Schüssele, Marcel Ebbinghaus, Azadeh Farzan, Andreas Podelski: Ultimate GemCutter and the Axes of Generalization (Competition Contribution). TACAS 2022</a>
+  <br/>
+  [3] <a
+      href="https://dl.acm.org/doi/10.1145/3519939.3523727">Azadeh Farzan, Dominik Klumpp, Andreas Podelski: Stratified Commutativity in Verification Algorithms for Concurrent Programs. POPL 2023</a>
+</p>
+
