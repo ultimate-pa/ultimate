@@ -28,7 +28,10 @@
 package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jface.preference.BooleanFieldEditor;
@@ -53,6 +56,7 @@ import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.gui.customeditors.KeyValueGridEditor;
 import de.uni_freiburg.informatik.ultimate.gui.customeditors.MultiLineTextFieldEditor;
@@ -70,6 +74,10 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 	private final String mTitle;
 	private final ScopedPreferenceStore mPreferenceStore;
 	private final Map<FieldEditor, UltimatePreferenceItem<?>> mCheckedFields;
+
+	private final ArrayDeque<ItemGroupBox> mActiveGroups = new ArrayDeque<>();
+	private final List<ItemGroupBox> mGroups = new ArrayList<>();
+	private int mMinColumns = 0;
 
 	public UltimateGeneratedPreferencePage(final String pluginID, final String title,
 			final BaseUltimatePreferenceItem[] preferences) {
@@ -89,7 +97,12 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 
 	@Override
 	protected void createFieldEditors() {
-		for (final BaseUltimatePreferenceItem prefItem : mDefaultPreferences) {
+		createFieldEditors(mDefaultPreferences);
+		adjustGroupGrids();
+	}
+
+	protected void createFieldEditors(final BaseUltimatePreferenceItem[] items) {
+		for (final BaseUltimatePreferenceItem prefItem : items) {
 			if (prefItem instanceof UltimatePreferenceItem) {
 				final UltimatePreferenceItem<?> item = (UltimatePreferenceItem<?>) prefItem;
 				final FieldEditor editor;
@@ -138,6 +151,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 							"You need to implement the new enum type \"" + item.getType() + "\" here");
 				}
 
+				mMinColumns = Integer.max(mMinColumns, editor.getNumberOfControls());
 				final String tooltip = item.getToolTip();
 				if (tooltip != null) {
 					setTooltip(editor, getFieldEditorParent(), tooltip);
@@ -146,7 +160,18 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 				if (item.getPreferenceValidator() != null) {
 					mCheckedFields.put(editor, item);
 				}
+			} else if (prefItem instanceof UltimatePreferenceItemGroup) {
+				final var group = (UltimatePreferenceItemGroup) prefItem;
+				beginGroupBox(group.getLabel(), 3);
+				createFieldEditors(group.getItems());
+				endGroupBox();
 			}
+		}
+	}
+
+	protected void adjustGroupGrids() {
+		for (final var group : mGroups) {
+			group.adjustForNumColumns(mMinColumns);
 		}
 	}
 
@@ -190,6 +215,24 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 			e.printStackTrace();
 		}
 		return super.performOk();
+	}
+
+	private void beginGroupBox(final String text, final int numColumns) {
+		mActiveGroups.push(new ItemGroupBox(text, getFieldEditorParent(), numColumns));
+	}
+
+	private void endGroupBox() {
+		final var finished = mActiveGroups.pop();
+		mGroups.add(finished);
+	}
+
+	@Override
+	protected Composite getFieldEditorParent() {
+		if (mActiveGroups.isEmpty()) {
+			return super.getFieldEditorParent();
+		}
+		final var topGroup = mActiveGroups.peek();
+		return topGroup.getFieldEditorParent();
 	}
 
 	@SuppressWarnings("unchecked")

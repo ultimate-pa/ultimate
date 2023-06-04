@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LoopAccelerators;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
@@ -627,13 +628,13 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_MCR_REFINEMENT_STRATEGY, DEF_MCR_REFINEMENT_STRATEGY,
 						PreferenceType.Combo, RefinementStrategy.values()),
 
-				getSectionLabel("PetriAutomizer"),
-				new UltimatePreferenceItem<>(LABEL_CONFIGURATION_ORDER, DEF_CONFIGURATION_ORDER, PreferenceType.Combo,
-						EventOrderEnum.values()),
-				new UltimatePreferenceItem<>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_BACKFOLDING, DEF_BACKFOLDING, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_LOOPER_CHECK_PETRI, DEF_LOOPER_CHECK_PETRI, PreferenceType.Combo,
-						LooperCheck.values()),
+				new UltimatePreferenceItemGroup("PetriAutomizer",
+						new UltimatePreferenceItem<>(LABEL_CONFIGURATION_ORDER, DEF_CONFIGURATION_ORDER,
+								PreferenceType.Combo, EventOrderEnum.values()),
+						new UltimatePreferenceItem<>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_BACKFOLDING, DEF_BACKFOLDING, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_LOOPER_CHECK_PETRI, DEF_LOOPER_CHECK_PETRI,
+								PreferenceType.Combo, LooperCheck.values())),
 
 				getPORSettings(), getPetriLbeSettings());
 	}
@@ -656,67 +657,21 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SCRIPT_DUMP_PATH, DEF_INDEPENDENCE_SCRIPT_DUMP_PATH,
 						PreferenceType.Directory),
 
-				getSectionLabel("Independence Relation"),
-				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_POR, IndependenceSettings.DEFAULT_INDEPENDENCE_TYPE,
-						PreferenceType.Combo, IndependenceType.values()),
-				new UltimatePreferenceItem<>(LABEL_POR_ABSTRACTION, IndependenceSettings.DEFAULT_ABSTRACTION_TYPE,
-						PreferenceType.Combo, AbstractionType.values()),
-				new UltimatePreferenceItem<>(LABEL_COND_POR, IndependenceSettings.DEFAULT_USE_CONDITIONAL,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SEMICOMM_POR, IndependenceSettings.DEFAULT_USE_SEMICOMMUTATIVITY,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SOLVER_POR, IndependenceSettings.DEFAULT_SOLVER,
-						PreferenceType.Combo, ExternalSolver.values()),
-				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR,
-						(int) IndependenceSettings.DEFAULT_SOLVER_TIMEOUT, PreferenceType.Integer),
+				getIndependenceSettings(0),
 
-				getSectionLabel("Independence Relation #2 (Stratified Commutativity)"),
-				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_POR, 1),
-						IndependenceSettings.DEFAULT_INDEPENDENCE_TYPE, PreferenceType.Combo,
-						IndependenceType.values()),
-				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_POR_ABSTRACTION, 1),
-						IndependenceSettings.DEFAULT_ABSTRACTION_TYPE, PreferenceType.Combo, AbstractionType.values()),
-				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_COND_POR, 1),
-						IndependenceSettings.DEFAULT_USE_CONDITIONAL, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_SEMICOMM_POR, 1),
-						IndependenceSettings.DEFAULT_USE_SEMICOMMUTATIVITY, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_POR, 1),
-						IndependenceSettings.DEFAULT_SOLVER, PreferenceType.Combo, ExternalSolver.values()),
-				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR, 1),
-						(int) IndependenceSettings.DEFAULT_SOLVER_TIMEOUT, PreferenceType.Integer),
+				getIndependenceSettings(1),
 
-				getSectionLabel("Independence Relation #3 (Stratified Commutativity)"),
-				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_POR, 2),
-						IndependenceSettings.DEFAULT_INDEPENDENCE_TYPE, PreferenceType.Combo,
-						IndependenceType.values()),
-				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_POR_ABSTRACTION, 2),
-						IndependenceSettings.DEFAULT_ABSTRACTION_TYPE, PreferenceType.Combo, AbstractionType.values()),
-				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_COND_POR, 2),
-						IndependenceSettings.DEFAULT_USE_CONDITIONAL, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_SEMICOMM_POR, 2),
-						IndependenceSettings.DEFAULT_USE_SEMICOMMUTATIVITY, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_POR, 2),
-						IndependenceSettings.DEFAULT_SOLVER, PreferenceType.Combo, ExternalSolver.values()),
-				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR, 2),
-						(int) IndependenceSettings.DEFAULT_SOLVER_TIMEOUT, PreferenceType.Integer),
+				getIndependenceSettings(2),
 
-				getSectionLabel("Stratified Commutativity: Budget Function"),
-				new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_MODE, DEF_POR_COINFLIP_MODE, PreferenceType.Combo,
-						CoinflipMode.values()),
-				new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_PROB, DEF_POR_COINFLIP_PROB, PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(0, 100)),
-				new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_INCREMENT, DEF_POR_COINFLIP_INCREMENT,
-						PreferenceType.Integer),
-				new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_SEED, DEF_POR_COINFLIP_SEED, PreferenceType.Integer));
-	}
-
-	private static UltimatePreferenceItem<?> getSectionLabel(final String label) {
-		final int targetLength = 120;
-		final int prefixLength = (targetLength - label.length() + 1) / 2;
-		final String prefix = "\n\n" + "=".repeat(prefixLength - 1) + " ";
-		final int suffixLength = (targetLength - label.length()) / 2;
-		final String suffix = " " + "=".repeat(suffixLength - 1) + "\n";
-		return new UltimatePreferenceItem<>(prefix + label + suffix, null, PreferenceType.Label);
+				new UltimatePreferenceItemGroup("Stratified Commutativity: Budget Function",
+						new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_MODE, DEF_POR_COINFLIP_MODE,
+								PreferenceType.Combo, CoinflipMode.values()),
+						new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_PROB, DEF_POR_COINFLIP_PROB,
+								PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(0, 100)),
+						new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_INCREMENT, DEF_POR_COINFLIP_INCREMENT,
+								PreferenceType.Integer),
+						new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_SEED, DEF_POR_COINFLIP_SEED,
+								PreferenceType.Integer)));
 	}
 
 	public UltimatePreferenceItemContainer getPetriLbeSettings() {
@@ -725,6 +680,25 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_PLBE, DEF_INDEPENDENCE_PLBE, PreferenceType.Combo,
 						IndependenceType.values()),
 				new UltimatePreferenceItem<>(LABEL_SEMICOMM_PLBE, DEF_SEMICOMM_PLBE, PreferenceType.Boolean));
+	}
+
+	public UltimatePreferenceItemGroup getIndependenceSettings(final int index) {
+		final var label =
+				getSuffixedLabel("Independence Relation", index) + (index == 0 ? "" : " (Stratified Commutativity)");
+		return new UltimatePreferenceItemGroup(label,
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_POR, index),
+						IndependenceSettings.DEFAULT_INDEPENDENCE_TYPE, PreferenceType.Combo,
+						IndependenceType.values()),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_POR_ABSTRACTION, index),
+						IndependenceSettings.DEFAULT_ABSTRACTION_TYPE, PreferenceType.Combo, AbstractionType.values()),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_COND_POR, index),
+						IndependenceSettings.DEFAULT_USE_CONDITIONAL, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_SEMICOMM_POR, index),
+						IndependenceSettings.DEFAULT_USE_SEMICOMMUTATIVITY, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_POR, index),
+						IndependenceSettings.DEFAULT_SOLVER, PreferenceType.Combo, ExternalSolver.values()),
+				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR, index),
+						(int) IndependenceSettings.DEFAULT_SOLVER_TIMEOUT, PreferenceType.Integer));
 	}
 
 	public static String getSuffixedLabel(final String label, final int index) {
