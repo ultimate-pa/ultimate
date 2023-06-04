@@ -26,22 +26,22 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Classes that implement this interface represent a {@link Term}. Typically
- * these classes provide additional information about the {@link Term} like
- * e.g., a direct access to parameters of the Term. In contrast to
- * {@link ITermProvider} this interface does not require its objects to store
- * the {@link Term}, the {@link Term} can be constructed on-demand using the
- * {@link Script} that is an argument of the
- * {@link ITermProviderOnDemand#asTerm} method.
+ * Classes that implement this interface represent certain kinds of
+ * {@link Term}s. In contrast to {@link Term} these classes have methods (e.g.,
+ * getters) that give us direct access to information that is only available
+ * these kinds of {@link Term}s (e.g, direct access to parameters of this term).
+ * <br />
+ * In contrast to the {@link ITermProvider} this interface requires that the
+ * {@link Term} is stored here, i.e., there must be a method
+ * {@link ITermWrapper#getTerm} that does take any arguments.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Leonard Fichtner (leonard.fichtner@web.de)
  */
-public interface ITermProviderOnDemand {
+public interface ITermWrapper {
 
-	public Term toTerm(Script script);
+	public Term getTerm();
 }

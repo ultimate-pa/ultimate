@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class NestedArrayStore implements ITermProviderOnDemand {
+public class NestedArrayStore implements ITermProvider {
 	private final Term mArray;
 	private final List<Term> mIndices;
 	private final List<Term> mValues;
