@@ -117,7 +117,7 @@ public final class TAPreferences {
 
 		mPrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		mInterprocedural = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPROCEDUTAL);
+		mInterprocedural = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPROCEDURAL);
 
 		mMaxIterations = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_ITERATIONS);
 		mWatchIteration = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_WATCHITERATION);

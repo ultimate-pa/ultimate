@@ -172,7 +172,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_LOOPER_CHECK_PETRI = "Looper check in Petri net analysis";
 	private static final LooperCheck DEF_LOOPER_CHECK_PETRI = LooperCheck.SYNTACTIC;
 
-	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
+	public static final String LABEL_INTERPROCEDURAL = "Interprocedural analysis (Nested Interpolants)";
 	public static final String LABEL_STOP_AFTER_FIRST_VIOLATION = "Stop after first violation was found";
 	public static final String LABEL_CEGAR_RESTART_BEHAVIOUR = "CEGAR restart behaviour";
 	public static final String LABEL_ERROR_AUTOMATON_MODE = "Error locations removal mode";
@@ -257,7 +257,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	/*
 	 * default values for the different preferences
 	 */
-	public static final boolean DEF_INTERPROCEDUTAL = true;
+	public static final boolean DEF_INTERPROCEDURAL = true;
 	private static final FloydHoareAutomataReuse DEF_FLOYD_HOARE_AUTOMATA_REUSE = FloydHoareAutomataReuse.NONE;
 	private static final FloydHoareAutomataReuseEnhancement DEF_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
 			FloydHoareAutomataReuseEnhancement.NONE;
@@ -448,7 +448,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<>(LABEL_INTERPROCEDUTAL, DEF_INTERPROCEDUTAL, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_INTERPROCEDURAL, DEF_INTERPROCEDURAL, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_STOP_AFTER_FIRST_VIOLATION, DEF_STOP_AFTER_FIRST_VIOLATION,
 						DESC_STOP_AFTER_FIRST_VIOLATION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CEGAR_RESTART_BEHAVIOUR, DEF_CEGAR_RESTART_BEHAVIOUR,
