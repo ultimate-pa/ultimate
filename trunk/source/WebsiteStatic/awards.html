@@ -29,7 +29,7 @@ permalink: /awards/
               <h6>
                 {% if award.tool_id %}
                   {% assign tool = site.tools | find: 'tool_id', award.tool_id %}
-                  <a href="{{ tool.url }}">{{award.name}}</a>
+                  <a href="{{ tool.url | relative_url }}">{{award.name}}</a>
                 {% else %}
                   {{award.name}}
                 {% endif %}
