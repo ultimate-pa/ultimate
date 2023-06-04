@@ -45,7 +45,7 @@
           <ul class="navbar-nav" id="navbar_breadcrumb">
           {% if page.url != '/' %}
             <li class="nav-item active">
-              <a class="nav-link" href="{{ page.url }}">{{ page.title }} <span class="sr-only">(current)</span></a>
+              <a class="nav-link" href="{{ page.url | relative_url }}">{{ page.title }} <span class="sr-only">(current)</span></a>
             </li>
           {% endif %}
           </ul>
@@ -55,7 +55,7 @@
         {{ content }}
       </div>
       <footer class="bg-light py-2">
-        <a class="float-end mx-2" href="{{ 'imprint' | relative_url }}">Imprint</a>
+        <a class="float-end mx-2" href="{{ 'imprint/' | relative_url }}">Imprint</a>
       </footer>
     </div>
   </body>
