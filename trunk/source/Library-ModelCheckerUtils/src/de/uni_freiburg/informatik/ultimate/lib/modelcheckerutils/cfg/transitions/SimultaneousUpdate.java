@@ -53,9 +53,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Represents a simultaneous variable update that consists of two parts 1.
@@ -106,12 +104,12 @@ public class SimultaneousUpdate {
 	};
 
 	private final Map<IProgramVar, Term> mDeterministicAssignment;
-	private final NestedMap2<IProgramVar, ArrayIndex, Term> mDeterministicArrayWrites;
+	private final Map<IProgramVar, MultiDimensionalNestedStore> mDeterministicArrayWrites;
 	private final Set<IProgramVar> mHavocedVars;
 	private final Set<IProgramVar> mReadonlyVars;
 
 	public SimultaneousUpdate(final Map<IProgramVar, Term> deterministicAssignment,
-			final NestedMap2<IProgramVar, ArrayIndex, Term> deterministicArrayWrites,
+			final Map<IProgramVar, MultiDimensionalNestedStore> deterministicArrayWrites,
 			final Set<IProgramVar> havocedVars, final Set<IProgramVar> readonlyVars) {
 		super();
 		mDeterministicAssignment = deterministicAssignment;
@@ -151,7 +149,7 @@ public class SimultaneousUpdate {
 			}
 		}
 		final Map<IProgramVar, Term> deterministicAssignment = new HashMap<>();
-		final NestedMap2<IProgramVar, ArrayIndex, Term> deterministicArrayWrites = new NestedMap2<>();
+		final Map<IProgramVar, MultiDimensionalNestedStore> deterministicArrayWrites = new HashMap<>();
 		for (final IProgramVar pv : assignmentCandidates) {
 
 			final Set<Term> pvContainingConjuncts = pv2conjuncts.getImage(pv);
@@ -187,7 +185,7 @@ public class SimultaneousUpdate {
 							if (!pv.getTermVariable().equals(mdns.getArray())) {
 								throw new UnsupportedOperationException("Only self-update supported");
 							}
-							deterministicArrayWrites.put(pv, mdns.getIndices().get(0), mdns.getValues().get(0));
+							deterministicArrayWrites.put(pv, mdns);
 						}
 					} else {
 						deterministicAssignment.put(pv, renamed);
@@ -208,18 +206,23 @@ public class SimultaneousUpdate {
 
 	private static boolean isReadInSomeAssignment(final IProgramVar pv,
 			final Map<IProgramVar, Term> deterministicAssignment,
-			final NestedMap2<IProgramVar, ArrayIndex, Term> deterministicArrayWrites) {
+			final Map<IProgramVar, MultiDimensionalNestedStore> deterministicArrayWrites) {
 		for (final Entry<IProgramVar, Term> entry : deterministicAssignment.entrySet()) {
 			if (Arrays.asList(entry.getValue().getFreeVars()).contains(pv.getTermVariable())) {
 				return true;
 			}
 		}
-		for (final Triple<IProgramVar, ArrayIndex, Term> triple : deterministicArrayWrites.entrySet()) {
-			if (triple.getSecond().getFreeVars().contains(pv.getTermVariable())) {
-				return true;
+		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : deterministicArrayWrites.entrySet()) {
+			final MultiDimensionalNestedStore mdns = entry.getValue();
+			for (final ArrayIndex idx : mdns.getIndices()) {
+				if (idx.getFreeVars().contains(pv.getTermVariable())) {
+					return true;
+				}
 			}
-			if (Arrays.asList(triple.getThird().getFreeVars()).contains(pv.getTermVariable())) {
-				return true;
+			for (final Term value : mdns.getValues()) {
+				if (Arrays.asList(value.getFreeVars()).contains(pv.getTermVariable())) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -347,7 +350,7 @@ public class SimultaneousUpdate {
 	 * Returns variables that occur on the right-hand side of an update, where the
 	 * update could be identified as a, potentially multi-dimensional, array write.
 	 */
-	public NestedMap2<IProgramVar, ArrayIndex, Term> getDeterministicArrayWrites() {
+	public Map<IProgramVar, MultiDimensionalNestedStore> getDeterministicArrayWrites() {
 		return mDeterministicArrayWrites;
 	}
 

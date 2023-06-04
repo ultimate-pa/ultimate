@@ -37,7 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Quad;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  *
@@ -105,25 +104,31 @@ public class LinearUpdate {
 				arrayReadsWithFixedIndex.addAll(quad.getThird());
 			}
 		}
-		for (final Triple<IProgramVar, ArrayIndex, Term> entry : su.getDeterministicArrayWrites().entrySet()) {
+		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : su.getDeterministicArrayWrites()
+				.entrySet()) {
 			for (final MultiDimensionalSelect mds : arrayReadsWithFixedIndex) {
-				if (mds.getArray().equals(entry.getFirst().getTermVariable())) {
+				if (mds.getArray().equals(entry.getKey().getTermVariable())) {
 					final String errorMessage = String.format(
-							"Acceleration would only be sound under the assumption that index %s and index %s are different",
-							entry.getSecond(), mds.getIndex());
+							"Acceleration would only be sound under the assumption that index %s is different each index in %s",
+							mds.getIndex(), entry.getValue().getIndices());
 					return new Pair<>(null, errorMessage);
 				}
 			}
 		}
-		for (final Triple<IProgramVar, ArrayIndex, Term> update : su.getDeterministicArrayWrites().entrySet()) {
-			final Set<TermVariable> freeVarsOfIndex = update.getSecond().getFreeVars();
+		for (final Entry<IProgramVar, MultiDimensionalNestedStore> update : su.getDeterministicArrayWrites()
+				.entrySet()) {
+			if (update.getValue().getIndices().size() != 1) {
+				throw new UnsupportedOperationException(String.format("Nested stores! Array: %s Indices: %s Values: %s",
+						update.getKey(), update.getValue().getIndices(), update.getValue().getValues()));
+			}
+			final Set<TermVariable> freeVarsOfIndex = update.getValue().getIndices().get(0).getFreeVars();
 			freeVarsOfIndex.retainAll(termVariablesOfModified);
 			if (!freeVarsOfIndex.isEmpty()) {
 				// index is moving
 				continue;
 			}
 			final Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String> quad = extractLinearUpdate(
-					mgdScript, termVariablesOfModified, update.getThird());
+					mgdScript, termVariablesOfModified, update.getValue().getValues().get(0));
 			if (quad.getFirst() == null) {
 				assert quad.getSecond() == null;
 				assert quad.getThird() == null;
@@ -134,12 +139,13 @@ public class LinearUpdate {
 				assert quad.getThird() != null;
 				assert quad.getFourth() == null;
 				final List<MultiDimensionalSelect> arrayReadsWithFixedIndex1 = quad.getThird();
-				for (final Triple<IProgramVar, ArrayIndex, Term> entry : su.getDeterministicArrayWrites().entrySet()) {
+				for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : su.getDeterministicArrayWrites()
+						.entrySet()) {
 					for (final MultiDimensionalSelect mds : arrayReadsWithFixedIndex1) {
-						if (mds.getArray().equals(entry.getFirst().getTermVariable())) {
+						if (mds.getArray().equals(entry.getKey().getTermVariable())) {
 							final String errorMessage = String.format(
 									"Fixed index update would only be sound under the assumption that index %s and index %s are different. We have %s reads in this update and %s writes in the loop.",
-									entry.getSecond(), mds.getIndex(), arrayReadsWithFixedIndex.size(),
+									entry.getValue().getIndices(), mds.getIndex(), arrayReadsWithFixedIndex.size(),
 									su.getDeterministicArrayWrites().size());
 							return new Pair<>(null, errorMessage);
 						}
