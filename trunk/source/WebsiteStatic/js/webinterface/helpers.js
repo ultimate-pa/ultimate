@@ -19,13 +19,12 @@ function tool_config_key_value_exists(key, value) {
 
 /**
  * Fetch window.location URL parameters
- * @returns {{ui: *, tool: *, session: *, lang: *, sample: *}}
+ * @returns {{tool: *, session: *, lang: *, sample: *}}
  */
 function get_url_params() {
   let url = new URL(window.location);
 
   return {
-    "ui": url.searchParams.get("ui"),
     "tool": url.searchParams.get("tool"),
     "session": url.searchParams.get("session"),
     "lang": url.searchParams.get("lang"),

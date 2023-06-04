@@ -9,9 +9,10 @@ js: [
   'vendor/lz-string.min.js',
   'webinterface/config.js',
   'webinterface/toolinfo.js',
-  #'webinterface/main.js',
+  'webinterface/helpers.js',
   'webinterface/handlebars-custom.js',
-  'webinterface/tool_interface.js'
+  'webinterface/tool_interface.js',
+  'webinterface/main.js',
 ]
 ---
 
@@ -165,6 +166,3 @@ js: [
   </ul>
 </script>
 {% endraw %}
-
-
-<script type="text/javascript" charset="utf-8" src="{{ 'js/webinterface/main.js' | relative_url }}"></script>

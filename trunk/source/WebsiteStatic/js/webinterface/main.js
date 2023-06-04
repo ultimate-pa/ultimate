@@ -51,12 +51,21 @@ function load_tool_interface(tool_id) {
   }
 }
 
+function get_home_url() {
+  let url = new URL(window.location);
+  let path = url.pathname;
+  let last_slash = path.lastIndexOf('/');
+  let prefix = path.substring(0, path.lastIndexOf('/', last_slash-1)+1);
+  url.pathname = prefix;
+  url.search = "";
+  return url;
+}
+
 /**
  * Inject current context to _CONFIG.context s.t:
  *
  * _CONFIG.context = {
  *     url: {
- *         ui: <URL ui param | home by default.>
  *         tool: <URL tool param>
  *     },
  *     tool: <CONFIG for tool with corresponding tool.id>,
@@ -72,7 +81,6 @@ function set_context() {
     try {
       url_params.session = URIDecompressArray(url_params.session);
       url_params.tool = url_params.session.tool;
-      url_params.ui = 'int';
     } catch (e) {
       alert('could not load Session provided. Malformed Link.');
       console.log(e);
@@ -80,16 +88,15 @@ function set_context() {
   }
 
   // Redirect non existing tools to home page.
-  if ((url_params.ui === "tool" || url_params.ui === "int") && !tool_config_key_value_exists("id", url_params.tool)) {
-    url_params.ui = "home";
+  if (!tool_config_key_value_exists("id", url_params.tool)) {
+    window.location.replace(get_home_url());
+    return false;
   }
 
   // Set current tool if active.
-  if (url_params.ui !== "home") {
-    tool = Object.values(_CONFIG.tools).find(function (tool) {
-      return tool.id === url_params.tool
-    });
-  }
+  tool = Object.values(_CONFIG.tools).find(function (tool) {
+    return tool.id === url_params.tool
+  });
 
   _CONFIG["context"] = {
     "url": url_params,
@@ -97,6 +104,7 @@ function set_context() {
     "msg_orientation": _CONFIG.editor.default_msg_orientation,
     "sample_source": ''
   }
+  return true;
 }
 
 
@@ -106,7 +114,10 @@ function load_available_code_examples() {
 
 
 function bootstrap() {
-  set_context();
+  let proceed = set_context();
+  if (!proceed) {
+    return;
+  }
   render_navbar();
 
   // load the interactive mode for the active tool.
