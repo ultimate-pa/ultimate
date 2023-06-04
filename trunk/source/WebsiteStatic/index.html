@@ -20,7 +20,7 @@ js: [ "redirect_legacy_urls.js" ]
       {% for tool in site.tools %}
       <div class="card border-secondary shadow mb-3 tool-card border-start">
         <div class="card-header">
-          <a class="link-primary" href="{{ tool.url }}">{{tool.title}}</a>
+          <a class="link-primary" href="{{ tool.url | relative_url }}">{{tool.title}}</a>
           <span class="float-end">
           {% for lang in tool.languages %}
           <span class="badge bg-secondary">{{lang}}</span>
@@ -29,7 +29,7 @@ js: [ "redirect_legacy_urls.js" ]
           <p class="card-text text-justify">{{tool.description}}</p>
         </div>
         <div class="card-footer text-right">
-          <a href="{{ tool.url }}" class="btn btn-secondary">Read more</a>
+          <a href="{{ tool.url | relative_url }}" class="btn btn-secondary">Read more</a>
           <a href="{{ 'webinterface/?tool=' | append: tool.tool_id | relative_url }}" class="btn btn-secondary">Try online</a>
         </div>
       </div>
