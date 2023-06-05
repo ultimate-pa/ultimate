@@ -136,7 +136,7 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 	}
 
 	private void computeMarkingsFromFirstWordRun() throws PetriNetNot1SafeException {
-		mFireSequenceTreeMarkings.add(new MarkingOfFireSequence<>(mInitialMarking, new HashSet<>(), 0));
+		mFireSequenceTreeMarkings.add(new MarkingOfFireSequence<>(mInitialMarking, new HashSet<>(), 0, 0));
 		for (final LETTER symbol : mLassoWord.getStem()) {
 			produceSuccessorMarkingsOfFireSequenceOfSet(symbol);
 		}
@@ -291,9 +291,12 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 		 */
 		private final Set<Pair<Marking<PLACE>, Integer>> mHondaMarkingsOfFireSequence;
 		private final int mLastIndexOfShootingAcceptingStateInFireSequence;
+		private final int mLastIndexOfShootingFinitePlaceInFireSequence;
 
 		/**
 		 * Constructor.
+		 *
+		 * @param lastIndexOfShootingFinitePlaceInFireSequence
 		 *
 		 * @param <marking>
 		 *            The marking with {@link Marking}.
@@ -307,10 +310,12 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 		 */
 		public MarkingOfFireSequence(final Marking<PLACE> marking,
 				final Set<Pair<Marking<PLACE>, Integer>> hondaMarkings,
-				final int lastIndexOfShootingAcceptingStateInFireSequence) {
+				final int lastIndexOfShootingAcceptingStateInFireSequence,
+				final int lastIndexOfShootingFinitePlaceInFireSequence) {
 			mMarking = marking;
 			mHondaMarkingsOfFireSequence = hondaMarkings;
 			mLastIndexOfShootingAcceptingStateInFireSequence = lastIndexOfShootingAcceptingStateInFireSequence;
+			mLastIndexOfShootingFinitePlaceInFireSequence = lastIndexOfShootingFinitePlaceInFireSequence;
 		}
 
 		public final Marking<PLACE> getMarking() {
@@ -327,6 +332,10 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 
 		public final int getLastIndexOfShootingAcceptingStateInFireSequence() {
 			return mLastIndexOfShootingAcceptingStateInFireSequence;
+		}
+
+		public int getLastIndexOfShootingFinitePlaceInFireSequence() {
+			return mLastIndexOfShootingFinitePlaceInFireSequence;
 		}
 	}
 }

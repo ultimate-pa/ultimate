@@ -81,7 +81,7 @@ public final class BuchiAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETT
 			firingInAcceptingPlaceIndex = predecessor.getLastIndexOfShootingAcceptingStateInFireSequence();
 		}
 		return new MarkingOfFireSequence<>(predecessor.getMarking().fireTransition(transition),
-				predecessor.getHondaMarkingsOfFireSequence(), firingInAcceptingPlaceIndex);
+				predecessor.getHondaMarkingsOfFireSequence(), firingInAcceptingPlaceIndex, 0);
 	}
 
 	@Override
