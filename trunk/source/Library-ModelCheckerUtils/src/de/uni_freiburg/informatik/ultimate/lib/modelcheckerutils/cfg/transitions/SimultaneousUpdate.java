@@ -180,7 +180,9 @@ public class SimultaneousUpdate {
 							final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore
 									.convert(mgdScript.getScript(), renamed);
 							if (mdns.getIndices().size() > 1) {
-								throw new UnsupportedOperationException("Nested stores not yet supported");
+								throw new UnsupportedOperationException(String.format(
+										"NestedStore not yet supported. Array: %s, Indices: %s, Values: %s",
+										mdns.getArray(), mdns.getIndices(), mdns.getValues()));
 							}
 							if (!pv.getTermVariable().equals(mdns.getArray())) {
 								throw new UnsupportedOperationException("Only self-update supported");
