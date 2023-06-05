@@ -629,6 +629,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Combo, RefinementStrategy.values()),
 
 				new UltimatePreferenceItemGroup("PetriAutomizer",
+						"These settings are only relevant if \"" + LABEL_CONCURRENCY + "\" is set to \""
+								+ Concurrency.PETRI_NET + "\".",
 						new UltimatePreferenceItem<>(LABEL_CONFIGURATION_ORDER, DEF_CONFIGURATION_ORDER,
 								PreferenceType.Combo, EventOrderEnum.values()),
 						new UltimatePreferenceItem<>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),

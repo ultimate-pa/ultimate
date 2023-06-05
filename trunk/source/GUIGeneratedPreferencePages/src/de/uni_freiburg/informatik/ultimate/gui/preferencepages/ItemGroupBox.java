@@ -32,6 +32,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
 
 /**
  * Used by {@link UltimateGeneratedPreferencePage} to group related preference items.
@@ -43,10 +44,12 @@ class ItemGroupBox {
 	private static final int MARGIN = 20;
 
 	private final Group mGroup;
+	private final Label mDescription;
 	private final Composite mItemContainer;
 
-	public ItemGroupBox(final String label, final Composite parent, final int numColumns) {
+	public ItemGroupBox(final String label, final String description, final Composite parent, final int numColumns) {
 		mGroup = createGroup(label, parent, numColumns);
+		mDescription = createDescription(parent, mGroup, description, numColumns);
 		mItemContainer = createItemContainer(parent, mGroup, numColumns);
 	}
 
@@ -94,5 +97,17 @@ class ItemGroupBox {
 
 		container.setLayout(new GridLayout(numColumns, false));
 		return container;
+	}
+
+	private static Label createDescription(final Composite root, final Group parent, final String description,
+			final int numColumns) {
+		if (description == null) {
+			return null;
+		}
+		final var label = new Label(parent, SWT.LEFT | SWT.WRAP);
+		label.setFont(root.getFont());
+		label.setText(description);
+		label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, numColumns, 1));
+		return label;
 	}
 }

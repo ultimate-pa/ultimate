@@ -32,15 +32,26 @@ import java.util.stream.Collectors;
 
 public class UltimatePreferenceItemGroup extends BaseUltimatePreferenceItem {
 	private final String mLabel;
+	private final String mDescription;
 	private final BaseUltimatePreferenceItem[] mItems;
 
 	public UltimatePreferenceItemGroup(final String label, final BaseUltimatePreferenceItem... items) {
+		this(label, null, items);
+	}
+
+	public UltimatePreferenceItemGroup(final String label, final String description,
+			final BaseUltimatePreferenceItem... items) {
 		mLabel = label;
+		mDescription = description;
 		mItems = items;
 	}
 
 	public String getLabel() {
 		return mLabel;
+	}
+
+	public String getDescription() {
+		return mDescription;
 	}
 
 	public BaseUltimatePreferenceItem[] getItems() {

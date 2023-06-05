@@ -162,7 +162,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 				}
 			} else if (prefItem instanceof UltimatePreferenceItemGroup) {
 				final var group = (UltimatePreferenceItemGroup) prefItem;
-				beginGroupBox(group.getLabel(), 3);
+				beginGroupBox(group.getLabel(), group.getDescription(), 2);
 				createFieldEditors(group.getItems());
 				endGroupBox();
 			}
@@ -217,8 +217,8 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 		return super.performOk();
 	}
 
-	private void beginGroupBox(final String text, final int numColumns) {
-		mActiveGroups.push(new ItemGroupBox(text, getFieldEditorParent(), numColumns));
+	private void beginGroupBox(final String label, final String description, final int numColumns) {
+		mActiveGroups.push(new ItemGroupBox(label, description, getFieldEditorParent(), numColumns));
 	}
 
 	private void endGroupBox() {
