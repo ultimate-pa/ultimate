@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.RabinPetriNetWrapper;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -119,10 +120,10 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 		case BUCHI_PETRI_NET:
 			return new BuchiPetriNetCegarLoop<>(icfg, rankVarConstructor, predicateFactory, mPrefs, mServices,
 					mTransitionClazz, constructInitialAbstraction(petriNetProvider, icfg), mCegarLoopBenchmark);
-		// case RABIN_PETRI_NET:
-		// return new RabinPetriNetCegarLoop<>(icfg, rankVarConstructor, predicateFactory, mPrefs, mServices,
-		// mTransitionClazz, new RabinPetriNetWrapper<>(constructInitialAbstraction(petriNetProvider, icfg)),
-		// mCegarLoopBenchmark);
+		case RABIN_PETRI_NET:
+			return new RabinPetriNetCegarLoop<>(icfg, rankVarConstructor, predicateFactory, mPrefs, mServices,
+					mTransitionClazz, new RabinPetriNetWrapper<>(constructInitialAbstraction(petriNetProvider, icfg)),
+					mCegarLoopBenchmark);
 		default:
 			throw new UnsupportedOperationException(
 					"The type " + automatonTypeConcurrent + " is currently not supported.");
