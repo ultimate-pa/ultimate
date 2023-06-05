@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 public class UltimatePreferenceItemGroup extends BaseUltimatePreferenceItem {
 	private final String mLabel;
 	private final String mDescription;
-	private final BaseUltimatePreferenceItem[] mItems;
+	private final List<BaseUltimatePreferenceItem> mItems;
 
 	public UltimatePreferenceItemGroup(final String label, final BaseUltimatePreferenceItem... items) {
 		this(label, null, items);
@@ -41,6 +41,11 @@ public class UltimatePreferenceItemGroup extends BaseUltimatePreferenceItem {
 
 	public UltimatePreferenceItemGroup(final String label, final String description,
 			final BaseUltimatePreferenceItem... items) {
+		this(label, description, Arrays.asList(items));
+	}
+
+	public UltimatePreferenceItemGroup(final String label, final String description,
+			final List<BaseUltimatePreferenceItem> items) {
 		mLabel = label;
 		mDescription = description;
 		mItems = items;
@@ -54,7 +59,7 @@ public class UltimatePreferenceItemGroup extends BaseUltimatePreferenceItem {
 		return mDescription;
 	}
 
-	public BaseUltimatePreferenceItem[] getItems() {
+	public List<BaseUltimatePreferenceItem> getItems() {
 		return mItems;
 	}
 
@@ -65,6 +70,6 @@ public class UltimatePreferenceItemGroup extends BaseUltimatePreferenceItem {
 
 	@Override
 	public List<UltimatePreferenceItem<?>> getFlattenedList() {
-		return Arrays.stream(mItems).flatMap(item -> item.getFlattenedList().stream()).collect(Collectors.toList());
+		return mItems.stream().flatMap(item -> item.getFlattenedList().stream()).collect(Collectors.toList());
 	}
 }

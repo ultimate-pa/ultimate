@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,11 +98,11 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 
 	@Override
 	protected void createFieldEditors() {
-		createFieldEditors(mDefaultPreferences);
+		createFieldEditors(Arrays.asList(mDefaultPreferences));
 		adjustGroupGrids();
 	}
 
-	protected void createFieldEditors(final BaseUltimatePreferenceItem[] items) {
+	protected void createFieldEditors(final List<BaseUltimatePreferenceItem> items) {
 		for (final BaseUltimatePreferenceItem prefItem : items) {
 			if (prefItem instanceof UltimatePreferenceItem) {
 				final UltimatePreferenceItem<?> item = (UltimatePreferenceItem<?>) prefItem;
