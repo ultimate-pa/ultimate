@@ -165,5 +165,6 @@ public class SmtChcScript implements IChcScript, AutoCloseable {
 	@Override
 	public void close() throws Exception {
 		reset();
+		mMgdScript.unlock(this);
 	}
 }
