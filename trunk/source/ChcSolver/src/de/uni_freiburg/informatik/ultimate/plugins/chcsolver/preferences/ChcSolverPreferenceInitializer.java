@@ -46,6 +46,11 @@ public class ChcSolverPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String LABEL_CHC_BACKEND = "CHC solver backend";
 	private static final SolverBackend DEF_CHC_BACKEND = SolverBackend.ELDARICA;
 
+	public static final String LABEL_SOLVER_TIMEOUT = "Timeout";
+	private static final String DESC_SOLVER_TIMEOUT =
+			"Timeout for solving an entire CHC system (in ms). 0 means no timeout.";
+	private static final int DEF_SOLVER_TIMEOUT = 0;
+
 	public static final String LABEL_PRODUCE_MODEL = "Produce CHC model if query is SAT";
 	private static final boolean DEF_PRODUCE_MODEL = true;
 
@@ -64,6 +69,8 @@ public class ChcSolverPreferenceInitializer extends UltimatePreferenceInitialize
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>(LABEL_CHC_BACKEND, DEF_CHC_BACKEND, PreferenceType.Combo,
 						SolverBackend.values()),
+				new UltimatePreferenceItem<>(LABEL_SOLVER_TIMEOUT, DEF_SOLVER_TIMEOUT, DESC_SOLVER_TIMEOUT,
+						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_PRODUCE_MODEL, DEF_PRODUCE_MODEL, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_PRODUCE_DERIVATION, DEF_PRODUCE_DERIVATION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_PRODUCE_UNSAT_CORES, DEF_PRODUCE_UNSAT_CORES,

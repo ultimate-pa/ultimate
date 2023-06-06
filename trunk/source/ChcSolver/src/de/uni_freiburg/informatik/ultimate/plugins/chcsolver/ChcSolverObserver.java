@@ -45,6 +45,11 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.eldarica.EldaricaChcScript;
 import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcSatResult;
 import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcUnknownResult;
 import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcUnsatResult;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.preferences.ChcSolverPreferences;
@@ -74,7 +79,13 @@ public class ChcSolverObserver extends BaseObserver {
 		final IChcScript chcScript = getBackend(annot);
 		configureBackend(chcScript);
 
-		final var satisfiability = chcScript.solve(annot.getSymbolTable(), annot.getHornClauses());
+		final LBool satisfiability;
+		if (mPrefs.getTimeout() > 0) {
+			satisfiability = chcScript.solve(annot.getSymbolTable(), annot.getHornClauses(), mPrefs.getTimeout());
+		} else {
+			satisfiability = chcScript.solve(annot.getSymbolTable(), annot.getHornClauses());
+		}
+
 		final IResult result = createResult(chcScript, satisfiability);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 
@@ -90,9 +101,7 @@ public class ChcSolverObserver extends BaseObserver {
 		case ELDARICA:
 			return new EldaricaChcScript(mServices, annotation.getScript().getScript());
 		case Z3:
-			// We use the script given in the annotation. For this to work, that script should use Z3.
-			// To use a fresh Z3 instance for solving instead, one has to transfer the Horn clause terms to that script.
-			return new SmtChcScript(annotation.getScript());
+			return createZ3Backend();
 		case TREEAUTOMIZER:
 			// NOTE: TAPreferences (last parameter) currently unused by TreeAutomizer
 			return new TreeAutomizerChcScript(mServices, annotation.getScript(), null);
@@ -101,6 +110,27 @@ public class ChcSolverObserver extends BaseObserver {
 		default:
 			throw new UnsupportedOperationException("Unsupported CHC backend: " + mPrefs.getBackend());
 		}
+	}
+
+	private SmtChcScript createZ3Backend() {
+		// We use a fresh Z3 instance to solve the system.
+		// In typical toolchains, the solver in the HornAnnot is often unsuitable:
+		//
+		// (1) It may not be a Z3 instance.
+		// (2) The query timeout may be very low.
+		// (3) Another logic may have been set.
+		//
+		// SmtChcScript internally detects that a different script was used, and transfers the terms.
+
+		final var timeout = mPrefs.getTimeout() > 0 ? mPrefs.getTimeout() : -1L;
+		final var mode = mPrefs.produceModels() ? SolverMode.External_ModelsMode : SolverMode.External_DefaultMode;
+		final var settings = SolverBuilder.constructSolverSettings().setSolverMode(mode)
+				.setUseExternalSolver(ExternalSolver.Z3, Logics.HORN, timeout);
+
+		final var solver = SolverBuilder.buildAndInitializeSolver(mServices, settings, "Z3-CHC");
+		final var mgdSolver = new ManagedScript(mServices, solver);
+
+		return new SmtChcScript(mgdSolver);
 	}
 
 	private void configureBackend(final IChcScript backend) {
