@@ -215,7 +215,7 @@ public class LinearUpdate {
 					final Set<TermVariable> freeVarsOfIndex = mds.getIndex().getFreeVars();
 					freeVarsOfIndex.retainAll(termVariablesOfModified);
 					final String errorMessage = String.format(
-							"Update contains array read whose index is moving. Array read %s, modified variable %s",
+							"Non-array update contains array read whose index is moving. Array read %s, modified variable %s",
 							mds, freeVarsOfIndex);
 					return new Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String>(null, null, null,
 							errorMessage);
