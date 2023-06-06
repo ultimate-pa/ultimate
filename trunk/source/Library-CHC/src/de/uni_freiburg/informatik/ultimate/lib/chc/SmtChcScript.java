@@ -61,6 +61,7 @@ public class SmtChcScript implements IChcScript, AutoCloseable {
 
 	public SmtChcScript(final ManagedScript mgdScript) {
 		mMgdScript = mgdScript;
+		mMgdScript.lock(this);
 	}
 
 	@Override
@@ -74,16 +75,15 @@ public class SmtChcScript implements IChcScript, AutoCloseable {
 		mMgdScript.push(this, 1);
 		mIsPushed = true;
 
+		mMgdScript.unlock(this);
 		final var asserter =
 				new ChcAsserter(mMgdScript, getScript(), mProduceUnsatCores, ADD_COMMENTS, DECLARE_FUNCTIONS);
 		asserter.assertClauses(symbolTable, system);
 		mMgdScript.lock(this);
 
 		mName2Clause = asserter.getName2Clause();
-		final LBool result = mMgdScript.checkSat(this);
 
-		mMgdScript.unlock(this);
-		return result;
+		return mMgdScript.checkSat(this);
 	}
 
 	@Override
