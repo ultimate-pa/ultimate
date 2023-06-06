@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttran
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -192,14 +193,27 @@ public class TermTransferrer extends TermTransformer {
 
 	@Override
 	public void postConvertLet(final LetTerm oldLet, final Term[] newValues, final Term newBody) {
-		throw new UnsupportedOperationException("not yet implemented");
+		final TermVariable[] vars = new TermVariable[oldLet.getVariables().length];
+		for (int i = 0; i < oldLet.getVariables().length; i++) {
+			// Bounded variables that occur in the subformula have to be already keys of the map.
+			assert (!Arrays.asList(oldLet.getSubTerm().getFreeVars()).contains(oldLet.getVariables()[i])
+					|| mTransferMapping.containsKey(oldLet.getVariables()[i])) : "Forgotten to transfer: "
+							+ oldLet.getVariables()[i];
+			vars[i] = (TermVariable) mTransferMapping.computeIfAbsent(oldLet.getVariables()[i],
+					x -> transferTermVariable((TermVariable) x));
+		}
+		final Term result = mNewScript.let(vars, newValues, newBody);
+		setResult(result);
 	}
 
 	@Override
 	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
 		final TermVariable[] vars = new TermVariable[old.getVariables().length];
 		for (int i = 0; i < old.getVariables().length; i++) {
-			// Check mTransferMapping first, in case a different mapping was already recorded.
+			// Bounded variables that occur in the subformula have to be already keys of the map.
+			assert (!Arrays.asList(old.getSubformula().getFreeVars()).contains(old.getVariables()[i])
+					|| mTransferMapping.containsKey(old.getVariables()[i])) : "Forgotten to transfer: "
+							+ old.getVariables()[i];
 			vars[i] = (TermVariable) mTransferMapping.computeIfAbsent(old.getVariables()[i],
 					x -> transferTermVariable((TermVariable) x));
 		}

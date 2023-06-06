@@ -31,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
@@ -51,6 +52,7 @@ public class TranslationManager {
 
 	private HashSet<Term> mConstraintSet; // Set of all constraints
 	private final boolean mNutzTransformation;
+	private final ConstraintsForBitwiseOperations mCfo;
 
 	/*
 	 * Wrapper class for bit-vector to integer translation and back-translation Manages: variables and constraints
@@ -68,6 +70,7 @@ public class TranslationManager {
 		mIntand = mTc.getIntAndFunctionSymbol();
 
 		mNutzTransformation = useNutzTransformation;
+		mCfo = cfbo;
 	}
 
 	public void setReplacementVarMaps(final LinkedHashMap<Term, Term> replacementVarMap) {
@@ -101,8 +104,9 @@ public class TranslationManager {
 
 	public Triple<Term, Set<Term>, Boolean> translateBvtoIntTransferrer(final Term bitvecFromula, final Script scriptBV, final Script scriptINT) {
 		mConstraintSet = new HashSet<>();
+		final TranslationConstrainer tc = new TranslationConstrainer(mMgdScript, mCfo);
 		final BvToIntTransferrer bvToInt =
-				new BvToIntTransferrer(scriptBV, scriptINT, mMgdScript, mVariableMap, mTc, bitvecFromula.getFreeVars(), mNutzTransformation);
+				new BvToIntTransferrer(scriptBV, scriptINT, mMgdScript, mVariableMap, tc, bitvecFromula.getFreeVars(), mNutzTransformation);
 		final Term integerFormulaNoConstraint;
 		try {
 			integerFormulaNoConstraint = bvToInt.transform(bitvecFromula);
@@ -114,10 +118,13 @@ public class TranslationManager {
 		final Set<Term> overapproxVariables = bvToInt.getOverapproxVariables();
 		final boolean isOverapproximation = bvToInt.wasOverapproximation();
 		if (!mNutzTransformation) {
-			mConstraintSet.addAll(mTc.getConstraints());
+			mConstraintSet.addAll(tc.getConstraints());
 			mConstraintSet.addAll(bvToInt.mArraySelectConstraintMap.values());
 		}else {
-			mConstraintSet.addAll(mTc.getBvandConstraints());
+			mConstraintSet.addAll(tc.getBvandConstraints());
+		}
+		if (!mConstraintSet.isEmpty() && !SmtSortUtils.isBoolSort(integerFormulaNoConstraint.getSort())) {
+			throw new AssertionError("Cannot add constraints to non-Boolean formula.");
 		}
 		// TODO: Also add the constraints with mNutzTransformation=true, maybe we need to be more careful there
 		final Term integerFormula =

@@ -209,7 +209,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 						}
 					}
 					final ArrayList<STATE> newStateSequence =
-							(ArrayList<STATE>) currentNodeSet.mWord.getStateSequence().clone();
+							new ArrayList<>(currentNodeSet.mWord.getStateSequence());
 					newStateSequence.add(ATransition.getSucc());
 					tempNodeData = new NodeData<>(new NestedRun<>(
 							currentNodeSet.mWord.getWord().concatenate(new NestedWord<>(ATransition.getLetter(), -2)),

@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -166,9 +165,14 @@ public class Abducer {
 	}
 
 	private Term tryEliminateForall(final Set<TermVariable> vars, final Term formula) {
-		return PartialQuantifierElimination.quantifier(mServices, mLogger, mScript,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-				QuantifiedFormula.FORALL, vars, formula);
+		final Term quantified = SmtUtils.quantifier(mScript.getScript(), QuantifiedFormula.FORALL, vars, formula);
+		final boolean eliminateLight = true;
+		if (eliminateLight) {
+			return PartialQuantifierElimination.eliminateLight(mServices, mScript, quantified);
+		} else {
+			return PartialQuantifierElimination.eliminate(mServices, mScript, quantified,
+					SimplificationTechnique.SIMPLIFY_DDA);
+		}
 	}
 
 	private boolean checkResult(final Term lhs, final Term rhs, final Term solution, final boolean equiv) {

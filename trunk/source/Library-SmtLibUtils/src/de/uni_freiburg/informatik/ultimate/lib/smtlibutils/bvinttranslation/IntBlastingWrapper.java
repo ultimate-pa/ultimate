@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
@@ -177,6 +179,7 @@ public class IntBlastingWrapper extends WrapperScript {
 	public void declareDatatype(final DataType datatype, final Constructor[] constrs) throws SMTLIBException {
 		// TODO: Probably unsupported, we will see...
 		mBvScript.declareDatatype(datatype, constrs);
+		throw new UnsupportedOperationException("Cannot yet translate algebraic datatypes");
 	}
 
 	@Override
@@ -184,6 +187,7 @@ public class IntBlastingWrapper extends WrapperScript {
 			throws SMTLIBException {
 		// TODO: Probably unsupported, we will see...
 		mBvScript.declareDatatypes(datatypes, constrs, sortParams);
+		throw new UnsupportedOperationException("Cannot yet translate algebraic datatypes");
 	}
 
 	@Override
@@ -196,33 +200,46 @@ public class IntBlastingWrapper extends WrapperScript {
 	@Override
 	public void defineSort(final String sort, final Sort[] sortParams, final Sort definition) throws SMTLIBException {
 		mBvScript.defineSort(sort, sortParams, definition);
-		// TODO: For Sort definitions we have to translate the parameter sorts
-		throw new UnsupportedOperationException();
+
+		final Sort[] newSortParams = new Sort[sortParams.length];
+		for (int i = 0; i < sortParams.length; i++) {
+			newSortParams[i] = translateSort(mIntScript, sortParams[i]);
+		}
+		final Sort newDefinition = translateSort(mIntScript, definition);
+		mIntScript.defineSort(sort, newSortParams, newDefinition);
 	}
 
 	@Override
 	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
 			throws SMTLIBException {
-		// TODO: Define function also in int script
-		throw new UnsupportedOperationException("defineFun not supported in intBlastingWrapper");
-//		Sort newSort;
-//		if (SmtSortUtils.isBitvecSort(resultSort)) {
-//			newSort = SmtSortUtils.getIntSort(mMgdIntScript);
-//		} else {
-//			newSort = resultSort;
-//		}
-//
-//		TermVariable[] intParams = new TermVariable[params.length];
-//		for (int i = 0; i < params.length; i++) {
-//			intParams[i] = (TermVariable) mTm.translateBvtoIntTransferrer(params[i], new HistoryRecordingScript(mBvScript), new HistoryRecordingScript(mIntScript)).getFirst(); // TODO
-//		}
-//
-//		Term intDefinition = mTm.translateBvtoIntTransferrer(definition, new HistoryRecordingScript(mBvScript), new HistoryRecordingScript(mIntScript)).getFirst();// TODO
-//
-//
-//		mIntScript.defineFun(fun, intParams, newSort, intDefinition);
-//		mBvScript.defineFun(fun, params, resultSort, definition);
+		mBvScript.defineFun(fun, params, resultSort, definition);
 
+		final TermVariable[] newParams = new TermVariable[params.length];
+		for (int i = 0; i < params.length; i++) {
+			final Sort newParamSort = translateSort(mIntScript, params[i].getSort());
+			final TermVariable newTermVariable = mIntScript.variable(params[i].getName(), newParamSort);
+			newParams[i] = newTermVariable;
+		}
+		final Sort newResultSort = translateSort(mIntScript, resultSort);
+		final Term definitionWithoutLet = new FormulaUnLet().unlet(definition);
+		final Triple<Term, Set<Term>, Boolean> triple;
+		try {
+			triple = mTm.translateBvtoIntTransferrer(definitionWithoutLet,
+				new HistoryRecordingScript(mBvScript), new HistoryRecordingScript(mIntScript));
+		} catch (final Throwable th) {
+			throw new AssertionError(th);
+		}
+		final Term newDefinition = SmtUtils.simplify(mMgdIntScript, triple.getFirst(), mServices,
+				SimplificationTechnique.POLY_PAC);
+		if (triple.getThird()) {
+			// there was an overapproximation
+			throw new UnsupportedOperationException("We cannot overapproximate in definition of defineFun");
+		} else {
+			if (!triple.getSecond().isEmpty()) {
+				throw new AssertionError("Unknown additional auxiliary variables " + triple.getSecond());
+			}
+		}
+		mIntScript.defineFun(fun, newParams, newResultSort, newDefinition);
 	}
 
 	@Override
@@ -240,40 +257,24 @@ public class IntBlastingWrapper extends WrapperScript {
 		mBvScript.declareFun(fun, paramSorts, resultSort);
 	}
 
-
-
-	public Sort translateSort(final Script script, final Sort sort) {
+	/**
+	 * Translates a bitvector sort to sort Int. Translates parameterized sorts
+	 * recursively. E.g., `(Array (_ BitVec 3) Bool)` is translated to `(Array Int
+	 * Bool)`.
+	 */
+	public static Sort translateSort(final Script intScript, final Sort sort) {
 		final Sort result;
 		if (sort.getName().equals("BitVec")) {
-			result = SmtSortUtils.getIntSort(script);
-		} else if (SmtSortUtils.isArraySort(sort)) {
-			result = translateArraySort(sort);
+			result = SmtSortUtils.getIntSort(intScript);
 		} else {
 			final Sort[] oldSorts = sort.getArguments();
 			final Sort[] newSorts = new Sort[oldSorts.length];
 			for (int i = 0; i < oldSorts.length; i++) {
-				newSorts[i] = translateSort(script, oldSorts[i]);
+				newSorts[i] = translateSort(intScript, oldSorts[i]);
 			}
-			return script.sort(sort.getName(), sort.getIndices(), newSorts);
+			return intScript.sort(sort.getName(), sort.getIndices(), newSorts);
 		}
 		return result;
-	}
-
-	private Sort translateArraySort(final Sort sort) {
-		if (SmtSortUtils.isBitvecSort(sort)) {
-			return SmtSortUtils.getIntSort(mMgdIntScript);
-		} else if (SmtSortUtils.isArraySort(sort)) {
-			final Sort[] newArgsSort = new Sort[sort.getArguments().length];
-			for (int i = 0; i < sort.getArguments().length; i++) {
-				newArgsSort[i] = translateArraySort(sort.getArguments()[i]);
-			}
-			assert newArgsSort.length == 2;
-			final Sort domainSort = newArgsSort[0];
-			final Sort rangeSort = newArgsSort[1];
-			return SmtSortUtils.getArraySort(mMgdIntScript.getScript(), domainSort, rangeSort);
-		} else {
-			throw new AssertionError("Unexpected Sort: " + sort);
-		}
 	}
 
 	@Override
@@ -296,22 +297,20 @@ public class IntBlastingWrapper extends WrapperScript {
 	}
 
 	@Override
-	public LBool assertTerm(Term bvTerm) throws SMTLIBException {
+	public LBool assertTerm(final Term bvTerm) throws SMTLIBException {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			writeEvalRow(0, "Timeout at beginning of assertTerm");
 			throw new ToolchainCanceledException(IntBlastingWrapper.class,
 					String.format("assertTerm"));
 		}
-		// No need to assert term in mBvScript.
-		// FIXME: translate to bv by using an instance of the TermTransferrer
-		bvTerm = new FormulaUnLet().unlet(bvTerm);
+		final Term bvTermWithoutLet = new FormulaUnLet().unlet(bvTerm);
 		final Triple<Term, Set<Term>, Boolean> translationResult;
 		try {
-			translationResult = mTm.translateBvtoIntTransferrer(bvTerm, new HistoryRecordingScript(mBvScript),
+			translationResult = mTm.translateBvtoIntTransferrer(bvTermWithoutLet, new HistoryRecordingScript(mBvScript),
 					new HistoryRecordingScript(mIntScript));
 		} catch (final Throwable th) {
 			writeEvalRow(0, th.toString());
-			throw th;
+			throw new AssertionError(th);
 		}
 		final Term intTerm = translationResult.getFirst();
 		final boolean weDidAnOverapproximation = translationResult.getThird();
@@ -320,7 +319,9 @@ public class IntBlastingWrapper extends WrapperScript {
 			mOverapproximationTrackingStack.add(true);
 		}
 		try {
-			return mIntScript.assertTerm(intTerm);
+			final Term simplifiedIntTerm = SmtUtils.simplify(mMgdIntScript, intTerm, mServices,
+					SimplificationTechnique.POLY_PAC);
+			return mIntScript.assertTerm(simplifiedIntTerm);
 		} catch (final Throwable th) {
 			writeEvalRow(0, th.toString());
 			throw new AssertionError(th);

@@ -27,8 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -68,10 +68,9 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 	private final ManagedScript mBoogie2Smt;
 
 	public AbsIntNonSmtInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction, final IPredicateUnifier predUnifier,
-			final ManagedScript csToolkit, final IIcfgSymbolTable symbolTable,
-			final IRun<LETTER, ?> currentCounterexample,
-			final SimplificationTechnique simplificationTechnique,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
+			final IPredicateUnifier predUnifier, final ManagedScript csToolkit, final IIcfgSymbolTable symbolTable,
+			final IRun<LETTER, ?> currentCounterexample, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mServices = services;
@@ -100,7 +99,7 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 		mLogger.info("Creating interpolant automaton from AI using abstract post for generalization");
 
 		final NestedRun<LETTER, IPredicate> cex = (NestedRun<LETTER, IPredicate>) mCurrentCounterExample;
-		final ArrayList<IPredicate> stateSequence = cex.getStateSequence();
+		final List<IPredicate> stateSequence = cex.getStateSequence();
 
 		if (stateSequence.size() <= 1) {
 			throw new AssertionError("Unexpected: state sequence size <= 1");

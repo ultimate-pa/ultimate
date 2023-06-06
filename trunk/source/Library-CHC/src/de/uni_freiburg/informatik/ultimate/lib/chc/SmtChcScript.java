@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-public class SmtChcScript implements IChcScript {
+public class SmtChcScript implements IChcScript, AutoCloseable {
 	private static final boolean ADD_COMMENTS = false;
 
 	// We assume the function symbols are already declared in the script, as the Horn clause terms use the same script.
@@ -55,6 +55,8 @@ public class SmtChcScript implements IChcScript {
 
 	private final ManagedScript mMgdScript;
 	private boolean mProduceUnsatCores;
+
+	private boolean mIsPushed;
 	private Map<String, HornClause> mName2Clause;
 
 	public SmtChcScript(final ManagedScript mgdScript) {
@@ -69,6 +71,8 @@ public class SmtChcScript implements IChcScript {
 	@Override
 	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system) {
 		reset();
+		mMgdScript.push(this, 1);
+		mIsPushed = true;
 
 		final var asserter =
 				new ChcAsserter(mMgdScript, getScript(), mProduceUnsatCores, ADD_COMMENTS, DECLARE_FUNCTIONS);
@@ -153,5 +157,14 @@ public class SmtChcScript implements IChcScript {
 
 	private void reset() {
 		mName2Clause = null;
+		if (mIsPushed) {
+			mMgdScript.pop(this, 1);
+		}
+	}
+
+	@Override
+	public void close() throws Exception {
+		reset();
+		mMgdScript.unlock(this);
 	}
 }

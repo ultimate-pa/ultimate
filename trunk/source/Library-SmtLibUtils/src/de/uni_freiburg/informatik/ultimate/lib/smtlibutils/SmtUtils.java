@@ -627,7 +627,7 @@ public final class SmtUtils {
 			return unaryNumericMinus(script, operand);
 		}
 		if (SmtSortUtils.isBitvecSort(sort)) {
-			return BitvectorUtils.termWithLocalSimplification(script, "bvneg", null, operand);
+			return BitvectorUtils.unfTerm(script, "bvneg", null, operand);
 		}
 		throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 	}
@@ -1420,20 +1420,16 @@ public final class SmtUtils {
 			result = SmtUtils.ite(script, params[0], params[1], params[2]);
 			break;
 		case "+":
-		case "bvadd":
 			result = SmtUtils.sum(script, funcname, params);
 			break;
 		case "-":
-		case "bvsub":
 			if (params.length == 1) {
-				assert !funcname.equals("bvsub");
 				result = SmtUtils.unaryNumericMinus(script, params[0]);
 			} else {
 				result = SmtUtils.minus(script, params);
 			}
 			break;
 		case "*":
-		case "bvmul":
 			result = SmtUtils.mul(script, funcname, params);
 			break;
 		case "div":
@@ -1465,7 +1461,9 @@ public final class SmtUtils {
 			break;
 		case "zero_extend":
 		case "extract":
-			// case "bvmul":
+		case "bvadd":
+		case "bvsub":
+		case "bvmul":
 		case "bvudiv":
 		case "bvurem":
 		case "bvsdiv":
@@ -1487,7 +1485,7 @@ public final class SmtUtils {
 		case "bvsle":
 		case "bvsgt":
 		case "bvsge":
-			result = BitvectorUtils.termWithLocalSimplification(script, funcname, toBigIntegerArray(indices), params);
+			result = BitvectorUtils.unfTerm(script, funcname, toBigIntegerArray(indices), params);
 			break;
 		default:
 			result = script.term(funcname, indices, resultSort, params);

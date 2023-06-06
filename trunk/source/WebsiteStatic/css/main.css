@@ -118,6 +118,13 @@ textarea {
   margin-right: 3rem;
 }
 
+[data-toggle][aria-expanded=false] .text-expanded {
+  display: none;
+}
+[data-toggle][aria-expanded=true] .text-collapsed {
+  display: none;
+}
+
 /* ==========================================================================
    Helper classes
    ========================================================================== */

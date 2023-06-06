@@ -79,6 +79,10 @@ public class ChcSolverObserver extends BaseObserver {
 		final IResult result = createResult(chcScript, satisfiability, annot.getBacktranslator());
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 
+		if (chcScript instanceof AutoCloseable) {
+			((AutoCloseable) chcScript).close();
+		}
+
 		return false;
 	}
 
