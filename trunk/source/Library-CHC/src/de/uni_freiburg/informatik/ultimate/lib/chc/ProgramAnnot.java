@@ -30,7 +30,7 @@ public abstract class ProgramAnnot extends BasePayloadContainer {
 			final IUltimateServiceProvider services) {
 		final Term term =
 				mModel.getFunctionDefinition(getFunctionSymbol(locactions), getArguments(locactions, localVarProvider));
-		return SmtUtils.simplify(managedScript, term, services, SimplificationTechnique.SIMPLIFY_DDA);
+		return SmtUtils.simplify(managedScript, term, services, SimplificationTechnique.POLY_PAC);
 	}
 
 	protected abstract String getFunctionSymbol(List<IcfgLocation> locactions);
