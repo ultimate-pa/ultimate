@@ -95,7 +95,7 @@ public class BoogieBooleanExpressionDecisionTest {
 		final Expression f = new IdentifierExpression(dummyLocation, "f");
 		cdd = cdd.and(BoogieBooleanExpressionDecision.create(f));
 		Assert.assertEquals("(!e && f)", cdd.toString(true));
-		// conjuction disjunction
+		// conjunction disjunction
 		final Expression e3 = new IdentifierExpression(dummyLocation, "g");
 		cdd = cdd.or(BoogieBooleanExpressionDecision.create(e3));
 		Assert.assertEquals("(g || (!e && (f || g)))", cdd.toString(true));

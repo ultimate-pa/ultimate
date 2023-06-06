@@ -78,6 +78,8 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	private final Transition<LETTER, PLACE> mTransition;
 	private final Map<PLACE, Set<PLACE>> mPlaceCorelationMap;
 	private int mDepth;
+	private boolean mIsCompanion = false;
+	private final Set<Event<LETTER, PLACE>> mIsCompanionToCutoffEventsSet = new HashSet<>();
 
 	/**
 	 * Creates an Event from its predecessor conditions and the transition from the net system it is mapped to by the
@@ -313,9 +315,23 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		assert mCompanion == null;
 		if (event.getCompanion() == null) {
 			mCompanion = event;
+			event.makeCompanionOf(this);
 		} else {
 			setCompanion(event.getCompanion());
 		}
+	}
+
+	public void makeCompanionOf(final Event<LETTER, PLACE> event) {
+		mIsCompanion = true;
+		mIsCompanionToCutoffEventsSet.add(event);
+	}
+
+	public boolean isCompanion() {
+		return mIsCompanion;
+	}
+
+	public Set<Event<LETTER, PLACE>> getCutoffEventsThisIsCompanionTo() {
+		return mIsCompanionToCutoffEventsSet;
 	}
 
 	/**

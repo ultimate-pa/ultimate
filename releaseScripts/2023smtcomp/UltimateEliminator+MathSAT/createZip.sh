@@ -8,6 +8,7 @@ rm StarExecArchive/Ultimate/Ultimate.ini
 cp *LICENSE* StarExecArchive/Ultimate/
 cp starexec_description.txt StarExecArchive/
 cp starexec_run_* StarExecArchive/bin/
+cp smtlib2_trace_executor StarExecArchive/bin/
 cp ../../../trunk/examples/settings/UltimateEliminator/mathsat.epf StarExecArchive/
 
 cp -LR mathsat StarExecArchive/Ultimate

@@ -33,7 +33,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
+public class MultiCaseSolvedBinaryRelation implements ITermProvider {
 
 	public enum IntricateOperation {
 		/**

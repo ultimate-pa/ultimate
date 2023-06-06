@@ -19,6 +19,43 @@ function render_landing_page() {
 
 
 /**
+ * Parse the awards page from config/awards_page/awards.js and add the result to the content container.
+ */
+function render_awards_page() {
+  const content = $('#content');
+  content.addClass('p-5');
+  const awards_page_template = Handlebars.compile(
+    $("#awards-page-template").html()
+  );
+  content.append(awards_page_template(_AWARDS));
+}
+
+
+/**
+ * Load HTML for developers page from config/developers_page/developers.html and add it to the content container.
+ */
+function render_developers_page() {
+  const content = $('#content');
+  content.addClass('p-5');
+  $.get("./config/developers_page/developers.html", function (data) {
+    content.append(data);
+  });
+}
+
+
+/**
+ * Load HTML for imprint page from config/imprint_page/imprint.html and add it to the content container.
+ */
+function render_imprint_page() {
+  const content = $('#content');
+  content.addClass('p-5');
+  $.get("./config/imprint_page/imprint.html", function (data) {
+    content.append(data);
+  });
+}
+
+
+/**
  * Fetch and parse the tool info page.
  * @param tool_id
  */
@@ -109,7 +146,7 @@ function set_context() {
   }
 
   // Redirect non existing tools to home page.
-  if (!tool_config_key_value_exists("id", url_params.tool)) {
+  if ((url_params.ui === "tool" || url_params.ui === "int") && !tool_config_key_value_exists("id", url_params.tool)) {
     url_params.ui = "home";
   }
 
@@ -153,6 +190,17 @@ function bootstrap() {
     case "tool":
       // load the tool info page.
       render_tool_page(_CONFIG.context.tool.id);
+      break;
+    case "awards":
+      // load the awards page
+      render_awards_page();
+      break;
+    case "developers":
+      // load the developers page
+      render_developers_page();
+      break;
+    case "imprint":
+      render_imprint_page();
       break;
     default:
       // load the landing page.

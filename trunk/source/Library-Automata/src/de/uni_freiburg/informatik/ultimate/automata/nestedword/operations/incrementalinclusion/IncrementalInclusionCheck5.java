@@ -188,7 +188,7 @@ public class IncrementalInclusionCheck5<LETTER, STATE> extends AbstractIncrement
 			counter_run++;
 			if (currentTerminalLeafs == null) {
 				currentTerminalLeafs = expand(null);
-				startingLeafs = (ArrayList<Leaf<LETTER, STATE>>) currentTerminalLeafs.clone();
+				startingLeafs = new ArrayList<>(currentTerminalLeafs);
 				if (refine_exceptionRun() || cover()) {
 					break;
 				}
@@ -243,7 +243,7 @@ public class IncrementalInclusionCheck5<LETTER, STATE> extends AbstractIncrement
 					for (final OutgoingInternalTransition<LETTER, STATE> ATransition : local_mA
 							.internalSuccessors(oldLeaf.aState, alphabet)) {
 						final ArrayList<STATE> newStateSequence =
-								(ArrayList<STATE>) oldLeaf.word.getStateSequence().clone();
+								new ArrayList<>(oldLeaf.word.getStateSequence());
 						newStateSequence.add(ATransition.getSucc());
 						newLeaf = new Leaf<>(ATransition.getSucc(), new NestedRun<>(
 								oldLeaf.word.getWord().concatenate(new NestedWord<>(alphabet, -2)), newStateSequence));

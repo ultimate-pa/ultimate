@@ -150,6 +150,12 @@ public class IntBlastingWrapperSmtcomp2023 extends AbstractModelCheckerTestSuite
 			new DirectoryFileEndingsPair("examples/local/2023smtcomp/QF_BV/VS3", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
 			new DirectoryFileEndingsPair("examples/local/2023smtcomp/QF_BV/wienand-cav2008", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
 
+			new DirectoryFileEndingsPair("examples/local/2023smtcomp/QF_UFBV/2018-Goel-hwbench", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2023smtcomp/QF_UFBV/2019-Wolf-fmbench", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2023smtcomp/QF_UFBV/20210312-Bouvier", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2023smtcomp/QF_UFBV/20230314-Jaroslav-Bendik-Certora", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2023smtcomp/QF_UFBV/btfnt", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
+			new DirectoryFileEndingsPair("examples/local/2023smtcomp/QF_UFBV/calc2", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
 
 			new DirectoryFileEndingsPair("examples/local/2023smtcomp/BV/20170501-Heizmann-UltimateAutomizer", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),
 			new DirectoryFileEndingsPair("examples/local/2023smtcomp/BV/2017-Preiner-keymaera", new String[]{ SMT_FILEENDING }, FILE_OFFSET, FILES_PER_DIRECTORY_LIMIT),

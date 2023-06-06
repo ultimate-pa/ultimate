@@ -208,7 +208,8 @@ public class QuantifierEliminationTest {
 				"(exists ((v_a (Array Int (Array Int Int)))) " + "(= a (store v_a i ((as const (Array Int Int)) 0))))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		// mLogger.info("Input: " + formulaAsTerm.toStringDirect());
-		final Term result = elim(formulaAsTerm);
+		final Term result = PartialQuantifierElimination.eliminate(mServices, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.SIMPLIFY_DDA);
 		mLogger.info("Result: " + result.toStringDirect());
 		Assert.assertTrue(!(result instanceof QuantifiedFormula));
 	}
@@ -246,7 +247,8 @@ public class QuantifierEliminationTest {
 		final LBool isDistinct = SmtUtils.checkSatTerm(mScript, mScript.term("distinct", formulaAsTerm, inlined));
 		mLogger.info("isDistinct     : " + isDistinct);
 		Assert.assertTrue(isDistinct == LBool.UNSAT);
-		final Term result = elim(inlined);
+		final Term result = PartialQuantifierElimination.eliminate(mServices, mMgdScript, inlined,
+				SimplificationTechnique.SIMPLIFY_DDA);
 		mLogger.info("Result         : " + result.toStringDirect());
 		Assert.assertTrue(!(result instanceof QuantifiedFormula));
 	}
@@ -345,12 +347,6 @@ public class QuantifierEliminationTest {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.convert(mScript, formulaAsTerm);
 		Assert.assertTrue(mdns.getDimension() == 2);
-	}
-
-	@Deprecated
-	private Term elim(final Term quantFormula) {
-		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, quantFormula,
-				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 	}
 
 }
