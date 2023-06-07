@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -55,9 +56,9 @@ public class SmtChcScript implements IChcScript, AutoCloseable {
 	private static final boolean DECLARE_FUNCTIONS = false;
 
 	private final ManagedScript mMgdScript;
+	private boolean mProduceModels;
 	private boolean mProduceUnsatCores;
 
-	private boolean mIsPushed;
 	private ChcTransferrer mTransferrer;
 	private Map<String, HornClause> mName2Clause;
 
@@ -74,9 +75,6 @@ public class SmtChcScript implements IChcScript, AutoCloseable {
 	@Override
 	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system) {
 		reset();
-		mMgdScript.push(this, 1);
-		mIsPushed = true;
-
 		mMgdScript.unlock(this);
 
 		final List<HornClause> assertedSystem;
@@ -120,7 +118,7 @@ public class SmtChcScript implements IChcScript, AutoCloseable {
 
 	@Override
 	public void produceModels(final boolean enable) {
-		getScript().setOption(SMTLIBConstants.PRODUCE_MODELS, enable);
+		mProduceModels = enable;
 	}
 
 	@Override
@@ -157,7 +155,6 @@ public class SmtChcScript implements IChcScript, AutoCloseable {
 
 	@Override
 	public void produceUnsatCores(final boolean enable) {
-		getScript().setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, enable);
 		mProduceUnsatCores = enable;
 	}
 
@@ -179,9 +176,11 @@ public class SmtChcScript implements IChcScript, AutoCloseable {
 	private void reset() {
 		mName2Clause = null;
 		mTransferrer = null;
-		if (mIsPushed) {
-			mMgdScript.pop(this, 1);
-		}
+
+		getScript().reset();
+		getScript().setLogic(Logics.HORN);
+		getScript().setOption(SMTLIBConstants.PRODUCE_MODELS, mProduceModels);
+		getScript().setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, mProduceUnsatCores);
 	}
 
 	@Override
