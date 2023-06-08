@@ -337,6 +337,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 			final var result = new HcBodyVar(globallyUniqueId, DUMMY_PRED_NAME, DUMMY_PRED_INDEX, transferredSort,
 					mManagedScript, this);
 			mManagedScript.unlock(this);
+			mTermVarToProgramVar.put(result.getTermVariable(), result);
 			return result;
 		});
 	}
@@ -392,7 +393,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	@Override
 	public IProgramVar getProgramVar(final TermVariable tv) {
 		final IProgramVar result = mTermVarToProgramVar.get(tv);
-		assert result != null;
+		assert result != null : "No IProgramVar found for term variable: " + tv;
 		return result;
 	}
 
