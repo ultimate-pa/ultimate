@@ -99,14 +99,37 @@ public class ChcTransferrer {
 	}
 
 	public HcBodyVar transfer(final HcBodyVar var) {
-		return transfer(var, mTargetSymbolTable::getOrConstructBodyVar);
+		return transferOld(var, mTargetSymbolTable::getOrConstructBodyVar);
 	}
 
 	public HcHeadVar transfer(final HcHeadVar var) {
 		return transfer(var, mTargetSymbolTable::getOrConstructHeadVar);
 	}
 
-	private <T extends HcVar> T transfer(final T var, final BiFunction<T, Sort, T> getOrConstruct) {
+	private interface IHcVarConstructor<T> {
+		T getOrConstruct(HcPredicateSymbol pred, int index, Sort sort, Object identifier);
+	}
+
+	private <T extends HcPredVar> T transfer(final T variable, final IHcVarConstructor<T> constructor) {
+		final var optPredicate = mPredMapping.entrySet().stream()
+				.filter(e -> HornUtilConstants.sanitizePredName(e.getKey().getName()).equals(variable.getProcedure()))
+				.findAny();
+		assert optPredicate.isPresent() : "Could not find predicate for " + variable;
+		final var predicate = optPredicate.get().getValue();
+
+		final var sort = mTransferrer.transferSort(variable.getSort());
+		final var copy = constructor.getOrConstruct(predicate, variable.getIndex(), sort, variable);
+
+		final var oldMapping = mTransferrer.getTransferMapping().get(variable.getTermVariable());
+		if (oldMapping != null && oldMapping != copy.getTermVariable()) {
+			throw new IllegalStateException("Variable already mapped: " + variable);
+		}
+		mTransferrer.getTransferMapping().put(variable.getTermVariable(), copy.getTermVariable());
+		return copy;
+	}
+
+	@Deprecated
+	private <T extends HcVar> T transferOld(final T var, final BiFunction<T, Sort, T> getOrConstruct) {
 		final var copy = getOrConstruct.apply(var, mTransferrer.transferSort(var.getSort()));
 		final var oldMapping = mTransferrer.getTransferMapping().get(var.getTermVariable());
 		if (oldMapping != null && oldMapping != copy.getTermVariable()) {
@@ -114,7 +137,6 @@ public class ChcTransferrer {
 		}
 		mTransferrer.getTransferMapping().put(var.getTermVariable(), copy.getTermVariable());
 		return copy;
-
 	}
 
 	public HornClause transfer(final HornClause clause) {
