@@ -419,7 +419,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	}
 
 	public String getMethodNameForPredSymbol(final HcPredicateSymbol predSym) {
-		return HornUtilConstants.sanitzePredName(predSym.getName());
+		return HornUtilConstants.sanitizePredName(predSym.getName());
 	}
 
 	public List<HcHeadVar> getHcHeadVarsForPredSym(final HcPredicateSymbol bodySymbol,

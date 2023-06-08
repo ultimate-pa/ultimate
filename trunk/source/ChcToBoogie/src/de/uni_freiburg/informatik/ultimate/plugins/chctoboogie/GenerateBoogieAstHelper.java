@@ -262,7 +262,7 @@ public class GenerateBoogieAstHelper {
 		String varName = mArraySortToDummyVarName.get(sort);
 		if (varName == null) {
 			final String dummyArrayPrefix = "#dummy~";
-			varName = dummyArrayPrefix + HornUtilConstants.sanitzeSortNameForBoogie(sort);
+			varName = dummyArrayPrefix + HornUtilConstants.sanitizeSortNameForBoogie(sort);
 			mArraySortToDummyVarName.put(sort, varName);
 		}
 		return ExpressionFactory.constructIdentifierExpression(mLocation, getType(sort), varName, DeclarationInformation.DECLARATIONINFO_GLOBAL);

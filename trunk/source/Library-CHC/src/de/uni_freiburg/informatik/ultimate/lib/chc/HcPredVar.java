@@ -24,7 +24,7 @@ public abstract class HcPredVar extends HcVar {
 		super(globallyUniqueId, mgdScript.variable(globallyUniqueId, sort),
 				ProgramVarUtils.constructDefaultConstant(mgdScript, lockOwner, sort, globallyUniqueId),
 				ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, globallyUniqueId), headNotBody,
-				HornUtilConstants.sanitzePredName(procName));
+				HornUtilConstants.sanitizePredName(procName));
 		mIndex = index;
 	}
 
