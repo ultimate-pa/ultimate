@@ -139,10 +139,10 @@ class Translator {
 
 	private ap.types.Sort translateSort(final Sort sort) {
 		if (SmtSortUtils.isIntSort(sort)) {
-			return new ap.types.Sort.Integer$();
+			return ap.types.Sort.Integer$.MODULE$;
 		}
 		if (SmtSortUtils.isBoolSort(sort)) {
-			return new ap.types.Sort.MultipleValueBool$();
+			return ap.types.Sort.MultipleValueBool$.MODULE$;
 		}
 		if (SmtSortUtils.isArraySort(sort)) {
 			return getArrayTheory(sort).sort();
@@ -169,7 +169,7 @@ class Translator {
 	public IFormula translateFormula(final Term term) {
 		final var expr = translateExpression(term);
 		if (expr instanceof ITerm) {
-			return new ap.types.Sort.MultipleValueBool$().isTrue((ITerm) expr);
+			return ap.types.Sort.MultipleValueBool$.MODULE$.isTrue((ITerm) expr);
 		}
 		return (IFormula) translateExpression(term);
 	}
@@ -177,7 +177,7 @@ class Translator {
 	public ITerm translateTerm(final Term term) {
 		final var expr = translateExpression(term);
 		if (expr instanceof IFormula) {
-			final var bool = new ap.types.Sort.MultipleValueBool$();
+			final var bool = ap.types.Sort.MultipleValueBool$.MODULE$;
 			return IExpression.ite((IFormula) expr, bool.True(), bool.False());
 		}
 		return (ITerm) translateExpression(term);
