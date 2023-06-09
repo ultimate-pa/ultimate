@@ -79,9 +79,11 @@ public class ChcTransferrer {
 	}
 
 	public HcPredicateSymbol transfer(final HcPredicateSymbol predicate) {
-		final var sorts =
-				predicate.getParameterSorts().stream().map(mTransferrer::transferSort).collect(Collectors.toList());
-		return mTargetSymbolTable.getOrConstructHornClausePredicateSymbol(predicate.getName(), sorts);
+		return mPredMapping.computeIfAbsent(predicate, p -> {
+			final var sorts =
+					p.getParameterSorts().stream().map(mTransferrer::transferSort).collect(Collectors.toList());
+			return mTargetSymbolTable.getOrConstructHornClausePredicateSymbol(p.getName(), sorts);
+		});
 	}
 
 	public <T extends HcVar> T transfer(final T var) {
@@ -141,26 +143,30 @@ public class ChcTransferrer {
 
 	public HornClause transfer(final HornClause clause) {
 		return mClauseMapping.computeIfAbsent(clause, c -> {
-			final var bodyVars = clause.getBodyVariables().stream().map(this::transfer).collect(Collectors.toSet());
+			// head is transferred first, so all HcHeadVars exist when body arguments and constraint are transferred
+			final HcPredicateSymbol head;
 			final List<HcHeadVar> headVars;
 			if (!clause.isHeadFalse()) {
+				head = transfer(clause.getHeadPredicate());
 				headVars =
 						clause.getTermVariablesForHeadPred().stream().map(this::transfer).collect(Collectors.toList());
-
 			} else {
+				head = null;
 				headVars = null;
 			}
 
-			final var constraint = transfer(clause.getConstraintFormula());
+			// transfer body
 			final var bodyPreds = clause.getBodyPredicates().stream().map(this::transfer).collect(Collectors.toList());
+			final var bodyVars = clause.getBodyVariables().stream().map(this::transfer).collect(Collectors.toSet());
 			final var bodyArgs = clause.getBodyPredToArgs().stream()
 					.map(args -> args.stream().map(this::transfer).collect(Collectors.toList()))
 					.collect(Collectors.toList());
+
+			final var constraint = transfer(clause.getConstraintFormula());
 			if (clause.isHeadFalse()) {
 				return new HornClause(mTargetScript, mTargetSymbolTable, constraint, bodyPreds, bodyArgs, bodyVars);
 			}
 
-			final var head = transfer(clause.getHeadPredicate());
 			return new HornClause(mTargetScript, mTargetSymbolTable, constraint, head, headVars, bodyPreds, bodyArgs,
 					bodyVars);
 		});
