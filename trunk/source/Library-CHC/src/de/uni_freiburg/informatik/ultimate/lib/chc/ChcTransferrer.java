@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.chc;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -37,6 +39,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.FunctionDefinition;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.ModelDescription;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 
 /**
@@ -52,6 +57,9 @@ public class ChcTransferrer {
 	private final HcSymbolTable mTargetSymbolTable;
 
 	private final TermTransferrer mTransferrer;
+	private final TermTransferrer mBackTransferrer;
+
+	private final BidirectionalMap<Term, Term> mTransferMap = new BidirectionalMap<>();
 	private final BidirectionalMap<HcPredicateSymbol, HcPredicateSymbol> mPredMapping = new BidirectionalMap<>();
 	private final BidirectionalMap<HornClause, HornClause> mClauseMapping = new BidirectionalMap<>();
 
@@ -59,7 +67,8 @@ public class ChcTransferrer {
 			final HcSymbolTable symbolTable) {
 		mOriginalScript = originalScript;
 		mTargetScript = targetScript;
-		mTransferrer = new TermTransferrer(originalScript, targetScript.getScript());
+		mTransferrer = new TermTransferrer(originalScript, targetScript.getScript(), mTransferMap, false);
+		mBackTransferrer = new TermTransferrer(targetScript.getScript(), originalScript, mTransferMap.inverse(), false);
 
 		mOriginalSymbolTable = symbolTable;
 		mTargetSymbolTable = transfer(symbolTable);
@@ -196,8 +205,25 @@ public class ChcTransferrer {
 	}
 
 	public Model transferBack(final Model model) {
-		// TODO
-		throw new UnsupportedOperationException("not yet implemented");
+		if (!(model instanceof ModelDescription)) {
+			// TODO support other types of models by wrapping in a "TransferredModel" class?
+			throw new UnsupportedOperationException("Can currently only transfer models of type ModelDescription");
+		}
+		return transferBack((ModelDescription) model);
+	}
+
+	private ModelDescription transferBack(final ModelDescription model) {
+		final var functions = new HashSet<FunctionDefinition>();
+		for (final var func : model.getDefinedFunctions()) {
+			final var funcSym = mTargetScript.getScript().getFunctionSymbol(func.getName());
+			final var funDesc = model.getFunctionDefinition(func.getName());
+			final var params = Arrays.stream(funDesc.getParams())
+					.map(x -> mTargetScript.getScript().variable(x.getName(), transferBack(x.getSort())))
+					.toArray(TermVariable[]::new);
+			final var body = transferBack(funDesc.getBody());
+			functions.add(new FunctionDefinition(funcSym, params, body));
+		}
+		return new ModelDescription(functions);
 	}
 
 	public Derivation transferBack(final Derivation derivation) {
@@ -227,7 +253,10 @@ public class ChcTransferrer {
 	}
 
 	private Term transferBack(final Term term) {
-		// TODO
-		throw new UnsupportedOperationException("not yet implemented");
+		return mBackTransferrer.transform(term);
+	}
+
+	private Sort transferBack(final Sort sort) {
+		return mBackTransferrer.transferSort(sort);
 	}
 }
