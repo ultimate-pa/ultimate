@@ -172,6 +172,8 @@ public class ChcSolverObserver extends BaseObserver {
 		final Model model;
 		if (mPrefs.produceModels() && chcScript.supportsModelProduction()) {
 			model = chcScript.getModel().orElse(null);
+			mLogger.info("ChcSolver found model:");
+			mLogger.info(model);
 		} else {
 			model = null;
 		}
