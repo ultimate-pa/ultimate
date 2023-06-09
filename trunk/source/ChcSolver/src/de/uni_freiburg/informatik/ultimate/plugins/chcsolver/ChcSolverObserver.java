@@ -35,13 +35,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.ChcSolution;
 import de.uni_freiburg.informatik.ultimate.lib.chc.Derivation;
+import de.uni_freiburg.informatik.ultimate.lib.chc.EldaricaCliChcScript;
 import de.uni_freiburg.informatik.ultimate.lib.chc.GolemChcScript;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClauseAST;
 import de.uni_freiburg.informatik.ultimate.lib.chc.IChcScript;
 import de.uni_freiburg.informatik.ultimate.lib.chc.SmtChcScript;
-import de.uni_freiburg.informatik.ultimate.lib.chc.eldarica.EldaricaChcScript;
 import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcSatResult;
 import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcUnknownResult;
 import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcUnsatResult;
@@ -99,7 +99,8 @@ public class ChcSolverObserver extends BaseObserver {
 	private IChcScript getBackend(final HornAnnot annotation) {
 		switch (mPrefs.getBackend()) {
 		case ELDARICA:
-			return new EldaricaChcScript(mServices, annotation.getScript().getScript());
+			// return new EldaricaChcScript(mServices, annotation.getScript().getScript());
+			return new EldaricaCliChcScript(mServices, annotation.getScript());
 		case Z3:
 			return createZ3Backend();
 		case TREEAUTOMIZER:
