@@ -127,6 +127,7 @@ public class QuantifierEliminationSgi {
 	}
 	
 	@Test
+	//(x=0), (A=0) and (B=0), multiple possible maps
 	public void simpleSgiExample02() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "A"),
@@ -138,6 +139,7 @@ public class QuantifierEliminationSgi {
 	}
 	
 	@Test
+	//(x=5) and (5=A), swapped ordering
 	public void simpleSgiExample03() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "A"),
@@ -148,6 +150,7 @@ public class QuantifierEliminationSgi {
 	}
 	
 	@Test
+	//two quantified term variables
 	public void simpleSgiExample04() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "A"),
@@ -159,6 +162,7 @@ public class QuantifierEliminationSgi {
 	}
 	
 	@Test
+	//noncommutative operator
 	public void simpleSgiExample05() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "c"),
@@ -169,6 +173,43 @@ public class QuantifierEliminationSgi {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	//x,y distinct, true
+	public void simpleSgiExample06() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "A"),
+				new FunDecl(SmtSortUtils::getIntSort, "B"),
+			};
+		final String formulaAsString = "(and (exists ((X Int) (Y Int)) (and (> X 0) (> Y 0) (not (= X Y)))) (> A 0) (> B 0) (not (= A B)))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	
+	@Test
+	//x,y distinct, false
+	public void simpleSgiExample07() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "A"),
+				new FunDecl(SmtSortUtils::getIntSort, "B"),
+				new FunDecl(SmtSortUtils::getIntSort, "M"),
+			};
+		final String formulaAsString = "(and (exists ((X Int) (Y Int)) (and (= X M) (= Y M) (not (= X Y)))) (= A M) (> B 0) (not (= A B)))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	
+	@Test
+	//x,y equal, true
+	public void simpleSgiExample08() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "A"),
+				new FunDecl(SmtSortUtils::getIntSort, "B"),
+			};
+		final String formulaAsString = "(and (exists ((X Int) (Y Int)) (and (= X 0) (= Y 0) (= X Y))) (= A 0) (= B 0) (= A B))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	
 	@Test
 	public void sgiCandidate01() {
 		final FunDecl[] funDecls = new FunDecl[] {

@@ -79,7 +79,7 @@ public class DualJunctionSgi extends DualJunctionQuantifierElimination {
 				inputEt.getContext().getCriticalConstraint());
 		final Term[] qSubformulaConjuncts =
 				QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
-		final Pair<Boolean, Map<TermVariable, Term>> finalresult = instantiable(inputEt.getEliminatees(),
+		final Pair<Boolean, Map<TermVariable, Term>> finalresult = instantiateCartesian(inputEt.getEliminatees(),
 				Arrays.asList(qSubformulaConjuncts), Arrays.asList(candidateConjuncts));
 		if (finalresult.getFirst()) {
 			assert finalresult.getSecond().size() == inputEt.getEliminatees().size();
@@ -89,18 +89,25 @@ public class DualJunctionSgi extends DualJunctionQuantifierElimination {
 		}
 	}
 
-	public Pair<Boolean, Map<TermVariable, Term>> instantiable(final Set<TermVariable> instantiatees,
+	public Pair<Boolean, Map<TermVariable, Term>> instantiateCartesian(final Set<TermVariable> instantiatees,
 			final List<Term> qsubformulas, final List<Term> candidates) {
 		final Map<TermVariable, Term> mergedmap = new HashMap<>();
 		for (int i = 0; i < qsubformulas.size(); i++) {
-			final Pair<Boolean, Map<TermVariable, Term>> resu =
-					extracted(instantiatees, qsubformulas.get(i), candidates);
-			if (!resu.getFirst()) {
+			Pair<Boolean, Map<TermVariable, Term>> res = new Pair<>(false, null);
+			for (int j = 0; j < candidates.size(); j++) {
+				res = matchExpression(instantiatees, qsubformulas.get(i), candidates.get(j));
+				if (res.getFirst()) {
+					break;
+				}
+			}
+
+			if (!res.getFirst()) {
 				return new Pair<>(false, null);
 			} else {
-				final Map<TermVariable, Term> mapFromCandidates = resu.getSecond();
+				final Map<TermVariable, Term> mapFromCandidates = res.getSecond();
 				for (final Entry<TermVariable, Term> entry : mapFromCandidates.entrySet()) {
-					if (mergedmap.containsKey(entry) && !(mergedmap.get(entry.getKey()) == entry.getValue())) {
+					if ((mergedmap.containsKey(entry) && !(mergedmap.get(entry.getKey()) == entry.getValue()))
+							|| (mergedmap.containsValue(entry.getValue()))) {
 						return new Pair<>(false, null);
 					}
 					mergedmap.put(entry.getKey(), entry.getValue());
@@ -111,19 +118,31 @@ public class DualJunctionSgi extends DualJunctionQuantifierElimination {
 
 	}
 
-	private Pair<Boolean, Map<TermVariable, Term>> extracted(final Set<TermVariable> instantiatees,
-			final Term qsubformula, final List<Term> candidates) {
-		for (int j = 0; j < candidates.size(); j++) {
-			final Pair<Boolean, Map<TermVariable, Term>> res =
-					candidateSearch(instantiatees, qsubformula, candidates.get(j));
-			if (res.getFirst()) {
-				return res;
+	public Pair<Boolean, Map<TermVariable, Term>> instantiatePairwise(final Set<TermVariable> instantiatees,
+			final List<Term> qsubformulas, final List<Term> candidates) {
+		final Map<TermVariable, Term> mergedmap = new HashMap<>();
+		for (int i = 0; i < qsubformulas.size(); i++) {
+			Pair<Boolean, Map<TermVariable, Term>> res = new Pair<>(false, null);
+
+			res = matchExpression(instantiatees, qsubformulas.get(i), candidates.get(i));
+			if (!res.getFirst()) {
+				return new Pair<>(false, null);
+			} else {
+				final Map<TermVariable, Term> mapFromCandidates = res.getSecond();
+				for (final Entry<TermVariable, Term> entry : mapFromCandidates.entrySet()) {
+					if ((mergedmap.containsKey(entry) && !(mergedmap.get(entry.getKey()) == entry.getValue()))
+							|| (mergedmap.containsValue(entry.getValue()))) {
+						return new Pair<>(false, null);
+					}
+					mergedmap.put(entry.getKey(), entry.getValue());
+				}
 			}
 		}
-		return new Pair<Boolean, Map<TermVariable, Term>>(false, null);
+		return new Pair<>(true, mergedmap);
+
 	}
 
-	public Pair<Boolean, Map<TermVariable, Term>> candidateSearch(final Set<TermVariable> instantiatees,
+	public Pair<Boolean, Map<TermVariable, Term>> matchExpression(final Set<TermVariable> instantiatees,
 			final Term qsubformula, final Term candidate) {
 
 		if ((qsubformula instanceof ApplicationTerm) && (candidate instanceof ApplicationTerm)) {
@@ -132,9 +151,14 @@ public class DualJunctionSgi extends DualJunctionQuantifierElimination {
 			if (qsubformulaAppTerm.getFunction() == candidateAppTerm.getFunction()) {
 				final Boolean isCommutative =
 						CommuhashUtils.isKnownToBeCommutative(qsubformulaAppTerm.getFunction().getName());
-				final Pair<Boolean, Map<TermVariable, Term>> res =
-						instantiable(instantiatees, Arrays.asList(qsubformulaAppTerm.getParameters()),
-								Arrays.asList(candidateAppTerm.getParameters()));
+				Pair<Boolean, Map<TermVariable, Term>> res;
+				if (isCommutative) {
+					res = instantiateCartesian(instantiatees, Arrays.asList(qsubformulaAppTerm.getParameters()),
+							Arrays.asList(candidateAppTerm.getParameters()));
+				} else {
+					res = instantiatePairwise(instantiatees, Arrays.asList(qsubformulaAppTerm.getParameters()),
+							Arrays.asList(candidateAppTerm.getParameters()));
+				}
 				return res;
 			} else {
 				return new Pair<>(false, null);
