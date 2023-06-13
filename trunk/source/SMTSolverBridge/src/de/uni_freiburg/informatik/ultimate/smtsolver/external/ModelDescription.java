@@ -85,7 +85,7 @@ public class ModelDescription implements Model {
 		return unletter.transform(def.getBody());
 	}
 
-	private FunctionDefinition getFunctionDefinition(final String func) {
+	public FunctionDefinition getFunctionDefinition(final String func) {
 		return mDefinitions.get(func);
 	}
 

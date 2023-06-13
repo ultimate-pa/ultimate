@@ -52,4 +52,8 @@ public class ChcSolverPreferences {
 	public boolean produceUnsatCore() {
 		return mPrefs.getBoolean(ChcSolverPreferenceInitializer.LABEL_PRODUCE_UNSAT_CORES);
 	}
+
+	public long getTimeout() {
+		return mPrefs.getInt(ChcSolverPreferenceInitializer.LABEL_SOLVER_TIMEOUT);
+	}
 }

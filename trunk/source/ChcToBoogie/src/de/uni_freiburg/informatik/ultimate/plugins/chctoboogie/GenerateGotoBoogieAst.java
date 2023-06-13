@@ -497,7 +497,7 @@ public class GenerateGotoBoogieAst {
 	private boolean constructArgumentVarId(final int index, final Sort sort) {
 		String result = mIndexToSortToGotoProcArgId.get(index, sort);
 		if (result == null) {
-			result = "gpav_" + index + "_" + HornUtilConstants.sanitzeSortNameForBoogie(sort);
+			result = "gpav_" + index + "_" + HornUtilConstants.sanitizeSortNameForBoogie(sort);
 			mIndexToSortToGotoProcArgId.put(index, sort, result);
 			return true;
 		}

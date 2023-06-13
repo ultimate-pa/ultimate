@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -45,7 +44,7 @@ public class PredicateInfo {
 		return mPredicate;
 	}
 
-	public Collection<IHcReplacementVar> getParameters() {
+	public List<IHcReplacementVar> getParameters() {
 		return mParameters;
 	}
 

@@ -59,7 +59,6 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	final Map<TermVariable, Integer> mVersionsMap;
 
 	private final Map<Object, HcBodyVar> mBodyVars = new HashMap<>();
-	private final Map<Object, HcHeadVar> mHeadVars = new HashMap<>();
 	private final NestedMap3<HcPredicateSymbol, Integer, Sort, HcHeadVar> mPredSymNameToIndexToSortToHcHeadVar;
 	private final NestedMap3<HcPredicateSymbol, Integer, Sort, HcBodyVar> mPredSymNameToIndexToSortToHcBodyVar;
 	private final Map<TermVariable, HcBodyAuxVar> mTermVariableToHcBodyAuxVar;
@@ -290,20 +289,6 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		return getOrConstructHeadVar(predSym, index, pv.getSort(), pv);
 	}
 
-	public HcHeadVar getOrConstructHeadVar(final Object identifier, final Sort sort) {
-		return mHeadVars.computeIfAbsent(identifier, id -> {
-			final Sort transferredSort = transferSort(sort);
-			final String globallyUniqueId =
-					HornUtilConstants.computeNameForHcVar(HornUtilConstants.HEADVARPREFIX, id.toString());
-			mManagedScript.lock(this);
-			final var result = new HcHeadVar(globallyUniqueId, DUMMY_PRED_NAME, DUMMY_PRED_INDEX, transferredSort,
-					mManagedScript, this);
-			mManagedScript.unlock(this);
-			mTermVarToProgramVar.put(result.getTermVariable(), result);
-			return result;
-		});
-	}
-
 	public HcBodyVar getOrConstructBodyVar(final HcPredicateSymbol predSym, final int index, final Sort sort,
 			final Object identfier) {
 		final Sort transferredSort = transferSort(sort);
@@ -328,6 +313,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		return getOrConstructBodyVar(predSym, index, pv.getSort(), pv);
 	}
 
+	@Deprecated
 	public HcBodyVar getOrConstructBodyVar(final Object identifier, final Sort sort) {
 		return mBodyVars.computeIfAbsent(identifier, id -> {
 			final Sort transferredSort = transferSort(sort);
@@ -337,6 +323,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 			final var result = new HcBodyVar(globallyUniqueId, DUMMY_PRED_NAME, DUMMY_PRED_INDEX, transferredSort,
 					mManagedScript, this);
 			mManagedScript.unlock(this);
+			mTermVarToProgramVar.put(result.getTermVariable(), result);
 			return result;
 		});
 	}
@@ -392,7 +379,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	@Override
 	public IProgramVar getProgramVar(final TermVariable tv) {
 		final IProgramVar result = mTermVarToProgramVar.get(tv);
-		assert result != null;
+		assert result != null : "No IProgramVar found for term variable: " + tv;
 		return result;
 	}
 
@@ -419,7 +406,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	}
 
 	public String getMethodNameForPredSymbol(final HcPredicateSymbol predSym) {
-		return HornUtilConstants.sanitzePredName(predSym.getName());
+		return HornUtilConstants.sanitizePredName(predSym.getName());
 	}
 
 	public List<HcHeadVar> getHcHeadVarsForPredSym(final HcPredicateSymbol bodySymbol,

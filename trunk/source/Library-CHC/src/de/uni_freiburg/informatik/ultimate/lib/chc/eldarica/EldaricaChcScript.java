@@ -129,7 +129,7 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 			if (0 == 1) {
 				// Unreachable dummy code so Java doesn't think the catch block is unreachable.
 				// Necessary because the scala API does not declare checked exceptions.
-				throw new lazabs.Main.TimeoutException$();
+				throw lazabs.Main.TimeoutException$.MODULE$;
 			}
 
 			mLogger.info("starting eldarica solver...");
@@ -319,7 +319,7 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 						&& System.currentTimeMillis() - startTime > actualTimeout.get())) {
 					// Nasty hack to trick java into throwing TimeoutException, a checked exception.
 					// (This is necessary, because scala does not declare checked exceptions.)
-					throwUnchecked(new lazabs.Main.TimeoutException$());
+					throwUnchecked(lazabs.Main.TimeoutException$.MODULE$);
 				}
 				return scala.runtime.BoxedUnit.UNIT;
 			}

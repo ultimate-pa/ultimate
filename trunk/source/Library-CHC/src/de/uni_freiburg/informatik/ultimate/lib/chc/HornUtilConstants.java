@@ -60,7 +60,7 @@ public final class HornUtilConstants {
 
 	public static String computeNameForHcVar(final String prefix, final HcPredicateSymbol predSym, final int index,
 			final String identifier) {
-		final String name = HornUtilConstants.sanitzePredName(predSym.getName());
+		final String name = HornUtilConstants.sanitizePredName(predSym.getName());
 		final String identifierString = identifier.replaceAll(" ", "_").replaceAll("[()]", "");
 		return String.format("%s_%s_%s_%d", prefix, name, identifierString, index);
 	}
@@ -76,7 +76,7 @@ public final class HornUtilConstants {
 	 * @param headPredSymProcNameRaw
 	 * @return
 	 */
-	public static String sanitzePredName(final String headPredSymProcNameRaw) {
+	public static String sanitizePredName(final String headPredSymProcNameRaw) {
 		assert !headPredSymProcNameRaw.contains(".CLN") : "naming might clash";
 		assert !headPredSymProcNameRaw.contains(".DLR") : "naming might clash";
 		assert !headPredSymProcNameRaw.contains(".AT") : "naming might clash";
@@ -86,7 +86,7 @@ public final class HornUtilConstants {
 				.replaceAll("\\$", ".DLR").replaceAll(":", ".CLN");
 	}
 
-	public static String sanitzeSortNameForBoogie(final Sort sort) {
+	public static String sanitizeSortNameForBoogie(final Sort sort) {
 		assert !sort.toString().contains(".OP") : "naming might clash";
 		assert !sort.toString().contains(".CP") : "naming might clash";
 		return sort.toString().replaceAll("\\(", ".OP").replaceAll("\\)", ".CP").replaceAll(" ", "_");
