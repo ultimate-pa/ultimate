@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot.IChcBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
@@ -185,7 +186,7 @@ public class ChcTransferrer {
 		return mTransferrer.transform(term);
 	}
 
-	public ChcSolution transferBack(final ChcSolution solution) {
+	public ChcSolution transferBack(final ChcSolution solution, final IChcBacktranslator backtranslator) {
 		switch (solution.getSatisfiability()) {
 		case UNKNOWN:
 			// nothing to transfer
@@ -193,13 +194,13 @@ public class ChcTransferrer {
 		case SAT:
 			final var originalModel = solution.getModel();
 			final var model = originalModel == null ? null : transferBack(originalModel);
-			return ChcSolution.sat(model);
+			return ChcSolution.sat(model, backtranslator);
 		case UNSAT:
 			final var originalDerivation = solution.getDerivation();
 			final var derivation = originalDerivation == null ? null : transferBack(originalDerivation);
 			final var originalUnsatCore = solution.getUnsatCore();
 			final var unsatCore = originalUnsatCore == null ? null : transferBack(originalUnsatCore);
-			return ChcSolution.unsat(derivation, unsatCore);
+			return ChcSolution.unsat(derivation, unsatCore, backtranslator);
 		}
 		throw new AssertionError("unknown satisfiability value: " + solution.getSatisfiability());
 	}
