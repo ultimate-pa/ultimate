@@ -52,7 +52,7 @@ collections:
     # Each tool gets its own individual description page.
     # (Web interfaces are handled separately.)
     output: true
-    permalink: /tools/:name/
+    permalink: /:path/
     # We fix a custom order for the tools.
     order:
       - automizer.html

@@ -19,7 +19,7 @@ function redirect_legacy_urls() {
     case "tool":
       let tool = url.searchParams.get("tool");
       if (known_tools.indexOf(tool) >= 0) {
-        target = "tools/" + tool + "/";
+        target = tool + "/";
       } else {
         target = "";
       }
