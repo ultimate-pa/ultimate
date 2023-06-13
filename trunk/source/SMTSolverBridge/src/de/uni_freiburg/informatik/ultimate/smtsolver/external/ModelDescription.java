@@ -69,7 +69,7 @@ public class ModelDescription implements Model {
 	}
 
 	@Override
-	public Term getFunctionDefinition(final String func, final Term[] args) {
+	public Term getFunctionDefinition(final String func, final TermVariable[] args) {
 		final var def = getFunctionDefinition(func);
 		final var params = def.getParams();
 		assert params.length == args.length : "Number of parameters does not match arity of " + func;

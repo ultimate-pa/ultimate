@@ -426,7 +426,7 @@ public class HornClauseParserScript extends HistoryRecordingScript implements IN
 		return new Model() {
 
 			@Override
-			public Term getFunctionDefinition(final String func, final Term[] args) {
+			public Term getFunctionDefinition(final String func, final TermVariable[] args) {
 				throw new UnsupportedOperationException();
 			}
 

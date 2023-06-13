@@ -77,5 +77,5 @@ public interface Model {
 	 *            match the function arguments of the function.
 	 * @return The defining term.
 	 */
-	public Term getFunctionDefinition(String func, Term[] args);
+	public Term getFunctionDefinition(String func, TermVariable[] args);
 }

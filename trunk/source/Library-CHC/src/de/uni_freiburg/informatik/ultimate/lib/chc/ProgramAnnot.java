@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.chc;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -13,8 +14,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public abstract class ProgramAnnot extends BasePayloadContainer {
 	private static final long serialVersionUID = -6722896725096551522L;
@@ -28,9 +31,16 @@ public abstract class ProgramAnnot extends BasePayloadContainer {
 	public Term getFormula(final List<IcfgLocation> locactions,
 			final BiFunction<IProgramVar, Integer, Term> localVarProvider, final ManagedScript managedScript,
 			final IUltimateServiceProvider services) {
-		final Term term =
-				mModel.getFunctionDefinition(getFunctionSymbol(locactions), getArguments(locactions, localVarProvider));
-		return SmtUtils.simplify(managedScript, term, services, SimplificationTechnique.POLY_PAC);
+		final Term[] args = getArguments(locactions, localVarProvider);
+		final TermVariable[] tmpArgs = new TermVariable[args.length];
+		final Map<Term, Term> substitution = new HashMap<>();
+		for (int i = 0; i < args.length; i++) {
+			tmpArgs[i] = managedScript.constructFreshTermVariable("x", args[i].getSort());
+			substitution.put(tmpArgs[i], args[i]);
+		}
+		final Term modelAsTerm = mModel.getFunctionDefinition(getFunctionSymbol(locactions), tmpArgs);
+		final Term substituted = Substitution.apply(managedScript, substitution, modelAsTerm);
+		return SmtUtils.simplify(managedScript, substituted, services, SimplificationTechnique.POLY_PAC);
 	}
 
 	protected abstract String getFunctionSymbol(List<IcfgLocation> locactions);

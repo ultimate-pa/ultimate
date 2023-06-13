@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtcomp.Track;
 
 /**
@@ -171,7 +172,7 @@ public class PrepareScript extends LoggingScript {
 			}
 
 			@Override
-			public Term getFunctionDefinition(final String func, final Term[] args) {
+			public Term getFunctionDefinition(final String func, final TermVariable[] args) {
 				return null;
 			}
 		};
