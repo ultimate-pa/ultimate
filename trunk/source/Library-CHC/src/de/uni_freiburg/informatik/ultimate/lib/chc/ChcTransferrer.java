@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -215,15 +216,20 @@ public class ChcTransferrer {
 	private ModelDescription transferBack(final ModelDescription model) {
 		final var functions = new HashSet<FunctionDefinition>();
 		for (final var func : model.getDefinedFunctions()) {
-			final var funcSym = mTargetScript.getScript().getFunctionSymbol(func.getName());
+			if (!isHcPredicate(func)) {
+				continue;
+			}
+			final var funcSym = mOriginalScript.getFunctionSymbol(func.getName());
 			final var funDesc = model.getFunctionDefinition(func.getName());
-			final var params = Arrays.stream(funDesc.getParams())
-					.map(x -> mTargetScript.getScript().variable(x.getName(), transferBack(x.getSort())))
-					.toArray(TermVariable[]::new);
+			final var params = Arrays.stream(funDesc.getParams()).map(this::transferBack).toArray(TermVariable[]::new);
 			final var body = transferBack(funDesc.getBody());
 			functions.add(new FunctionDefinition(funcSym, params, body));
 		}
 		return new ModelDescription(functions);
+	}
+
+	private boolean isHcPredicate(final FunctionSymbol fun) {
+		return mPredMapping.values().stream().anyMatch(p -> p.getFunctionSymbol().equals(fun));
 	}
 
 	public Derivation transferBack(final Derivation derivation) {
@@ -250,6 +256,11 @@ public class ChcTransferrer {
 			throw new IllegalArgumentException("Predicate symbol was not transferred by this instance: " + predicate);
 		}
 		return mPredMapping.inverse().get(predicate);
+	}
+
+	private TermVariable transferBack(final TermVariable tv) {
+		return (TermVariable) mTransferMap.inverse().computeIfAbsent(tv,
+				y -> mOriginalScript.variable(((TermVariable) y).getName(), transferBack(y.getSort())));
 	}
 
 	private Term transferBack(final Term term) {
