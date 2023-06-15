@@ -58,8 +58,9 @@ class SymbolicPreferenceOrderManager implements IPreferenceOrderManager {
 		final var id2 = clause.getBodyVar(new HcThreadIdVar(thread2, mScript));
 		final var lesserConstraint = SmtUtils.less(mScript, id1.getTerm(), id2.getTerm());
 
-		final var locConstraint = mPreferenceOrder.getOrderConstraint(loc1, locTerm1, loc2, locTerm2, mLocationMap);
-		return SmtUtils.and(mScript, lesserConstraint, locConstraint);
+		final var locConstraint1 = mPreferenceOrder.getOrderConstraint(loc1, locTerm1, loc2, locTerm2, mLocationMap);
+		final var locConstraint2 = mPreferenceOrder.getOrderConstraint(loc2, locTerm2, loc1, locTerm1, mLocationMap);
+		return SmtUtils.and(mScript, locConstraint1, SmtUtils.implies(mScript, locConstraint2, lesserConstraint));
 	}
 
 	@Override

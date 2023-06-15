@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -52,21 +53,18 @@ public class ApproximateLockstepPreferenceOrder implements IThreadModularPrefere
 	}
 
 	@Override
-	public Term getOrderConstraint(final IcfgLocation lesserLoc, final Term lesserLocTerm,
-			final IcfgLocation greaterLoc, final Term greaterLocTerm, final Map<IcfgLocation, Integer> locationMap) {
-		if (lesserLoc != null && greaterLoc != null) {
-			return getOrderConstraint(lesserLoc, greaterLoc);
+	public Term getOrderConstraint(final IcfgLocation loc1, final Term loc1Term, final IcfgLocation loc2,
+			final Term loc2Term, final Map<IcfgLocation, Integer> locationMap) {
+		if (loc1 != null && loc2 != null) {
+			return getOrderConstraint(loc1, loc2);
 		}
 
-		if (lesserLoc != null) {
-			return getOrderConstraint(lesserLoc, greaterLocTerm, locationMap);
+		if (loc1 != null) {
+			return getOrderConstraint(loc1, loc2Term, locationMap);
 		}
 
-		assert greaterLoc != null : "At least one location must be fixed";
-		final var constraint = getOrderConstraint(greaterLoc, lesserLocTerm, locationMap);
-
-		// invert the constraint, because we flipped greaterLoc and lesserLocTerm
-		return SmtUtils.not(mScript, constraint);
+		assert loc2 != null : "At least one location must be fixed";
+		return getOrderConstraint(loc1Term, loc2, locationMap);
 	}
 
 	private Term getOrderConstraint(final IcfgLocation lesserLoc, final IcfgLocation greaterLoc) {
@@ -76,13 +74,23 @@ public class ApproximateLockstepPreferenceOrder implements IThreadModularPrefere
 		return mScript.term(SMTLIBConstants.FALSE);
 	}
 
-	private Term getOrderConstraint(final IcfgLocation fixedLoc, final Term otherLoc,
+	private Term getOrderConstraint(final IcfgLocation loc1, final Term loc2,
 			final Map<IcfgLocation, Integer> locationMap) {
-		final var fixedDepth = mDepth.get(fixedLoc);
+		return getOrderConstraint(loc1, loc2, (x, y) -> x >= y, locationMap);
+	}
+
+	private Term getOrderConstraint(final Term loc1, final IcfgLocation loc2,
+			final Map<IcfgLocation, Integer> locationMap) {
+		return getOrderConstraint(loc2, loc1, (x, y) -> x <= y, locationMap);
+	}
+
+	private Term getOrderConstraint(final IcfgLocation loc1, final Term loc2,
+			final BiPredicate<Integer, Integer> comparator, final Map<IcfgLocation, Integer> locationMap) {
+		final var loc1Depth = mDepth.get(loc1);
 
 		final var greaterLocs = mDepth.entrySet().stream()
 				// consider only locations with greater depth
-				.filter(e -> e.getValue() >= fixedDepth)
+				.filter(e -> comparator.test(e.getValue(), loc1Depth))
 				// replace locations by the integers representing the,
 				.map(e -> locationMap.get(e.getKey()))
 				// sort (to simplify #rangify below) and collect
@@ -91,7 +99,7 @@ public class ApproximateLockstepPreferenceOrder implements IThreadModularPrefere
 
 		final var disjuncts = new ArrayList<Term>();
 		for (final var range : locRanges) {
-			final var disjunct = getIntervalConstraint(otherLoc, range.getFirst(), range.getSecond());
+			final var disjunct = getIntervalConstraint(loc2, range.getFirst(), range.getSecond());
 			if (SmtUtils.isTrueLiteral(disjunct)) {
 				return mScript.term(SMTLIBConstants.TRUE);
 			}
