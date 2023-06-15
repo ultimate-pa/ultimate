@@ -80,8 +80,13 @@ public class ApproximateLockstepPreferenceOrder implements IThreadModularPrefere
 			final Map<IcfgLocation, Integer> locationMap) {
 		final var fixedDepth = mDepth.get(fixedLoc);
 
-		final var greaterLocs = mDepth.entrySet().stream().filter(e -> e.getValue() >= fixedDepth)
-				.map(e -> mDepth.get(e.getKey())).sorted().collect(Collectors.toList());
+		final var greaterLocs = mDepth.entrySet().stream()
+				// consider only locations with greater depth
+				.filter(e -> e.getValue() >= fixedDepth)
+				// replace locations by the integers representing the,
+				.map(e -> locationMap.get(e.getKey()))
+				// sort (to simplify #rangify below) and collect
+				.sorted().collect(Collectors.toList());
 		final var locRanges = rangify(greaterLocs);
 
 		final var disjuncts = new ArrayList<Term>();
