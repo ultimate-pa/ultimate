@@ -27,7 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 
 /**
  * Interface for an abstract state that is used in {@link StateBasedDomain}
@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand
  * @param <STATE>
  *            The type of the state
  */
-public interface IAbstractState<STATE extends IAbstractState<STATE>> extends ITermProviderOnDemand {
+public interface IAbstractState<STATE extends IAbstractState<STATE>> extends ITermProvider {
 	/**
 	 * Joins two abstract states. The join of two abstract states is an over-approximation of their union.
 	 *

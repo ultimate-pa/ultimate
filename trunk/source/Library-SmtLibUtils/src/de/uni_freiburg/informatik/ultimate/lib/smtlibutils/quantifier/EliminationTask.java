@@ -47,18 +47,23 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-
 /**
- * Represents a task for quantifier elimination without quantifier alternation.
- * I.e., there in only a single kind of quantifier.
- * This class is very similar to ({@link QuantifiedFormula} but we want to have
- * this class to make its purpose more explicit
+ * Auxiliary class that we use in our quantifier elimination. Objects of this
+ * class define which quantified variables we will try to eliminate in the next
+ * of the elimination algorithm. (We call quantified variables that we try to
+ * eliminate <em> eliminatees </em>.) Note that this class can be see as
+ * {@link QuantifiedFormula} that additionally has a {@link Context}. Our
+ * quantifier elimination algorithms consider a formula as a tree and traverse
+ * that tree. If such an algorithm processes a node in the tree, the
+ * {@link Context} provides information about ancestors, siblings of ancestors,
+ * and descendants of siblings of ancestors.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class EliminationTask {
 	private static final boolean DEBUG_USE_TO_STRING_DIRECT = false;
-	
+
 	private final int mQuantifier;
 	private final LinkedHashSet<TermVariable> mEliminatees;
 	private final Term mTerm;
@@ -80,7 +85,7 @@ public class EliminationTask {
 		mTerm = quantifiedFormula.getSubformula();
 		mContext = context;
 	}
-	
+
 	public int getQuantifier() {
 		return mQuantifier;
 	}
@@ -89,10 +94,20 @@ public class EliminationTask {
 		return Collections.unmodifiableSet(mEliminatees);
 	}
 
+	/**
+	 * @return The term in which we are going to eliminate quantifiers. Note that
+	 *         this NOT the term that this {@link EliminationTask} represents.
+	 */
 	public Term getTerm() {
 		return mTerm;
 	}
 
+	/**
+	 * @return The term represented by this {@link EliminationTask}. I.e., the
+	 *         {@link QuantifiedFormula} whose variable are the eliminatees and
+	 *         whose subformula is the formula in which we want to try to eliminate
+	 *         the quantified variables.
+	 */
 	public Term toTerm(final Script script) {
 		if (mEliminatees.isEmpty()) {
 			return mTerm;
@@ -104,7 +119,11 @@ public class EliminationTask {
 	public Context getContext() {
 		return mContext;
 	}
-	
+
+	/**
+	 * @return An {@link EliminationTask} with additional eliminatees. Ignore all
+	 *         additional eliminatees that do not occur in the subformula.
+	 */
 	public EliminationTask integrateNewEliminatees(final Collection<TermVariable> additionalEliminatees) {
 		final Set<TermVariable> additionalOccuringEliminatees = QuantifierUtils.projectToFreeVars(additionalEliminatees,
 				getTerm());
@@ -152,7 +171,7 @@ public class EliminationTask {
 					new EliminationTask(getQuantifier(), getEliminatees(), dualJunctionWithEliminatee, newContext));
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		final String quantifier = (getQuantifier() == QuantifiedFormula.EXISTS ? "∃" : "∀");
@@ -160,7 +179,7 @@ public class EliminationTask {
 		final String term = (DEBUG_USE_TO_STRING_DIRECT ? getTerm().toStringDirect() : getTerm().toString());
 		return quantifier + " " + vars + ". " + term;
 	}
-	
+
 	/**
 	 * Check if the terms of two {@link EliminationTasks} can be disjoint. Return
 	 * sat if disjoint, unsat if equivalent.

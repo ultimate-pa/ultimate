@@ -327,12 +327,17 @@ public class HornClause implements IRankedLetter {
 		// TODO naming is a bit hacky
 		final String qos = "t" + hashCode();
 		for (int i = 0;; i++) {
+			final var name = qos + (i == 0 ? "" : ("_" + i));
+			final var expectedError = "Function " + name + " is already defined.";
 			try {
-				final var name = qos + (i == 0 ? "" : ("_" + i));
 				return mgdScript.getScript().annotate(term, new Annotation(":named", name));
 			} catch (final SMTLIBException sle) {
-				// indicates a name conflict
-				// do nothing, increment i and try again
+				if (expectedError.equals(sle.getMessage())) {
+					// indicates a name conflict
+					// do nothing, increment i and try again
+				} else {
+					throw sle;
+				}
 			}
 		}
 	}

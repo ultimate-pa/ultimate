@@ -112,6 +112,8 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	private final boolean mNewFiniteComprehensivePrefixMode = false;
 	private final boolean mUseFirstbornCutoffCheck;
 
+	public Set<Event<LETTER, PLACE>> mCutoffEvents = new HashSet<>();
+
 	public BranchingProcess(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, PLACE> net,
 			final ConfigurationOrder<LETTER, PLACE> order, final boolean useCutoffChekingPossibleExtention,
 			final boolean useB32Optimization) throws PetriNetNot1SafeException {
@@ -164,6 +166,9 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 				mYetKnownPredecessorTransitions.addPair(c.getPlace(), event.getTransition());
 			}
 		}
+		if (event.isCutoffEvent()) {
+			mCutoffEvents.add(event);
+		}
 		event.setSerialNumber(mEvents.size());
 		mEvents.add(event);
 		if (!mUseFirstbornCutoffCheck && !event.isCutoffEvent()) {
@@ -212,6 +217,10 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 			}
 		}
 		return false;
+	}
+
+	public Set<Event<LETTER, PLACE>> getCutoffEvents() {
+		return mCutoffEvents;
 	}
 
 	/**
@@ -321,38 +330,6 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		}
 		final Set<Object> eAncestors = ancestorNodes(event);
 		return eAncestors.contains(condition);
-	}
-
-	public boolean eventsInCausalRelation(final Event<LETTER, PLACE> e1, final Event<LETTER, PLACE> e2) {
-		final Set<Object> cAncestors = ancestorNodes(e1);
-		if (cAncestors.contains(e2)) {
-			return true;
-		}
-		final Set<Object> eAncestors = ancestorNodes(e2);
-		return eAncestors.contains(e1);
-	}
-
-	public boolean eventsInConcurrency(final Event<LETTER, PLACE> event1, final Event<LETTER, PLACE> event2) {
-		return (!eventsInConflict(event1, event2)) && (!eventsInCausalRelation(event1, event2));
-
-	}
-
-	public boolean eventsInConflict(final Event<LETTER, PLACE> e1, final Event<LETTER, PLACE> e2) {
-		if (e1 == e2) {
-			return false;
-		}
-		if (e1.getPredecessorConditions().stream().anyMatch(e2.getPredecessorConditions()::contains)) {
-			return true;
-		}
-		boolean result = false;
-		for (final Condition<LETTER, PLACE> e1Pred : e1.getPredecessorConditions()) {
-			for (final Condition<LETTER, PLACE> e2Pred : e2.getPredecessorConditions()) {
-				final Set<Object> e2Ancestors = ancestorNodes(e2);
-				result = result || conflictPathCheck(e1Pred, e2Pred, e2Ancestors);
-			}
-		}
-		return result;
-
 	}
 
 	/**

@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -234,7 +235,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 		mAnnotatedStates = new ArrayList<>();
 
 		// counter example components
-		final ArrayList<IPredicate> ce_states = mCounterExamplePath.getStateSequence();
+		final List<IPredicate> ce_states = mCounterExamplePath.getStateSequence();
 		final NestedWord<L> ce_edges = mCounterExamplePath.getWord();
 		final IPredicate[] ce_interp = mInterpolantGenerator.getInterpolants();
 
@@ -622,7 +623,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 	 * @param post
 	 *            the formula for the state n-1
 	 */
-	private void addPath(final NestedWord<L> edges, final ArrayList<IPredicate> states, final IPredicate[] interpolants,
+	private void addPath(final NestedWord<L> edges, final List<IPredicate> states, final IPredicate[] interpolants,
 			final IPredicate pre, final IPredicate post, final SortedMap<Integer, IPredicate> pendingContexts) {
 		mLogger.debug("Add path: numEdges:" + edges.length() + " numStates:" + states.size() + " numInterpol:"
 				+ interpolants.length);

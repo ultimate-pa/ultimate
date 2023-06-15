@@ -613,6 +613,10 @@ public class QuantifierPusher extends TermTransformer {
 	private static List<DualJunctionQuantifierElimination> generateNewEliminationTechniques(
 			final PqeTechniques pqeTechniques, final ManagedScript mgdScript, final IUltimateServiceProvider services) {
 		final List<DualJunctionQuantifierElimination> elimtechniques = new ArrayList<>();
+		final boolean useSgiElimination = false;
+		if (useSgiElimination) {
+			elimtechniques.add(new DualJunctionSgi(mgdScript, services));
+		}
 		switch (pqeTechniques) {
 		case ALL:
 			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));

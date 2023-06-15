@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jor
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,6 +59,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayStore;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
@@ -143,14 +146,21 @@ public class JordanLoopAcceleration {
 		}
 
 		{
-			final Set<TermVariable> tvOfHavoced = su.getHavocedVars().stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+			final Set<TermVariable> tvOfHavoced = su.getHavocedVars().stream().map(IProgramVar::getTermVariable)
+					.collect(Collectors.toSet());
 			for (final Entry<IProgramVar, Term> entry : su.getDeterministicAssignment().entrySet()) {
-				if (!DataStructureUtils.haveEmptyIntersection(new HashSet<>(Arrays.asList(entry.getValue().getFreeVars())), tvOfHavoced)) {
+				if (!DataStructureUtils.haveEmptyIntersection(
+						new HashSet<>(Arrays.asList(entry.getValue().getFreeVars())), tvOfHavoced)) {
 					throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Havoced var is read!");
 				}
 			}
-			for (final Triple<IProgramVar, ArrayIndex, Term> entry : su.getDeterministicArrayWrites().entrySet()) {
-				if (!DataStructureUtils.haveEmptyIntersection(new HashSet<>(Arrays.asList(entry.getThird().getFreeVars())), tvOfHavoced)) {
+			for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : su.getDeterministicArrayWrites()
+					.entrySet()) {
+				if (entry.getValue().getIndices().size() != 1) {
+					throw new AssertionError("Nested stores!");
+				}
+				if (!DataStructureUtils.haveEmptyIntersection(
+						new HashSet<>(Arrays.asList(entry.getValue().getValues().get(0).getFreeVars())), tvOfHavoced)) {
 					throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Havoced var is read!");
 				}
 			}
@@ -231,17 +241,41 @@ public class JordanLoopAcceleration {
 		// check is yet too strict,
 		// we support at least array writes where indices contain arrays that are not
 		// modified.
-		for (final Triple<IProgramVar, ArrayIndex, Term> triple : su.getDeterministicArrayWrites().entrySet()) {
-			for (final Term entry : triple.getSecond()) {
-				for (final TermVariable tv : Arrays.asList(entry.getFreeVars())) {
+		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : su.getDeterministicArrayWrites().entrySet()) {
+			for (int i = 0; i < entry.getValue().getIndices().size(); i++) {
+				final ArrayIndex idx = entry.getValue().getIndices().get(i);
+				for (final TermVariable tv : idx.getFreeVars()) {
 					if (SmtSortUtils.isArraySort(tv.getSort())) {
-						throw new UnsupportedOperationException("ArrayIndex contains modified array variable");
+						throw new UnsupportedOperationException("ArrayIndex contains some array variable");
 					}
 				}
-			}
-			for (final TermVariable tv : Arrays.asList(triple.getThird().getFreeVars())) {
-				if (SmtSortUtils.isArraySort(tv.getSort())) {
-					throw new UnsupportedOperationException("Written value contains modified array variable");
+				final Term value = entry.getValue().getValues().get(i);
+				final Collection<ArrayStore> stores = ArrayStore.extractStores(value, true);
+				if (!stores.isEmpty()) {
+					throw new UnsupportedOperationException("Written value contains store");
+				}
+
+				final List<MultiDimensionalSelect> selects = MultiDimensionalSelect.extractSelectDeep(value, false);
+				if (selects.size() > 1) {
+					// FIXME 20230606 Matthias: Occurs sedomly, do not support by now
+					throw new UnsupportedOperationException("Written value contains several selects");
+				}
+				if (selects.size() == 1) {
+					final MultiDimensionalSelect mds = selects.get(0);
+					if (entry.getValue().getArray() == mds.getArray()) {
+						throw new UnsupportedOperationException(String.format(
+								"Array update for index %s writes a value that reads the same array at index %s", idx,
+								mds.getIndex()));
+					} else {
+						throw new UnsupportedOperationException(
+								String.format("Update of array %s with value that reads from array %s",
+										entry.getValue().getArray(), mds.getArray()));
+					}
+				}
+				for (final TermVariable tv : Arrays.asList(value.getFreeVars())) {
+					if (SmtSortUtils.isArraySort(tv.getSort())) {
+						throw new UnsupportedOperationException("Written value contains modified array variable");
+					}
 				}
 			}
 		}
@@ -275,8 +309,9 @@ public class JordanLoopAcceleration {
 		}
 		final NestedMap2<IProgramVar, ArrayIndex, Term> array2Index2values = applySubstitutionToIndexAndValue(mgdScript,
 				substitutionMapping, su.getDeterministicArrayWrites());
+		final ClosedFormOfUpdate res = new ClosedFormOfUpdate(closedFormForProgramVar, array2Index2values);
 		checkIndices(mgdScript, array2Index2values, it);
-		return new ClosedFormOfUpdate(closedFormForProgramVar, array2Index2values);
+		return res;
 	}
 
 	private static void checkIndices(final ManagedScript mgdScript,
@@ -315,14 +350,18 @@ public class JordanLoopAcceleration {
 
 	private static NestedMap2<IProgramVar, ArrayIndex, Term> applySubstitutionToIndexAndValue(
 			final ManagedScript mgdScript, final Map<? extends Term, ? extends Term> substitutionMapping,
-			final NestedMap2<IProgramVar, ArrayIndex, Term> array2Index2Value) {
+			final Map<IProgramVar, MultiDimensionalNestedStore> map) {
 		final NestedMap2<IProgramVar, ArrayIndex, Term> result = new NestedMap2<>();
-		for (final Triple<IProgramVar, ArrayIndex, Term> triple : array2Index2Value.entrySet()) {
-			final List<Term> newIndexEntries = triple.getSecond().stream()
+		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : map.entrySet()) {
+			if (entry.getValue().getIndices().size() != 1) {
+				throw new AssertionError("Nested stores!");
+			}
+			final List<Term> newIndexEntries = entry.getValue().getIndices().get(0).stream()
 					.map(x -> Substitution.apply(mgdScript, substitutionMapping, x)).collect(Collectors.toList());
 			final ArrayIndex newArrayIndex = new ArrayIndex(newIndexEntries);
-			final Term newValue = Substitution.apply(mgdScript, substitutionMapping, triple.getThird());
-			result.put(triple.getFirst(), newArrayIndex, newValue);
+			final Term newValue = Substitution.apply(mgdScript, substitutionMapping,
+					entry.getValue().getValues().get(0));
+			result.put(entry.getKey(), newArrayIndex, newValue);
 		}
 		return result;
 	}
