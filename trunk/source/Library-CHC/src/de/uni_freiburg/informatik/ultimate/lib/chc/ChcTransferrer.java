@@ -270,4 +270,8 @@ public class ChcTransferrer {
 	private Sort transferBack(final Sort sort) {
 		return mBackTransferrer.transferSort(sort);
 	}
+
+	public ManagedScript getTargetScript() {
+		return mTargetScript;
+	}
 }
