@@ -78,10 +78,10 @@ public class ChcEvidenceExtractorObserver extends BaseObserver {
 		final ProgramAnnot programAnnot = backtranslator.backtranslate(model);
 		final Map<List<IcfgLocation>, Term> map = programAnnot.toProductMap((progVar, instance) -> {
 			if (instance == 0) {
-				return progVar.getTerm();
+				return progVar.getTermVariable();
 			}
 			throw new UnsupportedOperationException("Local variables for multiple threads are not supported yet.");
-		}, backtranslator.getIcfg().getCfgSmtToolkit().getManagedScript(), mServices);
+		}, backtranslator.getIcfg().getCfgSmtToolkit().getManagedScript());
 		for (final Entry<List<IcfgLocation>, Term> entry : map.entrySet()) {
 			mLogger.info("Invariant at " + entry);
 		}

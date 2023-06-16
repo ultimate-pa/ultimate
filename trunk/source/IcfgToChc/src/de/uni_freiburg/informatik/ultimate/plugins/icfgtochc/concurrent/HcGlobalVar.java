@@ -1,9 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  *
@@ -46,5 +49,11 @@ public class HcGlobalVar implements IHcReplacementVar {
 		}
 		final HcGlobalVar other = (HcGlobalVar) obj;
 		return Objects.equals(mVariable, other.mVariable);
+	}
+
+	@Override
+	public Optional<TermVariable>
+			getTermVariable(final BiFunction<IProgramVar, Integer, TermVariable> localVarProvider) {
+		return Optional.of(mVariable.getTermVariable());
 	}
 }

@@ -1,19 +1,15 @@
 package de.uni_freiburg.informatik.ultimate.lib.chc;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -29,32 +25,26 @@ public abstract class ProgramAnnot extends BasePayloadContainer {
 	}
 
 	public Term getFormula(final List<IcfgLocation> locactions,
-			final BiFunction<IProgramVar, Integer, Term> localVarProvider, final ManagedScript managedScript,
-			final IUltimateServiceProvider services) {
-		final Term[] args = getArguments(locactions, localVarProvider);
-		final TermVariable[] tmpArgs = new TermVariable[args.length];
-		final Map<Term, Term> substitution = new HashMap<>();
-		for (int i = 0; i < args.length; i++) {
-			tmpArgs[i] = managedScript.constructFreshTermVariable("x", args[i].getSort());
-			substitution.put(tmpArgs[i], args[i]);
-		}
-		final Term modelAsTerm = mModel.getFunctionDefinition(getFunctionSymbol(locactions), tmpArgs);
-		final Term substituted = Substitution.apply(managedScript, substitution, modelAsTerm);
-		return SmtUtils.simplify(managedScript, substituted, services, SimplificationTechnique.POLY_PAC);
+			final BiFunction<IProgramVar, Integer, TermVariable> localVarProvider, final ManagedScript managedScript) {
+		final Term modelAsTerm =
+				mModel.getFunctionDefinition(getFunctionSymbol(locactions), getDefaultArguments(localVarProvider));
+		return Substitution.apply(managedScript, getSubstitution(locactions), modelAsTerm);
 	}
+
+	protected abstract TermVariable[]
+			getDefaultArguments(BiFunction<IProgramVar, Integer, TermVariable> localVarProvider);
 
 	protected abstract String getFunctionSymbol(List<IcfgLocation> locactions);
 
-	protected abstract Term[] getArguments(List<IcfgLocation> locactions,
-			BiFunction<IProgramVar, Integer, Term> localVarProvider);
+	protected abstract Map<Term, Term> getSubstitution(List<IcfgLocation> locactions);
 
 	// TODO: How should we indicate that a thread is not started, by providing lists of different sizes?
 	protected abstract Collection<List<IcfgLocation>> getReachableProductLocations();
 
-	public Map<List<IcfgLocation>, Term> toProductMap(final BiFunction<IProgramVar, Integer, Term> localVarProvider,
-			final ManagedScript managedScript, final IUltimateServiceProvider services) {
+	public Map<List<IcfgLocation>, Term> toProductMap(
+			final BiFunction<IProgramVar, Integer, TermVariable> localVarProvider, final ManagedScript managedScript) {
 		return getReachableProductLocations().stream()
-				.collect(Collectors.toMap(x -> x, x -> getFormula(x, localVarProvider, managedScript, services)));
+				.collect(Collectors.toMap(x -> x, x -> getFormula(x, localVarProvider, managedScript)));
 	}
 
 	// TODO: Add a method to create an Ashcroft invariant

@@ -26,8 +26,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
+import java.util.Optional;
+import java.util.function.BiFunction;
+
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public interface IHcReplacementVar {
 	Sort getSort();
+
+	default Optional<TermVariable>
+			getTermVariable(final BiFunction<IProgramVar, Integer, TermVariable> localVarProvider) {
+		return Optional.empty();
+	}
 }

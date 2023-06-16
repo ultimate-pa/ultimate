@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -65,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.HcSleepVar;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences.SpecMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -779,6 +779,8 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 				return new ProgramAnnot(model) {
 					private static final long serialVersionUID = -3660389229111179778L;
 
+					private final Map<IHcReplacementVar, TermVariable> mConstructedTermVariables = new HashMap<>();
+
 					@Override
 					protected String getFunctionSymbol(final List<IcfgLocation> locactions) {
 						// TODO: check for mPrefs.explicitLocations(), if it is used to create multiple function symbols
@@ -786,41 +788,33 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 					}
 
 					@Override
-					protected Term[] getArguments(final List<IcfgLocation> locations,
-							final BiFunction<IProgramVar, Integer, Term> localVarProvider) {
-						final List<IHcReplacementVar> vars = getInvariantParameters();
-						final Term[] result = new Term[vars.size()];
-						int i = 0;
-						for (final var rv : vars) {
-							if (rv instanceof HcGlobalVar) {
-								result[i] = ((HcGlobalVar) rv).getVariable().getTermVariable();
-							}
-							if (rv instanceof HcLocalVar) {
-								final HcLocalVar lv = (HcLocalVar) rv;
-								result[i] = localVarProvider.apply(lv.getVariable(),
-										lv.getThreadInstance().getInstanceNumber());
-							}
-							if (rv instanceof HcLocationVar) {
-								final ThreadInstance instance = ((HcLocationVar) rv).getThreadInstance();
-								int locCounter = 0;
-								for (final IcfgLocation loc : locations) {
-									if (loc.getProcedure().equals(instance.getTemplateName())) {
-										if (locCounter == instance.getInstanceNumber()) {
-											result[i] = numeral(mLocationIndices.get(loc));
-											break;
-										}
-										locCounter++;
-									}
+					protected TermVariable[]
+							getDefaultArguments(final BiFunction<IProgramVar, Integer, TermVariable> localVarProvider) {
+						return getInvariantParameters().stream()
+								.map(x -> getOrConstructTermVariable(x, localVarProvider)).toArray(TermVariable[]::new);
+					}
 
-								}
-							}
-							if (rv instanceof HcSleepVar || rv instanceof HcThreadCounterVar) {
-								// TODO figure out how to handle these properly
-								result[i] = mScript.variable(rv.toString(), rv.getSort());
-							}
+					private TermVariable getOrConstructTermVariable(final IHcReplacementVar hcVar,
+							final BiFunction<IProgramVar, Integer, TermVariable> localVarProvider) {
+						final Optional<TermVariable> storedVar = hcVar.getTermVariable(localVarProvider);
+						if (storedVar.isPresent()) {
+							return storedVar.get();
+						}
+						return mConstructedTermVariables.computeIfAbsent(hcVar,
+								x -> mManagedScript.variable(x.toString(), x.getSort()));
+					}
 
-							// TODO: What should we do with the other types?
-							i++;
+					@Override
+					protected Map<Term, Term> getSubstitution(final List<IcfgLocation> locactions) {
+						final Map<Term, Term> result = new HashMap<>();
+						final Map<String, Integer> threadCounts = new HashMap<>();
+						for (final IcfgLocation loc : locactions) {
+							final String threadName = loc.getProcedure();
+							final int instanceNumber = threadCounts.getOrDefault(threadName, 0);
+							threadCounts.put(threadName, instanceNumber + 1);
+							final HcLocationVar locVar =
+									new HcLocationVar(new ThreadInstance(threadName, instanceNumber), mScript);
+							result.put(mConstructedTermVariables.get(locVar), numeral(mLocationIndices.get(loc)));
 						}
 						return result;
 					}
