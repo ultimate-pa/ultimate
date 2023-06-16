@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
@@ -65,6 +66,7 @@ public class MultiDimensionalSelect implements ITermProvider {
 
 	private final Term mArray;
 	private final ArrayIndex mIndex;
+	@Deprecated
 	private final Term mSelectTerm;
 
 	private MultiDimensionalSelect(final Term array, final ArrayIndex index, final Term selectTerm) {
@@ -174,20 +176,25 @@ public class MultiDimensionalSelect implements ITermProvider {
 		return mSelectTerm.toString();
 	}
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (obj instanceof MultiDimensionalSelect) {
-			return mSelectTerm.equals(((MultiDimensionalSelect) obj).getSelectTerm());
-		} else {
-			return false;
-		}
-	}
+
+
 
 	@Override
 	public int hashCode() {
-		return mSelectTerm.hashCode();
+		return Objects.hash(mArray, mIndex);
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		MultiDimensionalSelect other = (MultiDimensionalSelect) obj;
+		return Objects.equals(mArray, other.mArray) && Objects.equals(mIndex, other.mIndex);
+	}
 
 	/**
 	 * Return all MultiDimensionalSelect Objects for all multidimensional
