@@ -66,6 +66,10 @@ public class IcfgToChcPreferences {
 		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_LIPTON_REDUCTION);
 	}
 
+	public boolean skipAssertEdges() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_SKIP_ASSERT_EDGES);
+	}
+
 	public boolean useSleepSets() {
 		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_SLEEP_SET_REDUCTION);
 	}
