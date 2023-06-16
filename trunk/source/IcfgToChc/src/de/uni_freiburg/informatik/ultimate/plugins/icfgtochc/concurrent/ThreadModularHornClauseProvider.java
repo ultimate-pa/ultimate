@@ -776,59 +776,63 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 			@Override
 			public ProgramAnnot backtranslate(final Model model) {
-				return new ProgramAnnot(model) {
-					private static final long serialVersionUID = -3660389229111179778L;
-
-					private final Map<IHcReplacementVar, TermVariable> mConstructedTermVariables = new HashMap<>();
-
-					@Override
-					protected String getFunctionSymbol(final List<IcfgLocation> locactions) {
-						// TODO: check for mPrefs.explicitLocations(), if it is used to create multiple function symbols
-						return FUNCTION_NAME;
-					}
-
-					@Override
-					protected TermVariable[]
-							getDefaultArguments(final BiFunction<IProgramVar, Integer, TermVariable> localVarProvider) {
-						return getInvariantParameters().stream()
-								.map(x -> getOrConstructTermVariable(x, localVarProvider)).toArray(TermVariable[]::new);
-					}
-
-					private TermVariable getOrConstructTermVariable(final IHcReplacementVar hcVar,
-							final BiFunction<IProgramVar, Integer, TermVariable> localVarProvider) {
-						final Optional<TermVariable> storedVar = hcVar.getTermVariable(localVarProvider);
-						if (storedVar.isPresent()) {
-							return storedVar.get();
-						}
-						return mConstructedTermVariables.computeIfAbsent(hcVar,
-								x -> mManagedScript.variable(x.toString(), x.getSort()));
-					}
-
-					@Override
-					protected Map<Term, Term> getSubstitution(final List<IcfgLocation> locactions) {
-						final Map<Term, Term> result = new HashMap<>();
-						final Map<String, Integer> threadCounts = new HashMap<>();
-						for (final IcfgLocation loc : locactions) {
-							final String threadName = loc.getProcedure();
-							final int instanceNumber = threadCounts.getOrDefault(threadName, 0);
-							threadCounts.put(threadName, instanceNumber + 1);
-							final HcLocationVar locVar =
-									new HcLocationVar(new ThreadInstance(threadName, instanceNumber), mScript);
-							result.put(mConstructedTermVariables.get(locVar), numeral(mLocationIndices.get(loc)));
-						}
-						return result;
-					}
-
-					@Override
-					protected Collection<List<IcfgLocation>> getReachableProductLocations() {
-						return DataStructureUtils.cartesianProduct(mInstances.stream()
-								.map(x -> mLocationIndices.keySet().stream()
-										.filter(l -> l.getProcedure().equals(x.getTemplateName()))
-										.collect(Collectors.toSet()))
-								.collect(Collectors.toList()));
-					}
-				};
+				return new ThreadModularProgramAnnot(model);
 			}
 		};
+	}
+
+	private class ThreadModularProgramAnnot extends ProgramAnnot {
+		private static final long serialVersionUID = -3660389229111179778L;
+
+		private final Map<IHcReplacementVar, TermVariable> mConstructedTermVariables = new HashMap<>();
+
+		public ThreadModularProgramAnnot(final Model model) {
+			super(model);
+		}
+
+		@Override
+		protected String getFunctionSymbol(final List<IcfgLocation> locactions) {
+			// TODO: check for mPrefs.explicitLocations(), if it is used to create multiple function symbols
+			return FUNCTION_NAME;
+		}
+
+		@Override
+		protected TermVariable[]
+				getDefaultArguments(final BiFunction<IProgramVar, Integer, TermVariable> localVarProvider) {
+			return getInvariantParameters().stream().map(x -> getOrConstructTermVariable(x, localVarProvider))
+					.toArray(TermVariable[]::new);
+		}
+
+		private TermVariable getOrConstructTermVariable(final IHcReplacementVar hcVar,
+				final BiFunction<IProgramVar, Integer, TermVariable> localVarProvider) {
+			final Optional<TermVariable> storedVar = hcVar.getTermVariable(localVarProvider);
+			if (storedVar.isPresent()) {
+				return storedVar.get();
+			}
+			return mConstructedTermVariables.computeIfAbsent(hcVar,
+					x -> mManagedScript.variable(x.toString(), x.getSort()));
+		}
+
+		@Override
+		protected Map<Term, Term> getSubstitution(final List<IcfgLocation> locactions) {
+			final Map<Term, Term> result = new HashMap<>();
+			final Map<String, Integer> threadCounts = new HashMap<>();
+			for (final IcfgLocation loc : locactions) {
+				final String threadName = loc.getProcedure();
+				final int instanceNumber = threadCounts.getOrDefault(threadName, 0);
+				threadCounts.put(threadName, instanceNumber + 1);
+				final HcLocationVar locVar = new HcLocationVar(new ThreadInstance(threadName, instanceNumber), mScript);
+				result.put(mConstructedTermVariables.get(locVar), numeral(mLocationIndices.get(loc)));
+			}
+			return result;
+		}
+
+		@Override
+		protected Collection<List<IcfgLocation>> getReachableProductLocations() {
+			return DataStructureUtils.cartesianProduct(mInstances.stream()
+					.map(x -> mLocationIndices.keySet().stream()
+							.filter(l -> l.getProcedure().equals(x.getTemplateName())).collect(Collectors.toSet()))
+					.collect(Collectors.toList()));
+		}
 	}
 }
