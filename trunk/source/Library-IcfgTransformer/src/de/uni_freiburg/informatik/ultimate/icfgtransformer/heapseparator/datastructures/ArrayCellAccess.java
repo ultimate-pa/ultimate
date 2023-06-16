@@ -95,10 +95,6 @@ public class ArrayCellAccess {
 		return mMdSelect.getIndex();
 	}
 
-	public Term getTerm() {
-		return mMdSelect.getSelectTerm();
-	}
-
 	@Override
 	public String toString() {
 		return mMdSelect.toString();

@@ -346,7 +346,7 @@ public class MapEliminator {
 		final Term replacedTerm = replaceArrayInequalities(term);
 		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectDeep(replacedTerm, false)) {
 			if (SmtUtils.isFunctionApplication(select.getArray(), "store")) {
-				final Term selectTerm = select.getSelectTerm();
+				final Term selectTerm = select.toTerm(mScript);
 				substitutionMap.put(selectTerm,
 						replaceSelectStoreTerm(selectTerm, transformula, invariants, conjuncts, auxVars));
 			}

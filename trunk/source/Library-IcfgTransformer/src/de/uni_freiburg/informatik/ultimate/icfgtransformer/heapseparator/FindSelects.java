@@ -133,7 +133,7 @@ public class FindSelects {
 
 			final Set<ApplicationTerm> selectsInMdSelects = mdSelects.stream()
 					.map(mds -> new ApplicationTermFinder("select", false)
-					.findMatchingSubterms(mds.getSelectTerm()))
+					.findMatchingSubterms(mds.toTerm(mMgdScript.getScript())))
 					.reduce((s1, s2) -> DataStructureUtils.union(s1, s2)).get();
 
 			if (!allSelects.equals(selectsInMdSelects)) {

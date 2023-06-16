@@ -77,7 +77,7 @@ public class DivisibilityPredicateGenerator {
 					MultiDimensionalSelect.extractSelectDeep(pred.getFormula(), false);
 			for (final MultiDimensionalSelect mds : mdsList) {
 				if (isLengthArray(mds.getArray())) {
-					final Term term = getDivisibilityTerm(mds.getSelectTerm(), Integer.valueOf(4));
+					final Term term = getDivisibilityTerm(mds.toTerm(mScript), Integer.valueOf(4));
 					final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(term);
 					result.add(unified);
 				}

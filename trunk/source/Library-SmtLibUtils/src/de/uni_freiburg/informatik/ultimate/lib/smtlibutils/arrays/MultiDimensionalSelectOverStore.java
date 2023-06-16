@@ -93,7 +93,7 @@ public class MultiDimensionalSelectOverStore {
 	public Term constructNotEqualsReplacement(final Script script) {
 		final MultiDimensionalSelect mds = new MultiDimensionalSelect(getStore().getArray(), getSelect().getIndex(),
 				script);
-		return mds.getSelectTerm();
+		return mds.toTerm(script);
 	}
 
 	/**

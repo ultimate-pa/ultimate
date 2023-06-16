@@ -42,7 +42,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		ArrayDomainState<STATE> tmpState = state;
 		final Script script = mToolkit.getScript();
 		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectShallow(term, true)) {
-			final Term selectTerm = select.getSelectTerm();
+			final Term selectTerm = select.toTerm(script);
 			Term currentTerm = select.getArray();
 			for (final Term index : select.getIndex()) {
 				final Pair<ArrayDomainState<STATE>, Segmentation> segmentationPair =
@@ -185,7 +185,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			if (!(arrayExpr instanceof IdentifierExpression)) {
 				continue;
 			}
-			final Term selectTerm = select.getSelectTerm();
+			final Term selectTerm = select.toTerm(script);
 			final Pair<ArrayDomainState<STATE>, Term> oldValueResult = processTerm(newState, selectTerm);
 			final Term oldValue = oldValueResult.getSecond();
 			final IProgramVar auxVar = mToolkit.createAuxVar(selectTerm.getSort());
