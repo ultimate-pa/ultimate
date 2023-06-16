@@ -137,7 +137,7 @@ public class SmtChcScript implements IChcScript, AutoCloseable {
 			outputScript = getScript();
 		} else {
 			transferredModel = mTransferrer.transferBack(model);
-			outputScript = mTransferrer.getTargetScript().getScript();
+			outputScript = mTransferrer.getSourceScript();
 		}
 
 		// ensure Ultimate normal form

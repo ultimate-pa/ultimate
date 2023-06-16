@@ -271,7 +271,11 @@ public class ChcTransferrer {
 		return mBackTransferrer.transferSort(sort);
 	}
 
-	public ManagedScript getTargetScript() {
-		return mTargetScript;
+	public Script getSourceScript() {
+		return mOriginalScript;
+	}
+
+	public Script getTargetScript() {
+		return mTargetScript.getScript();
 	}
 }
