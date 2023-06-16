@@ -53,12 +53,13 @@ public class ChcSolutionNormalizer {
 			if (solution.getModel() == null) {
 				return solution;
 			}
-			return ChcSolution.sat(normalize((ModelDescription) solution.getModel()));
+			return ChcSolution.sat(normalize((ModelDescription) solution.getModel()), solution.getBacktranslator());
 		case UNSAT:
 			if (solution.getDerivation() == null) {
 				return solution;
 			}
-			return ChcSolution.unsat(normalize(solution.getDerivation()), solution.getUnsatCore());
+			return ChcSolution.unsat(normalize(solution.getDerivation()), solution.getUnsatCore(),
+					solution.getBacktranslator());
 		case UNKNOWN:
 			return solution;
 		default:
