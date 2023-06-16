@@ -87,7 +87,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvider {
 	private static final String FUNCTION_NAME = "Inv";
 	private static final int INTERFERING_INSTANCE_ID = -1;
-	protected static final boolean SKIP_ASSERTION_EDGES = false;
 
 	protected final IUltimateServiceProvider mServices;
 	protected final IIcfg<?> mIcfg;
@@ -289,7 +288,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		// add safety clauses
 		switch (mPrefs.specMode()) {
 		case ASSERT_VIOLATIONS:
-			if (SKIP_ASSERTION_EDGES) {
+			if (mPrefs.skipAssertEdges()) {
 				for (final var triple : getErrorConditions()) {
 					final var safetyClause =
 							buildErrorSafetyClause(triple.getFirst(), triple.getSecond(), triple.getThird());
@@ -397,7 +396,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	}
 
 	protected boolean isSkippableAssertEdge(final IcfgEdge edge) {
-		if (!SKIP_ASSERTION_EDGES) {
+		if (!mPrefs.skipAssertEdges()) {
 			return false;
 		}
 		final var errorLocs = mIcfg.getProcedureErrorNodes().get(edge.getSucceedingProcedure());

@@ -82,6 +82,11 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 			+ "templates, before a thread-modular proof is computed.";
 	public static final boolean DEF_LIPTON_REDUCTION = false;
 
+	public static final String LABEL_SKIP_ASSERT_EDGES = "Skip assert edges";
+	private static final String DESC_SKIP_ASSERT_EDGES = "If enabled, we do not directly encode unreachability of "
+			+ "error locations. Instead, the assertion condition is part of the safety clause.";
+	private static final boolean DEF_SKIP_ASSERT_EDGES = true;
+
 	// SETTINGS FOR SLEEP SET REDUCTION
 	// ------------------------------------------------------------------------
 
@@ -127,18 +132,21 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 	@Override
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
 		return new BaseUltimatePreferenceItem[] {
-				// Settings for thread-modular proofs
+				// Settings for concurrent programs
 				new UltimatePreferenceItem<>(LABEL_CONCURRENCY_MODE, DEF_CONCURRENCY_MODE, DESC_CONCURRENCY_MODE,
 						PreferenceType.Combo, ConcurrencyMode.values()),
 				new UltimatePreferenceItem<>(LABEL_HAS_PRECONDITION, DEF_HAS_PRECONDITION, DESC_HAS_PRECONDITION,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SPEC_MODE, DEF_SPEC_MODE, DESC_SPEC_MODE, PreferenceType.Combo,
 						SpecMode.values()),
+				// Settings for thread-modular proofs
 				new UltimatePreferenceItem<>(LABEL_THREADMODULAR_LEVEL, DEF_THREADMODULAR_LEVEL,
 						DESC_THREADMODULAR_LEVEL, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_EXPLICIT_LOCATIONS, DEF_EXPLICIT_LOCATIONS, DESC_EXPLICIT_LOCATIONS,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_LIPTON_REDUCTION, DEF_LIPTON_REDUCTION, DESC_LIPTON_REDUCTION,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SKIP_ASSERT_EDGES, DEF_SKIP_ASSERT_EDGES, DESC_SKIP_ASSERT_EDGES,
 						PreferenceType.Boolean),
 				getSleepSetSettings() };
 	}

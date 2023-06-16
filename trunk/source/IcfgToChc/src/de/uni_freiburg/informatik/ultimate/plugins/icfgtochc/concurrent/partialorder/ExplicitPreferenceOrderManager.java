@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.HornClauseBuilder;
@@ -53,11 +53,20 @@ class ExplicitPreferenceOrderManager implements IPreferenceOrderManager {
 	public Term getOrderConstraint(final HornClauseBuilder clause, final Comparator<ThreadInstance> comp,
 			final ThreadInstance thread1, final IcfgLocation loc1, final Term locTerm1, final ThreadInstance thread2,
 			final IcfgLocation loc2, final Term locTerm2) {
+		// (loc1, loc2) in R
+		final var locConstraint1 = mPreferenceOrder.getOrderConstraint(loc1, locTerm1, loc2, locTerm2, mLocationMap);
+
 		final int ordering = comp.compare(thread1, thread2);
-		if (ordering >= 0) {
-			return mScript.term(SMTLIBConstants.FALSE);
+		if (ordering < 0) {
+			// implication "(loc2, loc1) in R ==> thread1 < thread2" trivially true
+			return locConstraint1;
 		}
-		return mPreferenceOrder.getOrderConstraint(loc1, locTerm1, loc2, locTerm2, mLocationMap);
+
+		// (loc2, loc1) in R
+		final var locConstraint2 = mPreferenceOrder.getOrderConstraint(loc2, locTerm2, loc1, locTerm1, mLocationMap);
+
+		// (loc1, loc2) in R /\ (loc2, loc1) not in R
+		return SmtUtils.and(mScript, locConstraint1, SmtUtils.not(mScript, locConstraint2));
 	}
 
 	@Override

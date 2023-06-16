@@ -41,8 +41,8 @@ public class SequentialCompositionPreferenceOrder implements IThreadModularPrefe
 	}
 
 	@Override
-	public Term getOrderConstraint(final IcfgLocation lesserLoc, final Term lesserLocTerm,
-			final IcfgLocation greaterLoc, final Term greaterLocTerm, final Map<IcfgLocation, Integer> locationMap) {
+	public Term getOrderConstraint(final IcfgLocation loc1, final Term loc1Term, final IcfgLocation loc2,
+			final Term loc2Term, final Map<IcfgLocation, Integer> locationMap) {
 		return mScript.term(SMTLIBConstants.TRUE);
 	}
 

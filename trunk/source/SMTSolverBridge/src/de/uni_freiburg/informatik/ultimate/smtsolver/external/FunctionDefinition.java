@@ -80,7 +80,8 @@ public class FunctionDefinition {
 		builder.append(") ");
 		builder.append(getReturnSort());
 		builder.append(" ");
-		builder.append(mBody);
+		// TODO temporary change, revert to toString in the future
+		builder.append(mBody.toStringDirect());
 		builder.append(")");
 		return builder.toString();
 	}

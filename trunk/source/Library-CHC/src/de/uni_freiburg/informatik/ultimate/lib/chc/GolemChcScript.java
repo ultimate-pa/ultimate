@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Executor;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.ModelDescription;
 
 public class GolemChcScript implements IChcScript {
 	private static final boolean ADD_CLAUSE_NAMES = false;
@@ -137,7 +138,11 @@ public class GolemChcScript implements IChcScript {
 		if (mLastResult != LBool.SAT) {
 			throw new UnsupportedOperationException("No model available: last query was " + mLastResult);
 		}
-		return Optional.ofNullable(mLastModel);
+		if (mLastModel == null) {
+			return Optional.empty();
+		}
+		final var normalizedModel = new ChcSolutionNormalizer(getScript()).normalize((ModelDescription) mLastModel);
+		return Optional.of(normalizedModel);
 	}
 
 	@Override

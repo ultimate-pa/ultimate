@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.ModelDescription;
 
 /**
  * Used to access a constraint Horn solver via the {@link Script} interface. This can e.g. be used to access Z3's CHC
@@ -127,10 +128,22 @@ public class SmtChcScript implements IChcScript, AutoCloseable {
 		if (model == null) {
 			return Optional.empty();
 		}
+
+		// back-transfer model if necessary
+		final Model transferredModel;
+		final Script outputScript;
 		if (mTransferrer == null) {
-			return Optional.of(model);
+			transferredModel = model;
+			outputScript = getScript();
+		} else {
+			transferredModel = mTransferrer.transferBack(model);
+			outputScript = mTransferrer.getSourceScript();
 		}
-		return Optional.of(mTransferrer.transferBack(model));
+
+		// ensure Ultimate normal form
+		final var normalizedModel =
+				new ChcSolutionNormalizer(outputScript).normalize((ModelDescription) transferredModel);
+		return Optional.of(normalizedModel);
 	}
 
 	@Override
