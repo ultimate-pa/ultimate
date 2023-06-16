@@ -193,7 +193,7 @@ public class QuantifierEliminationSgi {
 				new FunDecl(SmtSortUtils::getIntSort, "B"),
 				new FunDecl(SmtSortUtils::getIntSort, "M"),
 			};
-		final String formulaAsString = "(and (exists ((X Int) (Y Int)) (and (= X M) (= Y M) (not (= X Y)))) (= A M) (> B 0) (not (= A B)))";
+		final String formulaAsString = "(and (exists ((X Int) (Y Int)) (and (> X 0) (> Y 0) (not (= X Y)))) (> A 0) (not (= A B)))";
 		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -208,6 +208,18 @@ public class QuantifierEliminationSgi {
 		final String formulaAsString = "(and (exists ((X Int) (Y Int)) (and (= X 0) (= Y 0) (= X Y))) (= A 0) (= B 0) (= A B))";
 		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	
+	@Test
+	//candidate rotation test
+	public void simpleSgiExample09() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "A"),
+				new FunDecl(SmtSortUtils::getIntSort, "B"),
+			};
+		final String formulaAsString = "(and (exists ((X Int)) (= X 0)) (> A 0) (> B 0) (> A B))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 	
 	@Test
