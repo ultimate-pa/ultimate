@@ -153,7 +153,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 				}
 
 				mMinColumns = Integer.max(mMinColumns, editor.getNumberOfControls());
-				final String tooltip = item.getToolTip();
+				final String tooltip = item.getDescription();
 				if (tooltip != null) {
 					setTooltip(editor, getFieldEditorParent(), tooltip);
 				}

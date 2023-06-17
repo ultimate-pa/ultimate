@@ -150,7 +150,7 @@ public class OptionBuilder {
 		if (triple == null) {
 			return false;
 		}
-		final String desc = triple.getThird().getToolTip();
+		final String desc = triple.getThird().getDescription();
 		return desc == null || desc.isEmpty();
 	}
 
@@ -266,8 +266,8 @@ public class OptionBuilder {
 	private static String createDescription(final UltimatePreferenceItem<?> item) {
 		final StringBuilder sb = new StringBuilder();
 
-		if (item.getToolTip() != null) {
-			sb.append(item.getToolTip());
+		if (item.getDescription() != null) {
+			sb.append(item.getDescription());
 			sb.append(" ");
 		}
 

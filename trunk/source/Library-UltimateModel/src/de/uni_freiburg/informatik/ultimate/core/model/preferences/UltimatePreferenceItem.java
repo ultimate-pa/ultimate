@@ -48,7 +48,7 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 	private final PreferenceType mType;
 	private final T[] mChoices;
 	private final IUltimatePreferenceItemValidator<T> mPreferenceValidator;
-	private final String mToolTip;
+	private final String mDescription;
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type) {
 		this(label, defaultValue, type, null, false, null, null);
@@ -74,18 +74,18 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		this(label, defaultValue, type, null, false, null, preferenceValidator);
 	}
 
-	public UltimatePreferenceItem(final String label, final T defaultValue, final String tooltip,
+	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
 			final PreferenceType type) {
-		this(label, defaultValue, type, tooltip, false, null, null);
+		this(label, defaultValue, type, description, false, null, null);
 	}
 
-	public UltimatePreferenceItem(final String label, final T defaultValue, final String tooltip,
+	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
 			final PreferenceType type, final IUltimatePreferenceItemValidator<T> preferenceValidator) {
-		this(label, defaultValue, type, tooltip, false, null, preferenceValidator);
+		this(label, defaultValue, type, description, false, null, preferenceValidator);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
-			final String tooltip, final boolean useCustomPreferencePage, final T[] choices,
+			final String description, final boolean useCustomPreferencePage, final T[] choices,
 			final IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		mLabel = label;
 		mDefaultValue = defaultValue;
@@ -93,7 +93,7 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		mChoices = choices;
 		mUseCustomPreferencePage = useCustomPreferencePage;
 		mPreferenceValidator = preferenceValidator;
-		mToolTip = tooltip;
+		mDescription = description;
 
 		if (mType == PreferenceType.Radio || mType == PreferenceType.Combo) {
 			if (mChoices == null) {
@@ -130,8 +130,8 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		return rtr;
 	}
 
-	public String getToolTip() {
-		return mToolTip;
+	public String getDescription() {
+		return mDescription;
 	}
 
 	@Override
