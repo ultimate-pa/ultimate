@@ -66,15 +66,11 @@ public class MultiDimensionalSelect implements ITermProvider {
 
 	private final Term mArray;
 	private final ArrayIndex mIndex;
-	@Deprecated
-	private final Term mSelectTerm;
 
-	private MultiDimensionalSelect(final Term array, final ArrayIndex index, final Term selectTerm) {
+	public MultiDimensionalSelect(final Term array, final ArrayIndex index) {
 		super();
 		mArray = array;
 		mIndex = index;
-		mSelectTerm = selectTerm;
-		assert classInvariant();
 	}
 
 	/**
@@ -83,7 +79,6 @@ public class MultiDimensionalSelect implements ITermProvider {
 	 * index i2.
 	 */
 	public static MultiDimensionalSelect of(Term term) {
-		final Term selectTerm = term;
 		final ArrayList<Term> index = new ArrayList<Term>();
 		while (true) {
 			if (!(term instanceof ApplicationTerm)) {
@@ -97,57 +92,7 @@ public class MultiDimensionalSelect implements ITermProvider {
 			index.add(0,appTerm.getParameters()[1]);
 			term = appTerm.getParameters()[0];
 		}
-		return new MultiDimensionalSelect(term, new ArrayIndex(index), selectTerm);
-	}
-
-	public MultiDimensionalSelect(final Term array, final ArrayIndex index, final Script script) {
-		super();
-		mArray = array;
-		mIndex = index;
-		Term tmp = array;
-		for (final Term entry : index) {
-			tmp = SmtUtils.select(script, tmp, entry);
-		}
-		mSelectTerm = tmp;
-	}
-
-	/**
-	 * Extract from this {@link MultiDimensionalSelect} the
-	 * {@link MultiDimensionalSelect} on the innermost dim dimensions. That is the
-	 * {@link MultiDimensionalSelect}
-	 * <ul>
-	 * <li>whose array is the same as the array of this
-	 * {@link MultiDimensionalSelect}
-	 * <li>whose index consists only of the first dim entries of this arrays' index,
-	 * and
-	 * <li>whose SMT sort is dim dimensions higher than the sort of this
-	 * {@link MultiDimensionalSelect}. E.g., if the sort of this
-	 * {@link MultiDimensionalSelect} is Int (hence 0-dimensional) and dim=2 then
-	 * the sort of the returned {@link MultiDimensionalSelect} is a 2-dimensional
-	 * array.
-	 * </ul>
-	 */
-	public MultiDimensionalSelect getInnermost(final int dim) {
-		if (dim < 1) {
-			throw new IllegalArgumentException("result must have at least dimension one");
-		}
-		if (dim > getDimension()) {
-			throw new IllegalArgumentException("cannot extract more dimensions than this array has");
-		}
-		ArraySelect as = ArraySelect.convert(mSelectTerm);
-		for (int i = 0; i < getDimension() - dim; i++) {
-			as = ArraySelect.convert(as.getArray());
-		}
-		return MultiDimensionalSelect.of(as.asTerm());
-	}
-
-	private boolean classInvariant() {
-		if (mSelectTerm == null) {
-			return mIndex.size() == 0;
-		} else {
-			return MultiDimensionalSort.
-					areDimensionsConsistent(mArray, mIndex, mSelectTerm);
-		}
+		return new MultiDimensionalSelect(term, new ArrayIndex(index));
 	}
 
 	public Term getArray() {
@@ -156,10 +101,6 @@ public class MultiDimensionalSelect implements ITermProvider {
 
 	public ArrayIndex getIndex() {
 		return mIndex;
-	}
-
-	public Term getSelectTerm() {
-		return mSelectTerm;
 	}
 
 	public int getDimension() {
@@ -173,11 +114,9 @@ public class MultiDimensionalSelect implements ITermProvider {
 
 	@Override
 	public String toString() {
-		return mSelectTerm.toString();
+		// not SMT-LIB syntax, but easier to read
+		return String.format("(select %s %s)k", mArray, mIndex);
 	}
-
-
-
 
 	@Override
 	public int hashCode() {
@@ -185,14 +124,14 @@ public class MultiDimensionalSelect implements ITermProvider {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		MultiDimensionalSelect other = (MultiDimensionalSelect) obj;
+		final MultiDimensionalSelect other = (MultiDimensionalSelect) obj;
 		return Objects.equals(mArray, other.mArray) && Objects.equals(mIndex, other.mIndex);
 	}
 
