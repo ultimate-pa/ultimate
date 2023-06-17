@@ -245,10 +245,9 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 		return new UltimatePreferenceItem<>(label, defaultValue, PreferenceType.Combo, values);
 	}
 
-	private static <T> UltimatePreferenceItem<T> combo(final String label, final String tooltip,
-			final T defaultValue, final T[] values) {
-		return new UltimatePreferenceItem<>(
-				label, defaultValue, PreferenceType.Combo, tooltip, false, values, null);
+	private static <T> UltimatePreferenceItem<T> combo(final String label, final String description, final T defaultValue,
+			final T[] values) {
+		return new UltimatePreferenceItem<>(label, defaultValue, description, PreferenceType.Combo, values);
 	}
 
 	private static UltimatePreferenceItem<Integer> integer(final String label, final int defaultValue) {

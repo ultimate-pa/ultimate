@@ -57,59 +57,58 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
 			final T[] choices, final IUltimatePreferenceItemValidator<T> preferenceValidator) {
-		this(label, defaultValue, type, null, false, choices, preferenceValidator);
+		this(label, defaultValue, type, null, choices, preferenceValidator);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
 			final T[] choices) {
-		this(label, defaultValue, type, null, false, choices, null);
+		this(label, defaultValue, type, null, choices, null);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
 			final PreferenceType type, final T[] choices) {
-		this(label, defaultValue, type, description, false, choices, null);
+		this(label, defaultValue, type, description, choices, null);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
 			final boolean isExperimental, final PreferenceType type, final T[] choices) {
-		this(label, defaultValue, type, description, isExperimental, false, choices, null);
+		this(label, defaultValue, type, description, isExperimental, choices, null);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
 			final IUltimatePreferenceItemValidator<T> preferenceValidator) {
-		this(label, defaultValue, type, null, false, null, preferenceValidator);
+		this(label, defaultValue, type, null, null, preferenceValidator);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
 			final PreferenceType type) {
-		this(label, defaultValue, type, description, false, null, null);
+		this(label, defaultValue, type, description, null, null);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
 			final boolean isExperimental, final PreferenceType type) {
-		this(label, defaultValue, type, description, isExperimental, false, null, null);
+		this(label, defaultValue, type, description, isExperimental, null, null);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
 			final PreferenceType type, final IUltimatePreferenceItemValidator<T> preferenceValidator) {
-		this(label, defaultValue, type, description, false, null, preferenceValidator);
+		this(label, defaultValue, type, description, null, preferenceValidator);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
-			final String description, final boolean useCustomPreferencePage, final T[] choices,
+			final String description, final T[] choices,
 			final IUltimatePreferenceItemValidator<T> preferenceValidator) {
-		this(label, defaultValue, type, description, description == null || description.isEmpty(),
-				useCustomPreferencePage, choices, preferenceValidator);
+		this(label, defaultValue, type, description, description == null || description.isEmpty(), choices,
+				preferenceValidator);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
-			final String description, final boolean isExperimental, final boolean useCustomPreferencePage,
-			final T[] choices, final IUltimatePreferenceItemValidator<T> preferenceValidator) {
+			final String description, final boolean isExperimental, final T[] choices,
+			final IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		mLabel = label;
 		mDefaultValue = defaultValue;
 		mType = type;
 		mChoices = choices;
-		mUseCustomPreferencePage = useCustomPreferencePage;
 		mPreferenceValidator = preferenceValidator;
 		mDescription = description;
 		mIsExperimental = isExperimental;
