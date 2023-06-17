@@ -49,9 +49,10 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 	private final T[] mChoices;
 	private final IUltimatePreferenceItemValidator<T> mPreferenceValidator;
 	private final String mDescription;
+	private final boolean mIsExperimental;
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type) {
-		this(label, defaultValue, type, null, false, null, null);
+		this(label, defaultValue, type, null, null);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
@@ -64,9 +65,14 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		this(label, defaultValue, type, null, false, choices, null);
 	}
 
-	public UltimatePreferenceItem(final String label, final T defaultValue, final String desc,
+	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
 			final PreferenceType type, final T[] choices) {
-		this(label, defaultValue, type, desc, false, choices, null);
+		this(label, defaultValue, type, description, false, choices, null);
+	}
+
+	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
+			final boolean isExperimental, final PreferenceType type, final T[] choices) {
+		this(label, defaultValue, type, description, isExperimental, false, choices, null);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
@@ -80,6 +86,11 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
+			final boolean isExperimental, final PreferenceType type) {
+		this(label, defaultValue, type, description, isExperimental, false, null, null);
+	}
+
+	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
 			final PreferenceType type, final IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		this(label, defaultValue, type, description, false, null, preferenceValidator);
 	}
@@ -87,6 +98,13 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
 			final String description, final boolean useCustomPreferencePage, final T[] choices,
 			final IUltimatePreferenceItemValidator<T> preferenceValidator) {
+		this(label, defaultValue, type, description, description == null || description.isEmpty(),
+				useCustomPreferencePage, choices, preferenceValidator);
+	}
+
+	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
+			final String description, final boolean isExperimental, final boolean useCustomPreferencePage,
+			final T[] choices, final IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		mLabel = label;
 		mDefaultValue = defaultValue;
 		mType = type;
@@ -94,6 +112,7 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		mUseCustomPreferencePage = useCustomPreferencePage;
 		mPreferenceValidator = preferenceValidator;
 		mDescription = description;
+		mIsExperimental = isExperimental;
 
 		if (mType == PreferenceType.Radio || mType == PreferenceType.Combo) {
 			if (mChoices == null) {
@@ -148,6 +167,10 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		final List<UltimatePreferenceItem<?>> returnList = new ArrayList<>();
 		returnList.add(this);
 		return returnList;
+	}
+
+	public boolean isExperimental() {
+		return mIsExperimental;
 	}
 
 	public interface IUltimatePreferenceItemValidator<T> {
