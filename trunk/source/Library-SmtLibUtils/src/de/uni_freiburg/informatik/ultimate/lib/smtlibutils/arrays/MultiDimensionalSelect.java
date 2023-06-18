@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -165,8 +164,7 @@ public class MultiDimensionalSelect implements ITermProvider {
 	public static List<MultiDimensionalSelect> extractSelectShallow(
 			final Term term, final boolean allowArrayValues) {
 		final List<MultiDimensionalSelect> result = new ArrayList<MultiDimensionalSelect>();
-		final Set<ApplicationTerm> selectTerms =
-				(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
+		final Set<ApplicationTerm> selectTerms = SmtUtils.extractApplicationTerms("select", term, true);
 		for (final Term storeTerm : selectTerms) {
 			if (allowArrayValues || !storeTerm.getSort().isArraySort()) {
 				final MultiDimensionalSelect mdSelect = MultiDimensionalSelect.of(storeTerm);
