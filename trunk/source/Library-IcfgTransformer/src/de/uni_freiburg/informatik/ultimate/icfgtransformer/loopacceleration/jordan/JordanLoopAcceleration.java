@@ -255,7 +255,7 @@ public class JordanLoopAcceleration {
 					throw new UnsupportedOperationException("Written value contains store");
 				}
 
-				final List<MultiDimensionalSelect> selects = MultiDimensionalSelect.extractSelectDeep(value, false);
+				final List<MultiDimensionalSelect> selects = MultiDimensionalSelect.extractSelectDeep(value);
 				if (selects.size() > 1) {
 					// FIXME 20230606 Matthias: Occurs sedomly, do not support by now
 					throw new UnsupportedOperationException("Written value contains several selects");

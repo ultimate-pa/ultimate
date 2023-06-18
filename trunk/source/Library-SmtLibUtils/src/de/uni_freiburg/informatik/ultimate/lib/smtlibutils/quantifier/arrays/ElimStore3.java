@@ -480,8 +480,7 @@ public class ElimStore3 {
 			mQuantifier = quantifier;
 			final Set<MultiDimensionalSelect> set = new HashSet<>();
 			for (final Term conjunct : conjuncts) {
-				for (final MultiDimensionalSelect mdSelect : MultiDimensionalSelect.extractSelectDeep(conjunct,
-						false)) {
+				for (final MultiDimensionalSelect mdSelect : MultiDimensionalSelect.extractSelectDeep(conjunct)) {
 					if (mdSelect.getArray().equals(array)) {
 						set.add(mdSelect);
 					}

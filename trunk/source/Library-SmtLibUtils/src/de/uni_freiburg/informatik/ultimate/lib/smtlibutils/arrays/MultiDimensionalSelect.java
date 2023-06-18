@@ -150,58 +150,45 @@ public class MultiDimensionalSelect implements ITermProvider {
 	}
 
 	/**
-	 * Return all MultiDimensionalSelect Objects for all multidimensional
-	 * select expressions that occur in term.
-	 * If one multidimensional expression occurs in another multidimensional
-	 * select expression (e.g. as index) the nested one is not returned by
-	 * this method.
-	 * If an select term occurs multiple times it is contained multiple times
-	 * in the result.
-	 * @param allowArrayValues allow also MultiDimensionalSelect terms whose
-	 * Sort is an array Sort (these select terms occur usually in
-	 * multidimensional store terms).
+	 * Return all MultiDimensionalSelect Objects for all multidimensional select
+	 * expressions that occur in term. If one multidimensional expression occurs in
+	 * another multidimensional select expression (e.g. as index) the nested one is
+	 * not returned by this method. If an select term occurs multiple times it is
+	 * contained multiple times in the result.
 	 */
-	public static List<MultiDimensionalSelect> extractSelectShallow(
-			final Term term, final boolean allowArrayValues) {
+	public static List<MultiDimensionalSelect> extractSelectShallow(final Term term) {
 		final List<MultiDimensionalSelect> result = new ArrayList<MultiDimensionalSelect>();
 		final Set<ApplicationTerm> selectTerms = SmtUtils.extractApplicationTerms("select", term, true);
 		for (final Term storeTerm : selectTerms) {
-			if (allowArrayValues || !storeTerm.getSort().isArraySort()) {
-				final MultiDimensionalSelect mdSelect = MultiDimensionalSelect.of(storeTerm);
-				if (mdSelect.getIndex().size() == 0) {
-					throw new AssertionError("MultiDimensionalSelect must not have dimension 0 here");
-				}
-				result.add(mdSelect);
+			final MultiDimensionalSelect mdSelect = MultiDimensionalSelect.of(storeTerm);
+			if (mdSelect.getIndex().size() == 0) {
+				throw new AssertionError("MultiDimensionalSelect must not have dimension 0 here");
 			}
+			result.add(mdSelect);
 		}
 		return result;
 	}
 
 	/**
-	 * Return all MultiDimensionalSelect Objects for all select expressions
-	 * that occur in term. This method also return the inner multidimensional
-	 * select expressions in other multidimensional select expressions.
-	 * If an select term occurs multiple times it is contained multiple times
-	 * in the result.
-	 * If multidimensional selects are nested, the inner ones occur earlier
-	 * in the resulting list.
-	 * @param allowArrayValues allow also MultiDimensionalSelect terms whose
-	 * Sort is an array Sort (these select terms occur usually in
-	 * multidimensional store terms).
+	 * Return all MultiDimensionalSelect Objects for all select expressions that
+	 * occur in term. This method also return the inner multidimensional select
+	 * expressions in other multidimensional select expressions. If an select term
+	 * occurs multiple times it is contained multiple times in the result. If
+	 * multidimensional selects are nested, the inner ones occur earlier in the
+	 * resulting list.
 	 */
-	public static List<MultiDimensionalSelect> extractSelectDeep(
-			final Term term, final boolean allowArrayValues) {
+	public static List<MultiDimensionalSelect> extractSelectDeep(final Term term) {
 		final List<MultiDimensionalSelect> result = new LinkedList<MultiDimensionalSelect>();
-		List<MultiDimensionalSelect> foundInThisIteration = extractSelectShallow(term, allowArrayValues);
+		List<MultiDimensionalSelect> foundInThisIteration = extractSelectShallow(term);
 		while (!foundInThisIteration.isEmpty()) {
 			result.addAll(0, foundInThisIteration);
 			final List<MultiDimensionalSelect> foundInLastIteration = foundInThisIteration;
 			foundInThisIteration = new ArrayList<MultiDimensionalSelect>();
 			for (final MultiDimensionalSelect mdSelect : foundInLastIteration) {
-				foundInThisIteration.addAll(extractSelectShallow(mdSelect.getArray(), allowArrayValues));
+				foundInThisIteration.addAll(extractSelectShallow(mdSelect.getArray()));
 				final ArrayIndex index = mdSelect.getIndex();
 				for (final Term entry : index) {
-					foundInThisIteration.addAll(extractSelectShallow(entry, allowArrayValues));
+					foundInThisIteration.addAll(extractSelectShallow(entry));
 				}
 			}
 		}

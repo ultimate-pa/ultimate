@@ -382,7 +382,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	 * @return true iff tv is subterm of some select term in term.
 	 */
 	private static boolean occursInsideSelectTerm(Script script, final Term term, final TermVariable tv) {
-		final List<MultiDimensionalSelect> selectTerms = MultiDimensionalSelect.extractSelectShallow(term, true);
+		final List<MultiDimensionalSelect> selectTerms = MultiDimensionalSelect.extractSelectShallow(term);
 		for (final MultiDimensionalSelect mds : selectTerms) {
 			for (final Term index : mds.getIndex()) {
 				if (Arrays.asList(index.getFreeVars()).contains(tv)) {

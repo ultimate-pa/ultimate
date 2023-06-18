@@ -345,7 +345,7 @@ public class MapEliminator {
 		final List<Term> conjuncts = new ArrayList<>();
 		// First remove all array inequalities by replacing them with true as an overapproximation
 		final Term replacedTerm = replaceArrayInequalities(term);
-		for (final MultiDimensionalSelect mds : MultiDimensionalSelect.extractSelectDeep(replacedTerm, false)) {
+		for (final MultiDimensionalSelect mds : MultiDimensionalSelect.extractSelectDeep(replacedTerm)) {
 			if (SmtUtils.isFunctionApplication(mds.getArray(), "store") && !SmtSortUtils.isArraySort(mds.getSort())) {
 				final Term selectTerm = mds.toTerm(mScript);
 				substitutionMap.put(selectTerm,

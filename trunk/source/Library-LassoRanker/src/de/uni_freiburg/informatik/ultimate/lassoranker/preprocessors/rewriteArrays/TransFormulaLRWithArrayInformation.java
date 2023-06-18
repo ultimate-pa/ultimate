@@ -315,11 +315,11 @@ public class TransFormulaLRWithArrayInformation {
 		final ArrayList<MultiDimensionalSelect> result = new ArrayList<>();
 		for (final ArrayUpdate au : arrayUpdates) {
 			for (final Term indexEntry : au.getIndex()) {
-				result.addAll(MultiDimensionalSelect.extractSelectDeep(indexEntry, true));
+				result.addAll(MultiDimensionalSelect.extractSelectDeep(indexEntry));
 			}
-			result.addAll(MultiDimensionalSelect.extractSelectDeep(au.getValue(), true));
+			result.addAll(MultiDimensionalSelect.extractSelectDeep(au.getValue()));
 		}
-		result.addAll(MultiDimensionalSelect.extractSelectDeep(remainderTerm, true));
+		result.addAll(MultiDimensionalSelect.extractSelectDeep(remainderTerm));
 		return result;
 	}
 
@@ -629,7 +629,7 @@ public class TransFormulaLRWithArrayInformation {
 		private List<MultiDimensionalSelect> extractArrayReads(final List<Term> terms) {
 			final ArrayList<MultiDimensionalSelect> result = new ArrayList<>();
 			for (final Term term : terms) {
-				result.addAll(MultiDimensionalSelect.extractSelectDeep(term, true));
+				result.addAll(MultiDimensionalSelect.extractSelectDeep(term));
 			}
 			return result;
 		}

@@ -124,7 +124,7 @@ public class FindSelects {
 
 //		new ApplicationTermFinder("select", false);
 
-		final List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(tf.getFormula(), true);
+		final List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(tf.getFormula());
 
 		// not sure if the mdSelects are good enough, therefore making a check here
 		if (!mdSelects.isEmpty()) {

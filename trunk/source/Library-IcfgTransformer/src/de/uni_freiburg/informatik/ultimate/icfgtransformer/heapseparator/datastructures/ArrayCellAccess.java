@@ -68,7 +68,7 @@ public class ArrayCellAccess {
 	public static List<ArrayCellAccess> extractArrayCellAccesses(final Term formula) {
 		final List<ArrayCellAccess> result = new ArrayList<>();
 
-		final List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(formula, true);
+		final List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(formula);
 
 		mdSelects.forEach(mds -> result.add(new ArrayCellAccess(mds)));
 
