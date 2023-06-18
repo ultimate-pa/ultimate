@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -107,9 +108,23 @@ public class MultiDimensionalSelect implements ITermProvider {
 		return getIndex().size();
 	}
 
+	/**
+	 * Returns the sort of the select that is represented by this class.
+	 */
+	public Sort getSort() {
+		Sort result = mArray.getSort();
+		for (int i = 0; i < getDimension(); i++) {
+			assert result.getArguments().length == 2;
+			result = result.getArguments()[1];
+		}
+		return result;
+	}
+
 	@Override
 	public Term toTerm(final Script script) {
-		return SmtUtils.multiDimensionalSelect(script, getArray(), getIndex());
+		final Term result = SmtUtils.multiDimensionalSelect(script, getArray(), getIndex());
+		assert result.getSort() == getSort();
+		return result;
 	}
 
 	@Override
