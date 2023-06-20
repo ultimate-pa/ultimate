@@ -96,8 +96,9 @@ const _CONFIG = {
 							"name": "Check division by zero",
 							"key": "Check division by zero",
 							"id": "cacsl2boogietranslator.check.division.by.zero",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -105,7 +106,7 @@ const _CONFIG = {
 							"name": "Check if freed pointer was valid",
 							"key": "Check if freed pointer was valid",
 							"id": "cacsl2boogietranslator.check.if.freed.pointer.was.valid",
-							"visible": false,
+							"visible": true,
 							"default": false,
 							"type": "bool"
 						},
@@ -114,8 +115,9 @@ const _CONFIG = {
 							"name": "Pointer to allocated memory at dereference",
 							"key": "Pointer to allocated memory at dereference",
 							"id": "cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -123,8 +125,9 @@ const _CONFIG = {
 							"name": "Check array bounds for arrays that are off heap",
 							"key": "Check array bounds for arrays that are off heap",
 							"id": "cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSERTandASSUME", "ASSUME"],
 							"type": "string"
 						},
 						{
@@ -150,8 +153,9 @@ const _CONFIG = {
 							"name": "Pointer base address is valid at dereference",
 							"key": "Pointer base address is valid at dereference",
 							"id": "cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -508,8 +512,9 @@ const _CONFIG = {
 							"name": "Check division by zero",
 							"key": "Check division by zero",
 							"id": "cacsl2boogietranslator.check.division.by.zero",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -517,7 +522,7 @@ const _CONFIG = {
 							"name": "Check if freed pointer was valid",
 							"key": "Check if freed pointer was valid",
 							"id": "cacsl2boogietranslator.check.if.freed.pointer.was.valid",
-							"visible": false,
+							"visible": true,
 							"default": false,
 							"type": "bool"
 						},
@@ -526,8 +531,9 @@ const _CONFIG = {
 							"name": "Pointer to allocated memory at dereference",
 							"key": "Pointer to allocated memory at dereference",
 							"id": "cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -535,8 +541,9 @@ const _CONFIG = {
 							"name": "Check array bounds for arrays that are off heap",
 							"key": "Check array bounds for arrays that are off heap",
 							"id": "cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -562,8 +569,9 @@ const _CONFIG = {
 							"name": "Pointer base address is valid at dereference",
 							"key": "Pointer base address is valid at dereference",
 							"id": "cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -967,8 +975,9 @@ const _CONFIG = {
 							"name": "Check division by zero",
 							"key": "Check division by zero",
 							"id": "cacsl2boogietranslator.check.division.by.zero",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -976,7 +985,7 @@ const _CONFIG = {
 							"name": "Check if freed pointer was valid",
 							"key": "Check if freed pointer was valid",
 							"id": "cacsl2boogietranslator.check.if.freed.pointer.was.valid",
-							"visible": false,
+							"visible": true,
 							"default": false,
 							"type": "bool"
 						},
@@ -985,8 +994,9 @@ const _CONFIG = {
 							"name": "Pointer to allocated memory at dereference",
 							"key": "Pointer to allocated memory at dereference",
 							"id": "cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -994,8 +1004,9 @@ const _CONFIG = {
 							"name": "Check array bounds for arrays that are off heap",
 							"key": "Check array bounds for arrays that are off heap",
 							"id": "cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -1021,8 +1032,9 @@ const _CONFIG = {
 							"name": "Pointer base address is valid at dereference",
 							"key": "Pointer base address is valid at dereference",
 							"id": "cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
