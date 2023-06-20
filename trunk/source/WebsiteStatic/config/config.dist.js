@@ -127,7 +127,7 @@ const _CONFIG = {
 							"id": "cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap",
 							"visible": true,
 							"default": "IGNORE",
-							"options": ["IGNORE", "ASSERTandASSUME", "ASSUME"],
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
