@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.ChcSolution;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot.IChcBacktranslator;
+import de.uni_freiburg.informatik.ultimate.lib.chc.IChcBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.chc.ProgramAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
