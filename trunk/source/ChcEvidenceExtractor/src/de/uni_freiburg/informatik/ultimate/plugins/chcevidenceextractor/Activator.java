@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2023 Frank Schüssele (schuessf@informatik.uni-freiburg.de) 
  * Copyright (C) 2023 University of Freiburg
  *
  * This file is part of the ULTIMATE ChcEvidenceExtractor plug-in.

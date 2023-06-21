@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2023 Frank Schüssele (schuessf@informatik.uni-freiburg.de) 
  * Copyright (C) 2023 University of Freiburg
  *
  * This file is part of the ULTIMATE ChcEvidenceExtractor plug-in.
@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
- * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class ChcEvidenceExtractor implements IGenerator {
 

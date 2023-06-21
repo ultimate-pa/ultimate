@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2023 Frank Schüssele (schuessf@informatik.uni-freiburg.de) 
  * Copyright (C) 2023 University of Freiburg
  *
  * This file is part of the ULTIMATE ChcEvidenceExtractor plug-in.
@@ -44,6 +44,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
+/**
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ */
 public class ChcEvidenceExtractorObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;

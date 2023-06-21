@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.chc;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot.IChcBacktranslator;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 

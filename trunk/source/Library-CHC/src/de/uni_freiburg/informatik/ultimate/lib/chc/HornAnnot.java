@@ -33,9 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnno
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
@@ -146,11 +144,5 @@ public class HornAnnot extends ModernAnnotations {
 
 	public IChcBacktranslator getBacktranslator() {
 		return mBacktranslator;
-	}
-
-	public interface IChcBacktranslator {
-		ProgramAnnot backtranslate(Model model);
-
-		IIcfg<?> getIcfg();
 	}
 }

@@ -45,7 +45,7 @@ import java.util.stream.Stream;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot.IChcBacktranslator;
+import de.uni_freiburg.informatik.ultimate.lib.chc.IChcBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.chc.ProgramAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
