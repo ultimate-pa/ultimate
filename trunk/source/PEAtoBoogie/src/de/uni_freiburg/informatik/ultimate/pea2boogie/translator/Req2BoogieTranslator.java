@@ -63,6 +63,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -585,7 +588,7 @@ public class Req2BoogieTranslator {
 				genWhileLoopBody(bl));
 	}
 
-	private Expression genPcExpr(final PhaseEventAutomata aut) {
+	private Expression genPcExpr(final PhaseEventAutomata aut, final BoogieLocation bl) {
 		final Phase[] phases = aut.getPhases();
 		final Phase[] initialPhases = aut.getInit();
 		// determine initial phases
@@ -607,9 +610,18 @@ public class Req2BoogieTranslator {
 			}
 
 			final IdentifierExpression id = mSymboltable.getIdentifierExpression(pcName);
-			final Expression current =
+			Expression current =
 					ExpressionFactory.newBinaryExpression(id.getLocation(), BinaryExpression.Operator.COMPEQ, id,
 							ExpressionFactory.createIntegerLiteral(id.getLocation(), Integer.toString(i)));
+			// add assume statement for guard of initial transition (if existent)
+			if (!phases[i].getInitialTransition().isEmpty()) {
+				CDD guard = phases[i].getInitialTransition().get().getGuard();
+				if (guard != CDD.TRUE) {
+					final Expression guardExpr = new CDDTranslator().toBoogie(guard, bl );
+					guardExpr.setType(BoogiePrimitiveType.TYPE_BOOL);
+					current = ExpressionFactory.newBinaryExpression(id.getLocation(), Operator.LOGICAND, current, guardExpr);
+				}
+			}
 			if (acc == null) {
 				acc = current;
 			} else {
@@ -627,7 +639,7 @@ public class Req2BoogieTranslator {
 				final PhaseEventAutomata aut = ct2pea.getValue();
 				final VariableLHS lhs = mSymboltable.getVariableLhs(mSymboltable.getPcName(aut));
 				stmts.add(new HavocStatement(lhs.getLocation(), new VariableLHS[] { lhs }));
-				stmts.add(new AssumeStatement(lhs.getLocation(), genPcExpr(aut)));
+				stmts.add(new AssumeStatement(lhs.getLocation(), genPcExpr(aut, bl)));
 			}
 		}
 		return stmts;
@@ -647,6 +659,10 @@ public class Req2BoogieTranslator {
 					BinaryExpression.Operator.COMPEQ, id, real)));
 		}
 		return stmts;
+	}
+	
+	private Statement genInitialTransitionStmts() {
+		return null;
 	}
 
 	private Statement[] generateProcedureBody(final BoogieLocation bl, final List<DeclarationPattern> init) {

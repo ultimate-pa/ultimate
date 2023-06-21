@@ -95,7 +95,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 		// add initial transition to Phases in initPhases 
 		for (Phase phase : mInit) {
 			if (phase.getInitialTransition().isEmpty()) {
-				InitialTransition initialTransition = new InitialTransition(phase.stateInv, phase);
+				InitialTransition initialTransition = new InitialTransition(CDD.TRUE, phase);
 				phase.setInitialTransition(initialTransition);
 			}
 		}
