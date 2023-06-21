@@ -422,7 +422,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 			return result;
 		}
 		if (edge instanceof IIcfgJoinTransitionThreadCurrent<?>) {
-			assert false : "Joins not supported";
+			throw new UnsupportedOperationException("Joins not supported");
 		}
 
 		return getInstances(edge.getPrecedingProcedure()).stream()
