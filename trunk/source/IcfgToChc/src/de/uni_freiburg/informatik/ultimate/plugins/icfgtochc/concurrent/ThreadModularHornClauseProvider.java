@@ -124,8 +124,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		mCfgSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 		mVariableFilter = variableFilter;
 
-		final var threadInfo =
-				mPrefs.concurrencyMode().getThreadNumbersAndUnboundedThreads(icfg, mPrefs.getThreadModularProofLevel());
+		final var threadInfo = mPrefs.concurrencyMode().getThreadNumbersAndUnboundedThreads(icfg, mPrefs);
 		mTemplates = Set.copyOf(threadInfo.getFirst().keySet());
 		mInstances = getInstances(threadInfo.getFirst());
 		mUnboundedTemplates = threadInfo.getSecond();
@@ -671,7 +670,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	// -----------------------------------------------------------------------------------------------------------------
 
 	protected Map<ThreadInstance, IcfgLocation> getInitialLocations() {
-		return mPrefs.concurrencyMode().getInitialLocations(mIcfg, mInstances);
+		return mPrefs.concurrencyMode().getInitialLocations(mIcfg, mInstances, mPrefs);
 	}
 
 	protected void addInLocationConstraint(final HornClauseBuilder clause, final ThreadInstance threadInstance,

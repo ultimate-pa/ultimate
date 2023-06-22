@@ -87,6 +87,18 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 			+ "error locations. Instead, the assertion condition is part of the safety clause.";
 	private static final boolean DEF_SKIP_ASSERT_EDGES = true;
 
+	// TODO Introduce PreferenceType.List?
+	public static final String LABEL_PARAMETRIC_TEMPLATES = "Templates for parametric program";
+	private static final String DESC_PARAMETRIC_TEMPLATES = "Comma-separated list of procedures denoting thread "
+			+ "templates of the parametric program. Leave empty for default behaviour (i.e., single template given "
+			+ "by ULTIMATE.start in Boogie, main in C).";
+	private static final String DEF_PARAMETRIC_TEMPLATES = "";
+
+	public static final String LABEL_PARAMETRIC_SINGLE_THREADS = "Single-instance threads";
+	private static final String DESC_PARAMETRIC_SINGLE_THREADS =
+			"Comma-separated list of procedures for which a single thread is running in a parametric program.";
+	private static final String DEF_PARAMETRIC_SINGLE_THREADS = "";
+
 	// SETTINGS FOR SLEEP SET REDUCTION
 	// ------------------------------------------------------------------------
 
@@ -148,6 +160,10 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SKIP_ASSERT_EDGES, DEF_SKIP_ASSERT_EDGES, DESC_SKIP_ASSERT_EDGES,
 						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_PARAMETRIC_TEMPLATES, DEF_PARAMETRIC_TEMPLATES,
+						DESC_PARAMETRIC_TEMPLATES, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_PARAMETRIC_SINGLE_THREADS, DEF_PARAMETRIC_SINGLE_THREADS,
+						DESC_PARAMETRIC_SINGLE_THREADS, PreferenceType.String),
 				getSleepSetSettings() };
 	}
 
