@@ -39,9 +39,14 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] { new UltimatePreferenceItem<>(INCLUDE_PATHS, "", PreferenceType.Path) };
+		// @formatter:off
+		return new UltimatePreferenceItem<?>[] {
+			new UltimatePreferenceItem<>(INCLUDE_PATHS, "", PreferenceType.Path),
+			new UltimatePreferenceItem<>(RECURSIVE, false, PreferenceType.Boolean)
+		};
+		// @formatter:on
 	}
 
 	public static final String INCLUDE_PATHS = "Please specify include paths that will be parsed with the given C-File";
-
+	public static final String RECURSIVE = "Add include files recursively from subdirectories of include paths as well";
 }
