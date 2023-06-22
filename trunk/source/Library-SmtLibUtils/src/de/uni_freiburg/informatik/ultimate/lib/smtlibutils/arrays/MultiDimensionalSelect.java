@@ -129,7 +129,7 @@ public class MultiDimensionalSelect implements ITermProvider {
 	@Override
 	public String toString() {
 		// not SMT-LIB syntax, but easier to read
-		return String.format("(select %s %s)k", mArray, mIndex);
+		return String.format("(select %s %s)", mArray, mIndex);
 	}
 
 	@Override
