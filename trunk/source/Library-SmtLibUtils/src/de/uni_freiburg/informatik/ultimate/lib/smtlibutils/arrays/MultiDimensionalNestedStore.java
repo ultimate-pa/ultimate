@@ -215,7 +215,7 @@ public class MultiDimensionalNestedStore implements ITermProvider {
 	}
 
 	public static MultiDimensionalNestedStore convert1mdseq(final Script script, final Term term) {
-		final ArrayStore as = ArrayStore.convert(term);
+		final ArrayStore as = ArrayStore.of(term);
 		if (as == null) {
 			return null;
 		}

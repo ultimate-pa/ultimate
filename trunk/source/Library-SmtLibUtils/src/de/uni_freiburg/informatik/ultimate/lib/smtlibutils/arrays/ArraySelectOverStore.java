@@ -39,8 +39,8 @@ public class ArraySelectOverStore {
 
 	public ArraySelectOverStore(final Term term) {
 		try {
-			final ArraySelect arraySelect = ArraySelect.convert(term);
-			mArrayStore = ArrayStore.convert(arraySelect.getArray());
+			final ArraySelect arraySelect = ArraySelect.of(term);
+			mArrayStore = ArrayStore.of(arraySelect.getArray());
 			mIndex = arraySelect.getIndex();
 		} catch (final IllegalArgumentException iae) {
 			throw iae;
@@ -56,7 +56,7 @@ public class ArraySelectOverStore {
 	}
 
 	public Term toTerm(final Script script) {
-		return script.term("select", getArrayStore().asTerm(), getIndex());
+		return script.term("select", getArrayStore().getTerm(), getIndex());
 	}
 
 

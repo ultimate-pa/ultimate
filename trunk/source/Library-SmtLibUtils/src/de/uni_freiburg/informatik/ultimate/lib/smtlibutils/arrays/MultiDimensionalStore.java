@@ -179,11 +179,11 @@ public class MultiDimensionalStore implements ITermProvider {
 		if (dim > getDimension()) {
 			throw new IllegalArgumentException("cannot extract more dimensions than this array has");
 		}
-		ArrayStore as = ArrayStore.convert(mStoreTerm);
+		ArrayStore as = ArrayStore.of(mStoreTerm);
 		for (int i = 0; i < getDimension() - dim; i++) {
-			as = ArrayStore.convert(as.getValue());
+			as = ArrayStore.of(as.getValue());
 		}
-		return MultiDimensionalStore.convert(as.asTerm());
+		return MultiDimensionalStore.convert(as.getTerm());
 	}
 
 	public static MultiDimensionalStore convert(final Term term) {

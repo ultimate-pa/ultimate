@@ -30,25 +30,26 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermWrapper;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- *
- * @author Matthias Heizmann
+ * Wrapper for `store` terms from the SMT theory of arrays.
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class ArrayStore {
+public class ArrayStore implements ITermWrapper {
 	private final Term mArray;
 	private final Term mIndex;
 	private final Term mValue;
-	private final Term mTermRepresentation;
+	private final Term mTerm;
 
-	public ArrayStore(final Term array, final Term index, final Term value, final Term termRepresentation) {
+	public ArrayStore(final Term array, final Term index, final Term value, final Term term) {
 		mArray = array;
 		mIndex = index;
 		mValue = value;
-		mTermRepresentation = termRepresentation;
+		mTerm = term;
 	}
 
 	public Term getArray() {
@@ -63,16 +64,17 @@ public class ArrayStore {
 		return mValue;
 	}
 
-	public Term asTerm() {
-		return mTermRepresentation;
+	@Override
+	public Term getTerm() {
+		return mTerm;
 	}
 
 	@Override
 	public String toString() {
-		return String.valueOf(mTermRepresentation);
+		return String.valueOf(mTerm);
 	}
 
-	public static ArrayStore convert(final Term term) {
+	public static ArrayStore of(final Term term) {
 		if (!(term instanceof ApplicationTerm)) {
 			return null;
 		}
@@ -95,6 +97,6 @@ public class ArrayStore {
 	 */
 	public static Collection<ArrayStore> extractStores(final Term term, final boolean onlyOutermost) {
 		final Set<ApplicationTerm> storeTerms = SmtUtils.extractApplicationTerms("store", term, onlyOutermost);
-		return storeTerms.stream().map(ArrayStore::convert).collect(Collectors.toList());
+		return storeTerms.stream().map(ArrayStore::of).collect(Collectors.toList());
 	}
 }

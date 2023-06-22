@@ -815,11 +815,11 @@ public class Elim1Store {
 	}
 
 	private static boolean selectTermsWithsimilarArray(final Term term1, final Term term2) {
-		final ArraySelect select1 = ArraySelect.convert(term1);
+		final ArraySelect select1 = ArraySelect.of(term1);
 		if (select1 == null) {
 			return false;
 		} else {
-			final ArraySelect select2 = ArraySelect.convert(term2);
+			final ArraySelect select2 = ArraySelect.of(term2);
 			if (select2 == null) {
 				return false;
 			} else {

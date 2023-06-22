@@ -1502,7 +1502,7 @@ public final class SmtUtils {
 	public static Term select(final Script script, final Term array, final Term index) {
 		final Term result;
 		if (FLATTEN_ARRAY_TERMS) {
-			final ArrayStore as = ArrayStore.convert(array);
+			final ArrayStore as = ArrayStore.of(array);
 			if (as != null) {
 				result = selectOverStore(script, as, index);
 			} else {
@@ -1525,7 +1525,7 @@ public final class SmtUtils {
 			final IPolynomialTerm selectIndex = PolynomialTermTransformer.convert(script, index);
 			final IPolynomialTerm storeIndex = PolynomialTermTransformer.convert(script, as.getIndex());
 			if (selectIndex == null || storeIndex == null) {
-				result = script.term("select", as.asTerm(), index);
+				result = script.term("select", as.getTerm(), index);
 			} else {
 				final Equivalence comparison = selectIndex.compare(storeIndex);
 				switch (comparison) {
@@ -1536,7 +1536,7 @@ public final class SmtUtils {
 					result = as.getValue();
 					break;
 				case INCOMPARABLE:
-					result = script.term("select", as.asTerm(), index);
+					result = script.term("select", as.getTerm(), index);
 					break;
 				default:
 					throw new AssertionError("unknown value " + comparison);
