@@ -122,8 +122,16 @@ public class MultiDimensionalStore implements ITermProvider {
 	}
 
 	static boolean isCompatibleSelect(final Term term, final Term array, final List<Term> index) {
-		final MultiDimensionalSelect mdSelect = MultiDimensionalSelect.of(term);
-		return mdSelect.getArray() == array && index.equals(mdSelect.getIndex());
+		if (index.isEmpty()) {
+			return term == array;
+		} else {
+			final MultiDimensionalSelect mdSelect = MultiDimensionalSelect.of(term);
+			if (mdSelect == null) {
+				return false;
+			} else {
+				return mdSelect.getArray() == array && index.equals(mdSelect.getIndex());
+			}
+		}
 	}
 
 	public Term getArray() {

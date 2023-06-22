@@ -92,6 +92,9 @@ public class MultiDimensionalSelect implements ITermProvider {
 			index.add(0,appTerm.getParameters()[1]);
 			term = appTerm.getParameters()[0];
 		}
+		if (index.isEmpty()) {
+			return null;
+		}
 		return new MultiDimensionalSelect(term, new ArrayIndex(index));
 	}
 
