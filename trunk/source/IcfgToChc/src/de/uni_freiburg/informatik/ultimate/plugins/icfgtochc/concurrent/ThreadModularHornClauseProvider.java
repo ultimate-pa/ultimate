@@ -374,18 +374,21 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		if (!mPrefs.hasPreconditions()) {
 			return false;
 		}
-
-		final var template = edge.getPrecedingProcedure();
-		final var entryLoc = mIcfg.getProcedureEntryNodes().get(template);
-		return edge.getSource().equals(entryLoc);
+		return mIcfg.getInitialNodes().contains(edge.getSource());
 	}
 
 	protected boolean isPostConditionSpecEdge(final IcfgEdge edge) {
 		if (mPrefs.specMode() != SpecMode.POSTCONDITION) {
 			return false;
 		}
-
 		final var template = edge.getPrecedingProcedure();
+
+		// only the initial procedure contains the postcondition
+		final var entryLoc = mIcfg.getProcedureEntryNodes().get(template);
+		if (!mIcfg.getInitialNodes().contains(entryLoc)) {
+			return false;
+		}
+
 		final var exitLoc = mIcfg.getProcedureExitNodes().get(template);
 		return edge.getTarget().equals(exitLoc);
 	}
