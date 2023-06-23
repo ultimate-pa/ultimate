@@ -102,7 +102,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.UltimateCdtExternalSettingsProvider.ToolchainDependency;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.LoggerOutputStream;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -202,15 +204,15 @@ public class CDTParser implements ISource {
 
 		if (mLogger.isDebugEnabled()) {
 			final String fileName = normalizeCdtFilename(tu.getFilePath());
-			final OutputStream printOutput = new ByteArrayOutputStream();
+			final OutputStream printOutput = new LoggerOutputStream(mLogger::debug);
 			final PrintStream printStream = new PrintStream(printOutput);
 
 			mLogger.debug("======== BEGIN dump AST [" + desc + "] of translation unit for " + fileName);
-			printStream.append(System.lineSeparator());
 			printFunc.accept(tu, printStream);
 			printStream.flush();
-			mLogger.debug(printOutput.toString());
 			mLogger.debug("======== END dump AST [" + desc + "] of translation unit for " + fileName);
+
+			printStream.close();
 		}
 	}
 
