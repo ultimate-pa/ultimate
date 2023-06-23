@@ -150,7 +150,7 @@ public class CDTParserTestSuite extends AbstractParserTestSuite {
 			final IUltimateServiceProvider overlay = services.registerPreferenceLayer(getClass(), cdtParserPluginId);
 			final IPreferenceProvider prefProvider = overlay.getPreferenceProvider(cdtParserPluginId);
 
-			final String includePaths = String.join(File.pathSeparator, absolutePathsIncDirs);
+			final String includePaths = String.join(";", absolutePathsIncDirs);
 
 			prefProvider.put(PreferenceInitializer.INCLUDE_PATHS, includePaths);
 			prefProvider.put(PreferenceInitializer.RECURSIVE, recursive);
