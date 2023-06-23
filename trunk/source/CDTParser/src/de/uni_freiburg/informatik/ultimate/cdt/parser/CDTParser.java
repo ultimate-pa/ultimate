@@ -33,10 +33,13 @@ package de.uni_freiburg.informatik.ultimate.cdt.parser;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -265,9 +268,22 @@ public class CDTParser implements ISource {
 				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.INCLUDE_PATHS);
 		final boolean recursive =
 				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceInitializer.RECURSIVE);
-		final File[] includePaths = Arrays.stream(includes.split(File.pathSeparator))
-				.map(include -> new File(include))
-				.toArray(File[]::new);
+		final Set<File> includePaths = new HashSet<>();
+		for (final String include : includes.split(";")) {
+			final File includeDir = new File(include);
+			if (includeDir.isAbsolute()) {
+				includePaths.add(includeDir);
+				continue;
+			}
+			for (final File f : files) {
+				try {
+					includePaths.add(new File(f.getParentFile(), include).getCanonicalFile());
+				} catch (final IOException e) {
+					// Invalid path, do nothing
+					continue;
+				}
+			}
+		}
 		addIncludeFiles(sourceFolder, includePaths, recursive);
 
 		// TODO: The indexer is empty and I dont know why -- reindexing does not help
@@ -290,7 +306,8 @@ public class CDTParser implements ISource {
 	 * @param includePaths absolute path names where include files are located
 	 * @param recursive determines whether include files in sub directories of each include path should be added
 	 */
-	private void addIncludeFiles(final IFolder sourceFolder, final File[] includePaths, boolean recursive) throws CoreException {
+	private void addIncludeFiles(final IFolder sourceFolder, final Collection<File> includePaths,
+			final boolean recursive) throws CoreException {
 		for (final File includePath : includePaths) {
 			// check if current include path is valid
 			final boolean includePathValid = includePath.exists() && includePath.isDirectory();
@@ -311,7 +328,7 @@ public class CDTParser implements ISource {
 			// recursively add include files from all subdirectories as well
 			if (recursive) {
 				final File[] includeSubPaths = includePath.listFiles(mIncludeDirectoriesFilter);
-				addIncludeFiles(sourceFolder, includeSubPaths, recursive);
+				addIncludeFiles(sourceFolder, Arrays.asList(includeSubPaths), recursive);
 			}
 		}
 	}

@@ -41,7 +41,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		// @formatter:off
 		return new UltimatePreferenceItem<?>[] {
-			new UltimatePreferenceItem<>(INCLUDE_PATHS, "", PreferenceType.Path),
+			new UltimatePreferenceItem<>(INCLUDE_PATHS, "", PreferenceType.String),
 			new UltimatePreferenceItem<>(RECURSIVE, false, PreferenceType.Boolean)
 		};
 		// @formatter:on
