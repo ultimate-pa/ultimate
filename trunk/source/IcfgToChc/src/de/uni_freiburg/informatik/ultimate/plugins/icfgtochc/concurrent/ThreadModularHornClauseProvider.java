@@ -172,16 +172,27 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 	protected Map<IcfgLocation, Integer> createLocationMap(final IIcfg<?> icfg) {
 		final var result = new HashMap<IcfgLocation, Integer>();
-		for (final var entry : icfg.getProcedureEntryNodes().values()) {
+		for (final var entry : icfg.getProcedureEntryNodes().entrySet()) {
+			final var errorNodes = icfg.getProcedureErrorNodes().get(entry.getKey());
+			final var initial = entry.getValue();
+
 			int counter = 0;
-			result.put(entry, counter);
+			result.put(initial, counter);
 			counter++;
-			final var iterator = new IcfgEdgeIterator(entry.getOutgoingEdges());
+
+			final var iterator = new IcfgEdgeIterator(initial.getOutgoingEdges());
 			while (iterator.hasNext()) {
 				final var edge = iterator.next();
 				assert result.containsKey(edge.getSource()) : "edge with unknown source loc";
-				if (!result.containsKey(edge.getTarget())) {
-					result.put(edge.getTarget(), counter);
+				final var loc = edge.getTarget();
+
+				if (mPrefs.skipAssertEdges() && errorNodes.contains(loc)) {
+					// do not map error locations to an integer (they do not appear in the CHC system)
+					continue;
+				}
+
+				if (!result.containsKey(loc)) {
+					result.put(loc, counter);
 					counter++;
 				}
 			}
