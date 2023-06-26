@@ -79,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
  * @param <L>
  */
 public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
+	private static final boolean USE_FAIRNESS = true;
 	private final IUltimateServiceProvider mServices;
 	private final TAPreferences mPrefs;
 	private final BuchiCegarLoopBenchmarkGenerator mCegarLoopBenchmark;
@@ -116,8 +117,12 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 				.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_AUTOMATON_TYPE, AutomatonTypeConcurrent.class);
 		switch (automatonTypeConcurrent) {
 		case BUCHI_AUTOMATON:
-			final var automatonProvider = new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(petriNetProvider,
+			IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> automatonProvider
+					= new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(petriNetProvider,
 					stateFactoryForRefinement, new AutomataLibraryServices(mServices));
+			if (USE_FAIRNESS) {
+				automatonProvider = new FairInitialAbstractionProvider<>(icfg, automatonProvider);
+			}
 			return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessAutomaton,
 					stateFactoryForRefinement, automatonProvider);
 		case BUCHI_PETRI_NET:
