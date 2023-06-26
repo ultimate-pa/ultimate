@@ -34,10 +34,11 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -141,13 +142,13 @@ public class CDTParser implements ISource {
 		mCdtPProjectHierachyFlag = "FLAG" + UUID.randomUUID().toString().substring(0, 10).replace("-", "");
 		mIncludeFilesFilter = new FilenameFilter() {
 			@Override
-			public boolean accept(File directory, String name) {
+			public boolean accept(final File directory, final String name) {
 				return name.toLowerCase().endsWith(mIncludeFileType);
 			}
 		};
 		mIncludeDirectoriesFilter = new FileFilter() {
 			@Override
-			public boolean accept(File pathname) {
+			public boolean accept(final File pathname) {
 				return pathname.isDirectory();
 			}
 		};
@@ -264,27 +265,7 @@ public class CDTParser implements ISource {
 		final ICProject cProject = CoreModel.getDefault().create(mProject);
 		cProject.setRawPathEntries(new IPathEntry[] { sourceEntry }, NULL_MONITOR);
 
-		final String includes =
-				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.INCLUDE_PATHS);
-		final boolean recursive =
-				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceInitializer.RECURSIVE);
-		final Set<File> includePaths = new HashSet<>();
-		for (final String include : includes.split(";")) {
-			final File includeDir = new File(include);
-			if (includeDir.isAbsolute()) {
-				includePaths.add(includeDir);
-				continue;
-			}
-			for (final File f : files) {
-				try {
-					includePaths.add(new File(f.getParentFile(), include).getCanonicalFile());
-				} catch (final IOException e) {
-					// Invalid path, do nothing
-					continue;
-				}
-			}
-		}
-		addIncludeFiles(sourceFolder, includePaths, recursive);
+		addIncludeFiles(sourceFolder, computeIncludePaths(files));
 
 		// TODO: The indexer is empty and I dont know why -- reindexing does not help
 		// CCorePlugin.getIndexManager().reindex(cProject);
@@ -299,15 +280,55 @@ public class CDTParser implements ISource {
 		return cProject;
 	}
 
+	private Collection<File> computeIncludePaths(final File[] files) {
+		// Include all parent dirs of the source files and all dirs from the settings afterwards
+		final List<File> rawPaths = Arrays.stream(files).map(File::getParentFile).collect(Collectors.toList());
+		final String includesFromSettings =
+				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.INCLUDE_PATHS);
+		for (final String include : includesFromSettings.split(";")) {
+			final File includeDir = new File(include);
+			if (includeDir.isAbsolute()) {
+				rawPaths.add(includeDir);
+				continue;
+			}
+			for (final File f : files) {
+				try {
+					rawPaths.add(new File(f.getParentFile(), include).getCanonicalFile());
+				} catch (final IOException e) {
+					// Invalid path, do nothing
+					continue;
+				}
+			}
+		}
+		// Exclude all duplicate and invalid paths, but keep their order.
+		final Collection<File> validPaths =
+				rawPaths.stream().filter(File::isDirectory).collect(Collectors.toCollection(LinkedHashSet::new));
+		final boolean recursive =
+				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceInitializer.RECURSIVE);
+		if (!recursive) {
+			return validPaths;
+		}
+		// Add the paths recursively
+		final ArrayDeque<File> queue = new ArrayDeque<>(validPaths);
+		final Set<File> result = new LinkedHashSet<>();
+		while (!queue.isEmpty()) {
+			final File f = queue.pop();
+			if (result.add(f)) {
+				queue.addAll(Arrays.asList(f.listFiles(mIncludeDirectoriesFilter)));
+			}
+		}
+		return result;
+	}
+
 	/**
 	 * Add files from specified include paths to the project source folder.
 	 *
-	 * @param sourceFolder project source folder
-	 * @param includePaths absolute path names where include files are located
-	 * @param recursive determines whether include files in sub directories of each include path should be added
+	 * @param sourceFolder
+	 *            project source folder
+	 * @param includePaths
+	 *            absolute path names where include files are located
 	 */
-	private void addIncludeFiles(final IFolder sourceFolder, final Collection<File> includePaths,
-			final boolean recursive) throws CoreException {
+	private void addIncludeFiles(final IFolder sourceFolder, final Collection<File> includePaths) throws CoreException {
 		for (final File includePath : includePaths) {
 			// check if current include path is valid
 			final boolean includePathValid = includePath.exists() && includePath.isDirectory();
@@ -323,12 +344,6 @@ public class CDTParser implements ISource {
 			for (final File includeFile : includeFiles) {
 				mLogger.info("Adding include file " + includeFile);
 				addLinkToFolder(sourceFolder, includeFile);
-			}
-
-			// recursively add include files from all subdirectories as well
-			if (recursive) {
-				final File[] includeSubPaths = includePath.listFiles(mIncludeDirectoriesFilter);
-				addIncludeFiles(sourceFolder, Arrays.asList(includeSubPaths), recursive);
 			}
 		}
 	}
