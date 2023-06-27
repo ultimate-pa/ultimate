@@ -129,7 +129,7 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 		}
 		
 		IcfgLocation exit = mIcfg.getProcedureExitNodes().get(procedure);
-		List<IcfgEdge> exitEdges = exit.getIncomingEdges();
+		List<IcfgEdge> exitEdges = exit.getOutgoingEdges();
 		
 		//construct outgoing edges of s2 and s3
 		for(IcfgEdge edge : mIcfgAlphabet) {
