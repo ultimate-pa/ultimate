@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -11,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersectNwa;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -27,10 +29,10 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 	private IIcfg<?> mIcfg;
 	private AutomataLibraryServices mServices;
 	private PredicateFactoryRefinement mStateFactory;
-	private IcfgEdgeIterator mIcfgEdgeIterator;
 	private Set<IcfgEdge> mIcfgAlphabet;
 	private Map<String, Set<IcfgEdge>> mProcedureAlphabetMap;
-	private Map<String, NestedWordAutomaton<L, IPredicate>> mFairAutomataList;
+	private Map<String, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mFairAutomataMap;
+	private BuchiIntersectNwa<L, IPredicate> mBuchiIntersectAutomaton;
 	
 	public FairInitialAbstractionProvider(IIcfg<?> icfg, IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>>
 	initialAbstractionProvider, AutomataLibraryServices services, PredicateFactoryRefinement stateFactoryForRefinement) {
@@ -38,50 +40,78 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 		mIcfg = icfg;
 		mServices = services;
 		mStateFactory = stateFactoryForRefinement;
+		mIcfgAlphabet = new HashSet<>();
+		mProcedureAlphabetMap = new HashMap<>();
+		mFairAutomataMap = new HashMap<>();
 	}
 
 	@Override
 	public INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getInitialAbstraction(
 			IIcfg<? extends IcfgLocation> icfg, Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
 		INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction = mInitialAbstractionProvider.getInitialAbstraction(icfg, errorLocs);
-		IEmptyStackStateFactory<IPredicate> stateFactory = new IEmptyStackStateFactory<IPredicate>() {
-			@Override
-			public IPredicate createEmptyStackState() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-		};
-		mIcfgEdgeIterator = new IcfgEdgeIterator(mIcfg);
-		//compute the alphabet of each procedure
-		while(mIcfgEdgeIterator.hasNext()) {
-			IcfgEdge edge = mIcfgEdgeIterator.next();
+		
+		//compute the alphabet of the main procedure
+		IcfgEdgeIterator iterator = new IcfgEdgeIterator(mIcfg);		
+		while(iterator.hasNext()) {
+			IcfgEdge edge = iterator.next();
 			mIcfgAlphabet.add(edge);
 			String procedure = edge.getPrecedingProcedure();
-			Set<IcfgEdge> procedureAlphabet = Collections.emptySet();
+			Set<IcfgEdge> procedureAlphabet = new HashSet<>();
 			if (mProcedureAlphabetMap.containsKey(procedure)) {
 				procedureAlphabet = mProcedureAlphabetMap.get(procedure);
 			}
-			procedureAlphabet.add(edge.getLabel());
+			procedureAlphabet.add(edge);
 			mProcedureAlphabetMap.put(procedure, procedureAlphabet);
+		}
+		
+		
+		//compute the alphabet of each forked procedure
+		for (Entry<String, ? extends IcfgLocation> procedureEntry : icfg.getProcedureEntryNodes().entrySet()) {
+			if (procedureEntry.getValue().getIncomingEdges().isEmpty()) {
+				continue;
+			}
+			iterator = new IcfgEdgeIterator(procedureEntry.getValue().getOutgoingEdges());
+			while(iterator.hasNext()) {
+				IcfgEdge edge = iterator.next();
+				mIcfgAlphabet.add(edge);
+				String procedure = edge.getPrecedingProcedure();
+				Set<IcfgEdge> procedureAlphabet = new HashSet<>();
+				if (mProcedureAlphabetMap.containsKey(procedure)) {
+					procedureAlphabet = mProcedureAlphabetMap.get(procedure);
+				}
+				procedureAlphabet.add(edge);
+				mProcedureAlphabetMap.put(procedure, procedureAlphabet);
+			}
 		}
 		//compute the fair automaton of each procedure
 		for (Entry<String, ? extends IcfgLocation> procedureEntry : icfg.getProcedureEntryNodes().entrySet()) {
-			mFairAutomataList.put(procedureEntry.getKey(), getFairAutomaton(initialAbstraction, stateFactory, procedureEntry.getValue()));
+			if (mProcedureAlphabetMap.get(procedureEntry.getKey()) != null) {
+				mFairAutomataMap.put(procedureEntry.getKey(), getFairAutomaton(initialAbstraction, procedureEntry.getValue()));
+			}	
+		}
+		
+		//compute the fair intersections
+		for (Entry<String, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> entry : mFairAutomataMap.entrySet()) {
+			if (mBuchiIntersectAutomaton == null) {
+				mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(initialAbstraction, entry.getValue(), mStateFactory);
+			} else {
+				mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(mBuchiIntersectAutomaton, entry.getValue(), mStateFactory);
+			}
 		}
 		
 		return mInitialAbstractionProvider.getInitialAbstraction(icfg, errorLocs);
 	}
 	
 	private NestedWordAutomaton<L, IPredicate> getFairAutomaton(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
-			IEmptyStackStateFactory<IPredicate> stateFactory, IcfgLocation entryLocation) {
+			IcfgLocation entryLocation) {
 		VpAlphabet<L> alphabet = initialAbstraction.getVpAlphabet();
-		NestedWordAutomaton<L, IPredicate> fairAutomaton = new NestedWordAutomaton<L, IPredicate>(mServices, alphabet, stateFactory);
+		NestedWordAutomaton<L, IPredicate> fairAutomaton = new NestedWordAutomaton<L, IPredicate>(mServices, alphabet, mStateFactory);
 
-		IPredicate s1 = stateFactory.createEmptyStackState();
-		IPredicate s2 = stateFactory.createEmptyStackState();
-		IPredicate s3 = stateFactory.createEmptyStackState();
+		IPredicate s1 = mStateFactory.createEmptyStackState();
 		fairAutomaton.addState(true, true, s1);
+		IPredicate s2 = mStateFactory.intersection(s1, s1);
 		fairAutomaton.addState(false, false, s2);
+		IPredicate s3 = mStateFactory.intersection(s1,s2);
 		fairAutomaton.addState(false, true, s3);
 		String procedure = entryLocation.getProcedure();
 		Set<IcfgEdge> procedureAlphabet = mProcedureAlphabetMap.get(procedure);
@@ -89,28 +119,31 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 		//construct outgoing edges of s1
 		List<IcfgEdge> entryEdges = entryLocation.getIncomingEdges();
 		for (IcfgEdge edge : mIcfgAlphabet ) {
-			if(!entryEdges.contains(edge)) {
-				fairAutomaton.addInternalTransition(s1, (L) edge, s1);
-			} else {
-				fairAutomaton.addInternalTransition(s1, (L) edge, s2);
+			if (alphabet.getInternalAlphabet().contains(edge)) {
+				if(entryEdges.contains(edge) && !edge.getPrecedingProcedure().equals(edge.getSucceedingProcedure())) {
+					fairAutomaton.addInternalTransition(s1, (L) edge, s2);
+				} else {
+					fairAutomaton.addInternalTransition(s1, (L) edge, s1);
+				}
 			}
 		}
 		
 		IcfgLocation exit = mIcfg.getProcedureExitNodes().get(procedure);
-		List<IcfgEdge> exitEdges = exit.getOutgoingEdges();
+		List<IcfgEdge> exitEdges = exit.getIncomingEdges();
 		
 		//construct outgoing edges of s2 and s3
 		for(IcfgEdge edge : mIcfgAlphabet) {
-			if(procedureAlphabet.contains(edge)) {
-				fairAutomaton.addInternalTransition(s2, (L) edge, s3);
-				fairAutomaton.addInternalTransition(s3, (L) edge, s3);
-			} else if (exitEdges.contains(edge)) {
-				fairAutomaton.addInternalTransition(s2, (L) edge, s1);
-				fairAutomaton.addInternalTransition(s3, (L) edge, s1);
-			} else {
-				fairAutomaton.addInternalTransition(s2, (L) edge, s2);
-				fairAutomaton.addInternalTransition(s3, (L) edge, s2);
-				
+			if (alphabet.getInternalAlphabet().contains(edge)) {
+				if(procedureAlphabet.contains(edge) && !exitEdges.contains(edge)) {
+					fairAutomaton.addInternalTransition(s2, (L) edge, s3);
+					fairAutomaton.addInternalTransition(s3, (L) edge, s3);
+				} else if (exitEdges.contains(edge)) {
+					fairAutomaton.addInternalTransition(s2, (L) edge, s1);
+					fairAutomaton.addInternalTransition(s3, (L) edge, s1);
+				} else {
+					fairAutomaton.addInternalTransition(s2, (L) edge, s2);
+					fairAutomaton.addInternalTransition(s3, (L) edge, s2);		
+				}
 			}
 		}		
 		return fairAutomaton;
