@@ -33,6 +33,7 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 	private Map<String, Set<IcfgEdge>> mProcedureAlphabetMap;
 	private Map<String, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mFairAutomataMap;
 	private BuchiIntersectNwa<L, IPredicate> mBuchiIntersectAutomaton;
+	private Set<L> mInitialAbstractionAlphabet;
 	
 	public FairInitialAbstractionProvider(IIcfg<?> icfg, IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>>
 	initialAbstractionProvider, AutomataLibraryServices services, PredicateFactoryRefinement stateFactoryForRefinement) {
@@ -50,6 +51,7 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 			IIcfg<? extends IcfgLocation> icfg, Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
 		INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction = mInitialAbstractionProvider.getInitialAbstraction(icfg, errorLocs);
 		
+		/*
 		//compute the alphabet of the main procedure
 		IcfgEdgeIterator iterator = new IcfgEdgeIterator(mIcfg);		
 		while(iterator.hasNext()) {
@@ -83,11 +85,22 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 				mProcedureAlphabetMap.put(procedure, procedureAlphabet);
 			}
 		}
+		
 		//compute the fair automaton of each procedure
 		for (Entry<String, ? extends IcfgLocation> procedureEntry : icfg.getProcedureEntryNodes().entrySet()) {
 			if (mProcedureAlphabetMap.get(procedureEntry.getKey()) != null) {
 				mFairAutomataMap.put(procedureEntry.getKey(), getFairAutomaton(initialAbstraction, procedureEntry.getValue()));
 			}	
+		}*/
+		
+		mInitialAbstractionAlphabet = initialAbstraction.getVpAlphabet().getInternalAlphabet();
+		Set<String> procedures = new HashSet<>();
+		for (L edge : mInitialAbstractionAlphabet) {
+			procedures.add(edge.getPrecedingProcedure());
+			procedures.add(edge.getSucceedingProcedure());
+		}
+		for (String procedure : procedures) {
+			mFairAutomataMap.put(procedure, getFairAutomaton(initialAbstraction, procedure));
 		}
 		
 		//compute the fair intersections
@@ -103,10 +116,41 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 	}
 	
 	private NestedWordAutomaton<L, IPredicate> getFairAutomaton(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
-			IcfgLocation entryLocation) {
+			String procedure) {
 		VpAlphabet<L> alphabet = initialAbstraction.getVpAlphabet();
 		NestedWordAutomaton<L, IPredicate> fairAutomaton = new NestedWordAutomaton<L, IPredicate>(mServices, alphabet, mStateFactory);
 
+		IPredicate s1 = mStateFactory.createEmptyStackState();
+		fairAutomaton.addState(true, true, s1);
+		IPredicate s2 = mStateFactory.intersection(s1, s1);
+		fairAutomaton.addState(false, false, s2);
+		IPredicate s3 = mStateFactory.intersection(s1,s2);
+		fairAutomaton.addState(false, true, s3);
+		for(L edge : mInitialAbstractionAlphabet) {
+			String pre = edge.getPrecedingProcedure();
+			String suc = edge.getSucceedingProcedure();
+			if (!pre.equals(suc) && suc.equals(procedure)) {
+				fairAutomaton.addInternalTransition(s1, edge, s2);
+			} else {
+				fairAutomaton.addInternalTransition(s1, edge, s1);
+			}
+		}
+		for(L edge : mInitialAbstractionAlphabet) {
+			String pre = edge.getPrecedingProcedure();
+			String suc = edge.getSucceedingProcedure();
+			if (pre.equals(procedure) && suc.equals(procedure)) {
+				fairAutomaton.addInternalTransition(s2, edge, s3);
+				fairAutomaton.addInternalTransition(s3, edge, s3);
+			} else if (pre.equals(procedure) && !suc.equals(procedure)) {
+				fairAutomaton.addInternalTransition(s2, edge, s1);
+				fairAutomaton.addInternalTransition(s3, edge, s1);
+			} else {
+				fairAutomaton.addInternalTransition(s2, edge, s2);
+				fairAutomaton.addInternalTransition(s3, edge, s2);
+			}
+		}
+
+		/*
 		IPredicate s1 = mStateFactory.createEmptyStackState();
 		fairAutomaton.addState(true, true, s1);
 		IPredicate s2 = mStateFactory.intersection(s1, s1);
@@ -145,7 +189,7 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 					fairAutomaton.addInternalTransition(s3, (L) edge, s2);		
 				}
 			}
-		}		
+		}		*/
 		return fairAutomaton;
 	}
 
