@@ -374,6 +374,14 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 	// add actual constraints for spec edges, do nothing if not a spec edge
 	protected void transformSpecEdgeClause(final IcfgEdge edge, final HornClauseBuilder clause) {
+		// TODO Fix this for
+		// - parametric programs with some single-instance threads:
+		// ---> i.e. only modify counter for unbounded templates; make sure bounded threads all at exit loc
+		// - parametric programs with multiple unbounded templates:
+		// ---> should there be one counter per template?
+		// - fork/join programs
+		// ---> i.e. we don't need the counter, just assert post after main thread has exited
+
 		if (isPreConditionSpecEdge(edge) && mPrefs.specMode() == SpecMode.POSTCONDITION) {
 			incrementThreadCounter(clause, mRunningThreadsVar, 1L);
 		} else if (isPostConditionSpecEdge(edge)) {
@@ -393,7 +401,9 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		if (!mPrefs.hasPreconditions()) {
 			return false;
 		}
-		return mIcfg.getInitialNodes().contains(edge.getSource());
+		final var template = edge.getPrecedingProcedure();
+		final var entryLoc = mIcfg.getProcedureEntryNodes().get(template);
+		return edge.getSource().equals(entryLoc);
 	}
 
 	protected boolean isPostConditionSpecEdge(final IcfgEdge edge) {
@@ -401,13 +411,6 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 			return false;
 		}
 		final var template = edge.getPrecedingProcedure();
-
-		// only the initial procedure contains the postcondition
-		final var entryLoc = mIcfg.getProcedureEntryNodes().get(template);
-		if (!mIcfg.getInitialNodes().contains(entryLoc)) {
-			return false;
-		}
-
 		final var exitLoc = mIcfg.getProcedureExitNodes().get(template);
 		return edge.getTarget().equals(exitLoc);
 	}
