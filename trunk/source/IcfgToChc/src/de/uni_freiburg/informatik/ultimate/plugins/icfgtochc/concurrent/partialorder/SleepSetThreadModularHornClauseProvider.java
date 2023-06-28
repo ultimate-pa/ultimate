@@ -67,8 +67,8 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 			final IThreadModularPreferenceOrder preferenceOrder, final IcfgToChcPreferences prefs) {
 		super(services, mgdScript, icfg, symbolTable, prefs);
 		mIndependenceChecker = new IndependenceChecker(services, icfg.getCfgSmtToolkit(), independence);
-		mThreadLocations = icfg.getProgramPoints().entrySet().stream()
-				.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().values()));
+		mThreadLocations = icfg.getProgramPoints().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+				e -> e.getValue().values().stream().filter(this::isRelevantLocation).collect(Collectors.toList())));
 
 		if (mPrefs.breakPreferenceOrderSymmetry()) {
 			mIdVars = null;

@@ -186,8 +186,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 				assert result.containsKey(edge.getSource()) : "edge with unknown source loc";
 				final var loc = edge.getTarget();
 
-				if (mPrefs.skipAssertEdges() && errorNodes.contains(loc)) {
-					// do not map error locations to an integer (they do not appear in the CHC system)
+				if (!isRelevantLocation(loc)) {
 					continue;
 				}
 
@@ -198,6 +197,15 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 			}
 		}
 		return result;
+	}
+
+	// do not map error locations to an integer if they do not appear in the CHC system
+	protected boolean isRelevantLocation(final IcfgLocation loc) {
+		if (!mPrefs.skipAssertEdges()) {
+			return true;
+		}
+		final var errorNodes = mIcfg.getProcedureErrorNodes().get(loc.getProcedure());
+		return errorNodes == null || !errorNodes.contains(loc);
 	}
 
 	/**
