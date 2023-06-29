@@ -62,7 +62,6 @@ public class TermTransferrer extends TermTransformer {
 	protected final HistoryRecordingScript mOldScript;
 	protected final HistoryRecordingScript mNewScript;
 
-	protected final Map<Term, Term> mBacktransferMapping = new HashMap<>();
 	protected final Map<Term, Term> mTransferMapping;
 
 	public TermTransferrer(final Script oldScript, final Script newScript) {
@@ -95,10 +94,6 @@ public class TermTransferrer extends TermTransformer {
 
 	public Map<Term, Term> getTransferMapping() {
 		return mTransferMapping;
-	}
-
-	public Map<Term, Term> getBacktranferMapping() {
-		return mBacktransferMapping;
 	}
 
 	@Override
