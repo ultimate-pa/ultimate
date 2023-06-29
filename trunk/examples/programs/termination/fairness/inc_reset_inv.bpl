@@ -1,7 +1,7 @@
 //#Terminating
 
 /*
- * Copy of inc_reset2.bpl, with just thread and ULTIMATE.start swapped.
+ * Copy of inc_reset.bpl, with just thread and ULTIMATE.start swapped.
  *
  * Author: Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  * Date: 2023-06-29
