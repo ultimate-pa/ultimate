@@ -125,7 +125,7 @@ public class SimultaneousUpdateWithReplacements extends SimultaneousUpdate {
 
 	private static Pair<Term, Map<TermVariable, Term>> replaceArrayIndices(final ManagedScript mgdScript,
 			final Set<TermVariable> defaultVarsOfAssignedVars, final Term term) {
-		final List<MultiDimensionalSelect> tmp = MultiDimensionalSelect.extractSelectShallow(term, false);
+		final List<MultiDimensionalSelect> tmp = MultiDimensionalSelect.extractSelectShallow(term);
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		final Map<TermVariable, Term> replacementMapping = new LinkedHashMap<>();
 		for (final MultiDimensionalSelect mds : tmp) {

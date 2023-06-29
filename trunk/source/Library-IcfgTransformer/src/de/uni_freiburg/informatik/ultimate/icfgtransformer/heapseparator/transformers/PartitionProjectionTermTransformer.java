@@ -526,7 +526,7 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 
 			final Term array = transformer.getConverted();
 
-			final Term mdsTerm = new MultiDimensionalSelect(array, index, mScript).getSelectTerm();
+			final Term mdsTerm = new MultiDimensionalSelect(array, index).toTerm(mScript);
 			transformer.setResult(mdsTerm);
 		}
 

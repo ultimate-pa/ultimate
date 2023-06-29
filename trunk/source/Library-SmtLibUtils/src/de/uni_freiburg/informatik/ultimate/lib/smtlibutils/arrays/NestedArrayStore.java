@@ -86,7 +86,7 @@ public class NestedArrayStore implements ITermProvider {
 		final LinkedList<Term> indices = new LinkedList<>();
 		final LinkedList<Term> values = new LinkedList<>();
 		Term currentArray = term;
-		ArrayStore currentStore = ArrayStore.convert(term);
+		ArrayStore currentStore = ArrayStore.of(term);
 		if (currentStore == null) {
 			return null;
 		}
@@ -94,7 +94,7 @@ public class NestedArrayStore implements ITermProvider {
 			indices.addFirst(currentStore.getIndex());
 			values.addFirst(currentStore.getValue());
 			currentArray = currentStore.getArray();
-			currentStore = ArrayStore.convert(currentArray);
+			currentStore = ArrayStore.of(currentArray);
 		}
 		return new NestedArrayStore(currentArray, indices, values);
 	}

@@ -693,6 +693,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 			}
 			case "store": {
 				assert args.length == 3;
+
 				if (mNutzTransformation && SmtSortUtils.isBitvecSort(appTerm.getParameters()[1].getSort())) {
 					final int width = Integer.valueOf(appTerm.getParameters()[1].getSort().getIndices()[0]);
 					// maximal representable number by a bit-vector of width
@@ -834,7 +835,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 				case "bvsle":
 				case "bvsgt":
 				case "bvsge": {
-					setResult(translateRelations(fsym, args, maxNumber, width));
+					setResult(translateRelations(appTerm, fsym, args, maxNumber, width));
 					return;
 				}
 				case "bvadd": {
@@ -1112,11 +1113,12 @@ public class BvToIntTransferrer extends TermTransferrer {
 		}
 	}
 
-	private Term translateRelations(final FunctionSymbol fsym, final Term[] args, final Term maxNumberPlusOne,
-			final int width) {
+	private Term translateRelations(final ApplicationTerm appTerm, final FunctionSymbol fsym, final Term[] args,
+			final Term maxNumberPlusOne, final int width) {
 		Term[] translatedArgs = new Term[args.length];
 		final Term[] utsArgs = args;
 		translatedArgs = args;
+
 		if (mNutzTransformation && SmtSortUtils.isNumericSort(args[0].getSort())) {
 			moduloCount += 2;
 		}
@@ -1128,6 +1130,30 @@ public class BvToIntTransferrer extends TermTransferrer {
 						translatedArgs[i] = SmtUtils.mod(mScript, args[i], maxNumberPlusOne);
 					}
 				}
+
+				if (mNutzTransformation && SmtSortUtils.isArraySort(appTerm.getParameters()[0].getSort())) {
+
+					if (SmtSortUtils.isBitvecSort(appTerm.getParameters()[0].getSort().getArguments()[1])) {
+						final TermVariable quantifiedVar =
+								mNewScript.variable("AuxVar", SmtSortUtils.getIntSort(mNewScript));
+
+						final Term bounds = SmtUtils.and(mNewScript,
+								SmtUtils.leq(mNewScript,
+										SmtUtils.rational2Term(mNewScript, Rational.ZERO,
+												SmtSortUtils.getIntSort(mNewScript)),
+										quantifiedVar),
+								SmtUtils.leq(mNewScript, quantifiedVar, maxNumberPlusOne));
+						final Term equality =
+								SmtUtils.equality(mNewScript, SmtUtils.select(mNewScript, args[0], quantifiedVar),
+										SmtUtils.select(mNewScript, args[1], quantifiedVar));
+						final Term subfromuls = SmtUtils.implies(mNewScript, bounds, equality);
+						final HashSet<TermVariable> newTermVars = new HashSet<TermVariable>();
+						newTermVars.add(quantifiedVar);
+						return SmtUtils.quantifier(mNewScript, 1, newTermVars, subfromuls);
+					}
+
+				}
+
 				return SmtUtils.unfTerm(mScript, "=", null, SmtSortUtils.getIntSort(mMgdScript), translatedArgs);
 			}
 			case "distinct": {

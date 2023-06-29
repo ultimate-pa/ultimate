@@ -124,7 +124,7 @@ public class FindSelects {
 
 //		new ApplicationTermFinder("select", false);
 
-		final List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(tf.getFormula(), true);
+		final List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(tf.getFormula());
 
 		// not sure if the mdSelects are good enough, therefore making a check here
 		if (!mdSelects.isEmpty()) {
@@ -133,7 +133,7 @@ public class FindSelects {
 
 			final Set<ApplicationTerm> selectsInMdSelects = mdSelects.stream()
 					.map(mds -> new ApplicationTermFinder("select", false)
-					.findMatchingSubterms(mds.getSelectTerm()))
+					.findMatchingSubterms(mds.toTerm(mMgdScript.getScript())))
 					.reduce((s1, s2) -> DataStructureUtils.union(s1, s2)).get();
 
 			if (!allSelects.equals(selectsInMdSelects)) {
