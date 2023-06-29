@@ -104,9 +104,8 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 		IPredicate s3 = mStateFactory.intersection(s1,s2);
 		fairAutomaton.addState(false, true, s3);
 		for(L edge : mInitialAbstractionAlphabet) {
-			String pre = edge.getPrecedingProcedure();
 			String suc = edge.getSucceedingProcedure();
-			if (!pre.equals(suc) && suc.equals(procedure)) {
+			if (edge instanceof IIcfgForkTransitionThreadOther && suc.equals(procedure)) {
 				fairAutomaton.addInternalTransition(s1, edge, s2);
 			} else {
 				fairAutomaton.addInternalTransition(s1, edge, s1);
@@ -115,15 +114,15 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 		for(L edge : mInitialAbstractionAlphabet) {
 			String pre = edge.getPrecedingProcedure();
 			String suc = edge.getSucceedingProcedure();
-			Set<String> sucSucProcedures = new HashSet<>();
-			if (edge instanceof IIcfgForkTransitionThreadOther) {
-				fairAutomaton.addInternalTransition(s2, edge, s3);
-				fairAutomaton.addInternalTransition(s3, edge, s3);
-			} else if (pre.equals(procedure) && suc.equals(procedure) && edge.getTarget().toString().contains("EXIT")) {
-				fairAutomaton.addInternalTransition(s2, edge, s1);
-				fairAutomaton.addInternalTransition(s3, edge, s1);
-			} 
-			else {
+			if (pre.equals(procedure) && suc.equals(procedure)) {
+				if (edge.getTarget().toString().contains("EXIT")) {
+					fairAutomaton.addInternalTransition(s2, edge, s1);
+					fairAutomaton.addInternalTransition(s3, edge, s1);
+				} else {
+					fairAutomaton.addInternalTransition(s2, edge, s3);
+					fairAutomaton.addInternalTransition(s3, edge, s3);
+				}	
+			} else {
 				fairAutomaton.addInternalTransition(s2, edge, s2);
 				fairAutomaton.addInternalTransition(s3, edge, s2);
 			}
