@@ -19,9 +19,13 @@ modifies x;
 procedure ULTIMATE.start() returns()
 modifies x;
 {
+	var cond : bool;
   fork 0 thread();
 
-  while (x > 0) {
-    x := x + 1;
+  while (true) {
+		atomic { cond := x > 0; x := x + 1; }
+		if (!cond) {
+			break;
+		}
   }
 }
