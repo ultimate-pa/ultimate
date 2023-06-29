@@ -1844,7 +1844,7 @@ public final class SmtUtils {
 			throw new IllegalArgumentException("dividend has to be integral");
 		}
 		if (!integralRational.denominator().equals(BigInteger.ONE)) {
-			throw new IllegalArgumentException("denominator has to be zero");
+			throw new IllegalArgumentException("denominator has to be one");
 		}
 		return integralRational.numerator();
 	}
@@ -1875,7 +1875,7 @@ public final class SmtUtils {
 
 	/**
 	 * Check if term represents a literal. If this is the case, then return its value as a {@link Rational} otherwise
-	 * return true.
+	 * return null.
 	 */
 	public static Rational tryToConvertToLiteral(final Term term) {
 		final Rational result;
