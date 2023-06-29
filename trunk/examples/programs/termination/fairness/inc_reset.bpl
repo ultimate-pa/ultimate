@@ -1,0 +1,27 @@
+//#Terminating
+
+/*
+ * Example that terminates, if we only consider fair interleavings.
+ *
+ * Author: Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Date: 2023-06-29
+ *
+ */
+
+var x, n: int;
+
+procedure thread() returns()
+modifies x;
+{
+  x := 0;
+}
+
+procedure ULTIMATE.start() returns()
+modifies x;
+{
+  fork 0 thread();
+
+  while (x > 0) {
+    x := x + 1;
+  }
+}
