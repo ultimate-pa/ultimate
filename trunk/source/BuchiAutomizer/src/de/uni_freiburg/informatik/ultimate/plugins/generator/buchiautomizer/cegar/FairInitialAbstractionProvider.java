@@ -53,13 +53,6 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 	public INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getInitialAbstraction(
 			IIcfg<? extends IcfgLocation> icfg, Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
 		INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction = mInitialAbstractionProvider.getInitialAbstraction(icfg, errorLocs);
-
-		//compute the fair automaton of each procedure
-		for (Entry<String, ? extends IcfgLocation> procedureEntry : icfg.getProcedureEntryNodes().entrySet()) {
-			if (mProcedureAlphabetMap.get(procedureEntry.getKey()) != null) {
-				mFairAutomataMap.put(procedureEntry.getKey(), getFairAutomaton(initialAbstraction, procedureEntry.getValue()));
-			}	
-		}*/
 		
 		mInitialAbstractionAlphabet = initialAbstraction.getVpAlphabet().getInternalAlphabet();
 		Set<String> procedures = new HashSet<>();
