@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersectNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -106,13 +107,17 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 		//compute the fair intersections
 		for (Entry<String, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> entry : mFairAutomataMap.entrySet()) {
 			if (mBuchiIntersectAutomaton == null) {
-				mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(initialAbstraction, entry.getValue(), mStateFactory);
+				mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(entry.getValue(), initialAbstraction, mStateFactory);
+				//NestedWordAutomatonReachableStates<L, IPredicate> debug = new NestedWordAutomatonReachableStates<>(mServices, mBuchiIntersectAutomaton);
+				//String debugString = debug.toString();
+				//Integer i = 0;
 			} else {
 				mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(mBuchiIntersectAutomaton, entry.getValue(), mStateFactory);
 			}
 		}
 		
-		return mInitialAbstractionProvider.getInitialAbstraction(icfg, errorLocs);
+		//return mInitialAbstractionProvider.getInitialAbstraction(icfg, errorLocs);
+		return mBuchiIntersectAutomaton;
 	}
 	
 	private NestedWordAutomaton<L, IPredicate> getFairAutomaton(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
