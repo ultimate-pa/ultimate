@@ -13,13 +13,13 @@ var x, n: int;
 procedure thread() returns()
 modifies x;
 {
-	var cond : bool;
-	
+  var cond : bool;
+
   while (true) {
-		atomic { cond := x > 0; x := x + 1; }
-		if (!cond) {
-			break;
-		}
+    atomic { cond := x > 0; x := x + 1; }
+    if (!cond) {
+      break;
+    }
   }
 }
 
@@ -27,5 +27,5 @@ procedure ULTIMATE.start() returns()
 modifies x;
 {
   fork 0 thread();
-	x := 0;
+  x := 0;
 }

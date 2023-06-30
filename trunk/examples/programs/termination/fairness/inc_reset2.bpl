@@ -1,8 +1,6 @@
-//#Terminating
+//#Nonterminating
 
 /*
- * Example that terminates, if we only consider fair interleavings.
- *
  * Author: Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  * Date: 2023-06-29
  *
@@ -19,13 +17,13 @@ modifies x;
 procedure ULTIMATE.start() returns()
 modifies x;
 {
-	var cond : bool;
+  var cond : bool;
   fork 0 thread();
 
   while (true) {
-		atomic { cond := x > 0; x := x + 1; }
-		if (!cond) {
-			break;
-		}
+    atomic { cond := x > 0; x := x + 1; }
+    if (!cond) {
+      break;
+    }
   }
 }

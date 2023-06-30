@@ -12,8 +12,8 @@ procedure thread() returns()
 modifies x;
 {
   while (x < n) {
-		x := x + 1;
-	}
+    x := x + 1;
+  }
 }
 
 procedure ULTIMATE.start() returns()
