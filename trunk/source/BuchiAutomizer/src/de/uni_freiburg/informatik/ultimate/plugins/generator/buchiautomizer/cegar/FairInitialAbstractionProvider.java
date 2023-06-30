@@ -99,21 +99,32 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 		NestedWordAutomaton<L, IPredicate> fairAutomaton = new NestedWordAutomaton<L, IPredicate>(mServices, alphabet, mStateFactory);
 
 		IPredicate s1 = mStateFactory.createEmptyStackState();
-		fairAutomaton.addState(true, false, s1);
+		fairAutomaton.addState(false, true, s1);
 		IPredicate s2 = mStateFactory.intersection(s1, s1);
-		fairAutomaton.addState(false, true, s2);
+		fairAutomaton.addState(true, false, s2);
+		IPredicate s3 = mStateFactory.intersection(s1,s2);
+		fairAutomaton.addState(false, true, s3);
 		
 		for(L edge : mInitialAbstractionAlphabet) {
 			String pre = edge.getPrecedingProcedure();
 			String suc = edge.getSucceedingProcedure();
 			if (pre.equals(procedure) && suc.equals(procedure)) {
-				fairAutomaton.addInternalTransition(s1, edge, s2);
-				fairAutomaton.addInternalTransition(s2, edge, s2);	
+				if (mIcfg.getProcedureExitNodes().get(procedure).equals(edge.getTarget())) {
+					fairAutomaton.addInternalTransition(s1, edge, s1);
+					fairAutomaton.addInternalTransition(s2, edge, s1);
+					fairAutomaton.addInternalTransition(s3, edge, s1);
+				} else {
+					fairAutomaton.addInternalTransition(s1, edge, s1);
+					fairAutomaton.addInternalTransition(s2, edge, s3);
+					fairAutomaton.addInternalTransition(s3, edge, s3);
+				}
 			} else {
 				fairAutomaton.addInternalTransition(s1, edge, s1);
-				fairAutomaton.addInternalTransition(s2, edge, s1);
+				fairAutomaton.addInternalTransition(s2, edge, s2);
+				fairAutomaton.addInternalTransition(s3, edge, s2);
 			}
 		}
+		
 		return fairAutomaton;
 	}
 
