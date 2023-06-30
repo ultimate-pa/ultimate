@@ -33,7 +33,6 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 	private AutomataLibraryServices mServices;
 	private PredicateFactoryRefinement mStateFactory;
 	private Set<IcfgEdge> mIcfgAlphabet;
-	private Map<String, Set<IcfgEdge>> mProcedureAlphabetMap;
 	private Map<String, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mFairAutomataMap;
 	private BuchiIntersectNwa<L, IPredicate> mBuchiIntersectAutomaton;
 	private Set<L> mInitialAbstractionAlphabet;
@@ -45,7 +44,6 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 		mServices = services;
 		mStateFactory = stateFactoryForRefinement;
 		mIcfgAlphabet = new HashSet<>();
-		mProcedureAlphabetMap = new HashMap<>();
 		mFairAutomataMap = new HashMap<>();
 	}
 
@@ -57,11 +55,14 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 		mInitialAbstractionAlphabet = initialAbstraction.getVpAlphabet().getInternalAlphabet();
 		Set<String> procedures = new HashSet<>();
 		for (L edge : mInitialAbstractionAlphabet) {
-			procedures.add(edge.getPrecedingProcedure());
-			procedures.add(edge.getSucceedingProcedure());
+			if (mIcfg.getInitialNodes().contains(edge.getSource())) {
+				mFairAutomataMap.computeIfAbsent(edge.getPrecedingProcedure(), v -> getFairAutomatonMainThread(initialAbstraction, edge.getPrecedingProcedure()));
+			} else {
+				procedures.add(edge.getPrecedingProcedure());
+			}
 		}
 		for (String procedure : procedures) {
-			mFairAutomataMap.put(procedure, getFairAutomaton(initialAbstraction, procedure));
+			mFairAutomataMap.computeIfAbsent(procedure, v -> getFairAutomaton(initialAbstraction, procedure));
 		}
 		
 		//compute the fair intersections
@@ -92,6 +93,30 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 		return mBuchiIntersectAutomaton;
 	}
 	
+	private NestedWordAutomaton<L, IPredicate> getFairAutomatonMainThread(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
+			String procedure) {
+		VpAlphabet<L> alphabet = initialAbstraction.getVpAlphabet();
+		NestedWordAutomaton<L, IPredicate> fairAutomaton = new NestedWordAutomaton<L, IPredicate>(mServices, alphabet, mStateFactory);
+
+		IPredicate s1 = mStateFactory.createEmptyStackState();
+		fairAutomaton.addState(true, false, s1);
+		IPredicate s2 = mStateFactory.intersection(s1, s1);
+		fairAutomaton.addState(false, true, s2);
+		
+		for(L edge : mInitialAbstractionAlphabet) {
+			String pre = edge.getPrecedingProcedure();
+			String suc = edge.getSucceedingProcedure();
+			if (pre.equals(procedure) && suc.equals(procedure)) {
+				fairAutomaton.addInternalTransition(s1, edge, s2);
+				fairAutomaton.addInternalTransition(s2, edge, s2);	
+			} else {
+				fairAutomaton.addInternalTransition(s1, edge, s1);
+				fairAutomaton.addInternalTransition(s2, edge, s1);
+			}
+		}
+		return fairAutomaton;
+	}
+
 	private NestedWordAutomaton<L, IPredicate> getFairAutomaton(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
 			String procedure) {
 		VpAlphabet<L> alphabet = initialAbstraction.getVpAlphabet();
@@ -115,7 +140,9 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 			String pre = edge.getPrecedingProcedure();
 			String suc = edge.getSucceedingProcedure();
 			if (pre.equals(procedure) && suc.equals(procedure)) {
-				if (edge.getTarget().toString().contains("EXIT")) {
+				if (mIcfg.getProcedureExitNodes().get(procedure).equals(edge.getTarget())
+						//edge.getTarget().toString().contains("EXIT")
+						) {
 					fairAutomaton.addInternalTransition(s2, edge, s1);
 					fairAutomaton.addInternalTransition(s3, edge, s1);
 				} else {
