@@ -147,7 +147,9 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 				if (itpCompStatus.wasComputationSuccesful()) {
 					mInterpolants = tc.getForwardIpp().getPredicates().toArray(new IPredicate[0]);
 				} else {
-					throw new UnsupportedOperationException("Acceleration-free interpolant computation failed.");
+					throw new UnsupportedOperationException(
+							String.format("Acceleration-free interpolant computation failed: %s %s ",
+									itpCompStatus.getStatus(), itpCompStatus.getException()));
 				}
 				break;
 			default:
