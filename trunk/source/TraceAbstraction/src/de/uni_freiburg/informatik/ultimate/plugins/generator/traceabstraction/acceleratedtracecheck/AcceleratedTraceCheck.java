@@ -250,7 +250,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 			protected String getSubtaskIdentifier() {
 				return "TODO";
 			}
-		}).setUseExternalSolver(ExternalSolver.Z3, timeout).setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
+		});
 		return createExternalManagedScript(solverSettings);
 	}
 
