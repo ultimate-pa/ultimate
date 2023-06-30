@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: eo-yaml
+Bundle-SymbolicName: eo-yaml
+Bundle-Version: 7.0.8
+Bundle-ClassPath: eo-yaml-7.0.8-jar-with-dependencies.jar
+Bundle-Vendor: https://github.com/decorators-squad/eo-yaml
+Export-Package: com.amihaiemil.eoyaml,
+ com.amihaiemil.eoyaml.exceptions,
+ com.amihaiemil.eoyaml.extensions,
+ javax.json,
+ javax.json.spi,
+ javax.json.stream
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Automatic-Module-Name: com.amihaiemil.web

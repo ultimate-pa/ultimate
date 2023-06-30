@@ -319,6 +319,7 @@
 			**/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/Numeral.java,
 			**/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/Query.java,
 			**/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/Union.java,
+			**/com/amihaiemil/eo-yaml/**,
 		</sonar.exclusions>
 
 		<!-- Exclude from sonar duplication analysis -->
@@ -502,6 +503,7 @@
 		<module>../ChcSolver</module>
 		<module>../ChcToBoogie</module>
 		<module>../CodeCheck</module>
+		<module>../eo-yaml</module>
 		<module>../CoreRCP</module>
 		<module>../Crocotta</module>
 		<module>../GUIGeneratedPreferencePages</module>
