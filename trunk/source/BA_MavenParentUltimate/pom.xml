@@ -608,6 +608,16 @@
 						<enabled>false</enabled>
 					</snapshots>
 				</repository>
+				
+				<repository>
+					<id>p2-repository-ultimate-dependencies</id>
+					<layout>p2</layout>
+					<url>https://struebli.informatik.uni-freiburg.de/p2-repository-ultimate-dependencies/</url>
+					<snapshots>
+						<enabled>false</enabled>
+					</snapshots>
+				</repository>
+				
 			</repositories>
 		</profile>
 

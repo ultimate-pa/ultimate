@@ -35,6 +35,11 @@
 			<unit id="org.apache.batik.util.gui" version="1.9.1.v20190730-1743"/>
 			<unit id="org.apache.batik.xml" version="1.9.1.v20190730-1743"/>
 		</location>
+		<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<repository location="https://struebli.informatik.uni-freiburg.de/p2-repository-ultimate-dependencies/"/>
+			<unit id="eo-yaml" version="7.0.8"/>
+			<unit id="eo-yaml.source" version="7.0.8"/>
+		</location>
 	</locations>
 	<includeBundles>
 		<plugin id="com.google.gson.source"/>
@@ -337,5 +342,6 @@
 		<plugin id="org.eclipse.equinox.security.source"/>
 		<plugin id="org.eclipse.help.source"/>
 		<plugin id="org.eclipse.osgi.services.source"/>
+        <plugin id="eo-yaml"/>
 	</includeBundles>
 </target>
