@@ -93,6 +93,7 @@ public class MultiDimensionalNestedStore implements ITermProvider {
 	}
 
 
+	@Override
 	public Term toTerm(final Script script) {
 		Term array = mArray;
 		for (int i = 0; i < mIndices.size(); i++) {
@@ -249,5 +250,8 @@ public class MultiDimensionalNestedStore implements ITermProvider {
 				ArrayIndex.appendEntriesAtBeginning(mIndices, indexEntries), mValues);
 	}
 
-
+	@Override
+	public String toString() {
+		return String.format("(%s %s %s)", mArray, mIndices, mValues);
+	}
 }
