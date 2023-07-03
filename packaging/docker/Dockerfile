@@ -223,7 +223,18 @@ ARG DIR_TOOLS
 ARG REPO_DIR_WEBSITE_CONFIG="releaseScripts/website-config"
 ARG DIR_WEBSITE_CONFIG="${DIR_ULTIMATE}/${REPO_DIR_WEBSITE_CONFIG}"
 
+ENV ULTIMATE_BACKEND_HOST="localhost"
+ENV ULTIMATE_BACKEND_PORT=8080
+ENV ULTIMATE_BACKEND_ROUTE="/api"
+
+ENV ULTIMATE_FRONTEND_SERVE="False"
+ENV ULTIMATE_FRONTEND_PATH="/some/path"
+ENV ULTIMATE_FRONTEND_ROUTE="/website"
+ENV ULTIMATE_LOG_PATH="/dev/stdout"
+ENV ULTIMATE_LOG_LEVEL="INFO"
+
 ENV ULTIMATE_DIR_TMP="/tmp/ultimate"
+ENV ULTIMATE_TIMEOUT=90
 
 # install runtime dependencies for Ultimate product
 RUN apt-get update && \
@@ -243,7 +254,7 @@ RUN apt-get update && \
 RUN mkdir -p "${DIR_ULTIMATE}"
 WORKDIR "${DIR_ULTIMATE}"
 COPY --from=build "${DIR_OUTPUT}/WebBackend/linux/gtk/x86_64" "${DIR_ULTIMATE}"
-RUN ln -s "${DIR_ULTIMATE}/Ultimate" "/usr/bin/Ultimate"
+RUN ln -s "${DIR_ULTIMATE}/WebBackend" "/usr/bin/WebBackend"
 
 # install alread compiled tools for Ultimate
 COPY --from=build "${DIR_TOOLS}/cvc4" "/usr/bin/cvc4"
@@ -254,24 +265,25 @@ COPY --from=build "${DIR_TOOLS}/z3" "/usr/bin/z3"
 # add configuration files and templates for 'dockerize' and Ultimate
 COPY --from=build "${DIR_WEBSITE_CONFIG}/backend/settings_whitelist.json" "${DIR_ULTIMATE}/settings_whitelist.json"
 ADD "web.config.properties.tpl" "${DIR_ULTIMATE}/web.config.properties.tpl"
-ENV ULTIMATE_BACKEND_SETTINGS_WHITELIST="${DIR_ULTIMATE}/settings_whitelist.json"
+ADD "WebBackend.ini.tpl" "${DIR_ULTIMATE}/WebBackend.ini.tpl"
+RUN rm -f "${DIR_ULTIMATE}/WebBackend.ini"
 
-# activate Ultimate Webbackend configuration
-RUN echo "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.StdErrLog" >> "${DIR_ULTIMATE}/Ultimate.ini" && \
-    echo "-DWebBackend.SETTINGS_FILE=${DIR_ULTIMATE}/web.config.properties" >> "${DIR_ULTIMATE}/Ultimate.ini"
+ENV ULTIMATE_BACKEND_SETTINGS_WHITELIST="${DIR_ULTIMATE}/settings_whitelist.json"
+ENV ULTIMATE_BACKEND_SETTINGS_FILE="${DIR_ULTIMATE}/web.config.properties"
 
 # create directory to store temporary files
-RUN mkdir -p "${ULTIMATE_TMP_DIR}"
+RUN mkdir -p "${ULTIMATE_DIR_TMP}"
 
 # expose communication port of the Webbackend
-EXPOSE "${ULTIMATE_WEBBACKEND_PORT}"
+EXPOSE "${ULTIMATE_BACKEND_PORT}"
 
 # define health check to supervise the Ultimate Webbackend's availability 
 HEALTHCHECK --interval=1m --timeout=10s --start-period=20s \
     CMD curl -f "http://${ULTIMATE_BACKEND_HOST}:${ULTIMATE_BACKEND_PORT}${ULTIMATE_BACKEND_ROUTE}" || exit 1
-
+RUN echo "${DIR_ULTIMATE}"
 # default entry point to automatically configure and start the Ultimate Webbackend product
-CMD dockerize -template "${DIR_ULTIMATE}/web.config.properties.tpl:${DIR_ULTIMATE}/web.config.properties" \
+CMD dockerize -template "web.config.properties.tpl:web.config.properties" \
+              -template "WebBackend.ini.tpl:WebBackend.ini" \
               -wait "tcp://${ULTIMATE_BACKEND_HOST}:${ULTIMATE_BACKEND_PORT}${ULTIMATE_BACKEND_ROUTE}" \
-              -timeout "${ULTIMATE_BACKEND_START_TIMEOUT}" \
-              Ultimate
+              -timeout 20s \
+              WebBackend
