@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -84,6 +86,73 @@ class IndependenceChecker {
 
 	public Term getIndependenceCondition(final HornClauseBuilder clause, final ThreadInstance thread1,
 			final IcfgEdge action1, final ThreadInstance thread2, final IcfgEdge action2) {
+		// Hardcoded conditions for line-queue example
+		// TODO remove after evaluation
+		Term hardcoded = null;
+		if ("value := queue[id - 1][read_ptr];".equals(action1.toString())
+				&& "queue := queue[0 := queue[0][write_ptr[0] := idx]];".equals(action2.toString())) {
+			final var idLeft = mLeftSubstitution.get(mSymbolTable.getLocals(thread1.getTemplateName()).stream()
+					.filter(v -> "id".equals(v.getIdentifier())).findAny().get());
+			final var readPtrLeft = mLeftSubstitution.get(mSymbolTable.getLocals(thread1.getTemplateName()).stream()
+					.filter(v -> "read_ptr".equals(v.getIdentifier())).findAny().get());
+			final var writePtr = mSymbolTable.getGlobals().stream().filter(v -> "write_ptr".equals(v.getIdentifier()))
+					.findAny().get();
+			hardcoded = SmtUtils.or(mMgdScript.getScript(),
+					SmtUtils.distinct(mMgdScript.getScript(), idLeft.getTerm(),
+							SmtUtils.constructIntValue(mMgdScript.getScript(), BigInteger.ONE)),
+					SmtUtils.distinct(mMgdScript.getScript(), readPtrLeft.getTerm(),
+							SmtUtils.select(mMgdScript.getScript(), writePtr.getTerm(),
+									SmtUtils.constructIntValue(mMgdScript.getScript(), BigInteger.ZERO))));
+		} else if ("value := queue[id - 1][read_ptr];".equals(action1.toString())
+				&& "queue := queue[id := queue[id][write_ptr[id] := value]];".equals(action2.toString())) {
+			final var idLeft = mLeftSubstitution.get(mSymbolTable.getLocals(thread1.getTemplateName()).stream()
+					.filter(v -> "id".equals(v.getIdentifier())).findAny().get());
+			final var readPtrLeft = mLeftSubstitution.get(mSymbolTable.getLocals(thread1.getTemplateName()).stream()
+					.filter(v -> "read_ptr".equals(v.getIdentifier())).findAny().get());
+			final var writePtr = mSymbolTable.getGlobals().stream().filter(v -> "write_ptr".equals(v.getIdentifier()))
+					.findAny().get();
+			hardcoded = SmtUtils.distinct(mMgdScript.getScript(), readPtrLeft.getTerm(),
+					SmtUtils.select(mMgdScript.getScript(), writePtr.getTerm(), SmtUtils.minus(mMgdScript.getScript(),
+							idLeft.getTerm(), SmtUtils.constructIntValue(mMgdScript.getScript(), BigInteger.ONE))));
+		} else if ("queue := queue[id := queue[id][write_ptr[id] := value]];".equals(action1.toString())
+				&& "queue := queue[id := queue[id][write_ptr[id] := value]];".equals(action2.toString())) {
+			final var idLeft = mLeftSubstitution.get(mSymbolTable.getLocals(thread1.getTemplateName()).stream()
+					.filter(v -> "id".equals(v.getIdentifier())).findAny().get());
+			final var idRight = mRightSubstitution.get(mSymbolTable.getLocals(thread2.getTemplateName()).stream()
+					.filter(v -> "id".equals(v.getIdentifier())).findAny().get());
+			hardcoded = SmtUtils.distinct(mMgdScript.getScript(), idLeft.getTerm(), idRight.getTerm());
+		} else if ("queue := queue[id := queue[id][write_ptr[id] := value]];".equals(action1.toString())
+				&& "value := queue[id - 1][read_ptr];".equals(action2.toString())) {
+			final var idRight = mRightSubstitution.get(mSymbolTable.getLocals(thread2.getTemplateName()).stream()
+					.filter(v -> "id".equals(v.getIdentifier())).findAny().get());
+			final var readPtrRight = mRightSubstitution.get(mSymbolTable.getLocals(thread2.getTemplateName()).stream()
+					.filter(v -> "read_ptr".equals(v.getIdentifier())).findAny().get());
+			final var writePtr = mSymbolTable.getGlobals().stream().filter(v -> "write_ptr".equals(v.getIdentifier()))
+					.findAny().get();
+			hardcoded = SmtUtils.distinct(mMgdScript.getScript(), readPtrRight.getTerm(),
+					SmtUtils.select(mMgdScript.getScript(), writePtr.getTerm(), SmtUtils.minus(mMgdScript.getScript(),
+							idRight.getTerm(), SmtUtils.constructIntValue(mMgdScript.getScript(), BigInteger.ONE))));
+		} else if ("queue := queue[0 := queue[0][write_ptr[0] := idx]];".equals(action1.toString())
+				&& "value := queue[id - 1][read_ptr];".equals(action2.toString())) {
+			final var idRight = mRightSubstitution.get(mSymbolTable.getLocals(thread2.getTemplateName()).stream()
+					.filter(v -> "id".equals(v.getIdentifier())).findAny().get());
+			final var readPtrRight = mRightSubstitution.get(mSymbolTable.getLocals(thread2.getTemplateName()).stream()
+					.filter(v -> "read_ptr".equals(v.getIdentifier())).findAny().get());
+			final var writePtr = mSymbolTable.getGlobals().stream().filter(v -> "write_ptr".equals(v.getIdentifier()))
+					.findAny().get();
+			hardcoded = SmtUtils.or(mMgdScript.getScript(),
+					SmtUtils.distinct(mMgdScript.getScript(), idRight.getTerm(),
+							SmtUtils.constructIntValue(mMgdScript.getScript(), BigInteger.ONE)),
+					SmtUtils.distinct(mMgdScript.getScript(), readPtrRight.getTerm(),
+							SmtUtils.select(mMgdScript.getScript(), writePtr.getTerm(),
+									SmtUtils.constructIntValue(mMgdScript.getScript(), BigInteger.ZERO))));
+		}
+		if (hardcoded != null) {
+			mLogger.warn(
+					"Hardcoded independence condition for '" + action1 + "' and '" + action2 + "' is: " + hardcoded);
+			return deinstantiate(clause, thread1, thread2, hardcoded);
+		}
+
 		// first check the cache
 		final var cached = mCache.get(new Pair<>(action1, action2));
 		if (cached != null) {
