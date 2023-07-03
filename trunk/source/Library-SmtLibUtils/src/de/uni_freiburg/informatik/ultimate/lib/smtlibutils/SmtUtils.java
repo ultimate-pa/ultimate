@@ -2278,6 +2278,17 @@ public final class SmtUtils {
 		final Term notEq = script.term("distinct", formula1, formula2);
 		return Util.checkSat(script, notEq);
 	}
+	
+	/**
+	 * @return LBool.UNSAT if the SMT solver was able to prove that the antecedent
+	 *         implies the succedent, LBool.SAT if the SMT was able to prove that
+	 *         the antecent does not imply the succedent, and LBool.UNKNOWN
+	 *         otherwise.
+	 */
+	public static LBool checkImplication(final Term antecedent, final Term succedent, final Script script) {
+		final Term notImply = SmtUtils.and(script, antecedent, SmtUtils.not(script, succedent)); 
+		return Util.checkSat(script, notImply);
+	}
 
 	/**
 	 * Returns true iff the boolean formulas formula1 and formula2 are equivalent under the given assumption w.r.t
