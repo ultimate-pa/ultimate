@@ -284,6 +284,4 @@ RUN echo "${DIR_ULTIMATE}"
 # default entry point to automatically configure and start the Ultimate Webbackend product
 CMD dockerize -template "web.config.properties.tpl:web.config.properties" \
               -template "WebBackend.ini.tpl:WebBackend.ini" \
-              -wait "tcp://${ULTIMATE_BACKEND_HOST}:${ULTIMATE_BACKEND_PORT}${ULTIMATE_BACKEND_ROUTE}" \
-              -timeout 20s \
               WebBackend
