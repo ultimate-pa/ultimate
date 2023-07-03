@@ -32,8 +32,8 @@ ARG DIR_OUTPUT
 RUN apt-get update && \
     apt-get install -y "git" \
                        "maven" \
-                       "openjdk-11-jdk" &&
-                       rm -rf /var/lib/apt/lists/*
+                       "openjdk-11-jdk" && \
+    rm -rf /var/lib/apt/lists/*
 
 # clone fresh Ultimate Git repository
 RUN mkdir -p "${DIR_BUILD}" && \
@@ -58,7 +58,7 @@ ARG DIR_TOOLS
 # install runtime dependencies for Ultimate product
 RUN apt-get update && \
     apt-get install -y "apt-utils" && \
-    apt-get install -y "openjdk-11-jre" &&
+    apt-get install -y "openjdk-11-jre" && \
     rm -rf /var/lib/apt/lists/*
 
 # install already built Ultimate product
@@ -91,7 +91,7 @@ ARG DIR_TOOLS
 # install runtime dependencies for Ultimate product
 RUN apt-get update && \
     apt-get install -y "apt-utils" && \
-    apt-get install -y "openjdk-11-jre" &&
+    apt-get install -y "openjdk-11-jre" && \
     rm -rf /var/lib/apt/lists/*
 
 # install already built Ultimate product
@@ -124,7 +124,7 @@ ARG DIR_TOOLS
 # install runtime dependencies for Ultimate product
 RUN apt-get update && \
     apt-get install -y "apt-utils" && \
-    apt-get install -y "openjdk-11-jre" &&
+    apt-get install -y "openjdk-11-jre" && \
     rm -rf /var/lib/apt/lists/*
 
 # install already built Ultimate product
@@ -157,7 +157,7 @@ ARG DIR_TOOLS
 # install runtime dependencies for Ultimate product
 RUN apt-get update && \
     apt-get install -y "apt-utils" && \
-    apt-get install -y "openjdk-11-jre" &&
+    apt-get install -y "openjdk-11-jre" && \
     rm -rf /var/lib/apt/lists/*
 
 # install already built Ultimate product
@@ -190,7 +190,7 @@ ARG DIR_TOOLS
 # install runtime dependencies for Ultimate product
 RUN apt-get update && \
     apt-get install -y "apt-utils" && \
-    apt-get install -y "openjdk-11-jre" &&
+    apt-get install -y "openjdk-11-jre" && \
     rm -rf /var/lib/apt/lists/*
 
 # install already built Ultimate product
@@ -257,7 +257,7 @@ ADD "web.config.properties.tpl" "${DIR_ULTIMATE}/web.config.properties.tpl"
 ENV ULTIMATE_BACKEND_SETTINGS_WHITELIST="${DIR_ULTIMATE}/settings_whitelist.json"
 
 # activate Ultimate Webbackend configuration
-RUN echo "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.StdErrLog" >> "${DIR_ULTIMATE}/Ultimate.ini" &&
+RUN echo "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.StdErrLog" >> "${DIR_ULTIMATE}/Ultimate.ini" && \
     echo "-DWebBackend.SETTINGS_FILE=${DIR_ULTIMATE}/web.config.properties" >> "${DIR_ULTIMATE}/Ultimate.ini"
 
 # create directory to store temporary files
