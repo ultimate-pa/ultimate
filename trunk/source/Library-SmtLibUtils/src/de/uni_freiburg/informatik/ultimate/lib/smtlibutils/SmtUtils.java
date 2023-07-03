@@ -125,6 +125,8 @@ public final class SmtUtils {
 		SIMPLIFY_QUICK(true),
 
 		SIMPLIFY_DDA(true),
+		
+		SIMPLIFY_DDA2(true),
 
 		POLY_PAC(false),
 
@@ -186,6 +188,9 @@ public final class SmtUtils {
 			case SIMPLIFY_DDA:
 				simplified = new SimplifyDDAWithTimeout(script.getScript(), true, services, context)
 						.getSimplifiedTerm(formula);
+				break;
+			case SIMPLIFY_DDA2:
+				simplified = SimplifyDDA2.simplify(services, mgdScript, context, formula);
 				break;
 			case SIMPLIFY_QUICK:
 				simplified = new SimplifyQuick(script.getScript(), services).getSimplifiedTerm(formula);
