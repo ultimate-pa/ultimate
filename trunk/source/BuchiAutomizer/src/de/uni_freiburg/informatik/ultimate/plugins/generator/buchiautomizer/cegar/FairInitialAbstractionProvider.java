@@ -17,12 +17,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiInters
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 
@@ -32,18 +30,18 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 	private IIcfg<?> mIcfg;
 	private AutomataLibraryServices mServices;
 	private PredicateFactoryRefinement mStateFactory;
-	private Set<IcfgEdge> mIcfgAlphabet;
 	private Map<String, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mFairAutomataMap;
 	private BuchiIntersectNwa<L, IPredicate> mBuchiIntersectAutomaton;
 	private Set<L> mInitialAbstractionAlphabet;
+	private PredicateFactory mPredicateFactory;
 	
 	public FairInitialAbstractionProvider(IIcfg<?> icfg, IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>>
-	initialAbstractionProvider, AutomataLibraryServices services, PredicateFactoryRefinement stateFactoryForRefinement) {
+	initialAbstractionProvider, AutomataLibraryServices services, PredicateFactory predicateFactory, PredicateFactoryRefinement stateFactoryForRefinement) {
 		mInitialAbstractionProvider = initialAbstractionProvider;
 		mIcfg = icfg;
 		mServices = services;
+		mPredicateFactory = predicateFactory;
 		mStateFactory = stateFactoryForRefinement;
-		mIcfgAlphabet = new HashSet<>();
 		mFairAutomataMap = new HashMap<>();
 	}
 
@@ -68,7 +66,7 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 		//compute the fair intersections
 		for (Entry<String, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> entry : mFairAutomataMap.entrySet()) {
 			if (mBuchiIntersectAutomaton == null) {
-				mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(entry.getValue(), initialAbstraction, mStateFactory);
+				mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(initialAbstraction, entry.getValue(), mStateFactory);
 				/*
 				NestedWordAutomatonReachableStates<L, IPredicate> debug = new NestedWordAutomatonReachableStates<>(mServices, mBuchiIntersectAutomaton);
 				String debugString = debug.toString();
@@ -84,12 +82,11 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 			}
 		}
 		
-		//return mInitialAbstractionProvider.getInitialAbstraction(icfg, errorLocs);
-		/*
+		
 		NestedWordAutomatonReachableStates<L, IPredicate> debug = new NestedWordAutomatonReachableStates<>(mServices, mBuchiIntersectAutomaton);
 		String debugString = debug.toString();
 		Integer i = 0;
-		*/
+		
 		return mBuchiIntersectAutomaton;
 	}
 	
@@ -98,11 +95,11 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 		VpAlphabet<L> alphabet = initialAbstraction.getVpAlphabet();
 		NestedWordAutomaton<L, IPredicate> fairAutomaton = new NestedWordAutomaton<L, IPredicate>(mServices, alphabet, mStateFactory);
 
-		IPredicate s1 = mStateFactory.createEmptyStackState();
+		IPredicate s1 = mPredicateFactory.newDebugPredicate("s1");
 		fairAutomaton.addState(false, true, s1);
-		IPredicate s2 = mStateFactory.intersection(s1, s1);
+		IPredicate s2 = mPredicateFactory.newDebugPredicate("s2");
 		fairAutomaton.addState(true, false, s2);
-		IPredicate s3 = mStateFactory.intersection(s1,s2);
+		IPredicate s3 = mPredicateFactory.newDebugPredicate("s3");
 		fairAutomaton.addState(false, true, s3);
 		
 		for(L edge : mInitialAbstractionAlphabet) {
@@ -133,11 +130,11 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 		VpAlphabet<L> alphabet = initialAbstraction.getVpAlphabet();
 		NestedWordAutomaton<L, IPredicate> fairAutomaton = new NestedWordAutomaton<L, IPredicate>(mServices, alphabet, mStateFactory);
 
-		IPredicate s1 = mStateFactory.createEmptyStackState();
+		IPredicate s1 = mPredicateFactory.newDebugPredicate("s1");
 		fairAutomaton.addState(true, true, s1);
-		IPredicate s2 = mStateFactory.intersection(s1, s1);
+		IPredicate s2 = mPredicateFactory.newDebugPredicate("s2");
 		fairAutomaton.addState(false, false, s2);
-		IPredicate s3 = mStateFactory.intersection(s1,s2);
+		IPredicate s3 = mPredicateFactory.newDebugPredicate("s3");
 		fairAutomaton.addState(false, true, s3);
 		for(L edge : mInitialAbstractionAlphabet) {
 			String suc = edge.getSucceedingProcedure();
@@ -151,9 +148,7 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 			String pre = edge.getPrecedingProcedure();
 			String suc = edge.getSucceedingProcedure();
 			if (pre.equals(procedure) && suc.equals(procedure)) {
-				if (mIcfg.getProcedureExitNodes().get(procedure).equals(edge.getTarget())
-						//edge.getTarget().toString().contains("EXIT")
-						) {
+				if (mIcfg.getProcedureExitNodes().get(procedure).equals(edge.getTarget())) {
 					fairAutomaton.addInternalTransition(s2, edge, s1);
 					fairAutomaton.addInternalTransition(s3, edge, s1);
 				} else {
