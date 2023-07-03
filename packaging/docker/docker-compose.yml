@@ -1,0 +1,12 @@
+version: "2"
+services:
+  ultimate-webbackend:
+    build:
+      dockerfile: "Dockerfile"
+      target: "ultimate-webbackend"
+    image: "ultimate-webbackend"
+    env_file:
+      - "ultimate-webbackend.env"
+    ports:
+      - "${ULTIMATE_BACKEND_PORT}:${ULTIMATE_BACKEND_PORT}"
+    restart: "unless-stopped"
