@@ -661,9 +661,6 @@ public class Req2BoogieTranslator {
 		return stmts;
 	}
 	
-	private Statement genInitialTransitionStmts() {
-		return null;
-	}
 
 	private Statement[] generateProcedureBody(final BoogieLocation bl, final List<DeclarationPattern> init) {
 		final List<Statement> statements = new ArrayList<>();
