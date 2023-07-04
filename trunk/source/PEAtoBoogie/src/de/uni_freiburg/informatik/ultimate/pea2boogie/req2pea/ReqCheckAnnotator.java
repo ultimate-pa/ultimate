@@ -192,7 +192,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final List<Statement> stmtList = new ArrayList<>();
 		ReqPeas reqPeaTotal = mReqPeas.get(0);
 		ReqPeas reqPeaComplement = mReqPeas.get(1);
-		// List<Entry<CounterTrace, PhaseEventAutomata>> peas = reqPea.getCounterTrace2Pea();
 		// we can only check for complement if we have exactly two PEAs
 		PhaseEventAutomata a0 = reqPeaTotal.getCounterTrace2Pea().get(0).getValue();
 		PhaseEventAutomata a1 = reqPeaComplement.getCounterTrace2Pea().get(0).getValue();

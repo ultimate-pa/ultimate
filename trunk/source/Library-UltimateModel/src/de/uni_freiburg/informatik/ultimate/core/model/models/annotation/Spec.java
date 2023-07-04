@@ -202,8 +202,8 @@ public enum Spec {
 	 * Checks if two PEAs accept each others complement language.
 	 */
 	COMPLEMENT(Group.REQUIREMENT,
-			"not complements of each other",
-			"complements of each other");
+			"complements of each other",
+			"not complements of each other");
 	// @formatter:on
 
 	/**

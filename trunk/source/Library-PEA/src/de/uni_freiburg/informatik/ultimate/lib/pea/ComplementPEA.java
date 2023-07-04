@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 
 
@@ -60,8 +61,8 @@ public class ComplementPEA {
 			CDD clockInv = phase.getClockInvariant();
 			Decision<?> clockDecision = clockInv.getDecision();
 			CDD guardToSink = phase.stateInv.and(RangeDecision.strict(clockInv));
-			// create new phase for complement automaton that is not accepting
 			Phase newPhase = new Phase(phase.name, phase.stateInv, phase.clockInv);
+			newPhase.setInit(phase.isInit);
 			
 			
 			for (Transition transition : phase.transitions) {
@@ -77,12 +78,16 @@ public class ComplementPEA {
 				// compute guard to sink
 				// we do not use the clock invariant of the successor phase
 				// if the same clock is in the reset set of the transition
+				CDD guardCdd = transition.getGuard();
+				Set<String> emptySet = Collections.<String>emptySet();
+				CDD guardUnprimed = guardCdd.unprime(emptySet);
 				if (reset.length > 0) {
 					CDD noResetClockInv = RangeDecision.filterCdd(successorClockInv, reset);
 							//noReset(successorClockInv, reset, noResetCdd);
-					guardToSink = guardToSink.or(transition.getGuard().and(successorStateInv).and(RangeDecision.strict(noResetClockInv)));
+					
+					guardToSink = guardToSink.or(guardUnprimed.and(successorStateInv).and(RangeDecision.strict(noResetClockInv)));
 				} else {
-					guardToSink = guardToSink.or(transition.getGuard().and(successorStateInv).and(RangeDecision.strict(successorClockInv)));
+					guardToSink = guardToSink.or(guardUnprimed.and(successorStateInv).and(RangeDecision.strict(successorClockInv)));
 				}
 			}
 			// make transition to sink 
