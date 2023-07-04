@@ -44,9 +44,9 @@ WORKDIR "${DIR_ULTIMATE}"
 RUN mvn -f "${REPO_MAVEN_ROOT}" clean package -P materialize
 
 #------------------------------------------------------------------------------
-# 2nd build stage: package Ultimate CLI
+# 2nd build stage: package common Ultimate artifacts shared by all products
 #------------------------------------------------------------------------------
-FROM debian:bullseye AS ultimate-cli
+FROM debian:bullseye AS ultimate-common
 
 ARG REPO_DIR_BUILD
 ARG REPO_DIR_TOOLS
@@ -55,31 +55,45 @@ ARG DIR_ULTIMATE
 ARG DIR_OUTPUT
 ARG DIR_TOOLS
 
-# install runtime dependencies for Ultimate product
+# install runtime dependencies for all Ultimate products
 RUN apt-get update && \
     apt-get install -y "apt-utils" && \
     apt-get install -y "openjdk-11-jre" && \
     rm -rf /var/lib/apt/lists/*
 
-# install already built Ultimate product
+# prepare installation directory for an Ultimate product
 RUN mkdir -p "${DIR_ULTIMATE}"
 WORKDIR "${DIR_ULTIMATE}"
+
+# install alread compiled tools for all Ultimate products
+COPY --from=build "${DIR_TOOLS}/cvc4" "/usr/bin/cvc4"
+COPY --from=build "${DIR_TOOLS}/ltl2ba" "/usr/bin/ltl2ba"
+COPY --from=build "${DIR_TOOLS}/mathsat" "/usr/bin/mathsat"
+COPY --from=build "${DIR_TOOLS}/z3" "/usr/bin/z3"
+
+#------------------------------------------------------------------------------
+# 3rd build stage: package Ultimate CLI
+#------------------------------------------------------------------------------
+FROM ultimate-common AS ultimate-cli
+
+ARG REPO_DIR_BUILD
+ARG REPO_DIR_TOOLS
+ARG DIR_BUILD
+ARG DIR_ULTIMATE
+ARG DIR_OUTPUT
+ARG DIR_TOOLS
+
+# install already built Ultimate CLI product
 COPY --from=build "${DIR_OUTPUT}/CLI-E4/linux/gtk/x86_64" "${DIR_ULTIMATE}"
 RUN ln -s "${DIR_ULTIMATE}/Ultimate" "/usr/bin/Ultimate"
 
-# install alread compiled tools for Ultimate
-COPY --from=build "${DIR_TOOLS}/cvc4" "/usr/bin/cvc4"
-COPY --from=build "${DIR_TOOLS}/ltl2ba" "/usr/bin/ltl2ba"
-COPY --from=build "${DIR_TOOLS}/mathsat" "/usr/bin/mathsat"
-COPY --from=build "${DIR_TOOLS}/z3" "/usr/bin/z3"
-
-# default entry point to print installed Ultimate version
-CMD ["Ultimate", "--version"]
+# default entry point to print installed Ultimate CLI version
+CMD ["Ultimate", "-version"]
 
 #------------------------------------------------------------------------------
-# 2nd build stage: package Ultimate Debug UI
+# 3rd build stage: package Ultimate Debug UI
 #------------------------------------------------------------------------------
-FROM debian:bullseye AS ultimate-debug
+FROM ultimate-common AS ultimate-debug
 
 ARG REPO_DIR_BUILD
 ARG REPO_DIR_TOOLS
@@ -88,31 +102,29 @@ ARG DIR_ULTIMATE
 ARG DIR_OUTPUT
 ARG DIR_TOOLS
 
-# install runtime dependencies for Ultimate product
+# install graphical dependencies for Ultimate Debug UI product
 RUN apt-get update && \
-    apt-get install -y "apt-utils" && \
-    apt-get install -y "openjdk-11-jre" && \
+    apt-get install -y "libswt-gtk-4-jni" && \
+    apt-get install -y "libswt-gtk-4-java" && \
+    apt-get install -y "xauth" && \
     rm -rf /var/lib/apt/lists/*
 
-# install already built Ultimate product
-RUN mkdir -p "${DIR_ULTIMATE}"
-WORKDIR "${DIR_ULTIMATE}"
+# install already built Ultimate Debug UI product
 COPY --from=build "${DIR_OUTPUT}/Debug-E4/linux/gtk/x86_64" "${DIR_ULTIMATE}"
-RUN ln -s "${DIR_ULTIMATE}/Ultimate" "/usr/bin/Ultimate"
+RUN ln -s "${DIR_ULTIMATE}/UltimateDebug" "/usr/bin/UltimateDebug"
 
-# install alread compiled tools for Ultimate
-COPY --from=build "${DIR_TOOLS}/cvc4" "/usr/bin/cvc4"
-COPY --from=build "${DIR_TOOLS}/ltl2ba" "/usr/bin/ltl2ba"
-COPY --from=build "${DIR_TOOLS}/mathsat" "/usr/bin/mathsat"
-COPY --from=build "${DIR_TOOLS}/z3" "/usr/bin/z3"
+# run the Ultimate Debug UI product as non-root user 'ultimate'
+RUN useradd --no-create-home --home-dir "${DIR_ULTIMATE}" ultimate && \
+    chown -R ultimate:ultimate "${DIR_ULTIMATE}"
+USER ultimate
 
 # default entry point to print installed Ultimate version
-CMD ["Ultimate", "--version"]
+CMD ["UltimateDebug", "-version"]
 
 #------------------------------------------------------------------------------
-# 2nd build stage: package Ultimate ReqAnalyzer
+# 3rd build stage: package Ultimate ReqAnalyzer
 #------------------------------------------------------------------------------
-FROM debian:bullseye AS ultimate-reqanalyzer
+FROM ultimate-common AS ultimate-reqanalyzer
 
 ARG REPO_DIR_BUILD
 ARG REPO_DIR_TOOLS
@@ -121,31 +133,17 @@ ARG DIR_ULTIMATE
 ARG DIR_OUTPUT
 ARG DIR_TOOLS
 
-# install runtime dependencies for Ultimate product
-RUN apt-get update && \
-    apt-get install -y "apt-utils" && \
-    apt-get install -y "openjdk-11-jre" && \
-    rm -rf /var/lib/apt/lists/*
-
-# install already built Ultimate product
-RUN mkdir -p "${DIR_ULTIMATE}"
-WORKDIR "${DIR_ULTIMATE}"
+# install already built Ultimate ReqAnalyzer product
 COPY --from=build "${DIR_OUTPUT}/ReqAnalyzer/linux/gtk/x86_64" "${DIR_ULTIMATE}"
-RUN ln -s "${DIR_ULTIMATE}/Ultimate" "/usr/bin/Ultimate"
-
-# install alread compiled tools for Ultimate
-COPY --from=build "${DIR_TOOLS}/cvc4" "/usr/bin/cvc4"
-COPY --from=build "${DIR_TOOLS}/ltl2ba" "/usr/bin/ltl2ba"
-COPY --from=build "${DIR_TOOLS}/mathsat" "/usr/bin/mathsat"
-COPY --from=build "${DIR_TOOLS}/z3" "/usr/bin/z3"
+RUN ln -s "${DIR_ULTIMATE}/ReqAnalyzer" "/usr/bin/ReqAnalyzer"
 
 # default entry point to print installed Ultimate version
-CMD ["Ultimate", "--version"]
+CMD ["ReqAnalyzer", "-version"]
 
 #------------------------------------------------------------------------------
-# 2nd build stage: package Ultimate DeltaDebugger
+# 3rd build stage: package Ultimate DeltaDebugger
 #------------------------------------------------------------------------------
-FROM debian:bullseye AS ultimate-deltadebugger
+FROM ultimate-common AS ultimate-deltadebugger
 
 ARG REPO_DIR_BUILD
 ARG REPO_DIR_TOOLS
@@ -154,31 +152,17 @@ ARG DIR_ULTIMATE
 ARG DIR_OUTPUT
 ARG DIR_TOOLS
 
-# install runtime dependencies for Ultimate product
-RUN apt-get update && \
-    apt-get install -y "apt-utils" && \
-    apt-get install -y "openjdk-11-jre" && \
-    rm -rf /var/lib/apt/lists/*
-
-# install already built Ultimate product
-RUN mkdir -p "${DIR_ULTIMATE}"
-WORKDIR "${DIR_ULTIMATE}"
+# install already built Ultimate DeltaDebugger product
 COPY --from=build "${DIR_OUTPUT}/DeltaDebugger/linux/gtk/x86_64" "${DIR_ULTIMATE}"
 RUN ln -s "${DIR_ULTIMATE}/Ultimate" "/usr/bin/Ultimate"
 
-# install alread compiled tools for Ultimate
-COPY --from=build "${DIR_TOOLS}/cvc4" "/usr/bin/cvc4"
-COPY --from=build "${DIR_TOOLS}/ltl2ba" "/usr/bin/ltl2ba"
-COPY --from=build "${DIR_TOOLS}/mathsat" "/usr/bin/mathsat"
-COPY --from=build "${DIR_TOOLS}/z3" "/usr/bin/z3"
-
 # default entry point to print installed Ultimate version
-CMD ["Ultimate", "--version"]
+CMD ["Ultimate", "-version"]
 
 #------------------------------------------------------------------------------
-# 2nd build stage: package Ultimate Eliminator
+# 3rd build stage: package Ultimate Eliminator
 #------------------------------------------------------------------------------
-FROM debian:bullseye AS ultimate-eliminator
+FROM ultimate-common AS ultimate-eliminator
 
 ARG REPO_DIR_BUILD
 ARG REPO_DIR_TOOLS
@@ -187,31 +171,17 @@ ARG DIR_ULTIMATE
 ARG DIR_OUTPUT
 ARG DIR_TOOLS
 
-# install runtime dependencies for Ultimate product
-RUN apt-get update && \
-    apt-get install -y "apt-utils" && \
-    apt-get install -y "openjdk-11-jre" && \
-    rm -rf /var/lib/apt/lists/*
-
-# install already built Ultimate product
-RUN mkdir -p "${DIR_ULTIMATE}"
-WORKDIR "${DIR_ULTIMATE}"
+# install already built Ultimate Eliminator product
 COPY --from=build "${DIR_OUTPUT}/UltimateEliminator/linux/gtk/x86_64" "${DIR_ULTIMATE}"
 RUN ln -s "${DIR_ULTIMATE}/Ultimate" "/usr/bin/Ultimate"
 
-# install alread compiled tools for Ultimate
-COPY --from=build "${DIR_TOOLS}/cvc4" "/usr/bin/cvc4"
-COPY --from=build "${DIR_TOOLS}/ltl2ba" "/usr/bin/ltl2ba"
-COPY --from=build "${DIR_TOOLS}/mathsat" "/usr/bin/mathsat"
-COPY --from=build "${DIR_TOOLS}/z3" "/usr/bin/z3"
-
 # default entry point to print installed Ultimate version
-CMD ["Ultimate", "--version"]
+CMD ["Ultimate", "-version"]
 
 #------------------------------------------------------------------------------
-# 2nd build stage: package Ultimate WebBackend
+# 3rd build stage: package Ultimate WebBackend
 #------------------------------------------------------------------------------
-FROM debian:bullseye AS ultimate-webbackend
+FROM ultimate-common AS ultimate-webbackend
 
 ARG REPO_DIR_BUILD
 ARG REPO_DIR_TOOLS
@@ -236,31 +206,18 @@ ENV ULTIMATE_LOG_LEVEL="INFO"
 ENV ULTIMATE_DIR_TMP="/tmp/ultimate"
 ENV ULTIMATE_TIMEOUT=90
 
-# install runtime dependencies for Ultimate product
-RUN apt-get update && \
-    apt-get install -y "apt-utils" && \
-    apt-get install -y "openjdk-11-jre"
-
 # install 'dockerize' for automatic configuration file creation
 ENV DOCKERIZE_VERSION="v0.7.0"
 RUN apt-get update && \
     apt-get install -y "wget" \
                        "curl" && \
-    wget -O - "https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-linux-amd64-${DOCKERIZE_VERSION}.tar.gz" | tar xzf - -C "/usr/local/bin" && \
+    wget -q -O - "https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-linux-amd64-${DOCKERIZE_VERSION}.tar.gz" | tar xzf - -C "/usr/local/bin" && \
     apt-get autoremove -yqq --purge "wget" && \
     rm -rf /var/lib/apt/lists/*
 
 # install already built Ultimate product
-RUN mkdir -p "${DIR_ULTIMATE}"
-WORKDIR "${DIR_ULTIMATE}"
 COPY --from=build "${DIR_OUTPUT}/WebBackend/linux/gtk/x86_64" "${DIR_ULTIMATE}"
 RUN ln -s "${DIR_ULTIMATE}/WebBackend" "/usr/bin/WebBackend"
-
-# install alread compiled tools for Ultimate
-COPY --from=build "${DIR_TOOLS}/cvc4" "/usr/bin/cvc4"
-COPY --from=build "${DIR_TOOLS}/ltl2ba" "/usr/bin/ltl2ba"
-COPY --from=build "${DIR_TOOLS}/mathsat" "/usr/bin/mathsat"
-COPY --from=build "${DIR_TOOLS}/z3" "/usr/bin/z3"
 
 # add configuration files and templates for 'dockerize' and Ultimate
 COPY --from=build "${DIR_WEBSITE_CONFIG}/backend/settings_whitelist.json" "${DIR_ULTIMATE}/settings_whitelist.json"
@@ -280,7 +237,7 @@ EXPOSE "${ULTIMATE_BACKEND_PORT}"
 # define health check to supervise the Ultimate Webbackend's availability 
 HEALTHCHECK --interval=1m --timeout=10s --start-period=20s \
     CMD curl -f "http://${ULTIMATE_BACKEND_HOST}:${ULTIMATE_BACKEND_PORT}${ULTIMATE_BACKEND_ROUTE}" || exit 1
-RUN echo "${DIR_ULTIMATE}"
+
 # default entry point to automatically configure and start the Ultimate Webbackend product
 CMD dockerize -template "web.config.properties.tpl:web.config.properties" \
               -template "WebBackend.ini.tpl:WebBackend.ini" \
