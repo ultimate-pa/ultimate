@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 
 /**
  *
@@ -276,7 +277,8 @@ public class QuantifierEliminationTest {
 		Term letFree = new FormulaUnLet().transform(formulaAsTerm);
 		letFree = new CommuhashNormalForm(services, mgdScript.getScript()).transform(letFree);
 		letFree = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(letFree);
-		csvWriter.reportEliminationBegin(letFree);
+		final String testId = ReflectionUtil.getCallerMethodName(4);
+		csvWriter.reportEliminationBegin(letFree, testId);
 		final Term result = PartialQuantifierElimination.eliminate(services, mgdScript, letFree,
 				SimplificationTechnique.SIMPLIFY_DDA);
 		logger.info("Result: " + result);
@@ -301,7 +303,7 @@ public class QuantifierEliminationTest {
 		if (expectedResultAsString != null) {
 			checkLogicalEquivalence(mgdScript.getScript(), result, expectedResultAsString);
 		}
-		csvWriter.reportEliminationSuccess(result);
+		csvWriter.reportEliminationSuccess(result, testId);
 	}
 
 	private static void checkLogicalEquivalence(final Script script, final Term result,
