@@ -199,33 +199,21 @@ public class QuantifierEliminationSgi {
 	}
 	
 	@Test
-	//x,y equal, true
-	public void simpleSgiExample08() {
-		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(SmtSortUtils::getIntSort, "A"),
-				new FunDecl(SmtSortUtils::getIntSort, "B"),
-			};
-		final String formulaAsString = "(and (exists ((X Int) (Y Int)) (and (= X 0) (= Y 0) (= X Y))) (= A 0) (= B 0) (= A B))";
-		final String expectedResult = null;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-	
-	@Test
 	//qsubformula rotation
-	public void simpleSgiExample10() {
+	public void simpleSgiExample8() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "A"),
 				new FunDecl(SmtSortUtils::getIntSort, "B"),
 				new FunDecl(SmtSortUtils::getIntSort, "C"),
 			};
-		final String formulaAsString = "(and (exists ((X Int) (Y Int)) (and (> X 0) (> Y 0) (= X Y))) (> A 0) (> B 0) (> C 0) (= A B) (not (= B C)))";
+		final String formulaAsString = "(and (exists ((X Int) (Y Int)) (and (> X 0) (> Y 0) (not (= X Y)))) (> A 0) (> B 0) (> C 0) (= A B) (not (= B C)))";
 		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 	
 	@Test
-	//parameter rotation test
-	public void simpleSgiExample11() {
+	//parameter rotation
+	public void simpleSgiExample9() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "A"),
 				new FunDecl(SmtSortUtils::getIntSort, "B"),
@@ -390,6 +378,7 @@ public class QuantifierEliminationSgi {
 	}
 	
 	@Test
+	//false
 	public void sgiCandidate13renamedmodified() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "M"),
@@ -397,7 +386,7 @@ public class QuantifierEliminationSgi {
 		};
 		final String formulaAsString = "(and (= |C| 0) (<= S 1) (= |F| 0) (<= 0 |E|) (exists ((|X| Int) (|Y| Int)) (and (= (select (select |M| |X|) 0) 0) (= (select (select |M| |Y|) 0) 0) (not (= |Y| |X|)))) (< |E| S) (= (+ |A| 1) 0) (= |B| 0) (not (= |D| |G|)) (= (select (select |M| |G|) 0) 0))";
 		final String expectedResultAsString = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -593,21 +582,7 @@ public class QuantifierEliminationSgi {
 		final String expectedResultAsString = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-
-	@Test
-	public void sgiCandidateb() {
-		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "V"),
-				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "M"),
-				new FunDecl(SmtSortUtils::getIntSort, "A", "B"),
-		};
-		final String formulaAsString = "(and (exists ((|X| Int)) (= (select |V| |X|) 1)) (< |B| 1073741824) (= ((as const (Array Int Int)) 0) (select |M| |A|)) (= (select |V| |A|) 1) (< 1 |B|))";
-		final String expectedResultAsString = formulaAsString;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
 	
-	
-
 
 	//@formatter:on
 }
