@@ -28,8 +28,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.io.IOException;
 
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.core.IsEqual;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -40,24 +38,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
-import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 
 /**
  *
@@ -76,7 +63,7 @@ public class SimplificationBenchmark {
 //	private static final String SOLVER_COMMAND = "cvc4 --incremental --lang smt";
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:12000 -memory:2024 -smt2 -in";
 //	private static final String SOLVER_COMMAND = "INTERNAL_SMTINTERPOL:10000";
-	
+
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
 
 	private IUltimateServiceProvider mServices;
@@ -133,7 +120,7 @@ public class SimplificationBenchmark {
 		final String expectedResultAsString = null;
 		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void benchmark02() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -143,6 +130,16 @@ public class SimplificationBenchmark {
 		final String expectedResultAsString = null;
 		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
+	@Test
+	public void benchmark03() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~#array~0#1.base", "~ARR_SIZE~0", "ULTIMATE.start_main_~row~0#1", "ULTIMATE.start_assume_abort_if_not_~cond#1", "ULTIMATE.start_main_~#array~0#1.offset", "ULTIMATE.start_main_~sum~0#1", "ULTIMATE.start_main_~column~0#1", "ULTIMATE.start_diff_~idx1#1", "ULTIMATE.start_diff_~idx2#1"),
+		};
+		final String formulaAsString = "(and (or (and (= |ULTIMATE.start_assume_abort_if_not_~cond#1| 1) (< 0 ~ARR_SIZE~0)) (and (<= ~ARR_SIZE~0 0) (= |ULTIMATE.start_assume_abort_if_not_~cond#1| 0))) (< 0 ~ARR_SIZE~0) (or (and (or (< 32767 (mod |ULTIMATE.start_main_~column~0#1| 65536)) (and (or (< (* ~ARR_SIZE~0 ~ARR_SIZE~0 ~ARR_SIZE~0) (+ (* 3 |ULTIMATE.start_main_~sum~0#1|) ~ARR_SIZE~0 1)) (< (mod |ULTIMATE.start_main_~column~0#1| 65536) (mod |ULTIMATE.start_main_~row~0#1| 65536))) (or (= 0 (+ (* |ULTIMATE.start_main_~row~0#1| ~ARR_SIZE~0) |ULTIMATE.start_main_~column~0#1|)) (< (mod |ULTIMATE.start_main_~column~0#1| 65536) (mod |ULTIMATE.start_main_~row~0#1| 65536))) (or (< (mod |ULTIMATE.start_main_~column~0#1| 65536) (mod |ULTIMATE.start_main_~row~0#1| 65536)) (< (+ (* 3 (mod |ULTIMATE.start_main_~column~0#1| 65536)) (* 3 |ULTIMATE.start_main_~sum~0#1|) ~ARR_SIZE~0) (+ (* ~ARR_SIZE~0 ~ARR_SIZE~0 ~ARR_SIZE~0) (* 3 (mod |ULTIMATE.start_main_~row~0#1| 65536)) 1))) (<= (mod |ULTIMATE.start_main_~row~0#1| 65536) 32767))) (or (and (or (< (* ~ARR_SIZE~0 ~ARR_SIZE~0 ~ARR_SIZE~0) (+ (* 3 |ULTIMATE.start_main_~sum~0#1|) ~ARR_SIZE~0 1)) (< (mod |ULTIMATE.start_main_~column~0#1| 65536) (mod |ULTIMATE.start_main_~row~0#1| 65536))) (or (= 0 (+ (* |ULTIMATE.start_main_~row~0#1| ~ARR_SIZE~0) |ULTIMATE.start_main_~column~0#1|)) (< (mod |ULTIMATE.start_main_~column~0#1| 65536) (mod |ULTIMATE.start_main_~row~0#1| 65536))) (or (< (mod |ULTIMATE.start_main_~column~0#1| 65536) (mod |ULTIMATE.start_main_~row~0#1| 65536)) (< (+ (* 3 (mod |ULTIMATE.start_main_~column~0#1| 65536)) (* 3 |ULTIMATE.start_main_~sum~0#1|) ~ARR_SIZE~0) (+ (* ~ARR_SIZE~0 ~ARR_SIZE~0 ~ARR_SIZE~0) (* 3 (mod |ULTIMATE.start_main_~row~0#1| 65536)) 1)))) (<= (mod |ULTIMATE.start_main_~row~0#1| 65536) 32767))) (< (+ |ULTIMATE.start_main_~column~0#1| 1) ~ARR_SIZE~0)) (or (= (* ~ARR_SIZE~0 ~ARR_SIZE~0 ~ARR_SIZE~0) (+ (* (select (select |#memory_int| |ULTIMATE.start_main_~#array~0#1.base|) |ULTIMATE.start_main_~#array~0#1.offset|) 3) (* 3 |ULTIMATE.start_main_~sum~0#1|) ~ARR_SIZE~0)) (< |ULTIMATE.start_main_~column~0#1| ~ARR_SIZE~0)) (or (<= ~ARR_SIZE~0 |ULTIMATE.start_main_~row~0#1|) (and (or (< 0 (mod |ULTIMATE.start_main_~row~0#1| 65536)) (< (+ (* 3 |ULTIMATE.start_main_~sum~0#1|) ~ARR_SIZE~0) (+ (* ~ARR_SIZE~0 ~ARR_SIZE~0 ~ARR_SIZE~0) (* 3 (mod |ULTIMATE.start_main_~row~0#1| 65536)) 1))) (or (< (* ~ARR_SIZE~0 ~ARR_SIZE~0 ~ARR_SIZE~0) (+ (* 3 |ULTIMATE.start_main_~sum~0#1|) ~ARR_SIZE~0 1)) (< 0 (mod |ULTIMATE.start_main_~row~0#1| 65536))) (or (< 0 (mod |ULTIMATE.start_main_~row~0#1| 65536)) (= (* |ULTIMATE.start_main_~row~0#1| ~ARR_SIZE~0) 0)) (<= (mod |ULTIMATE.start_main_~row~0#1| 65536) 32767)) (< 1 ~ARR_SIZE~0)) (or (< |ULTIMATE.start_diff_~idx2#1| |ULTIMATE.start_diff_~idx1#1|) (and (= (+ (* |ULTIMATE.start_diff_~idx2#1| 3) (* 3 |ULTIMATE.start_main_~sum~0#1|) ~ARR_SIZE~0) (+ (* ~ARR_SIZE~0 ~ARR_SIZE~0 ~ARR_SIZE~0) (* |ULTIMATE.start_diff_~idx1#1| 3))) (= 0 (+ (* |ULTIMATE.start_main_~row~0#1| ~ARR_SIZE~0) |ULTIMATE.start_main_~column~0#1|))) (< (+ |ULTIMATE.start_main_~column~0#1| 1) ~ARR_SIZE~0)))";		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 }
