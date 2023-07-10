@@ -2683,7 +2683,7 @@ public final class SmtUtils {
 	 * push/pop in order to remove the constant symbols from the assertion stack
 	 * after they are not needed any more. <br>
 	 * The name for the new constant symbols are defined by the method
-	 * {@link SmtUtils#termVariable2constant})
+	 * {@link SmtUtils#termVariable2constant}).
 	 */
 	public static Term replaceFreeVariablesByConstants(final Script script, final Term term) {
 		final TermVariable[] vars = term.getFreeVars();
