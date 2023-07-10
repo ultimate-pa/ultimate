@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -72,15 +71,12 @@ public class DualJunctionSgi extends DualJunctionQuantifierElimination {
 
 	@Override
 	public EliminationResult tryToEliminate(final EliminationTask inputEt) {
-		if (inputEt.getQuantifier() == QuantifiedFormula.FORALL) {
-			throw new UnsupportedOperationException("Universal Quantifier not yet implemented");
-		}
-		final Term[] candidateConjuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(),
+		final Term[] candidateDualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(),
 				inputEt.getContext().getCriticalConstraint());
-		final Term[] qSubformulaConjuncts =
+		final Term[] qSubformulaDualFiniteJuncts =
 				QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
-		final List<Term> candidateConjunctsList = Arrays.asList(candidateConjuncts);
-		final List<Term> qSubformulaConjunctsList = Arrays.asList(qSubformulaConjuncts);
+		final List<Term> candidateConjunctsList = Arrays.asList(candidateDualFiniteJuncts);
+		final List<Term> qSubformulaConjunctsList = Arrays.asList(qSubformulaDualFiniteJuncts);
 
 		final List<Map<TermVariable, Term>> finalresult =
 				instantiateCartesian(inputEt.getEliminatees(), qSubformulaConjunctsList, candidateConjunctsList);
@@ -187,7 +183,6 @@ public class DualJunctionSgi extends DualJunctionQuantifierElimination {
 
 	public List<Map<TermVariable, Term>> matchExpression(final Set<TermVariable> instantiatees, final Term qsubformula,
 			final Term candidate) {
-
 		if ((qsubformula instanceof ApplicationTerm) && (candidate instanceof ApplicationTerm)) {
 			final ApplicationTerm qsubformulaAppTerm = (ApplicationTerm) qsubformula;
 			final ApplicationTerm candidateAppTerm = (ApplicationTerm) candidate;
@@ -231,5 +226,4 @@ public class DualJunctionSgi extends DualJunctionQuantifierElimination {
 		}
 		return null;
 	}
-
 }
