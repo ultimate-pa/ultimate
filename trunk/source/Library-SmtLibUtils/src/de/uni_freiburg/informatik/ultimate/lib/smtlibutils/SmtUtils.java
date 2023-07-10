@@ -74,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.simplify.SimplifyQuic
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -2671,6 +2672,34 @@ public final class SmtUtils {
 
 	public BigInteger computeLargestRepresentableBitvector(final Sort bv, final BvSignedness signedness) {
 		return null;
+	}
+
+	/**
+	 * Auxiliary method that replaces all free variables in a term by constant
+	 * symbols (i.e., 0-ary function symbols). These constant symbols are declared
+	 * in the script. <br>
+	 * Use this method with caution. The constant symbols will live forever in the
+	 * current stack frame, hence this method should be used in combination with
+	 * push/pop in order to remove the constant symbols from the assertion stack
+	 * after they are not needed any more. <br>
+	 * The name for the new constant symbols are defined by the method
+	 * {@link SmtUtils#termVariable2constant})
+	 */
+	public static Term replaceFreeVariablesByConstants(final Script script, final Term term) {
+		final TermVariable[] vars = term.getFreeVars();
+		final Term[] values = new Term[vars.length];
+		for (int i = 0; i < vars.length; i++) {
+			values[i] = termVariable2constant(script, vars[i]);
+		}
+		return new FormulaUnLet().unlet(script.let(vars, values, term));
+	}
+
+	private static Term termVariable2constant(final Script script, final TermVariable tv) {
+		final String name = tv.getName() + "_const_" + tv.hashCode();
+		final Sort[] paramSorts = {};
+		final Sort resultSort = tv.getSort();
+		script.declareFun(name, paramSorts, resultSort);
+		return script.term(name);
 	}
 
 }
