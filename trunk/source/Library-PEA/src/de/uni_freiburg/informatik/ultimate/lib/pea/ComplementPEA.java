@@ -57,6 +57,9 @@ public class ComplementPEA {
 		computeInitialTransitionSink(sinkPhase);
 		phases.add(sinkPhase);
 		
+		// needed for priming/ unpriming
+		Set<String> emptySet = Collections.<String>emptySet();
+		
 		for (Phase phase : mPEAtoComplement.getPhases()) {
 			CDD clockInv = phase.getClockInvariant();
 			Decision<?> clockDecision = clockInv.getDecision();
@@ -79,7 +82,7 @@ public class ComplementPEA {
 				// we do not use the clock invariant of the successor phase
 				// if the same clock is in the reset set of the transition
 				CDD guardCdd = transition.getGuard();
-				Set<String> emptySet = Collections.<String>emptySet();
+				
 				CDD guardUnprimed = guardCdd.unprime(emptySet);
 				if (reset.length > 0) {
 					CDD noResetClockInv = RangeDecision.filterCdd(successorClockInv, reset);
@@ -90,8 +93,9 @@ public class ComplementPEA {
 					guardToSink = guardToSink.or(guardUnprimed.and(successorStateInv).and(RangeDecision.strict(successorClockInv)));
 				}
 			}
+			CDD guardToSinkPrimed = guardToSink.prime(emptySet);
 			// make transition to sink 
-			newPhase.addTransition(sinkPhase, guardToSink.negate(), new String[] {});
+			newPhase.addTransition(sinkPhase, guardToSinkPrimed.negate(), new String[] {});
 			phases.add(newPhase);
 			
 			Decision<?> newClockDecision = newPhase.getClockInvariant().getDecision();
