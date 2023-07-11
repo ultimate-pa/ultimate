@@ -424,6 +424,6 @@ public class NewPreRunner extends ASTVisitor {
 
 		// this is only to have a minimal symbolTableEntry (containing boogieID) for translation of the initializer
 		mSymTab.storeCSymbol(node, cDec.getName(),
-				new SymbolTableValue(boogieName, null, cDec, dummyDeclInfo, node, false));
+				new SymbolTableValue(boogieName, null, null, cDec, dummyDeclInfo, node, false));
 	}
 }

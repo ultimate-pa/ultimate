@@ -848,8 +848,8 @@ public class FunctionHandler {
 			in[i] = new VarList(loc, new String[] { currentParamId }, currentParamType);
 
 			if (updateSymbolTable) {
-				mSymboltable.storeCSymbol(hook, currentParamDec.getName(),
-						new SymbolTableValue(currentParamId, null, currentParamDec, declInformation, null, false));
+				mSymboltable.storeCSymbol(hook, currentParamDec.getName(), new SymbolTableValue(currentParamId, null,
+						currentParamType, currentParamDec, declInformation, null, false));
 			}
 		}
 		if (hasUsedVarArgs) {
@@ -982,7 +982,7 @@ public class FunctionHandler {
 
 				// Overwrite the information in the symbolTable for cId, s.t. it
 				// points to the locally declared variable.
-				mSymboltable.storeCSymbol(paramDec, inparamCId, new SymbolTableValue(inparamAuxVarName, inVarDecl,
+				mSymboltable.storeCSymbol(paramDec, inparamCId, new SymbolTableValue(inparamAuxVarName, inVarDecl, type,
 						new CDeclaration(cvar, inparamCId), inparamAuxVarDeclInfo, paramDec, false));
 			}
 		}
