@@ -575,11 +575,11 @@ public class ACSLHandler implements IACSLHandler {
 		LRValue lrVal;
 		if (mCHandler.isHeapVar(id)) {
 			final IdentifierExpression idExp = ExpressionFactory.constructIdentifierExpression(loc,
-					mTypeHandler.getBoogieTypeForBoogieASTType(astType), id, new DeclarationInformation(sc, procId));
+					mTypeHandler.getBoogieTypeForBoogieASTType(astType), id, stv.getDeclarationInformation());
 			lrVal = LRValueFactory.constructHeapLValue(mTypeHandler, idExp, cType, null);
 		} else {
 			final VariableLHS idLhs = ExpressionFactory.constructVariableLHS(loc,
-					mTypeHandler.getBoogieTypeForBoogieASTType(astType), id, new DeclarationInformation(sc, procId));
+					mTypeHandler.getBoogieTypeForBoogieASTType(astType), id, stv.getDeclarationInformation());
 			lrVal = new LocalLValue(idLhs, cType, null);
 		}
 		return new ExpressionResult(lrVal);
