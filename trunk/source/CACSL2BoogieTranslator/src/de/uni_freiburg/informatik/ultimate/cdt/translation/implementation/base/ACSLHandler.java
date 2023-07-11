@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
@@ -63,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
@@ -561,25 +559,14 @@ public class ACSLHandler implements IACSLHandler {
 		// the necessary auxiliary statements on.
 		// EDIT: (alex feb 18:) does this fixme still apply?
 
-		// TODO seems quite hacky, how we obtain storage class and procedure id ..
-		final ASTType astType;
-		if (stv.getBoogieDecl() instanceof VariableDeclaration) {
-			astType = ((VariableDeclaration) stv.getBoogieDecl()).getVariables()[0].getType();
-		} else if (stv.getBoogieDecl() instanceof ConstDeclaration) {
-			astType = ((ConstDeclaration) stv.getBoogieDecl()).getVarList().getType();
-		} else {
-			throw new UnsupportedOperationException("todo: handle this case");
-		}
-		final StorageClass sc = stv.isBoogieGlobalVar() ? StorageClass.GLOBAL : StorageClass.LOCAL;
-		final String procId = sc == StorageClass.GLOBAL ? null : mProcedureManager.getCurrentProcedureID();
-		LRValue lrVal;
+		final LRValue lrVal;
 		if (mCHandler.isHeapVar(id)) {
 			final IdentifierExpression idExp = ExpressionFactory.constructIdentifierExpression(loc,
-					mTypeHandler.getBoogieTypeForBoogieASTType(astType), id, stv.getDeclarationInformation());
+					mTypeHandler.getBoogieTypeForBoogieASTType(stv.getAstType()), id, stv.getDeclarationInformation());
 			lrVal = LRValueFactory.constructHeapLValue(mTypeHandler, idExp, cType, null);
 		} else {
 			final VariableLHS idLhs = ExpressionFactory.constructVariableLHS(loc,
-					mTypeHandler.getBoogieTypeForBoogieASTType(astType), id, stv.getDeclarationInformation());
+					mTypeHandler.getBoogieTypeForBoogieASTType(stv.getAstType()), id, stv.getDeclarationInformation());
 			lrVal = new LocalLValue(idLhs, cType, null);
 		}
 		return new ExpressionResult(lrVal);
