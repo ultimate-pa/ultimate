@@ -531,29 +531,14 @@ public class ACSLHandler implements IACSLHandler {
 		final String id = lookupId(main, node, loc);
 
 		final String cId = mSymboltable.getCIdForBoogieId(id);
+		final SymbolTableValue stv = mSymboltable.findCSymbol(main.getAcslHook(), cId);
 		final CType cType;
-		SymbolTableValue stv;
-		if (mSpecType != ACSLHandler.SPEC_TYPE.REQUIRES && mSpecType != ACSLHandler.SPEC_TYPE.ENSURES) {
-			// TODO : the translation is sometimes wrong, for requires and
-			// ensures! i.e. when referring to inparams in ensures clauses!
-			// The ensures clause will refer to the in-parameter listed in the
-			// in parameter declaration. However, these variables will not be
-			// changed, but only assigned to #in~NAME!
-			// This cannot be solved by just appending "#in~" to all
-			// identifiers, since the identifier could also refer to a global
-			// variable! However, we don't know that at this moment!
-
-			stv = mSymboltable.findCSymbol(main.getAcslHook(), cId);
 			if (stv != null) {
 				cType = stv.getCType();
 			} else {
 				throw new UnsupportedOperationException(
 						"not yet implemented: " + "unable to determine CType for variable " + id);
 			}
-		} else {
-			throw new UnsupportedOperationException(
-					"not yet implemented: " + "unable to determine CType for variable " + id);
-		}
 
 		// FIXME: dereferencing does not work for ACSL yet, because we cannot pass
 		// the necessary auxiliary statements on.
