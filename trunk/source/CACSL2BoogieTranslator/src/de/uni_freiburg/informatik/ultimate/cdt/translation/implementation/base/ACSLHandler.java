@@ -703,7 +703,7 @@ public class ACSLHandler implements IACSLHandler {
 		final CACSLLocation loc = mLocationFactory.createACSLLocation(node);
 		// TODO: what is the right storageclass here? and procedure?..
 		final IdentifierExpression idEx = ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, id,
-				new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID()));
+				new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, mProcedureManager.getCurrentProcedureID()));
 		return new ExpressionResult(new RValue(idEx, new CPrimitive(CPrimitives.INT)));
 	}
 
