@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgSummaryTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
@@ -124,13 +123,6 @@ public class IcfgDuplicator {
 					// delay creating returns until everything else is processed
 					openReturns.add(new Pair<>(newSource, oldEdge));
 					continue;
-				}
-				if (oldEdge instanceof IIcfgSummaryTransition) {
-					// hack to prevent copying "useless" summary edges
-					final IIcfgSummaryTransition oldSummary = (IIcfgSummaryTransition) oldEdge;
-					if (oldSummary.calledProcedureHasImplementation()) {
-						continue;
-					}
 				}
 				createEdgeCopy(old2new, newSource, oldEdge, edgeFactory);
 			}
