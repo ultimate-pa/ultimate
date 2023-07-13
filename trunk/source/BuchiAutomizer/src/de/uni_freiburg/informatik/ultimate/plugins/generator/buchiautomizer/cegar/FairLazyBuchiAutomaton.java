@@ -1,9 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -24,14 +22,10 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 	
 	private IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mInitialAbstractionProvider;
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mInitialAbstraction;
-	private Map<IPredicate, SleepPredicate<String>> mPredicateToAnnotatedPredicate;
-	private Map<SleepPredicate<String>, IPredicate> mAnnotatedPredicateToPredicate;
 	private Set<IPredicate> mInitialStates;
 
 	public FairLazyBuchiAutomaton(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction) {
 		mInitialAbstraction = initialAbstraction;
-		mPredicateToAnnotatedPredicate = new HashMap<>();
-		mAnnotatedPredicateToPredicate = new HashMap<>();
 	}
 
 	@Override
