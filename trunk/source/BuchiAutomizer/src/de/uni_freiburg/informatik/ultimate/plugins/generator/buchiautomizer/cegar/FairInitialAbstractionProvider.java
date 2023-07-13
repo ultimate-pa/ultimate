@@ -50,6 +50,10 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 			IIcfg<? extends IcfgLocation> icfg, Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
 		INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction = mInitialAbstractionProvider.getInitialAbstraction(icfg, errorLocs);
 		
+		NestedWordAutomatonReachableStates<L, IPredicate> debugi = new NestedWordAutomatonReachableStates<>(mServices, initialAbstraction);
+		String debugiString = debugi.toString();
+		Integer j = 0;
+		
 		mInitialAbstractionAlphabet = initialAbstraction.getVpAlphabet().getInternalAlphabet();
 		Set<String> procedures = new HashSet<>();
 		for (L edge : mInitialAbstractionAlphabet) {
