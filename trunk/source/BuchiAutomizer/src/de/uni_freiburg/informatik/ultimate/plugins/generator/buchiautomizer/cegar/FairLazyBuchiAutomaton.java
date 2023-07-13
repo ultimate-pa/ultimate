@@ -51,11 +51,10 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 		// TODO Auto-generated method stub
 		if (mInitialStates.isEmpty()) {
 			for (IPredicate state : mInitialAbstraction.getInitialStates()) {
-				mInitialStates.add((IPredicate) getOrConstructPredicate((IMLPredicate) state, ImmutableSet.of(Set.of())).getUnderlying());
+				mInitialStates.add((IPredicate) getOrConstructPredicate((IMLPredicate) state, ImmutableSet.of(Set.of())));
 			}
 		}
-		Iterable<IPredicate> iterable = mInitialStates;
-		return iterable;
+		return mInitialStates;
 	}
 
 	@Override
@@ -94,7 +93,7 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 			annotations.retainAll(preAnnotations);
 		}
 		for (OutgoingInternalTransition<L, IPredicate> suc : successors) {
-			IPredicate predicate = (IPredicate) getOrConstructPredicate((IMLPredicate) suc.getSucc(), annotations).getUnderlying();
+			IPredicate predicate = (IPredicate) getOrConstructPredicate((IMLPredicate) suc.getSucc(), annotations);
 			newSuccessors.add(new OutgoingInternalTransition<>(letter, predicate));
 		}
 		return newSuccessors;
@@ -124,8 +123,7 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 	}
 	
 	private SleepPredicate<String> getOrConstructPredicate(IMLPredicate state, ImmutableSet<String> annotations) {
-		SleepPredicate<String> annotatedPredicate = new SleepPredicate<>(state, annotations);
-		return annotatedPredicate;
+		return new SleepPredicate<>(state, annotations);
 	}
 
 }
