@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -17,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -59,7 +57,7 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 		// TODO Auto-generated method stub
 		if (mInitialStates.isEmpty()) {
 			for (IPredicate state : mInitialAbstraction.getInitialStates()) {
-				mInitialStates.add(getOrConstructPredicate((IMLPredicate) state, ImmutableSet.of(Set.of())));
+				mInitialStates.add((IPredicate) getOrConstructPredicate((IMLPredicate) state, ImmutableSet.of(Set.of())).getUnderlying());
 			}
 		}
 		Iterable<IPredicate> iterable = mInitialStates;
@@ -69,13 +67,13 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 	@Override
 	public boolean isInitial(IPredicate state) {
 		// TODO Auto-generated method stub
-		return (mInitialAbstraction.isInitial((IPredicate) ((SleepPredicate) state).getUnderlying()) && isFinal(state));
+		return (mInitialAbstraction.isInitial((IPredicate) ((SleepPredicate<String>) state).getUnderlying()) && isFinal(state));
 	}
 
 	@Override
 	public boolean isFinal(IPredicate state) {
 		// TODO Auto-generated method stub
-		return ((SleepPredicate) state).getSleepSet().isEmpty();
+		return ((SleepPredicate<String>) state).getSleepSet().isEmpty();
 		//return ((SleepPredicate<String>) state).getSleepSet().isEmpty();
 	}
 
@@ -97,12 +95,15 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 		ImmutableSet<String> annotations = getEnabledProcedures(state, letter);
 		Iterable<OutgoingInternalTransition<L, IPredicate>> successors = mInitialAbstraction.internalSuccessors(state, letter);
 		Set<OutgoingInternalTransition<L, IPredicate>> newSuccessors = new HashSet<>();
+		Set<String> preAnnotations = ((SleepPredicate<String>) state).getSleepSet();
+		if (!preAnnotations.isEmpty()) {
+			annotations.retainAll(preAnnotations);
+		}
 		for (OutgoingInternalTransition<L, IPredicate> suc : successors) {
-			IPredicate predicate = getOrConstructPredicate((IMLPredicate) suc.getSucc(), annotations);
+			IPredicate predicate = (IPredicate) getOrConstructPredicate((IMLPredicate) suc.getSucc(), annotations).getUnderlying();
 			newSuccessors.add(new OutgoingInternalTransition<>(letter, predicate));
 		}
-		Iterable<OutgoingInternalTransition<L, IPredicate>> iterable = newSuccessors;
-		return iterable;
+		return newSuccessors;
 	}
 
 	private ImmutableSet<String> getEnabledProcedures(IPredicate state, L letter) {
@@ -128,12 +129,9 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 		return List.of();
 	}
 	
-	private IPredicate getOrConstructPredicate(IMLPredicate state, ImmutableSet<String> annotations) {
+	private SleepPredicate<String> getOrConstructPredicate(IMLPredicate state, ImmutableSet<String> annotations) {
 		SleepPredicate<String> annotatedPredicate = new SleepPredicate<>(state, annotations);
-		IPredicate predicate  = (IPredicate) annotatedPredicate;
-		mPredicateToAnnotatedPredicate.putIfAbsent(predicate, annotatedPredicate);
-		mAnnotatedPredicateToPredicate.putIfAbsent(annotatedPredicate, predicate);
-		return (IPredicate) annotatedPredicate.getUnderlying();
+		return annotatedPredicate;
 	}
 
 }
