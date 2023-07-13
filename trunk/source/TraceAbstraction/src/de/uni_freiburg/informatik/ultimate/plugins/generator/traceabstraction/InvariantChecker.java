@@ -60,6 +60,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -333,9 +336,16 @@ public class InvariantChecker {
 				startLocs.add(loc);
 			} else {
 				for (final IcfgEdge pred : loc.getIncomingEdges()) {
-					if (!seenBackward.contains(pred)) {
-						seenBackward.add(pred);
-						worklistBackward.add(pred);
+					if (pred instanceof IIcfgInternalTransition) {
+						if (!seenBackward.contains(pred)) {
+							seenBackward.add(pred);
+							worklistBackward.add(pred);
+						}
+					} else if ((pred instanceof IIcfgCallTransition) || (pred instanceof IIcfgReturnTransition)) {
+						// omit this edge, do nothing
+					} else {
+						throw new UnsupportedOperationException(
+								"Unsupported kind of edge " + pred.getClass().getSimpleName());
 					}
 				}
 			}
