@@ -69,13 +69,13 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 	@Override
 	public boolean isInitial(IPredicate state) {
 		// TODO Auto-generated method stub
-		return (mInitialAbstraction.isInitial((IPredicate) mPredicateToAnnotatedPredicate.get(state).getUnderlying()) && isFinal(state));
+		return (mInitialAbstraction.isInitial((IPredicate) ((SleepPredicate) state).getUnderlying()) && isFinal(state));
 	}
 
 	@Override
 	public boolean isFinal(IPredicate state) {
 		// TODO Auto-generated method stub
-		return mPredicateToAnnotatedPredicate.get(state).getSleepSet().isEmpty();
+		return ((SleepPredicate) state).getSleepSet().isEmpty();
 		//return ((SleepPredicate<String>) state).getSleepSet().isEmpty();
 	}
 
@@ -118,14 +118,14 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 	@Override
 	public Iterable<OutgoingCallTransition<L, IPredicate>> callSuccessors(IPredicate state, L letter) {
 		// TODO Auto-generated method stub
-		return null;
+		return List.of();
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<L, IPredicate>> returnSuccessors(IPredicate state, IPredicate hier,
 			L letter) {
 		// TODO Auto-generated method stub
-		return null;
+		return List.of();
 	}
 	
 	private IPredicate getOrConstructPredicate(IMLPredicate state, ImmutableSet<String> annotations) {
@@ -133,7 +133,7 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 		IPredicate predicate  = (IPredicate) annotatedPredicate;
 		mPredicateToAnnotatedPredicate.putIfAbsent(predicate, annotatedPredicate);
 		mAnnotatedPredicateToPredicate.putIfAbsent(annotatedPredicate, predicate);
-		return mAnnotatedPredicateToPredicate.get(annotatedPredicate);
+		return (IPredicate) annotatedPredicate.getUnderlying();
 	}
 
 }
