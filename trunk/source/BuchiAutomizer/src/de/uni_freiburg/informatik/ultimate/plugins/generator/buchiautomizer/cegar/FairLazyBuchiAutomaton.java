@@ -33,25 +33,21 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 
 	@Override
 	public IStateFactory<IPredicate> getStateFactory() {
-		// TODO Auto-generated method stub
 		return mInitialAbstraction.getStateFactory();
 	}
 
 	@Override
 	public VpAlphabet<L> getVpAlphabet() {
-		// TODO Auto-generated method stub
 		return mInitialAbstraction.getVpAlphabet();
 	}
 
 	@Override
 	public IPredicate getEmptyStackState() {
-		// TODO Auto-generated method stub
 		return mInitialAbstraction.getEmptyStackState();
 	}
 
 	@Override
 	public Iterable<IPredicate> getInitialStates() {
-		// TODO Auto-generated method stub
 		if (mInitialStates.isEmpty()) {
 			for (IPredicate state : mInitialAbstraction.getInitialStates()) {
 				mInitialStates.add((IPredicate) getOrConstructPredicate((IMLPredicate) state, ImmutableSet.of(Set.of())));
@@ -62,13 +58,11 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 
 	@Override
 	public boolean isInitial(IPredicate state) {
-		// TODO Auto-generated method stub
 		return (mInitialAbstraction.isInitial((IPredicate) ((SleepPredicate<String>) state).getUnderlying()) && isFinal(state));
 	}
 
 	@Override
 	public boolean isFinal(IPredicate state) {
-		// TODO Auto-generated method stub
 		return ((SleepPredicate<String>) state).getSleepSet().isEmpty();
 	}
 
@@ -86,8 +80,8 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 
 	@Override
 	public Iterable<OutgoingInternalTransition<L, IPredicate>> internalSuccessors(IPredicate state, L letter) {
-		// TODO Auto-generated method stub	
-		Iterable<OutgoingInternalTransition<L, IPredicate>> successors = mInitialAbstraction.internalSuccessors((IPredicate) ((SleepPredicate) state).getUnderlying(), letter);
+		Iterable<OutgoingInternalTransition<L, IPredicate>> successors = mInitialAbstraction.internalSuccessors(
+				(IPredicate) ((SleepPredicate) state).getUnderlying(), letter);
 		Iterator<OutgoingInternalTransition<L, IPredicate>> iterator = successors.iterator();
 		ImmutableSet<String> annotations = getEnabledProcedures(state, letter, successors);
 		Set<OutgoingInternalTransition<L, IPredicate>> newSuccessors = new HashSet<>();
@@ -95,11 +89,6 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 			IPredicate predicate = (IPredicate) getOrConstructPredicate((IMLPredicate) iterator.next().getSucc(), annotations);
 			newSuccessors.add(new OutgoingInternalTransition<>(letter, predicate));
 		}
-		/*
-		for (OutgoingInternalTransition<L, IPredicate> suc : successors) {
-			IPredicate predicate = (IPredicate) getOrConstructPredicate((IMLPredicate) suc.getSucc(), annotations);
-			newSuccessors.add(new OutgoingInternalTransition<>(letter, predicate));
-		}*/
 		return newSuccessors;
 	}
 
@@ -126,14 +115,12 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 
 	@Override
 	public Iterable<OutgoingCallTransition<L, IPredicate>> callSuccessors(IPredicate state, L letter) {
-		// TODO Auto-generated method stub
 		return List.of();
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<L, IPredicate>> returnSuccessors(IPredicate state, IPredicate hier,
 			L letter) {
-		// TODO Auto-generated method stub
 		return List.of();
 	}
 	
