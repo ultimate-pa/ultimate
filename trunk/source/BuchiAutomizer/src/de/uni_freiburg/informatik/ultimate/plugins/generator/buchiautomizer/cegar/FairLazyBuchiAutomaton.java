@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -10,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
@@ -26,6 +28,7 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 
 	public FairLazyBuchiAutomaton(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction) {
 		mInitialAbstraction = initialAbstraction;
+		mInitialStates = new HashSet<>();
 	}
 
 	@Override
@@ -67,7 +70,6 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 	public boolean isFinal(IPredicate state) {
 		// TODO Auto-generated method stub
 		return ((SleepPredicate<String>) state).getSleepSet().isEmpty();
-		//return ((SleepPredicate<String>) state).getSleepSet().isEmpty();
 	}
 
 	@Override
@@ -84,29 +86,42 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 
 	@Override
 	public Iterable<OutgoingInternalTransition<L, IPredicate>> internalSuccessors(IPredicate state, L letter) {
-		// TODO Auto-generated method stub
-		ImmutableSet<String> annotations = getEnabledProcedures(state, letter);
-		Iterable<OutgoingInternalTransition<L, IPredicate>> successors = mInitialAbstraction.internalSuccessors(state, letter);
+		// TODO Auto-generated method stub	
+		Iterable<OutgoingInternalTransition<L, IPredicate>> successors = mInitialAbstraction.internalSuccessors((IPredicate) ((SleepPredicate) state).getUnderlying(), letter);
+		Iterator<OutgoingInternalTransition<L, IPredicate>> iterator = successors.iterator();
+		ImmutableSet<String> annotations = getEnabledProcedures(state, letter, successors);
 		Set<OutgoingInternalTransition<L, IPredicate>> newSuccessors = new HashSet<>();
+		while(iterator.hasNext()) {
+			IPredicate predicate = (IPredicate) getOrConstructPredicate((IMLPredicate) iterator.next().getSucc(), annotations);
+			newSuccessors.add(new OutgoingInternalTransition<>(letter, predicate));
+		}
+		/*
+		for (OutgoingInternalTransition<L, IPredicate> suc : successors) {
+			IPredicate predicate = (IPredicate) getOrConstructPredicate((IMLPredicate) suc.getSucc(), annotations);
+			newSuccessors.add(new OutgoingInternalTransition<>(letter, predicate));
+		}*/
+		return newSuccessors;
+	}
+
+	private ImmutableSet<String> getEnabledProcedures(IPredicate state, L letter, Iterable<OutgoingInternalTransition<L, IPredicate>> successors) {
+		Set<String> annotations = new HashSet<>();
+		Set<L> outgoing = mInitialAbstraction.lettersInternal((IPredicate) ((SleepPredicate) state).getUnderlying());
+		for (L edge : outgoing) {
+			annotations.add(edge.getSucceedingProcedure());
+		}
+		/*Iterator<OutgoingInternalTransition<L, IPredicate>> iterator = successors.iterator();
+		while(iterator.hasNext()) {
+			annotations.add(iterator.next().getLetter().getSucceedingProcedure());
+		}*/
+		if (letter instanceof IIcfgForkTransitionThreadOther) {
+			annotations.remove(letter.getSucceedingProcedure());
+		}
+		annotations.remove(letter.getPrecedingProcedure());
 		Set<String> preAnnotations = ((SleepPredicate<String>) state).getSleepSet();
 		if (!preAnnotations.isEmpty()) {
 			annotations.retainAll(preAnnotations);
 		}
-		for (OutgoingInternalTransition<L, IPredicate> suc : successors) {
-			IPredicate predicate = (IPredicate) getOrConstructPredicate((IMLPredicate) suc.getSucc(), annotations);
-			newSuccessors.add(new OutgoingInternalTransition<>(letter, predicate));
-		}
-		return newSuccessors;
-	}
-
-	private ImmutableSet<String> getEnabledProcedures(IPredicate state, L letter) {
-		Set<String> procedures = new HashSet<>();
-		List<IcfgLocation> successors = letter.getSource().getOutgoingNodes();
-		for(IcfgLocation loc : successors) {
-			procedures.add(loc.getProcedure());
-		}
-		procedures.remove(letter.getPrecedingProcedure());
-		return ImmutableSet.of(procedures);
+		return ImmutableSet.of(annotations);
 	}
 
 	@Override
