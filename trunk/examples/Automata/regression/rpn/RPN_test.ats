@@ -1,0 +1,15 @@
+// Date:  14-07-2023
+// Author: pm251@venus.uni-freiburg.de
+
+// Parser Test
+
+print(test);
+
+RabinPetriNet test = (
+	alphabet = {a b},
+	places = {p1 p2},
+	transitions = { ({p1} a {p1}) ({p2} b {p2})	},
+	initialMarking = {p1 p2},
+	acceptingPlaces = {p1},
+	finitePlaces = {p2}
+);
