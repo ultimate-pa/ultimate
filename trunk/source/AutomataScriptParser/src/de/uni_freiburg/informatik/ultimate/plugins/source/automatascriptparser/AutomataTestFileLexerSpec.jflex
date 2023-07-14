@@ -109,6 +109,7 @@ StringCharacter = [^\r\n\"\\]
   "CountingAutomaton"           { m_LastToken = m_CurToken; m_CurToken = "CountingAutomaton"; return symbol(sym.COUNTING_AUTOMATON); }
   "PetriNet"                    { m_LastToken = m_CurToken; m_CurToken = "PetriNet"; return symbol(sym.PETRINET_AUTOMATA); }
   "BranchingProcess"            { m_LastToken = m_CurToken; m_CurToken = "PetriNet"; return symbol(sym.BRANCHINGPROCESS_AUTOMATA); }
+  "RabinPetriNet"               { m_LastToken = m_CurToken; m_CurToken = "RabinPetriNet"; return symbol(sym.RABIN_PETRI_NET); }
   "alphabet"                    { m_LastToken = m_CurToken; m_CurToken = "alphabet"; return symbol(sym.ALPHABET); }
   "callAlphabet"                { m_LastToken = m_CurToken; m_CurToken = "callAlphabet"; return symbol(sym.CALL_ALPHABET); }
   "internalAlphabet"            { m_LastToken = m_CurToken; m_CurToken = "internalAlphabet"; return symbol(sym.INTERNAL_ALPHABET); }
@@ -145,8 +146,9 @@ StringCharacter = [^\r\n\"\\]
   "finalConditions"             { m_LastToken = m_CurToken; m_CurToken = "finalConditions"; return symbol(sym.FINAL_CONDITIONS); }
   
   // Net transitions  
-  "initialMarking"                  { m_LastToken = m_CurToken; m_CurToken = "initialMarking"; return symbol(sym.INITIAL_MARKINGS); }
-  "acceptingPlaces"                 { m_LastToken = m_CurToken; m_CurToken = "acceptingPlaces"; return symbol(sym.ACCEPTING_PLACES); }
+  "initialMarking"               { m_LastToken = m_CurToken; m_CurToken = "initialMarking"; return symbol(sym.INITIAL_MARKINGS); }
+  "acceptingPlaces"              { m_LastToken = m_CurToken; m_CurToken = "acceptingPlaces"; return symbol(sym.ACCEPTING_PLACES); }
+  "finitePlaces"                 { m_LastToken = m_CurToken; m_CurToken = "finitePlaces"; return symbol(sym.FINITE_PLACES); }
   /* boolean literals */
   "true"                         { m_LastToken = m_CurToken; m_CurToken = "true"; return symbol(sym.BOOLEAN_LITERAL, new Boolean(true)); }
   "false"                        { m_LastToken = m_CurToken; m_CurToken = "false"; return symbol(sym.BOOLEAN_LITERAL, new Boolean(false)); }
