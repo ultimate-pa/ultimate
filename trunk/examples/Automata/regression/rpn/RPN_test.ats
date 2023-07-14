@@ -3,9 +3,7 @@
 
 // Parser Test
 
-print(test);
-
-RabinPetriNet test = (
+RabinPetrinet test = (
 	alphabet = {a b},
 	places = {p1 p2},
 	transitions = { ({p1} a {p1}) ({p2} b {p2})	},
@@ -13,3 +11,12 @@ RabinPetriNet test = (
 	acceptingPlaces = {p1},
 	finitePlaces = {p2}
 );
+
+print(test);
+
+//assert(!rabinIsEmpty(test));
+
+/*assert(rabinAccepts(test, [a a b , a b]));
+assert(!rabinAccepts(test, [, b]));
+assert(rabinAccepts(test, [a a  , b a]));
+*/
