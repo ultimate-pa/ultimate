@@ -327,27 +327,14 @@ public class InvariantChecker {
 		final ArrayDeque<IcfgEdge> worklistBackward = new ArrayDeque<>();
 		final Set<IcfgEdge> seenBackward = new HashSet<>();
 		final Set<IcfgLocation> startLocs = new HashSet<>();
-		worklistBackward.addAll(backwardStartLoc.getIncomingEdges());
-		seenBackward.addAll(backwardStartLoc.getIncomingEdges());
+		addIncomingEdgesToWorklistIfNotYetSeen(backwardStartLoc, worklistBackward, seenBackward);
 		while (!worklistBackward.isEmpty()) {
 			final IcfgEdge edge = worklistBackward.removeFirst();
 			final IcfgLocation loc = edge.getSource();
 			if (icfg.getInitialNodes().contains(loc) || icfg.getLoopLocations().contains(loc)) {
 				startLocs.add(loc);
 			} else {
-				for (final IcfgEdge pred : loc.getIncomingEdges()) {
-					if (pred instanceof IIcfgInternalTransition) {
-						if (!seenBackward.contains(pred)) {
-							seenBackward.add(pred);
-							worklistBackward.add(pred);
-						}
-					} else if ((pred instanceof IIcfgCallTransition) || (pred instanceof IIcfgReturnTransition)) {
-						// omit this edge, do nothing
-					} else {
-						throw new UnsupportedOperationException(
-								"Unsupported kind of edge " + pred.getClass().getSimpleName());
-					}
-				}
+				addIncomingEdgesToWorklistIfNotYetSeen(loc, worklistBackward, seenBackward);
 			}
 		}
 		for (final IcfgLocation startLoc : startLocs) {
@@ -368,6 +355,28 @@ public class InvariantChecker {
 			tpsds.add(tpsd);
 		}
 		return tpsds;
+	}
+
+	public void addIncomingEdgesToWorklistIfNotYetSeen(final IcfgLocation loc,
+			final ArrayDeque<IcfgEdge> worklistBackward, final Set<IcfgEdge> seenBackward) {
+		for (final IcfgEdge pred : loc.getIncomingEdges()) {
+			addToWorklistIfNotYetSeen(pred, worklistBackward, seenBackward);
+		}
+	}
+
+	public void addToWorklistIfNotYetSeen(final IcfgEdge edge, final ArrayDeque<IcfgEdge> worklistBackward,
+			final Set<IcfgEdge> seenBackward) {
+		if (edge instanceof IIcfgInternalTransition) {
+			if (!seenBackward.contains(edge)) {
+				seenBackward.add(edge);
+				worklistBackward.add(edge);
+			}
+		} else if ((edge instanceof IIcfgCallTransition) || (edge instanceof IIcfgReturnTransition)) {
+			// omit this edge, do nothing
+		} else {
+			throw new UnsupportedOperationException(
+					"Unsupported kind of edge " + edge.getClass().getSimpleName());
+		}
 	}
 
 	/**
