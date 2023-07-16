@@ -70,7 +70,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -462,12 +465,19 @@ public class InvariantChecker {
 		final IncrementalHoareTripleChecker htc = new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), true);
 		final PredicateFactory pf = new PredicateFactory(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(),
 				mIcfg.getCfgSmtToolkit().getSymbolTable());
-		final IPredicate truePredicate =
-				pf.newPredicate(mIcfg.getCfgSmtToolkit().getManagedScript().getScript().term("true"));
-		final IPredicate falsePredicate =
+		
+		final IPredicate precondition;
+		if (mIcfg.getProcedureEntryNodes().get(startLoc.getProcedure()).equals(startLoc)) {
+			TermVarsProc tvp = TraceCheckUtils.getOldVarsEquality(startLoc.getProcedure(),
+					mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable(), mIcfg.getCfgSmtToolkit().getManagedScript());
+			precondition = pf.newPredicate(tvp.getFormula());
+		} else {
+			precondition = pf.newPredicate(mIcfg.getCfgSmtToolkit().getManagedScript().getScript().term("true"));
+		}
+		final IPredicate postcondition =
 				pf.newPredicate(mIcfg.getCfgSmtToolkit().getManagedScript().getScript().term("false"));
-		final Validity validity = htc.checkInternal(truePredicate,
-				new BasicInternalAction(startLoc.getProcedure(), errorLoc.getProcedure(), tf), falsePredicate);
+		final Validity validity = htc.checkInternal(precondition,
+				new BasicInternalAction(startLoc.getProcedure(), errorLoc.getProcedure(), tf), postcondition);
 		final EdgeCheckResult ecr;
 		switch (validity) {
 		case INVALID:
