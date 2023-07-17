@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -58,7 +59,8 @@ public class ComplementPEA {
 		phases.add(sinkPhase);
 		
 		// needed for priming/ unpriming
-		Set<String> emptySet = Collections.<String>emptySet();
+		Set<String> clockVarSet = new HashSet<>();
+		clockVarSet.addAll(mPEAtoComplement.getClocks());
 		
 		for (Phase phase : mPEAtoComplement.getPhases()) {
 			CDD clockInv = phase.getClockInvariant();
@@ -83,7 +85,7 @@ public class ComplementPEA {
 				// if the same clock is in the reset set of the transition
 				CDD guardCdd = transition.getGuard();
 				
-				CDD guardUnprimed = guardCdd.unprime(emptySet);
+				CDD guardUnprimed = guardCdd.unprime(clockVarSet);
 				if (reset.length > 0) {
 					CDD noResetClockInv = RangeDecision.filterCdd(successorClockInv, reset);
 							//noReset(successorClockInv, reset, noResetCdd);
@@ -93,7 +95,7 @@ public class ComplementPEA {
 					guardToSink = guardToSink.or(guardUnprimed.and(successorStateInv).and(RangeDecision.strict(successorClockInv)));
 				}
 			}
-			CDD guardToSinkPrimed = guardToSink.prime(emptySet);
+			CDD guardToSinkPrimed = guardToSink.prime(clockVarSet);
 			// make transition to sink 
 			newPhase.addTransition(sinkPhase, guardToSinkPrimed.negate(), new String[] {});
 			phases.add(newPhase);
@@ -125,6 +127,7 @@ public class ComplementPEA {
 		totalisedPEA.setInit(newInitArray);
 		totalisedPEA.mVariables = mPEAtoComplement.mVariables;
 		totalisedPEA.mClocks = mPEAtoComplement.mClocks;
+
 		return totalisedPEA;
 	}
 	
