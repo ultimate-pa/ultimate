@@ -65,32 +65,27 @@ public class ComplementTransformerReq2Pea implements IReq2Pea {
 			mDurations.addInitPattern(p);
 		}
 		ReqPeas reqPeas =  peas.get(0); 
-		final List<Entry<CounterTrace, PhaseEventAutomata>> ct2pea = reqPeas.getCounterTrace2Pea();
-		if (ct2pea.size() != 1) {
-			mLogger.error("Composite PEAs not yet implemented");
-		}
-		final Entry<CounterTrace, PhaseEventAutomata> pea = ct2pea.get(0);
 		final PatternType<?> pattern = peas.get(0).getPattern();
-		PhaseEventAutomata peaToComplement = pea.getValue();
-		ComplementPEA complementPea= new ComplementPEA(peaToComplement);
-		PhaseEventAutomata totalisedPea = complementPea.getTotalisedPEA();
-		PhaseEventAutomata complementedPEA = complementPea.getComplementPEA();
-		
-		
-		
+		final List<Entry<CounterTrace, PhaseEventAutomata>> ct2pea = reqPeas.getCounterTrace2Pea();
 		
 		final List<Entry<CounterTrace, PhaseEventAutomata>> totalCt2pea = new ArrayList<>();
-		totalCt2pea.add(new Pair<>(pea.getKey(), totalisedPea));
-		builder.addPea(pattern, totalisedPea);
-		mReqPeas.add(new ReqPeas(pattern, totalCt2pea));
-		
 		final List<Entry<CounterTrace, PhaseEventAutomata>> complementCt2pea = new ArrayList<>();
-		// The countertrace is wrong for the complemented Pea. I dont know how to negate a DC formula.
-		builder.addPea(pattern, complementedPEA);
-		complementCt2pea.add(new Pair<>(pea.getKey(), complementedPEA));
+		
+		for (Entry<CounterTrace, PhaseEventAutomata> pea : ct2pea) {
+			PhaseEventAutomata peaToComplement = pea.getValue();
+			ComplementPEA complementPea= new ComplementPEA(peaToComplement);
+			PhaseEventAutomata totalisedPea = complementPea.getTotalisedPEA();
+			PhaseEventAutomata complementedPEA = complementPea.getComplementPEA();
+			totalCt2pea.add(new Pair<>(pea.getKey(), totalisedPea));
+			builder.addPea(pattern, totalisedPea);
+			// The countertrace is wrong for the complemented Pea. I dont know how to negate a DC formula.
+			builder.addPea(pattern, complementedPEA);
+			complementCt2pea.add(new Pair<>(pea.getKey(), complementedPEA));
+			
+		}		
+		mReqPeas.add(new ReqPeas(pattern, totalCt2pea));
 		mReqPeas.add(new ReqPeas(pattern, complementCt2pea));
 		mSymbolTable = builder.constructSymbolTable();
-		
 	}
 
 	@Override
