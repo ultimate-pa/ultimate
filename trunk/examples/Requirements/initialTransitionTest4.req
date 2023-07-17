@@ -1,0 +1,3 @@
+Input R is bool
+
+ID000: Globally, it is always the case that once "R" becomes satisfied, it holds for at least "5" time units
