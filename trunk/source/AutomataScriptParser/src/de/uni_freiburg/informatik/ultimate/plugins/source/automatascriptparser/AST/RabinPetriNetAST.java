@@ -12,16 +12,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public class RabinPetriNetAST extends AutomatonAST {
 
-	/**
-	 *
-	 */
-	// private static final long serialVersionUID = -6021451678169305249L;
-	private List<String> malphabet;
-	private List<String> mplaces;
+	private List<String> mAlphabet;
+	private List<String> mPlaces;
 
-	private List<PetriNetTransitionAST> mtransitions;
-	private PetriNetMarkingListAST minitialMarkings;
-	private List<String> macceptingPlaces;
+	private List<PetriNetTransitionAST> mTransitions;
+	private PetriNetMarkingListAST mInitialMarkings;
+	private List<String> mAcceptingPlaces;
 
 	private List<String> mFinitePlaces;
 
@@ -30,43 +26,43 @@ public class RabinPetriNetAST extends AutomatonAST {
 	}
 
 	public List<String> getAlphabet() {
-		return malphabet;
+		return mAlphabet;
 	}
 
-	public void setAlphabet(final List<String> malphabet) {
-		this.malphabet = malphabet;
+	public void setAlphabet(final List<String> alphabet) {
+		mAlphabet = alphabet;
 	}
 
 	public List<String> getPlaces() {
-		return mplaces;
+		return mPlaces;
 	}
 
-	public void setPlaces(final List<String> mplaces) {
-		this.mplaces = mplaces;
+	public void setPlaces(final List<String> places) {
+		mPlaces = places;
 	}
 
 	public List<PetriNetTransitionAST> getTransitions() {
-		return mtransitions;
+		return mTransitions;
 	}
 
-	public void setTransitions(final List<PetriNetTransitionAST> mtransitions) {
-		this.mtransitions = mtransitions;
+	public void setTransitions(final List<PetriNetTransitionAST> transitions) {
+		mTransitions = transitions;
 	}
 
 	public PetriNetMarkingListAST getInitialMarkings() {
-		return minitialMarkings;
+		return mInitialMarkings;
 	}
 
-	public void setInitialMarkings(final PetriNetMarkingListAST minitialMarkings) {
-		this.minitialMarkings = minitialMarkings;
+	public void setInitialMarkings(final PetriNetMarkingListAST initialMarkings) {
+		mInitialMarkings = initialMarkings;
 	}
 
 	public List<String> getAcceptingPlaces() {
-		return macceptingPlaces;
+		return mAcceptingPlaces;
 	}
 
-	public void setAcceptingPlaces(final List<String> macceptingPlaces) {
-		this.macceptingPlaces = macceptingPlaces;
+	public void setAcceptingPlaces(final List<String> acceptingPlaces) {
+		mAcceptingPlaces = acceptingPlaces;
 	}
 
 	public List<String> getFinitePlaces() {

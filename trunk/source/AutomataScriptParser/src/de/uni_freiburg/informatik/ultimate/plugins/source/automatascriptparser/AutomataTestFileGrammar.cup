@@ -1276,15 +1276,14 @@ rpn_definition ::= variable_identifier:id EQ LPAREN:l
                               net_transitions:net_trans COMMA
                               initial_markings:init_mark COMMA
                               accepting_places:acc_places COMMA
-                              finite_places:fin_places
-                              RPAREN:r
+                              finite_places:fin_places RPAREN:r
                         	  {: RabinPetriNetAST rpn = new RabinPetriNetAST(getLocation(l$, r$), id);
                           		 rpn.setAlphabet(alpha.getIdentifierList());
                                  rpn.setPlaces(p.getIdentifierList());
                                  rpn.setTransitions(net_trans.getNetTransitions());
                                  rpn.setInitialMarkings(init_mark);
                                  rpn.setAcceptingPlaces(acc_places.getIdentifierList());
-                                 rpn.setAcceptingPlaces(fin_places.getIdentifierList());
+                                 rpn.setFinitePlaces(fin_places.getIdentifierList());
                           		 m_varDeclarations.put(id, RabinPetriNetAST.class);
                           		RESULT = rpn; :}
                           ;

@@ -109,7 +109,7 @@ StringCharacter = [^\r\n\"\\]
   "CountingAutomaton"           { m_LastToken = m_CurToken; m_CurToken = "CountingAutomaton"; return symbol(sym.COUNTING_AUTOMATON); }
   "PetriNet"                    { m_LastToken = m_CurToken; m_CurToken = "PetriNet"; return symbol(sym.PETRINET_AUTOMATA); }
   "BranchingProcess"            { m_LastToken = m_CurToken; m_CurToken = "PetriNet"; return symbol(sym.BRANCHINGPROCESS_AUTOMATA); }
-  "RabinPetrinet"               { m_LastToken = m_CurToken; m_CurToken = "RabinPetrinet"; return symbol(sym.RABIN_PETRI_NET); }
+  "RabinPetriNet"               { m_LastToken = m_CurToken; m_CurToken = "RabinPetriNet"; return symbol(sym.RABIN_PETRI_NET); }
   "alphabet"                    { m_LastToken = m_CurToken; m_CurToken = "alphabet"; return symbol(sym.ALPHABET); }
   "callAlphabet"                { m_LastToken = m_CurToken; m_CurToken = "callAlphabet"; return symbol(sym.CALL_ALPHABET); }
   "internalAlphabet"            { m_LastToken = m_CurToken; m_CurToken = "internalAlphabet"; return symbol(sym.INTERNAL_ALPHABET); }
