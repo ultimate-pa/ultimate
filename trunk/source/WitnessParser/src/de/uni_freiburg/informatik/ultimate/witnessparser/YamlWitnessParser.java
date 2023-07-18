@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.witnessparser;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
+import java.util.UUID;
 
 import com.amihaiemil.eoyaml.Node;
 import com.amihaiemil.eoyaml.Yaml;
@@ -10,11 +12,13 @@ import com.amihaiemil.eoyaml.YamlMapping;
 import com.amihaiemil.eoyaml.YamlNode;
 import com.amihaiemil.eoyaml.YamlSequence;
 
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Invariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Metadata;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Producer;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
 
@@ -42,7 +46,7 @@ public class YamlWitnessParser {
 		return witness;
 	}
 
-	private static WitnessEntry parseWitnessEntry(final YamlNode entry) {
+	private static WitnessEntry parseWitnessEntry(final YamlNode entry) throws Exception {
 
 		assert (entry.type() == Node.MAPPING);
 
@@ -66,15 +70,25 @@ public class YamlWitnessParser {
 			return new LoopInvariant(metadata, location, loopInvariant);
 
 		} else {
-			// TODO: Unknown entry type
-			return null;
+			// In this case, throw exception -Katie
+			throw new Exception("Unknown entry type");
 		}
 	}
 
 	private static Metadata parseMetadata(final YamlNode entry) {
-		// TODO: parse metadata mapping from an entry and return new Metadata(...)
-		// object
-		return null;
+		// Method parses metadata mapping from an entry and return new Metadata(...) object
+		
+		assert (entry.type() == Node.MAPPING);
+	
+		final YamlMapping entryMapping = entry.asMapping();
+		final String entryType = entryMapping.string("entry_type");
+		
+		final FormatVersion formatVersion = new FormatVersion(); 
+		final UUID uuid = new UUID(0, 0); 
+		final Date creationTime = new Date();
+		final Producer producer = new Producer(entryType, entryType);
+		
+		return new Metadata(formatVersion, uuid, creationTime, producer);
 	}
 
 	private static Location parseLocation(final YamlNode entry) {
@@ -92,8 +106,14 @@ public class YamlWitnessParser {
 	}
 
 	private static Invariant parseInvariant(final YamlNode entry, final String name) {
-		// TODO: parse invariant mapping from an entry called 'name' and return new
-		// Invariant(...) object
-		return null;
+		// this method parses an invariant mapping from an entry called 'name' and return new Invariant(...) object
+		final YamlNode invariantEntry = entry.asMapping().value(name);
+		final YamlMapping invariantMapping = invariantEntry.asMapping();
+		
+		final String expression = invariantMapping.string("string");
+		final String type = invariantMapping.string("type");
+		final String format = invariantMapping.string("format");
+		
+		return new Invariant(expression, type, format);
 	}
 }
