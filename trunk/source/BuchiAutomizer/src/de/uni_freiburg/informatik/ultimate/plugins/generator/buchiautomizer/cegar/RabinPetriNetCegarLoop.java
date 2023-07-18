@@ -76,9 +76,9 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 	protected IRabinPetriNet<L, IPredicate> refineBuchi(final IRabinPetriNet<L, IPredicate> abstraction,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
 			throws AutomataLibraryException {
-		final RabinDifference<L, IPredicate> difference = new RabinDifference<>(abstraction,
-				new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(mServices), interpolantAutomaton),
-				new AutomataLibraryServices(mServices));
+		final RabinDifference<L, IPredicate> difference = new RabinDifference<>(new AutomataLibraryServices(mServices),
+				abstraction,
+				new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(mServices), interpolantAutomaton));
 		return difference.getResult();
 	}
 
