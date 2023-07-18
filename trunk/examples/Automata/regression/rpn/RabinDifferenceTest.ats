@@ -1,0 +1,122 @@
+// Date:  18-07-2023
+// Author: pm251@venus.uni-freiburg.de
+
+// Tranlation of Daniel Küchlers JUnit test to .ats.
+
+RabinPetriNet bNet = (
+	alphabet = {a b},
+	places = {p1 p2},
+	transitions = { ({p1} a {p1}) ({p2} b {p2}) },
+	initialMarking = {p1 p2},
+	acceptingPlaces = {p1 p2},
+	finitePlaces = {}
+);
+
+NestedWordAutomaton bAutomata = (
+	callAlphabet = {a b},
+	internalAlphabet = {a b},
+	returnAlphabet = {a b},
+	states = {q1 q2},
+	initialStates = {q1},
+	finalStates = {q1},
+	callTransitions = {},
+	internalTransitions = { (q1 a q1) (q1 b q2) (q2 b q2) (q2 a q1)	},
+	returnTransitions = {}
+);
+
+assert(rabinAccepts(rabinDifference(bNet, bAutomata), [a , b]));
+assert(rabinAccepts(rabinDifference(bNet, bAutomata), [a , b b]));
+
+assert(!rabinAccepts(rabinDifference(bNet, bAutomata), [a , a]));
+assert(!rabinAccepts(rabinDifference(bNet, bAutomata), [a , a a]));
+assert(!rabinAccepts(rabinDifference(bNet, bAutomata), [a , a b]));
+assert(!rabinAccepts(rabinDifference(bNet, bAutomata), [a , b a]));
+
+
+RabinPetriNet testNet = (
+	alphabet = {a b c},
+	places = {p1 p2 p3},
+	transitions = { ({p1} a {p2 p3}) ({p2} b {p2}) ({p3} c {p3}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p2 p3},
+	finitePlaces = {}
+);
+
+NestedWordAutomaton testAutomata = (
+	callAlphabet = {a b c},
+	internalAlphabet = {a b c},
+	returnAlphabet = {a b c},
+	states = {q1 q2 q3},
+	initialStates = {q1},
+	finalStates = {q2},
+	callTransitions = {},
+	internalTransitions = { (q1 a q2) (q2 c q2) (q2 b q3) (q3 b q3)	(q3 c q2) },
+	returnTransitions = {}
+);
+
+assert(rabinAccepts(rabinDifference(testNet, testAutomata), [a , b]));
+assert(rabinAccepts(rabinDifference(testNet, testAutomata), [a , b b]));
+
+assert(!rabinAccepts(rabinDifference(testNet, testAutomata), [a , c]));
+assert(!rabinAccepts(rabinDifference(testNet, testAutomata), [a , c c]));
+assert(!rabinAccepts(rabinDifference(testNet, testAutomata), [a , b c b]));
+assert(!rabinAccepts(rabinDifference(testNet, testAutomata), [a , c c b]));
+
+
+RabinPetriNet test2Net = (
+	alphabet = {a b c},
+	places = {p1 p2 p3},
+	transitions = { ({p1} a {p2 p3}) ({p2} b {p2}) ({p3} c {p3}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p2 p3},
+	finitePlaces = {}
+);
+
+NestedWordAutomaton test2Automata = (
+	callAlphabet = {a b c},
+	internalAlphabet = {a b c},
+	returnAlphabet = {a b c},
+	states = {q1 q2 q3},
+	initialStates = {q1},
+	finalStates = {q2},
+	callTransitions = {},
+	internalTransitions = { (q1 a q2) (q2 c q2) (q2 b q3) (q3 b q3)	(q3 c q3) },
+	returnTransitions = {}
+);
+
+assert(rabinAccepts(rabinDifference(test2Net, test2Automata), [a , b]));
+assert(rabinAccepts(rabinDifference(test2Net, test2Automata), [a , b b]));
+assert(rabinAccepts(rabinDifference(test2Net, test2Automata), [a , b c b]));
+assert(rabinAccepts(rabinDifference(test2Net, test2Automata), [a , c c b]));
+
+assert(!rabinAccepts(rabinDifference(test2Net, test2Automata), [a , c]));
+assert(!rabinAccepts(rabinDifference(test2Net, test2Automata), [a , c c]));
+
+
+RabinPetriNet test3Net = (
+	alphabet = {a b c},
+	places = {p1 p2 p3},
+	transitions = { ({p1} a {p2 p3}) ({p2} b {p2}) ({p3} c {p3}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p2 p3},
+	finitePlaces = {}
+);
+
+NestedWordAutomaton test3Automata = (
+	callAlphabet = {a b c},
+	internalAlphabet = {a b c},
+	returnAlphabet = {a b c},
+	states = {q1 q2},
+	initialStates = {q1},
+	finalStates = {q1},
+	callTransitions = {},
+	internalTransitions = { (q1 c q1) (q1 b q2) (q1 a q2) (q2 a q2)	(q2 b q2) (q2 c q2) },
+	returnTransitions = {}
+);
+
+assert(rabinAccepts(rabinDifference(test3Net, test3Automata), [a , b]));
+assert(rabinAccepts(rabinDifference(test3Net, test3Automata), [a , b b]));
+assert(rabinAccepts(rabinDifference(test3Net, test3Automata), [a , b c b]));
+assert(rabinAccepts(rabinDifference(test3Net, test3Automata), [a , c c b]));
+assert(rabinAccepts(rabinDifference(test3Net, test3Automata), [a , c]));
+assert(rabinAccepts(rabinDifference(test3Net, test3Automata), [a , c c]));
