@@ -7,8 +7,8 @@ RabinPetriNet testGetResultWithEmptyStem = (
 	alphabet = {b c},
 	places = {p2 p3},
 	transitions = { ({p2} b {p3}) ({p3} c {p2}) },
-	initialMarking = {p1},
-	acceptingPlaces = {p2},
+	initialMarking = {p2},
+	acceptingPlaces = {p3},
 	finitePlaces = {}
 );
 
