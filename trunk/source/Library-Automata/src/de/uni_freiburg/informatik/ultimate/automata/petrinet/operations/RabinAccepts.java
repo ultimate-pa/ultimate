@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  * @param <LETTER>
  *            Symbol. Type of the symbols used as alphabet.
- * @param <STATE>
+ * @param <PLACE>
  *            Content. Type of the labels ("the content") of the automata states.
  */
 public final class RabinAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETTER, PLACE> {
@@ -20,13 +20,13 @@ public final class RabinAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETT
 	/**
 	 * Constructor. Check if given Rabin-Petri Net accepts given word.
 	 *
-	 * @param <services>
+	 * @param services
 	 *            Ultimare services.
 	 *
-	 * @param <operand>
+	 * @param operand
 	 *            Input Petri Net.
 	 *
-	 * @param <word>
+	 * @param word
 	 *            Input word.
 	 */
 	public RabinAccepts(final AutomataLibraryServices services, final IRabinPetriNet<LETTER, PLACE> operand,
