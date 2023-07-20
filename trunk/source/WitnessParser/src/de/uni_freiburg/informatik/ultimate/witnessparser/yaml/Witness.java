@@ -16,4 +16,9 @@ public class Witness extends BasePayloadContainer {
 	public List<WitnessEntry> getEntries() {
 		return mEntries;
 	}
+
+	@Override
+	public String toString() {
+		return mEntries.toString();
+	}
 }

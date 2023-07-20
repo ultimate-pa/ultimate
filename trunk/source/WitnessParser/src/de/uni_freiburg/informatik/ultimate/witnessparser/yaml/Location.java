@@ -8,7 +8,8 @@ public class Location {
 	private final int mColumn;
 	private final String mFunction;
 
-	public Location(final String fileName, final String fileHash, int line, int column, final String function) {
+	public Location(final String fileName, final String fileHash, final int line, final int column,
+			final String function) {
 		mFileName = fileName;
 		mFileHash = fileHash;
 		mLine = line;
@@ -34,5 +35,10 @@ public class Location {
 
 	public String getFunction() {
 		return mFunction;
+	}
+
+	@Override
+	public String toString() {
+		return "(" + mLine + ", " + mColumn + ")";
 	}
 }

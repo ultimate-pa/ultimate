@@ -23,4 +23,9 @@ public class Invariant {
 	public String getFormat() {
 		return mFormat;
 	}
+
+	@Override
+	public String toString() {
+		return mExpression + " [" + mType + ", " + mFormat + "]";
+	}
 }
