@@ -49,16 +49,18 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 		CPACHECKER
 	}
 
+	public enum Format {
+		NONE, GRAPHML, YAML
+	}
+
 	public static final String LABEL_GRAPH_DATA_SPECIFICATION = "Graph data specification";
 	public static final String LABEL_GRAPH_DATA_PROGRAMHASH = "Graph data programhash";
 	public static final String LABEL_GRAPH_DATA_ARCHITECTURE = "Graph data architecture";
 	public static final String LABEL_GRAPH_DATA_PRODUCER = "Graph data producer";
 	public static final String UNUSED_GRAPH_DATA = "UNUSED";
 
-	private static final String LABEL_WITNESS = "Witness generation";
-
-	public static final String LABEL_WITNESS_GEN = "Generate witnesses";
-	private static final boolean VALUE_WITNESS_GEN = true;
+	public static final String LABEL_WITNESS_FORMAT = "Generated witnesses format";
+	private static final Format VALUE_WITNESS_FORMAT = Format.GRAPHML;
 
 	public static final String LABEL_WITNESS_LOG = "Log witness to console";
 	private static final boolean VALUE_WITNESS_LOG = false;
@@ -110,7 +112,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
 		return new BaseUltimatePreferenceItem[] {
 				// Witness generation
-				new UltimatePreferenceItem<>(LABEL_WITNESS_GEN, VALUE_WITNESS_GEN, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_WITNESS_FORMAT, VALUE_WITNESS_FORMAT, PreferenceType.Combo,
+						Format.values()),
 				new UltimatePreferenceItem<>(LABEL_WITNESS_LOG, VALUE_WITNESS_LOG, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_WITNESS_DIRECTORY, VALUE_WITNESS_DIRECTORY, DESC_WITNESS_DIRECTORY,
 						PreferenceType.Directory),
@@ -161,7 +164,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 		public boolean isValid(final Boolean value) {
 			if (value) {
 				final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
-				return ups.getBoolean(LABEL_WITNESS_GEN) && ups.getBoolean(LABEL_WITNESS_WRITE_BESIDE_FILE);
+				return ups.getEnum(LABEL_WITNESS_FORMAT, Format.class) != Format.NONE
+						&& ups.getBoolean(LABEL_WITNESS_WRITE_BESIDE_FILE);
 			}
 			return true;
 		}
