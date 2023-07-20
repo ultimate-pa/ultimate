@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgSummaryTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
@@ -85,7 +86,7 @@ public class IcfgDuplicator {
 		mOld2New = new HashMap<>();
 	}
 
-	public BasicIcfg<IcfgLocation> copy(final IIcfg<?> originalIcfg) {
+	public BasicIcfg<IcfgLocation> copy(final IIcfg<?> originalIcfg, final boolean ignoreSummariesWithImplementation) {
 		final BasicIcfg<IcfgLocation> newIcfg =
 				new BasicIcfg<>(((IIcfg<? extends IcfgLocation>) originalIcfg).getIdentifier() + "_BEv2",
 						originalIcfg.getCfgSmtToolkit(), IcfgLocation.class);
@@ -123,6 +124,11 @@ public class IcfgDuplicator {
 					// delay creating returns until everything else is processed
 					openReturns.add(new Pair<>(newSource, oldEdge));
 					continue;
+				}
+				if (ignoreSummariesWithImplementation && oldEdge instanceof IIcfgSummaryTransition) {
+					if (((IIcfgSummaryTransition<?>) oldEdge).calledProcedureHasImplementation()) {
+						continue;
+					}
 				}
 				createEdgeCopy(old2new, newSource, oldEdge, edgeFactory);
 			}
