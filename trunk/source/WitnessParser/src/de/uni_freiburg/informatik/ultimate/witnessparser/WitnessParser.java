@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.witnessparser;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -51,7 +52,7 @@ import edu.uci.ics.jung.io.GraphIOException;
  */
 public class WitnessParser implements ISource {
 
-	private static final String[] FILE_TYPES = new String[] { "graphml" };
+	private static final String[] FILE_TYPES = new String[] { "graphml", "yaml" };
 	private IUltimateServiceProvider mServices;
 	private String mFilename;
 	private ModelType.Type mWitnessType;
@@ -113,6 +114,15 @@ public class WitnessParser implements ISource {
 
 	private IElement parseAST(final File file) {
 		mFilename = file.getAbsolutePath();
+		if (file.getName().endsWith("yaml")) {
+			// TODO: Extract the witness type from the Witness itself
+			mWitnessType = Type.OTHER;
+			try {
+				return YamlWitnessParser.parseWitness(file);
+			} catch (final IOException e) {
+				return null;
+			}
+		}
 		final WitnessAutomatonConstructor wac = new WitnessAutomatonConstructor(mServices);
 		try {
 			final IElement rtr = wac.constructWitnessAutomaton(file);
