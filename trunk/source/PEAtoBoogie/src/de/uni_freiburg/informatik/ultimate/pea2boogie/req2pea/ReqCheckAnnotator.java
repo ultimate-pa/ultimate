@@ -235,13 +235,14 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	
 	private Pair<Expression, Expression>  getExpressions(ReqPeas reqPeas, BoogieLocation bl) {
 		List<Entry<CounterTrace, PhaseEventAutomata>> peaList = reqPeas.getCounterTrace2Pea();
-		List<Expression>  terminalExpressions = new ArrayList<>();
-		List<Expression>  nonTerminalExpressions = new ArrayList<>();
+		
 		Expression resultTerminalExpression = ExpressionFactory.createBooleanLiteral(bl, true);
 		Expression resultNonTerminalExpression = ExpressionFactory.createBooleanLiteral(bl, false);
 		
 		
 		for (Entry<CounterTrace, PhaseEventAutomata> entry : peaList) {
+			List<Expression>  terminalExpressions = new ArrayList<>();
+			List<Expression>  nonTerminalExpressions = new ArrayList<>();
 			PhaseEventAutomata pea = entry.getValue();
 			Phase[] phases = pea.getPhases();
 			for (int i = 0; i < phases.length; i++) {
@@ -253,9 +254,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 				}
 			}
 			Expression terminalExpression = genDisjunction(terminalExpressions, bl);
-			resultTerminalExpression = ExpressionFactory.and(bl, Collections.singletonList(terminalExpression));
+			resultTerminalExpression = ExpressionFactory.and(bl,Collections.singletonList(terminalExpression));
 			Expression nonTerminalExpression = genDisjunction(nonTerminalExpressions, bl);
-			resultNonTerminalExpression = ExpressionFactory.or(bl, Collections.singletonList(nonTerminalExpression));
+			resultNonTerminalExpression = ExpressionFactory.or(bl,Collections.singletonList(nonTerminalExpression));
 		}
 		
 		Pair<Expression, Expression> result = new Pair<Expression, Expression>(resultTerminalExpression, resultNonTerminalExpression);
