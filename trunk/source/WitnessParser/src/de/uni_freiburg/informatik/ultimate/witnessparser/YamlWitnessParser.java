@@ -46,7 +46,7 @@ public class YamlWitnessParser {
 		return witness;
 	}
 
-	private static WitnessEntry parseWitnessEntry(final YamlNode entry) throws Exception {
+	private static WitnessEntry parseWitnessEntry(final YamlNode entry) {
 
 		assert (entry.type() == Node.MAPPING);
 
@@ -71,7 +71,7 @@ public class YamlWitnessParser {
 
 		} else {
 			// In this case, throw exception -Katie
-			throw new Exception("Unknown entry type");
+			throw new UnsupportedOperationException("Unknown entry type");
 		}
 	}
 
