@@ -23,4 +23,9 @@ public class LoopInvariant extends WitnessEntry {
 	public Invariant getInvariant() {
 		return mInvariant;
 	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + " @ " + mLocation + ": " + mInvariant;
+	}
 }
