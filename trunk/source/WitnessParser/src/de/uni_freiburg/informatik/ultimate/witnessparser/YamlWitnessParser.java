@@ -2,7 +2,9 @@ package de.uni_freiburg.informatik.ultimate.witnessparser;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import com.amihaiemil.eoyaml.Node;
@@ -36,14 +38,14 @@ public class YamlWitnessParser {
 
 	private static Witness parseWitnessEntries(final YamlInput witnessInput) throws IOException {
 		final YamlSequence witnessEntries = witnessInput.readYamlSequence();
-		final Witness witness = new Witness();
+		final List<WitnessEntry> entries = new ArrayList<>();
 
 		for (final YamlNode witnessEntry : witnessEntries) {
 			final WitnessEntry newEntry = parseWitnessEntry(witnessEntry);
-			witness.add(newEntry);
+			entries.add(newEntry);
 		}
 
-		return witness;
+		return new Witness(entries);
 	}
 
 	private static WitnessEntry parseWitnessEntry(final YamlNode entry) {
