@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer.Format;
 
 /**
  *
@@ -115,9 +116,10 @@ public class WitnessPrinter implements IOutput {
 
 	@Override
 	public void finish() {
+		final Format format = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getEnum(PreferenceInitializer.LABEL_WITNESS_FORMAT, Format.class);
 		try {
-			if (!mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getBoolean(PreferenceInitializer.LABEL_WITNESS_GEN)) {
+			if (format == Format.NONE) {
 				mLogger.info("Witness generation is disabled");
 				return;
 			}
@@ -129,13 +131,13 @@ public class WitnessPrinter implements IOutput {
 			final WitnessManager cexVerifier = new WitnessManager(mLogger, mServices);
 			if (results.stream().anyMatch(a -> a instanceof CounterExampleResult<?, ?, ?>)) {
 				mLogger.info("Generating witness for reachability counterexample");
-				generateReachabilityCounterexampleWitness(cexVerifier, results);
+				generateReachabilityCounterexampleWitness(cexVerifier, results, format);
 			} else if (results.stream().anyMatch(a -> a instanceof LassoShapedNonTerminationArgument<?, ?>)) {
 				mLogger.info("Generating witness for non-termination counterexample");
-				generateNonTerminationWitness(cexVerifier, results);
+				generateNonTerminationWitness(cexVerifier, results, format);
 			} else if (results.stream().anyMatch(a -> a instanceof AllSpecificationsHoldResult)) {
 				mLogger.info("Generating witness for correct program");
-				generateProofWitness(cexVerifier, results);
+				generateProofWitness(cexVerifier, results, format);
 			} else {
 				mLogger.info("No result that supports witness generation found");
 			}
@@ -145,8 +147,11 @@ public class WitnessPrinter implements IOutput {
 		}
 	}
 
-	private void generateProofWitness(final WitnessManager cexVerifier, final List<IResult> results)
-			throws IOException, InterruptedException {
+	private void generateProofWitness(final WitnessManager cexVerifier, final List<IResult> results,
+			final Format format) throws IOException, InterruptedException {
+		if (format != Format.GRAPHML) {
+			throw new UnsupportedOperationException("Currently only GraphML witnesses can be extracted.");
+		}
 		final AllSpecificationsHoldResult result =
 				ResultUtil.filterResults(results, AllSpecificationsHoldResult.class).stream().findFirst().orElse(null);
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
@@ -161,7 +166,10 @@ public class WitnessPrinter implements IOutput {
 
 	@SuppressWarnings("rawtypes")
 	private void generateReachabilityCounterexampleWitness(final WitnessManager cexVerifier,
-			final List<IResult> results) throws IOException, InterruptedException {
+			final List<IResult> results, final Format format) throws IOException, InterruptedException {
+		if (format != Format.GRAPHML) {
+			throw new UnsupportedOperationException("Currently only GraphML witnesses can be extracted.");
+		}
 		final Collection<Triple<IResult, String, String>> suppliers = new ArrayList<>();
 		final Collection<CounterExampleResult> cexResults =
 				ResultUtil.filterResults(results, CounterExampleResult.class);
@@ -178,8 +186,11 @@ public class WitnessPrinter implements IOutput {
 	}
 
 	@SuppressWarnings("rawtypes")
-	private void generateNonTerminationWitness(final WitnessManager cexVerifier, final List<IResult> results)
-			throws IOException, InterruptedException {
+	private void generateNonTerminationWitness(final WitnessManager cexVerifier, final List<IResult> results,
+			final Format format) throws IOException, InterruptedException {
+		if (format != Format.GRAPHML) {
+			throw new UnsupportedOperationException("Currently only GraphML witnesses can be extracted.");
+		}
 		final Collection<Triple<IResult, String, String>> suppliers = new ArrayList<>();
 		final Collection<LassoShapedNonTerminationArgument> cexResults =
 				ResultUtil.filterResults(results, LassoShapedNonTerminationArgument.class);
