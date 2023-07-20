@@ -61,7 +61,8 @@ public class YamlWitnessParser {
 
 			return new LocationInvariant(metadata, location, locationInvariant);
 
-		} else if (entryType.equals(LoopInvariant.NAME)) {
+		}
+		if (entryType.equals(LoopInvariant.NAME)) {
 
 			final Metadata metadata = YamlWitnessParser.parseMetadata(entry);
 			final Location location = YamlWitnessParser.parseLocation(entry);
@@ -69,25 +70,24 @@ public class YamlWitnessParser {
 
 			return new LoopInvariant(metadata, location, loopInvariant);
 
-		} else {
-			// In this case, throw exception -Katie
-			throw new UnsupportedOperationException("Unknown entry type");
 		}
+		// In this case, throw exception -Katie
+		throw new UnsupportedOperationException("Unknown entry type");
 	}
 
 	private static Metadata parseMetadata(final YamlNode entry) {
 		// Method parses metadata mapping from an entry and return new Metadata(...) object
-		
+
 		assert (entry.type() == Node.MAPPING);
-	
+
 		final YamlMapping entryMapping = entry.asMapping();
 		final String entryType = entryMapping.string("entry_type");
-		
-		final FormatVersion formatVersion = new FormatVersion(); 
-		final UUID uuid = new UUID(0, 0); 
+
+		final FormatVersion formatVersion = new FormatVersion();
+		final UUID uuid = new UUID(0, 0);
 		final Date creationTime = new Date();
 		final Producer producer = new Producer(entryType, entryType);
-		
+
 		return new Metadata(formatVersion, uuid, creationTime, producer);
 	}
 
@@ -109,11 +109,11 @@ public class YamlWitnessParser {
 		// this method parses an invariant mapping from an entry called 'name' and return new Invariant(...) object
 		final YamlNode invariantEntry = entry.asMapping().value(name);
 		final YamlMapping invariantMapping = invariantEntry.asMapping();
-		
+
 		final String expression = invariantMapping.string("string");
 		final String type = invariantMapping.string("type");
 		final String format = invariantMapping.string("format");
-		
+
 		return new Invariant(expression, type, format);
 	}
 }
