@@ -2,9 +2,13 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
 import java.util.List;
 
+import com.amihaiemil.eoyaml.Yaml;
+import com.amihaiemil.eoyaml.YamlNode;
+import com.amihaiemil.eoyaml.YamlSequenceBuilder;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 
-public class Witness extends BasePayloadContainer {
+public class Witness extends BasePayloadContainer implements IYamlProvider {
 	private static final long serialVersionUID = 2111530908758373549L;
 
 	private final List<WitnessEntry> mEntries;
@@ -22,8 +26,14 @@ public class Witness extends BasePayloadContainer {
 		return mEntries.toString();
 	}
 
-	public String toYaml() {
-		// TODO
-		return toString();
+	@Override
+	public YamlNode toYaml() {
+		final YamlSequenceBuilder builder = Yaml.createMutableYamlSequenceBuilder();
+		mEntries.forEach(x -> builder.add(x.toYaml()));
+		return builder.build();
+	}
+
+	public String toYamlString() {
+		return toYaml().toString();
 	}
 }

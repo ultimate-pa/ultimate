@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
+import com.amihaiemil.eoyaml.Yaml;
+import com.amihaiemil.eoyaml.YamlNode;
+
 public class LoopInvariant extends WitnessEntry {
 
 	/**
@@ -27,5 +30,12 @@ public class LoopInvariant extends WitnessEntry {
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + " @ " + mLocation + ": " + mInvariant;
+	}
+
+	@Override
+	public YamlNode toYaml() {
+		// TODO: Include metadata
+		return Yaml.createYamlMappingBuilder().add("entry_type", NAME).add("location", mLocation.toYaml())
+				.add(NAME, mInvariant.toYaml()).build();
 	}
 }
