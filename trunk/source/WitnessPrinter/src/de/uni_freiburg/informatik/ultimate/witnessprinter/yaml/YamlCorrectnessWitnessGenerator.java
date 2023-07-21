@@ -1,9 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.witnessprinter.yaml;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
@@ -61,9 +61,9 @@ public class YamlCorrectnessWitnessGenerator {
 		final String version = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_PRODUCER_VERSION);
 		final String format = mIsACSLForbidden ? "C" : "ACSL";
 		// TODO: Do not hardcode FormatVersion
-		final Metadata metadata =
-				new Metadata(new FormatVersion(0, 1), UUID.randomUUID(), new Date(), new Producer(producer, version),
-						new Task(List.of(mTranslatedCFG.getFilename()), List.of(hash), spec, arch, "C"));
+		final Metadata metadata = new Metadata(new FormatVersion(0, 1), UUID.randomUUID(), OffsetDateTime.now(),
+				new Producer(producer, version),
+				new Task(List.of(mTranslatedCFG.getFilename()), List.of(hash), spec, arch, "C"));
 
 		final List<WitnessEntry> entries = new ArrayList<>();
 		while (!worklist.isEmpty()) {

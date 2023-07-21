@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-import java.util.Date;
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import com.amihaiemil.eoyaml.Yaml;
@@ -10,11 +11,11 @@ public class Metadata implements IYamlProvider {
 
 	private final FormatVersion mFormatVersion;
 	private final UUID mUuid;
-	private final Date mCreationTime;
+	private final OffsetDateTime mCreationTime;
 	private final Producer mProducer;
 	private final Task mTask;
 
-	public Metadata(final FormatVersion formatVersion, final UUID uuid, final Date creationTime,
+	public Metadata(final FormatVersion formatVersion, final UUID uuid, final OffsetDateTime creationTime,
 			final Producer producer, final Task task) {
 		mFormatVersion = formatVersion;
 		mUuid = uuid;
@@ -31,7 +32,7 @@ public class Metadata implements IYamlProvider {
 		return mUuid;
 	}
 
-	public Date getCreationTime() {
+	public OffsetDateTime getCreationTime() {
 		return mCreationTime;
 	}
 
@@ -42,7 +43,8 @@ public class Metadata implements IYamlProvider {
 	@Override
 	public YamlNode toYaml() {
 		return Yaml.createYamlMappingBuilder().add("format_version", mFormatVersion.toString())
-				.add("uuid", mUuid.toString()).add("creation_time", mCreationTime.toGMTString())
+				.add("uuid", mUuid.toString())
+				.add("creation_time", mCreationTime.truncatedTo(ChronoUnit.SECONDS).toString())
 				.add("producer", mProducer.toYaml()).add("task", mTask.toYaml()).build();
 	}
 }
