@@ -18,7 +18,7 @@ public class FormatVersion implements Comparable<FormatVersion> {
 	}
 
 	public static FormatVersion fromString(final String string) {
-		final String[] split = string.split(".");
+		final String[] split = string.split("\\.");
 		if (split.length != 2) {
 			return null;
 		}

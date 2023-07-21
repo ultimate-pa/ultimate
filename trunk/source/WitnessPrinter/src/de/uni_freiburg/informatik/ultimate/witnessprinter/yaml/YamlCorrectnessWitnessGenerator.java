@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -60,10 +61,10 @@ public class YamlCorrectnessWitnessGenerator {
 		final String arch = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_ARCHITECTURE);
 		final String version = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_PRODUCER_VERSION);
 		final String format = mIsACSLForbidden ? "C" : "ACSL";
+		final String filename = mTranslatedCFG.getFilename();
 		// TODO: Do not hardcode FormatVersion
 		final Metadata metadata = new Metadata(new FormatVersion(0, 1), UUID.randomUUID(), OffsetDateTime.now(),
-				new Producer(producer, version),
-				new Task(List.of(mTranslatedCFG.getFilename()), List.of(hash), spec, arch, "C"));
+				new Producer(producer, version), new Task(List.of(filename), Map.of(filename, hash), spec, arch, "C"));
 
 		final List<WitnessEntry> entries = new ArrayList<>();
 		while (!worklist.isEmpty()) {

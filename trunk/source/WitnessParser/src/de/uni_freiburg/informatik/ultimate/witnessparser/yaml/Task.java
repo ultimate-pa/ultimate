@@ -1,18 +1,19 @@
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
 import java.util.List;
+import java.util.Map;
 
 import com.amihaiemil.eoyaml.Yaml;
 import com.amihaiemil.eoyaml.YamlNode;
 
 public class Task implements IYamlProvider {
 	private final List<String> mInputFiles;
-	private final List<String> mInputFileHashes;
+	private final Map<String, String> mInputFileHashes;
 	private final String mSpecification;
 	private final String mDataModel;
 	private final String mLanguage;
 
-	public Task(final List<String> inputFiles, final List<String> inputFileHashes, final String specification,
+	public Task(final List<String> inputFiles, final Map<String, String> inputFileHashes, final String specification,
 			final String dataModel, final String language) {
 		mInputFiles = inputFiles;
 		mInputFileHashes = inputFileHashes;
@@ -27,10 +28,16 @@ public class Task implements IYamlProvider {
 		return builder.build();
 	}
 
+	private static YamlNode fromMap(final Map<String, String> map) {
+		final var builder = Yaml.createMutableYamlMappingBuilder();
+		map.forEach(builder::add);
+		return builder.build();
+	}
+
 	@Override
 	public YamlNode toYaml() {
 		return Yaml.createYamlMappingBuilder().add("input_files", fromList(mInputFiles))
-				.add("input_file_hashes", fromList(mInputFileHashes)).add("specification", mSpecification)
+				.add("input_file_hashes", fromMap(mInputFileHashes)).add("specification", mSpecification)
 				.add("data_model", mDataModel).add("language", mLanguage).build();
 	}
 }
