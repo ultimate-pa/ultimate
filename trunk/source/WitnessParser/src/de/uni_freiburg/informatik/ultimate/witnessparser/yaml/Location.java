@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
+import java.util.Objects;
+
 public class Location {
 
 	private final String mFileName;
@@ -40,5 +42,24 @@ public class Location {
 	@Override
 	public String toString() {
 		return "(" + mLine + ", " + mColumn + ")";
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(mColumn, mFileHash, mFileName, mFunction, mLine);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		final Location other = (Location) obj;
+		return mColumn == other.mColumn && Objects.equals(mFileHash, other.mFileHash)
+				&& Objects.equals(mFileName, other.mFileName) && Objects.equals(mFunction, other.mFunction)
+				&& mLine == other.mLine;
 	}
 }

@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgGraphProvider;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer.Format;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.yaml.YamlCorrectnessWitnessGenerator;
 
 /**
  *
@@ -150,9 +152,6 @@ public class WitnessPrinter implements IOutput {
 
 	private List<Triple<IResult, String, String>> generateProofWitness(final List<IResult> results,
 			final Format format) {
-		if (format != Format.GRAPHML) {
-			throw new UnsupportedOperationException("Currently only GraphML witnesses can be extracted.");
-		}
 		final AllSpecificationsHoldResult result =
 				ResultUtil.filterResults(results, AllSpecificationsHoldResult.class).stream().findFirst().orElse(null);
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
@@ -160,8 +159,18 @@ public class WitnessPrinter implements IOutput {
 		final String filename = ILocation.getAnnotation(root).getFileName();
 		final BacktranslatedCFG<?, IcfgEdge> origCfg =
 				new BacktranslatedCFG<>(filename, IcfgGraphProvider.getVirtualRoot(root), IcfgEdge.class);
-		final String witness = new CorrectnessWitnessGenerator<>(backtrans.translateCFG(origCfg), mLogger, mServices)
-				.makeGraphMLString();
+		final IBacktranslatedCFG<?, ?> translateCFG = backtrans.translateCFG(origCfg);
+		String witness;
+		switch (format) {
+		case GRAPHML:
+			witness = new CorrectnessWitnessGenerator<>(translateCFG, mLogger, mServices).makeGraphMLString();
+			break;
+		case YAML:
+			witness = new YamlCorrectnessWitnessGenerator(translateCFG, mLogger, mServices).makeYamlString();
+			break;
+		default:
+			throw new AssertionError();
+		}
 		return List.of(new Triple<>(result, filename, witness));
 	}
 
