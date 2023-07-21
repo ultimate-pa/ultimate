@@ -72,7 +72,7 @@ public class YamlCorrectnessWitnessGenerator {
 	}
 
 	public String makeYamlString() {
-		return getWitness().toYaml();
+		return getWitness().toYamlString();
 	}
 
 	private String filterInvariant(final IExplicitEdgesMultigraph<?, ?, ?, ?, ?> node) {

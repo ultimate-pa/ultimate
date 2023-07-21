@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-public class Invariant {
+import com.amihaiemil.eoyaml.Yaml;
+import com.amihaiemil.eoyaml.YamlNode;
+
+public class Invariant implements IYamlProvider {
 
 	private final String mExpression;
 	private final String mType;
@@ -27,5 +30,11 @@ public class Invariant {
 	@Override
 	public String toString() {
 		return mExpression + " [" + mType + ", " + mFormat + "]";
+	}
+
+	@Override
+	public YamlNode toYaml() {
+		return Yaml.createYamlMappingBuilder().add("string", mExpression).add("type", mType).add("format", mFormat)
+				.build();
 	}
 }

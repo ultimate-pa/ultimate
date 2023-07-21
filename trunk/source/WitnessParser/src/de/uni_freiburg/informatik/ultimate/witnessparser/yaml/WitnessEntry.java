@@ -5,7 +5,7 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
  * 
  * @author Manuel Bentele
  */
-public abstract class WitnessEntry {
+public abstract class WitnessEntry implements IYamlProvider {
 
 	private final String mName;
 	private final Metadata mMetadata;
