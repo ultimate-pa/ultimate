@@ -58,9 +58,11 @@ public class YamlCorrectnessWitnessGenerator {
 		final String hash = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_PROGRAMHASH);
 		final String spec = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_SPECIFICATION);
 		final String arch = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_ARCHITECTURE);
+		final String version = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_PRODUCER_VERSION);
 		final String format = mIsACSLForbidden ? "C" : "ACSL";
+		// TODO: Do not hardcode FormatVersion
 		final Metadata metadata =
-				new Metadata(new FormatVersion(0, 1), new UUID(0, 0), new Date(), new Producer(producer, "version"),
+				new Metadata(new FormatVersion(0, 1), UUID.randomUUID(), new Date(), new Producer(producer, version),
 						new Task(List.of(mTranslatedCFG.getFilename()), List.of(hash), spec, arch, "C"));
 
 		final List<WitnessEntry> entries = new ArrayList<>();
@@ -73,8 +75,9 @@ public class YamlCorrectnessWitnessGenerator {
 			for (final var outgoing : node.getOutgoingEdges()) {
 				// TODO: Can we use type constraints instead of this cast?
 				final ILocation loc = (ILocation) outgoing.getLabel();
+				// TODO: Where do we get the function from?
 				locationCandidates.add(
-						new Location(loc.getFileName(), "hash", loc.getStartLine(), loc.getStartColumn(), "function"));
+						new Location(loc.getFileName(), hash, loc.getStartLine(), loc.getStartColumn(), "function"));
 				worklist.add(outgoing.getTarget());
 			}
 			final String invariant = filterInvariant(node);
