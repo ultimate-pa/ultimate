@@ -50,7 +50,17 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	}
 
 	public enum Format {
-		NONE, GRAPHML, YAML
+		NONE(""), GRAPHML(".graphml"), YAML(".yaml");
+
+		private String mFileEnding;
+
+		Format(final String fileEnding) {
+			mFileEnding = fileEnding;
+		}
+
+		public String getFileEnding() {
+			return mFileEnding;
+		}
 	}
 
 	public static final String LABEL_GRAPH_DATA_SPECIFICATION = "Graph data specification";
@@ -76,8 +86,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final String DESC_WITNESS_DIRECTORY = "Write witness to the specified directory.";
 
 	public static final String LABEL_WITNESS_NAME = "Witness filename";
-	private static final String VALUE_WITNESS_NAME = "witness.graphml";
-	private static final String DESC_WITNESS_NAME = "The filename of the generated witness.";
+	private static final String VALUE_WITNESS_NAME = "witness";
+	private static final String DESC_WITNESS_NAME = "The filename of the generated witness (without file-ending).";
 
 	public static final String LABEL_WITNESS_VERIFY = "Verify the witness and generate results";
 	private static final boolean VALUE_WITNESS_VERIFY = false;
