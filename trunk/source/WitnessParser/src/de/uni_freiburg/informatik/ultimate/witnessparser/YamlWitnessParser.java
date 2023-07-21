@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -104,8 +105,9 @@ public class YamlWitnessParser {
 		final YamlMapping taskMapping = entry.asMapping().value("task").asMapping();
 		final List<String> files = taskMapping.yamlSequence("input_files").values().stream()
 				.map(x -> x.asScalar().value()).collect(Collectors.toList());
-		final List<String> hashes = taskMapping.yamlSequence("input_file_hashes").values().stream()
-				.map(x -> x.asScalar().value()).collect(Collectors.toList());
+		final var hashesRaw = taskMapping.yamlMapping("input_file_hashes");
+		final Map<String, String> hashes = hashesRaw.keys().stream()
+				.collect(Collectors.toMap(x -> x.asScalar().value(), x -> hashesRaw.string(x)));
 		final String spec = taskMapping.string("specification");
 		final String dataModel = taskMapping.string("data_model");
 		final String language = taskMapping.string("language");
