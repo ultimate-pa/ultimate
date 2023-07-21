@@ -61,4 +61,9 @@ public class FormatVersion implements Comparable<FormatVersion> {
 			return compareMajorResult;
 		}
 	}
+
+	@Override
+	public String toString() {
+		return mMajor + "." + mMinor;
+	}
 }

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.amihaiemil.eoyaml.Node;
 import com.amihaiemil.eoyaml.Yaml;
@@ -21,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Metadata;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Producer;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Task;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
 
@@ -84,13 +86,27 @@ public class YamlWitnessParser {
 
 		final YamlMapping entryMapping = entry.asMapping();
 		final String entryType = entryMapping.string("entry_type");
+		final YamlMapping metadataEntry = entryMapping.yamlMapping("metadata");
 
+		// TODO: Parse this as well
 		final FormatVersion formatVersion = new FormatVersion();
 		final UUID uuid = new UUID(0, 0);
 		final Date creationTime = new Date();
 		final Producer producer = new Producer(entryType, entryType);
 
-		return new Metadata(formatVersion, uuid, creationTime, producer);
+		return new Metadata(formatVersion, uuid, creationTime, producer, parseTask(metadataEntry));
+	}
+
+	private static Task parseTask(final YamlNode entry) {
+		final YamlMapping taskMapping = entry.asMapping().value("task").asMapping();
+		final List<String> files = taskMapping.yamlSequence("input_files").values().stream()
+				.map(x -> x.asScalar().value()).collect(Collectors.toList());
+		final List<String> hashes = taskMapping.yamlSequence("input_file_hashes").values().stream()
+				.map(x -> x.asScalar().value()).collect(Collectors.toList());
+		final String spec = taskMapping.string("specification");
+		final String dataModel = taskMapping.string("data_model");
+		final String language = taskMapping.string("language");
+		return new Task(files, hashes, spec, dataModel, language);
 	}
 
 	private static Location parseLocation(final YamlNode entry) {

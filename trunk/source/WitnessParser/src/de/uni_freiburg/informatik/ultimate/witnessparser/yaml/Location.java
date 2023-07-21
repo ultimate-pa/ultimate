@@ -68,7 +68,7 @@ public class Location implements IYamlProvider {
 
 	@Override
 	public YamlNode toYaml() {
-		return Yaml.createYamlMappingBuilder().add("file_name", mFileName).add("file_has", mFileHash)
+		return Yaml.createYamlMappingBuilder().add("file_name", mFileName).add("file_hash", mFileHash)
 				.add("line", Integer.toString(mLine)).add("column", Integer.toString(mColumn))
 				.add("function", mFunction).build();
 	}
