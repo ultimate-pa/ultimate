@@ -9,7 +9,8 @@ int g;
 /*@ ensures (\result >= i);
   @*/
 int callee(int i) {
-    while(__VERIFIER_nondet_int()) {
+    int n = __VERIFIER_nondet_int();
+    while(i < n) {
         i++;
     }
     return i;

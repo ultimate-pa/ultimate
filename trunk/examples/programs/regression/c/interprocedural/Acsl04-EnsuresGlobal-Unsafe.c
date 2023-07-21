@@ -9,7 +9,8 @@ int g;
 /*@ ensures (g > \old(g));
   @*/
 void callee() {
-    while(__VERIFIER_nondet_int()) {
+    int n = __VERIFIER_nondet_int();
+    while(g < n) {
         g++;
     }
     return;
