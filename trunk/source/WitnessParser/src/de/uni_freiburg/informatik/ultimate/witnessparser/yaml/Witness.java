@@ -21,4 +21,9 @@ public class Witness extends BasePayloadContainer {
 	public String toString() {
 		return mEntries.toString();
 	}
+
+	public String toYaml() {
+		// TODO
+		return toString();
+	}
 }
