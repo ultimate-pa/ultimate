@@ -17,6 +17,18 @@ public class FormatVersion implements Comparable<FormatVersion> {
 		mMinor = minor;
 	}
 
+	public static FormatVersion fromString(final String string) {
+		final String[] split = string.split(".");
+		if (split.length != 2) {
+			return null;
+		}
+		try {
+			return new FormatVersion(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
+		} catch (final NumberFormatException e) {
+			return null;
+		}
+	}
+
 	private static void validateVersionNumber(final boolean invalidExpression, final String exceptionMsg) {
 		if (invalidExpression) {
 			throw new IllegalArgumentException(exceptionMsg);

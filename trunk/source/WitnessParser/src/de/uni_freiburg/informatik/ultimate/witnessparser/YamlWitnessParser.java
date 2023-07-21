@@ -2,8 +2,8 @@ package de.uni_freiburg.informatik.ultimate.witnessparser;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -85,16 +85,19 @@ public class YamlWitnessParser {
 		assert (entry.type() == Node.MAPPING);
 
 		final YamlMapping entryMapping = entry.asMapping();
-		final String entryType = entryMapping.string("entry_type");
 		final YamlMapping metadataEntry = entryMapping.yamlMapping("metadata");
 
-		// TODO: Parse this as well
-		final FormatVersion formatVersion = new FormatVersion();
-		final UUID uuid = new UUID(0, 0);
-		final Date creationTime = new Date();
-		final Producer producer = new Producer(entryType, entryType);
+		final FormatVersion formatVersion = FormatVersion.fromString(metadataEntry.string("format_version"));
+		final UUID uuid = UUID.fromString(metadataEntry.string("uuid"));
+		final OffsetDateTime creationTime = OffsetDateTime.parse(metadataEntry.string("creation_time"));
 
-		return new Metadata(formatVersion, uuid, creationTime, producer, parseTask(metadataEntry));
+		return new Metadata(formatVersion, uuid, creationTime, parseProducer(metadataEntry), parseTask(metadataEntry));
+	}
+
+	private static Producer parseProducer(final YamlMapping entry) {
+		final YamlMapping producerMapping = entry.asMapping().value("producer").asMapping();
+		// TODO: I don't see any reason to parse the optional entries here...
+		return new Producer(producerMapping.string("name"), producerMapping.string("version"));
 	}
 
 	private static Task parseTask(final YamlNode entry) {
