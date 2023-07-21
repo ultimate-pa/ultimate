@@ -34,8 +34,7 @@ public class LocationInvariant extends WitnessEntry {
 
 	@Override
 	public YamlNode toYaml() {
-		// TODO: Include metadata
-		return Yaml.createYamlMappingBuilder().add("entry_type", NAME).add("location", mLocation.toYaml())
-				.add(NAME, mInvariant.toYaml()).build();
+		return Yaml.createYamlMappingBuilder().add("entry_type", NAME).add("metadata", mMetadata.toYaml())
+				.add("location", mLocation.toYaml()).add(NAME, mInvariant.toYaml()).build();
 	}
 }

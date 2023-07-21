@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-public class Producer {
+import com.amihaiemil.eoyaml.Yaml;
+import com.amihaiemil.eoyaml.YamlNode;
+
+public class Producer implements IYamlProvider {
 	private final String mName;
 	private final String mVersion;
 	private final String mConfiguration;
@@ -61,5 +64,11 @@ public class Producer {
 		}
 
 		return false;
+	}
+
+	@Override
+	public YamlNode toYaml() {
+		// TODO: Should we include the optional fields as well?
+		return Yaml.createYamlMappingBuilder().add("name", mName).add("version", mVersion).build();
 	}
 }

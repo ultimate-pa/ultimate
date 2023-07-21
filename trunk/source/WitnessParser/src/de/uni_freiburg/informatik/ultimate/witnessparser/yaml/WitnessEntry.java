@@ -2,13 +2,13 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
 /**
  * Represents a generic witness type in a YAML-based witness file.
- * 
+ *
  * @author Manuel Bentele
  */
 public abstract class WitnessEntry implements IYamlProvider {
 
 	private final String mName;
-	private final Metadata mMetadata;
+	protected final Metadata mMetadata;
 
 	public WitnessEntry(final String name, final Metadata metadata) {
 		mName = name;

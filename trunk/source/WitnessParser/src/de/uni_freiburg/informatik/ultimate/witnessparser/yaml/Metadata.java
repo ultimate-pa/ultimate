@@ -3,19 +3,24 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 import java.util.Date;
 import java.util.UUID;
 
-public class Metadata {
+import com.amihaiemil.eoyaml.Yaml;
+import com.amihaiemil.eoyaml.YamlNode;
 
-	final FormatVersion mFormatVersion;
-	final UUID mUuid;
-	final Date mCreationTime;
-	final Producer mProducer;
+public class Metadata implements IYamlProvider {
+
+	private final FormatVersion mFormatVersion;
+	private final UUID mUuid;
+	private final Date mCreationTime;
+	private final Producer mProducer;
+	private final Task mTask;
 
 	public Metadata(final FormatVersion formatVersion, final UUID uuid, final Date creationTime,
-			final Producer producer) {
+			final Producer producer, final Task task) {
 		mFormatVersion = formatVersion;
 		mUuid = uuid;
 		mCreationTime = creationTime;
 		mProducer = producer;
+		mTask = task;
 	}
 
 	public FormatVersion getFormatVersion() {
@@ -34,5 +39,10 @@ public class Metadata {
 		return mProducer;
 	}
 
-	// TODO: Add "task" metadata
+	@Override
+	public YamlNode toYaml() {
+		return Yaml.createYamlMappingBuilder().add("format_version", mFormatVersion.toString())
+				.add("uuid", mUuid.toString()).add("creation_time", mCreationTime.toGMTString())
+				.add("producer", mProducer.toYaml()).add("task", mTask.toYaml()).build();
+	}
 }
