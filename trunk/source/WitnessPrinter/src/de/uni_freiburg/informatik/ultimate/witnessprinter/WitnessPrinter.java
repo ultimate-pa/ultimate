@@ -144,7 +144,7 @@ public class WitnessPrinter implements IOutput {
 			witnesses = List.of();
 		}
 		try {
-			new WitnessManager(mLogger, mServices).run(witnesses);
+			new WitnessManager(mLogger, mServices).run(witnesses, format.getFileEnding());
 		} catch (IOException | InterruptedException e) {
 			throw new RuntimeException(e);
 		}

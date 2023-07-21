@@ -76,7 +76,7 @@ public class WitnessManager {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public void run(final Collection<Triple<IResult, String, String>> witnessTriples)
+	public void run(final Collection<Triple<IResult, String, String>> witnessTriples, final String fileEnding)
 			throws IOException, InterruptedException {
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
@@ -88,14 +88,14 @@ public class WitnessManager {
 			final String svcompWitness = witnessTriple.getThird();
 
 			final String witnessDir = ups.getString(PreferenceInitializer.LABEL_WITNESS_DIRECTORY);
-			final String witnessFilename = ups.getString(PreferenceInitializer.LABEL_WITNESS_NAME);
+			final String witnessFilename = ups.getString(PreferenceInitializer.LABEL_WITNESS_NAME) + fileEnding;
 			final boolean writeBesideInputFile = ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_WRITE_BESIDE_FILE);
 			final List<String> filenamesToDelete = new ArrayList<>();
 
 			String filename = null;
 			if (svcompWitness != null) {
 				if (writeBesideInputFile) {
-					filename = createWitnessFilenameWriteBeside(originalFile, suffix);
+					filename = createWitnessFilenameWriteBeside(originalFile, suffix, fileEnding);
 				} else {
 					filename = createWitnessFilename(witnessDir, witnessFilename, suffix);
 				}
@@ -144,9 +144,9 @@ public class WitnessManager {
 		}
 	}
 
-	private String createWitnessFilenameWriteBeside(final String origInputFile, final String additionalPrefix) {
+	private String createWitnessFilenameWriteBeside(final String origInputFile, final String additionalPrefix,
+			final String fileending) {
 		final String suffix = "witness";
-		final String fileending = ".graphml";
 		final String separator = "-";
 		final StringBuilder filename = new StringBuilder();
 		final File f = new File(origInputFile);
