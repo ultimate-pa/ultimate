@@ -75,9 +75,10 @@ public class YamlCorrectnessWitnessGenerator {
 			for (final var outgoing : node.getOutgoingEdges()) {
 				// TODO: Can we use type constraints instead of this cast?
 				final ILocation loc = (ILocation) outgoing.getLabel();
+				// If the column is unknown (-1), use the first position of the line
+				final int column = Math.max(loc.getStartColumn(), 0);
 				// TODO: Where do we get the function from?
-				locationCandidates.add(
-						new Location(loc.getFileName(), hash, loc.getStartLine(), loc.getStartColumn(), "function"));
+				locationCandidates.add(new Location(loc.getFileName(), hash, loc.getStartLine(), column, "function"));
 				worklist.add(outgoing.getTarget());
 			}
 			final String invariant = filterInvariant(node);
