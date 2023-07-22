@@ -98,7 +98,7 @@ public class AcyclicSubgraphMerger {
 				final BlockEncodingBacktranslator backtranslator =
 						new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
 				final BasicIcfg<IcfgLocation> newCfg = new IcfgDuplicator(mLogger, mServices,
-						icfg.getCfgSmtToolkit().getManagedScript(), backtranslator).copy(icfg);
+						icfg.getCfgSmtToolkit().getManagedScript(), backtranslator).copy(icfg, false);
 				final Map<IcfgLocation, IcfgLocation> newLoc2oldLoc = backtranslator.getLocationMapping();
 				initialCopyWithOldStartLoc = new Subgraph(initialSubgraph, newCfg, newLoc2oldLoc);
 				final Map<IcfgEdge, IcfgEdge> newEdge2oldEdge = (Map) backtranslator.getEdgeMapping();

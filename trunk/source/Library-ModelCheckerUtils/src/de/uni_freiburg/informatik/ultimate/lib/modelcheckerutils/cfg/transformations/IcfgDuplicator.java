@@ -86,7 +86,7 @@ public class IcfgDuplicator {
 		mOld2New = new HashMap<>();
 	}
 
-	public BasicIcfg<IcfgLocation> copy(final IIcfg<?> originalIcfg) {
+	public BasicIcfg<IcfgLocation> copy(final IIcfg<?> originalIcfg, final boolean ignoreSummariesWithImplementation) {
 		final BasicIcfg<IcfgLocation> newIcfg =
 				new BasicIcfg<>(((IIcfg<? extends IcfgLocation>) originalIcfg).getIdentifier() + "_BEv2",
 						originalIcfg.getCfgSmtToolkit(), IcfgLocation.class);
@@ -125,10 +125,8 @@ public class IcfgDuplicator {
 					openReturns.add(new Pair<>(newSource, oldEdge));
 					continue;
 				}
-				if (oldEdge instanceof IIcfgSummaryTransition) {
-					// hack to prevent copying "useless" summary edges
-					final IIcfgSummaryTransition oldSummary = (IIcfgSummaryTransition) oldEdge;
-					if (oldSummary.calledProcedureHasImplementation()) {
+				if (ignoreSummariesWithImplementation && oldEdge instanceof IIcfgSummaryTransition) {
+					if (((IIcfgSummaryTransition<?>) oldEdge).calledProcedureHasImplementation()) {
 						continue;
 					}
 				}

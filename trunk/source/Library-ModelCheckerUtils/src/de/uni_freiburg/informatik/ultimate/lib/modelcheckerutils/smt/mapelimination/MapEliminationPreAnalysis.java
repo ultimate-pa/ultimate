@@ -109,7 +109,7 @@ public class MapEliminationPreAnalysis {
 	 */
 	private void findIndices(final ModifiableTransFormula transformula) {
 		final Term term = transformula.getFormula();
-		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectDeep(term, false)) {
+		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectDeep(term)) {
 			final ArrayWrite arrayWrite = new ArrayWrite(select.getArray(), mScript);
 			findIndicesArrayWrite(arrayWrite, transformula);
 			addArrayAccessToRelation(arrayWrite.getOldArray(), select.getIndex(), transformula);

@@ -35,6 +35,13 @@
 			<unit id="org.apache.batik.util.gui" version="1.9.1.v20190730-1743"/>
 			<unit id="org.apache.batik.xml" version="1.9.1.v20190730-1743"/>
 		</location>
+		<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<repository location="https://struebli.informatik.uni-freiburg.de/p2-repository-ultimate-dependencies/"/>
+			<unit id="eo-yaml" version="7.0.8"/>
+			<unit id="eo-yaml.source" version="7.0.8"/>
+			<unit id="com.lmax.disruptor" version="3.3.5"/>
+			<unit id="com.lmax.disruptor.source" version="3.3.5"/>
+		</location>
 	</locations>
 	<includeBundles>
 		<plugin id="com.google.gson.source"/>
@@ -333,5 +340,9 @@
 		<plugin id="org.eclipse.jetty.io.source"/>
 		<plugin id="org.eclipse.jetty.http"/>
 		<plugin id="org.eclipse.jetty.http.source"/>
+		<plugin id="eo-yaml" version="7.0.8"/>
+		<plugin id="eo-yaml.source" version="7.0.8"/>
+		<plugin id="com.lmax.disruptor"/>
+		<plugin id="com.lmax.disruptor.source"/>
 	</includeBundles>
 </target>

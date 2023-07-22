@@ -26,22 +26,23 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermWrapper;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- *
+ * Wrapper for `select` terms from the SMT theory of arrays.
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class ArraySelect {
+public class ArraySelect implements ITermWrapper {
 	private final Term mArray;
 	private final Term mIndex;
-	private final Term mTermRepresentation;
+	private final Term mTerm;
 
-	public ArraySelect(final Term array, final Term index, final Term termRepresentation) {
+	public ArraySelect(final Term array, final Term index, final Term term) {
 		mArray = array;
 		mIndex = index;
-		mTermRepresentation = termRepresentation;
+		mTerm = term;
 	}
 
 	public Term getArray() {
@@ -52,16 +53,17 @@ public class ArraySelect {
 		return mIndex;
 	}
 
-	public Term asTerm() {
-		return mTermRepresentation;
+	@Override
+	public Term getTerm() {
+		return mTerm;
 	}
 
 	@Override
 	public String toString() {
-		return String.valueOf(mTermRepresentation);
+		return String.valueOf(mTerm);
 	}
 
-	public static ArraySelect convert(final Term term) {
+	public static ArraySelect of(final Term term) {
 		if (!(term instanceof ApplicationTerm)) {
 			return null;
 		}

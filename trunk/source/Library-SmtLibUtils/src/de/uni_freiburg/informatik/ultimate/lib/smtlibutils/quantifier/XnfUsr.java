@@ -73,7 +73,7 @@ public class XnfUsr extends XjunctPartialQuantifierElimination {
 			final Set<ApplicationTerm> storeTerms =
 					(new ApplicationTermFinder("store", true)).findMatchingSubterms(param);
 			if (storeTerms.isEmpty()) {
-				final List<MultiDimensionalSelect> slects = MultiDimensionalSelect.extractSelectDeep(param, false);
+				final List<MultiDimensionalSelect> slects = MultiDimensionalSelect.extractSelectDeep(param);
 				for (final MultiDimensionalSelect mds : slects) {
 					final Set<TermVariable> indexFreeVars = mds.getIndex().getFreeVars();
 					for (final TermVariable tv : indexFreeVars) {

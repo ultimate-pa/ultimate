@@ -65,8 +65,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -147,7 +147,9 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 				if (itpCompStatus.wasComputationSuccesful()) {
 					mInterpolants = tc.getForwardIpp().getPredicates().toArray(new IPredicate[0]);
 				} else {
-					throw new UnsupportedOperationException("Acceleration-free interpolant computation failed.");
+					throw new UnsupportedOperationException(
+							String.format("Acceleration-free interpolant computation failed: %s %s ",
+									itpCompStatus.getStatus(), itpCompStatus.getException()));
 				}
 				break;
 			default:
@@ -248,7 +250,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 			protected String getSubtaskIdentifier() {
 				return "TODO";
 			}
-		}).setUseExternalSolver(ExternalSolver.Z3, timeout).setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
+		});
 		return createExternalManagedScript(solverSettings);
 	}
 
@@ -313,7 +315,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 			final List<IPredicate> sequenceOfStatesBefore = counterexample.getStateSequence().subList(lastcut,
 					entry.getKey());
 			currentSequenceofStates.addAll(sequenceOfStatesBefore);
-			final SPredicate loopPredicate = (SPredicate) counterexample
+			final ISLPredicate loopPredicate = (ISLPredicate) counterexample
 					.getStateAtPosition(accelSegment.getStartPosition());
 			final IIcfgTransition<?> accelerationEdge = icfgEdgeFactory.createInternalTransition(
 					loopPredicate.getProgramPoint(), loopPredicate.getProgramPoint(), new Payload(),
@@ -432,7 +434,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 			final List<IPredicate> programPoints) {
 		final HashTreeRelation<IcfgLocation, Integer> result = new HashTreeRelation<>();
 		for (int i = 0; i < programPoints.size(); i++) {
-			final SPredicate pred = (SPredicate) programPoints.get(i);
+			final ISLPredicate pred = (ISLPredicate) programPoints.get(i);
 			final IcfgLocation programPoint = pred.getProgramPoint();
 			result.addPair(programPoint, i);
 		}

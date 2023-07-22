@@ -543,14 +543,14 @@ public class TransFormulaLRWithArrayCells {
 			final TermVariable cellVariable = mArrayInstance2Index2CellVariable.get(ar.getArray()).get(ar.getIndex());
 			final Term inOutRepresentative = ec.getInOutRepresentative(cellVariable);
 			assert inOutRepresentative != null;
-			substitutionMapping.put(ar.getSelectTerm(), inOutRepresentative);
+			substitutionMapping.put(ar.toTerm(mScript.getScript()), inOutRepresentative);
 		}
 
 		for (final MultiDimensionalSelect ar : tflrwai.getAdditionalArrayReads()) {
 			final TermVariable cellVariable = mArrayInstance2Index2CellVariable.get(ar.getArray()).get(ar.getIndex());
 			final Term inOutRepresentative = ec.getInOutRepresentative(cellVariable);
 			assert inOutRepresentative != null;
-			substitutionMapping.put(ar.getSelectTerm(), inOutRepresentative);
+			substitutionMapping.put(ar.toTerm(mScript.getScript()), inOutRepresentative);
 		}
 		return substitutionMapping;
 	}

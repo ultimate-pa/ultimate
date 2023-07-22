@@ -255,7 +255,7 @@ public class JordanLoopAcceleration {
 					throw new UnsupportedOperationException("Written value contains store");
 				}
 
-				final List<MultiDimensionalSelect> selects = MultiDimensionalSelect.extractSelectDeep(value, false);
+				final List<MultiDimensionalSelect> selects = MultiDimensionalSelect.extractSelectDeep(value);
 				if (selects.size() > 1) {
 					// FIXME 20230606 Matthias: Occurs sedomly, do not support by now
 					throw new UnsupportedOperationException("Written value contains several selects");
@@ -666,8 +666,7 @@ public class JordanLoopAcceleration {
 			final Term conjunct1;
 			{
 				final Term valueUpdate = SmtUtils.equality(script,
-						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx),
-								script).toTerm(script),
+						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx)).toTerm(script),
 						value);
 				final Term impl1 = SmtUtils.implies(script, inRangeIndexEquality, valueUpdate);
 				final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, Collections.singleton(it),
@@ -678,9 +677,8 @@ public class JordanLoopAcceleration {
 			final Term conjunct2;
 			{
 				final Term valueConstancy = SmtUtils.equality(script,
-						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx),
-								script).toTerm(script),
-						new MultiDimensionalSelect(loopTransFormula.getInVars().get(array), new ArrayIndex(idx), script)
+						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx)).toTerm(script),
+						new MultiDimensionalSelect(loopTransFormula.getInVars().get(array), new ArrayIndex(idx))
 								.toTerm(script));
 				final Term existsInRangeEquality = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS,
 						Collections.singleton(it), inRangeIndexEquality);
@@ -804,7 +802,7 @@ public class JordanLoopAcceleration {
 		final List<Term> terms = new ArrayList<>();
 		for (final Triple<IProgramVar, ArrayIndex, Term> triple : arrayUpdates.entrySet()) {
 			final TermVariable arrayOutVar = outVars.get(triple.getFirst());
-			final MultiDimensionalSelect mds = new MultiDimensionalSelect(arrayOutVar, triple.getSecond(), script);
+			final MultiDimensionalSelect mds = new MultiDimensionalSelect(arrayOutVar, triple.getSecond());
 			terms.add(SmtUtils.equality(script, mds.toTerm(script), triple.getThird()));
 		}
 		return SmtUtils.and(script, terms);

@@ -35,6 +35,13 @@
 			<unit id="org.apache.batik.util.gui" version="1.9.1.v20190730-1743"/>
 			<unit id="org.apache.batik.xml" version="1.9.1.v20190730-1743"/>
 		</location>
+		<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<repository location="https://struebli.informatik.uni-freiburg.de/p2-repository-ultimate-dependencies/"/>
+			<unit id="eo-yaml" version="7.0.8"/>
+			<unit id="eo-yaml.source" version="7.0.8"/>
+			<unit id="com.lmax.disruptor" version="3.3.5"/>
+			<unit id="com.lmax.disruptor.source" version="3.3.5"/>
+		</location>
 	</locations>
 	<includeBundles>
 		<plugin id="com.google.gson.source"/>
@@ -54,7 +61,7 @@
 		<plugin id="javax.xml" version="1.3.4.v201005080400"/>
 		<plugin id="org.apache.batik.anim"/>
 		<plugin id="org.apache.batik.anim.source"/>
-		<plugin id="org.apache.batik.constants.source" version="1.9.1.v20180227-1645"/>
+		<plugin id="org.apache.batik.constants.source" version="1.13.0.v20200622-2037"/>
 		<plugin id="org.apache.batik.constants" version="1.9.1.v20180227-1645"/>
 		<plugin id="org.apache.batik.css.source" version="1.9.1.v20181015-1528"/>
 		<plugin id="org.apache.batik.css" version="1.9.1.v20181015-1528"/>
@@ -64,7 +71,7 @@
 		<plugin id="org.apache.batik.dom"/>
 		<plugin id="org.apache.batik.ext.awt.source"/>
 		<plugin id="org.apache.batik.ext.awt"/>
-		<plugin id="org.apache.batik.i18n.source" version="1.9.1.v20180227-1645"/>
+		<plugin id="org.apache.batik.i18n.source" version="1.13.0.v20200622-2037"/>
 		<plugin id="org.apache.batik.i18n" version="1.9.1.v20180227-1645"/>
 		<plugin id="org.apache.batik.parser.source"/>
 		<plugin id="org.apache.batik.parser"/>
@@ -82,8 +89,8 @@
 		<plugin id="org.apache.commons.jxpath.source" version="1.3.0.v200911051830"/>
 		<plugin id="org.apache.commons.logging" version="1.2.0.v20180409-1502"/>
 		<plugin id="org.apache.commons.logging.source" version="1.2.0.v20180409-1502"/>
-		<plugin id="org.apache.felix.scr"/>
-		<plugin id="org.apache.felix.scr.source"/>
+		<plugin id="org.apache.felix.scr" version="2.1.16.v20200110-1820"/>
+		<plugin id="org.apache.felix.scr.source" version="2.1.16.v20200110-1820"/>
 		<plugin id="org.apache.xalan"/>
 		<plugin id="org.apache.xerces"/>
 		<plugin id="org.apache.xml.resolver"/>
@@ -183,8 +190,8 @@
 		<plugin id="org.eclipse.equinox.common" version="3.13.0.v20200828-1034"/>
 		<plugin id="org.eclipse.equinox.ds.source"/>
 		<plugin id="org.eclipse.equinox.ds"/>
-		<plugin id="org.eclipse.equinox.event.source"/>
-		<plugin id="org.eclipse.equinox.event"/>
+		<plugin id="org.eclipse.equinox.event.source" version="1.5.500.v20200616-0800"/>
+		<plugin id="org.eclipse.equinox.event" version="1.5.500.v20200616-0800"/>
 		<plugin id="org.eclipse.equinox.preferences" version="3.8.0.v20200422-1833"/>
 		<plugin id="org.eclipse.equinox.preferences.source" version="3.8.0.v20200422-1833"/>
 		<plugin id="org.eclipse.equinox.registry" version="3.9.0.v20200625-1425"/>
@@ -330,12 +337,16 @@
 		<plugin id="org.eclipse.jetty.http"/>
 		<plugin id="org.eclipse.jetty.http.source"/>
 		<plugin id="javax.xml.bind.source"/>
-		<plugin id="org.apache.batik.constants.source"/>
-		<plugin id="org.apache.batik.css.source"/>
-		<plugin id="org.apache.batik.i18n.source"/>
-		<plugin id="org.apache.batik.util.source"/>
-		<plugin id="org.eclipse.equinox.security.source"/>
-		<plugin id="org.eclipse.help.source"/>
-		<plugin id="org.eclipse.osgi.services.source"/>
+		<plugin id="org.apache.batik.constants.source" version="1.9.1.v20180227-1645"/>
+		<plugin id="org.apache.batik.css.source" version="1.13.0.v20200622-2037"/>
+		<plugin id="org.apache.batik.i18n.source" version="1.9.1.v20180227-1645"/>
+		<plugin id="org.apache.batik.util.source" version="1.13.0.v20200622-2037"/>
+		<plugin id="org.eclipse.equinox.security.source" version="1.3.500.v20200114-1637"/>
+		<plugin id="org.eclipse.help.source" version="3.8.800.v20200525-0755"/>
+		<plugin id="org.eclipse.osgi.services.source" version="3.9.0.v20200511-1725"/>
+		<plugin id="eo-yaml" version="7.0.8"/>
+		<plugin id="eo-yaml.source" version="7.0.8"/>
+		<plugin id="com.lmax.disruptor"/>
+		<plugin id="com.lmax.disruptor.source"/>
 	</includeBundles>
 </target>

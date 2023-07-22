@@ -91,9 +91,8 @@ public class MultiDimensionalSelectOverStore {
 	 * if the index of the select and the index of the store are distinct.
 	 */
 	public Term constructNotEqualsReplacement(final Script script) {
-		final MultiDimensionalSelect mds = new MultiDimensionalSelect(getStore().getArray(), getSelect().getIndex(),
-				script);
-		return mds.getSelectTerm();
+		final MultiDimensionalSelect mds = new MultiDimensionalSelect(getStore().getArray(), getSelect().getIndex());
+		return mds.toTerm(script);
 	}
 
 	/**

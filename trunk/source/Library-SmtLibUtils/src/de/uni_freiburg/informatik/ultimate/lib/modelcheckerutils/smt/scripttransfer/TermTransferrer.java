@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttran
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -63,7 +62,6 @@ public class TermTransferrer extends TermTransformer {
 	protected final HistoryRecordingScript mOldScript;
 	protected final HistoryRecordingScript mNewScript;
 
-	protected final Map<Term, Term> mBacktransferMapping = new HashMap<>();
 	protected final Map<Term, Term> mTransferMapping;
 
 	public TermTransferrer(final Script oldScript, final Script newScript) {
@@ -96,10 +94,6 @@ public class TermTransferrer extends TermTransformer {
 
 	public Map<Term, Term> getTransferMapping() {
 		return mTransferMapping;
-	}
-
-	public Map<Term, Term> getBacktranferMapping() {
-		return mBacktransferMapping;
 	}
 
 	@Override
@@ -195,12 +189,12 @@ public class TermTransferrer extends TermTransformer {
 	public void postConvertLet(final LetTerm oldLet, final Term[] newValues, final Term newBody) {
 		final TermVariable[] vars = new TermVariable[oldLet.getVariables().length];
 		for (int i = 0; i < oldLet.getVariables().length; i++) {
-			// Bounded variables that occur in the subformula have to be already keys of the map.
-			assert (!Arrays.asList(oldLet.getSubTerm().getFreeVars()).contains(oldLet.getVariables()[i])
-					|| mTransferMapping.containsKey(oldLet.getVariables()[i])) : "Forgotten to transfer: "
-							+ oldLet.getVariables()[i];
-			vars[i] = (TermVariable) mTransferMapping.computeIfAbsent(oldLet.getVariables()[i],
-					x -> transferTermVariable((TermVariable) x));
+			// Check mTransferMapping first, in case a different mapping was already recorded.
+			if (mTransferMapping.containsKey(oldLet.getVariables()[i])) {
+				vars[i] = (TermVariable) mTransferMapping.get(oldLet.getVariables()[i]);
+			} else {
+				vars[i] = transferTermVariable(oldLet.getVariables()[i]);
+			}
 		}
 		final Term result = mNewScript.let(vars, newValues, newBody);
 		setResult(result);
@@ -210,12 +204,12 @@ public class TermTransferrer extends TermTransformer {
 	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
 		final TermVariable[] vars = new TermVariable[old.getVariables().length];
 		for (int i = 0; i < old.getVariables().length; i++) {
-			// Bounded variables that occur in the subformula have to be already keys of the map.
-			assert (!Arrays.asList(old.getSubformula().getFreeVars()).contains(old.getVariables()[i])
-					|| mTransferMapping.containsKey(old.getVariables()[i])) : "Forgotten to transfer: "
-							+ old.getVariables()[i];
-			vars[i] = (TermVariable) mTransferMapping.computeIfAbsent(old.getVariables()[i],
-					x -> transferTermVariable((TermVariable) x));
+			// Check mTransferMapping first, in case a different mapping was already recorded.
+			if (mTransferMapping.containsKey(old.getVariables()[i])) {
+				vars[i] = (TermVariable) mTransferMapping.get(old.getVariables()[i]);
+			} else {
+				vars[i] = transferTermVariable(old.getVariables()[i]);
+			}
 		}
 		final Term result = mNewScript.quantifier(old.getQuantifier(), vars, newBody);
 		setResult(result);

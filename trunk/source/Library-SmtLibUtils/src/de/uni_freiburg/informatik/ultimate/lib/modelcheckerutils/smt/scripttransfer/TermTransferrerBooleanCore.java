@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -55,12 +57,17 @@ public class TermTransferrerBooleanCore extends TermTransferrer {
 	private static final String FRESH_TERM_PREFIX = "FBV_";
 	private int mFreshTermCounter;
 	private final ConstructionCache<Term, Term> mConstructionCache;
+	private final Map<Term, Term> mBacktransferMapping = new HashMap<>();
 
 	public TermTransferrerBooleanCore(final Script oldScript, final Script newScript) {
 		super(oldScript, newScript);
 		mAuxiliaryTerm = constructAuxiliaryTerm();
 		mFreshTermCounter = 0;
 		mConstructionCache = new ConstructionCache<>(this::constructTerm);
+	}
+
+	public Map<Term, Term> getBacktransferMapping() {
+		return mBacktransferMapping;
 	}
 
 	private Term constructAuxiliaryTerm() {
