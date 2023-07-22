@@ -173,7 +173,6 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	protected Map<IcfgLocation, Integer> createLocationMap(final IIcfg<?> icfg) {
 		final var result = new HashMap<IcfgLocation, Integer>();
 		for (final var entry : icfg.getProcedureEntryNodes().entrySet()) {
-			final var errorNodes = icfg.getProcedureErrorNodes().get(entry.getKey());
 			final var initial = entry.getValue();
 
 			int counter = 0;
