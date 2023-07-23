@@ -1118,7 +1118,8 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		if (lhs instanceof VariableLHS) {
 			final VariableLHS varLhs = (VariableLHS) lhs;
 			final DeclarationInformation declInfo = varLhs.getDeclarationInformation();
-			final VarMapValue mapping = mVarMap.get(new VarMapKey(varLhs.getIdentifier(), declInfo, inOldExprOfProc()));
+			final VarMapValue mapping = mVarMap
+					.get(new VarMapKey(varLhs.getIdentifier(), declInfo, isGobalInOldExprOfProc(declInfo)));
 			final String newId = mapping.getVarId();
 			final DeclarationInformation newDeclInfo = mapping.getDeclInfo();
 			newLhs = new VariableLHS(varLhs.getLocation(), varLhs.getType(), newId, newDeclInfo);
@@ -1195,7 +1196,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			final IdentifierExpression idExpr = (IdentifierExpression) expr;
 			final String id = idExpr.getIdentifier();
 			final DeclarationInformation declInfo = idExpr.getDeclarationInformation();
-			final String inOldExprOfProc = inOldExprOfProc();
+			final String inOldExprOfProc = isGobalInOldExprOfProc(declInfo);
 			if (inOldExprOfProc != null) {
 				mapVariableInInlinedOldExpr(idExpr); // includes check to avoid mapping of already mapped values
 				updateInlinedOldVarStack(idExpr);
@@ -1299,7 +1300,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		boolean changed = false;
 		for (int i = 0; i < ids.length; ++i) {
 			final String id = ids[i];
-			final String newId = mVarMap.get(new VarMapKey(id, declInfo, inOldExprOfProc())).getVarId();
+			final String newId = mVarMap.get(new VarMapKey(id, declInfo, isGobalInOldExprOfProc(declInfo))).getVarId();
 			if (!newId.equals(id)) {
 				changed = true;
 			}
@@ -1324,11 +1325,13 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	/**
 	 * Creates the last argument for the constructor of VarMapKey.
 	 *
-	 * @return Current procedure identifier, if processing takes place inside an inlined old() expression, {@code null}
-	 *         otherwise.
+	 * @param declInfo {@link DeclarationInformation} of the identifier
+	 *
+	 * @return Current procedure identifier, if processing takes place inside an
+	 *         inlined old() expression, {@code null} otherwise.
 	 */
-	private String inOldExprOfProc() {
-		if (inInlinedOldExpr()) {
+	private String isGobalInOldExprOfProc(final DeclarationInformation declInfo) {
+		if (declInfo.getStorageClass() == StorageClass.GLOBAL && inInlinedOldExpr()) {
 			return currentProcId();
 		}
 		return null;
