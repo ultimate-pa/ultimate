@@ -63,7 +63,7 @@ public class SimplificationBenchmark {
 	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = !false;
-	private static final long TEST_TIMEOUT_MILLISECONDS = 20_000;
+	private static final long TEST_TIMEOUT_MILLISECONDS = 60_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 //	private static final String SOLVER_COMMAND = "cvc4 --incremental --lang smt";
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:12000 -memory:2024 -smt2 -in";
@@ -153,6 +153,38 @@ public class SimplificationBenchmark {
 			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_IoRegisterDeviceInterface_#res#1", "~myStatus~0", "ULTIMATE.start_FlAcpiConfigureFloppy_#res#1", "~MaximumInterfaceType~0", "ULTIMATE.start_FloppyStartDevice_#res#1", "~lowerDriverReturn~0", "ULTIMATE.start_FlFdcDeviceIo_~ntStatus~2#1", "ULTIMATE.start_FloppyStartDevice_~InterfaceType~0#1", "~s~0", "~IPC~0", "ULTIMATE.start_FloppyStartDevice_~ntStatus~1#1", "~SKIP1~0", "~SKIP2~0", "ULTIMATE.start_FloppyPnp_~__cil_tmp30~0#1", "~pended~0", "ULTIMATE.start_FlFdcDeviceIo_#res#1", "~compRegistered~0", "~customIrp~0", "~setEventCalled~0", "ULTIMATE.start_main_~status~1#1", "ULTIMATE.start_FloppyPnp_~ntStatus~0#1", "~NP~0", "ULTIMATE.start_FloppyStartDevice_~__cil_tmp42~0#1", "~DC~0", "ULTIMATE.start_FlFdcDeviceIo_~__cil_tmp11~0#1", "~MPR3~0", "~MPR1~0"),
 		};
 		final String formulaAsString = CoreUtil.readFile("src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/SimplificationBenchmarkIntNoMod01");
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	
+	@Test
+	public void mod01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~y~0#1", "ULTIMATE.start_main_~x~0#1", "ULTIMATE.start___VERIFIER_assert_~cond#1"),
+		};
+		final String formulaAsString = "(and (= |ULTIMATE.start___VERIFIER_assert_~cond#1| 1) (or (not (= (mod (+ (* |ULTIMATE.start_main_~y~0#1| 4) |ULTIMATE.start_main_~x~0#1| 24) 4294967296) 30)) (= 30 (mod (+ |ULTIMATE.start_main_~x~0#1| (* 3 |ULTIMATE.start_main_~y~0#1|) 12) 4294967296))) (or (= (mod (+ (* |ULTIMATE.start_main_~y~0#1| 4) |ULTIMATE.start_main_~x~0#1| 24) 4294967296) 30) (not (= (mod (+ 40 (* 5 |ULTIMATE.start_main_~y~0#1|) |ULTIMATE.start_main_~x~0#1|) 4294967296) 30))) (or (not (= (mod (+ (* 2 |ULTIMATE.start_main_~y~0#1|) |ULTIMATE.start_main_~x~0#1| 4) 4294967296) 30)) (= (mod (+ |ULTIMATE.start_main_~x~0#1| |ULTIMATE.start_main_~y~0#1|) 4294967296) 30)) (not (= (mod (+ |ULTIMATE.start_main_~x~0#1| |ULTIMATE.start_main_~y~0#1|) 4294967296) 30)) (or (= (mod (+ (* 2 |ULTIMATE.start_main_~y~0#1|) |ULTIMATE.start_main_~x~0#1| 4) 4294967296) 30) (not (= 30 (mod (+ |ULTIMATE.start_main_~x~0#1| (* 3 |ULTIMATE.start_main_~y~0#1|) 12) 4294967296)))))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	
+	@Test
+	public void mod02() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~#array~0#1.base", "~ARR_SIZE~0", "ULTIMATE.start_main_~row~0#1", "ULTIMATE.start_assume_abort_if_not_~cond#1", "ULTIMATE.start_main_~#array~0#1.offset", "ULTIMATE.start_main_~sum~0#1", "ULTIMATE.start_main_~column~0#1"),
+		};
+		final String formulaAsString = "(and (or (and (= |ULTIMATE.start_assume_abort_if_not_~cond#1| 1) (< 0 ~ARR_SIZE~0)) (and (<= ~ARR_SIZE~0 0) (= |ULTIMATE.start_assume_abort_if_not_~cond#1| 0))) (< 0 ~ARR_SIZE~0) (or (= (* ~ARR_SIZE~0 ~ARR_SIZE~0 ~ARR_SIZE~0) (+ (* (select (select |#memory_int| |ULTIMATE.start_main_~#array~0#1.base|) |ULTIMATE.start_main_~#array~0#1.offset|) 3) (* 3 |ULTIMATE.start_main_~sum~0#1|) ~ARR_SIZE~0)) (< (+ |ULTIMATE.start_main_~column~0#1| 1) ~ARR_SIZE~0)) (or (and (or (< 32767 (mod |ULTIMATE.start_main_~column~0#1| 65536)) (and (or (< (* ~ARR_SIZE~0 ~ARR_SIZE~0 ~ARR_SIZE~0) (+ (* 3 |ULTIMATE.start_main_~sum~0#1|) ~ARR_SIZE~0 1)) (< (mod |ULTIMATE.start_main_~column~0#1| 65536) (mod |ULTIMATE.start_main_~row~0#1| 65536))) (or (= 0 (+ (* |ULTIMATE.start_main_~row~0#1| ~ARR_SIZE~0) |ULTIMATE.start_main_~column~0#1|)) (< (mod |ULTIMATE.start_main_~column~0#1| 65536) (mod |ULTIMATE.start_main_~row~0#1| 65536))) (or (< (mod |ULTIMATE.start_main_~column~0#1| 65536) (mod |ULTIMATE.start_main_~row~0#1| 65536)) (< (+ (* 3 (mod |ULTIMATE.start_main_~column~0#1| 65536)) (* 3 |ULTIMATE.start_main_~sum~0#1|) ~ARR_SIZE~0) (+ (* ~ARR_SIZE~0 ~ARR_SIZE~0 ~ARR_SIZE~0) (* 3 (mod |ULTIMATE.start_main_~row~0#1| 65536)) 1))) (<= (mod |ULTIMATE.start_main_~row~0#1| 65536) 32767))) (or (and (or (< (* ~ARR_SIZE~0 ~ARR_SIZE~0 ~ARR_SIZE~0) (+ (* 3 |ULTIMATE.start_main_~sum~0#1|) ~ARR_SIZE~0 1)) (< (mod |ULTIMATE.start_main_~column~0#1| 65536) (mod |ULTIMATE.start_main_~row~0#1| 65536))) (or (= 0 (+ (* |ULTIMATE.start_main_~row~0#1| ~ARR_SIZE~0) |ULTIMATE.start_main_~column~0#1|)) (< (mod |ULTIMATE.start_main_~column~0#1| 65536) (mod |ULTIMATE.start_main_~row~0#1| 65536))) (or (< (mod |ULTIMATE.start_main_~column~0#1| 65536) (mod |ULTIMATE.start_main_~row~0#1| 65536)) (< (+ (* 3 (mod |ULTIMATE.start_main_~column~0#1| 65536)) (* 3 |ULTIMATE.start_main_~sum~0#1|) ~ARR_SIZE~0) (+ (* ~ARR_SIZE~0 ~ARR_SIZE~0 ~ARR_SIZE~0) (* 3 (mod |ULTIMATE.start_main_~row~0#1| 65536)) 1)))) (<= (mod |ULTIMATE.start_main_~row~0#1| 65536) 32767))) (< (+ |ULTIMATE.start_main_~column~0#1| 1) ~ARR_SIZE~0)))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	
+	@Test
+	public void qfArrayNoMod01() throws IOException {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "v_arrayElimCell_45", "v_arrayElimCell_44", "v_arrayElimCell_42", "v_arrayElimCell_49", "v_arrayElimCell_48", "v_arrayElimCell_47", "v_arrayElimCell_46", "v_ArrVal_408", "v_arrayElimCell_51", "v_arrayElimCell_50", "v_arrayElimCell_56", "v_arrayElimCell_55", "v_arrayElimCell_54", "v_arrayElimCell_53", "v_arrayElimCell_38", "v_arrayElimCell_59", "v_arrayElimCell_58", "v_arrayElimCell_57", "v_arrayElimCell_39", "#valid", "v_ArrVal_413", "v_ArrVal_418", "v_arrayElimCell_41", "v_arrayElimCell_40", "v_arrayElimCell_62", "v_arrayElimCell_61", "v_arrayElimCell_60"),
+				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~x~0#1.offset", "v_arrayElimCell_63", "v_arrayElimCell_80", "ULTIMATE.start_main_~head~0#1.offset", "v_arrayElimIndex_10", "v_prenex_2", "v_prenex_1", "v_arrayElimCell_79", "v_arrayElimCell_76", "v_arrayElimCell_75", "v_arrayElimCell_78", "v_arrayElimIndex_9", "v_arrayElimCell_77", "v_arrayElimCell_72", "ULTIMATE.start_main_~x~0#1.base", "v_arrayElimCell_71", "v_arrayElimCell_74", "v_arrayElimCell_73", "v_arrayElimCell_70", "v_ArrVal_428", "v_ArrVal_427", "v_arrayElimCell_69", "v_arrayElimCell_68", "ULTIMATE.start_main_~head~0#1.base", "v_arrayElimCell_65", "v_arrayElimCell_64", "v_arrayElimCell_67", "v_arrayElimCell_66"),
+			};
+		final String formulaAsString = CoreUtil.readFile("src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/SimplificationBenchmarkQfArrayNoMod01_2427");
 		final String expectedResultAsString = null;
 		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
