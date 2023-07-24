@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -53,9 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgGraphProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer.Format;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.yaml.YamlCorrectnessWitnessGenerator;
 
 /**
@@ -64,6 +63,8 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.yaml.YamlCorrectnessWi
  *
  */
 public class WitnessPrinter implements IOutput {
+	private static final String GRAPHML = ".graphml";
+	private static final String YAML = ".yaml";
 
 	private ILogger mLogger;
 	private IUltimateServiceProvider mServices;
@@ -118,40 +119,36 @@ public class WitnessPrinter implements IOutput {
 
 	@Override
 	public void finish() {
-		final Format format = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getEnum(PreferenceInitializer.LABEL_WITNESS_FORMAT, Format.class);
-		if (format == Format.NONE) {
-			mLogger.info("Witness generation is disabled");
-			return;
-		}
-
 		// determine if there are true or false witnesses
 		final List<IResult> results = mServices.getResultService().getResults().entrySet().stream()
 				.flatMap(a -> a.getValue().stream()).collect(Collectors.toList());
+		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		final boolean createGraphML = ups.getBoolean(PreferenceInitializer.LABEL_GENERATE_GRAPHML_WITNESS);
+		final boolean createYaml = ups.getBoolean(PreferenceInitializer.LABEL_GENERATE_YAML_WITNESS);
 
-		final List<Triple<IResult, String, String>> witnesses;
+		final List<ResultWitness> witnesses;
 		if (results.stream().anyMatch(a -> a instanceof CounterExampleResult<?, ?, ?>)) {
 			mLogger.info("Generating witness for reachability counterexample");
-			witnesses = generateReachabilityCounterexampleWitness(results, format);
+			witnesses = generateReachabilityCounterexampleWitness(results, createGraphML, createYaml);
 		} else if (results.stream().anyMatch(a -> a instanceof LassoShapedNonTerminationArgument<?, ?>)) {
-			mLogger.info("Generating witness for non-termination counterexample");
-			witnesses = generateNonTerminationWitness(results, format);
+			mLogger.info("Generating witness for non-termination counterexample", createGraphML, createYaml);
+			witnesses = generateNonTerminationWitness(results, createGraphML, createYaml);
 		} else if (results.stream().anyMatch(a -> a instanceof AllSpecificationsHoldResult)) {
 			mLogger.info("Generating witness for correct program");
-			witnesses = generateProofWitness(results, format);
+			witnesses = generateProofWitness(results, createGraphML, createYaml);
 		} else {
 			mLogger.info("No result that supports witness generation found");
 			witnesses = List.of();
 		}
 		try {
-			new WitnessManager(mLogger, mServices).run(witnesses, format.getFileEnding());
+			new WitnessManager(mLogger, mServices).run(witnesses);
 		} catch (IOException | InterruptedException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private List<Triple<IResult, String, String>> generateProofWitness(final List<IResult> results,
-			final Format format) {
+	private List<ResultWitness> generateProofWitness(final List<IResult> results, final boolean createGraphML,
+			final boolean createYaml) {
 		final AllSpecificationsHoldResult result =
 				ResultUtil.filterResults(results, AllSpecificationsHoldResult.class).stream().findFirst().orElse(null);
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
@@ -160,27 +157,22 @@ public class WitnessPrinter implements IOutput {
 		final BacktranslatedCFG<?, IcfgEdge> origCfg =
 				new BacktranslatedCFG<>(filename, IcfgGraphProvider.getVirtualRoot(root), IcfgEdge.class);
 		final IBacktranslatedCFG<?, ?> translateCFG = backtrans.translateCFG(origCfg);
-		String witness;
-		switch (format) {
-		case GRAPHML:
-			witness = new CorrectnessWitnessGenerator<>(translateCFG, mLogger, mServices).makeGraphMLString();
-			break;
-		case YAML:
-			witness = new YamlCorrectnessWitnessGenerator(translateCFG, mLogger, mServices).makeYamlString();
-			break;
-		default:
-			throw new AssertionError();
+		final List<ResultWitness> witnesses = new ArrayList<>();
+		if (createGraphML) {
+			witnesses.add(new ResultWitness(filename, GRAPHML,
+					new CorrectnessWitnessGenerator<>(translateCFG, mLogger, mServices).makeGraphMLString(), result));
 		}
-		return List.of(new Triple<>(result, filename, witness));
+		if (createYaml) {
+			witnesses.add(new ResultWitness(filename, YAML,
+					new YamlCorrectnessWitnessGenerator(translateCFG, mLogger, mServices).makeYamlString(), result));
+		}
+		return witnesses;
 	}
 
 	@SuppressWarnings("rawtypes")
-	private List<Triple<IResult, String, String>> generateReachabilityCounterexampleWitness(final List<IResult> results,
-			final Format format) {
-		if (format != Format.GRAPHML) {
-			throw new UnsupportedOperationException("Currently only GraphML witnesses can be extracted.");
-		}
-		final List<Triple<IResult, String, String>> suppliers = new ArrayList<>();
+	private List<ResultWitness> generateReachabilityCounterexampleWitness(final List<IResult> results,
+			final boolean createGraphML, final boolean createYaml) {
+		final List<ResultWitness> suppliers = new ArrayList<>();
 		final Collection<CounterExampleResult> cexResults =
 				ResultUtil.filterResults(results, CounterExampleResult.class);
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
@@ -189,19 +181,20 @@ public class WitnessPrinter implements IOutput {
 
 		for (final CounterExampleResult<?, ?, ?> cex : cexResults) {
 			final IProgramExecution<?, ?> backtransPe = backtrans.translateProgramExecution(cex.getProgramExecution());
-			final String witness = new ViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeGraphMLString();
-			suppliers.add(new Triple<>(cex, filename, witness));
+			if (createGraphML) {
+				final String witness =
+						new ViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeGraphMLString();
+				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
+			}
+			// TODO: Add support for YAML
 		}
 		return suppliers;
 	}
 
 	@SuppressWarnings("rawtypes")
-	private List<Triple<IResult, String, String>> generateNonTerminationWitness(final List<IResult> results,
-			final Format format) {
-		if (format != Format.GRAPHML) {
-			throw new UnsupportedOperationException("Currently only GraphML witnesses can be extracted.");
-		}
-		final List<Triple<IResult, String, String>> suppliers = new ArrayList<>();
+	private List<ResultWitness> generateNonTerminationWitness(final List<IResult> results, final boolean createGraphML,
+			final boolean createYaml) {
+		final List<ResultWitness> suppliers = new ArrayList<>();
 		final Collection<LassoShapedNonTerminationArgument> cexResults =
 				ResultUtil.filterResults(results, LassoShapedNonTerminationArgument.class);
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
@@ -209,8 +202,11 @@ public class WitnessPrinter implements IOutput {
 		final String filename = ILocation.getAnnotation(root).getFileName();
 
 		for (final LassoShapedNonTerminationArgument<?, ?> cex : cexResults) {
-			final String witness = getWitness(backtrans, cex);
-			suppliers.add(new Triple<>(cex, filename, witness));
+			if (createGraphML) {
+				final String witness = getWitness(backtrans, cex);
+				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
+			}
+			// TODO: Add support for YAML
 		}
 		return suppliers;
 	}
@@ -238,5 +234,36 @@ public class WitnessPrinter implements IOutput {
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
+	}
+
+	public static class ResultWitness {
+		private final String mSourceFile;
+		private final String mWitnessEnding;
+		private final String mWitnessString;
+		private final IResult mResult;
+
+		public ResultWitness(final String sourceFile, final String witnessEnding, final String witnessString,
+				final IResult result) {
+			mSourceFile = sourceFile;
+			mWitnessEnding = witnessEnding;
+			mWitnessString = witnessString;
+			mResult = result;
+		}
+
+		public String getSourceFile() {
+			return mSourceFile;
+		}
+
+		public String getWitnessEnding() {
+			return mWitnessEnding;
+		}
+
+		public String getWitnessString() {
+			return mWitnessString;
+		}
+
+		public IResult getResult() {
+			return mResult;
+		}
 	}
 }
