@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.WitnessPrinter.ResultWitness;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 
 /**
@@ -71,31 +71,31 @@ public class WitnessManager {
 	}
 
 	/**
-	 * @param witnessTriples
+	 * @param witnesses
 	 *            A collection of triples (IResult, filename, string that represents a valid SVCOMP witness).
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public void run(final Collection<Triple<IResult, String, String>> witnessTriples, final String fileEnding)
-			throws IOException, InterruptedException {
+	public void run(final Collection<ResultWitness> witnesses) throws IOException, InterruptedException {
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
 		int cexNo = 0;
 		String suffix = null;
-		for (final Triple<IResult, String, String> witnessTriple : witnessTriples) {
-			final IResult cex = witnessTriple.getFirst();
-			final String originalFile = witnessTriple.getSecond();
-			final String svcompWitness = witnessTriple.getThird();
+		for (final ResultWitness witness : witnesses) {
+			final IResult cex = witness.getResult();
+			final String originalFile = witness.getSourceFile();
+			final String svcompWitness = witness.getWitnessString();
+			final String witnessEnding = witness.getWitnessEnding();
 
 			final String witnessDir = ups.getString(PreferenceInitializer.LABEL_WITNESS_DIRECTORY);
-			final String witnessFilename = ups.getString(PreferenceInitializer.LABEL_WITNESS_NAME) + fileEnding;
+			final String witnessFilename = ups.getString(PreferenceInitializer.LABEL_WITNESS_NAME) + witnessEnding;
 			final boolean writeBesideInputFile = ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_WRITE_BESIDE_FILE);
 			final List<String> filenamesToDelete = new ArrayList<>();
 
 			String filename = null;
 			if (svcompWitness != null) {
 				if (writeBesideInputFile) {
-					filename = createWitnessFilenameWriteBeside(originalFile, suffix, fileEnding);
+					filename = createWitnessFilenameWriteBeside(originalFile, suffix, witnessEnding);
 				} else {
 					filename = createWitnessFilename(witnessDir, witnessFilename, suffix);
 				}
