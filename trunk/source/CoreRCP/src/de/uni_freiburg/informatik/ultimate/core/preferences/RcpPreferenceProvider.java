@@ -32,6 +32,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -44,11 +45,15 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
+import org.eclipse.core.runtime.preferences.IExportedPreferences;
+import org.eclipse.core.runtime.preferences.IPreferenceNodeVisitor;
+import org.eclipse.core.runtime.preferences.IPreferencesService;
 import org.eclipse.core.runtime.preferences.IScopeContext;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.osgi.service.prefs.BackingStoreException;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.PreferenceException;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.KeyValueUtil;
 
@@ -275,7 +280,8 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 	}
 
 	public static IStatus importPreferences(final InputStream inputStream) throws CoreException {
-		final IStatus status = Platform.getPreferencesService().importPreferences(inputStream);
+		final IPreferencesService ps = Platform.getPreferencesService();
+		final IStatus status = ps.importPreferences(inputStream);
 		if (status.isOK()) {
 			for (final Entry<String, Set<IPreferenceChangeListener>> entry : ACTIVE_LISTENER.entrySet()) {
 				for (final IPreferenceChangeListener listener : entry.getValue()) {
@@ -283,9 +289,51 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 					addPreferenceChangeListener(entry.getKey(), listener);
 				}
 			}
-
 		}
 		return status;
+	}
+
+	/**
+	 * Read preferences from a file, do not apply them, but return those preference paths that do not have default
+	 * values in the current configuration, i.e., which should not exist.
+	 */
+	public static Set<String> validatePreferences(final ICore<?> core, final InputStream inputStream)
+			throws CoreException, BackingStoreException {
+
+		final Set<String> paths = new HashSet<>();
+		final IPreferenceNodeVisitor collectingVisitor = new IPreferenceNodeVisitor() {
+
+			@Override
+			public boolean visit(final IEclipsePreferences node) throws BackingStoreException {
+				for (final String k : node.keys()) {
+					paths.add(node.name() + "." + k);
+				}
+				return true;
+			}
+		};
+
+		for (final String key : core.getRegisteredUltimatePluginIDs()) {
+			new RcpPreferenceProvider(key).getDefault().accept(collectingVisitor);
+		}
+
+		final Set<String> invalidPaths = new LinkedHashSet<>();
+		final IPreferenceNodeVisitor comparingVisitor = new IPreferenceNodeVisitor() {
+			@Override
+			public boolean visit(final IEclipsePreferences node) throws BackingStoreException {
+				for (final String k : node.keys()) {
+					final String prefKey = node.name() + "." + k;
+					if (!paths.contains(prefKey)) {
+						invalidPaths.add(prefKey);
+					}
+				}
+				return true;
+			}
+		};
+
+		final IPreferencesService ps = Platform.getPreferencesService();
+		final IExportedPreferences readPrefs = ps.readPreferences(inputStream);
+		readPrefs.accept(comparingVisitor);
+		return invalidPaths;
 	}
 
 	/**
@@ -314,6 +362,7 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 	/**
 	 * @return A map from key to value of the default preferences for this provider
 	 */
+	@Override
 	public Map<String, Object> getDefaultPreferences() {
 		final Map<String, Object> rtr = new HashMap<>();
 		try {
@@ -328,6 +377,7 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 		return rtr;
 	}
 
+	@Override
 	public Map<String, Object> getPreferences() {
 		final Map<String, Object> rtr = new HashMap<>();
 		try {

@@ -33,6 +33,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import org.eclipse.core.runtime.CoreException;
@@ -92,6 +93,19 @@ public final class SettingsManager {
 		logDefaultPreferences(pluginId, pluginName);
 	}
 
+	private void checkPreferences(final ICore<RunDefinition> core, final String filename)
+			throws CoreException, BackingStoreException, IOException {
+		try (final FileInputStream fis = new FileInputStream(filename)) {
+			final Set<String> invalidPaths = RcpPreferenceProvider.validatePreferences(core, fis);
+			if (!invalidPaths.isEmpty()) {
+				mLogger.warn("Preference file contains the following unknown settings:");
+				for (final String p : invalidPaths) {
+					mLogger.warn("  * " + p);
+				}
+			}
+		}
+	}
+
 	void loadPreferencesFromFile(final ICore<RunDefinition> core, final String filename, final boolean silent) {
 		final Consumer<Object> infoLogger = silent ? a -> {
 		} : mLogger::info;
@@ -102,10 +116,12 @@ public final class SettingsManager {
 				infoLogger.accept("Preferences different from defaults before loading file:");
 				logPreferencesDifferentFromDefaults(core);
 			}
-
 			try {
-				final FileInputStream fis = new FileInputStream(filename);
-				final IStatus status = RcpPreferenceProvider.importPreferences(fis);
+				checkPreferences(core, filename);
+				final IStatus status;
+				try (final FileInputStream fis = new FileInputStream(filename)) {
+					status = RcpPreferenceProvider.importPreferences(fis);
+				}
 				if (!status.isOK()) {
 					mLogger.warn("Failed to load preferences. Status is: " + status);
 				} else {
@@ -115,7 +131,7 @@ public final class SettingsManager {
 				if (!silent) {
 					logPreferencesDifferentFromDefaults(core);
 				}
-			} catch (IOException | CoreException e) {
+			} catch (IOException | CoreException | BackingStoreException e) {
 				mLogger.error("Could not load preferences: " + e.getMessage());
 			} finally {
 				mLogger.debug("--------------------------------------------------------------------------------");
