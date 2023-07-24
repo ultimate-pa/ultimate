@@ -27,10 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -38,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
@@ -50,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 /**
  * @author Xinyu Jiang
@@ -59,12 +58,11 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class SimplifyDDA2 extends TermWalker<Term> {
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
+	private int mAssertionStackHeight = 0;
 	/**
-	 * Replace terms of the form `x = l ∧ φ(x)` by `x = l ∧ φ(l)` and replace terms
-	 * of the form `x ≠ l ∨ φ(x)` by `x ≠ l ∨ φ(l)`, where l is a literal (of sort
-	 * Real, Int, or BitVec) and x is a variable in a {@link PolynomialRelation}
-	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a
-	 * select term `(select a k)`.)
+	 * Replace terms of the form `x = l ∧ φ(x)` by `x = l ∧ φ(l)` and replace terms of the form `x ≠ l ∨ φ(x)` by `x ≠ l
+	 * ∨ φ(l)`, where l is a literal (of sort Real, Int, or BitVec) and x is a variable in a {@link PolynomialRelation}
+	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a select term `(select a k)`.)
 	 */
 	private static final boolean APPLY_CONSTANT_FOLDING = true;
 	private static final boolean DEBUG_CHECK_RESULT = false;
@@ -82,8 +80,33 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		// from PolyPacSimplification. I forgot that in an optimized version of this
 		// simplification we want to use the push/pop SMT commands and assert conjuncts of
 		// the critical constraint as soon as possible.
-		return Context.buildCriticalConstraintForConDis(mServices, mMgdScript, context, symb, allParams, selectedParam,
-				CcTransformation.TO_NNF);
+		final List<Term> otherParams = new ArrayList<>(allParams);
+		otherParams.remove(selectedParam);
+
+		mMgdScript.getScript().pop(1);
+		mAssertionStackHeight--;
+
+		mMgdScript.getScript().push(1);
+		mAssertionStackHeight++;
+
+		if (symb.getName().equals("and")) {
+			for (final Term otherParam : otherParams) {
+				mMgdScript.getScript().assertTerm(otherParam);
+			}
+		}
+
+		if (symb.getName().equals("or")) {
+			// otherParamsNegated = otherParams.stream().map(x -> SmtUtils.not(mgdScript.getScript(), x))
+			// .collect(Collectors.toList());
+			/////// smtutils replace free variables
+
+			for (final Term otherParam : otherParams) {
+				mMgdScript.getScript().assertTerm(SmtUtils.not(mMgdScript.getScript(), otherParam));
+			}
+		}
+		return null;
+		// return Context.buildCriticalConstraintForConDis(mServices, mMgdScript, context, symb, allParams,
+		// selectedParam, CcTransformation.TO_NNF);
 	}
 
 	@Override
@@ -95,6 +118,15 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		// the critical constraint as soon as possible.
 		return Context.buildCriticalContraintForQuantifiedFormula(mMgdScript.getScript(), context, vars,
 				CcTransformation.TO_NNF);
+	}
+
+	// checks if we are at a leaf
+	private static boolean checkAtomicity(final Term term) {
+		if (((ApplicationTerm) term).getFunction().getName().equals("not")
+				&& (SmtUtils.isAtomicFormula(((ApplicationTerm) term).getParameters()[0]))) {
+			return true;
+		}
+		return SmtUtils.isAtomicFormula(term);
 	}
 
 	@Override
@@ -110,61 +142,80 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		// further into t. Here, t may be the input term of some modification of t
 		// new TermContextTransformationEngine.IntermediateResultForDescend(term);
 
+		if (checkAtomicity(term)) {
+			final Term result;
+			if (Util.checkSat(mMgdScript.getScript(), SmtUtils.not(mMgdScript.getScript(), term)) == LBool.UNSAT) {
+				result = mMgdScript.getScript().term("true");
+				return new TermContextTransformationEngine.FinalResultForAscend(result);
+			}
+			if (Util.checkSat(mMgdScript.getScript(), term) == LBool.UNSAT) {
+				result = mMgdScript.getScript().term("false");
+				return new TermContextTransformationEngine.FinalResultForAscend(result);
+			}
+			return new TermContextTransformationEngine.FinalResultForAscend(term);
+		} else {
+			mMgdScript.getScript().push(1);
+			mAssertionStackHeight++;
+			return new TermContextTransformationEngine.IntermediateResultForDescend(term);
+		}
 
 		// The following is copy&paste of an optimization for the PolyPacSimplification.
 		// Maybe we wont to have that optimization too, maybe its useless.
-		if (term instanceof ApplicationTerm) {
-			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (appTerm.getFunction().getName().equals("and") || appTerm.getFunction().getName().equals("or")) {
-				if (SmtUtils.isFalseLiteral(context)) {
-					// Optimization for cases in which context is "false"
-					// TODO 20210802 Matthias: check if this optimization
-					// is still needed
-					final Term result;
-					if (appTerm.getFunction().getName().equals("and")) {
-						result = mMgdScript.getScript().term("true");
-					} else if (appTerm.getFunction().getName().equals("or")) {
-						result = mMgdScript.getScript().term("false");
-					} else {
-						throw new AssertionError();
-					}
-					return new TermContextTransformationEngine.FinalResultForAscend(result);
-				} else {
-					return new TermContextTransformationEngine.IntermediateResultForDescend(term);
-				}
-			}
-		}
+		// if (term instanceof ApplicationTerm) {
+		// final ApplicationTerm appTerm = (ApplicationTerm) term;
+		// if (appTerm.getFunction().getName().equals("and") || appTerm.getFunction().getName().equals("or")) {
+		// if (SmtUtils.isFalseLiteral(context)) {
+		// Optimization for cases in which context is "false"
+		// TODO 20210802 Matthias: check if this optimization
+		// is still needed
+		// final Term result;
+		// if (appTerm.getFunction().getName().equals("and")) {
+		// result = mMgdScript.getScript().term("true");
+		// } else if (appTerm.getFunction().getName().equals("or")) {
+		// result = mMgdScript.getScript().term("false");
+		// } else {
+		// throw new AssertionError();
+		// }
+		// return new TermContextTransformationEngine.FinalResultForAscend(result);
+		// } else {
+		// return new TermContextTransformationEngine.IntermediateResultForDescend(term);
+		// }
+		// }
+		// }
 
 		// The following is copy&pase of an optimization for the PolyPacSimplification.
 		// Maybe we wont to have that optimization too, maybe its useless.
-		if (APPLY_CONSTANT_FOLDING) {
-			final Map<Term, Term> substitutionMapping = new HashMap<>();
-			for (final Term conjunct : SmtUtils.getConjuncts(context)) {
-				if (!SmtUtils.isFunctionApplication(conjunct, "=")) {
-					continue;
-				}
-				final PolynomialRelation polyRel = PolynomialRelation.of(mMgdScript.getScript(), conjunct);
-				if (polyRel != null) {
-					final SolvedBinaryRelation sbr = polyRel.isSimpleEquality(mMgdScript.getScript());
-					if (sbr != null) {
-						substitutionMapping.put(sbr.getLeftHandSide(), sbr.getRightHandSide());
-					}
-				}
-			}
-			if (!substitutionMapping.isEmpty()) {
-				final Term renamed = Substitution.apply(mMgdScript, substitutionMapping, term);
-				if (renamed != term) {
-					return new TermContextTransformationEngine.FinalResultForAscend(renamed);
-				}
-			}
-		}
+		// if (APPLY_CONSTANT_FOLDING) {
+		// final Map<Term, Term> substitutionMapping = new HashMap<>();
+		// for (final Term conjunct : SmtUtils.getConjuncts(context)) {
+		// if (!SmtUtils.isFunctionApplication(conjunct, "=")) {
+		// continue;
+		// }
+		// final PolynomialRelation polyRel = PolynomialRelation.of(mMgdScript.getScript(), conjunct);
+		// if (polyRel != null) {
+		// final SolvedBinaryRelation sbr = polyRel.isSimpleEquality(mMgdScript.getScript());
+		// if (sbr != null) {
+		// substitutionMapping.put(sbr.getLeftHandSide(), sbr.getRightHandSide());
+		// }
+		// }
+		// }
+		// if (!substitutionMapping.isEmpty()) {
+		// final Term renamed = Substitution.apply(mMgdScript, substitutionMapping, term);
+		// if (renamed != term) {
+		// return new TermContextTransformationEngine.FinalResultForAscend(renamed);
+		// }
+		// }
+		// }
 
-		return new TermContextTransformationEngine.FinalResultForAscend(term);
+		// return new TermContextTransformationEngine.FinalResultForAscend(term);
 	}
 
 	@Override
 	protected Term constructResultForApplicationTerm(final Term context, final ApplicationTerm originalApplicationTerm,
 			final Term[] resultParams) {
+		mMgdScript.getScript().pop(1);
+		mAssertionStackHeight--;
+		assert mAssertionStackHeight >= 0;
 		// While descending from node back to its parents, this method is called.
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			final CondisDepthCode contextCdc = CondisDepthCode.of(context);
@@ -199,9 +250,14 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		// this simplification via this static method.
 		final Term result;
 		try {
-			result = TermContextTransformationEngine.transform(new SimplifyDDA2(services, mgdScript),
-					context, term);
+			final SimplifyDDA2 simplifyDDA2 = new SimplifyDDA2(services, mgdScript);
+			result = TermContextTransformationEngine.transform(simplifyDDA2, context, term);
+			final int stackHeight = simplifyDDA2.getAssertionStackHeight();
+			if (stackHeight != 0) {
+				throw new AssertionError(String.format("stackHeight is non-zero"));
+			}
 		} catch (final ToolchainCanceledException tce) {
+			/// pop everything after exceeding time limit
 			final CondisDepthCode termCdc = CondisDepthCode.of(term);
 			final String taskDescription = String.format("simplifying a %s term", termCdc);
 			tce.addRunningTaskInfo(new RunningTaskInfo(SimplifyDDA2.class, taskDescription));
@@ -210,9 +266,16 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		return result;
 	}
 
+	public int getAssertionStackHeight() {
+		return mAssertionStackHeight;
+	}
+
 	@Override
 	protected Term constructResultForQuantifiedFormula(final Term context,
 			final QuantifiedFormula originalQuantifiedFormula, final Term resultSubformula) {
+		mMgdScript.getScript().pop(1);
+		mAssertionStackHeight--;
+		assert mAssertionStackHeight >= 0;
 		return SmtUtils.quantifier(mMgdScript.getScript(), originalQuantifiedFormula.getQuantifier(),
 				Arrays.asList(originalQuantifiedFormula.getVariables()), resultSubformula);
 	}
