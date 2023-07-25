@@ -613,6 +613,8 @@ public class StandardFunctionHandler {
 		/** from assert.h */
 		fill(map, "__assert_fail", this::handleAssertFail);
 		fill(map, "__assert_func", this::handleAssertFail);
+		// TODO: This should not occur in the preprocessed file, but we handle it for now
+		fill(map, "assert", this::handleAssert);
 
 		/** from fenv.h */
 		fill(map, "fegetround", this::handleBuiltinFegetround);
@@ -1815,6 +1817,23 @@ public class StandardFunctionHandler {
 
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults);
 		return erb.addStatement(createReachabilityAssert(loc, name, mSettings.checkAssertions(), Spec.ASSERT)).build();
+	}
+
+	private Result handleAssert(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+
+		final ExpressionResult result = (ExpressionResult) main.dispatch(arguments[0]);
+		final ExpressionResult transformed = mExprResultTransformer.transformSwitchRexIntToBool(result, loc, node);
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(transformed);
+		if (mSettings.checkAssertions()) {
+			final AssertStatement assertSt = new AssertStatement(loc, transformed.getLrValue().getValue());
+			new Check(Spec.ASSERT).annotate(assertSt);
+			erb.addStatement(assertSt);
+		}
+		return erb.build();
 	}
 
 	private Result handleBuiltinFegetround(final IDispatcher main, final IASTFunctionCallExpression node,
