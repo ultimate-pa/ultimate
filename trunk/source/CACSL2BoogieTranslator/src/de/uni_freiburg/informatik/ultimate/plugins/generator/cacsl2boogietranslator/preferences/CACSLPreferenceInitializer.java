@@ -45,10 +45,10 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final String MAINPROC_DESC =
 			"Specify the entry function of the program. " + "Use an empty string for library mode "
 					+ "(i.e., assume all globals are non-deterministic and verify each function in isolation).";
-	public static final String LABEL_ERROR = "Check reachability of error function";
+	public static final String LABEL_ERROR = "Check unreachability of reach_error function";
 	public static final String MAINPROC_LABEL = "Entry function";
 	private static final String MAINPROC_DEFAULT = "main";
-	public static final String LABEL_CHECK_ASSERTIONS = "Check assertions";
+	public static final String LABEL_CHECK_ASSERTIONS = "Check assertions from assert.h";
 	public static final String LABEL_CHECK_POINTER_VALIDITY = "Pointer base address is valid at dereference";
 	public static final String LABEL_CHECK_POINTER_ALLOC = "Pointer to allocated memory at dereference";
 	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
@@ -183,7 +183,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 		public static MemoryModel getPreciseEnoughMemoryModelFor(final int byteSize) {
 			if (byteSize >= 8) {
 				return HoenickeLindenmann_8ByteResolution;
-			} else if (byteSize >= 4) {
+			}
+			if (byteSize >= 4) {
 				return HoenickeLindenmann_4ByteResolution;
 			} else if (byteSize >= 2) {
 				return HoenickeLindenmann_2ByteResolution;
