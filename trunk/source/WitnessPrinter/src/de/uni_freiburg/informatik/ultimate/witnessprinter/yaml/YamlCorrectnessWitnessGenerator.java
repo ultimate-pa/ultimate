@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslate
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Invariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Metadata;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Producer;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Task;
@@ -86,7 +86,8 @@ public class YamlCorrectnessWitnessGenerator {
 			// TODO: Can we do anything if there are multiple locationCandidates?
 			if (invariant != null && locationCandidates.size() == 1) {
 				// TODO: How could we figure out, if it is a LocationInvariant or LoopInvariant?
-				entries.add(new LocationInvariant(metadata, locationCandidates.iterator().next(),
+				// For now we only produce loop invariants anyways
+				entries.add(new LoopInvariant(metadata, locationCandidates.iterator().next(),
 						new Invariant(invariant, "assertion", format)));
 			}
 		}
