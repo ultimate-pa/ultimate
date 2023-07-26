@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -63,8 +64,9 @@ public class YamlCorrectnessWitnessGenerator {
 		final String format = mIsACSLForbidden ? "C" : "ACSL";
 		final String filename = mTranslatedCFG.getFilename();
 		// TODO: Do not hardcode FormatVersion
-		final Metadata metadata = new Metadata(new FormatVersion(0, 1), UUID.randomUUID(), OffsetDateTime.now(),
-				new Producer(producer, version), new Task(List.of(filename), Map.of(filename, hash), spec, arch, "C"));
+		final Supplier<Metadata> metadataSupplier = () -> new Metadata(new FormatVersion(0, 1), UUID.randomUUID(),
+				OffsetDateTime.now(), new Producer(producer, version),
+				new Task(List.of(filename), Map.of(filename, hash), spec, arch, "C"));
 
 		final List<WitnessEntry> entries = new ArrayList<>();
 		while (!worklist.isEmpty()) {
@@ -87,7 +89,7 @@ public class YamlCorrectnessWitnessGenerator {
 			if (invariant != null && locationCandidates.size() == 1) {
 				// TODO: How could we figure out, if it is a LocationInvariant or LoopInvariant?
 				// For now we only produce loop invariants anyways
-				entries.add(new LoopInvariant(metadata, locationCandidates.iterator().next(),
+				entries.add(new LoopInvariant(metadataSupplier.get(), locationCandidates.iterator().next(),
 						new Invariant(invariant, "assertion", format)));
 			}
 		}
