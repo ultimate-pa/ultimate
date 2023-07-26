@@ -36,4 +36,9 @@ public class Witness extends BasePayloadContainer implements IYamlProvider {
 	public String toYamlString() {
 		return toYaml().toString();
 	}
+
+	public boolean isCorrectnessWitness() {
+		// TODO: Check this, when we also support violation witnesses
+		return true;
+	}
 }
