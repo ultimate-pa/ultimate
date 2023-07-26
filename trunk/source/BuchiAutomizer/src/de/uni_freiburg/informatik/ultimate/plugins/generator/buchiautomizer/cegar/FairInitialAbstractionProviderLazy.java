@@ -31,7 +31,7 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 			IIcfg<? extends IcfgLocation> icfg, Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
 		// TODO Auto-generated method stub
 		INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction = mInitialAbstractionProvider.getInitialAbstraction(icfg, errorLocs);
-		FairLazyBuchiAutomaton<L, IPredicate> fairAbstraction = new FairLazyBuchiAutomaton<>(initialAbstraction);
+		FairLazyBuchiAutomaton<L, IPredicate> fairAbstraction = new FairLazyBuchiAutomaton<>(icfg, initialAbstraction);
 		NestedWordAutomatonReachableStates<L, IPredicate> debug = new NestedWordAutomatonReachableStates<>(mServices, fairAbstraction);
 		String debugString = debug.toString();
 		NestedWordAutomatonReachableStates<L, IPredicate> debugi = new NestedWordAutomatonReachableStates<>(mServices, initialAbstraction);
