@@ -46,9 +46,13 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			"Specify the entry function of the program. " + "Use an empty string for library mode "
 					+ "(i.e., assume all globals are non-deterministic and verify each function in isolation).";
 	public static final String LABEL_ERROR = "Check unreachability of reach_error function";
+	private static final String DESC_ERROR =
+			"Check if every call to reach_error is unreachable. This is used for the ReachSafety category of SV-COMP";
 	public static final String MAINPROC_LABEL = "Entry function";
 	private static final String MAINPROC_DEFAULT = "main";
 	public static final String LABEL_CHECK_ASSERTIONS = "Check assertions from assert.h";
+	private static final String DESC_CHECK_ASSERTIONS =
+			"Check if the assertions from assert.h (currently supported: assert, __assert_fail, __assert_func) never fail.";
 	public static final String LABEL_CHECK_POINTER_VALIDITY = "Pointer base address is valid at dereference";
 	public static final String LABEL_CHECK_POINTER_ALLOC = "Pointer to allocated memory at dereference";
 	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
@@ -240,9 +244,10 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<>(LABEL_ERROR, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_ERROR, true, DESC_ERROR, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(MAINPROC_LABEL, MAINPROC_DEFAULT, MAINPROC_DESC, PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_CHECK_ASSERTIONS, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CHECK_ASSERTIONS, true, DESC_CHECK_ASSERTIONS,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_VALIDITY, PointerCheckMode.ASSERTandASSUME,
 						PreferenceType.Combo, PointerCheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_ALLOC, PointerCheckMode.ASSERTandASSUME,
