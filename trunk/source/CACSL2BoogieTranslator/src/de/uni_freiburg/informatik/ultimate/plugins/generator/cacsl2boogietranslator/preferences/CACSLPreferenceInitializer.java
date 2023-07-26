@@ -47,7 +47,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 					+ "(i.e., assume all globals are non-deterministic and verify each function in isolation).";
 	public static final String LABEL_ERROR = "Check unreachability of reach_error function";
 	private static final String DESC_ERROR =
-			"Check if every call to reach_error is unreachable. This is used for the ReachSafety category of SV-COMP";
+			"Check if every call to reach_error is unreachable. This is used for the ReachSafety category of SV-COMP. "
+					+ "Note: If a function reach_error is defined, it is automatically overridden.";
 	public static final String MAINPROC_LABEL = "Entry function";
 	private static final String MAINPROC_DEFAULT = "main";
 	public static final String LABEL_CHECK_ASSERTIONS = "Check assertions from assert.h";
