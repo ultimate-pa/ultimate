@@ -35,6 +35,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
@@ -45,10 +46,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.CorrectnessWitnessExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.GraphMLCorrectnessWitnessExtractor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.YamlCorrectnessWitnessExtractor;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessGraphAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 
 /**
  * @author Markus Lindenmann
@@ -60,7 +63,8 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final ACSLObjectContainerObserver mAdditionalAnnotationObserver;
-	private final CorrectnessWitnessExtractor mWitnessExtractor;
+	private final GraphMLCorrectnessWitnessExtractor mWitnessExtractor;
+	private final YamlCorrectnessWitnessExtractor mYamlWitnessExtractor;
 
 	private WrapperNode mRootNode;
 	private ASTDecorator mInputDecorator;
@@ -72,7 +76,8 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		assert services != null;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mWitnessExtractor = new CorrectnessWitnessExtractor(mServices);
+		mWitnessExtractor = new GraphMLCorrectnessWitnessExtractor(mServices);
+		mYamlWitnessExtractor = new YamlCorrectnessWitnessExtractor(mServices);
 		mAdditionalAnnotationObserver = additionalAnnotationObserver;
 	}
 
@@ -82,11 +87,17 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			extractWitnessInformation((WitnessNode) root);
 			return false;
 		}
+		if (root instanceof Witness) {
+			extractWitnessInformation((Witness) root);
+			return false;
+		}
 
 		if ((root instanceof WrapperNode) && (((WrapperNode) root).getBacking() instanceof ASTDecorator)) {
 			mInputDecorator = (ASTDecorator) ((WrapperNode) root).getBacking();
 			if (mInputDecorator.countUnits() == 1) {
-				mWitnessExtractor.setAST(mInputDecorator.getUnit(0).getSourceTranslationUnit());
+				final IASTTranslationUnit translationUnit = mInputDecorator.getUnit(0).getSourceTranslationUnit();
+				mWitnessExtractor.setAST(translationUnit);
+				mYamlWitnessExtractor.setAST(translationUnit);
 			} else {
 				mLogger.info("Witness extractor is disabled for multiple files");
 			}
@@ -98,6 +109,12 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 					"Your input file is a Boogie program. This plugin takes as input a C program.");
 		}
 		return false;
+	}
+
+	private void extractWitnessInformation(final Witness witness) {
+		if (witness.isCorrectnessWitness()) {
+			mYamlWitnessExtractor.setWitness(witness);
+		}
 	}
 
 	private void extractWitnessInformation(final WitnessNode wnode) {
@@ -119,6 +136,9 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	public void finish() {
 		if (mWitnessExtractor.isReady()) {
 			mWitnessInvariants = mWitnessExtractor.getCorrectnessWitnessInvariants();
+		}
+		if (mYamlWitnessExtractor.isReady()) {
+			mWitnessInvariants = mYamlWitnessExtractor.getCorrectnessWitnessInvariants();
 		}
 		if (mLastModel) {
 			if (mInputDecorator == null) {
