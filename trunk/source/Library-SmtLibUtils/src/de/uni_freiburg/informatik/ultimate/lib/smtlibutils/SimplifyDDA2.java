@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Polynomia
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context.CcTransformation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -104,6 +105,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			for (final Term otherParam : otherParams) {
 				mMgdScript.getScript().assertTerm(SmtUtils.not(mMgdScript.getScript(), otherParam));
 			}
+			// TODO Matthias 20230726: following method to find out whether formula contains quantifiers
+			// QuantifierUtils.isQuantifierFree()
 		}
 		return null;
 		// return Context.buildCriticalConstraintForConDis(mServices, mMgdScript, context, symb, allParams,
