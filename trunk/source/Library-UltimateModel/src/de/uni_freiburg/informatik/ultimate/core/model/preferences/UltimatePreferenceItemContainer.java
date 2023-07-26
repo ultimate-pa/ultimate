@@ -46,6 +46,15 @@ public final class UltimatePreferenceItemContainer extends BaseUltimatePreferenc
 		mContainerName = containerName;
 	}
 
+	@SafeVarargs
+	public <T extends BaseUltimatePreferenceItem> UltimatePreferenceItemContainer(final String containerName,
+			final T... items) {
+		this(containerName);
+		for (final var item : items) {
+			addItem(item);
+		}
+	}
+
 	@Override
 	public PreferenceType getType() {
 		return PreferenceType.SubItemContainer;

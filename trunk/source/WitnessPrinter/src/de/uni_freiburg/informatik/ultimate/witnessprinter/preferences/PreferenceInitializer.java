@@ -28,10 +28,12 @@
 package de.uni_freiburg.informatik.ultimate.witnessprinter.preferences;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.Activator;
@@ -105,10 +107,9 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	}
 
 	@Override
-	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] {
+	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
+		return new BaseUltimatePreferenceItem[] {
 				// Witness generation
-				new UltimatePreferenceItem<String>(LABEL_WITNESS, null, PreferenceType.Label),
 				new UltimatePreferenceItem<>(LABEL_WITNESS_GEN, VALUE_WITNESS_GEN, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_WITNESS_LOG, VALUE_WITNESS_LOG, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_WITNESS_DIRECTORY, VALUE_WITNESS_DIRECTORY, DESC_WITNESS_DIRECTORY,
@@ -133,19 +134,19 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_DO_NOT_USE_ACSL, VALUE_DO_NOT_USE_ACSL, DESC_DO_NOT_USE_ACSL,
 						PreferenceType.Boolean),
 
-				new UltimatePreferenceItem<>("Witness passthrough", "", PreferenceType.Label),
-				new UltimatePreferenceItem<>(LABEL_GRAPH_DATA_SPECIFICATION, UNUSED_GRAPH_DATA,
-						"Write the value of this option to the witness graph data attribute \"specification\"",
-						PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_GRAPH_DATA_PROGRAMHASH, UNUSED_GRAPH_DATA,
-						"Write the value of this option to the witness graph data attribute \"programhash\"",
-						PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_GRAPH_DATA_ARCHITECTURE, UNUSED_GRAPH_DATA,
-						"Write the value of this option to the witness graph data attribute \"architecture\"",
-						PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_GRAPH_DATA_PRODUCER, UNUSED_GRAPH_DATA,
-						"Write the value of this option to the witness graph data attribute \"Producer\"",
-						PreferenceType.String),
+				new UltimatePreferenceItemGroup("Witness passthrough",
+						new UltimatePreferenceItem<>(LABEL_GRAPH_DATA_SPECIFICATION, UNUSED_GRAPH_DATA,
+								"Write the value of this option to the witness graph data attribute \"specification\"",
+								PreferenceType.String),
+						new UltimatePreferenceItem<>(LABEL_GRAPH_DATA_PROGRAMHASH, UNUSED_GRAPH_DATA,
+								"Write the value of this option to the witness graph data attribute \"programhash\"",
+								PreferenceType.String),
+						new UltimatePreferenceItem<>(LABEL_GRAPH_DATA_ARCHITECTURE, UNUSED_GRAPH_DATA,
+								"Write the value of this option to the witness graph data attribute \"architecture\"",
+								PreferenceType.String),
+						new UltimatePreferenceItem<>(LABEL_GRAPH_DATA_PRODUCER, UNUSED_GRAPH_DATA,
+								"Write the value of this option to the witness graph data attribute \"Producer\"",
+								PreferenceType.String)),
 
 		};
 	}

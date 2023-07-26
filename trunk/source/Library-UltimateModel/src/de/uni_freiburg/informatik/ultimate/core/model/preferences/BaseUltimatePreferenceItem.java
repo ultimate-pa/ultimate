@@ -32,14 +32,12 @@ import java.util.List;
 
 /**
  * Interface for any Ultimate preference item.
- * 
+ *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public abstract class BaseUltimatePreferenceItem {
-
-	boolean mUseCustomPreferencePage;
 
 	/**
 	 * @return The type of the Ultimate Preference Item.
@@ -51,10 +49,6 @@ public abstract class BaseUltimatePreferenceItem {
 	 *         all container elements is constructed.
 	 */
 	public abstract List<UltimatePreferenceItem<?>> getFlattenedList();
-
-	public boolean getUseCustomPreferencePage() {
-		return mUseCustomPreferencePage;
-	}
 
 	/**
 	 * Constructs a flattened list out of a given list of {@link BaseUltimatePreferenceItem}s.

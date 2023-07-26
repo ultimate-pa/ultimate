@@ -117,18 +117,17 @@ public final class TAPreferences {
 
 		mPrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		mInterprocedural = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPROCEDUTAL);
+		mInterprocedural = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPROCEDURAL);
 
 		mMaxIterations = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_ITERATIONS);
 		mWatchIteration = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_WATCHITERATION);
 
 		mArtifact = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ARTIFACT, Artifact.class);
 
-		mHoare = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HOARE,
-				TraceAbstractionPreferenceInitializer.DEF_HOARE);
+		mHoare = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HOARE);
 
 		mHoareAnnotationPositions = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HOARE_POSITIONS,
-				TraceAbstractionPreferenceInitializer.DEF_HOARE_POSITIONS, HoareAnnotationPositions.class);
+				HoareAnnotationPositions.class);
 
 		mInterpolation = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
 				InterpolationTechnique.class);
