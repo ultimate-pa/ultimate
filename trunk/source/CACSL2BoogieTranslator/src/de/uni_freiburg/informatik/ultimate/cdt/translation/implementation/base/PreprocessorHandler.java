@@ -141,6 +141,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
 
 	@Override
 	public Result visit(final IDispatcher main, final IASTPreprocessorPragmaStatement node) {
+		mReporter.warn(mLocationFactory.createCLocation(node), "Ignoring preprocessor pragma");
 		return new SkipResult();
 	}
 
