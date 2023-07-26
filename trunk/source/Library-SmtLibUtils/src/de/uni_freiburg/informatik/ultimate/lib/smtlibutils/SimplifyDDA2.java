@@ -66,6 +66,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 */
 	private static final boolean APPLY_CONSTANT_FOLDING = true;
 	private static final boolean DEBUG_CHECK_RESULT = false;
+	private static final boolean CHECK_ALL_NODES_FOR_REDUNDANCY = !false;
 
 	private SimplifyDDA2(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		super();
@@ -142,7 +143,14 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		// further into t. Here, t may be the input term of some modification of t
 		// new TermContextTransformationEngine.IntermediateResultForDescend(term);
 
-		if (checkAtomicity(term)) {
+		if (SmtUtils.isFalseLiteral(context)) {
+			throw new AssertionError("critical constraint is false");
+		}
+		/// check if node is true or false, if neither, then descend
+		/// member variable to toggle this
+		/// descend into quantified formulas, rename qvariables (also restore names?)
+
+		if (CHECK_ALL_NODES_FOR_REDUNDANCY) {
 			final Term result;
 			if (Util.checkSat(mMgdScript.getScript(), SmtUtils.not(mMgdScript.getScript(), term)) == LBool.UNSAT) {
 				result = mMgdScript.getScript().term("true");
@@ -152,11 +160,32 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 				result = mMgdScript.getScript().term("false");
 				return new TermContextTransformationEngine.FinalResultForAscend(result);
 			}
-			return new TermContextTransformationEngine.FinalResultForAscend(term);
-		} else {
-			mMgdScript.getScript().push(1);
-			mAssertionStackHeight++;
-			return new TermContextTransformationEngine.IntermediateResultForDescend(term);
+			if (checkAtomicity(term)) {
+				return new TermContextTransformationEngine.FinalResultForAscend(term);
+			} else {
+				mMgdScript.getScript().push(1);
+				mAssertionStackHeight++;
+				return new TermContextTransformationEngine.IntermediateResultForDescend(term);
+			}
+		}
+
+		else {
+			if (checkAtomicity(term)) {
+				final Term result;
+				if (Util.checkSat(mMgdScript.getScript(), SmtUtils.not(mMgdScript.getScript(), term)) == LBool.UNSAT) {
+					result = mMgdScript.getScript().term("true");
+					return new TermContextTransformationEngine.FinalResultForAscend(result);
+				}
+				if (Util.checkSat(mMgdScript.getScript(), term) == LBool.UNSAT) {
+					result = mMgdScript.getScript().term("false");
+					return new TermContextTransformationEngine.FinalResultForAscend(result);
+				}
+				return new TermContextTransformationEngine.FinalResultForAscend(term);
+			} else {
+				mMgdScript.getScript().push(1);
+				mAssertionStackHeight++;
+				return new TermContextTransformationEngine.IntermediateResultForDescend(term);
+			}
 		}
 
 		// The following is copy&paste of an optimization for the PolyPacSimplification.
