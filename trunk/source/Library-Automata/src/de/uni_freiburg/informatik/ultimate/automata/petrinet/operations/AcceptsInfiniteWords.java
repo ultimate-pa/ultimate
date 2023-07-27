@@ -189,11 +189,14 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 		}
 		mFireSequenceTreeMarkings = successorMarkingSet;
 		// Remove firesequences with same marking as others
-		removeRedundantMarkings();
+		// removeRedundantMarkings();//currently deprecated
 
 		mFireSequenceIndex++;
 	}
 
+	// Deprecated: This method can remove a accepting fire sequence, when a nonaccepting sequence has the same markings
+	// but e.g. dosen't fire into an accepting place
+	@Deprecated
 	private void removeRedundantMarkings() {
 		final Set<MarkingOfFireSequence<LETTER, PLACE>> markingsToRemove = new HashSet<>();
 		for (final MarkingOfFireSequence<LETTER, PLACE> marking : mFireSequenceTreeMarkings) {
