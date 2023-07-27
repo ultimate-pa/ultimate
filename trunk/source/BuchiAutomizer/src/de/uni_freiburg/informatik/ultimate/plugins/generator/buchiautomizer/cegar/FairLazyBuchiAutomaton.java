@@ -133,6 +133,7 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 					substitutionMapping.put(entry.getValue(), entry.getKey().getTermVariable());
 				}
 				PureSubstitution.apply(Script, substitutionMapping, formula);
+				Script.assertTerm(stateFormula);
 			}	
 			if (!existsVariables.isEmpty()) {
 				formula = Script.quantifier(Script.EXISTS, existsVariables.toArray(new TermVariable[existsVariables.size()]), formula, null);
