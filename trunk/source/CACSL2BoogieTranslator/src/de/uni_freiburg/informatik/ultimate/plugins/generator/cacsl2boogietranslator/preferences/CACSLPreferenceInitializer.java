@@ -265,7 +265,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_POINTER_INTEGER_CONVERSION,
 						PointerIntegerConversion.NonBijectiveMapping, PreferenceType.Combo,
 						PointerIntegerConversion.values()),
-				new UltimatePreferenceItem<>(LABEL_REPORT_UNSOUNDNESS_WARNING, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_REPORT_UNSOUNDNESS_WARNING, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BITPRECISE_BITFIELDS, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
 						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
