@@ -710,7 +710,7 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTASMDeclaration node) {
-		mLogger.warn("Ignoring inline assembler instruction " + mLocationFactory.createCLocation(node));
+		mReporter.warn(mLocationFactory.createCLocation(node), "Ignoring inline assembler instruction");
 		return new SkipResult();
 	}
 
