@@ -2413,9 +2413,9 @@ public class StandardFunctionHandler {
 	}
 
 	/**
-	 * Create assert false or assume false statement for usage in reachability specifications, depending on the
-	 * settings. If we want to check reachability, an assert false will be generated. If not, (e.g., if we only want to
-	 * check memsafety), an assume false will be generated.
+	 * Create "assert expr" or "assume expr" for usage in reachability specifications, depending on the settings. If
+	 * checkProperty is true (i.e. the check is enabled), an "assert expr" will be generated, otherwise an "assume expr"
+	 * will be generated.
 	 */
 	private Statement createReachabilityAssert(final ILocation loc, final String functionName,
 			final boolean checkProperty, final Spec spec, final Expression expr) {
