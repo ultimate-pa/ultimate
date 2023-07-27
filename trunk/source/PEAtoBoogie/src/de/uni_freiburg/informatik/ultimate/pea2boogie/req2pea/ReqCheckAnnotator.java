@@ -214,18 +214,34 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	 * @return The assertion for non-complementness
 	 */
 	private Statement genAssertComplement(ReqPeas reqPeasTotal, ReqPeas reqPeasComplement, final BoogieLocation bl) {		
-		final Pair<Expression, Expression> expressionsTotal = getExpressions(reqPeasTotal, bl);
-		final Pair<Expression, Expression> expressionsComp = getExpressions(reqPeasComplement, bl);
+//		final Pair<Expression, Expression> expressionsTotal = getExpressions(reqPeasTotal, bl);
+//		final Pair<Expression, Expression> expressionsComp = getExpressions(reqPeasComplement, bl);
+//		
+//		final Expression expressionTotalTerminal = expressionsTotal.getFirst();
+//		final Expression expressionTotalNonTerminal = expressionsTotal.getSecond();
+//		final Expression expressionCompTerminal = expressionsComp.getFirst();
+//		final Expression expressionCompNonTerminal = expressionsComp.getSecond();
+//		
+//		final Expression conjunctionTerminal = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, expressionTotalTerminal, expressionCompTerminal);
+//		final Expression conjunctionNonTerminal = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, expressionTotalNonTerminal, expressionCompNonTerminal);
+//		
+//		final Expression disjunction = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICOR, conjunctionTerminal, conjunctionNonTerminal);
 		
-		final Expression expressionTotalTerminal = expressionsTotal.getFirst();
-		final Expression expressionTotalNonTerminal = expressionsTotal.getSecond();
-		final Expression expressionCompTerminal = expressionsComp.getFirst();
-		final Expression expressionCompNonTerminal = expressionsComp.getSecond();
 		
-		final Expression conjunctionTerminal = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, expressionTotalTerminal, expressionCompTerminal);
-		final Expression conjunctionNonTerminal = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, expressionTotalNonTerminal, expressionCompNonTerminal);
 		
-		final Expression disjunction = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICOR, conjunctionTerminal, conjunctionNonTerminal);
+		final Expression terminalExpressionCompPea = getTerminalExpressionComplement(reqPeasComplement, bl);
+		final Expression nonTerminalExpressionCompPea = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, terminalExpressionCompPea);
+		
+		final Expression nonTerminalExpressionTotalPEA = getTerminalExpressionComplement(reqPeasTotal, bl);
+		final Expression terminalExpressionTotalPea = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, nonTerminalExpressionTotalPEA);
+		
+		
+		final Expression terminalConjunction = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, terminalExpressionTotalPea, terminalExpressionCompPea);
+		
+		final Expression nonTerminalConjunction = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, nonTerminalExpressionTotalPEA, nonTerminalExpressionCompPea);
+		
+		final Expression disjunction = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICOR, terminalConjunction, nonTerminalConjunction);
+		
 		final Expression assertion = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, disjunction);
 		
 		final ReqCheck check = new ReqCheck(Spec.COMPLEMENT);
@@ -261,6 +277,19 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		
 		Pair<Expression, Expression> result = new Pair<Expression, Expression>(resultTerminalExpression, resultNonTerminalExpression);
 		return result;
+	}
+	
+	private Expression getTerminalExpressionComplement(ReqPeas reqPeas, BoogieLocation bl) {
+		List<Entry<CounterTrace, PhaseEventAutomata>> peaList = reqPeas.getCounterTrace2Pea();
+		List<Expression>  terminalExpressions = new ArrayList<>();
+		for (Entry<CounterTrace, PhaseEventAutomata> entry : peaList) {
+			PhaseEventAutomata pea = entry.getValue();
+			Phase[] phases = pea.getPhases();
+			Expression expression = genComparePhaseCounter(0, mSymbolTable.getPcName(pea), bl);
+			terminalExpressions.add(expression);
+		}
+		Expression terminalExpression = ExpressionFactory.or(bl, terminalExpressions);
+		return terminalExpression;
 	}
 
 	@SuppressWarnings("unchecked")
