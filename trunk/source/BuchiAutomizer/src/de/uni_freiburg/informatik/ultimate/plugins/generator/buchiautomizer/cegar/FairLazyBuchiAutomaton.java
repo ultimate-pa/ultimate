@@ -113,7 +113,9 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 		Set<String> annotations = new HashSet<>();
 		Set<L> outgoing = mInitialAbstraction.lettersInternal((IPredicate) ((SleepPredicate<String>) state).getUnderlying());
 		Script Script = mIcfg.getCfgSmtToolkit().getManagedScript().getScript();
+		//edge is enabled if (not (-> A B)), thus if (and A (not B))is unsatisfiable
 		for (L edge : outgoing) {
+			//declare function if not yet declared
 			for (Term var : edge.getTransformula().getFormula().getFreeVars()) {
 				if(!mDeclaredVariables.contains(var.toString())) {
 					mDeclaredVariables.add(var.toString());
@@ -122,10 +124,8 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 			}
 			UnmodifiableTransFormula transFormula = edge.getTransformula();
 			Term formula = transFormula.getFormula();
-			Set<TermVariable> existsVariables = new HashSet<>();
-			for(Entry<IProgramVar, TermVariable> entry : transFormula.getOutVars().entrySet()) {
-					existsVariables.add(entry.getValue());
-			}
+			
+			//if A != true, then assert A and substitute the variables in B to match the names of A
 			Term stateFormula = ((SleepPredicate<String>) state).getFormula();
 			if (!stateFormula.toString().equals("don't care")) {
 				Map<Term, Term> substitutionMapping = new HashMap<>();
@@ -134,12 +134,19 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 				}
 				PureSubstitution.apply(Script, substitutionMapping, formula);
 				Script.assertTerm(stateFormula);
-			}	
+			}
+			
+			//add an existential quantifier before B, quantifying over all OutVars, then assert (not B)
+			Set<TermVariable> existsVariables = new HashSet<>();
+			for(Entry<IProgramVar, TermVariable> entry : transFormula.getOutVars().entrySet()) {
+					existsVariables.add(entry.getValue());
+			}
 			if (!existsVariables.isEmpty()) {
 				formula = Script.quantifier(Script.EXISTS, existsVariables.toArray(new TermVariable[existsVariables.size()]), formula, null);
 			}
 			Script.assertTerm(Script.term("not", formula));
-
+			
+			//if unsatisfiable (or fork/join), then the edge is considered as enabled
 			if(Script.checkSat().equals(LBool.UNSAT) || letter instanceof IIcfgForkTransitionThreadOther 
 					|| letter instanceof IIcfgJoinTransitionThreadOther) {
 				annotations.add(edge.getSucceedingProcedure());
