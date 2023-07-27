@@ -62,16 +62,17 @@ public class CTranslationResultReporter {
 	 *
 	 * @param loc
 	 *            where did it happen?
-	 * @param longDesc
+	 * @param description
 	 *            description.
 	 */
-	public void warn(final ILocation loc, final String longDescription) {
+	public void warn(final ILocation loc, final String description) {
 		if (!mReportUnsoundnessWarning) {
 			return;
 		}
 
 		final String shortDescription = "Unsoundness Warning";
-		mLogger.warn(shortDescription + " " + longDescription);
+		final String longDescription = description + " " + loc;
+		mLogger.warn(shortDescription + ": " + longDescription);
 		final GenericResultAtLocation result = new GenericResultAtLocation(Activator.PLUGIN_NAME, loc, shortDescription,
 				longDescription, Severity.WARNING);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
