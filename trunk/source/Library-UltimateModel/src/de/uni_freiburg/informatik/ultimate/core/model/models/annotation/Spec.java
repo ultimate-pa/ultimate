@@ -204,6 +204,12 @@ public enum Spec {
 	COMPLEMENT(Group.REQUIREMENT,
 			"complements of each other",
 			"not complements of each other");
+	/**
+		 * Checks for redundancy.
+		 */
+		REDUNDANCY(Group.REQUIREMENT,
+			"non-redundant",
+			"redundant");
 	// @formatter:on
 
 	/**

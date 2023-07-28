@@ -60,8 +60,11 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	
 	public static final String LABEL_CHECK_COMPLEMENT = "Check if two PEAs are complements of each other";
 	private static final boolean DEF_CHECK_COMPLEMENT = true;
-	private static final String DESC_CHECK_COMPLEMENT_STRING = null;
-
+	private static final String DESC_CHECK_COMPLEMENT = null;
+	
+	public static final String LABEL_CHECK_REDUNDANCY = "Check redundancy";
+	private static final boolean DEF_CHECK_REDUNDANCY = true;
+	private static final String DESC_CHECK_REDUNCANCY = null;
 
 	public static final String LABEL_USE_EPSILON = "Use epsilon transformation during rt-inconsistency check";
 	private static final boolean DEF_USE_EPSILON = true;
@@ -104,7 +107,7 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			+ "step independend of length or usefulness.";
 
 	public enum PEATransformerMode {
-		REQ_CHECK, REQ_TEST, REQ_COMP
+		REQ_CHECK, REQ_TEST, REQ_COMP, REQ_RED
 	}
 
 	public Pea2BoogiePreferences() {
@@ -127,8 +130,9 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 					PreferenceType.Boolean),
 			new UltimatePreferenceItem<>(LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, DEF_REPORT_TRIVIAL_RT_CONSISTENCY,
 					DESC_REPORT_TRIVIAL_RT_CONSISTENCY, PreferenceType.Boolean),
-			new UltimatePreferenceItem<>(LABEL_CHECK_COMPLEMENT, DEF_CHECK_COMPLEMENT, DESC_CHECK_COMPLEMENT_STRING, 
+			new UltimatePreferenceItem<>(LABEL_CHECK_COMPLEMENT, DEF_CHECK_COMPLEMENT, DESC_CHECK_COMPLEMENT, 
 					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_CHECK_REDUNDANCY, DEF_CHECK_REDUNDANCY, DESC_CHECK_REDUNCANCY, PreferenceType.Boolean),
 			new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_RANGE, DEF_RT_INCONSISTENCY_RANGE,
 					DESC_RT_INCONSISTENCY_RANGE, PreferenceType.Integer,
 					IUltimatePreferenceItemValidator.ONLY_POSITIVE),
