@@ -1858,11 +1858,6 @@ public class CHandler {
 		// LinkedHashMap<>(0);
 		final List<Overapprox> overappr = new ArrayList<>();
 		final String label = node.getName().toString();
-		if ("ERROR".equals(label)) {
-			final String longDescription =
-					"The label \"ERROR\" does not have a special meaning in the translation mode you selected. You might want to change your settings and use the SV-COMP translation mode.";
-			mReporter.warn(loc, longDescription);
-		}
 		stmt.add(new Label(loc, label));
 		final Result r = main.dispatch(node.getNestedStatement());
 		if (r instanceof ExpressionResult) {
