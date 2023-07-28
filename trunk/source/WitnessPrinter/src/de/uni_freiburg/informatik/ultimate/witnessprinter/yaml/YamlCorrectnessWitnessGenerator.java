@@ -45,7 +45,7 @@ public class YamlCorrectnessWitnessGenerator {
 		mIsACSLForbidden = mPreferences.getBoolean(PreferenceInitializer.LABEL_DO_NOT_USE_ACSL);
 	}
 
-	private Witness getWitness() {
+	public String makeYamlString() {
 		final var roots = mTranslatedCFG.getCFGs();
 		if (roots.size() != 1) {
 			throw new UnsupportedOperationException("Cannot generate correctness witnesses in library mode");
@@ -76,7 +76,6 @@ public class YamlCorrectnessWitnessGenerator {
 			}
 			final Set<Location> locationCandidates = new HashSet<>();
 			for (final var outgoing : node.getOutgoingEdges()) {
-				// TODO: Can we use type constraints instead of this cast?
 				final ILocation loc = (ILocation) outgoing.getLabel();
 				// If the column is unknown (-1), use the first position of the line
 				final int column = Math.max(loc.getStartColumn(), 0);
@@ -93,11 +92,7 @@ public class YamlCorrectnessWitnessGenerator {
 						new Invariant(invariant, "assertion", format)));
 			}
 		}
-		return new Witness(entries);
-	}
-
-	public String makeYamlString() {
-		return getWitness().toYamlString();
+		return new Witness(entries).toYamlString();
 	}
 
 	private String filterInvariant(final IExplicitEdgesMultigraph<?, ?, ?, ?, ?> node) {
