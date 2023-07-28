@@ -31,12 +31,10 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 
 /**
  *
@@ -47,14 +45,16 @@ public class CTranslationResultReporter {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final boolean mReportUnsoundnessWarning;
+	private boolean mReportUnsoundnessWarning;
 
 	public CTranslationResultReporter(final IUltimateServiceProvider services, final ILogger logger) {
 		mServices = services;
 		mLogger = logger;
+		mReportUnsoundnessWarning = false;
+	}
 
-		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		mReportUnsoundnessWarning = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_REPORT_UNSOUNDNESS_WARNING);
+	public void enableUnsoundnessWarning() {
+		mReportUnsoundnessWarning = true;
 	}
 
 	/**
