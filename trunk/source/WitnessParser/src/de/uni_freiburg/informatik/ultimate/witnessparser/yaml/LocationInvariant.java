@@ -29,7 +29,7 @@ public class LocationInvariant extends WitnessEntry {
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + " @ " + mLocation + ": " + mInvariant;
+		return getClass().getSimpleName() + " " + mLocation + ": " + mInvariant;
 	}
 
 	@Override

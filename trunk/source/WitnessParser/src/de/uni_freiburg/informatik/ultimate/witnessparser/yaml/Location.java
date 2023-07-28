@@ -44,7 +44,7 @@ public class Location implements IYamlProvider {
 
 	@Override
 	public String toString() {
-		return "(" + mLine + ", " + mColumn + ")";
+		return "(" + mFileName + ", L" + mLine + "-" + mColumn + ")";
 	}
 
 	@Override

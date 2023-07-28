@@ -29,7 +29,7 @@ public class Invariant implements IYamlProvider {
 
 	@Override
 	public String toString() {
-		return mExpression + " [" + mType + ", " + mFormat + "]";
+		return mExpression;
 	}
 
 	@Override
