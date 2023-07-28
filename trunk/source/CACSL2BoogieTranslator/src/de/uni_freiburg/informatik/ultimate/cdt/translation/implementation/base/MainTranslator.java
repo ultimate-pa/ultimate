@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslatorMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.IdentifierMapping;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
 
 public class MainTranslator {
@@ -214,7 +215,10 @@ public class MainTranslator {
 			final CACSL2BoogieBacktranslatorMapping backtranslatorMapping, final List<DecoratedUnit> nodes,
 			final TypeHandler prerunTypeHandler, final MultiparseSymbolTable mst, final TypeSizes typeSizes) {
 		final NameHandler nameHandler = new NameHandler(backtranslatorMapping);
-
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		if (prefs.getBoolean(CACSLPreferenceInitializer.LABEL_REPORT_UNSOUNDNESS_WARNING)) {
+			reporter.enableUnsoundnessWarning();
+		}
 		final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mLogger, mst);
 		final ProcedureManager procedureManager = new ProcedureManager(mLogger, translationSettings);
 		final StaticObjectsHandler staticObjectsHandler = new StaticObjectsHandler(mLogger);
