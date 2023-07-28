@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.Req2CauseTrackingP
 import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.ReqTestResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ComplementTransformer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
+import jdk.jshell.spi.ExecutionControl.NotImplementedException;
 
 public class PEAtoBoogieObserver extends BaseObserver {
 
@@ -62,6 +63,9 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		if (mode == PEATransformerMode.REQ_COMP) {
 			return  generateReqComplementCheckBoogie(patterns);
 		}
+		if (mode == PEATransformerMode.REQ_RED) {
+			return generateReqCheckRedundancyBoogie(patterns);
+		}
 		return null;
 	}
 
@@ -100,6 +104,11 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		final UnaryOperator<IResult> resultTransformer = reporter::convertTraceAbstractionResult;
 		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
 		return translator.getUnit();
+	}
+	
+	private IElement generateReqCheckRedundancyBoogie(final List<PatternType<?>> patterns) {
+		// TODO
+		return null;
 	}
 
 }

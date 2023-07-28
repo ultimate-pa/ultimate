@@ -96,6 +96,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private int mCombinationNum;
 	private boolean mCheckConsistency;
 	private boolean mCheckComplement;
+	private boolean mCheckRedundancy;
 	private boolean mReportTrivialConsistency;
 
 	private boolean mSeparateInvariantHandling;
@@ -137,6 +138,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mReportTrivialConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY);
 		mSeparateInvariantHandling = prefs.getBoolean(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS);
 		mCheckComplement = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_COMPLEMENT);
+		mCheckRedundancy = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_REDUNDANCY);
 
 		// log preferences
 		mLogger.info(String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s, %s=%s", Pea2BoogiePreferences.LABEL_CHECK_VACUITY,
@@ -144,7 +146,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 				Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY, mCheckConsistency,
 				Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, mReportTrivialConsistency,
 				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS, mSeparateInvariantHandling,
-				Pea2BoogiePreferences.LABEL_CHECK_COMPLEMENT, mCheckComplement));
+				Pea2BoogiePreferences.LABEL_CHECK_COMPLEMENT, mCheckComplement), 
+				Pea2BoogiePreferences.LABEL_CHECK_REDUNDANCY, mCheckRedundancy);
 
 		final List<Declaration> decls = new ArrayList<>();
 		decls.addAll(mSymbolTable.getDeclarations());
@@ -177,6 +180,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 		if (mCheckComplement) {
 			annotations.addAll(genCheckComplement(mUnitLocation));
+		}
+		if (mCheckRedundancy) {
+			// TODO : implement check for Reduncancy 
 		}
 		annotations.addAll(genChecksRTInconsistency(mUnitLocation));
 		return annotations;
