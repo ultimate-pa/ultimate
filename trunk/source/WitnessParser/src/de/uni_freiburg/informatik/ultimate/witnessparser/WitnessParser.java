@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.preferences.WitnessParserPreferences;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 import edu.uci.ics.jung.io.GraphIOException;
 
 /**
@@ -115,11 +116,12 @@ public class WitnessParser implements ISource {
 	private IElement parseAST(final File file) {
 		mFilename = file.getAbsolutePath();
 		if (file.getName().endsWith("yaml")) {
-			// TODO: Extract the witness type from the Witness itself
-			mWitnessType = Type.OTHER;
 			try {
-				return YamlWitnessParser.parseWitness(file);
+				final Witness witness = YamlWitnessParser.parseWitness(file);
+				mWitnessType = witness.isCorrectnessWitness() ? Type.CORRECTNESS_WITNESS : Type.VIOLATION_WITNESS;
+				return witness;
 			} catch (final IOException e) {
+				mWitnessType = Type.OTHER;
 				return null;
 			}
 		}
