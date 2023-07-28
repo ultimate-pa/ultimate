@@ -91,9 +91,6 @@ public class PEAtoBoogieObserver extends BaseObserver {
 	}
 	
 	private IElement generateReqComplementCheckBoogie(final List<PatternType<?>> patterns) {
-		if (patterns.size() > 1) {
-			mLogger.error("only one pattern please");
-		}
 		final ComplementTransformer transformer = new ComplementTransformer(mServices, mLogger);
 		final Req2BoogieTranslator translator =
 				new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.singletonList(transformer));

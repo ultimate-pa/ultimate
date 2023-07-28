@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 * one that represents the totalised PEA and one that represents the complement PEA
 * 
 * The purpose of this class is to enable the complement check, a check to determine 
-* wether or not two PEAs are complements of each other.
+* whether or not two PEAs are complements of each other.
 * 
 * @author lena
 *
