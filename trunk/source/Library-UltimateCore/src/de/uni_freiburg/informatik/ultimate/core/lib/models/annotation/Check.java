@@ -150,6 +150,10 @@ public class Check extends ModernAnnotations {
 		 */
 		COMPLEMENT,
 		/**
+		 * Check for requirements. Checks for redundancy. 
+		 */
+		REDUNDANCY,
+		/**
 		 * Check if a petrified ICFG does provide enough thread instances.
 		 */
 		SUFFICIENT_THREAD_INSTANCES,
@@ -267,6 +271,8 @@ public class Check extends ModernAnnotations {
 			return "complete";
 		case COMPLEMENT:
 			return "complements of each other";
+		case REDUNDANCY:
+			return "non-redundant";
 		case SUFFICIENT_THREAD_INSTANCES:
 			return "petrification did provide enough thread instances (tool internal message, not intended for end users)";
 		case DATA_RACE:
@@ -324,6 +330,8 @@ public class Check extends ModernAnnotations {
 			return "incomplete";
 		case COMPLEMENT:
 			return "not complements of each other";
+		case REDUNDANCY:
+			return "redundant";
 		case SUFFICIENT_THREAD_INSTANCES:
 			return "petrification did not provide enough thread instances (tool internal message, not intended for end users)";
 		case DATA_RACE:
