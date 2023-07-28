@@ -79,8 +79,12 @@ public class YamlCorrectnessWitnessGenerator {
 				final ILocation loc = (ILocation) outgoing.getLabel();
 				// If the column is unknown (-1), use the first position of the line
 				final int column = Math.max(loc.getStartColumn(), 0);
-				// TODO: Where do we get the function from?
-				locationCandidates.add(new Location(loc.getFileName(), hash, loc.getStartLine(), column, "function"));
+				final String function = loc.getFunction();
+				if (function == null) {
+					// TODO: Is this possible, maybe for global invariants? What is the expected behavior?
+					continue;
+				}
+				locationCandidates.add(new Location(loc.getFileName(), hash, loc.getStartLine(), column, function));
 				worklist.add(outgoing.getTarget());
 			}
 			final String invariant = filterInvariant(node);

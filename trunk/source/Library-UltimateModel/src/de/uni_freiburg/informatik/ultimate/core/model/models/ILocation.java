@@ -67,6 +67,11 @@ public interface ILocation extends IAnnotations {
 	 */
 	int getEndColumn();
 
+	/**
+	 * @return The function that contains this {@code Location} (i.e. its scope), null if unknown.
+	 */
+	String getFunction();
+
 	default void annotate(final IElement node) {
 		annotate(node.getPayload());
 	}
