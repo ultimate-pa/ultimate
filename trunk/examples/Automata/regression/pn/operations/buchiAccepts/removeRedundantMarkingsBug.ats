@@ -1,0 +1,19 @@
+// Author: pm251@venus.uni-freiburg.de
+// Date: 2023-07-28
+
+PetriNet net = (
+  alphabet = {a},
+  places = {p1 p2},
+  transitions = {
+    ({p1} a {p1})
+    ({p2} a {p2})
+  },
+  initialMarking = {p1 p2},
+  acceptingPlaces = {p2}
+);
+
+//this asset fails in some cases if removeRedundantMarkings is used
+assert(buchiAccepts(net, [, a]));
+assert(buchiAccepts(net, [, a]));
+assert(buchiAccepts(net, [, a]));
+assert(buchiAccepts(net, [, a]));
