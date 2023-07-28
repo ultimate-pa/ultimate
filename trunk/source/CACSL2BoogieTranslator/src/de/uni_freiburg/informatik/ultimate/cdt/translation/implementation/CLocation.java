@@ -34,6 +34,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.LineOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.CdtASTUtils;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MergedLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -44,11 +45,14 @@ public class CLocation extends CACSLLocation {
 	private static final long serialVersionUID = -7497131349540138810L;
 	private final IASTNode mNode;
 	private final LineDirectiveMapping mLineDirectiveMapping;
+	private final LineOffsetComputer mLineOffsetComputer;
 
-	protected CLocation(final IASTNode node, final boolean ignoreDuringBacktranslation, final LineDirectiveMapping lineDirectiveMapping) {
+	protected CLocation(final IASTNode node, final boolean ignoreDuringBacktranslation,
+			final LineDirectiveMapping lineDirectiveMapping, final LineOffsetComputer lineOffsetComputer) {
 		super(ignoreDuringBacktranslation);
 		mNode = node;
 		mLineDirectiveMapping = lineDirectiveMapping;
+		mLineOffsetComputer = lineOffsetComputer;
 	}
 
 	@Override
@@ -92,12 +96,20 @@ public class CLocation extends CACSLLocation {
 
 	@Override
 	public int getStartColumn() {
-		return -1;
+		if (mLineOffsetComputer == null) {
+			return -1;
+		}
+		final Integer lineOffset = mLineOffsetComputer.getOffset(getStartLine());
+		return mNode.getFileLocation().getNodeOffset() - lineOffset;
 	}
 
 	@Override
 	public int getEndColumn() {
-		return -1;
+		if (mLineOffsetComputer == null) {
+			return -1;
+		}
+		final Integer lineOffset = mLineOffsetComputer.getOffset(getEndLine());
+		return mNode.getFileLocation().getNodeOffset() + mNode.getFileLocation().getNodeLength() - lineOffset;
 	}
 
 	public IASTNode getNode() {
@@ -106,6 +118,10 @@ public class CLocation extends CACSLLocation {
 
 	public LineDirectiveMapping getLineDirectiveMapping() {
 		return mLineDirectiveMapping;
+	}
+
+	public LineOffsetComputer getLineOffsetComputer() {
+		return mLineOffsetComputer;
 	}
 
 	@Override
@@ -144,7 +160,14 @@ public class CLocation extends CACSLLocation {
 			} else {
 				resultLineDirectiveMapping = mLineDirectiveMapping;
 			}
-			return new CLocation(node, ignoreDuringBacktranslation, resultLineDirectiveMapping);
+			final LineOffsetComputer resultLineOffsetComputer;
+			if (mLineOffsetComputer == null) {
+				resultLineOffsetComputer = otherCloc.getLineOffsetComputer();
+			} else {
+				resultLineOffsetComputer = mLineOffsetComputer;
+			}
+			return new CLocation(node, ignoreDuringBacktranslation, resultLineDirectiveMapping,
+					resultLineOffsetComputer);
 		} else if (other instanceof ILocation) {
 			return MergedLocation.mergeToMergeLocation(this, (ILocation) other);
 		}

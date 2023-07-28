@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.LineOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PreRunner.PreRunnerResult;
@@ -153,7 +154,8 @@ public class MainTranslator {
 
 			final IASTTranslationUnit tu = (IASTTranslationUnit) ldmNode.getCNode();
 			final LineDirectiveMapping lineDirectiveMapping = new LineDirectiveMapping(tu.getRawSignature());
-			final LocationFactory locationFactory = new LocationFactory(lineDirectiveMapping);
+			final LineOffsetComputer lineOffsetComputer = new LineOffsetComputer(tu.getRawSignature());
+			final LocationFactory locationFactory = new LocationFactory(lineDirectiveMapping, lineOffsetComputer);
 			final CACSL2BoogieBacktranslatorMapping backtranslatorMapping = new CACSL2BoogieBacktranslatorMapping();
 
 			final NameHandler nameHandler = new NameHandler(backtranslatorMapping);
