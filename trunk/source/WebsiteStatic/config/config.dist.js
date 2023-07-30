@@ -1577,7 +1577,7 @@ const _CONFIG = {
 						{
 							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
 							"default": "",
-							"visible": true,
+							"visible": false,
 							"name": "Entry function",
 							"id": "cacsl2boogietranslator_entry_function",
 							"type": "string",
@@ -1586,7 +1586,7 @@ const _CONFIG = {
 						{
 							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
 							"default": true,
-							"visible": true,
+							"visible": false,
 							"name": "Use bitvectors instead of ints",
 							"id": "cacsl2boogietranslator_use_bitvectors_instead_of_ints",
 							"type": "bool",
