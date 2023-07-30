@@ -3,6 +3,7 @@ extern char __VERIFIER_nondet_char();
 
 int g;
 
+//@ requires g < 1048;
 //@ ensures (g > \old(g));
 void increment() {
     g++;
