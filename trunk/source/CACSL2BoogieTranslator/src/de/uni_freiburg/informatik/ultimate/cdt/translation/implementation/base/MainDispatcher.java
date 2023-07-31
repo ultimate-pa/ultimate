@@ -127,8 +127,6 @@ import org.eclipse.cdt.internal.core.dom.parser.IASTAmbiguousExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
 
-import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
-import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -803,12 +801,12 @@ public class MainDispatcher implements IDispatcher {
 			final ExtractedWitnessInvariant invariants = mWitnessInvariants.get(node);
 			try {
 				final ILocation loc = mLocationFactory.createCLocation(node);
-				final List<AssertStatement> list = translateWitnessInvariant(loc, invariants, x -> x.isAt(), node);
+				final List<Statement> list = translateWitnessInvariant(loc, invariants, x -> x.isAt(), node);
 				if (list.isEmpty()) {
 					result = null;
 				} else {
 					assert list.size() == 1;
-					result = list.get(0);
+					result = (AssertStatement) list.get(0);
 				}
 			} catch (final IncorrectSyntaxException ise) {
 				mLogger.error("The following invariant contains an incorrect syntax and was ignored. Reason: "
@@ -831,7 +829,7 @@ public class MainDispatcher implements IDispatcher {
 		}
 		final ExtractedWitnessInvariant rawWitnessInvariant = mWitnessInvariants.get(n);
 		final ILocation loc = mLocationFactory.createCLocation(n);
-		final List<AssertStatement> translatedWitnessInvariant =
+		final List<Statement> translatedWitnessInvariant =
 				translateWitnessInvariant(loc, rawWitnessInvariant, a -> a.isBefore(), n);
 		mCurrentWitnessInvariants.push(new WitnessInvariant(translatedWitnessInvariant, rawWitnessInvariant));
 	}
@@ -843,12 +841,12 @@ public class MainDispatcher implements IDispatcher {
 		}
 
 		final WitnessInvariant before = mCurrentWitnessInvariants.pop();
-		final List<AssertStatement> translatedWitnessInvariant = before.getTranslatedWitnessInvariant();
+		final List<Statement> translatedWitnessInvariant = before.getTranslatedWitnessInvariant();
 		final ExtractedWitnessInvariant rawWitnessInvariant = before.getRawWitnessInvariant();
 
 		// TODO: Use the new information as you see fit
 		final ExtractedWitnessInvariant afterWitnessInvariantRaw = mWitnessInvariants.get(node);
-		final List<AssertStatement> afterTranslatedWitnessInvariants = translateWitnessInvariant(
+		final List<Statement> afterTranslatedWitnessInvariants = translateWitnessInvariant(
 				mLocationFactory.createCLocation(node), afterWitnessInvariantRaw, a -> a.isAfter(), node);
 
 		if (translatedWitnessInvariant.isEmpty() && afterTranslatedWitnessInvariants.isEmpty()) {
@@ -907,79 +905,26 @@ public class MainDispatcher implements IDispatcher {
 		}
 	}
 
-	private List<AssertStatement> translateWitnessInvariant(final ILocation loc,
-			final ExtractedWitnessInvariant invariant,
+	private List<Statement> translateWitnessInvariant(final ILocation loc, final ExtractedWitnessInvariant invariant,
 			final java.util.function.Predicate<ExtractedWitnessInvariant> funHasCorrectPosition, final IASTNode hook)
 			throws AssertionError {
-		if (invariant != null) {
-			if (!funHasCorrectPosition.test(invariant)) {
-				return Collections.emptyList();
-			}
-			ACSLNode acslNode = null;
-			try {
-				checkForQuantifiers(invariant.getInvariant());
-				acslNode = Parser.parseComment("lstart\n assert " + invariant.getInvariant() + ";",
-						invariant.getStartline(), 1, mLogger);
-			} catch (final ACSLSyntaxErrorException e) {
-				throw new UnsupportedSyntaxException(loc, e.getMessage());
-			} catch (final Exception e) {
-				throw new AssertionError(e);
-			}
-			final Result translationResult = dispatch(acslNode, hook);
-			final List<AssertStatement> invariants = new ArrayList<>();
-			if (translationResult instanceof ExpressionResult) {
-				final ExpressionResult exprResult = (ExpressionResult) translationResult;
-				if (!exprResult.getAuxVars().isEmpty()) {
-					throw new UnsupportedSyntaxException(loc,
-							"must be translatable without auxvars " + exprResult.getAuxVars().toString());
-				}
-				if (!exprResult.getDeclarations().isEmpty()) {
-					throw new UnsupportedSyntaxException(loc,
-							"must be translatable without new declarations" + exprResult.getDeclarations().toString());
-				}
-				if (!exprResult.getOverapprs().isEmpty()) {
-					throw new UnsupportedSyntaxException(loc, "must be translatable without new overapproximations"
-							+ exprResult.getOverapprs().toString());
-				}
-				if (exprResult.getStatements().size() > 1) {
-					throw new UnsupportedSyntaxException(loc, "must be translatable without additional statements"
-							+ exprResult.getStatements().toString());
-				}
-				final Statement stmt = exprResult.getStatements().get(0);
-				if (stmt instanceof AssertStatement) {
-					invariants.add((AssertStatement) stmt);
-				} else {
-					throw new AssertionError("must return one AssertStatement");
-				}
-			}
-			return invariants;
+		if (invariant != null && funHasCorrectPosition.test(invariant)) {
+			return invariant.dispatch(loc, this).getStatements();
 		}
 		return Collections.emptyList();
 	}
 
-	/**
-	 * Throw Exception if invariant contains quantifiers. It seems like our parser does not support quantifiers yet, For
-	 * the moment it seems to be better to crash here in order to get a meaningful error message.
-	 */
-	private static void checkForQuantifiers(final String invariant) {
-		if (invariant.contains("exists") || invariant.contains("forall")) {
-			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(),
-					"invariant contains quantifiers");
-		}
-
-	}
-
 	private static final class WitnessInvariant {
-		private final List<AssertStatement> mTranslatedWitnessInvariant;
+		private final List<Statement> mTranslatedWitnessInvariant;
 		private final ExtractedWitnessInvariant mRawWitnessInvariant;
 
-		public WitnessInvariant(final List<AssertStatement> translatedWitnessInvariant,
+		public WitnessInvariant(final List<Statement> translatedWitnessInvariant,
 				final ExtractedWitnessInvariant rawWitnessInvariant) {
 			mTranslatedWitnessInvariant = translatedWitnessInvariant;
 			mRawWitnessInvariant = rawWitnessInvariant;
 		}
 
-		public List<AssertStatement> getTranslatedWitnessInvariant() {
+		public List<Statement> getTranslatedWitnessInvariant() {
 			return mTranslatedWitnessInvariant;
 		}
 

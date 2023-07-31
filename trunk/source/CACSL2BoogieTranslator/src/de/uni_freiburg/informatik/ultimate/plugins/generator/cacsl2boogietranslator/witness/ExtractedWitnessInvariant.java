@@ -7,6 +7,15 @@ import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
+import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
+import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -115,5 +124,33 @@ public final class ExtractedWitnessInvariant {
 		sb.append(isAfter() ? '1' : '0');
 		sb.append(')');
 		return sb.toString();
+	}
+
+	public ExpressionResult dispatch(final ILocation loc, final IDispatcher dispatcher) {
+		ACSLNode acslNode = null;
+		try {
+			checkForQuantifiers(mInvariant);
+			acslNode = Parser.parseComment("lstart\n assert " + mInvariant + ";", getStartline(), 1);
+		} catch (final ACSLSyntaxErrorException e) {
+			throw new UnsupportedSyntaxException(loc, e.getMessage());
+		} catch (final Exception e) {
+			throw new AssertionError(e);
+		}
+		final Result translationResult = dispatcher.dispatch(acslNode, mMatchedAstNode);
+		if (translationResult instanceof ExpressionResult) {
+			return (ExpressionResult) translationResult;
+		}
+		return null;
+	}
+
+	/**
+	 * Throw Exception if invariant contains quantifiers. It seems like our parser does not support quantifiers yet, For
+	 * the moment it seems to be better to crash here in order to get a meaningful error message.
+	 */
+	private static void checkForQuantifiers(final String invariant) {
+		if (invariant.contains("exists") || invariant.contains("forall")) {
+			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(),
+					"invariant contains quantifiers");
+		}
 	}
 }
