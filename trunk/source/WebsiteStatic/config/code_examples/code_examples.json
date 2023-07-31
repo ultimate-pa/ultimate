@@ -1,10 +1,6 @@
 {
   "automataScript": [
     {
-      "name": "beverageVendingMachine.ats",
-      "source": "beverageVendingMachine.ats"
-    },
-    {
       "name": "BuchiAutomata.ats",
       "source": "BuchiAutomata.ats"
     },
@@ -47,6 +43,10 @@
     {
       "name": "TreeAutomata.ats",
       "source": "TreeAutomata.ats"
+    },
+    {
+      "name": "beverageVendingMachine.ats",
+      "source": "beverageVendingMachine.ats"
     }
   ],
   "boogieAutomizer": [
@@ -291,18 +291,6 @@
       "source": "Boulder.bpl"
     },
     {
-      "name": "bound-scaled200.bpl",
-      "source": "bound-scaled200.bpl"
-    },
-    {
-      "name": "bound-scaled400.bpl",
-      "source": "bound-scaled400.bpl"
-    },
-    {
-      "name": "bound-scaled600.bpl",
-      "source": "bound-scaled600.bpl"
-    },
-    {
       "name": "BradleyMannaSipma-2005ICALP-Fi...",
       "source": "BradleyMannaSipma-2005ICALP-Fig1-deterministic.bpl"
     },
@@ -471,12 +459,12 @@
       "source": "Konstanz.bpl"
     },
     {
-      "name": "LexConj-Ben-Amram.bpl",
-      "source": "LexConj-Ben-Amram.bpl"
+      "name": "LTL_Coolant_Nonterminating01.b...",
+      "source": "LTL_Coolant_Nonterminating01.bpl"
     },
     {
-      "name": "linRakWithNonTrivialSI01.bpl",
-      "source": "linRakWithNonTrivialSI01.bpl"
+      "name": "LexConj-Ben-Amram.bpl",
+      "source": "LexConj-Ben-Amram.bpl"
     },
     {
       "name": "Lobnya-Boolean-Reordered.bpl",
@@ -489,10 +477,6 @@
     {
       "name": "LoopUnsat.bpl",
       "source": "LoopUnsat.bpl"
-    },
-    {
-      "name": "LTL_Coolant_Nonterminating01.b...",
-      "source": "LTL_Coolant_Nonterminating01.bpl"
     },
     {
       "name": "Madrid.bpl",
@@ -575,6 +559,62 @@
       "source": "NonTermination3.bpl"
     },
     {
+      "name": "NonTerminationChangeOfBasisDem...",
+      "source": "NonTerminationChangeOfBasisDemonstration01.bpl"
+    },
+    {
+      "name": "NonTerminationFixedPoint.bpl",
+      "source": "NonTerminationFixedPoint.bpl"
+    },
+    {
+      "name": "NonTerminationMykonos01.bpl",
+      "source": "NonTerminationMykonos01.bpl"
+    },
+    {
+      "name": "NonTerminationOverReals.bpl",
+      "source": "NonTerminationOverReals.bpl"
+    },
+    {
+      "name": "NonTerminationPartitioned.bpl",
+      "source": "NonTerminationPartitioned.bpl"
+    },
+    {
+      "name": "NonTerminationProjection01.bpl",
+      "source": "NonTerminationProjection01.bpl"
+    },
+    {
+      "name": "NonTerminationReal.bpl",
+      "source": "NonTerminationReal.bpl"
+    },
+    {
+      "name": "NonTerminationRotation.bpl",
+      "source": "NonTerminationRotation.bpl"
+    },
+    {
+      "name": "NonTerminationSameEigenvalues....",
+      "source": "NonTerminationSameEigenvalues.bpl"
+    },
+    {
+      "name": "NonTerminationSimple.bpl",
+      "source": "NonTerminationSimple.bpl"
+    },
+    {
+      "name": "NonTerminationSimple4.bpl",
+      "source": "NonTerminationSimple4.bpl"
+    },
+    {
+      "name": "NonTerminationSimple6.bpl",
+      "source": "NonTerminationSimple6.bpl"
+    },
+    {
+      "name": "NonTerminationSimple7.bpl",
+      "source": "NonTerminationSimple7.bpl"
+    },
+    {
+      "name": "NonTerminationSimple8.bpl",
+      "source": "NonTerminationSimple8.bpl"
+    },
+    {
       "name": "NonterminationCAV_01.bpl",
       "source": "NonterminationCAV_01.bpl"
     },
@@ -585,10 +625,6 @@
     {
       "name": "NonterminationCAV_03.bpl",
       "source": "NonterminationCAV_03.bpl"
-    },
-    {
-      "name": "NonTerminationChangeOfBasisDem...",
-      "source": "NonTerminationChangeOfBasisDemonstration01.bpl"
     },
     {
       "name": "NonterminationDifficult01.bpl",
@@ -647,60 +683,8 @@
       "source": "NonterminationDifficult12_LeMans.bpl"
     },
     {
-      "name": "NonTerminationFixedPoint.bpl",
-      "source": "NonTerminationFixedPoint.bpl"
-    },
-    {
-      "name": "NonTerminationMykonos01.bpl",
-      "source": "NonTerminationMykonos01.bpl"
-    },
-    {
       "name": "NonterminationNilpotentCompone...",
       "source": "NonterminationNilpotentComponents.bpl"
-    },
-    {
-      "name": "NonTerminationOverReals.bpl",
-      "source": "NonTerminationOverReals.bpl"
-    },
-    {
-      "name": "NonTerminationPartitioned.bpl",
-      "source": "NonTerminationPartitioned.bpl"
-    },
-    {
-      "name": "NonTerminationProjection01.bpl",
-      "source": "NonTerminationProjection01.bpl"
-    },
-    {
-      "name": "NonTerminationReal.bpl",
-      "source": "NonTerminationReal.bpl"
-    },
-    {
-      "name": "NonTerminationRotation.bpl",
-      "source": "NonTerminationRotation.bpl"
-    },
-    {
-      "name": "NonTerminationSameEigenvalues....",
-      "source": "NonTerminationSameEigenvalues.bpl"
-    },
-    {
-      "name": "NonTerminationSimple.bpl",
-      "source": "NonTerminationSimple.bpl"
-    },
-    {
-      "name": "NonTerminationSimple4.bpl",
-      "source": "NonTerminationSimple4.bpl"
-    },
-    {
-      "name": "NonTerminationSimple6.bpl",
-      "source": "NonTerminationSimple6.bpl"
-    },
-    {
-      "name": "NonTerminationSimple7.bpl",
-      "source": "NonTerminationSimple7.bpl"
-    },
-    {
-      "name": "NonTerminationSimple8.bpl",
-      "source": "NonTerminationSimple8.bpl"
     },
     {
       "name": "NoriSharma-2013FSE-Fig7.bpl",
@@ -753,18 +737,6 @@
     {
       "name": "Selestat.bpl",
       "source": "Selestat.bpl"
-    },
-    {
-      "name": "simple-scaled100.bpl",
-      "source": "simple-scaled100.bpl"
-    },
-    {
-      "name": "simple-scaled200.bpl",
-      "source": "simple-scaled200.bpl"
-    },
-    {
-      "name": "simple-scaled250.bpl",
-      "source": "simple-scaled250.bpl"
     },
     {
       "name": "Stockholm.bpl",
@@ -827,6 +799,42 @@
       "source": "Wellington.bpl"
     },
     {
+      "name": "ZenoWithoutDivision.bpl",
+      "source": "ZenoWithoutDivision.bpl"
+    },
+    {
+      "name": "ZhuGuang.bpl",
+      "source": "ZhuGuang.bpl"
+    },
+    {
+      "name": "bound-scaled200.bpl",
+      "source": "bound-scaled200.bpl"
+    },
+    {
+      "name": "bound-scaled400.bpl",
+      "source": "bound-scaled400.bpl"
+    },
+    {
+      "name": "bound-scaled600.bpl",
+      "source": "bound-scaled600.bpl"
+    },
+    {
+      "name": "linRakWithNonTrivialSI01.bpl",
+      "source": "linRakWithNonTrivialSI01.bpl"
+    },
+    {
+      "name": "simple-scaled100.bpl",
+      "source": "simple-scaled100.bpl"
+    },
+    {
+      "name": "simple-scaled200.bpl",
+      "source": "simple-scaled200.bpl"
+    },
+    {
+      "name": "simple-scaled250.bpl",
+      "source": "simple-scaled250.bpl"
+    },
+    {
       "name": "yPositive-MixedIntReal.bpl",
       "source": "yPositive-MixedIntReal.bpl"
     },
@@ -841,14 +849,6 @@
     {
       "name": "yPositive-SIscaled75.bpl",
       "source": "yPositive-SIscaled75.bpl"
-    },
-    {
-      "name": "ZenoWithoutDivision.bpl",
-      "source": "ZenoWithoutDivision.bpl"
-    },
-    {
-      "name": "ZhuGuang.bpl",
-      "source": "ZhuGuang.bpl"
     }
   ],
   "boogieReferee": [
@@ -891,6 +891,10 @@
     {
       "name": "MultiplicationOfNaturalNumbers...",
       "source": "MultiplicationOfNaturalNumbers.bpl"
+    },
+    {
+      "name": "McCarthy91-withSpecification.b...",
+      "source": "McCarthy91-withSpecification.bpl"
     }
   ],
   "boogieTaipan": [
@@ -993,36 +997,6 @@
       "source": "TerminatorRamsey.c"
     }
   ],
-  "cLassoRanker": [
-    {
-      "name": "Bangalore.c",
-      "source": "Bangalore.c"
-    },
-    {
-      "name": "Hammereisenbach-AlternatingBra...",
-      "source": "Hammereisenbach-AlternatingBranches_false-termination.c"
-    },
-    {
-      "name": "MultiphaseOnlyInThesis.c",
-      "source": "MultiphaseOnlyInThesis.c"
-    },
-    {
-      "name": "Schaafheim_false-termination.c",
-      "source": "Schaafheim_false-termination.c"
-    },
-    {
-      "name": "SyntaxSupportBitwiseOperations...",
-      "source": "SyntaxSupportBitwiseOperations01.c"
-    },
-    {
-      "name": "Vienna.c",
-      "source": "Vienna.c"
-    },
-    {
-      "name": "Waldkirch.c",
-      "source": "Waldkirch.c"
-    }
-  ],
   "cLTLAutomizer": [
     {
       "name": "coolant_basis_1_neg.c",
@@ -1097,6 +1071,36 @@
       "source": "coolant_basis_6_unsafe_sftyliveness.c"
     }
   ],
+  "cLassoRanker": [
+    {
+      "name": "Bangalore.c",
+      "source": "Bangalore.c"
+    },
+    {
+      "name": "Hammereisenbach-AlternatingBra...",
+      "source": "Hammereisenbach-AlternatingBranches_false-termination.c"
+    },
+    {
+      "name": "Schaafheim_false-termination.c",
+      "source": "Schaafheim_false-termination.c"
+    },
+    {
+      "name": "SyntaxSupportBitwiseOperations...",
+      "source": "SyntaxSupportBitwiseOperations01.c"
+    },
+    {
+      "name": "Vienna.c",
+      "source": "Vienna.c"
+    },
+    {
+      "name": "MultiphaseOnlyInThesis.c",
+      "source": "MultiphaseOnlyInThesis.c"
+    },
+    {
+      "name": "Waldkirch.c",
+      "source": "Waldkirch.c"
+    }
+  ],
   "cReferee": [
     {
       "name": "2006CAV-GopanReps-Fig1.c",
@@ -1105,6 +1109,22 @@
     {
       "name": "2007POPL-GulwaniJojic-Figure3....",
       "source": "2007POPL-GulwaniJojic-Figure3.c"
+    },
+    {
+      "name": "GoannaDoubleFreeInt.c",
+      "source": "GoannaDoubleFreeInt.c"
+    },
+    {
+      "name": "IncrementGlobal.c",
+      "source": "IncrementGlobal.c"
+    },
+    {
+      "name": "linear-inequality-inv-a.c",
+      "source": "linear-inequality-inv-a.c"
+    },
+    {
+      "name": "mc91.c",
+      "source": "mc91.c"
     }
   ],
   "cTaipan": [
