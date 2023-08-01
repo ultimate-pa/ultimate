@@ -1382,8 +1382,7 @@ public class CHandler {
 		mInnerMostLoopLabel.push(loopLabel);
 		final Result bodyResult = main.dispatch(node.getBody());
 		mInnerMostLoopLabel.pop();
-		final LoopInvariantSpecification witnessInvariant = main.fetchInvariantAtLoop(node);
-		return handleLoops(main, node, bodyResult, condResult, loopLabel, witnessInvariant);
+		return handleLoops(main, node, bodyResult, condResult, loopLabel);
 	}
 
 	public Result visit(final IDispatcher main, final IASTEqualsInitializer node) {
@@ -1442,8 +1441,7 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTForStatement node) {
 		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
-		final LoopInvariantSpecification witnessInvariant = main.fetchInvariantAtLoop(node);
-		return handleLoops(main, node, null, null, loopLabel, witnessInvariant);
+		return handleLoops(main, node, null, null, loopLabel);
 	}
 
 	public Result visit(final IDispatcher main, final IASTFunctionCallExpression node) {
@@ -1483,12 +1481,13 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTGotoStatement node) {
 		final ArrayList<Statement> stmt = new ArrayList<>();
-		if (!mIsPrerun) {
-			stmt.addAll(((MainDispatcher) main).fetchWitnessStatementsAt(node));
-		}
 		final String[] name = { node.getName().toString() };
 		stmt.add(new GotoStatement(mLocationFactory.createCLocation(node), name));
-		return new ExpressionResult(stmt, null);
+		final ExpressionResult result = new ExpressionResult(stmt, null);
+		if (mIsPrerun) {
+			return result;
+		}
+		return ((MainDispatcher) main).handleWitnessInvariants(node, result);
 	}
 
 	public Result visit(final IDispatcher main, final IASTIdExpression node) {
@@ -2492,8 +2491,7 @@ public class CHandler {
 		mInnerMostLoopLabel.push(loopLabel);
 		final Result bodyResult = main.dispatch(node.getBody());
 		mInnerMostLoopLabel.pop();
-		final LoopInvariantSpecification witnessInvariant = main.fetchInvariantAtLoop(node);
-		return handleLoops(main, node, bodyResult, condResult, loopLabel, witnessInvariant);
+		return handleLoops(main, node, bodyResult, condResult, loopLabel);
 	}
 
 	public Result visit(final IDispatcher main, final IGNUASTCompoundStatementExpression node) {
@@ -3428,11 +3426,10 @@ public class CHandler {
 	 * @param condResult
 	 *            the condition of the loop
 	 * @param loopLabel
-	 * @param witnessInvariant
 	 * @return a result object holding the translated loop (i.e. a while loop)
 	 */
 	private Result handleLoops(final IDispatcher main, final IASTStatement node, Result bodyResult,
-			ExpressionResult condResult, final String loopLabel, final LoopInvariantSpecification witnessInvariant) {
+			ExpressionResult condResult, final String loopLabel) {
 		assert node instanceof IASTWhileStatement || node instanceof IASTDoStatement
 				|| node instanceof IASTForStatement;
 
@@ -3563,9 +3560,6 @@ public class CHandler {
 			spec = new LoopInvariantSpecification[0];
 		} else {
 			final List<LoopInvariantSpecification> specList = new ArrayList<>();
-			if (witnessInvariant != null) {
-				specList.add(witnessInvariant);
-			}
 			if (node instanceof IASTForStatement || node instanceof IASTWhileStatement
 					|| node instanceof IASTDoStatement) {
 				for (int i = 0; i < mContract.size(); i++) {
@@ -3610,7 +3604,11 @@ public class CHandler {
 
 		assert resultBuilder.getLrValue() == null : "there is an lrvalue although there should be none";
 		assert resultBuilder.getAuxVars().isEmpty() : "auxvars were added although they should have been havoced";
-		return resultBuilder.build();
+		final ExpressionResult result = resultBuilder.build();
+		if (mIsPrerun) {
+			return result;
+		}
+		return ((MainDispatcher) main).handleWitnessInvariants(node, result);
 	}
 
 }

@@ -36,7 +36,6 @@ import java.util.List;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CHandlerTranslationResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -89,6 +88,4 @@ public interface IDispatcher {
 	IASTNode getAcslHook();
 
 	NextACSL nextACSLStatement() throws ParseException;
-
-	LoopInvariantSpecification fetchInvariantAtLoop(final IASTNode node);
 }

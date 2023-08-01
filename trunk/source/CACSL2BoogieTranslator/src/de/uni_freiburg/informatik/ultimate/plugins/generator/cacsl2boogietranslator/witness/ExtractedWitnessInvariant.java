@@ -1,19 +1,28 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -100,7 +109,8 @@ public final class ExtractedWitnessInvariant {
 		return sb.toString();
 	}
 
-	public ExpressionResult dispatch(final ILocation loc, final IDispatcher dispatcher) {
+	public ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
+			final ExpressionResult expressionResult) {
 		ACSLNode acslNode = null;
 		try {
 			checkForQuantifiers(mInvariant);
@@ -110,11 +120,55 @@ public final class ExtractedWitnessInvariant {
 		} catch (final Exception e) {
 			throw new AssertionError(e);
 		}
-		final Result translationResult = dispatcher.dispatch(acslNode, mMatchedAstNode);
-		if (translationResult instanceof ExpressionResult) {
-			return (ExpressionResult) translationResult;
+		final Result invariantResult = dispatcher.dispatch(acslNode, mMatchedAstNode);
+		if (!(invariantResult instanceof ExpressionResult)) {
+			return null;
 		}
-		return null;
+		final ExpressionResult invariantExprResult = (ExpressionResult) invariantResult;
+		if (isBefore()) {
+			return new ExpressionResultBuilder(invariantExprResult).addAllIncludingLrValue(expressionResult).build();
+		}
+		if (isAfter()) {
+			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValue(invariantExprResult).build();
+		}
+		if (isAt()) {
+			final List<Statement> statements = new ArrayList<>();
+			boolean hasLoop = false;
+			for (final Statement st : expressionResult.getStatements()) {
+				if (st instanceof WhileStatement) {
+					assert !hasLoop;
+					hasLoop = true;
+					final WhileStatement whileOld = (WhileStatement) st;
+					statements.add(new WhileStatement(loc, whileOld.getCondition(), DataStructureUtils
+							.concat(whileOld.getInvariants(), extractLoopInvariants(invariantExprResult, loc)),
+							whileOld.getBody()));
+				} else {
+					statements.add(st);
+				}
+			}
+			if (hasLoop) {
+				return new ExpressionResultBuilder(expressionResult).resetStatements(statements).build();
+			}
+			return new ExpressionResultBuilder(invariantExprResult).addAllIncludingLrValue(expressionResult).build();
+		}
+		throw new AssertionError("Invariant does not belong to any location.");
+	}
+
+	private static LoopInvariantSpecification[] extractLoopInvariants(final ExpressionResult result,
+			final ILocation loc) {
+		final List<LoopInvariantSpecification> specs = new ArrayList<>();
+		for (final Statement st : result.getStatements()) {
+			if (st instanceof AssertStatement) {
+				final LoopInvariantSpecification spec =
+						new LoopInvariantSpecification(loc, false, ((AssertStatement) st).getFormula());
+				final Check check = new Check(Check.Spec.WITNESS_INVARIANT);
+				check.annotate(spec);
+				specs.add(spec);
+			} else {
+				throw new AssertionError(st.getClass().getSimpleName() + " is not supported as annotation of a loop.");
+			}
+		}
+		return specs.toArray(LoopInvariantSpecification[]::new);
 	}
 
 	/**
