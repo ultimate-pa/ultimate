@@ -756,16 +756,23 @@ public class MainDispatcher implements IDispatcher {
 
 	@Override
 	public LoopInvariantSpecification fetchInvariantAtLoop(final IASTNode node) {
-		final AssertStatement as = fetchInvariantAt(node);
-		LoopInvariantSpecification result;
-		if (as == null) {
-			result = null;
-		} else {
-			final ILocation loc = mLocationFactory.createCLocation(node);
-			result = new LoopInvariantSpecification(loc, false, as.getFormula());
-			final Check check = new Check(Check.Spec.WITNESS_INVARIANT);
-			check.annotate(result);
+		final List<de.uni_freiburg.informatik.ultimate.boogie.ast.Expression> invariants = new ArrayList<>();
+		for (final Statement st : fetchWitnessStatementsAt(node)) {
+			if (st instanceof AssertStatement) {
+				invariants.add(((AssertStatement) st).getFormula());
+			} else {
+				throw new AssertionError(
+						st.getClass().getSimpleName() + " is not supported yet in a witness at a loop.");
+			}
 		}
+		if (invariants.isEmpty()) {
+			return null;
+		}
+		final ILocation loc = mLocationFactory.createCLocation(node);
+		final LoopInvariantSpecification result =
+				new LoopInvariantSpecification(loc, false, ExpressionFactory.and(loc, invariants));
+		final Check check = new Check(Check.Spec.WITNESS_INVARIANT);
+		check.annotate(result);
 		return result;
 	}
 
@@ -811,23 +818,6 @@ public class MainDispatcher implements IDispatcher {
 			mLogger.warn(invariants);
 			return List.of();
 		}
-	}
-
-	private AssertStatement fetchInvariantAt(final IASTNode node) {
-		final List<de.uni_freiburg.informatik.ultimate.boogie.ast.Expression> invariantExpressions = new ArrayList<>();
-		for (final Statement st : fetchWitnessStatementsAt(node)) {
-			if (st instanceof AssertStatement) {
-				invariantExpressions.add(((AssertStatement) st).getFormula());
-			} else {
-				throw new AssertionError(
-						st.getClass().getSimpleName() + " is not supported yet in a witness at a loop.");
-			}
-		}
-		if (invariantExpressions.isEmpty()) {
-			return null;
-		}
-		final ILocation loc = mLocationFactory.createCLocation(node);
-		return new AssertStatement(loc, ExpressionFactory.and(loc, invariantExpressions));
 	}
 
 	private void handleWitnessInvariantsBeforeDispatch(final IASTNode n) throws AssertionError {
