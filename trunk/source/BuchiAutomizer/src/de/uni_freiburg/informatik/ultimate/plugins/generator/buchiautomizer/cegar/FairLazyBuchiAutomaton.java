@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
@@ -132,12 +133,6 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 				substitutionMapping.put(entry.getValue(), entry.getKey().getTermVariable());
 			}
 			formula = PureSubstitution.apply(Script, substitutionMapping, formula);
-			Term stateFormula = ((SleepPredicate<String>) state).getFormula();
-			
-			//if A != true, then assert A
-			if (!stateFormula.toString().equals("don't care")) {
-				Script.assertTerm(stateFormula);
-			}
 			
 			//add an existential quantifier before B, quantifying over all OutVars, then assert (not B)
 			Set<TermVariable> existsVariables = new HashSet<>();
@@ -147,10 +142,18 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 			if (!existsVariables.isEmpty()) {
 				formula = Script.quantifier(Script.EXISTS, existsVariables.toArray(new TermVariable[existsVariables.size()]), formula, null);
 			}
-			Script.assertTerm(Script.term("not", formula));
+			formula = Script.term("not", formula);
+			//Script.assertTerm(Script.term("not", formula));
 			
+			//if A != true, then assert A
+			Term stateFormula = ((SleepPredicate<String>) state).getFormula();
+			if (!stateFormula.toString().equals("don't care")) {
+				formula = Script.term("and", stateFormula, formula);
+				//Script.assertTerm(stateFormula);
+			}
+				
 			//if unsatisfiable (or fork/join), then the edge is considered as enabled
-			if(Script.checkSat().equals(LBool.UNSAT) || letter instanceof IIcfgForkTransitionThreadOther 
+			if(Util.checkSat(Script, formula).equals(LBool.UNSAT) || letter instanceof IIcfgForkTransitionThreadOther 
 					|| letter instanceof IIcfgJoinTransitionThreadOther) {
 				annotations.add(edge.getSucceedingProcedure());
 			}
