@@ -116,23 +116,26 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 		//edge is enabled if (not (-> A B)), thus if (and A (not B))is unsatisfiable
 		for (L edge : outgoing) {
 			//declare function if not yet declared
+			/*
 			for (Term var : edge.getTransformula().getFormula().getFreeVars()) {
 				if(!mDeclaredVariables.contains(var.toString())) {
 					mDeclaredVariables.add(var.toString());
 					Script.declareFun(var.toString(), new Sort[0], var.getSort());
 				}
-			}
+			}*/
 			UnmodifiableTransFormula transFormula = edge.getTransformula();
 			Term formula = transFormula.getFormula();
 			
-			//if A != true, then assert A and substitute the variables in B to match the names of A
+			//substitute the variables in B to match the names of A
+			Map<Term, Term> substitutionMapping = new HashMap<>();
+			for(Entry<IProgramVar, TermVariable> entry : transFormula.getInVars().entrySet()) {
+				substitutionMapping.put(entry.getValue(), entry.getKey().getTermVariable());
+			}
+			formula = PureSubstitution.apply(Script, substitutionMapping, formula);
 			Term stateFormula = ((SleepPredicate<String>) state).getFormula();
+			
+			//if A != true, then assert A
 			if (!stateFormula.toString().equals("don't care")) {
-				Map<Term, Term> substitutionMapping = new HashMap<>();
-				for(Entry<IProgramVar, TermVariable> entry : transFormula.getInVars().entrySet()) {
-					substitutionMapping.put(entry.getValue(), entry.getKey().getTermVariable());
-				}
-				PureSubstitution.apply(Script, substitutionMapping, formula);
 				Script.assertTerm(stateFormula);
 			}
 			
