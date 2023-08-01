@@ -1,8 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -72,30 +70,6 @@ public final class ExtractedWitnessInvariant {
 
 	public IASTNode getRelatedAstNode() {
 		return mMatchedAstNode;
-	}
-
-	public ExtractedWitnessInvariant merge(final ExtractedWitnessInvariant other) {
-		if (other == null) {
-			return this;
-		}
-		if (mMatchedAstNode != other.mMatchedAstNode) {
-			throw new IllegalArgumentException("Cannot merge WitnessInvariants that are matched to different nodes");
-		}
-		final StringBuilder newInvariant = new StringBuilder();
-		newInvariant.append('(');
-		newInvariant.append(mInvariant);
-		newInvariant.append(')');
-		newInvariant.append("||");
-		newInvariant.append('(');
-		newInvariant.append(other.mInvariant);
-		newInvariant.append(')');
-
-		final Set<String> newNodeLabels = new HashSet<>();
-		newNodeLabels.addAll(mNodeLabels);
-		newNodeLabels.addAll(other.mNodeLabels);
-
-		return new ExtractedWitnessInvariant(newInvariant.toString(), newNodeLabels, mMatchedAstNode, isBefore(),
-				isAfter(), isAt());
 	}
 
 	@Override

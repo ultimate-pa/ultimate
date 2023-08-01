@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -58,6 +59,8 @@ import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.CdtASTUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
@@ -91,8 +94,8 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 	}
 
 	@Override
-	protected Map<IASTNode, ExtractedWitnessInvariant> extract() {
-		Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>();
+	protected HashRelation<IASTNode, ExtractedWitnessInvariant> extract() {
+		Map<IASTNode, ExtractedWitnessInvariant> map = new HashMap<>();
 
 		final Deque<WitnessNode> worklist = new ArrayDeque<>();
 		final Set<WitnessNode> closed = new HashSet<>();
@@ -104,10 +107,74 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 			}
 			worklist.addAll(current.getOutgoingNodes());
 			final Map<IASTNode, ExtractedWitnessInvariant> match = matchWitnessToAstNode(current, mStats);
-			rtr = mergeMatchesIfNecessary(rtr, match);
+			map = mergeMatchesIfNecessary(map, match);
 		}
+		final HashRelation<IASTNode, ExtractedWitnessInvariant> rtr = new HashRelation<>();
+		map.forEach(rtr::addPair);
 		mLogger.info("Processed " + closed.size() + " nodes");
 		return rtr;
+	}
+
+	protected Map<IASTNode, ExtractedWitnessInvariant> mergeMatchesIfNecessary(
+			final Map<IASTNode, ExtractedWitnessInvariant> mapA, final Map<IASTNode, ExtractedWitnessInvariant> mapB) {
+		if (mapA == null || mapA.isEmpty()) {
+			return mapB;
+		}
+		if (mapB == null || mapB.isEmpty()) {
+			return mapA;
+		}
+
+		final Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>(mapA.size());
+		for (final Entry<IASTNode, ExtractedWitnessInvariant> entryB : mapB.entrySet()) {
+			final ExtractedWitnessInvariant aWitnessInvariant = mapA.get(entryB.getKey());
+			if (aWitnessInvariant == null) {
+				rtr.put(entryB.getKey(), entryB.getValue());
+			} else {
+				rtr.put(entryB.getKey(), mergeAndWarn(aWitnessInvariant, entryB.getValue()));
+			}
+		}
+		for (final Entry<IASTNode, ExtractedWitnessInvariant> entryA : mapA.entrySet()) {
+			final ExtractedWitnessInvariant aWitnessInvariant = mapB.get(entryA.getKey());
+			if (aWitnessInvariant == null) {
+				rtr.put(entryA.getKey(), entryA.getValue());
+			} else {
+				// we already merged in the earlier pass
+			}
+		}
+		return rtr;
+	}
+
+	private ExtractedWitnessInvariant mergeAndWarn(final ExtractedWitnessInvariant invA,
+			final ExtractedWitnessInvariant invB) {
+		final ExtractedWitnessInvariant newInvariant = mergeInvariants(invA, invB);
+		mLogger.warn("Merging invariants");
+		mLogger.warn("  Invariant A is " + invA.toString());
+		mLogger.warn("  Invariant B is " + invB.toString());
+		mLogger.warn("  New match: " + newInvariant.toString());
+		return newInvariant;
+	}
+
+	private static ExtractedWitnessInvariant mergeInvariants(final ExtractedWitnessInvariant ewi1,
+			final ExtractedWitnessInvariant ewi2) {
+		if (ewi2 == null) {
+			return ewi1;
+		}
+		if (ewi1.getRelatedAstNode() != ewi2.getRelatedAstNode()) {
+			throw new IllegalArgumentException("Cannot merge WitnessInvariants that are matched to different nodes");
+		}
+		final StringBuilder newInvariant = new StringBuilder();
+		newInvariant.append('(');
+		newInvariant.append(ewi1.getInvariant());
+		newInvariant.append(')');
+		newInvariant.append("||");
+		newInvariant.append('(');
+		newInvariant.append(ewi2.getInvariant());
+		newInvariant.append(')');
+
+		final Set<String> newNodeLabels = DataStructureUtils.union(ewi1.getNodeLabels(), ewi2.getNodeLabels());
+
+		return new ExtractedWitnessInvariant(newInvariant.toString(), newNodeLabels, ewi1.getRelatedAstNode(),
+				ewi1.isBefore(), ewi1.isAfter(), ewi1.isAt());
 	}
 
 	private Map<IASTNode, ExtractedWitnessInvariant> matchWitnessToAstNode(final WitnessNode current,

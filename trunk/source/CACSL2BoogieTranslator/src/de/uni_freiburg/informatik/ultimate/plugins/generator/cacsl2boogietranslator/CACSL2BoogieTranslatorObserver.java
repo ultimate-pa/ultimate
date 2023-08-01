@@ -32,8 +32,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
-import java.util.Map;
-
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
@@ -49,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.GraphMLCorrectnessWitnessExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.YamlCorrectnessWitnessExtractor;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessGraphAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
@@ -69,7 +68,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	private WrapperNode mRootNode;
 	private ASTDecorator mInputDecorator;
 	private boolean mLastModel;
-	private Map<IASTNode, ExtractedWitnessInvariant> mWitnessInvariants;
+	private HashRelation<IASTNode, ExtractedWitnessInvariant> mWitnessInvariants;
 
 	public CACSL2BoogieTranslatorObserver(final IUltimateServiceProvider services,
 			final ACSLObjectContainerObserver additionalAnnotationObserver) {
