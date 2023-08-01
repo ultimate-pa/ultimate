@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
@@ -41,12 +42,15 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 	private Set<IPredicate> mInitialStates;
 	private IIcfg<?> mIcfg;
 	private Set<String> mDeclaredVariables;
+	private IEnabledProcedures<L, IPredicate> mEnabledProcedures;
 
-	public FairLazyBuchiAutomaton(IIcfg<?> icfg, INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction) {
+	public FairLazyBuchiAutomaton(IIcfg<?> icfg, INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
+			IEnabledProcedures<L, IPredicate> enabledProcedures) {
 		mIcfg = icfg;
 		mInitialAbstraction = initialAbstraction;
 		mInitialStates = new HashSet<>();
 		mDeclaredVariables = new HashSet<>();
+		mEnabledProcedures = enabledProcedures;
 	}
 
 	@Override
@@ -101,7 +105,10 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 		Iterable<OutgoingInternalTransition<L, IPredicate>> successors = mInitialAbstraction.internalSuccessors(
 				(IPredicate) ((SleepPredicate<String>) state).getUnderlying(), letter);
 		Iterator<OutgoingInternalTransition<L, IPredicate>> iterator = successors.iterator();
-		ImmutableSet<String> annotations = getEnabledProcedures(state, letter, successors);
+		//ImmutableSet<String> annotations = getEnabledProcedures(state, letter);
+		Set<L> outgoing = mInitialAbstraction.lettersInternal((IPredicate) ((SleepPredicate<String>) state).getUnderlying());
+		Script script = mIcfg.getCfgSmtToolkit().getManagedScript().getScript();
+		ImmutableSet<String> annotations = mEnabledProcedures.getEnabledProcedures(state, letter, outgoing, script);
 		Set<OutgoingInternalTransition<L, IPredicate>> newSuccessors = new HashSet<>();
 		while(iterator.hasNext()) {
 			IPredicate predicate = (IPredicate) getOrConstructPredicate((IMLPredicate) iterator.next().getSucc(), annotations);
@@ -109,69 +116,7 @@ public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> im
 		}
 		return newSuccessors;
 	}
-
-	private ImmutableSet<String> getEnabledProcedures(IPredicate state, L letter, Iterable<OutgoingInternalTransition<L, IPredicate>> successors) {
-		Set<String> annotations = new HashSet<>();
-		Set<L> outgoing = mInitialAbstraction.lettersInternal((IPredicate) ((SleepPredicate<String>) state).getUnderlying());
-		Script Script = mIcfg.getCfgSmtToolkit().getManagedScript().getScript();
-		//edge is enabled if (not (-> A B)), thus if (and A (not B))is unsatisfiable
-		for (L edge : outgoing) {
-			//declare function if not yet declared
-			/*
-			for (Term var : edge.getTransformula().getFormula().getFreeVars()) {
-				if(!mDeclaredVariables.contains(var.toString())) {
-					mDeclaredVariables.add(var.toString());
-					Script.declareFun(var.toString(), new Sort[0], var.getSort());
-				}
-			}*/
-			UnmodifiableTransFormula transFormula = edge.getTransformula();
-			Term formula = transFormula.getFormula();
-			
-			//substitute the variables in B to match the names of A
-			Map<Term, Term> substitutionMapping = new HashMap<>();
-			for(Entry<IProgramVar, TermVariable> entry : transFormula.getInVars().entrySet()) {
-				substitutionMapping.put(entry.getValue(), entry.getKey().getTermVariable());
-			}
-			formula = PureSubstitution.apply(Script, substitutionMapping, formula);
-			
-			//add an existential quantifier before B, quantifying over all OutVars, then assert (not B)
-			Set<TermVariable> existsVariables = new HashSet<>();
-			for(Entry<IProgramVar, TermVariable> entry : transFormula.getOutVars().entrySet()) {
-					existsVariables.add(entry.getValue());
-			}
-			if (!existsVariables.isEmpty()) {
-				formula = Script.quantifier(Script.EXISTS, existsVariables.toArray(new TermVariable[existsVariables.size()]), formula, null);
-			}
-			formula = Script.term("not", formula);
-			//Script.assertTerm(Script.term("not", formula));
-			
-			//if A != true, then assert A
-			Term stateFormula = ((SleepPredicate<String>) state).getFormula();
-			if (!stateFormula.toString().equals("don't care")) {
-				formula = Script.term("and", stateFormula, formula);
-				//Script.assertTerm(stateFormula);
-			}
-				
-			//if unsatisfiable (or fork/join), then the edge is considered as enabled
-			if(Util.checkSat(Script, formula).equals(LBool.UNSAT) || letter instanceof IIcfgForkTransitionThreadOther 
-					|| letter instanceof IIcfgJoinTransitionThreadOther) {
-				annotations.add(edge.getSucceedingProcedure());
-			}
-			Script.resetAssertions();
-		}
-		/*for (L edge : outgoing) {
-			annotations.add(edge.getSucceedingProcedure());
-		}*/
-		if (letter instanceof IIcfgForkTransitionThreadOther) {
-			annotations.remove(letter.getSucceedingProcedure());
-		}
-		annotations.remove(letter.getPrecedingProcedure());
-		Set<String> preAnnotations = ((SleepPredicate<String>) state).getSleepSet();
-		if (!preAnnotations.isEmpty()) {
-			annotations.retainAll(preAnnotations);
-		}
-		return ImmutableSet.of(annotations);
-	}
+	
 
 	@Override
 	public Iterable<OutgoingCallTransition<L, IPredicate>> callSuccessors(IPredicate state, L letter) {
