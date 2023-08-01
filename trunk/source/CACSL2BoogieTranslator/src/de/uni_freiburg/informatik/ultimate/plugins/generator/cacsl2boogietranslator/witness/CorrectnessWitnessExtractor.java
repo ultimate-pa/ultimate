@@ -27,8 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -37,6 +35,7 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.preferences.WitnessParserPreferences;
 
 /**
@@ -51,7 +50,7 @@ public abstract class CorrectnessWitnessExtractor {
 	protected final boolean mCheckOnlyLoopInvariants;
 
 	protected IASTTranslationUnit mTranslationUnit;
-	private Map<IASTNode, ExtractedWitnessInvariant> mAST2Invariant;
+	private HashRelation<IASTNode, ExtractedWitnessInvariant> mAST2Invariant;
 	protected ExtractionStatistics mStats;
 
 	public CorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
@@ -71,7 +70,7 @@ public abstract class CorrectnessWitnessExtractor {
 	 *         {@link ExtractedWitnessInvariant} represents a witness invariant which has to hold before, at, or after
 	 *         the {@link IASTNode}.
 	 */
-	public Map<IASTNode, ExtractedWitnessInvariant> getCorrectnessWitnessInvariants() {
+	public HashRelation<IASTNode, ExtractedWitnessInvariant> getCorrectnessWitnessInvariants() {
 		if (mAST2Invariant == null) {
 			if (!isReady()) {
 				mLogger.warn("Cannot extract witness if there is no witness");
@@ -88,13 +87,13 @@ public abstract class CorrectnessWitnessExtractor {
 		return mAST2Invariant;
 	}
 
-	private void printResults(final Map<IASTNode, ExtractedWitnessInvariant> result) {
+	private void printResults(final HashRelation<IASTNode, ExtractedWitnessInvariant> result) {
 		if (result.isEmpty()) {
 			mLogger.info("Witness did not contain any usable invariants.");
 			return;
 		}
 		mLogger.info("Found the following invariants in the witness:");
-		for (final Entry<IASTNode, ExtractedWitnessInvariant> entry : result.entrySet()) {
+		for (final Entry<IASTNode, ExtractedWitnessInvariant> entry : result.getSetOfPairs()) {
 			assert entry.getKey() == entry.getValue().getRelatedAstNode();
 			mLogger.info(entry.getValue().toStringWithWitnessNodeLabel());
 		}
@@ -102,46 +101,7 @@ public abstract class CorrectnessWitnessExtractor {
 
 	protected abstract boolean isReady();
 
-	protected abstract Map<IASTNode, ExtractedWitnessInvariant> extract();
-
-	protected Map<IASTNode, ExtractedWitnessInvariant> mergeMatchesIfNecessary(
-			final Map<IASTNode, ExtractedWitnessInvariant> mapA, final Map<IASTNode, ExtractedWitnessInvariant> mapB) {
-		if (mapA == null || mapA.isEmpty()) {
-			return mapB;
-		}
-		if (mapB == null || mapB.isEmpty()) {
-			return mapA;
-		}
-
-		final Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>(mapA.size());
-		for (final Entry<IASTNode, ExtractedWitnessInvariant> entryB : mapB.entrySet()) {
-			final ExtractedWitnessInvariant aWitnessInvariant = mapA.get(entryB.getKey());
-			if (aWitnessInvariant == null) {
-				rtr.put(entryB.getKey(), entryB.getValue());
-			} else {
-				rtr.put(entryB.getKey(), mergeAndWarn(aWitnessInvariant, entryB.getValue()));
-			}
-		}
-		for (final Entry<IASTNode, ExtractedWitnessInvariant> entryA : mapA.entrySet()) {
-			final ExtractedWitnessInvariant aWitnessInvariant = mapB.get(entryA.getKey());
-			if (aWitnessInvariant == null) {
-				rtr.put(entryA.getKey(), entryA.getValue());
-			} else {
-				// we already merged in the earlier pass
-			}
-		}
-		return rtr;
-	}
-
-	private ExtractedWitnessInvariant mergeAndWarn(final ExtractedWitnessInvariant invA,
-			final ExtractedWitnessInvariant invB) {
-		final ExtractedWitnessInvariant newInvariant = invA.merge(invB);
-		mLogger.warn("Merging invariants");
-		mLogger.warn("  Invariant A is " + invA.toString());
-		mLogger.warn("  Invariant B is " + invB.toString());
-		mLogger.warn("  New match: " + newInvariant.toString());
-		return newInvariant;
-	}
+	protected abstract HashRelation<IASTNode, ExtractedWitnessInvariant> extract();
 
 	public static final class ExtractionStatistics {
 		private int mSuccess;

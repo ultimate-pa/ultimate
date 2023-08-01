@@ -1,10 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
@@ -13,6 +10,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
@@ -35,8 +33,8 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	}
 
 	@Override
-	protected Map<IASTNode, ExtractedWitnessInvariant> extract() {
-		Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>();
+	protected HashRelation<IASTNode, ExtractedWitnessInvariant> extract() {
+		final HashRelation<IASTNode, ExtractedWitnessInvariant> rtr = new HashRelation<>();
 		for (final WitnessEntry entry : mWitness.getEntries()) {
 			int line = -1;
 			if (entry instanceof LocationInvariant && !mCheckOnlyLoopInvariants) {
@@ -53,31 +51,29 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 				mStats.fail();
 				continue;
 			}
-			rtr = mergeMatchesIfNecessary(rtr, extractFromEntry(entry, matchesBefore, matchesAfter));
+			extractFromEntry(entry, matchesBefore, matchesAfter, rtr);
 			mStats.success();
 		}
 
 		return rtr;
 	}
 
-	private Map<IASTNode, ExtractedWitnessInvariant> extractFromEntry(final WitnessEntry entry,
-			final Set<IASTNode> matchesBefore, final Set<IASTNode> matchesAfter) {
+	private static void extractFromEntry(final WitnessEntry entry, final Set<IASTNode> matchesBefore,
+			final Set<IASTNode> matchesAfter, final HashRelation<IASTNode, ExtractedWitnessInvariant> invariants) {
 		final Set<String> labels = Set.of(entry.getMetadata().getUuid().toString());
 		if (entry instanceof LoopInvariant) {
-			return Stream.concat(matchesBefore.stream(), matchesAfter.stream())
-					.collect(Collectors.toMap(x -> x,
-							x -> new ExtractedWitnessInvariant(((LoopInvariant) entry).getInvariant().getExpression(),
-									labels, x, false, false, true)));
-		}
-		if (entry instanceof LocationInvariant) {
+			final String invariant = ((LoopInvariant) entry).getInvariant().getExpression();
+			Stream.concat(matchesBefore.stream(), matchesAfter.stream()).forEach(x -> invariants.addPair(x,
+					new ExtractedWitnessInvariant(invariant, labels, x, false, false, true)));
+		} else if (entry instanceof LocationInvariant) {
 			final String invariant = ((LocationInvariant) entry).getInvariant().getExpression();
-			final Map<IASTNode, ExtractedWitnessInvariant> before = matchesBefore.stream().collect(Collectors
-					.toMap(x -> x, x -> new ExtractedWitnessInvariant(invariant, labels, x, true, false, false)));
-			final Map<IASTNode, ExtractedWitnessInvariant> after = matchesAfter.stream().collect(Collectors
-					.toMap(x -> x, x -> new ExtractedWitnessInvariant(invariant, labels, x, false, true, false)));
-			return mergeMatchesIfNecessary(before, after);
+			matchesBefore.stream().forEach(x -> invariants.addPair(x,
+					new ExtractedWitnessInvariant(invariant, labels, x, true, false, false)));
+			matchesAfter.stream().forEach(x -> invariants.addPair(x,
+					new ExtractedWitnessInvariant(invariant, labels, x, false, true, false)));
+		} else {
+			throw new AssertionError("Unknown witness type " + entry.getClass().getSimpleName());
 		}
-		throw new AssertionError("Unknown witness type " + entry.getClass().getSimpleName());
 	}
 
 	private static final class LineMatchingVisitor extends ASTGenericVisitor {

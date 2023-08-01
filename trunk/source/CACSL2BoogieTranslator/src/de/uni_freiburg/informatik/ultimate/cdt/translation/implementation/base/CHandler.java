@@ -129,7 +129,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
@@ -1485,10 +1484,7 @@ public class CHandler {
 	public Result visit(final IDispatcher main, final IASTGotoStatement node) {
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		if (!mIsPrerun) {
-			final AssertStatement assertWitnessInvariant = ((MainDispatcher) main).fetchInvariantAtGoto(node);
-			if (assertWitnessInvariant != null) {
-				stmt.add(assertWitnessInvariant);
-			}
+			stmt.addAll(((MainDispatcher) main).fetchWitnessStatementsAt(node));
 		}
 		final String[] name = { node.getName().toString() };
 		stmt.add(new GotoStatement(mLocationFactory.createCLocation(node), name));
