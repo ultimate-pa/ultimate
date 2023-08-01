@@ -35,7 +35,9 @@ import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -79,8 +81,7 @@ public class WitnessManager {
 	public void run(final Collection<ResultWitness> witnesses) throws IOException, InterruptedException {
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		int cexNo = 0;
-		String suffix = null;
+		final Map<String, Integer> cexCounts = new HashMap<>();
 		for (final ResultWitness witness : witnesses) {
 			final IResult cex = witness.getResult();
 			final String originalFile = witness.getSourceFile();
@@ -90,14 +91,23 @@ public class WitnessManager {
 			final String witnessDir = ups.getString(PreferenceInitializer.LABEL_WITNESS_DIRECTORY);
 			final String witnessFilename = ups.getString(PreferenceInitializer.LABEL_WITNESS_NAME) + witnessEnding;
 			final boolean writeBesideInputFile = ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_WRITE_BESIDE_FILE);
+			final Integer count = cexCounts.get(witnessFilename);
+			String prefix;
+			if (count == null) {
+				prefix = null;
+				cexCounts.put(witnessFilename, 1);
+			} else {
+				prefix = count.toString();
+				cexCounts.put(witnessFilename, count + 1);
+			}
 			final List<String> filenamesToDelete = new ArrayList<>();
 
 			String filename = null;
 			if (svcompWitness != null) {
 				if (writeBesideInputFile) {
-					filename = createWitnessFilenameWriteBeside(originalFile, suffix, witnessEnding);
+					filename = createWitnessFilenameWriteBeside(originalFile, prefix, witnessEnding);
 				} else {
-					filename = createWitnessFilename(witnessDir, witnessFilename, suffix);
+					filename = createWitnessFilename(witnessDir, witnessFilename, prefix);
 				}
 				writeWitness(svcompWitness, filename);
 				filenamesToDelete.add(filename);
@@ -120,8 +130,6 @@ public class WitnessManager {
 					deleteFile(fi);
 				}
 			}
-			cexNo++;
-			suffix = String.valueOf(cexNo);
 		}
 	}
 
