@@ -5,7 +5,7 @@ const _CONFIG = {
 	},
 	backend: {
 		// web_bridge_url: URL to the WebBackend API.
-		web_bridge_url: 'http://127.0.0.1:8080/api'
+		web_bridge_url: 'https://ultimate-pa.org/api'
 	},
 	editor: {
 		// Default content of the editor.
