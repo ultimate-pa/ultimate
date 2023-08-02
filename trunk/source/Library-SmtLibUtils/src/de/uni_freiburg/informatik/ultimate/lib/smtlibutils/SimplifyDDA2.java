@@ -67,7 +67,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 */
 	private static final boolean APPLY_CONSTANT_FOLDING = true;
 	private static final boolean DEBUG_CHECK_RESULT = false;
-	private static final boolean CHECK_ALL_NODES_FOR_REDUNDANCY = !false;
+	private static final boolean CHECK_ALL_NODES_FOR_REDUNDANCY = false;
+	private static final boolean CONSIDER_QUANTFIED_FORMULAS_AS_LEAVES = true;
 
 	private SimplifyDDA2(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		super();
@@ -125,12 +126,29 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	}
 
 	// checks if we are at a leaf
-	private static boolean checkAtomicity(final Term term) {
+	private static boolean isLeaf(final Term term) {
+		if (CONSIDER_QUANTFIED_FORMULAS_AS_LEAVES && term instanceof QuantifiedFormula) {
+			return true;
+		}
 		if (((ApplicationTerm) term).getFunction().getName().equals("not")
 				&& (SmtUtils.isAtomicFormula(((ApplicationTerm) term).getParameters()[0]))) {
 			return true;
 		}
 		return SmtUtils.isAtomicFormula(term);
+	}
+
+	// checks if the critical constraint implies the formula(or its negation), returns null if neither
+	private DescendResult checkImplications(final Term term) {
+		final Term result;
+		if (Util.checkSat(mMgdScript.getScript(), SmtUtils.not(mMgdScript.getScript(), term)) == LBool.UNSAT) {
+			result = mMgdScript.getScript().term("true");
+			return new TermContextTransformationEngine.FinalResultForAscend(result);
+		}
+		if (Util.checkSat(mMgdScript.getScript(), term) == LBool.UNSAT) {
+			result = mMgdScript.getScript().term("false");
+			return new TermContextTransformationEngine.FinalResultForAscend(result);
+		}
+		return null;
 	}
 
 	@Override
@@ -154,34 +172,22 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		/// descend into quantified formulas, rename qvariables (also restore names?)
 
 		if (CHECK_ALL_NODES_FOR_REDUNDANCY) {
-			final Term result;
-			if (Util.checkSat(mMgdScript.getScript(), SmtUtils.not(mMgdScript.getScript(), term)) == LBool.UNSAT) {
-				result = mMgdScript.getScript().term("true");
-				return new TermContextTransformationEngine.FinalResultForAscend(result);
+			DescendResult result;
+			if ((result = checkImplications(term)) != null) {
+				return result;
 			}
-			if (Util.checkSat(mMgdScript.getScript(), term) == LBool.UNSAT) {
-				result = mMgdScript.getScript().term("false");
-				return new TermContextTransformationEngine.FinalResultForAscend(result);
-			}
-			if (checkAtomicity(term)) {
+			if (isLeaf(term)) {
 				return new TermContextTransformationEngine.FinalResultForAscend(term);
 			} else {
 				mMgdScript.getScript().push(1);
 				mAssertionStackHeight++;
 				return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 			}
-		}
-
-		else {
-			if (checkAtomicity(term)) {
-				final Term result;
-				if (Util.checkSat(mMgdScript.getScript(), SmtUtils.not(mMgdScript.getScript(), term)) == LBool.UNSAT) {
-					result = mMgdScript.getScript().term("true");
-					return new TermContextTransformationEngine.FinalResultForAscend(result);
-				}
-				if (Util.checkSat(mMgdScript.getScript(), term) == LBool.UNSAT) {
-					result = mMgdScript.getScript().term("false");
-					return new TermContextTransformationEngine.FinalResultForAscend(result);
+		} else {
+			if (isLeaf(term)) {
+				DescendResult result;
+				if ((result = checkImplications(term)) != null) {
+					return result;
 				}
 				return new TermContextTransformationEngine.FinalResultForAscend(term);
 			} else {
