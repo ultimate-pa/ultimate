@@ -59,18 +59,18 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	}
 
 	private static void extractFromEntry(final WitnessEntry entry, final Set<IASTNode> matchesBefore,
-			final Set<IASTNode> matchesAfter, final HashRelation<IASTNode, IExtractedWitnessEntry> invariants) {
+			final Set<IASTNode> matchesAfter, final HashRelation<IASTNode, IExtractedWitnessEntry> entries) {
 		final Set<String> labels = Set.of(entry.getMetadata().getUuid().toString());
 		if (entry instanceof LoopInvariant) {
 			final String invariant = ((LoopInvariant) entry).getInvariant().getExpression();
 			Stream.concat(matchesBefore.stream(), matchesAfter.stream())
-					.forEach(x -> invariants.addPair(x, new ExtractedLoopInvariant(invariant, labels, x)));
+					.forEach(x -> entries.addPair(x, new ExtractedLoopInvariant(invariant, labels, x)));
 		} else if (entry instanceof LocationInvariant) {
 			final String invariant = ((LocationInvariant) entry).getInvariant().getExpression();
 			matchesBefore.stream()
-					.forEach(x -> invariants.addPair(x, new ExtractedLocationInvariant(invariant, labels, x, true)));
+					.forEach(x -> entries.addPair(x, new ExtractedLocationInvariant(invariant, labels, x, true)));
 			matchesAfter.stream()
-					.forEach(x -> invariants.addPair(x, new ExtractedLocationInvariant(invariant, labels, x, false)));
+					.forEach(x -> entries.addPair(x, new ExtractedLocationInvariant(invariant, labels, x, false)));
 		} else {
 			throw new AssertionError("Unknown witness type " + entry.getClass().getSimpleName());
 		}

@@ -50,7 +50,7 @@ public abstract class CorrectnessWitnessExtractor {
 	protected final boolean mCheckOnlyLoopInvariants;
 
 	protected IASTTranslationUnit mTranslationUnit;
-	private HashRelation<IASTNode, IExtractedWitnessEntry> mAST2Invariant;
+	private HashRelation<IASTNode, IExtractedWitnessEntry> mAST2Entries;
 	protected ExtractionStatistics mStats;
 
 	public CorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
@@ -66,12 +66,11 @@ public abstract class CorrectnessWitnessExtractor {
 	}
 
 	/**
-	 * @return a relation from {@link IASTNode} to an {@link IExtractedWitnessEntry}. The
-	 *         {@link IExtractedWitnessEntry} represents a witness invariant which has to hold before, at, or after
-	 *         the {@link IASTNode}.
+	 * @return A relation that maps each {@link IASTNode} to the {@link IExtractedWitnessEntry}s that match this
+	 *         location.
 	 */
-	public HashRelation<IASTNode, IExtractedWitnessEntry> getCorrectnessWitnessInvariants() {
-		if (mAST2Invariant == null) {
+	public HashRelation<IASTNode, IExtractedWitnessEntry> getMatchingWitnessEntries() {
+		if (mAST2Entries == null) {
 			if (!isReady()) {
 				mLogger.warn("Cannot extract witness if there is no witness");
 				return null;
@@ -81,18 +80,18 @@ public abstract class CorrectnessWitnessExtractor {
 			} else {
 				mLogger.info("Extracting all invariants from correctness witness");
 			}
-			mAST2Invariant = extract();
-			printResults(mAST2Invariant);
+			mAST2Entries = extract();
+			printResults(mAST2Entries);
 		}
-		return mAST2Invariant;
+		return mAST2Entries;
 	}
 
 	private void printResults(final HashRelation<IASTNode, IExtractedWitnessEntry> result) {
 		if (result.isEmpty()) {
-			mLogger.info("Witness did not contain any usable invariants.");
+			mLogger.info("Witness did not contain any usable entries.");
 			return;
 		}
-		mLogger.info("Found the following invariants in the witness:");
+		mLogger.info("Found the following entries in the witness:");
 		for (final Entry<IASTNode, IExtractedWitnessEntry> entry : result.getSetOfPairs()) {
 			assert entry.getKey() == entry.getValue().getRelatedAstNode();
 			mLogger.info(entry.getValue().toString());

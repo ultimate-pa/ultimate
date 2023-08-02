@@ -68,7 +68,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	private WrapperNode mRootNode;
 	private ASTDecorator mInputDecorator;
 	private boolean mLastModel;
-	private HashRelation<IASTNode, IExtractedWitnessEntry> mWitnessInvariants;
+	private HashRelation<IASTNode, IExtractedWitnessEntry> mWitnessEntries;
 
 	public CACSL2BoogieTranslatorObserver(final IUltimateServiceProvider services,
 			final ACSLObjectContainerObserver additionalAnnotationObserver) {
@@ -134,16 +134,16 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	@Override
 	public void finish() {
 		if (mWitnessExtractor.isReady()) {
-			mWitnessInvariants = mWitnessExtractor.getCorrectnessWitnessInvariants();
+			mWitnessEntries = mWitnessExtractor.getMatchingWitnessEntries();
 		}
 		if (mYamlWitnessExtractor.isReady()) {
-			mWitnessInvariants = mYamlWitnessExtractor.getCorrectnessWitnessInvariants();
+			mWitnessEntries = mYamlWitnessExtractor.getMatchingWitnessEntries();
 		}
 		if (mLastModel) {
 			if (mInputDecorator == null) {
 				throw new IllegalArgumentException("There is no C AST present. Did you parse a C file?");
 			}
-			mRootNode = new MainTranslator(mServices, mLogger, mWitnessInvariants, mInputDecorator.getUnits(),
+			mRootNode = new MainTranslator(mServices, mLogger, mWitnessEntries, mInputDecorator.getUnits(),
 					mInputDecorator.getSymbolTable(), mAdditionalAnnotationObserver.getAnnotation()).getResult();
 		}
 	}

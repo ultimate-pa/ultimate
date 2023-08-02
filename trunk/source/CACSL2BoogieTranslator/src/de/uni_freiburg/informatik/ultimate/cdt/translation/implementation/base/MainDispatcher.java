@@ -227,7 +227,7 @@ public class MainDispatcher implements IDispatcher {
 
 	private final Set<ImmutableSet<String>> mNodeLabelsOfAddedWitnesses;
 
-	private final HashRelation<IASTNode, IExtractedWitnessEntry> mWitnessInvariants;
+	private final HashRelation<IASTNode, IExtractedWitnessEntry> mWitnessEntries;
 
 	private final CHandler mCHandler;
 	private final ITypeHandler mTypeHandler;
@@ -238,12 +238,12 @@ public class MainDispatcher implements IDispatcher {
 	private IASTNode mAcslHook;
 
 	public MainDispatcher(final ILogger logger,
-			final HashRelation<IASTNode, IExtractedWitnessEntry> witnessInvariants, final LocationFactory locFac,
+			final HashRelation<IASTNode, IExtractedWitnessEntry> witnessEntries, final LocationFactory locFac,
 			final ITypeHandler typeHandler, final CHandler cHandler, final PreprocessorHandler preprocessorHandler,
 			final IACSLHandler acslHandler) {
 		mLogger = logger;
 		mNodeLabelsOfAddedWitnesses = new LinkedHashSet<>();
-		mWitnessInvariants = witnessInvariants;
+		mWitnessEntries = witnessEntries;
 		mLocationFactory = locFac;
 		mTypeHandler = typeHandler;
 		mCHandler = cHandler;
@@ -409,18 +409,18 @@ public class MainDispatcher implements IDispatcher {
 			final ILocation loc = mLocationFactory.createCLocation(n);
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		return handleWitnessInvariants(n, result);
+		return handleWitnessEntries(n, result);
 	}
 
-	public Result handleWitnessInvariants(final IASTNode node, final Result result) {
-		if (mWitnessInvariants == null) {
+	public Result handleWitnessEntries(final IASTNode node, final Result result) {
+		if (mWitnessEntries == null) {
 			return result;
 		}
 		Result rtr = result;
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		for (final IExtractedWitnessEntry inv : mWitnessInvariants.getImage(node)) {
-			if (mNodeLabelsOfAddedWitnesses.add(inv.getNodeLabels())) {
-				rtr = inv.transform(loc, this, (ExpressionResult) rtr);
+		for (final IExtractedWitnessEntry entry : mWitnessEntries.getImage(node)) {
+			if (mNodeLabelsOfAddedWitnesses.add(entry.getNodeLabels())) {
+				rtr = entry.transform(loc, this, (ExpressionResult) rtr);
 			}
 		}
 		return rtr;
