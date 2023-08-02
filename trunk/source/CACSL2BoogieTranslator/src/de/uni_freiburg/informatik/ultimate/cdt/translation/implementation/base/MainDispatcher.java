@@ -126,7 +126,6 @@ import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CHandlerTranslationResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -421,17 +420,7 @@ public class MainDispatcher implements IDispatcher {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		for (final ExtractedWitnessInvariant inv : mWitnessInvariants.getImage(node)) {
 			if (mNodeLabelsOfAddedWitnesses.add(inv.getNodeLabels())) {
-				try {
-					rtr = inv.transform(loc, this, (ExpressionResult) rtr);
-				} catch (final IncorrectSyntaxException ise) {
-					mLogger.error("The following invariant contains an incorrect syntax and was ignored. Reason: "
-							+ ise.getMessage());
-					mLogger.error(inv);
-				} catch (final UnsupportedSyntaxException use) {
-					mLogger.warn("The following invariant contains an usupported syntax and was ignored. Reason: "
-							+ use.getMessage());
-					mLogger.warn(inv);
-				}
+				rtr = inv.transform(loc, this, (ExpressionResult) rtr);
 			}
 		}
 		return rtr;
