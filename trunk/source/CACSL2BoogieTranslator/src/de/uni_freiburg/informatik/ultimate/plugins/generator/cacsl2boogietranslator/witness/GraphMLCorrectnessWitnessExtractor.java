@@ -162,19 +162,27 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		if (ewi1.getRelatedAstNode() != ewi2.getRelatedAstNode()) {
 			throw new IllegalArgumentException("Cannot merge WitnessInvariants that are matched to different nodes");
 		}
-		final StringBuilder newInvariant = new StringBuilder();
-		newInvariant.append('(');
-		newInvariant.append(ewi1.getInvariant());
-		newInvariant.append(')');
-		newInvariant.append("||");
-		newInvariant.append('(');
-		newInvariant.append(ewi2.getInvariant());
-		newInvariant.append(')');
+		final String invariant1 = ewi1.getInvariant();
+		final String invariant2 = ewi2.getInvariant();
+		String newInvariant;
+		if (invariant1.equals(invariant2)) {
+			newInvariant = invariant1;
+		} else {
+			final StringBuilder builder = new StringBuilder();
+			builder.append('(');
+			builder.append(invariant1);
+			builder.append(')');
+			builder.append("||");
+			builder.append('(');
+			builder.append(invariant2);
+			builder.append(')');
+			newInvariant = builder.toString();
+		}
 
 		final Set<String> newNodeLabels = DataStructureUtils.union(ewi1.getNodeLabels(), ewi2.getNodeLabels());
 
-		return new ExtractedWitnessInvariant(newInvariant.toString(), newNodeLabels, ewi1.getRelatedAstNode(),
-				ewi1.isBefore(), ewi1.isAfter(), ewi1.isAt());
+		return new ExtractedWitnessInvariant(newInvariant, newNodeLabels, ewi1.getRelatedAstNode(), ewi1.isBefore(),
+				ewi1.isAfter(), ewi1.isAt());
 	}
 
 	private Map<IASTNode, ExtractedWitnessInvariant> matchWitnessToAstNode(final WitnessNode current,
