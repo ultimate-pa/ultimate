@@ -1483,7 +1483,7 @@ public class CHandler {
 		if (mIsPrerun) {
 			return result;
 		}
-		return ((MainDispatcher) main).handleWitnessInvariants(node, result);
+		return ((MainDispatcher) main).handleWitnessEntries(node, result);
 	}
 
 	public Result visit(final IDispatcher main, final IASTIdExpression node) {
@@ -3587,7 +3587,7 @@ public class CHandler {
 		if (mIsPrerun) {
 			return result;
 		}
-		return ((MainDispatcher) main).handleWitnessInvariants(node, result);
+		return ((MainDispatcher) main).handleWitnessEntries(node, result);
 	}
 
 }
