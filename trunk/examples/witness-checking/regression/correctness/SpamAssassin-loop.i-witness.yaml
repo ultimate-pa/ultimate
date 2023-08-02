@@ -1,0 +1,81 @@
+-
+  entry_type: loop_invariant
+  metadata:
+    format_version: 0.1
+    uuid: "b026f985-fc7a-45fe-a7f1-fe55611fe5cc"
+    creation_time: "2023-08-02T17:03:15+02:00"
+    producer:
+      name: UNUSED
+      version: UNUSED
+    task:
+      input_files:
+        - "C:\ultimate\trunk\examples\witness-checking\regression\correctness\SpamAssassin-loop.i"
+      input_file_hashes:
+        "C:\ultimate\trunk\examples\witness-checking\regression\correctness\SpamAssassin-loop.i": UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  location:
+    file_name: "C:\ultimate\trunk\examples\witness-checking\regression\correctness\SpamAssassin-loop.i"
+    file_hash: UNUSED
+    line: 34
+    column: 0
+    function: main
+  loop_invariant:
+    string: "bufsize == limit + 4 && 0 <= i"
+    type: assertion
+    format: C
+-
+  entry_type: loop_invariant
+  metadata:
+    format_version: 0.1
+    uuid: "36887496-951e-4411-bc67-6c6678f3d710"
+    creation_time: "2023-08-02T17:03:15+02:00"
+    producer:
+      name: UNUSED
+      version: UNUSED
+    task:
+      input_files:
+        - "C:\ultimate\trunk\examples\witness-checking\regression\correctness\SpamAssassin-loop.i"
+      input_file_hashes:
+        "C:\ultimate\trunk\examples\witness-checking\regression\correctness\SpamAssassin-loop.i": UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  location:
+    file_name: "C:\ultimate\trunk\examples\witness-checking\regression\correctness\SpamAssassin-loop.i"
+    file_hash: UNUSED
+    line: 35
+    column: 0
+    function: main
+  loop_invariant:
+    string: "(bufsize == limit + 4 && 0 <= j) && 0 <= i"
+    type: assertion
+    format: C
+-
+  entry_type: loop_invariant
+  metadata:
+    format_version: 0.1
+    uuid: "1668e54f-5626-4a2d-8a0c-03e59b4fe70b"
+    creation_time: "2023-08-02T17:03:15+02:00"
+    producer:
+      name: UNUSED
+      version: UNUSED
+    task:
+      input_files:
+        - "C:\ultimate\trunk\examples\witness-checking\regression\correctness\SpamAssassin-loop.i"
+      input_file_hashes:
+        "C:\ultimate\trunk\examples\witness-checking\regression\correctness\SpamAssassin-loop.i": UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  location:
+    file_name: "C:\ultimate\trunk\examples\witness-checking\regression\correctness\SpamAssassin-loop.i"
+    file_hash: UNUSED
+    line: 57
+    column: 0
+    function: main
+  loop_invariant:
+    string: "(((bufsize == limit + 4 && i + 1 <= len) && 0 <= j) && 5 + j <= bufsize) && 0 <= i"
+    type: assertion
+    format: C
