@@ -414,6 +414,9 @@ public class MainDispatcher implements IDispatcher {
 	}
 
 	public Result handleWitnessInvariants(final IASTNode node, final Result result) {
+		if (mWitnessInvariants == null) {
+			return result;
+		}
 		Result rtr = result;
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		for (final ExtractedWitnessInvariant inv : mWitnessInvariants.getImage(node)) {
