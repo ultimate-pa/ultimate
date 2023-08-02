@@ -443,14 +443,14 @@ public class BitabsTranslation {
 		if (BigInteger.ZERO.equals(leftValue) || BigInteger.ZERO.equals(rightValue)) {
 			return new ExpressionResult(new RValue(left, typeLeft));
 		}
+		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, typeLeft);
 		if (rightValue != null) {
 			final Expression value =
-					constructShiftWithLiteralOptimization(loc, left, typeRight, rightValue, shiftOperator);
+					constructShiftWithLiteralOptimization(loc, leftWrapped, typeRight, rightValue, shiftOperator);
 			return new ExpressionResult(new RValue(value, typeLeft));
 		}
 		final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
-		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, typeLeft);
 		final Expression leftEqualsZero =
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, leftWrapped, zero);
 		final Expression rightEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
