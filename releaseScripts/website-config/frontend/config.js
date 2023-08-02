@@ -1617,6 +1617,15 @@ const _CONFIG = {
 							"type": "bool",
 							"key": "Adapt memory model on pointer casts if necessary"
 						}
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"default": false,
+							"visible": false,
+							"name": "Report unsoundness warnings",
+							"id": "cacsl2boogietranslator_report_unsoundness_warnings",
+							"type": "bool",
+							"key": "Report unsoundness warnings"
+						},
 					]
 				},
 				{

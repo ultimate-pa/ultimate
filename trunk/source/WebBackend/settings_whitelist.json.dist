@@ -47,9 +47,8 @@
 		"Use bitvectors instead of ints",
 		"Memory model",
 		"Adapt memory model on pointer casts if necessary",
-		"Entry function"
-		
-		
+		"Entry function",
+		"Report unsoundness warnings"
 	],
 	"de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer": [
 		"Try twofold refinement",
