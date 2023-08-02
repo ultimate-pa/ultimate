@@ -50,7 +50,7 @@ public abstract class CorrectnessWitnessExtractor {
 	protected final boolean mCheckOnlyLoopInvariants;
 
 	protected IASTTranslationUnit mTranslationUnit;
-	private HashRelation<IASTNode, ExtractedWitnessInvariant> mAST2Invariant;
+	private HashRelation<IASTNode, IExtractedWitnessEntry> mAST2Invariant;
 	protected ExtractionStatistics mStats;
 
 	public CorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
@@ -66,11 +66,11 @@ public abstract class CorrectnessWitnessExtractor {
 	}
 
 	/**
-	 * @return a map from {@link IASTNode} to an {@link ExtractedWitnessInvariant}. The
-	 *         {@link ExtractedWitnessInvariant} represents a witness invariant which has to hold before, at, or after
+	 * @return a relation from {@link IASTNode} to an {@link IExtractedWitnessEntry}. The
+	 *         {@link IExtractedWitnessEntry} represents a witness invariant which has to hold before, at, or after
 	 *         the {@link IASTNode}.
 	 */
-	public HashRelation<IASTNode, ExtractedWitnessInvariant> getCorrectnessWitnessInvariants() {
+	public HashRelation<IASTNode, IExtractedWitnessEntry> getCorrectnessWitnessInvariants() {
 		if (mAST2Invariant == null) {
 			if (!isReady()) {
 				mLogger.warn("Cannot extract witness if there is no witness");
@@ -87,21 +87,21 @@ public abstract class CorrectnessWitnessExtractor {
 		return mAST2Invariant;
 	}
 
-	private void printResults(final HashRelation<IASTNode, ExtractedWitnessInvariant> result) {
+	private void printResults(final HashRelation<IASTNode, IExtractedWitnessEntry> result) {
 		if (result.isEmpty()) {
 			mLogger.info("Witness did not contain any usable invariants.");
 			return;
 		}
 		mLogger.info("Found the following invariants in the witness:");
-		for (final Entry<IASTNode, ExtractedWitnessInvariant> entry : result.getSetOfPairs()) {
+		for (final Entry<IASTNode, IExtractedWitnessEntry> entry : result.getSetOfPairs()) {
 			assert entry.getKey() == entry.getValue().getRelatedAstNode();
-			mLogger.info(entry.getValue().toStringWithWitnessNodeLabel());
+			mLogger.info(entry.getValue().toString());
 		}
 	}
 
 	protected abstract boolean isReady();
 
-	protected abstract HashRelation<IASTNode, ExtractedWitnessInvariant> extract();
+	protected abstract HashRelation<IASTNode, IExtractedWitnessEntry> extract();
 
 	public static final class ExtractionStatistics {
 		private int mSuccess;
