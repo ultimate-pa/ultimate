@@ -13,9 +13,7 @@ var x, n: int;
 procedure thread() returns()
 modifies x;
 {
-    if ( x % 2 == 0 ) {
-		x := 0;
-    }
+	atomic {assume x%2 == 0; x:= 0;}
 }
 
 procedure ULTIMATE.start() returns()
