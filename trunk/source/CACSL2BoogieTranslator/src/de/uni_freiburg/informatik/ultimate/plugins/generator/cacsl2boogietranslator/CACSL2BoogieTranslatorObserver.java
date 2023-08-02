@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedWitnessEntry;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.GraphMLCorrectnessWitnessExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.YamlCorrectnessWitnessExtractor;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -68,7 +68,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	private WrapperNode mRootNode;
 	private ASTDecorator mInputDecorator;
 	private boolean mLastModel;
-	private HashRelation<IASTNode, ExtractedWitnessInvariant> mWitnessInvariants;
+	private HashRelation<IASTNode, IExtractedWitnessEntry> mWitnessInvariants;
 
 	public CACSL2BoogieTranslatorObserver(final IUltimateServiceProvider services,
 			final ACSLObjectContainerObserver additionalAnnotationObserver) {

@@ -94,7 +94,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 	}
 
 	@Override
-	protected HashRelation<IASTNode, ExtractedWitnessInvariant> extract() {
+	protected HashRelation<IASTNode, IExtractedWitnessEntry> extract() {
 		Map<IASTNode, ExtractedWitnessInvariant> map = new HashMap<>();
 
 		final Deque<WitnessNode> worklist = new ArrayDeque<>();
@@ -109,7 +109,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 			final Map<IASTNode, ExtractedWitnessInvariant> match = matchWitnessToAstNode(current, mStats);
 			map = mergeMatchesIfNecessary(map, match);
 		}
-		final HashRelation<IASTNode, ExtractedWitnessInvariant> rtr = new HashRelation<>();
+		final HashRelation<IASTNode, IExtractedWitnessEntry> rtr = new HashRelation<>();
 		map.forEach(rtr::addPair);
 		mLogger.info("Processed " + closed.size() + " nodes");
 		return rtr;
@@ -148,8 +148,8 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 			final ExtractedWitnessInvariant invB) {
 		final ExtractedWitnessInvariant newInvariant = mergeInvariants(invA, invB);
 		mLogger.warn("Merging invariants");
-		mLogger.warn("  Invariant A is " + invA.toString());
-		mLogger.warn("  Invariant B is " + invB.toString());
+		mLogger.warn("  " + invA.toString());
+		mLogger.warn("  " + invB.toString());
 		mLogger.warn("  New match: " + newInvariant.toString());
 		return newInvariant;
 	}
@@ -180,9 +180,12 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		}
 
 		final Set<String> newNodeLabels = DataStructureUtils.union(ewi1.getNodeLabels(), ewi2.getNodeLabels());
-
-		return new ExtractedWitnessInvariant(newInvariant, newNodeLabels, ewi1.getRelatedAstNode(), ewi1.isBefore(),
-				ewi1.isAfter(), ewi1.isAt());
+		// If one of the invariants is a loop invariant, the result should be as well
+		if (ewi1 instanceof ExtractedLoopInvariant || ewi2 instanceof ExtractedLoopInvariant) {
+			return new ExtractedLoopInvariant(newInvariant, newNodeLabels, ewi1.getRelatedAstNode());
+		}
+		return new ExtractedLocationInvariant(newInvariant, newNodeLabels, ewi1.getRelatedAstNode(),
+				((ExtractedLocationInvariant) ewi1).isBefore());
 	}
 
 	private Map<IASTNode, ExtractedWitnessInvariant> matchWitnessToAstNode(final WitnessNode current,
@@ -311,8 +314,8 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 			}
 			mLogger.info("Matched downward: " + loopHead.toStringSimple());
 			loopStatements.stream()
-					.map(a -> new ExtractedWitnessInvariant(dwnode.getInvariant(),
-							Collections.singletonList(dwnode.getName()), a, false, false, true))
+					.map(a -> new ExtractedLoopInvariant(dwnode.getInvariant(),
+							Collections.singletonList(dwnode.getName()), a))
 					.forEach(a -> rtr.put(a.getRelatedAstNode(), a));
 			iter.remove();
 		}
@@ -343,9 +346,8 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		if (loopStatements.isEmpty()) {
 			return rtr;
 		}
-		loopStatements.stream()
-				.map(a -> new ExtractedWitnessInvariant(dwnode.getInvariant(),
-						Collections.singletonList(dwnode.getName()), a, false, false, true))
+		loopStatements.stream().map(
+				a -> new ExtractedLoopInvariant(dwnode.getInvariant(), Collections.singletonList(dwnode.getName()), a))
 				.forEach(a -> rtr.put(a.getRelatedAstNode(), a));
 		loopHeads.clear();
 		return rtr;
@@ -355,9 +357,8 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 			extractStatementInvariants(final DecoratedWitnessNode dwnode, final Set<MatchedASTNode> candidateNodes) {
 		final Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>();
 		candidateNodes.stream()
-				.map(a -> new ExtractedWitnessInvariant(dwnode.getInvariant(),
-						Collections.singletonList(dwnode.getName()), a.getNode(), !a.isIncoming(), a.isIncoming(),
-						false))
+				.map(a -> new ExtractedLocationInvariant(dwnode.getInvariant(),
+						Collections.singletonList(dwnode.getName()), a.getNode(), !a.isIncoming()))
 				.forEach(a -> rtr.put(a.getRelatedAstNode(), a));
 		candidateNodes.clear();
 		return rtr;

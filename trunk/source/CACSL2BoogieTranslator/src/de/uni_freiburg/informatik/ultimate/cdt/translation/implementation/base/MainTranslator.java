@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslatorMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.IdentifierMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedWitnessEntry;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class MainTranslator {
@@ -88,14 +88,14 @@ public class MainTranslator {
 	private final WrapperNode mResult;
 
 	public MainTranslator(final IUltimateServiceProvider services, final ILogger logger,
-			final HashRelation<IASTNode, ExtractedWitnessInvariant> witnessInvariants, final List<DecoratedUnit> units,
+			final HashRelation<IASTNode, IExtractedWitnessEntry> witnessInvariants, final List<DecoratedUnit> units,
 			final MultiparseSymbolTable symboltable, final ACSLNode acslAnnotation) {
 		mServices = services;
 		mLogger = logger;
 		mResult = run(witnessInvariants, units, acslAnnotation, symboltable);
 	}
 
-	private WrapperNode run(final HashRelation<IASTNode, ExtractedWitnessInvariant> witnessInvariants,
+	private WrapperNode run(final HashRelation<IASTNode, IExtractedWitnessEntry> witnessInvariants,
 			final List<DecoratedUnit> units, final ACSLNode acslAnnotation, final MultiparseSymbolTable mst) {
 
 		// if an additional Annotation was parsed put it into the root node
@@ -135,8 +135,7 @@ public class MainTranslator {
 	}
 
 	private BoogieASTNode translate(final List<DecoratedUnit> nodes,
-			final HashRelation<IASTNode, ExtractedWitnessInvariant> witnessInvariants,
-			final MultiparseSymbolTable mst) {
+			final HashRelation<IASTNode, IExtractedWitnessEntry> witnessInvariants, final MultiparseSymbolTable mst) {
 
 		assert !nodes.isEmpty() : "Received no nodes";
 
@@ -214,7 +213,7 @@ public class MainTranslator {
 	private CHandlerTranslationResult performMainRun(final TranslationSettings translationSettings,
 			final CHandler prerunCHandler, final CTranslationResultReporter reporter,
 			final LocationFactory locationFactory,
-			final HashRelation<IASTNode, ExtractedWitnessInvariant> witnessInvariants,
+			final HashRelation<IASTNode, IExtractedWitnessEntry> witnessInvariants,
 			final CACSL2BoogieBacktranslatorMapping backtranslatorMapping, final List<DecoratedUnit> nodes,
 			final TypeHandler prerunTypeHandler, final MultiparseSymbolTable mst, final TypeSizes typeSizes) {
 		final NameHandler nameHandler = new NameHandler(backtranslatorMapping);

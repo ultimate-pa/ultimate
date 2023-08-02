@@ -33,8 +33,8 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	}
 
 	@Override
-	protected HashRelation<IASTNode, ExtractedWitnessInvariant> extract() {
-		final HashRelation<IASTNode, ExtractedWitnessInvariant> rtr = new HashRelation<>();
+	protected HashRelation<IASTNode, IExtractedWitnessEntry> extract() {
+		final HashRelation<IASTNode, IExtractedWitnessEntry> rtr = new HashRelation<>();
 		for (final WitnessEntry entry : mWitness.getEntries()) {
 			int line = -1;
 			if (entry instanceof LocationInvariant && !mCheckOnlyLoopInvariants) {
@@ -59,18 +59,18 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	}
 
 	private static void extractFromEntry(final WitnessEntry entry, final Set<IASTNode> matchesBefore,
-			final Set<IASTNode> matchesAfter, final HashRelation<IASTNode, ExtractedWitnessInvariant> invariants) {
+			final Set<IASTNode> matchesAfter, final HashRelation<IASTNode, IExtractedWitnessEntry> invariants) {
 		final Set<String> labels = Set.of(entry.getMetadata().getUuid().toString());
 		if (entry instanceof LoopInvariant) {
 			final String invariant = ((LoopInvariant) entry).getInvariant().getExpression();
-			Stream.concat(matchesBefore.stream(), matchesAfter.stream()).forEach(x -> invariants.addPair(x,
-					new ExtractedWitnessInvariant(invariant, labels, x, false, false, true)));
+			Stream.concat(matchesBefore.stream(), matchesAfter.stream())
+					.forEach(x -> invariants.addPair(x, new ExtractedLoopInvariant(invariant, labels, x)));
 		} else if (entry instanceof LocationInvariant) {
 			final String invariant = ((LocationInvariant) entry).getInvariant().getExpression();
-			matchesBefore.stream().forEach(x -> invariants.addPair(x,
-					new ExtractedWitnessInvariant(invariant, labels, x, true, false, false)));
-			matchesAfter.stream().forEach(x -> invariants.addPair(x,
-					new ExtractedWitnessInvariant(invariant, labels, x, false, true, false)));
+			matchesBefore.stream()
+					.forEach(x -> invariants.addPair(x, new ExtractedLocationInvariant(invariant, labels, x, true)));
+			matchesAfter.stream()
+					.forEach(x -> invariants.addPair(x, new ExtractedLocationInvariant(invariant, labels, x, false)));
 		} else {
 			throw new AssertionError("Unknown witness type " + entry.getClass().getSimpleName());
 		}

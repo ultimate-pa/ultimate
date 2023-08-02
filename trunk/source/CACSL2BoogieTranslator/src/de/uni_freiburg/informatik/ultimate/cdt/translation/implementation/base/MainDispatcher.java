@@ -201,7 +201,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.TypeInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedWitnessEntry;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -227,7 +227,7 @@ public class MainDispatcher implements IDispatcher {
 
 	private final Set<ImmutableSet<String>> mNodeLabelsOfAddedWitnesses;
 
-	private final HashRelation<IASTNode, ExtractedWitnessInvariant> mWitnessInvariants;
+	private final HashRelation<IASTNode, IExtractedWitnessEntry> mWitnessInvariants;
 
 	private final CHandler mCHandler;
 	private final ITypeHandler mTypeHandler;
@@ -238,7 +238,7 @@ public class MainDispatcher implements IDispatcher {
 	private IASTNode mAcslHook;
 
 	public MainDispatcher(final ILogger logger,
-			final HashRelation<IASTNode, ExtractedWitnessInvariant> witnessInvariants, final LocationFactory locFac,
+			final HashRelation<IASTNode, IExtractedWitnessEntry> witnessInvariants, final LocationFactory locFac,
 			final ITypeHandler typeHandler, final CHandler cHandler, final PreprocessorHandler preprocessorHandler,
 			final IACSLHandler acslHandler) {
 		mLogger = logger;
@@ -418,7 +418,7 @@ public class MainDispatcher implements IDispatcher {
 		}
 		Result rtr = result;
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		for (final ExtractedWitnessInvariant inv : mWitnessInvariants.getImage(node)) {
+		for (final IExtractedWitnessEntry inv : mWitnessInvariants.getImage(node)) {
 			if (mNodeLabelsOfAddedWitnesses.add(inv.getNodeLabels())) {
 				rtr = inv.transform(loc, this, (ExpressionResult) rtr);
 			}
