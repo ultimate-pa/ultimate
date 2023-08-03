@@ -48,7 +48,6 @@ public abstract class ExtractedWitnessInvariant implements IExtractedWitnessEntr
 		return mMatchedAstNode.getFileLocation().getEndingLineNumber();
 	}
 
-	@Override
 	public IASTNode getRelatedAstNode() {
 		return mMatchedAstNode;
 	}

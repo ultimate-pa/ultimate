@@ -93,7 +93,6 @@ public abstract class CorrectnessWitnessExtractor {
 		}
 		mLogger.info("Found the following entries in the witness:");
 		for (final Entry<IASTNode, IExtractedWitnessEntry> entry : result.getSetOfPairs()) {
-			assert entry.getKey() == entry.getValue().getRelatedAstNode();
 			mLogger.info(entry.getValue().toString());
 		}
 	}
