@@ -1,4 +1,4 @@
-// #Safe
+// #Unsafe
 /*
  * Test for right shift with constant, see https://github.com/ultimate-pa/ultimate/issues/642
  * 
