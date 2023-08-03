@@ -17,7 +17,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Test class for the functions filterCDD() and strict() in the class RangeDecision 
  * implemented by me as part of my bachelors Thesis.
  * 
- * TODO: test strict()
  *
  * @author Lena Funk
  */
@@ -26,12 +25,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class RangeDecisionTest {
 	ArrayList<Pair<CDD, CDD>> mTestCasesFilterCdd;
 	ArrayList<Pair<CDD, CDD>> mTestCasesStrict;
+	ArrayList<Pair<CDD, Boolean>> mTestCasesIsStrict; 
 	
 	public RangeDecisionTest() {
 		mTestCasesFilterCdd = new ArrayList<Pair<CDD, CDD>>();
 		mTestCasesStrict = new ArrayList<Pair<CDD, CDD>>();
+		mTestCasesIsStrict = new ArrayList<Pair<CDD, Boolean>>();
 		createTestCasesFilterCdd();
 		createTestCasesStrict();
+		createTestCasesIsStict();
 		
 	}
 	
@@ -110,6 +112,34 @@ public class RangeDecisionTest {
 		CDD expected1 = CDD.TRUE;
 		Pair<CDD, CDD> testCase1 = new Pair<CDD, CDD>(testCdd1, expected1);
 		mTestCasesStrict.add(testCase1);
+		
+	}
+	
+	public void createTestCasesIsStict() {
+		// c1 <= 5
+		CDD c1 = RangeDecision.create("c1", RangeDecision.OP_LTEQ, 5);
+		// c2 >= 5
+		CDD c2 = RangeDecision.create("c2", RangeDecision.OP_GTEQ, 5);
+		// c3 > 5
+		CDD c3 = RangeDecision.create("c3", RangeDecision.OP_GT, 5);
+		// c4 < 5
+		CDD c4 = RangeDecision.create("c4", RangeDecision.OP_GT, 5);
+		
+		//-----------------------------------------------------------
+		// Test 1
+		mTestCasesIsStrict.add(new Pair<CDD, Boolean>(c3, true));
+		
+		//-----------------------------------------------------------
+		// Test 2
+		mTestCasesIsStrict.add(new Pair<CDD, Boolean>(c1, false));
+		
+		//-----------------------------------------------------------
+		// Test 0 (Contains all binary operators
+		CDD conj1 = (c1.and(c2)).and(c4);
+		CDD conj2 = (c1.and(c3)).and(c4);
+
+		CDD testCdd = mTestCasesFilterCdd.get(0).getFirst();
+		mTestCasesIsStrict.add(new Pair<CDD, Boolean>(testCdd, true));
 		
 	}
 	
@@ -207,6 +237,33 @@ public class RangeDecisionTest {
 		CDD testCDD = testCase.getFirst();
 		CDD expected = testCase.getSecond();
 		CDD actual = RangeDecision.strict(testCDD);
+		assertTrue(actual.equals(expected));
+	}
+	
+	@Test
+	public void isStrictTest0() {
+		Pair<CDD, Boolean> testCase = mTestCasesIsStrict.get(0);
+		CDD testCdd = testCase.getFirst();
+		Boolean expected = testCase.getSecond();
+		Boolean actual = RangeDecision.isStrict(testCdd);
+		assertTrue(actual.equals(expected));
+	}
+	
+	@Test
+	public void isStrictTest1() {
+		Pair<CDD, Boolean> testCase = mTestCasesIsStrict.get(1);
+		CDD testCdd = testCase.getFirst();
+		Boolean expected = testCase.getSecond();
+		Boolean actual = RangeDecision.isStrict(testCdd);
+		assertTrue(actual.equals(expected));
+	}
+	
+	@Test
+	public void isStrictTest2() {
+		Pair<CDD, Boolean> testCase = mTestCasesIsStrict.get(2);
+		CDD testCdd = testCase.getFirst();
+		Boolean expected = testCase.getSecond();
+		Boolean actual = RangeDecision.isStrict(testCdd);
 		assertTrue(actual.equals(expected));
 	}
 	

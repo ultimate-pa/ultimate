@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.internal.matchers.Each;
+
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -590,6 +592,24 @@ public class RangeDecision extends Decision<RangeDecision> {
 			newDisjunction = newDisjunction.or(conjunction);
 		}
 		return newDisjunction;	
+	}
+	
+	public static boolean isStrict(CDD cdd) {
+		// initialise result to false
+		boolean isStrict = false;
+		// get list of atomic CDDs and their corresponding true child indices
+		ArrayList<ArrayList<Pair<Decision<?>, int[]>>> decisionDNF = cdd.getDecisionsDNF();
+		for (ArrayList<Pair<Decision<?>, int[]>> conjunction : decisionDNF) {
+			for (Pair<Decision<?>, int[]> pair : conjunction) {
+				RangeDecision decision = (RangeDecision) pair.getFirst();
+				int op = decision.getOp(pair.getSecond()[0]);
+				if (op == OP_LT || op == OP_GT) {
+					isStrict = true;
+					break;
+				}
+			}
+		}
+		return isStrict;
 	}
 }
 	
