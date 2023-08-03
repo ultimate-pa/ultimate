@@ -330,7 +330,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 
 	public String generateExitMessage() {
 		return String.format(
-				"Run SimplifyDDA2 in %s ms. %s checksat commands took %s ms. %s non-constraining nodes. %s Non-relaxing nodes",
+				"Run SimplifyDDA2 in %s ms. %s check-sat commands took %s ms. %s non-constraining nodes. %s Non-relaxing nodes.",
 				(System.nanoTime() - mStartTime) / 1000000, mNumberOfCheckSatCommands, mCheckSatTime / 1000000,
 				mNonConstrainingNodes, mNonRelaxingNodes);
 	}
