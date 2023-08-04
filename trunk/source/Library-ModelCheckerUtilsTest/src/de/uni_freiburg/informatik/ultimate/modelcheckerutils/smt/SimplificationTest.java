@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -111,6 +112,7 @@ public class SimplificationTest {
 		} else {
 			mScript = solverInstance;
 		}
+		mScript = new StatisticsScript(mScript);
 
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
@@ -1055,6 +1057,7 @@ public class SimplificationTest {
 		logger.info(esr.buildSizeReductionMessage());
 		logger.info("CDC code input:  " + CondisDepthCode.of(unf));
 		logger.info("CDC code output: " + CondisDepthCode.of(result));
+		csvWriter.reportEliminationSuccess(result, testId, (StatisticsScript) mgdScript.getScript());
 		if (expectedResultAsString != null) {
 			final CommuhashNormalForm cnft = new CommuhashNormalForm(services, mgdScript.getScript());
 			final Term cnfResult = cnft.transform(result);
@@ -1063,7 +1066,6 @@ public class SimplificationTest {
 			MatcherAssert.assertThat(cnfResult, IsEqual.equalTo(cnfExpectedResultAsTerm));
 		}
 		checkLogicalEquivalence(mgdScript.getScript(), result, formulaAsTerm);
-		csvWriter.reportEliminationSuccess(result, testId);
 	}
 
 	private static void checkLogicalEquivalence(final Script script, final Term result, final Term input) {
