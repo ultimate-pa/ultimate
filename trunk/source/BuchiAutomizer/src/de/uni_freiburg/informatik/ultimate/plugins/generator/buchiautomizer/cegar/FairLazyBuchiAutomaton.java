@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
+public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>> implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
 	
 	private IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mInitialAbstractionProvider;
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mInitialAbstraction;

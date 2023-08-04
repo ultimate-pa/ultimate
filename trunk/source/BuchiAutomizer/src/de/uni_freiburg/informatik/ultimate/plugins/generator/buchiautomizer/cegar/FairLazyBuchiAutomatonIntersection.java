@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -8,9 +9,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersectNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
@@ -18,29 +22,37 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public class FairLazyBuchiAutomatonIntersection<L extends IIcfgTransition<?>, IPredicate> implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate> {
+public class FairLazyBuchiAutomatonIntersection<L extends IIcfgTransition<?>> {
 
-	private IIcfg<?> mIcfg;
-	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mInitialAbstraction; 
+	private IIcfg<? extends IcfgLocation> mIcfg;
 	private BuchiIntersectNwa<L, IPredicate> mBuchiIntersectAutomaton;
 	private PredicateFactory mPredicateFactory;
 	private Map<String, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mFairProcedureAutomataMap;
 	private String mMainProcedure;
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mFairMainProcedureAutomaton;
+	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mInitialAbstraction;
 
-	public FairLazyBuchiAutomatonIntersection(IIcfg<?> icfg, INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
-			PredicateFactory predicateFactory, PredicateFactoryRefinement stateFactoryForRefinement) {
+	public FairLazyBuchiAutomatonIntersection(IIcfg<? extends IcfgLocation> icfg,
+			INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction, AutomataLibraryServices services, PredicateFactory predicateFactory,
+			PredicateFactoryRefinement stateFactoryForRefinement) throws AutomataLibraryException {
 		mIcfg = icfg;
 		mInitialAbstraction = initialAbstraction;
 		mPredicateFactory = predicateFactory;
 		mFairProcedureAutomataMap = new HashMap<>();
 		mMainProcedure = mIcfg.getInitialNodes().iterator().next().getProcedure();
 		
+		for (L edge : initialAbstraction.getVpAlphabet().getInternalAlphabet()) {
+			mFairProcedureAutomataMap.computeIfAbsent(edge.getPrecedingProcedure(), v -> new FairLazyProcedureBuchiAutomaton<>(edge.getPrecedingProcedure()));
+		}
+		
+	/*	
 		for (String procedure : icfg.getProcedureEntryNodes().keySet()) {
 			INwaOutgoingLetterAndTransitionProvider<L, IPredicate> fairAutomaton = new FairLazyProcedureBuchiAutomaton<>(procedure);
 			if (procedure.equals(mMainProcedure)) {
@@ -48,90 +60,29 @@ public class FairLazyBuchiAutomatonIntersection<L extends IIcfgTransition<?>, IP
 			} else {
 				mFairProcedureAutomataMap.putIfAbsent(procedure, fairAutomaton);
 			}
-		}
+		}*/
 		
+		//mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(initialAbstraction, mFairMainProcedureAutomaton, stateFactoryForRefinement);
 		for (Entry<String, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> entry : mFairProcedureAutomataMap.entrySet()) {
+			//mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(mBuchiIntersectAutomaton, entry.getValue(), stateFactoryForRefinement);
+			NestedWordAutomatonReachableStates<L, IPredicate> debug = new NestedWordAutomatonReachableStates<>(services, entry.getValue());
+			String debugString = debug.toString();
+			Integer i = 0;
 			if (mBuchiIntersectAutomaton == null) {
-				mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(mFairMainProcedureAutomaton, entry.getValue(), stateFactoryForRefinement);
-				/*
-				NestedWordAutomatonReachableStates<L, IPredicate> debug = new NestedWordAutomatonReachableStates<>(mServices, mBuchiIntersectAutomaton);
-				String debugString = debug.toString();
-				Integer i = 0;
-				*/
+				mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(initialAbstraction, entry.getValue(), stateFactoryForRefinement);
 			} else {
-				mBuchiIntersectAutomaton = new BuchiIntersectNwa<L, IPredicate>(mBuchiIntersectAutomaton, entry.getValue(), stateFactoryForRefinement);
-				/*
-				NestedWordAutomatonReachableStates<L, IPredicate> debug = new NestedWordAutomatonReachableStates<>(mServices, mBuchiIntersectAutomaton);
-				String debugString = debug.toString();
-				Integer i = 0;
-				*/
+				mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(mBuchiIntersectAutomaton, entry.getValue(), stateFactoryForRefinement);
 			}
+			NestedWordAutomatonReachableStates<L, IPredicate> debugfair = new NestedWordAutomatonReachableStates<>(services, mBuchiIntersectAutomaton);
+			String debugfairString = debugfair.toString();		
 		}
 	}
 	
-	@Override
-	public IStateFactory<IPredicate> getStateFactory() {
-		return mInitialAbstraction.getStateFactory();
-	}
-
-	@Override
-	public VpAlphabet<L> getVpAlphabet() {
-		return mInitialAbstraction.getVpAlphabet();
-	}
-
-	@Override
-	public IPredicate getEmptyStackState() {
-		return mInitialAbstraction.getEmptyStackState();
-	}
-
-	@Override
-	public Iterable<IPredicate> getInitialStates() {
-		// TODO Auto-generated method stub
-		return mBuchiIntersectAutomaton.getInitialStates();
-	}
-
-	@Override
-	public boolean isInitial(IPredicate state) {
-		// TODO Auto-generated method stub
-		return mBuchiIntersectAutomaton.isInitial(state);
-	}
-
-	@Override
-	public boolean isFinal(IPredicate state) {
-		// TODO Auto-generated method stub
-		return mBuchiIntersectAutomaton.isFinal(state);
-	}
-
-	@Override
-	public int size() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public String sizeInformation() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Iterable<OutgoingInternalTransition<L, IPredicate>> internalSuccessors(IPredicate state, L letter) {
-		// TODO Auto-generated method stub
-		return mBuchiIntersectAutomaton.internalSuccessors(state, letter);
-	}
-
-	@Override
-	public Iterable<OutgoingCallTransition<L, IPredicate>> callSuccessors(IPredicate state, L letter) {
-		return List.of();
-	}
-
-	@Override
-	public Iterable<OutgoingReturnTransition<L, IPredicate>> returnSuccessors(IPredicate state, IPredicate hier,
-			L letter) {
-		return List.of();
+	public INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getFairIntersectionAutomaton(){
+		return mBuchiIntersectAutomaton;
 	}
 	
-	private class FairLazyProcedureBuchiAutomaton<L extends IIcfgTransition<?>, IPredicate> implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
+	private class FairLazyProcedureBuchiAutomaton<L extends IIcfgTransition<?>> implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
 		
 		private HashSet<IPredicate> mProcedureInitialStates;
 		private HashSet<IPredicate> mProcedureFinalStates;
@@ -140,8 +91,10 @@ public class FairLazyBuchiAutomatonIntersection<L extends IIcfgTransition<?>, IP
 
 		public FairLazyProcedureBuchiAutomaton(String procedure) {
 			mProcedureInitialStates = new HashSet<>();
+			mProcedureFinalStates = new HashSet<>();
 			mProcedure = procedure;
-			mStatesThread = new ArrayList<IPredicate>();
+			mStatesThread = new ArrayList<IPredicate>(Arrays.asList(null,null,null));
+			
 		}
 
 		@Override
@@ -152,8 +105,7 @@ public class FairLazyBuchiAutomatonIntersection<L extends IIcfgTransition<?>, IP
 
 		@Override
 		public VpAlphabet<L> getVpAlphabet() {
-			// TODO Auto-generated method stub
-			return null;
+			return (VpAlphabet<L>) mInitialAbstraction.getVpAlphabet();
 		}
 
 		@Override
@@ -201,7 +153,7 @@ public class FairLazyBuchiAutomatonIntersection<L extends IIcfgTransition<?>, IP
 			String pre = letter.getPrecedingProcedure();
 			String suc = letter.getSucceedingProcedure();
 			if (state.equals(mStatesThread.get(0))) {
-				if (letter instanceof IIcfgForkTransitionThreadOther && suc.equals(mProcedure)) {
+				if (!mProcedure.equals(mMainProcedure) && letter instanceof IIcfgForkTransitionThreadOther && suc.equals(mProcedure)) {
 					return getOrConstructTransition(letter, getOrConstructState(1));
 				} else {
 					return getOrConstructTransition(letter, state);
@@ -231,9 +183,9 @@ public class FairLazyBuchiAutomatonIntersection<L extends IIcfgTransition<?>, IP
 		}
 		
 		private IPredicate getOrConstructState(Integer index) {
-			if(mStatesThread.get(index).equals(null)) {
-				IPredicate state = (IPredicate) mPredicateFactory.newDebugPredicate("s"+index);
-				mStatesThread.add(index, state);
+			if(mStatesThread.get(index) == null) {
+				IPredicate state = mPredicateFactory.newDebugPredicate("s" + index.toString());
+				mStatesThread.set(index, state);
 				if(!index.equals(1)) {
 					mProcedureFinalStates.add(state);
 				}
