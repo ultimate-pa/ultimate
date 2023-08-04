@@ -36,6 +36,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BinaryOperator;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -431,11 +432,11 @@ public class StandardFunctionHandler {
 		fill(map, "__atomic_exchange", this::handleAtomicExchange);
 		fill(map, "__atomic_store", this::handleAtomicStore);
 
-		fill(map, "__atomic_fetch_add", die);
-		fill(map, "__atomic_fetch_sub", die);
-		fill(map, "__atomic_fetch_and", die);
-		fill(map, "__atomic_fetch_or", die);
-		fill(map, "__atomic_fetch_xor", die);
+		fill(map, "__atomic_fetch_add", this::handleAtomicFetchAdd);
+		fill(map, "__atomic_fetch_sub", this::handleAtomicFetchSub);
+		fill(map, "__atomic_fetch_and", this::handleAtomicFetchAnd);
+		fill(map, "__atomic_fetch_or", this::handleAtomicFetchOr);
+		fill(map, "__atomic_fetch_xor", this::handleAtomicFetchXor);
 
 		fill(map, "__atomic_test_and_set", die);
 		fill(map, "__atomic_clear", die);
@@ -1057,6 +1058,74 @@ public class StandardFunctionHandler {
 
 		return builder.addStatements(handleMemoryOrder(loc, statements, memOrderResult.getLrValue().getValue()))
 				.build();
+	}
+
+	private Result handleAtomicFetchAdd(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleAtomicFetchOp(main, node, loc, name,
+				(x, y) -> new ExpressionResult(new RValue(mExpressionTranslation.constructArithmeticExpression(loc,
+						IASTBinaryExpression.op_plus, x.getLrValue().getValue(), (CPrimitive) x.getCType(),
+						y.getLrValue().getValue(), (CPrimitive) y.getCType()), x.getCType())));
+	}
+
+	private Result handleAtomicFetchSub(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleAtomicFetchOp(main, node, loc, name,
+				(x, y) -> new ExpressionResult(new RValue(mExpressionTranslation.constructArithmeticExpression(loc,
+						IASTBinaryExpression.op_minus, x.getLrValue().getValue(), (CPrimitive) x.getCType(),
+						y.getLrValue().getValue(), (CPrimitive) y.getCType()), x.getCType())));
+	}
+
+	private Result handleAtomicFetchAnd(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleAtomicFetchOp(main, node, loc, name,
+				(x, y) -> mExpressionTranslation.handleBinaryBitwiseExpression(loc, IASTBinaryExpression.op_binaryAnd,
+						x.getLrValue().getValue(), (CPrimitive) x.getCType(), y.getLrValue().getValue(),
+						(CPrimitive) y.getCType(), mAuxVarInfoBuilder));
+	}
+
+	private Result handleAtomicFetchOr(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleAtomicFetchOp(main, node, loc, name,
+				(x, y) -> mExpressionTranslation.handleBinaryBitwiseExpression(loc, IASTBinaryExpression.op_binaryOr,
+						x.getLrValue().getValue(), (CPrimitive) x.getCType(), y.getLrValue().getValue(),
+						(CPrimitive) y.getCType(), mAuxVarInfoBuilder));
+	}
+
+	private Result handleAtomicFetchXor(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleAtomicFetchOp(main, node, loc, name,
+				(x, y) -> mExpressionTranslation.handleBinaryBitwiseExpression(loc, IASTBinaryExpression.op_binaryXor,
+						x.getLrValue().getValue(), (CPrimitive) x.getCType(), y.getLrValue().getValue(),
+						(CPrimitive) y.getCType(), mAuxVarInfoBuilder));
+	}
+
+	private Result handleAtomicFetchOp(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final BinaryOperator<ExpressionResult> operator) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final List<Statement> statements = new ArrayList<>();
+		final ExpressionResult first = (ExpressionResult) main.dispatch(arguments[0]);
+		statements.addAll(first.getStatements());
+		builder.addAllExceptLrValueAndStatements(first);
+		final ExpressionResult read = mMemoryHandler.getReadCall(first.getLrValue().getValue(),
+				((CPointer) first.getCType()).getPointsToType());
+		statements.addAll(read.getStatements());
+		builder.addAllExceptLrValueAndStatements(read).setLrValue(read.getLrValue());
+		final ExpressionResult second = (ExpressionResult) main.dispatch(arguments[1]);
+		statements.addAll(second.getStatements());
+		builder.addAllExceptLrValueAndStatements(second);
+		final ExpressionResult newValue = operator.apply(read, second);
+		builder.addAllExceptLrValueAndStatements(newValue);
+		statements.addAll(newValue.getStatements());
+		final var hlv =
+				LRValueFactory.constructHeapLValue(mTypeHandler, first.getLrValue().getValue(), first.getCType(), null);
+		statements.addAll(mMemoryHandler.getWriteCall(loc, hlv, newValue.getLrValue().getValue(),
+				((CPointer) first.getCType()).getPointsToType(), false));
+		final ExpressionResult third = (ExpressionResult) main.dispatch(arguments[2]);
+		builder.addAllExceptLrValue(third);
+		return builder.addStatements(handleMemoryOrder(loc, statements, third.getLrValue().getValue())).build();
 	}
 
 	private List<Statement> handleMemoryOrder(final ILocation loc, final List<Statement> originalStatements,
