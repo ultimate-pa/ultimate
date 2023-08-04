@@ -2694,6 +2694,16 @@ public final class SmtUtils {
 		return null;
 	}
 
+	public static boolean isAbsorbingElement(final String booleanConnective, final Term term) {
+		if (booleanConnective.equals("and")) {
+			return isFalseLiteral(term);
+		} else if (booleanConnective.equals("or")) {
+			return isTrueLiteral(term);
+		} else {
+			throw new AssertionError("unsupported connective " + booleanConnective);
+		}
+	}
+
 	/**
 	 * Auxiliary method that replaces all free variables in a term by constant
 	 * symbols (i.e., 0-ary function symbols). These constant symbols are declared

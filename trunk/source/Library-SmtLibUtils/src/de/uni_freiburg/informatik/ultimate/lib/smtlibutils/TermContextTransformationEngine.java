@@ -161,6 +161,11 @@ public class TermContextTransformationEngine<C> {
 				final Task old = mStack.pop();
 				assert old == this;
 				result = new AscendResultTask(super.mContext, res);
+			} else if (mNext != 0
+					&& SmtUtils.isAbsorbingElement(mOriginal.getFunction().getName(), mResult[mNext - 1])) {
+				// If the result of the last iteration was the absorbing element, we return the
+				// absorbing element as result for this node.
+				result = new AscendResultTask(super.mContext, mResult[mNext - 1]);
 			} else {
 				final ArrayList<Term> otherParams = new ArrayList<>(Arrays.asList(mResult));
 				otherParams.remove(mNext);
