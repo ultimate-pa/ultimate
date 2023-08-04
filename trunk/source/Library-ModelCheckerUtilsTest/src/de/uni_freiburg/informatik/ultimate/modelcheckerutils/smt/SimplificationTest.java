@@ -146,9 +146,12 @@ public class SimplificationTest {
 	@Test
 	// simplify leaf to false in conjunction
 	public void dda2TestExample04() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "Y", "X"), };
-		final String formulaAsString = "(or (= Y 0) (and (= X 2) (>= X 5) (< X 8)))";
-		final String expectedResultAsString = "(= Y 0)";
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getBoolSort, "B"),
+				new FunDecl(SmtSortUtils::getIntSort, "y", "x"),
+				};
+		final String formulaAsString = "(or B (and (= x 0) (= x y) (not (= y 0))))";
+		final String expectedResultAsString = "B";
 		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.SIMPLIFY_DDA2,
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
