@@ -304,7 +304,7 @@ public class QuantifierEliminationTest {
 		if (expectedResultAsString != null) {
 			checkLogicalEquivalence(mgdScript.getScript(), result, expectedResultAsString);
 		}
-		csvWriter.reportEliminationSuccess(result, testId, null);
+		csvWriter.reportEliminationSuccess(result, testId, (StatisticsScript) mgdScript.getScript());
 	}
 
 	private static void checkLogicalEquivalence(final Script script, final Term result,

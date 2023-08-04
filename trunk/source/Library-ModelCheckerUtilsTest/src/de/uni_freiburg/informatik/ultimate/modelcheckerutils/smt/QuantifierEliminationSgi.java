@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -102,6 +103,7 @@ public class QuantifierEliminationSgi {
 		} else {
 			mScript = solverInstance;
 		}
+		mScript = new StatisticsScript(mScript);
 
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
@@ -125,7 +127,7 @@ public class QuantifierEliminationSgi {
 		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	//(x=0), (A=0) and (B=0), multiple possible maps
 	public void simpleSgiExample02() {
@@ -137,7 +139,7 @@ public class QuantifierEliminationSgi {
 		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	//(x=5) and (5=A), swapped ordering
 	public void simpleSgiExample03() {
@@ -148,7 +150,7 @@ public class QuantifierEliminationSgi {
 		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	//two quantified term variables
 	public void simpleSgiExample04() {
@@ -160,7 +162,7 @@ public class QuantifierEliminationSgi {
 		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	//noncommutative operator
 	public void simpleSgiExample05() {
@@ -184,7 +186,7 @@ public class QuantifierEliminationSgi {
 		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	//x,y distinct, false
 	public void simpleSgiExample07() {
@@ -197,7 +199,7 @@ public class QuantifierEliminationSgi {
 		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	//qsubformula rotation
 	public void simpleSgiExample8() {
@@ -210,7 +212,7 @@ public class QuantifierEliminationSgi {
 		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	//parameter rotation
 	public void simpleSgiExample9() {
@@ -223,7 +225,7 @@ public class QuantifierEliminationSgi {
 		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void sgiCandidate01() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -365,7 +367,7 @@ public class QuantifierEliminationSgi {
 		final String expectedResultAsString = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void sgiCandidate13renamed() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -376,7 +378,7 @@ public class QuantifierEliminationSgi {
 		final String expectedResultAsString = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	//false
 	public void sgiCandidate13renamedmodified() {
@@ -582,7 +584,7 @@ public class QuantifierEliminationSgi {
 		final String expectedResultAsString = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 
 	//@formatter:on
 }

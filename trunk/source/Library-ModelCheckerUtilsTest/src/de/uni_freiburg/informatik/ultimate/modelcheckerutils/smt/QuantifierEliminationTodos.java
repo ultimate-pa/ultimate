@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -105,6 +106,7 @@ public class QuantifierEliminationTodos {
 		} else {
 			mScript = solverInstance;
 		}
+		mScript = new StatisticsScript(mScript);
 
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
@@ -432,7 +434,7 @@ public class QuantifierEliminationTodos {
 		final String expectedResultAsString = "(= (+ main_result (* main_m 1)) (* main_n main_m))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void test01() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "~waterLevel~0", "~pumpRunning~0", "#NULL.base", "#NULL.offset", "~head~0.base", "~head~0.offset", "~cleanupTimeShifts~0", "~systemActive~0", "#StackHeapBarrier", "old(~methaneLevelCritical~0)", "~methaneLevelCritical~0", "test_~splverifierCounter~0", "old(~waterLevel~0)", "test_~tmp~1"), };
