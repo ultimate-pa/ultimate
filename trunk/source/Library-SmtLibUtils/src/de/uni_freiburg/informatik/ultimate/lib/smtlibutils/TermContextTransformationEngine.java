@@ -131,7 +131,8 @@ public class TermContextTransformationEngine<C> {
 		int mNext;
 		final ApplicationTerm mOriginal;
 		final Term[] mResult;
-		boolean mChangeInThisIteration = false;
+		// We use the value -1 to indicate that there was not yet an update.
+		int mPositionOfLastChange = -1;
 		int mRepetitions;
 
 		public ApplicationTermTask(final C context, final ApplicationTerm original) {
@@ -144,10 +145,10 @@ public class TermContextTransformationEngine<C> {
 
 		@Override
 		Task doStep() {
-			if (mNext == mOriginal.getParameters().length && mChangeInThisIteration
+			if (mNext == mOriginal.getParameters().length && mPositionOfLastChange != -1
 					&& mTermWalker.applyRepeatedlyUntilNoChange()) {
 				mNext = 0;
-				mChangeInThisIteration = false;
+//				mPositionOfLastChange = false;
 				mRepetitions++;
 			} else {
 				if (DEBUG_NONTERMINATION && mRepetitions > 0) {
@@ -156,7 +157,7 @@ public class TermContextTransformationEngine<C> {
 				}
 			}
 			final Task result;
-			if (mNext == mOriginal.getParameters().length) {
+			if (mNext == mOriginal.getParameters().length || mPositionOfLastChange == mNext) {
 				final Term res = mTermWalker.constructResultForApplicationTerm(super.mContext, mOriginal, mResult);
 				final Task old = mStack.pop();
 				assert old == this;
@@ -184,7 +185,7 @@ public class TermContextTransformationEngine<C> {
 		void integrateResult(final Term result) {
 			assert (mNext < mOriginal.getParameters().length);
 			if (!mResult[mNext].equals(result)) {
-				mChangeInThisIteration = true;
+				mPositionOfLastChange = mNext;
 			}
 			mResult[mNext] = result;
 			mNext++;
