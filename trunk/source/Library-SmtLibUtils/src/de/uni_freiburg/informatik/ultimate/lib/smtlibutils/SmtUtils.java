@@ -2704,6 +2704,16 @@ public final class SmtUtils {
 		}
 	}
 
+	public static boolean isNeutralElement(final String booleanConnective, final Term term) {
+		if (booleanConnective.equals("and")) {
+			return isTrueLiteral(term);
+		} else if (booleanConnective.equals("or")) {
+			return isFalseLiteral(term);
+		} else {
+			throw new AssertionError("unsupported connective " + booleanConnective);
+		}
+	}
+
 	/**
 	 * Auxiliary method that replaces all free variables in a term by constant
 	 * symbols (i.e., 0-ary function symbols). These constant symbols are declared
