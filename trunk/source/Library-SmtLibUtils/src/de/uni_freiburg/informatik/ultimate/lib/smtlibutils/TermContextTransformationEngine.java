@@ -47,6 +47,13 @@ public class TermContextTransformationEngine<C> {
 
 	private static final boolean DEBUG_CHECK_INTERMEDIATE_RESULT = false;
 	private static final boolean DEBUG_NONTERMINATION = false;
+	/**
+	 * Optimization for ApplicationTerm: While determining the position of the last
+	 * change, we omit positions where the result is the neutral element. Rationale:
+	 * the neutral element will not strengthen the critical constraint and hence
+	 * cannot justify another repetition.
+	 */
+	private static final boolean SMART_REPETITIONS = true;
 
 	private final TermWalker<C> mTermWalker;
 	private final ArrayDeque<Task> mStack;
@@ -189,7 +196,8 @@ public class TermContextTransformationEngine<C> {
 		@Override
 		void integrateResult(final Term result) {
 			assert (mNext < mOriginal.getParameters().length);
-			if (!mResult[mNext].equals(result)) {
+			if (!mResult[mNext].equals(result)
+					&& (!SMART_REPETITIONS || !SmtUtils.isNeutralElement(mOriginal.getFunction().getName(), result))) {
 				mPositionOfLastChange = mNext;
 			}
 			mResult[mNext] = result;
