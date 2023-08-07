@@ -1056,8 +1056,7 @@ public class StandardFunctionHandler {
 					((CPointer) targetResult.getCType()).getPointsToType(), false));
 		}
 
-		return builder.addStatements(handleMemoryOrder(loc, statements, memOrderResult.getLrValue().getValue()))
-				.build();
+		return builder.addStatement(handleMemoryOrder(loc, statements, memOrderResult.getLrValue().getValue())).build();
 	}
 
 	private Result handleAtomicFetchAdd(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1125,31 +1124,33 @@ public class StandardFunctionHandler {
 				((CPointer) first.getCType()).getPointsToType(), false));
 		final ExpressionResult third = (ExpressionResult) main.dispatch(arguments[2]);
 		builder.addAllExceptLrValue(third);
-		return builder.addStatements(handleMemoryOrder(loc, statements, third.getLrValue().getValue())).build();
+		return builder.addStatement(handleMemoryOrder(loc, statements, third.getLrValue().getValue())).build();
 	}
 
-	private List<Statement> handleMemoryOrder(final ILocation loc, final List<Statement> originalStatements,
+	private Statement handleMemoryOrder(final ILocation loc, final List<Statement> statements,
 			final Expression memoryOrder) {
-		// Check the memory order: "5" means sequential consistency, if this is the case make an atomic block of those
-		// statements.
+		// Check the memory order
+		// - "5" means sequential consistency, if this is the case make an atomic block of those statements
+		// - Otherwise we cannot say anything, since we only support sequential consistency (so we just overapproximate)
 		// TODO: Is this always 5?
-		// TODO: What are the other cases?
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final Expression five =
 				mExpressionTranslation.constructLiteralForIntegerType(loc, intType, BigInteger.valueOf(5));
 		final Expression atomicCond = mExpressionTranslation.constructBinaryEqualityExpression(loc,
 				IASTBinaryExpression.op_equals, memoryOrder, intType, five, intType);
-		final Statement[] statements = originalStatements.toArray(Statement[]::new);
-		final Statement atomic = new AtomicStatement(loc, statements);
+		final Statement atomic = new AtomicStatement(loc, statements.toArray(Statement[]::new));
+		final Statement overapprox = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
+		new Overapprox("memory order (only sequential consistency is supported)", loc).annotate(overapprox);
+		new Check(Spec.UNKNOWN).annotate(overapprox);
 		// Try to avoid unnecessary IfStatements
 		if (atomicCond instanceof BooleanLiteral) {
 			final BooleanLiteral literal = ((BooleanLiteral) atomicCond);
 			if (literal.getValue()) {
-				return List.of(atomic);
+				return atomic;
 			}
-			return originalStatements;
+			return overapprox;
 		}
-		return List.of(new IfStatement(loc, atomicCond, new Statement[] { atomic }, statements));
+		return new IfStatement(loc, atomicCond, new Statement[] { atomic }, new Statement[] { overapprox });
 	}
 
 	private Result handleVaStart(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
