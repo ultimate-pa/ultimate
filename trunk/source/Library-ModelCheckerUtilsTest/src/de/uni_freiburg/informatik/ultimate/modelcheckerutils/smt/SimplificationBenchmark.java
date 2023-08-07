@@ -305,6 +305,7 @@ public class SimplificationBenchmark {
 		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+
 	@Test
 	public void mod06_5675() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -316,5 +317,253 @@ public class SimplificationBenchmark {
 		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void quantified01_2103() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~sn~0#1"),
+		};
+		final String formulaAsString = "(or (forall ((|ULTIMATE.start_main_~n~0#1| Int)) (= (mod |ULTIMATE.start_main_~sn~0#1| 4294967296) (mod (div (mod (+ |ULTIMATE.start_main_~n~0#1| (* |ULTIMATE.start_main_~n~0#1| |ULTIMATE.start_main_~n~0#1|)) 4294967296) 2) 4294967296))) (= (mod |ULTIMATE.start_main_~sn~0#1| 4294967296) 0))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
+	@Test
+	public void quantified02_6010() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base", "#memory_$Pointer$.offset"),
+			new FunDecl(SmtSortUtils::getIntSort, "max_#in~n.offset", "max_#in~n.base"),
+		};
+		final String formulaAsString = "(or (and (= |max_#in~n.base| 0) (= |max_#in~n.offset| 0)) (and (forall ((|v_max_#in~n.base_BEFORE_CALL_11| Int) (|v_max_#in~n.offset_BEFORE_CALL_11| Int)) (= (select (select |#memory_$Pointer$.offset| |v_max_#in~n.base_BEFORE_CALL_11|) (+ |v_max_#in~n.offset_BEFORE_CALL_11| 8)) 0)) (forall ((|v_max_#in~n.base_BEFORE_CALL_11| Int) (|v_max_#in~n.offset_BEFORE_CALL_11| Int)) (= (select (select |#memory_$Pointer$.base| |v_max_#in~n.base_BEFORE_CALL_11|) (+ |v_max_#in~n.offset_BEFORE_CALL_11| 8)) 0))))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified03_2013() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~i~0#1", "ULTIMATE.start_main_~val2~0#1", "ULTIMATE.start_main_~a~0#1.offset", "ULTIMATE.start_main_~a~0#1.base", "~SIZE~0"),
+		};
+		final String formulaAsString = "(and (forall ((|v_ULTIMATE.start_main_~i~0#1_57| Int) (v_ArrVal_129 Int)) (or (< v_ArrVal_129 |ULTIMATE.start_main_~val2~0#1|) (< |v_ULTIMATE.start_main_~i~0#1_57| 0) (<= ~SIZE~0 (+ |v_ULTIMATE.start_main_~i~0#1_57| 2)) (< (select (store (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* |ULTIMATE.start_main_~i~0#1| 4)) v_ArrVal_129) (+ |ULTIMATE.start_main_~a~0#1.offset| (* |v_ULTIMATE.start_main_~i~0#1_57| 4))) (+ (select (store (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* |ULTIMATE.start_main_~i~0#1| 4)) v_ArrVal_129) (+ |ULTIMATE.start_main_~a~0#1.offset| (* |v_ULTIMATE.start_main_~i~0#1_57| 4) 8)) 1)))) (forall ((|v_ULTIMATE.start_main_~i~0#1_57| Int)) (or (< |v_ULTIMATE.start_main_~i~0#1_57| 0) (<= ~SIZE~0 (+ |v_ULTIMATE.start_main_~i~0#1_57| 2)) (< (select (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* |v_ULTIMATE.start_main_~i~0#1_57| 4))) (+ (select (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* |v_ULTIMATE.start_main_~i~0#1_57| 4) 8)) 1)))))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified04_4899() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~i~0#1", "ULTIMATE.start_main_~a~0#1.offset", "ULTIMATE.start_main_~#sum~0#1.base", "ULTIMATE.start_main_~a~0#1.base", "~N~0"),
+		};
+		final String formulaAsString = "(and (or (forall ((v_ArrVal_146 Int) (v_ArrVal_144 Int) (|ULTIMATE.start_main_~#sum~0#1.offset| Int)) (or (< 0 v_ArrVal_144) (< (+ v_ArrVal_144 (select (select (store |#memory_int| |ULTIMATE.start_main_~#sum~0#1.base| (store (select |#memory_int| |ULTIMATE.start_main_~#sum~0#1.base|) |ULTIMATE.start_main_~#sum~0#1.offset| v_ArrVal_144)) |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| 4))) v_ArrVal_146) (< (+ v_ArrVal_146 (select (select (store |#memory_int| |ULTIMATE.start_main_~#sum~0#1.base| (store (select |#memory_int| |ULTIMATE.start_main_~#sum~0#1.base|) |ULTIMATE.start_main_~#sum~0#1.offset| v_ArrVal_146)) |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| 8))) (+ (* ~N~0 4) 1)))) (< 3 ~N~0) (<= ~N~0 2)) (or (forall ((v_ArrVal_146 Int) (v_ArrVal_144 Int) (v_ArrVal_142 Int) (|ULTIMATE.start_main_~#sum~0#1.offset| Int)) (or (< 0 v_ArrVal_144) (< (+ v_ArrVal_146 (select (select (store (store |#memory_int| |ULTIMATE.start_main_~a~0#1.base| (store (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* |ULTIMATE.start_main_~i~0#1| 4)) v_ArrVal_142)) |ULTIMATE.start_main_~#sum~0#1.base| (store (select (store |#memory_int| |ULTIMATE.start_main_~a~0#1.base| (store (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* |ULTIMATE.start_main_~i~0#1| 4)) v_ArrVal_142)) |ULTIMATE.start_main_~#sum~0#1.base|) |ULTIMATE.start_main_~#sum~0#1.offset| v_ArrVal_146)) |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| 8))) (+ (* ~N~0 4) 1)) (< (+ v_ArrVal_144 (select (select (store (store |#memory_int| |ULTIMATE.start_main_~a~0#1.base| (store (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* |ULTIMATE.start_main_~i~0#1| 4)) v_ArrVal_142)) |ULTIMATE.start_main_~#sum~0#1.base| (store (select (store |#memory_int| |ULTIMATE.start_main_~a~0#1.base| (store (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* |ULTIMATE.start_main_~i~0#1| 4)) v_ArrVal_142)) |ULTIMATE.start_main_~#sum~0#1.base|) |ULTIMATE.start_main_~#sum~0#1.offset| v_ArrVal_144)) |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| 4))) v_ArrVal_146) (< 0 v_ArrVal_142))) (< 3 ~N~0) (<= ~N~0 2) (< (+ |ULTIMATE.start_main_~i~0#1| 1) ~N~0)))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified05_2007() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int", "#memory_$Pointer$.base", "#memory_$Pointer$.offset"),
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~list~0#1.offset", "ULTIMATE.start_main_~m~0#1.base", "ULTIMATE.start_main_~m~0#1.offset", "ULTIMATE.start_main_#t~mem9#1", "ULTIMATE.start_main_~list~0#1.base"),
+		};
+		final String formulaAsString = "(or (forall ((v_ArrVal_1150 Int)) (or (< (+ (select (select |#memory_int| |ULTIMATE.start_main_~list~0#1.base|) |ULTIMATE.start_main_~list~0#1.offset|) v_ArrVal_1150) (select (select |#memory_int| (select (select |#memory_$Pointer$.base| |ULTIMATE.start_main_~list~0#1.base|) (+ |ULTIMATE.start_main_~list~0#1.offset| 4))) (select (select |#memory_$Pointer$.offset| |ULTIMATE.start_main_~list~0#1.base|) (+ |ULTIMATE.start_main_~list~0#1.offset| 4)))) (<= 91 (select (select (store |#memory_int| (select (select |#memory_$Pointer$.base| |ULTIMATE.start_main_~list~0#1.base|) (+ |ULTIMATE.start_main_~list~0#1.offset| 4)) (store (select |#memory_int| (select (select |#memory_$Pointer$.base| |ULTIMATE.start_main_~list~0#1.base|) (+ |ULTIMATE.start_main_~list~0#1.offset| 4))) (select (select |#memory_$Pointer$.offset| |ULTIMATE.start_main_~list~0#1.base|) (+ |ULTIMATE.start_main_~list~0#1.offset| 4)) v_ArrVal_1150)) |ULTIMATE.start_main_~m~0#1.base|) |ULTIMATE.start_main_~m~0#1.offset|)))) (<= |ULTIMATE.start_main_#t~mem9#1| 100))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified06_2804() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
+			new FunDecl(SmtSortUtils::getIntSort, "Ubas", "s", "idx", "off", "sum"),
+		};
+		final String formulaAsString = "(and (exists ((|x| Int) (|y| Int) (|z| Int) (|u| Int)) (and (<= s (+ |x| 1)) (<= |x| 1) (= (select (select |#memory_int| |z|) (+ (- 4) (* |x| (* s 4)) |y| (* |u| 4))) 0) (= (select (select |#memory_int| |z|) |y|) 0) (<= s (+ |u| 1)) (= (select (select |#memory_int| |z|) (+ (* |x| (* s 4)) |y| (* |u| 4))) 0) (< |u| s) (= (select (select |#memory_int| |z|) (+ 4 |y|)) 0))) (= |sum| 0) (<= 0 |idx|) (< |idx| s) (exists ((|v_ULTIMATE.start_main_~row~0#1_26| Int) (|w| Int) (|v_off_BEFORE_CALL_2| Int) (|v_Ubas_BEFORE_CALL_2| Int)) (and (<= s (+ |w| 1)) (= (select (select |#memory_int| |v_Ubas_BEFORE_CALL_2|) |v_off_BEFORE_CALL_2|) 0) (<= |v_ULTIMATE.start_main_~row~0#1_26| 1) (= (select (select |#memory_int| |v_Ubas_BEFORE_CALL_2|) (+ 4 |v_off_BEFORE_CALL_2|)) 0) (<= s (+ |v_ULTIMATE.start_main_~row~0#1_26| 1)) (= (select (select |#memory_int| |v_Ubas_BEFORE_CALL_2|) (+ (* |v_ULTIMATE.start_main_~row~0#1_26| (* s 4)) (* |w| 4) |v_off_BEFORE_CALL_2|)) 0) (= (select (select |#memory_int| |v_Ubas_BEFORE_CALL_2|) (+ (* |v_ULTIMATE.start_main_~row~0#1_26| (* s 4)) (- 4) (* |w| 4) |v_off_BEFORE_CALL_2|)) 0) (< |w| s))) (= (select (select |#memory_int| |Ubas|) (+ |off| 4)) 0) (exists ((|v_ULTIMATE.start_main_~row~0#1_26| Int) (|w| Int)) (and (<= s (+ |w| 1)) (= (select (select |#memory_int| |Ubas|) (+ (* |v_ULTIMATE.start_main_~row~0#1_26| (* s 4)) |off| (- 4) (* |w| 4))) 0) (<= |v_ULTIMATE.start_main_~row~0#1_26| 1) (<= s (+ |v_ULTIMATE.start_main_~row~0#1_26| 1)) (= (select (select |#memory_int| |Ubas|) (+ (* |v_ULTIMATE.start_main_~row~0#1_26| (* s 4)) |off| (* |w| 4))) 0) (< |w| s))) (= (select (select |#memory_int| |Ubas|) |off|) 0) (<= 1 s))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified07_10019() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "ov", "v"),
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int", "mpb", "m", "om", "old(m)", "ompb"),
+			new FunDecl(SmtSortUtils::getIntSort, "bas"),
+		};
+		final String formulaAsString = "(and (or (exists ((|bc13| Int)) (not (= (select (select |mpb| |bc13|) 8) 0))) (exists ((|bc13| Int)) (not (= (select (select |m| |bc13|) 8) 0)))) (= (store |ov| |bas| (select |v| |bas|)) |v|) (= (select |ov| |bas|) 0) (= |#memory_int| |om|) (exists ((|bc| Int)) (<= 0 (+ (* 18446744073709551616 (div (* (- 1) (select (select |#memory_int| |bc|) 0)) 18446744073709551616)) (select (select |#memory_int| |bc|) 0)))) (= |mpb| |ompb|) (= |m| |old(m)|))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified08_1339() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "v"),
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "m"),
+			new FunDecl(SmtSortUtils::getIntSort, "tb", "ao", "ab", "pb", "po"),
+		};
+		final String formulaAsString = "(and (= |ao| 0) (not (= |ab| |pb|)) (= 2 (select (select |m| |ab|) 0)) (forall ((v_ArrVal_111 Int) (v_ArrVal_114 (Array Int Int))) (= 2 (select (select (store (store |m| |pb| (store (select |m| |pb|) (+ |po| 4) v_ArrVal_111)) |tb| v_ArrVal_114) |ab|) |ao|))) (= (select |v| |ab|) 1))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified09_6012() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base", "#memory_$Pointer$.offset"),
+			new FunDecl(SmtSortUtils::getIntSort, "max_#in~n.offset", "max_~n.offset", "max_#in~n.base", "max_~n.base"),
+		};
+		final String formulaAsString = "(or (and (= |max_#in~n.base| 0) (= |max_#in~n.offset| 0)) (and (forall ((|v_max_#in~n.base_BEFORE_CALL_8| Int) (|v_max_#in~n.offset_BEFORE_CALL_8| Int)) (= (select (select |#memory_$Pointer$.offset| |v_max_#in~n.base_BEFORE_CALL_8|) (+ |v_max_#in~n.offset_BEFORE_CALL_8| 4)) 0)) (forall ((|v_max_#in~n.base_BEFORE_CALL_8| Int) (|v_max_#in~n.offset_BEFORE_CALL_8| Int)) (= (select (select |#memory_$Pointer$.base| |v_max_#in~n.base_BEFORE_CALL_8|) (+ |v_max_#in~n.offset_BEFORE_CALL_8| 4)) 0))) (not (= max_~n.base 0)) (not (= max_~n.offset 0)))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified10_2713() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~list~0#1.offset", "ULTIMATE.start_main_~end~0#1.base", "ULTIMATE.start_main_~list~0#1.base"),
+		};
+		final String formulaAsString = "(and (or (forall ((v_ArrVal_305 (Array Int Int)) (v_ArrVal_309 (Array Int Int)) (v_arrayElimCell_12 Int)) (= (select (select (store (store |#memory_int| |ULTIMATE.start_main_~end~0#1.base| v_ArrVal_309) v_arrayElimCell_12 v_ArrVal_305) |ULTIMATE.start_main_~list~0#1.base|) (+ |ULTIMATE.start_main_~list~0#1.offset| 8)) 1)) (not (= (select |#valid| |ULTIMATE.start_main_~end~0#1.base|) 0))) (forall ((v_arrayElimCell_11 Int)) (or (forall ((v_ArrVal_304 (Array Int Int)) (v_ArrVal_305 (Array Int Int))) (= (select (select (store (store |#memory_int| |ULTIMATE.start_main_~end~0#1.base| v_ArrVal_304) v_arrayElimCell_11 v_ArrVal_305) |ULTIMATE.start_main_~list~0#1.base|) (+ |ULTIMATE.start_main_~list~0#1.offset| 8)) 1)) (= |ULTIMATE.start_main_~end~0#1.base| v_arrayElimCell_11) (not (= (select |#valid| v_arrayElimCell_11) 0)))) (forall ((v_arrayElimCell_11 Int)) (or (forall ((v_ArrVal_304 (Array Int Int)) (v_ArrVal_305 (Array Int Int))) (or (forall ((v_ArrVal_309 (Array Int Int)) (v_arrayElimCell_12 Int)) (= (select (select (store (store (store |#memory_int| |ULTIMATE.start_main_~end~0#1.base| v_ArrVal_304) v_arrayElimCell_11 v_ArrVal_309) v_arrayElimCell_12 v_ArrVal_305) |ULTIMATE.start_main_~list~0#1.base|) (+ |ULTIMATE.start_main_~list~0#1.offset| 8)) 1)) (= (select (select (store (store |#memory_int| |ULTIMATE.start_main_~end~0#1.base| v_ArrVal_304) v_arrayElimCell_11 v_ArrVal_305) |ULTIMATE.start_main_~list~0#1.base|) (+ |ULTIMATE.start_main_~list~0#1.offset| 8)) 1))) (not (= (select |#valid| v_arrayElimCell_11) 0)))))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified11_2993() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~list~0#1.offset", "ULTIMATE.start_main_~end~0#1.base", "ULTIMATE.start_main_~list~0#1.base"),
+		};
+		final String formulaAsString = "(and (or (forall ((v_ArrVal_305 (Array Int Int)) (v_ArrVal_309 (Array Int Int)) (v_arrayElimCell_12 Int)) (= (select (select (store (store |#memory_int| |ULTIMATE.start_main_~end~0#1.base| v_ArrVal_309) v_arrayElimCell_12 v_ArrVal_305) |ULTIMATE.start_main_~list~0#1.base|) (+ |ULTIMATE.start_main_~list~0#1.offset| 8)) 1)) (not (= (select |#valid| |ULTIMATE.start_main_~end~0#1.base|) 0))) (forall ((v_arrayElimCell_11 Int)) (or (forall ((v_ArrVal_304 (Array Int Int)) (v_ArrVal_305 (Array Int Int))) (= (select (select (store (store |#memory_int| |ULTIMATE.start_main_~end~0#1.base| v_ArrVal_304) v_arrayElimCell_11 v_ArrVal_305) |ULTIMATE.start_main_~list~0#1.base|) (+ |ULTIMATE.start_main_~list~0#1.offset| 8)) 1)) (= |ULTIMATE.start_main_~end~0#1.base| v_arrayElimCell_11) (not (= (select |#valid| v_arrayElimCell_11) 0)))) (forall ((v_arrayElimCell_11 Int)) (or (forall ((v_ArrVal_304 (Array Int Int)) (v_ArrVal_305 (Array Int Int))) (or (forall ((v_ArrVal_309 (Array Int Int)) (v_arrayElimCell_12 Int)) (= (select (select (store (store (store |#memory_int| |ULTIMATE.start_main_~end~0#1.base| v_ArrVal_304) v_arrayElimCell_11 v_ArrVal_309) v_arrayElimCell_12 v_ArrVal_305) |ULTIMATE.start_main_~list~0#1.base|) (+ |ULTIMATE.start_main_~list~0#1.offset| 8)) 1)) (= (select (select (store (store |#memory_int| |ULTIMATE.start_main_~end~0#1.base| v_ArrVal_304) v_arrayElimCell_11 v_ArrVal_305) |ULTIMATE.start_main_~list~0#1.base|) (+ |ULTIMATE.start_main_~list~0#1.offset| 8)) 1))) (not (= (select |#valid| v_arrayElimCell_11) 0)))))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified12_2156() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~i~0#1", "ULTIMATE.start_main_~a~0#1.offset", "ULTIMATE.start_main_~a~0#1.base", "~N~0"),
+		};
+		final String formulaAsString = "(and (<= ~N~0 2147483647) (or (exists ((v_z_3 Int) (v_y_3 Int)) (and (< v_z_3 4294967296) (< (+ v_z_3 (* v_y_3 4294967296)) ~N~0) (<= |ULTIMATE.start_main_~i~0#1| (+ v_z_3 (* v_y_3 4294967296) 1)) (= (+ (select (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* v_z_3 8) (- 34359738368))) (* 2 v_z_3) (* 8589934592 v_y_3)) (+ (* 8589934592 (* v_z_3 v_y_3)) (* 18446744073709551616 (* v_y_3 v_y_3)) (* v_z_3 v_z_3) 1)) (< 2147483647 v_z_3))) (exists ((v_z_1 Int) (v_y_1 Int)) (and (= (+ (* 8589934592 v_y_1) (* 2 v_z_1) (select (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ (* v_z_1 8) |ULTIMATE.start_main_~a~0#1.offset|))) (+ (* 8589934592 (* v_z_1 v_y_1)) (* 18446744073709551616 (* v_y_1 v_y_1)) (* v_z_1 v_z_1) 1)) (<= 0 v_z_1) (<= v_z_1 2147483647) (< (+ v_z_1 (* v_y_1 4294967296)) ~N~0) (<= |ULTIMATE.start_main_~i~0#1| (+ v_z_1 (* v_y_1 4294967296) 1))))) (<= (mod ~N~0 4294967296) 536870911) (< 0 ~N~0))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified13_12055() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "old(#valid)", "#length", "old(#length)", "#valid"),
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base", "#memory_$Pointer$.offset"),
+			new FunDecl(SmtSortUtils::getIntSort, "~ldv_coherent_state~0", "~res_kbtab_probe_3~0", "~ldv_urb_state~0"),
+		};
+		final String formulaAsString = "(and (or (< ~ldv_urb_state~0 0) (< ~ldv_coherent_state~0 0) (= ~ldv_coherent_state~0 1) (not (= ~ldv_coherent_state~0 0)) (not (= ~ldv_urb_state~0 0)) (and (= ~ldv_coherent_state~0 0) (= |old(#length)| |#length|) (= 0 ~res_kbtab_probe_3~0) (= ~ldv_urb_state~0 0) (= |old(#valid)| |#valid|)) (not (= 0 ~res_kbtab_probe_3~0))) (or (< ~ldv_urb_state~0 0) (< ~ldv_coherent_state~0 1) (not (= ~ldv_urb_state~0 0)) (not (= ~ldv_coherent_state~0 1)) (not (= 0 ~res_kbtab_probe_3~0)) (and (= |old(#length)| |#length|) (= 0 ~res_kbtab_probe_3~0) (= ~ldv_urb_state~0 0) (= ~ldv_coherent_state~0 1) (= |old(#valid)| |#valid|) (or (exists ((|v_ULTIMATE.start_kbtab_probe_~kbtab~3#1.base_BEFORE_CALL_1| Int) (|v_ULTIMATE.start_kbtab_probe_~kbtab~3#1.offset_BEFORE_CALL_1| Int)) (not (= (select (select |#memory_$Pointer$.base| |v_ULTIMATE.start_kbtab_probe_~kbtab~3#1.base_BEFORE_CALL_1|) |v_ULTIMATE.start_kbtab_probe_~kbtab~3#1.offset_BEFORE_CALL_1|) 0))) (exists ((|v_ULTIMATE.start_kbtab_probe_~kbtab~3#1.base_BEFORE_CALL_1| Int) (|v_ULTIMATE.start_kbtab_probe_~kbtab~3#1.offset_BEFORE_CALL_1| Int)) (not (= (select (select |#memory_$Pointer$.offset| |v_ULTIMATE.start_kbtab_probe_~kbtab~3#1.base_BEFORE_CALL_1|) |v_ULTIMATE.start_kbtab_probe_~kbtab~3#1.offset_BEFORE_CALL_1|) 0))))) (and (forall ((|v_ULTIMATE.start_kbtab_probe_~kbtab~3#1.base_BEFORE_CALL_1| Int) (|v_ULTIMATE.start_kbtab_probe_~kbtab~3#1.offset_BEFORE_CALL_1| Int)) (= (select (select |#memory_$Pointer$.base| |v_ULTIMATE.start_kbtab_probe_~kbtab~3#1.base_BEFORE_CALL_1|) |v_ULTIMATE.start_kbtab_probe_~kbtab~3#1.offset_BEFORE_CALL_1|) 0)) (forall ((|v_ULTIMATE.start_kbtab_probe_~kbtab~3#1.base_BEFORE_CALL_1| Int) (|v_ULTIMATE.start_kbtab_probe_~kbtab~3#1.offset_BEFORE_CALL_1| Int)) (= (select (select |#memory_$Pointer$.offset| |v_ULTIMATE.start_kbtab_probe_~kbtab~3#1.base_BEFORE_CALL_1|) |v_ULTIMATE.start_kbtab_probe_~kbtab~3#1.offset_BEFORE_CALL_1|) 0)))))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified14_10051() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
+			new FunDecl(SmtSortUtils::getIntSort, "aws_array_eq_#in~len_a", "aws_array_eq_#res"),
+		};
+		final String formulaAsString = "(or (= (mod |aws_array_eq_#res| 256) 0) (<= (mod |aws_array_eq_#in~len_a| 18446744073709551616) 0) (and (forall ((|x| Int) (|y| Int)) (or (< 9223372036854775807 (mod (select (select |#memory_int| |x|) (+ |y| 8)) 18446744073709551616)) (= (mod (select (select |#memory_int| |x|) (+ |y| 16 (mod (select (select |#memory_int| |x|) (+ |y| 8)) 18446744073709551616))) 256) 0))) (forall ((|x| Int) (|y| Int)) (or (= (mod (select (select |#memory_int| |x|) (+ |y| (- 18446744073709551600) (mod (select (select |#memory_int| |x|) (+ |y| 8)) 18446744073709551616))) 256) 0) (= (mod (select (select |#memory_int| |x|) (+ |y| 16 (mod (select (select |#memory_int| |x|) (+ |y| 8)) 18446744073709551616))) 256) 0))) (forall ((|x| Int) (|y| Int)) (or (<= (mod (select (select |#memory_int| |x|) (+ |y| 8)) 18446744073709551616) 9223372036854775807) (= (mod (select (select |#memory_int| |x|) (+ |y| (- 18446744073709551600) (mod (select (select |#memory_int| |x|) (+ |y| 8)) 18446744073709551616))) 256) 0)))))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified15_2748() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~t~0#1.base", "ULTIMATE.start_main_~a~0#1.offset", "ULTIMATE.start_main_~a~0#1.base", "ULTIMATE.start_main_~p~0#1.base", "ULTIMATE.start_main_~p~0#1.offset"),
+		};
+		final String formulaAsString = "(and (= |ULTIMATE.start_main_~a~0#1.offset| 0) (not (= |ULTIMATE.start_main_~a~0#1.base| |ULTIMATE.start_main_~p~0#1.base|)) (= (select (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) 0) 1) (forall ((v_ArrVal_277 Int) (v_ArrVal_280 (Array Int Int))) (= (select (select (store (store |#memory_int| |ULTIMATE.start_main_~p~0#1.base| (store (select |#memory_int| |ULTIMATE.start_main_~p~0#1.base|) (+ |ULTIMATE.start_main_~p~0#1.offset| 4) v_ArrVal_277)) |ULTIMATE.start_main_~t~0#1.base| v_ArrVal_280) |ULTIMATE.start_main_~a~0#1.base|) |ULTIMATE.start_main_~a~0#1.offset|) 1)) (= (select (select |#memory_int| |ULTIMATE.start_main_~p~0#1.base|) |ULTIMATE.start_main_~p~0#1.offset|) 1) (= (select |#valid| |ULTIMATE.start_main_~a~0#1.base|) 1))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified16_3583() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base", "#memory_$Pointer$.offset"),
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~#prio_queue~0#1.offset", "ULTIMATE.start_main_~#prio_queue~0#1.base", "#StackHeapBarrier", "ULTIMATE.start_main_~#normal_queue~0#1.base", "ULTIMATE.start_main_~#normal_queue~0#1.offset"),
+		};
+		final String formulaAsString = "(and (forall ((v_append_to_queue_~node~0.base_8 Int)) (or (<= |#StackHeapBarrier| v_append_to_queue_~node~0.base_8) (forall ((|v_append_to_queue_~#p.base_23| Int)) (or (forall ((v_ArrVal_904 (Array Int Int)) (v_ArrVal_906 (Array Int Int)) (v_ArrVal_908 (Array Int Int))) (= (select (select (store (store (store |#memory_$Pointer$.base| |v_append_to_queue_~#p.base_23| v_ArrVal_904) v_append_to_queue_~node~0.base_8 v_ArrVal_908) |ULTIMATE.start_main_~#normal_queue~0#1.base| v_ArrVal_906) |ULTIMATE.start_main_~#prio_queue~0#1.base|) |ULTIMATE.start_main_~#prio_queue~0#1.offset|) 0)) (not (= (select |#valid| |v_append_to_queue_~#p.base_23|) 0)))))) (forall ((v_append_to_queue_~node~0.base_8 Int)) (or (<= |#StackHeapBarrier| v_append_to_queue_~node~0.base_8) (forall ((|v_append_to_queue_~#p.base_23| Int)) (or (not (= (select |#valid| |v_append_to_queue_~#p.base_23|) 0)) (forall ((v_ArrVal_903 (Array Int Int)) (v_ArrVal_905 (Array Int Int)) (v_ArrVal_907 (Array Int Int))) (= (select (select (store (store (store |#memory_$Pointer$.offset| |v_append_to_queue_~#p.base_23| v_ArrVal_905) v_append_to_queue_~node~0.base_8 v_ArrVal_907) |ULTIMATE.start_main_~#normal_queue~0#1.base| (store (select (store (store |#memory_$Pointer$.offset| |v_append_to_queue_~#p.base_23| v_ArrVal_905) v_append_to_queue_~node~0.base_8 v_ArrVal_903) |ULTIMATE.start_main_~#normal_queue~0#1.base|) |ULTIMATE.start_main_~#normal_queue~0#1.offset| 0)) |ULTIMATE.start_main_~#prio_queue~0#1.base|) |ULTIMATE.start_main_~#prio_queue~0#1.offset|) 0)))))))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified17_9730() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "old(#valid)"),
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int", "old(#memory_int)"),
+			new FunDecl(SmtSortUtils::getIntSort, "aws_array_list_is_valid_#in~list.offset", "aws_array_list_is_valid_#res", "aws_array_list_is_valid_#in~list.base"),
+		};
+		final String formulaAsString = "(and (or (and (not (= (mod (select (select |#memory_int| |aws_array_list_is_valid_#in~list.base|) (+ |aws_array_list_is_valid_#in~list.offset| 24)) 18446744073709551616) 0)) (or (and (exists ((|aws_array_list_is_valid_~#required_size~0.base| Int)) (and (= (select |old(#valid)| |aws_array_list_is_valid_~#required_size~0.base|) 0) (= |#memory_int| (store |old(#memory_int)| |aws_array_list_is_valid_~#required_size~0.base| (store (select |old(#memory_int)| |aws_array_list_is_valid_~#required_size~0.base|) 0 (* (select (select |old(#memory_int)| |aws_array_list_is_valid_#in~list.base|) (+ |aws_array_list_is_valid_#in~list.offset| 24)) (select (select |old(#memory_int)| |aws_array_list_is_valid_#in~list.base|) (+ 16 |aws_array_list_is_valid_#in~list.offset|)))))) (<= (mod (select (select |#memory_int| |aws_array_list_is_valid_~#required_size~0.base|) 0) 18446744073709551616) 0))) (or (= |aws_array_list_is_valid_#res| 0) (= |aws_array_list_is_valid_#res| 1))) (and (= |aws_array_list_is_valid_#res| 0) (exists ((|aws_array_list_is_valid_~#required_size~0.base| Int)) (and (< 0 (mod (select (select |#memory_int| |aws_array_list_is_valid_~#required_size~0.base|) 0) 18446744073709551616)) (= (select |old(#valid)| |aws_array_list_is_valid_~#required_size~0.base|) 0) (= |#memory_int| (store |old(#memory_int)| |aws_array_list_is_valid_~#required_size~0.base| (store (select |old(#memory_int)| |aws_array_list_is_valid_~#required_size~0.base|) 0 (* (select (select |old(#memory_int)| |aws_array_list_is_valid_#in~list.base|) (+ |aws_array_list_is_valid_#in~list.offset| 24)) (select (select |old(#memory_int)| |aws_array_list_is_valid_#in~list.base|) (+ 16 |aws_array_list_is_valid_#in~list.offset|))))))))))) (and (or (and (exists ((|aws_array_list_is_valid_~#required_size~0.base| Int)) (and (= (select |old(#valid)| |aws_array_list_is_valid_~#required_size~0.base|) 0) (= |#memory_int| (store |old(#memory_int)| |aws_array_list_is_valid_~#required_size~0.base| (store (select |old(#memory_int)| |aws_array_list_is_valid_~#required_size~0.base|) 0 (* (select (select |old(#memory_int)| |aws_array_list_is_valid_#in~list.base|) (+ |aws_array_list_is_valid_#in~list.offset| 24)) (select (select |old(#memory_int)| |aws_array_list_is_valid_#in~list.base|) (+ 16 |aws_array_list_is_valid_#in~list.offset|)))))) (<= (mod (select (select |#memory_int| |aws_array_list_is_valid_~#required_size~0.base|) 0) 18446744073709551616) 0))) (= |aws_array_list_is_valid_#res| 0)) (and (= |aws_array_list_is_valid_#res| 0) (exists ((|aws_array_list_is_valid_~#required_size~0.base| Int)) (and (< 0 (mod (select (select |#memory_int| |aws_array_list_is_valid_~#required_size~0.base|) 0) 18446744073709551616)) (= (select |old(#valid)| |aws_array_list_is_valid_~#required_size~0.base|) 0) (= |#memory_int| (store |old(#memory_int)| |aws_array_list_is_valid_~#required_size~0.base| (store (select |old(#memory_int)| |aws_array_list_is_valid_~#required_size~0.base|) 0 (* (select (select |old(#memory_int)| |aws_array_list_is_valid_#in~list.base|) (+ |aws_array_list_is_valid_#in~list.offset| 24)) (select (select |old(#memory_int)| |aws_array_list_is_valid_#in~list.base|) (+ 16 |aws_array_list_is_valid_#in~list.offset|)))))))))) (= (mod (select (select |#memory_int| |aws_array_list_is_valid_#in~list.base|) (+ |aws_array_list_is_valid_#in~list.offset| 24)) 18446744073709551616) 0))) (= (mod (select (select |#memory_int| |aws_array_list_is_valid_#in~list.base|) (+ |aws_array_list_is_valid_#in~list.offset| 8)) 18446744073709551616) 0))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified18_3140() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int", "#memory_$Pointer$.base", "old(#memory_int)", "#memory_$Pointer$.offset", "old(#memory_$Pointer$.offset)", "old(#memory_$Pointer$.base)"),
+			new FunDecl(SmtSortUtils::getIntSort, "aws_is_mem_zeroed_#in~buf.base", "aws_is_mem_zeroed_~buf_u8~0.offset", "aws_is_mem_zeroed_~buf_u8~0.base", "aws_is_mem_zeroed_~i~0", "aws_is_mem_zeroed_#in~bufsize", "aws_is_mem_zeroed_#in~buf.offset"),
+		};
+		final String formulaAsString = "(and (exists ((v_z_16 Int) (v_y_16 Int) (v_aws_linked_list_node_reset_~node.base_BEFORE_CALL_17 Int) (v_aws_linked_list_node_reset_~node.offset_BEFORE_CALL_17 Int)) (and (<= (+ (* 18446744073709551616 v_y_16) v_z_16) 5) (<= 5 (+ (* 18446744073709551616 v_y_16) v_z_16)) (= (select (select |#memory_int| v_aws_linked_list_node_reset_~node.base_BEFORE_CALL_17) (+ (* 18446744073709551616 v_y_16) v_z_16 (- 5) v_aws_linked_list_node_reset_~node.offset_BEFORE_CALL_17)) 0) (= (select (select |#memory_int| v_aws_linked_list_node_reset_~node.base_BEFORE_CALL_17) (+ (* 18446744073709551616 v_y_16) v_z_16 (- 4) v_aws_linked_list_node_reset_~node.offset_BEFORE_CALL_17)) 0) (< v_z_16 17) (= (select (select |#memory_int| v_aws_linked_list_node_reset_~node.base_BEFORE_CALL_17) (+ (* 18446744073709551616 v_y_16) v_z_16 v_aws_linked_list_node_reset_~node.offset_BEFORE_CALL_17)) 0) (= 0 (select (select |#memory_int| v_aws_linked_list_node_reset_~node.base_BEFORE_CALL_17) (+ (* 18446744073709551616 v_y_16) v_z_16 (- 3) v_aws_linked_list_node_reset_~node.offset_BEFORE_CALL_17))) (<= 1 v_z_16) (= (select (select |#memory_int| v_aws_linked_list_node_reset_~node.base_BEFORE_CALL_17) (+ (- 1) (* 18446744073709551616 v_y_16) v_z_16 v_aws_linked_list_node_reset_~node.offset_BEFORE_CALL_17)) 0) (= (select (select |#memory_int| v_aws_linked_list_node_reset_~node.base_BEFORE_CALL_17) (+ (- 2) (* 18446744073709551616 v_y_16) v_z_16 v_aws_linked_list_node_reset_~node.offset_BEFORE_CALL_17)) 0))) (= aws_is_mem_zeroed_~buf_u8~0.offset |aws_is_mem_zeroed_#in~buf.offset|) (= |#memory_int| |old(#memory_int)|) (= |#memory_$Pointer$.base| |old(#memory_$Pointer$.base)|) (<= (mod (select (select |#memory_int| aws_is_mem_zeroed_~buf_u8~0.base) aws_is_mem_zeroed_~buf_u8~0.offset) 256) 0) (= |#memory_$Pointer$.offset| |old(#memory_$Pointer$.offset)|) (exists ((v_z_16 Int) (v_aws_linked_list_node_reset_~node.base_BEFORE_CALL_17 Int) (v_y_16 Int) (v_aws_linked_list_node_reset_~node.offset_BEFORE_CALL_17 Int)) (and (<= (+ (* 18446744073709551616 v_y_16) v_z_16) 5) (<= 5 (+ (* 18446744073709551616 v_y_16) v_z_16)) (= (select (select |#memory_int| v_aws_linked_list_node_reset_~node.base_BEFORE_CALL_17) (+ (* 18446744073709551616 v_y_16) v_z_16 (- 5) v_aws_linked_list_node_reset_~node.offset_BEFORE_CALL_17)) 0) (= (select (select |#memory_int| v_aws_linked_list_node_reset_~node.base_BEFORE_CALL_17) (+ (* 18446744073709551616 v_y_16) v_z_16 (- 4) v_aws_linked_list_node_reset_~node.offset_BEFORE_CALL_17)) 0) (< v_z_16 17) (= (select (select |#memory_int| v_aws_linked_list_node_reset_~node.base_BEFORE_CALL_17) (+ (* 18446744073709551616 v_y_16) v_z_16 v_aws_linked_list_node_reset_~node.offset_BEFORE_CALL_17)) 0) (= 0 (select (select |#memory_int| v_aws_linked_list_node_reset_~node.base_BEFORE_CALL_17) (+ (* 18446744073709551616 v_y_16) v_z_16 (- 3) v_aws_linked_list_node_reset_~node.offset_BEFORE_CALL_17))) (<= 1 v_z_16) (= (select (select |#memory_int| v_aws_linked_list_node_reset_~node.base_BEFORE_CALL_17) (+ (- 1) (* 18446744073709551616 v_y_16) v_z_16 v_aws_linked_list_node_reset_~node.offset_BEFORE_CALL_17)) 0) (= (select (select |#memory_int| v_aws_linked_list_node_reset_~node.base_BEFORE_CALL_17) (+ (- 2) (* 18446744073709551616 v_y_16) v_z_16 v_aws_linked_list_node_reset_~node.offset_BEFORE_CALL_17)) 0))) (= aws_is_mem_zeroed_~buf_u8~0.base |aws_is_mem_zeroed_#in~buf.base|) (= aws_is_mem_zeroed_~i~0 4) (< 0 (mod |aws_is_mem_zeroed_#in~bufsize| 18446744073709551616)))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified19_9075() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~b~0#1.offset", "ULTIMATE.start_main_~i~0#1", "ULTIMATE.start_main_~a~0#1.offset", "ULTIMATE.start_main_~a~0#1.base", "ULTIMATE.start_main_~b~0#1.base"),
+		};
+		final String formulaAsString = "(and (or (and (or (forall ((v_ArrVal_198 Int)) (or (= (+ (select (store (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* (mod |ULTIMATE.start_main_~i~0#1| 4294967296) 8)) v_ArrVal_198) |ULTIMATE.start_main_~a~0#1.offset|) (select (select (store |#memory_int| |ULTIMATE.start_main_~a~0#1.base| (store (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* (mod |ULTIMATE.start_main_~i~0#1| 4294967296) 8)) v_ArrVal_198)) |ULTIMATE.start_main_~b~0#1.base|) |ULTIMATE.start_main_~b~0#1.offset|)) 7) (< v_ArrVal_198 (+ 6 (select (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* (mod (+ 4294967295 |ULTIMATE.start_main_~i~0#1|) 4294967296) 8) (- 34359738368))))))) (< 2147483647 (mod |ULTIMATE.start_main_~i~0#1| 4294967296))) (or (<= (mod |ULTIMATE.start_main_~i~0#1| 4294967296) 2147483647) (forall ((v_ArrVal_198 Int)) (or (< v_ArrVal_198 (+ 6 (select (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* (mod (+ 4294967295 |ULTIMATE.start_main_~i~0#1|) 4294967296) 8) (- 34359738368))))) (= 7 (+ (select (store (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* (mod |ULTIMATE.start_main_~i~0#1| 4294967296) 8) (- 34359738368)) v_ArrVal_198) |ULTIMATE.start_main_~a~0#1.offset|) (select (select (store |#memory_int| |ULTIMATE.start_main_~a~0#1.base| (store (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* (mod |ULTIMATE.start_main_~i~0#1| 4294967296) 8) (- 34359738368)) v_ArrVal_198)) |ULTIMATE.start_main_~b~0#1.base|) |ULTIMATE.start_main_~b~0#1.offset|))))))) (<= (mod (+ 4294967295 |ULTIMATE.start_main_~i~0#1|) 4294967296) 2147483647)) (or (and (or (<= (mod |ULTIMATE.start_main_~i~0#1| 4294967296) 2147483647) (forall ((v_ArrVal_198 Int)) (or (< v_ArrVal_198 (+ 6 (select (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* (mod (+ 4294967295 |ULTIMATE.start_main_~i~0#1|) 4294967296) 8))))) (= 7 (+ (select (store (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* (mod |ULTIMATE.start_main_~i~0#1| 4294967296) 8) (- 34359738368)) v_ArrVal_198) |ULTIMATE.start_main_~a~0#1.offset|) (select (select (store |#memory_int| |ULTIMATE.start_main_~a~0#1.base| (store (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* (mod |ULTIMATE.start_main_~i~0#1| 4294967296) 8) (- 34359738368)) v_ArrVal_198)) |ULTIMATE.start_main_~b~0#1.base|) |ULTIMATE.start_main_~b~0#1.offset|)))))) (or (forall ((v_ArrVal_198 Int)) (or (= (+ (select (store (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* (mod |ULTIMATE.start_main_~i~0#1| 4294967296) 8)) v_ArrVal_198) |ULTIMATE.start_main_~a~0#1.offset|) (select (select (store |#memory_int| |ULTIMATE.start_main_~a~0#1.base| (store (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* (mod |ULTIMATE.start_main_~i~0#1| 4294967296) 8)) v_ArrVal_198)) |ULTIMATE.start_main_~b~0#1.base|) |ULTIMATE.start_main_~b~0#1.offset|)) 7) (< v_ArrVal_198 (+ 6 (select (select |#memory_int| |ULTIMATE.start_main_~a~0#1.base|) (+ |ULTIMATE.start_main_~a~0#1.offset| (* (mod (+ 4294967295 |ULTIMATE.start_main_~i~0#1|) 4294967296) 8))))))) (< 2147483647 (mod |ULTIMATE.start_main_~i~0#1| 4294967296)))) (< 2147483647 (mod (+ 4294967295 |ULTIMATE.start_main_~i~0#1|) 4294967296))))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified20_10317() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "v"),
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "m"),
+			new FunDecl(SmtSortUtils::getIntSort, "init", "data", "heado", "headb", "last"),
+		};
+		final String formulaAsString = "(and (or (not (= 0 (select |v| |last|))) (forall ((xa (Array Int Int)) (cell41 Int) (cell39 Int) (x Int) (val671 (Array Int Int)) (v_ArrVal_646 Int) (cell42 Int)) (or (= |init| (select (select (store (store (store |m| |last| xa) |headb| (store (select (store |m| |last| xa) |headb|) (+ |heado| 8) v_ArrVal_646)) |last| val671) x) cell42)) (= |init| (select (select (store (store (store |m| |last| xa) |headb| (store (select (store |m| |last| xa) |headb|) (+ |heado| 8) v_ArrVal_646)) |last| val671) cell39) cell41)) (not (= (select xa 0) |data|))))) (forall ((|y| Int)) (or (forall ((xa (Array Int Int))) (or (forall ((cell41 Int) (cell39 Int) (x Int) (val671 (Array Int Int)) (v_ArrVal_646 Int) (cell42 Int) (val665 (Array Int Int))) (or (= |init| (select (select (store (store (store (store |m| |y| xa) |headb| (store (select (store |m| |y| xa) |headb|) (+ |heado| 8) v_ArrVal_646)) |last| val665) |y| val671) |headb|) |heado|)) (= |init| (select (select (store (store (store (store |m| |y| xa) |headb| (store (select (store |m| |y| xa) |headb|) (+ |heado| 8) v_ArrVal_646)) |last| val665) |y| val671) x) cell42)) (= (select (select (store (store (store (store |m| |y| xa) |headb| (store (select (store |m| |y| xa) |headb|) (+ |heado| 8) v_ArrVal_646)) |last| val665) |y| val671) cell39) cell41) |init|))) (not (= (select xa 0) |data|)))) (not (= (select |v| |y|) 0)))) (forall ((|y| Int)) (or (forall ((xa (Array Int Int)) (val671 (Array Int Int)) (v_ArrVal_646 Int) (val665 (Array Int Int))) (or (= |init| (select (select (store (store (store (store |m| |y| xa) |headb| (store (select (store |m| |y| xa) |headb|) (+ |heado| 8) v_ArrVal_646)) |last| val665) |y| val671) |headb|) |heado|)) (not (= (select xa 0) |data|)))) (= |y| |headb|) (= |y| |last|) (not (= (select |v| |y|) 0)))) (or (not (= 0 (select |v| |last|))) (forall ((xa (Array Int Int)) (x Int) (val671 (Array Int Int)) (v_ArrVal_646 Int) (cell42 Int)) (or (= |init| (select (select (store (store (store |m| |last| xa) |headb| (store (select (store |m| |last| xa) |headb|) (+ |heado| 8) v_ArrVal_646)) |last| val671) x) cell42)) (not (= (select xa 0) |data|))))) (forall ((|y| Int)) (or (= |y| |headb|) (forall ((xa (Array Int Int))) (or (forall ((x Int) (val671 (Array Int Int)) (v_ArrVal_646 Int) (cell42 Int) (val665 (Array Int Int))) (or (= |init| (select (select (store (store (store (store |m| |y| xa) |headb| (store (select (store |m| |y| xa) |headb|) (+ |heado| 8) v_ArrVal_646)) |last| val665) |y| val671) |headb|) |heado|)) (= |init| (select (select (store (store (store (store |m| |y| xa) |headb| (store (select (store |m| |y| xa) |headb|) (+ |heado| 8) v_ArrVal_646)) |last| val665) |y| val671) x) cell42)))) (not (= (select xa 0) |data|)))) (not (= (select |v| |y|) 0)))) (forall ((|y| Int)) (or (forall ((xa (Array Int Int)) (cell41 Int) (cell39 Int) (val671 (Array Int Int)) (v_ArrVal_646 Int) (val665 (Array Int Int))) (or (= |init| (select (select (store (store (store (store |m| |y| xa) |headb| (store (select (store |m| |y| xa) |headb|) (+ |heado| 8) v_ArrVal_646)) |last| val665) |y| val671) |headb|) |heado|)) (= (select (select (store (store (store (store |m| |y| xa) |headb| (store (select (store |m| |y| xa) |headb|) (+ |heado| 8) v_ArrVal_646)) |last| val665) |y| val671) cell39) cell41) |init|) (not (= (select xa 0) |data|)))) (= |y| |last|) (not (= (select |v| |y|) 0)))) (or (not (= (select |v| |headb|) 0)) (and (or (and (or (forall ((v_arrayElimArr_10 (Array Int Int)) (cell41 Int) (cell39 Int) (val671 (Array Int Int)) (val665 (Array Int Int))) (= |init| (select (select (store (store (store |m| |headb| v_arrayElimArr_10) |last| val665) |headb| val671) cell39) cell41))) (not (= (+ |heado| 8) 0))) (forall ((v_arrayElimArr_10 (Array Int Int)) (cell41 Int) (cell39 Int) (val671 (Array Int Int)) (val665 (Array Int Int))) (or (not (= (select v_arrayElimArr_10 0) |data|)) (= |init| (select (select (store (store (store |m| |headb| v_arrayElimArr_10) |last| val665) |headb| val671) cell39) cell41))))) (= |headb| |last|)) (or (not (= (+ |heado| 8) 0)) (forall ((cell41 Int) (cell39 Int) (x Int) (val671 (Array Int Int)) (v_arrayElimArr_9 (Array Int Int)) (cell42 Int) (val665 (Array Int Int))) (or (= |init| (select (select (store (store (store |m| |headb| v_arrayElimArr_9) |last| val665) |headb| val671) x) cell42)) (= (select (select (store (store (store |m| |headb| v_arrayElimArr_9) |last| val665) |headb| val671) cell39) cell41) |init|)))) (forall ((cell41 Int) (cell39 Int) (x Int) (val671 (Array Int Int)) (v_arrayElimArr_9 (Array Int Int)) (cell42 Int) (val665 (Array Int Int))) (or (= |init| (select (select (store (store (store |m| |headb| v_arrayElimArr_9) |last| val665) |headb| val671) x) cell42)) (not (= (select v_arrayElimArr_9 0) |data|)) (= (select (select (store (store (store |m| |headb| v_arrayElimArr_9) |last| val665) |headb| val671) cell39) cell41) |init|))))))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified21_3132() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int", "#memory_$Pointer$.base", "old(#memory_int)", "#memory_$Pointer$.offset", "old(#memory_$Pointer$.offset)", "old(#memory_$Pointer$.base)"),
+			new FunDecl(SmtSortUtils::getIntSort, "aws_is_mem_zeroed_#in~buf.base", "aws_is_mem_zeroed_~buf_u8~0.offset", "aws_is_mem_zeroed_~buf_u8~0.base", "aws_is_mem_zeroed_~i~0", "aws_is_mem_zeroed_~bufsize", "aws_is_mem_zeroed_#in~bufsize", "aws_is_mem_zeroed_#in~buf.offset"),
+		};
+		final String formulaAsString = "(and (exists ((v_z_16 Int) (v_y_16 Int) (x Int) (y Int)) (and (<= (+ (* 18446744073709551616 v_y_16) v_z_16) 5) (<= 5 (+ (* 18446744073709551616 v_y_16) v_z_16)) (= (select (select |#memory_int| x) (+ (* 18446744073709551616 v_y_16) v_z_16 (- 5) y)) 0) (= (select (select |#memory_int| x) (+ (* 18446744073709551616 v_y_16) v_z_16 (- 4) y)) 0) (< v_z_16 17) (= (select (select |#memory_int| x) (+ (* 18446744073709551616 v_y_16) v_z_16 y)) 0) (= 0 (select (select |#memory_int| x) (+ (* 18446744073709551616 v_y_16) v_z_16 (- 3) y))) (<= 1 v_z_16) (= (select (select |#memory_int| x) (+ (- 1) (* 18446744073709551616 v_y_16) v_z_16 y)) 0) (= (select (select |#memory_int| x) (+ (- 2) (* 18446744073709551616 v_y_16) v_z_16 y)) 0))) (= aws_is_mem_zeroed_~buf_u8~0.offset |aws_is_mem_zeroed_#in~buf.offset|) (= |#memory_int| |old(#memory_int)|) (= |#memory_$Pointer$.base| |old(#memory_$Pointer$.base)|) (<= (mod (select (select |#memory_int| aws_is_mem_zeroed_~buf_u8~0.base) aws_is_mem_zeroed_~buf_u8~0.offset) 256) 0) (= |#memory_$Pointer$.offset| |old(#memory_$Pointer$.offset)|) (exists ((v_z_16 Int) (x Int) (v_y_16 Int) (y Int)) (and (<= (+ (* 18446744073709551616 v_y_16) v_z_16) 5) (<= 5 (+ (* 18446744073709551616 v_y_16) v_z_16)) (= (select (select |#memory_int| x) (+ (* 18446744073709551616 v_y_16) v_z_16 (- 5) y)) 0) (= (select (select |#memory_int| x) (+ (* 18446744073709551616 v_y_16) v_z_16 (- 4) y)) 0) (< v_z_16 17) (= (select (select |#memory_int| x) (+ (* 18446744073709551616 v_y_16) v_z_16 y)) 0) (= 0 (select (select |#memory_int| x) (+ (* 18446744073709551616 v_y_16) v_z_16 (- 3) y))) (<= 1 v_z_16) (= (select (select |#memory_int| x) (+ (- 1) (* 18446744073709551616 v_y_16) v_z_16 y)) 0) (= (select (select |#memory_int| x) (+ (- 2) (* 18446744073709551616 v_y_16) v_z_16 y)) 0))) (= aws_is_mem_zeroed_~buf_u8~0.base |aws_is_mem_zeroed_#in~buf.base|) (= aws_is_mem_zeroed_~i~0 0) (< 0 (mod |aws_is_mem_zeroed_#in~bufsize| 18446744073709551616)) (= |aws_is_mem_zeroed_#in~bufsize| aws_is_mem_zeroed_~bufsize))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantified22_4046() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
+			new FunDecl(SmtSortUtils::getIntSort, "aws_array_eq_ignore_case_#in~len_b", "aws_array_eq_ignore_case_#in~len_a", "aws_array_eq_ignore_case_#res"),
+		};
+		final String formulaAsString = "(or (and (forall ((|x| Int) (|y| Int)) (or (= (mod (select (select |#memory_int| |x|) (+ |y| (mod (select (select |#memory_int| |x|) (+ |y| 8)) 18446744073709551616) (- 18446744073709551600))) 256) 0) (<= (mod (select (select |#memory_int| |x|) (+ |y| 8)) 18446744073709551616) 9223372036854775807))) (forall ((|x| Int) (|y| Int)) (or (= (mod (select (select |#memory_int| |x|) (+ 16 |y| (mod (select (select |#memory_int| |x|) (+ |y| 8)) 18446744073709551616))) 256) 0) (= (mod (select (select |#memory_int| |x|) (+ |y| (mod (select (select |#memory_int| |x|) (+ |y| 8)) 18446744073709551616) (- 18446744073709551600))) 256) 0))) (forall ((|x| Int) (|y| Int)) (or (= (mod (select (select |#memory_int| |x|) (+ 16 |y| (mod (select (select |#memory_int| |x|) (+ |y| 8)) 18446744073709551616))) 256) 0) (< 9223372036854775807 (mod (select (select |#memory_int| |x|) (+ |y| 8)) 18446744073709551616))))) (= (mod |aws_array_eq_ignore_case_#res| 256) 0) (= (mod |aws_array_eq_ignore_case_#in~len_a| 18446744073709551616) (mod |aws_array_eq_ignore_case_#in~len_b| 18446744073709551616)))";
+		final String expectedResultAsString = null;
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 }
