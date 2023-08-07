@@ -1014,19 +1014,15 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final List<Statement> statements = new ArrayList<>();
 		final ExpressionResult pointer = (ExpressionResult) main.dispatch(arguments[0]);
-		builder.addAllExceptLrValueAndStatements(pointer);
-		statements.addAll(pointer.getStatements());
-		final ExpressionResult memoryOrder = (ExpressionResult) main.dispatch(arguments[1]);
-		builder.addAllExceptLrValue(memoryOrder);
+		builder.addAllExceptLrValue(pointer);
 		final var heapValue = LRValueFactory.constructHeapLValue(mTypeHandler, pointer.getLrValue().getValue(),
 				pointer.getCType(), null);
-		statements.addAll(mMemoryHandler.getWriteCall(
+		builder.addStatements(mMemoryHandler.getWriteCall(
 				loc, heapValue, mExpressionTranslation.constructLiteralForIntegerType(loc,
 						new CPrimitive(CPrimitives.BOOL), BigInteger.ZERO),
 				((CPointer) pointer.getCType()).getPointsToType(), false));
-		return builder.addStatement(handleMemoryOrder(loc, statements, memoryOrder.getLrValue().getValue())).build();
+		return buildWrtMemoryOrder(loc, builder, (ExpressionResult) main.dispatch(arguments[1]));
 	}
 
 	private Result handleAtomicTestAndSet(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1066,28 +1062,21 @@ public class StandardFunctionHandler {
 			final List<Pair<IASTInitializerClause, IASTInitializerClause>> srcTargets,
 			final IASTInitializerClause memOrder) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final List<Statement> statements = new ArrayList<>();
-
-		final ExpressionResult memOrderResult = (ExpressionResult) main.dispatch(memOrder);
-		builder.addAllExceptLrValue(memOrderResult);
-
 		for (final var srcTarget : srcTargets) {
 			final ExpressionResult srcResult = (ExpressionResult) main.dispatch(srcTarget.getFirst());
-			builder.addAllExceptLrValueAndStatements(srcResult);
+			builder.addAllExceptLrValue(srcResult);
 			final ExpressionResult targetResult = (ExpressionResult) main.dispatch(srcTarget.getSecond());
-			builder.addAllExceptLrValueAndStatements(targetResult);
+			builder.addAllExceptLrValue(targetResult);
 
 			final ExpressionResult read = mMemoryHandler.getReadCall(srcResult.getLrValue().getValue(),
 					((CPointer) srcResult.getCType()).getPointsToType());
-			builder.addAllExceptLrValueAndStatements(read);
+			builder.addAllExceptLrValue(read);
 			final var heapValue = LRValueFactory.constructHeapLValue(mTypeHandler, targetResult.getLrValue().getValue(),
 					targetResult.getCType(), null);
-			statements.addAll(read.getStatements());
-			statements.addAll(mMemoryHandler.getWriteCall(loc, heapValue, read.getLrValue().getValue(),
+			builder.addStatements(mMemoryHandler.getWriteCall(loc, heapValue, read.getLrValue().getValue(),
 					((CPointer) targetResult.getCType()).getPointsToType(), false));
 		}
-
-		return builder.addStatement(handleMemoryOrder(loc, statements, memOrderResult.getLrValue().getValue())).build();
+		return buildWrtMemoryOrder(loc, builder, (ExpressionResult) main.dispatch(memOrder));
 	}
 
 	private Result handleAtomicFetchAdd(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1143,50 +1132,44 @@ public class StandardFunctionHandler {
 			final ExpressionResult value, final ExpressionResult memoryOrder,
 			final BinaryOperator<ExpressionResult> operator) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final List<Statement> statements = new ArrayList<>();
-		statements.addAll(pointer.getStatements());
-		builder.addAllExceptLrValueAndStatements(pointer);
+		builder.addAllExceptLrValue(pointer);
 		final ExpressionResult read = mMemoryHandler.getReadCall(pointer.getLrValue().getValue(),
 				((CPointer) pointer.getCType()).getPointsToType());
-		statements.addAll(read.getStatements());
-		builder.addAllExceptLrValueAndStatements(read).setLrValue(read.getLrValue());
-		statements.addAll(value.getStatements());
-		builder.addAllExceptLrValueAndStatements(value);
+		builder.addAllIncludingLrValue(read).addAllExceptLrValue(value);
 		final ExpressionResult newValue = operator.apply(read, value);
-		builder.addAllExceptLrValueAndStatements(newValue);
-		statements.addAll(newValue.getStatements());
+		builder.addAllExceptLrValue(newValue);
 		final var hlv = LRValueFactory.constructHeapLValue(mTypeHandler, pointer.getLrValue().getValue(),
 				pointer.getCType(), null);
-		statements.addAll(mMemoryHandler.getWriteCall(loc, hlv, newValue.getLrValue().getValue(),
+		builder.addStatements(mMemoryHandler.getWriteCall(loc, hlv, newValue.getLrValue().getValue(),
 				((CPointer) pointer.getCType()).getPointsToType(), false));
-		builder.addAllExceptLrValue(memoryOrder);
-		return builder.addStatement(handleMemoryOrder(loc, statements, memoryOrder.getLrValue().getValue())).build();
+		return buildWrtMemoryOrder(loc, builder, memoryOrder);
 	}
 
-	private Statement handleMemoryOrder(final ILocation loc, final List<Statement> statements,
-			final Expression memoryOrder) {
+	private ExpressionResult buildWrtMemoryOrder(final ILocation loc, final ExpressionResultBuilder atomicBlockBuilder,
+			final ExpressionResult memoryOrder) {
 		// Check the memory order
 		// - "5" means sequential consistency, if this is the case make an atomic block of those statements
 		// - Otherwise we cannot say anything, since we only support sequential consistency (so we just overapproximate)
 		// TODO: Is this always 5?
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder(atomicBlockBuilder);
+		builder.resetStatements(List.of()).addAllExceptLrValue(memoryOrder);
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final Expression five =
 				mExpressionTranslation.constructLiteralForIntegerType(loc, intType, BigInteger.valueOf(5));
 		final Expression atomicCond = mExpressionTranslation.constructBinaryEqualityExpression(loc,
-				IASTBinaryExpression.op_equals, memoryOrder, intType, five, intType);
-		final Statement atomic = new AtomicStatement(loc, statements.toArray(Statement[]::new));
+				IASTBinaryExpression.op_equals, memoryOrder.getLrValue().getValue(), intType, five, intType);
+		final Statement atomic = new AtomicStatement(loc, atomicBlockBuilder.getStatements().toArray(Statement[]::new));
 		final Statement overapprox = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 		new Overapprox("memory order (only sequential consistency is supported)", loc).annotate(overapprox);
 		new Check(Spec.UNKNOWN).annotate(overapprox);
+		Statement statement;
 		// Try to avoid unnecessary IfStatements
 		if (atomicCond instanceof BooleanLiteral) {
-			final BooleanLiteral literal = ((BooleanLiteral) atomicCond);
-			if (literal.getValue()) {
-				return atomic;
-			}
-			return overapprox;
+			statement = ((BooleanLiteral) atomicCond).getValue() ? atomic : overapprox;
+		} else {
+			statement = new IfStatement(loc, atomicCond, new Statement[] { atomic }, new Statement[] { overapprox });
 		}
-		return new IfStatement(loc, atomicCond, new Statement[] { atomic }, new Statement[] { overapprox });
+		return builder.addStatement(statement).build();
 	}
 
 	private Result handleVaStart(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
