@@ -109,8 +109,6 @@ public class SimpleErrorAutomatonBuilder<L extends IIcfgTransition<?>> implement
 
 	private void addCoveredTestGoalsToErrorAutomaton(final NestedWord<L> trace, final IRun<L, ?> counterexample,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
-		System.out.println("HELP2");
-
 		final List<?> sequence = counterexample.getStateSequence();
 		for (int i = 0; i < sequence.size(); i++) {
 			final IPredicate errorStatePredecessor = (IPredicate) sequence.get(i);
@@ -139,9 +137,13 @@ public class SimpleErrorAutomatonBuilder<L extends IIcfgTransition<?>> implement
 	}
 
 	/*
-	 * caller has to ensure state is an errorState with testgoal annotation
+	 * can be Check ErrorLocation and not a TestGoal
 	 */
 	private boolean errorStateIsTestGoalWithId(final ISLPredicate state, final Integer testGoalId) {
+		if (((TestGoalAnnotation) state.getProgramPoint().getPayload().getAnnotations()
+				.get(TestGoalAnnotation.class.getName())) == null) {
+			return false;
+		}
 		if (((TestGoalAnnotation) state.getProgramPoint().getPayload().getAnnotations()
 				.get(TestGoalAnnotation.class.getName())).mId == testGoalId) {
 			return true;
