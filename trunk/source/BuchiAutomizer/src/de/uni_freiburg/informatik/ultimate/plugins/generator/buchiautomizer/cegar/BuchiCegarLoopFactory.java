@@ -121,6 +121,7 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 					= new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(petriNetProvider,
 					stateFactoryForRefinement, new AutomataLibraryServices(mServices));
 			if (USE_FAIRNESS) {
+				
 				automatonProvider = new FairInitialAbstractionProviderLazy<>(icfg, automatonProvider,
 						new AutomataLibraryServices(mServices), predicateFactory, stateFactoryForRefinement);
 				/*automatonProvider = new FairInitialAbstractionProvider<>(icfg, automatonProvider,

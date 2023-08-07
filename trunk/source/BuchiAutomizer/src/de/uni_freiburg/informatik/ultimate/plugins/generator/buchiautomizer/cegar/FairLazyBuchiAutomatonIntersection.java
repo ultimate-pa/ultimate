@@ -51,20 +51,8 @@ public class FairLazyBuchiAutomatonIntersection<L extends IIcfgTransition<?>> {
 		for (L edge : initialAbstraction.getVpAlphabet().getInternalAlphabet()) {
 			mFairProcedureAutomataMap.computeIfAbsent(edge.getPrecedingProcedure(), v -> new FairLazyProcedureBuchiAutomaton<>(edge.getPrecedingProcedure()));
 		}
-		
-	/*	
-		for (String procedure : icfg.getProcedureEntryNodes().keySet()) {
-			INwaOutgoingLetterAndTransitionProvider<L, IPredicate> fairAutomaton = new FairLazyProcedureBuchiAutomaton<>(procedure);
-			if (procedure.equals(mMainProcedure)) {
-				mFairMainProcedureAutomaton = fairAutomaton;
-			} else {
-				mFairProcedureAutomataMap.putIfAbsent(procedure, fairAutomaton);
-			}
-		}*/
-		
-		//mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(initialAbstraction, mFairMainProcedureAutomaton, stateFactoryForRefinement);
+	
 		for (Entry<String, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> entry : mFairProcedureAutomataMap.entrySet()) {
-			//mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(mBuchiIntersectAutomaton, entry.getValue(), stateFactoryForRefinement);
 			NestedWordAutomatonReachableStates<L, IPredicate> debug = new NestedWordAutomatonReachableStates<>(services, entry.getValue());
 			String debugString = debug.toString();
 			Integer i = 0;
@@ -159,6 +147,14 @@ public class FairLazyBuchiAutomatonIntersection<L extends IIcfgTransition<?>> {
 					return getOrConstructTransition(letter, state);
 				}
 			} else {
+				if (mIcfg.getProcedureExitNodes().get(mProcedure).equals(letter.getTarget())) {
+					return getOrConstructTransition(letter, getOrConstructState(0));
+				} else if (pre.equals(mProcedure) && suc.equals(mProcedure)) {
+					return getOrConstructTransition(letter, getOrConstructState(2));
+				} else {
+					return getOrConstructTransition(letter, getOrConstructState(1));
+				}
+				/*
 				if (pre.equals(mProcedure) && suc.equals(mProcedure)) {
 					if (mIcfg.getProcedureExitNodes().get(mProcedure).equals(letter.getTarget())) {
 						return getOrConstructTransition(letter, getOrConstructState(0));
@@ -167,7 +163,7 @@ public class FairLazyBuchiAutomatonIntersection<L extends IIcfgTransition<?>> {
 					}	
 				} else {
 					return getOrConstructTransition(letter, getOrConstructState(1));
-				}
+				}*/
 			}
 		}
 
