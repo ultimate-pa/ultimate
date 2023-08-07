@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -63,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -132,6 +134,11 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	private final AStarHeuristic mAStarHeuristic;
 	private final Integer mAStarRandomHeuristicSeed;
 
+	boolean mLongTraceOptimization = false;
+	private final List<Integer> mTestGoalTodoStack = new ArrayList<>();
+	private final List<Integer> mTestGoalsInCurrentTrace = new ArrayList<>();
+	private Integer mTestGoalWithHighesID = super.mErrorLocs.size() - 1;
+
 	public NwaCegarLoop(final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
@@ -152,15 +159,33 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		mScoringMethod = taPrefs.getHeuristicEmptinessCheckScoringMethod();
 		mAStarHeuristic = taPrefs.getHeuristicEmptinessCheckAStarHeuristic();
 		mAStarRandomHeuristicSeed = taPrefs.getHeuristicEmptinessCheckAStarHeuristicRandomSeed();
+
+		for (int i = 0; i < super.mErrorLocs.size(); i = i + 1) {
+			mTestGoalTodoStack.add(i);
+		}
 	}
 
+	// TODO mCounterexample ist der Trace
+	// Mit error automata sagen, dass error state nicht gebraucht wird
+	// schneidet abstraction mit error atuomaton um die error location
+	// verschwidenn zu lassen
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction = mAbstraction;
-
+		System.out.println(mTestGoalTodoStack);
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		try {
-			if (mUseHeuristicEmptinessCheck) {
+
+			if (!mTestGoalTodoStack.isEmpty() && mLongTraceOptimization) { // TODO
+
+				mCounterexample =
+						new IsEmptyHeuristic<>(new AutomataLibraryServices(getServices()), abstraction,
+								IHeuristic.getHeuristic(AStarHeuristic.TESTCOMP, mScoringMethod,
+										mAStarRandomHeuristicSeed, mTestGoalWithHighesID, mTestGoalTodoStack))
+												.getNestedRun();
+
+				assert checkIsEmptyHeuristic(abstraction) : "IsEmptyHeuristic did not match IsEmpty";
+			} else if (mUseHeuristicEmptinessCheck) {
 				mCounterexample = new IsEmptyHeuristic<>(new AutomataLibraryServices(getServices()), abstraction,
 						IHeuristic.getHeuristic(mAStarHeuristic, mScoringMethod, mAStarRandomHeuristicSeed))
 								.getNestedRun();
@@ -178,6 +203,39 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		if (mCounterexample == null) {
 			return true;
 		}
+		// 1. Wir wollen, dass alle errorstates entlang dieses traces
+		// (irreführend) durch den automaten abgedeckt werden,
+		// sodass die trace abstraction diese nicht länger berücksichtigt
+		// (müssen dann alle als covered in die statistk)
+
+		// Wir wollen, dass ein Error state gewählt wird mit hohem Index
+		// final SimpleErrorAutomatonBuilder eab = new
+		// SimpleErrorAutomatonBuilder(mServices, mPredicateFactory, null,
+		// mCsToolkit, mPredicateFactoryInterpolantAutomata, mAbstraction,
+		// null);
+
+		final List<?> a = mCounterexample.getStateSequence();
+		String print = "";
+		final boolean coeringError = false;
+		for (int i = 0; i < a.size(); i++) {
+			if (a.get(i) instanceof ISLPredicate) {
+				final ISLPredicate stmt = (ISLPredicate) a.get(i);
+				if (stmt.getProgramPoint().getPayload().getAnnotations()
+						.containsKey(TestGoalAnnotation.class.getName())) {
+					print = print + " " + ((TestGoalAnnotation) stmt.getProgramPoint().getPayload().getAnnotations()
+							.get(TestGoalAnnotation.class.getName())).mId;
+					// coeringError = true;
+					mTestGoalsInCurrentTrace.add(((TestGoalAnnotation) stmt.getProgramPoint().getPayload()
+							.getAnnotations().get(TestGoalAnnotation.class.getName())).mId);
+				}
+
+			}
+		}
+		System.out.println(print);
+		// TODO error atuomaton
+
+		// TODO loop wenn mProgramPoint hat payload mit annotation
+		// testgeneradings
 
 		if (mPref.dumpAutomata()) {
 			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
@@ -278,7 +336,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				mRefinementResult.getPredicateUnifier(), mCsToolkit, mSimplificationTechnique, mXnfConversionTechnique,
 				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata, mAbstraction,
 				mIteration);
-
 		mInterpolAutomaton = null;
 		final NestedWordAutomaton<L, IPredicate> resultBeforeEnhancement =
 				mErrorGeneralizationEngine.getResultBeforeEnhancement();
@@ -311,6 +368,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			enhanceMode = mErrorGeneralizationEngine.getEnhancementMode();
 			subtrahendBeforeEnhancement = mErrorGeneralizationEngine.getResultBeforeEnhancement();
 			subtrahend = mErrorGeneralizationEngine.getResultAfterEnhancement();
+			mTestGoalTodoStack.removeAll(mTestGoalsInCurrentTrace);
+			// mTestGoalTodoStack.clear();
 		} else {
 			automatonType = AutomatonType.FLOYD_HOARE;
 			useErrorAutomaton = false;
@@ -318,9 +377,17 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			subtrahendBeforeEnhancement = mInterpolAutomaton;
 			enhanceMode = mPref.interpolantAutomatonEnhancement();
 			subtrahend = enhanceInterpolantAutomaton(enhanceMode, predicateUnifier, htc, subtrahendBeforeEnhancement);
+
+			if (!mTestGoalTodoStack.isEmpty()) {
+				mTestGoalTodoStack.remove(mTestGoalTodoStack.get(mTestGoalTodoStack.size() - 1));
+			}
+		}
+		if (!mTestGoalTodoStack.isEmpty()) {
+			mTestGoalWithHighesID = mTestGoalTodoStack.get(mTestGoalTodoStack.size() - 1);
 		}
 
-		// TODO: HTC and predicateunifier statistics are saved in the following method, but it seems better to save them
+		// TODO: HTC and predicateunifier statistics are saved in the following
+		// method, but it seems better to save them
 		// at the end of the htc lifecycle instead of there
 		computeAutomataDifference(minuend, subtrahend, subtrahendBeforeEnhancement, predicateUnifier,
 				exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);

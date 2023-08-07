@@ -195,7 +195,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 			switch (type) {
 			case SIMPLE_ERROR_AUTOMATON:
 				mErrorAutomatonBuilder = new SimpleErrorAutomatonBuilder<>(mServices, predicateFactory,
-						predicateUnifier, csToolkit, stateFactoryForAutomaton, abstraction, trace);
+						predicateUnifier, csToolkit, stateFactoryForAutomaton, abstraction, counterexample);
 				break;
 			case ERROR_AUTOMATON:
 				mErrorAutomatonBuilder = new ErrorAutomatonBuilder<>(mServices, predicateFactory, predicateUnifier,
@@ -210,6 +210,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 			default:
 				throw new IllegalArgumentException("Unknown automaton type: " + type);
 			}
+
 		} catch (final ToolchainCanceledException tce) {
 			mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
 			mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();

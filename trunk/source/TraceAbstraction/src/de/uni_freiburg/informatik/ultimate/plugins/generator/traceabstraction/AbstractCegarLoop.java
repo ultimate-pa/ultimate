@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledExcep
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -79,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
@@ -449,11 +451,13 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 					mResultBuilder.addResult(currentErrorLoc, result,
 							IcfgProgramExecution.create(mCounterexample.getWord().asList(), Collections.emptyMap()), e,
 							null);
+
 					mLogger.warn("Local analysis aborted during iteration targeting %s because %s: %s", currentErrorLoc,
 							result, e.printRunningTaskMessage());
 					final long remainingTime = mServices.getProgressMonitorService().remainingTime();
 					if (remainingTime == 0 || mResultBuilder.remainingErrorLocs() <= 0) {
-						// if we do not have anymore time or any more error locations, end
+						// if we do not have anymore time or any more error
+						// locations, end
 						return;
 					}
 					mLogger.warn("Still %s and %s left, trying to recover",
@@ -522,7 +526,33 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	private AutomatonType processFeasibilityCheckResult(final LBool isCounterexampleFeasible,
 			final IProgramExecution<L, Term> programExecution, final IcfgLocation currentErrorLoc) {
 		if (isCounterexampleFeasible == Script.LBool.SAT) {
-			mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
+
+			// TODO TestGeneration Setting
+			final boolean testcomp = true;
+			if (testcomp) {
+				final List<?> sequence = mCounterexample.getStateSequence();
+				for (int i = 0; i < sequence.size(); i++) {
+					if (sequence.get(i) instanceof ISLPredicate) {
+						final ISLPredicate stmt = (ISLPredicate) sequence.get(i);
+						if (stmt.getProgramPoint().getPayload().getAnnotations()
+								.containsKey(TestGoalAnnotation.class.getName())) {
+							for (final IcfgLocation node : stmt.getProgramPoint().getOutgoingNodes()) {
+								if (sequence.get(i) instanceof ISLPredicate) {
+									if (node.getPayload().getAnnotations()
+											.containsKey(TestGoalAnnotation.class.getName())) {
+										mResultBuilder.addResult(node, Result.UNSAFE, null, null, null);
+									}
+								}
+							}
+
+						}
+
+					}
+				}
+			} else {
+				mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
+			}
+
 			if (mPref.stopAfterFirstViolation()) {
 				mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
 			}
@@ -797,6 +827,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			final AtomicTraceElement<L> lastElem = programExecution.getTraceElement(programExecution.getLength() - 1);
 			final IcfgLocation loc = lastElem.getStep().getTarget();
 			return addResult(loc, result, programExecution, rtsp, reasonUnknown);
+
 		}
 
 		public CegarLoopResultBuilder addResult(final IcfgLocation loc, final Result result,

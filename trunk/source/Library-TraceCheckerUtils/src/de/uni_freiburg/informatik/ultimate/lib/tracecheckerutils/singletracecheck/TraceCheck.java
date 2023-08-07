@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -325,7 +326,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			result = new FeasibilityCheckResult(isSafe, tcru, false);
 		} catch (final SMTLIBException e) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				// there was a cancellation request, probably responsible for abnormal solver termination
+				// there was a cancellation request, probably responsible for
+				// abnormal solver termination
 				result = new FeasibilityCheckResult(LBool.UNKNOWN, new TraceCheckReasonUnknown(Reason.ULTIMATE_TIMEOUT,
 						null, ExceptionHandlingCategory.KNOWN_IGNORE), true);
 			} else {
@@ -368,8 +370,10 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			case UNKNOWN:
 				final Exception ex = tc.getTraceCheckReasonUnknown().getException();
 				if (ex instanceof ToolchainCanceledException || ex instanceof AutomataOperationCanceledException) {
-					// TODO: 20210701 DD: It might be useful to set a higher timeout for a TraceCheck here because the
-					// chance of getting a program execution if the previous TC was already successful is high.
+					// TODO: 20210701 DD: It might be useful to set a higher
+					// timeout for a TraceCheck here because the
+					// chance of getting a program execution if the previous TC
+					// was already successful is high.
 					throw new ToolchainCanceledException((IRunningTaskStackProvider) ex,
 							new RunningTaskInfo(getClass(), "computing program execution"));
 				}
@@ -419,18 +423,40 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			funGetValue = this::getValue;
 		}
 
+		final TestVector testV = new TestVector();
+
 		for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
 			final IProgramVar bv = entry.getKey();
 			final Map<Integer, Term> indexedRepresentatives = entry.getValue();
 			if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
+				boolean firstRepresentatives = true;
 				for (final var representative : indexedRepresentatives.entrySet()) {
 					final Integer index = representative.getKey();
 					final Term indexedVar = representative.getValue();
 					final Term valueT = funGetValue.apply(indexedVar);
+					if (indexedVar instanceof ApplicationTerm) {
+						assert ((ApplicationTerm) indexedVar).getParameters().length == 0;
+						if (indexedVar.toStringDirect().contains("nondet") && firstRepresentatives) {
+							assert indexedRepresentatives.entrySet().size() == 2;
+							// TODO Not sure if save, but by far the best solution
+							testV.addValueAssignment(valueT, index); // Only if nondetINT!!
+							firstRepresentatives = false;
+						}
+
+					}
 					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
+
 				}
 			}
 		}
+
+		try {
+			TestExporter.getInstance().exportTests(testV, rpeb.mTrace.hashCode());
+		} catch (final Exception e) {
+			// TODO TestGeneration Auto-generated catch block
+			e.printStackTrace();
+		}
+
 		cleanupAndUnlockSolver();
 		return rpeb.getIcfgProgramExecution();
 	}

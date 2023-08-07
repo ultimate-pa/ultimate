@@ -141,6 +141,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		mIsGoalState = funIsGoalState;
 		mIsForbiddenState = funIsForbiddenState;
 		mHeuristic = heuristic;
+
 		assert startStates != null;
 		assert mIsGoalState != null;
 		assert mIsForbiddenState != null;
@@ -201,14 +202,92 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(String.format("Current: %s", current));
 			}
-			if (mIsGoalState.test(current.mTargetState)) {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("  Is target");
-					printDebugStats(lowestCall, lowestOther, summaries);
-				}
-				return current.constructRun();
-			}
-
+			final boolean testcomp = true;
+			// if (mIsGoalState.test(current.mTargetState)) {
+			// if (testcomp) {
+			// if (current.mTargetState instanceof SPredicate) {
+			// if (((SPredicate) current.mTargetState).getProgramPoint().getPayload().getAnnotations()
+			// .containsKey(TestGoalAnnotation.class.getName())) {
+			//
+			// if (((TestGoalAnnotation) ((SPredicate) current.mTargetState).getProgramPoint().getPayload()
+			// .getAnnotations().get(TestGoalAnnotation.class
+			// .getName())).mId == ((TestCompHeuristic) heuristic).mHighestErrorStateID) {
+			// if (mLogger.isDebugEnabled()) {
+			// mLogger.debug(" Is target with testgoal Id: "
+			// + ((TestCompHeuristic) heuristic).mHighestErrorStateID);
+			// printDebugStats(lowestCall, lowestOther, summaries);
+			// }
+			//
+			// return current.constructRun();
+			// }
+			//
+			// }
+			// } else if (current.mTargetState instanceof UnknownState) {
+			// if (((UnknownState) current.mTargetState).getProgramPoint().getPayload().getAnnotations()
+			// .containsKey(TestGoalAnnotation.class.getName())) {
+			//
+			// if (((TestGoalAnnotation) ((UnknownState) current.mTargetState).getProgramPoint()
+			// .getPayload().getAnnotations().get(TestGoalAnnotation.class
+			// .getName())).mId == ((TestCompHeuristic) heuristic).mHighestErrorStateID) {
+			// if (mLogger.isDebugEnabled()) {
+			// mLogger.debug(" Is target with testgoal Id: "
+			// + ((TestCompHeuristic) heuristic).mHighestErrorStateID);
+			// printDebugStats(lowestCall, lowestOther, summaries);
+			// }
+			//
+			// return current.constructRun();
+			// }
+			//
+			// }
+			// } else {
+			// if (mIsGoalState.test(current.mTargetState)) {
+			// if (mLogger.isDebugEnabled()) {
+			// mLogger.debug(" Is target");
+			// printDebugStats(lowestCall, lowestOther, summaries);
+			// }
+			// return current.constructRun();
+			// }
+			// }
+			//
+			// } else {
+			// if (mIsGoalState.test(current.mTargetState)) {
+			//
+			// if (current.mTargetState instanceof SPredicate) {
+			// if (((SPredicate) current.mTargetState).getProgramPoint().getPayload().getAnnotations()
+			// .containsKey(TestGoalAnnotation.class.getName())) {
+			//
+			// if (((TestCompHeuristic) heuristic).mTestGoalTodoStack
+			// .contains(((TestGoalAnnotation) ((SPredicate) current.mTargetState)
+			// .getProgramPoint().getPayload().getAnnotations()
+			// .get(TestGoalAnnotation.class.getName())).mId)) {
+			//
+			// return current.constructRun();
+			// }
+			//
+			// }
+			// } else if (current.mTargetState instanceof UnknownState) {
+			// if (((UnknownState) current.mTargetState).getProgramPoint().getPayload().getAnnotations()
+			// .containsKey(TestGoalAnnotation.class.getName())) {
+			//
+			// if (((TestCompHeuristic) heuristic).mTestGoalTodoStack
+			// .contains(((TestGoalAnnotation) ((UnknownState) current.mTargetState)
+			// .getProgramPoint().getPayload().getAnnotations()
+			// .get(TestGoalAnnotation.class.getName())).mId)) {
+			//
+			// return current.constructRun();
+			// }
+			//
+			// }
+			// }
+			//
+			// // if (mLogger.isDebugEnabled()) {
+			// // mLogger.debug(" Is target");
+			// // printDebugStats(lowestCall, lowestOther, summaries);
+			// // }
+			// // return current.constructRun();
+			// }
+			// }
+			// }
 			final List<Item> stragglingSummaries;
 			if (current.mItemType == ItemType.RETURN) {
 				stragglingSummaries = updateSummaries(summaries, usedSummaries, current);
@@ -247,7 +326,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				}
 
 				if (lowestCostSoFar != null && costSoFar >= lowestCostSoFar) {
-					// we have already seen this successor but with a lower cost, so we should not explore with a
+					// we have already seen this successor but with a lower
+					// cost, so we should not explore with a
 					// higher cost
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug(String.format("    Skip (cost %s, but have seen with cost %s)", costSoFar,
@@ -257,9 +337,12 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				}
 				if (succ.mItemType == ItemType.CALL
 						&& !isCheapestAncestor(lowestCall, discoveredUniqueReturnStates, succ, costSoFar)) {
-					// if the succ is not yet in lowest, there can still be an item with a call stack that has the
-					// same ancestor as the current succ -- if this item is cheaper, we do not insert.
-					// TODO: isCheapestAncestor is rather expensive, but with a dedicated data structure it could be
+					// if the succ is not yet in lowest, there can still be an
+					// item with a call stack that has the
+					// same ancestor as the current succ -- if this item is
+					// cheaper, we do not insert.
+					// TODO: isCheapestAncestor is rather expensive, but with a
+					// dedicated data structure it could be
 					// much cheaper, e.g., something similar to a suffix tree
 					delayedCalls.computeIfAbsent(current.getHierPreState(), a -> new LinkedHashSet<>()).add(succ);
 					continue;
@@ -269,7 +352,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 						heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mLetter);
 				succ.setEstimatedCostToTarget(expectedCostToTarget);
 
-				// we changed the cost of this item, so we have to remove it if it is already in the queue, because
+				// we changed the cost of this item, so we have to remove it if
+				// it is already in the queue, because
 				// its queue position will not be updated otherwise
 				if (worklist.remove(succ)) {
 					if (mLogger.isDebugEnabled()) {
@@ -286,7 +370,9 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				}
 			}
 		}
-		if (mLogger.isDebugEnabled()) {
+		if (mLogger.isDebugEnabled())
+
+		{
 			printDebugStats(lowestCall, lowestOther, summaries);
 		}
 		return null;
@@ -322,10 +408,13 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				final Map<ReturnTransition, SummaryItem> summary = summaries.get(callTrans);
 				if (summary != null) {
 					assert !summary.isEmpty();
-					// there is a summary for this call and we are going to use it.
-					// we need to record that we used a summary in case we find more summaries later (straggling
+					// there is a summary for this call and we are going to use
+					// it.
+					// we need to record that we used a summary in case we find
+					// more summaries later (straggling
 					// summaries)
-					// we save the cost of the current location in the successor item, so we may use it for straggling
+					// we save the cost of the current location in the successor
+					// item, so we may use it for straggling
 					// summaries
 					succ.setCostSoFar(currentCostSoFar + concreteCost);
 					final Map<ReturnTransition, Set<Item>> usedSummariesForCall =
@@ -356,7 +445,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	private List<Item> updateSummaries(final Map<CallTransition, Map<ReturnTransition, SummaryItem>> summaries,
 			final Map<CallTransition, Map<ReturnTransition, Set<Item>>> usedSummaries, final Item returnItem) {
 
-		// the current item is a return (returnItem), so we can compute a new summary
+		// the current item is a return (returnItem), so we can compute a new
+		// summary
 
 		final Item callItem = returnItem.findCorrespondingCallItem();
 		final CallTransition callTrans = new CallTransition(callItem);
@@ -372,7 +462,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				mLogger.debug(String.format("  Is fresh summary: %s", sItem));
 			}
 
-			// if we add a fresh summary, we also have to add additional items to the worklist for all the items that
+			// if we add a fresh summary, we also have to add additional items
+			// to the worklist for all the items that
 			// already used summaries of this call
 			final Map<ReturnTransition, Set<Item>> usedSummariesForCall = usedSummaries.get(callTrans);
 			if (usedSummariesForCall != null) {
@@ -424,14 +515,16 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 			final double lowestCostSoFar = entry.getValue();
 			if (item.mHierPreStates.size() >= succ.mHierPreStates.size()) {
-				// item cannot be prefix, is either longer, or, if it is the same length, has a different
+				// item cannot be prefix, is either longer, or, if it is the
+				// same length, has a different
 				// hashcode (checked before)
 				continue;
 			}
 			final int extension =
 					discoveredUniqueReturnStates.getOrDefault(succ.getHierPreState(), Collections.emptySet()).size();
 			if (item.isHierStatesPrefixOf(succ, extension) && costSoFar >= lowestCostSoFar) {
-				// we have already seen this successor but with a lower cost, so we should not explore
+				// we have already seen this successor but with a lower cost, so
+				// we should not explore
 				// with a higher cost
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(String.format(
@@ -488,7 +581,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			rtr.add(new Item(succ, null, symbol, current, ItemType.RETURN));
 		}
 		if (old != rtr.size()) {
-			// we found a new state from which a hierPre call can take at least one return
+			// we found a new state from which a hierPre call can take at least
+			// one return
 			discoveredUniqueReturnStates.computeIfAbsent(hierPre, a -> new HashSet<>()).add(current.mTargetState);
 
 			final Set<Item> hierDelayedCalls = delayedCalls.remove(hierPre);
@@ -649,7 +743,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 	private class SummaryItem implements IWithBackPointer<STATE> {
 
-		// the actual cost of this summary, i.e., the cost of the subpath in this summary
+		// the actual cost of this summary, i.e., the cost of the subpath in
+		// this summary
 		private final double mSummaryCost;
 		private final NestedRun<LETTER, STATE> mSubrun;
 		private final IWithBackPointer<STATE> mBackPointer;
@@ -730,7 +825,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		private double mCostSoFar;
 		// h-value, i.e., how expensive from here to target using this node
 		private double mEstimatedCostToTargetFromHere;
-		// f-value, i.e. how expensive from start to target if we use this node, i.e. g+h
+		// f-value, i.e. how expensive from start to target if we use this node,
+		// i.e. g+h
 		private double mEstimatedCostToTarget;
 
 		/**
@@ -840,10 +936,12 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			}
 
 			if (iter.hasNext()) {
-				// we have more items, but the other one does not, so we are not a prefix
+				// we have more items, but the other one does not, so we are not
+				// a prefix
 				return false;
 			}
-			// we are a prefix of other, but we are lenient for up to maxExtension:
+			// we are a prefix of other, but we are lenient for up to
+			// maxExtension:
 			while (otherIter.hasNext() && maxExtension > 0) {
 				maxExtension--;
 				otherIter.next();
@@ -1084,7 +1182,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	}
 
 	public enum AStarHeuristic {
-		ZERO, RANDOM_HALF, RANDOM_FULL, SMT_FEATURE_COMPARISON
+		ZERO, RANDOM_HALF, RANDOM_FULL, SMT_FEATURE_COMPARISON, TESTCOMP
 	}
 
 	/**
@@ -1113,6 +1211,19 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				return IHeuristic.getSmtFeatureHeuristic(scoringMethod);
 			case ZERO:
 				return IHeuristic.getZeroHeuristic();
+			default:
+				throw new UnsupportedOperationException("Unknown heuristic: " + astarHeuristic.toString());
+
+			}
+		}
+
+		public static <STATE, LETTER> IHeuristic<STATE, LETTER> getHeuristic(final AStarHeuristic astarHeuristic,
+				final ScoringMethod scoringMethod, final long seed, final Integer testGoalWithHighesID,
+				final List<Integer> testGoalTodoStack) {
+			switch (astarHeuristic) {
+
+			case TESTCOMP:
+				return IHeuristic.getTestCompHeuristic(testGoalWithHighesID, testGoalTodoStack);
 			default:
 				throw new UnsupportedOperationException("Unknown heuristic: " + astarHeuristic.toString());
 
@@ -1173,6 +1284,11 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		public static <STATE, LETTER> SmtFeatureHeuristic<STATE, LETTER>
 				getSmtFeatureHeuristic(final ScoringMethod scoringMethod) {
 			return new SmtFeatureHeuristic<>(scoringMethod);
+		}
+
+		public static <STATE, LETTER> TestCompHeuristic<STATE, LETTER>
+				getTestCompHeuristic(final Integer testGoalWithHighesID, final List<Integer> testGoalTodoStack) {
+			return new TestCompHeuristic<>(testGoalWithHighesID, testGoalTodoStack);
 		}
 
 	}

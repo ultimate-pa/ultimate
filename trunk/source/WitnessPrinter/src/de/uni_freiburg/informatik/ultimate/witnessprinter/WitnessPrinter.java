@@ -94,7 +94,8 @@ public class WitnessPrinter implements IOutput {
 	@Override
 	public List<IObserver> getObservers() {
 		if (mMatchingModel) {
-			// we should create this class somewere in cacsl s.t. we get the correct parameters -- perhaps translation
+			// we should create this class somewere in cacsl s.t. we get the
+			// correct parameters -- perhaps translation
 			// service
 			mRCFGCatcher = new RCFGCatcher();
 			return Collections.singletonList(mRCFGCatcher);
@@ -127,6 +128,11 @@ public class WitnessPrinter implements IOutput {
 					.flatMap(a -> a.getValue().stream()).collect(Collectors.toList());
 
 			final WitnessManager cexVerifier = new WitnessManager(mLogger, mServices);
+			final boolean TestCompMetaFileTODO = true;
+			if (TestCompMetaFileTODO) { // TODO
+				mLogger.info("Generating MetaFile for TestComp Reults");
+				generateMetaFile(cexVerifier, results);
+			}
 			if (results.stream().anyMatch(a -> a instanceof CounterExampleResult<?, ?, ?>)) {
 				mLogger.info("Generating witness for reachability counterexample");
 				generateReachabilityCounterexampleWitness(cexVerifier, results);
@@ -140,9 +146,22 @@ public class WitnessPrinter implements IOutput {
 				mLogger.info("No result that supports witness generation found");
 			}
 
-		} catch (IOException | InterruptedException e) {
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	// creates a MetaFile with the descriptions necessary for the TestComp
+	private void generateMetaFile(final WitnessManager cexVerifier, final List<IResult> results) throws Exception {
+		final IBacktranslationService backtrans = mServices.getBacktranslationService();
+		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
+		final String filename = ILocation.getAnnotation(root).getFileName();
+		final BacktranslatedCFG<?, IcfgEdge> origCfg =
+				new BacktranslatedCFG<>(filename, IcfgGraphProvider.getVirtualRoot(root), IcfgEdge.class);
+
+		final TestCompMetaFilePrinter asd =
+				new TestCompMetaFilePrinter(backtrans.translateCFG(origCfg), mLogger, mServices);
+
 	}
 
 	private void generateProofWitness(final WitnessManager cexVerifier, final List<IResult> results)

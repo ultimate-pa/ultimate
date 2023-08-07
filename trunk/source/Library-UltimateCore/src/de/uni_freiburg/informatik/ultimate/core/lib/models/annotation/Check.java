@@ -101,8 +101,9 @@ public class Check extends ModernAnnotations {
 		 */
 		MALLOC_NONNEGATIVE,
 		/**
-		 * Pointer arithmetic that is not allowed by C. E.g. - computing the difference of two pointers that point to
-		 * completely different arrays - comparing pointers that point to completely different arrays
+		 * Pointer arithmetic that is not allowed by C. E.g. - computing the
+		 * difference of two pointers that point to completely different arrays
+		 * - comparing pointers that point to completely different arrays
 		 */
 		ILLEGAL_POINTER_ARITHMETIC,
 		/**
@@ -157,6 +158,8 @@ public class Check extends ModernAnnotations {
 		 */
 		CHC_SATISFIABILITY,
 
+		TEST_GOAL_ANNOTATION,
+
 	}
 
 	private static final long serialVersionUID = -3753413284642976683L;
@@ -170,7 +173,13 @@ public class Check extends ModernAnnotations {
 
 	private final Function<Spec, String> mNegMsgProvider;
 
+	private Integer testId;
+
 	public Check(final Check.Spec spec) {
+		this(EnumSet.of(spec));
+	}
+
+	public Check(final Check.Spec spec, final Integer testId) {
 		this(EnumSet.of(spec));
 	}
 
@@ -267,6 +276,7 @@ public class Check extends ModernAnnotations {
 			return "there are no data races";
 		case CHC_SATISFIABILITY:
 			return "the set of constraint Horn clauses is satisfiable";
+
 		default:
 			return "a specification is correct but has no positive message: " + spec;
 		}
@@ -342,7 +352,8 @@ public class Check extends ModernAnnotations {
 
 		final EnumSet<Spec> newSpec = EnumSet.copyOf(mSpec);
 		newSpec.addAll(otherCheck.getSpec());
-		// note: automatic merging looses all information about message providers and uses the default ones
+		// note: automatic merging looses all information about message
+		// providers and uses the default ones
 		return new Check(newSpec);
 	}
 
@@ -352,12 +363,31 @@ public class Check extends ModernAnnotations {
 	 * @param node
 	 *            the element
 	 */
-	public void annotate(final IElement node) {
-		node.getPayload().getAnnotations().put(KEY, this);
+	public void annotate(final IElement node, final int countTestGoals) {
+		if (mSpec.equals(Spec.TEST_GOAL_ANNOTATION)) {
+			final TestGoalAnnotation tg1 = new TestGoalAnnotation(countTestGoals);
+			node.getPayload().getAnnotations().put(KEY, tg1);
+		} else {
+			node.getPayload().getAnnotations().put(KEY, this);
+		}
+
 	}
 
 	/**
-	 * Return the checked specification that is checked at this location or null.
+	 * Adds this Check object to the annotations of a IElement.
+	 *
+	 * @param node
+	 *            the element
+	 */
+	public void annotate(final IElement node) {
+
+		node.getPayload().getAnnotations().put(KEY, this);
+
+	}
+
+	/**
+	 * Return the checked specification that is checked at this location or
+	 * null.
 	 */
 	public static Check getAnnotation(final IElement node) {
 		return ModelUtils.getAnnotation(node, KEY, a -> (Check) a);
