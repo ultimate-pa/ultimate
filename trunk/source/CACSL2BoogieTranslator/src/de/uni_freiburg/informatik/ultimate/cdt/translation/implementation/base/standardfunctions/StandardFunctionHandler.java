@@ -1022,6 +1022,9 @@ public class StandardFunctionHandler {
 				loc, heapValue, mExpressionTranslation.constructLiteralForIntegerType(loc,
 						new CPrimitive(CPrimitives.BOOL), BigInteger.ZERO),
 				((CPointer) pointer.getCType()).getPointsToType(), false));
+		if (mDataRaceChecker != null) {
+			mDataRaceChecker.checkOnWrite(builder, loc, heapValue);
+		}
 		return buildWrtMemoryOrder(loc, builder, (ExpressionResult) main.dispatch(arguments[1]));
 	}
 
@@ -1071,10 +1074,17 @@ public class StandardFunctionHandler {
 			final ExpressionResult read = mMemoryHandler.getReadCall(srcResult.getLrValue().getValue(),
 					((CPointer) srcResult.getCType()).getPointsToType());
 			builder.addAllExceptLrValue(read);
+			if (mDataRaceChecker != null) {
+				mDataRaceChecker.checkOnRead(builder, loc, new HeapLValue(srcResult.getLrValue().getValue(),
+						srcResult.getLrValue().getUnderlyingType(), null));
+			}
 			final var heapValue = LRValueFactory.constructHeapLValue(mTypeHandler, targetResult.getLrValue().getValue(),
 					targetResult.getCType(), null);
 			builder.addStatements(mMemoryHandler.getWriteCall(loc, heapValue, read.getLrValue().getValue(),
 					((CPointer) targetResult.getCType()).getPointsToType(), false));
+			if (mDataRaceChecker != null) {
+				mDataRaceChecker.checkOnWrite(builder, loc, heapValue);
+			}
 		}
 		return buildWrtMemoryOrder(loc, builder, (ExpressionResult) main.dispatch(memOrder));
 	}
@@ -1136,12 +1146,19 @@ public class StandardFunctionHandler {
 		final ExpressionResult read = mMemoryHandler.getReadCall(pointer.getLrValue().getValue(),
 				((CPointer) pointer.getCType()).getPointsToType());
 		builder.addAllIncludingLrValue(read).addAllExceptLrValue(value);
+		if (mDataRaceChecker != null) {
+			mDataRaceChecker.checkOnRead(builder, loc,
+					new HeapLValue(pointer.getLrValue().getValue(), pointer.getLrValue().getUnderlyingType(), null));
+		}
 		final ExpressionResult newValue = operator.apply(read, value);
 		builder.addAllExceptLrValue(newValue);
 		final var hlv = LRValueFactory.constructHeapLValue(mTypeHandler, pointer.getLrValue().getValue(),
 				pointer.getCType(), null);
 		builder.addStatements(mMemoryHandler.getWriteCall(loc, hlv, newValue.getLrValue().getValue(),
 				((CPointer) pointer.getCType()).getPointsToType(), false));
+		if (mDataRaceChecker != null) {
+			mDataRaceChecker.checkOnWrite(builder, loc, hlv);
+		}
 		return buildWrtMemoryOrder(loc, builder, memoryOrder);
 	}
 
