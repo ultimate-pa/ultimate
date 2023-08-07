@@ -438,8 +438,8 @@ public class StandardFunctionHandler {
 		fill(map, "__atomic_fetch_or", this::handleAtomicFetchOr);
 		fill(map, "__atomic_fetch_xor", this::handleAtomicFetchXor);
 
-		fill(map, "__atomic_test_and_set", die);
-		fill(map, "__atomic_clear", die);
+		fill(map, "__atomic_test_and_set", this::handleAtomicTestAndSet);
+		fill(map, "__atomic_clear", this::handleAtomicClear);
 
 		/*
 		 * builtin_prefetch according to https://gcc.gnu.org/onlinedocs/gcc-3.4.5/gcc/Other-Builtins.html (state:
@@ -1009,6 +1009,37 @@ public class StandardFunctionHandler {
 		}
 	}
 
+	private Result handleAtomicClear(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final List<Statement> statements = new ArrayList<>();
+		final ExpressionResult pointer = (ExpressionResult) main.dispatch(arguments[0]);
+		builder.addAllExceptLrValueAndStatements(pointer);
+		statements.addAll(pointer.getStatements());
+		final ExpressionResult memoryOrder = (ExpressionResult) main.dispatch(arguments[1]);
+		builder.addAllExceptLrValue(memoryOrder);
+		final var heapValue = LRValueFactory.constructHeapLValue(mTypeHandler, pointer.getLrValue().getValue(),
+				pointer.getCType(), null);
+		statements.addAll(mMemoryHandler.getWriteCall(
+				loc, heapValue, mExpressionTranslation.constructLiteralForIntegerType(loc,
+						new CPrimitive(CPrimitives.BOOL), BigInteger.ZERO),
+				((CPointer) pointer.getCType()).getPointsToType(), false));
+		return builder.addStatement(handleMemoryOrder(loc, statements, memoryOrder.getLrValue().getValue())).build();
+	}
+
+	private Result handleAtomicTestAndSet(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, name, arguments);
+		final CPrimitive boolType = new CPrimitive(CPrimitives.BOOL);
+		final ExpressionResult value = new ExpressionResult(new RValue(
+				mExpressionTranslation.constructLiteralForIntegerType(loc, boolType, BigInteger.ONE), boolType));
+		return handleAtomicWriteWithOldResult(loc, (ExpressionResult) main.dispatch(arguments[0]), value,
+				(ExpressionResult) main.dispatch(arguments[1]), (x, y) -> value);
+	}
+
 	private Result handleAtomicLoad(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
@@ -1103,28 +1134,33 @@ public class StandardFunctionHandler {
 			final ILocation loc, final String name, final BinaryOperator<ExpressionResult> operator) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
+		return handleAtomicWriteWithOldResult(loc, (ExpressionResult) main.dispatch(arguments[0]),
+				(ExpressionResult) main.dispatch(arguments[1]), (ExpressionResult) main.dispatch(arguments[2]),
+				operator);
+	}
+
+	private Result handleAtomicWriteWithOldResult(final ILocation loc, final ExpressionResult pointer,
+			final ExpressionResult value, final ExpressionResult memoryOrder,
+			final BinaryOperator<ExpressionResult> operator) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final List<Statement> statements = new ArrayList<>();
-		final ExpressionResult first = (ExpressionResult) main.dispatch(arguments[0]);
-		statements.addAll(first.getStatements());
-		builder.addAllExceptLrValueAndStatements(first);
-		final ExpressionResult read = mMemoryHandler.getReadCall(first.getLrValue().getValue(),
-				((CPointer) first.getCType()).getPointsToType());
+		statements.addAll(pointer.getStatements());
+		builder.addAllExceptLrValueAndStatements(pointer);
+		final ExpressionResult read = mMemoryHandler.getReadCall(pointer.getLrValue().getValue(),
+				((CPointer) pointer.getCType()).getPointsToType());
 		statements.addAll(read.getStatements());
 		builder.addAllExceptLrValueAndStatements(read).setLrValue(read.getLrValue());
-		final ExpressionResult second = (ExpressionResult) main.dispatch(arguments[1]);
-		statements.addAll(second.getStatements());
-		builder.addAllExceptLrValueAndStatements(second);
-		final ExpressionResult newValue = operator.apply(read, second);
+		statements.addAll(value.getStatements());
+		builder.addAllExceptLrValueAndStatements(value);
+		final ExpressionResult newValue = operator.apply(read, value);
 		builder.addAllExceptLrValueAndStatements(newValue);
 		statements.addAll(newValue.getStatements());
-		final var hlv =
-				LRValueFactory.constructHeapLValue(mTypeHandler, first.getLrValue().getValue(), first.getCType(), null);
+		final var hlv = LRValueFactory.constructHeapLValue(mTypeHandler, pointer.getLrValue().getValue(),
+				pointer.getCType(), null);
 		statements.addAll(mMemoryHandler.getWriteCall(loc, hlv, newValue.getLrValue().getValue(),
-				((CPointer) first.getCType()).getPointsToType(), false));
-		final ExpressionResult third = (ExpressionResult) main.dispatch(arguments[2]);
-		builder.addAllExceptLrValue(third);
-		return builder.addStatement(handleMemoryOrder(loc, statements, third.getLrValue().getValue())).build();
+				((CPointer) pointer.getCType()).getPointsToType(), false));
+		builder.addAllExceptLrValue(memoryOrder);
+		return builder.addStatement(handleMemoryOrder(loc, statements, memoryOrder.getLrValue().getValue())).build();
 	}
 
 	private Statement handleMemoryOrder(final ILocation loc, final List<Statement> statements,
