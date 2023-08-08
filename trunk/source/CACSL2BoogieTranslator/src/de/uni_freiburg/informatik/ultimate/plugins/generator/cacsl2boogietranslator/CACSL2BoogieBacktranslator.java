@@ -1156,6 +1156,13 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	private IASTExpression translateFunctionApplication(final CType cType, final FunctionApplication fun) {
+		final IASTExpression[] translatedArguments = new IASTExpression[fun.getArguments().length];
+		for(int i = 0; i < fun.getArguments().length; i++) {
+			translatedArguments[i] = translateExpression(fun.getArguments()[i]);
+			if (translatedArguments[i] == null) {
+				return null;
+			}
+		}
 		final Pair<String, CPrimitives> reversed = SFO.reverseBoogieFunctionName(fun.getIdentifier());
 		if (reversed == null) {
 			reportUnfinishedBacktranslation(
@@ -1170,6 +1177,32 @@ public class CACSL2BoogieBacktranslator
 			return translateFloatConstConstructor(cType, fun, reversed.getSecond());
 		case "NaN":
 			return translateFloatNaNConstructor(cType, fun, reversed.getSecond());
+		case "bvadd":
+			return new FakeExpression(String.format("(%s + %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvmul":
+			return new FakeExpression(String.format("(%s * %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvsub":
+			return new FakeExpression(String.format("(%s * %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvand":
+			return new FakeExpression(String.format("(%s & %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvor":
+			return new FakeExpression(String.format("(%s | %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvult":
+			return new FakeExpression(String.format("(%s < %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvule":
+			return new FakeExpression(String.format("(%s <= %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvugt":
+			return new FakeExpression(String.format("(%s > %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvuge":
+			return new FakeExpression(String.format("(%s >= %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvslt":
+			return new FakeExpression(String.format("(%s < %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvsle":
+			return new FakeExpression(String.format("(%s <= %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvsgt":
+			return new FakeExpression(String.format("(%s > %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvsge":
+			return new FakeExpression(String.format("(%s >= %s)", translatedArguments[0], translatedArguments[1]));
 		default:
 			reportUnfinishedBacktranslation(
 					UNFINISHED_BACKTRANSLATION + " could not match function " + fun.getIdentifier());
