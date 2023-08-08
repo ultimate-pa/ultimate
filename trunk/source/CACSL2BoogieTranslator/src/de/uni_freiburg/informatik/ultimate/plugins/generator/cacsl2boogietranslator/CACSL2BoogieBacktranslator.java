@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieBacktranslationValueProv
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -1057,6 +1058,8 @@ public class CACSL2BoogieBacktranslator
 								+ " has a C AST node but it is no IASTExpression: " + cnode.getClass());
 				return null;
 			}
+		} else if (expression instanceof BinaryExpression) {
+			return translateBinaryExpression(cType, (BinaryExpression) expression, hook);
 		} else if (expression instanceof IntegerLiteral) {
 			return translateIntegerLiteral(cType, (IntegerLiteral) expression, hook);
 		} else if (expression instanceof BooleanLiteral) {
@@ -1087,6 +1090,69 @@ public class CACSL2BoogieBacktranslator
 					+ BoogiePrettyPrinter.print(expression) + " has no CACSLLocation");
 			return null;
 		}
+	}
+
+	private IASTExpression translateBinaryExpression(final CType cType, final BinaryExpression expression, final IASTNode hook) {
+		final FakeExpression lhs = (FakeExpression) translateExpression(expression.getLeft(), cType, hook);
+		final FakeExpression rhs = (FakeExpression) translateExpression(expression.getRight(), cType, hook);
+		if (lhs == null || rhs == null) {
+			return null;
+		}
+		final String result;
+		switch (expression.getOperator()) {
+		case ARITHDIV:
+			result = String.format("(%s / %s)", lhs, rhs);
+			break;
+		case ARITHMINUS:
+			result = String.format("(%s - %s)", lhs, rhs);
+			break;
+		case ARITHMOD:
+			result = String.format("(%s % %s)", lhs, rhs);
+			break;
+		case ARITHMUL:
+			result = String.format("(%s / %s)", lhs, rhs);
+			break;
+		case ARITHPLUS:
+			result = String.format("(%s + %s)", lhs, rhs);
+			break;
+		case BITVECCONCAT:
+			return null;
+		case COMPEQ:
+			result = String.format("(%s == %s)", lhs, rhs);
+			break;
+		case COMPGEQ:
+			result = String.format("(%s >= %s)", lhs, rhs);
+			break;
+		case COMPGT:
+			result = String.format("(%s > %s)", lhs, rhs);
+			break;
+		case COMPLEQ:
+			result = String.format("(%s <= %s)", lhs, rhs);
+			break;
+		case COMPLT:
+			result = String.format("(%s < %s)", lhs, rhs);
+			break;
+		case COMPNEQ:
+			result = String.format("(%s != %s)", lhs, rhs);
+			break;
+		case COMPPO:
+			return null;
+		case LOGICAND:
+			result = String.format("(%s && %s)", lhs, rhs);
+			break;
+		case LOGICIFF:
+			result = String.format("(%s == %s)", lhs, rhs);
+			break;
+		case LOGICIMPLIES:
+			result = String.format("(!%s || %s)", lhs, rhs);
+			break;
+		case LOGICOR:
+			result = String.format("(%s || %s)", lhs, rhs);
+			break;
+		default:
+			throw new AssertionError("Unknown operator " + expression.getOperator());
+		}
+		return new FakeExpression(result);
 	}
 
 	private IASTExpression translateFunctionApplication(final CType cType, final FunctionApplication fun) {
