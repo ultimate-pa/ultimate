@@ -1079,6 +1079,8 @@ public class CACSL2BoogieBacktranslator
 				// (using ACSL).
 				translatedString = translatedString.replaceAll("old\\(", "\\\\old\\(")
 						.replaceAll("(\\\\)*old", "\\\\old").replaceAll("exists", "\\\\exists");
+				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": Expression "
+						+ BoogiePrettyPrinter.print(expression) + " was only translated via a workaround.");
 				return new FakeExpression(translatedString);
 			}
 			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": Expression "
