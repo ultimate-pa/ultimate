@@ -219,7 +219,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	 *            A boogie location used for all statements.
 	 * @return The assertion for non-complementness
 	 */
-	private Statement genAssertComplement(ReqPeas reqPeasTotal, ReqPeas reqPeasComplement, final BoogieLocation bl) {		
+	private Statement genAssertComplement(ReqPeas reqPeasTotal, ReqPeas reqPeasComplement, final BoogieLocation bl) {
+		
 		final Expression terminalExpressionCompPea = getTerminalExpressionComplement(reqPeasComplement, bl);
 		final Expression nonTerminalExpressionCompPea = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, terminalExpressionCompPea);
 		

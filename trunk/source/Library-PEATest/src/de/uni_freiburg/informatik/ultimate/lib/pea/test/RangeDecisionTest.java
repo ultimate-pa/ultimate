@@ -118,12 +118,12 @@ public class RangeDecisionTest {
 	public void createTestCasesIsStict() {
 		// c1 <= 5
 		CDD c1 = RangeDecision.create("c1", RangeDecision.OP_LTEQ, 5);
-		// c2 >= 5
-		CDD c2 = RangeDecision.create("c2", RangeDecision.OP_GTEQ, 5);
-		// c3 > 5
-		CDD c3 = RangeDecision.create("c3", RangeDecision.OP_GT, 5);
-		// c4 < 5
-		CDD c4 = RangeDecision.create("c4", RangeDecision.OP_GT, 5);
+		// c2 <= 7
+		CDD c2 = RangeDecision.create("c2", RangeDecision.OP_LTEQ, 7);
+		// c3 < 5
+		CDD c3 = RangeDecision.create("c3", RangeDecision.OP_LT, 5);
+		// c4 < 7
+		CDD c4 = RangeDecision.create("c4", RangeDecision.OP_LT, 7);
 		
 		//-----------------------------------------------------------
 		// Test 1
@@ -245,7 +245,7 @@ public class RangeDecisionTest {
 		Pair<CDD, Boolean> testCase = mTestCasesIsStrict.get(0);
 		CDD testCdd = testCase.getFirst();
 		Boolean expected = testCase.getSecond();
-		Boolean actual = RangeDecision.isStrict(testCdd);
+		Boolean actual = RangeDecision.isStrictLess(testCdd);
 		assertTrue(actual.equals(expected));
 	}
 	
@@ -254,7 +254,7 @@ public class RangeDecisionTest {
 		Pair<CDD, Boolean> testCase = mTestCasesIsStrict.get(1);
 		CDD testCdd = testCase.getFirst();
 		Boolean expected = testCase.getSecond();
-		Boolean actual = RangeDecision.isStrict(testCdd);
+		Boolean actual = RangeDecision.isStrictLess(testCdd);
 		assertTrue(actual.equals(expected));
 	}
 	
@@ -263,7 +263,7 @@ public class RangeDecisionTest {
 		Pair<CDD, Boolean> testCase = mTestCasesIsStrict.get(2);
 		CDD testCdd = testCase.getFirst();
 		Boolean expected = testCase.getSecond();
-		Boolean actual = RangeDecision.isStrict(testCdd);
+		Boolean actual = RangeDecision.isStrictLess(testCdd);
 		assertTrue(actual.equals(expected));
 	}
 	
