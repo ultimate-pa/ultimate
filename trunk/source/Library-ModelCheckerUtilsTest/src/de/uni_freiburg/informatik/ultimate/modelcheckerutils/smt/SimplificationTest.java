@@ -1069,10 +1069,10 @@ public class SimplificationTest {
 			final Term cnfExpectedResultAsTerm = cnft.transform(expectedResultAsTerm);
 			MatcherAssert.assertThat(cnfResult, IsEqual.equalTo(cnfExpectedResultAsTerm));
 		}
-		checkLogicalEquivalence(mgdScript.getScript(), result, formulaAsTerm);
+		assert checkLogicalEquivalence(mgdScript.getScript(), result, formulaAsTerm);
 	}
 
-	private static void checkLogicalEquivalence(final Script script, final Term result, final Term input) {
+	private static boolean checkLogicalEquivalence(final Script script, final Term result, final Term input) {
 		script.echo(new QuotedObject("Start correctness check for simplification."));
 		final LBool lbool = SmtUtils.checkEquivalence(result, input, script);
 		script.echo(new QuotedObject("Finished correctness check for simplification. Result: " + lbool));
@@ -1091,6 +1091,7 @@ public class SimplificationTest {
 			throw new AssertionError("unknown value " + lbool);
 		}
 		MatcherAssert.assertThat(errorMessage, lbool == LBool.UNSAT);
+		return lbool == LBool.UNSAT;
 	}
 
 }
