@@ -231,6 +231,7 @@ public class ComplementPEATest {
 				assertEquals(expectedGuard, transition.getGuard());
 			}
 		}
+		assertTrue(originalPhase1.getModifiedConstraints().get().size() == 1);
 	}
 	
 }
