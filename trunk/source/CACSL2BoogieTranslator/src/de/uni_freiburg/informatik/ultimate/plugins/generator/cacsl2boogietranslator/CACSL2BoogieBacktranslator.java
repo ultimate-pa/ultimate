@@ -1107,7 +1107,7 @@ public class CACSL2BoogieBacktranslator
 			result = String.format("(%s - %s)", lhs, rhs);
 			break;
 		case ARITHMOD:
-			result = String.format("(%s % %s)", lhs, rhs);
+			result = String.format("(%s %% %s)", lhs, rhs);
 			break;
 		case ARITHMUL:
 			result = String.format("(%s / %s)", lhs, rhs);
