@@ -443,8 +443,17 @@ public final class SFO {
 		// TODO Matthias 2023-08-08: Cannot always extract C primitive, hence we omit
 		// it. In the future we have to extract the bitsize and use some C type that
 		// suiteable for this bitsize.
-		//		final CPrimitives prim = Enum.valueOf(CPrimitives.class, splitted[2]);
-		return new Pair<>(smtFunctionName, null);
+		CPrimitives prim;
+		try {
+			prim = Enum.valueOf(CPrimitives.class, splitted[2]);
+		} catch (final IllegalArgumentException iea) {
+			if (iea.getMessage().startsWith("No enum constant")) {
+				prim = null;
+			} else {
+				throw iea;
+			}
+		}
+		return new Pair<>(smtFunctionName, prim);
 	}
 
 }
