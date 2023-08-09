@@ -42,10 +42,12 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Polynomia
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context.CcTransformation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+//import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SimplificationTest;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -64,10 +66,11 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 * ∨ φ(l)`, where l is a literal (of sort Real, Int, or BitVec) and x is a variable in a {@link PolynomialRelation}
 	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a select term `(select a k)`.)
 	 */
-	private static final boolean APPLY_CONSTANT_FOLDING = true;
+	private static final boolean APPLY_CONSTANT_FOLDING = false;
 	private static final boolean DEBUG_CHECK_RESULT = false;
 	private static final boolean CHECK_ALL_NODES_FOR_REDUNDANCY = false;
 	private static final boolean CONSIDER_QUANTFIED_FORMULAS_AS_LEAVES = true;
+	private static final boolean OMIT_QUANTIFIED_FORMULAS = true;
 
 	private int mNumberOfCheckSatCommands = 0;
 	private int mNonConstrainingNodes = 0;
@@ -97,9 +100,13 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		mMgdScript.getScript().push(1);
 		mAssertionStackHeight++;
 
+		final List<Term> qfParams = new ArrayList<>();
 		if (symb.getName().equals("and")) {
 			for (final Term otherParam : otherParams) {
-				mMgdScript.getScript().assertTerm(otherParam);
+				if (!OMIT_QUANTIFIED_FORMULAS || QuantifierUtils.isQuantifierFree(otherParam)) {
+					mMgdScript.getScript().assertTerm(otherParam);
+					qfParams.add(otherParam);
+				}
 			}
 		}
 
@@ -109,12 +116,16 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			/////// smtutils replace free variables
 
 			for (final Term otherParam : otherParams) {
-				mMgdScript.getScript().assertTerm(SmtUtils.not(mMgdScript.getScript(), otherParam));
+				if (!OMIT_QUANTIFIED_FORMULAS || QuantifierUtils.isQuantifierFree(otherParam)) {
+					mMgdScript.getScript().assertTerm(SmtUtils.not(mMgdScript.getScript(), otherParam));
+					qfParams.add(SmtUtils.not(mMgdScript.getScript(), otherParam));
+				}
 			}
 			// TODO Matthias 20230726: following method to find out whether formula contains quantifiers
 			// QuantifierUtils.isQuantifierFree()
 		}
-		return null;
+		return SmtUtils.and(mMgdScript.getScript(), qfParams);
+		// return null;
 		// return Context.buildCriticalConstraintForConDis(mServices, mMgdScript, context, symb, allParams,
 		// selectedParam, CcTransformation.TO_NNF);
 	}
@@ -130,7 +141,10 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 				CcTransformation.TO_NNF);
 	}
 
-	// checks if we are at a leaf
+	/**
+	 * Checks if we treat the current node a leaf, i.e., if we want to consider quantified formulas as leaves, are at a
+	 * atomic formula, or at a negated atomic formula.
+	 */
 	private static boolean isLeaf(final Term term) {
 		if (CONSIDER_QUANTFIED_FORMULAS_AS_LEAVES && term instanceof QuantifiedFormula) {
 			return true;
@@ -147,8 +161,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final Term result;
 		final long timeBeforeConstrainigcheck = System.nanoTime();
 		mNumberOfCheckSatCommands++;
-		final LBool isNonConstraining = Util.checkSat(mMgdScript.getScript(),
-				SmtUtils.not(mMgdScript.getScript(), term));
+		final LBool isNonConstraining =
+				Util.checkSat(mMgdScript.getScript(), SmtUtils.not(mMgdScript.getScript(), term));
 		mCheckSatTime += (System.nanoTime() - timeBeforeConstrainigcheck);
 		if (isNonConstraining == LBool.UNSAT) {
 			mNonConstrainingNodes++;
@@ -187,8 +201,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		/// member variable to toggle this
 		/// descend into quantified formulas, rename qvariables (also restore names?)
 
-		if (CHECK_ALL_NODES_FOR_REDUNDANCY) {
-			DescendResult result;
+		DescendResult result;
+		if (CHECK_ALL_NODES_FOR_REDUNDANCY || isLeaf(term)) {
 			if ((result = checkImplications(term)) != null) {
 				return result;
 			}
@@ -200,17 +214,9 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 				return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 			}
 		} else {
-			if (isLeaf(term)) {
-				DescendResult result;
-				if ((result = checkImplications(term)) != null) {
-					return result;
-				}
-				return new TermContextTransformationEngine.FinalResultForAscend(term);
-			} else {
-				mMgdScript.getScript().push(1);
-				mAssertionStackHeight++;
-				return new TermContextTransformationEngine.IntermediateResultForDescend(term);
-			}
+			mMgdScript.getScript().push(1);
+			mAssertionStackHeight++;
+			return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 		}
 
 		// The following is copy&paste of an optimization for the PolyPacSimplification.

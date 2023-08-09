@@ -146,10 +146,8 @@ public class SimplificationTest {
 	@Test
 	// simplify leaf to false in conjunction
 	public void dda2TestExample04() {
-		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(SmtSortUtils::getBoolSort, "B"),
-				new FunDecl(SmtSortUtils::getIntSort, "y", "x"),
-				};
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getBoolSort, "B"),
+				new FunDecl(SmtSortUtils::getIntSort, "y", "x"), };
 		final String formulaAsString = "(or B (and (= x 0) (= x y) (not (= y 0))))";
 		final String expectedResultAsString = "B";
 		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.SIMPLIFY_DDA2,
