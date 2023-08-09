@@ -594,23 +594,18 @@ public class RangeDecision extends Decision<RangeDecision> {
 		return newDisjunction;	
 	}
 	
-	public static boolean isStrict(CDD cdd) {
-		// initialise result to false
-		boolean isStrict = false;
-		// get list of atomic CDDs and their corresponding true child indices
-		ArrayList<ArrayList<Pair<Decision<?>, int[]>>> decisionDNF = cdd.getDecisionsDNF();
-		for (ArrayList<Pair<Decision<?>, int[]>> conjunction : decisionDNF) {
-			for (Pair<Decision<?>, int[]> pair : conjunction) {
-				RangeDecision decision = (RangeDecision) pair.getFirst();
-				int op = decision.getOp(pair.getSecond()[0]);
-				if (op == OP_LT || op == OP_GT) {
-					isStrict = true;
-					break;
-				}
-			}
+	public static boolean isStrictLess(CDD cdd) {
+		if (cdd == CDD.TRUE || cdd == CDD.FALSE) {
+			return false;
 		}
-		return isStrict;
+		RangeDecision decision = (RangeDecision) cdd.getDecision();
+		if (decision.getOp(0) == OP_LT) {
+			return true;
+		}
+		assert cdd.getChilds().length == 2;
+		return isStrictLess(cdd.getChilds()[0]) || isStrictLess(cdd.getChilds()[1]);
 	}
+		
 }
 	
 	

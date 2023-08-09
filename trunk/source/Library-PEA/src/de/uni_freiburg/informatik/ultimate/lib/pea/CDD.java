@@ -584,18 +584,6 @@ public final class CDD {
 	}
 
 	/**
-	 * Check whether a given childs in the current node is dominated (i.e. logically implied) by all other childs. This
-	 * function should only be called by subclasses of Decision.
-	 *
-	 * @param i
-	 *            the index of the child to check.
-	 * @return true, if childs[j] implies childs[i] for all j.
-	 */
-	public boolean childIsDominated(final int i) {
-		return cddIsDominated(i, mChilds[i]);
-	}
-
-	/**
 	 * Check whether a given CDD dominates (i.e. logically implies) all childs (besides the child given by i) of this
 	 * CDD.
 	 *
@@ -611,8 +599,20 @@ public final class CDD {
 				return false;
 			}
 		}
-
+	
 		return true;
+	}
+
+	/**
+	 * Check whether a given childs in the current node is dominated (i.e. logically implied) by all other childs. This
+	 * function should only be called by subclasses of Decision.
+	 *
+	 * @param i
+	 *            the index of the child to check.
+	 * @return true, if childs[j] implies childs[i] for all j.
+	 */
+	public boolean childIsDominated(final int i) {
+		return cddIsDominated(i, mChilds[i]);
 	}
 
 	/**

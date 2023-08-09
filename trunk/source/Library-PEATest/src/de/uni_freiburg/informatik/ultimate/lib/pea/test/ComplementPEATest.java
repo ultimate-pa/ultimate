@@ -11,6 +11,7 @@ import org.junit.runners.JUnit4;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.List;
 import java.util.jar.Attributes.Name;
 
@@ -44,6 +45,7 @@ public class ComplementPEATest {
 		PhaseEventAutomata ResponseDelayGlobally = createResponseDelayGloballyPea();
 		PhaseEventAutomata UniversalityGlobally = createUniversalityGloballyPea();
 		PhaseEventAutomata DurationBoundUGlobally = createDurationBoundUGlobally();
+		PhaseEventAutomata durationBoundUGloballyModified = createDurationBoundUGloballyModified();
 		
 		mTestAutomata.add(ResponseDelayGlobally);
 		mTestAutomata.add(UniversalityGlobally);
@@ -101,6 +103,31 @@ public class ComplementPEATest {
 		CDD r = BooleanDecision.create("R");
 		CDD notR = r.negate();
 		CDD clkInv = RangeDecision.create("c0", RangeDecision.OP_LT, 5);
+		
+		final Phase[] phases = new Phase[] { new Phase("0", notR, CDD.TRUE), new Phase("1", r, clkInv)};
+		
+		
+		final String[] reset = new String[] { "c0" };
+		final String[] noreset = new String[0];
+		
+		// loop transitions
+		phases[0].addTransition(phases[0], CDD.TRUE, noreset);
+		phases[1].addTransition(phases[1], CDD.TRUE, noreset);
+		
+		phases[0].addTransition(phases[1], CDD.TRUE, reset);
+		phases[1].addTransition(phases[0], CDD.TRUE, noreset);
+		
+		
+		return new PhaseEventAutomata("DurationBoundUGlobally", phases, new Phase[] { phases[0], phases[1] });
+	}
+	
+	public PhaseEventAutomata createDurationBoundUGloballyModified() {
+		CDD r = BooleanDecision.create("R");
+		CDD notR = r.negate();
+		CDD strictConstraint = RangeDecision.create("c0", RangeDecision.OP_LT, 5);
+		CDD nonStrictConstraint = RangeDecision.create("c1", RangeDecision.OP_LTEQ, 5);
+		CDD clkInv = strictConstraint.and(nonStrictConstraint);
+		String varString = clkInv.getDecision().getVar();
 		
 		final Phase[] phases = new Phase[] { new Phase("0", notR, CDD.TRUE), new Phase("1", r, clkInv)};
 		

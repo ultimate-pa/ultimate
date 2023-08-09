@@ -48,8 +48,10 @@ public class Phase implements Comparable<Phase> {
 	List<Transition> transitions;
 	public int ID;
 	
-	boolean mIsTerminal;
+	private boolean mIsTerminal;
+	private boolean mIsStrict;
 	private Optional<InitialTransition> mInitialTransition;
+	private Optional<List<RangeDecision>> mModifiedConstraints;
 	
 	
 	
@@ -74,6 +76,8 @@ public class Phase implements Comparable<Phase> {
 		
 		mIsTerminal = true;
 		mInitialTransition = Optional.empty();
+		mIsStrict = RangeDecision.isStrictLess(clockInv);
+		mModifiedConstraints = Optional.empty();
 	}
 
 	public Phase(final String name, final CDD stateInv, final CDD clockInv) {
@@ -277,4 +281,20 @@ public class Phase implements Comparable<Phase> {
     public Optional<InitialTransition> getInitialTransition() {
         return mInitialTransition;
     }
+    
+    public void setModifiedConstraints(List<RangeDecision> modifiedConstraints) {
+		mModifiedConstraints = Optional.ofNullable(modifiedConstraints);
+	}
+    
+    public List<RangeDecision> getModifiedConstraints() {
+		if (!mModifiedConstraints.isEmpty()) {
+			return mModifiedConstraints.get();
+		} else {
+			return null;
+		}
+	}
+    
+    public boolean isStrict() {
+		return mIsStrict;
+	}
 }

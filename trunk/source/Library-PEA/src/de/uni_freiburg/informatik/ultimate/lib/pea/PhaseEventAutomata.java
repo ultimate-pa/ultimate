@@ -59,11 +59,6 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	// Additional declarations needed when processing this PEA.
 	protected List<String> mDeclarations;
 	
-	// This bitset represents the array of phases
-	// Only needed for Totalised PEAs constructed from PEAs with strict clock invariants
-	// Set Bit represents a Phase that was strict before totalisation
-	// This is needed to create the assertion representing acceptance for the totalised PEA
-	private Optional<BitSet> mStrict;
 
 	public PhaseEventAutomata(final String name, final Phase[] phases, final Phase[] init) {
 		this(name, phases, init, new ArrayList<String>());
@@ -107,7 +102,6 @@ public class PhaseEventAutomata implements Comparable<Object> {
 				phase.setInitialTransition(initialTransition);
 			}
 		}
-		mStrict = Optional.empty();
 	}
 
 	public PhaseEventAutomata parallel(final PhaseEventAutomata b) {
