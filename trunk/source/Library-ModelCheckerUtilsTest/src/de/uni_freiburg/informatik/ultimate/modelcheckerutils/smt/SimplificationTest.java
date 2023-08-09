@@ -1064,7 +1064,8 @@ public class SimplificationTest {
 		if (expectedResultAsString != null) {
 			final CommuhashNormalForm cnft = new CommuhashNormalForm(services, mgdScript.getScript());
 			final Term cnfResult = cnft.transform(result);
-			final Term expectedResultAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), expectedResultAsString);
+			final Term expectedResultAsTerm = new FormulaUnLet()
+					.transform(TermParseUtils.parseTerm(mgdScript.getScript(), expectedResultAsString));
 			final Term cnfExpectedResultAsTerm = cnft.transform(expectedResultAsTerm);
 			MatcherAssert.assertThat(cnfResult, IsEqual.equalTo(cnfExpectedResultAsTerm));
 		}
