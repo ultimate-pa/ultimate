@@ -971,21 +971,7 @@ public class CACSL2BoogieBacktranslator
 
 	private IASTExpression translateExpression(final Expression expression, final CType cType, final IASTNode hook) {
 		if (expression instanceof UnaryExpression) {
-			// handle old vars
-			final UnaryExpression uexp = (UnaryExpression) expression;
-			if (uexp.getOperator() == Operator.OLD) {
-				final IASTExpression innerTrans = translateExpression(uexp.getExpr());
-				if (innerTrans == null) {
-					return null;
-				}
-				final CType newCType;
-				if (innerTrans instanceof FakeExpression) {
-					newCType = ((FakeExpression) innerTrans).getCType();
-				} else {
-					newCType = cType;
-				}
-				return new FakeExpression(innerTrans, "\\old(" + innerTrans.getRawSignature() + ")", newCType);
-			}
+			return handleUnaryExpression((UnaryExpression) expression, cType);
 		}
 
 		if (expression instanceof TemporaryPointerExpression) {
@@ -1092,7 +1078,36 @@ public class CACSL2BoogieBacktranslator
 		}
 	}
 
-	private IASTExpression translateBinaryExpression(final CType cType, final BinaryExpression expression, final IASTNode hook) {
+	private IASTExpression handleUnaryExpression(final UnaryExpression expr, final CType cType) throws AssertionError {
+		final IASTExpression innerTrans = translateExpression(expr.getExpr());
+		if (innerTrans == null) {
+			return null;
+		}
+		final String op;
+		switch (expr.getOperator()) {
+		case ARITHNEGATIVE:
+			op = "-";
+			break;
+		case LOGICNEG:
+			op = "!";
+			break;
+		case OLD:
+			op = "\\old";
+			break;
+		default:
+			throw new AssertionError("Unhandled case");
+		}
+		final CType newCType;
+		if (innerTrans instanceof FakeExpression) {
+			newCType = ((FakeExpression) innerTrans).getCType();
+		} else {
+			newCType = cType;
+		}
+		return new FakeExpression(innerTrans, String.format("%s(%s)", op, innerTrans.getRawSignature()), newCType);
+	}
+
+	private IASTExpression translateBinaryExpression(final CType cType, final BinaryExpression expression,
+			final IASTNode hook) {
 		final FakeExpression lhs = (FakeExpression) translateExpression(expression.getLeft(), cType, hook);
 		final FakeExpression rhs = (FakeExpression) translateExpression(expression.getRight(), cType, hook);
 		if (lhs == null || rhs == null) {
