@@ -98,7 +98,7 @@ public class ComplementPEA {
 			CDD guardToSinkPrimed = guardToSink.prime(clockVarSet);
 			// make transition to sink 
 			totalisedPhase.addTransition(sinkPhase, guardToSinkPrimed.negate(), new String[] {});
-			phases.add(totalisedPhase);
+			
 			
 			// special case
 			if (phase.isStrict()) {
@@ -120,6 +120,7 @@ public class ComplementPEA {
 				}
 				
 			}
+			phases.add(totalisedPhase);
 		}
 		ArrayList<Phase> totalisedInit = new ArrayList<>(Arrays.asList(mPEAtoComplement.getInit()));
 		if (sinkPhase.isInit) {
@@ -141,16 +142,19 @@ public class ComplementPEA {
 	public PhaseEventAutomata complement() {
 		List<Phase> phases = new ArrayList<>();
 		for (Phase phase : mTotalisedPEA.getPhases()) {
-			Phase newPhase = new Phase(phase.name, phase.stateInv, phase.clockInv);
+			Phase complementPhase = new Phase(phase.name, phase.stateInv, phase.clockInv);
 			boolean newTerminal = !phase.getTerminal();
-			newPhase.setTerminal(newTerminal);
+			complementPhase.setTerminal(newTerminal);
 			for (Transition transition : phase.transitions) {
-				newPhase.addTransition(transition.getDest(), transition.getGuard(), transition.getResets());
+				complementPhase.addTransition(transition.getDest(), transition.getGuard(), transition.getResets());
 			}
 			if (!phase.getInitialTransition().isEmpty()) {
-				newPhase.setInitialTransition(phase.getInitialTransition().get());
+				complementPhase.setInitialTransition(phase.getInitialTransition().get());
 			}
-			phases.add(newPhase);
+			if (!phase.getModifiedConstraints().isEmpty()) {
+				complementPhase.setModifiedConstraints(phase.getModifiedConstraints().get());
+			}
+			phases.add(complementPhase);
 		}
 		PhaseEventAutomata complementPEA = new PhaseEventAutomata(mPEAtoComplement.getName() + "_c", phases.toArray(new Phase[phases.size()]), mTotalisedPEA.mInit);
 		complementPEA.mVariables = mPEAtoComplement.mVariables;

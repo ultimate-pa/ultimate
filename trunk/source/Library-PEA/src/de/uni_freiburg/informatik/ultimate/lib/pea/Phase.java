@@ -51,6 +51,8 @@ public class Phase implements Comparable<Phase> {
 	private boolean mIsTerminal;
 	private boolean mIsStrict;
 	private Optional<InitialTransition> mInitialTransition;
+	// clock constraints that have been modified in the complementation procedure
+	// in the case of a phase with a strict clock constraints
 	private Optional<List<RangeDecision>> mModifiedConstraints;
 	
 	
@@ -286,12 +288,8 @@ public class Phase implements Comparable<Phase> {
 		mModifiedConstraints = Optional.ofNullable(modifiedConstraints);
 	}
     
-    public List<RangeDecision> getModifiedConstraints() {
-		if (!mModifiedConstraints.isEmpty()) {
-			return mModifiedConstraints.get();
-		} else {
-			return null;
-		}
+    public Optional<List<RangeDecision>> getModifiedConstraints() {
+		return mModifiedConstraints;
 	}
     
     public boolean isStrict() {
