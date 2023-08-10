@@ -33,8 +33,8 @@
 	</rundefinition>
   -->
 
-	<tasks name="SVCOMP ConcurrencySafety-Main">
-		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+	<tasks name="SVCOMP Termination-Concurrent">
+		<includesfile>../../../trunk/examples/svcomp/Termination-Concurrent.set</includesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/termination.prp</propertyfile>
 	</tasks>
   
