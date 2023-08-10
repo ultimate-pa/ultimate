@@ -180,6 +180,7 @@ public final class SmtUtils {
 		}
 		if (!SmtUtils.isTrueLiteral(context) && simplificationTechnique != SimplificationTechnique.POLY_PAC
 				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA
+				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA2
 				&& simplificationTechnique != SimplificationTechnique.NONE) {
 			throw new UnsupportedOperationException(
 					simplificationTechnique + " does not support simplification with respect to context");
