@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.CheckMessageProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -68,12 +69,14 @@ public class ReqCheck extends Check {
 
 	private ReqCheck(final EnumSet<Check.Spec> types, final int startline, final int endline, final String[] reqIds,
 			final String[] peaNames) {
-		super(types, a -> ReqCheck.getCustomPositiveMessage(a, reqIds, peaNames),
-				a -> ReqCheck.getCustomNegativeMessage(a, reqIds, peaNames));
+		super(types);
+
 		mStartline = startline;
 		mEndline = endline;
 		mReqIds = reqIds;
 		mPeaNames = peaNames;
+
+		registerMessageOverrides(types, reqIds, peaNames);
 	}
 
 	public int getStartLine() {
@@ -84,12 +87,17 @@ public class ReqCheck extends Check {
 		return mEndline;
 	}
 
-	private static String getCustomPositiveMessage(final Spec spec, final String[] reqIds, final String[] peaNames) {
-		return getRequirementTexts(reqIds, peaNames) + " " + getDefaultPositiveMessage(spec);
-	}
+	private void registerMessageOverrides(final EnumSet<Spec> types, final String[] reqIds, final String[] peaNames) {
 
-	private static String getCustomNegativeMessage(final Spec spec, final String[] reqIds, final String[] peaNames) {
-		return getRequirementTexts(reqIds, peaNames) + " " + getDefaultNegativeMessage(spec);
+		final CheckMessageProvider mPosMsgProvider = getPositiveMessageProvider();
+		final CheckMessageProvider mNegMsgProvider = getNegativeMessageProvider();
+
+		for (final Spec spec : types) {
+			mPosMsgProvider.registerMessageOverride(spec, () -> String.format("%s %s",
+					getRequirementTexts(reqIds, peaNames), mPosMsgProvider.getDefaultMessage(spec)));
+			mNegMsgProvider.registerMessageOverride(spec, () -> String.format("%s %s",
+					getRequirementTexts(reqIds, peaNames), mNegMsgProvider.getDefaultMessage(spec)));
+		}
 	}
 
 	private static String getRequirementTexts(final String[] reqIds, final String[] peaNames) {
