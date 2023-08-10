@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -55,17 +56,32 @@ public class TermContextTransformationEngine<C> {
 	 */
 	private static final boolean SMART_REPETITIONS = true;
 
+	/**
+	 * Order in which we iterate over parameters of {@link ApplicationTerm}s.
+	 */
+	private final Comparator<Term> mSiblingOrder;
 	private final TermWalker<C> mTermWalker;
 	private final ArrayDeque<Task> mStack;
 
-	private TermContextTransformationEngine(final TermWalker<C> termWalker) {
+
+	/**
+	 * @param siblingOrder Order in which we iterate over parameters of
+	 *                     {@link ApplicationTerm}s.
+	 */
+	private TermContextTransformationEngine(final TermWalker<C> termWalker, Comparator<Term> siblingOrder) {
 		super();
+		mSiblingOrder = siblingOrder;
 		mTermWalker = termWalker;
 		mStack = new ArrayDeque<>();
 	}
 
-	public static <C> Term transform(final TermWalker<C> termWalker, final C initialContext, final Term term) {
-		return new TermContextTransformationEngine<>(termWalker).transform(initialContext, term);
+	/**
+	 * @param siblingOrder Order in which we iterate over parameters of
+	 *                     {@link ApplicationTerm}s.
+	 */
+	public static <C> Term transform(final TermWalker<C> termWalker, Comparator<Term> siblingOrder,
+			final C initialContext, final Term term) {
+		return new TermContextTransformationEngine<>(termWalker, siblingOrder).transform(initialContext, term);
 	}
 
 	private Term transform(final C context, final Term term) {
@@ -147,6 +163,9 @@ public class TermContextTransformationEngine<C> {
 			mNext = 0;
 			mOriginal = original;
 			mResult = Arrays.copyOf(original.getParameters(), original.getParameters().length);
+			if (mSiblingOrder != null) {
+				Arrays.sort(mResult, mSiblingOrder);
+			}
 			mRepetitions = 0;
 		}
 

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
@@ -311,7 +312,10 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final Term result;
 		try {
 			final SimplifyDDA2 simplifyDDA2 = new SimplifyDDA2(services, mgdScript);
-			result = TermContextTransformationEngine.transform(simplifyDDA2, context, term);
+			final Comparator<Term> siblingOrder = null;
+			// TODO Matthias 20230810: Some example for an order in the next line.
+			// final Comparator<Term> siblingOrder = new TreeSizeComperator(CommuhashUtils.HASH_BASED_COMPERATOR);
+			result = TermContextTransformationEngine.transform(simplifyDDA2, siblingOrder, context, term);
 			final ILogger logger = services.getLoggingService().getLogger(SimplifyDDA2.class);
 			if (logger.isInfoEnabled()) {
 				logger.info(simplifyDDA2.generateExitMessage());

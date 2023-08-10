@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -292,9 +293,10 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 			final SimplificationTechnique simplificationTechnique, final Context context, final Term inputTerm) {
 		checkSimplificationPotential(services, script, "Quantifier elimination called on non-simplified input",
 				inputTerm);
-		final Term result =
-				TermContextTransformationEngine.transform(new QuantifierPushTermWalker(services, applyDistributivity,
-						quantifierEliminationTechniques, simplificationTechnique, script), context, inputTerm);
+		final Comparator<Term> siblingOrder = null;
+		final Term result = TermContextTransformationEngine.transform(new QuantifierPushTermWalker(services,
+				applyDistributivity, quantifierEliminationTechniques, simplificationTechnique, script), siblingOrder,
+				context, inputTerm);
 		checkSimplificationPotential(services, script, "Quantifier elimination failed to simlify output", result);
 		if (DEBUG_CHECK_RESULT) {
 			final boolean tolerateUnknown = true;
