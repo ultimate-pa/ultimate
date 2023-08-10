@@ -37,12 +37,13 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 		// TODO Auto-generated method stub
 		INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction = mInitialAbstractionProvider.getInitialAbstraction(icfg, errorLocs);
 		//FairLazyBuchiAutomaton<L> fairAbstraction = new FairLazyBuchiAutomaton<>(icfg, initialAbstraction, new EnabledProceduresWeakFairness<>());
-		INwaOutgoingLetterAndTransitionProvider<L, IPredicate> fairAbstraction = (new FairLazyBuchiAutomatonIntersection<L>(icfg, initialAbstraction, mServices, mPredicateFactory, mStateFactory)).getFairIntersectionAutomaton();
+		INwaOutgoingLetterAndTransitionProvider<L, IPredicate> fairAbstraction = (new FairBuchiAutomatonLazy<L>(icfg, initialAbstraction, mServices, mPredicateFactory, mStateFactory)).getFairIntersectionAutomaton();
 		//fairAbstraction = new BuchiIntersectNwa<>(initialAbstraction, fairAbstraction, mStateFactory);
+		/*
 		NestedWordAutomatonReachableStates<L, IPredicate> debug = new NestedWordAutomatonReachableStates<>(mServices, fairAbstraction);
 		String debugString = debug.toString();
 		NestedWordAutomatonReachableStates<L, IPredicate> debugi = new NestedWordAutomatonReachableStates<>(mServices, initialAbstraction);
-		String debugiString = debugi.toString();
+		String debugiString = debugi.toString();*/
 		return fairAbstraction;
 	}
 

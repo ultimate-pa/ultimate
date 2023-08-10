@@ -30,17 +30,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public class FairLazyBuchiAutomatonIntersection<L extends IIcfgTransition<?>> {
+public class FairBuchiAutomatonLazy<L extends IIcfgTransition<?>> {
 
 	private IIcfg<? extends IcfgLocation> mIcfg;
 	private BuchiIntersectNwa<L, IPredicate> mBuchiIntersectAutomaton;
 	private PredicateFactory mPredicateFactory;
 	private Map<String, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mFairProcedureAutomataMap;
 	private String mMainProcedure;
-	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mFairMainProcedureAutomaton;
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mInitialAbstraction;
 
-	public FairLazyBuchiAutomatonIntersection(IIcfg<? extends IcfgLocation> icfg,
+	public FairBuchiAutomatonLazy(IIcfg<? extends IcfgLocation> icfg,
 			INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction, AutomataLibraryServices services, PredicateFactory predicateFactory,
 			PredicateFactoryRefinement stateFactoryForRefinement) throws AutomataLibraryException {
 		mIcfg = icfg;
@@ -54,16 +53,18 @@ public class FairLazyBuchiAutomatonIntersection<L extends IIcfgTransition<?>> {
 		}
 	
 		for (Entry<String, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> entry : mFairProcedureAutomataMap.entrySet()) {
+			/*
 			NestedWordAutomatonReachableStates<L, IPredicate> debug = new NestedWordAutomatonReachableStates<>(services, entry.getValue());
 			String debugString = debug.toString();
-			Integer i = 0;
+			Integer i = 0;*/
 			if (mBuchiIntersectAutomaton == null) {
 				mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(initialAbstraction, entry.getValue(), stateFactoryForRefinement);
 			} else {
 				mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(mBuchiIntersectAutomaton, entry.getValue(), stateFactoryForRefinement);
 			}
+			/*
 			NestedWordAutomatonReachableStates<L, IPredicate> debugfair = new NestedWordAutomatonReachableStates<>(services, mBuchiIntersectAutomaton);
-			String debugfairString = debugfair.toString();		
+			String debugfairString = debugfair.toString();	*/
 		}
 	}
 	
@@ -82,7 +83,7 @@ public class FairLazyBuchiAutomatonIntersection<L extends IIcfgTransition<?>> {
 			mProcedureInitialStates = new HashSet<>();
 			mProcedureFinalStates = new HashSet<>();
 			mProcedure = procedure;
-			mStatesThread = new ArrayList<IPredicate>(Arrays.asList(null,null,null));
+			mStatesThread = new ArrayList<>(Arrays.asList(null,null,null));
 			
 		}
 

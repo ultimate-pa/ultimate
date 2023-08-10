@@ -1,11 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -15,41 +12,25 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public class FairLazyBuchiAutomaton<L extends IIcfgTransition<?>> implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
+public class FairLazyBuchiAutomatonWeakFairnessLazy<L extends IIcfgTransition<?>> implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
 	
-	private IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mInitialAbstractionProvider;
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mInitialAbstraction;
 	private Set<IPredicate> mInitialStates;
 	private IIcfg<?> mIcfg;
-	private Set<String> mDeclaredVariables;
 	private IEnabledProcedures<L, IPredicate> mEnabledProcedures;
 
-	public FairLazyBuchiAutomaton(IIcfg<?> icfg, INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
+	public FairLazyBuchiAutomatonWeakFairnessLazy(IIcfg<?> icfg, INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
 			IEnabledProcedures<L, IPredicate> enabledProcedures) {
 		mIcfg = icfg;
 		mInitialAbstraction = initialAbstraction;
 		mInitialStates = new HashSet<>();
-		mDeclaredVariables = new HashSet<>();
 		mEnabledProcedures = enabledProcedures;
 	}
 

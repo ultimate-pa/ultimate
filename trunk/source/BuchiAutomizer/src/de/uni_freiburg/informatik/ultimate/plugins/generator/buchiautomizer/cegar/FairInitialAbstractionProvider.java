@@ -1,9 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -49,10 +47,10 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 	public INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getInitialAbstraction(
 			IIcfg<? extends IcfgLocation> icfg, Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
 		INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction = mInitialAbstractionProvider.getInitialAbstraction(icfg, errorLocs);
-		
+		/*
 		NestedWordAutomatonReachableStates<L, IPredicate> debugi = new NestedWordAutomatonReachableStates<>(mServices, initialAbstraction);
 		String debugiString = debugi.toString();
-		Integer j = 0;
+		Integer j = 0;*/
 		
 		mInitialAbstractionAlphabet = initialAbstraction.getVpAlphabet().getInternalAlphabet();
 		Set<String> procedures = new HashSet<>();
@@ -69,30 +67,31 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 		
 		//compute the fair intersections
 		for (Entry<String, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> entry : mFairAutomataMap.entrySet()) {
+			/*
 			NestedWordAutomatonReachableStates<L, IPredicate> debugp = new NestedWordAutomatonReachableStates<>(mServices, entry.getValue());
-			String debugpString = debugp.toString();
+			String debugpString = debugp.toString();*/
 			if (mBuchiIntersectAutomaton == null) {
 				mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(initialAbstraction, entry.getValue(), mStateFactory);
-				
+				/*
 				NestedWordAutomatonReachableStates<L, IPredicate> debug = new NestedWordAutomatonReachableStates<>(mServices, mBuchiIntersectAutomaton);
 				String debugString = debug.toString();
 				Integer i = 0;
-				
+				*/
 			} else {
 				mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(mBuchiIntersectAutomaton, entry.getValue(), mStateFactory);
-				
+				/*
 				NestedWordAutomatonReachableStates<L, IPredicate> debug = new NestedWordAutomatonReachableStates<>(mServices, mBuchiIntersectAutomaton);
 				String debugString = debug.toString();
 				Integer i = 0;
-				
+				*/
 			}
 		}
 		
-		
+		/*
 		NestedWordAutomatonReachableStates<L, IPredicate> debug = new NestedWordAutomatonReachableStates<>(mServices, mBuchiIntersectAutomaton);
 		String debugString = debug.toString();
 		Integer i = 0;
-		
+		*/
 		return mBuchiIntersectAutomaton;
 	}
 	

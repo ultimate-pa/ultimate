@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Buch
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.AutomatonTypeConcurrent;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.FairnessType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.WitnessAutomatonAbstractionProvider;
@@ -115,20 +116,31 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 		final var petriNetProvider = constructPetriNetProvider(predicateFactory, icfg);
 		final AutomatonTypeConcurrent automatonTypeConcurrent = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_AUTOMATON_TYPE, AutomatonTypeConcurrent.class);
+		final FairnessType fairnessType = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_FAIRNESS_TYPE, FairnessType.class);
 		switch (automatonTypeConcurrent) {
 		case BUCHI_AUTOMATON:
 			IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> automatonProvider
 					= new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(petriNetProvider,
 					stateFactoryForRefinement, new AutomataLibraryServices(mServices));
-			if (USE_FAIRNESS) {
-				
+			switch (fairnessType) {
+			case NONE:
+				break;
+			case FAIRNESS:
+				automatonProvider = new FairInitialAbstractionProvider<>(icfg, automatonProvider,
+						new AutomataLibraryServices(mServices), predicateFactory, stateFactoryForRefinement);
+				break;
+			case FAIRNESS_LAZY:
 				automatonProvider = new FairInitialAbstractionProviderLazy<>(icfg, automatonProvider,
 						new AutomataLibraryServices(mServices), predicateFactory, stateFactoryForRefinement);
-				/*automatonProvider = new FairInitialAbstractionProvider<>(icfg, automatonProvider,
-						new AutomataLibraryServices(mServices), predicateFactory, stateFactoryForRefinement);*/
+				break;
+			default: 
+				throw new UnsupportedOperationException(
+						"The type " + fairnessType + " is currently not supported.");
 			}
 			return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessAutomaton,
 					stateFactoryForRefinement, automatonProvider);
+			
 		case BUCHI_PETRI_NET:
 			return new BuchiPetriNetCegarLoop<>(icfg, rankVarConstructor, predicateFactory, mPrefs, mServices,
 					mTransitionClazz, constructInitialAbstraction(petriNetProvider, icfg), mCegarLoopBenchmark);

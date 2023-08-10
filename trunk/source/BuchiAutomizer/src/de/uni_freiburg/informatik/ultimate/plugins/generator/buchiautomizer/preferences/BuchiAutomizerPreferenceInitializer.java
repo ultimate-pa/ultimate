@@ -79,6 +79,10 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 	public enum AutomatonTypeConcurrent {
 		BUCHI_AUTOMATON, BUCHI_PETRI_NET, RABIN_PETRI_NET
 	}
+	
+	public enum FairnessType {
+		NONE, FAIRNESS, FAIRNESS_LAZY
+	}
 
 	public static final String LABEL_IGNORE_DOWN_STATES = "Ignore down states";
 	public static final String LABEL_DETERMINIZATION_ON_DEMAND = "Determinization on demand";
@@ -144,6 +148,9 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 	private static final NcsbImplementation DEF_NCSB_IMPLEMENTATION = NcsbImplementation.ORIGINAL;
 	public static final String LABEL_AUTOMATON_TYPE = "Automaton type for concurrent programs";
 	private static final AutomatonTypeConcurrent DEF_AUTOMATON_TYPE = AutomatonTypeConcurrent.BUCHI_AUTOMATON;
+	
+	public static final String LABEL_FAIRNESS_TYPE = "Fairness type for concurrent programs";
+	private static final FairnessType DEF_FAIRNESS_TYPE = FairnessType.NONE;
 
 	public BuchiAutomizerPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "Buchi Automizer (Termination Analysis)");
@@ -208,6 +215,7 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 				new UltimatePreferenceItem<>(LABEL_NCSB_IMPLEMENTATION, DEF_NCSB_IMPLEMENTATION, PreferenceType.Combo,
 						NcsbImplementation.values()),
 				new UltimatePreferenceItem<>(LABEL_AUTOMATON_TYPE, DEF_AUTOMATON_TYPE, PreferenceType.Combo,
-						AutomatonTypeConcurrent.values()) };
+						AutomatonTypeConcurrent.values()),
+				new UltimatePreferenceItem<>(LABEL_FAIRNESS_TYPE, DEF_FAIRNESS_TYPE, PreferenceType.Combo, FairnessType.values())};
 	}
 }
