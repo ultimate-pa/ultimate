@@ -155,7 +155,6 @@ public class TermContextTransformationEngine<C> {
 			if (mNext == mOriginal.getParameters().length && mPositionOfLastChange != -1
 					&& mTermWalker.applyRepeatedlyUntilNoChange()) {
 				mNext = 0;
-//				mPositionOfLastChange = false;
 				mRepetitions++;
 			} else {
 				if (DEBUG_NONTERMINATION && mRepetitions > 0) {
