@@ -33,20 +33,31 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 /**
  * Terms with greater treesize are considered smaller according to this
- * {@link Comparator}. The order has to be total, we use the order from
- * {@linkCommuhashUtils } if two terms have the same treesize.
+ * {@link Comparator}. Uses another comparator if both terms have the
+ * same treesize (order has to be total).
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class TreeSizeComperator implements Comparator<Term> {
 
+	final Comparator<Term> mTieBreaker;
+
+	/**
+	 * @param tieBreaker Additonal comparator that we use if both terms have the
+	 *                   same treesize.
+	 */
+	public TreeSizeComperator(Comparator<Term> tieBreaker) {
+		super();
+		mTieBreaker = tieBreaker;
+	}
+
 	@Override
 	public int compare(final Term t1, final Term t2) {
 		final long size1 = new DAGSize().treesize(t1);
 		final long size2 = new DAGSize().treesize(t2);
 		if (size1 - size2 == 0) {
-			return CommuhashUtils.HASH_BASED_COMPERATOR.compare(t1, t2);
+			return mTieBreaker.compare(t1, t2);
 		} else {
 			if (size1 - size2 > 0) {
 				// first has greater size and is hence small in this order
