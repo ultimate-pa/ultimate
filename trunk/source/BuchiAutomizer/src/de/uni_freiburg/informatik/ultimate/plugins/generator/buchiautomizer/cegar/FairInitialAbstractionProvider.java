@@ -163,19 +163,6 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 				fairAutomaton.addInternalTransition(s2, edge, s2);
 				fairAutomaton.addInternalTransition(s3, edge, s2);
 			}
-			/*
-			if (pre.equals(procedure) && suc.equals(procedure)) {
-				if (mIcfg.getProcedureExitNodes().get(procedure).equals(edge.getTarget())) {
-					fairAutomaton.addInternalTransition(s2, edge, s1);
-					fairAutomaton.addInternalTransition(s3, edge, s1);
-				} else {
-					fairAutomaton.addInternalTransition(s2, edge, s3);
-					fairAutomaton.addInternalTransition(s3, edge, s3);
-				}	
-			} else {
-				fairAutomaton.addInternalTransition(s2, edge, s2);
-				fairAutomaton.addInternalTransition(s3, edge, s2);
-			}*/
 		}
 		return fairAutomaton;
 	}

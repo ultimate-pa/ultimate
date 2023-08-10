@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,7 +50,7 @@ public class FairLazyBuchiAutomatonIntersection<L extends IIcfgTransition<?>> {
 		mMainProcedure = mIcfg.getInitialNodes().iterator().next().getProcedure();
 		
 		for (L edge : initialAbstraction.getVpAlphabet().getInternalAlphabet()) {
-			mFairProcedureAutomataMap.computeIfAbsent(edge.getPrecedingProcedure(), v -> new FairLazyProcedureBuchiAutomaton<>(edge.getPrecedingProcedure()));
+			mFairProcedureAutomataMap.computeIfAbsent(edge.getPrecedingProcedure(), v -> new FairLazyProcedureBuchiAutomaton(edge.getPrecedingProcedure()));
 		}
 	
 		for (Entry<String, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> entry : mFairProcedureAutomataMap.entrySet()) {
@@ -70,7 +71,7 @@ public class FairLazyBuchiAutomatonIntersection<L extends IIcfgTransition<?>> {
 		return mBuchiIntersectAutomaton;
 	}
 	
-	private class FairLazyProcedureBuchiAutomaton<L extends IIcfgTransition<?>> implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
+	private class FairLazyProcedureBuchiAutomaton implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate>{
 		
 		private HashSet<IPredicate> mProcedureInitialStates;
 		private HashSet<IPredicate> mProcedureFinalStates;
@@ -154,16 +155,6 @@ public class FairLazyBuchiAutomatonIntersection<L extends IIcfgTransition<?>> {
 				} else {
 					return getOrConstructTransition(letter, getOrConstructState(1));
 				}
-				/*
-				if (pre.equals(mProcedure) && suc.equals(mProcedure)) {
-					if (mIcfg.getProcedureExitNodes().get(mProcedure).equals(letter.getTarget())) {
-						return getOrConstructTransition(letter, getOrConstructState(0));
-					} else {
-						return getOrConstructTransition(letter, getOrConstructState(2));
-					}	
-				} else {
-					return getOrConstructTransition(letter, getOrConstructState(1));
-				}*/
 			}
 		}
 
