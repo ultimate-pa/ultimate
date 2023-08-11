@@ -68,7 +68,7 @@ public class TermContextTransformationEngine<C> {
 	 * @param siblingOrder Order in which we iterate over parameters of
 	 *                     {@link ApplicationTerm}s.
 	 */
-	private TermContextTransformationEngine(final TermWalker<C> termWalker, Comparator<Term> siblingOrder) {
+	private TermContextTransformationEngine(final TermWalker<C> termWalker, final Comparator<Term> siblingOrder) {
 		super();
 		mSiblingOrder = siblingOrder;
 		mTermWalker = termWalker;
@@ -79,7 +79,7 @@ public class TermContextTransformationEngine<C> {
 	 * @param siblingOrder Order in which we iterate over parameters of
 	 *                     {@link ApplicationTerm}s.
 	 */
-	public static <C> Term transform(final TermWalker<C> termWalker, Comparator<Term> siblingOrder,
+	public static <C> Term transform(final TermWalker<C> termWalker, final Comparator<Term> siblingOrder,
 			final C initialContext, final Term term) {
 		return new TermContextTransformationEngine<>(termWalker, siblingOrder).transform(initialContext, term);
 	}
