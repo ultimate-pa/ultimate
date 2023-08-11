@@ -2,12 +2,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.ceg
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -31,10 +28,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 public class FairBuchiAutomatonLazy<L extends IIcfgTransition<?>> {
 
 	private IIcfg<? extends IcfgLocation> mIcfg;
-	private BuchiIntersectNwa<L, IPredicate> mBuchiIntersectAutomaton;
+	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mBuchiIntersectAutomaton;
 	private PredicateFactory mPredicateFactory;
-	private Map<String, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mFairProcedureAutomataMap;
-	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mFairMainAutomaton;
 	private String mMainProcedure;
 	private VpAlphabet<L> mVpAlphabet;
 
@@ -44,36 +39,28 @@ public class FairBuchiAutomatonLazy<L extends IIcfgTransition<?>> {
 		mIcfg = icfg;
 		mVpAlphabet = alphabet;
 		mPredicateFactory = predicateFactory;
-		mFairProcedureAutomataMap = new HashMap<>();
 		mMainProcedure = mIcfg.getInitialNodes().iterator().next().getProcedure();
 		
+		Set<String> procedures = new HashSet<>(); 
 		for (L edge : alphabet.getInternalAlphabet()) {
-			
-			if (edge.getPrecedingProcedure().equals(mMainProcedure)) {
-				if (mFairMainAutomaton == null) {
-					mFairMainAutomaton = new FairLazyProcedureBuchiAutomaton(edge.getPrecedingProcedure());
-
-				}
-			} else {
-				mFairProcedureAutomataMap.computeIfAbsent(edge.getPrecedingProcedure(), v -> new FairLazyProcedureBuchiAutomaton(edge.getPrecedingProcedure()));
-			}
+			procedures.add(edge.getPrecedingProcedure());
 		}
-	
-		for (Entry<String, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> entry : mFairProcedureAutomataMap.entrySet()) {		
+		for (String procedure : procedures) {		
 			/*
 			NestedWordAutomatonReachableStates<L, IPredicate> debug = new NestedWordAutomatonReachableStates<>(services, entry.getValue());
 			String debugString = debug.toString();
 			Integer i = 0;
 			*/		
 			if (mBuchiIntersectAutomaton == null) {
-				mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(mFairMainAutomaton, entry.getValue(), stateFactoryForRefinement);
+				mBuchiIntersectAutomaton = new FairLazyProcedureBuchiAutomaton(procedure);
 			} else {
-				mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(mBuchiIntersectAutomaton, entry.getValue(), stateFactoryForRefinement);
+				mBuchiIntersectAutomaton = new BuchiIntersectNwa<>(mBuchiIntersectAutomaton, new FairLazyProcedureBuchiAutomaton(procedure), stateFactoryForRefinement);
 			}
 			/*
 			NestedWordAutomatonReachableStates<L, IPredicate> debugfair = new NestedWordAutomatonReachableStates<>(services, mBuchiIntersectAutomaton);
 			String debugfairString = debugfair.toString();*/
 		}
+
 	}
 	
 	public INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getFairIntersectionAutomaton(){
