@@ -34,11 +34,11 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 	@Override
 	public INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getInitialAbstraction(
 			IIcfg<? extends IcfgLocation> icfg, Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
-		// TODO Auto-generated method stub
 		INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction = mInitialAbstractionProvider.getInitialAbstraction(icfg, errorLocs);
 		//FairLazyBuchiAutomaton<L> fairAbstraction = new FairLazyBuchiAutomaton<>(icfg, initialAbstraction, new EnabledProceduresWeakFairness<>());
-		INwaOutgoingLetterAndTransitionProvider<L, IPredicate> fairAbstraction = (new FairBuchiAutomatonLazy<L>(icfg, initialAbstraction, mServices, mPredicateFactory, mStateFactory)).getFairIntersectionAutomaton();
-		//fairAbstraction = new BuchiIntersectNwa<>(initialAbstraction, fairAbstraction, mStateFactory);
+		INwaOutgoingLetterAndTransitionProvider<L, IPredicate> fairAbstraction = (new FairBuchiAutomatonLazy<L>(icfg, initialAbstraction.getVpAlphabet(), mServices, mPredicateFactory, mStateFactory)).getFairIntersectionAutomaton();
+
+		fairAbstraction = new BuchiIntersectNwa<>(initialAbstraction, fairAbstraction, mStateFactory);
 		/*
 		NestedWordAutomatonReachableStates<L, IPredicate> debug = new NestedWordAutomatonReachableStates<>(mServices, fairAbstraction);
 		String debugString = debug.toString();
