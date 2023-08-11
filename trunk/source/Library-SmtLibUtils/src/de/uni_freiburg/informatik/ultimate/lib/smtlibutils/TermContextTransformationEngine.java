@@ -197,6 +197,10 @@ public class TermContextTransformationEngine<C> {
 				final Task old = mStack.pop();
 				assert old == this;
 				result = new AscendResultTask(super.mContext, res);
+			} else if (SmtUtils.isNeutralElement(mOriginal.getFunction().getName(), mResult[mNext])) {
+				// If the current param is the neutral element we will omit this param.
+				// Rationale: if we compose the result it will not have an effect anyway.
+				result = constructTaskForDescendResult(super.mContext, new FinalResultForAscend(mResult[mNext]));
 			} else {
 				final ArrayList<Term> otherParams = new ArrayList<>(Arrays.asList(mResult));
 				otherParams.remove(mNext);
