@@ -30,7 +30,9 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -50,10 +52,12 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 //import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SimplificationTest;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
  * @author Xinyu Jiang
@@ -61,9 +65,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  *
  */
 public class SimplifyDDA2 extends TermWalker<Term> {
-	private final IUltimateServiceProvider mServices;
-	private final ManagedScript mMgdScript;
-	private int mAssertionStackHeight = 0;
 	/**
 	 * Replace terms of the form `x = l ∧ φ(x)` by `x = l ∧ φ(l)` and replace terms of the form `x ≠ l ∨ φ(x)` by `x ≠ l
 	 * ∨ φ(l)`, where l is a literal (of sort Real, Int, or BitVec) and x is a variable in a {@link PolynomialRelation}
@@ -72,19 +73,25 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private static final boolean APPLY_CONSTANT_FOLDING = false;
 	private static final boolean DEBUG_CHECK_RESULT = false;
 	private static final boolean CHECK_ALL_NODES_FOR_REDUNDANCY = false;
-	private static final boolean CONSIDER_QUANTFIED_FORMULAS_AS_LEAVES = true;
-	private static final boolean OMIT_QUANTIFIED_FORMULAS = true;
+	private static final boolean CONSIDER_QUANTFIED_FORMULAS_AS_LEAVES = false;
+	private static final boolean OMIT_QUANTIFIED_FORMULAS_FROM_CONTEXT = !true;
 
+	private final IUltimateServiceProvider mServices;
+	private final ManagedScript mMgdScript;
+	private int mAssertionStackHeight = 0;
 	private int mNumberOfCheckSatCommands = 0;
 	private int mNonConstrainingNodes = 0;
 	private int mNonRelaxingNodes = 0;
 	private long mCheckSatTime = 0;
 	private final long mStartTime = System.nanoTime();
+	private final ScopedHashMap<TermVariable, TermVariable> mRenamingMap;
+	private boolean mPreviousWasQuantified = false;
 
 	private SimplifyDDA2(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		super();
 		mServices = services;
 		mMgdScript = mgdScript;
+		mRenamingMap = new ScopedHashMap<>();
 	}
 
 	@Override
@@ -97,8 +104,12 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final List<Term> otherParams = new ArrayList<>(allParams);
 		otherParams.remove(selectedParam);
 
-		mMgdScript.getScript().pop(1);
-		mAssertionStackHeight--;
+		if (!mPreviousWasQuantified) {
+			mMgdScript.getScript().pop(1);
+			mAssertionStackHeight--;
+		} else {
+			mPreviousWasQuantified = false;
+		}
 
 		mMgdScript.getScript().push(1);
 		mAssertionStackHeight++;
@@ -106,7 +117,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final List<Term> qfParams = new ArrayList<>();
 		if (symb.getName().equals("and")) {
 			for (final Term otherParam : otherParams) {
-				if (!OMIT_QUANTIFIED_FORMULAS || QuantifierUtils.isQuantifierFree(otherParam)) {
+				if (!OMIT_QUANTIFIED_FORMULAS_FROM_CONTEXT || QuantifierUtils.isQuantifierFree(otherParam)) {
 					mMgdScript.getScript().assertTerm(otherParam);
 					qfParams.add(otherParam);
 				}
@@ -119,7 +130,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			/////// smtutils replace free variables
 
 			for (final Term otherParam : otherParams) {
-				if (!OMIT_QUANTIFIED_FORMULAS || QuantifierUtils.isQuantifierFree(otherParam)) {
+				if (!OMIT_QUANTIFIED_FORMULAS_FROM_CONTEXT || QuantifierUtils.isQuantifierFree(otherParam)) {
 					mMgdScript.getScript().assertTerm(SmtUtils.not(mMgdScript.getScript(), otherParam));
 					qfParams.add(SmtUtils.not(mMgdScript.getScript(), otherParam));
 				}
@@ -200,6 +211,29 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		if (SmtUtils.isFalseLiteral(context)) {
 			throw new AssertionError("critical constraint is false");
 		}
+
+		if (!CONSIDER_QUANTFIED_FORMULAS_AS_LEAVES && term instanceof QuantifiedFormula) {
+			mPreviousWasQuantified = true;
+			final QuantifiedFormula termAsQuantifiedFormula = (QuantifiedFormula) term;
+			mRenamingMap.beginScope();
+			mMgdScript.lock(this);
+			for (final TermVariable quantifiedVariable : termAsQuantifiedFormula.getVariables()) {
+				final TermVariable freshVariable = mMgdScript.constructFreshCopy(quantifiedVariable);
+				mRenamingMap.put(quantifiedVariable, freshVariable);
+				mMgdScript.declareFun(this, freshVariable.getName(), new Sort[0], freshVariable.getSort());
+			}
+			mMgdScript.unlock(this);
+			final Term substituted =
+					Substitution.apply(mMgdScript, mRenamingMap, termAsQuantifiedFormula.getSubformula());
+			return new TermContextTransformationEngine.IntermediateResultForDescend(substituted);
+		}
+		//// check if term is quantified formula, if so, descend
+		// create fresh variables and restore
+		// mMgdScript.constructFreshCopy(null);
+		// new ScopedHashMap<>(); // push/pop functionallity
+		// iterate over all quantified variables, construct copy using above, store in scoped hashmap
+		// use substitution to replace variables, then descend by returning descend result w the subformula
+
 		/// check if node is true or false, if neither, then descend
 		/// member variable to toggle this
 		/// descend into quantified formulas, rename qvariables (also restore names?)
@@ -276,8 +310,13 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	@Override
 	protected Term constructResultForApplicationTerm(final Term context, final ApplicationTerm originalApplicationTerm,
 			final Term[] resultParams) {
-		mMgdScript.getScript().pop(1);
-		mAssertionStackHeight--;
+		if (!mPreviousWasQuantified) {
+			mMgdScript.getScript().pop(1);
+			mAssertionStackHeight--;
+		} else {
+			mPreviousWasQuantified = false;
+		}
+
 		assert mAssertionStackHeight >= 0;
 		// While descending from node back to its parents, this method is called.
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -351,15 +390,24 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	@Override
 	protected Term constructResultForQuantifiedFormula(final Term context,
 			final QuantifiedFormula originalQuantifiedFormula, final Term resultSubformula) {
+		final HashMap<TermVariable, TermVariable> swapped = new HashMap<>();
+		for (final Map.Entry<TermVariable, TermVariable> entry : mRenamingMap.currentScopeEntries()) {
+			swapped.put(entry.getValue(), entry.getKey());
+		}
+		final Term revertedFormula = Substitution.apply(mMgdScript, swapped, resultSubformula);
+		// rename variables back here
+		mRenamingMap.endScope();
+
 		mMgdScript.getScript().pop(1);
 		mAssertionStackHeight--;
 		assert mAssertionStackHeight >= 0;
 		return SmtUtils.quantifier(mMgdScript.getScript(), originalQuantifiedFormula.getQuantifier(),
-				Arrays.asList(originalQuantifiedFormula.getVariables()), resultSubformula);
+				Arrays.asList(originalQuantifiedFormula.getVariables()), revertedFormula);
 	}
 
 	@Override
 	protected boolean applyRepeatedlyUntilNoChange() {
+		// make this an option/flag
 		return true;
 	}
 
