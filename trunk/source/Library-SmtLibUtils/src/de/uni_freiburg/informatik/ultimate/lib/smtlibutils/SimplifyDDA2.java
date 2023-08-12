@@ -38,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
@@ -312,10 +314,11 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final Term result;
 		try {
 			final SimplifyDDA2 simplifyDDA2 = new SimplifyDDA2(services, mgdScript);
+			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(term);
 			final Comparator<Term> siblingOrder = null;
 			// TODO Matthias 20230810: Some example for an order in the next line.
 			// final Comparator<Term> siblingOrder = new TreeSizeComperator(CommuhashUtils.HASH_BASED_COMPERATOR);
-			result = TermContextTransformationEngine.transform(simplifyDDA2, siblingOrder, context, term);
+			result = TermContextTransformationEngine.transform(simplifyDDA2, siblingOrder, context, nnf);
 			final ILogger logger = services.getLoggingService().getLogger(SimplifyDDA2.class);
 			if (logger.isInfoEnabled()) {
 				logger.info(simplifyDDA2.generateExitMessage());
