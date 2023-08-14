@@ -1077,7 +1077,7 @@ public class SimplificationTest {
 		final String errorMessage;
 		switch (lbool) {
 		case SAT:
-			errorMessage = "Not equivalent to expected result: " + result;
+			errorMessage = "Not logically equivalent to expected result: " + result;
 			break;
 		case UNKNOWN:
 			errorMessage = "Insufficient ressources for checking equivalence to expected result: " + result;
