@@ -33,7 +33,6 @@ import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DataRaceFoundResult;
@@ -44,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UserSpecifiedLimitReachedResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
@@ -159,7 +159,7 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 		}
 		final Check check = Check.getAnnotation(errorLoc);
 		IResult cexResult;
-		if (check != null && check.getSpec().contains(Spec.DATA_RACE)) {
+		if (check != null && check.getSpec().contains(ISpec.Type.DATA_RACE)) {
 			cexResult = new DataRaceFoundResult<>(errorLoc, mPluginName, mServices.getBacktranslationService(), pe);
 		} else {
 			cexResult = new CounterExampleResult<>(errorLoc, mPluginName, mServices.getBacktranslationService(), pe);

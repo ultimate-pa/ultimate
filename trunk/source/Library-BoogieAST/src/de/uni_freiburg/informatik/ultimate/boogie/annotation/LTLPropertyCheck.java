@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
@@ -66,7 +67,7 @@ public class LTLPropertyCheck extends Check {
 	public LTLPropertyCheck(final String ltlPropertyAsString,
 			final Map<String, CheckableExpression> checkableAtomicPropositions,
 			final List<VariableDeclaration> globalDeclarations) {
-		super(Spec.LTL);
+		super(ISpec.Type.LTL);
 		assert ltlPropertyAsString != null : "There is no property";
 		assert checkableAtomicPropositions != null : "There is a property the map between APs and Boogie expressions is not there";
 		assert !checkableAtomicPropositions

@@ -42,13 +42,13 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.IResultWithCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -143,17 +143,17 @@ public class VerificationResultTransformer {
 			return result;
 		}
 
-		final Set<Spec> specs = reqCheck.getSpec();
+		final Set<ISpec.Type> specs = reqCheck.getSpec();
 		if (specs == null || specs.isEmpty()) {
 			throw new AssertionError("Result without specification: " + oldRes.getShortDescription());
 		}
 		if (specs.size() != 1) {
 			throw new UnsupportedOperationException("Multi-checks of " + specs + " are not yet supported");
 		}
-		final Spec spec = specs.iterator().next();
+		final ISpec.Type spec = specs.iterator().next();
 		dieIfUnsupported(spec);
 
-		if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS) {
+		if (spec == ISpec.Type.CONSISTENCY || spec == ISpec.Type.VACUOUS) {
 			// a counterexample for consistency and vacuity means that the requirements are consistent or
 			// non-vacuous
 			isPositive = !isPositive;
@@ -166,7 +166,7 @@ public class VerificationResultTransformer {
 			return new ReqCheckSuccessResult<>(element, plugin, translatorSequence);
 		}
 
-		if (spec == Spec.RTINCONSISTENT) {
+		if (spec == ISpec.Type.RTINCONSISTENT) {
 			@SuppressWarnings("unchecked")
 			final IcfgProgramExecution<? extends IAction> oldPe =
 					(IcfgProgramExecution<? extends IAction>) ((CounterExampleResult<?, ?, Term>) oldRes)
@@ -552,7 +552,7 @@ public class VerificationResultTransformer {
 		return lightResult;
 	}
 
-	private static void dieIfUnsupported(final Spec spec) {
+	private static void dieIfUnsupported(final ISpec.Type spec) {
 		switch (spec) {
 		case CONSISTENCY:
 		case VACUOUS:

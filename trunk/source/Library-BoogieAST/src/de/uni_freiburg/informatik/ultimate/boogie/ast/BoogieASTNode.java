@@ -38,13 +38,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.CheckNegativeMessageProvider;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.CheckPositiveMessageProvider;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.CheckMessageProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ISimpleAST;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
 
 /**
  *
@@ -140,24 +138,20 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 			final NamedAttribute[] attrib = ((AssertStatement) node).getAttributes();
 			if (attrib != null && attrib.length > 0) {
 				final String namedAttribStr = BoogiePrettyPrinter.print(attrib);
+				final CheckMessageProvider msgProvider = new CheckMessageProvider();
 
-				final CheckMessageProvider posMsgProvider = new CheckPositiveMessageProvider();
-				final CheckMessageProvider negMsgProvider = new CheckNegativeMessageProvider();
+				/* customize result message for assertion specifications with named attributes */
+				msgProvider.registerSpecificationAssertNamedAttributes(namedAttribStr);
 
-				posMsgProvider.registerMessageOverride(Spec.ASSERT,
-						() -> String.format("assertion with attributes \"%s\" always holds", namedAttribStr));
-				negMsgProvider.registerMessageOverride(Spec.ASSERT,
-						() -> String.format("assertion with attributes \"%s\" can be violated", namedAttribStr));
-
-				return new Check(Check.Spec.ASSERT, posMsgProvider, negMsgProvider);
+				return new Check(ISpec.Type.ASSERT, msgProvider);
 			}
-			return new Check(Check.Spec.ASSERT);
+			return new Check(ISpec.Type.ASSERT);
 		} else if (node instanceof LoopInvariantSpecification) {
-			return new Check(Check.Spec.INVARIANT);
+			return new Check(ISpec.Type.INVARIANT);
 		} else if (node instanceof CallStatement) {
-			return new Check(Check.Spec.PRE_CONDITION);
+			return new Check(ISpec.Type.PRE_CONDITION);
 		} else if (node instanceof EnsuresSpecification) {
-			return new Check(Check.Spec.POST_CONDITION);
+			return new Check(ISpec.Type.POST_CONDITION);
 		} else if (node == null) {
 			throw new IllegalArgumentException();
 		}

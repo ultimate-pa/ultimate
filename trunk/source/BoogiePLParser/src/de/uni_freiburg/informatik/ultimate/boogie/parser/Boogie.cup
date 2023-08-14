@@ -10,9 +10,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.parser.BoogieSymbolFactory.Boo
 import de.uni_freiburg.informatik.ultimate.boogie.ast.*;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
@@ -347,9 +347,9 @@ specStar ::=
 	; 
 spec ::=
 	  freeOpt:free REQUIRES expr:e SEMI:semi
-	  {: RESULT = new RequiresSpecification(getLocation(free$,semi$), free, e); Check check = new Check(Spec.PRE_CONDITION); check.annotate(RESULT); :}
+	  {: RESULT = new RequiresSpecification(getLocation(free$,semi$), free, e); Check check = new Check(ISpec.Type.PRE_CONDITION); check.annotate(RESULT); :}
 	| freeOpt:free ENSURES expr:e SEMI:semi
-	  {: RESULT = new EnsuresSpecification(getLocation(free$,semi$), free, e); Check check = new Check(Spec.POST_CONDITION); check.annotate(RESULT); :}
+	  {: RESULT = new EnsuresSpecification(getLocation(free$,semi$), free, e); Check check = new Check(ISpec.Type.POST_CONDITION); check.annotate(RESULT); :}
 	| freeOpt:free MODIFIES varCommaStar:l SEMI:semi
 	  {: RESULT = new ModifiesSpecification(getLocation(free$,semi$), free, l.toArray(new VariableLHS[l.size()])); :}
 	;
@@ -775,7 +775,7 @@ loopInvStar ::=
 	;
 loopInv ::=
 	  freeOpt:free INVARIANT:x expr:e SEMI
-	  {: RESULT = new LoopInvariantSpecification(getLocation(x$,e$), free, e); Check check = new Check(Spec.INVARIANT); check.annotate(RESULT); :}
+	  {: RESULT = new LoopInvariantSpecification(getLocation(x$,e$), free, e); Check check = new Check(ISpec.Type.INVARIANT); check.annotate(RESULT); :}
 	;
 	
 lhsCommaPlus ::=

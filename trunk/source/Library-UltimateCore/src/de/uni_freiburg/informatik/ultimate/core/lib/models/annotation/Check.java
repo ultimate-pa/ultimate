@@ -35,11 +35,14 @@ package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IMessageProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
@@ -54,170 +57,58 @@ public class Check extends ModernAnnotations {
 
 	private static final String MSG_AND = " and ";
 
-	public enum Spec {
-		/**
-		 * Array Index out of bounds error.
-		 */
-		ARRAY_INDEX,
-		/**
-		 * Pre condition violated.
-		 */
-		PRE_CONDITION,
-		/**
-		 * Post condition violated.
-		 */
-		POST_CONDITION,
-		/**
-		 * Invariant violated.
-		 */
-		INVARIANT,
-		/**
-		 * Assert statement violated.
-		 */
-		ASSERT,
-		/**
-		 * Devision by zero error.
-		 */
-		DIVISION_BY_ZERO,
-		/**
-		 * Integer overflow error.
-		 */
-		INTEGER_OVERFLOW,
-		/**
-		 * Tried to access unallocated memory.
-		 */
-		MEMORY_DEREFERENCE,
-		/**
-		 * Memory leak detected. I.e. missing free!
-		 */
-		MEMORY_LEAK,
-		/**
-		 * Free of unallocated pointer.
-		 */
-		MEMORY_FREE,
-		/**
-		 * Free of unallocated pointer.
-		 */
-		MALLOC_NONNEGATIVE,
-		/**
-		 * Pointer arithmetic that is not allowed by C. E.g. - computing the difference of two pointers that point to
-		 * completely different arrays - comparing pointers that point to completely different arrays
-		 */
-		ILLEGAL_POINTER_ARITHMETIC,
-		/**
-		 * Error function reachable.
-		 */
-		ERROR_FUNCTION,
-		/**
-		 * Not further specified or unknown.
-		 */
-		UNKNOWN,
-		/**
-		 * An LTL property
-		 */
-		LTL,
-		/**
-		 * Invariant of a correctness witness
-		 */
-		WITNESS_INVARIANT,
-		/**
-		 * Unsigned int overflow
-		 */
-		UINT_OVERFLOW,
-		/**
-		 * Undefined behavior according to the standard
-		 */
-		UNDEFINED_BEHAVIOR,
-		/**
-		 * Check for requirements. Checks for rt-inconsistency.
-		 */
-		RTINCONSISTENT,
-		/**
-		 * Check for requirements. Checks for vacuity.
-		 */
-		VACUOUS,
-		/**
-		 * Check for requirements. Checks for consistency.
-		 */
-		CONSISTENCY,
-		/**
-		 * Check for requirements. Checks for incompleteness.
-		 */
-		INCOMPLETE,
-		/**
-		 * Check if a petrified ICFG does provide enough thread instances.
-		 */
-		SUFFICIENT_THREAD_INSTANCES,
-
-		DATA_RACE,
-
-		/***
-		 * Satisfiability of constraint Horn clauses
-		 */
-		CHC_SATISFIABILITY,
-
-	}
-
 	private static final long serialVersionUID = -3753413284642976683L;
 
 	private static final String KEY = Check.class.getName();
 
 	@Visualizable
-	private final Set<Spec> mSpec;
+	private final Set<ISpec.Type> mSpec;
 
-	private final CheckMessageProvider mPosMsgProvider;
-	private final CheckMessageProvider mNegMsgProvider;
+	private final IMessageProvider mMsgProvider;
 
-	public Check(final Check.Spec spec) {
+	public Check(final ISpec.Type spec) {
 		this(EnumSet.of(spec));
 	}
 
-	public Check(final Check.Spec spec, final CheckMessageProvider positiveMessageProvider,
-			final CheckMessageProvider negativeMessageProvider) {
-		this(EnumSet.of(spec), positiveMessageProvider, negativeMessageProvider);
+	public Check(final ISpec.Type spec, final IMessageProvider msgProvider) {
+		this(EnumSet.of(spec), msgProvider);
 	}
 
-	public Check(final Set<Spec> newSpec) {
-		this(newSpec, new CheckPositiveMessageProvider(), new CheckNegativeMessageProvider());
+	public Check(final Set<ISpec.Type> newSpec) {
+		this(newSpec, new CheckMessageProvider());
 	}
 
-	public Check(final Set<Spec> newSpec, final CheckMessageProvider positiveMessageProvider,
-			final CheckMessageProvider negativeMessageProvider) {
+	public Check(final Set<ISpec.Type> newSpec, final IMessageProvider msgProvider) {
 		assert !newSpec.isEmpty();
 		mSpec = newSpec;
-		mPosMsgProvider = positiveMessageProvider;
-		mNegMsgProvider = negativeMessageProvider;
+		mMsgProvider = msgProvider;
 	}
 
-	public Set<Spec> getSpec() {
+	public Set<ISpec.Type> getSpec() {
 		return mSpec;
 	}
 
-	protected CheckMessageProvider getPositiveMessageProvider() {
-		return mPosMsgProvider;
-	}
-
-	protected CheckMessageProvider getNegativeMessageProvider() {
-		return mNegMsgProvider;
+	protected IMessageProvider getMessageProvider() {
+		return mMsgProvider;
 	}
 
 	public String getPositiveMessage() {
-		return getMessage(mPosMsgProvider);
+		return getCompoundMessage(mMsgProvider::getPositiveMessage);
 	}
 
 	public String getNegativeMessage() {
-		return getMessage(mNegMsgProvider);
+		return getCompoundMessage(mMsgProvider::getNegativeMessage);
 	}
 
-	private String getMessage(final CheckMessageProvider messageProvider) {
-		final Iterator<Spec> iter = mSpec.iterator();
+	private String getCompoundMessage(final Function<ISpec.Type, String> msgProviderFunc) {
+		final Iterator<ISpec.Type> iter = mSpec.iterator();
 		if (mSpec.size() == 1) {
-			return messageProvider.getMessage(iter.next());
+			return msgProviderFunc.apply(iter.next());
 		}
 
 		final StringBuilder sb = new StringBuilder();
 		while (iter.hasNext()) {
-			sb.append(messageProvider.getMessage(iter.next())).append(MSG_AND);
+			sb.append(msgProviderFunc.apply(iter.next())).append(MSG_AND);
 		}
 		sb.delete(sb.length() - MSG_AND.length(), sb.length());
 		return sb.toString();
@@ -236,7 +127,7 @@ public class Check extends ModernAnnotations {
 		}
 		final Check otherCheck = (Check) other;
 
-		final EnumSet<Spec> newSpec = EnumSet.copyOf(mSpec);
+		final EnumSet<ISpec.Type> newSpec = EnumSet.copyOf(mSpec);
 		newSpec.addAll(otherCheck.getSpec());
 		// note: automatic merging looses all information about message providers and uses the default ones
 		return new Check(newSpec);
@@ -271,7 +162,7 @@ public class Check extends ModernAnnotations {
 
 	@Override
 	public String toString() {
-		return mSpec.stream().map(Spec::toString).collect(Collectors.joining(MSG_AND));
+		return mSpec.stream().map(ISpec.Type::toString).collect(Collectors.joining(MSG_AND));
 	}
 
 	@Override

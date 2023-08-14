@@ -129,9 +129,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
@@ -622,7 +622,7 @@ public class MemoryHandler {
 			 * malloc, or realloc function, or if the space has been deallocated by a call to free or realloc, the
 			 * behavior is undefined.
 			 */
-			final Check check = new Check(Spec.MEMORY_FREE);
+			final Check check = new Check(ISpec.Type.MEMORY_FREE);
 			{
 				// assert (~addr!offset == 0);
 				final AssertStatement offsetZero = new AssertStatement(loc,
@@ -2201,7 +2201,7 @@ public class MemoryHandler {
 			isFreeRequires = true;
 		}
 		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, offsetInAllocatedRange);
-		final Check check = new Check(Spec.MEMORY_DEREFERENCE);
+		final Check check = new Check(ISpec.Type.MEMORY_DEREFERENCE);
 		check.annotate(spec);
 		return Collections.singletonList(spec);
 	}
@@ -2239,7 +2239,7 @@ public class MemoryHandler {
 			isFreeRequires = true;
 		}
 		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, isValid);
-		final Check check = new Check(Spec.MEMORY_DEREFERENCE);
+		final Check check = new Check(ISpec.Type.MEMORY_DEREFERENCE);
 		check.annotate(spec);
 		return Collections.singletonList(spec);
 	}
@@ -3298,7 +3298,7 @@ public class MemoryHandler {
 
 			if (mSettings.getPointerBaseValidityMode() == PointerCheckMode.ASSERTandASSUME) {
 				final AssertStatement assertion = new AssertStatement(loc, validBase);
-				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
+				final Check chk = new Check(ISpec.Type.MEMORY_DEREFERENCE);
 				chk.annotate(assertion);
 				result.add(assertion);
 			} else {
@@ -3330,7 +3330,7 @@ public class MemoryHandler {
 							offsetNonnegative);
 			if (mSettings.getPointerBaseValidityMode() == PointerCheckMode.ASSERTandASSUME) {
 				final AssertStatement assertion = new AssertStatement(loc, aAndB);
-				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
+				final Check chk = new Check(ISpec.Type.MEMORY_DEREFERENCE);
 				chk.annotate(assertion);
 				result.add(assertion);
 			} else {

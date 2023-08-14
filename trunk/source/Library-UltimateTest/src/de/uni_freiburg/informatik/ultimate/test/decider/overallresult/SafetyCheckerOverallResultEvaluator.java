@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DataRaceFoundResult;
@@ -43,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
@@ -109,12 +109,12 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 			final CounterExampleResult<?, ?, ?> cer = (CounterExampleResult<?, ?, ?>) result;
 
 			// TODO: This should change to take into account multiple specs
-			final Set<Spec> spec = cer.getCheckedSpecification().getSpec();
-			if (spec.contains(Spec.ARRAY_INDEX) || spec.contains(Spec.MEMORY_DEREFERENCE)) {
+			final Set<ISpec.Type> spec = cer.getCheckedSpecification().getSpec();
+			if (spec.contains(ISpec.Type.ARRAY_INDEX) || spec.contains(ISpec.Type.MEMORY_DEREFERENCE)) {
 				return SafetyCheckerOverallResult.UNSAFE_DEREF;
-			} else if (spec.contains(Spec.MEMORY_FREE)) {
+			} else if (spec.contains(ISpec.Type.MEMORY_FREE)) {
 				return SafetyCheckerOverallResult.UNSAFE_FREE;
-			} else if (spec.contains(Spec.MEMORY_LEAK)) {
+			} else if (spec.contains(ISpec.Type.MEMORY_LEAK)) {
 				return SafetyCheckerOverallResult.UNSAFE_MEMTRACK;
 			} else {
 				return SafetyCheckerOverallResult.UNSAFE;

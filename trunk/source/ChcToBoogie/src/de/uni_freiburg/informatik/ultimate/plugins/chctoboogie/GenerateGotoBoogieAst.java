@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
 import de.uni_freiburg.informatik.ultimate.lib.chc.ChcPreMetaInfoProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
@@ -454,7 +454,7 @@ public class GenerateGotoBoogieAst {
 				new CallStatement(loc, false, new VariableLHS[0], getGotoProcName(), gotoProcCallArgs);
 
 		final Statement assertFalse = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
-		final Check check = new Check(Spec.CHC_SATISFIABILITY);
+		final Check check = new Check(ISpec.Type.CHC_SATISFIABILITY);
 		check.annotate(assertFalse);
 
 		statements = new Statement[] { callToGotoProc, assertFalse };

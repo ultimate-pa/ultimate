@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -102,7 +102,7 @@ public class HybridIcfgGenerator {
 		mErrorLocation = new IcfgLocation(new StringDebugIdentifier("error"), HybridTranslatorConstants.PROC_NAME);
 		// DD: You need the check annotation s.t. result reporting knows what
 		// you are checking
-		new Check(Spec.ASSERT).annotate(mErrorLocation);
+		new Check(ISpec.Type.ASSERT).annotate(mErrorLocation);
 		// you need a location at the error loc for legacy reasons (we will find
 		// a way ;) ) -- the location is also
 		// responsible for the line number in the result
