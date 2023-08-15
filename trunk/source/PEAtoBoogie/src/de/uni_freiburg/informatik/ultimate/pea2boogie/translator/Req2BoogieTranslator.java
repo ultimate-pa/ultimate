@@ -560,7 +560,6 @@ public class Req2BoogieTranslator {
 			}
 		}
 		// Assign St-Recoverability if statement
-		//stmtList.addAll(mSymboltable.getAuxStatements().setBoogieLocationForInstance(new StateRecoverabilityAuxStatement(""), StRecExpr.IF_ST, bl));
 		stmtList.addAll(mSymboltable.getAuxStatementContainer().getStatements(StRecExpr.IF_ST));
 		stmtList.addAll(mReqCheckAnnotator.getStateChecks());
 		stmtList.addAll(
