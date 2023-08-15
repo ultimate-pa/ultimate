@@ -219,6 +219,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 		
 		// DOT printen
+		/*
 		final List<Entry<PatternType<?>, PhaseEventAutomata>> counterTracePEAList = new ArrayList<>();
 		for (final ReqPeas reqPea : mReqPeas) {
 			final PatternType<?> pattern = reqPea.getPattern();
@@ -229,8 +230,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 		final List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets = CrossProducts.subArrays(counterTracePEAList.toArray(new Entry[counterTracePEAList.size()]), counterTracePEAList.size(), new Entry[counterTracePEAList.size()]);
 		//Prints parallel automaton
-		//dotPrinter(subsets);
-		
+		dotPrinter(subsets);
+		*/
 		return list;
 	}
 
