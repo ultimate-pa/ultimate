@@ -12,6 +12,6 @@ public interface AuxStatement {
 	public Statement getStatement(StRecExpr stRecExpr);
 
 	public BoogieLocation setBoogieLocation(BoogieLocation loc);
-
+	
 	public BoogieLocation getBoogieLocation();
 }
