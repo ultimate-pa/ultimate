@@ -217,7 +217,8 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 
 			@Override
 			public boolean isValid(final String string) {
-				String[]exprPairs =   string.split(",");
+				String[]exprPairs = string.split(",");
+
 				for(String exprPair : exprPairs) {
 					Matcher m = match(exprPair, mPattern);
 					if(!m.matches()) {
