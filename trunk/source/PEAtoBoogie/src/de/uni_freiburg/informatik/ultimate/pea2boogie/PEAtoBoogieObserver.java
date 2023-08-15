@@ -56,7 +56,7 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		if (mode == PEATransformerMode.REQ_CHECK) {
 			return generateReqCheckBoogie(patterns);
 		}
-		if(mode == PEATransformerMode.REQ_PARAM_CHECK) {
+		if (mode == PEATransformerMode.REQ_PARAM_CHECK) {
 			return generateReqParamCheckBoogie(patterns);
 		}
 		if (mode == PEATransformerMode.REQ_TEST) {
@@ -66,7 +66,8 @@ public class PEAtoBoogieObserver extends BaseObserver {
 	}
 
 	private IElement generateReqCheckBoogie(final List<PatternType<?>> patterns) {
-		final Req2BoogieTranslator translator = new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.emptyList());
+		final Req2BoogieTranslator translator =
+				new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.emptyList());
 		final VerificationResultTransformer reporter =
 				new VerificationResultTransformer(mLogger, mServices, translator.getReqSymbolTable());
 		// register CEX transformer that removes program executions from CEX.
@@ -74,13 +75,16 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
 		return translator.getUnit();
 	}
-	
+
 	private IElement generateReqParamCheckBoogie(final List<PatternType<?>> patterns) {
-		final Req2ModifySymbolTablePeaTransformer transformer = new Req2ModifySymbolTablePeaTransformer(mServices, mLogger);
-		
-		final Req2BoogieTranslator translator = new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.singletonList(transformer));
-		
-		final VerificationResultTransformer reporter = new VerificationResultTransformer(mLogger, mServices, translator.getReqSymbolTable());
+		final Req2ModifySymbolTablePeaTransformer transformer =
+				new Req2ModifySymbolTablePeaTransformer(mServices, mLogger);
+
+		final Req2BoogieTranslator translator =
+				new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.singletonList(transformer));
+
+		final VerificationResultTransformer reporter =
+				new VerificationResultTransformer(mLogger, mServices, translator.getReqSymbolTable());
 		// register CEX transformer that removes program executions from CEX.
 		final UnaryOperator<IResult> resultTransformer = reporter::convertTraceAbstractionResult;
 		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);

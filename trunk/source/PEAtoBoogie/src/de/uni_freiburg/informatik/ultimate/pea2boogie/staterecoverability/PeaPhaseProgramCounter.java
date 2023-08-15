@@ -16,7 +16,7 @@ public class PeaPhaseProgramCounter {
 	private final PhaseEventAutomata pea;
 	private final PatternType<?> req;
 	
-	public PeaPhaseProgramCounter(int pc, Phase phase, PhaseEventAutomata pea, PatternType<?> req) {
+	public PeaPhaseProgramCounter(final int pc, final Phase phase, final PhaseEventAutomata pea, final PatternType<?> req) {
 		super();
 		this.pc = pc;
 		this.phase = phase;

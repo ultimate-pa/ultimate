@@ -140,7 +140,7 @@ public class ReqCheck extends Check {
 	}
 	
 	private String createMessage() {
-		if(mMessage.isEmpty()) {
+		if(mMessage == null) {
 			return "";
 		}
 		return mMessage;

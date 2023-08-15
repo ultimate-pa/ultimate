@@ -186,7 +186,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			annotations.addAll(genChecksNonVacuity(mUnitLocation));
 		}
 		annotations.addAll(genChecksRTInconsistency(mUnitLocation));
-		//New check
 		if(mCheckStateRecoverability) {
 			annotations.addAll(genCheckStateRecoverability(mUnitLocation));
 		}
@@ -197,7 +196,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private List<Statement> genCheckStateRecoverability(final BoogieLocation bl) {
 		List<Statement> list = new ArrayList<>();
 		StateRecoverabilityGenerator mStRecGen = new StateRecoverabilityGenerator();
-		//Set<PeaPhaseProgramCounter> consideredPcLocations = mStRecGen.getRelevantLocationsFromPea(mReqPeas);
 		AuxStatementContainer auxStatementContainer = mSymbolTable.getAuxStatementContainer();
 		Map<VerificationExpression, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxStatement>>> vePeaAuxStatementMap = mStRecGen.getAuxStatementPerVerificationExpression(auxStatementContainer);
 		
@@ -223,10 +221,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		// DOT printen
 		final List<Entry<PatternType<?>, PhaseEventAutomata>> counterTracePEAList = new ArrayList<>();
 		for (final ReqPeas reqPea : mReqPeas) {
-			//Pattern mit Anforderung als Key
 			final PatternType<?> pattern = reqPea.getPattern();
 			
-			//Nötig weil komplexere Anforderungen mehrere DC haben können
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqPea.getCounterTrace2Pea()) {
 				counterTracePEAList.add(new Pair<>(pattern, pea.getValue()));
 			}
@@ -319,7 +315,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final PhaseEventAutomata[] automata = automataSet.toArray(new PhaseEventAutomata[subset.length]);
 
 		final Expression expr = mRtInconcistencyConditionGenerator.generateNonDeadlockCondition(automata);
-		final ReqCheck check = createReqCheck(Spec.RTINCONSISTENT,"", subset);
+		final ReqCheck check = createReqCheck(Spec.RTINCONSISTENT, "", subset);
 
 		if (expr == null) {
 			if (mReportTrivialConsistency) {

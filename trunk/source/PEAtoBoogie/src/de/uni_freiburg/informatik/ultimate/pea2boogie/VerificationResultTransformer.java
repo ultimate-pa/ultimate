@@ -190,12 +190,13 @@ public class VerificationResultTransformer {
 			final String failurePath = formatTimeSequenceMap(delta2var2value);
 			return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence, failurePath);
 		}
-		
-		if(spec == Spec.STATE_RECOVERABILITY) {
+
+		if (spec == Spec.STATE_RECOVERABILITY) {
 			IBacktranslationService translatorSequenceStRec = oldRes.getCurrentBacktranslation();
-			return new ReqCheckStateRecoverabilityResult<>(element, plugin, translatorSequenceStRec, reqCheck.getMessage());
+			return new ReqCheckStateRecoverabilityResult<>(element, plugin, translatorSequenceStRec,
+					reqCheck.getMessage());
 		}
-		
+
 		return new ReqCheckFailResult<>(element, plugin, translatorSequence);
 	}
 

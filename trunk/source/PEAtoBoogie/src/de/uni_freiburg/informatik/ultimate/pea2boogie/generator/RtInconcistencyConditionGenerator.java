@@ -307,8 +307,7 @@ public class RtInconcistencyConditionGenerator {
 	 *
 	 */
 	public Expression generateNonDeadlockCondition(final PhaseEventAutomata[] automata) {
-		//if (PRINT_PEA_DOT) {
-		if (true) {
+		if (PRINT_PEA_DOT) {
 			mLogger.info("### Printing DOT for Peas ###");
 			for (int i = 0; i < automata.length; ++i) {
 				final PhaseEventAutomata pea = automata[i];
