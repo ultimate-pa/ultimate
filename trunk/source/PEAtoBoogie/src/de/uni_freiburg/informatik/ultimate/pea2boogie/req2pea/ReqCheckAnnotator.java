@@ -197,7 +197,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private List<Statement> genCheckStateRecoverability(final BoogieLocation bl) {
 		List<Statement> list = new ArrayList<>();
 		StateRecoverabilityGenerator mStRecGen = new StateRecoverabilityGenerator();
-		//Set<PeaPhaseProgramCounter> consideredPcLocations = mStRecGen.getRelevantLocationsFromPea(mReqPeas);
 		AuxStatementContainer auxStatementContainer = mSymbolTable.getAuxStatementContainer();
 		Map<VerificationExpression, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxStatement>>> vePeaAuxStatementMap = mStRecGen.getAuxStatementPerVerificationExpression(auxStatementContainer);
 		
