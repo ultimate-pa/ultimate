@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxSta
 
 public interface AuxStatement {
 	
-public Statement getStatement(StRecExpr stRecExpr);
-public BoogieLocation setBoogieLocation(BoogieLocation loc);
-public BoogieLocation getBoogieLocation();
+	public Statement getStatement(StRecExpr stRecExpr);
+	public BoogieLocation setBoogieLocation(BoogieLocation loc);
+	public BoogieLocation getBoogieLocation();
 }
