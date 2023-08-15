@@ -318,7 +318,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final PhaseEventAutomata[] automata = automataSet.toArray(new PhaseEventAutomata[subset.length]);
 
 		final Expression expr = mRtInconcistencyConditionGenerator.generateNonDeadlockCondition(automata);
-		final ReqCheck check = createReqCheck(Spec.RTINCONSISTENT,"", subset);
+		final ReqCheck check = createReqCheck(Spec.RTINCONSISTENT, "", subset);
 
 		if (expr == null) {
 			if (mReportTrivialConsistency) {
