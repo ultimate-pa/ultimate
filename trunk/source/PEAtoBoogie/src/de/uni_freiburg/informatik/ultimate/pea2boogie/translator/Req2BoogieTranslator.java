@@ -564,7 +564,6 @@ public class Req2BoogieTranslator {
 		stmtList.addAll(mReqCheckAnnotator.getStateChecks());
 		stmtList.addAll(
 				mSymboltable.getPcVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
-		
 		for (final ReqPeas reqpea : mReqPeas) {
 			for (final Entry<CounterTrace, PhaseEventAutomata> ct2pea : reqpea.getCounterTrace2Pea()) {
 				final PhaseEventAutomata pea = ct2pea.getValue();
