@@ -95,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckFailResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckRtInconsistentResult;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckStateRecoverabilityResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckSuccessResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
@@ -153,7 +154,7 @@ public class VerificationResultTransformer {
 		final Spec spec = specs.iterator().next();
 		dieIfUnsupported(spec);
 
-		if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS) {
+		if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS || spec == Spec.STATE_RECOVERABILITY) {
 			// a counterexample for consistency and vacuity means that the requirements are consistent or
 			// non-vacuous
 			isPositive = !isPositive;
@@ -189,6 +190,12 @@ public class VerificationResultTransformer {
 			final String failurePath = formatTimeSequenceMap(delta2var2value);
 			return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence, failurePath);
 		}
+		
+		if(spec == Spec.STATE_RECOVERABILITY) {
+			IBacktranslationService translatorSequenceStRec = oldRes.getCurrentBacktranslation();
+			return new ReqCheckStateRecoverabilityResult<>(element, plugin, translatorSequenceStRec, reqCheck.getMessage());
+		}
+		
 		return new ReqCheckFailResult<>(element, plugin, translatorSequence);
 	}
 
@@ -557,6 +564,7 @@ public class VerificationResultTransformer {
 		case CONSISTENCY:
 		case VACUOUS:
 		case RTINCONSISTENT:
+		case STATE_RECOVERABILITY:
 			return;
 		default:
 			throw new UnsupportedOperationException("Unknown spec type " + spec);

@@ -146,6 +146,10 @@ public class Check extends ModernAnnotations {
 		 */
 		INCOMPLETE,
 		/**
+		 * Check for requirements. Checks for state recoverability.
+		 */
+		STATE_RECOVERABILITY,
+		/**
 		 * Check if a petrified ICFG does provide enough thread instances.
 		 */
 		SUFFICIENT_THREAD_INSTANCES,
@@ -261,6 +265,8 @@ public class Check extends ModernAnnotations {
 			return "consistent";
 		case INCOMPLETE:
 			return "complete";
+		case STATE_RECOVERABILITY:
+			return "state recoverable";
 		case SUFFICIENT_THREAD_INSTANCES:
 			return "petrification did provide enough thread instances (tool internal message, not intended for end users)";
 		case DATA_RACE:
@@ -316,6 +322,8 @@ public class Check extends ModernAnnotations {
 			return "inconsistent";
 		case INCOMPLETE:
 			return "incomplete";
+		case STATE_RECOVERABILITY:
+			return "not recoverable";
 		case SUFFICIENT_THREAD_INSTANCES:
 			return "petrification did not provide enough thread instances (tool internal message, not intended for end users)";
 		case DATA_RACE:

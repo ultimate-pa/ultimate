@@ -96,7 +96,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			builder.addInitPattern(p);
 			mDurations.addInitPattern(p);
 			if (p.getCategory() == VariableCategory.OUT) {
-				builder.addAuxvar(ReqTestAnnotator.getTrackingVar(p.getId()), "bool", p);
+				builder.addAuxVarPrimedAndUnprimed(ReqTestAnnotator.getTrackingVar(p.getId()), "bool", p);
 			}
 		}
 		for (final ReqPeas reqpea : simplePeas) {

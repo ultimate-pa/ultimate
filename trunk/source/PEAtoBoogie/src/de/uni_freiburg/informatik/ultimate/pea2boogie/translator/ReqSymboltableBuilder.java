@@ -38,6 +38,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.eclipse.core.runtime.IRegistryChangeEvent;
+
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -65,6 +67,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPatter
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxStatement;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxStatementContainer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.LinkedHashRelation;
 
@@ -82,6 +86,9 @@ public class ReqSymboltableBuilder {
 	private final Map<String, BoogieType> mId2Type;
 	private final Map<String, IdentifierExpression> mId2IdExpr;
 	private final Map<String, VariableLHS> mId2VarLHS;
+	
+	private final AuxStatementContainer mAuxStatements;
+	private final Set<String> mAuxVars;
 	private final Set<String> mStateVars;
 	private final Set<String> mConstVars;
 	private final Set<String> mPrimedVars;
@@ -106,6 +113,8 @@ public class ReqSymboltableBuilder {
 		mId2IdExpr = new LinkedHashMap<>();
 		mId2VarLHS = new LinkedHashMap<>();
 
+		mAuxStatements = new AuxStatementContainer();
+		mAuxVars = new LinkedHashSet<>();
 		mStateVars = new LinkedHashSet<>();
 		mConstVars = new LinkedHashSet<>();
 		mPrimedVars = new LinkedHashSet<>();
@@ -122,6 +131,37 @@ public class ReqSymboltableBuilder {
 		mBuiltinFunctions = generateBuildinFuntions();
 
 	}
+	
+	//Copy constructor SymbolTable
+	
+	public ReqSymboltableBuilder(ILogger logger, IReqSymbolTable iReqSymbolTable) {
+		mLogger = logger;
+		mId2Errors = new LinkedHashRelation<>();
+		//mId2Type = new LinkedHashMap<>(iReqSymbolTable.getId2Type());
+		//mId2IdExpr = new LinkedHashMap<>(iReqSymbolTable.getId2IdExpr());
+		//mId2VarLHS = new LinkedHashMap<>(iReqSymbolTable.getId2VarLHS());
+		mId2Type = new LinkedHashMap<>();
+		mId2IdExpr = new LinkedHashMap<>();
+		mId2VarLHS = new LinkedHashMap<>();
+		
+		mAuxStatements = iReqSymbolTable.getAuxStatementContainer();
+		mAuxVars = new LinkedHashSet<String>(iReqSymbolTable.getAuxVars());
+		mStateVars = new LinkedHashSet<String>(iReqSymbolTable.getStateVars());
+		mConstVars = new LinkedHashSet<String>(iReqSymbolTable.getConstVars());
+		mPrimedVars = new LinkedHashSet<String>(iReqSymbolTable.getPrimedVars());
+		mHistoryVars = new LinkedHashSet<String>(iReqSymbolTable.getHistoryVars());
+		mEventVars = new LinkedHashSet<String>(iReqSymbolTable.getEventVars());
+		mPcVars = new LinkedHashSet<String>(iReqSymbolTable.getPcVars());
+		mClockVars = new LinkedHashSet<String>(iReqSymbolTable.getClockVars());
+		
+		mReq2Loc = new LinkedHashMap<>();
+		mConst2Value = new LinkedHashMap<>(iReqSymbolTable.getConstToValue());
+		mInputVars = new LinkedHashSet<>(iReqSymbolTable.getInputVars());
+		mOutputVars = new LinkedHashSet<>(iReqSymbolTable.getOutputVars());
+		mEquivalences = iReqSymbolTable.getVariableEquivalenceClasses();
+		mBuiltinFunctions = generateBuildinFuntions();
+	}
+	
 
 	public void addInitPattern(final DeclarationPattern initPattern) {
 		final BoogiePrimitiveType type = BoogiePrimitiveType.toPrimitiveType(initPattern.getType());
@@ -198,13 +238,13 @@ public class ReqSymboltableBuilder {
 		mEquivalences.union(peaVars);
 	}
 
-	public void addAuxvar(final String name, final String typeString, final PatternType<?> source) {
+	public void addAuxVarPrimedAndUnprimed(final String name, final String typeString, final PatternType<?> source) {
 		addVar(name, BoogiePrimitiveType.toPrimitiveType(typeString), source, mStateVars);
 	}
 
 	public IReqSymbolTable constructSymbolTable() {
 		final String deltaVar = declareDeltaVar();
-		return new ReqSymbolTable(deltaVar, mId2Type, mId2IdExpr, mId2VarLHS, mStateVars, mPrimedVars, mHistoryVars,
+		return new ReqSymbolTable(deltaVar, mId2Type, mId2IdExpr, mId2VarLHS, mAuxStatements, mAuxVars,  mStateVars, mPrimedVars, mHistoryVars,
 				mConstVars, mEventVars, mPcVars, mClockVars, mReq2Loc, mConst2Value, mInputVars, mOutputVars,
 				mBuiltinFunctions, mEquivalences);
 	}
@@ -255,6 +295,24 @@ public class ReqSymboltableBuilder {
 		addVarOneKind(getHistoryVarId(name), type, source, mHistoryVars);
 		addVarOneKind(getPrimedVarId(name), type, source, mPrimedVars);
 	}
+	
+	public AuxStatement addAuxVar(final AuxStatement auxStatement, final String name, final String boogieType, final PatternType<?> source) {
+		Set<String> kind = mAuxVars;
+		auxStatement.setBoogieLocation(DUMMY_LOC);
+		switch (boogieType.toLowerCase()) {
+		case "bool":
+		case "real":
+		case "int":
+			addVarOneKind(name, BoogiePrimitiveType.toPrimitiveType(boogieType), source, kind);
+			 return mAuxStatements.addAuxStatement(name, auxStatement);
+		case "event":
+			break;
+		default:
+			addError(name, new ErrorInfo(ErrorType.UNKNOWN_TYPE, source));
+			break;
+		}
+		return null;
+	} 
 
 	private void addVarOneKind(final String name, final BoogieType type, final PatternType<?> source,
 			final Set<String> kind) {
@@ -348,6 +406,9 @@ public class ReqSymboltableBuilder {
 		private final Map<String, VariableLHS> mId2VarLHS;
 		private final Map<String, Expression> mConst2Value;
 		private final Map<PatternType<?>, BoogieLocation> mReq2Loc;
+		
+		private final AuxStatementContainer mAuxStatements;
+		private final Set<String> mAuxVars;
 		private final Set<String> mStateVars;
 		private final Set<String> mConstVars;
 		private final Set<String> mPrimedVars;
@@ -362,8 +423,8 @@ public class ReqSymboltableBuilder {
 		private final UnionFind<String> mEquivalences;
 
 		private ReqSymbolTable(final String deltaVar, final Map<String, BoogieType> id2Type,
-				final Map<String, IdentifierExpression> id2idExp, final Map<String, VariableLHS> id2VarLhs,
-				final Set<String> stateVars, final Set<String> primedVars, final Set<String> historyVars,
+				final Map<String, IdentifierExpression> id2idExp, final Map<String, VariableLHS> id2VarLhs, final AuxStatementContainer auxStatements, 
+				final Set<String> auxVars, Set<String> stateVars, final Set<String> primedVars, final Set<String> historyVars,
 				final Set<String> constVars, final Set<String> eventVars, final Set<String> pcVars,
 				final Set<String> clockVars, final Map<PatternType<?>, BoogieLocation> req2loc,
 				final Map<String, Expression> const2Value, final Set<String> inputVars, final Set<String> outputVars,
@@ -372,6 +433,8 @@ public class ReqSymboltableBuilder {
 			mId2IdExpr = Collections.unmodifiableMap(id2idExp);
 			mId2VarLHS = Collections.unmodifiableMap(id2VarLhs);
 
+			mAuxStatements = auxStatements;
+			mAuxVars = Collections.unmodifiableSet(auxVars);
 			mStateVars = Collections.unmodifiableSet(stateVars);
 			mConstVars = Collections.unmodifiableSet(constVars);
 			mPrimedVars = Collections.unmodifiableSet(primedVars);
@@ -462,6 +525,21 @@ public class ReqSymboltableBuilder {
 		public Map<String, Expression> getConstToValue() {
 			return mConst2Value;
 		}
+		
+		@Override
+		public UnionFind<String> getVariableEquivalenceClasses() {
+			return mEquivalences;
+		}
+		
+		@Override
+		public Set<String> getAuxVars() {
+			return mAuxVars;
+		}
+		
+		@Override
+		public AuxStatementContainer getAuxStatementContainer( ) {
+			return mAuxStatements;
+		}
 
 		@Override
 		public String getPcName(final PhaseEventAutomata automaton) {
@@ -489,6 +567,7 @@ public class ReqSymboltableBuilder {
 			decls.addAll(constructVariableDeclarations(mPrimedVars));
 			decls.addAll(constructVariableDeclarations(mHistoryVars));
 			decls.addAll(constructVariableDeclarations(mEventVars));
+			decls.addAll(constructVariableDeclarations(mAuxVars));
 			decls.addAll(mBuildinFunctions.values());
 			return decls;
 		}
@@ -522,7 +601,7 @@ public class ReqSymboltableBuilder {
 					final IdentifierExpression idExpr = mId2IdExpr.get(id);
 					final Expression axiom =
 							new BinaryExpression(value.getLoc(), value.getType(), Operator.COMPEQ, idExpr, value);
-					rtr.add(new Axiom(varlist.getLocation(), EMPTY_ATTRIBUTES, axiom));
+					 rtr.add(new Axiom(varlist.getLocation(), EMPTY_ATTRIBUTES, axiom));
 				}
 			}
 			return rtr;
@@ -550,11 +629,6 @@ public class ReqSymboltableBuilder {
 				return Collections.emptyList();
 			}
 			return identifiers.stream().map(this::constructVarlist).filter(a -> a != null).collect(Collectors.toList());
-		}
-
-		@Override
-		public UnionFind<String> getVariableEquivalenceClasses() {
-			return mEquivalences;
 		}
 
 	}

@@ -35,9 +35,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxStatementContainer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public interface IReqSymbolTable {
@@ -65,6 +67,10 @@ public interface IReqSymbolTable {
 	Set<String> getClockVars();
 
 	Set<String> getStateVars();
+	
+	Set<String> getAuxVars();
+	
+	AuxStatementContainer getAuxStatementContainer();
 
 	/**
 	 * Given a variable name, return the name of the primed version of this variable.

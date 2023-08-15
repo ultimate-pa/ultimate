@@ -28,6 +28,8 @@ package de.uni_freiburg.informatik.ultimate.core.model.preferences;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 
@@ -157,6 +159,7 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		IntegerValidator ONLY_POSITIVE = new IntegerValidator(0, Integer.MAX_VALUE);
 		IntegerValidator ONLY_POSITIVE_NON_ZERO = new IntegerValidator(1, Integer.MAX_VALUE);
 		IntegerValidator GEQ_TWO = new IntegerValidator(2, Integer.MAX_VALUE);
+		StringValidator EXPR_PAIR = new StringValidator("\\s{0,1}((\\w+)\\s*([<>=!][=]*)\\s*(\\w+))\\s{0,1}$");
 
 		boolean isValid(T value);
 
@@ -202,6 +205,38 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 			public String getInvalidValueErrorMessage(final Double value) {
 				return "Valid range is " + mMin + " <= value <= " + mMax;
 			}
+		}
+		
+		public class StringValidator implements IUltimatePreferenceItemValidator<String> {
+
+			private final String mPattern;
+
+			public StringValidator(String pattern) {
+				mPattern = pattern;
+			}
+
+			@Override
+			public boolean isValid(final String string) {
+				String[]exprPairs =   string.split(",");
+				for(String exprPair : exprPairs) {
+					Matcher m = match(exprPair, mPattern);
+					if(!m.matches()) {
+						return false;
+					}
+				}
+				return true;
+			}
+
+			@Override
+			public String getInvalidValueErrorMessage(final String string) {
+				return "Expression pairs " + string + " is not in the format <Variable<Operator>VALUE, ...>";
+			}
+		}
+		
+		default Matcher match(String s, String pattern) {
+			Pattern p = Pattern.compile(pattern);
+	        Matcher m = p.matcher(s);
+	        return m;
 		}
 	}
 

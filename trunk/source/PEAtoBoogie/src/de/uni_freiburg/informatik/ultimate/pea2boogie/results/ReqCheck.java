@@ -53,27 +53,34 @@ public class ReqCheck extends Check {
 	private final String[] mReqIds;
 
 	private final String[] mPeaNames;
+	
+	private final String mMessage;
 
 	public ReqCheck(final Check.Spec type) {
-		this(EnumSet.of(type), 0, 0, new String[0], new String[0]);
+		this(EnumSet.of(type), 0, 0, new String[0], new String[0], "");
 	}
 
+	public ReqCheck(final Check.Spec type, final String[] reqIds, final String[] peaNames, String message) {
+		this(EnumSet.of(type), reqIds, peaNames, message);
+	}
+	
 	public ReqCheck(final Check.Spec type, final String[] reqIds, final String[] peaNames) {
-		this(EnumSet.of(type), reqIds, peaNames);
+		this(EnumSet.of(type), reqIds, peaNames, "");
 	}
 
-	private ReqCheck(final EnumSet<Check.Spec> types, final String[] reqIds, final String[] peaNames) {
-		this(types, -1, -1, reqIds, peaNames);
+	private ReqCheck(final EnumSet<Check.Spec> types, final String[] reqIds, final String[] peaNames, String message) {
+		this(types, -1, -1, reqIds, peaNames, message);
 	}
 
 	private ReqCheck(final EnumSet<Check.Spec> types, final int startline, final int endline, final String[] reqIds,
-			final String[] peaNames) {
+			final String[] peaNames, String message) {
 		super(types, a -> ReqCheck.getCustomPositiveMessage(a, reqIds, peaNames),
 				a -> ReqCheck.getCustomNegativeMessage(a, reqIds, peaNames));
 		mStartline = startline;
 		mEndline = endline;
 		mReqIds = reqIds;
 		mPeaNames = peaNames;
+		mMessage = message;
 	}
 
 	public int getStartLine() {
@@ -128,7 +135,15 @@ public class ReqCheck extends Check {
 		final int endline = Math.max(mEndline, other.mEndline);
 		final String[] reqIds = DataStructureUtils.concat(mReqIds, other.mReqIds);
 		final String[] peaNames = DataStructureUtils.concat(mPeaNames, other.mPeaNames);
-		return new ReqCheck(newSpec, startline, endline, reqIds, peaNames);
+		final String message = mMessage.concat(other.getMessage());
+		return new ReqCheck(newSpec, startline, endline, reqIds, peaNames, message);
+	}
+	
+	private String createMessage() {
+		if(mMessage.isEmpty()) {
+			return "";
+		}
+		return mMessage;
 	}
 
 	public Set<String> getReqIds() {
@@ -138,13 +153,17 @@ public class ReqCheck extends Check {
 	public Set<String> getPeaNames() {
 		return new LinkedHashSet<>(Arrays.asList(mPeaNames));
 	}
+	
+	public String getMessage( ) {
+		return mMessage;
+	}
 
 	@Override
 	public String toString() {
 		if (mReqIds.length == 0) {
 			return super.toString() + " for all requirements";
 		}
-		return super.toString() + " for " + Arrays.stream(mReqIds).collect(Collectors.joining(", "));
+		return super.toString() + " for " + Arrays.stream(mReqIds).collect(Collectors.joining(", ")) + " " + createMessage();
 	}
 
 	@Override
@@ -154,6 +173,7 @@ public class ReqCheck extends Check {
 		result = prime * result + mEndline;
 		result = prime * result + Arrays.hashCode(mReqIds);
 		result = prime * result + Arrays.hashCode(mPeaNames);
+		result = prime * result + mMessage.hashCode();
 		result = prime * result + mStartline;
 		return result;
 	}
@@ -180,6 +200,9 @@ public class ReqCheck extends Check {
 			return false;
 		}
 		if (!Arrays.equals(mPeaNames, other.mPeaNames)) {
+			return false;
+		}
+		if(!mMessage.equalsIgnoreCase(other.getMessage())) {
 			return false;
 		}
 		return true;

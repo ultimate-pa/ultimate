@@ -57,7 +57,7 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	public static final String LABEL_CHECK_RT_INCONSISTENCY = "Check rt-inconsistency";
 	private static final boolean DEF_CHECK_RT_INCONSISTENCY = true;
 	private static final String DESC_CHECK_RT_INCONSISTENCY = null;
-
+	
 	public static final String LABEL_USE_EPSILON = "Use epsilon transformation during rt-inconsistency check";
 	private static final boolean DEF_USE_EPSILON = true;
 	private static final String DESC_USE_EPSILON = null;
@@ -81,6 +81,14 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 					+ " are treated as separate requirements. If enabled, each rt-inconsistency check is of the form "
 					+ "Invariants ∧ (check over all remaining requirements). If disabled, invariants are not treated separately.";
 
+	public static final String LABEL_CHECK_STATE_RECOVERABILITY = "Check state recoverability";
+	private static final boolean DEF_CHECK_STATE_RECOVERABILITY = true;
+	private static final String DESC_CHECK_STATE_RECOVERABILITY = null;
+	
+	public static final String LABEL_STATE_RECOVERABILITY_VER_EXPR = "State recoverability expressions";
+	private static final String DEF_STATE_RECOVERABILITY_VER_EXPR = "ENG_READY==true, ENG_START==false";
+	private static final String DESC_STATE_RECOVERABILITY_VER_STRING = "Enter the expressions for which state recoverability should be valid";
+	
 	public static final String LABEL_GUESS_IN_OUT =
 			"Use heuristic to find input/output definitions (if none are given)";
 	private static final boolean DEF_GUESS_IN_OUT = true;
@@ -99,7 +107,7 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			+ "step independend of length or usefulness.";
 
 	public enum PEATransformerMode {
-		REQ_CHECK, REQ_TEST
+		REQ_CHECK, REQ_PARAM_CHECK, REQ_TEST
 	}
 
 	public Pea2BoogiePreferences() {
@@ -128,6 +136,11 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS,
 					DEF_RT_INCONSISTENCY_USE_ALL_INVARIANTS, DESC_RT_INCONSISTENCY_USE_ALL_INVARIANTS,
 					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_CHECK_STATE_RECOVERABILITY, DEF_CHECK_STATE_RECOVERABILITY, DESC_CHECK_STATE_RECOVERABILITY, 
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_STATE_RECOVERABILITY_VER_EXPR, DEF_STATE_RECOVERABILITY_VER_EXPR,
+					DESC_STATE_RECOVERABILITY_VER_STRING, PreferenceType.String,
+					IUltimatePreferenceItemValidator.EXPR_PAIR),
 			new UltimatePreferenceItem<>(LABEL_GUESS_IN_OUT, DEF_GUESS_IN_OUT, DESC_GUESS_IN_OUT,
 					PreferenceType.Boolean),
 			new UltimatePreferenceItem<>(LABEL_GUESS_INITIAL, DEF_GUESS_INITIAL, DESC_GUESS_INITIAL,
