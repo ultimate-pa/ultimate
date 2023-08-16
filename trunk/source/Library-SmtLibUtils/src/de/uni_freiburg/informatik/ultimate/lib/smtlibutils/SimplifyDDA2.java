@@ -74,7 +74,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private static final boolean DEBUG_CHECK_RESULT = false;
 	private static final boolean CHECK_ALL_NODES_FOR_REDUNDANCY = false;
 	private static final boolean CONSIDER_QUANTFIED_FORMULAS_AS_LEAVES = false;
-	private static final boolean OMIT_QUANTIFIED_FORMULAS_FROM_CONTEXT = !true;
+	private static final boolean OMIT_QUANTIFIED_FORMULAS_FROM_CONTEXT = false;
 
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
@@ -125,10 +125,6 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		}
 
 		if (symb.getName().equals("or")) {
-			// otherParamsNegated = otherParams.stream().map(x -> SmtUtils.not(mgdScript.getScript(), x))
-			// .collect(Collectors.toList());
-			/////// smtutils replace free variables
-
 			for (final Term otherParam : otherParams) {
 				if (!OMIT_QUANTIFIED_FORMULAS_FROM_CONTEXT || QuantifierUtils.isQuantifierFree(otherParam)) {
 					mMgdScript.getScript().assertTerm(SmtUtils.not(mMgdScript.getScript(), otherParam));
@@ -217,26 +213,22 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			final QuantifiedFormula termAsQuantifiedFormula = (QuantifiedFormula) term;
 			mRenamingMap.beginScope();
 			mMgdScript.lock(this);
+			final ArrayList<TermVariable> substitutedTermVariables = new ArrayList<>();
 			for (final TermVariable quantifiedVariable : termAsQuantifiedFormula.getVariables()) {
 				final TermVariable freshVariable = mMgdScript.constructFreshCopy(quantifiedVariable);
 				mRenamingMap.put(quantifiedVariable, freshVariable);
+				substitutedTermVariables.add(freshVariable);
 				mMgdScript.declareFun(this, freshVariable.getName(), new Sort[0], freshVariable.getSort());
 			}
 			mMgdScript.unlock(this);
-			final Term substituted =
-					Substitution.apply(mMgdScript, mRenamingMap, termAsQuantifiedFormula.getSubformula());
-			return new TermContextTransformationEngine.IntermediateResultForDescend(substituted);
-		}
-		//// check if term is quantified formula, if so, descend
-		// create fresh variables and restore
-		// mMgdScript.constructFreshCopy(null);
-		// new ScopedHashMap<>(); // push/pop functionallity
-		// iterate over all quantified variables, construct copy using above, store in scoped hashmap
-		// use substitution to replace variables, then descend by returning descend result w the subformula
 
-		/// check if node is true or false, if neither, then descend
-		/// member variable to toggle this
-		/// descend into quantified formulas, rename qvariables (also restore names?)
+			final Term substitutedSubformula =
+					Substitution.apply(mMgdScript, mRenamingMap, termAsQuantifiedFormula.getSubformula());
+			final QuantifiedFormula substitutedQuantifiedFormula =
+					(QuantifiedFormula) SmtUtils.quantifier(mMgdScript.getScript(),
+							termAsQuantifiedFormula.getQuantifier(), substitutedTermVariables, substitutedSubformula);
+			return new TermContextTransformationEngine.IntermediateResultForDescend(substitutedQuantifiedFormula);
+		}
 
 		DescendResult result;
 		if (CHECK_ALL_NODES_FOR_REDUNDANCY || isLeaf(term)) {
@@ -391,18 +383,19 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	protected Term constructResultForQuantifiedFormula(final Term context,
 			final QuantifiedFormula originalQuantifiedFormula, final Term resultSubformula) {
 		final HashMap<TermVariable, TermVariable> swapped = new HashMap<>();
+		final ArrayList<TermVariable> revertedTermVariables = new ArrayList<>();
 		for (final Map.Entry<TermVariable, TermVariable> entry : mRenamingMap.currentScopeEntries()) {
 			swapped.put(entry.getValue(), entry.getKey());
+			revertedTermVariables.add(entry.getKey());
 		}
-		final Term revertedFormula = Substitution.apply(mMgdScript, swapped, resultSubformula);
-		// rename variables back here
+		final Term revertedSubformula = Substitution.apply(mMgdScript, swapped, resultSubformula);
 		mRenamingMap.endScope();
 
 		mMgdScript.getScript().pop(1);
 		mAssertionStackHeight--;
 		assert mAssertionStackHeight >= 0;
 		return SmtUtils.quantifier(mMgdScript.getScript(), originalQuantifiedFormula.getQuantifier(),
-				Arrays.asList(originalQuantifiedFormula.getVariables()), revertedFormula);
+				revertedTermVariables, revertedSubformula);
 	}
 
 	@Override
