@@ -21,13 +21,18 @@ CodeForBehavior ::=
 	codeStmt : CodeStatement;
 
 CodeStatement ::=
-	formula : Expression
-	( { Assertion } 
-	| { CodeInvariant } 
-	);
-
-	
-
+ 	{ Assertion }
+ 		formula : Expression
+ 	| { CodeInvariant }
+ 		formula : Expression
+ 	| { GhostDeclaration }
+ 		type : ACSLType
+	    identifier : String
+	    expr : Expression
+	| { GhostUpdate }
+	    identifier : String
+	    expr : Expression
+ 	;
 
 /**
  * LoopAnnotation
