@@ -155,6 +155,19 @@ public class SimplificationTest {
 	}
 
 	@Test
+	// tests for quantified formulas
+	public void dda2TestExample05() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "X", "c", "d"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a") };
+		final String formulaAsString =
+				"(and (= c 1) (exists ((X Int)) (and (= X 1) (or (= (select a X) 5) (= c 0) (and (= d 23) (= X 1))))))";
+		final String expectedResultAsString =
+				"(and (exists ((X Int)) (let ((.cse0 (= X 1))) (and (or (= 5 (select a X)) (and .cse0 (= 23 d))) .cse0))) (= c 1))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.SIMPLIFY_DDA2,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
 	public void alternativeRepresentations() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x", "y"), };
 		final String formulaAsString = "(and (distinct y x) (or (<= x 0) (> x 2) (= x y)))";
@@ -1050,7 +1063,7 @@ public class SimplificationTest {
 		final String testId = ReflectionUtil.getCallerMethodName(3);
 		csvWriter.reportEliminationBegin(letFree, testId);
 		final ExtendedSimplificationResult esr =
-				SmtUtils.simplifyWithStatistics(mgdScript, unf, services, simplificationTechnique);
+				SmtUtils.simplifyWithStatistics(mgdScript, unf, services, SimplificationTechnique.SIMPLIFY_DDA2);
 		// final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, unf, services,
 		// SimplificationTechnique.SIMPLIFY_DDA2);
 		final Term result = esr.getSimplifiedTerm();
