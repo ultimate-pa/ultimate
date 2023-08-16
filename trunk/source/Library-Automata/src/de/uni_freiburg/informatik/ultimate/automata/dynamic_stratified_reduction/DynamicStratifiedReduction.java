@@ -136,10 +136,7 @@ public class DynamicStratifiedReduction<L, S> {
 	private void traverse() throws AutomataOperationCanceledException {
 		// add initial state to reduction automaton
 		mReductionAutomaton.addState(true,mOriginalAutomaton.isFinal(mStateFactory.getOriginalState(mStartState)), mStartState);
-		
 		createSuccessors(mStartState);
-		
-		
 		
 		final boolean abortImmediately = visitState(mStartState);
 		if (abortImmediately) {
@@ -155,8 +152,7 @@ public class DynamicStratifiedReduction<L, S> {
 			final var current = mWorklist.pop();
 			final  StratifiedReductionState<L,S> currentState = current.getFirst();			
 			
-			//TODO: understand those backtracks
-			// Backtrack states still on the stack whose exploration has finished. - what does 'backtrack' mean...
+			// Backtrack states still on the stack whose exploration has finished.
 			final boolean abort = backtrackUntil(currentState);
 			if (abort) {
 				mLogger.debug(ABORT_MSG);
@@ -172,7 +168,6 @@ public class DynamicStratifiedReduction<L, S> {
 				mLogger.debug(ABORT_MSG);
 				return;
 			}
-			
 
 			final int stackIndex;
 			if (prune) {
@@ -185,27 +180,13 @@ public class DynamicStratifiedReduction<L, S> {
 					return;
 				}
 			} else if ((stackIndex = mDfs.stackIndexOf(nextState)) != -1) {
-				// TODO: check if this loop is allowed, otherwise to a loop exploration
 				debugIndent("-> state is on stack -- do not unroll loop");
 				mDfs.updateLoopHead(currentState, new Pair<>(stackIndex, nextState));
-			} else {
-				// TODO: it's not that easy anymore, we need to check if a copy exploration is necessary
-				ImmutableSet<L> newSleepSet = createSleepSet(currentState, currentTransition.getLetter());
-				
-				// If the sleepsets are inequal or the abstraction level of the next state is higher than our current abstraction level we need to copy the state
-				boolean copyState = ((newSleepSet != mStateFactory.getSleepSet(nextState)) || 
-						!(mStateFactory.getAbstractionLevel(currentState).isLEQ(mStateFactory.getAbstractionLevel(nextState))));
-				if(copyState) {
-					debugIndent("-> state's abstraction level or sleepset are unfitting -- copying state");
-
-					
-					
-				} else {
+			}  else {
 					debugIndent("-> state was visited before -- no re-exploration");
 					mDfs.backPropagateLoopHead(currentState, nextState);
-				}
 			}
-		}// end while
+		}
 
 		final boolean abort = backtrackUntil(mStartState);
 		if (abort) {
@@ -227,7 +208,7 @@ public class DynamicStratifiedReduction<L, S> {
 		return false;
 	}
 	
-	//TODO: Update Abstraction Levels here?
+	//TODO: Add abstraction levels of fully explored states to their predecessor's abstraction level
 
 	private boolean backtrack() {
 		final StratifiedReductionState<L,S> oldState = mDfs.peek();
@@ -252,7 +233,7 @@ public class DynamicStratifiedReduction<L, S> {
 		if (isProvenState) {
 			HashSet<L> freeVars = mProofManager.getVariables(mProofManager.choseRespProof(state));
 			mStateFactory.addToAbstractionLevel(state, freeVars);
-			// how can i modify states of the nested word automaton???
+			// Can one modify states/transitions of the NWA?
 		}
 		
 		
@@ -289,9 +270,12 @@ public class DynamicStratifiedReduction<L, S> {
 	
 	
 	
-// Stuff for reductionbuilding	
+//---------------------------------------------------    Stuff for reductionbuilding	-----------------------------------------------------------------------------------------
+	
 	/**
 	 *  get original successor states & transitions and add their reduction states/transitions to the reduction automaton
+	 *  and put them on the Worklist
+	 *  
 	 * @param state		state whose successors are created
 	 */
 	
@@ -374,7 +358,7 @@ public class DynamicStratifiedReduction<L, S> {
 						.toArray()));
 		
 		return sleepSet;
-		}
+	}
 	
 	/**
 	 * Create a newly discovered state of the reduction automaton
@@ -393,33 +377,30 @@ public class DynamicStratifiedReduction<L, S> {
 	 * 		The reduction state
 	 */	
 	
-		private StratifiedReductionState<L,S> createNextState(StratifiedReductionState<L,S> predecState, ImmutableSet<L> sleepSet, S originState, L letter) { 
+	private StratifiedReductionState<L,S> createNextState(StratifiedReductionState<L,S> predecState, ImmutableSet<L> sleepSet, S originState, L letter) { 
+		
+		LinkedList<StratifiedReductionState<L,S>> loopablepredecs = new LinkedList<StratifiedReductionState<L,S>>();
+			
+		// If the current transition is the smallest (unpruned) outgoing transition of the state let it 'inherit' the list of loopable predecessors 
 
-			LinkedList<StratifiedReductionState<L,S>> loopablepredecs = new LinkedList<StratifiedReductionState<L,S>>();
-			
-			// If the current transition is the smallest (unpruned) outgoing transition of the state let it 'inherit' the list of loopable predecessors 
-
-			final Stream<L> smallerEdges = mOriginalAutomaton.lettersInternal(originState).stream()
-					.filter(x -> mOrder.getOrder(originState).compare(x, letter) < 0 && !mStateFactory.getSleepSet(predecState).contains(x));
-			if(smallerEdges.findAny().isEmpty()) {
-				loopablepredecs.addAll(mStateFactory.getLoopablePredecs(predecState));
-				loopablepredecs.add(predecState);
-			}
-				
-			
-			// Abstraction limit of the new state is the abstraction limit of its parent + the abstraction levels of the edges in its sleepset
-			HashSet<L> protectedVars = mStateFactory.getAbstractionLimit(predecState).getValue();
-			
-			Iterator<L> comEdges = sleepSet.iterator();
-			
-			while(comEdges.hasNext()) {
-				StratifiedReductionState<L,S> succState = mReductionAutomaton.internalSuccessors(predecState, comEdges.next()).iterator().next().getSucc();
-				protectedVars.addAll(mStateFactory.getAbstractionLevel(succState).getValue());		
-			}
-			
-			return new StratifiedReductionState<L,S>(originState, sleepSet, new AbstractionLevel<L>(protectedVars, mStateFactory.getAbstractionLimit(predecState).isLocked()), 
-					new AbstractionLevel<L>(protectedVars, false), loopablepredecs);
+		final Stream<L> smallerEdges = mOriginalAutomaton.lettersInternal(originState).stream()
+				.filter(x -> mOrder.getOrder(originState).compare(x, letter) < 0 && !mStateFactory.getSleepSet(predecState).contains(x));
+		if(smallerEdges.findAny().isEmpty()) {
+			loopablepredecs.addAll(mStateFactory.getLoopablePredecs(predecState));
+			loopablepredecs.add(predecState);
 		}
+							
+		// Abstraction limit of the new state is the abstraction limit of its parent + the abstraction levels of the edges in its sleepset
+		HashSet<L> protectedVars = mStateFactory.getAbstractionLimit(predecState).getValue();			
+		Iterator<L> comEdges = sleepSet.iterator();
+		while(comEdges.hasNext()) {
+			StratifiedReductionState<L,S> succState = mReductionAutomaton.internalSuccessors(predecState, comEdges.next()).iterator().next().getSucc();
+			protectedVars.addAll(mStateFactory.getAbstractionLevel(succState).getValue());		
+		}
+			
+		return new StratifiedReductionState<L,S>(originState, sleepSet, new AbstractionLevel<L>(protectedVars, mStateFactory.getAbstractionLimit(predecState).isLocked()), 
+				new AbstractionLevel<L>(protectedVars, false), loopablepredecs);
+	}
 }
 	
 	
