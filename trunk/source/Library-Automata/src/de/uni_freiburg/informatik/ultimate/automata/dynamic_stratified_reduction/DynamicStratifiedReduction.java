@@ -73,7 +73,7 @@ public class DynamicStratifiedReduction<L, S> {
 	private StratifiedStateFactory<L,S> mStateFactory;
 	private final StratifiedReductionState<L,S> mStartState; 
 	private IIndependenceInducedByAbstraction <StratifiedReductionState<L,S>, L> mIndependenceProvider;
-	private final ProofManager<L, StratifiedReductionState<L,S>, ? > mProofManager;
+	private final ProofManager<L, StratifiedReductionState<L,S>, Object> mProofManager;
 	
 	private final IDfsOrder<L, S> mOrder;
 	private final IDfsVisitor<L, StratifiedReductionState<L,S>> mVisitor;

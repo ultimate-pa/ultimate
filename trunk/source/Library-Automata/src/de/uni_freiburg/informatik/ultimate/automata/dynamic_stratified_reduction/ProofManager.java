@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.automata.dynamic_stratified_reductio
 
 import java.util.HashSet;
 
+
 /**
  * Used by DynamicStratifiedReduction to handle everything related to proofs
  * 
@@ -13,6 +14,7 @@ import java.util.HashSet;
  *@param<PROOF>
  *	Placeholder since idk in what form the proofs are given/can be accessed
  */
+
 public class ProofManager<L, S, PROOF> {
 	private int[] proofCounter; 	// count how many times each proof has been chosen as responsible
 	private PROOF lastResp;	// the proof we chose at the last proven state
