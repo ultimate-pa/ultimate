@@ -226,7 +226,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnotStmt;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.ICACSL2BoogieBacktranslatorMapping;
@@ -3239,6 +3242,36 @@ public class CHandler {
 						final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
 						final ILocation loc = mLocationFactory.createCLocation(parent);
 						mReporter.unsupportedSyntax(loc, msg);
+					}
+				}
+				if (globAcsl instanceof CodeAnnotStmt) {
+					final CodeStatement codeStmt = ((CodeAnnotStmt) globAcsl).getCodeStmt();
+					if (codeStmt instanceof GhostDeclaration) {
+						final GhostDeclaration decl = (GhostDeclaration) codeStmt;
+						final String boogieName = "#ghost~" + decl.getIdentifier();
+						final CPrimitive cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
+						final ILocation loc = mLocationFactory.createCLocation(next);
+						final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
+						final VariableDeclaration boogieDecl = new VariableDeclaration(loc, new Attribute[0],
+								new VarList[] { new VarList(loc, new String[] { boogieName }, astType) });
+						final CDeclaration cDecl = new CDeclaration(cType, decl.getIdentifier());
+						final DeclarationInformation declInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+						mSymbolTable.storeCSymbol(next, decl.getIdentifier(), new SymbolTableValue(boogieName,
+								boogieDecl, astType, cDecl, declInfo, main.getAcslHook(), false));
+						resultBuilder.addDeclaration(boogieDecl);
+						final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression expr = decl.getExpr();
+						if (expr != null) {
+							final ExpressionResultBuilder initBuilder = new ExpressionResultBuilder();
+							final ExpressionResult exprResult =
+									(ExpressionResult) main.dispatch(expr, main.getAcslHook());
+							// TODO: Check that expr does not have any side-effects
+							initBuilder.addAllExceptLrValue(exprResult);
+							final VariableLHS lhs = new VariableLHS(loc, mTypeHandler.getBoogieTypeForCType(cType),
+									boogieName, declInfo);
+							final AssignmentStatement assignment = StatementFactory
+									.constructSingleAssignmentStatement(loc, lhs, exprResult.getLrValue().getValue());
+							mStaticObjectsHandler.addStatementsForUltimateInit(List.of(assignment));
+						}
 					}
 				}
 			}
