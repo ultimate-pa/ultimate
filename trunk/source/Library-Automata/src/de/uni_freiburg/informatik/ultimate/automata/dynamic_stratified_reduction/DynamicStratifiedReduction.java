@@ -307,10 +307,10 @@ public class DynamicStratifiedReduction<L, S> {
 				StratifiedReductionState<L,S > correspRstate = mAlreadyReduced.get(originalState); 
 				/* If there is no reduction state corresponding to this state of the original automaton or its corresponding reduction state is in the already completed part of the 
 				 * reduction automaton and therefore has a higher abstraction level than our current state we create a new reduction state.*/
-				
+				StratifiedReductionState<L,S> reductionSucc;
 				if (correspRstate != null | mStateFactory.getAbstractionLevel(correspRstate).isLocked()) {
 					ImmutableSet<L> nextSleepSet = createSleepSet(state, letter);
-					StratifiedReductionState<L,S> reductionSucc = createNextState(state, nextSleepSet, originalSucc, letter);
+					reductionSucc = createNextState(state, nextSleepSet, originalSucc, letter);
 					mReductionAutomaton.addState(mOriginalAutomaton.isInitial(originalSucc), mOriginalAutomaton.isFinal(originalSucc), reductionSucc);
 					mReductionAutomaton.addInternalTransition(state, letter, reductionSucc);
 					mAlreadyReduced.remove(originalSucc);    // old reduction state will be replaced by its copy
@@ -323,22 +323,24 @@ public class DynamicStratifiedReduction<L, S> {
 					| (mStateFactory.isLoopCopy(state) & (mStateFactory.getAbstractionLevel(state).getValue() == mStateFactory.getAbstractionLimit(correspRstate).getValue()))){
 					// if the abstraction level of the corresp. red. state is not yet defined it is still on the stack -> we're in a loop
 					mReductionAutomaton.addInternalTransition(state, letter, correspRstate);	
+					reductionSucc = correspRstate;
 				} else {
 					// create a copystate with fixed abstractionlimit for its subgraph
 					ImmutableSet<L> nextSleepSet = createSleepSet(state, letter);
 					AbstractionLevel<L> nextAbstractionLimit = new AbstractionLevel(mStateFactory.getAbstractionLevel(state).getValue(), true);
 					AbstractionLevel<L> nextAbstractionLevel = new AbstractionLevel(nextAbstractionLimit.getValue(), true);
-					StratifiedReductionState<L,S> reductionSucc = mStateFactory.createStratifiedState(originalState, nextSleepSet, 
+					reductionSucc = mStateFactory.createStratifiedState(originalState, nextSleepSet, 
 							nextAbstractionLevel, nextAbstractionLimit, new LinkedList());
 					mReductionAutomaton.addState(mOriginalAutomaton.isInitial(originalSucc), mOriginalAutomaton.isFinal(originalSucc), reductionSucc);
 					mReductionAutomaton.addInternalTransition(state, letter, reductionSucc);
 					mAlreadyReduced.remove(originalSucc);    		// old reduction state will be replaced by its copy
 					mAlreadyReduced.put(originalSucc, reductionSucc);
 				}
+				// add state + new reduced transition to worklist
+				mWorklist.add(new Pair(state, new OutgoingInternalTransition(letter, reductionSucc)));
 			}
 		}
 	}
-	
 	
 	
 	/* *
