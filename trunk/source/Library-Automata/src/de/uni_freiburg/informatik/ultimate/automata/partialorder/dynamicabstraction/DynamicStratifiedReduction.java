@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2023 Veronika Klasen
+ * Copyright (C) 2023 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Automata Library.
+ *
+ * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Automata Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction;
 
 import java.util.ArrayDeque;
@@ -47,7 +74,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            what do we need to return in those cases?
  */
 
-public class DynamicStratifiedReduction<L, S, R, P> {
+public class DynamicStratifiedReduction<L, S, R, H> {
 	private static final String ABORT_MSG = "visitor aborted traversal";
 
 	private final AutomataLibraryServices mServices;
@@ -58,7 +85,7 @@ public class DynamicStratifiedReduction<L, S, R, P> {
 	private final IStratifiedStateFactory<L, S, R, AbstractionLevel<L>> mStateFactory;
 	private final R mStartState;
 	private final IIndependenceInducedByAbstraction<S, L> mIndependenceProvider;
-	private final IProofManager<L, S, P> mProofManager;
+	private final IProofManager<L, S, H> mProofManager;
 
 	private final IDfsOrder<L, S> mOrder;
 	private final IDfsVisitor<L, R> mVisitor;
@@ -92,7 +119,7 @@ public class DynamicStratifiedReduction<L, S, R, P> {
 			final INwaOutgoingLetterAndTransitionProvider<L, S> originalAutomaton, final IDfsOrder<L, S> order,
 			final IStratifiedStateFactory<L, S, R, AbstractionLevel<L>> stateFactory, final IDfsVisitor<L, R> visitor,
 			final S startingState, final IIndependenceInducedByAbstraction<S, L> independence,
-			final IProofManager<L, S, P> manager) throws AutomataOperationCanceledException {
+			final IProofManager<L, S, H> manager) throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(originalAutomaton) : "Finite automata only";
 
 		mServices = services;
