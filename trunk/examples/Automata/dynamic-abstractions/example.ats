@@ -1,0 +1,37 @@
+/*
+ * Example test case for stratified reduction with dynamic abstractions.
+ *
+ */
+
+// We specify commutativity for each set of variables.
+//@ commutativity ({x, y}, c, b) ({x, y}, b, c) ({x}, a, b) ({x}, b, a)
+
+// We specify the variables of each proof, separated by |.
+//@ proof variables x | x, y | z, y
+
+// Automaton state names for the input should have one conjunct for each proof (so 3 in this case),
+// separated by |. States should be accepting if and only if one conjunct is "false".
+
+FiniteAutomaton input = (
+     alphabet      = {a b c},
+     states        = {"true|true|true" "x=0|true|true" "false|y=x|true"},
+     initialStates = {"true|true|true"},
+     finalStates   = {"false|y=x|true"},
+     transitions   = {
+         ("true|true|true" a "x=0|true|true")
+         ("x=0|true|true" b "false|y=x|true")
+     }
+);
+
+FiniteAutomaton expected = (
+     alphabet      = {a b c},
+     states        = {E A AB ABC},
+     initialStates = {E},
+     finalStates   = {ABC},
+     transitions   = {
+         (E a A)
+         (A b AB)
+         (AB c ABC)
+     }
+);
+
