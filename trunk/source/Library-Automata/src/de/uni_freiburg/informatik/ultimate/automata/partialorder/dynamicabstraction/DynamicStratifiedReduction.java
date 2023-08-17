@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.dynamic_stratified_reduction;
+package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction;
 
 import java.util.ArrayDeque;
 import java.util.Comparator;
