@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
@@ -37,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
@@ -47,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+//import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SimplificationTest;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -65,9 +69,17 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 * ∨ φ(l)`, where l is a literal (of sort Real, Int, or BitVec) and x is a variable in a {@link PolynomialRelation}
 	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a select term `(select a k)`.)
 	 */
-	private static final boolean APPLY_CONSTANT_FOLDING = true;
+	private static final boolean APPLY_CONSTANT_FOLDING = false;
 	private static final boolean DEBUG_CHECK_RESULT = false;
-	private static final boolean CHECK_ALL_NODES_FOR_REDUNDANCY = !false;
+	private static final boolean CHECK_ALL_NODES_FOR_REDUNDANCY = false;
+	private static final boolean CONSIDER_QUANTFIED_FORMULAS_AS_LEAVES = true;
+	private static final boolean OMIT_QUANTIFIED_FORMULAS = true;
+
+	private int mNumberOfCheckSatCommands = 0;
+	private int mNonConstrainingNodes = 0;
+	private int mNonRelaxingNodes = 0;
+	private long mCheckSatTime = 0;
+	private final long mStartTime = System.nanoTime();
 
 	private SimplifyDDA2(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		super();
@@ -91,9 +103,13 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		mMgdScript.getScript().push(1);
 		mAssertionStackHeight++;
 
+		final List<Term> qfParams = new ArrayList<>();
 		if (symb.getName().equals("and")) {
 			for (final Term otherParam : otherParams) {
-				mMgdScript.getScript().assertTerm(otherParam);
+				if (!OMIT_QUANTIFIED_FORMULAS || QuantifierUtils.isQuantifierFree(otherParam)) {
+					mMgdScript.getScript().assertTerm(otherParam);
+					qfParams.add(otherParam);
+				}
 			}
 		}
 
@@ -103,12 +119,16 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			/////// smtutils replace free variables
 
 			for (final Term otherParam : otherParams) {
-				mMgdScript.getScript().assertTerm(SmtUtils.not(mMgdScript.getScript(), otherParam));
+				if (!OMIT_QUANTIFIED_FORMULAS || QuantifierUtils.isQuantifierFree(otherParam)) {
+					mMgdScript.getScript().assertTerm(SmtUtils.not(mMgdScript.getScript(), otherParam));
+					qfParams.add(SmtUtils.not(mMgdScript.getScript(), otherParam));
+				}
 			}
 			// TODO Matthias 20230726: following method to find out whether formula contains quantifiers
 			// QuantifierUtils.isQuantifierFree()
 		}
-		return null;
+		return SmtUtils.and(mMgdScript.getScript(), qfParams);
+		// return null;
 		// return Context.buildCriticalConstraintForConDis(mServices, mMgdScript, context, symb, allParams,
 		// selectedParam, CcTransformation.TO_NNF);
 	}
@@ -124,13 +144,44 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 				CcTransformation.TO_NNF);
 	}
 
-	// checks if we are at a leaf
-	private static boolean checkAtomicity(final Term term) {
+	/**
+	 * Checks if we treat the current node a leaf, i.e., if we want to consider quantified formulas as leaves, are at a
+	 * atomic formula, or at a negated atomic formula.
+	 */
+	private static boolean isLeaf(final Term term) {
+		if (CONSIDER_QUANTFIED_FORMULAS_AS_LEAVES && term instanceof QuantifiedFormula) {
+			return true;
+		}
 		if (((ApplicationTerm) term).getFunction().getName().equals("not")
 				&& (SmtUtils.isAtomicFormula(((ApplicationTerm) term).getParameters()[0]))) {
 			return true;
 		}
 		return SmtUtils.isAtomicFormula(term);
+	}
+
+	// checks if the critical constraint implies the formula(or its negation), returns null if neither
+	private DescendResult checkImplications(final Term term) {
+		final Term result;
+		final long timeBeforeConstrainigcheck = System.nanoTime();
+		mNumberOfCheckSatCommands++;
+		final LBool isNonConstraining =
+				Util.checkSat(mMgdScript.getScript(), SmtUtils.not(mMgdScript.getScript(), term));
+		mCheckSatTime += (System.nanoTime() - timeBeforeConstrainigcheck);
+		if (isNonConstraining == LBool.UNSAT) {
+			mNonConstrainingNodes++;
+			result = mMgdScript.getScript().term("true");
+			return new TermContextTransformationEngine.FinalResultForAscend(result);
+		}
+		mNumberOfCheckSatCommands++;
+		final long timeBeforeRelaxingcheck = System.nanoTime();
+		final LBool isNonRelaxing = Util.checkSat(mMgdScript.getScript(), term);
+		mCheckSatTime += (System.nanoTime() - timeBeforeRelaxingcheck);
+		if (isNonRelaxing == LBool.UNSAT) {
+			mNonRelaxingNodes++;
+			result = mMgdScript.getScript().term("false");
+			return new TermContextTransformationEngine.FinalResultForAscend(result);
+		}
+		return null;
 	}
 
 	@Override
@@ -153,42 +204,22 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		/// member variable to toggle this
 		/// descend into quantified formulas, rename qvariables (also restore names?)
 
-		if (CHECK_ALL_NODES_FOR_REDUNDANCY) {
-			final Term result;
-			if (Util.checkSat(mMgdScript.getScript(), SmtUtils.not(mMgdScript.getScript(), term)) == LBool.UNSAT) {
-				result = mMgdScript.getScript().term("true");
-				return new TermContextTransformationEngine.FinalResultForAscend(result);
+		DescendResult result;
+		if (CHECK_ALL_NODES_FOR_REDUNDANCY || isLeaf(term)) {
+			if ((result = checkImplications(term)) != null) {
+				return result;
 			}
-			if (Util.checkSat(mMgdScript.getScript(), term) == LBool.UNSAT) {
-				result = mMgdScript.getScript().term("false");
-				return new TermContextTransformationEngine.FinalResultForAscend(result);
-			}
-			if (checkAtomicity(term)) {
+			if (isLeaf(term)) {
 				return new TermContextTransformationEngine.FinalResultForAscend(term);
 			} else {
 				mMgdScript.getScript().push(1);
 				mAssertionStackHeight++;
 				return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 			}
-		}
-
-		else {
-			if (checkAtomicity(term)) {
-				final Term result;
-				if (Util.checkSat(mMgdScript.getScript(), SmtUtils.not(mMgdScript.getScript(), term)) == LBool.UNSAT) {
-					result = mMgdScript.getScript().term("true");
-					return new TermContextTransformationEngine.FinalResultForAscend(result);
-				}
-				if (Util.checkSat(mMgdScript.getScript(), term) == LBool.UNSAT) {
-					result = mMgdScript.getScript().term("false");
-					return new TermContextTransformationEngine.FinalResultForAscend(result);
-				}
-				return new TermContextTransformationEngine.FinalResultForAscend(term);
-			} else {
-				mMgdScript.getScript().push(1);
-				mAssertionStackHeight++;
-				return new TermContextTransformationEngine.IntermediateResultForDescend(term);
-			}
+		} else {
+			mMgdScript.getScript().push(1);
+			mAssertionStackHeight++;
+			return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 		}
 
 		// The following is copy&paste of an optimization for the PolyPacSimplification.
@@ -283,7 +314,15 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final Term result;
 		try {
 			final SimplifyDDA2 simplifyDDA2 = new SimplifyDDA2(services, mgdScript);
-			result = TermContextTransformationEngine.transform(simplifyDDA2, context, term);
+			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(term);
+			final Comparator<Term> siblingOrder = null;
+			// TODO Matthias 20230810: Some example for an order in the next line.
+			// final Comparator<Term> siblingOrder = new TreeSizeComperator(CommuhashUtils.HASH_BASED_COMPERATOR);
+			result = TermContextTransformationEngine.transform(simplifyDDA2, siblingOrder, context, nnf);
+			final ILogger logger = services.getLoggingService().getLogger(SimplifyDDA2.class);
+			if (logger.isInfoEnabled()) {
+				logger.info(simplifyDDA2.generateExitMessage());
+			}
 			final int stackHeight = simplifyDDA2.getAssertionStackHeight();
 			if (stackHeight != 0) {
 				throw new AssertionError(String.format("stackHeight is non-zero"));
@@ -300,6 +339,13 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 
 	public int getAssertionStackHeight() {
 		return mAssertionStackHeight;
+	}
+
+	public String generateExitMessage() {
+		return String.format(
+				"Run SimplifyDDA2 in %s ms. %s check-sat commands took %s ms. %s non-constraining nodes. %s Non-relaxing nodes.",
+				(System.nanoTime() - mStartTime) / 1000000, mNumberOfCheckSatCommands, mCheckSatTime / 1000000,
+				mNonConstrainingNodes, mNonRelaxingNodes);
 	}
 
 	@Override

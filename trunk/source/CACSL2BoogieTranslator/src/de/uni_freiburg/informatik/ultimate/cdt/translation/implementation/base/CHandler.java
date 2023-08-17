@@ -251,6 +251,8 @@ public class CHandler {
 	 */
 	private static final boolean POINTER_CAST_IS_UNSUPPORTED_SYNTAX = false;
 
+	private static final boolean ADD_HAVOCS_AT_SCOPE_END = true;
+
 	private final MemoryHandler mMemoryHandler;
 
 	private final ArrayHandler mArrayHandler;
@@ -710,13 +712,8 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTASMDeclaration node) {
-		if (mSettings.isSvcompMode()) {
-			// workaround for now: ignore inline assembler instructions
-			return new SkipResult();
-		}
-		final String msg = "CHandler: Not yet implemented: \"" + node.getRawSignature() + "\" (Type: "
-				+ node.getClass().getName() + ")";
-		throw new UnsupportedSyntaxException(mLocationFactory.createCLocation(node), msg);
+		mReporter.warn(mLocationFactory.createCLocation(node), "Ignoring inline assembler instruction");
+		return new SkipResult();
 	}
 
 	public Result visit(final IDispatcher main, final IASTBinaryExpression node) {
@@ -1103,7 +1100,9 @@ public class CHandler {
 		checkForACSL(main, resultBuilder, null, node, true);
 		if (isNewScopeRequired(parent)) {
 			updateStmtsAndDeclsAtScopeEnd(resultBuilder, node);
-
+			if (ADD_HAVOCS_AT_SCOPE_END) {
+				resultBuilder.addStatements(getHavocsAtScopeEnd(mLocationFactory.createCLocation(node), node));
+			}
 			endScope();
 		}
 		resultBuilder.setLrValue(expr);
@@ -1863,11 +1862,6 @@ public class CHandler {
 		// LinkedHashMap<>(0);
 		final List<Overapprox> overappr = new ArrayList<>();
 		final String label = node.getName().toString();
-		if ("ERROR".equals(label)) {
-			final String longDescription =
-					"The label \"ERROR\" does not have a special meaning in the translation mode you selected. You might want to change your settings and use the SV-COMP translation mode.";
-			mReporter.warn(loc, longDescription);
-		}
 		stmt.add(new Label(loc, label));
 		final Result r = main.dispatch(node.getNestedStatement());
 		if (r instanceof ExpressionResult) {
@@ -2783,6 +2777,18 @@ public class CHandler {
 		}
 	}
 
+	private List<Statement> getHavocsAtScopeEnd(final ILocation loc, final IASTStatement hook) {
+		final List<Statement> havocs = new ArrayList<>();
+		for (final SymbolTableValue stv : mSymbolTable.getInnermostCScopeValues(hook)) {
+			if (!stv.isBoogieGlobalVar() && stv.getBoogieDecl() != null) {
+				final VariableLHS lhs = new VariableLHS(loc, stv.getAstType().getBoogieType(), stv.getBoogieName(),
+						stv.getDeclarationInformation());
+				havocs.add(new HavocStatement(loc, new VariableLHS[] { lhs }));
+			}
+		}
+		return havocs;
+	}
+
 	/**
 	 * @return true iff this is called while in prerun mode, false otherwise
 	 */
@@ -3438,6 +3444,7 @@ public class CHandler {
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
+		final List<Statement> afterLoopStatements = new ArrayList<>();
 		Result iterator = null;
 		if (node instanceof IASTForStatement) {
 			final IASTForStatement forStmt = (IASTForStatement) node;
@@ -3449,6 +3456,10 @@ public class CHandler {
 				if (initializer instanceof ExpressionResult) {
 					final ExpressionResult rExp = (ExpressionResult) initializer;
 					resultBuilder.addAllExceptLrValue(rExp);
+					// Havoc all variables that are declared in the initializer statement after the loop
+					if (ADD_HAVOCS_AT_SCOPE_END) {
+						afterLoopStatements.addAll(getHavocsAtScopeEnd(loc, cInitStmt));
+					}
 				} else if (initializer instanceof SkipResult) {
 					// this is an empty statement in the C Code. We will skip it
 				} else {
@@ -3599,7 +3610,7 @@ public class CHandler {
 				new WhileStatement(ignoreLocation, ExpressionFactory.createBooleanLiteral(ignoreLocation, true), spec,
 						bodyBlock.toArray(new Statement[bodyBlock.size()]));
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
-		resultBuilder.addStatement(whileStmt);
+		resultBuilder.addStatement(whileStmt).addStatements(afterLoopStatements);
 
 		assert resultBuilder.getLrValue() == null : "there is an lrvalue although there should be none";
 		assert resultBuilder.getAuxVars().isEmpty() : "auxvars were added although they should have been havoced";

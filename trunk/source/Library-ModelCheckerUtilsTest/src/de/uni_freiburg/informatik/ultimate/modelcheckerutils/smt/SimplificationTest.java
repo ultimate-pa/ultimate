@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -69,7 +70,7 @@ public class SimplificationTest {
 	/**
 	 * Warning: each test will overwrite the SMT script of the preceding test.
 	 */
-	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = !false;
+	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
 	private static final long TEST_TIMEOUT_MILLISECONDS = 20_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
@@ -111,6 +112,7 @@ public class SimplificationTest {
 		} else {
 			mScript = solverInstance;
 		}
+		mScript = new StatisticsScript(mScript);
 
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
@@ -132,11 +134,22 @@ public class SimplificationTest {
 	}
 
 	@Test
-	public void dda2TestExample() {
+	public void dda2TestExample01() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
 		final String formulaAsString =
 				"(or (and (or (> x 1) (= (+ y z) 1)) (<= y 2)) (and (< x 2) (or (< x 5) (>= z 2))))";
 		final String expectedResultAsString = "(or (<= y 2) (< x 2))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.SIMPLIFY_DDA2,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	// simplify leaf to false in conjunction
+	public void dda2TestExample04() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getBoolSort, "B"),
+				new FunDecl(SmtSortUtils::getIntSort, "y", "x"), };
+		final String formulaAsString = "(or B (and (= x 0) (= x y) (not (= y 0))))";
+		final String expectedResultAsString = "B";
 		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.SIMPLIFY_DDA2,
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -579,8 +592,8 @@ public class SimplificationTest {
 				"~x$w_buff1_used~0", "~x$w_buff0~0", "~x$w_buff1~0", "~x$r_buff1_thd0~0"), };
 		final String formulaAsString =
 				"(let ((.cse11 (= (mod ~x$r_buff0_thd2~0 256) 0)) (.cse19 (= (mod ~x$w_buff1_used~0 256) 0)) (.cse20 (= (mod ~x$r_buff1_thd2~0 256) 0))) (let ((.cse2 (= (mod ~x$w_buff0_used~0 256) 0)) (.cse21 (not .cse20)) (.cse18 (not .cse19)) (.cse13 (not .cse11))) (let ((.cse22 (or .cse18 .cse13)) (.cse14 (or .cse13 .cse21)) (.cse15 (not .cse2)) (.cse8 (= (mod |P1Thread1of1ForFork0_#t~nondet35| 256) 0))) (let ((.cse7 (not .cse8)) (.cse3 (and .cse11 .cse19)) (.cse4 (and .cse13 .cse15)) (.cse6 (and .cse11 .cse20)) (.cse1 (and .cse22 .cse14 .cse15))) (or (let ((.cse5 (or .cse2 .cse11))) (let ((.cse0 (let ((.cse16 (and .cse5 .cse13 .cse15))) (let ((.cse9 (let ((.cse17 (and .cse8 (or .cse7 (and (or .cse2 .cse16 .cse3 .cse6) .cse22 .cse14 .cse15))))) (and (or .cse7 (and (or (and (or .cse17 .cse4) (or .cse2 .cse11 (and (or .cse7 (and .cse18 (or .cse2 .cse19 .cse20) .cse21 .cse15)) .cse8))) .cse2 .cse3 .cse6) (or .cse17 .cse1))) (or .cse17 .cse8))))) (and (or .cse8 .cse9) (or .cse7 (and (or .cse2 .cse3 (let ((.cse10 (let ((.cse12 (and (or .cse7 (and (or .cse2 .cse16 .cse11 .cse6) .cse13 .cse14 .cse15)) .cse8))) (and (or .cse12 .cse8) (or .cse7 (and (or (and .cse5 (or .cse4 .cse12)) .cse2 .cse11 .cse6) (or .cse12 (and .cse13 .cse14 .cse15)))))))) (and (or .cse10 .cse4) (or .cse2 .cse11 .cse10))) .cse6) (or .cse1 .cse9)))))))) (and (or (and (or .cse0 .cse1) (or .cse2 .cse3 (and (or .cse4 .cse0) .cse5) .cse6)) .cse7) (or .cse0 .cse8)))) (let ((.cse25 (<= ~x$w_buff0~0 0)) (.cse26 (= 0 ~x$w_buff1~0)) (.cse27 (= ~x$r_buff1_thd0~0 0))) (let ((.cse31 (let ((.cse32 (let ((.cse33 (and (= ~x~0 1) .cse25 .cse26 .cse27))) (and (or .cse7 (and (or .cse2 .cse3 (and (or .cse33 .cse4) (or .cse2 .cse11 .cse33)) .cse6) (or .cse33 .cse1))) (or .cse33 .cse8))))) (and (or .cse7 (and (or .cse32 .cse1) (or .cse2 .cse3 (and (or .cse2 .cse11 .cse32) (or .cse4 .cse32)) .cse6))) (or .cse32 .cse8))))) (let ((.cse28 (or .cse31 .cse8))) (and (or .cse2 .cse3 (and (or .cse4 (and (or .cse7 (let ((.cse23 (let ((.cse24 (and .cse25 .cse26 (= ~x$w_buff1~0 1) .cse27))) (and (or .cse24 .cse8) (or (and (or .cse24 .cse1) (or .cse2 .cse3 (and (or .cse4 .cse24) (or .cse2 .cse11 .cse24)) .cse6)) .cse7))))) (and (or (and (or .cse1 .cse23) (or .cse2 .cse3 (and (or .cse2 .cse11 .cse23) (or .cse4 .cse23)) .cse6)) .cse7) (or .cse8 .cse23)))) .cse28)) (or .cse2 .cse11 (and (or .cse7 (let ((.cse29 (let ((.cse30 (and (= ~x$w_buff0~0 1) .cse25 .cse26 .cse27))) (and (or .cse7 (and (or .cse2 .cse3 .cse6 (and (or .cse2 .cse11 .cse30) (or .cse4 .cse30))) (or .cse30 .cse1))) (or .cse30 .cse8))))) (and (or .cse29 .cse8) (or .cse7 (and (or .cse2 .cse3 (and (or .cse2 .cse11 .cse29) (or .cse4 .cse29)) .cse6) (or .cse29 .cse1)))))) .cse28))) .cse6) (or (and (or .cse7 .cse31) .cse28) .cse1))))))))))";
-		runSimplificationTest(funDecls, formulaAsString, null, SimplificationTechnique.SIMPLIFY_DDA2, mServices,
-				mLogger, mMgdScript, mCsvWriter);
+		runSimplificationTest(funDecls, formulaAsString, null, SimplificationTechnique.POLY_PAC, mServices, mLogger,
+				mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -1045,25 +1058,26 @@ public class SimplificationTest {
 		logger.info(esr.buildSizeReductionMessage());
 		logger.info("CDC code input:  " + CondisDepthCode.of(unf));
 		logger.info("CDC code output: " + CondisDepthCode.of(result));
+		csvWriter.reportEliminationSuccess(result, testId, (StatisticsScript) mgdScript.getScript());
 		if (expectedResultAsString != null) {
 			final CommuhashNormalForm cnft = new CommuhashNormalForm(services, mgdScript.getScript());
 			final Term cnfResult = cnft.transform(result);
-			final Term expectedResultAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), expectedResultAsString);
+			final Term expectedResultAsTerm = new FormulaUnLet()
+					.transform(TermParseUtils.parseTerm(mgdScript.getScript(), expectedResultAsString));
 			final Term cnfExpectedResultAsTerm = cnft.transform(expectedResultAsTerm);
 			MatcherAssert.assertThat(cnfResult, IsEqual.equalTo(cnfExpectedResultAsTerm));
 		}
-		checkLogicalEquivalence(mgdScript.getScript(), result, formulaAsTerm);
-		csvWriter.reportEliminationSuccess(result, testId);
+		assert checkLogicalEquivalence(mgdScript.getScript(), result, formulaAsTerm);
 	}
 
-	private static void checkLogicalEquivalence(final Script script, final Term result, final Term input) {
+	private static boolean checkLogicalEquivalence(final Script script, final Term result, final Term input) {
 		script.echo(new QuotedObject("Start correctness check for simplification."));
 		final LBool lbool = SmtUtils.checkEquivalence(result, input, script);
 		script.echo(new QuotedObject("Finished correctness check for simplification. Result: " + lbool));
 		final String errorMessage;
 		switch (lbool) {
 		case SAT:
-			errorMessage = "Not equivalent to expected result: " + result;
+			errorMessage = "Not logically equivalent to expected result: " + result;
 			break;
 		case UNKNOWN:
 			errorMessage = "Insufficient ressources for checking equivalence to expected result: " + result;
@@ -1075,6 +1089,7 @@ public class SimplificationTest {
 			throw new AssertionError("unknown value " + lbool);
 		}
 		MatcherAssert.assertThat(errorMessage, lbool == LBool.UNSAT);
+		return lbool == LBool.UNSAT;
 	}
 
 }

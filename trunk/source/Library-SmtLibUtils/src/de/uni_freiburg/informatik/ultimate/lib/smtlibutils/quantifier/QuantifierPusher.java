@@ -600,48 +600,48 @@ public class QuantifierPusher extends TermTransformer {
 	private static List<DualJunctionQuantifierElimination> generateNewEliminationTechniques(
 			final PqeTechniques pqeTechniques, final ManagedScript mgdScript, final IUltimateServiceProvider services) {
 		final List<DualJunctionQuantifierElimination> elimtechniques = new ArrayList<>();
-		final boolean useSgiElimination = true;
+		final boolean useSgiElimination = false;
 		if (useSgiElimination) {
 			elimtechniques.add(new DualJunctionSgi(mgdScript, services));
 		}
-		// switch (pqeTechniques) {
-		// case ALL:
-		//// elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
-		// elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
-		// elimtechniques.add(new DualJunctionTir(mgdScript, services, true));
-		// elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfUpd(mgdScript, services)));
-		// elimtechniques.add(new DualJunctionDml(mgdScript, services));
-		// final boolean useOldEliminationForDivAndMod = false;
-		// if (useOldEliminationForDivAndMod) {
-		// elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
-		// }
-		// elimtechniques.add(new DualJunctionSaa(mgdScript, services, true));
-		// break;
-		// case ALL_LOCAL:
-		// elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
-		// elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
-		// elimtechniques.add(new DualJunctionTir(mgdScript, services, false));
-		// elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfUpd(mgdScript, services)));
-		// elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
-		// break;
-		// case NO_UPD:
-		// elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
-		// elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
-		// elimtechniques.add(new DualJunctionTir(mgdScript, services, false));
-		// elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
-		// break;
-		// case ONLY_DER:
-		// elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
-		// elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
-		// break;
-		// case LIGHT:
-		// elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
-		// elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
-		// elimtechniques.add(new DualJunctionTir(mgdScript, services, false));
-		// break;
-		// default:
-		// throw new AssertionError("unknown value " + pqeTechniques);
-		// }
+		switch (pqeTechniques) {
+		case ALL:
+			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
+			elimtechniques.add(new DualJunctionTir(mgdScript, services, true));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfUpd(mgdScript, services)));
+			elimtechniques.add(new DualJunctionDml(mgdScript, services));
+			final boolean useOldEliminationForDivAndMod = false;
+			if (useOldEliminationForDivAndMod) {
+				elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
+			}
+			elimtechniques.add(new DualJunctionSaa(mgdScript, services, true));
+			break;
+		case ALL_LOCAL:
+			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
+			elimtechniques.add(new DualJunctionTir(mgdScript, services, false));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfUpd(mgdScript, services)));
+			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
+			break;
+		case NO_UPD:
+			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
+			elimtechniques.add(new DualJunctionTir(mgdScript, services, false));
+			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
+			break;
+		case ONLY_DER:
+			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
+			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
+			break;
+		case LIGHT:
+			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
+			elimtechniques.add(new DualJunctionTir(mgdScript, services, false));
+			break;
+		default:
+			throw new AssertionError("unknown value " + pqeTechniques);
+		}
 		return elimtechniques;
 	}
 

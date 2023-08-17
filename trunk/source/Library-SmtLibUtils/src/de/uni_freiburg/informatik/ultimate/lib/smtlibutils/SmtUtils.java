@@ -26,6 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -126,7 +130,7 @@ public final class SmtUtils {
 		SIMPLIFY_QUICK(true),
 
 		SIMPLIFY_DDA(true),
-		
+
 		SIMPLIFY_DDA2(true),
 
 		POLY_PAC(false),
@@ -176,6 +180,7 @@ public final class SmtUtils {
 		}
 		if (!SmtUtils.isTrueLiteral(context) && simplificationTechnique != SimplificationTechnique.POLY_PAC
 				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA
+				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA2
 				&& simplificationTechnique != SimplificationTechnique.NONE) {
 			throw new UnsupportedOperationException(
 					simplificationTechnique + " does not support simplification with respect to context");
@@ -227,6 +232,22 @@ public final class SmtUtils {
 				sb.append(" (called from ").append(ReflectionUtil.getCallerSignatureFiltered(Set.of(SmtUtils.class)))
 						.append(")");
 				logger.warn(sb);
+				// Matthias 2023-08-01: The following is a hack for writing simplification
+				// benchmarks to a file. We write only if the simplification took at least 5s
+				// (see if above) and if the context is equivalent to true.
+				final boolean writeSimplificationBenchmarksToFile = false;
+				if (writeSimplificationBenchmarksToFile && SmtUtils.isTrueLiteral(context)) {
+					try (FileWriter fw = new FileWriter("SimplificationBenchmark_" + overallTimeMs);
+							BufferedWriter bw = new BufferedWriter(fw);
+							PrintWriter out = new PrintWriter(bw)) {
+						out.println(SmtTestGenerationUtils.generateStringForTestfile(formula));
+						out.close();
+						bw.close();
+						fw.close();
+					} catch (final IOException e) {
+						throw new AssertionError(e);
+					}
+				}
 			}
 			// TODO: DD 2019-11-19: This call is a dirty hack! SimplifyDDAWithTimeout leaves an empty stack frame open,
 			// but I do not want to try and debug how it is happening.
@@ -2284,7 +2305,7 @@ public final class SmtUtils {
 		final Term notEq = script.term("distinct", formula1, formula2);
 		return Util.checkSat(script, notEq);
 	}
-	
+
 	/**
 	 * @return LBool.UNSAT if the SMT solver was able to prove that the antecedent
 	 *         implies the succedent, LBool.SAT if the SMT was able to prove that
@@ -2292,7 +2313,7 @@ public final class SmtUtils {
 	 *         otherwise.
 	 */
 	public static LBool checkImplication(final Term antecedent, final Term succedent, final Script script) {
-		final Term notImply = SmtUtils.and(script, antecedent, SmtUtils.not(script, succedent)); 
+		final Term notImply = SmtUtils.and(script, antecedent, SmtUtils.not(script, succedent));
 		return Util.checkSat(script, notImply);
 	}
 
@@ -2672,6 +2693,26 @@ public final class SmtUtils {
 
 	public BigInteger computeLargestRepresentableBitvector(final Sort bv, final BvSignedness signedness) {
 		return null;
+	}
+
+	public static boolean isAbsorbingElement(final String booleanConnective, final Term term) {
+		if (booleanConnective.equals("and")) {
+			return isFalseLiteral(term);
+		} else if (booleanConnective.equals("or")) {
+			return isTrueLiteral(term);
+		} else {
+			throw new AssertionError("unsupported connective " + booleanConnective);
+		}
+	}
+
+	public static boolean isNeutralElement(final String booleanConnective, final Term term) {
+		if (booleanConnective.equals("and")) {
+			return isTrueLiteral(term);
+		} else if (booleanConnective.equals("or")) {
+			return isFalseLiteral(term);
+		} else {
+			throw new AssertionError("unsupported connective " + booleanConnective);
+		}
 	}
 
 	/**

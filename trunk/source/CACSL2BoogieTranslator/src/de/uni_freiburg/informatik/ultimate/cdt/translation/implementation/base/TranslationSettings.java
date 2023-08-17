@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.TranslationMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.FloatingPointRoundingMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
@@ -67,8 +66,8 @@ public final class TranslationSettings {
 	private final boolean mFpToIeeeBvExtension;
 	private final boolean mSmtBoolArraysWorkaround;
 	private final String mEntryMethod;
-	private final TranslationMode mTranslationMode;
-	private final boolean mCheckSvcompErrorFunction;
+	private final boolean mCheckErrorFunction;
+	private final boolean mCheckAssertions;
 	private final boolean mIsSvcompMemtrackCompatibilityMode;
 	private final boolean mCheckAllocationPurity;
 	private final boolean mCheckMemoryLeakInMain;
@@ -89,9 +88,9 @@ public final class TranslationSettings {
 		mCheckAllocationPurity = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_ALLOCATION_PURITY);
 		mCheckMemoryLeakInMain = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN);
 
-		mCheckSvcompErrorFunction = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SVCOMP_ERRORFUNCTION);
+		mCheckAssertions = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_ASSERTIONS);
 		mEntryMethod = ups.getString(CACSLPreferenceInitializer.MAINPROC_LABEL);
-		mTranslationMode = ups.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class);
+		mCheckErrorFunction = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ERROR);
 		mSmtBoolArraysWorkaround = ups.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
 		mCheckIfFreedPointerIsValid = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID);
 		mPointerBaseValidity =
@@ -139,7 +138,7 @@ public final class TranslationSettings {
 			final PointerCheckMode pointerBaseValidity, final PointerCheckMode pointerTargetFullyAllocated,
 			final PointerCheckMode checkPointerSubtractionAndComparisonValidity,
 			final MemoryModel memoryModelPreference, final boolean fpToIeeeBvExtension,
-			final boolean smtBoolArraysWorkaround, final String checkedMethod, final TranslationMode translationMode,
+			final boolean smtBoolArraysWorkaround, final String checkedMethod, final boolean checkErrorFunction,
 			final boolean checkSvcompErrorFunction, final boolean isSvcompMemtrackCompatibilityMode,
 			final boolean checkAllocationPurity, final boolean checkMemoryLeakInMain,
 			final boolean checkSignedIntegerBounds, final boolean checkDataRaces, final boolean useConstantArrays,
@@ -163,8 +162,8 @@ public final class TranslationSettings {
 		mFpToIeeeBvExtension = fpToIeeeBvExtension;
 		mSmtBoolArraysWorkaround = smtBoolArraysWorkaround;
 		mEntryMethod = checkedMethod;
-		mTranslationMode = translationMode;
-		mCheckSvcompErrorFunction = checkSvcompErrorFunction;
+		mCheckErrorFunction = checkErrorFunction;
+		mCheckAssertions = checkSvcompErrorFunction;
 		mIsSvcompMemtrackCompatibilityMode = isSvcompMemtrackCompatibilityMode;
 		mCheckAllocationPurity = checkAllocationPurity;
 		mCheckMemoryLeakInMain = checkMemoryLeakInMain;
@@ -250,19 +249,12 @@ public final class TranslationSettings {
 		return mEntryMethod;
 	}
 
-	public boolean isSvcompMode() {
-		switch (mTranslationMode) {
-		case BASE:
-			return false;
-		case SV_COMP14:
-			return true;
-		default:
-			throw new IllegalArgumentException("Unknown mode " + mTranslationMode);
-		}
+	public boolean checkErrorFunction() {
+		return mCheckErrorFunction;
 	}
 
-	public boolean checkSvcompErrorFunction() {
-		return mCheckSvcompErrorFunction;
+	public boolean checkAssertions() {
+		return mCheckAssertions;
 	}
 
 	public boolean isSvcompMemtrackCompatibilityMode() {
@@ -318,11 +310,10 @@ public final class TranslationSettings {
 				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mBitpreciseBitfields,
 				mCheckArrayAccessOffHeap, mInRange, mPointerIntegerConversion, mCheckIfFreedPointerIsValid,
 				mPointerBaseValidity, mPointerTargetFullyAllocated, mCheckPointerSubtractionAndComparisonValidity,
-				memoryModel, mFpToIeeeBvExtension, mSmtBoolArraysWorkaround, mEntryMethod, mTranslationMode,
-				mCheckSvcompErrorFunction, mIsSvcompMemtrackCompatibilityMode, mCheckAllocationPurity,
-				mCheckMemoryLeakInMain, mCheckSignedIntegerBounds, mCheckDataRaces, mUseConstantArrays, mUseStoreChains,
-				mEnableFesetround, mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts,
-				mStringOverapproximationThreshold);
+				memoryModel, mFpToIeeeBvExtension, mSmtBoolArraysWorkaround, mEntryMethod, mCheckErrorFunction,
+				mCheckAssertions, mIsSvcompMemtrackCompatibilityMode, mCheckAllocationPurity, mCheckMemoryLeakInMain,
+				mCheckSignedIntegerBounds, mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround,
+				mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts, mStringOverapproximationThreshold);
 	}
 
 	/**
