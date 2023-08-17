@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVi
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.DfsBookkeeping;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -74,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            what do we need to return in those cases?
  */
 
-public class DynamicStratifiedReduction<L, S, R, H> {
+public class DynamicStratifiedReduction<L, S, R, H extends Set<P>, P> {
 	private static final String ABORT_MSG = "visitor aborted traversal";
 
 	private final AutomataLibraryServices mServices;
@@ -82,7 +83,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOriginalAutomaton;
 	private final NestedWordAutomaton<L, R> mReductionAutomaton;
-	private final IStratifiedStateFactory<L, S, R, AbstractionLevel<L>> mStateFactory;
+	private final IStratifiedStateFactory<L, S, R, AbstractionLevel<H>> mStateFactory;
+	private final ILattice<H> mAbstractionLattice;
 	private final R mStartState;
 	private final IIndependenceInducedByAbstraction<S, L> mIndependenceProvider;
 	private final IProofManager<L, S, H> mProofManager;
@@ -117,18 +119,19 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	 */
 	public DynamicStratifiedReduction(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> originalAutomaton, final IDfsOrder<L, S> order,
-			final IStratifiedStateFactory<L, S, R, AbstractionLevel<L>> stateFactory, final IDfsVisitor<L, R> visitor,
-			final S startingState, final IIndependenceInducedByAbstraction<S, L> independence,
+			final IStratifiedStateFactory<L, S, R, AbstractionLevel<H>> stateFactory, final IDfsVisitor<L, R> visitor,
+			final S startingState, final ILattice<H> lattice, final IIndependenceInducedByAbstraction<S, L> independence,
 			final IProofManager<L, S, H> manager) throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(originalAutomaton) : "Finite automata only";
 
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(DynamicStratifiedReduction.class);
+		mAbstractionLattice = lattice;
 		mStateFactory = stateFactory;
 		mOriginalAutomaton = originalAutomaton;
 		mReductionAutomaton = new NestedWordAutomaton<>(services, mOriginalAutomaton.getVpAlphabet(), mStateFactory);
 		mStartState = mStateFactory.createStratifiedState(startingState, ImmutableSet.empty(),
-				AbstractionLevel.createEmpty(), AbstractionLevel.createEmpty(), new LinkedList<R>());
+				new AbstractionLevel(emptyset, mAbstractionLattice, false), new AbstractionLevel(emptyset, mAbstractionLattice, false);
 
 		mOrder = order;
 		mIndependenceProvider = independence;

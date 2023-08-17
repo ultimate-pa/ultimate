@@ -27,9 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction;
 
-import java.util.LinkedList;
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
@@ -50,31 +47,89 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  */
 
 public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFactory<R> {
-	// Method to create a reduction state
-	R createStratifiedState(S state, ImmutableSet<L> sleepset, H level, H limit, LinkedList<R> loopPredecs);
+	/**
+	 * Create a reduction state
+	 *
+	 * @param state
+	 *            a state of the original automaton
+	 * @param sleepset
+	 *            the reduction states sleep set
+	 * @param level
+	 *            the reduction states abstraction level
+	 * @param limit
+	 *            the reduction states abstraction limit
+	 * @return a state of the reduction automaton
+	 */
 
-	// Returns the original state from which a reduction state was constructed
+	R createStratifiedState(S state, ImmutableSet<L> sleepset, AbstractionLevel<H> level, AbstractionLevel<H> limit);
+
+	/**
+	 * Returns the original state from which a reduction state was constructed
+	 *
+	 * @param state
+	 *            a state of the reduction automaton
+	 *
+	 * @return the state's original state
+	 */
 	S getOriginalState(R state);
 
-	// Returns the sleep set of a reduction state
+	/**
+	 * Returns the sleep set of a reduction state
+	 *
+	 * @param state
+	 *            a state of the reduction automaton
+	 * @return the state's sleep set
+	 */
 	ImmutableSet<L> getSleepSet(R state);
 
-	// Returns the abstraction level of a reduction state
-	H getAbstractionLevel(R state);
+	/**
+	 * Returns the abstraction level of a reduction state
+	 *
+	 * @param state
+	 *            a state of the reduction automaton
+	 * @return the state's abstraction level
+	 */
+	AbstractionLevel<H> getAbstractionLevel(R state);
 
-	// Add additional variables to the abstraction level of a state
-	void addToAbstractionLevel(R state, Set<L> variables);
+	/**
+	 * Add additional variables to the abstraction level of a state
+	 *
+	 * @param state
+	 *            a state of the reduction automaton
+	 * @param variables
+	 *            a set of program variables
+	 */
+	void addToAbstractionLevel(R state, H variables);
 
-	// Returns the abstraction limit of a reduction state (is the upper limit for the abstraction level of all reduction
-	// states reachable from state)
-	H getAbstractionLimit(R state);
+	/**
+	 * Returns the abstraction limit of a reduction state (is the upper limit for the abstraction level of all reduction
+	 * states reachable from state)
+	 *
+	 * @param state
+	 *            a state of the reduction automaton
+	 * @return the state's abstraction limit
+	 */
+	AbstractionLevel<H> getAbstractionLimit(R state);
 
-	// Add additional variables to the abstraction level of a state
-	void addToAbstractionLimit(R state, Set<L> variables);
+	/**
+	 * Add additional variables to the abstraction limit of a state
+	 *
+	 * @param state
+	 *            a state of the reduction automaton
+	 * @param variables
+	 *            a set of program variables
+	 */
+	void addToAbstractionLimit(R state, H variables);
 
-	// Returns the set of predecessors that state is allowed to loop back to
-	LinkedList<R> getLoopablePredecs(R state);
-
+	/**
+	 * If we encounter a loop we need the states inside to be of equal abstraction level. For this reason we need to
+	 * create new states that are copies of the states inside the loop with different abstraction levels and limits.
+	 * Such states are called loop copies.
+	 *
+	 * @param state
+	 *            state of the reduction automaton
+	 * @return true if the state is a loop copy state
+	 */
 	boolean isLoopCopy(final R state);
 }
 
@@ -89,62 +144,55 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
  *            Type of state of the original automaton
  */
 
-class StratifiedStateFactory<L, S>
-		implements IStratifiedStateFactory<L, S, StratifiedReductionState<L, S>, AbstractionLevel<L>> {
+class StratifiedStateFactory<L, S, H> implements IStratifiedStateFactory<L, S, StratifiedReductionState<L, S, H>, H> {
 
 	// Wir wollen nicht wirklich einen Kellerautomaten
 	@Override
-	public StratifiedReductionState<L, S> createEmptyStackState() {
+	public StratifiedReductionState<L, S, H> createEmptyStackState() {
 		// TODO Find out the right type for this
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public StratifiedReductionState<L, S> createStratifiedState(final S state, final ImmutableSet<L> sleepset,
-			final AbstractionLevel<L> level, final AbstractionLevel<L> limit,
-			final LinkedList<StratifiedReductionState<L, S>> loopPredecs) {
+	public StratifiedReductionState<L, S, H> createStratifiedState(final S state, final ImmutableSet<L> sleepset,
+			final AbstractionLevel<H> level, final AbstractionLevel<H> limit) {
 
-		return new StratifiedReductionState<>(state, sleepset, level, limit, loopPredecs);
+		return new StratifiedReductionState<>(state, sleepset, level, limit);
 	}
 
 	@Override
-	public S getOriginalState(final StratifiedReductionState<L, S> state) {
+	public S getOriginalState(final StratifiedReductionState<L, S, H> state) {
 		return state.mOriginalState;
 	}
 
 	@Override
-	public ImmutableSet<L> getSleepSet(final StratifiedReductionState<L, S> state) {
+	public ImmutableSet<L> getSleepSet(final StratifiedReductionState<L, S, H> state) {
 		return state.mSleepSet;
 	}
 
 	@Override
-	public AbstractionLevel<L> getAbstractionLevel(final StratifiedReductionState<L, S> state) {
+	public AbstractionLevel<H> getAbstractionLevel(final StratifiedReductionState<L, S, H> state) {
 		return state.mAbstractionLevel;
 	}
 
 	@Override
-	public void addToAbstractionLevel(final StratifiedReductionState<L, S> state, final Set<L> variables) {
+	public void addToAbstractionLevel(final StratifiedReductionState<L, S, H> state, final H variables) {
 		state.mAbstractionLevel.addToAbstractionLevel(variables);
 
 	}
 
 	@Override
-	public AbstractionLevel<L> getAbstractionLimit(final StratifiedReductionState<L, S> state) {
+	public AbstractionLevel<H> getAbstractionLimit(final StratifiedReductionState<L, S, H> state) {
 		return state.mAbstractionLimit;
 	}
 
 	@Override
-	public void addToAbstractionLimit(final StratifiedReductionState<L, S> state, final Set<L> variables) {
+	public void addToAbstractionLimit(final StratifiedReductionState<L, S, H> state, final H variables) {
 		state.mAbstractionLimit.addToAbstractionLevel(variables);
 	}
 
 	@Override
-	public LinkedList<StratifiedReductionState<L, S>> getLoopablePredecs(final StratifiedReductionState<L, S> state) {
-		return state.mLoopablePredecs;
-	}
-
-	@Override
-	public boolean isLoopCopy(final StratifiedReductionState<L, S> state) {
+	public boolean isLoopCopy(final StratifiedReductionState<L, S, H> state) {
 		return state.mAbstractionLimit.isLocked();
 	}
 }
@@ -166,21 +214,17 @@ class StratifiedStateFactory<L, S>
  * @return the corresponding state of the reduction automaton
  */
 
-class StratifiedReductionState<L, S> {
-	// TODO: I'd like for its state factory to be the only 'friend' of this class
+class StratifiedReductionState<L, S, H> {
 	protected S mOriginalState;
 	protected ImmutableSet<L> mSleepSet;
-	protected AbstractionLevel<L> mAbstractionLevel;
-	protected AbstractionLevel<L> mAbstractionLimit; // does this need to be an AbstractionLevel?
-	protected LinkedList<StratifiedReductionState<L, S>> mLoopablePredecs;
+	protected AbstractionLevel<H> mAbstractionLevel;
+	protected AbstractionLevel<H> mAbstractionLimit;
 
-	public StratifiedReductionState(final S state, final ImmutableSet<L> sleepset, final AbstractionLevel<L> absLv,
-			final AbstractionLevel<L> absLmt, final LinkedList<StratifiedReductionState<L, S>> loopPredecs) {
-		assert absLv.isLEQ(absLmt) : "Abstraction level is bigger than the allowed upper limit!";
+	public StratifiedReductionState(final S state, final ImmutableSet<L> sleepset, final AbstractionLevel<H> absLv,
+			final AbstractionLevel<H> absLmt) {
 		mOriginalState = state;
 		mSleepSet = sleepset;
 		mAbstractionLevel = absLv;
 		mAbstractionLimit = absLmt;
-		mLoopablePredecs = loopPredecs;
 	}
 }

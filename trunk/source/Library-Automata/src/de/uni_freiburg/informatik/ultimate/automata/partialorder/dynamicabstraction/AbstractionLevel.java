@@ -46,7 +46,7 @@ class AbstractionLevel<H> {
 	 * @param protectedVar
 	 *            variables the abstraction is forbidden from abstracting
 	 * @param lattice
-	 * 
+	 *
 	 * @param true
 	 *            if the value of the abstraction level is fixed from now on
 	 */
@@ -64,21 +64,19 @@ class AbstractionLevel<H> {
 	 * @param vars
 	 *            the variables to be added
 	 */
-	public void addToAbstractionLevel(final AbstractionLevel<H> level, final H vars) {
-		level.mValue = level.mLattice.supremum(level.mValue, vars);
+	public void addToAbstractionLevel(final H vars) {
+		this.mValue = this.mLattice.supremum(this.mValue, vars);
 	}
 
 	/**
 	 * Compare two abstraction levels
 	 *
-	 * @param lv1
-	 *            abstraction level we want to compare
-	 * @param lv2
-	 *            abstraction level we want lv1 to compare with
-	 * @return STRICTLY_SMALLER if lv1 < lv2, EQUAL if lv1 = lv2, STRICTLY_GREATER if lv1 > lv2, INCOMPARABLE otherwise
+	 * @param level
+	 *            abstraction level we want to compare with
+	 * @return STRICTLY_SMALLER if < level, EQUAL if = level, STRICTLY_GREATER if > level, INCOMPARABLE otherwise
 	 */
-	public ComparisonResult compare(final H lv1, final H lv2) {
-		return mLattice.compare(lv1, lv2);
+	public ComparisonResult compare(final H level) {
+		return mLattice.compare(this.mValue, level);
 	}
 
 	/**

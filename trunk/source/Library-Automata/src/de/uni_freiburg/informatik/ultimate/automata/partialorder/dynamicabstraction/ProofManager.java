@@ -27,8 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction;
 
-import java.util.HashSet;
-
 /**
  * Used by DynamicStratifiedReduction to handle everything related to proofs
  *
@@ -41,7 +39,7 @@ import java.util.HashSet;
  *                   since idk in what form the proofs are given/can be accessed
  */
 
-public class ProofManager<L, S, PROOF> {
+public class ProofManager<H, S, PROOF> {
 	private final int[] proofCounter; // count how many times each proof has been chosen as responsible
 	private final PROOF lastResp; // the proof we chose at the last proven state
 
@@ -67,7 +65,7 @@ public class ProofManager<L, S, PROOF> {
 		return null;
 	}
 
-	public HashSet<L> getVariables(final PROOF responsible) {
+	public H getVariables(final PROOF responsible) {
 		// TODO implement this
 		// get all program variables used in the input proof
 		return null;
