@@ -47,6 +47,8 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 
 	// Returns the set of predecessors that state is allowed to loop back to
 	LinkedList<R> getLoopablePredecs(R state);
+
+	boolean isLoopCopy(final R state);
 }
 
 /**
@@ -114,6 +116,7 @@ class StratifiedStateFactory<L, S>
 		return state.mLoopablePredecs;
 	}
 
+	@Override
 	public boolean isLoopCopy(final StratifiedReductionState<L, S> state) {
 		return state.mAbstractionLimit.isLocked();
 	}

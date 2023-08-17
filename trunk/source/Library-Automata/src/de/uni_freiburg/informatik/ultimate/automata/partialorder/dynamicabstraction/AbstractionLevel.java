@@ -18,8 +18,8 @@ class AbstractionLevel<L> {
 		mLocked = defined;
 	}
 
-	public static AbstractionLevel createEmpty() {
-		return new AbstractionLevel(new HashSet(), false);
+	public static <L> AbstractionLevel<L> createEmpty() {
+		return new AbstractionLevel<>(new HashSet<>(), false);
 	}
 
 	public void addToAbstractionLevel(final Set<L> vars) {
