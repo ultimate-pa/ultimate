@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction;
 
-import java.util.Set;
-
 /**
  * Used by DynamicStratifiedReduction to handle everything related to proofs
  *
@@ -14,7 +12,7 @@ import java.util.Set;
  *                   type of proofs
  */
 
-public interface IProofManager<L, S, PROOF> {
+public interface IProofManager<H, S, PROOF> {
 
 	// Return true if a state is a proven state
 	public boolean isProvenState(S state);
@@ -23,6 +21,6 @@ public interface IProofManager<L, S, PROOF> {
 	public PROOF choseRespProof(S state);
 
 	// get all program variables used in the input proof
-	public Set<L> getVariables(PROOF responsible);
+	public H getVariables(PROOF responsible);
 
 }

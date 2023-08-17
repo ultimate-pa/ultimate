@@ -83,11 +83,11 @@ public class DynamicStratifiedReduction<L, S, R, H extends Set<P>, P> {
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOriginalAutomaton;
 	private final NestedWordAutomaton<L, R> mReductionAutomaton;
-	private final IStratifiedStateFactory<L, S, R, AbstractionLevel<H>> mStateFactory;
+	private final IStratifiedStateFactory<L, S, R, H> mStateFactory;
 	private final ILattice<H> mAbstractionLattice;
 	private final R mStartState;
 	private final IIndependenceInducedByAbstraction<S, L> mIndependenceProvider;
-	private final IProofManager<L, S, H> mProofManager;
+	private final IProofManager<H, S, P> mProofManager;
 
 	private final IDfsOrder<L, S> mOrder;
 	private final IDfsVisitor<L, R> mVisitor;
@@ -119,9 +119,10 @@ public class DynamicStratifiedReduction<L, S, R, H extends Set<P>, P> {
 	 */
 	public DynamicStratifiedReduction(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> originalAutomaton, final IDfsOrder<L, S> order,
-			final IStratifiedStateFactory<L, S, R, AbstractionLevel<H>> stateFactory, final IDfsVisitor<L, R> visitor,
-			final S startingState, final ILattice<H> lattice, final IIndependenceInducedByAbstraction<S, L> independence,
-			final IProofManager<L, S, H> manager) throws AutomataOperationCanceledException {
+			final IStratifiedStateFactory<L, S, R, H> stateFactory, final IDfsVisitor<L, R> visitor,
+			final S startingState, final ILattice<H> lattice,
+			final IIndependenceInducedByAbstraction<S, L> independence, final IProofManager<H, S, P> manager)
+			throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(originalAutomaton) : "Finite automata only";
 
 		mServices = services;
@@ -130,8 +131,9 @@ public class DynamicStratifiedReduction<L, S, R, H extends Set<P>, P> {
 		mStateFactory = stateFactory;
 		mOriginalAutomaton = originalAutomaton;
 		mReductionAutomaton = new NestedWordAutomaton<>(services, mOriginalAutomaton.getVpAlphabet(), mStateFactory);
-		mStartState = mStateFactory.createStratifiedState(startingState, ImmutableSet.empty(),
-				new AbstractionLevel(emptyset, mAbstractionLattice, false), new AbstractionLevel(emptyset, mAbstractionLattice, false);
+		mStartState = (R) mStateFactory.createStratifiedState(startingState, ImmutableSet.empty(),
+				new AbstractionLevel(new HashSet<P>(), mAbstractionLattice, false),
+				new AbstractionLevel(new HashSet<P>(), mAbstractionLattice, false));
 
 		mOrder = order;
 		mIndependenceProvider = independence;
@@ -248,7 +250,7 @@ public class DynamicStratifiedReduction<L, S, R, H extends Set<P>, P> {
 		final var originalState = mStateFactory.getOriginalState(state);
 		final boolean isProvenState = mProofManager.isProvenState(originalState);
 		if (isProvenState) {
-			final Set<L> freeVars = mProofManager.getVariables(mProofManager.choseRespProof(originalState));
+			final H freeVars = mProofManager.getVariables(mProofManager.choseRespProof(originalState));
 			mStateFactory.addToAbstractionLevel(state, freeVars);
 			// Can one modify states/transitions of the NWA?
 		}
