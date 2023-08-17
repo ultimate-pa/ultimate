@@ -217,7 +217,7 @@ public class DynamicStratifiedReduction<L, S, R> {
 
 		final boolean isProvenState = mProofManager.isProvenState(state);
 		if (isProvenState) {
-			final HashSet<L> freeVars = mProofManager.getVariables(mProofManager.choseRespProof(state));
+			final Set<L> freeVars = mProofManager.getVariables(mProofManager.choseRespProof(originalState));
 			mStateFactory.addToAbstractionLevel(state, freeVars);
 			// Can one modify states/transitions of the NWA?
 		}

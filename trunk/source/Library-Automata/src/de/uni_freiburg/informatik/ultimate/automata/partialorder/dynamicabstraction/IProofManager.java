@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction;
 
-import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Used by DynamicStratifiedReduction to handle everything related to proofs
@@ -23,6 +23,6 @@ public interface IProofManager<L, S, PROOF> {
 	public PROOF choseRespProof(S state);
 
 	// get all program variables used in the input proof
-	public HashSet<L> getVariables(PROOF responsible);
+	public Set<L> getVariables(PROOF responsible);
 
 }

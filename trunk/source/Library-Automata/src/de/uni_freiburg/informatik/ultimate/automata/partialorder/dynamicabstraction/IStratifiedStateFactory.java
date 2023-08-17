@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction;
 
-import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -36,14 +36,14 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 	H getAbstractionLevel(R state);
 
 	// Add additional variables to the abstraction level of a state
-	void addToAbstractionLevel(R state, HashSet<L> variables);
+	void addToAbstractionLevel(R state, Set<L> variables);
 
 	// Returns the abstraction limit of a reduction state (is the upper limit for the abstraction level of all reduction
 	// states reachable from state)
 	H getAbstractionLimit(R state);
 
 	// Add additional variables to the abstraction level of a state
-	void addToAbstractionLimit(R state, HashSet<L> variables);
+	void addToAbstractionLimit(R state, Set<L> variables);
 
 	// Returns the set of predecessors that state is allowed to loop back to
 	LinkedList<R> getLoopablePredecs(R state);
@@ -96,7 +96,7 @@ class StratifiedStateFactory<L, S>
 	}
 
 	@Override
-	public void addToAbstractionLevel(final StratifiedReductionState<L, S> state, final HashSet<L> variables) {
+	public void addToAbstractionLevel(final StratifiedReductionState<L, S> state, final Set<L> variables) {
 		state.mAbstractionLevel.addToAbstractionLevel(variables);
 
 	}
@@ -107,7 +107,7 @@ class StratifiedStateFactory<L, S>
 	}
 
 	@Override
-	public void addToAbstractionLimit(final StratifiedReductionState<L, S> state, final HashSet<L> variables) {
+	public void addToAbstractionLimit(final StratifiedReductionState<L, S> state, final Set<L> variables) {
 		state.mAbstractionLimit.addToAbstractionLevel(variables);
 	}
 
