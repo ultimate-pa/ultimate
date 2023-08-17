@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            what do we need to return in those cases?
  */
 
-public class DynamicStratifiedReduction<L, S, R> {
+public class DynamicStratifiedReduction<L, S, R, P> {
 	private static final String ABORT_MSG = "visitor aborted traversal";
 
 	private final AutomataLibraryServices mServices;
@@ -58,7 +58,7 @@ public class DynamicStratifiedReduction<L, S, R> {
 	private final IStratifiedStateFactory<L, S, R, AbstractionLevel<L>> mStateFactory;
 	private final R mStartState;
 	private final IIndependenceInducedByAbstraction<S, L> mIndependenceProvider;
-	private final IProofManager<L, R, Object> mProofManager;
+	private final IProofManager<L, S, P> mProofManager;
 
 	private final IDfsOrder<L, S> mOrder;
 	private final IDfsVisitor<L, R> mVisitor;
@@ -92,7 +92,7 @@ public class DynamicStratifiedReduction<L, S, R> {
 			final INwaOutgoingLetterAndTransitionProvider<L, S> originalAutomaton, final IDfsOrder<L, S> order,
 			final IStratifiedStateFactory<L, S, R, AbstractionLevel<L>> stateFactory, final IDfsVisitor<L, R> visitor,
 			final S startingState, final IIndependenceInducedByAbstraction<S, L> independence,
-			final IProofManager manager) throws AutomataOperationCanceledException {
+			final IProofManager<L, S, P> manager) throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(originalAutomaton) : "Finite automata only";
 
 		mServices = services;
@@ -215,7 +215,8 @@ public class DynamicStratifiedReduction<L, S, R> {
 		mIndentLevel++;
 		debugIndent("visiting state %s", state);
 
-		final boolean isProvenState = mProofManager.isProvenState(state);
+		final var originalState = mStateFactory.getOriginalState(state);
+		final boolean isProvenState = mProofManager.isProvenState(originalState);
 		if (isProvenState) {
 			final Set<L> freeVars = mProofManager.getVariables(mProofManager.choseRespProof(originalState));
 			mStateFactory.addToAbstractionLevel(state, freeVars);
