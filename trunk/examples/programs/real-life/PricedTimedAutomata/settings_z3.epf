@@ -114,7 +114,6 @@ file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ double=8
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ for\ the\ main\ procedure\ if\ all\ allocated\ memory\ was\ freed=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Use\ bitvectors\ instead\ of\ ints=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ POINTER=8
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Assume\ nondeterminstic\ values\ are\ in\ range=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Use\ the\ constants\ given\ below\ as\ storage\ sizes\ for\ the\ correponding\ types=true
