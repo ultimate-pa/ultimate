@@ -69,6 +69,14 @@ class AbstractionLevel<H> {
 	}
 
 	/**
+	 * Lock an abstraction level
+	 */
+
+	public void lock() {
+		this.mLocked = true;
+	}
+
+	/**
 	 * Compare two abstraction levels
 	 *
 	 * @param level

@@ -102,6 +102,14 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 	void addToAbstractionLevel(R state, H variables);
 
 	/**
+	 * Set a state's abstraction level as defined
+	 * 
+	 * @param state
+	 *            whose abstraction level is declared as fully define
+	 */
+	void defineAbstractionLevel(StratifiedReductionState<L, S, H> state);
+
+	/**
 	 * Returns the abstraction limit of a reduction state (is the upper limit for the abstraction level of all reduction
 	 * states reachable from state)
 	 *
@@ -179,6 +187,11 @@ class StratifiedStateFactory<L, S, H> implements IStratifiedStateFactory<L, S, S
 	public void addToAbstractionLevel(final StratifiedReductionState<L, S, H> state, final H variables) {
 		state.mAbstractionLevel.addToAbstractionLevel(variables);
 
+	}
+
+	@Override
+	public void defineAbstractionLevel(final StratifiedReductionState<L, S, H> state) {
+		state.mAbstractionLevel.lock();
 	}
 
 	@Override
