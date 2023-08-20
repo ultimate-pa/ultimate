@@ -71,7 +71,7 @@ public class DynamicStratifiedReductionTests extends DynamicStratifiedReductionT
 	private boolean areEqual(final NestedWordAutomaton<String, String> first,
 			final NestedWordAutomaton<String, String> second) {
 		if ((first == null) != (second == null)) {
-			mLogger.error("only one automata is null");
+			mLogger.error("only one automaton is null");
 			return false;
 		}
 

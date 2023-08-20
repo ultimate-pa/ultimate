@@ -35,9 +35,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -160,8 +160,7 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		final IIndependenceInducedByAbstraction<String, String, Set<String>> indep = extractCommutativity(path);
 		final IProofManager<Set<String>, String, Integer> proofManager = new StringProofManager(extractProofs(path));
 
-		final ILattice<Set<String>> lattice =
-				new UpsideDownLattice<Set<String>>(new PowersetLattice<String>(extractProofVars(path)));
+		final ILattice<Set<String>> lattice = new UpsideDownLattice<>(new PowersetLattice<>(extractProofVars(path)));
 
 		runTest(path, parsed, input, expected, indep, proofManager, lattice);
 	}
@@ -201,10 +200,10 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		return result;
 	}
 
-	// TODO check if this works
+	// TODO fix this
 	private Set<String> extractProofVars(final Path path) throws IOException {
 		final Iterator<Set<String>> varList = extractProofs(path).iterator();
-		final Set<String> allVars = Collections.<String> emptySet();
+		final Set<String> allVars = new HashSet<>();
 		varList.forEachRemaining((varSet) -> allVars.addAll(varSet));
 		return allVars;
 	}
