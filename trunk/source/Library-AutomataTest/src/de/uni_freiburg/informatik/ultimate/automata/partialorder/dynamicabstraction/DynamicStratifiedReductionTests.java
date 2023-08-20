@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstrac
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.nio.file.Path;
+import java.util.Set;
 
 import org.junit.runner.RunWith;
 
@@ -39,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.Automa
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 
 @RunWith(FactoryTestRunner.class)
 public class DynamicStratifiedReductionTests extends DynamicStratifiedReductionTestsBase {
@@ -46,8 +48,9 @@ public class DynamicStratifiedReductionTests extends DynamicStratifiedReductionT
 	@Override
 	protected <P> void runTest(final Path path, final AutomataTestFileAST ast,
 			final NestedWordAutomaton<String, String> input, final NestedWordAutomaton<String, String> expected,
-			final IIndependenceInducedByAbstraction<String, String> independence,
-			final IProofManager<String, String, P> proofManager) throws AutomataLibraryException {
+			final IIndependenceInducedByAbstraction<String, String, Set<String>> independence,
+			final IProofManager<Set<String>, String, P> proofManager, final ILattice<Set<String>> lattice)
+			throws AutomataLibraryException {
 
 		final var stateFactory = new StratifiedStringFactory();
 		final var constructor =
@@ -58,7 +61,7 @@ public class DynamicStratifiedReductionTests extends DynamicStratifiedReductionT
 		final var initial = DataStructureUtils.getOneAndOnly(input.getInitialStates(), "initial state");
 
 		new DynamicStratifiedReduction<>(mAutomataServices, input, new AlphabeticOrder<>(), stateFactory, constructor,
-				initial, independence, proofManager);
+				initial, lattice, independence, proofManager);
 
 		final NestedWordAutomaton<String, String> actual = constructor.getReductionAutomaton();
 

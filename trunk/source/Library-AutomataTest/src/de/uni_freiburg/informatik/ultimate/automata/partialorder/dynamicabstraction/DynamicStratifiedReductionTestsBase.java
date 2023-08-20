@@ -35,9 +35,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -69,8 +70,11 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.UpsideDownLattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Quin;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Quad;
 
 /**
  * Base class for Dynamic Stratified Reduction tests. Callers must only implemented the method
@@ -87,8 +91,9 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 
 	protected abstract <P> void runTest(final Path path, AutomataTestFileAST ast,
 			NestedWordAutomaton<String, String> input, NestedWordAutomaton<String, String> expected,
-			IIndependenceInducedByAbstraction<String, String> independence,
-			IProofManager<String, String, P> proofManager) throws AutomataLibraryException;
+			IIndependenceInducedByAbstraction<String, String, Set<String>> independence,
+			IProofManager<Set<String>, String, P> proofManager, ILattice<Set<String>> lattice)
+			throws AutomataLibraryException;
 
 	@Before
 	public void setUp() {
@@ -152,9 +157,13 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		final var expected = (NestedWordAutomaton<String, String>) mInterpreter.getAutomata().get("expected");
 		assert input != null && expected != null : "either input or expected is missing";
 
-		final IIndependenceInducedByAbstraction<String, String> indep = extractCommutativity(path);
-		final IProofManager<String, String, Integer> proofManager = new StringProofManager(extractProofs(path));
-		runTest(path, parsed, input, expected, indep, proofManager);
+		final IIndependenceInducedByAbstraction<String, String, Set<String>> indep = extractCommutativity(path);
+		final IProofManager<Set<String>, String, Integer> proofManager = new StringProofManager(extractProofs(path));
+
+		final ILattice<Set<String>> lattice =
+				new UpsideDownLattice<Set<String>>(new PowersetLattice<String>(extractProofVars(path)));
+
+		runTest(path, parsed, input, expected, indep, proofManager, lattice);
 	}
 
 	@Override
@@ -192,7 +201,16 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		return result;
 	}
 
-	private <S> IIndependenceInducedByAbstraction<S, String> extractCommutativity(final Path path) throws IOException {
+	// TODO check if this works
+	private Set<String> extractProofVars(final Path path) throws IOException {
+		final Iterator<Set<String>> varList = extractProofs(path).iterator();
+		final Set<String> allVars = Collections.<String> emptySet();
+		varList.forEachRemaining((varSet) -> allVars.addAll(varSet));
+		return allVars;
+	}
+
+	private <S> IIndependenceInducedByAbstraction<S, String, Set<String>> extractCommutativity(final Path path)
+			throws IOException {
 		final String prefix = "//@ commutativity ";
 
 		final Optional<String> commLine;
@@ -229,7 +247,7 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 	}
 
 	private static final class HashIndependenceByAbstraction<S>
-			implements IIndependenceInducedByAbstraction<S, String> {
+			implements IIndependenceInducedByAbstraction<S, String, Set<String>> {
 
 		private final IIndependenceRelation<S, String> mEmptyIndependence =
 				new HashIndependence<>(new HashRelation<>());
@@ -284,7 +302,7 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		}
 	}
 
-	private static final class StringProofManager implements IProofManager<String, String, Integer> {
+	private static final class StringProofManager implements IProofManager<Set<String>, String, Integer> {
 		private final List<Set<String>> mProofs;
 
 		public StringProofManager(final List<Set<String>> proofs) {
@@ -331,10 +349,9 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		}
 	}
 
-	protected class StratifiedStringFactory
-			implements IStratifiedStateFactory<String, String, String, AbstractionLevel<String>> {
+	protected class StratifiedStringFactory implements IStratifiedStateFactory<String, String, String, Set<String>> {
 
-		private final BidirectionalMap<String, Quin<String, ImmutableSet<String>, AbstractionLevel<String>, AbstractionLevel<String>, LinkedList<String>>> mMap =
+		private final BidirectionalMap<String, Quad<String, ImmutableSet<String>, AbstractionLevel<Set<String>>, AbstractionLevel<Set<String>>>> mMap =
 				new BidirectionalMap<>();
 		private int mCounter;
 
@@ -345,10 +362,9 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 
 		@Override
 		public String createStratifiedState(final String state, final ImmutableSet<String> sleepset,
-				final AbstractionLevel<String> level, final AbstractionLevel<String> limit,
-				final LinkedList<String> loopPredecs) {
-			final var quin = new Quin<>(state, sleepset, level, limit, loopPredecs);
-			final var existing = mMap.inverse().get(quin);
+				final AbstractionLevel<Set<String>> level, final AbstractionLevel<Set<String>> limit) {
+			final var quad = new Quad<>(state, sleepset, level, limit);
+			final var existing = mMap.inverse().get(quad);
 			if (existing != null) {
 				return existing;
 			}
@@ -356,7 +372,7 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 			// TODO @Veronika It may be nicer to include the parameters in the name.
 			final var name = "s" + mCounter;
 			mCounter++;
-			mMap.put(name, quin);
+			mMap.put(name, quad);
 			return name;
 		}
 
@@ -371,36 +387,43 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		}
 
 		@Override
-		public AbstractionLevel<String> getAbstractionLevel(final String state) {
+		public AbstractionLevel<Set<String>> getAbstractionLevel(final String state) {
 			return mMap.get(state).getThird();
 		}
 
 		@Override
 		public void addToAbstractionLevel(final String state, final Set<String> variables) {
-			// TODO @Veronika
-			throw new AssertionError("not yet implemented");
+			final AbstractionLevel<Set<String>> level = mMap.get(state).getThird();
+			level.addToAbstractionLevel(variables);
+			mMap.replace(state, new Quad<>(mMap.get(state).getFirst(), mMap.get(state).getSecond(), level,
+					mMap.get(state).getFourth()));
 		}
 
 		@Override
-		public AbstractionLevel<String> getAbstractionLimit(final String state) {
+		public AbstractionLevel<Set<String>> getAbstractionLimit(final String state) {
 			return mMap.get(state).getFourth();
 		}
 
 		@Override
 		public void addToAbstractionLimit(final String state, final Set<String> variables) {
-			// TODO @Veronika
-			throw new AssertionError("not yet implemented");
-		}
-
-		@Override
-		public LinkedList<String> getLoopablePredecs(final String state) {
-			return mMap.get(state).getFifth();
+			final AbstractionLevel<Set<String>> limit = mMap.get(state).getFourth();
+			limit.addToAbstractionLevel(variables);
+			mMap.replace(state, new Quad<>(mMap.get(state).getFirst(), mMap.get(state).getSecond(),
+					mMap.get(state).getThird(), limit));
 		}
 
 		@Override
 		public boolean isLoopCopy(final String state) {
-			// TODO @Veronika
-			throw new AssertionError("not yet implemented");
+			return mMap.get(state).getFourth().isLocked();
+		}
+
+		@Override
+		public void defineAbstractionLevel(final String state) {
+			final AbstractionLevel<Set<String>> level = mMap.get(state).getThird();
+			level.lock();
+			mMap.replace(state, new Quad<>(mMap.get(state).getFirst(), mMap.get(state).getSecond(), level,
+					mMap.get(state).getFourth()));
+
 		}
 	}
 }

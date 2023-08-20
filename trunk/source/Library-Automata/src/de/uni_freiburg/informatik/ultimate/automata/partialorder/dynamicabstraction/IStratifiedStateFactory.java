@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  *            an upper limit for the abstraction level and a list of predecessors of the state that are safe to loop
  *            back to
  * @param <H>
- *            The type of abstraction level used in the reduction automaton
+ *            The type of abstraction level value used in the reduction automaton
  */
 
 public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFactory<R> {
@@ -103,11 +103,11 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 
 	/**
 	 * Set a state's abstraction level as defined
-	 * 
+	 *
 	 * @param state
 	 *            whose abstraction level is declared as fully define
 	 */
-	void defineAbstractionLevel(StratifiedReductionState<L, S, H> state);
+	void defineAbstractionLevel(R state);
 
 	/**
 	 * Returns the abstraction limit of a reduction state (is the upper limit for the abstraction level of all reduction
@@ -150,6 +150,8 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
  *            Type of letter of the original automaton
  * @param <S>
  *            Type of state of the original automaton
+ * @param <H>
+ *            Type representing the value of an abstraction level
  */
 
 class StratifiedStateFactory<L, S, H> implements IStratifiedStateFactory<L, S, StratifiedReductionState<L, S, H>, H> {

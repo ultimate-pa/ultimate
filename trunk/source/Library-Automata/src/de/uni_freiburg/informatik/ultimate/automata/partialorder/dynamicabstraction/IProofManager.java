@@ -32,8 +32,8 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstrac
  *
  * @param<S> The
  *               type of states of the reduction automaton
- * @param<L> The
- *               type of letters of the reduction automaton
+ * @param<H> The
+ *               type of abstraction level value of the reduction automaton
  *
  * @param<PROOF> The
  *                   type of proofs

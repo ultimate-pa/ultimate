@@ -236,10 +236,10 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 			}
 		}
 		if (mAlreadyReduced.get(mStateFactory.getOriginalState(oldState)) == oldState) {
-			mStateFactory.defineAbstractionLevel((StratifiedReductionState<L, S, H>) oldState);
+			mStateFactory.defineAbstractionLevel(oldState);
 			mAlreadyReduced.put(mStateFactory.getOriginalState(oldState), oldState);
 		}
-		mStateFactory.defineAbstractionLevel((StratifiedReductionState<L, S, H>) oldState);
+		mStateFactory.defineAbstractionLevel(oldState);
 
 		final boolean isComplete = mDfs.backtrack();
 

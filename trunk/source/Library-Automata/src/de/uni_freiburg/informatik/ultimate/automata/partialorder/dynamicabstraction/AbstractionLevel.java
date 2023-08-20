@@ -96,6 +96,11 @@ class AbstractionLevel<H> {
 		return this.mValue;
 	}
 
+	public ILattice<H> getLattice() {
+		return this.mLattice;
+
+	}
+
 	/**
 	 * return whether the abstraction level has already been assigned all corresponding variables
 	 *
