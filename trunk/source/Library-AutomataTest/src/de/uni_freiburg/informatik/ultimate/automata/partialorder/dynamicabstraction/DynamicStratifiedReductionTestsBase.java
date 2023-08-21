@@ -191,7 +191,7 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		}
 
 		final String relDescr = proofLine.get().substring(prefix.length());
-		final String[] proofDescrs = relDescr.split("|");
+		final String[] proofDescrs = relDescr.split("\\|");
 		final var result = new ArrayList<Set<String>>();
 		for (final var proof : proofDescrs) {
 			final var variables = Arrays.stream(proof.split(",")).map(String::strip).collect(Collectors.toSet());
@@ -309,8 +309,9 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		}
 
 		private String[] getProofStates(final String state) {
-			final var splitStates = state.split("|");
-			assert splitStates.length == mProofs.size();
+			final var splitStates = state.split("\\|");
+			assert splitStates.length == mProofs.size() : "Got state of " + splitStates.length
+					+ " proofs, but expected " + mProofs.size();
 			return splitStates;
 		}
 
