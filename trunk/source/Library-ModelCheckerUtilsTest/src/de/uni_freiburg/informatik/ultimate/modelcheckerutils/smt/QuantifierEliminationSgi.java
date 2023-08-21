@@ -119,6 +119,16 @@ public class QuantifierEliminationSgi {
 
 
 	@Test
+	public void simpleSgiExample00() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getBoolSort, "a"),
+			};
+		final String formulaAsString = "(exists ((x Bool)) (and (= x true) (= a true)))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	
+	@Test
 	public void simpleSgiExample() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "y"),
