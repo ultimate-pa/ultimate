@@ -200,7 +200,7 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		return result;
 	}
 
-	// TODO fix this
+	// TODO überprüfen
 	private Set<String> extractProofVars(final Path path) throws IOException {
 		final Iterator<Set<String>> varList = extractProofs(path).iterator();
 		final Set<String> allVars = new HashSet<>();
