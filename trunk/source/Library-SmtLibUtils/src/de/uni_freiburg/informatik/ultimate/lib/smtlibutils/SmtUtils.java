@@ -2533,6 +2533,10 @@ public final class SmtUtils {
 		return (Set) SubTermFinder.find(term, p, false);
 	}
 
+	/**
+	 * If the term is a negated formula return the subformula of the `not` operator,
+	 * otherwise return null.
+	 */
 	public static Term unzipNot(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
