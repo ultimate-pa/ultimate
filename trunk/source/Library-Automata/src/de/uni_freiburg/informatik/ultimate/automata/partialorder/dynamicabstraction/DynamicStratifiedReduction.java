@@ -187,6 +187,7 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 				debugIndent("-> visitor pruned transition");
 			} else if (!mDfs.isVisited(nextState)) {
 				createSuccessors(nextState);
+
 				final boolean abortNow = visitState(nextState);
 				if (abortNow) {
 					mLogger.debug(ABORT_MSG);
@@ -262,7 +263,6 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 		if (isProvenState) {
 			final H freeVars = mProofManager.getVariables(mProofManager.choseRespProof(originalState));
 			mStateFactory.addToAbstractionLevel(state, freeVars);
-			// Can one modify states/transitions of the NWA?
 		}
 
 		final boolean pruneSuccessors;
@@ -287,7 +287,12 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 							mOrder.getOrder(mStateFactory.getOriginalState(state))).reversed();
 			StreamSupport.stream(mPending.spliterator(), false).sorted(comp)
 					.forEachOrdered(out -> mWorklist.push(new Pair<>(state, out)));
+			debugIndent("added successor states to worklist");
+			System.out.println("\n Current Worklist: ");
+			System.out.println(mWorklist);
+
 		}
+		mPending.clear();
 		return false;
 	}
 
@@ -307,16 +312,21 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 	 */
 
 	private void createSuccessors(final R state) {
+
 		final S originalState = mStateFactory.getOriginalState(state);
 
 		final ImmutableSet<L> toPrune = mStateFactory.getSleepSet(state);
-		final Iterator<L> outgoingLetters = mOriginalAutomaton.lettersInternal(originalState).iterator();
-		while (outgoingLetters.hasNext()) {
-			final L letter = outgoingLetters.next();
-			final S originalSucc =
-					mOriginalAutomaton.internalSuccessors(originalState, letter).iterator().next().getSucc();
+		final Iterator<OutgoingInternalTransition<L, S>> outgoingTransitions =
+				mOriginalAutomaton.internalSuccessors(originalState).iterator();
+		while (outgoingTransitions.hasNext()) {
+			final OutgoingInternalTransition<L, S> transition = outgoingTransitions.next();
+			System.out.println("Checking outgoing transition: ");
+			System.out.print(transition);
+			final L letter = transition.getLetter();
+			final S originalSucc = transition.getSucc();
+
 			if (!toPrune.contains(letter)) {
-				final R correspRstate = mAlreadyReduced.get(originalState);
+				final R correspRstate = mAlreadyReduced.get(originalSucc);
 				/*
 				 * If there is no reduction state corresponding to this state of the original automaton or its
 				 * corresponding reduction state is in the already completed part of the reduction automaton and
@@ -324,12 +334,16 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 				 */
 				R reductionSucc;
 				if (correspRstate == null || mStateFactory.getAbstractionLevel(correspRstate).isLocked()) {
+					System.out.print("\n Case No Loop \n");
 					final ImmutableSet<L> nextSleepSet = createSleepSet(state, letter);
 					reductionSucc = createNextState(state, nextSleepSet, originalSucc, letter);
-					// old reduction state will be replaced by its copy
+					// TODO: use replace
 					mAlreadyReduced.remove(originalSucc);
 					mAlreadyReduced.put(originalSucc, reductionSucc);
 				} else {
+					System.out.print("Case Loop \n");
+
+					// TODO: dont do this if the state loops back to itself
 					// if we're in a loop instantly use the abstraction hammer
 					mStateFactory.addToAbstractionLevel(state, mAbstractionLattice.getBottom());
 					mStateFactory.addToAbstractionLimit(state, mAbstractionLattice.getBottom());
@@ -339,7 +353,13 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 
 				}
 				// add state + new reduced transition to worklist
+				System.out.print("\n Current state is: ");
+				System.out.print(state);
+				System.out.print("\n Reduction successor is: ");
+				System.out.print(reductionSucc);
 				mPending.add(new OutgoingInternalTransition(letter, reductionSucc));
+				System.out.print("\n Added to Pending: ");
+				System.out.println(mPending.getLast());
 			}
 		}
 	}
