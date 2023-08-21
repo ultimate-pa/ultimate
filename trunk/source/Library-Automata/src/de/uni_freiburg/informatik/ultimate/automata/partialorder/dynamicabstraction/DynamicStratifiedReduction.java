@@ -29,10 +29,9 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstrac
 
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Set;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -92,6 +91,9 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 
 	private final DfsBookkeeping<R> mDfs = new DfsBookkeeping<>();
 	private final HashMap<S, R> mAlreadyReduced = new HashMap<>();
+
+	// TODO: use this to find parents for state in backtracking
+	private final LinkedList<Pair<R, OutgoingInternalTransition<L, R>>> mStack = new LinkedList<>();
 
 	private int mIndentLevel = -1;
 
@@ -162,7 +164,7 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 
-			final var current = mWorklist.pop();
+			var current = mWorklist.pop();
 			final R currentState = current.getFirst();
 
 			// Backtrack states still on the stack whose exploration has finished.
@@ -172,7 +174,7 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 				return;
 			}
 
-			final OutgoingInternalTransition<L, R> currentTransition = current.getSecond();
+			OutgoingInternalTransition<L, R> currentTransition = current.getSecond();
 			final R nextState = currentTransition.getSucc();
 			debugIndent("Now exploring transition %s --> %s (label: %s)", currentState, nextState,
 					currentTransition.getLetter());
@@ -186,9 +188,16 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 			if (prune) {
 				debugIndent("-> visitor pruned transition");
 			} else if (!mDfs.isVisited(nextState)) {
+				// TODO: Compute sleepsets!
+				final ImmutableSet<L> nextSleepSet = createSleepSet(currentState, currentTransition.getLetter());
+				mStateFactory.setSleepSet(nextState, nextSleepSet);
+				currentTransition = new OutgoingInternalTransition(currentTransition.getLetter(), nextState);
+				current = new Pair(currentState, currentTransition);
+
 				createSuccessors(nextState);
 
 				final boolean abortNow = visitState(nextState);
+				mStack.push(current);
 				if (abortNow) {
 					mLogger.debug(ABORT_MSG);
 					return;
@@ -224,16 +233,30 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 
 	private boolean backtrack() {
 		final R oldState = mDfs.peek();
+		if (!mStack.isEmpty()) {
+			final Pair<R, OutgoingInternalTransition<L, R>> lastTransition = mStack.getLast();
+		}
 		// search stack for state's parents and update their abstraction levels
-		for (int i = 0; i < mWorklist.size(); i++) {
-			final Pair<R, OutgoingInternalTransition<L, R>> stackElement = mWorklist.get(i);
+		for (int i = 0; i < mStack.size(); i++) {
+			final Pair<R, OutgoingInternalTransition<L, R>> stackElement = mStack.get(i);
 			if (stackElement.getSecond().getSucc() == oldState) {
 				final R potParent = stackElement.getFirst();
 				mStateFactory.addToAbstractionLevel(potParent, mStateFactory.getAbstractionLevel(oldState).getValue());
 				if (mAlreadyReduced.get(mStateFactory.getOriginalState(potParent)) == stackElement.getFirst()) {
 					mAlreadyReduced.put(mStateFactory.getOriginalState(potParent), potParent);
 				}
-				mWorklist.set(i, new Pair<R, OutgoingInternalTransition<L, R>>(potParent, stackElement.getSecond()));
+				mStack.set(i, new Pair<R, OutgoingInternalTransition<L, R>>(potParent, stackElement.getSecond()));
+				debugIndent("State's parent is %s", potParent);
+				final int index = mDfs.stackIndexOf(potParent);
+				mDfs.mStack.set(index, potParent);
+				// TODO: überlegen, ob das hier notwendig ist
+				for (int j = 0; j < mWorklist.size(); j++) {
+					final Pair<R, OutgoingInternalTransition<L, R>> element = mWorklist.get(j);
+					if (element.getFirst() == stackElement.getSecond()) {
+						mWorklist.set(j, new Pair(potParent, element.getSecond()));
+					}
+
+				}
 			}
 		}
 		if (mAlreadyReduced.get(mStateFactory.getOriginalState(oldState)) == oldState) {
@@ -245,8 +268,9 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 		final boolean isComplete = mDfs.backtrack();
 
 		debugIndent("backtracking state %s (complete: %s)", oldState, isComplete);
+		debugIndent("final abstraction level of state %s was %s", oldState,
+				mStateFactory.getAbstractionLevel(oldState).getValue());
 		mIndentLevel--;
-		// give its Abstractionlevel to its parents?
 		mVisitor.backtrackState(oldState, isComplete);
 		return mVisitor.isFinished();
 	}
@@ -257,12 +281,16 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 		assert !mDfs.isVisited(state) : "must never re-visit state";
 		mIndentLevel++;
 		debugIndent("visiting state %s", state);
+		System.out.println("with sleepSet: " + mStateFactory.getSleepSet(state) + ", " + "original state: "
+				+ mStateFactory.getOriginalState(state));
 
 		final var originalState = mStateFactory.getOriginalState(state);
 		final boolean isProvenState = mProofManager.isProvenState(originalState);
 		if (isProvenState) {
 			final H freeVars = mProofManager.getVariables(mProofManager.choseRespProof(originalState));
 			mStateFactory.addToAbstractionLevel(state, freeVars);
+			debugIndent("State is a proven state, additional protected variables are %s", freeVars);
+			debugIndent("State's abstraction level is %s", mStateFactory.getAbstractionLevel(state).getValue());
 		}
 
 		final boolean pruneSuccessors;
@@ -288,9 +316,6 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 			StreamSupport.stream(mPending.spliterator(), false).sorted(comp)
 					.forEachOrdered(out -> mWorklist.push(new Pair<>(state, out)));
 			debugIndent("added successor states to worklist");
-			System.out.println("\n Current Worklist: ");
-			System.out.println(mWorklist);
-
 		}
 		mPending.clear();
 		return false;
@@ -335,8 +360,8 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 				R reductionSucc;
 				if (correspRstate == null || mStateFactory.getAbstractionLevel(correspRstate).isLocked()) {
 					System.out.print("\n Case No Loop \n");
-					final ImmutableSet<L> nextSleepSet = createSleepSet(state, letter);
-					reductionSucc = createNextState(state, nextSleepSet, originalSucc, letter);
+					// only compute sleep set directly before visiting the state!
+					reductionSucc = createNextState(state, ImmutableSet.empty(), originalSucc, letter);
 					// TODO: use replace
 					mAlreadyReduced.remove(originalSucc);
 					mAlreadyReduced.put(originalSucc, reductionSucc);
@@ -355,8 +380,9 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 				// add state + new reduced transition to worklist
 				System.out.print("\n Current state is: ");
 				System.out.print(state);
-				System.out.print("\n Reduction successor is: ");
-				System.out.print(reductionSucc);
+				System.out.print("\n Reduction successor is: (" + mStateFactory.getOriginalState(reductionSucc) + ", "
+						+ mStateFactory.getSleepSet(reductionSucc) + ", "
+						+ mStateFactory.getAbstractionLevel(reductionSucc).getValue() + ")");
 				mPending.add(new OutgoingInternalTransition(letter, reductionSucc));
 				System.out.print("\n Added to Pending: ");
 				System.out.println(mPending.getLast());
@@ -375,19 +401,28 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 
 		final S currentS = mStateFactory.getOriginalState(current);
 		final ImmutableSet<L> currSleepSet = mStateFactory.getSleepSet(current);
-		final IIndependenceRelation<S, L> independence =
-				mIndependenceProvider.getInducedIndependence(mStateFactory.getAbstractionLevel(current).getValue());
-
-		// stolen from minimal sleep set reduction
-
+		final HashSet<L> protoSleepSet = new HashSet<>();
 		final Comparator<L> comp = mOrder.getOrder(currentS);
-		final Stream<L> explored = mOriginalAutomaton.lettersInternal(currentS).stream()
-				.filter(x -> comp.compare(x, letter) < 0 && !currSleepSet.contains(x));
+		final Iterator<OutgoingInternalTransition<L, S>> explored =
+				mOriginalAutomaton.internalSuccessors(currentS).iterator();
 
-		// TODO: check if this is ok
+		IIndependenceRelation<S, L> independence;
 
-		final ImmutableSet<L> sleepSet = ImmutableSet.of((Set<L>) Set.of(Stream.concat(currSleepSet.stream(), explored)
-				.filter(l -> independence.isIndependent(currentS, letter, l) == Dependence.INDEPENDENT).toArray()));
+		while (explored.hasNext()) {
+			final OutgoingInternalTransition<L, S> candidate = explored.next();
+
+			if ((comp.compare(candidate.getLetter(), letter) < 0) && !currSleepSet.contains(candidate.getLetter())) {
+				assert mAlreadyReduced.containsKey(candidate.getSucc()) : "State has already been visited and "
+						+ "should have an reduction state\n";
+				independence = mIndependenceProvider.getInducedIndependence(
+						mStateFactory.getAbstractionLevel(mAlreadyReduced.get(candidate.getSucc())).getValue());
+				if (independence.isIndependent(currentS, candidate.getLetter(), letter) == Dependence.INDEPENDENT) {
+					protoSleepSet.add(candidate.getLetter());
+				}
+			}
+		}
+
+		final ImmutableSet<L> sleepSet = ImmutableSet.of(protoSleepSet);
 
 		return sleepSet;
 	}

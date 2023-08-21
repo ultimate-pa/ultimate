@@ -83,6 +83,16 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 	ImmutableSet<L> getSleepSet(R state);
 
 	/**
+	 * Set the sleep set of state to a set of variables
+	 *
+	 * @param state
+	 *            whose sleep set is set
+	 * @param sleepset
+	 *            variables of the sleep set
+	 */
+	void setSleepSet(R state, ImmutableSet<L> sleepset);
+
+	/**
 	 * Returns the abstraction level of a reduction state
 	 *
 	 * @param state
@@ -209,6 +219,12 @@ class StratifiedStateFactory<L, S, H> implements IStratifiedStateFactory<L, S, S
 	@Override
 	public boolean isLoopCopy(final StratifiedReductionState<L, S, H> state) {
 		return state.mAbstractionLimit.isLocked();
+	}
+
+	@Override
+	public void setSleepSet(final StratifiedReductionState<L, S, H> state, final ImmutableSet<L> sleepset) {
+		state.mSleepSet = sleepset;
+
 	}
 }
 

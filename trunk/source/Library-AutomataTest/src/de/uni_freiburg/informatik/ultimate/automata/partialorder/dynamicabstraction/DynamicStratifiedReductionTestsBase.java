@@ -425,5 +425,11 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 					mMap.get(state).getFourth()));
 
 		}
+
+		@Override
+		public void setSleepSet(final String state, final ImmutableSet<String> sleepset) {
+			mMap.replace(state, new Quad<>(mMap.get(state).getFirst(), sleepset, mMap.get(state).getThird(),
+					mMap.get(state).getFourth()));
+		}
 	}
 }

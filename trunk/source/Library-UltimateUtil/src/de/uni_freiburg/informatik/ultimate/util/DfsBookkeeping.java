@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            The type of nodes in the traversed graph
  */
 public class DfsBookkeeping<V> {
-	private final List<V> mStack = new ArrayList<>();
+	public final List<V> mStack = new ArrayList<>();
 
 	// Maps each visited node v to the outermost loop head reached from v, and its stack index.
 	// If v has no entry, it has not been visited. If v is mapped to null, no loop head has been reached from v.

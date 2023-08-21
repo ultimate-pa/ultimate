@@ -65,7 +65,8 @@ class AbstractionLevel<H> {
 	 *            the variables to be added
 	 */
 	public void addToAbstractionLevel(final H vars) {
-		this.mValue = this.mLattice.supremum(this.mValue, vars);
+		// TODO: check if this is the same for upside down lattice and those bitsubset lattices...
+		this.mValue = this.mLattice.infimum(this.mValue, vars);
 	}
 
 	/**
