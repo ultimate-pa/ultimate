@@ -160,17 +160,19 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	}
 
 	/**
-	 * Checks if the current node is a leaf, i.e., if we are at a atomic formula, or at a negated atomic formula.
+	 * Checks if the current node is a leaf, i.e., if we are at a atomic formula, or
+	 * at a negated atomic formula.
 	 */
 	private static boolean isLeaf(final Term term) {
 		if (term instanceof QuantifiedFormula) {
 			return false;
 		}
-		if (((ApplicationTerm) term).getFunction().getName().equals("not")
-				&& (SmtUtils.isAtomicFormula(((ApplicationTerm) term).getParameters()[0]))) {
-			return true;
+		final Term suformulaOfNegation = SmtUtils.unzipNot(term);
+		if (suformulaOfNegation != null) {
+			return SmtUtils.isAtomicFormula(suformulaOfNegation);
+		} else {
+			return SmtUtils.isAtomicFormula(term);
 		}
-		return SmtUtils.isAtomicFormula(term);
 	}
 
 	// checks if the critical constraint implies the formula(or its negation), returns null if neither
@@ -411,7 +413,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	@Override
 	protected Term constructResultForQuantifiedFormula(final Term context,
 			final QuantifiedFormula originalQuantifiedFormula, final Term resultSubformula) {
-		
+
 
 		if (DESCEND_INTO_QUANTIFIED_FORMULAS) {
 			final HashMap<TermVariable, TermVariable> swapped = new HashMap<>();
