@@ -69,7 +69,6 @@ import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.TestF
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PowersetLattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.UpsideDownLattice;
@@ -351,7 +350,7 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 
 	protected class StratifiedStringFactory implements IStratifiedStateFactory<String, String, String, Set<String>> {
 
-		private final BidirectionalMap<String, Quad<String, ImmutableSet<String>, AbstractionLevel<Set<String>>, AbstractionLevel<Set<String>>>> mMap =
+		private final BidirectionalMap<String, Quad<String, HashMap<String, Set<String>>, AbstractionLevel<Set<String>>, AbstractionLevel<Set<String>>>> mMap =
 				new BidirectionalMap<>();
 		private int mCounter;
 
@@ -361,7 +360,7 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		}
 
 		@Override
-		public String createStratifiedState(final String state, final ImmutableSet<String> sleepset,
+		public String createStratifiedState(final String state, final HashMap<String, Set<String>> sleepset,
 				final AbstractionLevel<Set<String>> level, final AbstractionLevel<Set<String>> limit) {
 			final var quad = new Quad<>(state, sleepset, level, limit);
 			final var existing = mMap.inverse().get(quad);
@@ -382,7 +381,7 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		}
 
 		@Override
-		public ImmutableSet<String> getSleepSet(final String state) {
+		public HashMap<String, Set<String>> getSleepSet(final String state) {
 			return mMap.get(state).getSecond();
 		}
 
@@ -427,7 +426,7 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		}
 
 		@Override
-		public void setSleepSet(final String state, final ImmutableSet<String> sleepset) {
+		public void setSleepSet(final String state, final HashMap<String, Set<String>> sleepset) {
 			mMap.replace(state, new Quad<>(mMap.get(state).getFirst(), sleepset, mMap.get(state).getThird(),
 					mMap.get(state).getFourth()));
 		}

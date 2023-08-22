@@ -27,8 +27,9 @@
 
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction;
 
+import java.util.HashMap;
+
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Interface for the state factory used for the dynamic stratified reduction.
@@ -61,7 +62,7 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 	 * @return a state of the reduction automaton
 	 */
 
-	R createStratifiedState(S state, ImmutableSet<L> sleepset, AbstractionLevel<H> level, AbstractionLevel<H> limit);
+	R createStratifiedState(S state, HashMap<L, H> sleepset, AbstractionLevel<H> level, AbstractionLevel<H> limit);
 
 	/**
 	 * Returns the original state from which a reduction state was constructed
@@ -80,7 +81,7 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 	 *            a state of the reduction automaton
 	 * @return the state's sleep set
 	 */
-	ImmutableSet<L> getSleepSet(R state);
+	HashMap<L, H> getSleepSet(R state);
 
 	/**
 	 * Set the sleep set of state to a set of variables
@@ -90,7 +91,7 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 	 * @param sleepset
 	 *            variables of the sleep set
 	 */
-	void setSleepSet(R state, ImmutableSet<L> sleepset);
+	void setSleepSet(R state, HashMap<L, H> sleepset);
 
 	/**
 	 * Returns the abstraction level of a reduction state
@@ -174,7 +175,7 @@ class StratifiedStateFactory<L, S, H> implements IStratifiedStateFactory<L, S, S
 	}
 
 	@Override
-	public StratifiedReductionState<L, S, H> createStratifiedState(final S state, final ImmutableSet<L> sleepset,
+	public StratifiedReductionState<L, S, H> createStratifiedState(final S state, final HashMap<L, H> sleepset,
 			final AbstractionLevel<H> level, final AbstractionLevel<H> limit) {
 
 		return new StratifiedReductionState<>(state, sleepset, level, limit);
@@ -186,7 +187,7 @@ class StratifiedStateFactory<L, S, H> implements IStratifiedStateFactory<L, S, S
 	}
 
 	@Override
-	public ImmutableSet<L> getSleepSet(final StratifiedReductionState<L, S, H> state) {
+	public HashMap<L, H> getSleepSet(final StratifiedReductionState<L, S, H> state) {
 		return state.mSleepSet;
 	}
 
@@ -222,7 +223,7 @@ class StratifiedStateFactory<L, S, H> implements IStratifiedStateFactory<L, S, S
 	}
 
 	@Override
-	public void setSleepSet(final StratifiedReductionState<L, S, H> state, final ImmutableSet<L> sleepset) {
+	public void setSleepSet(final StratifiedReductionState<L, S, H> state, final HashMap<L, H> sleepset) {
 		state.mSleepSet = sleepset;
 
 	}
@@ -234,7 +235,7 @@ class StratifiedStateFactory<L, S, H> implements IStratifiedStateFactory<L, S, S
  * @param originalState
  *            state of the input automaton
  * @param sleepSet
- *            a given set of letters
+ *            a map letter -> abstraction level
  * @param abstractionLevel
  *            an object with a set of program variables 'value' and a boolean 'locked' locked = true means that the
  *            abstraction level is fully defined and no more variables will be added to its value
@@ -247,11 +248,11 @@ class StratifiedStateFactory<L, S, H> implements IStratifiedStateFactory<L, S, S
 
 class StratifiedReductionState<L, S, H> {
 	protected S mOriginalState;
-	protected ImmutableSet<L> mSleepSet;
+	protected HashMap<L, H> mSleepSet;
 	protected AbstractionLevel<H> mAbstractionLevel;
 	protected AbstractionLevel<H> mAbstractionLimit;
 
-	public StratifiedReductionState(final S state, final ImmutableSet<L> sleepset, final AbstractionLevel<H> absLv,
+	public StratifiedReductionState(final S state, final HashMap<L, H> sleepset, final AbstractionLevel<H> absLv,
 			final AbstractionLevel<H> absLmt) {
 		mOriginalState = state;
 		mSleepSet = sleepset;

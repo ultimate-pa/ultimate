@@ -29,9 +29,10 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstrac
 
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -45,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.DfsBookkeeping;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -129,7 +129,7 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 		mAbstractionLattice = lattice;
 		mStateFactory = stateFactory;
 		mOriginalAutomaton = originalAutomaton;
-		mStartState = (R) mStateFactory.createStratifiedState(startingState, ImmutableSet.empty(),
+		mStartState = (R) mStateFactory.createStratifiedState(startingState, new HashMap<L, H>(),
 				new AbstractionLevel(mAbstractionLattice.getTop(), mAbstractionLattice, false),
 				new AbstractionLevel(mAbstractionLattice.getTop(), mAbstractionLattice, false));
 
@@ -189,7 +189,7 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 				debugIndent("-> visitor pruned transition");
 			} else if (!mDfs.isVisited(nextState)) {
 				// TODO: Compute sleepsets!
-				final ImmutableSet<L> nextSleepSet = createSleepSet(currentState, currentTransition.getLetter());
+				final HashMap<L, H> nextSleepSet = createSleepSet(currentState, currentTransition.getLetter());
 				mStateFactory.setSleepSet(nextState, nextSleepSet);
 				currentTransition = new OutgoingInternalTransition(currentTransition.getLetter(), nextState);
 				current = new Pair(currentState, currentTransition);
@@ -233,30 +233,14 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 
 	private boolean backtrack() {
 		final R oldState = mDfs.peek();
-		if (!mStack.isEmpty()) {
-			final Pair<R, OutgoingInternalTransition<L, R>> lastTransition = mStack.getLast();
-		}
 		// search stack for state's parents and update their abstraction levels
 		for (int i = 0; i < mStack.size(); i++) {
 			final Pair<R, OutgoingInternalTransition<L, R>> stackElement = mStack.get(i);
 			if (stackElement.getSecond().getSucc() == oldState) {
-				final R potParent = stackElement.getFirst();
-				mStateFactory.addToAbstractionLevel(potParent, mStateFactory.getAbstractionLevel(oldState).getValue());
-				if (mAlreadyReduced.get(mStateFactory.getOriginalState(potParent)) == stackElement.getFirst()) {
-					mAlreadyReduced.put(mStateFactory.getOriginalState(potParent), potParent);
-				}
-				mStack.set(i, new Pair<R, OutgoingInternalTransition<L, R>>(potParent, stackElement.getSecond()));
-				debugIndent("State's parent is %s", potParent);
-				final int index = mDfs.stackIndexOf(potParent);
-				mDfs.mStack.set(index, potParent);
-				// TODO: überlegen, ob das hier notwendig ist
-				for (int j = 0; j < mWorklist.size(); j++) {
-					final Pair<R, OutgoingInternalTransition<L, R>> element = mWorklist.get(j);
-					if (element.getFirst() == stackElement.getSecond()) {
-						mWorklist.set(j, new Pair(potParent, element.getSecond()));
-					}
+				mStateFactory.addToAbstractionLevel(stackElement.getFirst(),
+						mStateFactory.getAbstractionLevel(oldState).getValue());
 
-				}
+				debugIndent("State's parent is %s", stackElement.getFirst());
 			}
 		}
 		if (mAlreadyReduced.get(mStateFactory.getOriginalState(oldState)) == oldState) {
@@ -281,8 +265,6 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 		assert !mDfs.isVisited(state) : "must never re-visit state";
 		mIndentLevel++;
 		debugIndent("visiting state %s", state);
-		System.out.println("with sleepSet: " + mStateFactory.getSleepSet(state) + ", " + "original state: "
-				+ mStateFactory.getOriginalState(state));
 
 		final var originalState = mStateFactory.getOriginalState(state);
 		final boolean isProvenState = mProofManager.isProvenState(originalState);
@@ -340,13 +322,12 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 
 		final S originalState = mStateFactory.getOriginalState(state);
 
-		final ImmutableSet<L> toPrune = mStateFactory.getSleepSet(state);
+		final Set<L> toPrune = mStateFactory.getSleepSet(state).keySet();
 		final Iterator<OutgoingInternalTransition<L, S>> outgoingTransitions =
 				mOriginalAutomaton.internalSuccessors(originalState).iterator();
 		while (outgoingTransitions.hasNext()) {
 			final OutgoingInternalTransition<L, S> transition = outgoingTransitions.next();
-			System.out.println("Checking outgoing transition: ");
-			System.out.print(transition);
+
 			final L letter = transition.getLetter();
 			final S originalSucc = transition.getSucc();
 
@@ -359,33 +340,25 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 				 */
 				R reductionSucc;
 				if (correspRstate == null || mStateFactory.getAbstractionLevel(correspRstate).isLocked()) {
-					System.out.print("\n Case No Loop \n");
 					// only compute sleep set directly before visiting the state!
-					reductionSucc = createNextState(state, ImmutableSet.empty(), originalSucc, letter);
-					// TODO: use replace
+					reductionSucc = createNextState(state, new HashMap<L, H>(), originalSucc, letter);
+					// TODO: use replace?
 					mAlreadyReduced.remove(originalSucc);
 					mAlreadyReduced.put(originalSucc, reductionSucc);
 				} else {
-					System.out.print("Case Loop \n");
+					System.out.println("Found a loop, use abstraction hammer");
 
 					// TODO: dont do this if the state loops back to itself
 					// if we're in a loop instantly use the abstraction hammer
 					mStateFactory.addToAbstractionLevel(state, mAbstractionLattice.getBottom());
 					mStateFactory.addToAbstractionLimit(state, mAbstractionLattice.getBottom());
-					mAlreadyReduced.remove(originalState);
-					mAlreadyReduced.put(originalState, state);
+					// should be unneccessary...
+
 					reductionSucc = correspRstate;
 
 				}
 				// add state + new reduced transition to worklist
-				System.out.print("\n Current state is: ");
-				System.out.print(state);
-				System.out.print("\n Reduction successor is: (" + mStateFactory.getOriginalState(reductionSucc) + ", "
-						+ mStateFactory.getSleepSet(reductionSucc) + ", "
-						+ mStateFactory.getAbstractionLevel(reductionSucc).getValue() + ")");
 				mPending.add(new OutgoingInternalTransition(letter, reductionSucc));
-				System.out.print("\n Added to Pending: ");
-				System.out.println(mPending.getLast());
 			}
 		}
 	}
@@ -397,34 +370,41 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 	 *
 	 * @param letter The letter on the transition from the current state to the state whose sleepset is being created
 	 */
-	private ImmutableSet<L> createSleepSet(final R current, final L letter) {
+	private HashMap<L, H> createSleepSet(final R current, final L letter) {
 
 		final S currentS = mStateFactory.getOriginalState(current);
-		final ImmutableSet<L> currSleepSet = mStateFactory.getSleepSet(current);
-		final HashSet<L> protoSleepSet = new HashSet<>();
+		final HashMap<L, H> currSleepSet = mStateFactory.getSleepSet(current);
+		final HashMap<L, H> nextSleepSet = new HashMap<>();
 		final Comparator<L> comp = mOrder.getOrder(currentS);
 		final Iterator<OutgoingInternalTransition<L, S>> explored =
 				mOriginalAutomaton.internalSuccessors(currentS).iterator();
 
+		// Letters from neighbouring edges
 		IIndependenceRelation<S, L> independence;
 
 		while (explored.hasNext()) {
 			final OutgoingInternalTransition<L, S> candidate = explored.next();
 
-			if ((comp.compare(candidate.getLetter(), letter) < 0) && !currSleepSet.contains(candidate.getLetter())) {
+			if ((comp.compare(candidate.getLetter(), letter) < 0) && !currSleepSet.containsKey(candidate.getLetter())) {
 				assert mAlreadyReduced.containsKey(candidate.getSucc()) : "State has already been visited and "
 						+ "should have an reduction state\n";
 				independence = mIndependenceProvider.getInducedIndependence(
 						mStateFactory.getAbstractionLevel(mAlreadyReduced.get(candidate.getSucc())).getValue());
 				if (independence.isIndependent(currentS, candidate.getLetter(), letter) == Dependence.INDEPENDENT) {
-					protoSleepSet.add(candidate.getLetter());
+					nextSleepSet.put(candidate.getLetter(),
+							mStateFactory.getAbstractionLevel(mAlreadyReduced.get(candidate.getSucc())).getValue());
 				}
 			}
 		}
+		// Letters from old SleepSet
+		for (final Map.Entry<L, H> entry : currSleepSet.entrySet()) {
+			independence = mIndependenceProvider.getInducedIndependence(entry.getValue());
+			if (independence.isIndependent(currentS, entry.getKey(), letter) == Dependence.INDEPENDENT) {
+				nextSleepSet.put(entry.getKey(), entry.getValue());
+			}
+		}
 
-		final ImmutableSet<L> sleepSet = ImmutableSet.of(protoSleepSet);
-
-		return sleepSet;
+		return nextSleepSet;
 	}
 
 	/**
@@ -434,7 +414,7 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 	 * @param predecState
 	 *            State of the reduction automaton from which the new state was discovered
 	 * @param sleepSet
-	 *            Sleep set of the new state
+	 *            Sleep set of the new state, a Map letter -> abstraction level value
 	 * @param originState
 	 *            State of the original automaton that corresponds to the new state
 	 * @param letter
@@ -443,8 +423,7 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 	 * @return The reduction state
 	 */
 
-	private R createNextState(final R predecState, final ImmutableSet<L> sleepSet, final S originState,
-			final L letter) {
+	private R createNextState(final R predecState, final HashMap<L, H> sleepSet, final S originState, final L letter) {
 
 		// Abstraction limit of the new state is the abstraction limit of its parent + the abstraction levels of the
 		// edges in its sleepset
@@ -454,13 +433,8 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 						mStateFactory.getAbstractionLimit(predecState).isLocked()),
 				new AbstractionLevel<>(protectedVars, mAbstractionLattice, false));
 
-		final Iterator<L> comEdges = sleepSet.iterator();
-		while (comEdges.hasNext()) {
-			final S sibState =
-					mOriginalAutomaton.internalSuccessors(mStateFactory.getOriginalState(predecState), comEdges.next())
-							.iterator().next().getSucc();
-			final R succState = mAlreadyReduced.get(sibState);
-			mStateFactory.addToAbstractionLevel(nextState, (mStateFactory.getAbstractionLevel(succState).getValue()));
+		for (final Map.Entry<L, H> edge : sleepSet.entrySet()) {
+			mStateFactory.addToAbstractionLevel(nextState, edge.getValue());
 		}
 		return nextState;
 	}

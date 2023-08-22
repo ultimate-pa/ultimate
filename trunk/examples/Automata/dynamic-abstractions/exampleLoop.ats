@@ -14,7 +14,7 @@
 
 FiniteAutomaton input = (
      alphabet      = {a b c},
-     states        = {"true|true|true" "x=0|true|true" "false|y=x|true" "true|y=0|true" "true|true|z=y", "true|true|y>x"},
+     states        = {"true|true|true" "x=0|true|true" "false|y=x|true" "true|y=0|true" "true|true|z=y" "true|true|y>x"},
      initialStates = {"true|true|true"},
      finalStates   = {"false|y=x|true"},
      transitions   = {

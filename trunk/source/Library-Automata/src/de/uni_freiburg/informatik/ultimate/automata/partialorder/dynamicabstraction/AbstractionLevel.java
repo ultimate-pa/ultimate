@@ -38,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialCom
  */
 
 class AbstractionLevel<H> {
-	public H mValue;
-	public boolean mLocked;
-	public ILattice<H> mLattice;
+	private H mValue;
+	private boolean mLocked;
+	private final ILattice<H> mLattice;
 
 	/**
 	 * @param protectedVar
