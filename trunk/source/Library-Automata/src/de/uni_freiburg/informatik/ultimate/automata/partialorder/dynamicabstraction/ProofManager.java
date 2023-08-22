@@ -39,7 +39,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstrac
  *                   since idk in what form the proofs are given/can be accessed
  */
 
-public class ProofManager<H, S, PROOF> {
+public class ProofManager<H, S, PROOF> implements IProofManager<H, S> {
 	private final int[] proofCounter; // count how many times each proof has been chosen as responsible
 	private final PROOF lastResp; // the proof we chose at the last proven state
 
@@ -48,27 +48,21 @@ public class ProofManager<H, S, PROOF> {
 		lastResp = null;
 	}
 
+	@Override
 	public boolean isProvenState(final S state) {
 		// TODO implement this
-		// Identify if a state is a proven state
 		return false;
 	}
 
-	public PROOF choseRespProof(final S state) {
-		// TODO implement this
+	@Override
+	public H chooseResponsibleAbstraction(final S state) {
 		// Chose a proof that is deemed responsible for state being a proven state
 		/*
 		 * Priorities: (1) last chosen proof (2) number of times chosen (asc.) (3) refinement round the proof was found
 		 * in (desc.)
 		 *
 		 */
+		// get all program variables used in the chosen proof
 		return null;
 	}
-
-	public H getVariables(final PROOF responsible) {
-		// TODO implement this
-		// get all program variables used in the input proof
-		return null;
-	}
-
 }
