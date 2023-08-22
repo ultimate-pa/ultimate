@@ -88,10 +88,10 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 	protected ILogger mLogger;
 	protected AutomataDefinitionInterpreter mInterpreter;
 
-	protected abstract <P> void runTest(final Path path, AutomataTestFileAST ast,
-			NestedWordAutomaton<String, String> input, NestedWordAutomaton<String, String> expected,
+	protected abstract void runTest(final Path path, AutomataTestFileAST ast, NestedWordAutomaton<String, String> input,
+			NestedWordAutomaton<String, String> expected,
 			IIndependenceInducedByAbstraction<String, String, Set<String>> independence,
-			IProofManager<Set<String>, String, P> proofManager, ILattice<Set<String>> lattice)
+			IProofManager<Set<String>, String> proofManager, ILattice<Set<String>> lattice)
 			throws AutomataLibraryException;
 
 	@Before
@@ -157,7 +157,7 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		assert input != null && expected != null : "either input or expected is missing";
 
 		final IIndependenceInducedByAbstraction<String, String, Set<String>> indep = extractCommutativity(path);
-		final IProofManager<Set<String>, String, Integer> proofManager = new StringProofManager(extractProofs(path));
+		final IProofManager<Set<String>, String> proofManager = new StringProofManager(extractProofs(path));
 
 		final ILattice<Set<String>> lattice = new UpsideDownLattice<>(new PowersetLattice<>(extractProofVars(path)));
 
@@ -300,7 +300,7 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		}
 	}
 
-	private static final class StringProofManager implements IProofManager<Set<String>, String, Integer> {
+	private static final class StringProofManager implements IProofManager<Set<String>, String> {
 		private final List<Set<String>> mProofs;
 
 		public StringProofManager(final List<Set<String>> proofs) {
@@ -320,19 +320,14 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		}
 
 		@Override
-		public Integer choseRespProof(final String state) {
+		public Set<String> chooseResponsibleAbstraction(final String state) {
 			// always chooses the proof with the minimal index
 			// TODO @Veronika: Customize this if necessary
 			final int result = Arrays.asList(getProofStates(state)).indexOf("false");
 			if (result < 0) {
 				throw new IllegalStateException("No proof can be made responsible in state " + state);
 			}
-			return result;
-		}
-
-		@Override
-		public Set<String> getVariables(final Integer responsible) {
-			return mProofs.get(responsible);
+			return mProofs.get(result);
 		}
 	}
 

@@ -30,24 +30,17 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstrac
 /**
  * Used by DynamicStratifiedReduction to handle everything related to proofs
  *
- * @param<S> The
- *               type of states of the reduction automaton
- * @param<H> The
- *               type of abstraction level value of the reduction automaton
- *
- * @param<PROOF> The
- *                   type of proofs
+ * @param <S>
+ *            The type of states of the reduction automaton
+ * @param <H>
+ *            The type of abstraction level value of the reduction automaton
  */
 
-public interface IProofManager<H, S, PROOF> {
-
+public interface IProofManager<H, S> {
 	// Return true if a state is a proven state
-	public boolean isProvenState(S state);
+	boolean isProvenState(S state);
 
 	// Chose a proof that is deemed responsible for state being a proven state
-	public PROOF choseRespProof(S state);
-
-	// get all program variables used in the input proof
-	public H getVariables(PROOF responsible);
-
+	// return all program variables used in the proof.
+	H chooseResponsibleAbstraction(S state);
 }

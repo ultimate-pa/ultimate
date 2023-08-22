@@ -36,14 +36,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
- * @param <R>
+ * @param <P>
  *            The type of infeasibility proof produced by the CEGAR loop
  * @param <H>
  *            The type of abstraction levels
  * @param <L>
  *            The type of abstracted actions
  */
-public interface IRefinableAbstraction<R, H, L extends IAction> extends IAbstraction<H, L> {
+public interface IRefinableAbstraction<P, H, L extends IAction> extends IAbstraction<H, L> {
 	/**
 	 * Retrieves the initial abstraction level. By default, this is the top element of the abstraction hierarchy (see
 	 * {@link #getHierarchy()}).
@@ -61,5 +61,5 @@ public interface IRefinableAbstraction<R, H, L extends IAction> extends IAbstrac
 	 *            the refinement made during the last iteration
 	 * @return the new refinement level, which must be less or equal to the current level
 	 */
-	H refine(H current, IRefinementEngineResult<L, R> refinement);
+	H refine(H current, IRefinementEngineResult<L, P> refinement);
 }

@@ -46,10 +46,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 public class DynamicStratifiedReductionTests extends DynamicStratifiedReductionTestsBase {
 
 	@Override
-	protected <P> void runTest(final Path path, final AutomataTestFileAST ast,
+	protected void runTest(final Path path, final AutomataTestFileAST ast,
 			final NestedWordAutomaton<String, String> input, final NestedWordAutomaton<String, String> expected,
 			final IIndependenceInducedByAbstraction<String, String, Set<String>> independence,
-			final IProofManager<Set<String>, String, P> proofManager, final ILattice<Set<String>> lattice)
+			final IProofManager<Set<String>, String> proofManager, final ILattice<Set<String>> lattice)
 			throws AutomataLibraryException {
 
 		final var stateFactory = new StratifiedStringFactory();

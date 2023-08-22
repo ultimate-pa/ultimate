@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            what do we need to return in those cases?
  */
 
-public class DynamicStratifiedReduction<L, S, R, H, P> {
+public class DynamicStratifiedReduction<L, S, R, H> {
 	private static final String ABORT_MSG = "visitor aborted traversal";
 
 	private final AutomataLibraryServices mServices;
@@ -81,7 +81,7 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 	private final ILattice<H> mAbstractionLattice;
 	private final R mStartState;
 	private final IIndependenceInducedByAbstraction<S, L, H> mIndependenceProvider;
-	private final IProofManager<H, S, P> mProofManager;
+	private final IProofManager<H, S> mProofManager;
 
 	private final IDfsOrder<L, S> mOrder;
 	private final IDfsVisitor<L, R> mVisitor;
@@ -120,7 +120,7 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 			final INwaOutgoingLetterAndTransitionProvider<L, S> originalAutomaton, final IDfsOrder<L, S> order,
 			final IStratifiedStateFactory<L, S, R, H> stateFactory, final IDfsVisitor<L, R> visitor,
 			final S startingState, final ILattice<H> lattice,
-			final IIndependenceInducedByAbstraction<S, L, H> independence, final IProofManager<H, S, P> manager)
+			final IIndependenceInducedByAbstraction<S, L, H> independence, final IProofManager<H, S> manager)
 			throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(originalAutomaton) : "Finite automata only";
 
@@ -269,7 +269,7 @@ public class DynamicStratifiedReduction<L, S, R, H, P> {
 		final var originalState = mStateFactory.getOriginalState(state);
 		final boolean isProvenState = mProofManager.isProvenState(originalState);
 		if (isProvenState) {
-			final H freeVars = mProofManager.getVariables(mProofManager.choseRespProof(originalState));
+			final H freeVars = mProofManager.chooseResponsibleAbstraction(originalState);
 			mStateFactory.addToAbstractionLevel(state, freeVars);
 			debugIndent("State is a proven state, additional protected variables are %s", freeVars);
 			debugIndent("State's abstraction level is %s", mStateFactory.getAbstractionLevel(state).getValue());
