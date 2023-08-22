@@ -253,6 +253,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
  de.uni_freiburg.informatik.ultimate.automata.partialorder,
  de.uni_freiburg.informatik.ultimate.automata.partialorder.independence,
  de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.abstraction,
+ de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction,
  de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction,
  de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors,
  de.uni_freiburg.informatik.ultimate.automata.petrinet;
