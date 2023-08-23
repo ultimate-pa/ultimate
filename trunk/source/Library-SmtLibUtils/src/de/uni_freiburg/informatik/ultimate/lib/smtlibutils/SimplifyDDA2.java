@@ -74,11 +74,10 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private static final boolean APPLY_CONSTANT_FOLDING = false;
 	private static final boolean DEBUG_CHECK_RESULT = false;
 	// private static final boolean PREPROCESS_WITH_POLY_PAC_SIMPLIFICATION = false;
-	// private static final boolean CHECK_ALL_NODES_FOR_REDUNDANCY = false;
-	private static final boolean DESCEND_INTO_QUANTIFIED_FORMULAS = false;
+	private static final boolean DESCEND_INTO_QUANTIFIED_FORMULAS = !false;
 	private static final boolean OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT = true;
 	private static final boolean SIMPLIFY_REPEATEDLY = true;
-	private static final CheckedNodes test = CheckedNodes.ALL_NODES;
+	private static final CheckedNodes CHECKED_NODES = CheckedNodes.ALL_NODES;
 
 	private enum CheckedNodes {
 		ONLY_LEAVES, ALL_NODES, ONLY_LEAVES_AND_QUANTIFIED_NODES
@@ -112,12 +111,15 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final List<Term> otherParams = new ArrayList<>(allParams);
 		otherParams.remove(selectedParam);
 
-		if (!mPreviousWasQuantified) {
-			mMgdScript.getScript().pop(1);
-			mAssertionStackHeight--;
-		} else {
-			mPreviousWasQuantified = false;
-		}
+		// if (!mPreviousWasQuantified) {
+		// mMgdScript.getScript().pop(1);
+		// mAssertionStackHeight--;
+		// } else {
+		// mPreviousWasQuantified = false;
+		// }
+
+		mMgdScript.getScript().pop(1);
+		mAssertionStackHeight--;
 
 		mMgdScript.getScript().push(1);
 		mAssertionStackHeight++;
@@ -161,6 +163,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 
 	/**
 	 * Checks if the current node is a leaf, i.e., if we are at a atomic formula, or at a negated atomic formula.
+	 * Additionally, quantified formulas are never considered to be leaves
 	 */
 	private static boolean isLeaf(final Term term) {
 		if (term instanceof QuantifiedFormula) {
@@ -202,7 +205,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		return null;
 	}
 
-	private DescendResult descendIntoQuantifiedFormula(final QuantifiedFormula term) {
+	private Term preprocessQuantifiedFormula(final QuantifiedFormula term) {
 		mPreviousWasQuantified = true;
 		final QuantifiedFormula termAsQuantifiedFormula = term;
 		mRenamingMap.beginScope();
@@ -221,14 +224,14 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final QuantifiedFormula substitutedQuantifiedFormula =
 				(QuantifiedFormula) SmtUtils.quantifier(mMgdScript.getScript(), termAsQuantifiedFormula.getQuantifier(),
 						substitutedTermVariables, substitutedSubformula);
-		return new TermContextTransformationEngine.IntermediateResultForDescend(substitutedQuantifiedFormula);
+		return substitutedQuantifiedFormula;
 	}
 
 	private boolean checkRedundancyForNode(final Term term) {
-		return ((test == CheckedNodes.ALL_NODES)
-				|| ((test == CheckedNodes.ONLY_LEAVES_AND_QUANTIFIED_NODES)
+		return ((CHECKED_NODES == CheckedNodes.ALL_NODES)
+				|| ((CHECKED_NODES == CheckedNodes.ONLY_LEAVES_AND_QUANTIFIED_NODES)
 						&& (term instanceof QuantifiedFormula || isLeaf(term)))
-				|| (test == CheckedNodes.ONLY_LEAVES && isLeaf(term)));
+				|| (CHECKED_NODES == CheckedNodes.ONLY_LEAVES && isLeaf(term)));
 	}
 
 	@Override
@@ -277,15 +280,19 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		if (checkRedundancyForNode(term) && ((result = checkRedundancy(term)) != null)) {
 			return result;
 		} else if (descend) {
-
-			if (DESCEND_INTO_QUANTIFIED_FORMULAS && term instanceof QuantifiedFormula) {
-				return descendIntoQuantifiedFormula((QuantifiedFormula) term);
+			mMgdScript.getScript().push(1);
+			mAssertionStackHeight++;
+			//// push whenever descend, even into quantified, pop when constructing context?
+			if (term instanceof QuantifiedFormula) {
+				return new TermContextTransformationEngine.IntermediateResultForDescend(
+						preprocessQuantifiedFormula((QuantifiedFormula) term));
 			} else {
-				mMgdScript.getScript().push(1);
-				mAssertionStackHeight++;
+
 				return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 			}
 		} else {
+			// mMgdScript.getScript().pop(1);
+			// mAssertionStackHeight--;
 			return new TermContextTransformationEngine.FinalResultForAscend(term);
 		}
 
@@ -320,14 +327,16 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	@Override
 	protected Term constructResultForApplicationTerm(final Term context, final ApplicationTerm originalApplicationTerm,
 			final Term[] resultParams) {
-		if (!mPreviousWasQuantified) {
-			mMgdScript.getScript().pop(1);
-			mAssertionStackHeight--;
-		} else {
-			mPreviousWasQuantified = false;
-		}
-
+		// if (!mPreviousWasQuantified) {
+		// mMgdScript.getScript().pop(1);
+		// mAssertionStackHeight--;
+		// } else {
+		// mPreviousWasQuantified = false;
+		// }
+		mMgdScript.getScript().pop(1);
+		mAssertionStackHeight--;
 		assert mAssertionStackHeight >= 0;
+
 		// While descending from node back to its parents, this method is called.
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			final CondisDepthCode contextCdc = CondisDepthCode.of(context);
@@ -360,6 +369,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			final Term context, final Term term) {
 		// 20230629 Matthias: The constructor of this class is private. Uses should call
 		// this simplification via this static method.
+		/// push new frame and add context in beginning for if user submits a context
 		final Term result;
 		final SimplifyDDA2 simplifyDDA2 = new SimplifyDDA2(services, mgdScript);
 		try {
@@ -408,26 +418,26 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	protected Term constructResultForQuantifiedFormula(final Term context,
 			final QuantifiedFormula originalQuantifiedFormula, final Term resultSubformula) {
 
-		if (DESCEND_INTO_QUANTIFIED_FORMULAS) {
-			final HashMap<TermVariable, TermVariable> swapped = new HashMap<>();
-			final ArrayList<TermVariable> revertedTermVariables = new ArrayList<>();
-			for (final Map.Entry<TermVariable, TermVariable> entry : mRenamingMap.currentScopeEntries()) {
-				swapped.put(entry.getValue(), entry.getKey());
-				revertedTermVariables.add(entry.getKey());
-			}
-			final Term revertedSubformula = Substitution.apply(mMgdScript, swapped, resultSubformula);
-			mRenamingMap.endScope();
-			mMgdScript.getScript().pop(1);
-			mAssertionStackHeight--;
-			assert mAssertionStackHeight >= 0;
-			return SmtUtils.quantifier(mMgdScript.getScript(), originalQuantifiedFormula.getQuantifier(),
-					revertedTermVariables, revertedSubformula);
+		// if (DESCEND_INTO_QUANTIFIED_FORMULAS) {
+		final HashMap<TermVariable, TermVariable> swapped = new HashMap<>();
+		final ArrayList<TermVariable> revertedTermVariables = new ArrayList<>();
+		for (final Map.Entry<TermVariable, TermVariable> entry : mRenamingMap.currentScopeEntries()) {
+			swapped.put(entry.getValue(), entry.getKey());
+			revertedTermVariables.add(entry.getKey());
 		}
+		final Term revertedSubformula = Substitution.apply(mMgdScript, swapped, resultSubformula);
+		mRenamingMap.endScope();
 		mMgdScript.getScript().pop(1);
 		mAssertionStackHeight--;
 		assert mAssertionStackHeight >= 0;
 		return SmtUtils.quantifier(mMgdScript.getScript(), originalQuantifiedFormula.getQuantifier(),
-				Arrays.asList(originalQuantifiedFormula.getVariables()), resultSubformula);
+				revertedTermVariables, revertedSubformula);
+		// }
+		// mMgdScript.getScript().pop(1);
+		// mAssertionStackHeight--;
+		// assert mAssertionStackHeight >= 0;
+		// return SmtUtils.quantifier(mMgdScript.getScript(), originalQuantifiedFormula.getQuantifier(),
+		// Arrays.asList(originalQuantifiedFormula.getVariables()), resultSubformula);
 	}
 
 	@Override
