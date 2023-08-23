@@ -361,8 +361,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		// 20230629 Matthias: The constructor of this class is private. Uses should call
 		// this simplification via this static method.
 		final Term result;
+		final SimplifyDDA2 simplifyDDA2 = new SimplifyDDA2(services, mgdScript);
 		try {
-			final SimplifyDDA2 simplifyDDA2 = new SimplifyDDA2(services, mgdScript);
 			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(term);
 			final Comparator<Term> siblingOrder = null;
 			// TODO Matthias 20230810: Some example for an order in the next line.
@@ -377,7 +377,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 				throw new AssertionError(String.format("stackHeight is non-zero"));
 			}
 		} catch (final ToolchainCanceledException tce) {
-			/// pop everything after exceeding time limit
+			simplifyDDA2.clearStack();
 			final CondisDepthCode termCdc = CondisDepthCode.of(term);
 			final String taskDescription = String.format("simplifying a %s term", termCdc);
 			tce.addRunningTaskInfo(new RunningTaskInfo(SimplifyDDA2.class, taskDescription));
@@ -388,6 +388,13 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 
 	public int getAssertionStackHeight() {
 		return mAssertionStackHeight;
+	}
+
+	public void clearStack() {
+		while (mAssertionStackHeight > 0) {
+			mMgdScript.getScript().pop(1);
+			mAssertionStackHeight--;
+		}
 	}
 
 	public String generateExitMessage() {
