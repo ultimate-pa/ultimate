@@ -75,7 +75,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private static final boolean DEBUG_CHECK_RESULT = false;
 	// private static final boolean PREPROCESS_WITH_POLY_PAC_SIMPLIFICATION = false;
 	// private static final boolean CHECK_ALL_NODES_FOR_REDUNDANCY = false;
-	private static final boolean DESCEND_INTO_QUANTIFIED_FORMULAS = !true;
+	private static final boolean DESCEND_INTO_QUANTIFIED_FORMULAS = false;
 	private static final boolean OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT = true;
 	private static final boolean SIMPLIFY_REPEATEDLY = true;
 	private static final CheckedNodes test = CheckedNodes.ALL_NODES;
@@ -160,8 +160,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	}
 
 	/**
-	 * Checks if the current node is a leaf, i.e., if we are at a atomic formula, or
-	 * at a negated atomic formula.
+	 * Checks if the current node is a leaf, i.e., if we are at a atomic formula, or at a negated atomic formula.
 	 */
 	private static boolean isLeaf(final Term term) {
 		if (term instanceof QuantifiedFormula) {
@@ -175,8 +174,11 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		}
 	}
 
-	// checks if the critical constraint implies the formula(or its negation), returns null if neither
-	private DescendResult checkImplications(final Term term) {
+	/**
+	 * Checks if the critical constraint implies the formula(or its negation), and returns `true`(`false`) for ascend.
+	 * returns null if neither is the case
+	 */
+	private DescendResult checkRedundancy(final Term term) {
 		final Term result;
 		final long timeBeforeConstrainigcheck = System.nanoTime();
 		mNumberOfCheckSatCommands++;
@@ -222,6 +224,13 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		return new TermContextTransformationEngine.IntermediateResultForDescend(substitutedQuantifiedFormula);
 	}
 
+	private boolean checkRedundancyForNode(final Term term) {
+		return ((test == CheckedNodes.ALL_NODES)
+				|| ((test == CheckedNodes.ONLY_LEAVES_AND_QUANTIFIED_NODES)
+						&& (term instanceof QuantifiedFormula || isLeaf(term)))
+				|| (test == CheckedNodes.ONLY_LEAVES && isLeaf(term)));
+	}
+
 	@Override
 	protected DescendResult convert(final Term context, final Term term) {
 		// The following is copy&pase of an optimization for the PolyPacSimplification.
@@ -262,45 +271,22 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		if (SmtUtils.isFalseLiteral(context)) {
 			throw new AssertionError("critical constraint is false");
 		}
-
 		DescendResult result;
-		if (test == CheckedNodes.ALL_NODES) {
-			if ((result = checkImplications(term)) != null) {
-				return result;
-			} else if (isLeaf(term)) {
-				return new TermContextTransformationEngine.FinalResultForAscend(term);
-			} else if (DESCEND_INTO_QUANTIFIED_FORMULAS && term instanceof QuantifiedFormula) {
+		final boolean descend = (DESCEND_INTO_QUANTIFIED_FORMULAS && term instanceof QuantifiedFormula)
+				|| !(isLeaf(term) || term instanceof QuantifiedFormula);
+		if (checkRedundancyForNode(term) && ((result = checkRedundancy(term)) != null)) {
+			return result;
+		} else if (descend) {
+
+			if (DESCEND_INTO_QUANTIFIED_FORMULAS && term instanceof QuantifiedFormula) {
 				return descendIntoQuantifiedFormula((QuantifiedFormula) term);
 			} else {
 				mMgdScript.getScript().push(1);
 				mAssertionStackHeight++;
 				return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 			}
-		} else if (test == CheckedNodes.ONLY_LEAVES_AND_QUANTIFIED_NODES
-				&& ((isLeaf(term) || term instanceof QuantifiedFormula))) {
-			if ((result = checkImplications(term)) != null) {
-				return result;
-			} else if (isLeaf(term)) {
-				return new TermContextTransformationEngine.FinalResultForAscend(term);
-			} else if (DESCEND_INTO_QUANTIFIED_FORMULAS && term instanceof QuantifiedFormula) {
-				return descendIntoQuantifiedFormula((QuantifiedFormula) term);
-			} else {
-				mMgdScript.getScript().push(1);
-				mAssertionStackHeight++;
-				return new TermContextTransformationEngine.IntermediateResultForDescend(term);
-			}
-		} else if (test == CheckedNodes.ONLY_LEAVES && isLeaf(term)) {
-			if ((result = checkImplications(term)) != null) {
-				return result;
-			} else {
-				return new TermContextTransformationEngine.FinalResultForAscend(term);
-			}
-		} else if (DESCEND_INTO_QUANTIFIED_FORMULAS && term instanceof QuantifiedFormula) {
-			return descendIntoQuantifiedFormula((QuantifiedFormula) term);
 		} else {
-			mMgdScript.getScript().push(1);
-			mAssertionStackHeight++;
-			return new TermContextTransformationEngine.IntermediateResultForDescend(term);
+			return new TermContextTransformationEngine.FinalResultForAscend(term);
 		}
 
 		// The following is copy&paste of an optimization for the PolyPacSimplification.
@@ -330,6 +316,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		// return new TermContextTransformationEngine.FinalResultForAscend(term);
 	}
 
+	//// always push pop for everything
 	@Override
 	protected Term constructResultForApplicationTerm(final Term context, final ApplicationTerm originalApplicationTerm,
 			final Term[] resultParams) {
@@ -413,7 +400,6 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	@Override
 	protected Term constructResultForQuantifiedFormula(final Term context,
 			final QuantifiedFormula originalQuantifiedFormula, final Term resultSubformula) {
-
 
 		if (DESCEND_INTO_QUANTIFIED_FORMULAS) {
 			final HashMap<TermVariable, TermVariable> swapped = new HashMap<>();
