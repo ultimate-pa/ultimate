@@ -92,7 +92,7 @@ public class RabinDifference<LETTER, PLACE>
 					}
 				} else {
 					throw new AutomataLibraryException(getClass(),
-							"Not full buchi automaton can not be used in deterministic difference.\n"
+							"Incomplete buchi automaton can not be used in deterministic difference.\n"
 									+ "There is no transition for one state-letter pair.");
 				}
 

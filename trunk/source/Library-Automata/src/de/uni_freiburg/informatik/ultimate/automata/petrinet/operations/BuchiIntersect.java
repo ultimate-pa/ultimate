@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersect
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Creates intersection of Buchi Petri net and buchi automata (eagerly).
@@ -180,6 +181,13 @@ public class BuchiIntersect<LETTER, PLACE>
 			}
 		}
 		return mInputQGetQ2.get(buchiTransition.getSucc());
+	}
+
+	/*
+	 * returns q1 and q2 for a given q from the original Petri net
+	 */
+	protected Pair<PLACE, PLACE> getDerivedPlaces(final PLACE originalPlace) {
+		return new Pair<>(mInputQGetQ1.get(originalPlace), mInputQGetQ2.get(originalPlace));
 	}
 
 	@Override
