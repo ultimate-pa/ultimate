@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -15,7 +16,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
- * Eager difference of Rabin-Petri-net minuend and Buchi automata subtrahend. Buchi automata must be complete.
+ * Eager difference of Rabin-Petri-net minuend and Buchi automata subtrahend. Buchi automata must be complete and
+ * deterministic.
  *
  */
 public class RabinDifference<LETTER, PLACE>
@@ -26,7 +28,7 @@ public class RabinDifference<LETTER, PLACE>
 	private final BoundedRabinPetriNet<LETTER, PLACE> mDifferenceNet;
 
 	public RabinDifference(final AutomataLibraryServices services, final IRabinPetriNet<LETTER, PLACE> petriNet,
-			final INestedWordAutomaton<LETTER, PLACE> buchiAutomata) {
+			final INestedWordAutomaton<LETTER, PLACE> buchiAutomata) throws AutomataLibraryException {
 		super(services);
 		mPetriNet = petriNet;
 		mBuchiAutomata = buchiAutomata;
@@ -45,7 +47,7 @@ public class RabinDifference<LETTER, PLACE>
 		return mDifferenceNet;
 	}
 
-	private final void constructIntersectionNet() {
+	private final void constructIntersectionNet() throws AutomataLibraryException {
 		addPlacesToIntersectionNet();
 		addTransitionsToIntersectionNet();
 	}
@@ -70,23 +72,42 @@ public class RabinDifference<LETTER, PLACE>
 		}
 	}
 
-	private final void addTransitionsToIntersectionNet() {
+	private final void addTransitionsToIntersectionNet() throws AutomataLibraryException {
 		final Set<Transition<LETTER, PLACE>> pairedTransitions = new HashSet<>();
 		for (final Transition<LETTER, PLACE> petriTransition : mPetriNet.getTransitions()) {
 			for (final PLACE buchiPlace : mBuchiAutomata.getStates()) {
-				for (final OutgoingInternalTransition<LETTER, PLACE> buchiTransition : mBuchiAutomata
-						.internalSuccessors(buchiPlace, petriTransition.getSymbol())) {
-					addNewTransition(petriTransition, buchiTransition, buchiPlace);
-					pairedTransitions.add(petriTransition);
+
+				final Iterable<OutgoingInternalTransition<LETTER, PLACE>> successorCandidate =
+						mBuchiAutomata.internalSuccessors(buchiPlace, petriTransition.getSymbol());
+
+				final Iterator<OutgoingInternalTransition<LETTER, PLACE>> successorCandidateIterator =
+						successorCandidate.iterator();
+				OutgoingInternalTransition<LETTER, PLACE> buchiTransition;
+				if (successorCandidateIterator.hasNext()) {
+					buchiTransition = successorCandidateIterator.next();
+					if (successorCandidateIterator.hasNext()) {
+						throw new AutomataLibraryException(getClass(),
+								"Nondeterministic buchi automaton can not be used in deterministic difference.\n"
+										+ "There are multiple transitions for one state-letter pair.");
+					}
+				} else {
+					throw new AutomataLibraryException(getClass(),
+							"Not full buchi automaton can not be used in deterministic difference.\n"
+									+ "There is no transition for one state-letter pair.");
 				}
+
+				addNewTransition(petriTransition, buchiTransition, buchiPlace);
+				pairedTransitions.add(petriTransition);
+
 			}
 		}
-		for (final Transition<LETTER, PLACE> petriTransition : mPetriNet.getTransitions()) {
-			if (!pairedTransitions.contains(petriTransition)) {
-				mDifferenceNet.addTransition(petriTransition.getSymbol(), petriTransition.getPredecessors(),
-						petriTransition.getSuccessors());
-			}
-		}
+		// This method causes the automaton to "sleep" for cases it has no transitions for a letter,
+		// but we require it to be complete and deterministic
+		/*
+		 * for (final Transition<LETTER, PLACE> petriTransition : mPetriNet.getTransitions()) { if
+		 * (!pairedTransitions.contains(petriTransition)) { mDifferenceNet.addTransition(petriTransition.getSymbol(),
+		 * petriTransition.getPredecessors(), petriTransition.getSuccessors()); } }
+		 */
 	}
 
 	private final void addNewTransition(final Transition<LETTER, PLACE> petriTransition,
