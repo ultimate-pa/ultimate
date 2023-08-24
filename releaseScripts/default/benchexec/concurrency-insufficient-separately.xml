@@ -1,39 +1,43 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="16GB" timelimit="900" hardtimelimit="920" cpuCores="2">
-	<option name="--force-no-wrapper" />
+  <option name="--force-no-wrapper" />
+  <resultfiles></resultfiles>
 
-	<rundefinition name="Automizer-PN">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf</option>
-	</rundefinition>
+  <rundefinition name="Automizer-PN">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf</option>
+  </rundefinition>
 	
-	<rundefinition name="Automizer-PN.Before">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf</option>
-		<option name="--traceabstraction.when.to.check.the.insufficient.erros.location.relative.to.the.other.error.locations">BEFORE</option>
-	</rundefinition>
+  <rundefinition name="Automizer-PN.Before">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf</option>
+    <option name="--traceabstraction.order.of.the.error.locations.to.be.checked">INSUFFICIENT_FIRST</option>
+  </rundefinition>
   
   <rundefinition name="Automizer-PN.After">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf</option>
-		<option name="--traceabstraction.when.to.check.the.insufficient.erros.location.relative.to.the.other.error.locations">AFTER</option>
-	</rundefinition>
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf</option>
+    <option name="--traceabstraction.order.of.the.error.locations.to.be.checked">PROGRAM_FIRST</option>
+  </rundefinition>
 
-	<tasks name="SVCOMP-ConcurrencySafety-Main">
-		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
-		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
-		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-	</tasks>
-	<tasks name="SVCOMP-Concurrency-NoDataRace">
+  <tasks name="SVCOMP-ConcurrencySafety-Main">
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 
-    <option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-Concurrency-NoDataRace">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+    <option name="--cacsl2boogietranslator.check.unreachability.of.reach_error.function">false</option>
     <option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
 
     <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
   </tasks>
+
   <tasks name="SVCOMP-Concurrency-SafeDeref">
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 
-    <option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+    <option name="--cacsl2boogietranslator.check.unreachability.of.reach_error.function">false</option>
     <option name="--cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference">ASSERTandASSUME</option>
     <option name="--cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference">ASSERTandASSUME</option>
     <option name="--cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap">ASSERTandASSUME</option>
@@ -43,37 +47,38 @@
     <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
   </tasks>
+
   <tasks name="SVCOMP-Concurrency-NoOverflow">
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 
-    <option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+    <option name="--cacsl2boogietranslator.check.unreachability.of.reach_error.function">false</option>
     <option name="--cacsl2boogietranslator.check.absence.of.signed.integer.overflows">true</option>
 
     <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/no-overflow.prp</propertyfile>
   </tasks>
 
-	<!-- <tasks name="Ultimate Repo: pthreads"> -->
-		<!-- <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option> -->
-		<!-- <includesfile>../../../trunk/examples/bench-pthreads.set</includesfile> -->
-		<!-- <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile> -->
-	<!-- </tasks> -->
+  <!-- <tasks name="Ultimate Repo: pthreads">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+    <includesfile>../../../trunk/examples/bench-pthreads.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks> -->
 
-	<!-- <tasks name="Ultimate Repo: Boogie"> -->
-		<!-- <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option> -->
-		<!-- <includesfile>../../../trunk/examples/bench-concurrent-boogie.set</includesfile> -->
-		<!-- <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile> -->
-	<!-- </tasks> -->
+  <!-- <tasks name="Ultimate Repo: Boogie">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+    <includesfile>../../../trunk/examples/bench-concurrent-boogie.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks> -->
 
-	<!-- <tasks name="Ultimate Repo: MCR"> -->
-		<!-- <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option> -->
-		<!-- <includesfile>../../../trunk/examples/bench-mcr-synth.set</includesfile> -->
-		<!-- <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile> -->
-	<!-- </tasks> -->
+  <!-- <tasks name="Ultimate Repo: MCR">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+    <includesfile>../../../trunk/examples/bench-mcr-synth.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks> -->
 
-	<!-- <tasks name="Weaver Benchmarks"> -->
-		<!-- <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option> -->
-    <!-- <includesfile>../../../trunk/examples/concurrent/bpl/weaver-benchmarks/WeaverBenchmarks.set</includesfile> -->
-    <!-- <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile> -->
-	<!-- </tasks> -->
+  <!-- <tasks name="Weaver Benchmarks">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+    <includesfile>../../../trunk/examples/concurrent/bpl/weaver-benchmarks/WeaverBenchmarks.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks> -->
 </benchmark>
