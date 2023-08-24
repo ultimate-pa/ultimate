@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -12,7 +11,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * A class for intersecting a RabinPetriNet with a Buchi automaton
@@ -56,7 +54,7 @@ public class RabinIntersect<LETTER, PLACE>
 	}
 
 	/**
-	 * A wrapper for generating a RabinPetriNet using BuchiIntersect
+	 * A wrapper for generating a RabinPetriNet using BuchiIntersect, passes through the finiteness of finite places
 	 *
 	 * @author Philipp Müller (pm251@venus.uni-freiburg.de)
 	 *
@@ -67,7 +65,7 @@ public class RabinIntersect<LETTER, PLACE>
 	 */
 	private static class RabinWrapper<LETTER, PLACE> implements IRabinPetriNet<LETTER, PLACE> {
 		final IPetriNet<LETTER, PLACE> mIntersectionNet;
-		final HashSet<PLACE> mFinitePlaces = new HashSet<>();
+		final Set<PLACE> mFinitePlaces;
 
 		/**
 		 *
@@ -79,11 +77,7 @@ public class RabinIntersect<LETTER, PLACE>
 		RabinWrapper(final BuchiIntersect<LETTER, PLACE> intersection,
 				final IRabinPetriNet<LETTER, PLACE> originalRabinNet) {
 			mIntersectionNet = intersection.getResult();
-			for (final PLACE finitePlace : originalRabinNet.getFinitePlaces()) {
-				final Pair<PLACE, PLACE> successors = intersection.getDerivedPlaces(finitePlace);
-				mFinitePlaces.add(successors.getFirst());
-				mFinitePlaces.add(successors.getSecond());
-			}
+			mFinitePlaces = originalRabinNet.getFinitePlaces();
 		}
 
 		@Override
