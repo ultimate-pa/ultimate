@@ -46,11 +46,12 @@ NestedWordAutomaton testAutomata = (
 	callAlphabet = {a b c},
 	internalAlphabet = {a b c},
 	returnAlphabet = {a b c},
-	states = {q1 q2 q3},
+	states = {q1 q2 q3 F},
 	initialStates = {q1},
 	finalStates = {q2},
 	callTransitions = {},
-	internalTransitions = { (q1 a q2) (q2 c q2) (q2 b q3) (q3 b q3)	(q3 c q2) },
+	internalTransitions = { (q1 a q2) (q2 c q2) (q2 b q3) (q3 b q3)	(q3 c q2)
+	(q1 b F) (q1 c F) (q2 a F) (q3 a F) (F a F) (F b F) (F c F)},
 	returnTransitions = {}
 );
 
@@ -76,11 +77,12 @@ NestedWordAutomaton test2Automata = (
 	callAlphabet = {a b c},
 	internalAlphabet = {a b c},
 	returnAlphabet = {a b c},
-	states = {q1 q2 q3},
+	states = {q1 q2 q3 F},
 	initialStates = {q1},
 	finalStates = {q2},
 	callTransitions = {},
-	internalTransitions = { (q1 a q2) (q2 c q2) (q2 b q3) (q3 b q3)	(q3 c q3) },
+	internalTransitions = { (q1 a q2) (q2 c q2) (q2 b q3) (q3 b q3)	(q3 c q3) 
+	(q1 b F) (q1 c F) (q2 a F) (q3 a F) (F a F) (F b F) (F c F)},
 	returnTransitions = {}
 );
 
