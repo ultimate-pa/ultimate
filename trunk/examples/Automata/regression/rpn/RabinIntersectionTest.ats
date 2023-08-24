@@ -1,0 +1,108 @@
+// Date:  24-08-2023
+// Author: pm251@venus.uni-freiburg.de
+
+// some examples for the intersection of a Buchi automaton and a Rabin-Petri-Net
+
+
+//a intersection where no structure contains the other
+
+RabinPetriNet thesisIntersectionNet = (
+	alphabet = {a b},
+	places = {p1 p2},
+	transitions = { ({p1} a {p1}) ({p2} b {p2}) },
+	initialMarking = {p1 p2},
+	acceptingPlaces = {p1},
+	finitePlaces = {p2}
+);
+
+NestedWordAutomaton thesisIntersectionAutomaton = (
+	callAlphabet = {a b},
+	internalAlphabet = {a b},
+	returnAlphabet = {a b},
+	states = {s g},
+	initialStates = {s},
+	finalStates = {g},
+	callTransitions = {},
+	internalTransitions = { (s a s) (s b s) (s b g) (g a g) (g b g)	},
+	returnTransitions = {}
+);
+
+assert(rabinAccepts(rabinIntersect(thesisIntersectionNet, thesisIntersectionAutomaton), [b , a]));
+assert(rabinAccepts(rabinIntersect(thesisIntersectionNet, thesisIntersectionAutomaton), [b , a a]));
+assert(rabinAccepts(rabinIntersect(thesisIntersectionNet, thesisIntersectionAutomaton), [b b , a]));
+assert(rabinAccepts(rabinIntersect(thesisIntersectionNet, thesisIntersectionAutomaton), [a b a , a]));
+
+assert(!rabinAccepts(rabinIntersect(thesisIntersectionNet, thesisIntersectionAutomaton), [, a]));
+assert(!rabinAccepts(rabinIntersect(thesisIntersectionNet, thesisIntersectionAutomaton), [a , b]));
+assert(!rabinAccepts(rabinIntersect(thesisIntersectionNet, thesisIntersectionAutomaton), [a a , b]));
+assert(!rabinAccepts(rabinIntersect(thesisIntersectionNet, thesisIntersectionAutomaton), [a , a b]));
+assert(!rabinAccepts(rabinIntersect(thesisIntersectionNet, thesisIntersectionAutomaton), [a , b a]));
+
+//two structures accepting the same language
+
+RabinPetriNet projectEquivNet = (
+	alphabet = {a b},
+	places = {p1 p2 p3},
+	transitions = { ({p1} a {p2}) ({p2} b {p1}) ({p2} a {p3}) ({p3} b {p1}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p2},
+	finitePlaces = {p3}
+);
+
+NestedWordAutomaton projectAutomaton = (
+	callAlphabet = {a b},
+	internalAlphabet = {a b},
+	returnAlphabet = {a b},
+	states = {s1 s2 s3 s1A s2A},
+	initialStates = {s1},
+	finalStates = {s2A},
+	callTransitions = {},
+	internalTransitions = { (s1 a s2) (s1 a s2A) (s2 b s1) (s2 a s3) (s3 b s1)	(s1A a s2A) (s2A b s1A) },
+	returnTransitions = {}
+);
+
+assert(rabinAccepts(rabinIntersect(projectEquivNet, projectAutomaton), [a b , a b]));
+assert(rabinAccepts(rabinIntersect(projectEquivNet, projectAutomaton), [a a b , a b]));
+assert(rabinAccepts(rabinIntersect(projectEquivNet, projectAutomaton), [a b a a b a , b a]));
+assert(rabinAccepts(rabinIntersect(projectEquivNet, projectAutomaton), [a, b a]));
+
+assert(!rabinAccepts(rabinIntersect(projectEquivNet, projectAutomaton), [, a]));
+assert(!rabinAccepts(rabinIntersect(projectEquivNet, projectAutomaton), [a , b]));
+assert(!rabinAccepts(rabinIntersect(projectEquivNet, projectAutomaton), [a a , b a a]));
+assert(!rabinAccepts(rabinIntersect(projectEquivNet, projectAutomaton), [a b , b a]));
+assert(!rabinAccepts(rabinIntersect(projectEquivNet, projectAutomaton), [a , b]));
+
+
+
+//a empty intersection
+
+RabinPetriNet containsInfiniteABNet = (
+	alphabet = {a b c},
+	places = {p1 p2 p3},
+	transitions = { ({p1} a {p1}) ({p1} b {p1}) ({p1} a {p2}) ({p2} b {p1}) ({p3} c {p3}) },
+	initialMarking = {p1 p3},
+	acceptingPlaces = {p2},
+	finitePlaces = {p3}
+);
+
+NestedWordAutomaton inverseAutomaton = (
+	callAlphabet = {a b c},
+	internalAlphabet = {a b c},
+	returnAlphabet = {a b c},
+	states = {s1 s2 s3 s4},
+	initialStates = {s1},
+	finalStates = {s2 s3 s4},
+	callTransitions = {},
+	internalTransitions = { (s1 a s1) (s1 a s2) (s1 b s1) (s1 b s3) (s1 c s4) (s2 a s2) (s3 b s3) (s4 c s4) (s4 a s1) (s4 b s1) (s4 c s4) },
+	returnTransitions = {}
+);
+
+assert(!rabinAccepts(rabinIntersect(containsInfiniteABNet, inverseAutomaton), [c , a b]));
+assert(!rabinAccepts(rabinIntersect(containsInfiniteABNet, inverseAutomaton), [a b , c]));
+assert(!rabinAccepts(rabinIntersect(containsInfiniteABNet, inverseAutomaton), [a b c , a]));
+assert(!rabinAccepts(rabinIntersect(containsInfiniteABNet, inverseAutomaton), [c, b a]));
+assert(!rabinAccepts(rabinIntersect(containsInfiniteABNet, inverseAutomaton), [, a]));
+assert(!rabinAccepts(rabinIntersect(containsInfiniteABNet, inverseAutomaton), [, b]));
+assert(!rabinAccepts(rabinIntersect(containsInfiniteABNet, inverseAutomaton), [, c]));
+assert(!rabinAccepts(rabinIntersect(containsInfiniteABNet, inverseAutomaton), [b , a]));
+assert(!rabinAccepts(rabinIntersect(containsInfiniteABNet, inverseAutomaton), [a , b]));
