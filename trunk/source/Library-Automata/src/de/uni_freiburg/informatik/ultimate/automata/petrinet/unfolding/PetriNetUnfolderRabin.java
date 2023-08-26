@@ -17,11 +17,11 @@ public class PetriNetUnfolderRabin<LETTER, PLACE> extends PetriNetUnfolderBuchi<
 
 	}
 
-	@SuppressWarnings("unused")
-	private final boolean checkIfLassoConfigurationAccepted(final List<Event<LETTER, PLACE>> configLoopPart,
+	@Override
+	protected boolean checkIfLassoConfigurationAccepted(final List<Event<LETTER, PLACE>> configLoopPart,
 			final List<Event<LETTER, PLACE>> configStemPart) {
-		mEvents2PetriNetLassoRunBuchi = new Events2PetriNetLassoRunRabin<LETTER, PLACE>(configLoopPart, configStemPart,
-				mUnfolding, (IRabinPetriNet<LETTER, PLACE>) mOperand);
+		mEvents2PetriNetLassoRunBuchi = new Events2PetriNetLassoRunRabin<>(configLoopPart, configStemPart, mUnfolding,
+				(IRabinPetriNet<LETTER, PLACE>) mOperand);
 		return mEvents2PetriNetLassoRunBuchi.isAccepted();
 	}
 
