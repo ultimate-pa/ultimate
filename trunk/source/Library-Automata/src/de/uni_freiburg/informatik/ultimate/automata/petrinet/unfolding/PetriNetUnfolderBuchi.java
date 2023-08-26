@@ -174,7 +174,7 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE>
 		return false;
 	}
 
-	private final boolean checkIfLassoConfigurationAccepted(final List<Event<LETTER, PLACE>> configLoopPart,
+	protected boolean checkIfLassoConfigurationAccepted(final List<Event<LETTER, PLACE>> configLoopPart,
 			final List<Event<LETTER, PLACE>> configStemPart) {
 		mEvents2PetriNetLassoRunBuchi = new Events2PetriNetLassoRunBuchi<>(configLoopPart, configStemPart, mUnfolding);
 		return mEvents2PetriNetLassoRunBuchi.isAccepted();
