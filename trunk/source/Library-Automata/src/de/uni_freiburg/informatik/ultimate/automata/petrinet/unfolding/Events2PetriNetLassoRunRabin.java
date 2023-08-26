@@ -7,13 +7,9 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IRabinPetriNet;
 
 public class Events2PetriNetLassoRunRabin<LETTER, PLACE> extends Events2PetriNetLassoRunBuchi<LETTER, PLACE> {
 
-	IRabinPetriNet<LETTER, PLACE> mRabinPetriNet;
-
 	public Events2PetriNetLassoRunRabin(final List<Event<LETTER, PLACE>> configLoopPart,
-			final List<Event<LETTER, PLACE>> configStemPart, final BranchingProcess<LETTER, PLACE> unfolding,
-			final IRabinPetriNet<LETTER, PLACE> rabinPetriNet) {
+			final List<Event<LETTER, PLACE>> configStemPart, final BranchingProcess<LETTER, PLACE> unfolding) {
 		super(configLoopPart, configStemPart, unfolding);
-		mRabinPetriNet = rabinPetriNet;
 	}
 
 	@Override
@@ -23,7 +19,7 @@ public class Events2PetriNetLassoRunRabin<LETTER, PLACE> extends Events2PetriNet
 		boolean result = false;
 		while (candidateIterator.hasNext()) {
 			final PLACE candidate = candidateIterator.next();
-			if (mRabinPetriNet.isFinite(candidate)) {
+			if (((IRabinPetriNet<LETTER, PLACE>) mUnfolding.getNet()).isFinite(candidate)) {
 				return false;
 			}
 			if (mUnfolding.getNet().isAccepting(candidate)) {

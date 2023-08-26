@@ -20,8 +20,7 @@ public class PetriNetUnfolderRabin<LETTER, PLACE> extends PetriNetUnfolderBuchi<
 	@Override
 	protected boolean checkIfLassoConfigurationAccepted(final List<Event<LETTER, PLACE>> configLoopPart,
 			final List<Event<LETTER, PLACE>> configStemPart) {
-		mEvents2PetriNetLassoRunBuchi = new Events2PetriNetLassoRunRabin<>(configLoopPart, configStemPart, mUnfolding,
-				(IRabinPetriNet<LETTER, PLACE>) mOperand);
+		mEvents2PetriNetLassoRunBuchi = new Events2PetriNetLassoRunRabin<>(configLoopPart, configStemPart, mUnfolding);
 		return mEvents2PetriNetLassoRunBuchi.isAccepted();
 	}
 
