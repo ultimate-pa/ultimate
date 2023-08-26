@@ -1,10 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
@@ -16,7 +18,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class that provides the Rabin acceptance check for (Rabin-)Petri nets.
@@ -72,33 +73,33 @@ public final class RabinAcceptsNeu<LETTER, PLACE>
 		// situations refer to the combination of a state and a letter to be consumed(referenced by loopIndex), if one
 		// situation is encountered twice it is not to be evaluated again since its effects/successors are already
 		// considered
-		final HashSet<Pair<Marking<PLACE>, Integer>> mExploredSituations = new HashSet<>();
-		final HashSet<Pair<Marking<PLACE>, Integer>> mAcceptingSituationsWithoutLoop = new HashSet<>();
+		final ArrayList<HashSet<Marking<PLACE>>> mExploredSituations =
+				Stream.generate(() -> new HashSet<Marking<PLACE>>()).limit(mLassoWord.getLoop().length())
+						.collect(Collectors.toCollection(ArrayList::new));
+		final ArrayList<HashSet<Marking<PLACE>>> mAcceptingSituationsWithoutLoop =
+				Stream.generate(() -> new HashSet<Marking<PLACE>>()).limit(mLassoWord.getLoop().length())
+						.collect(Collectors.toCollection(ArrayList::new));
 		while (!activeMarkings.isEmpty()) {
 			// if there are no markings reachable with the LassoWord it is not in the language
 			final HashSet<Marking<PLACE>> nextMarkings = new HashSet<>();
 			final int nextLoopIndex = (loopIndex + 1) % mLassoWord.getLoop().length();
 			for (final Marking<PLACE> m : activeMarkings) {
-
-				final Pair<Marking<PLACE>, Integer> preSituation = new Pair<>(m, loopIndex);
-				if (mExploredSituations.add(preSituation)) {
+				if (mExploredSituations.get(loopIndex).add(m)) {
 
 					final HashMap<Marking<PLACE>, AcceptanceCondition> reachableMarkings =
 							getSuccessorMarkings(m, mLassoWord.getLoop().getSymbol(loopIndex));
 
 					for (final Entry<Marking<PLACE>, AcceptanceCondition> markingWithAcceptanceCondition : reachableMarkings
 							.entrySet()) {
-						final Pair<Marking<PLACE>, Integer> postSituation =
-								new Pair<>(markingWithAcceptanceCondition.getKey(), nextLoopIndex);
 						if (markingWithAcceptanceCondition.getValue().equals(AcceptanceCondition.ACCEPTING)
-								&& !mAcceptingSituationsWithoutLoop.contains(postSituation)) {
+								&& mAcceptingSituationsWithoutLoop.get(nextLoopIndex)
+										.add(markingWithAcceptanceCondition.getKey())) {
 
-							if (checkForLoop(postSituation)) {
+							if (checkForLoop(markingWithAcceptanceCondition.getKey(), nextLoopIndex)) {
 								return true;
 							}
-							mAcceptingSituationsWithoutLoop.add(postSituation);
 						}
-						nextMarkings.add(postSituation.getFirst());
+						nextMarkings.add(markingWithAcceptanceCondition.getKey());
 					}
 				}
 			}
@@ -113,34 +114,36 @@ public final class RabinAcceptsNeu<LETTER, PLACE>
 
 	}
 
-	private boolean checkForLoop(final Pair<Marking<PLACE>, Integer> acceptingSituation)
+	private boolean checkForLoop(final Marking<PLACE> acceptingMarking, final int acceptingLoopIndex)
 			throws PetriNetNot1SafeException {
 		// situations refer to the combination of a state and a letter to be consumed(referenced by loopIndex), if one
 		// situation is encountered twice it is not to be evaluated again since its effects/successors are already
 		// considered
-		final HashSet<Pair<Marking<PLACE>, Integer>> mExploredSituations = new HashSet<>();
-		int loopIndex = acceptingSituation.getSecond();
+		final ArrayList<HashSet<Marking<PLACE>>> mExploredSituations =
+				Stream.generate(() -> new HashSet<Marking<PLACE>>()).limit(mLassoWord.getLoop().length())
+						.collect(Collectors.toCollection(ArrayList::new));
+		int loopIndex = acceptingLoopIndex;
 		HashSet<Marking<PLACE>> activeMarkings = new HashSet<>();
-		activeMarkings.add(acceptingSituation.getFirst());
-		do {
+		activeMarkings.add(acceptingMarking);
+		while (!activeMarkings.isEmpty()) {
 			// if there are no markings reachable with the LassoWord it is not in the language
 			final HashSet<Marking<PLACE>> nextMarkings = new HashSet<>();
 			final int nextLoopIndex = (loopIndex + 1) % mLassoWord.getLoop().length();
 			for (final Marking<PLACE> m : activeMarkings) {
 
-				if (mExploredSituations.add(new Pair<>(m, loopIndex))) {
+				if (mExploredSituations.get(loopIndex).add(m)) {
 					final HashMap<Marking<PLACE>, AcceptanceCondition> reachableMarkings =
 							getSuccessorMarkings(m, mLassoWord.getLoop().getSymbol(loopIndex));
 
 					for (final Entry<Marking<PLACE>, AcceptanceCondition> markingWithAcceptanceCondition : reachableMarkings
 							.entrySet()) {
 						if (!markingWithAcceptanceCondition.getValue().equals(AcceptanceCondition.FINITE)) {
-							nextMarkings.add(markingWithAcceptanceCondition.getKey());
-							if (markingWithAcceptanceCondition.getValue().equals(AcceptanceCondition.ACCEPTING)
-									&& acceptingSituation.equals(
-											new Pair<>(markingWithAcceptanceCondition.getKey(), nextLoopIndex))) {
+							if (acceptingLoopIndex == nextLoopIndex
+									&& markingWithAcceptanceCondition.getValue().equals(AcceptanceCondition.ACCEPTING)
+									&& acceptingMarking.equals(markingWithAcceptanceCondition.getKey())) {
 								return true;
 							}
+							nextMarkings.add(markingWithAcceptanceCondition.getKey());
 						}
 					}
 				}
@@ -150,10 +153,8 @@ public final class RabinAcceptsNeu<LETTER, PLACE>
 			// for the next step we consider the next letter, if we consumed loop once the next letter will therefore be
 			// the one at index 0 of loop, so it can be consumed "infinitely" often
 			loopIndex = nextLoopIndex;
-		} while (!activeMarkings.isEmpty());
-
+		}
 		return false;
-
 	}
 
 	/**
