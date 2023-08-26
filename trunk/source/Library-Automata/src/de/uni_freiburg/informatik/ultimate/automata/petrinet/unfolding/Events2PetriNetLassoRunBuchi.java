@@ -47,9 +47,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @author Daniel Küchler (kuechlerdaniel33@gmail.com)
  */
 public class Events2PetriNetLassoRunBuchi<LETTER, PLACE> {
-	private final BranchingProcess<LETTER, PLACE> mUnfolding;
+	protected final BranchingProcess<LETTER, PLACE> mUnfolding;
 	private final List<Event<LETTER, PLACE>> mConfigStemPart;
-	private final List<Event<LETTER, PLACE>> mConfigLoopPart;
+	protected final List<Event<LETTER, PLACE>> mConfigLoopPart;
 
 	public Events2PetriNetLassoRunBuchi(final List<Event<LETTER, PLACE>> configLoopPart,
 			final List<Event<LETTER, PLACE>> configStemPart, final BranchingProcess<LETTER, PLACE> unfolding) {

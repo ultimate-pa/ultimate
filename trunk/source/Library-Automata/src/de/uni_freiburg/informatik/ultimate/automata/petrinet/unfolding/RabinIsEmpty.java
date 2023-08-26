@@ -46,11 +46,10 @@ public final class RabinIsEmpty<LETTER, PLACE>
 		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
-		// TODO: Implement PetriNetUnfolderRabin and don't just assign
-		mRun = null;
-		// final PetriNetUnfolderRabin<LETTER, PLACE> unfolder =
-		// new PetriNetUnfolderRabin<>(mServices, operand, order, sameTransitionCutOff, stopIfAcceptingRunFound);
-		// mRun = unfolder.getAcceptingRun();
+
+		final PetriNetUnfolderRabin<LETTER, PLACE> unfolder =
+				new PetriNetUnfolderRabin<>(mServices, operand, order, sameTransitionCutOff, stopIfAcceptingRunFound);
+		mRun = unfolder.getAcceptingRun();
 		mLogger.info(exitMessage());
 	}
 
