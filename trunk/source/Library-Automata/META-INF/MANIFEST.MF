@@ -308,7 +308,8 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ClassPath: src/de/uni_freiburg/informatik/ultimate/automata/petrinet/petruchio/petruchio.jar,
  .
-Import-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure,
+Import-Package: de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg

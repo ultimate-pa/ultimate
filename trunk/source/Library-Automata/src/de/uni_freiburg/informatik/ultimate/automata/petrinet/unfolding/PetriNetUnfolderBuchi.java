@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class PetriNetUnfolderBuchi<LETTER, PLACE>
 		extends PetriNetUnfolderBase<LETTER, PLACE, PetriNetLassoRun<LETTER, PLACE>> {
 
-	private Events2PetriNetLassoRunBuchi<LETTER, PLACE> mEvents2PetriNetLassoRunBuchi;
+	protected Events2PetriNetLassoRunBuchi<LETTER, PLACE> mEvents2PetriNetLassoRunBuchi;
 
 	public PetriNetUnfolderBuchi(final AutomataLibraryServices services,
 			final IPetriNetSuccessorProvider<LETTER, PLACE> operand, final EventOrderEnum order,
