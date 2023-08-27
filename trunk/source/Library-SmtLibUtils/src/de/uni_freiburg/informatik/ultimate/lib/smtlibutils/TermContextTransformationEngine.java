@@ -187,7 +187,7 @@ public class TermContextTransformationEngine<C> {
 				final Task old = mStack.pop();
 				assert old == this;
 				result = new AscendResultTask(super.mContext, res);
-			} else if (SmtUtils.isAbsorbingElement(mOriginal.getFunction().getName(),
+			} else if (isAbsorbingElementConDis(mOriginal.getFunction(),
 					mResult[Math.floorMod(mNext - 1, mResult.length)])) {
 				// If the result of the last iteration was the absorbing
 				// element, we can already construct the result which
@@ -197,7 +197,7 @@ public class TermContextTransformationEngine<C> {
 				final Task old = mStack.pop();
 				assert old == this;
 				result = new AscendResultTask(super.mContext, res);
-			} else if (SmtUtils.isNeutralElement(mOriginal.getFunction().getName(), mResult[mNext])) {
+			} else if (isNeutralElementConDis(mOriginal.getFunction(), mResult[mNext])) {
 				// If the current param is the neutral element we will omit this param.
 				// Rationale: if we compose the result it will not have an effect anyway.
 				result = constructTaskForDescendResult(super.mContext, new FinalResultForAscend(mResult[mNext]));
@@ -219,7 +219,7 @@ public class TermContextTransformationEngine<C> {
 		void integrateResult(final Term result) {
 			assert (mNext < mOriginal.getParameters().length);
 			if (!mResult[mNext].equals(result)
-					&& (!SMART_REPETITIONS || !SmtUtils.isNeutralElement(mOriginal.getFunction().getName(), result))) {
+					&& (!SMART_REPETITIONS || !isNeutralElementConDis(mOriginal.getFunction(), result))) {
 				mPositionOfLastChange = mNext;
 			}
 			mResult[mNext] = result;
@@ -306,6 +306,26 @@ public class TermContextTransformationEngine<C> {
 		}
 		return result;
 	}
+
+	/**
+	 * Returns true iff fun is conjunction or disjunction and term is the absorbing
+	 * element of this operation.
+	 */
+	private static boolean isAbsorbingElementConDis(final FunctionSymbol fun, final Term term) {
+		return (fun.getName().equals("and") || fun.getName().equals("or"))
+				&& SmtUtils.isAbsorbingElement(fun.getName(), term);
+	}
+
+	/**
+	 * Returns true iff fun is conjunction or disjunction and term is the neutral
+	 * element of this operation.
+	 */
+	private static boolean isNeutralElementConDis(final FunctionSymbol fun, final Term term) {
+		return (fun.getName().equals("and") || fun.getName().equals("or"))
+				&& SmtUtils.isNeutralElement(fun.getName(), term);
+	}
+
+
 
 	public abstract static class TermWalker<C> {
 
