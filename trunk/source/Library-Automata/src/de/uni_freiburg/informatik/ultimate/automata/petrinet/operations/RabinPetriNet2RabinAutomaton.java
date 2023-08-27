@@ -4,14 +4,22 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IRabinPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.rabin.IRabinAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public class RabinPetriNet2RabinAutomaton<LETTER, STATE> implements IRabinAutomaton<LETTER, STATE> {
+public class RabinPetriNet2RabinAutomaton<LETTER, STATE, FACTORY extends IPetriNet2FiniteAutomatonStateFactory<STATE> & IBlackWhiteStateFactory<STATE>>
+		implements IRabinAutomaton<LETTER, STATE> {
 
 	IRabinPetriNet<LETTER, STATE> mOperand;
 
-	public RabinPetriNet2RabinAutomaton(final IRabinPetriNet<LETTER, STATE> rpn) {
+	private final FACTORY mContentFactory;
+
+	public RabinPetriNet2RabinAutomaton(final IRabinPetriNet<LETTER, STATE> rpn, final FACTORY factory) {
 		mOperand = rpn;
+		mContentFactory = factory;
 	}
 
 	@Override
@@ -21,12 +29,14 @@ public class RabinPetriNet2RabinAutomaton<LETTER, STATE> implements IRabinAutoma
 
 	@Override
 	public int size() {
-
-		final int result = 2 << mOperand.getPlaces().size();
-		if (result == 0 && (mOperand.getPlaces().size() != 0)) {
+		final int operandSize = mOperand.getPlaces().size();
+		if (operandSize > 29) {
 			return -1;
 		}
-		return result;
+		if (operandSize == 0) {
+			return 0;
+		}
+		return 3 << (operandSize - 1);
 	}
 
 	@Override
@@ -40,7 +50,8 @@ public class RabinPetriNet2RabinAutomaton<LETTER, STATE> implements IRabinAutoma
 
 	@Override
 	public Set<STATE> getInitialStates() {
-		return null;
+		return Set.of(mContentFactory
+				.getContentOnPetriNet2FiniteAutomaton(new Marking<>(ImmutableSet.of(mOperand.getInitialPlaces()))));
 	}
 
 	@Override
