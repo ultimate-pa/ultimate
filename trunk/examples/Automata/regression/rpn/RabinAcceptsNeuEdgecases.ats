@@ -1,0 +1,43 @@
+// Date:  19-07-2023
+// Author: pm251@venus.uni-freiburg.de
+
+
+RabinPetriNet oneInitial = (
+	alphabet = {a b c},
+	places = {start p1 p2 p3 p4},
+	transitions = {
+	({start} a {p1}) ({p1} a {start}) ({start} b {p2 p3}) ({p2 p3} b {start}) ({start} b {p4}) ({p4} b {start})
+	({p1} c {p1})
+	},
+	initialMarking = {start},
+	acceptingPlaces = {p1 p2 p4},
+	finitePlaces = {p3 p4}
+);
+
+assert(rabinAcceptsNeu(oneInitial, [, a]));
+assert(rabinAcceptsNeu(oneInitial, [a a a a a a a a , a]));
+assert(rabinAcceptsNeu(oneInitial, [a c , a]));
+assert(rabinAcceptsNeu(oneInitial, [a , c]));
+assert(rabinAcceptsNeu(oneInitial, [, a c a]));
+
+assert(!rabinAcceptsNeu(oneInitial, [, b]));
+assert(!rabinAcceptsNeu(oneInitial, [a a, b]));
+assert(!rabinAcceptsNeu(oneInitial, [a a, a a b b]));
+assert(!rabinAcceptsNeu(oneInitial, [b b, b b a a]));
+
+RabinPetriNet multiInitial = (
+	alphabet = {a b c},
+	places = {s1 s2 s3 s4 p1 p1a p1b p2 p3 p4 terminal},
+	transitions = {
+	({s1} a {s1}) ({s2} a {s2}) ({s1} a {terminal})
+	({terminal} a {terminal}) ({terminal} b {terminal}) ({s2} a {p2}) ({s1} c {p1}) ({p1} c {p1a}) ({p1a} c {p1b}) ({p1b} c {p2}) ({p2} c {s1})
+	},
+	initialMarking = {s1 s2 s3 s4},
+	acceptingPlaces = {s2 s3 p2 p3},
+	finitePlaces = {s3 s4 p3 p4 terminal}
+);
+
+assert(rabinAcceptsNeu(multiInitial, [, a]));
+assert(rabinAcceptsNeu(multiInitial, [a a a a a a a a , a]));
+assert(rabinAcceptsNeu(multiInitial, [, c]));
+assert(rabinAcceptsNeu(multiInitial, [c c c c c c c c , c]));
