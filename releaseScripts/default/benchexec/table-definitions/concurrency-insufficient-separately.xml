@@ -10,7 +10,6 @@
   <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
   <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
 
-
   <union>
     <result filename="concurrency-insufficient-separately.*.Automizer-PN.After.SVCOMP*.xml" />
   </union>
@@ -20,6 +19,6 @@
   </union>
 
   <union>
-    <result filename="concurrency-insufficient-separately.*.Automizer-PN.SVCOMP*.xml" />
+    <result filename="concurrency-insufficient-separately.*.Automizer-PN.Together.SVCOMP*.xml" />
   </union>
 </table>

@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="16GB" timelimit="900" hardtimelimit="920" cpuCores="2">
+
   <option name="--force-no-wrapper" />
+  <option name="--cacsl2boogietranslator.check.assertions.from.assert.h">false</option>
+
   <resultfiles></resultfiles>
 
-  <rundefinition name="Automizer-PN">
+  <rundefinition name="Automizer-PN.Together">
     <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf</option>
   </rundefinition>
 	
