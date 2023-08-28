@@ -11,14 +11,14 @@
   <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
 
   <union>
-    <result filename="concurrency-insufficient-separately.*.Automizer-PN.After.SVCOMP*.xml" />
+    <result filename="concurrency-insufficient-separately.*.Automizer-PN.After.*.xml" />
   </union>
 
   <union>
-    <result filename="concurrency-insufficient-separately.*.Automizer-PN.Before.SVCOMP*.xml" />
+    <result filename="concurrency-insufficient-separately.*.Automizer-PN.Before.*.xml" />
   </union>
 
   <union>
-    <result filename="concurrency-insufficient-separately.*.Automizer-PN.Together.SVCOMP*.xml" />
+    <result filename="concurrency-insufficient-separately.*.Automizer-PN.Together.*.xml" />
   </union>
 </table>
