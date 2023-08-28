@@ -2,6 +2,8 @@
 <benchmark tool="ultimateautomizer" memlimit="16GB" timelimit="900" hardtimelimit="920" cpuCores="2">
   <resultfiles></resultfiles>
 
+  <option name="--full-output"/>
+
   <rundefinition name="Automizer-PN.After">
     <option name="--traceabstraction.order.of.the.error.locations.to.be.checked">PROGRAM_FIRST</option>
   </rundefinition>
