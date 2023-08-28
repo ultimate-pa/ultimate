@@ -59,9 +59,11 @@ public class RabinPetriNet2RabinAutomaton<LETTER, STATE, FACTORY extends IPetriN
 	public String sizeInformation() {
 		final int size = size();
 		if (size == -1) {
-			return "Automaton has more than " + Integer.MAX_VALUE + " states!";
+			return "Automaton has more than " + Integer.MAX_VALUE + " states!" + "Currently " + mAutomatonMap.size()
+					+ " have been lazily computed.";
 		}
-		return "Automaton has " + size + " states.";
+		return "Automaton has " + size + " states.\n" + "Currently " + mAutomatonMap.size()
+				+ " have been lazily computed.";
 	}
 
 	@Override
