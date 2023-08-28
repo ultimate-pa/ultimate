@@ -77,9 +77,9 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyC
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxStatementContainer;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxiliaryStatementContainer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.PeaPhaseProgramCounter;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.StateRecoverabilityAuxStatement;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.StateRecoverabilityAuxiliaryStatement;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.StateRecoverabilityGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.VerificationExpression;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CheckedReqLocation;
@@ -96,6 +96,7 @@ import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer
 public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 	private static final boolean DEBUG_ONLY_FIRST_NON_TRIVIAL_RT_INCONSISTENCY = false;
+	private static final boolean PRINT_PEA_DOT = true;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -194,45 +195,36 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	}
 	
 	private List<Statement> genCheckStateRecoverability(final BoogieLocation bl) {
-		List<Statement> list = new ArrayList<>();
-		StateRecoverabilityGenerator mStRecGen = new StateRecoverabilityGenerator();
-		AuxStatementContainer auxStatementContainer = mSymbolTable.getAuxStatementContainer();
-		Map<VerificationExpression, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxStatement>>> vePeaAuxStatementMap = mStRecGen.getAuxStatementPerVerificationExpression(auxStatementContainer);
+		List<Statement> statements = new ArrayList<>();
+		StateRecoverabilityGenerator stateRecoverabilityGenerator = new StateRecoverabilityGenerator();
+		AuxiliaryStatementContainer auxStatementContainer = mSymbolTable.getAuxStatementContainer();
+		Map<VerificationExpression, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxiliaryStatement>>> vePeaAuxStatementMap = stateRecoverabilityGenerator.getAuxStatementPerVerificationExpression(auxStatementContainer);
 		
-		for(Map.Entry<VerificationExpression, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxStatement>>> entry : vePeaAuxStatementMap.entrySet()) {
+		for(Map.Entry<VerificationExpression, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxiliaryStatement>>> entry : vePeaAuxStatementMap.entrySet()) {
 			VerificationExpression ve = entry.getKey();
 			
-			for(Map.Entry<PhaseEventAutomata, Set<StateRecoverabilityAuxStatement>> entryPeaStRecAuxSt : entry.getValue().entrySet()) {
-					Set<StateRecoverabilityAuxStatement> stRecAuxStSet = entryPeaStRecAuxSt.getValue();
-					for(StateRecoverabilityAuxStatement stRecAuxSt : stRecAuxStSet) {
+			for(Map.Entry<PhaseEventAutomata, Set<StateRecoverabilityAuxiliaryStatement>> entryPeaStRecAuxSt : entry.getValue().entrySet()) {
+					Set<StateRecoverabilityAuxiliaryStatement> stRecAuxStSet = entryPeaStRecAuxSt.getValue();
+					for(StateRecoverabilityAuxiliaryStatement stRecAuxSt : stRecAuxStSet) {
 					String checkLabel = "STATE_RECOVERABILITY_" + entry.getKey().getVariable() + "_" + stRecAuxSt.getPcVariable();
 					
-					Expression globalVariableTrue = mStRecGen.createExpression(bl, BoogieType.TYPE_BOOL, stRecAuxSt.getRelatedVariable(), Operator.COMPEQ, "true");
-					Expression inputCondition = mStRecGen.createExpression(bl, BoogiePrimitiveType.toPrimitiveType(ve.getDataType()), ve.getVariable(), ve.getOperator(), ve.getValue());
+					Expression globalVariableTrue = stateRecoverabilityGenerator.createExpression(bl, BoogieType.TYPE_BOOL, stRecAuxSt.getRelatedVariable(), Operator.COMPEQ, "true");
+					Expression inputCondition = stateRecoverabilityGenerator.createExpression(bl, BoogiePrimitiveType.toPrimitiveType(ve.getDataType()), ve.getVariable(), ve.getOperator(), ve.getValue());
 					Expression andCondition = ExpressionFactory.newBinaryExpression(bl, Operator.LOGICAND, globalVariableTrue, inputCondition);
 					Expression expr = ExpressionFactory.constructUnaryExpression(bl, UnaryExpression.Operator.LOGICNEG, andCondition);
 					
 					final ReqCheck check = createReqCheck(Spec.STATE_RECOVERABILITY, stRecAuxSt.getPeaPhasePc().getReq(), entryPeaStRecAuxSt.getKey(), String.join("", ve.getExpr()));
-					list.add(createAssert(expr, check, checkLabel));
+					statements .add(createAssert(expr, check, checkLabel));
 				}
 			}
 		}
 		
-		// DOT printen
-		/*
-		final List<Entry<PatternType<?>, PhaseEventAutomata>> counterTracePEAList = new ArrayList<>();
-		for (final ReqPeas reqPea : mReqPeas) {
-			final PatternType<?> pattern = reqPea.getPattern();
-			
-			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqPea.getCounterTrace2Pea()) {
-				counterTracePEAList.add(new Pair<>(pattern, pea.getValue()));
-			}
-		}
-		final List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets = CrossProducts.subArrays(counterTracePEAList.toArray(new Entry[counterTracePEAList.size()]), counterTracePEAList.size(), new Entry[counterTracePEAList.size()]);
 		//Prints parallel automaton
-		dotPrinter(subsets);
-		*/
-		return list;
+		if(PRINT_PEA_DOT) {
+			dotPrinter(mReqPeas);
+		}
+		
+		return statements ;
 	}
 
 	private static List<Statement> genCheckConsistency(final BoogieLocation bl) {
@@ -478,7 +470,17 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.COMPEQ, identifier, intLiteral);
 	}
 	
-	private void dotPrinter(final List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets) {
+	private void dotPrinter(List<ReqPeas> reqPeas) {
+		final List<Entry<PatternType<?>, PhaseEventAutomata>> counterTracePEAList = new ArrayList<>();
+		for (final ReqPeas reqPea : reqPeas) {
+			final PatternType<?> pattern = reqPea.getPattern();
+			
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqPea.getCounterTrace2Pea()) {
+				counterTracePEAList.add(new Pair<>(pattern, pea.getValue()));
+			}
+		}
+		final List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets = CrossProducts.subArrays(counterTracePEAList.toArray(new Entry[counterTracePEAList.size()]), counterTracePEAList.size(), new Entry[counterTracePEAList.size()]);
+		
 		for(final Entry<PatternType<?>, PhaseEventAutomata>[] subset : subsets) {
 			
 			final Set<PhaseEventAutomata> automataSet = Arrays.stream(subset).map(Entry<PatternType<?>, PhaseEventAutomata>::getValue).collect(Collectors.toSet());

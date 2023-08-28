@@ -138,13 +138,6 @@ public class ReqCheck extends Check {
 		final String message = mMessage.concat(other.getMessage());
 		return new ReqCheck(newSpec, startline, endline, reqIds, peaNames, message);
 	}
-	
-	private String createMessage() {
-		if(mMessage == null) {
-			return "";
-		}
-		return mMessage;
-	}
 
 	public Set<String> getReqIds() {
 		return new LinkedHashSet<>(Arrays.asList(mReqIds));
@@ -163,7 +156,11 @@ public class ReqCheck extends Check {
 		if (mReqIds.length == 0) {
 			return super.toString() + " for all requirements";
 		}
-		return super.toString() + " for " + Arrays.stream(mReqIds).collect(Collectors.joining(", ")) + " " + createMessage();
+		if(mMessage.isEmpty()) {
+			return super.toString() + " for " + Arrays.stream(mReqIds).collect(Collectors.joining(", "));
+		} else {
+			return super.toString() + " for " + Arrays.stream(mReqIds).collect(Collectors.joining(", ")) + " " + mMessage;
+		}
 	}
 
 	@Override
@@ -202,7 +199,7 @@ public class ReqCheck extends Check {
 		if (!Arrays.equals(mPeaNames, other.mPeaNames)) {
 			return false;
 		}
-		if(!mMessage.equalsIgnoreCase(other.getMessage())) {
+		if(!mMessage.equals(other.getMessage())) {
 			return false;
 		}
 		return true;

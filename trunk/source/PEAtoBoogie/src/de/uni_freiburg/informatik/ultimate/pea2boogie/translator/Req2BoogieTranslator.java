@@ -84,8 +84,8 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2Pea;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaAnnotator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaTransformer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.Req2Pea;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.StateRecoverabilityAuxStatement;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxStatementContainer.StRecExpr;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.StateRecoverabilityAuxiliaryStatement;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxiliaryStatementContainer.StatementAssignment;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.ReqInOutGuesser;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
 
@@ -560,7 +560,7 @@ public class Req2BoogieTranslator {
 			}
 		}
 		// Assign St-Recoverability if statement
-		stmtList.addAll(mSymboltable.getAuxStatementContainer().getStatements(StRecExpr.IF_ST));
+		stmtList.addAll(mSymboltable.getAuxStatementContainer().getStatements(StatementAssignment.IF_ST));
 		stmtList.addAll(mReqCheckAnnotator.getStateChecks());
 		stmtList.addAll(
 				mSymboltable.getPcVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
@@ -665,7 +665,7 @@ public class Req2BoogieTranslator {
 		statements.addAll(mReqCheckAnnotator.getPreChecks());
 
 		// Assign St-Recoverability variables
-		statements.addAll(mSymboltable.getAuxStatementContainer().getStatements(StRecExpr.ASSIGN_VAR));
+		statements.addAll(mSymboltable.getAuxStatementContainer().getStatements(StatementAssignment.ASSIGN_VAR));
 		
 		statements.add(genWhileLoop(bl));
 		return statements.toArray(new Statement[statements.size()]);
@@ -706,7 +706,7 @@ public class Req2BoogieTranslator {
 		modifiedVarsList.addAll(mSymboltable.getHistoryVars());
 		modifiedVarsList.addAll(mSymboltable.getEventVars());
 		// Adds only instance of class type StateRecoverabilityAuxStatement
-		modifiedVarsList.addAll(mSymboltable.getAuxStatementContainer().getRelatedVariableForInstance(new StateRecoverabilityAuxStatement("")));
+		modifiedVarsList.addAll(mSymboltable.getAuxStatementContainer().getRelatedVariableForInstance(new StateRecoverabilityAuxiliaryStatement("")));
 
 		final VariableLHS[] modifiedVars = new VariableLHS[modifiedVarsList.size()];
 		for (int i = 0; i < modifiedVars.length; i++) {

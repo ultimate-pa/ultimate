@@ -67,8 +67,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPatter
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxStatement;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxStatementContainer;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxiliaryStatement;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxiliaryStatementContainer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.LinkedHashRelation;
 
@@ -87,7 +87,7 @@ public class ReqSymboltableBuilder {
 	private final Map<String, IdentifierExpression> mId2IdExpr;
 	private final Map<String, VariableLHS> mId2VarLHS;
 	
-	private final AuxStatementContainer mAuxStatements;
+	private final AuxiliaryStatementContainer mAuxStatements;
 	private final Set<String> mAuxVars;
 	private final Set<String> mStateVars;
 	private final Set<String> mConstVars;
@@ -113,7 +113,7 @@ public class ReqSymboltableBuilder {
 		mId2IdExpr = new LinkedHashMap<>();
 		mId2VarLHS = new LinkedHashMap<>();
 
-		mAuxStatements = new AuxStatementContainer();
+		mAuxStatements = new AuxiliaryStatementContainer();
 		mAuxVars = new LinkedHashSet<>();
 		mStateVars = new LinkedHashSet<>();
 		mConstVars = new LinkedHashSet<>();
@@ -296,7 +296,7 @@ public class ReqSymboltableBuilder {
 		addVarOneKind(getPrimedVarId(name), type, source, mPrimedVars);
 	}
 	
-	public AuxStatement addAuxVar(final AuxStatement auxStatement, final String name, final String boogieType, final PatternType<?> source) {
+	public AuxiliaryStatement addAuxVar(final AuxiliaryStatement auxStatement, final String name, final String boogieType, final PatternType<?> source) {
 		Set<String> kind = mAuxVars;
 		auxStatement.setBoogieLocation(DUMMY_LOC);
 		switch (boogieType.toLowerCase()) {
@@ -407,7 +407,7 @@ public class ReqSymboltableBuilder {
 		private final Map<String, Expression> mConst2Value;
 		private final Map<PatternType<?>, BoogieLocation> mReq2Loc;
 		
-		private final AuxStatementContainer mAuxStatements;
+		private final AuxiliaryStatementContainer mAuxStatements;
 		private final Set<String> mAuxVars;
 		private final Set<String> mStateVars;
 		private final Set<String> mConstVars;
@@ -423,7 +423,7 @@ public class ReqSymboltableBuilder {
 		private final UnionFind<String> mEquivalences;
 
 		private ReqSymbolTable(final String deltaVar, final Map<String, BoogieType> id2Type,
-				final Map<String, IdentifierExpression> id2idExp, final Map<String, VariableLHS> id2VarLhs, final AuxStatementContainer auxStatements, 
+				final Map<String, IdentifierExpression> id2idExp, final Map<String, VariableLHS> id2VarLhs, final AuxiliaryStatementContainer auxStatements, 
 				final Set<String> auxVars, Set<String> stateVars, final Set<String> primedVars, final Set<String> historyVars,
 				final Set<String> constVars, final Set<String> eventVars, final Set<String> pcVars,
 				final Set<String> clockVars, final Map<PatternType<?>, BoogieLocation> req2loc,
@@ -537,7 +537,7 @@ public class ReqSymboltableBuilder {
 		}
 		
 		@Override
-		public AuxStatementContainer getAuxStatementContainer( ) {
+		public AuxiliaryStatementContainer getAuxStatementContainer( ) {
 			return mAuxStatements;
 		}
 

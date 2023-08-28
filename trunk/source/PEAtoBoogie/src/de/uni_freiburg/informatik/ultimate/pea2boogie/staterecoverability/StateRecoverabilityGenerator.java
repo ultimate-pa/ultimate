@@ -280,22 +280,22 @@ public class StateRecoverabilityGenerator {
 		return SolverBuilder.buildAndInitializeSolver(services, settings, "RtInconsistencySolver");
 	}
 
-	public Map<VerificationExpression, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxStatement>>>
-			getAuxStatementPerVerificationExpression(AuxStatementContainer auxStatementContainer) {
-		Map<VerificationExpression, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxStatement>>> vePeaAuxStatementMap =
+	public Map<VerificationExpression, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxiliaryStatement>>>
+			getAuxStatementPerVerificationExpression(AuxiliaryStatementContainer auxStatementContainer) {
+		Map<VerificationExpression, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxiliaryStatement>>> vePeaAuxStatementMap =
 				new HashMap<>();
-		for (AuxStatement auxStatement : auxStatementContainer.getSreMap().values()) {
-			if (auxStatement instanceof StateRecoverabilityAuxStatement) {
-				StateRecoverabilityAuxStatement stRecAuxSt = (StateRecoverabilityAuxStatement) auxStatement;
+		for (AuxiliaryStatement auxStatement : auxStatementContainer.getSreMap().values()) {
+			if (auxStatement instanceof StateRecoverabilityAuxiliaryStatement) {
+				StateRecoverabilityAuxiliaryStatement stRecAuxSt = (StateRecoverabilityAuxiliaryStatement) auxStatement;
 				if (!vePeaAuxStatementMap.containsKey(stRecAuxSt.getVerificationExpression())) {
 					vePeaAuxStatementMap.put(stRecAuxSt.getVerificationExpression(), new HashMap<>());
 				}
-				Map<PhaseEventAutomata, Set<StateRecoverabilityAuxStatement>> peaAuxStatementMap =
+				Map<PhaseEventAutomata, Set<StateRecoverabilityAuxiliaryStatement>> peaAuxStatementMap =
 						vePeaAuxStatementMap.get(stRecAuxSt.getVerificationExpression());
 				if (!peaAuxStatementMap.containsKey(stRecAuxSt.getPeaPhasePc().getPea())) {
 					peaAuxStatementMap.put(stRecAuxSt.getPeaPhasePc().getPea(), new HashSet<>());
 				}
-				Set<StateRecoverabilityAuxStatement> stRecAuxStSet =
+				Set<StateRecoverabilityAuxiliaryStatement> stRecAuxStSet =
 						peaAuxStatementMap.get(stRecAuxSt.getPeaPhasePc().getPea());
 				stRecAuxStSet.add(stRecAuxSt);
 			}

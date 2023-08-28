@@ -206,7 +206,7 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 				return "Valid range is " + mMin + " <= value <= " + mMax;
 			}
 		}
-		
+
 		public class StringValidator implements IUltimatePreferenceItemValidator<String> {
 
 			private final String mPattern;
@@ -217,10 +217,10 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 
 			@Override
 			public boolean isValid(final String string) {
-				String[]exprPairs =   string.split(",");
-				for(String exprPair : exprPairs) {
+				String[] exprPairs = string.split(",");
+				for (String exprPair : exprPairs) {
 					Matcher m = match(exprPair, mPattern);
-					if(!m.matches()) {
+					if (!m.matches()) {
 						return false;
 					}
 				}
@@ -232,11 +232,11 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 				return "Expression pairs " + string + " is not in the format <Variable<Operator>VALUE, ...>";
 			}
 		}
-		
+
 		default Matcher match(String s, String pattern) {
 			Pattern p = Pattern.compile(pattern);
-	        Matcher m = p.matcher(s);
-	        return m;
+			Matcher m = p.matcher(s);
+			return m;
 		}
 	}
 

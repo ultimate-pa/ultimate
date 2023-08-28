@@ -5,7 +5,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
-public class ReqCheckStateRecoverabilityResult<LOC extends IElement, TE extends IAction, E> extends ReqCheckFailResult<LOC> {
+public class ReqCheckStateRecoverabilityResult<LOC extends IElement, TE extends IAction, E> extends ReqCheckFailResult<LOC>{
 
 	private final String mMessage;
 	

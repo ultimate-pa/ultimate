@@ -82,12 +82,16 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_CHECK_STATE_RECOVERABILITY = "Check state recoverability";
 	private static final boolean DEF_CHECK_STATE_RECOVERABILITY = true;
-	private static final String DESC_CHECK_STATE_RECOVERABILITY = null;
-	
+	private static final String DESC_CHECK_STATE_RECOVERABILITY = 
+			"This setting controls whether the property check state-recoverability should be done. " 
+					+ "State-recoverability checks for the specified conditions whether it can be recovered from any location in " 
+					+ "the phase event automaton. If not, there is an error message for the specified condition.";
+
 	public static final String LABEL_STATE_RECOVERABILITY_VER_EXPR = "State recoverability expressions";
 	private static final String DEF_STATE_RECOVERABILITY_VER_EXPR = "ENG_READY==true, ENG_START==false";
-	private static final String DESC_STATE_RECOVERABILITY_VER_STRING = "Enter the expressions for which state recoverability should be valid";
-	
+	private static final String DESC_STATE_RECOVERABILITY_VER_STRING =
+			"Enter the expressions for which state recoverability should be valid";
+
 	public static final String LABEL_GUESS_IN_OUT =
 			"Use heuristic to find input/output definitions (if none are given)";
 	private static final boolean DEF_GUESS_IN_OUT = true;
@@ -117,33 +121,33 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
 
-			new UltimatePreferenceItem<>(LABEL_TRANSFOMER_MODE, TRANSFOMER_MODE, DESC_TRANSFOMER_MODE,
-					PreferenceType.Combo, PEATransformerMode.values()),
-			new UltimatePreferenceItem<>(LABEL_CHECK_VACUITY, DEF_CHECK_VACUITY, DESC_CHECK_VACUITY,
-					PreferenceType.Boolean),
-			new UltimatePreferenceItem<>(LABEL_CHECK_CONSISTENCY, DEF_CHECK_CONSISTENCY, DESC_CHECK_CONSISTENCY,
-					PreferenceType.Boolean),
-			new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY, DEF_CHECK_RT_INCONSISTENCY,
-					DESC_CHECK_RT_INCONSISTENCY, PreferenceType.Boolean),
-			new UltimatePreferenceItem<>(LABEL_USE_EPSILON, DEF_USE_EPSILON, DESC_USE_EPSILON,
-					PreferenceType.Boolean),
-			new UltimatePreferenceItem<>(LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, DEF_REPORT_TRIVIAL_RT_CONSISTENCY,
-					DESC_REPORT_TRIVIAL_RT_CONSISTENCY, PreferenceType.Boolean),
-			new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_RANGE, DEF_RT_INCONSISTENCY_RANGE,
-					DESC_RT_INCONSISTENCY_RANGE, PreferenceType.Integer,
-					IUltimatePreferenceItemValidator.ONLY_POSITIVE),
-			new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS,
-					DEF_RT_INCONSISTENCY_USE_ALL_INVARIANTS, DESC_RT_INCONSISTENCY_USE_ALL_INVARIANTS,
-					PreferenceType.Boolean),
-			new UltimatePreferenceItem<>(LABEL_CHECK_STATE_RECOVERABILITY, DEF_CHECK_STATE_RECOVERABILITY, DESC_CHECK_STATE_RECOVERABILITY, 
-					PreferenceType.Boolean),
-			new UltimatePreferenceItem<>(LABEL_STATE_RECOVERABILITY_VER_EXPR, DEF_STATE_RECOVERABILITY_VER_EXPR,
-					DESC_STATE_RECOVERABILITY_VER_STRING, PreferenceType.String,
-					IUltimatePreferenceItemValidator.EXPR_PAIR),
-			new UltimatePreferenceItem<>(LABEL_GUESS_IN_OUT, DEF_GUESS_IN_OUT, DESC_GUESS_IN_OUT,
-					PreferenceType.Boolean),
-			new UltimatePreferenceItem<>(LABEL_GUESS_INITIAL, DEF_GUESS_INITIAL, DESC_GUESS_INITIAL,
-					PreferenceType.Boolean) };
+				new UltimatePreferenceItem<>(LABEL_TRANSFOMER_MODE, TRANSFOMER_MODE, DESC_TRANSFOMER_MODE,
+						PreferenceType.Combo, PEATransformerMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_VACUITY, DEF_CHECK_VACUITY, DESC_CHECK_VACUITY,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CHECK_CONSISTENCY, DEF_CHECK_CONSISTENCY, DESC_CHECK_CONSISTENCY,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY, DEF_CHECK_RT_INCONSISTENCY,
+						DESC_CHECK_RT_INCONSISTENCY, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_USE_EPSILON, DEF_USE_EPSILON, DESC_USE_EPSILON,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, DEF_REPORT_TRIVIAL_RT_CONSISTENCY,
+						DESC_REPORT_TRIVIAL_RT_CONSISTENCY, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_RANGE, DEF_RT_INCONSISTENCY_RANGE,
+						DESC_RT_INCONSISTENCY_RANGE, PreferenceType.Integer,
+						IUltimatePreferenceItemValidator.ONLY_POSITIVE),
+				new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS,
+						DEF_RT_INCONSISTENCY_USE_ALL_INVARIANTS, DESC_RT_INCONSISTENCY_USE_ALL_INVARIANTS,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CHECK_STATE_RECOVERABILITY, DEF_CHECK_STATE_RECOVERABILITY,
+						DESC_CHECK_STATE_RECOVERABILITY, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_STATE_RECOVERABILITY_VER_EXPR, DEF_STATE_RECOVERABILITY_VER_EXPR,
+						DESC_STATE_RECOVERABILITY_VER_STRING, PreferenceType.String,
+						IUltimatePreferenceItemValidator.EXPR_PAIR),
+				new UltimatePreferenceItem<>(LABEL_GUESS_IN_OUT, DEF_GUESS_IN_OUT, DESC_GUESS_IN_OUT,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_GUESS_INITIAL, DEF_GUESS_INITIAL, DESC_GUESS_INITIAL,
+						PreferenceType.Boolean) };
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {

@@ -51,9 +51,9 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaAnnotator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqCheckAnnotator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.VerificationExpression;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.VerificationExpressionContainer;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxStatement;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxiliaryStatement;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.PeaPhaseProgramCounter;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.StateRecoverabilityAuxStatement;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.StateRecoverabilityAuxiliaryStatement;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.StateRecoverabilityGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder.ErrorInfo;
@@ -125,7 +125,7 @@ public class Req2ModifySymbolTablePea implements IReq2Pea {
 		//Necessary in Transformer since otherwise unused global variables would be in the Boogie code
 		Map<VerificationExpression, Set<PeaPhaseProgramCounter>> veLocationMap = stRecGen.getRelevantLocationsFromPea(simplePeas, vec);
 		
-		List<AuxStatement> sreList = createGlobalVariableForVerificationExpression(builder, veLocationMap, vec);
+		List<AuxiliaryStatement> sreList = createGlobalVariableForVerificationExpression(builder, veLocationMap, vec);
 		
 		//Creating the statements
 		createAssignBoolToGlobalVariableBeforeWhileLoop(sreList);
@@ -134,10 +134,10 @@ public class Req2ModifySymbolTablePea implements IReq2Pea {
 		mSymbolTable = builder.constructSymbolTable();
 	}
 	
-	private void createIfStatementInWhileLoop(List<AuxStatement> auxStatements) {
-		for(AuxStatement auxStatement : auxStatements) {
-			if(auxStatement instanceof StateRecoverabilityAuxStatement) {
-				StateRecoverabilityAuxStatement auxStatementStRec = (StateRecoverabilityAuxStatement) auxStatement;
+	private void createIfStatementInWhileLoop(List<AuxiliaryStatement> auxStatements) {
+		for(AuxiliaryStatement auxStatement : auxStatements) {
+			if(auxStatement instanceof StateRecoverabilityAuxiliaryStatement) {
+				StateRecoverabilityAuxiliaryStatement auxStatementStRec = (StateRecoverabilityAuxiliaryStatement) auxStatement;
 				VerificationExpression ve = auxStatementStRec.getVerificationExpression();
 				ILocation loc = auxStatementStRec.getBoogieLocation();
 				// Create expression
@@ -163,8 +163,8 @@ public class Req2ModifySymbolTablePea implements IReq2Pea {
 		return vec;
 	}
 	
-	private List<AuxStatement> createGlobalVariableForVerificationExpression(ReqSymboltableBuilder builder, Map<VerificationExpression, Set<PeaPhaseProgramCounter>> veLocationMaptionMap, VerificationExpressionContainer vec) {
-		List<AuxStatement> sreList = new ArrayList<>();
+	private List<AuxiliaryStatement> createGlobalVariableForVerificationExpression(ReqSymboltableBuilder builder, Map<VerificationExpression, Set<PeaPhaseProgramCounter>> veLocationMaptionMap, VerificationExpressionContainer vec) {
+		List<AuxiliaryStatement> sreList = new ArrayList<>();
 		for(Map.Entry<VerificationExpression, Set<PeaPhaseProgramCounter>> entry : veLocationMaptionMap.entrySet()) {
 			for(PeaPhaseProgramCounter peaPhasePc : entry.getValue()) {
 				String pcName = getPcName(peaPhasePc.getPea().getName());
@@ -173,7 +173,7 @@ public class Req2ModifySymbolTablePea implements IReq2Pea {
 					String variable = entry.getKey().getVariable();
 					String dataType = entry.getKey().getDataType();
 					String globalVariable = pcName + pc + "_StRec_" + variable;
-					StateRecoverabilityAuxStatement auxStatement = new StateRecoverabilityAuxStatement(peaPhasePc, globalVariable, pcName, pc, entry.getKey());
+					StateRecoverabilityAuxiliaryStatement auxStatement = new StateRecoverabilityAuxiliaryStatement(peaPhasePc, globalVariable, pcName, pc, entry.getKey());
 					sreList.add(builder.addAuxVar(auxStatement, globalVariable, "bool", null));
 				}
 				
@@ -181,10 +181,10 @@ public class Req2ModifySymbolTablePea implements IReq2Pea {
 		return sreList;
 	}
 	
-	private void createAssignBoolToGlobalVariableBeforeWhileLoop(List<AuxStatement> auxStatements) {
-		for(AuxStatement auxStatement : auxStatements) {
-			if(auxStatement instanceof StateRecoverabilityAuxStatement) {
-				StateRecoverabilityAuxStatement auxStatementStateRecoverability = (StateRecoverabilityAuxStatement) auxStatement;
+	private void createAssignBoolToGlobalVariableBeforeWhileLoop(List<AuxiliaryStatement> auxStatements) {
+		for(AuxiliaryStatement auxStatement : auxStatements) {
+			if(auxStatement instanceof StateRecoverabilityAuxiliaryStatement) {
+				StateRecoverabilityAuxiliaryStatement auxStatementStateRecoverability = (StateRecoverabilityAuxiliaryStatement) auxStatement;
 				BooleanLiteral booleanLiteral = ExpressionFactory.createBooleanLiteral(null, false);
 				AssignmentStatement assignmentStatement = genAssignmentStmt(constructNewLocation(), auxStatementStateRecoverability.getRelatedVariable(), booleanLiteral);				
 				auxStatementStateRecoverability.setAssignVar(assignmentStatement);

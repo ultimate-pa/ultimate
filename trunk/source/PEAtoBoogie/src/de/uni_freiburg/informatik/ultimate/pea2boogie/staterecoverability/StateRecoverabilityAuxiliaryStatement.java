@@ -5,9 +5,9 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxStatementContainer.StRecExpr;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxiliaryStatementContainer.StatementAssignment;
 
-public class StateRecoverabilityAuxStatement implements AuxStatement {
+public class StateRecoverabilityAuxiliaryStatement implements AuxiliaryStatement {
 	
 	private PeaPhaseProgramCounter peaPhasePc;
 	private String relatedVariable;
@@ -19,11 +19,11 @@ public class StateRecoverabilityAuxStatement implements AuxStatement {
 	private Statement assignVar;
 	private Statement ifSt;
 	
-	public StateRecoverabilityAuxStatement(String variable) {
+	public StateRecoverabilityAuxiliaryStatement(String variable) {
 		this.relatedVariable = variable;
 	}
 	
-	public StateRecoverabilityAuxStatement(PeaPhaseProgramCounter peaPhasePc, String variable, String pcVariable, int pc, VerificationExpression ve) {
+	public StateRecoverabilityAuxiliaryStatement(PeaPhaseProgramCounter peaPhasePc, String variable, String pcVariable, int pc, VerificationExpression ve) {
 		this.peaPhasePc = peaPhasePc;
 		this.relatedVariable = variable;
 		this.pcVariable = pcVariable;
@@ -32,7 +32,7 @@ public class StateRecoverabilityAuxStatement implements AuxStatement {
 	}
 
 	@Override
-	public Statement getStatement(StRecExpr stRecExpr) {
+	public Statement getStatement(StatementAssignment stRecExpr) {
 		Statement s = null;
 		switch (stRecExpr) {
 		case DECL_VAR:

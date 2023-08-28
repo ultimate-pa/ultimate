@@ -5,11 +5,11 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxStatementContainer.StRecExpr;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxiliaryStatementContainer.StatementAssignment;
 
-public interface AuxStatement {
+public interface AuxiliaryStatement {
 
-	public Statement getStatement(StRecExpr stRecExpr);
+	public Statement getStatement(StatementAssignment stRecExpr);
 
 	public BoogieLocation setBoogieLocation(BoogieLocation loc);
 	
