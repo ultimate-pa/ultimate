@@ -247,7 +247,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>(LABEL_ERROR, true, DESC_ERROR, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(MAINPROC_LABEL, MAINPROC_DEFAULT, MAINPROC_DESC, PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_CHECK_ASSERTIONS, true, DESC_CHECK_ASSERTIONS,
+				new UltimatePreferenceItem<>(LABEL_CHECK_ASSERTIONS, false, DESC_CHECK_ASSERTIONS,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_VALIDITY, PointerCheckMode.ASSERTandASSUME,
 						PreferenceType.Combo, PointerCheckMode.values()),
