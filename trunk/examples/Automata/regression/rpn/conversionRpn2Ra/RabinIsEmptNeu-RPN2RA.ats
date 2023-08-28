@@ -1,0 +1,71 @@
+// Date:  26-08-2023
+// Author: pm251@venus.uni-freiburg.de
+
+// Tranlation of Daniel Küchlers JUnit test automata with changes for emptiness check.
+
+RabinPetriNet testGetResultWithEmptyStem = (
+	alphabet = {b c},
+	places = {p2 p3},
+	transitions = { ({p2} b {p3}) ({p3} c {p2}) },
+	initialMarking = {p2},
+	acceptingPlaces = {p3},
+	finitePlaces = {}
+);
+
+assert(!isEmpty(rpn2ra(testGetResultWithEmptyStem)));
+
+RabinPetriNet testGetResultWithNonTrivialLoopPlaces = (
+	alphabet = {a b},
+	places = {p1 p2 p3 p4 p5 p6 p7},
+	transitions = { ({p1} a {p2}) ({p2} b {p3}) ({p3} b {p4}) ({p4} b {p5}) ({p5} b {p6}) ({p6} b {p7}) ({p7} b {p6}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p6},
+	finitePlaces = {}
+);
+
+assert(!isEmpty(rpn2ra(testGetResultWithNonTrivialLoopPlaces)));
+
+RabinPetriNet testGetResultWithNonTrivialLoopPlaces2 = (
+	alphabet = {a b},
+	places = {p1 p2 p3 p4 p5 p6 p7},
+	transitions = { ({p1} a {p2}) ({p2} b {p3}) ({p3} b {p4}) ({p4} b {p5}) ({p5} b {p6}) ({p6} b {p7}) ({p7} b {p6}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p5},
+	finitePlaces = {}
+);
+
+assert(isEmpty(rpn2ra(testGetResultWithNonTrivialLoopPlaces2)));
+
+
+RabinPetriNet testGetResultWithNondeterministicTransitions = (
+	alphabet = {a b c},
+	places = {p1 p2 p3},
+	transitions = { ({p1} a {p2}) ({p2} b {p3})	({p3} c {p2}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p3},
+	finitePlaces = {}
+);
+
+assert(!isEmpty(rpn2ra(testGetResultWithNondeterministicTransitions)));
+
+RabinPetriNet testGetResultWithNondeterministicTransitionsAndNonAcceptingLoop = (
+	alphabet = {a b c},
+	places = {p1 p2 p3 p4},
+	transitions = { ({p1} a {p2}) ({p2} b {p3}) ({p2} b {p4}) ({p3} c {p2}) },
+	initialMarking = {p1},
+	acceptingPlaces = {},
+	finitePlaces = {}
+);
+
+assert(isEmpty(rpn2ra(testGetResultWithNondeterministicTransitionsAndNonAcceptingLoop)));
+
+RabinPetriNet testGetResultWithDoubleLoop = (
+	alphabet = {a b c},
+	places = {p0 p1 p2 p3},
+	transitions = { ({p1 p0} a {p2 p3}) ({p2} b {p2}) ({p3} c {p3}) },
+	initialMarking = {p0 p1},
+	acceptingPlaces = {p2},
+	finitePlaces = {}
+);
+
+assert(!isEmpty(rpn2ra(testGetResultWithDoubleLoop)));
