@@ -1,0 +1,218 @@
+// Date:  17-07-2023
+// Author: pm251@venus.uni-freiburg.de
+
+// Tranlation of Daniel Küchlers JUnit test to .ats.
+
+RabinPetriNet testBasic = (
+	alphabet = {a b c},
+	places = {p1 p2},
+	transitions = { ({p1} a {p1}) ({p1} b {p2})	({p2} c {p2}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p1 p2},
+	finitePlaces = {p1}
+);
+
+assert(!isEmpty(rpn2ra(testBasic)));
+
+
+RabinPetriNet testBasic2 = (
+	alphabet = {a b c},
+	places = {p1 p2},
+	transitions = { ({p1} a {p1}) ({p1} b {p2})	({p2} c {p2}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p1 p2},
+	finitePlaces = {p2}
+);
+
+assert(!isEmpty(rpn2ra(testBasic2)));
+
+RabinPetriNet testBasic3 = (
+	alphabet = {a b c},
+	places = {p1 p2},
+	transitions = { ({p1} a {p1}) ({p1} b {p2})	({p2} c {p2}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p1 p2},
+	finitePlaces = {p1 p2}
+);
+
+assert(isEmpty(rpn2ra(testBasic3)));
+
+
+
+RabinPetriNet test4 = (
+	alphabet = {a b c d},
+	places = {p1 p2 p3 p4 p5 p6},
+	transitions = { ({p1} a {p2 p3 p4}) ({p2 p3 p4} b {p5 p6}) ({p5} c {p2 p3}) ({p6} d {p4}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p5},
+	finitePlaces = {}
+);
+
+assert(!isEmpty(rpn2ra(test4)));
+
+RabinPetriNet test4f = (
+	alphabet = {a b c d},
+	places = {p1 p2 p3 p4 p5 p6},
+	transitions = { ({p1} a {p2 p3 p4}) ({p2 p3 p4} b {p5 p6})	({p5} c {p2 p3}) ({p6} d {p4}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p5},
+	finitePlaces = {p5}
+);
+
+assert(isEmpty(rpn2ra(test4f)));
+
+RabinPetriNet test4nf = (
+	alphabet = {a b c d},
+	places = {p1 p2 p3 p4 p5 p6},
+	transitions = { ({p1} a {p2 p3 p4}) ({p2 p3 p4} b {p5 p6})	({p5} c {p2 p3}) ({p6} d {p4}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p5},
+	finitePlaces = {p1}
+);
+
+assert(!isEmpty(rpn2ra(test4nf)));
+
+RabinPetriNet test42 = (
+	alphabet = {a b c d},
+	places = {p1 p2 p3 p4 p5},
+	transitions = { ({p1} a {p2 p3}) ({p2} b {p4}) ({p3} c {p5}) ({p4 p5} d {p2 p3}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p5},
+	finitePlaces = {}
+);
+
+assert(!isEmpty(rpn2ra(test42)));
+
+RabinPetriNet test422 = (
+	alphabet = {a b c d e},
+	places = {p1 p2 p3 p4 p5 p6 p7},
+	transitions = { ({p1} a {p2 p3 p6}) ({p2} e {p4}) ({p2} b {p4}) ({p3} c {p5}) ({p4 p5 p7} d {p2 p3 p6}) ({p6} a {p7}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p5},
+	finitePlaces = {}
+);
+
+assert(!isEmpty(rpn2ra(test422)));
+
+
+RabinPetriNet testCutoffEvent = (
+	alphabet = {a aa b c d u},
+	places = {p1 p2 p3 p4 p5 p6},
+	transitions = { ({p1} a {p2}) ({p2} aa {p3}) ({p3} c {p5}) ({p5} d {p2}) ({p1} b {p3}) ({p2} u {p6}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p5},
+	finitePlaces = {}
+);
+
+assert(!isEmpty(rpn2ra(testCutoffEvent)));
+
+RabinPetriNet testCutoffEventF = (
+	alphabet = {a aa b c d u},
+	places = {p1 p2 p3 p4 p5 p6},
+	transitions = { ({p1} a {p2}) ({p2} aa {p3}) ({p3} c {p5}) ({p5} d {p2}) ({p1} b {p3}) ({p2} u {p6}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p5},
+	finitePlaces = {p2}
+);
+
+assert(isEmpty(rpn2ra(testCutoffEventF)));
+
+RabinPetriNet testCutoffEventF2 = (
+	alphabet = {a aa b c d u},
+	places = {p1 p2 p3 p4 p5 p6},
+	transitions = { ({p1} a {p2}) ({p2} aa {p3}) ({p3} c {p5}) ({p5} d {p2}) ({p1} b {p3}) ({p2} u {p6}) },
+	initialMarking = {p1},
+	acceptingPlaces = {p5},
+	finitePlaces = {p1}
+);
+
+assert(!isEmpty(rpn2ra(testCutoffEventF2)));
+
+RabinPetriNet testCutoffEvent3 = (
+	alphabet = {a aa b c d},
+	places = {p1 p2 p3 p4},
+	transitions = { ({p1 p2} a {p1 p4}) ({p3 p4} b {p3 p2}) },
+	initialMarking = {p1 p2 p3},
+	acceptingPlaces = {p4},
+	finitePlaces = {}
+);
+
+assert(!isEmpty(rpn2ra(testCutoffEvent3)));
+
+RabinPetriNet testCutoffEvent3F = (
+	alphabet = {a aa b c d},
+	places = {p1 p2 p3 p4},
+	transitions = { ({p1 p2} a {p1 p4}) ({p3 p4} b {p3 p2}) },
+	initialMarking = {p1 p2 p3},
+	acceptingPlaces = {p4},
+	finitePlaces = {p1}
+);
+
+assert(isEmpty(rpn2ra(testCutoffEvent3F)));
+
+RabinPetriNet testCutoffEvent4 = (
+	alphabet = {a aa b c d},
+	places = {p00 p0 p1 p2 p3 p4},
+	transitions = { ({p0} c {p1}) ({p00} aa {p2 p3}) ({p1 p2} a {p1 p4}) ({p3 p4} b {p3 p2}) },
+	initialMarking = {p00 p0},
+	acceptingPlaces = {p4},
+	finitePlaces = {}
+);
+
+assert(!isEmpty(rpn2ra(testCutoffEvent4)));
+
+
+RabinPetriNet testPartialConfigurationThesis = (
+	alphabet = {a b c d e f g h},
+	places = {p1 p2 p3 p4 p5 p6},
+	transitions = { ({p1} a {p2}) ({p1} b {p3}) ({p1} c {p4}) ({p2} d {p5}) ({p3} e {p6}) ({p4} f {p3}) ({p5} g {p4}) ({p6} h {p5})},
+	initialMarking = {p1},
+	acceptingPlaces = {p3},
+	finitePlaces = {}
+);
+
+assert(!isEmpty(rpn2ra(testPartialConfigurationThesis)));
+
+RabinPetriNet testPartialConfigurationThesisF1 = (
+	alphabet = {a b c d e f g h},
+	places = {p1 p2 p3 p4 p5 p6},
+	transitions = { ({p1} a {p2}) ({p1} b {p3}) ({p1} c {p4}) ({p2} d {p5}) ({p3} e {p6}) ({p4} f {p3}) ({p5} g {p4}) ({p6} h {p5})},
+	initialMarking = {p1},
+	acceptingPlaces = {p3},
+	finitePlaces = {p5}
+);
+
+assert(isEmpty(rpn2ra(testPartialConfigurationThesisF1)));
+
+RabinPetriNet testPartialConfigurationThesisF2 = (
+	alphabet = {a b c d e f g h},
+	places = {p1 p2 p3 p4 p5 p6},
+	transitions = { ({p1} a {p2}) ({p1} b {p3}) ({p1} c {p4}) ({p2} d {p5}) ({p3} e {p6}) ({p4} f {p3}) ({p5} g {p4}) ({p6} h {p5})},
+	initialMarking = {p1},
+	acceptingPlaces = {p3},
+	finitePlaces = {p1}
+);
+
+assert(!isEmpty(rpn2ra(testPartialConfigurationThesisF2)));
+
+RabinPetriNet testPartialConfigurationThesisF3 = (
+	alphabet = {a b c d e f g h},
+	places = {p1 p2 p3 p4 p5 p6},
+	transitions = { ({p1} a {p2}) ({p1} b {p3}) ({p1} c {p4}) ({p2} d {p5}) ({p3} e {p6}) ({p4} f {p3}) ({p5} g {p4}) ({p6} h {p5})},
+	initialMarking = {p1},
+	acceptingPlaces = {p3},
+	finitePlaces = {p4}
+);
+
+assert(isEmpty(rpn2ra(testPartialConfigurationThesisF3)));
+
+RabinPetriNet testPartialConfigurationThesisF4 = (
+	alphabet = {a b c d e f g h},
+	places = {p1 p2 p3 p4 p5 p6},
+	transitions = { ({p1} a {p2}) ({p1} b {p3}) ({p1} c {p4}) ({p2} d {p5}) ({p3} e {p6}) ({p4} f {p3}) ({p5} g {p4}) ({p6} h {p5})},
+	initialMarking = {p1},
+	acceptingPlaces = {p3},
+	finitePlaces = {p2}
+);
+
+assert(!isEmpty(rpn2ra(testPartialConfigurationThesisF4)));
