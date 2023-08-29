@@ -38,7 +38,7 @@ public interface ISpec {
 	/**
 	 * Specification types.
 	 */
-	public enum Type {
+	enum Type {
 
 		// @formatter:off
 		/*-------------------------------------------------------------------------------------------------------------

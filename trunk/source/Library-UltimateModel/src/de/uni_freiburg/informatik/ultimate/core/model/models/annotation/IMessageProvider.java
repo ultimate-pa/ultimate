@@ -43,7 +43,7 @@ public interface IMessageProvider {
 	 * 
 	 * @return positive default message for the given {@code spec}.
 	 */
-	public default String getDefaultPositiveMessage(final ISpec.Type spec) {
+	default String getDefaultPositiveMessage(final ISpec.Type spec) {
 		return spec.getDefaultPositiveMessage();
 	}
 
@@ -55,7 +55,7 @@ public interface IMessageProvider {
 	 * 
 	 * @return negative default message for the given {@code spec}.
 	 */
-	public default String getDefaultNegativeMessage(final ISpec.Type spec) {
+	default String getDefaultNegativeMessage(final ISpec.Type spec) {
 		return spec.getDefaultNegativeMessage();
 	}
 
@@ -67,7 +67,7 @@ public interface IMessageProvider {
 	 * @param msgProviderFunc
 	 *            {@link Supplier} returning the customized positive message for {@code spec}.
 	 */
-	public void registerPositiveMessageOverride(final ISpec.Type spec, final Supplier<String> msgProviderFunc);
+	void registerPositiveMessageOverride(final ISpec.Type spec, final Supplier<String> msgProviderFunc);
 
 	/**
 	 * Register a custom negative message supplier for a given {@link ISpec.Type} specification.
@@ -77,7 +77,7 @@ public interface IMessageProvider {
 	 * @param msgProviderFunc
 	 *            {@link Supplier} returning the customized negative message for {@code spec}.
 	 */
-	public void registerNegativeMessageOverride(final ISpec.Type spec, final Supplier<String> msgProviderFunc);
+	void registerNegativeMessageOverride(final ISpec.Type spec, final Supplier<String> msgProviderFunc);
 
 	/**
 	 * Returns a positive message for a given {@link ISpec.Type} specification.
@@ -92,7 +92,7 @@ public interface IMessageProvider {
 	 *           considered as well as positive default messages. Default messages can be obtained by
 	 *           {@link #getDefaultPositiveMessage(ISpec.Type)}.
 	 */
-	public String getPositiveMessage(final ISpec.Type spec);
+	String getPositiveMessage(final ISpec.Type spec);
 
 	/**
 	 * Returns a negative message for a given {@link ISpec.Type} specification.
@@ -107,5 +107,5 @@ public interface IMessageProvider {
 	 *           considered as well as negative default messages. Default messages can be obtained by
 	 *           {@link #getDefaultNegativeMessage(ISpec.Type)}.
 	 */
-	public String getNegativeMessage(final ISpec.Type spec);
+	String getNegativeMessage(final ISpec.Type spec);
 }
