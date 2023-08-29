@@ -74,10 +74,10 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private static final boolean APPLY_CONSTANT_FOLDING = false;
 	private static final boolean DEBUG_CHECK_RESULT = false;
 	// private static final boolean PREPROCESS_WITH_POLY_PAC_SIMPLIFICATION = false;
-	private static final boolean DESCEND_INTO_QUANTIFIED_FORMULAS = !false;
+	private static final boolean DESCEND_INTO_QUANTIFIED_FORMULAS = false;
 	private static final boolean OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT = true;
 	private static final boolean SIMPLIFY_REPEATEDLY = true;
-	private static final CheckedNodes CHECKED_NODES = CheckedNodes.ALL_NODES;
+	private static final CheckedNodes CHECKED_NODES = CheckedNodes.ONLY_LEAVES;
 
 	private enum CheckedNodes {
 		ONLY_LEAVES, ALL_NODES, ONLY_LEAVES_AND_QUANTIFIED_NODES
@@ -227,7 +227,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		return substitutedQuantifiedFormula;
 	}
 
-	private boolean checkRedundancyForNode(final Term term) {
+	private static boolean checkRedundancyForNode(final Term term) {
 		return ((CHECKED_NODES == CheckedNodes.ALL_NODES)
 				|| ((CHECKED_NODES == CheckedNodes.ONLY_LEAVES_AND_QUANTIFIED_NODES)
 						&& (term instanceof QuantifiedFormula || isLeaf(term)))
@@ -372,6 +372,9 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		/// push new frame and add context in beginning for if user submits a context
 		final Term result;
 		final SimplifyDDA2 simplifyDDA2 = new SimplifyDDA2(services, mgdScript);
+		// do initial push
+		mgdScript.getScript().push(1);
+		mgdScript.getScript().assertTerm(context);
 		try {
 			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(term);
 			final Comparator<Term> siblingOrder = null;
@@ -392,6 +395,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			final String taskDescription = String.format("simplifying a %s term", termCdc);
 			tce.addRunningTaskInfo(new RunningTaskInfo(SimplifyDDA2.class, taskDescription));
 			throw tce;
+		} finally {
+			mgdScript.getScript().pop(1);
 		}
 		return result;
 	}
