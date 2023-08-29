@@ -196,7 +196,7 @@ public final class SmtUtils {
 						.getSimplifiedTerm(formula);
 				break;
 			case SIMPLIFY_DDA2:
-				simplified = SimplifyDDA2.simplify(services, mgdScript, context, formula);
+				simplified = SimplifyDDA2.simplify(services, script, context, formula);
 				break;
 			case SIMPLIFY_QUICK:
 				simplified = new SimplifyQuick(script.getScript(), services).getSimplifiedTerm(formula);
@@ -256,7 +256,7 @@ public final class SmtUtils {
 				// TODO: Matthias 2019-11-19 SimplifyDDA can produce nested
 				// conjunctions or disjunctions. Use UnfTransformer to get
 				// rid of these.
-				return new UnfTransformer(mgdScript.getScript()).transform(simplified);
+				return new UnfTransformer(script.getScript()).transform(simplified);
 			}
 			return simplified;
 		} catch (final ToolchainCanceledException t) {
