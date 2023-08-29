@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
@@ -397,7 +398,7 @@ public class ExpressionFactory {
 			throw new AssertionError("unknown operator " + operator);
 		}
 	}
-	
+
 	public static Expression constructIfThenExpression(final ILocation loc, final Expression condition,
 			final Expression thenPart) {
 		if (condition instanceof BooleanLiteral) {
@@ -406,12 +407,12 @@ public class ExpressionFactory {
 				return thenPart;
 			}
 		}
-		final BoogieType type = TypeCheckHelper.typeCheckIfThenElseExpression((BoogieType) condition.getType(),
+		final BoogieType type = TypeCheckHelper.typeCheckIfThenExpression((BoogieType) condition.getType(),
 				(BoogieType) thenPart.getType(), (BoogieType) thenPart.getType(), new TypeErrorReporter(loc));
-		return new IfThenElseExpression(loc, type, condition, thenPart, null);
+		return new IfThenExpression(loc, type, condition, thenPart);
 
 	}
-	
+
 	public static Expression constructIfThenElseExpression(final ILocation loc, final Expression condition,
 			final Expression thenPart, final Expression elsePart) {
 		if (condition instanceof BooleanLiteral) {

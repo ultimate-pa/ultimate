@@ -265,6 +265,23 @@ public class TypeCheckHelper {
 		}
 		return resultType;
 	}
+	
+	public static <T> BoogieType typeCheckIfThenExpression(final BoogieType condType, final BoogieType left,
+			final BoogieType right, final ITypeErrorReporter<T> typeErrorReporter) {
+		BoogieType resultType;
+		if (!condType.equals(BoogieType.TYPE_ERROR) && !condType.equals(BoogieType.TYPE_BOOL)) {
+			// typeError(expr, "if expects boolean type: " + expr);
+			typeErrorReporter.report(exp -> "if expects boolean type: " + exp);
+		}
+		if (!left.isUnifiableTo(right)) {
+			// typeError(expr, "Type check failed for " + expr);
+			typeErrorReporter.report(exp -> "Type check failed for " + exp);
+			resultType = BoogieType.TYPE_ERROR;
+		} else {
+			resultType = left.equals(BoogieType.TYPE_ERROR) ? right : left;
+		}
+		return resultType;
+	}
 
 	public static <T> void typeCheckAssignStatement(final String[] lhsIds, final BoogieType[] lhsTypes,
 			final BoogieType[] rhsTypes, final ITypeErrorReporter<T> typeErrorReporter) {

@@ -81,7 +81,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.Auxili
 import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.PeaPhaseProgramCounter;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.StateRecoverabilityAuxiliaryStatement;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.StateRecoverabilityGenerator;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.VerificationExpression;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.StateRecoverabilityVerificationCondition;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CheckedReqLocation;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
@@ -198,10 +198,10 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		List<Statement> statements = new ArrayList<>();
 		StateRecoverabilityGenerator stateRecoverabilityGenerator = new StateRecoverabilityGenerator();
 		AuxiliaryStatementContainer auxStatementContainer = mSymbolTable.getAuxStatementContainer();
-		Map<VerificationExpression, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxiliaryStatement>>> vePeaAuxStatementMap = stateRecoverabilityGenerator.getAuxStatementPerVerificationExpression(auxStatementContainer);
+		Map<StateRecoverabilityVerificationCondition, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxiliaryStatement>>> vePeaAuxStatementMap = stateRecoverabilityGenerator.getAuxStatementPerVerificationExpression(auxStatementContainer);
 		
-		for(Map.Entry<VerificationExpression, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxiliaryStatement>>> entry : vePeaAuxStatementMap.entrySet()) {
-			VerificationExpression ve = entry.getKey();
+		for(Map.Entry<StateRecoverabilityVerificationCondition, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxiliaryStatement>>> entry : vePeaAuxStatementMap.entrySet()) {
+			StateRecoverabilityVerificationCondition ve = entry.getKey();
 			
 			for(Map.Entry<PhaseEventAutomata, Set<StateRecoverabilityAuxiliaryStatement>> entryPeaStRecAuxSt : entry.getValue().entrySet()) {
 					Set<StateRecoverabilityAuxiliaryStatement> stRecAuxStSet = entryPeaStRecAuxSt.getValue();

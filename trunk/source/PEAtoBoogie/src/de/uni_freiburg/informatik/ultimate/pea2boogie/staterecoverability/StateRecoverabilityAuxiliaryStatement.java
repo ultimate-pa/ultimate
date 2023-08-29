@@ -46,7 +46,7 @@ public class StateRecoverabilityAuxiliaryStatement implements AuxiliaryStatement
 	private BoogieLocation loc;
 	private String pcVariable;
 	private int pc;
-	private VerificationExpression verificationExpression;
+	private StateRecoverabilityVerificationCondition verificationExpression;
 	private Statement declVar;
 	private Statement assignVar;
 	private Statement ifSt;
@@ -55,7 +55,7 @@ public class StateRecoverabilityAuxiliaryStatement implements AuxiliaryStatement
 		this.relatedVariable = variable;
 	}
 	
-	public StateRecoverabilityAuxiliaryStatement(PeaPhaseProgramCounter peaPhasePc, String variable, String pcVariable, int pc, VerificationExpression ve) {
+	public StateRecoverabilityAuxiliaryStatement(PeaPhaseProgramCounter peaPhasePc, String variable, String pcVariable, int pc, StateRecoverabilityVerificationCondition ve) {
 		this.peaPhasePc = peaPhasePc;
 		this.relatedVariable = variable;
 		this.pcVariable = pcVariable;
@@ -103,11 +103,11 @@ public class StateRecoverabilityAuxiliaryStatement implements AuxiliaryStatement
 		this.pc = pc;
 	}
 
-	public VerificationExpression getVerificationExpression() {
+	public StateRecoverabilityVerificationCondition getVerificationExpression() {
 		return verificationExpression;
 	}
 
-	public void setVerificationExpression(VerificationExpression verificationExpression) {
+	public void setVerificationExpression(StateRecoverabilityVerificationCondition verificationExpression) {
 		this.verificationExpression = verificationExpression;
 	}
 

@@ -56,6 +56,7 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		if (mode == PEATransformerMode.REQ_CHECK) {
 			return generateReqCheckBoogie(patterns);
 		}
+		// For checks with additional parameters that must be passed for execution.
 		if (mode == PEATransformerMode.REQ_PARAM_CHECK) {
 			return generateReqParamCheckBoogie(patterns);
 		}
@@ -76,6 +77,7 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		return translator.getUnit();
 	}
 
+	// For checks with additional parameters that must be passed for execution.
 	private IElement generateReqParamCheckBoogie(final List<PatternType<?>> patterns) {
 		final Req2ModifySymbolTablePeaTransformer transformer =
 				new Req2ModifySymbolTablePeaTransformer(mServices, mLogger);

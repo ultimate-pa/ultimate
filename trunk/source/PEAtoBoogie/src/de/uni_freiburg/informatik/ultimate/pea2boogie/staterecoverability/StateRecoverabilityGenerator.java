@@ -131,9 +131,9 @@ public class StateRecoverabilityGenerator {
 		mCddToSmt = new CddToSmt(mServices, mPeaResultUtil, mScript, mBoogie2Smt, boogieDeclarations, mReqSymboltable);
 	}
 
-	public Map<VerificationExpression, Set<PeaPhaseProgramCounter>>
-			getRelevantLocationsFromPea(List<ReqPeas> reqPeasList, VerificationExpressionContainer vec) {
-		Map<VerificationExpression, Set<PeaPhaseProgramCounter>> veLocation = new HashMap<>();
+	public Map<StateRecoverabilityVerificationCondition, Set<PeaPhaseProgramCounter>>
+			getRelevantLocationsFromPea(List<ReqPeas> reqPeasList, StateRecoverabilityVerificationConditionContainer vec) {
+		Map<StateRecoverabilityVerificationCondition, Set<PeaPhaseProgramCounter>> veLocation = new HashMap<>();
 		Set<ReqPeas> reqPeasSet = new HashSet<>(reqPeasList);
 		Set<String> declaredConstants = new HashSet<>();
 		Map<ReqPeas, Term> reqPeasTerm = new HashMap<>();
@@ -155,7 +155,7 @@ public class StateRecoverabilityGenerator {
 					// Check for every phase if the location can fulfill the verification expression
 					// TRUE -> Do not add the phase
 					// FALSE -> Add the phase
-					for (VerificationExpression ve : vec.getVerificationExpressions().values()) {
+					for (StateRecoverabilityVerificationCondition ve : vec.getVerificationExpressions().values()) {
 						CDD veCcd = BoogieBooleanExpressionDecision
 								.create(createOppositeCondition(new DefaultLocation(), ve.getBoogiePrimitiveType(),
 										ve.getVariable(), ve.getOperator(), ve.getValue()));
@@ -312,9 +312,9 @@ public class StateRecoverabilityGenerator {
 		return SolverBuilder.buildAndInitializeSolver(services, settings, "RtInconsistencySolver");
 	}
 
-	public Map<VerificationExpression, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxiliaryStatement>>>
+	public Map<StateRecoverabilityVerificationCondition, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxiliaryStatement>>>
 			getAuxStatementPerVerificationExpression(AuxiliaryStatementContainer auxStatementContainer) {
-		Map<VerificationExpression, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxiliaryStatement>>> vePeaAuxStatementMap =
+		Map<StateRecoverabilityVerificationCondition, Map<PhaseEventAutomata, Set<StateRecoverabilityAuxiliaryStatement>>> vePeaAuxStatementMap =
 				new HashMap<>();
 		for (AuxiliaryStatement auxStatement : auxStatementContainer.getSreMap().values()) {
 			if (auxStatement instanceof StateRecoverabilityAuxiliaryStatement) {

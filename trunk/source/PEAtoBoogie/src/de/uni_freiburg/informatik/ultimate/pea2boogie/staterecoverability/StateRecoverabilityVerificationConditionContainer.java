@@ -43,11 +43,13 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2Pea;
 
 /**
 *
+* This class contains all conditions to be verified for the property check state-recoverability.
+*
 * @author Tobias Wießner <tobias.wiessner@mailbox.org>
 *
 */
 
-public class VerificationExpressionContainer {
+public class StateRecoverabilityVerificationConditionContainer {
 
 	// Pattern for input expression
 	public static final String exprPattern = "\\s{0,1}((\\w+)\\s*([<>=!][=]*)\\s*(\\w+))\\s{0,1}";
@@ -58,10 +60,10 @@ public class VerificationExpressionContainer {
 	public static final String REAL = "real";
 
 	private IReq2Pea mReq2pea;
-	private Map<String, VerificationExpression> mVerificationExpressions;
+	private Map<String, StateRecoverabilityVerificationCondition> mVerificationExpressions;
 	private Map<String, String> mVariableDataTypeMap;
 
-	public VerificationExpressionContainer(IReq2Pea req2pea) {
+	public StateRecoverabilityVerificationConditionContainer(IReq2Pea req2pea) {
 		mReq2pea = req2pea;
 		mVerificationExpressions = new HashMap<>();
 		getDataTypeFromReq2Pea(req2pea);
@@ -82,12 +84,12 @@ public class VerificationExpressionContainer {
 		mVariableDataTypeMap = variableDataTypeMap;
 	}
 
-	public Map<String, VerificationExpression> getVerificationExpressions() {
+	public Map<String, StateRecoverabilityVerificationCondition> getVerificationExpressions() {
 		return mVerificationExpressions;
 	}
 
 	public void addExpression(String inputExpr) {
-		List<VerificationExpression> veList = new ArrayList<>();
+		List<StateRecoverabilityVerificationCondition> veList = new ArrayList<>();
 		int grpVariable = 2;
 		int grpOperator = 3;
 		int grpValue = 4;
@@ -103,19 +105,19 @@ public class VerificationExpressionContainer {
 					throw new IllegalArgumentException(
 							getClass().getName() + " could not find data type for " + sVariable);
 				}
-				veList.add(new VerificationExpression(new String[] { sVariable, sOperator, sValue }, dataType));
+				veList.add(new StateRecoverabilityVerificationCondition(new String[] { sVariable, sOperator, sValue }, dataType));
 			}
 		}
 		addVerificationExpression(veList);
 	}
 
-	private void addVerificationExpression(List<VerificationExpression> veList) {
-		for (VerificationExpression ve : veList) {
+	private void addVerificationExpression(List<StateRecoverabilityVerificationCondition> veList) {
+		for (StateRecoverabilityVerificationCondition ve : veList) {
 			addVerificationExpression(ve);
 		}
 	}
 
-	private void addVerificationExpression(VerificationExpression ve) {
+	private void addVerificationExpression(StateRecoverabilityVerificationCondition ve) {
 		if (mVerificationExpressions == null) {
 			mVerificationExpressions = new HashMap<>();
 		}

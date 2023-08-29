@@ -49,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePref
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2Pea;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaAnnotator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqCheckAnnotator;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.VerificationExpression;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.VerificationExpressionContainer;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.StateRecoverabilityVerificationCondition;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.StateRecoverabilityVerificationConditionContainer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxiliaryStatement;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.PeaPhaseProgramCounter;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.StateRecoverabilityAuxiliaryStatement;
@@ -98,7 +98,7 @@ public class Req2ModifySymbolTablePea implements IReq2Pea {
 
 	@Override
 	public void transform(IReq2Pea req2pea) {
-		final VerificationExpressionContainer vec = getVerificationExpression(req2pea);
+		final StateRecoverabilityVerificationConditionContainer vec = getVerificationExpression(req2pea);
 		
 		final List<ReqPeas> simplePeas = req2pea.getReqPeas();
 		final IReqSymbolTable oldSymbolTable = req2pea.getSymboltable();
@@ -123,7 +123,7 @@ public class Req2ModifySymbolTablePea implements IReq2Pea {
 		
 		//Collecting the PEAs and ProgramCounter
 		//Necessary in Transformer since otherwise unused global variables would be in the Boogie code
-		Map<VerificationExpression, Set<PeaPhaseProgramCounter>> veLocationMap = stRecGen.getRelevantLocationsFromPea(simplePeas, vec);
+		Map<StateRecoverabilityVerificationCondition, Set<PeaPhaseProgramCounter>> veLocationMap = stRecGen.getRelevantLocationsFromPea(simplePeas, vec);
 		
 		List<AuxiliaryStatement> sreList = createGlobalVariableForVerificationExpression(builder, veLocationMap, vec);
 		
@@ -138,7 +138,7 @@ public class Req2ModifySymbolTablePea implements IReq2Pea {
 		for(AuxiliaryStatement auxStatement : auxStatements) {
 			if(auxStatement instanceof StateRecoverabilityAuxiliaryStatement) {
 				StateRecoverabilityAuxiliaryStatement auxStatementStRec = (StateRecoverabilityAuxiliaryStatement) auxStatement;
-				VerificationExpression ve = auxStatementStRec.getVerificationExpression();
+				StateRecoverabilityVerificationCondition ve = auxStatementStRec.getVerificationExpression();
 				ILocation loc = auxStatementStRec.getBoogieLocation();
 				// Create expression
 				//Opposite of verification Expression
@@ -155,17 +155,17 @@ public class Req2ModifySymbolTablePea implements IReq2Pea {
 		}
 	}
 
-	private VerificationExpressionContainer getVerificationExpression(IReq2Pea req2pea) {
-		final VerificationExpressionContainer vec = new VerificationExpressionContainer(req2pea);
+	private StateRecoverabilityVerificationConditionContainer getVerificationExpression(IReq2Pea req2pea) {
+		final StateRecoverabilityVerificationConditionContainer vec = new StateRecoverabilityVerificationConditionContainer(req2pea);
 		//Gets verification expression from GUI
 		String verExpr = prefs.getString(Pea2BoogiePreferences.LABEL_STATE_RECOVERABILITY_VER_EXPR);
 		vec.addExpression(verExpr);
 		return vec;
 	}
 	
-	private List<AuxiliaryStatement> createGlobalVariableForVerificationExpression(ReqSymboltableBuilder builder, Map<VerificationExpression, Set<PeaPhaseProgramCounter>> veLocationMaptionMap, VerificationExpressionContainer vec) {
+	private List<AuxiliaryStatement> createGlobalVariableForVerificationExpression(ReqSymboltableBuilder builder, Map<StateRecoverabilityVerificationCondition, Set<PeaPhaseProgramCounter>> veLocationMaptionMap, StateRecoverabilityVerificationConditionContainer vec) {
 		List<AuxiliaryStatement> sreList = new ArrayList<>();
-		for(Map.Entry<VerificationExpression, Set<PeaPhaseProgramCounter>> entry : veLocationMaptionMap.entrySet()) {
+		for(Map.Entry<StateRecoverabilityVerificationCondition, Set<PeaPhaseProgramCounter>> entry : veLocationMaptionMap.entrySet()) {
 			for(PeaPhaseProgramCounter peaPhasePc : entry.getValue()) {
 				String pcName = getPcName(peaPhasePc.getPea().getName());
 				int pc = peaPhasePc.getPc();
