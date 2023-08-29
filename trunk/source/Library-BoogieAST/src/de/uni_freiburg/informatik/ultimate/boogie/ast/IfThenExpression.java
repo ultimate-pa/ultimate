@@ -9,7 +9,7 @@ public class IfThenExpression extends Expression{
 
 	private static final long serialVersionUID = 1L;
     private static final java.util.function.Predicate<BoogieASTNode> VALIDATOR = 
-			BoogieASTNode.VALIDATORS.get(IfThenElseExpression.class);
+			BoogieASTNode.VALIDATORS.get(IfThenExpression.class);
     /**
      * The condition of this if then expression.
      */
