@@ -1824,7 +1824,7 @@ public class StandardFunctionHandler {
 		}
 
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults);
-		return erb.addStatement(createReachabilityAssert(loc, name, mSettings.checkAssertions(), ISpec.Type.ASSERT,
+		return erb.addStatement(createAnnotatedAssertOrAssume(loc, name, mSettings.checkAssertions(), ISpec.Type.ASSERT,
 				ExpressionFactory.createBooleanLiteral(loc, false))).build();
 	}
 
@@ -1836,7 +1836,7 @@ public class StandardFunctionHandler {
 
 		final ExpressionResult result = mExprResultTransformer
 				.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[0]), loc, node);
-		return new ExpressionResultBuilder().addAllExceptLrValue(result).addStatement(createReachabilityAssert(loc,
+		return new ExpressionResultBuilder().addAllExceptLrValue(result).addStatement(createAnnotatedAssertOrAssume(loc,
 				name, mSettings.checkAssertions(), ISpec.Type.ASSERT, result.getLrValue().getValue())).build();
 	}
 
@@ -1871,9 +1871,9 @@ public class StandardFunctionHandler {
 
 				final ExpressionResult result = mExprResultTransformer
 						.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[0]), loc, node);
-				return new ExpressionResultBuilder()
-						.addAllExceptLrValue(result).addStatement(createReachabilityAssert(loc, name,
-								mSettings.checkAssertions(), ISpec.Type.ASSERT, result.getLrValue().getValue(), errorMsg))
+				return new ExpressionResultBuilder().addAllExceptLrValue(result)
+						.addStatement(createAnnotatedAssertOrAssume(loc, name, mSettings.checkAssertions(),
+								ISpec.Type.ASSERT, result.getLrValue().getValue(), errorMsg))
 						.build();
 			} else {
 				/* WARNING: this case should be never reached since the msg should be always a string literal */
@@ -2463,55 +2463,55 @@ public class StandardFunctionHandler {
 	private Result handleErrorFunction(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
-		final Statement st = createReachabilityAssert(loc, name, mSettings.checkErrorFunction(),
+		final Statement st = createAnnotatedAssertOrAssume(loc, name, mSettings.checkErrorFunction(),
 				ISpec.Type.ERROR_FUNCTION, falseLiteral);
 		return new ExpressionResult(Collections.singletonList(st), null);
 	}
 
 	/**
-	 * Create an assertion or assumption for usage in reachability specifications.
+	 * Create an assertion or assumption statement annotated with a {@link Check} annotation.
 	 * 
 	 * @param loc
-	 *            location of the reachability specification.
+	 *            location of the assertion or assumption node.
 	 * @param functionName
-	 *            name of the function for the reachability specification.
+	 *            name of the function for the assertion statement and {@link Check} annotation.
 	 * @param checkProperty
-	 *            enables checking of the reachability specification, otherwise an assumption is made.
+	 *            enables creation of an assertion to check {@code expr}, otherwise an assumption is made.
 	 * @param spec
-	 *            type of the reachability specification that should be checked.
+	 *            type of {@link Check} for assertion or assumption statement annotation.
 	 * @param expr
-	 *            expression for checking the reachability specification.
+	 *            expression for assertion or assumption statement.
 	 * 
-	 * @see {@link #createReachabilityAssert(ILocation, String, boolean, Spec, Expression, String)}
+	 * @see {@link #createAnnotatedAssertOrAssume(ILocation, String, boolean, Spec, Expression, String)}
 	 */
-	private Statement createReachabilityAssert(final ILocation loc, final String functionName,
+	private Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
 			final boolean checkProperty, final ISpec.Type spec, final Expression expr) {
-		return createReachabilityAssert(loc, functionName, checkProperty, spec, expr, null);
+		return createAnnotatedAssertOrAssume(loc, functionName, checkProperty, spec, expr, null);
 	}
 
 	/**
-	 * Create an assertion or assumption for usage in reachability specifications.
+	 * Create an assertion or assumption statement annotated with a {@link Check} annotation.
 	 * 
-	 * Create an {@code assert expr} or {@code assume expr} for usage in reachability specifications, depending on the
-	 * settings. If {@code checkProperty} is {@code true} (i.e. the check is enabled), an {@code assert expr} will be
-	 * generated, otherwise an {@code assume expr} will be generated.
+	 * Create an {@code assert expr} or {@code assume expr} depending on the settings. If {@code checkProperty} is
+	 * {@code true} (i.e. the check is enabled), an {@code assert expr} will be generated, otherwise an
+	 * {@code assume expr} will be generated.
 	 * 
 	 * @param loc
-	 *            location of the reachability specification.
+	 *            location of the assertion or assumption node.
 	 * @param functionName
-	 *            name of the function for the reachability specification.
+	 *            name of the function for the assertion statement and {@link Check} annotation.
 	 * @param checkProperty
-	 *            enables checking of the reachability specification, otherwise an assumption is made.
+	 *            enables creation of an assertion to check {@code expr}, otherwise an assumption is made.
 	 * @param spec
-	 *            type of the reachability specification that should be checked.
+	 *            type of {@link Check} for assertion or assumption statement annotation.
 	 * @param expr
-	 *            expression for checking the reachability specification.
+	 *            expression for assertion or assumption statement.
 	 * @param errorMsg
 	 *            error message for a negative check result of an assertion.
 	 * 
-	 * @return {@link Statement} representing the reachability specification.
+	 * @return {@link Statement} annotated with a {@link Check} annotation.
 	 */
-	private Statement createReachabilityAssert(final ILocation loc, final String functionName,
+	private Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
 			final boolean checkProperty, final ISpec.Type spec, final Expression expr, final String errorMsg) {
 		final boolean checkMemoryleakInMain = mSettings.checkMemoryLeakInMain()
 				&& mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired();
