@@ -103,9 +103,9 @@ public abstract class MessageProvider implements IMessageProvider {
 
 	@Override
 	public String getPositiveMessage(final ISpec.Type spec) {
-		final Supplier<String> posMsgProviderFunc = mPosMsgProviderOverrideFuncs.get(spec);
-
 		checkSpecificationGroups(spec);
+
+		final Supplier<String> posMsgProviderFunc = mPosMsgProviderOverrideFuncs.get(spec);
 
 		if (posMsgProviderFunc != null) {
 			return posMsgProviderFunc.get();
@@ -116,9 +116,9 @@ public abstract class MessageProvider implements IMessageProvider {
 
 	@Override
 	public String getNegativeMessage(final ISpec.Type spec) {
-		final Supplier<String> negMsgProviderFunc = mNegMsgProviderOverrideFuncs.get(spec);
-
 		checkSpecificationGroups(spec);
+
+		final Supplier<String> negMsgProviderFunc = mNegMsgProviderOverrideFuncs.get(spec);
 
 		if (negMsgProviderFunc != null) {
 			return negMsgProviderFunc.get();
