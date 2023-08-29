@@ -90,7 +90,6 @@ public class ReqCheck extends Check {
 
 	private void registerMessageOverrides(final EnumSet<ISpec.Type> types, final String[] reqIds,
 			final String[] peaNames) {
-
 		final IMessageProvider mMsgProvider = getMessageProvider();
 
 		for (final ISpec.Type spec : types) {

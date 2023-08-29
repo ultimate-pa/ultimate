@@ -93,13 +93,11 @@ public abstract class MessageProvider implements IMessageProvider {
 
 	@Override
 	public void registerPositiveMessageOverride(final ISpec.Type spec, final Supplier<String> msgProviderFunc) {
-
 		mPosMsgProviderOverrideFuncs.put(spec, msgProviderFunc);
 	}
 
 	@Override
 	public void registerNegativeMessageOverride(final ISpec.Type spec, final Supplier<String> msgProviderFunc) {
-
 		mNegMsgProviderOverrideFuncs.put(spec, msgProviderFunc);
 	}
 

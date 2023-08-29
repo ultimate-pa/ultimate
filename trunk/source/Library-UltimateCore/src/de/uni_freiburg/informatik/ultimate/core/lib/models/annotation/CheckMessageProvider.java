@@ -52,7 +52,6 @@ public class CheckMessageProvider extends MessageProvider {
 	 *            name of the error function.
 	 */
 	public void registerSpecificationErrorFunctionName(final String functionName) {
-
 		if (functionName != null && !functionName.isEmpty()) {
 			registerPositiveMessageOverride(ISpec.Type.ERROR_FUNCTION,
 					() -> String.format("a call to %s is unreachable", functionName));
@@ -70,7 +69,6 @@ public class CheckMessageProvider extends MessageProvider {
 	 *            message describing the violation of the {@code spec}.
 	 */
 	public void registerSpecificationErrorMessage(final ISpec.Type spec, final String errorMsg) {
-
 		if (errorMsg != null && !errorMsg.isEmpty()) {
 			registerNegativeMessageOverride(spec,
 					() -> String.format("%s: %s", getDefaultNegativeMessage(spec), errorMsg));
@@ -84,7 +82,6 @@ public class CheckMessageProvider extends MessageProvider {
 	 *            description of the named attributes.
 	 */
 	public void registerSpecificationAssertNamedAttributes(final String namedAttributes) {
-
 		if (namedAttributes != null && !namedAttributes.isEmpty()) {
 			registerPositiveMessageOverride(ISpec.Type.ASSERT,
 					() -> String.format("assertion with attributes \"%s\" always holds", namedAttributes));
