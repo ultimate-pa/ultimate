@@ -27,13 +27,13 @@ FiniteAutomaton input = (
 
 FiniteAutomaton expected = (
      alphabet      = {a b c},
-     states        = {"true|true|true" "x=0|true|true" "false|y=x|true" "true|y=0|true" "true|true|z=y"},
-     initialStates = {"true|true|true"},
-     finalStates   = {"false|y=x|true"},
+     states        = {"s0: true|true|true" "s1: x=0|true|true" "s3: false|y=x|true" "s2: true|y=0|true"},
+     initialStates = {"s0: true|true|true"},
+     finalStates   = {"s3: false|y=x|true"},
      transitions   = {
-         ("true|true|true" a "x=0|true|true")
-         ("x=0|true|true" b "false|y=x|true")
-         ("true|true|true" b "true|y=0|true")
+         ("s0: true|true|true" a "s1: x=0|true|true")
+         ("s1: x=0|true|true" b "s3: false|y=x|true")
+         ("s0: true|true|true" b "s2: true|y=0|true")
      }
 );
 

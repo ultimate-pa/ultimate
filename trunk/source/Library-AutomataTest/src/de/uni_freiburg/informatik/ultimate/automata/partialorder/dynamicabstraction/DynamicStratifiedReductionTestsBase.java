@@ -364,7 +364,7 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 			}
 
 			// TODO @Veronika It may be nicer to include the parameters in the name.
-			final var name = "s" + mCounter;
+			final var name = "s" + mCounter + ": " + state;
 			mCounter++;
 			mMap.put(name, quad);
 			return name;
