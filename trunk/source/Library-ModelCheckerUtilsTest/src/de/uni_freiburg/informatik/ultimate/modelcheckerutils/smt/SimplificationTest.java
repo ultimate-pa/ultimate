@@ -1063,7 +1063,7 @@ public class SimplificationTest {
 		final String testId = ReflectionUtil.getCallerMethodName(3);
 		csvWriter.reportEliminationBegin(letFree, testId);
 		final ExtendedSimplificationResult esr =
-				SmtUtils.simplifyWithStatistics(mgdScript, unf, services, SimplificationTechnique.SIMPLIFY_DDA2);
+				SmtUtils.simplifyWithStatistics(mgdScript, unf, services, simplificationTechnique);
 		// final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, unf, services,
 		// SimplificationTechnique.SIMPLIFY_DDA2);
 		final Term result = esr.getSimplifiedTerm();
