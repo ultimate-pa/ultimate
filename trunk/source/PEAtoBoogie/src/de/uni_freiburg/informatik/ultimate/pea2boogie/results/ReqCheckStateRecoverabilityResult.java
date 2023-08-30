@@ -52,7 +52,7 @@ public class ReqCheckStateRecoverabilityResult<LOC extends IElement, TE extends 
 		sb.append(getShortDescription());
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		if (mMessage != null) {
-			sb.append("Verification Expression: ");
+			sb.append("Verification Condition: ");
 			sb.append(mMessage);
 		}
 		return sb.toString();

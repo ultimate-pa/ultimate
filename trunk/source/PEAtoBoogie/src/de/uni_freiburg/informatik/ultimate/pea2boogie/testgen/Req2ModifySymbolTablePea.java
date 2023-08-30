@@ -219,19 +219,6 @@ public class Req2ModifySymbolTablePea implements IReq2Pea {
 	private ILocation constructNewLocation() {
 		return new DefaultLocation();
 	}
-	
-	private IBoogieType getBoogieType(String type) {
-		switch (type.toLowerCase()) {
-		case "bool":
-		case "real":
-		case "int":
-			return BoogiePrimitiveType.toPrimitiveType(type);
-		case "event":
-			return BoogieType.TYPE_BOOL;
-		default:
-			return BoogieType.TYPE_ERROR;
-		}
-	}
 
 	@Override
 	public boolean hasErrors() {

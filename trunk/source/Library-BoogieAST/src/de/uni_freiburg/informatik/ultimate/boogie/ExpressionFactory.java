@@ -399,20 +399,6 @@ public class ExpressionFactory {
 		}
 	}
 
-	public static Expression constructIfThenExpression(final ILocation loc, final Expression condition,
-			final Expression thenPart) {
-		if (condition instanceof BooleanLiteral) {
-			final boolean value = ((BooleanLiteral) condition).getValue();
-			if (value) {
-				return thenPart;
-			}
-		}
-		final BoogieType type = TypeCheckHelper.typeCheckIfThenExpression((BoogieType) condition.getType(),
-				(BoogieType) thenPart.getType(), (BoogieType) thenPart.getType(), new TypeErrorReporter(loc));
-		return new IfThenExpression(loc, type, condition, thenPart);
-
-	}
-
 	public static Expression constructIfThenElseExpression(final ILocation loc, final Expression condition,
 			final Expression thenPart, final Expression elsePart) {
 		if (condition instanceof BooleanLiteral) {
