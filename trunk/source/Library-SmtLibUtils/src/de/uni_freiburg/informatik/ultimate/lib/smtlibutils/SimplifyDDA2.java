@@ -74,6 +74,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 */
 	private static final boolean APPLY_CONSTANT_FOLDING = false;
 	private static final boolean DEBUG_CHECK_RESULT = false;
+	private static final boolean USE_ECHO_COMMANDS = false;
 	// private static final boolean PREPROCESS_WITH_POLY_PAC_SIMPLIFICATION = false;
 	private static final boolean DESCEND_INTO_QUANTIFIED_FORMULAS = true;
 	private static final boolean OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT = true;
@@ -111,10 +112,11 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		// the critical constraint as soon as possible.
 		final List<Term> otherParams = new ArrayList<>(allParams);
 		otherParams.remove(selectedParam);
-
-		mMgdScript.lock(this);
-		mMgdScript.echo(this, new QuotedObject("push in constructContextForApplicationTerm"));
-		mMgdScript.unlock(this);
+		if (USE_ECHO_COMMANDS) {
+			mMgdScript.lock(this);
+			mMgdScript.echo(this, new QuotedObject("push in constructContextForApplicationTerm"));
+			mMgdScript.unlock(this);
+		}
 		mMgdScript.getScript().push(1);
 		mAssertionStackHeight++;
 
@@ -151,9 +153,11 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		// from PolyPacSimplification. I forgot that in an optimized version of this
 		// simplification we want to use the push/pop SMT commands and assert conjuncts of
 		// the critical constraint as soon as possible.
-		mMgdScript.lock(this);
-		mMgdScript.echo(this, new QuotedObject("push in constructContextForQuantifiedFormula"));
-		mMgdScript.unlock(this);
+		if (USE_ECHO_COMMANDS) {
+			mMgdScript.lock(this);
+			mMgdScript.echo(this, new QuotedObject("push in constructContextForQuantifiedFormula"));
+			mMgdScript.unlock(this);
+		}
 		mMgdScript.getScript().push(1);
 		mAssertionStackHeight++;
 		return Context.buildCriticalContraintForQuantifiedFormula(mMgdScript.getScript(), context, vars,
@@ -277,9 +281,11 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final boolean descend = (DESCEND_INTO_QUANTIFIED_FORMULAS && term instanceof QuantifiedFormula)
 				|| !(isLeaf(term) || term instanceof QuantifiedFormula);
 		if (checkRedundancyForNode(term) && ((result = checkRedundancy(term)) != null)) {
-			mMgdScript.lock(this);
-			mMgdScript.echo(this, new QuotedObject("pop in convert, node is redundant"));
-			mMgdScript.unlock(this);
+			if (USE_ECHO_COMMANDS) {
+				mMgdScript.lock(this);
+				mMgdScript.echo(this, new QuotedObject("pop in convert, node is redundant"));
+				mMgdScript.unlock(this);
+			}
 			mMgdScript.getScript().pop(1);
 			mAssertionStackHeight--;
 			return result;
@@ -293,9 +299,11 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 				return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 			}
 		} else {
-			mMgdScript.lock(this);
-			mMgdScript.echo(this, new QuotedObject("pop in convert, not redundant and not descend"));
-			mMgdScript.unlock(this);
+			if (USE_ECHO_COMMANDS) {
+				mMgdScript.lock(this);
+				mMgdScript.echo(this, new QuotedObject("pop in convert, not redundant and not descend"));
+				mMgdScript.unlock(this);
+			}
 			mMgdScript.getScript().pop(1);
 			mAssertionStackHeight--;
 			return new TermContextTransformationEngine.FinalResultForAscend(term);
@@ -332,9 +340,11 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	@Override
 	protected Term constructResultForApplicationTerm(final Term context, final ApplicationTerm originalApplicationTerm,
 			final Term[] resultParams) {
-		mMgdScript.lock(this);
-		mMgdScript.echo(this, new QuotedObject("pop in constructResultForApplicationTerm"));
-		mMgdScript.unlock(this);
+		if (USE_ECHO_COMMANDS) {
+			mMgdScript.lock(this);
+			mMgdScript.echo(this, new QuotedObject("pop in constructResultForApplicationTerm"));
+			mMgdScript.unlock(this);
+		}
 		mMgdScript.getScript().pop(1);
 		mAssertionStackHeight--;
 		assert mAssertionStackHeight >= 0;
@@ -410,9 +420,11 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 
 	public void clearStack() {
 		while (mAssertionStackHeight > 0) {
-			mMgdScript.lock(this);
-			mMgdScript.echo(this, new QuotedObject("pop for clearStack"));
-			mMgdScript.unlock(this);
+			if (USE_ECHO_COMMANDS) {
+				mMgdScript.lock(this);
+				mMgdScript.echo(this, new QuotedObject("pop for clearStack"));
+				mMgdScript.unlock(this);
+			}
 			mMgdScript.getScript().pop(1);
 			mAssertionStackHeight--;
 		}
@@ -436,9 +448,11 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		}
 		final Term revertedSubformula = Substitution.apply(mMgdScript, swapped, resultSubformula);
 		mRenamingMap.endScope();
-		mMgdScript.lock(this);
-		mMgdScript.echo(this, new QuotedObject("pop in constructResultForQuantifiedFormula"));
-		mMgdScript.unlock(this);
+		if (USE_ECHO_COMMANDS) {
+			mMgdScript.lock(this);
+			mMgdScript.echo(this, new QuotedObject("pop in constructResultForQuantifiedFormula"));
+			mMgdScript.unlock(this);
+		}
 		mMgdScript.getScript().pop(1);
 		mAssertionStackHeight--;
 		assert mAssertionStackHeight >= 0;
