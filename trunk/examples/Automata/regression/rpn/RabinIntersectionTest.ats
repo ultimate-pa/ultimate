@@ -27,6 +27,8 @@ NestedWordAutomaton thesisIntersectionAutomaton = (
 	returnTransitions = {}
 );
 
+assert(!rabinIsEmpty(rabinIntersect(thesisIntersectionNet, thesisIntersectionAutomaton)));
+
 assert(rabinAccepts(rabinIntersect(thesisIntersectionNet, thesisIntersectionAutomaton), [b , a]));
 assert(rabinAccepts(rabinIntersect(thesisIntersectionNet, thesisIntersectionAutomaton), [b , a a]));
 assert(rabinAccepts(rabinIntersect(thesisIntersectionNet, thesisIntersectionAutomaton), [b b , a]));
@@ -61,6 +63,7 @@ NestedWordAutomaton projectAutomaton = (
 	returnTransitions = {}
 );
 
+assert(!rabinIsEmpty(rabinIntersect(projectEquivNet, projectAutomaton)));
 assert(rabinAccepts(rabinIntersect(projectEquivNet, projectAutomaton), [a b , a b]));
 assert(rabinAccepts(rabinIntersect(projectEquivNet, projectAutomaton), [a a b , a b]));
 assert(rabinAccepts(rabinIntersect(projectEquivNet, projectAutomaton), [a b a a b a , b a]));
@@ -96,6 +99,8 @@ NestedWordAutomaton inverseAutomaton = (
 	internalTransitions = { (s1 a s1) (s1 a s2) (s1 b s1) (s1 b s3) (s1 c s4) (s2 a s2) (s3 b s3) (s4 c s4) (s4 a s1) (s4 b s1) (s4 c s4) },
 	returnTransitions = {}
 );
+
+assert(rabinIsEmpty(rabinIntersect(containsInfiniteABNet, inverseAutomaton)));
 
 assert(!rabinAccepts(rabinIntersect(containsInfiniteABNet, inverseAutomaton), [c , a b]));
 assert(!rabinAccepts(rabinIntersect(containsInfiniteABNet, inverseAutomaton), [a b , c]));
