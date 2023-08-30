@@ -345,17 +345,19 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					// TODO: use replace?
 					mAlreadyReduced.remove(originalSucc);
 					mAlreadyReduced.put(originalSucc, reductionSucc);
-				} else {
+				} else if (!mStateFactory.getAbstractionLimit(correspRstate).isLocked()) {
 					System.out.println("Found a loop, use abstraction hammer");
 
 					// TODO: dont do this if the state loops back to itself
 					// if we're in a loop instantly use the abstraction hammer
-					mStateFactory.addToAbstractionLevel(state, mAbstractionLattice.getBottom());
-					mStateFactory.addToAbstractionLimit(state, mAbstractionLattice.getBottom());
-					// should be unneccessary...
 
+					reductionSucc = mStateFactory.createStratifiedState(originalSucc, new HashMap<>(),
+							new AbstractionLevel<>(mAbstractionLattice.getBottom(), mAbstractionLattice, false),
+							new AbstractionLevel<>(mAbstractionLattice.getBottom(), mAbstractionLattice, true));
+					mAlreadyReduced.put(originalSucc, reductionSucc);
+
+				} else {
 					reductionSucc = correspRstate;
-
 				}
 				// add state + new reduced transition to worklist
 				mPending.add(new OutgoingInternalTransition(letter, reductionSucc));
@@ -429,9 +431,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		// edges in its sleepset
 		final H protectedVars = mStateFactory.getAbstractionLimit(predecState).getValue();
 		final R nextState = mStateFactory.createStratifiedState(originState, sleepSet,
-				new AbstractionLevel<>(protectedVars, mAbstractionLattice,
-						mStateFactory.getAbstractionLimit(predecState).isLocked()),
-				new AbstractionLevel<>(protectedVars, mAbstractionLattice, false));
+				new AbstractionLevel<>(protectedVars, mAbstractionLattice, false), new AbstractionLevel<>(protectedVars,
+						mAbstractionLattice, mStateFactory.getAbstractionLimit(predecState).isLocked()));
 
 		for (final Map.Entry<L, H> edge : sleepSet.entrySet()) {
 			mStateFactory.addToAbstractionLevel(nextState, edge.getValue());

@@ -29,16 +29,19 @@ FiniteAutomaton input = (
 
 FiniteAutomaton expected = (
      alphabet      = {a b c},
-     states        = {"s0: true|true|true" "s1: x=0|true|true" "s3: false|y=x|true" "s2: true|y=0|true" "s5: true|true|z=y" "s4: true|true|y>x"},
+     states        = {"s0: true|true|true" "s1: x=0|true|true" "s3: false|y=x|true" "s5: false|y=x|true" "s6: true|true|y>x" "s2: true|y=0|true" "s7: true|true|z=y" "s4: true|true|y>x"},
      initialStates = {"s0: true|true|true"},
-     finalStates   = {"s3: false|y=x|true"},
+     finalStates   = {"s3: false|y=x|true" "s5: false|y=x|true"},
      transitions   = {
          ("s0: true|true|true" a "s1: x=0|true|true")
          ("s1: x=0|true|true" b "s3: false|y=x|true")
          ("s0: true|true|true" b "s2: true|y=0|true")
-         ("s2: true|y=0|true" a "s5: true|true|z=y")
+         ("s2: true|y=0|true" a "s7: true|true|z=y")
          ("s3: false|y=x|true" c "s4: true|true|y>x")
-         ("s4: true|true|y>x" c "s3: false|y=x|true")
+         ("s4: true|true|y>x" c "s5: false|y=x|true")
+         ("s5: false|y=x|true" c "s6: true|true|y>x")
+         ("s6: true|true|y>x" c "s5: false|y=x|true")
+         
      }
 );
 
