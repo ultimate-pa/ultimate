@@ -686,6 +686,48 @@ public class SimplificationTest {
 				mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void nonConstraining01() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"),
+				new FunDecl(SmtSortUtils::getBoolSort, "A", "B") };
+		final String formulaAsString = "(and (>= x 24) (or B (and A (>= x 23))))";
+		final String simplified = "(and (<= 24 x) (or B A))";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void disjunctionNonRelaxingBecauseOfCriticalConstraint() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"),
+				new FunDecl(SmtSortUtils::getBoolSort, "B") };
+		final String formulaAsString = "(and (>= x 24) (or B (<= x 23)))";
+		final String simplified = "(and B (<= 24 x))";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void disjunctionNonConstrainingBecauseOfCriticalConstraint() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"),
+				new FunDecl(SmtSortUtils::getBoolSort, "B") };
+		final String formulaAsString = "(and (>= x 24) (or B (>= x 23)))";
+		final String simplified = "(<= 24 x)";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void disjunctionNonRelaxing01() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"),
+				new FunDecl(SmtSortUtils::getBoolSort, "B") };
+		final String formulaAsString = "(or (>= x 24) (>= x 23) (>= x 22))";
+		final String simplified = "(<= 22 x)";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+
 	// @Test
 	// public void bvToIntBadgerExists01() {
 	// final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "m", "n"), };
