@@ -59,7 +59,7 @@ public class StateRecoverabilityVerificationCondition {
 		return verificationConditionExpression;
 	}
 
-	public String[] getVerificationConditionStrings() {
+	public String[] getVerificationConditionString() {
 		return expr;
 	}
 

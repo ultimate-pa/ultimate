@@ -213,7 +213,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 					Expression andCondition = ExpressionFactory.newBinaryExpression(bl, Operator.LOGICAND, globalVariableTrue, inputCondition);
 					Expression expr = ExpressionFactory.constructUnaryExpression(bl, UnaryExpression.Operator.LOGICNEG, andCondition);
 					
-					final ReqCheck check = createReqCheck(Spec.STATE_RECOVERABILITY, stRecAuxSt.getPeaPhasePc().getReq(), entryPeaStRecAuxSt.getKey(), String.join("", ve.getVerificationConditionStrings()));
+					final ReqCheck check = createReqCheck(Spec.STATE_RECOVERABILITY, stRecAuxSt.getPeaPhasePc().getReq(), entryPeaStRecAuxSt.getKey(), String.join("", ve.getVerificationConditionString()));
 					statements .add(createAssert(expr, check, checkLabel));
 				}
 			}
