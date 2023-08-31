@@ -42,7 +42,22 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
+ * Internal data structure that we use to construct simplified conjunctions and
+ * disjunction. We distinguish three kinds of parameters of the
+ * disjunction/conjunction.
+ * <li>polynomial parameter: params that can be converted into a
+ * {@link PolynomialRelation}
+ * <li>negative parameters: params that cannot be converted into a
+ * {@link PolynomialRelation} and are negated
+ * <li>negative parameters: all other params.
  *
+ * Based on a pairwise comparison of params, we decide whether a parameter is
+ * redundant and can be omitted or whether the result for two parameters is
+ * already the absorbing element of the operation.
+ *
+ * For disjunctions we store negated versions of the
+ * {@link PolynomialRelation}s, apply the rules for conjunctions, and negate all
+ * {@link PolynomialRelation} before computing the result.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
