@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Totali
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.UnionNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.IIndependenceInducedByAbstraction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.IndependenceInducedByAbstraction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.CoinFlipBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.OptimisticBudget;
@@ -92,7 +93,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.IndependenceInducedByVariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -179,7 +179,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		final IIndependenceInducedByAbstraction<IPredicate, L, BitSubSet<IProgramVar>> abstractIndependence;
 		if (mPref.getPartialOrderMode() == PartialOrderMode.DYNAMIC_ABSTRACTIONS) {
 			assert relations.size() == 1;
-			abstractIndependence = new IndependenceInducedByVariableAbstraction<>(relations.get(0), null);
+			abstractIndependence = new IndependenceInducedByAbstraction<>(relations.get(0), null);
 		} else {
 			abstractIndependence = null;
 		}
