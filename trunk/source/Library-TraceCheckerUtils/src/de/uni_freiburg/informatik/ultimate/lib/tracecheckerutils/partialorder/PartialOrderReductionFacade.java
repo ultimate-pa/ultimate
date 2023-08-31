@@ -154,6 +154,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 
 		mSleepFactory = createSleepFactory(predicateFactory);
 		mSleepMapFactory = createSleepMapFactory(predicateFactory);
+		mStratifiedFactory = createStratifiedFactory();
+
 		mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
 
 		// TODO decouple dead end support from this class
@@ -161,8 +163,6 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 
 		// TODO give proper arguments
 		mProofManager = new ProofManager<>(services, null, null);
-		// TODO create proper factory
-		mStratifiedFactory = null;
 
 		mIcfg = icfg;
 		mErrorLocs = errorLocs;
@@ -198,7 +198,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 
 	private ISleepSetStateFactory<L, IPredicate, IPredicate>
 			createSleepFactory(final PredicateFactory predicateFactory) {
-		if (!mMode.hasSleepSets()) {
+		if (!mMode.hasSleepSets() || mMode == PartialOrderMode.DYNAMIC_ABSTRACTIONS) {
 			return null;
 		}
 		if (mIndependenceRelations.size() > 1) {
@@ -215,13 +215,20 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 
 	private ISleepMapStateFactory<L, IPredicate, IPredicate>
 			createSleepMapFactory(final PredicateFactory predicateFactory) {
-		if (mIndependenceRelations.size() <= 1) {
+		if (mIndependenceRelations.size() <= 1 || mMode == PartialOrderMode.DYNAMIC_ABSTRACTIONS) {
 			return null;
 		}
 		final var factory = new SleepMapStateFactory<L>(predicateFactory);
 		mStateSplitter = StateSplitter.extend(mStateSplitter, factory::getOriginalState,
 				p -> new Pair<>(factory.getSleepMap(p), factory.getBudget(p)));
 		return factory;
+	}
+
+	private IStratifiedStateFactory<L, IPredicate, IPredicate, H> createStratifiedFactory() {
+		if (mMode == PartialOrderMode.DYNAMIC_ABSTRACTIONS) {
+			return new StratifiedStateFactory<>();
+		}
+		return null;
 	}
 
 	public ISleepSetStateFactory<L, IPredicate, IPredicate> getSleepFactory() {
