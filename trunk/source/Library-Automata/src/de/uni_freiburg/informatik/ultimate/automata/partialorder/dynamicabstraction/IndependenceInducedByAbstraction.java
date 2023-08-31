@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ab
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 
 public class IndependenceInducedByAbstraction<S, L, H> implements IIndependenceInducedByAbstraction<S, L, H> {
-
 	private final IAbstraction<H, L> mAbstraction;
 	private final IIndependenceRelation<S, L> mUnderlying;
 
@@ -43,8 +42,8 @@ public class IndependenceInducedByAbstraction<S, L, H> implements IIndependenceI
 	}
 
 	@Override
-	public IIndependenceRelation<S, L> getInducedIndependence(final H freeVariables) {
-		return new IndependenceRelationWithAbstraction<>(mUnderlying, mAbstraction, freeVariables);
+	public IIndependenceRelation<S, L> getInducedIndependence(final H abstractionLevel) {
+		return new IndependenceRelationWithAbstraction<>(mUnderlying, mAbstraction, abstractionLevel);
 	}
 
 	@Override

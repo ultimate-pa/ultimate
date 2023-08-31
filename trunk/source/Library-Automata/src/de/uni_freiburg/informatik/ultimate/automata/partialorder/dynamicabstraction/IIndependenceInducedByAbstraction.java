@@ -31,22 +31,23 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 
 /**
- * Interface for an independence provider
+ * Provides independence relations induced by a given abstraction level.
  *
  * @param <S>
- *            an automaton state
+ *            The type of automaton states
  * @param <H>
- *            an abstraction level = a set of program variables
+ *            The type of abstraction levels
  */
 public interface IIndependenceInducedByAbstraction<S, L, H> {
 	/**
-	 * Return the independence relation induced by abstracting all program variables but the free variables
+	 * Return the independence relation induced by the given abstraction level
 	 *
-	 * @param freeVariables
-	 *            Set of program variables that are not abstracted away
-	 * @return The independence relation induced by abstracting all program variables but the free variables
+	 * @param abstractionLevel
+	 *            The abstraction level. For instance, if the abstraction is performed through projection of variables,
+	 *            this should be the set of program variables that are not abstracted away.
+	 * @return The independence relation induced by the given abstraction level
 	 */
-	IIndependenceRelation<S, L> getInducedIndependence(H freeVariables);
+	IIndependenceRelation<S, L> getInducedIndependence(H abstractionLevel);
 
 	ILattice<H> getAbstractionLattice();
 }
