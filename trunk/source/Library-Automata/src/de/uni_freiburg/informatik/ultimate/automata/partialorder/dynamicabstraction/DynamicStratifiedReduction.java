@@ -119,14 +119,13 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	public DynamicStratifiedReduction(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> originalAutomaton, final IDfsOrder<L, S> order,
 			final IStratifiedStateFactory<L, S, R, H> stateFactory, final IDfsVisitor<L, R> visitor,
-			final S startingState, final ILattice<H> lattice,
-			final IIndependenceInducedByAbstraction<S, L, H> independence, final IProofManager<H, S> manager)
-			throws AutomataOperationCanceledException {
+			final S startingState, final IIndependenceInducedByAbstraction<S, L, H> independence,
+			final IProofManager<H, S> manager) throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(originalAutomaton) : "Finite automata only";
 
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(DynamicStratifiedReduction.class);
-		mAbstractionLattice = lattice;
+		mAbstractionLattice = independence.getAbstractionLattice();
 		mStateFactory = stateFactory;
 		mOriginalAutomaton = originalAutomaton;
 		mStartState = (R) mStateFactory.createStratifiedState(startingState, new HashMap<L, H>(),

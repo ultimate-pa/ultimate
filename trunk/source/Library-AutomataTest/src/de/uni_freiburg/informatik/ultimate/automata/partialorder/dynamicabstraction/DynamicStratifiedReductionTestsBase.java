@@ -91,8 +91,7 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 	protected abstract void runTest(final Path path, AutomataTestFileAST ast, NestedWordAutomaton<String, String> input,
 			NestedWordAutomaton<String, String> expected,
 			IIndependenceInducedByAbstraction<String, String, Set<String>> independence,
-			IProofManager<Set<String>, String> proofManager, ILattice<Set<String>> lattice)
-			throws AutomataLibraryException;
+			IProofManager<Set<String>, String> proofManager) throws AutomataLibraryException;
 
 	@Before
 	public void setUp() {
@@ -156,12 +155,12 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		final var expected = (NestedWordAutomaton<String, String>) mInterpreter.getAutomata().get("expected");
 		assert input != null && expected != null : "either input or expected is missing";
 
-		final IIndependenceInducedByAbstraction<String, String, Set<String>> indep = extractCommutativity(path);
+		final ILattice<Set<String>> lattice = new UpsideDownLattice<>(new PowersetLattice<>(extractProofVars(path)));
+		final IIndependenceInducedByAbstraction<String, String, Set<String>> indep =
+				extractCommutativity(path, lattice);
 		final IProofManager<Set<String>, String> proofManager = new StringProofManager(extractProofs(path));
 
-		final ILattice<Set<String>> lattice = new UpsideDownLattice<>(new PowersetLattice<>(extractProofVars(path)));
-
-		runTest(path, parsed, input, expected, indep, proofManager, lattice);
+		runTest(path, parsed, input, expected, indep, proofManager);
 	}
 
 	@Override
@@ -207,8 +206,8 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		return allVars;
 	}
 
-	private <S> IIndependenceInducedByAbstraction<S, String, Set<String>> extractCommutativity(final Path path)
-			throws IOException {
+	private <S> IIndependenceInducedByAbstraction<S, String, Set<String>> extractCommutativity(final Path path,
+			final ILattice<Set<String>> lattice) throws IOException {
 		final String prefix = "//@ commutativity ";
 
 		final Optional<String> commLine;
@@ -218,7 +217,7 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 
 		if (!commLine.isPresent()) {
 			mLogger.info("no commutativity specification found");
-			return new HashIndependenceByAbstraction<>(Map.of());
+			return new HashIndependenceByAbstraction<>(Map.of(), lattice);
 		}
 
 		final HashMap<Set<String>, HashRelation<String, String>> result = new HashMap<>();
@@ -241,17 +240,20 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		}
 
 		return new HashIndependenceByAbstraction<>(result.entrySet().stream()
-				.collect(Collectors.toMap(Map.Entry::getKey, e -> new HashIndependence<>(e.getValue()))));
+				.collect(Collectors.toMap(Map.Entry::getKey, e -> new HashIndependence<>(e.getValue()))), lattice);
 	}
 
 	private static final class HashIndependenceByAbstraction<S>
 			implements IIndependenceInducedByAbstraction<S, String, Set<String>> {
 
+		private final ILattice<Set<String>> mLattice;
 		private final IIndependenceRelation<S, String> mEmptyIndependence =
 				new HashIndependence<>(new HashRelation<>());
 		private final Map<Set<String>, IIndependenceRelation<S, String>> mMap;
 
-		public HashIndependenceByAbstraction(final Map<Set<String>, IIndependenceRelation<S, String>> map) {
+		public HashIndependenceByAbstraction(final Map<Set<String>, IIndependenceRelation<S, String>> map,
+				final ILattice<Set<String>> mLattice) {
+			this.mLattice = mLattice;
 			mMap = map;
 		}
 
@@ -263,6 +265,11 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 				return mEmptyIndependence;
 			}
 			return result;
+		}
+
+		@Override
+		public ILattice<Set<String>> getAbstractionLattice() {
+			return mLattice;
 		}
 	}
 

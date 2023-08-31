@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 
 /**
  * Interface for an independence provider
@@ -47,4 +48,5 @@ public interface IIndependenceInducedByAbstraction<S, L, H> {
 	 */
 	IIndependenceRelation<S, L> getInducedIndependence(H freeVariables);
 
+	ILattice<H> getAbstractionLattice();
 }
