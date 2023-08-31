@@ -128,7 +128,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mAbstractionLattice = independence.getAbstractionLattice();
 		mStateFactory = stateFactory;
 		mOriginalAutomaton = originalAutomaton;
-		mStartState = (R) mStateFactory.createStratifiedState(startingState, new HashMap<L, H>(),
+		mStartState = (R) mStateFactory.createStratifiedState(startingState,
 				new AbstractionLevel(mAbstractionLattice.getTop(), mAbstractionLattice, false),
 				new AbstractionLevel(mAbstractionLattice.getTop(), mAbstractionLattice, false));
 
@@ -188,7 +188,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				debugIndent("-> visitor pruned transition");
 			} else if (!mDfs.isVisited(nextState)) {
 				// TODO: Compute sleepsets!
-				final HashMap<L, H> nextSleepSet = createSleepSet(currentState, currentTransition.getLetter());
+				final Map<L, H> nextSleepSet = createSleepSet(currentState, currentTransition.getLetter());
 				mStateFactory.setSleepSet(nextState, nextSleepSet);
 				currentTransition = new OutgoingInternalTransition(currentTransition.getLetter(), nextState);
 				current = new Pair(currentState, currentTransition);
@@ -340,7 +340,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				R reductionSucc;
 				if (correspRstate == null || mStateFactory.getAbstractionLevel(correspRstate).isLocked()) {
 					// only compute sleep set directly before visiting the state!
-					reductionSucc = createNextState(state, new HashMap<L, H>(), originalSucc, letter);
+					reductionSucc = createNextState(state, originalSucc, letter);
 					// TODO: use replace?
 					mAlreadyReduced.remove(originalSucc);
 					mAlreadyReduced.put(originalSucc, reductionSucc);
@@ -350,7 +350,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					// TODO: dont do this if the state loops back to itself
 					// if we're in a loop instantly use the abstraction hammer
 
-					reductionSucc = mStateFactory.createStratifiedState(originalSucc, new HashMap<>(),
+					reductionSucc = mStateFactory.createStratifiedState(originalSucc,
 							new AbstractionLevel<>(mAbstractionLattice.getBottom(), mAbstractionLattice, false),
 							new AbstractionLevel<>(mAbstractionLattice.getBottom(), mAbstractionLattice, true));
 					mAlreadyReduced.put(originalSucc, reductionSucc);
@@ -371,11 +371,11 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	 *
 	 * @param letter The letter on the transition from the current state to the state whose sleepset is being created
 	 */
-	private HashMap<L, H> createSleepSet(final R current, final L letter) {
+	private Map<L, H> createSleepSet(final R current, final L letter) {
 
 		final S currentS = mStateFactory.getOriginalState(current);
-		final HashMap<L, H> currSleepSet = mStateFactory.getSleepSet(current);
-		final HashMap<L, H> nextSleepSet = new HashMap<>();
+		final Map<L, H> currSleepSet = mStateFactory.getSleepSet(current);
+		final Map<L, H> nextSleepSet = new HashMap<>();
 		final Comparator<L> comp = mOrder.getOrder(currentS);
 		final Iterator<OutgoingInternalTransition<L, S>> explored =
 				mOriginalAutomaton.internalSuccessors(currentS).iterator();
@@ -424,18 +424,19 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	 * @return The reduction state
 	 */
 
-	private R createNextState(final R predecState, final HashMap<L, H> sleepSet, final S originState, final L letter) {
+	private R createNextState(final R predecState, final S originState, final L letter) {
 
 		// Abstraction limit of the new state is the abstraction limit of its parent + the abstraction levels of the
 		// edges in its sleepset
 		final H protectedVars = mStateFactory.getAbstractionLimit(predecState).getValue();
-		final R nextState = mStateFactory.createStratifiedState(originState, sleepSet,
+		final R nextState = mStateFactory.createStratifiedState(originState,
 				new AbstractionLevel<>(protectedVars, mAbstractionLattice, false), new AbstractionLevel<>(protectedVars,
 						mAbstractionLattice, mStateFactory.getAbstractionLimit(predecState).isLocked()));
 
-		for (final Map.Entry<L, H> edge : sleepSet.entrySet()) {
-			mStateFactory.addToAbstractionLevel(nextState, edge.getValue());
-		}
+		// TODO @Veronika: I removed this as the sleep set was always empty here.
+		// for (final Map.Entry<L, H> edge : sleepSet.entrySet()) {
+		// mStateFactory.addToAbstractionLevel(nextState, edge.getValue());
+		// }
 		return nextState;
 	}
 }

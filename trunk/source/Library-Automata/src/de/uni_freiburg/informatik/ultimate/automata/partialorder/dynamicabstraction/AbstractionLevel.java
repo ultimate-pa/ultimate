@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialCom
  *            actually a set of Programvariables
  */
 
-class AbstractionLevel<H> {
+public class AbstractionLevel<H> {
 	private H mValue;
 	private boolean mLocked;
 	private final ILattice<H> mLattice;

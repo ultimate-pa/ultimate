@@ -27,7 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction;
 
-import java.util.HashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 
@@ -53,8 +53,6 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 	 *
 	 * @param state
 	 *            a state of the original automaton
-	 * @param sleepset
-	 *            the reduction states sleep set
 	 * @param level
 	 *            the reduction states abstraction level
 	 * @param limit
@@ -62,7 +60,7 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 	 * @return a state of the reduction automaton
 	 */
 
-	R createStratifiedState(S state, HashMap<L, H> sleepset, AbstractionLevel<H> level, AbstractionLevel<H> limit);
+	R createStratifiedState(S state, AbstractionLevel<H> level, AbstractionLevel<H> limit);
 
 	/**
 	 * Returns the original state from which a reduction state was constructed
@@ -81,7 +79,7 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 	 *            a state of the reduction automaton
 	 * @return the state's sleep set
 	 */
-	HashMap<L, H> getSleepSet(R state);
+	Map<L, H> getSleepSet(R state);
 
 	/**
 	 * Set the sleep set of state to a set of variables
@@ -91,7 +89,7 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 	 * @param sleepset
 	 *            variables of the sleep set
 	 */
-	void setSleepSet(R state, HashMap<L, H> sleepset);
+	void setSleepSet(R state, Map<L, H> sleepset);
 
 	/**
 	 * Returns the abstraction level of a reduction state
@@ -110,7 +108,9 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 	 * @param variables
 	 *            a set of program variables
 	 */
-	void addToAbstractionLevel(R state, H variables);
+	default void addToAbstractionLevel(final R state, final H variables) {
+		getAbstractionLevel(state).addToAbstractionLevel(variables);
+	}
 
 	/**
 	 * Set a state's abstraction level as defined
@@ -118,7 +118,9 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 	 * @param state
 	 *            whose abstraction level is declared as fully define
 	 */
-	void defineAbstractionLevel(R state);
+	default void defineAbstractionLevel(final R state) {
+		getAbstractionLevel(state).lock();
+	}
 
 	/**
 	 * Returns the abstraction limit of a reduction state (is the upper limit for the abstraction level of all reduction
@@ -138,7 +140,9 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 	 * @param variables
 	 *            a set of program variables
 	 */
-	void addToAbstractionLimit(R state, H variables);
+	default void addToAbstractionLimit(final R state, final H variables) {
+		getAbstractionLimit(state).addToAbstractionLevel(variables);
+	}
 
 	/**
 	 * If we encounter a loop we need the states inside to be of equal abstraction level. For this reason we need to
@@ -149,7 +153,9 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 	 *            state of the reduction automaton
 	 * @return true if the state is a loop copy state
 	 */
-	boolean isLoopCopy(final R state);
+	default boolean isLoopCopy(final R state) {
+		return getAbstractionLimit(state).isLocked();
+	}
 }
 
 /**
@@ -170,15 +176,13 @@ class StratifiedStateFactory<L, S, H> implements IStratifiedStateFactory<L, S, S
 	// Wir wollen nicht wirklich einen Kellerautomaten
 	@Override
 	public StratifiedReductionState<L, S, H> createEmptyStackState() {
-		// TODO Find out the right type for this
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public StratifiedReductionState<L, S, H> createStratifiedState(final S state, final HashMap<L, H> sleepset,
-			final AbstractionLevel<H> level, final AbstractionLevel<H> limit) {
-
-		return new StratifiedReductionState<>(state, sleepset, level, limit);
+	public StratifiedReductionState<L, S, H> createStratifiedState(final S state, final AbstractionLevel<H> level,
+			final AbstractionLevel<H> limit) {
+		return new StratifiedReductionState<>(state, level, limit);
 	}
 
 	@Override
@@ -187,7 +191,7 @@ class StratifiedStateFactory<L, S, H> implements IStratifiedStateFactory<L, S, S
 	}
 
 	@Override
-	public HashMap<L, H> getSleepSet(final StratifiedReductionState<L, S, H> state) {
+	public Map<L, H> getSleepSet(final StratifiedReductionState<L, S, H> state) {
 		return state.mSleepSet;
 	}
 
@@ -197,35 +201,13 @@ class StratifiedStateFactory<L, S, H> implements IStratifiedStateFactory<L, S, S
 	}
 
 	@Override
-	public void addToAbstractionLevel(final StratifiedReductionState<L, S, H> state, final H variables) {
-		state.mAbstractionLevel.addToAbstractionLevel(variables);
-
-	}
-
-	@Override
-	public void defineAbstractionLevel(final StratifiedReductionState<L, S, H> state) {
-		state.mAbstractionLevel.lock();
-	}
-
-	@Override
 	public AbstractionLevel<H> getAbstractionLimit(final StratifiedReductionState<L, S, H> state) {
 		return state.mAbstractionLimit;
 	}
 
 	@Override
-	public void addToAbstractionLimit(final StratifiedReductionState<L, S, H> state, final H variables) {
-		state.mAbstractionLimit.addToAbstractionLevel(variables);
-	}
-
-	@Override
-	public boolean isLoopCopy(final StratifiedReductionState<L, S, H> state) {
-		return state.mAbstractionLimit.isLocked();
-	}
-
-	@Override
-	public void setSleepSet(final StratifiedReductionState<L, S, H> state, final HashMap<L, H> sleepset) {
+	public void setSleepSet(final StratifiedReductionState<L, S, H> state, final Map<L, H> sleepset) {
 		state.mSleepSet = sleepset;
-
 	}
 }
 
@@ -247,15 +229,13 @@ class StratifiedStateFactory<L, S, H> implements IStratifiedStateFactory<L, S, S
  */
 
 class StratifiedReductionState<L, S, H> {
-	protected S mOriginalState;
-	protected HashMap<L, H> mSleepSet;
-	protected AbstractionLevel<H> mAbstractionLevel;
-	protected AbstractionLevel<H> mAbstractionLimit;
+	protected final S mOriginalState;
+	protected Map<L, H> mSleepSet;
+	protected final AbstractionLevel<H> mAbstractionLevel;
+	protected final AbstractionLevel<H> mAbstractionLimit;
 
-	public StratifiedReductionState(final S state, final HashMap<L, H> sleepset, final AbstractionLevel<H> absLv,
-			final AbstractionLevel<H> absLmt) {
+	public StratifiedReductionState(final S state, final AbstractionLevel<H> absLv, final AbstractionLevel<H> absLmt) {
 		mOriginalState = state;
-		mSleepSet = sleepset;
 		mAbstractionLevel = absLv;
 		mAbstractionLimit = absLmt;
 	}
