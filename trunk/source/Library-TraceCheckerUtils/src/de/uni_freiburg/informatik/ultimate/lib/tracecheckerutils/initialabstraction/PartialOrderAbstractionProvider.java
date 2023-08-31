@@ -110,8 +110,8 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 		final IIndependenceRelation<IPredicate, L> indep =
 				IndependenceBuilder.<L> semantic(mServices, icfg.getCfgSmtToolkit().getManagedScript(), false, false)
 						.withSyntacticCheck().cached().threadSeparated().build();
-		final PartialOrderReductionFacade<L> por = new PartialOrderReductionFacade<>(mServices, mPredicateFactory, icfg,
-				errorLocs, mPartialOrderMode, mOrderType, mDfsOrderSeed, List.of(indep), null, null);
+		final PartialOrderReductionFacade<L, ?> por = new PartialOrderReductionFacade<>(mServices, mPredicateFactory,
+				icfg, errorLocs, mPartialOrderMode, mOrderType, mDfsOrderSeed, List.of(indep), null, null, null);
 
 		// actually apply POR to automaton
 		final NestedWordAutomaton<L, IPredicate> result = por.constructReduction(input, mStateFactory);

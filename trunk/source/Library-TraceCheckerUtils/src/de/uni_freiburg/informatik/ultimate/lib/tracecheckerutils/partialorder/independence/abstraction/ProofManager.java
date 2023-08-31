@@ -36,10 +36,15 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.IProofManager;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 
 /**
  * Used by DynamicStratifiedReduction to handle everything related to proofs
@@ -53,8 +58,11 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
  */
 
 public class ProofManager<L extends IAction, H, P> implements IProofManager<H, IPredicate> {
+	private final ILogger mLogger;
 	private final IRefinableAbstraction<P, H, L> mAbstraction;
 	private final Function<IPredicate, List<IPredicate>> mGetConjuncts;
+
+	private final Statistics mStatistics = new Statistics();
 
 	private final List<H> mProofLevels = new ArrayList<>();
 
@@ -64,8 +72,9 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	// the proof we chose at the last proven state
 	private int mLastResponsibleProof = -1;
 
-	public ProofManager(final IRefinableAbstraction<P, H, L> abstraction,
+	public ProofManager(final IUltimateServiceProvider services, final IRefinableAbstraction<P, H, L> abstraction,
 			final Function<IPredicate, List<IPredicate>> getConjuncts) {
+		mLogger = services.getLoggingService().getLogger(getClass());
 		mAbstraction = abstraction;
 		mGetConjuncts = getConjuncts;
 	}
@@ -74,11 +83,15 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 		final var proofAbstraction = mAbstraction.refine(mAbstraction.getInitial(), proof);
 		mProofLevels.add(proofAbstraction);
 		mProofCounter.add(0);
+		// TODO reset all proof counters
+
+		// TODO
+		mStatistics.addIrresponsibleProofs(7);
 	}
 
 	@Override
 	public boolean isProvenState(final IPredicate state) {
-		// TODO must we also check acceptance here?
+		// TODO we must also check acceptance (of pgm automaton) here
 		return mGetConjuncts.apply(state).stream().anyMatch(p -> SmtUtils.isFalseLiteral(p.getFormula()));
 	}
 
@@ -113,5 +126,25 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 
 		// return abstraction corresponding to the chosen proof
 		return mProofLevels.get(responsibleProof);
+	}
+
+	public void finish() {
+		// TODO collect statistics from last iteration
+	}
+
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+
+	private static final class Statistics extends AbstractStatisticsDataProvider {
+		private int mIrresponsibleProofs = 0;
+
+		public Statistics() {
+			declare("IrresponsibleProofs", () -> mIrresponsibleProofs, KeyType.COUNTER);
+		}
+
+		public void addIrresponsibleProofs(final int n) {
+			mIrresponsibleProofs += n;
+		}
 	}
 }

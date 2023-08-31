@@ -140,7 +140,7 @@ public final class PartialOrderUtil {
 	 */
 	public static <L extends IIcfgTransition<?>> void checkFeasibleCounterexample(
 			final IUltimateServiceProvider services, final ILogger logger, final Class<L> clazz,
-			final PartialOrderReductionFacade<L> por,
+			final PartialOrderReductionFacade<L, ?> por,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final Predicate<IPredicate> isAccepting, final int[] hashes) throws AutomataOperationCanceledException {
 		logger.warn("computing representative of feasible ctex");
