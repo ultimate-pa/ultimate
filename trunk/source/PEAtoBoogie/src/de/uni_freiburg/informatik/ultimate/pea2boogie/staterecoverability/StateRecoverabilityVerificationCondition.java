@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability;
 
 import javax.management.RuntimeErrorException;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 
 /**
  *
@@ -40,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
  */
 
 public class StateRecoverabilityVerificationCondition {
+	private final Expression verificationConditionExpression;
 	private final String[] expr;
 	private final String dataType;
 	private final int iVariable = 0;
@@ -49,9 +52,14 @@ public class StateRecoverabilityVerificationCondition {
 	public StateRecoverabilityVerificationCondition(String[] expr, String dataType) {
 		this.expr = expr;
 		this.dataType = dataType;
+		this.verificationConditionExpression = StateRecoverabilityGenerator.createExpression(new DefaultLocation(), getBoogiePrimitiveType(dataType), expr[iVariable], expr[iOperator], expr[iValue]);
+	}
+	
+	public Expression getVerificationConditionExpression() {
+		return verificationConditionExpression;
 	}
 
-	public String[] getExpr() {
+	public String[] getVerificationConditionStrings() {
 		return expr;
 	}
 
@@ -72,7 +80,7 @@ public class StateRecoverabilityVerificationCondition {
 	}
 
 	public boolean getBoolValue() {
-		if (expr[iValue].equals(StateRecoverabilityVerificationConditionContainer.BOOL)) {
+		if (BoogiePrimitiveType.TYPE_BOOL.equals(getBoogiePrimitiveType(dataType))) {
 			return Boolean.getBoolean(expr[iValue]);
 		}
 
@@ -81,7 +89,7 @@ public class StateRecoverabilityVerificationCondition {
 	}
 
 	public int getIntegerValue() {
-		if (expr[iValue].equals(StateRecoverabilityVerificationConditionContainer.INT)) {
+		if (BoogiePrimitiveType.TYPE_INT.equals(getBoogiePrimitiveType(dataType))) {
 			return Integer.getInteger(expr[iValue]);
 		}
 
@@ -90,7 +98,7 @@ public class StateRecoverabilityVerificationCondition {
 	}
 
 	public double getDoubleValue() {
-		if (expr[iValue].equals(StateRecoverabilityVerificationConditionContainer.REAL)) {
+		if (BoogiePrimitiveType.TYPE_REAL.equals(getBoogiePrimitiveType(dataType))) {
 			return Double.parseDouble(expr[iValue]);
 		}
 
@@ -98,8 +106,8 @@ public class StateRecoverabilityVerificationCondition {
 				getClass().getName() + " data type " + dataType + " is not correct for " + expr);
 	}
 
-	public BoogiePrimitiveType getBoogiePrimitiveType() {
-		switch (dataType) {
+	public BoogiePrimitiveType getBoogiePrimitiveType(String sDataType) {
+		switch (sDataType) {
 		case "bool":
 			return BoogiePrimitiveType.TYPE_BOOL;
 		case "int":

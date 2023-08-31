@@ -89,10 +89,10 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 
 /**
-*
-* @author Tobias Wießner <tobias.wiessner@mailbox.org>
-*
-*/
+ *
+ * @author Tobias Wießner <tobias.wiessner@mailbox.org>
+ *
+ */
 
 public class StateRecoverabilityGenerator {
 
@@ -131,8 +131,8 @@ public class StateRecoverabilityGenerator {
 		mCddToSmt = new CddToSmt(mServices, mPeaResultUtil, mScript, mBoogie2Smt, boogieDeclarations, mReqSymboltable);
 	}
 
-	public Map<StateRecoverabilityVerificationCondition, Set<PeaPhaseProgramCounter>>
-			getRelevantLocationsFromPea(List<ReqPeas> reqPeasList, StateRecoverabilityVerificationConditionContainer vec) {
+	public Map<StateRecoverabilityVerificationCondition, Set<PeaPhaseProgramCounter>> getRelevantLocationsFromPea(
+			List<ReqPeas> reqPeasList, StateRecoverabilityVerificationConditionContainer vec) {
 		Map<StateRecoverabilityVerificationCondition, Set<PeaPhaseProgramCounter>> veLocation = new HashMap<>();
 		Set<ReqPeas> reqPeasSet = new HashSet<>(reqPeasList);
 		Set<String> declaredConstants = new HashSet<>();
@@ -156,13 +156,14 @@ public class StateRecoverabilityGenerator {
 					// TRUE -> Do not add the phase
 					// FALSE -> Add the phase
 					for (StateRecoverabilityVerificationCondition ve : vec.getVerificationExpressions().values()) {
-						CDD veCcd = BoogieBooleanExpressionDecision
-								.create(createOppositeCondition(new DefaultLocation(), ve.getBoogiePrimitiveType(),
-										ve.getVariable(), ve.getOperator(), ve.getValue()));
+						CDD verificationConditionCcd = BoogieBooleanExpressionDecision.create(ExpressionFactory.constructUnaryExpression(
+								ve.getVerificationConditionExpression().getLoc(),
+								de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.LOGICNEG,
+								ve.getVerificationConditionExpression()));
 						List<Term> invariantVeList = new ArrayList<>();
 
 						// Compute phase invariant ⋀ opposite verification expression
-						final Term termVe = mCddToSmt.toSmt(veCcd);
+						final Term termVe = mCddToSmt.toSmt(verificationConditionCcd);
 						invariantVeList.add(termVe);
 						final Term termLocation = mCddToSmt.toSmt(phase.getStateInvariant());
 						invariantVeList.add(termLocation);
@@ -386,7 +387,7 @@ public class StateRecoverabilityGenerator {
 		return expression;
 	}
 
-	public Expression createExpression(final ILocation loc, BoogieType boogieType, String sLhs, String sOpr,
+	public static Expression createExpression(final ILocation loc, BoogieType boogieType, String sLhs, String sOpr,
 			String sRhs) {
 		Expression rhs = null;
 		Expression lhs;
@@ -404,14 +405,15 @@ public class StateRecoverabilityGenerator {
 			rhs = ExpressionFactory.createRealLiteral(loc, sRhs);
 			break;
 		case "type-error":
-			throw new RuntimeErrorException(null, getClass().getName() + ": " + boogieType + " no known data type.");
+			throw new RuntimeErrorException(null,
+					StateRecoverabilityGenerator.class.getName() + ": " + boogieType + " no known data type.");
 		}
 		opr = getOperator(sOpr);
 		Expression expression = ExpressionFactory.newBinaryExpression(loc, opr, lhs, rhs);
 		return expression;
 	}
 
-	private BinaryExpression.Operator getOperator(String sOpr) {
+	private static BinaryExpression.Operator getOperator(String sOpr) {
 		switch (sOpr) {
 		case "||":
 		case "|":
@@ -432,7 +434,8 @@ public class StateRecoverabilityGenerator {
 		case ">=":
 			return Operator.COMPGEQ;
 		default:
-			throw new RuntimeErrorException(null, getClass().getName() + ": Could not parse operator.");
+			throw new RuntimeErrorException(null,
+					StateRecoverabilityGenerator.class.getName() + ": Could not parse operator.");
 		}
 	}
 }

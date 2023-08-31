@@ -36,6 +36,9 @@ import java.util.regex.Pattern;
 
 import javax.management.RuntimeErrorException;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
@@ -53,11 +56,6 @@ public class StateRecoverabilityVerificationConditionContainer {
 
 	// Pattern for input expression
 	public static final String exprPattern = "\\s{0,1}((\\w+)\\s*([<>=!][=]*)\\s*(\\w+))\\s{0,1}";
-
-	// Data types
-	public static final String BOOL = "bool";
-	public static final String INT = "int";
-	public static final String REAL = "real";
 
 	private IReq2Pea mReq2pea;
 	private Map<String, StateRecoverabilityVerificationCondition> mVerificationExpressions;
