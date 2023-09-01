@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -61,6 +62,7 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	private final ILogger mLogger;
 	private final IRefinableAbstraction<P, H, L> mAbstraction;
 	private final Function<IPredicate, List<IPredicate>> mGetConjuncts;
+	private final Predicate<IPredicate> mIsErrorState;
 
 	private final Statistics mStatistics = new Statistics();
 
@@ -73,32 +75,33 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	private int mLastResponsibleProof = -1;
 
 	public ProofManager(final IUltimateServiceProvider services, final IRefinableAbstraction<P, H, L> abstraction,
-			final Function<IPredicate, List<IPredicate>> getConjuncts) {
+			final Function<IPredicate, List<IPredicate>> getConjuncts, final Predicate<IPredicate> isErrorState) {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mAbstraction = abstraction;
 		mGetConjuncts = getConjuncts;
+		mIsErrorState = isErrorState;
 	}
 
 	public void addProof(final IRefinementEngineResult<L, P> proof) {
 		final var proofAbstraction = mAbstraction.refine(mAbstraction.getInitial(), proof);
 		mProofLevels.add(proofAbstraction);
-		
+
 		// reset all proof counters and add this iteration's irresp. proofs to statistics
-		for(int i = 0; i < mProofCounter.size(); i++) {
+		for (int i = 0; i < mProofCounter.size(); i++) {
 			if (mProofCounter.get(i) == 0) {
 				mStatistics.addIrresponsibleProofs(1);
 			}
-			mProofCounter.set(i,0);
+			mProofCounter.set(i, 0);
 		}
-		
+
 		// TODO
 		mProofCounter.add(0);
 	}
 
 	@Override
 	public boolean isProvenState(final IPredicate state) {
-		// TODO we must also check acceptance (of pgm automaton) here
-		return mGetConjuncts.apply(state).stream().anyMatch(p -> SmtUtils.isFalseLiteral(p.getFormula()));
+		return mIsErrorState.test(state)
+				&& mGetConjuncts.apply(state).stream().anyMatch(p -> SmtUtils.isFalseLiteral(p.getFormula()));
 	}
 
 	@Override
@@ -136,8 +139,8 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 
 	public void finish() {
 		// TODO collect statistics from last iteration
-		for(int i: mProofCounter) {
-			if(i == 0) {
+		for (final int i : mProofCounter) {
+			if (i == 0) {
 				mStatistics.addIrresponsibleProofs(1);
 			}
 		}

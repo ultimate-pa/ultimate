@@ -109,7 +109,8 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 		return independenceProviders;
 	}
 
-	public IRefinableAbstraction<?, ?, L> createStratifiableAbstraction(final IIcfg<?> icfg) {
+	public IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, ?, L>
+			createStratifiableAbstraction(final IIcfg<?> icfg) {
 		if (mPref.getPartialOrderMode() != PartialOrderMode.DYNAMIC_ABSTRACTIONS) {
 			return null;
 		}

@@ -43,14 +43,13 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.DeterminizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.UnionNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.IIndependenceInducedByAbstraction;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.IndependenceInducedByAbstraction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.CoinFlipBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.OptimisticBudget;
@@ -93,6 +92,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.IRefinableAbstraction;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ProofManager;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -118,11 +118,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		extends BasicCegarLoop<L, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
+	private static final boolean OPTIMIZE_TRIVIAL_CONJUNCTS = false;
+
 	private final PartialOrderMode mPartialOrderMode;
 	private final InformationStorageFactory mFactory = new InformationStorageFactory();
 
 	private final PartialOrderReductionFacade<L, ?> mPOR;
 	private final List<IRefinableIndependenceProvider<L>> mIndependenceProviders;
+	private ProofManager<L, ?, NestedWordAutomaton<L, IPredicate>> mProofManager;
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProgram;
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mItpAutomata;
@@ -138,7 +141,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			final IUltimateServiceProvider services,
 			final List<IRefinableIndependenceProvider<L>> independenceProviders, final Class<L> transitionClazz,
 			final PredicateFactoryRefinement stateFactoryForRefinement,
-			final IRefinableAbstraction<?, ?, L> stratifiableAbstraction) {
+			final IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, ?, L> stratifiableAbstraction) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, false,
 				Collections.emptySet(), services, transitionClazz, stateFactoryForRefinement);
 
@@ -170,25 +173,27 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			provider.initialize();
 		}
 
-		final List<IIndependenceRelation<IPredicate, L>> relations = mIndependenceProviders.stream()
-				.map(IRefinableIndependenceProvider::retrieveIndependence).collect(Collectors.toList());
-
 		mSupportsDeadEnds = mPref.getNumberOfIndependenceRelations() == 1
 				&& mPref.porIndependenceSettings(0).getAbstractionType() == AbstractionType.NONE;
 
-		final IIndependenceInducedByAbstraction<IPredicate, L, ?> abstractIndependence;
-		if (mPref.getPartialOrderMode() == PartialOrderMode.DYNAMIC_ABSTRACTIONS) {
-			assert relations.size() == 1;
-			abstractIndependence = new IndependenceInducedByAbstraction<>(relations.get(0), stratifiableAbstraction);
-		} else {
-			abstractIndependence = null;
-		}
-		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs, mPartialOrderMode,
-				mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), relations, this::makeBudget,
-				mSupportsDeadEnds ? this::createDeadEndStore : null, abstractIndependence);
+		mPOR = createFacade(stratifiableAbstraction);
 		assert mSupportsDeadEnds == (mDeadEndStore != null);
 
 		mProgram = initialAbstraction;
+	}
+
+	private <H> PartialOrderReductionFacade<L, H> createFacade(
+			final IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, H, L> stratifiableAbstraction) {
+		final List<IIndependenceRelation<IPredicate, L>> relations = mIndependenceProviders.stream()
+				.map(IRefinableIndependenceProvider::retrieveIndependence).collect(Collectors.toList());
+
+		final var proofManager = new ProofManager<>(mServices, stratifiableAbstraction,
+				PartialOrderCegarLoop::getProofConjuncts, this::isErrorState);
+		mProofManager = proofManager;
+
+		return new PartialOrderReductionFacade<>(mServices, mPredicateFactory, mIcfg, mErrorLocs, mPartialOrderMode,
+				mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), relations, this::makeBudget,
+				mSupportsDeadEnds ? this::createDeadEndStore : null, stratifiableAbstraction, proofManager);
 	}
 
 	@Override
@@ -250,6 +255,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			container.refine(resultWithHtc);
 			mPOR.replaceIndependence(i, container.retrieveIndependence());
 		}
+		mProofManager.addProof(resultWithHtc);
 
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
@@ -368,14 +374,14 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private boolean isGoalState(final IPredicate state) {
 		assert state instanceof IMLPredicate || state instanceof ISLPredicate : "unexpected type of predicate: "
 				+ state.getClass();
+		return isErrorState(state) && !isProvenState(state);
+	}
 
-		final boolean isErrorState;
+	private boolean isErrorState(final IPredicate state) {
 		if (state instanceof ISLPredicate) {
-			isErrorState = mErrorLocs.contains(((ISLPredicate) state).getProgramPoint());
-		} else {
-			isErrorState = Arrays.stream(((IMLPredicate) state).getProgramPoints()).anyMatch(mErrorLocs::contains);
+			return mErrorLocs.contains(((ISLPredicate) state).getProgramPoint());
 		}
-		return isErrorState && !isProvenState(state);
+		return Arrays.stream(((IMLPredicate) state).getProgramPoints()).anyMatch(mErrorLocs::contains);
 	}
 
 	private boolean isProvenState(IPredicate state) {
@@ -391,9 +397,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 	public static boolean isFalseLiteral(final IPredicate state) {
 		if (state instanceof PredicateWithConjuncts) {
+			final ImmutableList<IPredicate> conjuncts = ((PredicateWithConjuncts) state).getConjuncts();
+			if (!OPTIMIZE_TRIVIAL_CONJUNCTS) {
+				return conjuncts.stream().anyMatch(PartialOrderCegarLoop::isFalseLiteral);
+			}
 			// By the way we create conjunctions in the state factory below, any conjunction that contains the conjunct
 			// "false" will contain no other conjuncts.
-			final ImmutableList<IPredicate> conjuncts = ((PredicateWithConjuncts) state).getConjuncts();
 			return conjuncts.size() == 1 && isFalseLiteral(conjuncts.getHead());
 		}
 
@@ -404,9 +413,16 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private static boolean isTrueLiteral(final IPredicate state) {
 		if (state instanceof PredicateWithConjuncts) {
 			final ImmutableList<IPredicate> conjuncts = ((PredicateWithConjuncts) state).getConjuncts();
+			if (!OPTIMIZE_TRIVIAL_CONJUNCTS) {
+				return conjuncts.stream().allMatch(PartialOrderCegarLoop::isTrueLiteral);
+			}
 			return conjuncts.size() == 1 && isTrueLiteral(conjuncts.getHead());
 		}
 		return SmtUtils.isTrueLiteral(state.getFormula());
+	}
+
+	public static ImmutableList<IPredicate> getProofConjuncts(final IPredicate conjunction) {
+		return getConjuncts(conjunction).getTail();
 	}
 
 	public static ImmutableList<IPredicate> getConjuncts(final IPredicate conjunction) {
@@ -504,21 +520,25 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		// TODO If the new structure helps as much as expected, the optimizations in this method may be unnecessary.
 		// TODO Evaluate and possibly remove.
 		private IPredicate createUnion(final IPredicate state1, final IPredicate state2) {
-			if (isFalseLiteral(state1) || isTrueLiteral(state2)) {
-				// If state1 is "false", we add no other conjuncts.
-				// Similarly, there is no point in adding state2 as conjunct if it is "true".
-				if (state1 instanceof PredicateWithConjuncts) {
-					final var conjState1 = (PredicateWithConjuncts) state1;
-					return mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, conjState1.getConjuncts()));
+			if (OPTIMIZE_TRIVIAL_CONJUNCTS) {
+				if (isFalseLiteral(state1) || isTrueLiteral(state2)) {
+					// If state1 is "false", we add no other conjuncts.
+					// Similarly, there is no point in adding state2 as conjunct if it is "true".
+					if (state1 instanceof PredicateWithConjuncts) {
+						final var conjState1 = (PredicateWithConjuncts) state1;
+						return mPredicateFactory
+								.construct(id -> new PredicateWithConjuncts(id, conjState1.getConjuncts()));
+					}
+					return mPredicateFactory
+							.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state1)));
 				}
-				return mPredicateFactory
-						.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state1)));
-			}
-			if (isFalseLiteral(state2) || isTrueLiteral(state1)) {
-				// If state2 is "false", we ignore all previous conjuncts. This allows us to optimize in #isFalseLiteral
-				// As another (less important) optimization, we also ignore state1 if it is "true".
-				return mPredicateFactory
-						.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state2)));
+				if (isFalseLiteral(state2) || isTrueLiteral(state1)) {
+					// If state2 is "false", we ignore all previous conjuncts. This allows us to optimize in
+					// #isFalseLiteral
+					// As another (less important) optimization, we also ignore state1 if it is "true".
+					return mPredicateFactory
+							.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state2)));
+				}
 			}
 			// In the normal case, we simply add state2 as conjunct.
 			return mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, state1, state2));

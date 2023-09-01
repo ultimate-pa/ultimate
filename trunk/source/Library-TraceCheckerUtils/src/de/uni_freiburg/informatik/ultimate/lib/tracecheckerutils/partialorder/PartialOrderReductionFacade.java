@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayRe
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.DynamicStratifiedReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.IIndependenceInducedByAbstraction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.IStratifiedStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.IndependenceInducedByAbstraction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.CachedBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.ISleepMapStateFactory;
@@ -79,9 +80,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.IRefinableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ProofManager;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
@@ -133,10 +136,18 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
 			final OrderType orderType, final long randomOrderSeed,
+			final IIndependenceRelation<IPredicate, L> independenceRelation) {
+		this(services, predicateFactory, icfg, errorLocs, mode, orderType, randomOrderSeed,
+				List.of(independenceRelation), null, null, null, null);
+	}
+
+	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
+			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
+			final OrderType orderType, final long randomOrderSeed,
 			final List<IIndependenceRelation<IPredicate, L>> independenceRelations,
 			final Function<SleepMapReduction<L, IPredicate, IPredicate>, IBudgetFunction<L, IPredicate>> getBudget,
 			final Function<StateSplitter<IPredicate>, IDeadEndStore<?, IPredicate>> getDeadEndStore,
-			final IIndependenceInducedByAbstraction<IPredicate, L, H> abstractIndependence) {
+			final IRefinableAbstraction<?, H, L> stratifiableAbstraction, final ProofManager<L, H, ?> proofManager) {
 		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
 
@@ -149,7 +160,13 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 			throw new IllegalArgumentException("This mode does not support multiple independence relations");
 		}
 		mIndependenceRelations = new ArrayList<>(independenceRelations);
-		mAbstractIndependence = abstractIndependence;
+		if (mMode == PartialOrderMode.DYNAMIC_ABSTRACTIONS) {
+			assert independenceRelations.size() == 1;
+			mAbstractIndependence =
+					new IndependenceInducedByAbstraction<>(independenceRelations.get(0), stratifiableAbstraction);
+		} else {
+			mAbstractIndependence = null;
+		}
 		mGetBudget = getBudget;
 
 		mSleepFactory = createSleepFactory(predicateFactory);
@@ -161,8 +178,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 		// TODO decouple dead end support from this class
 		mDeadEndStore = getDeadEndStore == null ? null : getDeadEndStore.apply(mStateSplitter);
 
-		// TODO give proper arguments
-		mProofManager = new ProofManager<>(services, null, null);
+		mProofManager = proofManager;
 
 		mIcfg = icfg;
 		mErrorLocs = errorLocs;
@@ -225,10 +241,14 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 	}
 
 	private IStratifiedStateFactory<L, IPredicate, IPredicate, H> createStratifiedFactory() {
-		if (mMode == PartialOrderMode.DYNAMIC_ABSTRACTIONS) {
-			return new StratifiedStateFactory<>();
+		if (mMode != PartialOrderMode.DYNAMIC_ABSTRACTIONS) {
+			return null;
 		}
-		return null;
+		final var factory = new StratifiedStateFactory<L, H>();
+		mStateSplitter = StateSplitter.extend(mStateSplitter, factory::getOriginalState,
+				p -> new Triple<>(factory.getSleepSet(p), factory.getAbstractionLevel(p),
+						factory.getAbstractionLimit(p)));
+		return factory;
 	}
 
 	public ISleepSetStateFactory<L, IPredicate, IPredicate> getSleepFactory() {
