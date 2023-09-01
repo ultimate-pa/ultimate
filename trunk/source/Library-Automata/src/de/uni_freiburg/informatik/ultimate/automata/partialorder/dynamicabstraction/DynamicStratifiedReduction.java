@@ -131,7 +131,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mStartState = (R) mStateFactory.createStratifiedState(startingState,
 				new AbstractionLevel(mAbstractionLattice.getTop(), mAbstractionLattice, false),
 				new AbstractionLevel(mAbstractionLattice.getTop(), mAbstractionLattice, false));
-
+		mStateFactory.setSleepSet(mStartState, new HashMap<L, H>());
 		mOrder = order;
 		mIndependenceProvider = independence;
 		mVisitor = visitor;
@@ -353,6 +353,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					reductionSucc = mStateFactory.createStratifiedState(originalSucc,
 							new AbstractionLevel<>(mAbstractionLattice.getBottom(), mAbstractionLattice, false),
 							new AbstractionLevel<>(mAbstractionLattice.getBottom(), mAbstractionLattice, true));
+					mAlreadyReduced.remove(originalSucc);
 					mAlreadyReduced.put(originalSucc, reductionSucc);
 
 				} else {

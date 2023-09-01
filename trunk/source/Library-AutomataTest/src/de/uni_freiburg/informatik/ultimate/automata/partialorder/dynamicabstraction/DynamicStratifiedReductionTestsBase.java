@@ -357,14 +357,10 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		private int mCounter;
 
 		@Override
-		public String createEmptyStackState() {
-			return "###empty###";
-		}
-
-		@Override
-		public String createStratifiedState(final String state, final HashMap<String, Set<String>> sleepset,
-				final AbstractionLevel<Set<String>> level, final AbstractionLevel<Set<String>> limit) {
-			final var quad = new Quad<>(state, sleepset, level, limit);
+		public String createStratifiedState(final String state, final AbstractionLevel<Set<String>> level,
+				final AbstractionLevel<Set<String>> limit) {
+			// TODO Auto-generated method stub
+			final var quad = new Quad<>(state, new HashMap<String, Set<String>>(), level, limit);
 			final var existing = mMap.inverse().get(quad);
 			if (existing != null) {
 				return existing;
@@ -374,7 +370,13 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 			final var name = "s" + mCounter + ": " + state;
 			mCounter++;
 			mMap.put(name, quad);
-			return name;
+
+			return null;
+		}
+
+		@Override
+		public String createEmptyStackState() {
+			return "###empty###";
 		}
 
 		@Override
@@ -428,9 +430,11 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		}
 
 		@Override
-		public void setSleepSet(final String state, final HashMap<String, Set<String>> sleepset) {
-			mMap.replace(state, new Quad<>(mMap.get(state).getFirst(), sleepset, mMap.get(state).getThird(),
-					mMap.get(state).getFourth()));
+		public void setSleepSet(final String state, final Map<String, Set<String>> sleepset) {
+			// TODO Auto-generated method stub
+			mMap.replace(state, new Quad<>(mMap.get(state).getFirst(), (HashMap<String, Set<String>>) sleepset,
+					mMap.get(state).getThird(), mMap.get(state).getFourth()));
+
 		}
 	}
 }
