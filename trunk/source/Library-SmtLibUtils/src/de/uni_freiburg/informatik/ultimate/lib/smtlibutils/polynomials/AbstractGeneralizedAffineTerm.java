@@ -784,7 +784,6 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		}
 	}
 
-
 	public static ComparisonResult compareRepresentation(final PolynomialRelation lhs, final PolynomialRelation rhs) {
 		if (!lhs.getPolynomialTerm().getSort().equals(rhs.getPolynomialTerm().getSort())) {
 			throw new AssertionError("Cannot compare polynomials of different sorts");
@@ -794,13 +793,26 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		if (!lhsTerm.getAbstractVariable2Coefficient().equals(rhsTerm.getAbstractVariable2Coefficient())) {
 			throw new AssertionError("incomparable");
 		}
-		final RelationSymbol lhsRelationSymbol = lhs.getRelationSymbol();
-		final RelationSymbol rhsRelationSymbol = rhs.getRelationSymbol();
-		final Rational lhsConstant = lhs.getPolynomialTerm().getConstant();
-		final Rational rhsConstant = rhs.getPolynomialTerm().getConstant();
+		final RelationSymbol lhsRelationSymbol;
+		final RelationSymbol rhsRelationSymbol;
+		final Rational lhsConstant;
+		final Rational rhsConstant;
+		if (SmtSortUtils.isIntSort(lhs.getPolynomialTerm().getSort())) {
+			lhsRelationSymbol = lhs.getRelationSymbol().getCorrespondingNonStrictRelationSymbol();
+			rhsRelationSymbol = rhs.getRelationSymbol().getCorrespondingNonStrictRelationSymbol();
+			lhsConstant = lhs.getPolynomialTerm().getConstant()
+					.add(lhs.getRelationSymbol().getOffsetForStrictToNonstrictTransformation());
+			rhsConstant = rhs.getPolynomialTerm().getConstant()
+					.add(rhs.getRelationSymbol().getOffsetForStrictToNonstrictTransformation());
+		} else {
+			lhsRelationSymbol = lhs.getRelationSymbol();
+			rhsRelationSymbol = rhs.getRelationSymbol();
+			lhsConstant = lhs.getPolynomialTerm().getConstant();
+			rhsConstant = rhs.getPolynomialTerm().getConstant();
+		}
 		final ComparisonResult result = compare(lhsRelationSymbol, rhsRelationSymbol, lhsConstant, rhsConstant);
-		assert doubleCheck(lhsRelationSymbol, rhsRelationSymbol, lhsConstant, rhsConstant,
-				result) : "double check failed";
+		assert doubleCheck(lhsRelationSymbol, rhsRelationSymbol, lhsConstant, rhsConstant, result)
+				: "double check failed";
 		return result;
 	}
 
