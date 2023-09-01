@@ -82,11 +82,17 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	public void addProof(final IRefinementEngineResult<L, P> proof) {
 		final var proofAbstraction = mAbstraction.refine(mAbstraction.getInitial(), proof);
 		mProofLevels.add(proofAbstraction);
-		mProofCounter.add(0);
-		// TODO reset all proof counters
-
+		
+		// reset all proof counters and add this iteration's irresp. proofs to statistics
+		for(int i = 0; i < mProofCounter.size(); i++) {
+			if (mProofCounter.get(i) == 0) {
+				mStatistics.addIrresponsibleProofs(1);
+			}
+			mProofCounter.set(i,0);
+		}
+		
 		// TODO
-		mStatistics.addIrresponsibleProofs(7);
+		mProofCounter.add(0);
 	}
 
 	@Override
@@ -130,6 +136,11 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 
 	public void finish() {
 		// TODO collect statistics from last iteration
+		for(int i: mProofCounter) {
+			if(i == 0) {
+				mStatistics.addIrresponsibleProof(1);
+			}
+		}
 	}
 
 	public IStatisticsDataProvider getStatistics() {
