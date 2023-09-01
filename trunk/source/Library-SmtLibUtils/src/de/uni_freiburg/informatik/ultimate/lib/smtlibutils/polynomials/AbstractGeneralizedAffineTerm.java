@@ -786,6 +786,9 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 
 
 	public static ComparisonResult compareRepresentation(final PolynomialRelation lhs, final PolynomialRelation rhs) {
+		if (!lhs.getPolynomialTerm().getSort().equals(rhs.getPolynomialTerm().getSort())) {
+			throw new AssertionError("Cannot compare polynomials of different sorts");
+		}
 		final AbstractGeneralizedAffineTerm<?> lhsTerm = lhs.getPolynomialTerm();
 		final AbstractGeneralizedAffineTerm<?> rhsTerm = rhs.getPolynomialTerm();
 		if (!lhsTerm.getAbstractVariable2Coefficient().equals(rhsTerm.getAbstractVariable2Coefficient())) {
@@ -812,7 +815,10 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 	}
 
 	/**
-	 * Compare the relations lc lrel 0 and rc rrel 0
+	 * Compare the relations lc lrel 0 and rc rrel 0.
+	 *
+	 * Consider lc and rc as rationals, so that e.g., c > 0 and c >=1 are not
+	 * considered equivalent.
 	 */
 	private static ComparisonResult compare(final RelationSymbol lhsRelationSymbol,
 			final RelationSymbol rhsRelationSymbol, final Rational lhsConstant, final Rational rhsConstant)
