@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
@@ -60,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.SpecificVariableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.SpecificVariableAbstraction.TransFormulaAuxVarEliminator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.VariableAbstraction;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
@@ -81,6 +83,7 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 	private final ICopyActionFactory<L> mCopyFactory;
 
 	private ManagedScript mIndependenceScript;
+	private TransferrerWithVariableCache mIndependenceScriptTransferrer;
 
 	public IndependenceProviderFactory(final IUltimateServiceProvider services, final TAPreferences pref,
 			final ICopyActionFactory<L> copyFactory) {
@@ -106,6 +109,26 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 		return independenceProviders;
 	}
 
+	public IRefinableAbstraction<?, ?, L> createStratifiableAbstraction(final IIcfg<?> icfg) {
+		if (mPref.getPartialOrderMode() != PartialOrderMode.DYNAMIC_ABSTRACTIONS) {
+			return null;
+		}
+
+		if (mPref.getStratifiableAbstraction() == AbstractionType.NONE) {
+			throw new IllegalStateException("Cannot apply dynamic stratified reduction: No abstraction selected");
+		}
+		if (mPref.getNumberOfIndependenceRelations() != 1) {
+			throw new IllegalStateException(
+					"Cannot apply dynamic stratified reduction: There must be exactly one independence relation");
+		}
+
+		final var settings = mPref.porIndependenceSettings(0);
+		final var independenceScript = getIndependenceScript(settings);
+		final var transferrer =
+				getIndependenceTransferrer(icfg.getCfgSmtToolkit().getManagedScript().getScript(), independenceScript);
+		return constructAbstraction(icfg, mPref.getStratifiableAbstraction(), independenceScript, transferrer);
+	}
+
 	private IRefinableIndependenceProvider<L> constructIndependenceProvider(final IIcfg<?> icfg,
 			final IndependenceSettings settings, final PredicateFactory predicateFactory) {
 		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
@@ -114,46 +137,43 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 					new Lazy<>(() -> constructIndependenceScript(settings)), settings.getIndependenceType());
 		}
 
-		// Construct the script used for independence checks.
-		// TODO Only construct this if an independence relation actually needs a script!
-		// TODO Independence relations might have different settings for the script!
-		if (mIndependenceScript == null) {
-			mIndependenceScript = constructIndependenceScript(settings);
-		}
-
-		// We need to transfer given transition formulas and condition predicates to the independenceScript.
-		final TransferrerWithVariableCache transferrer =
-				new TransferrerWithVariableCache(csToolkit.getManagedScript().getScript(), mIndependenceScript);
-
+		final Script sourceScript = csToolkit.getManagedScript().getScript();
 		if (settings.getAbstractionType() == AbstractionType.NONE) {
-			// Construct the independence relation (without abstraction). It is the responsibility of the independence
-			// relation to transfer any terms (transition formulas and condition predicates) to the independenceScript.
+			// It is the responsibility of the independence relation to transfer any terms (transition formulas and
+			// condition predicates) to the independenceScript,
+			// unless there is a dynamically-stratified abstraction which already takes care of this.
+			final boolean tfsAlreadyTransferred = mPref.getPartialOrderMode() == PartialOrderMode.DYNAMIC_ABSTRACTIONS;
+
+			// Construct the independence relation (without abstraction).
 			final var independence =
-					constructIndependence(settings, mIndependenceScript, transferrer, false, predicateFactory);
+					constructIndependence(settings, sourceScript, tfsAlreadyTransferred, predicateFactory);
 			return new StaticIndependenceProvider<>(independence);
 		}
 
 		// Construct the abstraction function.
-		final var letterAbstraction = constructAbstraction(icfg, settings, mIndependenceScript, transferrer);
+		final var independenceScript = getIndependenceScript(settings);
+		final var transferrer = getIndependenceTransferrer(sourceScript, independenceScript);
+		final var letterAbstraction =
+				constructAbstraction(icfg, settings.getAbstractionType(), independenceScript, transferrer);
 		final var cachedAbstraction = new RefinableCachedAbstraction<>(letterAbstraction);
 
 		// Construct the independence relation (still without abstraction).
 		// It is the responsibility of the abstraction function to transfer the transition formulas. But we leave it to
 		// the independence relation to transfer conditions.
-		final var independence =
-				constructIndependence(settings, mIndependenceScript, transferrer, true, predicateFactory);
+		final var independence = constructIndependence(settings, sourceScript, true, predicateFactory);
 
 		return new IndependenceProviderWithAbstraction<>(cachedAbstraction, independence);
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructIndependence(final IndependenceSettings settings,
-			final ManagedScript independenceScript, final TransferrerWithVariableCache transferrer,
-			final boolean tfsAlreadyTransferred, final PredicateFactory predicateFactory) {
+			final Script sourceScript, final boolean tfsAlreadyTransferred, final PredicateFactory predicateFactory) {
 		if (settings.getIndependenceType() == IndependenceType.SYNTACTIC) {
 			return IndependenceBuilder.<L, IPredicate> syntactic().cached().threadSeparated().build();
 		}
 
 		assert settings.getIndependenceType() == IndependenceType.SEMANTIC : "unsupported independence type";
+		final var independenceScript = getIndependenceScript(settings);
+		final var transferrer = getIndependenceTransferrer(sourceScript, independenceScript);
 		return IndependenceBuilder
 				// Semantic independence forms the base.
 				// If transition formulas are already transferred to the independenceScript, we need not transfer them
@@ -208,9 +228,9 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 	}
 
 	private IRefinableAbstraction<NestedWordAutomaton<L, IPredicate>, ?, L> constructAbstraction(final IIcfg<?> icfg,
-			final IndependenceSettings settings, final ManagedScript abstractionScript,
+			final AbstractionType abstractionType, final ManagedScript abstractionScript,
 			final TransferrerWithVariableCache transferrer) {
-		if (settings.getAbstractionType() == AbstractionType.NONE) {
+		if (abstractionType == AbstractionType.NONE) {
 			return null;
 		}
 
@@ -222,7 +242,7 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 		final TransFormulaAuxVarEliminator tfEliminator =
 				(ms, fm, av) -> TransFormulaUtils.tryAuxVarEliminationLight(mServices, ms, fm, av);
 
-		switch (settings.getAbstractionType()) {
+		switch (abstractionType) {
 		case VARIABLES_GLOBAL:
 			return new VariableAbstraction<>(mCopyFactory, abstractionScript, transferrer, tfEliminator, allVariables);
 		case VARIABLES_LOCAL:
@@ -238,7 +258,7 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 			return new SpecificVariableAbstraction<>(mCopyFactory, abstractionScript, transferrer, tfEliminator,
 					allLetters, allVariables);
 		default:
-			throw new UnsupportedOperationException("Unknown abstraction type: " + settings.getAbstractionType());
+			throw new UnsupportedOperationException("Unknown abstraction type: " + abstractionType);
 		}
 	}
 
@@ -248,5 +268,23 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 			// TODO Share independence script and independence relation (including cache) between CEGAR loop instances!
 			mIndependenceScript.getScript().exit();
 		}
+	}
+
+	private ManagedScript getIndependenceScript(final IndependenceSettings settings) {
+		// Construct the script used for independence checks.
+		// TODO Independence relations might have different settings for the script!
+		if (mIndependenceScript == null) {
+			mIndependenceScript = constructIndependenceScript(settings);
+		}
+		return mIndependenceScript;
+	}
+
+	private TransferrerWithVariableCache getIndependenceTransferrer(final Script source,
+			final ManagedScript independenceScript) {
+		if (mIndependenceScriptTransferrer == null) {
+			// We need to transfer given transition formulas and condition predicates to the independenceScript.
+			mIndependenceScriptTransferrer = new TransferrerWithVariableCache(source, independenceScript);
+		}
+		return mIndependenceScriptTransferrer;
 	}
 }

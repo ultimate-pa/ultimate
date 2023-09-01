@@ -179,7 +179,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					createPartialOrderAbstraction(services, predicateFactory, stateFactoryForRefinement, root,
 							errorLocs),
 					root, csToolkit, predicateFactory, mPrefs, errorLocs, mPrefs.interpolation(), services,
-					factory.createProviders(root, predicateFactory), mTransitionClazz, stateFactoryForRefinement);
+					factory.createProviders(root, predicateFactory), mTransitionClazz, stateFactoryForRefinement,
+					factory.createStratifiableAbstraction(root));
 		case PETRI_NET:
 			requireNoReuse("Petri net-based analysis");
 			requireNoWitnesses(witnessAutomaton, "Petri net-based analysis");

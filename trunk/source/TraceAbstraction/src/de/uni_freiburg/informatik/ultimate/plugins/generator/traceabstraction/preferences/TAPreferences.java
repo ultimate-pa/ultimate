@@ -402,6 +402,11 @@ public final class TAPreferences {
 		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_RANDOM_SEED);
 	}
 
+	public AbstractionType getStratifiableAbstraction() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_STRATIFIABLE_ABSTRACTION,
+				AbstractionType.class);
+	}
+
 	public CoinflipMode useCoinflip() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_MODE, CoinflipMode.class);
 	}

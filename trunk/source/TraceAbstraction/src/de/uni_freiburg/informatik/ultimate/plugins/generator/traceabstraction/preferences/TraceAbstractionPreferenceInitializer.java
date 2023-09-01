@@ -170,6 +170,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR =
 			"SMT solver timeout for commutativity in POR (in ms)";
 
+	public static final String LABEL_STRATIFIABLE_ABSTRACTION = "Abstraction for dynamic stratified reduction";
+	private static final AbstractionType DEF_STRATIFIABLE_ABSTRACTION = AbstractionType.NONE;
+
 	public static final String LABEL_POR_DFS_ORDER = "DFS Order used in POR";
 	private static final OrderType DEF_POR_DFS_ORDER = OrderType.BY_SERIAL_NUMBER;
 
@@ -731,6 +734,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				getIndependenceSettings(1),
 
 				getIndependenceSettings(2),
+
+				new UltimatePreferenceItem<>(LABEL_STRATIFIABLE_ABSTRACTION, DEF_STRATIFIABLE_ABSTRACTION,
+						PreferenceType.Combo, AbstractionType.values()),
 
 				new UltimatePreferenceItemGroup("Stratified Commutativity: Budget Function",
 						new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_MODE, DEF_POR_COINFLIP_MODE,
