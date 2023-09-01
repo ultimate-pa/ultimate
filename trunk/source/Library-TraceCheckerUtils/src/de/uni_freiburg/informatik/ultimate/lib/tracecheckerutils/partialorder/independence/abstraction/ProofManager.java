@@ -138,7 +138,7 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 		// TODO collect statistics from last iteration
 		for(int i: mProofCounter) {
 			if(i == 0) {
-				mStatistics.addIrresponsibleProof(1);
+				mStatistics.addIrresponsibleProofs(1);
 			}
 		}
 	}
