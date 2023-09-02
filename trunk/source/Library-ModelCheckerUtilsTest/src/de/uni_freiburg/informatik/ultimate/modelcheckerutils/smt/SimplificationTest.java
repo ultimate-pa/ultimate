@@ -726,7 +726,23 @@ public class SimplificationTest {
 				mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void nonstrictForConjunctions() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String formulaAsString = "(and (> x 42) (> y 42))";
+		final String simplified = "(and (<= 43 x) (<= 43 y))";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
 
+	@Test
+	public void strictForDisjunctions() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String formulaAsString = "(or (>= x 42) (>= y 42))";
+		final String simplified = "(or (< 41 x) (< 41 y))";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
 
 	// @Test
 	// public void bvToIntBadgerExists01() {

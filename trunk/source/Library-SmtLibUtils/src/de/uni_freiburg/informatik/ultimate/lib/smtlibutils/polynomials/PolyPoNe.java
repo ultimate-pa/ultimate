@@ -36,6 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm.ComparisonResult;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -72,7 +73,6 @@ public class PolyPoNe {
 	private final Set<Term> mNegative = new HashSet<>();
 	private final HashRelation<Map<?, Rational>, PolynomialRelation> mPolyRels = new HashRelation<>();
 	private boolean mInconsistent = false;
-	private boolean mSimplificationPossible = false;
 
 	PolyPoNe(final Script script) {
 		mScript = script;
@@ -87,7 +87,12 @@ public class PolyPoNe {
 			// TODO 20201123 Matthias: For bitvectors distinct and equality are polynomial,
 			// the other inequalities not, hence distinct and equality should also be added
 			// as nonPoly. Add another data structure for binary relations
-			final PolynomialRelation polyPolyRel = PolynomialRelation.of(mScript, param);
+			final PolynomialRelation polyPolyRel;
+			if (negate) {
+				polyPolyRel = PolynomialRelation.of(mScript, param, TransformInequality.NONSTRICT2STRICT);
+			} else {
+				polyPolyRel = PolynomialRelation.of(mScript, param, TransformInequality.STRICT2NONSTRICT);
+			}
 			if (polyPolyRel != null) {
 				final PolynomialRelation addedRel = negate ? polyPolyRel.negate(mScript) : polyPolyRel;
 				final boolean isInconsistent = addPolyRel(mScript, addedRel, true);
@@ -108,21 +113,12 @@ public class PolyPoNe {
 
 	Term and(final List<Term> params) {
 		add(params, false);
-		if (mSimplificationPossible) {
-			return and();
-		} else {
-			return SmtUtils.and(mScript, params);
-		}
+		return and();
 	}
 
 	Term or(final List<Term> params) {
 		add(params, true);
-		if (mSimplificationPossible) {
-			return or();
-		} else {
-
-			return SmtUtils.or(mScript, params);
-		}
+		return or();
 	}
 
 	protected Check checkPolyRel(final Script script, final PolynomialRelation newPolyRel,
@@ -171,7 +167,6 @@ public class PolyPoNe {
 				final boolean modified = mPolyRels.removePair(existing.getPolynomialTerm().getAbstractVariable2Coefficient(),
 						existing);
 				assert modified : "nothing removed";
-				mSimplificationPossible = true;
 			}
 		}
 		return null;
@@ -187,10 +182,8 @@ public class PolyPoNe {
 			mPolyRels.addPair(polyRel.getPolynomialTerm().getAbstractVariable2Coefficient(), polyRel);
 			return false;
 		} else if (check == Check.REDUNDANT) {
-			mSimplificationPossible = true;
 			return false;
 		} else if (check == Check.INCONSISTENT) {
-			mSimplificationPossible = true;
 			return true;
 		} else {
 			throw new AssertionError("unknown value " + check);
@@ -229,7 +222,6 @@ public class PolyPoNe {
 		boolean result;
 		switch (check) {
 		case INCONSISTENT:
-			mSimplificationPossible = true;
 			result = true;
 			break;
 		case MAYBE_USEFUL:
@@ -237,7 +229,6 @@ public class PolyPoNe {
 			result = false;
 			break;
 		case REDUNDANT:
-			mSimplificationPossible = true;
 			result = false;
 			break;
 		default:
@@ -264,7 +255,6 @@ public class PolyPoNe {
 		boolean result;
 		switch (check) {
 		case INCONSISTENT:
-			mSimplificationPossible = true;
 			result = true;
 			break;
 		case MAYBE_USEFUL:
@@ -272,7 +262,6 @@ public class PolyPoNe {
 			result = false;
 			break;
 		case REDUNDANT:
-			mSimplificationPossible = true;
 			result = false;
 			break;
 		default:
