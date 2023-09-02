@@ -762,7 +762,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 	public enum ComparisonResult {
 		INCONSISTENT, IMPLIES, EXPLIES, EQUIVALENT;
 
-		public ComparisonResult switchDiection() {
+		public ComparisonResult switchDirection() {
 			final ComparisonResult result;
 			switch (this) {
 			case EQUIVALENT:
@@ -822,7 +822,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		if (result == null) {
 			return (otherDirection == null);
 		} else {
-			return result.switchDiection().equals(otherDirection);
+			return result.switchDirection().equals(otherDirection);
 		}
 	}
 
