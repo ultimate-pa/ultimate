@@ -192,6 +192,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				final Map<L, H> nextSleepSet = createSleepSet(currentState, currentTransition.getLetter());
 				mStateFactory.setSleepSet(nextState, nextSleepSet);
 				for (final Map.Entry<L, H> edge : mStateFactory.getSleepSet(nextState).entrySet()) {
+					mStateFactory.addToAbstractionLimit(nextState, edge.getValue());
 					mStateFactory.addToAbstractionLevel(nextState, edge.getValue());
 				}
 				currentTransition = new OutgoingInternalTransition(currentTransition.getLetter(), nextState);
@@ -404,12 +405,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				}
 			}
 			if (currSleepSet.containsKey(candidate.getLetter())) {
-				assert mAlreadyReduced.containsKey(candidate.getSucc()) : "State has already been visited and "
-						+ "should have an reduction state\n";
-				assert mStateFactory.getAbstractionLevel(mAlreadyReduced.get(candidate.getSucc()))
-						.isLocked() : "traversal is supposed to be completed for this state";
-				final H abst_lv =
-						mStateFactory.getAbstractionLevel(mAlreadyReduced.get(candidate.getSucc())).getValue();
+				final H abst_lv = currSleepSet.get(candidate.getLetter());
 				assert ((mAbstractionLattice.compare(abst_lv,
 						mStateFactory.getAbstractionLevel(current).getValue()) == ComparisonResult.STRICTLY_GREATER)
 						|| (mAbstractionLattice.compare(abst_lv, mStateFactory.getAbstractionLevel(current)
