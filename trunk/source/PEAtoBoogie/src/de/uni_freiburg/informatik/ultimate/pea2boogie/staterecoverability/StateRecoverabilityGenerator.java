@@ -280,7 +280,13 @@ public class StateRecoverabilityGenerator {
 				reqsCDD.and(peasCDD);
 			}
 		}
-		final Term term = mCddToSmt.toSmt(reqsCDD);
+		// Check for Null in case there is no start location, then deliver a false condition
+		Term term;
+		if(reqsCDD != null) {
+			term = mCddToSmt.toSmt(reqsCDD);
+		} else {
+			term = mCddToSmt.toSmt(CDD.FALSE);
+		}
 		return term;
 	}
 
