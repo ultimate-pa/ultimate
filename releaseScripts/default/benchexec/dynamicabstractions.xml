@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="7GB" timelimit="300" hardtimelimit="310" cpuCores="2">
+  <resultfiles></resultfiles>
+
+  <option name="--force-no-wrapper" />
+
+  <rundefinition name="DynamicAbstractions">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/DynamicStratifiedAbstractions.epf</option>
+  </rundefinition>
+
+  <tasks name="SVCOMP-ConcurrencySafety-Main">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-NoDataRace">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+    <option name="&#45;-cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
+    <option name="&#45;-cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+
+    <includesfile>../../../trunk/examples/svcomp/NoDataRace-Main.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-Concurrency-SafeDeref">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+    <option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+    <option name="--cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference">ASSERTandASSUME</option>
+    <option name="--cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference">ASSERTandASSUME</option>
+    <option name="--cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap">ASSERTandASSUME</option>
+    <option name="--cacsl2boogietranslator.check.if.freed.pointer.was.valid">true</option>
+    <option name="--cacsl2boogietranslator.adapt.memory.model.on.pointer.casts.if.necessary">true</option>
+
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-Concurrency-NoOverflow">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+    <option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+    <option name="--cacsl2boogietranslator.check.absence.of.signed.integer.overflows">true</option>
+
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/no-overflow.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-Concurrency-NoDataRace">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+    <option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+    <option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
+
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
+  </tasks>
+</benchmark>
