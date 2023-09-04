@@ -134,10 +134,10 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	@Override
 	public void finish() {
 		if (mWitnessExtractor.isReady()) {
-			mWitnessEntries = mWitnessExtractor.getMatchingWitnessEntries();
+			mWitnessEntries = mWitnessExtractor.getWitnessEntries();
 		}
 		if (mYamlWitnessExtractor.isReady()) {
-			mWitnessEntries = mYamlWitnessExtractor.getMatchingWitnessEntries();
+			mWitnessEntries = mYamlWitnessExtractor.getWitnessEntries();
 		}
 		if (mLastModel) {
 			if (mInputDecorator == null) {
