@@ -94,7 +94,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 	}
 
 	@Override
-	protected HashRelation<IASTNode, IExtractedWitnessEntry> extract() {
+	protected HashRelation<IASTNode, IExtractedWitnessEntry> computeWitnessEntries() {
 		Map<IASTNode, ExtractedWitnessInvariant> map = new HashMap<>();
 
 		final Deque<WitnessNode> worklist = new ArrayDeque<>();

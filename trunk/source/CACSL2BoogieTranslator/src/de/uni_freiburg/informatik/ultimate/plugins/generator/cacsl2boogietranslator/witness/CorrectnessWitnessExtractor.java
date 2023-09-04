@@ -66,10 +66,10 @@ public abstract class CorrectnessWitnessExtractor {
 	}
 
 	/**
-	 * @return A relation that maps each {@link IASTNode} to the {@link IExtractedWitnessEntry}s that match this
-	 *         location.
+	 * Get the witness entries, i.e. a relation that maps each {@link IASTNode} to the {@link IExtractedWitnessEntry}s
+	 * that match this location.
 	 */
-	public HashRelation<IASTNode, IExtractedWitnessEntry> getMatchingWitnessEntries() {
+	public HashRelation<IASTNode, IExtractedWitnessEntry> getWitnessEntries() {
 		if (mAST2Entries == null) {
 			if (!isReady()) {
 				mLogger.warn("Cannot extract witness if there is no witness");
@@ -80,7 +80,7 @@ public abstract class CorrectnessWitnessExtractor {
 			} else {
 				mLogger.info("Extracting all invariants from correctness witness");
 			}
-			mAST2Entries = extract();
+			mAST2Entries = computeWitnessEntries();
 			printResults(mAST2Entries);
 		}
 		return mAST2Entries;
@@ -99,7 +99,11 @@ public abstract class CorrectnessWitnessExtractor {
 
 	protected abstract boolean isReady();
 
-	protected abstract HashRelation<IASTNode, IExtractedWitnessEntry> extract();
+	/**
+	 * Compute the witness entries, i.e. a relation that maps each {@link IASTNode} to the
+	 * {@link IExtractedWitnessEntry}s that match this location.
+	 */
+	protected abstract HashRelation<IASTNode, IExtractedWitnessEntry> computeWitnessEntries();
 
 	public static final class ExtractionStatistics {
 		private int mSuccess;

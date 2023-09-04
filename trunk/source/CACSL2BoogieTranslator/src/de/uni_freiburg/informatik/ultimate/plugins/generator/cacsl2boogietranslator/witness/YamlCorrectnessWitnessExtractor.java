@@ -33,7 +33,7 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	}
 
 	@Override
-	protected HashRelation<IASTNode, IExtractedWitnessEntry> extract() {
+	protected HashRelation<IASTNode, IExtractedWitnessEntry> computeWitnessEntries() {
 		final HashRelation<IASTNode, IExtractedWitnessEntry> rtr = new HashRelation<>();
 		for (final WitnessEntry entry : mWitness.getEntries()) {
 			int line = -1;
