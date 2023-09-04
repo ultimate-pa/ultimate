@@ -27,6 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
+import java.util.Objects;
+
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
@@ -42,7 +44,7 @@ public abstract class WitnessEntry implements IYamlProvider {
 	protected final Metadata mMetadata;
 
 	public WitnessEntry(final String name, final Metadata metadata) {
-		mName = name;
+		mName = Objects.requireNonNull(name);
 		mMetadata = metadata;
 	}
 
