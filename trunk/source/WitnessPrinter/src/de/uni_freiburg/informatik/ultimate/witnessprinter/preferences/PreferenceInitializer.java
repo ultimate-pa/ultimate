@@ -53,7 +53,6 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_GRAPH_DATA_PROGRAMHASH = "Graph data programhash";
 	public static final String LABEL_GRAPH_DATA_ARCHITECTURE = "Graph data architecture";
 	public static final String LABEL_GRAPH_DATA_PRODUCER = "Graph data producer";
-	public static final String LABEL_GRAPH_DATA_PRODUCER_VERSION = "Graph data producer version";
 	public static final String UNUSED_GRAPH_DATA = "UNUSED";
 
 	public static final String LABEL_GENERATE_GRAPHML_WITNESS = "Generate GraphML witnesses";
@@ -151,10 +150,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 								PreferenceType.String),
 						new UltimatePreferenceItem<>(LABEL_GRAPH_DATA_PRODUCER, UNUSED_GRAPH_DATA,
 								"Write the value of this option to the witness graph data attribute \"Producer\"",
-								PreferenceType.String)),
-				new UltimatePreferenceItem<>(LABEL_GRAPH_DATA_PRODUCER_VERSION, UNUSED_GRAPH_DATA,
-						"Write the value of this option to the witness graph data attribute \"Version\"",
-						PreferenceType.String) };
+								PreferenceType.String)) };
 	}
 
 	public static IPreferenceProvider getPreferences(final IUltimateServiceProvider services) {
