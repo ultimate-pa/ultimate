@@ -62,7 +62,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final ACSLObjectContainerObserver mAdditionalAnnotationObserver;
-	private final GraphMLCorrectnessWitnessExtractor mWitnessExtractor;
+	private final GraphMLCorrectnessWitnessExtractor mGraphMLWitnessExtractor;
 	private final YamlCorrectnessWitnessExtractor mYamlWitnessExtractor;
 
 	private WrapperNode mRootNode;
@@ -75,7 +75,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		assert services != null;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mWitnessExtractor = new GraphMLCorrectnessWitnessExtractor(mServices);
+		mGraphMLWitnessExtractor = new GraphMLCorrectnessWitnessExtractor(mServices);
 		mYamlWitnessExtractor = new YamlCorrectnessWitnessExtractor(mServices);
 		mAdditionalAnnotationObserver = additionalAnnotationObserver;
 	}
@@ -95,7 +95,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			mInputDecorator = (ASTDecorator) ((WrapperNode) root).getBacking();
 			if (mInputDecorator.countUnits() == 1) {
 				final IASTTranslationUnit translationUnit = mInputDecorator.getUnit(0).getSourceTranslationUnit();
-				mWitnessExtractor.setAST(translationUnit);
+				mGraphMLWitnessExtractor.setAST(translationUnit);
 				mYamlWitnessExtractor.setAST(translationUnit);
 			} else {
 				mLogger.info("Witness extractor is disabled for multiple files");
@@ -124,7 +124,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			// is currently not handled here. May happen in the future if we want to handle assume
 			break;
 		case CORRECTNESS_WITNESS:
-			mWitnessExtractor.setWitness(wnode);
+			mGraphMLWitnessExtractor.setWitness(wnode);
 			break;
 		default:
 			throw new UnsupportedOperationException("Unknown witness type " + graphAnnot.getWitnessType());
@@ -133,8 +133,8 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
 	@Override
 	public void finish() {
-		if (mWitnessExtractor.isReady()) {
-			mWitnessEntries = mWitnessExtractor.getWitnessEntries();
+		if (mGraphMLWitnessExtractor.isReady()) {
+			mWitnessEntries = mGraphMLWitnessExtractor.getWitnessEntries();
 		}
 		if (mYamlWitnessExtractor.isReady()) {
 			mWitnessEntries = mYamlWitnessExtractor.getWitnessEntries();
