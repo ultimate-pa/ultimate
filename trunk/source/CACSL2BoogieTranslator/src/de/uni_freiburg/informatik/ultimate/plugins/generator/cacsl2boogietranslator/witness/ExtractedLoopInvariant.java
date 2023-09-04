@@ -30,7 +30,10 @@ public class ExtractedLoopInvariant extends ExtractedWitnessInvariant {
 		boolean hasLoop = false;
 		for (final Statement st : expressionResult.getStatements()) {
 			if (st instanceof WhileStatement) {
-				assert !hasLoop;
+				if (hasLoop) {
+					throw new UnsupportedOperationException(
+							"The result contains multiple loops, unable to match the invariant.");
+				}
 				hasLoop = true;
 				final WhileStatement whileOld = (WhileStatement) st;
 				statements.add(new WhileStatement(loc, whileOld.getCondition(), DataStructureUtils
