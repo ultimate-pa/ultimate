@@ -39,6 +39,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 import de.uni_freiburg.informatik.ultimate.witnessparser.preferences.WitnessParserPreferences;
 
 /**
+ * Extract the witness entries and map each location (represented by {@link IASTNode}) to the set of
+ * {@link IExtractedWitnessEntry} that belong to this location.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
