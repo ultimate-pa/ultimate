@@ -72,10 +72,10 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 * ∨ φ(l)`, where l is a literal (of sort Real, Int, or BitVec) and x is a variable in a {@link PolynomialRelation}
 	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a select term `(select a k)`.)
 	 */
-	private static final boolean APPLY_CONSTANT_FOLDING = false;
+	private static final boolean APPLY_CONSTANT_FOLDING = true;
 	private static final boolean DEBUG_CHECK_RESULT = false;
 	private static final boolean USE_ECHO_COMMANDS = false;
-	// private static final boolean PREPROCESS_WITH_POLY_PAC_SIMPLIFICATION = false;
+	private static final boolean PREPROCESS_WITH_POLY_PAC_SIMPLIFICATION = true;
 	private static final boolean DESCEND_INTO_QUANTIFIED_FORMULAS = true;
 	private static final boolean OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT = true;
 	private static final boolean SIMPLIFY_REPEATEDLY = true;
@@ -239,6 +239,15 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 
 	@Override
 	protected DescendResult convert(final Term context, final Term term) {
+		if (PREPROCESS_WITH_POLY_PAC_SIMPLIFICATION) {
+			final Term polyPacTerm = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript, context, term);
+			if (polyPacTerm != term) {
+				mMgdScript.getScript().pop(1);
+				mAssertionStackHeight--;
+				return new TermContextTransformationEngine.FinalResultForAscend(polyPacTerm);
+			}
+		}
+
 		// The following is copy&pase of an optimization for the PolyPacSimplification.
 		// Maybe we wont to have that optimization too, maybe its useless.
 		if (APPLY_CONSTANT_FOLDING) {
@@ -258,6 +267,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			if (!substitutionMapping.isEmpty()) {
 				final Term renamed = Substitution.apply(mMgdScript, substitutionMapping, term);
 				if (renamed != term) {
+					mMgdScript.getScript().pop(1);
+					mAssertionStackHeight--;
 					return new TermContextTransformationEngine.FinalResultForAscend(renamed);
 				}
 			}
