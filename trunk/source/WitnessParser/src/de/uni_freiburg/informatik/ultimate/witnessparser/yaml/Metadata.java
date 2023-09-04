@@ -27,10 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-/**
- * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
- */
-
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
@@ -38,6 +34,9 @@ import java.util.UUID;
 import com.amihaiemil.eoyaml.Yaml;
 import com.amihaiemil.eoyaml.YamlNode;
 
+/**
+ * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
+ */
 public class Metadata implements IYamlProvider {
 
 	private final FormatVersion mFormatVersion;

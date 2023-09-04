@@ -27,10 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-/**
- * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
- */
-
 import java.util.List;
 
 import com.amihaiemil.eoyaml.Yaml;
@@ -39,6 +35,9 @@ import com.amihaiemil.eoyaml.YamlSequenceBuilder;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 
+/**
+ * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
+ */
 public class Witness extends BasePayloadContainer implements IYamlProvider {
 	private static final long serialVersionUID = 2111530908758373549L;
 

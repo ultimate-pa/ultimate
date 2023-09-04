@@ -27,13 +27,12 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-/**
- * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
- */
-
 import com.amihaiemil.eoyaml.Yaml;
 import com.amihaiemil.eoyaml.YamlNode;
 
+/**
+ * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
+ */
 public class LocationInvariant extends WitnessEntry {
 
 	/**
