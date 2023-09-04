@@ -409,10 +409,11 @@ public class MainDispatcher implements IDispatcher {
 			final ILocation loc = mLocationFactory.createCLocation(n);
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		return handleWitnessEntries(n, result);
+		return transformWithWitness(n, result);
 	}
 
-	public Result handleWitnessEntries(final IASTNode node, final Result result) {
+	@Override
+	public Result transformWithWitness(final IASTNode node, final Result result) {
 		if (mWitnessEntries == null) {
 			return result;
 		}
