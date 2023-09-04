@@ -37,10 +37,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersect
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * A class that lazyly constructs the intersection production with the method described in: J. Esparza, “Automata theory
- * - an algorithmic approach.” https://www7.in.tum.de/esparza/autoskript.pdf. Aug 26, 2017. The construction is found on
- * page 247. All product-states that have at least one finite state as a parent are finite in Rabin automata. You can
- * imagine removing all finite parents at one point, this results in removing their children at the same point.
+ * A class that lazyly constructs the intersection production with the method from: An Automata-Theoretic Approach to
+ * Linear Temporal Logic by Moshe Y. Vardi The construction is found on page 242f in Banff Higher Order Workshop 1995.
+ * All product-states that have at least one finite state as a parent are finite in Rabin automata. You can imagine
+ * removing all finite parents at one point, this results in removing their children at the same point and extending
+ * this method to work on Rabin automata.
  *
  * @author Philipp Müller (pm251@venus.uni-freiburg.de)
  *

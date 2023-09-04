@@ -45,6 +45,9 @@ public final class RabinAcceptsNeu<LETTER, PLACE>
 	 *
 	 * @param word
 	 *            Input word.
+	 * 
+	 * @exception PetriNetNot1SafeException
+	 *                exception for not 1-safe Petri nets
 	 */
 	public RabinAcceptsNeu(final AutomataLibraryServices services, final IRabinPetriNet<LETTER, PLACE> operand,
 			final NestedLassoWord<LETTER> word) throws PetriNetNot1SafeException {
@@ -171,7 +174,7 @@ public final class RabinAcceptsNeu<LETTER, PLACE>
 
 		for (final Transition<LETTER, PLACE> transition : enabledTransitionSet) {
 			AcceptanceCondition ac;
-			if (!(transition.getSuccessors().stream().anyMatch(mOperand::isFinite))) {
+			if (transition.getSuccessors().stream().noneMatch(mOperand::isFinite)) {
 				if (transition.getSuccessors().stream().anyMatch(mOperand::isAccepting)) {
 					ac = AcceptanceCondition.ACCEPTING;
 				} else {
