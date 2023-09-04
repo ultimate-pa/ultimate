@@ -403,4 +403,9 @@ public class PRDispatcher implements IDispatcher {
 	public NextACSL nextACSLStatement() throws ParseException {
 		throw new UnsupportedOperationException();
 	}
+
+	@Override
+	public Result transformWithWitness(final IASTNode node, final Result result) {
+		return result;
+	}
 }
