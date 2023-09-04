@@ -174,7 +174,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		mSupportsDeadEnds = mPref.getNumberOfIndependenceRelations() == 1
-				&& mPref.porIndependenceSettings(0).getAbstractionType() == AbstractionType.NONE;
+				&& mPref.porIndependenceSettings(0).getAbstractionType() == AbstractionType.NONE
+				&& mPref.getPartialOrderMode() != PartialOrderMode.DYNAMIC_ABSTRACTIONS;
 
 		mPOR = createFacade(stratifiableAbstraction);
 		assert mSupportsDeadEnds == (mDeadEndStore != null);
