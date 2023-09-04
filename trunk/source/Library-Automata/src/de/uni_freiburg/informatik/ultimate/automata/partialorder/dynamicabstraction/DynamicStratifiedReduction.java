@@ -187,6 +187,12 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			final int stackIndex;
 			if (prune) {
 				debugIndent("-> visitor pruned transition");
+				final var originalState = mStateFactory.getOriginalState(nextState);
+				final boolean isProvenState = mProofManager.isProvenState(originalState);
+				if (isProvenState) {
+					final H freeVars = mProofManager.chooseResponsibleAbstraction(originalState);
+					mStateFactory.addToAbstractionLevel(currentState, freeVars);
+				}
 			} else if (!mDfs.isVisited(nextState)) {
 				// TODO: Compute sleepsets!
 				final Map<L, H> nextSleepSet = createSleepSet(currentState, currentTransition.getLetter());
@@ -393,18 +399,18 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			final OutgoingInternalTransition<L, S> candidate = explored.next();
 
 			if ((comp.compare(candidate.getLetter(), letter) < 0) && !currSleepSet.containsKey(candidate.getLetter())) {
-				assert mAlreadyReduced.containsKey(candidate.getSucc()) : "Siblingstate has already been visited and "
+				assert mAlreadyReduced.containsKey(candidate.getSucc()) : "State has already been visited and "
 						+ "should have an reduction state\n";
 				final H abst_lv =
 						mStateFactory.getAbstractionLevel(mAlreadyReduced.get(candidate.getSucc())).getValue();
 				independence = mIndependenceProvider.getInducedIndependence(abst_lv);
 				if (independence.isIndependent(currentS, candidate.getLetter(), letter) == Dependence.INDEPENDENT) {
 					nextSleepSet.put(candidate.getLetter(), abst_lv);
-					System.out.println("new independence");
 
-				}
-			}
-			if (currSleepSet.containsKey(candidate.getLetter())) {
+				} // TODO: finde den fehler
+			} // Letters from old SleepSet
+
+			else if (currSleepSet.containsKey(candidate.getLetter())) {
 				final H abst_lv = currSleepSet.get(candidate.getLetter());
 				assert ((mAbstractionLattice.compare(abst_lv,
 						mStateFactory.getAbstractionLevel(current).getValue()) == ComparisonResult.STRICTLY_GREATER)
@@ -413,13 +419,10 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				independence = mIndependenceProvider.getInducedIndependence(abst_lv);
 				if (independence.isIndependent(currentS, candidate.getLetter(), letter) == Dependence.INDEPENDENT) {
 					nextSleepSet.put(candidate.getLetter(), abst_lv);
-					System.out.println("old independence");
 				}
-
 			}
+
 		}
-		// Letters from old SleepSet
-		// TODO: finde den fehler
 		return nextSleepSet;
 	}
 

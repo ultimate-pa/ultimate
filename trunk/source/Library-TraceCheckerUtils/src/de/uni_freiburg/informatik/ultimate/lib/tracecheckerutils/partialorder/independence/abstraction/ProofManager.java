@@ -100,8 +100,9 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 
 	@Override
 	public boolean isProvenState(final IPredicate state) {
-		return mIsErrorState.test(state)
-				&& mGetConjuncts.apply(state).stream().anyMatch(p -> SmtUtils.isFalseLiteral(p.getFormula()));
+		return mGetConjuncts.apply(state).stream().anyMatch(p -> SmtUtils.isFalseLiteral(p.getFormula()));
+		// && mIsErrorState.test(state);
+		// ;
 	}
 
 	@Override
