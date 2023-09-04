@@ -36,12 +36,14 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	protected HashRelation<IASTNode, IExtractedWitnessEntry> computeWitnessEntries() {
 		final HashRelation<IASTNode, IExtractedWitnessEntry> rtr = new HashRelation<>();
 		for (final WitnessEntry entry : mWitness.getEntries()) {
-			int line = -1;
+			final int line;
 			if (entry instanceof LocationInvariant && !mCheckOnlyLoopInvariants) {
 				line = ((LocationInvariant) entry).getLocation().getLine();
-			}
-			if (entry instanceof LoopInvariant) {
+			} else if (entry instanceof LoopInvariant) {
 				line = ((LoopInvariant) entry).getLocation().getLine();
+			} else {
+				mStats.fail();
+				continue;
 			}
 			final LineMatchingVisitor visitor = new LineMatchingVisitor(line);
 			visitor.run(mTranslationUnit);
