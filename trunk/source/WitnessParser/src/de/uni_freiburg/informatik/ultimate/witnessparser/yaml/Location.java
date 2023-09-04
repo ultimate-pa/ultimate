@@ -27,15 +27,14 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-/**
- * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
- */
-
 import java.util.Objects;
 
 import com.amihaiemil.eoyaml.Yaml;
 import com.amihaiemil.eoyaml.YamlNode;
 
+/**
+ * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
+ */
 public class Location implements IYamlProvider {
 
 	private final String mFileName;

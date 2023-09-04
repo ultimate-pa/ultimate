@@ -27,16 +27,15 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-/**
- * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
- */
-
 import java.util.List;
 import java.util.Map;
 
 import com.amihaiemil.eoyaml.Yaml;
 import com.amihaiemil.eoyaml.YamlNode;
 
+/**
+ * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
+ */
 public class Task implements IYamlProvider {
 	private final List<String> mInputFiles;
 	private final Map<String, String> mInputFileHashes;

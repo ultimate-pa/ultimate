@@ -30,10 +30,6 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 import java.util.Objects;
 
 /**
- * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
- */
-
-/**
  * Represents a generic witness type in a YAML-based witness file.
  *
  * @author Manuel Bentele
