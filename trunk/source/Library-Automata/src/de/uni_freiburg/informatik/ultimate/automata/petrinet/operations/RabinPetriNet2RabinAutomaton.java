@@ -16,6 +16,19 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * This Rabin automaton uses a Rabin-Petri-Net and lazily converts it to a semantically equivalent automaton
+ *
+ * @author Philipp Müller (pm251@venus.uni-freiburg.de)
+ *
+ * @param <LETTER>
+ *            type of letters
+ * @param <STATE>
+ *            type of states/places
+ * @param <FACTORY>
+ *            a {@link IPetriNet2FiniteAutomatonStateFactory} and {@link IBlackWhiteStateFactory} that operates on
+ *            states/places
+ */
 public class RabinPetriNet2RabinAutomaton<LETTER, STATE, FACTORY extends IPetriNet2FiniteAutomatonStateFactory<STATE> & IBlackWhiteStateFactory<STATE>>
 		implements IRabinAutomaton<LETTER, STATE> {
 
@@ -25,6 +38,15 @@ public class RabinPetriNet2RabinAutomaton<LETTER, STATE, FACTORY extends IPetriN
 	private Set<STATE> mInitialStates;
 	private final HashMap<STATE, Pair<Marking<STATE>, AcceptanceCondition>> mAutomatonMap = new HashMap<>();
 
+	/**
+	 * This constructor take a IRabinPetriNet and a FACTORY, and prepares a semantically equivalent Rabin-automaton
+	 *
+	 * @param rpn
+	 *            The Rabin-Petri-Net that should be transformed to a Rabin automaton
+	 * @param factory
+	 *            A {@link IPetriNet2FiniteAutomatonStateFactory} and {@link IBlackWhiteStateFactory} that operates on
+	 *            type STATE
+	 */
 	public RabinPetriNet2RabinAutomaton(final IRabinPetriNet<LETTER, STATE> rpn, final FACTORY factory) {
 		mOperand = rpn;
 		mContentFactory = factory;
@@ -49,7 +71,7 @@ public class RabinPetriNet2RabinAutomaton<LETTER, STATE, FACTORY extends IPetriN
 			return 0;
 		}
 		// (2^operandSize) *3
-		return 3 << (operandSize - 1);
+		return AcceptanceCondition.values().length << (operandSize - 1);
 	}
 
 	/**
@@ -112,7 +134,6 @@ public class RabinPetriNet2RabinAutomaton<LETTER, STATE, FACTORY extends IPetriN
 		}
 	}
 
-	@SuppressWarnings("incomplete-switch")
 	private STATE getMarking2State(final Marking<STATE> marking, final AcceptanceCondition acceptanceCondition) {
 		STATE result = mContentFactory.getContentOnPetriNet2FiniteAutomaton(marking);
 		switch (acceptanceCondition) {
@@ -121,6 +142,9 @@ public class RabinPetriNet2RabinAutomaton<LETTER, STATE, FACTORY extends IPetriN
 			break;
 		case FINITE:
 			result = mContentFactory.getWhiteContent(result);
+			break;
+		default:
+			break;
 		}
 		mAutomatonMap.computeIfAbsent(result, x -> new Pair<>(marking, acceptanceCondition));
 		return result;

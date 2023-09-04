@@ -16,27 +16,43 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
- * Eager difference of Rabin-Petri-net minuend and Buchi automata subtrahend. Buchi automata must be complete and
+ * Eager difference of Rabin-Petri-net minuend and Buchi automaton subtrahend. Buchi automata must be complete and
  * deterministic.
  *
+ * @param <LETTER>
+ *            type of letters
+ * @param <PLACE>
+ *            type of places
  */
 public class RabinDifference<LETTER, PLACE>
 		extends GeneralOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 
 	private final IRabinPetriNet<LETTER, PLACE> mPetriNet;
-	private final INestedWordAutomaton<LETTER, PLACE> mBuchiAutomata;
+	private final INestedWordAutomaton<LETTER, PLACE> mBuchiAutomaton;
 	private final BoundedRabinPetriNet<LETTER, PLACE> mDifferenceNet;
 
+	/**
+	 * eagerly builds a Rabin-Petri-Net that accepts L = @param{petriNet} - @param{buchiAutomaton}
+	 *
+	 * @param services
+	 *            services
+	 * @param petriNet
+	 *            the Rabin-Petri-Net minuend
+	 * @param buchiAutomaton
+	 *            the automaton subtrahend
+	 * @throws AutomataLibraryException
+	 *             a exception to be thrown when the automaton is not complete or deterministic
+	 */
 	public RabinDifference(final AutomataLibraryServices services, final IRabinPetriNet<LETTER, PLACE> petriNet,
-			final INestedWordAutomaton<LETTER, PLACE> buchiAutomata) throws AutomataLibraryException {
+			final INestedWordAutomaton<LETTER, PLACE> buchiAutomaton) throws AutomataLibraryException {
 		super(services);
 		mPetriNet = petriNet;
-		mBuchiAutomata = buchiAutomata;
-		if (buchiAutomata.getInitialStates().size() != 1) {
+		mBuchiAutomaton = buchiAutomaton;
+		if (buchiAutomaton.getInitialStates().size() != 1) {
 			throw new IllegalArgumentException("Buchi with multiple initial states not supported.");
 		}
 		mDifferenceNet = new BoundedRabinPetriNet<>(services, petriNet.getAlphabet(), false);
-		for (final PLACE place : mBuchiAutomata.getFinalStates()) {
+		for (final PLACE place : mBuchiAutomaton.getFinalStates()) {
 			mDifferenceNet.addFinitePlace(place);
 		}
 		constructIntersectionNet();
@@ -64,9 +80,9 @@ public class RabinDifference<LETTER, PLACE>
 	}
 
 	private final void addOriginalBuchiPlaces() {
-		for (final PLACE place : mBuchiAutomata.getStates()) {
-			mDifferenceNet.addPlace(place, mBuchiAutomata.isInitial(place), false);
-			if (mBuchiAutomata.isFinal(place)) {
+		for (final PLACE place : mBuchiAutomaton.getStates()) {
+			mDifferenceNet.addPlace(place, mBuchiAutomaton.isInitial(place), false);
+			if (mBuchiAutomaton.isFinal(place)) {
 				mDifferenceNet.addFinitePlace(place);
 			}
 		}
@@ -75,10 +91,10 @@ public class RabinDifference<LETTER, PLACE>
 	private final void addTransitionsToIntersectionNet() throws AutomataLibraryException {
 		final Set<Transition<LETTER, PLACE>> pairedTransitions = new HashSet<>();
 		for (final Transition<LETTER, PLACE> petriTransition : mPetriNet.getTransitions()) {
-			for (final PLACE buchiPlace : mBuchiAutomata.getStates()) {
+			for (final PLACE buchiPlace : mBuchiAutomaton.getStates()) {
 
 				final Iterable<OutgoingInternalTransition<LETTER, PLACE>> successorCandidate =
-						mBuchiAutomata.internalSuccessors(buchiPlace, petriTransition.getSymbol());
+						mBuchiAutomaton.internalSuccessors(buchiPlace, petriTransition.getSymbol());
 
 				final Iterator<OutgoingInternalTransition<LETTER, PLACE>> successorCandidateIterator =
 						successorCandidate.iterator();

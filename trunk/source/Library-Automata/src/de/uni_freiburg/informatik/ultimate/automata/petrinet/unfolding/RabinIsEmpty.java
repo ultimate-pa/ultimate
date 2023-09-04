@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  *
  * @param <LETTER>
  *            letter type
- * @param <STATE>
+ * @param <PLACE>
  *            place content type
  */
 public final class RabinIsEmpty<LETTER, PLACE>
@@ -24,6 +24,18 @@ public final class RabinIsEmpty<LETTER, PLACE>
 	private final IRabinPetriNet<LETTER, PLACE> mOperand;
 	private final PetriNetLassoRun<LETTER, PLACE> mRun;
 
+	/**
+	 * A operation that determines if a {@link IRabinPetriNet} is empty
+	 *
+	 * @param services
+	 *            services
+	 * @param operand
+	 *            the Rabin-Petri-Net that should be checked for emptiness
+	 * @throws AutomataOperationCanceledException
+	 *             a exception that can be thrown if the operation is cancelled from the outside
+	 * @throws PetriNetNot1SafeException
+	 *             a exception that occurs if 2 markings could be put into 1 place
+	 */
 	public RabinIsEmpty(final AutomataLibraryServices services, final IRabinPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		this(services, operand, EventOrderEnum.ERV, false, true);
@@ -59,7 +71,8 @@ public final class RabinIsEmpty<LETTER, PLACE>
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + getOperationName() + " language is " + (getResult() ? "empty" : "not empty");
+		return "Finished " + getOperationName() + " language is "
+				+ (Boolean.TRUE.equals(getResult()) ? "empty" : "not empty");
 	}
 
 	@Override
