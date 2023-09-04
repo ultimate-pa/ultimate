@@ -514,7 +514,7 @@ public class BitabsTranslation {
 		for (int i = exactCases.size() - 1; i >= 0; i--) {
 			final Pair<Expression, Expression> pair = exactCases.get(i);
 			final Statement assignment =
-					StatementFactory.constructAssignmentStatement(loc, auxvarLhs, pair.getSecond());
+					StatementFactory.constructSingleAssignmentStatement(loc, auxvarLhs, pair.getSecond());
 			final Statement ifStatement = StatementFactory.constructIfStatement(loc, pair.getFirst(),
 					new Statement[] { assignment }, resultStatements);
 			resultStatements = new Statement[] { ifStatement };

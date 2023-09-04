@@ -855,7 +855,7 @@ public class StandardFunctionHandler {
 		builder.setLrValue(new LocalLValue(retvar.getLhs(), resultType, null));
 
 		// one possible return value: NULL
-		final var setPtrToNull = StatementFactory.constructAssignmentStatement(loc, retvar.getLhs(),
+		final var setPtrToNull = StatementFactory.constructSingleAssignmentStatement(loc, retvar.getLhs(),
 				mExpressionTranslation.constructNullPointer(loc));
 
 		// alternative option: return a nondeterministic string of nondeterministic length
@@ -889,7 +889,7 @@ public class StandardFunctionHandler {
 
 	private List<Statement> makeAssignment(final ILocation loc, final LRValue lhs, final Expression rhs) {
 		if (lhs instanceof LocalLValue) {
-			return List.of(StatementFactory.constructAssignmentStatement(loc, ((LocalLValue) lhs).getLhs(), rhs));
+			return List.of(StatementFactory.constructSingleAssignmentStatement(loc, ((LocalLValue) lhs).getLhs(), rhs));
 		} else if (lhs instanceof HeapLValue) {
 			return mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, rhs, lhs.getCType(), false);
 		} else {
@@ -1040,7 +1040,7 @@ public class StandardFunctionHandler {
 		// ctr := 0
 		final var zero = mTypeSizes.constructLiteralForIntegerType(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-		final var initCtr = StatementFactory.constructAssignmentStatement(loc, ctr.getLhs(), zero);
+		final var initCtr = StatementFactory.constructSingleAssignmentStatement(loc, ctr.getLhs(), zero);
 		builder.addStatement(initCtr);
 
 		final var body = new ArrayList<Statement>();
@@ -1075,7 +1075,7 @@ public class StandardFunctionHandler {
 		}
 
 		// ctr := ctr + 1
-		final var incrementCtr = StatementFactory.constructAssignmentStatement(loc, ctr.getLhs(),
+		final var incrementCtr = StatementFactory.constructSingleAssignmentStatement(loc, ctr.getLhs(),
 				mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_plus,
 						ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents(),
 						mTypeSizes.constructLiteralForIntegerType(loc,
