@@ -218,6 +218,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.StringLiteralResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
@@ -1062,6 +1063,11 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTCompoundStatement node) {
+		return handleCompoundStatement(main, node, false);
+	}
+
+	private Result handleCompoundStatement(final IDispatcher main, final IASTCompoundStatement node,
+			final boolean useRValue) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		LRValue expr = null;
 		final IASTNode parent = node.getParent();
@@ -1097,6 +1103,21 @@ public class CHandler {
 			}
 		}
 		checkForACSL(main, resultBuilder, null, node, true);
+		if (useRValue && expr != null) {
+			final ILocation loc = LocationFactory.createIgnoreCLocation(node);
+			if (expr instanceof HeapLValue) {
+				// The read already creates an aux-var, so we just use the RValue of the read
+				resultBuilder.addAllIncludingLrValue(
+						mMemoryHandler.getReadCall(((HeapLValue) expr).getAddress(), expr.getCType()));
+			} else {
+				final AuxVarInfo auxVarInfo =
+						mAuxVarInfoBuilder.constructAuxVarInfo(loc, expr.getCType(), AUXVAR.NONDET);
+				resultBuilder.addAuxVar(auxVarInfo).addDeclaration(auxVarInfo.getVarDec());
+				resultBuilder.setLrValue(new RValue(auxVarInfo.getExp(), expr.getCType()));
+				resultBuilder.addStatement(
+						StatementFactory.constructSingleAssignmentStatement(loc, auxVarInfo.getLhs(), expr.getValue()));
+			}
+		}
 		if (isNewScopeRequired(parent)) {
 			updateStmtsAndDeclsAtScopeEnd(resultBuilder, node);
 			if (ADD_HAVOCS_AT_SCOPE_END) {
@@ -1104,7 +1125,6 @@ public class CHandler {
 			}
 			endScope();
 		}
-		resultBuilder.setLrValue(expr);
 		return resultBuilder.build();
 	}
 
@@ -2495,7 +2515,7 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IGNUASTCompoundStatementExpression node) {
-		return main.dispatch(node.getCompoundStatement());
+		return handleCompoundStatement(main, node.getCompoundStatement(), true);
 	}
 
 	/**
