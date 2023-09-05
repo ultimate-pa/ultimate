@@ -38,8 +38,8 @@ function get_url_params() {
  */
 function get_current_language() {
   let result = "undefined";
-  if ("current_worker" in _CONFIG.context) {
-    result = _CONFIG.context.current_worker.language;
+  if ("current_worker" in _CONTEXT) {
+    result = _CONTEXT.current_worker.language;
   }
   return result
 }

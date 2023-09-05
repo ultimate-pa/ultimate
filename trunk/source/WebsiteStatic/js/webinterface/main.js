@@ -20,11 +20,11 @@ function load_backend_version() {
  */
 function render_navbar() {
   const navbar_template = Handlebars.compile($("#navbar-template").html());
-  $('#navbar_content').append(navbar_template(_CONFIG));
+  $('#navbar_content').append(navbar_template(_CONTEXT));
   
   const navbar_breadcrumb_entry = $("#navbar_breadcrumb li a");
-  navbar_breadcrumb_entry.text(_TOOLS[_CONFIG.context.tool.id].name);
-  navbar_breadcrumb_entry.attr('href', _TOOLS[_CONFIG.context.tool.id].url);
+  navbar_breadcrumb_entry.text(_TOOLS[_CONTEXT.tool.id].name);
+  navbar_breadcrumb_entry.attr('href', _TOOLS[_CONTEXT.tool.id].url);
 }
 
 
@@ -38,16 +38,16 @@ function load_tool_interface(tool_id) {
   init_interface_controls();
   refresh_navbar();
   load_backend_version();
-  set_message_orientation(_CONFIG.context.msg_orientation);
-  if (_CONFIG.context.url.lang !== null) {
-    choose_language(_CONFIG.context.url.lang);
+  set_message_orientation(_CONTEXT.msg_orientation);
+  if (_CONTEXT.url.lang !== null) {
+    choose_language(_CONTEXT.url.lang);
     refresh_navbar();
   }
-  if (_CONFIG.context.url.sample !== null) {
-    load_sample(_CONFIG.context.url.sample);
+  if (_CONTEXT.url.sample !== null) {
+    load_sample(_CONTEXT.url.sample);
   }
-  if (_CONFIG.context.url.session !== null) {
-    load_user_provided_session(_CONFIG.context.url.session);
+  if (_CONTEXT.url.session !== null) {
+    load_user_provided_session(_CONTEXT.url.session);
   }
 }
 
@@ -62,9 +62,9 @@ function get_home_url() {
 }
 
 /**
- * Inject current context to _CONFIG.context s.t:
+ * Inject current context to _CONTEXT s.t:
  *
- * _CONFIG.context = {
+ * _CONTEXT = {
  *     url: {
  *         tool: <URL tool param>
  *     },
@@ -72,6 +72,7 @@ function get_home_url() {
  *     msg_orientation: _CONFIG.editor.default_msg_orientation
  * }
  */
+var _CONTEXT;
 function set_context() {
   const url_params = get_url_params();
   let tool = {};
@@ -98,7 +99,7 @@ function set_context() {
     return tool.id === url_params.tool
   });
 
-  _CONFIG["context"] = {
+  _CONTEXT = {
     "url": url_params,
     "tool": tool,
     "msg_orientation": _CONFIG.editor.default_msg_orientation,
@@ -123,7 +124,7 @@ function bootstrap() {
   // load the interactive mode for the active tool.
   load_available_code_examples().always(function (json) {
     _CONFIG.code_examples = json;
-    load_tool_interface(_CONFIG.context.tool.id);
+    load_tool_interface(_CONTEXT.tool.id);
   });
 }
 

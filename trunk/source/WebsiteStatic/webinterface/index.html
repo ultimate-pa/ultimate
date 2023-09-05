@@ -123,7 +123,7 @@ js: [
         Choose Language
       </a>
       <div class="dropdown-menu">
-        {{#each context.tool.workers}}
+        {{#each tool.workers}}
           <a class="dropdown-item language-selection" href="#"  id="{{this.id}}" data-language="{{this.language}}">{{this.language}}</a>
         {{~/each}}
       </div>
