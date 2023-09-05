@@ -8,12 +8,17 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IRabinPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RabinDeterministicDifference;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RabinIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.RabinIsEmpty;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -78,12 +83,23 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton,
 			final BuchiInterpolantAutomatonConstructionStyle constructionStyle) throws AutomataLibraryException {
 		// TODO: This null-check is only here because we pass null from refiniteFinite, this should change in the future
-		// TODO: Use the proper difference for (non-)deterministic automata
 		final boolean isDeterministic = constructionStyle != null && constructionStyle.isAlwaysDeterministic();
-		final RabinDeterministicDifference<L, IPredicate> difference = new RabinDeterministicDifference<>(
-				new AutomataLibraryServices(mServices), abstraction,
-				new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(mServices), interpolantAutomaton));
-		return difference.getResult();
+		if (isDeterministic) {
+			final RabinDeterministicDifference<L, IPredicate> difference =
+					new RabinDeterministicDifference<>(new AutomataLibraryServices(mServices), abstraction,
+							new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(mServices),
+									new TotalizeNwa<>(interpolantAutomaton, mDefaultStateFactory, false)));
+			return difference.getResult();
+		}
+		final IStateDeterminizer<L, IPredicate> stateDeterminizer =
+				new PowersetDeterminizer<>(interpolantAutomaton, mUseDoubleDeckers, mDefaultStateFactory);
+		final BuchiComplementFKV<L, IPredicate> complNwa = new BuchiComplementFKV<>(
+				new AutomataLibraryServices(mServices), mDefaultStateFactory, interpolantAutomaton, stateDeterminizer);
+		mBenchmarkGenerator.reportHighestRank(complNwa.getHighestRank());
+
+		final RabinIntersect<L, IPredicate> intersection = new RabinIntersect<>(new AutomataLibraryServices(mServices),
+				mDefaultStateFactory, abstraction, complNwa.getResult());
+		return intersection.getResult();
 	}
 
 	@Override
