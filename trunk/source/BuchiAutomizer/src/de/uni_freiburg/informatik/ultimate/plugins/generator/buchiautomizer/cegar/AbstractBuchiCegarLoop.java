@@ -146,7 +146,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	protected final PredicateFactoryForInterpolantAutomata mDefaultStateFactory;
 	protected final BuchiCegarLoopBenchmarkGenerator mBenchmarkGenerator;
 	protected final PredicateFactory mPredicateFactory;
-	protected boolean mIsSemiDeterministic;
 	protected boolean mUseDoubleDeckers;
 
 	/**
@@ -281,12 +280,15 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	 *            The abstraction to be refined
 	 * @param interpolantAutomaton
 	 *            The subtrahend of the difference
+	 * @param constructionStyle
+	 *            The construction style of the interpolant automaton (where we can extract properties of the
+	 *            interpolant automaton from).
 	 * @return The new refined abstraction
 	 * @throws AutomataOperationCanceledException
 	 */
 	protected abstract A refineBuchi(A abstraction,
-			INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
-			throws AutomataLibraryException;
+			INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton,
+			BuchiInterpolantAutomatonConstructionStyle constructionStyle) throws AutomataLibraryException;
 
 	/**
 	 * Reduce the size of the given {@code abstraction} w.r.t the given minimization technique
@@ -588,8 +590,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 				interpolantAutomaton = mInterpolantAutomatonBuilder.constructGeneralizedAutomaton(mCounterexample,
 						constructionStyle, bspmResult, pu, stemInterpolants, loopInterpolants, inputAutomaton, bhtc);
-				mIsSemiDeterministic = constructionStyle.isAlwaysSemiDeterministic();
-				newAbstraction = refineBuchi(mAbstraction, interpolantAutomaton);
+				newAbstraction = refineBuchi(mAbstraction, interpolantAutomaton, constructionStyle);
 				// Switch to read-only-mode for lazy constructions
 				if (interpolantAutomaton instanceof NondeterministicInterpolantAutomaton) {
 					((NondeterministicInterpolantAutomaton<?>) interpolantAutomaton).switchToReadonlyMode();
