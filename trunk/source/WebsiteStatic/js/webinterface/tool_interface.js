@@ -497,7 +497,7 @@ function choose_language(language) {
 	});
 
 	// Load the ultimate toolchain file.
-	$.get('./ultimate_toolchain_xmls/' + _CONTEXT.current_worker.id + '.xml', function (response) {
+	$.get('./workers/' + _CONTEXT.current_worker.id + '.xml', function (response) {
 		_CONTEXT.current_worker.ultimate_toolchain_xml = response;
 	}).fail(function () {
 		alert("Could not fetch ultimate toolchain xml. Config error.");
