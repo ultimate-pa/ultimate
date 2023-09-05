@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Acti
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmarkGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStyle;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RefineBuchi;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
@@ -244,9 +245,9 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 	@Override
 	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> refineBuchi(
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
-			throws AutomataLibraryException {
-		return mRefineBuchi.refineBuchi(abstraction, interpolantAutomaton, mIsSemiDeterministic, mBenchmarkGenerator,
-				mComplementationConstruction);
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton,
+			final BuchiInterpolantAutomatonConstructionStyle constructionStyle) throws AutomataLibraryException {
+		return mRefineBuchi.refineBuchi(abstraction, interpolantAutomaton,
+				constructionStyle.isAlwaysSemiDeterministic(), mBenchmarkGenerator, mComplementationConstruction);
 	}
 }

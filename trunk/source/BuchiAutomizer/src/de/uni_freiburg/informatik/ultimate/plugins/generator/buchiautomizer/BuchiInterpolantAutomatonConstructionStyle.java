@@ -81,6 +81,10 @@ public class BuchiInterpolantAutomatonConstructionStyle {
 		return !isScroogeNondeterminismLoop();
 	}
 
+	public boolean isAlwaysDeterministic() {
+		return !isScroogeNondeterminismStem() && !isScroogeNondeterminismLoop();
+	}
+
 	@Override
 	public String toString() {
 		return "RefinementSetting [mInterpolantAutomaton=" + mInterpolantAutomaton + ", mBouncerStem=" + mBouncerStem

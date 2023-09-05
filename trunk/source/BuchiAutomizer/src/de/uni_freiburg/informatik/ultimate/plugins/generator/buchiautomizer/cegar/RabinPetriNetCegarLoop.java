@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmarkGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStyle;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
@@ -69,15 +70,18 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 			throws AutomataLibraryException {
 		// TODO: This is sound, but more complicated than necessary!
 		// We need something like DifferencePairwiseOnDemand for IRabinPetriNet.
-		return refineBuchi(abstraction, interpolantAutomaton);
+		return refineBuchi(abstraction, interpolantAutomaton, null);
 	}
 
 	@Override
 	protected IRabinPetriNet<L, IPredicate> refineBuchi(final IRabinPetriNet<L, IPredicate> abstraction,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
-			throws AutomataLibraryException {
-		final RabinDeterministicDifference<L, IPredicate> difference = new RabinDeterministicDifference<>(new AutomataLibraryServices(mServices),
-				abstraction,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton,
+			final BuchiInterpolantAutomatonConstructionStyle constructionStyle) throws AutomataLibraryException {
+		// TODO: This null-check is only here because we pass null from refiniteFinite, this should change in the future
+		// TODO: Use the proper difference for (non-)deterministic automata
+		final boolean isDeterministic = constructionStyle != null && constructionStyle.isAlwaysDeterministic();
+		final RabinDeterministicDifference<L, IPredicate> difference = new RabinDeterministicDifference<>(
+				new AutomataLibraryServices(mServices), abstraction,
 				new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(mServices), interpolantAutomaton));
 		return difference.getResult();
 	}

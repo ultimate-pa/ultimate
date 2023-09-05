@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmarkGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStyle;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
@@ -112,8 +113,8 @@ public class BuchiPetriNetCegarLoop<L extends IIcfgTransition<?>>
 
 	@Override
 	protected IPetriNet<L, IPredicate> refineBuchi(final IPetriNet<L, IPredicate> abstraction,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
-			throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton,
+			final BuchiInterpolantAutomatonConstructionStyle constructionStyle) throws AutomataLibraryException {
 		final IStateDeterminizer<L, IPredicate> stateDeterminizer =
 				new PowersetDeterminizer<>(interpolantAutomaton, mUseDoubleDeckers, mDefaultStateFactory);
 		final BuchiComplementFKV<L, IPredicate> complNwa = new BuchiComplementFKV<>(
