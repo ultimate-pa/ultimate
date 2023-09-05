@@ -8,8 +8,6 @@ let Range = ace.require('ace/range').Range;
 function load_tool_interface_template() {
 	let content = $('#content');
 	content.removeClass('p-5');
-	//const tool_interface_template = Handlebars.compile($("#tool-interface-template").html());
-	//content.append(tool_interface_template(_CONFIG));
 }
 
 
