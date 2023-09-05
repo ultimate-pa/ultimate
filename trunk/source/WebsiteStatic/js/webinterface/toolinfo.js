@@ -6,7 +6,7 @@ _TOOLS = {
   {% for tool in site.tools %}
   "{{ tool.tool_id }}": {
     name: "{{ tool.title }}",
-    url: "{{ tool.url }}",
+    url: "{{ tool.url | relative_url }}",
   },
   {% endfor %}
 };
