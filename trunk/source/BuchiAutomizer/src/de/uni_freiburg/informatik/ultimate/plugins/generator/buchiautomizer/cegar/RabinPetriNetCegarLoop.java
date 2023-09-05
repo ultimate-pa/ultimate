@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.N
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IRabinPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RabinDifference;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RabinDeterministicDifference;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.RabinIsEmpty;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -76,7 +76,7 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 	protected IRabinPetriNet<L, IPredicate> refineBuchi(final IRabinPetriNet<L, IPredicate> abstraction,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
 			throws AutomataLibraryException {
-		final RabinDifference<L, IPredicate> difference = new RabinDifference<>(new AutomataLibraryServices(mServices),
+		final RabinDeterministicDifference<L, IPredicate> difference = new RabinDeterministicDifference<>(new AutomataLibraryServices(mServices),
 				abstraction,
 				new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(mServices), interpolantAutomaton));
 		return difference.getResult();

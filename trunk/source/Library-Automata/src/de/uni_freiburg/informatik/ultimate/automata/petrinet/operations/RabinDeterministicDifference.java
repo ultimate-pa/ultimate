@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @param <PLACE>
  *            type of places
  */
-public class RabinDifference<LETTER, PLACE>
+public class RabinDeterministicDifference<LETTER, PLACE>
 		extends GeneralOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 
 	private final IRabinPetriNet<LETTER, PLACE> mPetriNet;
@@ -43,7 +43,7 @@ public class RabinDifference<LETTER, PLACE>
 	 * @throws AutomataLibraryException
 	 *             a exception to be thrown when the automaton is not complete or deterministic
 	 */
-	public RabinDifference(final AutomataLibraryServices services, final IRabinPetriNet<LETTER, PLACE> petriNet,
+	public RabinDeterministicDifference(final AutomataLibraryServices services, final IRabinPetriNet<LETTER, PLACE> petriNet,
 			final INestedWordAutomaton<LETTER, PLACE> buchiAutomaton) throws AutomataLibraryException {
 		super(services);
 		mPetriNet = petriNet;
