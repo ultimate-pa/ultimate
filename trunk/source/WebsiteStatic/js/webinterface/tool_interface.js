@@ -69,8 +69,8 @@ function create_persistence_link() {
 
 	delete session_data.code;
 	link_input_small.val(window.location.origin + window.location.pathname
-		+ '?ui=int&tool=' + _CONFIG.context.tool.id + '&lang=' + _CONFIG.context.current_worker.language
-		+ '&sample=' + _CONFIG.context.sample_source
+		+ '?ui=int&tool=' + _CONTEXT.tool.id + '&lang=' + _CONTEXT.current_worker.language
+		+ '&sample=' + _CONTEXT.sample_source
 	);
 
 	$('#copy_persistence_link_to_clipboard').on({
@@ -104,11 +104,11 @@ function get_user_session_settings() {
 	});
 
 	return {
-		"tool": _CONFIG.context.tool.id,
-		"worker": _CONFIG.context.current_worker.id,
-		"language": _CONFIG.context.current_worker.language,
+		"tool": _CONTEXT.tool.id,
+		"worker": _CONTEXT.current_worker.id,
+		"language": _CONTEXT.current_worker.language,
 		"frontend_settings": user_frontend_settings,
-		"sample_source": _CONFIG.context.sample_source,
+		"sample_source": _CONTEXT.sample_source,
 		"code": _EDITOR.getValue()
 	}
 }
@@ -203,7 +203,7 @@ function init_interface_controls() {
 
 	$('#move-messages').on({
 		click: function () {
-			switch (_CONFIG.context.msg_orientation) {
+			switch (_CONTEXT.msg_orientation) {
 				case "left":
 					set_message_orientation("bottom");
 					break;
@@ -229,7 +229,7 @@ function init_interface_controls() {
 function init_messages_resize() {
 	let messages_container = $('#messages');
 	let edges = { left: false, right: false, bottom: false, top: false };
-	switch (_CONFIG.context.msg_orientation) {
+	switch (_CONTEXT.msg_orientation) {
 		case "bottom":
 			edges.top = true;
 			break;
@@ -239,7 +239,7 @@ function init_messages_resize() {
 	}
 
 	function set_flex_basis(event) {
-		switch (_CONFIG.context.msg_orientation) {
+		switch (_CONTEXT.msg_orientation) {
 			case "bottom":
 				return event.rect.height;
 			case "left":
@@ -285,21 +285,21 @@ function set_message_orientation(new_orientation) {
 			move_msg_action.addClass("oi-collapse-right");
 			break;
 	}
-	_CONFIG.context.msg_orientation = new_orientation;
+	_CONTEXT.msg_orientation = new_orientation;
 	init_messages_resize();
 	_EDITOR.resize();
 }
 
 
 /**
- * Set available options for the navbar based on _CONFIG.context
+ * Set available options for the navbar based on _CONTEXT
  */
 function refresh_navbar() {
-	if ("current_worker" in _CONFIG.context) {
-		$('#navbar_language_select_dropdown').html('Language: ' + _CONFIG.context.current_worker.language);
+	if ("current_worker" in _CONTEXT) {
+		$('#navbar_language_select_dropdown').html('Language: ' + _CONTEXT.current_worker.language);
 
-		set_available_code_samples(_CONFIG.context.current_worker.id);
-		set_available_frontend_settings(_CONFIG.context.current_worker.language);
+		set_available_code_samples(_CONTEXT.current_worker.id);
+		set_available_frontend_settings(_CONTEXT.current_worker.language);
 		$('#navbar_execute_interface').removeClass('hidden');
 	} else {
 		$('#navbar_sample_select_dropdown').addClass('hidden');
@@ -441,7 +441,7 @@ function run_ultimate_task(settings) {
  */
 function get_user_frontend_settings() {
 	let result = [];
-	_CONFIG.context.current_worker.frontend_settings.forEach(function (setting) {
+	_CONTEXT.current_worker.frontend_settings.forEach(function (setting) {
 		// TODO: implement float, ... settings.
 		// note: our setting.id contain dots, which have to be escaped
 		let setting_input = $('[id="' + setting.id + '"]')
@@ -470,11 +470,11 @@ function get_execute_settings() {
 		action: 'execute',
 		code: _EDITOR.getSession().getValue(),
 		toolchain: {
-			id: _CONFIG.context.current_worker.id
+			id: _CONTEXT.current_worker.id
 		},
-		code_file_extension: _CONFIG.code_file_extensions[_CONFIG.context.current_worker.language],
+		code_file_extension: _CONFIG.code_file_extensions[_CONTEXT.current_worker.language],
 		user_settings: "",
-		ultimate_toolchain_xml: (new XMLSerializer()).serializeToString(_CONFIG.context.current_worker.ultimate_toolchain_xml)
+		ultimate_toolchain_xml: (new XMLSerializer()).serializeToString(_CONTEXT.current_worker.ultimate_toolchain_xml)
 	};
 
 	const user_settings = get_user_frontend_settings();
@@ -490,15 +490,15 @@ function get_execute_settings() {
  */
 function choose_language(language) {
 	console.log('Set current language to ' + language);
-	_CONFIG.context.tool.workers.forEach(function (worker) {
+	_CONTEXT.tool.workers.forEach(function (worker) {
 		if (worker.language === language) {
-			_CONFIG.context.current_worker = worker;
+			_CONTEXT.current_worker = worker;
 		}
 	});
 
 	// Load the ultimate toolchain file.
-	$.get('./ultimate_toolchain_xmls/' + _CONFIG.context.current_worker.id + '.xml', function (response) {
-		_CONFIG.context.current_worker.ultimate_toolchain_xml = response;
+	$.get('./ultimate_toolchain_xmls/' + _CONTEXT.current_worker.id + '.xml', function (response) {
+		_CONTEXT.current_worker.ultimate_toolchain_xml = response;
 	}).fail(function () {
 		alert("Could not fetch ultimate toolchain xml. Config error.");
 	});
@@ -608,7 +608,7 @@ function load_sample(source) {
 	$.get('./code_examples/' + source, function (data) {
 		clear_messages();
 		_EDITOR.session.setValue(data);
-		_CONFIG.context.sample_source = source;
+		_CONTEXT.sample_source = source;
 	})
 }
 
@@ -620,7 +620,7 @@ function set_available_frontend_settings(language) {
 	let settings_menu = $('#settings_dropdown_menu');
 	let settings_entries = '';
 
-	_CONFIG.context.current_worker.frontend_settings.forEach(function (setting) {
+	_CONTEXT.current_worker.frontend_settings.forEach(function (setting) {
 		switch (setting.type) {
 			case "bool":
 				settings_entries += '<div class="form-check ' + (setting.visible ? "" : "hidden") + '">' +
