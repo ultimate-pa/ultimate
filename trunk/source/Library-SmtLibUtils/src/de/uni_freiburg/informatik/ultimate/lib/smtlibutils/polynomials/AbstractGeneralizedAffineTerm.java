@@ -760,7 +760,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 
 
 	public enum ComparisonResult {
-		INCONSISTENT, IMPLIES, EXPLIES, EQUIVALENT;
+		INCONSISTENT, IMPLIES, EXPLIES, EQUIVALENT, FUSIBLE;
 
 		public ComparisonResult switchDirection() {
 			final ComparisonResult result;
@@ -775,6 +775,9 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 				result = EXPLIES;
 				break;
 			case INCONSISTENT:
+				result = this;
+				break;
+			case FUSIBLE:
 				result = this;
 				break;
 			default:
@@ -1046,6 +1049,8 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		case LEQ:
 			if (lc.compareTo(rc) < 0) {
 				result = ComparisonResult.INCONSISTENT;
+			} else if (lc.compareTo(rc) == 0) {
+				result = ComparisonResult.FUSIBLE;
 			} else {
 				result = null;
 			}
@@ -1118,6 +1123,8 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		case LESS:
 			if (lc.compareTo(rc) <= 0) {
 				result = ComparisonResult.INCONSISTENT;
+			} else if (lc.compareTo(rc) == 0) {
+				result = ComparisonResult.FUSIBLE;
 			} else {
 				result = null;
 			}
@@ -1160,6 +1167,8 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		case GEQ:
 			if (lc.compareTo(rc) > 0) {
 				result = ComparisonResult.INCONSISTENT;
+			} else if (lc.compareTo(rc) == 0) {
+				result = ComparisonResult.FUSIBLE;
 			} else {
 				result = null;
 			}
@@ -1232,6 +1241,8 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		case GREATER:
 			if (lc.compareTo(rc) >= 0) {
 				result = ComparisonResult.INCONSISTENT;
+			} else if (lc.compareTo(rc) == 0) {
+				result = ComparisonResult.FUSIBLE;
 			} else {
 				result = null;
 			}

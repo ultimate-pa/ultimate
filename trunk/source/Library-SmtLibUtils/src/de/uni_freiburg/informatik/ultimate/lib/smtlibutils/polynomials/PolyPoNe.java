@@ -35,6 +35,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm.ComparisonResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -65,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class PolyPoNe {
 
 	protected enum Check {
-		REDUNDANT, INCONSISTENT, MAYBE_USEFUL
+		REDUNDANT, INCONSISTENT, MAYBE_USEFUL, FUSIBLE
 	};
 
 	protected final Script mScript;
@@ -124,15 +125,21 @@ public class PolyPoNe {
 	protected Check checkPolyRel(final Script script, final PolynomialRelation newPolyRel,
 			final boolean removeExpliedPolyRels) {
 		final Check res1 = compareToExistingRepresentations(newPolyRel, removeExpliedPolyRels);
-		if (res1 != null) {
+		if (res1 == Check.INCONSISTENT || res1 == Check.REDUNDANT) {
 			return res1;
 		}
+		assert res1 == null || res1 == Check.FUSIBLE;
 		final PolynomialRelation alternativeRepresentation = newPolyRel.mul(mScript, Rational.MONE);
 		final Check res2 = compareToExistingRepresentations(alternativeRepresentation, removeExpliedPolyRels);
-		if (res2 != null) {
+		if (res2 == Check.INCONSISTENT || res2 == Check.REDUNDANT) {
 			return res2;
 		}
-		return Check.MAYBE_USEFUL;
+		assert res2 == null || res2 == Check.FUSIBLE;
+		if (res1 == Check.FUSIBLE || res2 == Check.FUSIBLE) {
+			return Check.FUSIBLE;
+		} else {
+			return Check.MAYBE_USEFUL;
+		}
 	}
 
 	private Check compareToExistingRepresentations(final PolynomialRelation newPolyRel,
@@ -140,6 +147,7 @@ public class PolyPoNe {
 		final Set<PolynomialRelation> existingPolyRels = mPolyRels
 				.getImage(newPolyRel.getPolynomialTerm().getAbstractVariable2Coefficient());
 		final List<PolynomialRelation> existingThatExplyNew = new ArrayList<>();
+		boolean isFusible = false;
 		for (final PolynomialRelation existingPolyRel : existingPolyRels) {
 			final ComparisonResult comp = AbstractGeneralizedAffineTerm.compareRepresentation(existingPolyRel,
 					newPolyRel);
@@ -155,6 +163,20 @@ public class PolyPoNe {
 					break;
 				case INCONSISTENT:
 					return Check.INCONSISTENT;
+				case FUSIBLE:
+					// If this PolynomialRelation can be fused, we will change its relation symbol
+					// and hence this changed PolynomialRelation explies the existing
+					// PolynomialRelation. If the newPolyRel is fusible it can still exply others.
+					// However, it must not be implied by others. If it would be implied by others
+					// the existing relations would be inconsistent or have been fused already.
+					// (One may wonder: is it really safe to remove the existingPolyRel? Couldn't it
+					// happen that we never add the fused relation? The arguments above explain that
+					// the removal is safe.)
+					if (removeExpliedPolyRels) {
+						existingThatExplyNew.add(existingPolyRel);
+					}
+					isFusible = true;
+					break;
 				default:
 					throw new AssertionError("unknown value " + comp);
 				}
@@ -169,7 +191,11 @@ public class PolyPoNe {
 				assert modified : "nothing removed";
 			}
 		}
-		return null;
+		if (isFusible) {
+			return Check.FUSIBLE;
+		} else {
+			return null;
+		}
 	}
 
 	protected final boolean addPolyRel(final Script script, final PolynomialRelation polyRel,
@@ -178,7 +204,12 @@ public class PolyPoNe {
 			throw new AssertionError("must not add if already inconsistent");
 		}
 		final Check check = checkPolyRel(script, polyRel, removeExpliedPolyRels);
-		if (check == Check.MAYBE_USEFUL) {
+		if (check == Check.FUSIBLE) {
+			assert polyRel.getRelationSymbol() == RelationSymbol.LEQ || polyRel.getRelationSymbol() == RelationSymbol.GEQ;
+			final PolynomialRelation fusedPolyRel = PolynomialRelation.of(polyRel.getPolynomialTerm(), RelationSymbol.EQ);
+			mPolyRels.addPair(polyRel.getPolynomialTerm().getAbstractVariable2Coefficient(), fusedPolyRel);
+			return false;
+		} else if (check == Check.MAYBE_USEFUL) {
 			mPolyRels.addPair(polyRel.getPolynomialTerm().getAbstractVariable2Coefficient(), polyRel);
 			return false;
 		} else if (check == Check.REDUNDANT) {

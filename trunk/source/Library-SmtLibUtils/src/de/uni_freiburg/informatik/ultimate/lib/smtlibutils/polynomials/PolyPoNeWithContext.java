@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -97,10 +98,27 @@ public class PolyPoNeWithContext extends PolyPoNe {
 	protected Check checkPolyRel(final Script script, final PolynomialRelation newPolyRel,
 			final boolean removeExpliedPolyRels) {
 		final Check contextCheck = mContext.checkPolyRel(script, newPolyRel, false);
-		if (contextCheck != Check.MAYBE_USEFUL) {
+		if (contextCheck == Check.INCONSISTENT || contextCheck == Check.REDUNDANT) {
 			return contextCheck;
 		} else {
-			return super.checkPolyRel(mScript, newPolyRel, true);
+			if (contextCheck == Check.MAYBE_USEFUL) {
+				return super.checkPolyRel(mScript, newPolyRel, true);
+			} else {
+				assert contextCheck == Check.FUSIBLE;
+				assert newPolyRel.getRelationSymbol() == RelationSymbol.LEQ
+						|| newPolyRel.getRelationSymbol() == RelationSymbol.GEQ;
+				final PolynomialRelation fusedPolyRel = PolynomialRelation.of(newPolyRel.getPolynomialTerm(),
+						RelationSymbol.EQ);
+				final Check check = super.checkPolyRel(mScript, fusedPolyRel, true);
+				if (check == Check.INCONSISTENT || check == Check.REDUNDANT) {
+					return check;
+				} else {
+					// Cannot be Check.FUSIBLE otherwise the counterpart for the fuse would be in
+					// context and here.
+					assert check == Check.MAYBE_USEFUL : "Cannot be fusible";
+					return Check.FUSIBLE;
+				}
+			}
 		}
 	}
 

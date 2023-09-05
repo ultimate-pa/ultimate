@@ -744,6 +744,25 @@ public class SimplificationTest {
 				mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void directFusionForConjunction() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x") };
+		final String formulaAsString = "(and (>= x 42) (<= x 42))";
+		final String simplified = "(= 42 x)";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void directFusionForDisjunction() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x") };
+		final String formulaAsString = "(or (> x 42) (< x 42))";
+		final String simplified = "(not (= 42 x))";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
+
 	// @Test
 	// public void bvToIntBadgerExists01() {
 	// final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "m", "n"), };
