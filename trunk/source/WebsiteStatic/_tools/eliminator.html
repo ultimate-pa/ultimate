@@ -9,7 +9,9 @@ tool_id: "eliminator"
 description: "Run SMT script."
 
 # Supported languages to be displayed in the frontend.
-languages: ["Smt"]
+languages: [
+  { "language": "Smt", "worker": "smtEliminator" }
+]
 ---
 
 <h1>Eliminator</h1>

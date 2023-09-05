@@ -23,8 +23,8 @@ function render_navbar() {
   $('#navbar_content').append(navbar_template(_CONTEXT));
   
   const navbar_breadcrumb_entry = $("#navbar_breadcrumb li a");
-  navbar_breadcrumb_entry.text(_TOOLS[_CONTEXT.tool.id].name);
-  navbar_breadcrumb_entry.attr('href', _TOOLS[_CONTEXT.tool.id].url);
+  navbar_breadcrumb_entry.text(_CONTEXT.tool.name);
+  navbar_breadcrumb_entry.attr('href', _CONTEXT.tool.url);
 }
 
 
@@ -40,8 +40,8 @@ function load_tool_interface(tool_id) {
   load_backend_version();
   set_message_orientation(_CONTEXT.msg_orientation);
   if (_CONTEXT.url.lang !== null) {
-    choose_language(_CONTEXT.url.lang);
-    refresh_navbar();
+    choose_language(_CONTEXT.url.lang)
+    .then(refresh_navbar);
   }
   if (_CONTEXT.url.sample !== null) {
     load_sample(_CONTEXT.url.sample);
@@ -89,15 +89,13 @@ function set_context() {
   }
 
   // Redirect non existing tools to home page.
-  if (!tool_config_key_value_exists("id", url_params.tool)) {
+  if (!(url_params.tool in _TOOLS)) {
     window.location.replace(get_home_url());
     return false;
   }
 
   // Set current tool if active.
-  tool = Object.values(_CONFIG.tools).find(function (tool) {
-    return tool.id === url_params.tool
-  });
+  tool = _TOOLS[url_params.tool];
 
   _CONTEXT = {
     "url": url_params,

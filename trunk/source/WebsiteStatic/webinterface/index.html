@@ -123,8 +123,8 @@ js: [
         Choose Language
       </a>
       <div class="dropdown-menu">
-        {{#each tool.workers}}
-          <a class="dropdown-item language-selection" href="#"  id="{{this.id}}" data-language="{{this.language}}">{{this.language}}</a>
+        {{#each tool.languages}}
+          <a class="dropdown-item language-selection" href="#"  id="{{this.worker}}" data-language="{{this.language}}">{{this.language}}</a>
         {{~/each}}
       </div>
     </li>

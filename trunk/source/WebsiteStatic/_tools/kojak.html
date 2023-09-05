@@ -9,7 +9,10 @@ tool_id: "kojak"
 description: "A software model checker."
 
 # Supported languages to be displayed in the frontend.
-languages: ["Boogie", "C"]
+languages: [
+  { "language": "Boogie", "worker": "boogieKojak" },
+  { "language": "C",      "worker": "cKojak" }
+]
 ---
 
 <h1>Kojak</h1>

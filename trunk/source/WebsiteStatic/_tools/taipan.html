@@ -9,7 +9,10 @@ tool_id: "taipan"
 description: "Verification of safety properties using trace abstraction and abstract interpretation on path programs."
 
 # Supported languages to be displayed in the frontend.
-languages: ["Boogie", "C"]
+languages: [
+  { "language": "Boogie", "worker": "boogieTaipan" },
+  { "language": "C",      "worker": "cTaipan" }
+]
 ---
 
 <h1>Taipan</h1>
