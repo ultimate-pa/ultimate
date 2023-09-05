@@ -9,7 +9,9 @@ tool_id: "ltl_automizer"
 description: "An LTL software model checker based on Büchi programs."
 
 # Supported languages to be displayed in the frontend.
-languages: ["C"]
+languages: [
+  { "language": "C",      "worker": "cLTLAutomizer" }
+]
 ---
 
 <h1>LTL Automizer</h1>

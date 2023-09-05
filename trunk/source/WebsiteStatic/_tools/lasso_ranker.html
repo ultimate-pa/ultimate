@@ -9,7 +9,10 @@ tool_id: "lasso_ranker"
 description: "Synthesis of ranking functions and nontermination arguments."
 
 # Supported languages to be displayed in the frontend.
-languages: ["Boogie", "C"]
+languages: [
+  { "language": "Boogie", "worker": "boogieLassoRanker" },
+  { "language": "C",      "worker": "cLassoRanker" }
+]
 ---
 
 <h1><span style="font-variant:small-caps">Lasso Ranker</span></h1>

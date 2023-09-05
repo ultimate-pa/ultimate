@@ -9,7 +9,10 @@ tool_id: "automizer"
 description: "Verification of safety properties based on an automata-theoretic approach to software verification."
 
 # Supported languages to be displayed in the frontend.
-languages: ["Boogie", "C"]
+languages: [
+  { "language": "Boogie", "worker": "boogieAutomizer" },
+  { "language": "C",      "worker": "cAutomizer" }
+]
 ---
 
 <img src="{{ 'img/tool_logo.png' | relative_url }}" style="width:min-content">
