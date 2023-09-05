@@ -62,10 +62,10 @@ def parse_args() -> argparse.Namespace:
 
 def get_ultimate_json(options):
     output = subprocess.check_output(['Ultimate', *options], stderr=subprocess.DEVNULL)
-    
+
     # ignore ordinary log lines if they exist
     output = output.splitlines()[-1]
-        
+
     return json.loads(output)['frontend_settings']
 
 
@@ -86,13 +86,11 @@ def find_entry(entries, id: str):
             return i
     return -1
 
-def main() -> None:
-    args = parse_args()
-
+def compute_settings(toolchain, settings, override=None):
     # Read default settings, delta given by epf file, and overrides for web interface
-    defaults  = get_ultimate_json(['-tc', args.toolchain, '--generate-frontend-json-from-defaults'])
-    delta     = get_ultimate_json(['-tc', args.toolchain, '-s', args.settings, '-i', 'dummy', '--generate-frontend-json-from-delta'])
-    overrides = get_overrides(args.override)
+    defaults  = get_ultimate_json(['-tc', toolchain, '--generate-frontend-json-from-defaults'])
+    delta     = get_ultimate_json(['-tc', toolchain, '-s', settings, '-i', 'dummy', '--generate-frontend-json-from-delta'])
+    overrides = get_overrides(override)
 
     # Apply overrides to delta settings
     for entry in overrides:
@@ -101,6 +99,7 @@ def main() -> None:
             default_index = find_entry(defaults, entry['id'])
             if default_index < 0:
                 print(f"ERROR: Could not find setting with ID {entry['id']}. Exiting...")
+                print([ entry['id'] for entry in defaults ])
                 sys.exit(1)
             default_entry = defaults[default_index]
             merged_entry = { **default_entry, **entry }
@@ -110,9 +109,13 @@ def main() -> None:
             merged_entry = { **delta_entry, **entry }
             delta[delta_index] = merged_entry
 
-    # Write delta settings
-    print(json.dumps(delta, indent=2))
+    # Return delta settings
+    return json.dumps(delta, indent=2)
 
+def main() -> None:
+    args = parse_args()
+    delta_settings = compute_settings(args.toolchain, args.settings, args.override)
+    print(delta_settings)
 
 if __name__ == "__main__":
     main()

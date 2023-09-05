@@ -9,7 +9,10 @@ tool_id: "buechi_automizer"
 description: "Termination analysis based on Büchi automata."
 
 # Supported languages to be displayed in the frontend.
-languages: ["Boogie", "C"]
+languages: [
+  { "language": "Boogie", "worker": "boogieBuchiAutomizer" },
+  { "language": "C",      "worker": "cBuchiAutomizer" }
+]
 ---
 
 <h1>Büchi Automizer</h1>

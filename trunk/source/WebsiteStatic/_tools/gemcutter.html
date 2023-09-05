@@ -9,7 +9,10 @@ tool_id: "gemcutter"
 description: "A verifier for concurrent programs based on commutativity – the observation that for certain statements, the execution order does not matter."
 
 # Supported languages to be displayed in the frontend.
-languages: ["Boogie", "C"]
+languages: [
+  { "language": "Boogie", "worker": "boogieGemCutter" },
+  { "language": "C",      "worker": "cGemCutter" }
+]
 ---
 
 <h1><span style="font-variant: small-caps">Ultimate</span>  GemCutter</h1>

@@ -9,7 +9,10 @@ tool_id: "referee"
 description: "Checking validity of given invariants."
 
 # Supported languages to be displayed in the frontend.
-languages: ["Boogie", "C"]
+languages: [
+  { "language": "Boogie", "worker": "boogieReferee" },
+  { "language": "C",      "worker": "cReferee" }
+]
 ---
 
 <h1>Referee</h1>
