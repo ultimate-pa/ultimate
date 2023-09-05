@@ -371,7 +371,7 @@ public class SimplificationTest {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"),
 				new FunDecl(SmtSortUtils::getBoolSort, "A"), };
 		final String formulaAsString = "(and (>= x 7.0) (<= x 7.0))";
-		final String expectedResultAsString = "(and (<= x 7.0) (<= 7.0 x))";
+		final String expectedResultAsString = "(= x 7.0)";
 		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.POLY_PAC,
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -613,7 +613,7 @@ public class SimplificationTest {
 	public void missingConjuncts() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"), };
 		final String formulaAsString = "(and (<= x 11) (not (= (+ x (- 2)) 0)) (<= 11 x))";
-		final String simplified = "(and (<= x 11) (<= 11 x))";
+		final String simplified = "(= x 11)";
 		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
 				mLogger, mMgdScript, mCsvWriter);
 	}
