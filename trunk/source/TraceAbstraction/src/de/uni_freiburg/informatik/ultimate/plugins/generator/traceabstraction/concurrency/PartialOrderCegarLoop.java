@@ -173,7 +173,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			provider.initialize();
 		}
 
-		mSupportsDeadEnds = mPref.getNumberOfIndependenceRelations() == 1
+		mSupportsDeadEnds = mPref.enableDeadEndPruning() && mPref.getNumberOfIndependenceRelations() == 1
 				&& mPref.porIndependenceSettings(0).getAbstractionType() == AbstractionType.NONE
 				&& mPref.getPartialOrderMode() != PartialOrderMode.DYNAMIC_ABSTRACTIONS;
 

@@ -386,6 +386,10 @@ public final class TAPreferences {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_MODE, PartialOrderMode.class);
 	}
 
+	public boolean enableDeadEndPruning() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_POR_DEADENDS);
+	}
+
 	public boolean dumpIndependenceScript() {
 		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_INDEPENDENCE_SCRIPT);
 	}

@@ -152,6 +152,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_POR_MODE = "Partial Order Reduction in concurrent analysis";
 	private static final PartialOrderMode DEF_POR_MODE = PartialOrderMode.NONE;
 
+	public static final String LABEL_POR_DEADENDS = "Prune known deadend states from previous iterations";
+	private static final boolean DEF_POR_DEADENDS = true;
+	private static final String DESC_POR_DEADENDS = "This setting has no effect when abstract commutativity is"
+			+ " involved, as such modes do not support dead end pruning.";
+
 	public static final String LABEL_POR_NUM_INDEPENDENCE = "Number of independence relations to use for POR";
 	private static final int DEF_POR_NUM_INDEPENDENCE = 1;
 
@@ -716,6 +721,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_POR_ONESHOT, DEF_POR_ONESHOT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_POR_MODE, DEF_POR_MODE, PreferenceType.Combo,
 						PartialOrderMode.values()),
+				new UltimatePreferenceItem<>(LABEL_POR_DEADENDS, DEF_POR_DEADENDS, DESC_POR_DEADENDS,
+						PreferenceType.Boolean),
 
 				new UltimatePreferenceItem<>(LABEL_POR_DFS_ORDER, DEF_POR_DFS_ORDER, PreferenceType.Combo,
 						OrderType.values()),
