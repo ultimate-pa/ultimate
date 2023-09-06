@@ -111,9 +111,9 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 		final List<IPredicate> conjuncts = mGetConjuncts.apply(state);
 
 		// identify candidates for responsible proofs (proofs whose conjunct is FALSE)
-		final var candidateProofs =
-				IntStream.range(0, conjuncts.size()).filter(i -> SmtUtils.isFalseLiteral(conjuncts.get(i).getFormula()))
-						.mapToObj(Integer::valueOf).collect(Collectors.toList());
+		final var candidateProofs = IntStream.range(0, conjuncts.size())
+				.filter(i -> SmtUtils.isFalseLiteral(conjuncts.get(conjuncts.size() - i - 1).getFormula()))
+				.mapToObj(Integer::valueOf).collect(Collectors.toList());
 		assert !candidateProofs.isEmpty() : "No proof can be made responsible for state " + state;
 
 		// choose the proof that is deemed responsible for state being a proven state
