@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.DfsBookkeeping;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -97,6 +98,22 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	private final LinkedList<Pair<R, OutgoingInternalTransition<L, R>>> mStack = new LinkedList<>();
 
 	private int mIndentLevel = -1;
+
+	public static <L, S, R, H> void traverse(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
+			final IStratifiedStateFactory<L, S, R, H> stateFactory, final IDfsVisitor<L, R> visitor,
+			final IIndependenceInducedByAbstraction<S, L, H> independence, final IProofManager<H, S> manager)
+			throws AutomataOperationCanceledException {
+		final var initial =
+				DataStructureUtils.getOnly(operand.getInitialStates(), "There must only be one initial state");
+		if (initial.isPresent()) {
+			new DynamicStratifiedReduction<>(services, operand, order, stateFactory, visitor, initial.get(),
+					independence, manager);
+		} else {
+			final var logger = services.getLoggingService().getLogger(DynamicStratifiedReduction.class);
+			logger.warn("DynamicStratifiedReduction did not find any initial state. Returning directly.");
+		}
+	}
 
 	/**
 	 * Performs a depth-first traversal over the reduction automaton while constructing it. This constructor is called

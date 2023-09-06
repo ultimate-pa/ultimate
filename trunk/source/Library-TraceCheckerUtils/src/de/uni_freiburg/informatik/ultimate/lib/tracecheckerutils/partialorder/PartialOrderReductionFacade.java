@@ -82,7 +82,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Lo
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.IRefinableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ProofManager;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
@@ -390,8 +389,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 			}
 			break;
 		case DYNAMIC_ABSTRACTIONS:
-			final var initial = DataStructureUtils.getOneAndOnly(input.getInitialStates(), "initial state");
-			new DynamicStratifiedReduction<>(mAutomataServices, input, mDfsOrder, mStratifiedFactory, visitor, initial,
+			DynamicStratifiedReduction.traverse(mAutomataServices, input, mDfsOrder, mStratifiedFactory, visitor,
 					mAbstractIndependence, mProofManager);
 			break;
 		case NONE:
