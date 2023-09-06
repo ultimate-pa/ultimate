@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.i
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -77,9 +78,9 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	public ProofManager(final IUltimateServiceProvider services, final IRefinableAbstraction<P, H, L> abstraction,
 			final Function<IPredicate, List<IPredicate>> getConjuncts, final Predicate<IPredicate> isErrorState) {
 		mLogger = services.getLoggingService().getLogger(getClass());
-		mAbstraction = abstraction;
-		mGetConjuncts = getConjuncts;
-		mIsErrorState = isErrorState;
+		mAbstraction = Objects.requireNonNull(abstraction);
+		mGetConjuncts = Objects.requireNonNull(getConjuncts);
+		mIsErrorState = Objects.requireNonNull(isErrorState);
 	}
 
 	public void addProof(final IRefinementEngineResult<L, P> proof) {

@@ -188,8 +188,13 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		final List<IIndependenceRelation<IPredicate, L>> relations = mIndependenceProviders.stream()
 				.map(IRefinableIndependenceProvider::retrieveIndependence).collect(Collectors.toList());
 
-		final var proofManager = new ProofManager<>(mServices, stratifiableAbstraction,
-				PartialOrderCegarLoop::getProofConjuncts, this::isErrorState);
+		final ProofManager<L, H, NestedWordAutomaton<L, IPredicate>> proofManager;
+		if (stratifiableAbstraction == null) {
+			proofManager = null;
+		} else {
+			proofManager = new ProofManager<>(mServices, stratifiableAbstraction,
+					PartialOrderCegarLoop::getProofConjuncts, this::isErrorState);
+		}
 		mProofManager = proofManager;
 
 		return new PartialOrderReductionFacade<>(mServices, mPredicateFactory, mIcfg, mErrorLocs, mPartialOrderMode,
@@ -256,7 +261,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			container.refine(resultWithHtc);
 			mPOR.replaceIndependence(i, container.retrieveIndependence());
 		}
-		mProofManager.addProof(resultWithHtc);
+		if (mProofManager != null) {
+			mProofManager.addProof(resultWithHtc);
+		}
 
 		// TODO (Dominik 2020-12-17) Really implement this acceptance check (see BasicCegarLoop::refineAbstraction)
 		return true;
