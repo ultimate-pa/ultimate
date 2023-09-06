@@ -32,6 +32,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -78,7 +79,8 @@ public class PolyPoNeWithContext extends PolyPoNe {
 
 	private boolean addContext(final Collection<Term> contextParams) {
 		for (final Term param : contextParams) {
-			final PolynomialRelation polyRel = PolynomialRelation.of(mScript, param);
+			final PolynomialRelation polyRel = PolynomialRelation.of(mScript, param,
+					TransformInequality.STRICT2NONSTRICT);
 			if (polyRel != null) {
 				final boolean isInconsistent = mContext.addPolyRel(mScript, polyRel, true);
 				if (isInconsistent) {
