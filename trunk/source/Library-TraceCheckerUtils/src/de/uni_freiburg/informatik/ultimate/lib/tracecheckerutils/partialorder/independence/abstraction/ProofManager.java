@@ -94,15 +94,16 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 			mProofCounter.set(i, 0);
 		}
 
-		// TODO
 		mProofCounter.add(0);
 	}
 
 	@Override
 	public boolean isProvenState(final IPredicate state) {
-		return mGetConjuncts.apply(state).stream().anyMatch(p -> SmtUtils.isFalseLiteral(p.getFormula()));
-		// && mIsErrorState.test(state);
-		// ;
+		final var isProven = mGetConjuncts.apply(state).stream().anyMatch(p -> SmtUtils.isFalseLiteral(p.getFormula()));
+		if (isProven) {
+			mStatistics.reportProvenState();
+		}
+		return isProven;
 	}
 
 	@Override
@@ -139,10 +140,10 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	}
 
 	public void finish() {
-		// TODO collect statistics from last iteration
+		// collect statistics from last iteration
 		for (final int i : mProofCounter) {
 			if (i == 0) {
-				mStatistics.addIrresponsibleProofs(1);
+				mStatistics.reportRedundantProof();
 			}
 		}
 	}
@@ -153,9 +154,22 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 
 	private static final class Statistics extends AbstractStatisticsDataProvider {
 		private int mIrresponsibleProofs = 0;
+		private int mRedundantProofs = 0;
+		private int mProvenStates = 0;
 
 		public Statistics() {
 			declare("IrresponsibleProofs", () -> mIrresponsibleProofs, KeyType.COUNTER);
+			declare("RedundantProofs", () -> mRedundantProofs, KeyType.COUNTER);
+			declare("ProvenStates", () -> mProvenStates, KeyType.COUNTER);
+		}
+
+		public void reportRedundantProof() {
+			mRedundantProofs++;
+			addIrresponsibleProofs(1);
+		}
+
+		public void reportProvenState() {
+			mProvenStates++;
 		}
 
 		public void addIrresponsibleProofs(final int n) {
