@@ -1104,7 +1104,7 @@ public class CHandler {
 		}
 		checkForACSL(main, resultBuilder, null, node, true);
 		if (useRValue && expr != null) {
-			final ILocation loc = LocationFactory.createIgnoreCLocation(node);
+			final ILocation loc = mLocationFactory.createCLocation(node);
 			if (expr instanceof HeapLValue) {
 				// The read already creates an aux-var, so we just use the RValue of the read
 				resultBuilder.addAllIncludingLrValue(
