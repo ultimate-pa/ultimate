@@ -1,12 +1,69 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="7GB" timelimit="300" hardtimelimit="310" cpuCores="2">
+<benchmark tool="ultimateautomizer" memlimit="7GB" timelimit="900" hardtimelimit="920" cpuCores="2">
   <resultfiles></resultfiles>
 
   <option name="--force-no-wrapper" />
+  <option name="--traceabstraction.prune.known.deadend.states.from.previous.iterations">false</option>
 
   <rundefinition name="DynamicAbstractions">
     <option name="-s">../../../trunk/examples/settings/gemcutter/DynamicStratifiedAbstractions.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
   </rundefinition>
+
+  <rundefinition name="ConcreteCommutativity">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+  </rundefinition>
+
+  <rundefinition name="AbstractCommutativity">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+    <option name="--traceabstraction.abstraction.used.for.commutativity.in.por">VARIABLES_GLOBAL</option>
+  </rundefinition>
+
+  <rundefinition name="StratifiedReductionWithOptimalBudget">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+    <option name="--traceabstraction.number.of.independence.relations.to.use.for.por">2</option>
+    <option name="--traceabstraction.abstraction.used.for.commutativity.in.por">VARIABLES_GLOBAL</option>
+    <option name="--traceabstraction.abstraction.used.for.commutativity.in.por.#2">NONE</option>
+  </rundefinition>
+
+
+
+  <rundefinition name="DynamicAbstractions_OneCegar">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/DynamicStratifiedAbstractions.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONLY_ONE_CEGAR</option>
+  </rundefinition>
+
+  <rundefinition name="ConcreteCommutativity_OneCegar">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONLY_ONE_CEGAR</option>
+  </rundefinition>
+
+  <rundefinition name="AbstractCommutativity_OneCegar">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONLY_ONE_CEGAR</option>
+    <option name="--traceabstraction.abstraction.used.for.commutativity.in.por">VARIABLES_GLOBAL</option>
+  </rundefinition>
+
+  <rundefinition name="StratifiedReductionWithOptimalBudget_OneCegar">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONLY_ONE_CEGAR</option>
+    <option name="--traceabstraction.number.of.independence.relations.to.use.for.por">2</option>
+    <option name="--traceabstraction.abstraction.used.for.commutativity.in.por">VARIABLES_GLOBAL</option>
+    <option name="--traceabstraction.abstraction.used.for.commutativity.in.por.#2">NONE</option>
+  </rundefinition>
+
+
+
+  <tasks name="dry-run">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+    <include>../../../trunk/examples/svcomp/goblint-regressions/13-privatized_58-singlethreaded-lock_true.yml</include>
+    <include>../../../trunk/examples/svcomp/goblint-regressions/13-privatized_18-first-reads_unknown_2_neg.yml</include>
+  </tasks>
+
+
 
   <tasks name="SVCOMP-ConcurrencySafety-Main">
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
