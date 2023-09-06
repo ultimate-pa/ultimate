@@ -129,7 +129,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
@@ -219,6 +218,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.StringLiteralResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
@@ -1063,6 +1063,11 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTCompoundStatement node) {
+		return handleCompoundStatement(main, node, false);
+	}
+
+	private Result handleCompoundStatement(final IDispatcher main, final IASTCompoundStatement node,
+			final boolean useRValue) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		LRValue expr = null;
 		final IASTNode parent = node.getParent();
@@ -1098,6 +1103,21 @@ public class CHandler {
 			}
 		}
 		checkForACSL(main, resultBuilder, null, node, true);
+		if (useRValue && expr != null) {
+			final ILocation loc = mLocationFactory.createCLocation(node);
+			if (expr instanceof HeapLValue) {
+				// The read already creates an aux-var, so we just use the RValue of the read
+				resultBuilder.addAllIncludingLrValue(
+						mMemoryHandler.getReadCall(((HeapLValue) expr).getAddress(), expr.getCType()));
+			} else {
+				final AuxVarInfo auxVarInfo =
+						mAuxVarInfoBuilder.constructAuxVarInfo(loc, expr.getCType(), AUXVAR.NONDET);
+				resultBuilder.addAuxVar(auxVarInfo).addDeclaration(auxVarInfo.getVarDec());
+				resultBuilder.setLrValue(new RValue(auxVarInfo.getExp(), expr.getCType()));
+				resultBuilder.addStatement(
+						StatementFactory.constructSingleAssignmentStatement(loc, auxVarInfo.getLhs(), expr.getValue()));
+			}
+		}
 		if (isNewScopeRequired(parent)) {
 			updateStmtsAndDeclsAtScopeEnd(resultBuilder, node);
 			if (ADD_HAVOCS_AT_SCOPE_END) {
@@ -1105,7 +1125,6 @@ public class CHandler {
 			}
 			endScope();
 		}
-		resultBuilder.setLrValue(expr);
 		return resultBuilder.build();
 	}
 
@@ -1383,8 +1402,7 @@ public class CHandler {
 		mInnerMostLoopLabel.push(loopLabel);
 		final Result bodyResult = main.dispatch(node.getBody());
 		mInnerMostLoopLabel.pop();
-		final LoopInvariantSpecification witnessInvariant = main.fetchInvariantAtLoop(node);
-		return handleLoops(main, node, bodyResult, condResult, loopLabel, witnessInvariant);
+		return handleLoops(main, node, bodyResult, condResult, loopLabel);
 	}
 
 	public Result visit(final IDispatcher main, final IASTEqualsInitializer node) {
@@ -1443,8 +1461,7 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTForStatement node) {
 		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
-		final LoopInvariantSpecification witnessInvariant = main.fetchInvariantAtLoop(node);
-		return handleLoops(main, node, null, null, loopLabel, witnessInvariant);
+		return handleLoops(main, node, null, null, loopLabel);
 	}
 
 	public Result visit(final IDispatcher main, final IASTFunctionCallExpression node) {
@@ -1484,15 +1501,13 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTGotoStatement node) {
 		final ArrayList<Statement> stmt = new ArrayList<>();
-		if (!mIsPrerun) {
-			final AssertStatement assertWitnessInvariant = ((MainDispatcher) main).fetchInvariantAtGoto(node);
-			if (assertWitnessInvariant != null) {
-				stmt.add(assertWitnessInvariant);
-			}
-		}
 		final String[] name = { node.getName().toString() };
 		stmt.add(new GotoStatement(mLocationFactory.createCLocation(node), name));
-		return new ExpressionResult(stmt, null);
+		final ExpressionResult result = new ExpressionResult(stmt, null);
+		if (mIsPrerun) {
+			return result;
+		}
+		return main.transformWithWitness(node, result);
 	}
 
 	public Result visit(final IDispatcher main, final IASTIdExpression node) {
@@ -2496,12 +2511,11 @@ public class CHandler {
 		mInnerMostLoopLabel.push(loopLabel);
 		final Result bodyResult = main.dispatch(node.getBody());
 		mInnerMostLoopLabel.pop();
-		final LoopInvariantSpecification witnessInvariant = main.fetchInvariantAtLoop(node);
-		return handleLoops(main, node, bodyResult, condResult, loopLabel, witnessInvariant);
+		return handleLoops(main, node, bodyResult, condResult, loopLabel);
 	}
 
 	public Result visit(final IDispatcher main, final IGNUASTCompoundStatementExpression node) {
-		return main.dispatch(node.getCompoundStatement());
+		return handleCompoundStatement(main, node.getCompoundStatement(), true);
 	}
 
 	/**
@@ -3432,11 +3446,10 @@ public class CHandler {
 	 * @param condResult
 	 *            the condition of the loop
 	 * @param loopLabel
-	 * @param witnessInvariant
 	 * @return a result object holding the translated loop (i.e. a while loop)
 	 */
 	private Result handleLoops(final IDispatcher main, final IASTStatement node, Result bodyResult,
-			ExpressionResult condResult, final String loopLabel, final LoopInvariantSpecification witnessInvariant) {
+			ExpressionResult condResult, final String loopLabel) {
 		assert node instanceof IASTWhileStatement || node instanceof IASTDoStatement
 				|| node instanceof IASTForStatement;
 
@@ -3567,9 +3580,6 @@ public class CHandler {
 			spec = new LoopInvariantSpecification[0];
 		} else {
 			final List<LoopInvariantSpecification> specList = new ArrayList<>();
-			if (witnessInvariant != null) {
-				specList.add(witnessInvariant);
-			}
 			if (node instanceof IASTForStatement || node instanceof IASTWhileStatement
 					|| node instanceof IASTDoStatement) {
 				for (int i = 0; i < mContract.size(); i++) {
@@ -3614,7 +3624,11 @@ public class CHandler {
 
 		assert resultBuilder.getLrValue() == null : "there is an lrvalue although there should be none";
 		assert resultBuilder.getAuxVars().isEmpty() : "auxvars were added although they should have been havoced";
-		return resultBuilder.build();
+		final ExpressionResult result = resultBuilder.build();
+		if (mIsPrerun) {
+			return result;
+		}
+		return main.transformWithWitness(node, result);
 	}
 
 }

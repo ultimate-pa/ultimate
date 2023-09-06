@@ -128,7 +128,7 @@ public class SimplificationTest {
 	public void ddaExample6() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"), };
 		final String formulaAsString = "(and (distinct x 1) (or (<= x 0) (> x 2) (= x 1)))";
-		final String expectedResultAsString = "(and (not (= x 1)) (or (<= x 0) (< 2 x)))";
+		final String expectedResultAsString = "(and (not (= x 1)) (or (< 2 x) (< x 1)))";
 		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.POLY_PAC,
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -138,7 +138,7 @@ public class SimplificationTest {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
 		final String formulaAsString =
 				"(or (and (or (> x 1) (= (+ y z) 1)) (<= y 2)) (and (< x 2) (or (< x 5) (>= z 2))))";
-		final String expectedResultAsString = "(or (<= y 2) (< x 2))";
+		final String expectedResultAsString = "(or (< y 3) (< x 2))";
 		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.SIMPLIFY_DDA2,
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -155,10 +155,23 @@ public class SimplificationTest {
 	}
 
 	@Test
+	// tests for quantified formulas
+	public void dda2TestExample05() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "X", "c", "d"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a") };
+		final String formulaAsString =
+				"(and (= c 1) (exists ((X Int)) (and (= X 1) (or (= (select a X) 5) (= c 0) (and (= d 23) (= X 1))))))";
+		final String expectedResultAsString =
+				"(and (exists ((X Int)) (let ((.cse0 (= X 1))) (and (or (= 5 (select a X)) (and .cse0 (= 23 d))) .cse0))) (= c 1))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.SIMPLIFY_DDA2,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
 	public void alternativeRepresentations() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x", "y"), };
 		final String formulaAsString = "(and (distinct y x) (or (<= x 0) (> x 2) (= x y)))";
-		final String expectedResultAsString = "(and (not (= x y)) (or (<= x 0) (< 2 x)))";
+		final String expectedResultAsString = "(and (not (= y x)) (or (< 2 x) (< x 1)))";
 		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.POLY_PAC,
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -358,7 +371,7 @@ public class SimplificationTest {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "x"),
 				new FunDecl(SmtSortUtils::getBoolSort, "A"), };
 		final String formulaAsString = "(and (>= x 7.0) (<= x 7.0))";
-		final String expectedResultAsString = "(and (<= x 7.0) (<= 7.0 x))";
+		final String expectedResultAsString = "(= x 7.0)";
 		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.POLY_PAC,
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -600,7 +613,7 @@ public class SimplificationTest {
 	public void missingConjuncts() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"), };
 		final String formulaAsString = "(and (<= x 11) (not (= (+ x (- 2)) 0)) (<= 11 x))";
-		final String simplified = "(and (<= x 11) (<= 11 x))";
+		final String simplified = "(= x 11)";
 		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
 				mLogger, mMgdScript, mCsvWriter);
 	}
@@ -668,10 +681,87 @@ public class SimplificationTest {
 	public void constantFolding01() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
 		final String formulaAsString = "(or (distinct x 1) (and (< y (* x x)) (< z (* x x))))";
-		final String simplified = "(or (distinct x 1) (and (< y 1) (< z 1)))";
+		final String simplified = "(or (and (<= z 0) (<= y 0)) (not (= x 1)))";
 		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
 				mLogger, mMgdScript, mCsvWriter);
 	}
+
+	@Test
+	public void nonConstraining01() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"),
+				new FunDecl(SmtSortUtils::getBoolSort, "A", "B") };
+		final String formulaAsString = "(and (>= x 24) (or B (and A (>= x 23))))";
+		final String simplified = "(and (<= 24 x) (or B A))";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void disjunctionNonRelaxingBecauseOfCriticalConstraint() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"),
+				new FunDecl(SmtSortUtils::getBoolSort, "B") };
+		final String formulaAsString = "(and (>= x 24) (or B (<= x 23)))";
+		final String simplified = "(and B (<= 24 x))";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void disjunctionNonConstrainingBecauseOfCriticalConstraint() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"),
+				new FunDecl(SmtSortUtils::getBoolSort, "B") };
+		final String formulaAsString = "(and (>= x 24) (or B (>= x 23)))";
+		final String simplified = "(<= 24 x)";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void disjunctionNonRelaxing01() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"),
+				new FunDecl(SmtSortUtils::getBoolSort, "B") };
+		final String formulaAsString = "(or (>= x 24) (>= x 23) (>= x 22))";
+		final String simplified = "(< 21 x)";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void nonstrictForConjunctions() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String formulaAsString = "(and (> x 42) (> y 42))";
+		final String simplified = "(and (<= 43 x) (<= 43 y))";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void strictForDisjunctions() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String formulaAsString = "(or (>= x 42) (>= y 42))";
+		final String simplified = "(or (< 41 x) (< 41 y))";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void directFusionForConjunction() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x") };
+		final String formulaAsString = "(and (>= x 42) (<= x 42))";
+		final String simplified = "(= 42 x)";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void directFusionForDisjunction() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x") };
+		final String formulaAsString = "(or (> x 42) (< x 42))";
+		final String simplified = "(not (= 42 x))";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 	// @Test
 	// public void bvToIntBadgerExists01() {

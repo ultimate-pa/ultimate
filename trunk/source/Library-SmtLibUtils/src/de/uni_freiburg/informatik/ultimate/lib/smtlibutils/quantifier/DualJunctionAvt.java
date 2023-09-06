@@ -41,6 +41,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
+ * Replace term of the form `∃x. a' = (store a k x) ∧ ϕ[x]` by `a'= (store a k
+ * (select a' k)) ∧ ϕ[(select a' k)]`
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */

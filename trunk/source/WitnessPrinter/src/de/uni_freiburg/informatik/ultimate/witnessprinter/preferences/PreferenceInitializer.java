@@ -55,10 +55,11 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_GRAPH_DATA_PRODUCER = "Graph data producer";
 	public static final String UNUSED_GRAPH_DATA = "UNUSED";
 
-	private static final String LABEL_WITNESS = "Witness generation";
+	public static final String LABEL_GENERATE_GRAPHML_WITNESS = "Generate GraphML witnesses";
+	private static final boolean VALUE_GENERATE_GRAPHML_WITNESS = true;
 
-	public static final String LABEL_WITNESS_GEN = "Generate witnesses";
-	private static final boolean VALUE_WITNESS_GEN = true;
+	public static final String LABEL_GENERATE_YAML_WITNESS = "Generate YAML witnesses";
+	private static final boolean VALUE_GENERATE_YAML_WITNESS = true;
 
 	public static final String LABEL_WITNESS_LOG = "Log witness to console";
 	private static final boolean VALUE_WITNESS_LOG = false;
@@ -73,8 +74,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final String DESC_WITNESS_DIRECTORY = "Write witness to the specified directory.";
 
 	public static final String LABEL_WITNESS_NAME = "Witness filename";
-	private static final String VALUE_WITNESS_NAME = "witness.graphml";
-	private static final String DESC_WITNESS_NAME = "The filename of the generated witness.";
+	private static final String VALUE_WITNESS_NAME = "witness";
+	private static final String DESC_WITNESS_NAME = "The filename of the generated witness (without file-ending).";
 
 	public static final String LABEL_WITNESS_VERIFY = "Verify the witness and generate results";
 	private static final boolean VALUE_WITNESS_VERIFY = false;
@@ -110,7 +111,10 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
 		return new BaseUltimatePreferenceItem[] {
 				// Witness generation
-				new UltimatePreferenceItem<>(LABEL_WITNESS_GEN, VALUE_WITNESS_GEN, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_GENERATE_GRAPHML_WITNESS, VALUE_GENERATE_GRAPHML_WITNESS,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_GENERATE_YAML_WITNESS, VALUE_GENERATE_YAML_WITNESS,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_WITNESS_LOG, VALUE_WITNESS_LOG, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_WITNESS_DIRECTORY, VALUE_WITNESS_DIRECTORY, DESC_WITNESS_DIRECTORY,
 						PreferenceType.Directory),
@@ -146,9 +150,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 								PreferenceType.String),
 						new UltimatePreferenceItem<>(LABEL_GRAPH_DATA_PRODUCER, UNUSED_GRAPH_DATA,
 								"Write the value of this option to the witness graph data attribute \"Producer\"",
-								PreferenceType.String)),
-
-		};
+								PreferenceType.String)) };
 	}
 
 	public static IPreferenceProvider getPreferences(final IUltimateServiceProvider services) {
@@ -161,7 +163,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 		public boolean isValid(final Boolean value) {
 			if (value) {
 				final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
-				return ups.getBoolean(LABEL_WITNESS_GEN) && ups.getBoolean(LABEL_WITNESS_WRITE_BESIDE_FILE);
+				return (ups.getBoolean(LABEL_GENERATE_GRAPHML_WITNESS) || ups.getBoolean(LABEL_GENERATE_YAML_WITNESS))
+						&& ups.getBoolean(LABEL_WITNESS_WRITE_BESIDE_FILE);
 			}
 			return true;
 		}
