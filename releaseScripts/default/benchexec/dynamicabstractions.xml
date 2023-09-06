@@ -59,8 +59,8 @@
 
   <tasks name="dry-run">
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
-    <include>../../../trunk/examples/svcomp/goblint-regressions/13-privatized_58-singlethreaded-lock_true.yml</include>
-    <include>../../../trunk/examples/svcomp/goblint-regressions/13-privatized_18-first-reads_unknown_2_neg.yml</include>
+    <include>../../../trunk/examples/svcomp/goblint-regression/13-privatized_58-singlethreaded-lock_true.yml</include>
+    <include>../../../trunk/examples/svcomp/goblint-regression/13-privatized_18-first-reads_unknown_2_neg.yml</include>
   </tasks>
 
 
