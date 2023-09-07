@@ -16,8 +16,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Totali
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IRabinPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RabinDeterministicDifference;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RabinDifferencePairwiseOnDemand;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RabinIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.RabinIsEmpty;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -73,9 +75,12 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 	protected IRabinPetriNet<L, IPredicate> refineFinite(final IRabinPetriNet<L, IPredicate> abstraction,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
 			throws AutomataLibraryException {
-		// TODO: This is sound, but more complicated than necessary!
-		// We need something like DifferencePairwiseOnDemand for IRabinPetriNet.
-		return refineBuchi(abstraction, interpolantAutomaton, null);
+		try {
+			return (IRabinPetriNet<L, IPredicate>) new RabinDifferencePairwiseOnDemand<>(
+					new AutomataLibraryServices(mServices), abstraction, interpolantAutomaton).getResult();
+		} catch (AutomataOperationCanceledException | PetriNetNot1SafeException e) {
+			throw new AutomataLibraryException(getClass(), e.toString());
+		}
 	}
 
 	@Override
