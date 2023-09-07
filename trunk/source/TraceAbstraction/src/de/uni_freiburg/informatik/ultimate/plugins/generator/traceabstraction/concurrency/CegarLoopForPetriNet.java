@@ -125,12 +125,10 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	public int mCoRelationQueries = 0;
 	/**
-	 * Alternative measure to
-	 * {@link CegarLoopStatisticsDefinitions#BiggestAbstraction} which currently
-	 * counts the number of places.
-	 * TODO 20220821 Matthias: Find out whether counting transitions instead of
-	 * places is helpful. An alternative might be to count flow. In the long
-	 * run the most suitable measure should be utilized in the statistics.
+	 * Alternative measure to {@link CegarLoopStatisticsDefinitions#BiggestAbstraction} which currently counts the
+	 * number of places. TODO 20220821 Matthias: Find out whether counting transitions instead of places is helpful. An
+	 * alternative might be to count flow. In the long run the most suitable measure should be utilized in the
+	 * statistics.
 	 */
 	public int mBiggestAbstractionTransitions;
 	/**
@@ -256,7 +254,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 				mArtifactAutomaton = nia;
 			}
 			if (USE_ON_DEMAND_RESULT) {
-				mAbstraction = enhancementResult.getSecond().getResult();
+				mAbstraction = (BoundedPetriNet<L, IPredicate>) enhancementResult.getSecond().getResult();
 			} else {
 				final Difference<L, IPredicate, ?> diff = new Difference<>(new AutomataLibraryServices(getServices()),
 						mPredicateFactoryInterpolantAutomata, mAbstraction, dia, LoopSyncMethod.HEURISTIC,
@@ -359,10 +357,10 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 						uf.addEquivalenceClass(ImmutableSet.of(entry.getValue()));
 					}
 				}
-				final Map<IPredicate, IPredicate> placeMap = PetriNetUtils
-						.mergePlaces(new HashSet<>(abstractionAsNet.getPlaces()), uf);
-				final IPetriNet<L, IPredicate> res = PetriNetUtils.mergePlaces(new AutomataLibraryServices(mServices),
-						abstractionAsNet, placeMap);
+				final Map<IPredicate, IPredicate> placeMap =
+						PetriNetUtils.mergePlaces(new HashSet<>(abstractionAsNet.getPlaces()), uf);
+				final IPetriNet<L, IPredicate> res =
+						PetriNetUtils.mergePlaces(new AutomataLibraryServices(mServices), abstractionAsNet, placeMap);
 				mAbstraction = (BoundedPetriNet<L, IPredicate>) res;
 				mProgramPointPlaces = mProgramPointPlaces.stream().map(placeMap::get).collect(Collectors.toSet());
 				mLogger.info(mProgramPointPlaces.size() + " programPoint places, "
@@ -478,8 +476,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 				}
 				final long start = System.nanoTime();
 				try {
-					dpod = new DifferencePairwiseOnDemand<>(new AutomataLibraryServices(getServices()),
-							(IPetriNet<L, IPredicate>) mAbstraction, raw, universalSubtrahendLoopers);
+					dpod = new DifferencePairwiseOnDemand<>(new AutomataLibraryServices(getServices()), mAbstraction,
+							raw, universalSubtrahendLoopers);
 				} catch (final AutomataOperationCanceledException tce) {
 					final String taskDescription = generateOnDemandEnhancementCanceledMessage(interpolAutomaton,
 							universalSubtrahendLoopers, mAbstraction.getAlphabet(), mIteration);
