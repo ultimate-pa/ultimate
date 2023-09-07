@@ -50,7 +50,7 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 
 		// exclude paths that match the following regex
 		mExcludeFilterRegexToolchain =
-				".*(CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow|abstractInterpretation|Automata|LTL|DataRace).*";
+				".*(CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow|abstractInterpretation|Automata|LTL|DataRace|witness-checking).*";
 	}
 
 	@Override

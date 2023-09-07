@@ -27,7 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -74,8 +73,8 @@ public class UltimatePreferencePageFactory {
 				continue;
 			}
 			final String parentNodeId = getParentNodeId(plugin);
-			createPreferencePage(plugin.getPluginID(), plugin.getPreferences().getPreferenceTitle(),
-					filterPreferences(preferenceItems), parentNodeId);
+			createPreferencePage(plugin.getPluginID(), plugin.getPreferences().getPreferenceTitle(), preferenceItems,
+					parentNodeId);
 		}
 	}
 
@@ -90,16 +89,6 @@ public class UltimatePreferencePageFactory {
 			return "SourcePlugins";
 		}
 		return "GeneratedUltimatePreferences";
-	}
-
-	private static BaseUltimatePreferenceItem[] filterPreferences(final BaseUltimatePreferenceItem[] items) {
-		final ArrayList<BaseUltimatePreferenceItem> list = new ArrayList<>();
-		for (final BaseUltimatePreferenceItem item : items) {
-			if (!item.getUseCustomPreferencePage()) {
-				list.add(item);
-			}
-		}
-		return list.toArray(new BaseUltimatePreferenceItem[list.size()]);
 	}
 
 	private static void createPreferencePage(final String pluginID, final String title,
@@ -128,8 +117,7 @@ public class UltimatePreferencePageFactory {
 				final BaseUltimatePreferenceItem[] containerItems = container.getContainerItems()
 						.toArray(new BaseUltimatePreferenceItem[container.getContainerItems().size()]);
 
-				createPreferencePage(pluginID, container.getContainerName(), filterPreferences(containerItems),
-						node.getId());
+				createPreferencePage(pluginID, container.getContainerName(), containerItems, node.getId());
 			}
 			page.init(PlatformUI.getWorkbench());
 		}

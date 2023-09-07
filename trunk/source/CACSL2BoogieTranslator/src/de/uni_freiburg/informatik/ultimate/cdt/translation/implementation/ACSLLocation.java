@@ -109,4 +109,8 @@ public class ACSLLocation extends CACSLLocation {
 		return MergedLocation.mergeToMergeLocation(this, (ILocation) other);
 	}
 
+	@Override
+	public String getFunction() {
+		return null;
+	}
 }

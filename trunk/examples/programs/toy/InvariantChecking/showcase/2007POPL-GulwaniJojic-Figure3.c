@@ -15,7 +15,7 @@
 
 int main(void) {
     int x = 0, y = 50;
-    //@ loop invariant \true;
+     //@ loop invariant (x < 50 || x == y) && (x>=50 || y == 50) && x <= 100;
     while (x < 100) {
         if (x < 50) {
             x++;

@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -185,8 +186,9 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 			final Term context, final Term term) {
 		final Term result;
 		try {
+			final Comparator<Term> siblingOrder = null;
 			result = TermContextTransformationEngine.transform(new PolyPacSimplificationTermWalker(services, mgdScript),
-					context, term);
+					siblingOrder, context, term);
 		} catch (final ToolchainCanceledException tce) {
 			final CondisDepthCode termCdc = CondisDepthCode.of(term);
 			final String taskDescription = String.format("simplifying a %s term", termCdc);

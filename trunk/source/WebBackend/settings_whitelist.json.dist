@@ -43,7 +43,12 @@
 		"Overapproximate operations on floating types",
 		"Pointer to allocated memory at dereference",
 		"Check for the main procedure if all allocated memory was freed",
-		"Check absence of signed integer overflows"
+		"Check absence of signed integer overflows",
+		"Use bitvectors instead of ints",
+		"Memory model",
+		"Adapt memory model on pointer casts if necessary",
+		"Entry function",
+		"Report unsoundness warnings"
 	],
 	"de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer": [
 		"Try twofold refinement",

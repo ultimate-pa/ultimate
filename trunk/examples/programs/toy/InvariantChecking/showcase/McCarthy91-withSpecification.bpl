@@ -19,7 +19,7 @@ implementation McCarthy(x: int) returns (res: int)
     res := x-10;
   }
   else {
-    call res :=  McCarthy(x + 11);
+    call res := McCarthy(x + 11);
     call res := McCarthy(res);
   }
   assert(res == 91 || x > 101);

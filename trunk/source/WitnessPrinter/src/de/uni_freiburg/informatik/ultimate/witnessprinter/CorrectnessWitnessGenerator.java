@@ -64,7 +64,7 @@ import edu.uci.ics.jung.graph.Hypergraph;
  */
 public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<TTE, TE> {
 
-	private static final String[] ACSL_SUBSTRING = new String[] { "\\old", "\\result", "\\exists" };
+	private static final String[] ACSL_SUBSTRING = new String[] { "\\old", "\\result", "exists", "forall" };
 
 	private final ILogger mLogger;
 	private final IBacktranslationValueProvider<TTE, TE> mStringProvider;

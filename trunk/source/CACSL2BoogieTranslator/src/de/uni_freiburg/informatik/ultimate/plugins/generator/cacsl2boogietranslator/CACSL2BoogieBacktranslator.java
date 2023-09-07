@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieBacktranslationValueProv
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -970,21 +971,7 @@ public class CACSL2BoogieBacktranslator
 
 	private IASTExpression translateExpression(final Expression expression, final CType cType, final IASTNode hook) {
 		if (expression instanceof UnaryExpression) {
-			// handle old vars
-			final UnaryExpression uexp = (UnaryExpression) expression;
-			if (uexp.getOperator() == Operator.OLD) {
-				final IASTExpression innerTrans = translateExpression(uexp.getExpr());
-				if (innerTrans == null) {
-					return null;
-				}
-				final CType newCType;
-				if (innerTrans instanceof FakeExpression) {
-					newCType = ((FakeExpression) innerTrans).getCType();
-				} else {
-					newCType = cType;
-				}
-				return new FakeExpression(innerTrans, "\\old(" + innerTrans.getRawSignature() + ")", newCType);
-			}
+			return handleUnaryExpression((UnaryExpression) expression, cType);
 		}
 
 		if (expression instanceof TemporaryPointerExpression) {
@@ -1057,6 +1044,8 @@ public class CACSL2BoogieBacktranslator
 								+ " has a C AST node but it is no IASTExpression: " + cnode.getClass());
 				return null;
 			}
+		} else if (expression instanceof BinaryExpression) {
+			return translateBinaryExpression(cType, (BinaryExpression) expression, hook);
 		} else if (expression instanceof IntegerLiteral) {
 			return translateIntegerLiteral(cType, (IntegerLiteral) expression, hook);
 		} else if (expression instanceof BooleanLiteral) {
@@ -1079,6 +1068,8 @@ public class CACSL2BoogieBacktranslator
 				// (using ACSL).
 				translatedString = translatedString.replaceAll("old\\(", "\\\\old\\(")
 						.replaceAll("(\\\\)*old", "\\\\old").replaceAll("exists", "\\\\exists");
+				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": Expression "
+						+ BoogiePrettyPrinter.print(expression) + " was only translated via a workaround.");
 				return new FakeExpression(translatedString);
 			}
 			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": Expression "
@@ -1087,7 +1078,106 @@ public class CACSL2BoogieBacktranslator
 		}
 	}
 
+	private IASTExpression handleUnaryExpression(final UnaryExpression expr, final CType cType) throws AssertionError {
+		final IASTExpression innerTrans = translateExpression(expr.getExpr());
+		if (innerTrans == null) {
+			return null;
+		}
+		final String op;
+		switch (expr.getOperator()) {
+		case ARITHNEGATIVE:
+			op = "-";
+			break;
+		case LOGICNEG:
+			op = "!";
+			break;
+		case OLD:
+			op = "\\old";
+			break;
+		default:
+			throw new AssertionError("Unhandled case");
+		}
+		final CType newCType;
+		if (innerTrans instanceof FakeExpression) {
+			newCType = ((FakeExpression) innerTrans).getCType();
+		} else {
+			newCType = cType;
+		}
+		return new FakeExpression(innerTrans, String.format("%s(%s)", op, innerTrans.getRawSignature()), newCType);
+	}
+
+	private IASTExpression translateBinaryExpression(final CType cType, final BinaryExpression expression,
+			final IASTNode hook) {
+		final FakeExpression lhs = (FakeExpression) translateExpression(expression.getLeft(), cType, hook);
+		final FakeExpression rhs = (FakeExpression) translateExpression(expression.getRight(), cType, hook);
+		if (lhs == null || rhs == null) {
+			return null;
+		}
+		final String result;
+		switch (expression.getOperator()) {
+		case ARITHDIV:
+			result = String.format("(%s / %s)", lhs, rhs);
+			break;
+		case ARITHMINUS:
+			result = String.format("(%s - %s)", lhs, rhs);
+			break;
+		case ARITHMOD:
+			result = String.format("(%s %% %s)", lhs, rhs);
+			break;
+		case ARITHMUL:
+			result = String.format("(%s / %s)", lhs, rhs);
+			break;
+		case ARITHPLUS:
+			result = String.format("(%s + %s)", lhs, rhs);
+			break;
+		case BITVECCONCAT:
+			return null;
+		case COMPEQ:
+			result = String.format("(%s == %s)", lhs, rhs);
+			break;
+		case COMPGEQ:
+			result = String.format("(%s >= %s)", lhs, rhs);
+			break;
+		case COMPGT:
+			result = String.format("(%s > %s)", lhs, rhs);
+			break;
+		case COMPLEQ:
+			result = String.format("(%s <= %s)", lhs, rhs);
+			break;
+		case COMPLT:
+			result = String.format("(%s < %s)", lhs, rhs);
+			break;
+		case COMPNEQ:
+			result = String.format("(%s != %s)", lhs, rhs);
+			break;
+		case COMPPO:
+			return null;
+		case LOGICAND:
+			result = String.format("(%s && %s)", lhs, rhs);
+			break;
+		case LOGICIFF:
+			result = String.format("(%s == %s)", lhs, rhs);
+			break;
+		case LOGICIMPLIES:
+			result = String.format("(!%s || %s)", lhs, rhs);
+			break;
+		case LOGICOR:
+			result = String.format("(%s || %s)", lhs, rhs);
+			break;
+		default:
+			throw new AssertionError("Unknown operator " + expression.getOperator());
+		}
+		return new FakeExpression(result);
+	}
+
 	private IASTExpression translateFunctionApplication(final CType cType, final FunctionApplication fun) {
+		final IASTExpression[] translatedArguments = new IASTExpression[fun.getArguments().length];
+		for(int i = 0; i < fun.getArguments().length; i++) {
+			translatedArguments[i] = translateExpression(fun.getArguments()[i]);
+			if (translatedArguments[i] == null) {
+				return null;
+			}
+		}
 		final Pair<String, CPrimitives> reversed = SFO.reverseBoogieFunctionName(fun.getIdentifier());
 		if (reversed == null) {
 			reportUnfinishedBacktranslation(
@@ -1102,6 +1192,32 @@ public class CACSL2BoogieBacktranslator
 			return translateFloatConstConstructor(cType, fun, reversed.getSecond());
 		case "NaN":
 			return translateFloatNaNConstructor(cType, fun, reversed.getSecond());
+		case "bvadd":
+			return new FakeExpression(String.format("(%s + %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvmul":
+			return new FakeExpression(String.format("(%s * %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvsub":
+			return new FakeExpression(String.format("(%s * %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvand":
+			return new FakeExpression(String.format("(%s & %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvor":
+			return new FakeExpression(String.format("(%s | %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvult":
+			return new FakeExpression(String.format("(%s < %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvule":
+			return new FakeExpression(String.format("(%s <= %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvugt":
+			return new FakeExpression(String.format("(%s > %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvuge":
+			return new FakeExpression(String.format("(%s >= %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvslt":
+			return new FakeExpression(String.format("(%s < %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvsle":
+			return new FakeExpression(String.format("(%s <= %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvsgt":
+			return new FakeExpression(String.format("(%s > %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvsge":
+			return new FakeExpression(String.format("(%s >= %s)", translatedArguments[0], translatedArguments[1]));
 		default:
 			reportUnfinishedBacktranslation(
 					UNFINISHED_BACKTRANSLATION + " could not match function " + fun.getIdentifier());

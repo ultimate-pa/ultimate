@@ -1,0 +1,54 @@
+-
+  entry_type: loop_invariant
+  metadata:
+    format_version: 0.1
+    uuid: "072e87df-48b4-476f-ac99-67b3aa304c45"
+    creation_time: "2023-08-02T17:01:58+02:00"
+    producer:
+      name: UNUSED
+      version: UNUSED
+    task:
+      input_files:
+        - "C:\ultimate\trunk\examples\witness-checking\regression\correctness\apache-get-tag.i"
+      input_file_hashes:
+        "C:\ultimate\trunk\examples\witness-checking\regression\correctness\apache-get-tag.i": UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  location:
+    file_name: "C:\ultimate\trunk\examples\witness-checking\regression\correctness\apache-get-tag.i"
+    file_hash: UNUSED
+    line: 32
+    column: 0
+    function: main
+  loop_invariant:
+    string: "t <= tagbuf_len && 0 <= t"
+    type: assertion
+    format: C
+-
+  entry_type: loop_invariant
+  metadata:
+    format_version: 0.1
+    uuid: "2f59fcfb-cf4c-465e-aa13-bc9540d18cb5"
+    creation_time: "2023-08-02T17:01:58+02:00"
+    producer:
+      name: UNUSED
+      version: UNUSED
+    task:
+      input_files:
+        - "C:\ultimate\trunk\examples\witness-checking\regression\correctness\apache-get-tag.i"
+      input_file_hashes:
+        "C:\ultimate\trunk\examples\witness-checking\regression\correctness\apache-get-tag.i": UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  location:
+    file_name: "C:\ultimate\trunk\examples\witness-checking\regression\correctness\apache-get-tag.i"
+    file_hash: UNUSED
+    line: 48
+    column: 0
+    function: main
+  loop_invariant:
+    string: "(1 <= tagbuf_len && t <= tagbuf_len) && 0 <= t"
+    type: assertion
+    format: C

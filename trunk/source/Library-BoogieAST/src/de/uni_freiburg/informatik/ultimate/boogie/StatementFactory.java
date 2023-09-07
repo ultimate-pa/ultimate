@@ -71,11 +71,6 @@ public class StatementFactory {
 		return new AssignmentStatement(loc, lhs, rhs);
 	}
 
-	public static AssignmentStatement constructAssignmentStatement(final ILocation loc, final LeftHandSide lhs,
-			final Expression rhs) {
-		return constructAssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { rhs });
-	}
-
 	public static CallStatement constructCallStatement(final ILocation loc, final boolean isForall,
 			final VariableLHS[] variableLHSs, final String methodName, final Expression[] arguments) {
 		return new CallStatement(loc, isForall, variableLHSs, methodName, arguments);

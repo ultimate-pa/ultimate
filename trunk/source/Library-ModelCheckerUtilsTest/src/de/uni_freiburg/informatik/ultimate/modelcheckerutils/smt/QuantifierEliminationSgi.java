@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -61,11 +62,11 @@ public class QuantifierEliminationSgi {
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
 	private static final boolean CHECK_SIMPLIFICATION_POSSIBILITY = false;
-	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
+	private static final long TEST_TIMEOUT_MILLISECONDS = 10_00099999;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final LogLevel LOG_LEVEL_SOLVER = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
-//	private static final String SOLVER_COMMAND = "smtinterpol -q";
+	// private static final String SOLVER_COMMAND = "smtinterpol -q";
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
@@ -95,13 +96,14 @@ public class QuantifierEliminationSgi {
 		mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + TEST_TIMEOUT_MILLISECONDS);
 		mLogger = mServices.getLoggingService().getLogger("lol");
 
-		final Script solverInstance = new HistoryRecordingScript(
-				UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL_SOLVER));
+		final Script solverInstance =
+				new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL_SOLVER));
 		if (WRITE_SMT_SCRIPTS_TO_FILE) {
 			mScript = new LoggingScript(solverInstance, "QuantifierEliminationTest.smt2", true);
 		} else {
 			mScript = solverInstance;
 		}
+		mScript = new StatisticsScript(mScript);
 
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
@@ -117,13 +119,121 @@ public class QuantifierEliminationSgi {
 
 
 	@Test
+	public void simpleSgiExample00() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getBoolSort, "a"),
+			};
+		final String formulaAsString = "(exists ((x Bool)) (and (= x true) (= a true)))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	
+	@Test
 	public void simpleSgiExample() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "y"),
 			};
 		final String formulaAsString = "(exists ((x Int)) (and (= x y) (= 5 y)))";
 		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	//(x=0), (A=0) and (B=0), multiple possible maps
+	public void simpleSgiExample02() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "A"),
+				new FunDecl(SmtSortUtils::getIntSort, "B"),
+			};
+		final String formulaAsString = "(and (exists ((x Int)) (= x 0)) (= A 0) (= B 0))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	//(x=5) and (5=A), swapped ordering
+	public void simpleSgiExample03() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "A"),
+			};
+		final String formulaAsString = "(and (exists ((x Int)) (= x 5)) (= 5 A))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	//two quantified term variables
+	public void simpleSgiExample04() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "A"),
+				new FunDecl(SmtSortUtils::getIntSort, "B"),
+			};
+		final String formulaAsString = "(and (exists ((x Int) (y Int)) (and (<= x 0) (> (+ y x) 0))) (<= A 0) (> (+ B A) 0))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	//noncommutative operator
+	public void simpleSgiExample05() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "c"),
+				new FunDecl(SmtSortUtils::getIntSort, "d"),
+			};
+		final String formulaAsString = "(and (exists ((x Int)) (<= x c)) (<= c d))";
+		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	//x,y distinct, true
+	public void simpleSgiExample06() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "A"),
+				new FunDecl(SmtSortUtils::getIntSort, "B"),
+			};
+		final String formulaAsString = "(and (exists ((X Int) (Y Int)) (and (> X 0) (> Y 0) (not (= X Y)))) (> A 0) (> B 0) (not (= A B)))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	//x,y distinct, false
+	public void simpleSgiExample07() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "A"),
+				new FunDecl(SmtSortUtils::getIntSort, "B"),
+				new FunDecl(SmtSortUtils::getIntSort, "M"),
+			};
+		final String formulaAsString = "(and (exists ((X Int) (Y Int)) (and (> X 0) (> Y 0) (not (= X Y)))) (> A 0) (not (= A B)))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	//qsubformula rotation
+	public void simpleSgiExample8() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "A"),
+				new FunDecl(SmtSortUtils::getIntSort, "B"),
+				new FunDecl(SmtSortUtils::getIntSort, "C"),
+			};
+		final String formulaAsString = "(and (exists ((X Int) (Y Int)) (and (> X 0) (> Y 0) (not (= X Y)))) (> A 0) (> B 0) (> C 0) (= A B) (not (= B C)))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	//parameter rotation
+	public void simpleSgiExample9() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "A"),
+				new FunDecl(SmtSortUtils::getIntSort, "B"),
+				new FunDecl(SmtSortUtils::getIntSort, "C"),
+			};
+		final String formulaAsString = "(and (exists ((X Int) (Y Int) (Z Int)) (and (= X Y) (= Y Z))) (= A B) (= C A))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -266,6 +376,29 @@ public class QuantifierEliminationSgi {
 		final String formulaAsString = "(and (= (select (select |#memory_int| |ULTIMATE.start_main_~#array2~0#1.base|) 0) 0) (= |ULTIMATE.start_main_~#array2~0#1.offset| 0) (<= ~ARR_SIZE~0 1) (= |ULTIMATE.start_main_~sum~0#1| 0) (<= 0 |ULTIMATE.start_main_~index~0#1|) (exists ((|v_ULTIMATE.start_main_~#array1~0#1.base_BEFORE_CALL_1| Int) (|v_ULTIMATE.start_main_~#array2~0#1.base_BEFORE_CALL_1| Int)) (and (= (select (select |#memory_int| |v_ULTIMATE.start_main_~#array1~0#1.base_BEFORE_CALL_1|) 0) 0) (= (select (select |#memory_int| |v_ULTIMATE.start_main_~#array2~0#1.base_BEFORE_CALL_1|) 0) 0) (not (= |v_ULTIMATE.start_main_~#array2~0#1.base_BEFORE_CALL_1| |v_ULTIMATE.start_main_~#array1~0#1.base_BEFORE_CALL_1|)))) (< |ULTIMATE.start_main_~index~0#1| ~ARR_SIZE~0) (= (+ |ULTIMATE.start_main_~num~0#1| 1) 0) (= |ULTIMATE.start_main_~#array1~0#1.offset| 0) (not (= |ULTIMATE.start_main_~#array2~0#1.base| |ULTIMATE.start_main_~#array1~0#1.base|)) (= (select (select |#memory_int| |ULTIMATE.start_main_~#array1~0#1.base|) 0) 0))";
 		final String expectedResultAsString = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void sgiCandidate13renamed() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "M"),
+				new FunDecl(SmtSortUtils::getIntSort, "A", "S", "B", "C", "D", "E", "F", "G"),
+		};
+		final String formulaAsString = "(and (= (select (select |M| |D|) 0) 0) (= |C| 0) (<= S 1) (= |F| 0) (<= 0 |E|) (exists ((|X| Int) (|Y| Int)) (and (= (select (select |M| |X|) 0) 0) (= (select (select |M| |Y|) 0) 0) (not (= |Y| |X|)))) (< |E| S) (= (+ |A| 1) 0) (= |B| 0) (not (= |D| |G|)) (= (select (select |M| |G|) 0) 0))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	//false
+	public void sgiCandidate13renamedmodified() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "M"),
+				new FunDecl(SmtSortUtils::getIntSort, "A", "S", "B", "C", "D", "E", "F", "G"),
+		};
+		final String formulaAsString = "(and (= |C| 0) (<= S 1) (= |F| 0) (<= 0 |E|) (exists ((|X| Int) (|Y| Int)) (and (= (select (select |M| |X|) 0) 0) (= (select (select |M| |Y|) 0) 0) (not (= |Y| |X|)))) (< |E| S) (= (+ |A| 1) 0) (= |B| 0) (not (= |D| |G|)) (= (select (select |M| |G|) 0) 0))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -461,7 +594,6 @@ public class QuantifierEliminationSgi {
 		final String expectedResultAsString = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-
 
 
 	//@formatter:on

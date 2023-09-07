@@ -37,7 +37,6 @@ import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
-import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
@@ -174,11 +173,11 @@ public final class CdtASTUtils {
 		return children.length == 0 ? findSuccessorStatement(cmpStmt) : getFirstOrSuccessorStatement(children[0]);
 	}
 
-	public static IASTDeclaration findScope(final IASTNode current) {
+	public static IASTFunctionDefinition findScope(final IASTNode current) {
 		IASTNode parent = current.getParent();
 		while (parent != null) {
 			if (parent instanceof IASTFunctionDefinition) {
-				return (IASTDeclaration) parent;
+				return (IASTFunctionDefinition) parent;
 			}
 			if (parent instanceof IASTTranslationUnit) {
 				return null;

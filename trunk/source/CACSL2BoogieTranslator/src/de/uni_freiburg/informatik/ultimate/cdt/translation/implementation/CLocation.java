@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation;
 import java.util.Collection;
 import java.util.HashSet;
 
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
@@ -176,4 +177,12 @@ public class CLocation extends CACSLLocation {
 		}
 	}
 
+	@Override
+	public String getFunction() {
+		final IASTFunctionDefinition scope = CdtASTUtils.findScope(mNode);
+		if (scope == null) {
+			return null;
+		}
+		return scope.getDeclarator().getName().toString();
+	}
 }

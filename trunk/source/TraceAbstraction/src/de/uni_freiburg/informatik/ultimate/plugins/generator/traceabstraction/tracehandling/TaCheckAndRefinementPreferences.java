@@ -355,7 +355,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 							ScoringMethod.class),
 					ups.getInt(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS),
 					ups.getDouble(
-							TraceAbstractionPreferenceInitializer.DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD));
+							TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD));
 		}
 
 	}

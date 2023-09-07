@@ -235,5 +235,10 @@ public class CommentParser {
 		public int getEndColumn() {
 			return mNode.getLocation().getEndColumn();
 		}
+
+		@Override
+		public String getFunction() {
+			return null;
+		}
 	}
 }

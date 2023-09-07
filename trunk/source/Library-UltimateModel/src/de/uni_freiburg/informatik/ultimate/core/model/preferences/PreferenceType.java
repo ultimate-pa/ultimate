@@ -103,5 +103,10 @@ public enum PreferenceType {
 	 * A Map between keys and values of type string.
 	 */
 	KeyValue,
+	/**
+	 * A group of related preference items. Groups can be nested in containers (see SubItemContainer), but not vice
+	 * versa.
+	 */
+	Group,
 
 }

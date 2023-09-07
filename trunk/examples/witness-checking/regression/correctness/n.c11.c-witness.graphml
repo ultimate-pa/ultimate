@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+<key id="programfile" attr.name="programfile" for="graph"/>
+<key id="sourcecodelang" attr.name="sourcecodelang" for="graph"/>
+<key id="creationtime" attr.name="creationtime" for="graph"/>
+<key id="witness-type" attr.name="witness-type" for="graph"/>
+<key id="entry" attr.name="entry" for="node">
+<default>false</default>
+</key>
+<key id="nodetype" attr.name="nodetype" for="node">
+<default>path</default>
+</key>
+<key id="violation" attr.name="violation" for="node">
+<default>false</default>
+</key>
+<key id="invariant" attr.name="invariant" for="node">
+<default>true</default>
+</key>
+<key id="endline" attr.name="endline" for="edge"/>
+<key id="enterLoopHead" attr.name="enterLoopHead" for="edge">
+<default>false</default>
+</key>
+<key id="enterFunction" attr.name="enterFunction" for="edge"/>
+<key id="startline" attr.name="startline" for="edge"/>
+<key id="returnFrom" attr.name="returnFrom" for="edge"/>
+<key id="assumption" attr.name="assumption" for="edge"/>
+<key id="tokens" attr.name="tokens" for="edge"/>
+<key id="originfile" attr.name="originfile" for="edge">
+<default>C:\ultimate\trunk\examples\witnesses\regression\n.c11.c</default>
+</key>
+<key id="sourcecode" attr.name="sourcecode" for="edge"/>
+<graph edgedefault="directed">
+<data key="programfile">C:\ultimate\trunk\examples\witnesses\regression\n.c11.c</data>
+<data key="sourcecodelang">C</data>
+<data key="creationtime">2023-08-02T13:35:54Z</data>
+<data key="witness-type">correctness_witness</data>
+<node id="N0">
+<data key="entry">true</data>
+</node>
+<node id="N1"/>
+<node id="N2"/>
+<node id="N3">
+<data key="invariant">len % 4294967296 &lt; 5</data>
+</node>
+<node id="N4"/>
+<node id="N5"/>
+<node id="N6"/>
+<node id="N7"/>
+<node id="N8"/>
+<node id="N9"/>
+<node id="N10"/>
+<node id="N11"/>
+<node id="N12"/>
+<node id="N13"/>
+<node id="N14"/>
+<node id="N15"/>
+<node id="N16"/>
+<node id="N17"/>
+<node id="N18"/>
+<edge id="E0" source="N0" target="N1">
+<data key="endline">15</data>
+<data key="startline">15</data>
+<data key="sourcecode">int a[5];</data>
+</edge>
+<edge id="E1" source="N1" target="N2">
+<data key="endline">16</data>
+<data key="startline">16</data>
+<data key="sourcecode">unsigned int len=0;</data>
+</edge>
+<edge id="E2" source="N2" target="N3">
+<data key="endline">18</data>
+<data key="enterLoopHead">true</data>
+<data key="startline">18</data>
+<data key="sourcecode">int i;</data>
+</edge>
+<edge id="E3" source="N3" target="N4">
+<data key="endline">21</data>
+<data key="startline">21</data>
+<data key="sourcecode">__VERIFIER_nondet_bool()</data>
+</edge>
+<edge id="E4" source="N4" target="N5">
+<data key="endline">21</data>
+<data key="startline">21</data>
+<data key="sourcecode">[__VERIFIER_nondet_bool()]</data>
+</edge>
+<edge id="E5" source="N4" target="N6">
+<data key="endline">21</data>
+<data key="startline">21</data>
+<data key="sourcecode">[!(__VERIFIER_nondet_bool())]</data>
+</edge>
+<edge id="E6" source="N5" target="N7">
+<data key="endline">21</data>
+<data key="startline">21</data>
+<data key="sourcecode">__VERIFIER_nondet_bool()</data>
+</edge>
+<edge id="E7" source="N6" target="N8">
+<data key="endline">21</data>
+<data key="startline">21</data>
+<data key="sourcecode">__VERIFIER_nondet_bool()</data>
+</edge>
+<edge id="E8" source="N7" target="N9">
+<data key="endline">30</data>
+<data key="startline">30</data>
+<data key="sourcecode">__VERIFIER_assert(len&gt;=0 &amp;&amp; len&lt;5)</data>
+</edge>
+<edge id="E9" source="N7" target="N10">
+<data key="endline">30</data>
+<data key="startline">30</data>
+<data key="sourcecode">__VERIFIER_assert(len&gt;=0 &amp;&amp; len&lt;5)</data>
+</edge>
+<edge id="E10" source="N8" target="N11">
+<data key="endline">23</data>
+<data key="startline">23</data>
+<data key="sourcecode">[len==4]</data>
+</edge>
+<edge id="E11" source="N8" target="N12">
+<data key="endline">23</data>
+<data key="startline">23</data>
+<data key="sourcecode">[!(len==4)]</data>
+</edge>
+<edge id="E12" source="N9" target="N13">
+<data key="endline">31</data>
+<data key="startline">31</data>
+<data key="sourcecode">return 1;</data>
+</edge>
+<edge id="E13" source="N10" target="N14">
+<data key="endline">6</data>
+<data key="startline">6</data>
+<data key="sourcecode">[!(cond)]</data>
+</edge>
+<edge id="E14" source="N10" target="N15">
+<data key="endline">6</data>
+<data key="startline">6</data>
+<data key="sourcecode">[!(!(cond))]</data>
+</edge>
+<edge id="E15" source="N11" target="N12">
+<data key="endline">24</data>
+<data key="startline">24</data>
+<data key="sourcecode">len =0</data>
+</edge>
+<edge id="E16" source="N12" target="N16">
+<data key="endline">26</data>
+<data key="startline">26</data>
+<data key="sourcecode">a[len]=0</data>
+</edge>
+<edge id="E17" source="N14" target="N17">
+<data key="endline">7</data>
+<data key="startline">7</data>
+<data key="sourcecode">reach_error()</data>
+</edge>
+<edge id="E18" source="N14" target="N18">
+<data key="endline">7</data>
+<data key="startline">7</data>
+<data key="sourcecode">reach_error()</data>
+</edge>
+<edge id="E19" source="N15" target="N9">
+<data key="endline">30</data>
+<data key="startline">30</data>
+<data key="sourcecode">__VERIFIER_assert(len&gt;=0 &amp;&amp; len&lt;5)</data>
+</edge>
+<edge id="E20" source="N16" target="N3">
+<data key="endline">28</data>
+<data key="enterLoopHead">true</data>
+<data key="startline">28</data>
+<data key="sourcecode">len++</data>
+</edge>
+<edge id="E21" source="N18" target="N15">
+<data key="endline">7</data>
+<data key="startline">7</data>
+<data key="sourcecode">abort()</data>
+</edge>
+</graph>
+</graphml>

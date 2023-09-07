@@ -1,12 +1,17 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
+import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
+import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -14,106 +19,67 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class ExtractedWitnessInvariant {
+public abstract class ExtractedWitnessInvariant implements IExtractedWitnessEntry {
 
 	private final String mInvariant;
 	private final ImmutableSet<String> mNodeLabels;
 	private final IASTNode mMatchedAstNode;
-	private final boolean mIsBefore;
-	private final boolean mIsAfter;
-	private final boolean mIsAt;
 
-	public ExtractedWitnessInvariant(final String invariant, final Collection<String> nodeLabel, final IASTNode match,
-			final boolean isBefore, final boolean isAfter, final boolean isAt) {
+	public ExtractedWitnessInvariant(final String invariant, final Collection<String> nodeLabel, final IASTNode match) {
 		mInvariant = invariant;
 		mNodeLabels = ImmutableSet.copyOf(nodeLabel);
 		mMatchedAstNode = match;
-		mIsBefore = isBefore;
-		mIsAfter = isAfter;
-		mIsAt = isAt;
 	}
 
 	public String getInvariant() {
 		return mInvariant;
 	}
 
+	@Override
 	public ImmutableSet<String> getNodeLabels() {
 		return mNodeLabels;
 	}
 
-	public int getStartline() {
+	private int getStartline() {
 		return mMatchedAstNode.getFileLocation().getStartingLineNumber();
 	}
 
-	public int getEndline() {
+	private int getEndline() {
 		return mMatchedAstNode.getFileLocation().getEndingLineNumber();
-	}
-
-	public boolean isBefore() {
-		return mIsBefore;
-	}
-
-	public boolean isAfter() {
-		return mIsAfter;
-	}
-
-	public boolean isAt() {
-		return mIsAt;
 	}
 
 	public IASTNode getRelatedAstNode() {
 		return mMatchedAstNode;
 	}
 
-	public ExtractedWitnessInvariant merge(final ExtractedWitnessInvariant other) {
-		if (other == null) {
-			return this;
-		}
-		if (mMatchedAstNode != other.mMatchedAstNode) {
-			throw new IllegalArgumentException("Cannot merge WitnessInvariants that are matched to different nodes");
-		}
-		final StringBuilder newInvariant = new StringBuilder();
-		newInvariant.append('(');
-		newInvariant.append(mInvariant);
-		newInvariant.append(')');
-		newInvariant.append("||");
-		newInvariant.append('(');
-		newInvariant.append(other.mInvariant);
-		newInvariant.append(')');
-
-		final Set<String> newNodeLabels = new HashSet<>();
-		newNodeLabels.addAll(mNodeLabels);
-		newNodeLabels.addAll(other.mNodeLabels);
-
-		return new ExtractedWitnessInvariant(newInvariant.toString(), newNodeLabels, mMatchedAstNode, isBefore(),
-				isAfter(), isAt());
-	}
-
 	@Override
 	public String toString() {
-		return getBAACode() + " [L" + getStartline() + "-L" + getEndline() + "] " + mInvariant;
+		return getLocationDescription() + " [L" + getStartline() + "-L" + getEndline() + "] " + mInvariant;
 	}
 
-	public String toStringWithCNode() {
-		return toString() + " --- " + getRelatedAstNode().getRawSignature();
-	}
+	protected abstract String getLocationDescription();
 
-	public String toStringWithWitnessNodeLabel() {
-		return getBAACode() + " [L" + getStartline() + "-L" + getEndline() + "]["
-				+ mNodeLabels.stream().collect(Collectors.joining(", ")) + "]" + mInvariant;
+	protected ExpressionResult instrument(final ILocation loc, final IDispatcher dispatcher) {
+		ACSLNode acslNode = null;
+		try {
+			checkForQuantifiers(mInvariant);
+			acslNode = Parser.parseComment("lstart\n assert " + mInvariant + ";", getStartline(), 1);
+		} catch (final ACSLSyntaxErrorException e) {
+			throw new UnsupportedSyntaxException(loc, e.getMessage());
+		} catch (final Exception e) {
+			throw new AssertionError(e);
+		}
+		return (ExpressionResult) dispatcher.dispatch(acslNode, mMatchedAstNode);
 	}
 
 	/**
-	 * @return A string of the form "(baa)" where b is either 0 or 1 and encodes the value of before, at, and after.
-	 *         E.g., (010) means before=false, at=true, after=false.
+	 * Throw Exception if invariant contains quantifiers. It seems like our parser does not support quantifiers yet, For
+	 * the moment it seems to be better to crash here in order to get a meaningful error message.
 	 */
-	private String getBAACode() {
-		final StringBuilder sb = new StringBuilder(5);
-		sb.append('(');
-		sb.append(isBefore() ? '1' : '0');
-		sb.append(isAt() ? '1' : '0');
-		sb.append(isAfter() ? '1' : '0');
-		sb.append(')');
-		return sb.toString();
+	private static void checkForQuantifiers(final String invariant) {
+		if (invariant.contains("exists") || invariant.contains("forall")) {
+			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(),
+					"invariant contains quantifiers");
+		}
 	}
 }

@@ -58,15 +58,12 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
  */
 public class PreprocessorHandler implements IPreprocessorHandler {
 
-	private final boolean mIgnorePreprocessorPragmas;
 	private final CTranslationResultReporter mReporter;
 	private final LocationFactory mLocationFactory;
 
-	public PreprocessorHandler(final CTranslationResultReporter reporter, final LocationFactory locFac,
-			final boolean ignorePreprocessorPragmas) {
+	public PreprocessorHandler(final CTranslationResultReporter reporter, final LocationFactory locFac) {
 		mReporter = reporter;
 		mLocationFactory = locFac;
-		mIgnorePreprocessorPragmas = ignorePreprocessorPragmas;
 	}
 
 	@Override
@@ -144,12 +141,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
 
 	@Override
 	public Result visit(final IDispatcher main, final IASTPreprocessorPragmaStatement node) {
-		if (mIgnorePreprocessorPragmas) {
-			return new SkipResult();
-		}
-		final String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
-		final ILocation loc = mLocationFactory.createCLocation(node);
-		mReporter.unsupportedSyntax(loc, msg);
+		mReporter.warn(mLocationFactory.createCLocation(node), "Ignoring preprocessor pragma");
 		return new SkipResult();
 	}
 

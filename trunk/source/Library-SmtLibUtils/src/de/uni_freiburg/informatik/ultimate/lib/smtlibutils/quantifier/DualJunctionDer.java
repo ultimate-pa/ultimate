@@ -360,7 +360,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		return result;
 	}
 
-	private static class DerHelperSbr extends IDerHelper<SolvedBinaryRelation> {
+	public static class DerHelperSbr extends IDerHelper<SolvedBinaryRelation> {
 
 
 		public DerHelperSbr() {

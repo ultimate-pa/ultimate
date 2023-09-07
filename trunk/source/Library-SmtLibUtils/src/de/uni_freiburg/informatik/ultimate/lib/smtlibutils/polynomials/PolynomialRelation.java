@@ -283,72 +283,20 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 
 		if (transformInequality != TransformInequality.NO_TRANFORMATION
 				&& SmtSortUtils.isIntSort(difference.getSort())) {
+			final Rational transformationOffset;
 			if (transformInequality == TransformInequality.STRICT2NONSTRICT) {
-				switch (relationSymbol) {
-				case DISTINCT:
-				case EQ:
-				case GEQ:
-				case BVULE:
-				case BVUGE:
-				case BVSLE:
-				case BVSGE:
-				case LEQ:
-					// relation symbol is not strict anyway
-					polyTerm = difference;
-					relationSymbolAfterTransformation = relationSymbol;
-					break;
-				case LESS:
-					// increment polynomial term by one
-					relationSymbolAfterTransformation = RelationSymbol.LEQ;
-					polyTerm = PolynomialTerm.sum(difference, constructConstant(difference.getSort(), Rational.ONE));
-					break;
-				case GREATER:
-					// decrement polynomial term by one
-					relationSymbolAfterTransformation = RelationSymbol.GEQ;
-					polyTerm = PolynomialTerm.sum(difference, constructConstant(difference.getSort(), Rational.MONE));
-					break;
-				case BVULT:
-				case BVUGT:
-				case BVSLT:
-				case BVSGT:
-					throw new AssertionError("STRICT2NONSTRICT for Bitvector not implemented");
-				default:
-					throw new AssertionError("unknown symbol");
-				}
+				relationSymbolAfterTransformation = relationSymbol.getCorrespondingNonStrictRelationSymbol();
+				transformationOffset = relationSymbol.getOffsetForStrictToNonstrictTransformation();
 			} else if (transformInequality == TransformInequality.NONSTRICT2STRICT) {
-				switch (relationSymbol) {
-				case DISTINCT:
-				case EQ:
-				case BVULT:
-				case BVUGT:
-				case BVSLT:
-				case BVSGT:
-				case LESS:
-				case GREATER:
-					// relation symbol is strict anyway
-					polyTerm = difference;
-					relationSymbolAfterTransformation = relationSymbol;
-					break;
-				case GEQ:
-					// increment polynomial term by one
-					relationSymbolAfterTransformation = RelationSymbol.GREATER;
-					polyTerm = PolynomialTerm.sum(difference, constructConstant(difference.getSort(), Rational.ONE));
-					break;
-				case LEQ:
-					// decrement polynomial term by one
-					relationSymbolAfterTransformation = RelationSymbol.LESS;
-					polyTerm = PolynomialTerm.sum(difference, constructConstant(difference.getSort(), Rational.MONE));
-					break;
-				case BVULE:
-				case BVUGE:
-				case BVSLE:
-				case BVSGE:
-					throw new AssertionError("NONSTRICT2STRICT for Bitvector not implemented");
-				default:
-					throw new AssertionError("unknown symbol");
-				}
+				relationSymbolAfterTransformation = relationSymbol.getCorrespondingStrictRelationSymbol();
+				transformationOffset = relationSymbol.getOffsetForNonstrictToStrictTransformation();
 			} else {
 				throw new AssertionError("unknown case");
+			}
+			if (transformationOffset.equals(Rational.ZERO)) {
+				polyTerm = difference;
+			} else {
+				polyTerm = PolynomialTerm.sum(difference, constructConstant(difference.getSort(), transformationOffset));
 			}
 		} else {
 			polyTerm = difference;

@@ -1,0 +1,27 @@
+-
+  entry_type: loop_invariant
+  metadata:
+    format_version: 0.1
+    uuid: "a3c4cf49-2d52-4310-a309-561ff332cde9"
+    creation_time: "2023-08-02T17:03:04+02:00"
+    producer:
+      name: UNUSED
+      version: UNUSED
+    task:
+      input_files:
+        - "C:\ultimate\trunk\examples\witness-checking\regression\correctness\simple_vardep_1.c"
+      input_file_hashes:
+        "C:\ultimate\trunk\examples\witness-checking\regression\correctness\simple_vardep_1.c": UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  location:
+    file_name: "C:\ultimate\trunk\examples\witness-checking\regression\correctness\simple_vardep_1.c"
+    file_hash: UNUSED
+    line: 21
+    column: 0
+    function: main
+  loop_invariant:
+    string: "(i + j + k / 4294967296 * 4294967296 <= (i + j) / 4294967296 * 4294967296 + k && (i + j) / 4294967296 * 4294967296 + k < i + j + k / 4294967296 * 4294967296 + 1) && i + j <= k"
+    type: assertion
+    format: C

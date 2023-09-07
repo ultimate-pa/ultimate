@@ -50,7 +50,6 @@ public class PoormanDomainPreferences {
 
 	public static List<BaseUltimatePreferenceItem> getPreferences() {
 		final UltimatePreferenceItemContainer poormanContainer = new UltimatePreferenceItemContainer("Poorman Domain");
-		poormanContainer.addItem(new UltimatePreferenceItem<String>("", null, PreferenceType.Label));
 		poormanContainer.addItem(new UltimatePreferenceItem<>(LABEL_USE_STRONGMAN, DEF_USE_STRONGMAN,
 				DESC_USE_STRONGMAN, PreferenceType.Boolean));
 		return Collections.singletonList(poormanContainer);

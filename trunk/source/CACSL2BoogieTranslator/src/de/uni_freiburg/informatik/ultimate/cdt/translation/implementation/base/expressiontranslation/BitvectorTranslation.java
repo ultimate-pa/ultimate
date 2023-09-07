@@ -447,7 +447,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	private static String generateBoogieFunctionNameForOrdinaryBitvecOp(final BvOp bvop, final int bitsize) {
-		return SFO.AUXILIARY_FUNCTION_PREFIX + bvop + bitsize;
+		return SFO.AUXILIARY_FUNCTION_PREFIX + bvop + SFO.AUXILIARY_FUNCTION_PREFIX + bitsize;
 	}
 
 	public void declareBitvectorFunction(final ILocation loc, final BvOp smtFunctionName,

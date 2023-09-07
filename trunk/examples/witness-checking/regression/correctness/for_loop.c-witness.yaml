@@ -1,0 +1,27 @@
+-
+  entry_type: loop_invariant
+  metadata:
+    format_version: 0.1
+    uuid: "c66ec3a4-1f93-4adc-ae70-052a37624f3d"
+    creation_time: "2023-08-03T13:15:06+02:00"
+    producer:
+      name: ULTIMATE
+      version: 0.2.3
+    task:
+      input_files:
+        - "C:\Users\Frank\Desktop\for_loop.c"
+      input_file_hashes:
+        "C:\Users\Frank\Desktop\for_loop.c": hash
+      specification: spec
+      data_model: 32bit
+      language: C
+  location:
+    file_name: "C:\Users\Frank\Desktop\for_loop.c"
+    file_hash: hash
+    line: 3
+    column: 0
+    function: main
+  loop_invariant:
+    string: "(((((5 < x && x <= 6) && 4 <= i) || (3 == x && 3 == i)) || (2 == i && x == 1)) || (i == 1 && x == 0)) || (i == 0 && x == 0)"
+    type: assertion
+    format: C

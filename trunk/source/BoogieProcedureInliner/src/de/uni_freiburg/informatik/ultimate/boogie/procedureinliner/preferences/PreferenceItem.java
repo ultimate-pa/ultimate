@@ -148,6 +148,6 @@ public enum PreferenceItem {
 	}
 
 	public UltimatePreferenceItem<?> newUltimatePreferenceItem() {
-		return new UltimatePreferenceItem<>(mName, mDefaultValue, mType, mDescription, false, mChoices, null);
+		return new UltimatePreferenceItem<>(mName, mDefaultValue, mType, mDescription, mChoices, null);
 	}
 }
