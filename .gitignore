@@ -6,7 +6,9 @@
 **/.recommenders/*
 **/.gitignore
 **/.idea/*
+**/__pycache__/
 hs_err_pid*
+*.md.backup
 
 /releaseScripts/default/DeltaDebugger-linux/*
 /releaseScripts/default/DeltaDebugger-win32/*
