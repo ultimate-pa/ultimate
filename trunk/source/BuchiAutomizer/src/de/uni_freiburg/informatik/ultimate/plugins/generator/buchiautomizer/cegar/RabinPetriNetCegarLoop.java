@@ -87,9 +87,7 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 	protected IRabinPetriNet<L, IPredicate> refineBuchi(final IRabinPetriNet<L, IPredicate> abstraction,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton,
 			final BuchiInterpolantAutomatonConstructionStyle constructionStyle) throws AutomataLibraryException {
-		// TODO: This null-check is only here because we pass null from refiniteFinite, this should change in the future
-		final boolean isDeterministic = constructionStyle != null && constructionStyle.isAlwaysDeterministic();
-		if (isDeterministic) {
+		if (constructionStyle.isAlwaysDeterministic()) {
 			final RabinDeterministicDifference<L, IPredicate> difference =
 					new RabinDeterministicDifference<>(new AutomataLibraryServices(mServices), abstraction,
 							new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(mServices),

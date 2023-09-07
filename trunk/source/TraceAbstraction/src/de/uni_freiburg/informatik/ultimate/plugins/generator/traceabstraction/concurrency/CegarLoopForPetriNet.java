@@ -254,7 +254,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 				mArtifactAutomaton = nia;
 			}
 			if (USE_ON_DEMAND_RESULT) {
-				mAbstraction = enhancementResult.getSecond().getResult();
+				mAbstraction = (BoundedPetriNet<L, IPredicate>) enhancementResult.getSecond().getResult();
 			} else {
 				final Difference<L, IPredicate, ?> diff = new Difference<>(new AutomataLibraryServices(getServices()),
 						mPredicateFactoryInterpolantAutomata, mAbstraction, dia, LoopSyncMethod.HEURISTIC,
