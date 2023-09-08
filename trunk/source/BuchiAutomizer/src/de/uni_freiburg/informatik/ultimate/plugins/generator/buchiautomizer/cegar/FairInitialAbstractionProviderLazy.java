@@ -43,8 +43,8 @@ INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 			fairAbstraction = (new FairBuchiAutomatonLazyIntersections<L>(icfg, initialAbstraction.getVpAlphabet(), mServices, mPredicateFactory, mStateFactory)).getFairIntersectionAutomaton();
 		} else {
 			fairAbstraction = new FairBuchiAutomatonLazy<>(icfg, initialAbstraction, new EnabledProceduresAlwaysEnabled<>());
-		}
-		fairAbstraction = new BuchiIntersectNwa<>(initialAbstraction, fairAbstraction, mStateFactory);
+			fairAbstraction = new BuchiIntersectNwa<>(initialAbstraction, fairAbstraction, mStateFactory);
+		}		
 		/*
 		NestedWordAutomatonReachableStates<L, IPredicate> debug = new NestedWordAutomatonReachableStates<>(mServices, fairAbstraction);
 		String debugString = debug.toString();
