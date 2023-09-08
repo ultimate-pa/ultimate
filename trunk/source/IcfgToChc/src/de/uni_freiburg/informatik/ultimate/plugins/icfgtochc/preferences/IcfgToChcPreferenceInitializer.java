@@ -72,6 +72,7 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String DESC_THREADMODULAR_LEVEL = "The level at which thread-modular proofs should be computed";
 	public static final int DEF_THREADMODULAR_LEVEL = 2;
 
+	// TODO Currently unused
 	public static final String LABEL_EXPLICIT_LOCATIONS = "Encode control locations explicitly";
 	public static final String DESC_EXPLICIT_LOCATIONS = "Control locations can be encoded symbolically "
 			+ "(as CHC variables), or explicitly (by using different predicate symbols).";
@@ -112,6 +113,7 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 			+ "all symmetric preference orders. If we break symmetry, more proofs are accepted.";
 	public static final boolean DEF_BREAK_PREFORDER_SYMMETRY = true;
 
+	// TODO Currently unused
 	public static final String LABEL_EXPLICIT_SLEEP = "Encode sleep sets explicitly";
 	public static final String DESC_EXPLICIT_SLEEP = "Sleep sets can be encoded symbolically (as CHC variables), "
 			+ "or explicitly (by using different predicate symbols).";

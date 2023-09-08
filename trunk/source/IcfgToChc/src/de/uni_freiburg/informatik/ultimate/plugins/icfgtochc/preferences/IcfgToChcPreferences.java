@@ -62,6 +62,7 @@ public class IcfgToChcPreferences {
 		return mPrefs.getInt(IcfgToChcPreferenceInitializer.LABEL_THREADMODULAR_LEVEL);
 	}
 
+	// TODO Currently unused
 	public boolean explicitLocations() {
 		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_EXPLICIT_LOCATIONS);
 	}
@@ -82,6 +83,7 @@ public class IcfgToChcPreferences {
 		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_BREAK_PREFORDER_SYMMETRY);
 	}
 
+	// TODO Currently unused
 	public boolean explicitSleep() {
 		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_EXPLICIT_SLEEP);
 	}
