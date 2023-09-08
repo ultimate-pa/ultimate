@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -19,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 public class EnabledProceduresOnlyTrue<L extends IIcfgTransition<?>, IPredicate> implements IEnabledProcedures<L, IPredicate> {
 
 	@Override
-	public ImmutableSet<String> getEnabledProcedures(IPredicate state, L letter, Set<L> outgoing, Script script) {
+	public ImmutableSet<String> getEnabledProcedures(IPredicate state, L letter, Set<L> outgoing, Script script, IIcfg<?> icfg) {
 		Set<String> annotations = new HashSet<>();
 		for (L edge : outgoing) {
 			UnmodifiableTransFormula transFormula = edge.getTransformula();

@@ -89,7 +89,7 @@ public class FairBuchiAutomatonLazy<L extends IIcfgTransition<?>> implements INw
 		//ImmutableSet<String> annotations = getEnabledProcedures(state, letter);
 		Set<L> outgoing = mInitialAbstraction.lettersInternal((IPredicate) ((SleepPredicate<String>) state).getUnderlying());
 		Script script = mIcfg.getCfgSmtToolkit().getManagedScript().getScript();
-		ImmutableSet<String> annotations = mEnabledProcedures.getEnabledProcedures(state, letter, outgoing, script);
+		ImmutableSet<String> annotations = mEnabledProcedures.getEnabledProcedures(state, letter, outgoing, script, mIcfg);
 		Set<OutgoingInternalTransition<L, IPredicate>> newSuccessors = new HashSet<>();
 		while(iterator.hasNext()) {
 			IPredicate predicate = (IPredicate) getOrConstructPredicate((IMLPredicate) iterator.next().getSucc(), annotations);

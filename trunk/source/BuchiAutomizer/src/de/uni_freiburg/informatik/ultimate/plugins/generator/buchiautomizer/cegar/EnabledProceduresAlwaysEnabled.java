@@ -1,11 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -13,12 +18,22 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 public class EnabledProceduresAlwaysEnabled<L extends IIcfgTransition<?>, IPredicate> implements IEnabledProcedures<L, IPredicate> {
 
 	@Override
-	public ImmutableSet<String> getEnabledProcedures(IPredicate state, L letter, Set<L> outgoing, Script script) {
+	public ImmutableSet<String> getEnabledProcedures(IPredicate state, L letter, Set<L> outgoing, Script script, IIcfg<?> icfg) {
 		Set<String> annotations = new HashSet<>();
 		for (L edge : outgoing) {
-			if (!(edge instanceof IIcfgJoinTransitionThreadOther)) {
+			if (edge instanceof IIcfgJoinTransitionThreadOther) {
+				IcfgLocation[] locations = ((SleepPredicate<String>) state).getUnderlying().getProgramPoints();
+				Iterable<IcfgLocation> iterable = Arrays.asList(locations);
+				Iterator<IcfgLocation> iterator = iterable.iterator();
+				IcfgLocation exit = icfg.getProcedureExitNodes().get(edge.getPrecedingProcedure());
+				while(iterator.hasNext()) {	
+					if (iterator.next().equals(exit)) {
+						annotations.add(edge.getSucceedingProcedure());
+					}
+				}
+			} else {
 				annotations.add(edge.getSucceedingProcedure());
-			}	
+			}
 		}
 		if (letter instanceof IIcfgForkTransitionThreadOther) {
 			annotations.remove(letter.getSucceedingProcedure());
