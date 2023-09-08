@@ -1,0 +1,38 @@
+<?xml version="1.0" ?>
+<!DOCTYPE table PUBLIC "+//IDN sosy-lab.org//DTD BenchExec table 1.10//EN" "https://www.sosy-lab.org/benchexec/table-1.10.dtd">
+<table>
+  <!-- default columns -->
+  <column title="status"/>
+  <column title="cputime" displayTitle="CPU Time"/>
+  <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+  <!-- Trace Abstraction-specific columns -->
+  <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+  <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+  <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+
+  <result filename="*.results.DynamicAbstractions.*.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- Trace Abstraction-specific columns -->
+    <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+    <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+    <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
+
+    <!-- DynamicStratifiedReduction statistics -->
+    <column title="irrespProofs"    displayTitle="Irresponsible Proofs (Sum)">IrresponsibleProofs:\s*(\d+),</column>
+    <column title="avgIrrespProofs" displayTitle="Irresponsible Proofs (Avg)" copy="irrespProofs" denominator="iterations" />
+    <column title="redundantProofs" displayTitle="Redundant Proofs">RedundantProofs:\s*(\d+),</column>
+    <column title="percRedundantProofs" displayTitle="Redundant Proofs (%)" copy="redundantProofs" denominator="iterations" displayUnit="%" scaleFactor="100" />
+    <column title="provenStates"    displayTitle="Proven States (Sum)">ProvenStates:\s*(\d+)$</column>
+    <column title="avgProvenStates" displayTitle="Proven States (Avg)" copy="provenStates" denominator="iterations" />
+  </result>
+
+  <result filename="*.results.ConcreteCommutativity.*.xml" />
+  <result filename="*.results.AbstractCommutativity.*.xml" />
+  <result filename="*.results.StratifiedReductionWithOptimalBudget.*.xml" />
+
+</table>
