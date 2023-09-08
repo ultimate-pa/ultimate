@@ -1,0 +1,54 @@
+-
+  entry_type: loop_invariant
+  metadata:
+    format_version: 0.1
+    uuid: "e92e8d2b-0ac6-4d6d-b6bd-6598f9843c13"
+    creation_time: "2023-08-02T17:29:09+02:00"
+    producer:
+      name: ULTIMATE
+      version: 0.2.3
+    task:
+      input_files:
+        - "C:\ultimate\trunk\examples\witness-checking\regression\correctness\doubleLoop.c"
+      input_file_hashes:
+        "C:\ultimate\trunk\examples\witness-checking\regression\correctness\doubleLoop.c": hash
+      specification: spec
+      data_model: 32bit
+      language: C
+  location:
+    file_name: "C:\ultimate\trunk\examples\witness-checking\regression\correctness\doubleLoop.c"
+    file_hash: hash
+    line: 6
+    column: 0
+    function: main
+  loop_invariant:
+    string: "((((i == 2 && x == 1) && y == 0) || ((x == 0 && i == 1) && y == 0)) || ((x == 0 && i == 0) && y == 0)) || (((x == 3 && 3 <= i) && y == 0) && i <= 3)"
+    type: assertion
+    format: C
+-
+  entry_type: loop_invariant
+  metadata:
+    format_version: 0.1
+    uuid: "3ac6af95-ca05-4618-9b61-b0a7d4fd39ea"
+    creation_time: "2023-08-02T17:29:09+02:00"
+    producer:
+      name: ULTIMATE
+      version: 0.2.3
+    task:
+      input_files:
+        - "C:\ultimate\trunk\examples\witness-checking\regression\correctness\doubleLoop.c"
+      input_file_hashes:
+        "C:\ultimate\trunk\examples\witness-checking\regression\correctness\doubleLoop.c": hash
+      specification: spec
+      data_model: 32bit
+      language: C
+  location:
+    file_name: "C:\ultimate\trunk\examples\witness-checking\regression\correctness\doubleLoop.c"
+    file_hash: hash
+    line: 9
+    column: 0
+    function: main
+  loop_invariant:
+    string: "(((((x == 3 && i == y + 1) && 3 <= i + y) && i <= (y + 1) / 2 + 1) || (((i == 1 && x <= 3) && y == 0) && 3 <= x)) || ((x == 3 && i == 0) && y == 0)) || (((x == 3 && 2 <= (y + 1) / 2) && i == y) && i <= (y + 1) / 2 + 1)"
+    type: assertion
+    format: C

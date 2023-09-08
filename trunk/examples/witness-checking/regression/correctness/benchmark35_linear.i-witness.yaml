@@ -1,0 +1,27 @@
+-
+  entry_type: loop_invariant
+  metadata:
+    format_version: 0.1
+    uuid: "3ca7ef49-53f5-4fc6-955a-407ad391b243"
+    creation_time: "2023-08-02T17:02:03+02:00"
+    producer:
+      name: UNUSED
+      version: UNUSED
+    task:
+      input_files:
+        - "C:\ultimate\trunk\examples\witness-checking\regression\correctness\benchmark35_linear.i"
+      input_file_hashes:
+        "C:\ultimate\trunk\examples\witness-checking\regression\correctness\benchmark35_linear.i": UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  location:
+    file_name: "C:\ultimate\trunk\examples\witness-checking\regression\correctness\benchmark35_linear.i"
+    file_hash: UNUSED
+    line: 22
+    column: 0
+    function: main
+  loop_invariant:
+    string: 0 < x + 1
+    type: assertion
+    format: C

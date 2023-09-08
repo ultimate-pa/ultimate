@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -105,6 +106,7 @@ public class QuantifierEliminationTodos {
 		} else {
 			mScript = solverInstance;
 		}
+		mScript = new StatisticsScript(mScript);
 
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
@@ -432,7 +434,7 @@ public class QuantifierEliminationTodos {
 		final String expectedResultAsString = "(= (+ main_result (* main_m 1)) (* main_n main_m))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
+
 	@Test
 	public void test01() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "~waterLevel~0", "~pumpRunning~0", "#NULL.base", "#NULL.offset", "~head~0.base", "~head~0.offset", "~cleanupTimeShifts~0", "~systemActive~0", "#StackHeapBarrier", "old(~methaneLevelCritical~0)", "~methaneLevelCritical~0", "test_~splverifierCounter~0", "old(~waterLevel~0)", "test_~tmp~1"), };
@@ -449,6 +451,39 @@ public class QuantifierEliminationTodos {
 		final String formulaAsString = "(and (<= |ULTIMATE.start_finddup_~n#1| |ULTIMATE.start_finddup_~j~1#1|) (<= |ULTIMATE.start_finddup_~j~1#1| (+ |ULTIMATE.start_finddup_~i~1#1| 1)) (<= |ULTIMATE.start_finddup_~n#1| (+ |ULTIMATE.start_finddup_~i~1#1| 1)))";
 		final String expectedResultAsString = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void avt01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
+		};
+		final String formulaAsString = "(exists ((x Int)) (= a2 (store a1 k x)))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void avt02() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
+		};
+		final String formulaAsString = "(forall ((x Int)) (distinct a2 (store a1 k (+ x 1))))";
+		final String expectedResult = "(forall ((x Int)) (not (= (store a1 k (+ x 1)) a2)))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void avt03() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "a1", "a2"),
+		};
+		final String formulaAsString = "(exists ((x Int) (y Int)) (= a2 (store (store a1 k (store (select a1 k) 23 x)) k (store (select (store a1 k (store (select a1 k) 23 x)) k) 42 y))))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	//@formatter:on

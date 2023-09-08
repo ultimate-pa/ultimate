@@ -443,14 +443,14 @@ public class BitabsTranslation {
 		if (BigInteger.ZERO.equals(leftValue) || BigInteger.ZERO.equals(rightValue)) {
 			return new ExpressionResult(new RValue(left, typeLeft));
 		}
+		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, typeLeft);
 		if (rightValue != null) {
 			final Expression value =
-					constructShiftWithLiteralOptimization(loc, left, typeRight, rightValue, shiftOperator);
+					constructShiftWithLiteralOptimization(loc, leftWrapped, typeRight, rightValue, shiftOperator);
 			return new ExpressionResult(new RValue(value, typeLeft));
 		}
 		final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
-		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, typeLeft);
 		final Expression leftEqualsZero =
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, leftWrapped, zero);
 		final Expression rightEqualsZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
@@ -514,7 +514,7 @@ public class BitabsTranslation {
 		for (int i = exactCases.size() - 1; i >= 0; i--) {
 			final Pair<Expression, Expression> pair = exactCases.get(i);
 			final Statement assignment =
-					StatementFactory.constructAssignmentStatement(loc, auxvarLhs, pair.getSecond());
+					StatementFactory.constructSingleAssignmentStatement(loc, auxvarLhs, pair.getSecond());
 			final Statement ifStatement = StatementFactory.constructIfStatement(loc, pair.getFirst(),
 					new Statement[] { assignment }, resultStatements);
 			resultStatements = new Statement[] { ifStatement };

@@ -35,6 +35,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -73,6 +74,8 @@ public class SymbolTableValue {
 
 	private final DeclarationInformation mDeclarationInformation;
 
+	private final ASTType mAstType;
+
 	/**
 	 * Constructor for SymbolTableValues that don't store a constant value.
 	 *
@@ -83,10 +86,10 @@ public class SymbolTableValue {
 	 * @param declNode
 	 * @param isIntFromPointer
 	 */
-	public SymbolTableValue(final String bId, final Declaration boogieDecl, final CDeclaration cdecl,
-			final DeclarationInformation declarationInformation, final IASTNode declNode,
+	public SymbolTableValue(final String bId, final Declaration boogieDecl, final ASTType astType,
+			final CDeclaration cdecl, final DeclarationInformation declarationInformation, final IASTNode declNode,
 			final boolean isIntFromPointer) {
-		this(bId, boogieDecl, cdecl, declarationInformation, declNode, isIntFromPointer, null);
+		this(bId, boogieDecl, astType, cdecl, declarationInformation, declNode, isIntFromPointer, null);
 	}
 
 	/**
@@ -109,7 +112,7 @@ public class SymbolTableValue {
 	 *            that expression here. Example: enum entries are translated to Boogie variables, and they have a
 	 *            constant integer value (which is stored in an axiom elsewhere)
 	 */
-	public SymbolTableValue(final String bId, final Declaration boogieDecl, final CDeclaration cdecl,
+	public SymbolTableValue(final String bId, final Declaration boogieDecl, final ASTType astType, final CDeclaration cdecl,
 			final DeclarationInformation declarationInformation, final IASTNode declNode,
 			final boolean isIntFromPointer, final Expression constantValue) {
 		assert bId != null && !bId.equals(SFO.EMPTY);
@@ -117,6 +120,7 @@ public class SymbolTableValue {
 		mBoogieName = bId;
 		mCDecl = cdecl;
 		mBoogieDecl = boogieDecl;
+		mAstType = astType;
 		mDeclarationNode = declNode;
 		mIsIntFromPointer = isIntFromPointer;
 
@@ -151,6 +155,10 @@ public class SymbolTableValue {
 
 	public Declaration getBoogieDecl() {
 		return mBoogieDecl;
+	}
+
+	public ASTType getAstType() {
+		return mAstType;
 	}
 
 	/**
@@ -193,8 +201,8 @@ public class SymbolTableValue {
 	 * @return
 	 */
 	public SymbolTableValue createMarkedIsIntFromPointer() {
-		return new SymbolTableValue(mBoogieName, mBoogieDecl, mCDecl, mDeclarationInformation, mDeclarationNode, true,
-				mConstantValue);
+		return new SymbolTableValue(mBoogieName, mBoogieDecl, mAstType, mCDecl, mDeclarationInformation,
+				mDeclarationNode, true, mConstantValue);
 	}
 
 	public DeclarationInformation getDeclarationInformation() {
@@ -222,7 +230,7 @@ public class SymbolTableValue {
 
 	public SymbolTableValue createOnHeap(final String onHeapBoogieName) {
 		final CDeclaration newCDecl = mCDecl.createOnHeap();
-		return new SymbolTableValue(onHeapBoogieName, mBoogieDecl, newCDecl, mDeclarationInformation, mDeclarationNode,
-				mIsIntFromPointer, mConstantValue);
+		return new SymbolTableValue(onHeapBoogieName, mBoogieDecl, mAstType, newCDecl, mDeclarationInformation,
+				mDeclarationNode, mIsIntFromPointer, mConstantValue);
 	}
 }

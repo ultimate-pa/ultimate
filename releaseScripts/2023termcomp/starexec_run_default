@@ -1,0 +1,39 @@
+#!/bin/sh
+if [ ! "$1" ]; then
+    echo "First argument has to be the file that we analyze"
+    exit
+fi
+pushd ../Ultimate > /dev/null
+./jdk-11.0.2/bin/java \
+-Dosgi.configuration.area=config/ \
+-Xmx40G \
+-Xss4m \
+-jar plugins/org.eclipse.equinox.launcher_1.5.800.v20200727-1323.jar \
+-tc ./../AutomizerAndBuchiAutomizerCInlineWithBlockEncoding.xml -s ./../termcomp2017.epf -data "$TMPDIR" -i "$1" &> "$2"/output.txt
+popd > /dev/null
+RESULT_NOTMEMSAFE=`cat "$2"/output.txt | grep "CounterExampleResult"`
+RESULT_PROVEN_TERMINATION=`cat "$2"/output.txt | grep "Buchi Automizer proved that your program is terminating"`
+RESULT_UNKNOWN_TERMINATION=`cat "$2"/output.txt | grep "Buchi Automizer is unable to decide termination"`
+RESULT_FALSE_TERMINATION=`cat "$2"/output.txt | grep "Nonterminating execution"`
+
+if [ "$RESULT_PROVEN_TERMINATION" ]; then
+	echo "YES"
+fi
+    
+if [ "$RESULT_FALSE_TERMINATION" ]; then
+	echo "NO"
+fi
+    
+if [ "$RESULT_UNKNOWN_TERMINATION" ]; then
+	echo "MAYBE"
+fi
+
+if [ "$RESULT_NOTMEMSAFE" ]; then
+	echo "MAYBE"
+fi
+
+echo ""
+cat "$2"/output.txt
+
+#test if we receive output from z3
+#./../z3-4.3.2.d548c51a984e-x64-debian-6.0.6/bin/z3 -h
