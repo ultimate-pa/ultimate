@@ -9,7 +9,7 @@
     <option name="&#45;-buchiautomizer.fairness.type.for.concurrent.programs">NONE</option>
   </rundefinition>
   
-  <rundefinition name="BuchiAutomaton FAIRNESS">
+  <rundefinition name="BuchiAutomaton FAIRNESS_INTERSECTION">
     <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Termination-32bit-Automizer_Default.epf</option>
     <option name="&#45;-buchiautomizer.fairness.type.for.concurrent.programs">FAIRNESS</option>
   </rundefinition>
