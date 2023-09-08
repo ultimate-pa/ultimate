@@ -81,7 +81,7 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 	}
 	
 	public enum FairnessType {
-		NONE, FAIRNESS, FAIRNESS_LAZY
+		NONE, FAIRNESS_INTERSECTION, FAIRNESS_LAZY
 	}
 
 	public static final String LABEL_IGNORE_DOWN_STATES = "Ignore down states";

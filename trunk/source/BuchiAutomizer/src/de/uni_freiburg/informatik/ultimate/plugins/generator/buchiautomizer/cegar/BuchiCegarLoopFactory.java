@@ -126,13 +126,13 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 			switch (fairnessType) {
 			case NONE:
 				break;
-			case FAIRNESS:
-				automatonProvider = new FairInitialAbstractionProvider<>(icfg, automatonProvider,
-						new AutomataLibraryServices(mServices), predicateFactory, stateFactoryForRefinement);
+			case FAIRNESS_INTERSECTION:
+				automatonProvider = new FairInitialAbstractionProviderLazy<>(icfg, automatonProvider,
+						new AutomataLibraryServices(mServices), predicateFactory, stateFactoryForRefinement, FairnessType.FAIRNESS_INTERSECTION);
 				break;
 			case FAIRNESS_LAZY:
 				automatonProvider = new FairInitialAbstractionProviderLazy<>(icfg, automatonProvider,
-						new AutomataLibraryServices(mServices), predicateFactory, stateFactoryForRefinement);
+						new AutomataLibraryServices(mServices), predicateFactory, stateFactoryForRefinement, FairnessType.FAIRNESS_LAZY);
 				break;
 			default: 
 				throw new UnsupportedOperationException(
