@@ -135,6 +135,14 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			+ "bytes or more are overapproximated, i.e., Ultimate assumes that the string can contain arbitrary bytes.";
 	private static final int DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD = 9;
 
+	// Test Generation =========================================================
+	public static final String LABEL_BRANCH_COVERAGE = "Branch Coverage Property";
+	private static final boolean DEF_BRANCH_COVERAGE = false;
+	private static final String DESC_BRANCH_COVERAGE = "TODO";
+	public static final String LABEL_ERROR_COVERAGE = "Error Coverage Property";
+	private static final boolean DEF_ERROR_COVERAGE = false;
+	private static final String DESC_ERROR_COVERAGE = "TODO";
+
 	public enum PointerCheckMode {
 		IGNORE, ASSUME, ASSERTandASSUME
 	}
@@ -316,7 +324,11 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						DESC_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_STRING_OVERAPPROXIMATION_THRESHOLD,
 						DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD, DESC_STRING_OVERAPPROXIMATION_THRESHOLD,
-						PreferenceType.Integer) };
-
+						PreferenceType.Integer),
+				// Test Generation
+				new UltimatePreferenceItem<>(LABEL_BRANCH_COVERAGE, DEF_BRANCH_COVERAGE, DESC_BRANCH_COVERAGE,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_ERROR_COVERAGE, DEF_ERROR_COVERAGE, DESC_ERROR_COVERAGE,
+						PreferenceType.Boolean) };
 	}
 }

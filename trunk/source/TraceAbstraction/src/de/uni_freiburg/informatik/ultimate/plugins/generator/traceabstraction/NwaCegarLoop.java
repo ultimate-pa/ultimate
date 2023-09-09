@@ -29,6 +29,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -66,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledExcep
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -134,10 +142,20 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	private final AStarHeuristic mAStarHeuristic;
 	private final Integer mAStarRandomHeuristicSeed;
 
-	boolean mLongTraceOptimization = false;
-	private final List<Integer> mTestGoalTodoStack = new ArrayList<>();
-	private final List<Integer> mTestGoalsInCurrentTrace = new ArrayList<>();
-	private Integer mTestGoalWithHighesID = super.mErrorLocs.size() - 1;
+	// TestGeneration
+	private final ArrayList<Integer> mTestGoalTodoStack = new ArrayList<>();
+	private final Set<Integer> mTestGoalWorkingSet = new HashSet<>();
+	private final Set<Integer> mTestGoalsInCurrentTrace = new HashSet<>();
+	private Integer mCurrentTestGoalId;
+	private final boolean mNaiveLongTrace = false;
+
+	// TestGeneration Statistiks
+	private final boolean mWriteEvaluationToFile = true;
+	private final long startTime = System.nanoTime();
+	private int CegarLoopIterations = 1;
+	private double Covered = 0;
+	private double CoveredLongTrace = 0;
+	private long mLongTraceTime = 0;
 
 	public NwaCegarLoop(final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
@@ -160,9 +178,23 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		mAStarHeuristic = taPrefs.getHeuristicEmptinessCheckAStarHeuristic();
 		mAStarRandomHeuristicSeed = taPrefs.getHeuristicEmptinessCheckAStarHeuristicRandomSeed();
 
-		for (int i = 0; i < super.mErrorLocs.size(); i = i + 1) {
-			mTestGoalTodoStack.add(i);
+		// if (mLongTraceOptimization) { //Necessary to fill mTestGoalTodoStack for Statistics
+		for (int i = 0; i < mErrorLocs.size() - 1; i = i + 1) {
+			mTestGoalTodoStack.add(i); // maybe dont fill it fully up
 		}
+		// }
+		mCurrentTestGoalId = mTestGoalTodoStack.size() - 1;
+		if (mWriteEvaluationToFile) {
+			writeEvalRowLongTrace();
+			writeEvalTestCaseNewRow();
+		}
+	}
+
+	private NestedRun<L, IPredicate> longTraceRun(final INestedWordAutomaton<L, IPredicate> abstraction,
+			final Set<IPredicate> possibleEndPoints) throws AutomataOperationCanceledException {
+		return new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, abstraction.getInitialStates(),
+				Collections.emptySet(), possibleEndPoints).getNestedRun();
+
 	}
 
 	// TODO mCounterexample ist der Trace
@@ -172,19 +204,44 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction = mAbstraction;
-		System.out.println(mTestGoalTodoStack);
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		try {
 
-			if (!mTestGoalTodoStack.isEmpty() && mLongTraceOptimization) { // TODO
+			if (mLongTraceOptimization && !mTestGoalTodoStack.isEmpty()) { // TODO
+				// Wir fügen in jeder iteration einen neuen goalstate hinzu, immer den höchsten
+				// es ist uns egal wenn mehrere goal state drin sin
 
-				mCounterexample =
-						new IsEmptyHeuristic<>(new AutomataLibraryServices(getServices()), abstraction,
-								IHeuristic.getHeuristic(AStarHeuristic.TESTCOMP, mScoringMethod,
-										mAStarRandomHeuristicSeed, mTestGoalWithHighesID, mTestGoalTodoStack))
-												.getNestedRun();
+				final Set<IPredicate> longTraceGoalStates = new HashSet<>();
+				mTestGoalWorkingSet.add(mCurrentTestGoalId);
+				if (!mNaiveLongTrace) {
+					mCurrentTestGoalId -= 1;
+				}
+				for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
+					final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
+					final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
+							.get(TestGoalAnnotation.class.getName());
 
-				assert checkIsEmptyHeuristic(abstraction) : "IsEmptyHeuristic did not match IsEmpty";
+					if (pLocAnno instanceof TestGoalAnnotation) {
+						if (mTestGoalWorkingSet.contains(((TestGoalAnnotation) pLocAnno).mId)) {
+							longTraceGoalStates.add(testGoal);
+						}
+					}
+				}
+				mTestGoalWorkingSet.clear(); // If Skips Unsat Long Traces activated
+
+				mCounterexample = longTraceRun(mAbstraction, longTraceGoalStates);
+				if (mCounterexample == null) { // mTestGoalTodoStack can be not Empty but mCounterexample can be null
+					// If more testgoals than iterations
+					if (mNaiveLongTrace) {
+						mCurrentTestGoalId -= 1;
+					}
+					mLongTraceTime = System.nanoTime() - startTime;
+					mLongTraceOptimization = false;
+					mCounterexample =
+							new IsEmpty<>(new AutomataLibraryServices(getServices()), abstraction, mSearchStrategy)
+									.getNestedRun();
+
+				}
 			} else if (mUseHeuristicEmptinessCheck) {
 				mCounterexample = new IsEmptyHeuristic<>(new AutomataLibraryServices(getServices()), abstraction,
 						IHeuristic.getHeuristic(mAStarHeuristic, mScoringMethod, mAStarRandomHeuristicSeed))
@@ -197,26 +254,30 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 								.getNestedRun();
 			}
 		} finally {
+			final long estimatedTime = System.nanoTime() - startTime;
+			if (mLongTraceOptimization) {
+				mLongTraceTime = System.nanoTime() - startTime;
+			}
+			if (mWriteEvaluationToFile) {
+				writeEvalRow(estimatedTime, mLongTraceTime);
+			}
+			CegarLoopIterations += 1;
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		}
-
 		if (mCounterexample == null) {
+			final long estimatedTime = System.nanoTime() - startTime;
+			if (mLongTraceOptimization) {
+				mLongTraceTime = System.nanoTime() - startTime;
+			}
+			if (mWriteEvaluationToFile) {
+				writeEvalRow(estimatedTime, mLongTraceTime);
+			}
 			return true;
 		}
-		// 1. Wir wollen, dass alle errorstates entlang dieses traces
-		// (irreführend) durch den automaten abgedeckt werden,
-		// sodass die trace abstraction diese nicht länger berücksichtigt
-		// (müssen dann alle als covered in die statistk)
-
-		// Wir wollen, dass ein Error state gewählt wird mit hohem Index
-		// final SimpleErrorAutomatonBuilder eab = new
-		// SimpleErrorAutomatonBuilder(mServices, mPredicateFactory, null,
-		// mCsToolkit, mPredicateFactoryInterpolantAutomata, mAbstraction,
-		// null);
+		// TODO auslagern: remove collect COvered Testgoals
 
 		final List<?> a = mCounterexample.getStateSequence();
 		String print = "";
-		final boolean coeringError = false;
 		for (int i = 0; i < a.size(); i++) {
 			if (a.get(i) instanceof ISLPredicate) {
 				final ISLPredicate stmt = (ISLPredicate) a.get(i);
@@ -224,7 +285,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 						.containsKey(TestGoalAnnotation.class.getName())) {
 					print = print + " " + ((TestGoalAnnotation) stmt.getProgramPoint().getPayload().getAnnotations()
 							.get(TestGoalAnnotation.class.getName())).mId;
-					// coeringError = true;
 					mTestGoalsInCurrentTrace.add(((TestGoalAnnotation) stmt.getProgramPoint().getPayload()
 							.getAnnotations().get(TestGoalAnnotation.class.getName())).mId);
 				}
@@ -232,10 +292,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			}
 		}
 		System.out.println(print);
-		// TODO error atuomaton
-
-		// TODO loop wenn mProgramPoint hat payload mit annotation
-		// testgeneradings
 
 		if (mPref.dumpAutomata()) {
 			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
@@ -263,6 +319,78 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		}
 
 		return false;
+	}
+
+	private void writeEvalRowLongTrace() {
+		try (FileWriter fw = new FileWriter("C:\\Users\\maxba\\ultimate\\testcomp\\TestGenerationEval2.csv", true);
+
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter out = new PrintWriter(bw)) {
+			out.println(String.format("%s", mLongTraceOptimization));
+		} catch (final IOException e) {
+			throw new AssertionError(e);
+		}
+	}
+
+	private void writeEvalTestCaseNewRow() {
+		final File fold = new File("C:\\Users\\maxba\\ultimate\\testcomp\\TestGenerationEvalCoverage.csv");
+		if (fold.exists() && !fold.isDirectory()) {
+			try (FileWriter fw =
+					new FileWriter("C:\\Users\\maxba\\ultimate\\testcomp\\TestGenerationEvalTestCases.csv", true);
+
+					BufferedWriter bw = new BufferedWriter(fw);
+					PrintWriter out = new PrintWriter(bw)) {
+				out.print("\n");
+			} catch (final IOException e) {
+				throw new AssertionError(e);
+			}
+		}
+	}
+
+	private void writeEvalRow(final long estimatedTime, final long longTraceTime) {
+		String asd = "";
+		final File fold = new File("C:\\Users\\maxba\\ultimate\\testcomp\\TestGenerationEvalCoverage.csv");
+		if (fold.exists() && !fold.isDirectory()) {
+			asd = readEvalCoverage();
+			fold.delete();
+		}
+
+		try (FileWriter fw =
+				new FileWriter("C:\\Users\\maxba\\ultimate\\testcomp\\TestGenerationEvalCoverage.csv", true);
+
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter out = new PrintWriter(bw)) {
+			fw.write(asd);
+			out.println(
+					String.format("Time: %s, Coverage: %s , LongTraceTime %s, CoverageLongTrace: %s, Iterations: %s",
+							estimatedTime / 1000, Covered / mErrorLocs.size(), longTraceTime / 1000,
+							CoveredLongTrace / mErrorLocs.size(), CegarLoopIterations));
+		} catch (final IOException e) {
+			throw new AssertionError(e);
+		}
+
+	}
+
+	private String readEvalCoverage() {
+		final StringBuilder resultStringBuilder = new StringBuilder();
+		String fileCOntentWithoutLastLine = "";
+		try (final FileReader fr =
+				new FileReader("C:\\Users\\maxba\\ultimate\\testcomp\\TestGenerationEvalCoverage.csv");
+				final BufferedReader br = new BufferedReader(fr)) {
+			String line;
+
+			while ((line = br.readLine()) != null) {
+				fileCOntentWithoutLastLine = resultStringBuilder.toString();
+				resultStringBuilder.append(line).append("\n");
+
+			}
+			if (CegarLoopIterations == 1) {
+				return resultStringBuilder.toString();
+			}
+		} catch (final IOException e) {
+			throw new AssertionError(e);
+		}
+		return fileCOntentWithoutLastLine;
 	}
 
 	private boolean checkIsEmptyHeuristic(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction)
@@ -368,8 +496,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			enhanceMode = mErrorGeneralizationEngine.getEnhancementMode();
 			subtrahendBeforeEnhancement = mErrorGeneralizationEngine.getResultBeforeEnhancement();
 			subtrahend = mErrorGeneralizationEngine.getResultAfterEnhancement();
-			mTestGoalTodoStack.removeAll(mTestGoalsInCurrentTrace);
-			// mTestGoalTodoStack.clear();
+			testGenerationCoverage();
 		} else {
 			automatonType = AutomatonType.FLOYD_HOARE;
 			useErrorAutomaton = false;
@@ -378,12 +505,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			enhanceMode = mPref.interpolantAutomatonEnhancement();
 			subtrahend = enhanceInterpolantAutomaton(enhanceMode, predicateUnifier, htc, subtrahendBeforeEnhancement);
 
-			if (!mTestGoalTodoStack.isEmpty()) {
-				mTestGoalTodoStack.remove(mTestGoalTodoStack.get(mTestGoalTodoStack.size() - 1));
-			}
-		}
-		if (!mTestGoalTodoStack.isEmpty()) {
-			mTestGoalWithHighesID = mTestGoalTodoStack.get(mTestGoalTodoStack.size() - 1);
 		}
 
 		// TODO: HTC and predicateunifier statistics are saved in the following
@@ -398,6 +519,19 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction,
 				(NestedWord<L>) mCounterexample.getWord()).getResult();
 		return !stillAccepted;
+	}
+
+	// TestGoal Coverage for Statistic and removing covered TestGoals form Stack
+	private void testGenerationCoverage() {
+		for (final Integer testgoal : mTestGoalsInCurrentTrace) {
+			if (mTestGoalTodoStack.contains(testgoal)) {
+				Covered += 1;
+				if (mLongTraceOptimization) {
+					CoveredLongTrace += 1;
+				}
+			}
+		}
+		mTestGoalTodoStack.removeAll(mTestGoalsInCurrentTrace);
 	}
 
 	private void computeAutomataDifference(final INestedWordAutomaton<L, IPredicate> minuend,

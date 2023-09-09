@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
@@ -117,13 +118,15 @@ public class SimpleErrorAutomatonBuilder<L extends IIcfgTransition<?>> implement
 				for (final IPredicate errorState : ((INestedWordAutomaton<L, IPredicate>) abstraction)
 						.getFinalStates()) {
 					if (errorStateIsTestGoalWithId((ISLPredicate) errorState, testGoalId)) {
-						mResult.addState(false, true, errorState);
+						final BasicPredicate errorStateAsBP =
+								new BasicPredicate(mResult.size(), null, errorState.getFormula(), null, null, null);
+						mResult.addState(false, true, errorStateAsBP);
 
 						for (final Iterator<IPredicate> it = mResult.getInitialStates().iterator(); it.hasNext();) {
 							final IPredicate f = it.next();
 
 							final L letter = ((L) trace.getSymbol(i).getSource().getOutgoingEdges().get(0).getLabel());
-							mResult.addInternalTransition(f, letter, errorState);
+							mResult.addInternalTransition(f, letter, errorStateAsBP);
 							break;
 						}
 

@@ -556,4 +556,11 @@ public final class TAPreferences {
 		return mMcrInterpolantMethod;
 	}
 
+	public boolean getTestGeneration() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_TESTGENERATION);
+	}
+
+	public boolean getLongTraceOpti() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LONGTRACEOPTIMIZATION);
+	}
 }

@@ -27,6 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -147,6 +151,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	protected final AssertCodeBlockOrder mAssertCodeBlockOrder;
 	protected final IIcfgSymbolTable mBoogie2SmtSymbolTable;
 	protected final FeasibilityCheckResult mFeasibilityResult;
+
+	private final boolean mWriteEvaluationToFile = true;
 
 	/**
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
@@ -451,7 +457,14 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		}
 
 		try {
-			TestExporter.getInstance().exportTests(testV, rpeb.mTrace.hashCode());
+			final boolean mExportTestCase = true; // TODO Setting
+			if (mWriteEvaluationToFile) {
+				writeEvalRow();
+			}
+			if (!testV.isEmpty() && mExportTestCase) {
+				TestExporter.getInstance().exportTests(testV, rpeb.mTrace.hashCode());
+			}
+
 		} catch (final Exception e) {
 			// TODO TestGeneration Auto-generated catch block
 			e.printStackTrace();
@@ -459,6 +472,18 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 
 		cleanupAndUnlockSolver();
 		return rpeb.getIcfgProgramExecution();
+	}
+
+	private void writeEvalRow() {
+		try (FileWriter fw =
+				new FileWriter("C:\\Users\\maxba\\ultimate\\testcomp\\TestGenerationEvalTestCases.csv", true);
+
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter out = new PrintWriter(bw)) {
+			out.append(String.format("%s, ", 1));
+		} catch (final IOException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 	protected AnnotateAndAssertCodeBlocks<L> getAnnotateAndAsserterCodeBlocks(final NestedFormulas<L, Term, Term> ssa) {

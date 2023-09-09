@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -117,6 +118,9 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	protected final XnfConversionTechnique mXnfConversionTechnique;
 	protected final Class<L> mTransitionClazz;
 
+	final Set<IPredicate> mNotReachedLongTraceStates = new HashSet<>();
+	private long TraceCeckTime = 0;
+	private long ExportedTestVectors = 0;
 	/**
 	 * Interprocedural control flow graph.
 	 */
@@ -166,6 +170,9 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 * Interpolant automaton of this iteration.
 	 */
 	protected NestedWordAutomaton<L, IPredicate> mInterpolAutomaton;
+
+	protected final boolean mTestGeneration;
+	protected boolean mLongTraceOptimization;
 
 	// used for debugging only
 	protected IAutomaton<L, IPredicate> mArtifactAutomaton;
@@ -227,6 +234,9 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		// TODO: TaskIdentifier should probably be provided by caller
 		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier() + "_" + name);
 		mResultBuilder = new CegarLoopResultBuilder();
+		// Test-Generation Settings
+		mTestGeneration = mPref.getTestGeneration();
+		mLongTraceOptimization = mPref.getLongTraceOpti(); // Skips Unsat Long Traces;
 	}
 
 	/**
@@ -430,15 +440,24 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 					mDumper = new Dumper(mLogger, mPref, mName, mIteration);
 				}
 				try {
+					final long startTime = System.nanoTime();
 					final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible();
-					final AutomatonType automatonType = processFeasibilityCheckResult(isCexResult.getFirst(),
-							isCexResult.getSecond(), currentErrorLoc);
-					if (mPref.stopAfterFirstViolation() && automatonType != AutomatonType.INTERPOLANT) {
-						return;
+					final long estimatedTime = System.nanoTime() - startTime;
+					TraceCeckTime += estimatedTime;
+					System.out.println("TimeSpendinTraceCecking: " + TraceCeckTime);
+					if (isCexResult.getFirst() == Script.LBool.SAT) {
+						ExportedTestVectors += 1;
+						System.out.println("Exported tests: " + ExportedTestVectors);
 					}
-					constructRefinementAutomaton(automatonType);
-					refineAbstractionInternal(automatonType);
-
+					if (isCexResult.getFirst() != Script.LBool.UNSAT || !mLongTraceOptimization) {
+						final AutomatonType automatonType = processFeasibilityCheckResult(isCexResult.getFirst(),
+								isCexResult.getSecond(), currentErrorLoc);
+						if (mPref.stopAfterFirstViolation() && automatonType != AutomatonType.INTERPOLANT) {
+							return;
+						}
+						constructRefinementAutomaton(automatonType);
+						refineAbstractionInternal(automatonType);
+					}
 				} catch (AutomataOperationCanceledException | ToolchainCanceledException e) {
 					mServices = updateTimeBudget(currentErrorLoc, parentServices, iterationServices);
 					updateBudget = false;
@@ -484,6 +503,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			}
 		}
 		mResultBuilder.addResultForAllRemaining(Result.USER_LIMIT_ITERATIONS);
+
 	}
 
 	private void refineAbstractionInternal(final AutomatonType automatonType)
@@ -527,9 +547,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			final IProgramExecution<L, Term> programExecution, final IcfgLocation currentErrorLoc) {
 		if (isCounterexampleFeasible == Script.LBool.SAT) {
 
-			// TODO TestGeneration Setting
-			final boolean testcomp = true;
-			if (testcomp) {
+			if (mTestGeneration) {
 				final List<?> sequence = mCounterexample.getStateSequence();
 				for (int i = 0; i < sequence.size(); i++) {
 					if (sequence.get(i) instanceof ISLPredicate) {
@@ -807,6 +825,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	}
 
 	private final class CegarLoopResultBuilder {
+		// TODO result for test generation
 		private final Map<IcfgLocation, CegarLoopLocalResult<L>> mResults = new LinkedHashMap<>();
 
 		public CegarLoopResultBuilder addResultForAllRemaining(final Result result) {

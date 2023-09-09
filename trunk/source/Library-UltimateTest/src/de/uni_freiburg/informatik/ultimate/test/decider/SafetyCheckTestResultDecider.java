@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE UnitTest Library.
- * 
+ *
  * The ULTIMATE UnitTest Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE UnitTest Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE UnitTest Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -38,31 +38,30 @@ import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.SafetyChec
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 /**
- * Use keywords in filename and first line to decide correctness of safety
- * checker results.
- * 
+ * Use keywords in filename and first line to decide correctness of safety checker results.
+ *
  * @author heizmann@informatik.uni-freiburg.de
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * 
+ *
  */
 public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<SafetyCheckerOverallResult> {
 
 	/**
-	 * 
+	 *
 	 * @param ultimateRunDefinition
-	 * 
+	 *
 	 * @param unknownIsJUnitSuccess
-	 *            if true the TestResult UNKNOWN is a success for JUnit, if
-	 *            false, the TestResult UNKNOWN is a failure for JUnit.
+	 *            if true the TestResult UNKNOWN is a success for JUnit, if false, the TestResult UNKNOWN is a failure
+	 *            for JUnit.
 	 */
-	public SafetyCheckTestResultDecider(final UltimateRunDefinition ultimateRunDefinition, final boolean unknownIsJUnitSuccess) {
+	public SafetyCheckTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
+			final boolean unknownIsJUnitSuccess) {
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
 	}
 
 	@Override
 	public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
-		return new KeywordBasedExpectedResultFinder<>(
-				TestUtil.constructFilenameKeywordMap_AllSafetyChecker(), null,
+		return new KeywordBasedExpectedResultFinder<>(TestUtil.constructFilenameKeywordMap_AllSafetyChecker(), null,
 				TestUtil.constructFirstlineKeywordMap_SafetyChecker());
 	}
 
@@ -85,14 +84,23 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 		public void evaluateTestResult(final IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder,
 				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
 			evaluateExpectedResult(expectedResultFinder);
+			final boolean testGeneration = true;
 			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
 			case ERROR:
 				// we will not evaluate overall result;
 				return;
 			case EXPECTED_RESULT_FOUND:
+				if (testGeneration) {
+					evaluateTestGenerationResult(overallResultDeterminer);
+					return;
+				}
 				compareToOverallResult(expectedResultFinder.getExpectedResult(), overallResultDeterminer);
 				return;
 			case NO_EXPECTED_RESULT_FOUND:
+				if (testGeneration) {
+					evaluateTestGenerationResult(overallResultDeterminer);
+					return;
+				}
 				evaluateOverallResultWithoutExpectedResult(overallResultDeterminer);
 				return;
 			default:
@@ -109,9 +117,18 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 			mMessage += " UltimateResult: " + overallResultMsg;
 			switch (overallResult) {
 			case EXCEPTION_OR_ERROR:
-			case UNSUPPORTED_SYNTAX:
-			case NO_RESULT:
+			case UNSUPPORTED_SYNTAX: {
 				mTestResult = TestResult.FAIL;
+
+				break;
+			}
+			case NO_RESULT:
+				final boolean testGeneration = true;
+				if (testGeneration) {
+					mTestResult = TestResult.SUCCESS;
+				} else {
+					mTestResult = TestResult.FAIL;
+				}
 				break;
 			case SAFE:
 			case UNSAFE:
@@ -126,6 +143,32 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				break;
 			default:
 				throw new AssertionError("case not implemented: " + overallResult);
+			}
+		}
+
+		private void evaluateTestGenerationResult(
+				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
+			final SafetyCheckerOverallResult overallResult = overallResultDeterminer.getOverallResult();
+			mCategory = overallResult + " (Expected:UNKNOWN)";
+			mMessage += " Ultimate TestGeneration";
+			switch (overallResult) {
+			case EXCEPTION_OR_ERROR:
+			case UNSUPPORTED_SYNTAX:
+				mTestResult = TestResult.FAIL;
+				break;
+
+			case UNSAFE_DEREF:
+			case UNSAFE_FREE:
+			case UNSAFE_MEMTRACK:
+			case UNSAFE_OVERAPPROXIMATED:
+			case UNKNOWN:
+			case SYNTAX_ERROR:
+			case TIMEOUT:
+				mTestResult = TestResult.UNKNOWN;
+				break;
+			default:
+				mTestResult = TestResult.SUCCESS;
+				break;
 			}
 		}
 

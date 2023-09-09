@@ -202,92 +202,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(String.format("Current: %s", current));
 			}
-			final boolean testcomp = true;
-			// if (mIsGoalState.test(current.mTargetState)) {
-			// if (testcomp) {
-			// if (current.mTargetState instanceof SPredicate) {
-			// if (((SPredicate) current.mTargetState).getProgramPoint().getPayload().getAnnotations()
-			// .containsKey(TestGoalAnnotation.class.getName())) {
-			//
-			// if (((TestGoalAnnotation) ((SPredicate) current.mTargetState).getProgramPoint().getPayload()
-			// .getAnnotations().get(TestGoalAnnotation.class
-			// .getName())).mId == ((TestCompHeuristic) heuristic).mHighestErrorStateID) {
-			// if (mLogger.isDebugEnabled()) {
-			// mLogger.debug(" Is target with testgoal Id: "
-			// + ((TestCompHeuristic) heuristic).mHighestErrorStateID);
-			// printDebugStats(lowestCall, lowestOther, summaries);
-			// }
-			//
-			// return current.constructRun();
-			// }
-			//
-			// }
-			// } else if (current.mTargetState instanceof UnknownState) {
-			// if (((UnknownState) current.mTargetState).getProgramPoint().getPayload().getAnnotations()
-			// .containsKey(TestGoalAnnotation.class.getName())) {
-			//
-			// if (((TestGoalAnnotation) ((UnknownState) current.mTargetState).getProgramPoint()
-			// .getPayload().getAnnotations().get(TestGoalAnnotation.class
-			// .getName())).mId == ((TestCompHeuristic) heuristic).mHighestErrorStateID) {
-			// if (mLogger.isDebugEnabled()) {
-			// mLogger.debug(" Is target with testgoal Id: "
-			// + ((TestCompHeuristic) heuristic).mHighestErrorStateID);
-			// printDebugStats(lowestCall, lowestOther, summaries);
-			// }
-			//
-			// return current.constructRun();
-			// }
-			//
-			// }
-			// } else {
-			// if (mIsGoalState.test(current.mTargetState)) {
-			// if (mLogger.isDebugEnabled()) {
-			// mLogger.debug(" Is target");
-			// printDebugStats(lowestCall, lowestOther, summaries);
-			// }
-			// return current.constructRun();
-			// }
-			// }
-			//
-			// } else {
-			// if (mIsGoalState.test(current.mTargetState)) {
-			//
-			// if (current.mTargetState instanceof SPredicate) {
-			// if (((SPredicate) current.mTargetState).getProgramPoint().getPayload().getAnnotations()
-			// .containsKey(TestGoalAnnotation.class.getName())) {
-			//
-			// if (((TestCompHeuristic) heuristic).mTestGoalTodoStack
-			// .contains(((TestGoalAnnotation) ((SPredicate) current.mTargetState)
-			// .getProgramPoint().getPayload().getAnnotations()
-			// .get(TestGoalAnnotation.class.getName())).mId)) {
-			//
-			// return current.constructRun();
-			// }
-			//
-			// }
-			// } else if (current.mTargetState instanceof UnknownState) {
-			// if (((UnknownState) current.mTargetState).getProgramPoint().getPayload().getAnnotations()
-			// .containsKey(TestGoalAnnotation.class.getName())) {
-			//
-			// if (((TestCompHeuristic) heuristic).mTestGoalTodoStack
-			// .contains(((TestGoalAnnotation) ((UnknownState) current.mTargetState)
-			// .getProgramPoint().getPayload().getAnnotations()
-			// .get(TestGoalAnnotation.class.getName())).mId)) {
-			//
-			// return current.constructRun();
-			// }
-			//
-			// }
-			// }
-			//
-			// // if (mLogger.isDebugEnabled()) {
-			// // mLogger.debug(" Is target");
-			// // printDebugStats(lowestCall, lowestOther, summaries);
-			// // }
-			// // return current.constructRun();
-			// }
-			// }
-			// }
 			final List<Item> stragglingSummaries;
 			if (current.mItemType == ItemType.RETURN) {
 				stragglingSummaries = updateSummaries(summaries, usedSummaries, current);
@@ -974,7 +888,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (mItemType != ItemType.RETURN) {
 				return null;
 			}
-			IWithBackPointer<STATE> current = this.mBackPointer;
+			IWithBackPointer<STATE> current = mBackPointer;
 
 			final Deque<IWithBackPointer<STATE>> localStack = new ArrayDeque<>();
 			while (current != null) {

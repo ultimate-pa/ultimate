@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
 public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public enum CodeBlockSize {
-		SingleStatement, OneNontrivialStatement, SequenceOfStatements, LoopFreeBlock, SequenceOfStatementsForTestComp
+		SingleStatement, OneNontrivialStatement, SequenceOfStatements, LoopFreeBlock, SequenceOfStatementsBreakOnNondet
 	}
 
 	// some solver commands

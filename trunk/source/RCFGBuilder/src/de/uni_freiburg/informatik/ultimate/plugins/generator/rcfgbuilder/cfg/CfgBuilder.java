@@ -1193,16 +1193,15 @@ public class CfgBuilder {
 				switch (mCodeBlockSize) {
 				case LoopFreeBlock:
 				case SequenceOfStatements:
-					// addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
-					// break;
-					// case SequenceOfStatementsWithTestComp: //TODO TestGeneration Setting
+					addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
+					break;
+				case SequenceOfStatementsBreakOnNondet: // TODO TestGeneration Setting
 					if (st instanceof HavocStatement) {
 						if (st.getPayload().toString().contains("__VERIFIER_nondet_")) {
 							// TODO better
 							endCurrentStatementSequence(st);
 							startNewStatementSequenceAndAddStatement(st, origin);
 						}
-
 					} else {
 						addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
 					}

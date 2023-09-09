@@ -495,6 +495,15 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
 			"If Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is THRESHOLD, two partitions are created, one partition contains all terms >= threshold  and one all terms < threshold";
 
+	// Test Generation
+	// ========================================================================
+	public static final String LABEL_TESTGENERATION = "Enable Test Generation";
+	private static final boolean DEF_TESTGENERATION = false;
+	private static final String DESC_TESTGENERATION = "TODO";
+	public static final String LABEL_LONGTRACEOPTIMIZATION = "Enable Test Long Trace Optimization";
+	private static final boolean DEF_LONGTRACEOPTIMIZATION = false;
+	private static final String DESC_LONGTRACEOPTIMIZATION = "TODO";
+
 	/**
 	 * Constructor.
 	 */
@@ -681,7 +690,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_IF_ANALYZED_TOO_OFTEN, 0, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_STOP_MODE, PathProgramDumpStop.AFTER_FIRST_DUMP,
 						PreferenceType.Combo, PathProgramDumpStop.values()),
-				getConcurrencySettings() };
+				getConcurrencySettings(), getTestGenerationSettings() };
 	}
 
 	public UltimatePreferenceItemContainer getConcurrencySettings() {
@@ -706,6 +715,16 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 								PreferenceType.Combo, LooperCheck.values())),
 
 				getPORSettings(), getPetriLbeSettings());
+	}
+
+	public UltimatePreferenceItemContainer getTestGenerationSettings() {
+		return new UltimatePreferenceItemContainer("Test Generation",
+				new UltimatePreferenceItem<>(LABEL_TESTGENERATION, DEF_TESTGENERATION, DESC_TESTGENERATION,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_LONGTRACEOPTIMIZATION, DEF_LONGTRACEOPTIMIZATION,
+						DESC_LONGTRACEOPTIMIZATION, PreferenceType.Boolean)
+
+		);
 	}
 
 	public UltimatePreferenceItemContainer getPORSettings() {

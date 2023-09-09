@@ -147,6 +147,10 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 	}
 
 	private void reportCounterexampleResult(final IcfgLocation errorLoc, final IProgramExecution<L, Term> pe) {
+		final boolean testcomp = true;
+		if (testcomp) {
+			return;
+		}
 		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
 		if (!upreasons.isEmpty()) {
 			reportUnproveableResult(errorLoc, pe, upreasons);

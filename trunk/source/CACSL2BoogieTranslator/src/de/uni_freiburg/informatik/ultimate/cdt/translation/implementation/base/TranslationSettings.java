@@ -79,6 +79,9 @@ public final class TranslationSettings {
 	private final FloatingPointRoundingMode mInitialRoundingMode;
 	private final boolean mAdaptMemoryModelResolutionOnPointerCasts;
 	private final int mStringOverapproximationThreshold;
+	// Test Generation
+	private final boolean mTestGenerationErrorCoverage;
+	private final boolean mTestGenerationBranchCoverage;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS);
@@ -120,7 +123,6 @@ public final class TranslationSettings {
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
 		mUseConstantArrays = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_CONSTANT_ARRAYS);
 		mUseStoreChains = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_STORE_CHAINS);
-
 		mEnableFesetround = ups.getBoolean(CACSLPreferenceInitializer.LABEL_FP_ROUNDING_MODE_ENABLE_FESETROUND);
 		mInitialRoundingMode =
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_FP_ROUNDING_MODE_INITIAL, FloatingPointRoundingMode.class);
@@ -128,6 +130,9 @@ public final class TranslationSettings {
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS);
 		mStringOverapproximationThreshold =
 				ups.getInt(CACSLPreferenceInitializer.LABEL_STRING_OVERAPPROXIMATION_THRESHOLD);
+		// Test Generation
+		mTestGenerationErrorCoverage = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ERROR_COVERAGE);
+		mTestGenerationBranchCoverage = ups.getBoolean(CACSLPreferenceInitializer.LABEL_BRANCH_COVERAGE);
 	}
 
 	private TranslationSettings(final PointerCheckMode divisionByZeroOfIntegerTypes,
@@ -144,7 +149,7 @@ public final class TranslationSettings {
 			final boolean checkSignedIntegerBounds, final boolean checkDataRaces, final boolean useConstantArrays,
 			final boolean useStoreChains, final boolean enableFesetround,
 			final FloatingPointRoundingMode initialRoundingMode, final boolean adaptMemoryModelResolutionOnPointerCasts,
-			final int stringOverapproximationThreshold) {
+			final int stringOverapproximationThreshold, final boolean coverError, final boolean coverBranches) {
 		super();
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
@@ -175,6 +180,8 @@ public final class TranslationSettings {
 		mInitialRoundingMode = initialRoundingMode;
 		mAdaptMemoryModelResolutionOnPointerCasts = adaptMemoryModelResolutionOnPointerCasts;
 		mStringOverapproximationThreshold = stringOverapproximationThreshold;
+		mTestGenerationErrorCoverage = coverError;
+		mTestGenerationBranchCoverage = coverBranches;
 	}
 
 	public PointerIntegerConversion getPointerIntegerCastMode() {
@@ -305,6 +312,15 @@ public final class TranslationSettings {
 		return mStringOverapproximationThreshold;
 	}
 
+	// TestGeneration
+	public boolean isCoverError() {
+		return mTestGenerationErrorCoverage;
+	}
+
+	public boolean isCoverBranches() {
+		return mTestGenerationBranchCoverage;
+	}
+
 	public TranslationSettings setMemoryModelPreference(final MemoryModel memoryModel) {
 		return new TranslationSettings(mDivisionByZeroOfIntegerTypes, mDivisionByZeroOfFloatingTypes,
 				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mBitpreciseBitfields,
@@ -313,7 +329,8 @@ public final class TranslationSettings {
 				memoryModel, mFpToIeeeBvExtension, mSmtBoolArraysWorkaround, mEntryMethod, mCheckErrorFunction,
 				mCheckAssertions, mIsSvcompMemtrackCompatibilityMode, mCheckAllocationPurity, mCheckMemoryLeakInMain,
 				mCheckSignedIntegerBounds, mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround,
-				mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts, mStringOverapproximationThreshold);
+				mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts, mStringOverapproximationThreshold,
+				mTestGenerationErrorCoverage, mTestGenerationBranchCoverage);
 	}
 
 	/**

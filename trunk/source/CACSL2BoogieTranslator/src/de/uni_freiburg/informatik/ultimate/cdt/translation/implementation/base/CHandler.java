@@ -369,6 +369,9 @@ public class CHandler {
 
 	private final boolean mIsInLibraryMode;
 
+	// Test Generation
+	private final boolean mTestGenerationErrorCoverage;
+	private final boolean mTestGenerationBranchCoverage;
 	private int countTestGoals = 0;
 
 	/**
@@ -456,6 +459,8 @@ public class CHandler {
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
 
 		mIsInLibraryMode = false;
+		mTestGenerationErrorCoverage = settings.isCoverError();
+		mTestGenerationBranchCoverage = settings.isCoverBranches();
 	}
 
 	/**
@@ -554,7 +559,8 @@ public class CHandler {
 				mFunctionToIndex, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
 		mIsInLibraryMode = !prerunCHandler.mProcedureManager.hasProcedure(mSettings.getEntryMethod());
-
+		mTestGenerationErrorCoverage = mSettings.isCoverError();
+		mTestGenerationBranchCoverage = mSettings.isCoverBranches();
 	}
 
 	/**
@@ -1729,9 +1735,8 @@ public class CHandler {
 		// states with identifier for later
 		// Annotation zur identifikation
 		// mLogger für statistik
-		final boolean testGeneration = true;
 		final IfStatement ifStmt;
-		if (testGeneration) {
+		if (mTestGenerationBranchCoverage) {
 
 			final ArrayList<Statement> thenArray = new ArrayList();
 			final ArrayList<Statement> elseArray = new ArrayList();
@@ -1761,7 +1766,6 @@ public class CHandler {
 			chk.annotate(assertFalseElse);
 			elseArray.add(assertFalseElse);
 			elseArray.addAll(elseStmt);
-
 			ifStmt = new IfStatement(loc, cond.getValue(), thenArray.toArray(new Statement[thenArray.size()]),
 					elseArray.toArray(new Statement[elseArray.size()]));
 
@@ -3642,15 +3646,51 @@ public class CHandler {
 		resultBuilder.addDeclarations(condResult.getDeclarations());
 		final RValue condRVal = (RValue) condResult.getLrValue();
 		IfStatement ifStmt;
-		{
-			final Expression cond = ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG,
-					condRVal.getValue());
-			final ArrayList<Statement> thenStmt =
-					new ArrayList<>(CTranslationUtil.createHavocsForAuxVars(condResult.getAuxVars()));
-			thenStmt.add(new BreakStatement(loc));
-			final Statement[] elseStmt =
-					CTranslationUtil.createHavocsForAuxVars(condResult.getAuxVars()).toArray(new Statement[0]);
-			ifStmt = new IfStatement(loc, cond, thenStmt.toArray(new Statement[thenStmt.size()]), elseStmt);
+		final Expression cond =
+				ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, condRVal.getValue());
+		final ArrayList<Statement> thenStmt =
+				new ArrayList<>(CTranslationUtil.createHavocsForAuxVars(condResult.getAuxVars()));
+		thenStmt.add(new BreakStatement(loc));
+		final ArrayList<Statement> elseStmt =
+				// CTranslationUtil.createHavocsForAuxVars(condResult.getAuxVars()).toArray(new Statement[0]);
+				new ArrayList<>(CTranslationUtil.createHavocsForAuxVars(condResult.getAuxVars()));
+		if (mTestGenerationBranchCoverage) {
+
+			final ArrayList<Statement> thenArray = new ArrayList<Statement>();
+			final ArrayList<Statement> elseArray = new ArrayList<Statement>();
+			final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
+
+			final ILocation loc1 = mLocationFactory.createCLocation(node);
+			final Statement assertFalseThen =
+					new AssertStatement(loc1, ExpressionFactory.createBooleanLiteral(loc1, false));
+			final TestGoalAnnotation tg1 = new TestGoalAnnotation(countTestGoals);
+			// assertFalseThen.getPayload().getAnnotations().put("TEST_GOAL_ANNOTATION",
+			// tg1);
+			countTestGoals += 1;
+			thenArray.add(assertFalseThen);
+			thenArray.addAll(thenStmt);
+			tg1.annotate(assertFalseThen);
+			chk.annotate(assertFalseThen);
+
+			final ILocation loc2 = mLocationFactory.createCLocation(node);
+			final Statement assertFalseElse =
+					new AssertStatement(loc2, ExpressionFactory.createBooleanLiteral(loc2, false));
+
+			final TestGoalAnnotation tg2 = new TestGoalAnnotation(countTestGoals);
+			countTestGoals += 1;
+			// assertFalseElse.getPayload().getAnnotations().put("TEST_GOAL_ANNOTATION",
+			// tg2);
+			tg2.annotate(assertFalseElse);
+			chk.annotate(assertFalseElse);
+			elseArray.add(assertFalseElse);
+			elseArray.addAll(elseStmt);
+
+			ifStmt = new IfStatement(loc, cond, thenArray.toArray(new Statement[thenArray.size()]),
+					elseArray.toArray(new Statement[elseArray.size()]));
+
+		} else {
+			ifStmt = new IfStatement(loc, cond, thenStmt.toArray(new Statement[thenStmt.size()]),
+					elseStmt.toArray(new Statement[elseStmt.size()]));
 		}
 
 		if (node instanceof IASTWhileStatement || node instanceof IASTForStatement) {
