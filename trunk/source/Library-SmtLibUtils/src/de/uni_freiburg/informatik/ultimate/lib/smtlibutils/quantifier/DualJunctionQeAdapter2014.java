@@ -66,7 +66,7 @@ public class DualJunctionQeAdapter2014 extends DualJunctionQuantifierElimination
 
 	@Override
 	public EliminationResult tryToEliminate(final EliminationTask et) {
-		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
+		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), et.getTerm());
 		final Set<TermVariable> modifiableEliminateeSet = new LinkedHashSet<>(et.getEliminatees());
 		final Term[] resultdualJuncts = mXjunctPqe.tryToEliminate(et.getQuantifier(), dualJuncts,
 				modifiableEliminateeSet);

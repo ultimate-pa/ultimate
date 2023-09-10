@@ -2,18 +2,14 @@
 # Tries to update SMTInterpol in Ultimate to the newest version 
 # Execute it from a folder where SMTInterpol and Ultimate are both subfolders 
 
-function exit_on_fail() {
-  "$@"
-  local status=$?
-  if [ $status -ne 0 ]; then
-    echo "$* failed with exit code $status"
-    exit $status
-  fi
-  return $status
-}
+## Include the makeSettings shared functions 
+DIR="${BASH_SOURCE%/*}"
+if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
+. "$DIR/makeSettings.sh"
 
-function make_diff(){
-  pushd "$dir_smtinterpol" > /dev/null
+
+make_diff(){
+  spushd "$dir_smtinterpol"
   echo "Creating diff..."
   [ -e "$diff_file" ] && rm "$diff_file"
   [ -e "$changed_files" ] && rm "$changed_files"
@@ -32,12 +28,12 @@ function make_diff(){
 
   diff_file=$(readlink -f $diff_file)
   changed_files=$(readlink -f $changed_files)
-  popd > /dev/null
+  spopd
 }
 
-function update_tools(){
+update_tools(){
   echo "Updating $dir_smtinterpol..."
-  pushd "$dir_smtinterpol" > /dev/null
+  spushd "$dir_smtinterpol"
   exit_on_fail git checkout master
   exit_on_fail git fetch
   exit_on_fail git rebase
@@ -45,15 +41,15 @@ function update_tools(){
   echo "Building SMTInterpol..."
   exit_on_fail ant > /dev/null
   smtinterpol_cur=$(git describe --tags)
-  popd > /dev/null
+  spopd
 
   echo "Updating $dir_ultimate..."
-  pushd "$dir_ultimate" > /dev/null
+  spushd "$dir_ultimate"
   smtinterpol_ver=$(grep -oP "VERSION\s*=\s*\"\K[0-9\.\-a-zA-Z]*" trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.java)
-  popd > /dev/null
+  spopd
 }
 
-function get_versions(){
+get_versions() {
   echo "Normalizing versions..."
   smtinterpol_hash=$(echo "$smtinterpol_cur" | cut -d'-' -f 3)
   ultimate_hash=$(echo "$smtinterpol_ver" | cut -d'-' -f 3)
@@ -75,7 +71,7 @@ function get_versions(){
   echo "Latest SMTInterpol version is $smtinterpol_cur, in Ultimate is $smtinterpol_ver, updating..."
 }
 
-function patch_ultimate_manually(){
+patch_ultimate_manually(){
   echo "Problems applying the patch with git tools, just copying all changed files"
   while IFS= read -r file_name ; do
     source_file="${dir_smtinterpol}/${file_name}"
@@ -92,8 +88,8 @@ function patch_ultimate_manually(){
   done < "$changed_files"
 }
 
-function patch_ultimate(){
-  pushd "$dir_ultimate" > /dev/null 
+patch_ultimate(){
+  spushd "$dir_ultimate"
   echo "Trying to apply patch..."
   ## first check, if nothing can be applied, do not update version
   if git apply --check --directory=trunk/source/ "$diff_file"; then
@@ -105,7 +101,7 @@ function patch_ultimate(){
   echo "Updating version"
   cp "$dir_smtinterpol"/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.java "$dir_ultimate"/trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.java
   git commit -a -m"Updated SMTInterpol to $smtinterpol_cur"
-  popd > /dev/null
+  spopd
 }
 
 function run() {

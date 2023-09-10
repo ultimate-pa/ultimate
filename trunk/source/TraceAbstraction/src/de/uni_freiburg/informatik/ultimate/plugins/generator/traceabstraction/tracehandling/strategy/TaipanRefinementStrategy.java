@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -88,8 +90,7 @@ public class TaipanRefinementStrategy<L extends IIcfgTransition<?>> extends Basi
 
 	@Override
 	public IHoareTripleChecker getHoareTripleChecker(final IRefinementEngine<L, ?> engine) {
-		if (engine.getResult().getUsedTracePredicates().stream().map(QualifiedTracePredicates::getOrigin)
-				.allMatch(AbsIntInterpolantGenerator.class::isAssignableFrom)) {
+		if (engine.getResult().getUsedTracePredicates().stream().allMatch(this::isAbsIntPredicate)) {
 			// rather hacky: we now that the absint module is in position 2
 			return getInterpolantGeneratorModules()[2].getHoareTripleChecker();
 		}
@@ -98,11 +99,28 @@ public class TaipanRefinementStrategy<L extends IIcfgTransition<?>> extends Basi
 
 	@Override
 	public IPredicateUnifier getPredicateUnifier(final IRefinementEngine<L, ?> engine) {
-		if (engine.getResult().getUsedTracePredicates().stream().map(QualifiedTracePredicates::getOrigin)
-				.allMatch(AbsIntInterpolantGenerator.class::isAssignableFrom)) {
+		if (engine.getResult().getUsedTracePredicates().stream().allMatch(this::isAbsIntPredicate)) {
 			// rather hacky: we know that the absint module is in position 2
 			return getInterpolantGeneratorModules()[2].getPredicateUnifier();
 		}
 		return super.getPredicateUnifier(engine);
+	}
+
+	private boolean isAbsIntPredicate(final QualifiedTracePredicates qtp) {
+		return qtp.getOrigin().isAssignableFrom(AbsIntInterpolantGenerator.class);
+	}
+
+	@Override
+	public List<QualifiedTracePredicates> mergeInterpolants(final List<QualifiedTracePredicates> perfectIpps,
+			final List<QualifiedTracePredicates> imperfectIpps) {
+		final List<QualifiedTracePredicates> perfectAbsIntIpps =
+				perfectIpps.stream().filter(this::isAbsIntPredicate).collect(Collectors.toList());
+		// If we have perfect interpolants from AbsInt, we use them
+		if (!perfectAbsIntIpps.isEmpty()) {
+			return perfectAbsIntIpps;
+		}
+		// Otherwise we use all interpolants that are not provided by AbsInt
+		return Stream.concat(perfectIpps.stream(), imperfectIpps.stream()).filter(x -> !isAbsIntPredicate(x))
+				.collect(Collectors.toList());
 	}
 }

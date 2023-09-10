@@ -1233,7 +1233,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 				}
 				final Term term = withPdr;
 				final Term afterQuantElim = PartialQuantifierElimination.eliminateCompat(mServices, mScript,
-						SimplificationTechnique.SIMPLIFY_QUICK, term);
+						SimplificationTechnique.SIMPLIFY_DDA, term);
 				final IPredicate result = mLocalPredicateUnifier.getOrConstructPredicate(afterQuantElim);
 				assert result != null;
 				return result;
@@ -1280,8 +1280,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 			}
 			substitutionMapping.put(bv.getTermVariable(), constant);
 		}
-		final PureSubstitution priming = new PureSubstitution(script, substitutionMapping);
-		final Term result = priming.transform(pred.getFormula());
+		final Term result = PureSubstitution.apply(script, substitutionMapping, pred.getFormula());
 		return result;
 	}
 

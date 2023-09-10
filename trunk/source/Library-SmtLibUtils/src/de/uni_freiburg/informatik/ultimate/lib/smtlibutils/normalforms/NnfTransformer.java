@@ -109,11 +109,6 @@ public class NnfTransformer {
 	}
 
 	public NnfTransformer(final ManagedScript mgdScript, final IUltimateServiceProvider services,
-			final QuantifierHandling quantifierHandling, final boolean omitSoundnessCheck) {
-		this(mgdScript, services, quantifierHandling, a -> false);
-	}
-
-	public NnfTransformer(final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final QuantifierHandling quantifierHandling, final Function<Integer, Boolean> funAbortIfExponential) {
 		mFunAbortIfExponential = Objects.requireNonNull(funAbortIfExponential);
 		mQuantifierHandling = quantifierHandling;
@@ -312,7 +307,7 @@ public class NnfTransformer {
 
 		@Override
 		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
-			final Term simplified = SmtUtils.termWithLocalSimplification(mScript, appTerm.getFunction(), newArgs);
+			final Term simplified = SmtUtils.unfTerm(mScript, appTerm.getFunction(), newArgs);
 			setResult(simplified);
 		}
 

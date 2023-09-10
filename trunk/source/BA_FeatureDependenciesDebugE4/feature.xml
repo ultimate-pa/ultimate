@@ -2,7 +2,7 @@
 <feature
       id="BA_FeatureDependenciesDebugE4"
       label="BA_FeatureDependenciesDebugE4"
-      version="0.2.2"
+      version="0.2.3"
       arch="x86_64">
 
    <description url="http://www.example.com/description">
@@ -169,6 +169,17 @@
          id="org.eclipse.swt.gtk.linux.x86_64"
          os="linux"
          ws="gtk"
+         arch="x86_64"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.swt.cocoa.macosx.x86_64"
+         os="macosx"
+         ws="cocoa"
          arch="x86_64"
          download-size="0"
          install-size="0"

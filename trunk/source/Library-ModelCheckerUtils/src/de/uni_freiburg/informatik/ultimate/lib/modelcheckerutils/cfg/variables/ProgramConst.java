@@ -36,10 +36,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class ProgramConst implements IProgramConst {
+public class ProgramConst extends ProgramFunction implements IProgramConst {
 	private static final long serialVersionUID = 2529175722580437047L;
 
 	private final String mIdentifier;
+	/**
+	 * @deprecated SMT constants that below to the theory are no {@link IProgramConst}s
+	 */
+	@Deprecated
 	private final boolean mBelongsToSmtTheory;
 
 	/**
@@ -53,6 +57,7 @@ public class ProgramConst implements IProgramConst {
 	 *            iff constant belongs to SMT theory
 	 */
 	public ProgramConst(final String identifier, final ApplicationTerm smtConstant, final boolean belongsToSmtTheory) {
+		super(smtConstant.getFunction());
 		mIdentifier = identifier;
 		mSmtConstant = smtConstant;
 		mBelongsToSmtTheory = belongsToSmtTheory;

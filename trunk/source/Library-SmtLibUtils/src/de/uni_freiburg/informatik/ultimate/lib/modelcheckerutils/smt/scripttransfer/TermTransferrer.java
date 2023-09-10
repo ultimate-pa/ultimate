@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttran
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -63,11 +62,10 @@ public class TermTransferrer extends TermTransformer {
 	protected final HistoryRecordingScript mOldScript;
 	protected final HistoryRecordingScript mNewScript;
 
-	protected final Map<Term, Term> mBacktransferMapping = new HashMap<>();
 	protected final Map<Term, Term> mTransferMapping;
 
 	public TermTransferrer(final Script oldScript, final Script newScript) {
-		this(oldScript, newScript, Collections.emptyMap(), false);
+		this(oldScript, newScript, new HashMap<>(), false);
 	}
 
 	/**
@@ -96,10 +94,6 @@ public class TermTransferrer extends TermTransformer {
 
 	public Map<Term, Term> getTransferMapping() {
 		return mTransferMapping;
-	}
-
-	public Map<Term, Term> getBacktranferMapping() {
-		return mBacktransferMapping;
 	}
 
 	@Override
@@ -183,7 +177,7 @@ public class TermTransferrer extends TermTransformer {
 		}
 		Term result;
 		if (mApplyLocalSimplifications) {
-			result = SmtUtils.termWithLocalSimplification(mNewScript, fsymb.getName(),
+			result = SmtUtils.unfTerm(mNewScript, fsymb.getName(),
 					appTerm.getFunction().getIndices(), resultSort, newArgs);
 		} else {
 			result = mNewScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), resultSort, newArgs);
@@ -193,7 +187,17 @@ public class TermTransferrer extends TermTransformer {
 
 	@Override
 	public void postConvertLet(final LetTerm oldLet, final Term[] newValues, final Term newBody) {
-		throw new UnsupportedOperationException("not yet implemented");
+		final TermVariable[] vars = new TermVariable[oldLet.getVariables().length];
+		for (int i = 0; i < oldLet.getVariables().length; i++) {
+			// Check mTransferMapping first, in case a different mapping was already recorded.
+			if (mTransferMapping.containsKey(oldLet.getVariables()[i])) {
+				vars[i] = (TermVariable) mTransferMapping.get(oldLet.getVariables()[i]);
+			} else {
+				vars[i] = transferTermVariable(oldLet.getVariables()[i]);
+			}
+		}
+		final Term result = mNewScript.let(vars, newValues, newBody);
+		setResult(result);
 	}
 
 	@Override
@@ -201,8 +205,11 @@ public class TermTransferrer extends TermTransformer {
 		final TermVariable[] vars = new TermVariable[old.getVariables().length];
 		for (int i = 0; i < old.getVariables().length; i++) {
 			// Check mTransferMapping first, in case a different mapping was already recorded.
-			vars[i] = (TermVariable) mTransferMapping.computeIfAbsent(old.getVariables()[i],
-					x -> transferTermVariable((TermVariable) x));
+			if (mTransferMapping.containsKey(old.getVariables()[i])) {
+				vars[i] = (TermVariable) mTransferMapping.get(old.getVariables()[i]);
+			} else {
+				vars[i] = transferTermVariable(old.getVariables()[i]);
+			}
 		}
 		final Term result = mNewScript.quantifier(old.getQuantifier(), vars, newBody);
 		setResult(result);

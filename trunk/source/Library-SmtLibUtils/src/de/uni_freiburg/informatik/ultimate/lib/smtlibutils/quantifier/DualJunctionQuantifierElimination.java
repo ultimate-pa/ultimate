@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
+import java.util.Arrays;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -35,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtLibUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 /**
  * Abstract superclass for our partial quantifier elimination techniques that we
@@ -87,14 +90,19 @@ public abstract class DualJunctionQuantifierElimination {
 	 */
 	public abstract EliminationResult tryToEliminate(EliminationTask et);
 
-	public static class EliminationResult {
+	public static class EliminationResult implements Comparable<EliminationResult> {
 		private final EliminationTask mEliminationTask;
 		private final Set<TermVariable> mNewEliminatees;
+		private final int mNumberOfEliminatees;
+		private final long mTreeSize;
 
 		public EliminationResult(final EliminationTask eliminationTask, final Set<TermVariable> newEliminatees) {
 			super();
 			mEliminationTask = eliminationTask;
-			mNewEliminatees = newEliminatees;
+			mNewEliminatees = Arrays.stream(eliminationTask.getTerm().getFreeVars()).filter(newEliminatees::contains)
+					.collect(Collectors.toSet());
+			mNumberOfEliminatees = mEliminationTask.getEliminatees().size() + mNewEliminatees.size();
+			mTreeSize = new DAGSize().treesize(mEliminationTask.getTerm());
 		}
 
 		public EliminationTask getEliminationTask() {
@@ -107,6 +115,28 @@ public abstract class DualJunctionQuantifierElimination {
 
 		public EliminationTask integrateNewEliminatees() {
 			return mEliminationTask.integrateNewEliminatees(mNewEliminatees);
+		}
+
+		/**
+		 * We want to implement some metric that selects better
+		 * {@link EliminationResult}s. Rather randomly we take a lexicographic order
+		 * that first compares the remaining eliminatees and secondly compares the size
+		 * of the formula. (Rationale: eliminations may increase the size of the formula
+		 * substantially)
+		 */
+		@Override
+		public int compareTo(final EliminationResult arg0) {
+			final int eliminateeBased = Integer.compare(mNumberOfEliminatees, arg0.mNumberOfEliminatees);
+			if (eliminateeBased != 0) {
+				return eliminateeBased;
+			}
+			final int sizeBased = Double.compare(mTreeSize, arg0.mTreeSize);
+			if (sizeBased != 0) {
+				return sizeBased;
+			}
+			// Some metric, not related to difficulty, just to make sure that different
+			// EliminationResult are not considered equivalent.
+			return mEliminationTask.getTerm().toString().compareTo(arg0.mEliminationTask.getTerm().toString());
 		}
 	}
 

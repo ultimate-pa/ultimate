@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtTestGenerationUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
@@ -150,7 +151,7 @@ public class UltimateEliminator extends WrapperScript {
 	public LBool assertTerm(final Term term) throws SMTLIBException {
 		mNumberOfAssertedTerms++;
 		final NamedTermWrapper ntw = new NamedTermWrapper(term);
-		if (ntw.isIsNamed()) {
+		if (ntw.isNamed()) {
 			// we alredy removed quantifiers
 			mTreeSizeOfAssertedTerms += new DAGSize().treesize(ntw.getUnnamedTerm());
 			return mScript.assertTerm(term);
@@ -166,7 +167,7 @@ public class UltimateEliminator extends WrapperScript {
 		final Term unf = new UnfTransformer(mMgdScript.getScript()).transform(annotationFree);
 		if (LOG_JUNIT_TEST) {
 			mLogger.info("Copy this to one of our JUnit test files:\n"
-					+ SmtTestGenerationUtils.generateStringForTestfile2(unf));
+					+ SmtTestGenerationUtils.generateStringForTestfile(unf));
 		}
 		final Term lessQuantifier = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript, SimplificationTechnique.SIMPLIFY_DDA, unf);
 		// TODO futher optimizations. E.g., overapproximation by replacing all

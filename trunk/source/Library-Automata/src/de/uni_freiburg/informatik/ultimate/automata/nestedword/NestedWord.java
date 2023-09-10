@@ -396,45 +396,45 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	/**
 	 * Creates a new nested word as a subword in the given range.
 	 *
-	 * @param firstIndex
+	 * @param from
 	 *            the index where the subword starts
-	 * @param lastIndex
-	 *            the index where the subword ends
+	 * @param to
+	 *            first index after the last letter of the subword
 	 * @return a new nested word which is a subword of {@code this}
 	 */
-	public NestedWord<LETTER> getSubWord(final int firstIndex, final int lastIndex) {
-		if (firstIndex < 0) {
+	public NestedWord<LETTER> getSubWord(final int from, final int to) {
+		if (from < 0) {
 			throw new IllegalArgumentException("The first index must be greater or equal to 0.");
 		}
-		if (lastIndex < firstIndex) {
+		if (to < from) {
 			throw new IllegalArgumentException("The last index must not be smaller than the first.");
 		}
-		if (lastIndex >= length()) {
+		if (to > length()) {
 			throw new IllegalArgumentException("The last index must be strictly smaller than the word length.");
 		}
 
 		// create nesting relation (more involved due to index changes)
-		final int[] newNestingRelation = new int[lastIndex - firstIndex + 1];
-		for (int i = firstIndex, newWordPos = 0; i <= lastIndex; ++i, ++newWordPos) {
+		final int[] newNestingRelation = new int[to - from];
+		for (int i = from, newWordPos = 0; i < to; ++i, ++newWordPos) {
 			final int oldNestingEntry = mNestingRelation[i];
 			if (isSpecialNestingRelationIndex(oldNestingEntry)) {
 				newNestingRelation[newWordPos] = oldNestingEntry;
-			} else if (oldNestingEntry < firstIndex) {
+			} else if (oldNestingEntry < from) {
 				// becomes pending return
 				assert oldNestingEntry >= 0;
 				newNestingRelation[newWordPos] = MINUS_INFINITY;
-			} else if (oldNestingEntry > lastIndex) {
+			} else if (oldNestingEntry >= to) {
 				// becomes pending call
 				assert oldNestingEntry < length();
 				newNestingRelation[newWordPos] = PLUS_INFINITY;
 			} else {
-				assert oldNestingEntry >= firstIndex && oldNestingEntry <= lastIndex;
-				newNestingRelation[newWordPos] = oldNestingEntry - firstIndex;
+				assert oldNestingEntry >= from && oldNestingEntry < to;
+				newNestingRelation[newWordPos] = oldNestingEntry - from;
 			}
 		}
 
 		// copy word
-		final LETTER[] subwordAsArray = Arrays.copyOfRange(mWord, firstIndex, lastIndex + 1);
+		final LETTER[] subwordAsArray = Arrays.copyOfRange(mWord, from, to);
 
 		return new NestedWord<>(subwordAsArray, newNestingRelation);
 	}
@@ -603,5 +603,18 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	private static boolean isSpecialNestingRelationIndex(final int nestingRelationEntry) {
 		return nestingRelationEntry == INTERNAL_POSITION || nestingRelationEntry == PLUS_INFINITY
 				|| nestingRelationEntry == MINUS_INFINITY;
+	}
+
+	/**
+	 * Check whether the nesting relation is empty, i.e., check whether there are
+	 * only internal positions.
+	 */
+	public boolean hasEmptyNestingRelation() {
+		for (int i = 0; i < mWord.length; i++) {
+			if (!isInternalPosition(i)) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

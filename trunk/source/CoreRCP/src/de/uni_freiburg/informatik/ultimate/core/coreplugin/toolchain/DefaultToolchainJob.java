@@ -159,7 +159,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 		} else {
 			mLogger.fatal(String.format("The toolchain threw an exception: %s: %s", e.getClass(), e.getMessage()));
 		}
-		mController.displayException(mToolchain.getCurrentToolchainData(), "The toolchain threw an exception", e);
+		mController.displayException(mToolchain, "The toolchain threw an exception", e);
 		if (mServices != null) {
 			final String idOfCore = Activator.PLUGIN_ID;
 			mServices.getResultService().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));

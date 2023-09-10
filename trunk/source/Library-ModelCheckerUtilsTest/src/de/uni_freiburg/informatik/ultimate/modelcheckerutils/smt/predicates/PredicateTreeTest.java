@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -37,6 +38,7 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramOldVar;
@@ -90,20 +92,20 @@ public class PredicateTreeTest {
 		final ProgramNonOldVar b = constructProgramVar("b");
 		vars.add(a);
 		vars.add(b);
-		final TestPredicate pred1 =
-				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")), vars, mMgdScript);
-		final TestPredicate pred2 =
-				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")), vars, mMgdScript);
-		final TestPredicate pred3 =
-				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("2")), vars, mMgdScript);
-		final TestPredicate pred4 =
-				new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("0")), vars, mMgdScript);
-		final TestPredicate pred5 =
-				new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("1")), vars, mMgdScript);
-		final TestPredicate pred6 =
-				new TestPredicate(mScript.term("=", b.getTermVariable(), mScript.numeral("0")), vars, mMgdScript);
-		final TestPredicate pred7 =
-				new TestPredicate(SmtUtils.and(mScript, pred1.getFormula(), pred6.getFormula()), vars, mMgdScript);
+		final TestPredicate pred1 = new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")),
+				vars, Collections.emptySet(), mMgdScript);
+		final TestPredicate pred2 = new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")),
+				vars, Collections.emptySet(), mMgdScript);
+		final TestPredicate pred3 = new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("2")),
+				vars, Collections.emptySet(), mMgdScript);
+		final TestPredicate pred4 = new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("0")),
+				vars, Collections.emptySet(), mMgdScript);
+		final TestPredicate pred5 = new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("1")),
+				vars, Collections.emptySet(), mMgdScript);
+		final TestPredicate pred6 = new TestPredicate(mScript.term("=", b.getTermVariable(), mScript.numeral("0")),
+				vars, Collections.emptySet(), mMgdScript);
+		final TestPredicate pred7 = new TestPredicate(SmtUtils.and(mScript, pred1.getFormula(), pred6.getFormula()),
+				vars, Collections.emptySet(), mMgdScript);
 		mMgdScript.unlock(this);
 
 		Assert.assertTrue(pred1 != pred2);
@@ -193,11 +195,13 @@ public class PredicateTreeTest {
 	private static final class TestPredicate implements IPredicate {
 
 		private final Set<IProgramVar> mVars;
+		private final Set<IProgramFunction> mFuns;
 		private final Term mClosedFormula;
 		private final Term mFormula;
 
-		public TestPredicate(final Term formula, final Set<IProgramVar> vars, final ManagedScript mgdScript) {
+		public TestPredicate(final Term formula, final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final ManagedScript mgdScript) {
 			mVars = vars;
+			mFuns = funs;
 			mFormula = formula;
 			mClosedFormula = PredicateUtils.computeClosedFormula(formula, vars, mgdScript);
 		}
@@ -210,6 +214,11 @@ public class PredicateTreeTest {
 		@Override
 		public Set<IProgramVar> getVars() {
 			return mVars;
+		}
+
+		@Override
+		public Set<IProgramFunction> getFuns() {
+			return mFuns;
 		}
 
 		@Override
@@ -226,6 +235,7 @@ public class PredicateTreeTest {
 		public String toString() {
 			return getFormula().toStringDirect();
 		}
+
 
 	}
 }

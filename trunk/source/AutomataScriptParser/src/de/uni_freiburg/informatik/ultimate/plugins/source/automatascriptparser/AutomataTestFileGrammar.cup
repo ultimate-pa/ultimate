@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IEpsilonNestedWor
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.counting.CountingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.rabin.IRabinAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
@@ -272,11 +273,11 @@ non terminal TreeSymbolAST tree_symbol;
  /* -------------------- Specification of Automata DEFINITION Files-----------------------*/
  /* -------------------- Specification of terminals   -----------------------*/
  // 1. Automata Types
- terminal Object NESTEDWORD_AUTOMATA, EPSILON_NESTEDWORD_AUTOMATA, PETRINET_AUTOMATA, BRANCHINGPROCESS_AUTOMATA, ALTERNATING_AUTOMATON, TREE_AUTOMATON, FINITE_AUTOMATON, COUNTING_AUTOMATON;
+ terminal Object NESTEDWORD_AUTOMATA, EPSILON_NESTEDWORD_AUTOMATA, PETRINET_AUTOMATA, BRANCHINGPROCESS_AUTOMATA, ALTERNATING_AUTOMATON, TREE_AUTOMATON, FINITE_AUTOMATON, COUNTING_AUTOMATON, RABIN_AUTOMATON;
  // 2. Alphabets
  terminal Object ALPHABET, CALL_ALPHABET, INTERNAL_ALPHABET, RETURN_ALPHABET, RANKED_ALPHABET;
 // 3. States & Places
-terminal Object STATES, PLACES, INITIAL_STATES, FINAL_STATES, TRANSITION_TABLE, ACCEPTING_FUNCTION, EXPR_STATE_NEGATE, EXPR_STATE_AND, EXPR_STATE_OR, IS_REVERSED;
+terminal Object STATES, PLACES, INITIAL_STATES, FINAL_STATES, ACCEPTING_STATES, FINITE_STATES, TRANSITION_TABLE, ACCEPTING_FUNCTION, EXPR_STATE_NEGATE, EXPR_STATE_AND, EXPR_STATE_OR, IS_REVERSED;
 // 4. Transitions
 terminal Object TRANSITIONS, INTERNAL_TRANSITIONS, CALL_TRANSITIONS, RETURN_TRANSITIONS, EPSILON_TRANSITIONS;
 // 5. 
@@ -288,11 +289,11 @@ terminal Object INITIAL_CONDITIONS, FINAL_CONDITIONS;
  /* -------------------- Specification of non-terminals   -----------------------*/
 non terminal IdentifierListAST identifier_list_opt, identifier_list;
 // Automata types
-non terminal AutomatonAST nwa_definition, epsilon_nwa_definition, boundedPetrinet_definition, aa_definition, ta_definition, fa_definition, ca_definition;
+non terminal AutomatonAST nwa_definition, epsilon_nwa_definition, boundedPetrinet_definition, aa_definition, ta_definition, fa_definition, ca_definition, ra_definition;
 // Alphabets
 non terminal IdentifierListAST alphabet, call_alphabet, return_alphabet, internal_alphabet;
 // States & Places
-non terminal IdentifierListAST states, initial_states, final_states;  
+non terminal IdentifierListAST states, initial_states, final_states, accepting_states, finite_states;
 non terminal IdentifierListAST places, accepting_places;
 // Transitions & Markings
 non terminal TransitionListAST call_transitions, internal_transitions, transitions, epsilon_transitions; 
@@ -444,6 +445,8 @@ type	::=     INT
                 {: RESULT = INestedWordAutomaton.class; :}
         |       COUNTING_AUTOMATON
         		{: RESULT = CountingAutomaton.class; :}
+        |       RABIN_AUTOMATON
+                {: RESULT = IRabinAutomaton.class; :}
         |       PETRINET_AUTOMATA         
                 {: RESULT = BoundedPetriNet.class; :}
         |       BRANCHINGPROCESS_AUTOMATA         
@@ -488,6 +491,12 @@ variable_declaration ::=
                   m_automataDefinitions.addAutomaton(counting);}
              else {reportError(true, "AutomataDefiniton: Type error \"" + t.getSimpleName() + "\" is not compatible with \"INestedWordAutomaton\""); }
              RESULT = null;:}
+        | type:t ra_definition:ra
+          {: if (t.equals(IRabinAutomaton.class))
+                { ra.setType(t);
+                  m_automataDefinitions.addAutomaton(ra);}
+             else {reportError(true, "AutomataDefiniton: Type error \"" + t.getSimpleName() + "\" is not compatible with \"IRabinAutomaton\""); }
+             RESULT = null;:}						 
         | type:t boundedPetrinet_definition:petri
           {: if (t.equals(BoundedPetriNet.class))
                 { petri.setType(t);
@@ -1150,6 +1159,23 @@ ca_definition ::=		variable_identifier:id EQ LPAREN:l
 						  count_trans);
 						  RESULT = ca; :} ;
 
+ra_definition ::=      variable_identifier:id EQ
+                        LPAREN:l alphabet:intern COMMA
+                               states:states COMMA
+                               initial_states:init_states COMMA
+                               accepting_states:acc_states COMMA
+                               finite_states:fin_states COMMA
+                               transitions:int_trans
+                        RPAREN:r
+                        {: RabinAutomatonAST ra = new RabinAutomatonAST(getLocation(l$, r$), id,
+                          intern.getIdentifierList(),
+                          states.getIdentifierList(),
+                          init_states.getIdentifierList(),
+                          acc_states.getIdentifierList(),
+                          fin_states.getIdentifierList(),
+                          int_trans);
+                          m_varDeclarations.put(id, RabinAutomatonAST.class);
+                          RESULT = ra; :} ;
 
 call_alphabet ::=  CALL_ALPHABET EQ LBRACE:l identifier_list_opt:idList  RBRACE:r 
 				   {:RESULT = idList; :} ;
@@ -1180,6 +1206,12 @@ initial_states ::= INITIAL_STATES EQ LBRACE:l identifier_list_opt:idList RBRACE:
 				   {:RESULT = idList; :} ;
 
 final_states ::= FINAL_STATES EQ LBRACE:l identifier_list_opt:idList RBRACE:r
+				{:RESULT = idList; :} ;
+
+accepting_states ::= ACCEPTING_STATES EQ LBRACE:l identifier_list_opt:idList RBRACE:r
+				{:RESULT = idList; :} ;
+
+finite_states ::= FINITE_STATES EQ LBRACE:l identifier_list_opt:idList RBRACE:r
 				{:RESULT = idList; :} ;
 
 transitions ::= TRANSITIONS EQ LBRACE:l transition_list_opt:tList RBRACE:r

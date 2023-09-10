@@ -27,7 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -35,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
@@ -71,7 +75,14 @@ import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
-
+	/**
+	 * Replace terms of the form `x = l ∧ φ(x)` by `x = l ∧ φ(l)` and replace terms
+	 * of the form `x ≠ l ∨ φ(x)` by `x ≠ l ∨ φ(l)`, where l is a literal (of sort
+	 * Real, Int, or BitVec) and x is a variable in a {@link PolynomialRelation}
+	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a
+	 * select term `(select a k)`.)
+	 */
+	private static final boolean APPLY_CONSTANT_FOLDING = true;
 	private static final boolean DEBUG_CHECK_RESULT = false;
 
 	private PolyPacSimplificationTermWalker(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
@@ -119,6 +130,27 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 		} else if (term instanceof QuantifiedFormula) {
 			return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 		}
+		if (APPLY_CONSTANT_FOLDING) {
+			final Map<Term, Term> substitutionMapping = new HashMap<>();
+			for (final Term conjunct : SmtUtils.getConjuncts(context)) {
+				if (!SmtUtils.isFunctionApplication(conjunct, "=")) {
+					continue;
+				}
+				final PolynomialRelation polyRel = PolynomialRelation.of(mMgdScript.getScript(), conjunct);
+				if (polyRel != null) {
+					final SolvedBinaryRelation sbr = polyRel.isSimpleEquality(mMgdScript.getScript());
+					if (sbr != null) {
+						substitutionMapping.put(sbr.getLeftHandSide(), sbr.getRightHandSide());
+					}
+				}
+			}
+			if (!substitutionMapping.isEmpty()) {
+				final Term renamed = Substitution.apply(mMgdScript, substitutionMapping, term);
+				if (renamed != term) {
+					return new TermContextTransformationEngine.FinalResultForAscend(renamed);
+				}
+			}
+		}
 		return new TermContextTransformationEngine.FinalResultForAscend(term);
 	}
 
@@ -154,8 +186,9 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 			final Term context, final Term term) {
 		final Term result;
 		try {
+			final Comparator<Term> siblingOrder = null;
 			result = TermContextTransformationEngine.transform(new PolyPacSimplificationTermWalker(services, mgdScript),
-					context, term);
+					siblingOrder, context, term);
 		} catch (final ToolchainCanceledException tce) {
 			final CondisDepthCode termCdc = CondisDepthCode.of(term);
 			final String taskDescription = String.format("simplifying a %s term", termCdc);

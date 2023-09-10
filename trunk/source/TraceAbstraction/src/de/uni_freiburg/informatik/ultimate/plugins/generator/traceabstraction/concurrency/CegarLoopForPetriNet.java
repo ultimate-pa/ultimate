@@ -75,7 +75,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -219,13 +218,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		final IHoareTripleChecker htc;
-		if (mRefinementResult.getHoareTripleChecker() != null) {
-			htc = mRefinementResult.getHoareTripleChecker();
-		} else {
-			htc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
-					mPref.getHoareTripleChecks(), mCsToolkit, mRefinementResult.getPredicateUnifier());
-		}
+		final IHoareTripleChecker htc = getHoareTripleChecker();
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		try {
 			// Determinize the interpolant automaton

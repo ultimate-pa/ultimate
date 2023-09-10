@@ -26,17 +26,36 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+
 /**
  * A Result that contain one CDeclaration. It should be used when a declarator is dispatched. .. or more general:
  * whenever we have something declaration-like where we know that only one symbol is declared/one type is involved --> a
  * typeIdExpression is such a case, a SimpleDeclaration is not, for example.
  */
-public class DeclaratorResult extends Result {
+public class DeclaratorResult extends ResultWithSideEffects {
 
 	CDeclaration mDecl;
 
 	public DeclaratorResult(final CDeclaration cd) {
-		super(null);
+		this(cd, Collections.emptyList(), Collections.emptyList(), Collections.emptySet(), Collections.emptyList());
+	}
+
+	public DeclaratorResult(final CDeclaration cd, final ResultWithSideEffects sideEffects) {
+		this(cd, sideEffects.getStatements(), sideEffects.getDeclarations(), sideEffects.getAuxVars(),
+				sideEffects.getOverapprs());
+	}
+
+	public DeclaratorResult(final CDeclaration cd, final List<Statement> stmt, final List<Declaration> decl,
+			final Set<AuxVarInfo> auxVars, final List<Overapprox> overapproxList) {
+		super(null, stmt, decl, auxVars, overapproxList);
 		mDecl = cd;
 	}
 

@@ -184,6 +184,16 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 
 	}
 
+	public EqState widen(final EqState other) {
+		final EqConstraint<EqNode> newConstraint = getConstraint().widen(other.getConstraint());
+
+		final Set<IProgramVarOrConst> newVariables = new HashSet<>();
+		newVariables.addAll(getVariables());
+		newVariables.addAll(other.getVariables());
+
+		return mFactory.getEqState(newConstraint, newVariables);
+	}
+
 	@Override
 	public boolean isEmpty() {
 		return mPvocs.isEmpty();

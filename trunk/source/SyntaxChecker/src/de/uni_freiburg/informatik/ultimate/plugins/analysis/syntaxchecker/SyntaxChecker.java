@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxCheckerSyntaxErrorResult;
@@ -93,7 +92,7 @@ public class SyntaxChecker implements IAnalysis {
 
 	@Override
 	public List<IObserver> getObservers() {
-		return Arrays.asList(new IObserver[] { mFilenameExtractionObserver });
+		return Arrays.asList(mFilenameExtractionObserver);
 	}
 
 	@Override
@@ -112,7 +111,7 @@ public class SyntaxChecker implements IAnalysis {
 		try {
 			doSyntaxCheck();
 		} catch (final IOException e) {
-			throw new ToolchainCanceledException(e.getMessage(), SyntaxChecker.class, "Syntax Checking");
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -139,7 +138,7 @@ public class SyntaxChecker implements IAnalysis {
 				.getBoolean(PreferenceInitializer.LABEL_DoSyntaxWarningCheck);
 		if (doSyntaxWarningCheck) {
 			final String toolCommandWarnings = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getString(PreferenceInitializer.LABEL_SyntaxErrorCommand);
+					.getString(PreferenceInitializer.LABEL_SyntaxWarningCommand);
 			final String outputWarnings;
 			if (Objects.equals(toolCommandError, toolCommandWarnings)) {
 				outputWarnings = outputError;
@@ -150,7 +149,7 @@ public class SyntaxChecker implements IAnalysis {
 				// everything fine, do nothing
 			} else {
 				final String longMessage =
-						generateLongDescription(toolCommandError, outputWarnings, filename, removeFilename);
+						generateLongDescription(toolCommandWarnings, outputWarnings, filename, removeFilename);
 				final String shortDescription = "Syntax checker warnings";
 				final Severity severity = Severity.WARNING;
 				final GenericResult res =
@@ -164,7 +163,7 @@ public class SyntaxChecker implements IAnalysis {
 			final String filename, final boolean replaceFilename) {
 		final String toolOutput;
 		if (replaceFilename) {
-			toolOutput = outputError.replaceAll(filename, "");
+			toolOutput = outputError.replace(filename + ":", "").strip();
 		} else {
 			toolOutput = outputError;
 		}
@@ -175,18 +174,17 @@ public class SyntaxChecker implements IAnalysis {
 	private String callSytaxCheckerAndReturnStderrOutput(final String toolCommand, final String filename)
 			throws IOException {
 		final String syntaxCheckerCommand = toolCommand + " " + filename;
-		final MonitoredProcess mProcess = MonitoredProcess.exec(syntaxCheckerCommand, null, mServices);
+		final MonitoredProcess proc = MonitoredProcess.exec(syntaxCheckerCommand, null, mServices);
 
-		if (mProcess == null) {
+		if (proc == null) {
 			final String errorMsg = " Could not create process, terminating... ";
 			mLogger.fatal(errorMsg);
 			throw new IllegalStateException(errorMsg);
 		}
 		// Let all processes terminate when the toolchain terminates
-		mProcess.setTerminationAfterTimeout(SYNTAX_CHECKER_TIMEOUT_MS);
+		proc.setTerminationAfterTimeout(SYNTAX_CHECKER_TIMEOUT_MS);
 
-		final String stderr = convert(mProcess.getErrorStream());
-		return stderr;
+		return convert(proc.getErrorStream());
 	}
 
 	private static String convert(final InputStream is) throws IOException {

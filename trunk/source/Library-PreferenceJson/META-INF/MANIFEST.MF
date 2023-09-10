@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.preferencejson
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.preferencejson
+Bundle-Version: 0.2.3
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.preferencejson
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
+ com.google.gson
+Export-Package: de.uni_freiburg.informatik.ultimate.preferencejson

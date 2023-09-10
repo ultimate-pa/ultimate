@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainModelType
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain.ReturnCode;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
@@ -63,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainCancel;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
@@ -95,8 +97,8 @@ final class ToolchainWalker implements IToolchainCancel {
 		mToolchainCancelRequest = false;
 	}
 
-	ReturnCode walk(final CompleteToolchainData data, final IProgressMonitorService service,
-			final IToolchainProgressMonitor monitor) throws Throwable {
+	ReturnCode walk(final IToolchain<?> toolchain, final CompleteToolchainData data,
+			final IProgressMonitorService service, final IToolchainProgressMonitor monitor) throws Throwable {
 		if (mCountDownLatch.getCount() != INITIAL_COUNTDOWN) {
 			throw new IllegalStateException("You cannot reuse the toolchain walker");
 		}
@@ -123,7 +125,7 @@ final class ToolchainWalker implements IToolchainCancel {
 
 	private ReturnCode walkUnprotected(final CompleteToolchainData data, final IProgressMonitorService service,
 			final IToolchainProgressMonitor monitor) throws Throwable {
-		final IToolchainData<RunDefinition> chain = data.getToolchain();
+		final IToolchainData<RunDefinition> chain = data.getToolchainData();
 
 		// convert monitor to submonitor
 		int remainingWork = chain.getRootElement().getToolchain().getPluginOrSubchain().size();
@@ -186,10 +188,10 @@ final class ToolchainWalker implements IToolchainCancel {
 		}
 
 		if (!service.continueProcessing()) {
-			final Collection<ITimeoutResult> toResults = ResultUtil.filterResults(
-					data.getToolchain().getServices().getResultService().getResults(), ITimeoutResult.class);
+			final Collection<ITimeoutResult> toResults =
+					ResultUtil.filterResults(data.getServices().getResultService().getResults(), ITimeoutResult.class);
 			if (toResults.isEmpty()) {
-				data.getToolchain().getServices().getResultService().reportResult(Activator.PLUGIN_ID,
+				data.getServices().getResultService().reportResult(Activator.PLUGIN_ID,
 						new TimeoutResult(Activator.PLUGIN_ID, "Timeout occured before executing " + pluginId));
 			}
 			mLogger.info("Toolchain execution was canceled (Timeout) before executing " + pluginId);
@@ -213,8 +215,7 @@ final class ToolchainWalker implements IToolchainCancel {
 
 		final PluginConnector pc;
 		if (!mOpenPlugins.containsKey(plugin.getId())) {
-			pc = new PluginConnector(mModelManager, tool, data.getController(), data.getToolchain().getStorage(),
-					data.getToolchain().getServices());
+			pc = new PluginConnector(data.getToolchain(), mModelManager, tool, data.getController());
 			mOpenPlugins.put(plugin.getId(), pc);
 		} else {
 			pc = mOpenPlugins.get(plugin.getId());
@@ -256,7 +257,7 @@ final class ToolchainWalker implements IToolchainCancel {
 		mLogger.info("Toolchain cancelled while executing plugin " + plugin.getId() + ". Reason: " + e.getMessage());
 		final String longDescription = "Toolchain cancelled " + e.printRunningTaskMessage();
 		final TimeoutResult timeoutResult = new TimeoutResult(plugin.getId(), longDescription);
-		data.getToolchain().getServices().getResultService().reportResult(plugin.getId(), timeoutResult);
+		data.getServices().getResultService().reportResult(plugin.getId(), timeoutResult);
 		return ReturnCode.Cancel;
 	}
 
@@ -280,11 +281,11 @@ final class ToolchainWalker implements IToolchainCancel {
 		}
 		if (cause instanceof SMTLIBException) {
 			return handleException(data, plugin, (SMTLIBException) cause);
-		} else if (cause instanceof ToolchainCanceledException) {
-			return handleException(data, plugin, (ToolchainCanceledException) cause);
-		} else {
-			return handleExceptionFallback(data, plugin, cause);
 		}
+		if (cause instanceof ToolchainCanceledException) {
+			return handleException(data, plugin, (ToolchainCanceledException) cause);
+		}
+		return handleExceptionFallback(data, plugin, cause);
 	}
 
 	private ReturnCode handleExceptionFallback(final CompleteToolchainData data, final PluginType plugin,
@@ -297,8 +298,7 @@ final class ToolchainWalker implements IToolchainCancel {
 
 	private static void reportExceptionOrError(final CompleteToolchainData data, final String pluginId,
 			final Throwable e) {
-		data.getToolchain().getServices().getResultService().reportResult(pluginId,
-				new ExceptionOrErrorResult(pluginId, e));
+		data.getServices().getResultService().reportResult(pluginId, new ExceptionOrErrorResult(pluginId, e));
 	}
 
 	/**
@@ -392,19 +392,23 @@ final class ToolchainWalker implements IToolchainCancel {
 	 */
 	static final class CompleteToolchainData {
 
-		private final IToolchainData<RunDefinition> mToolchain;
+		private final IToolchain<RunDefinition> mToolchain;
 		private final ISource[] mParsers;
 		private final IController<RunDefinition> mController;
 
-		CompleteToolchainData(final IToolchainData<RunDefinition> toolchain, final ISource[] parsers,
+		CompleteToolchainData(final IToolchain<RunDefinition> toolchain, final ISource[] parsers,
 				final IController<RunDefinition> controller) {
 			mToolchain = toolchain;
 			mParsers = parsers;
 			mController = controller;
 		}
 
-		IToolchainData<RunDefinition> getToolchain() {
+		IToolchain<RunDefinition> getToolchain() {
 			return mToolchain;
+		}
+
+		IToolchainData<RunDefinition> getToolchainData() {
+			return mToolchain.getCurrentToolchainData();
 		}
 
 		ISource[] getParsers() {
@@ -413,6 +417,10 @@ final class ToolchainWalker implements IToolchainCancel {
 
 		IController<RunDefinition> getController() {
 			return mController;
+		}
+
+		IUltimateServiceProvider getServices() {
+			return mToolchain.getCurrentToolchainData().getServices();
 		}
 	}
 }

@@ -40,12 +40,14 @@ public interface IPredicateCoverageChecker {
 	Validity isCovered(IPredicate lhs, IPredicate rhs);
 
 	/**
-	 * Returns all known predicates that are covered by the predicate pred (i.e. all predicates that imply pred).
+	 * Returns all known predicates that are covered by the predicate pred (i.e. all
+	 * predicates that imply pred, which includes also pred itself).
 	 */
 	Set<IPredicate> getCoveredPredicates(IPredicate pred);
 
 	/**
-	 * Returns all known predicates that cover the predicate pred (i.e. all predicates that are implied by pred).
+	 * Returns all known predicates that cover the predicate pred (i.e. all
+	 * predicates that are implied by pred, which includes also pred itself).
 	 */
 	Set<IPredicate> getCoveringPredicates(IPredicate pred);
 

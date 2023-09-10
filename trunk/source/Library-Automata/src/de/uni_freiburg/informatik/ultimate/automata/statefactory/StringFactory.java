@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -55,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteStateFactory<String>,
 		IFinitePrefix2PetriNetStateFactory<String>, IBuchiComplementDeterministicStateFactory<String>,
 		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementSvwStateFactory<String>,
-		IPetriNet2FiniteAutomatonStateFactory<String>, IIncrementalInclusionStateFactory<String>,
-		IMinimizationStateFactory<String>, IMinimizationCheckResultStateFactory<String>, IUnionStateFactory<String>,
+		IIncrementalInclusionStateFactory<String>, IMinimizationStateFactory<String>,
+		IMinimizationCheckResultStateFactory<String>, IUnionStateFactory<String>,
 		IBuchiComplementNcsbSimpleStateFactory<String>, IRelabelStateFactory<String>,
 		IConcurrentProductStateFactory<String>, IPetriNetAndAutomataInclusionStateFactory<String>,
 		ICaUnionStateFactory<String> {
@@ -129,10 +128,8 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 		builder.append(OPEN_BRACE);
 		for (final Entry<String, Set<String>> entry : down2up.entrySet()) {
 			final String downState = entry.getKey();
-			final Iterator<String> iterator = entry.getValue().iterator();
 			String separator = EMPTY_STRING;
-			while (iterator.hasNext()) {
-				final String upState = iterator.next();
+			for (final String upState : entry.getValue()) {
 				// @formatter:off
 				builder.append(separator)
 						.append(OPEN_PARENTHESIS)
@@ -233,17 +230,17 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 					throw new IllegalArgumentException("must have rank");
 				}
 				switch (upState.getRank()) {
-					case RANK_THREE:
-						listN.add(new Pair<>(downState, upState.getState()));
-						break;
-					case RANK_TWO:
-						buchiComplementNcsbHelperRankTwo(listC, listB, downState, upState);
-						break;
-					case RANK_ONE:
-						listS.add(new Pair<>(downState, upState.getState()));
-						break;
-					default:
-						throw new IllegalArgumentException("Only ranks 1, 2, 3 are allowed.");
+				case RANK_THREE:
+					listN.add(new Pair<>(downState, upState.getState()));
+					break;
+				case RANK_TWO:
+					buchiComplementNcsbHelperRankTwo(listC, listB, downState, upState);
+					break;
+				case RANK_ONE:
+					listS.add(new Pair<>(downState, upState.getState()));
+					break;
+				default:
+					throw new IllegalArgumentException("Only ranks 1, 2, 3 are allowed.");
 				}
 			}
 		}
@@ -380,7 +377,7 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 
 	/**
 	 * @author Yong Li (liyong@ios.ac.cn)
-	 * */
+	 */
 	@Override
 	public String buchiComplementNcsbSimple(final int id) {
 		return "s" + id;
@@ -395,7 +392,4 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 	public String constructInitialState() {
 		return "UnionInitialState";
 	}
-
-
-
 }

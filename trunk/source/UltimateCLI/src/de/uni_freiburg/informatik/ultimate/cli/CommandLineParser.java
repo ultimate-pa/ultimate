@@ -71,7 +71,7 @@ public final class CommandLineParser {
 		mCore = core;
 		mLogger = core.getCoreLoggingService().getControllerLogger();
 		mParser = new DefaultParser();
-		mOptionBuilder = new OptionBuilder(core, mLogger, requireToolchain, requireInputFiles);
+		mOptionBuilder = new OptionBuilder(core, requireToolchain, requireInputFiles);
 		mOptionsForParser = mOptionBuilder.getParserOptions(pluginNameFilter);
 		mOptionsForHelp = mOptionBuilder.getHelpOptions(pluginNameFilter);
 	}

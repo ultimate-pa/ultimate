@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -348,8 +349,8 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 		}
 
-		final SmtFunctionsAndAxioms transformedSymbols =
-				transformSmtFunctionsAndAxioms(oldToolkit.getSmtFunctionsAndAxioms());
+		final SmtFunctionsAndAxioms transformedSymbols = transformSmtFunctionsAndAxioms(
+				oldToolkit.getSmtFunctionsAndAxioms(), oldToolkit.getManagedScript(), newSymbolTable);
 		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(newModifiedGlobals, oldToolkit.getManagedScript(),
 				newSymbolTable, oldToolkit.getProcedures(), oldToolkit.getInParams(), oldToolkit.getOutParams(),
 				oldToolkit.getIcfgEdgeFactory(), oldToolkit.getConcurrencyInformation(), transformedSymbols);
@@ -506,7 +507,8 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		return null;
 	}
 
-	private SmtFunctionsAndAxioms transformSmtFunctionsAndAxioms(final SmtFunctionsAndAxioms smtSymbols) {
+	private SmtFunctionsAndAxioms transformSmtFunctionsAndAxioms(final SmtFunctionsAndAxioms smtSymbols,
+			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable) {
 		// TODO: Transfer defined SMT functions
 		final AxiomTransformationResult translationResult = mTransformer.transform(smtSymbols.getAxioms());
 
@@ -519,12 +521,13 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 			return new SmtFunctionsAndAxioms(translationResult.getAxiom(), script);
 		}
 
-		final List<Term> newAxiomsClosed =
-				mAdditionalAxioms.stream().map(IPredicate::getClosedFormula).collect(Collectors.toList());
+		final List<Term> newAxiomsClosed = mAdditionalAxioms.stream().map(IPredicate::getClosedFormula)
+				.collect(Collectors.toList());
 		newAxiomsClosed.add(translationResult.getAxiom().getClosedFormula());
 
 		final Term newAxioms = SmtUtils.and(script.getScript(), newAxiomsClosed);
-		return new SmtFunctionsAndAxioms(newAxioms, new String[0], script);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(newAxioms, mgdScript, symbolTable);
+		return new SmtFunctionsAndAxioms(newAxioms, tvp.getFuns(), script);
 	}
 
 }

@@ -302,11 +302,9 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 						if (errorEdge2fork.containsKey(edge)) {
 							final List<IPredicate> threadInUse = fork2inUseState.get(errorEdge2fork.get(edge));
 							final Set<IPredicate> predecessors = new HashSet<>(threadInUse);
-							final Set<IPredicate> successors = new HashSet<>(threadInUse);
 							predecessors.add(state);
-							successors.add(succState);
 							net.addTransition((LETTER) edge, ImmutableSet.of(predecessors),
-									ImmutableSet.of(successors));
+									ImmutableSet.singleton(succState));
 						} else {
 							net.addTransition((LETTER) edge, ImmutableSet.singleton(state),
 									ImmutableSet.singleton(succState));
@@ -349,8 +347,8 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 								final String threadInstanceName = edge.getPrecedingProcedure();
 								final IPredicate threadNotInUse = threadInstance2notinUseState.get(threadInstanceName);
 								final IPredicate threadInUse = threadInstance2inUseState.get(threadInstanceName);
-								predecessors = new HashSet<>(Arrays.asList(predCurrentThread, state, threadInUse));
-								successors = new HashSet<>(Arrays.asList(succState, threadNotInUse));
+								predecessors = Set.of(predCurrentThread, state, threadInUse);
+								successors = Set.of(succState, threadNotInUse);
 							}
 							net.addTransition((LETTER) edge, ImmutableSet.of(predecessors),
 									ImmutableSet.of(successors));

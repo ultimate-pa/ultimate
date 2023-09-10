@@ -846,6 +846,9 @@ public class SMTInterpol extends NoopScript {
 				final Interpolator interpolator = new Interpolator(mLogger, checkingSolver, mAssertions, getTheory(),
 						parts, startOfSubtree, mCancel);
 				ipls = interpolator.getInterpolants(proofTree);
+				if (checkingSolver != null) {
+					mLogger.info("FOUND VALID INTERPOLANT");
+				}
 			} finally {
 				if (checkingSolver != null) {
 					checkingSolver.exit();
@@ -863,7 +866,6 @@ public class SMTInterpol extends NoopScript {
 					ipls[i] = simplifier.getSimplifiedTerm(ipls[i]);
 				}
 			}
-			mLogger.info("FOUND VALID INTERPOLANT");
 			return ipls;
 		} catch (final SMTLIBException ex) {
 			if (mErrorCallback != null) {

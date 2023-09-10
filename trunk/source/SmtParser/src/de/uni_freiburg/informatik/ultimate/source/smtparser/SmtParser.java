@@ -44,6 +44,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ExceptionThrowingParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.UltimateEliminator;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.IntBlastingWrapper;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.IntBlastingWrapper.IntBlastingMode;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
@@ -248,6 +251,37 @@ public class SmtParser implements ISource {
 
 			final Script backEnd = SolverBuilder.buildScript(mServices, solverSettings);
 			script = new UltimateEliminator(mServices, mLogger, backEnd);
+		}
+			break;
+
+		case IntBlastingWrapper: {
+			mLogger.info("Expecting script with bitvectors, will translate to integers");
+			final String command = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getString(SmtParserPreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND);
+
+			SolverSettings solverSettings = SolverBuilder.constructSolverSettings();
+			if (command.isEmpty()) {
+				solverSettings = solverSettings.setSolverMode(SolverMode.Internal_SMTInterpol);
+			} else {
+				solverSettings = solverSettings.setSolverMode(SolverMode.External_DefaultMode)
+						.setUseExternalSolver(true, command, null);
+			}
+
+			final String folderOfDumpedFile = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getString(SmtParserPreferenceInitializer.LABEL_SMT_DUMP_PATH);
+			if (!folderOfDumpedFile.isEmpty()) {
+				solverSettings = solverSettings.setDumpSmtScriptToFile(true, folderOfDumpedFile,
+						"IntBlastingWrapperBackEndSolverInput.smt2", false);
+			}
+			final IntBlastingMode intBlastingMode = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getEnum(SmtParserPreferenceInitializer.LABEL_IntBlastingMode, IntBlastingMode.class);
+			final ConstraintsForBitwiseOperations constraintsForBitwiseOperations = mServices
+					.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getEnum(SmtParserPreferenceInitializer.LABEL_IntBlastingConstraintsForBitwiseOperations,
+							ConstraintsForBitwiseOperations.class);
+			final Script backEnd = SolverBuilder.buildScript(mServices, solverSettings);
+			script = new IntBlastingWrapper(mServices, mLogger, backEnd, intBlastingMode,
+					constraintsForBitwiseOperations, file.getAbsolutePath());
 		}
 			break;
 		case UltimateTreeAutomizer: {

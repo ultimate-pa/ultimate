@@ -34,6 +34,7 @@ import org.junit.Test;
 /**
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Katharina Wagner
  *
  */
 public class ArithmeticUtilsTest {
@@ -98,34 +99,28 @@ public class ArithmeticUtilsTest {
 	}
 
 	@Test
-	public void extendedEuclidean01() {
-		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(3), BigInteger.valueOf(256));
-		Assert.assertTrue(result.equals(BigInteger.valueOf(171)));
+	public void multiplicativeInverse01() {
+		final BigInteger res1 = ArithmeticUtils.multiplicativeInverse(BigInteger.valueOf(3), BigInteger.valueOf(256));
+		Assert.assertTrue(res1.equals(BigInteger.valueOf(171)));
+		final BigInteger res2 = ArithmeticUtils.multiplicativeInverse(BigInteger.valueOf(-3), BigInteger.valueOf(256));
+		Assert.assertTrue(res2.equals(BigInteger.valueOf(85)));
+		final BigInteger res3 = ArithmeticUtils.multiplicativeInverse(BigInteger.valueOf(5), BigInteger.valueOf(128));
+		Assert.assertTrue(res3.equals(BigInteger.valueOf(77)));
+		final BigInteger res4 = ArithmeticUtils.multiplicativeInverse(BigInteger.valueOf(17), BigInteger.valueOf(11));
+		Assert.assertTrue(res4.equals(BigInteger.valueOf(2)));
+		final BigInteger res5 = ArithmeticUtils.multiplicativeInverse(BigInteger.valueOf(1), BigInteger.valueOf(256));
+		Assert.assertTrue(res5.equals(BigInteger.valueOf(1)));
 	}
-    @Test
-	public void extendedEuclidean02() {
-		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(5), BigInteger.valueOf(128));
-		Assert.assertTrue(result.equals(BigInteger.valueOf(77)));
+
+	@Test(expected = IllegalArgumentException.class)
+	public void multiplicativeInverse02() {
+		ArithmeticUtils.multiplicativeInverse(BigInteger.valueOf(7), BigInteger.valueOf(1));
 	}
-    @Test
-	public void extendedEuclidean03() {
-		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(17), BigInteger.valueOf(11));
-		Assert.assertTrue(result.equals(BigInteger.valueOf(2)));
+
+	@Test(expected = IllegalArgumentException.class)
+	public void multiplicativeInverse03() {
+		ArithmeticUtils.multiplicativeInverse(BigInteger.valueOf(2), BigInteger.valueOf(4));
 	}
-   @Test
-	public void extendedEuclidean04() {
-		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(1), BigInteger.valueOf(256));
-		Assert.assertTrue(result.equals(BigInteger.valueOf(1)));
-	}
-   @Test
-	public void extendedEuclidean05() {
-		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(-3), BigInteger.valueOf(256));
-		Assert.assertTrue(result.equals(BigInteger.valueOf(85)));
-	}
-    @Test
-	public void extendedEuclidean06() {
-		final BigInteger result = ArithmeticUtils.extendedEuclidean(BigInteger.valueOf(7), BigInteger.valueOf(1));
-		Assert.assertTrue(result.equals(BigInteger.valueOf(0)));
-	}
+
 
 }

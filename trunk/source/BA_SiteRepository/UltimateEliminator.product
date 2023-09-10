@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="UltimateEliminator" uid="UltimateEliminator" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.2.2" useFeatures="false" includeLaunchers="true">
+<product name="UltimateEliminator" uid="UltimateEliminator" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.2.3" useFeatures="false" includeLaunchers="true">
 
    <aboutInfo>
       <text>
@@ -57,11 +57,12 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.util"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.smtinterpol"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.smtsolver.external"/>
-      <plugin id="javax.activation"/>
+      <plugin id="javax.activation" version="1.1.0.v201211130549"/>
       <plugin id="javax.xml"/>
       <plugin id="javax.xml.bind"/>
       <plugin id="javax.xml.stream"/>
       <plugin id="net.sf.javabdd"/>
+      <plugin id="org.apache.commons.io"/>
       <plugin id="org.apache.commons.lang"/>
       <plugin id="org.apache.log4j"/>
       <plugin id="org.apache.logging.log4j"/>

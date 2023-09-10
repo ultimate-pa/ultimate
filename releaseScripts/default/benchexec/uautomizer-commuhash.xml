@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-1.9.dtd">
+<benchmark tool="ultimateautomizer" timelimit="300s" hardtimelimit="300s" memlimit="8 GB"
+  cpuCores="2">
+
+  <resultfiles></resultfiles>
+  <option name="--full-output" />
+
+  <rundefinition name="sv-comp21_prop-reachsafety">
+    <tasks name="ReachSafety-Arrays">
+      <includesfile>../sv-benchmarks/c/ReachSafety-Arrays.set</includesfile>
+      <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+      <option name="--architecture">32bit</option>
+    </tasks>
+    <tasks name="ReachSafety-BitVectors">
+      <includesfile>../sv-benchmarks/c/ReachSafety-BitVectors.set</includesfile>
+      <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+      <option name="--architecture">32bit</option>
+    </tasks>
+    <tasks name="ReachSafety-ControlFlow">
+      <includesfile>../sv-benchmarks/c/ReachSafety-ControlFlow.set</includesfile>
+      <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+      <option name="--architecture">32bit</option>
+    </tasks>
+    <tasks name="ReachSafety-Heap">
+      <includesfile>../sv-benchmarks/c/ReachSafety-Heap.set</includesfile>
+      <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+      <option name="--architecture">32bit</option>
+    </tasks>
+    <tasks name="ReachSafety-Loops">
+      <includesfile>../sv-benchmarks/c/ReachSafety-Loops.set</includesfile>
+      <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+      <option name="--architecture">32bit</option>
+    </tasks>
+    <tasks name="ReachSafety-Recursive">
+      <includesfile>../sv-benchmarks/c/ReachSafety-Recursive.set</includesfile>
+      <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+      <option name="--architecture">32bit</option>
+    </tasks>
+  </rundefinition>
+
+  <rundefinition name="sv-comp21_prop-memsafety">
+    <tasks name="MemSafety-Arrays">
+      <includesfile>../sv-benchmarks/c/MemSafety-Arrays.set</includesfile>
+      <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+      <option name="--architecture">32bit</option>
+    </tasks>
+    <tasks name="MemSafety-Heap">
+      <includesfile>../sv-benchmarks/c/MemSafety-Heap.set</includesfile>
+      <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+      <option name="--architecture">32bit</option>
+    </tasks>
+    <tasks name="MemSafety-LinkedLists">
+      <includesfile>../sv-benchmarks/c/MemSafety-LinkedLists.set</includesfile>
+      <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+      <option name="--architecture">32bit</option>
+    </tasks>
+    <tasks name="MemSafety-Other">
+      <includesfile>../sv-benchmarks/c/MemSafety-Other.set</includesfile>
+      <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+      <option name="--architecture">32bit</option>
+    </tasks>
+
+    <tasks name="SoftwareSystems-BusyBox-MemSafety">
+      <includesfile>../sv-benchmarks/c/SoftwareSystems-BusyBox-MemSafety.set</includesfile>
+      <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+      <option name="--architecture">64bit</option>
+    </tasks>
+    <tasks name="SoftwareSystems-OpenBSD-MemSafety">
+      <includesfile>../sv-benchmarks/c/SoftwareSystems-OpenBSD-MemSafety.set</includesfile>
+      <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+      <option name="--architecture">64bit</option>
+    </tasks>
+  </rundefinition>
+
+  <rundefinition name="sv-comp21_prop-nooverflow">
+    <tasks name="NoOverflows-Main">
+      <includesfile>../sv-benchmarks/c/NoOverflows-Main.set</includesfile>
+      <propertyfile>../sv-benchmarks/c/properties/no-overflow.prp</propertyfile>
+    </tasks>
+  </rundefinition>
+
+  <rundefinition name="sv-comp21_prop-termination">
+    <tasks name="Termination-MainControlFlow">
+      <includesfile>../sv-benchmarks/c/Termination-MainControlFlow.set</includesfile>
+      <propertyfile>../sv-benchmarks/c/properties/termination.prp</propertyfile>
+      <option name="--architecture">64bit</option>
+    </tasks>
+  </rundefinition>
+
+</benchmark>

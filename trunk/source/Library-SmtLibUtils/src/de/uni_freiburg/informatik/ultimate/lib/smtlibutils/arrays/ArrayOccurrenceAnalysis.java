@@ -345,10 +345,10 @@ public class ArrayOccurrenceAnalysis {
 							}
 						}
 					} else {
-						final MultiDimensionalSelect as = MultiDimensionalSelect.convert(term);
+						final MultiDimensionalSelect as = MultiDimensionalSelect.of(term);
 						// If this select is above our dimension limit we ignore this select and descend
 						// to all children
-						if (as != null && as.getArray().equals(mWantedArray)
+						if (as.getIndex().size() > 0 && as.getArray().equals(mWantedArray)
 								&& as.getDimension() <= mDimensionUpperLimit) {
 							mArraySelects.add(as);
 							for (final Term indexEntry : as.getIndex()) {
@@ -429,7 +429,7 @@ public class ArrayOccurrenceAnalysis {
 	}
 
 	public static boolean isStoreWhereWantedArrayIsValue(final Term term, final Term wantedArray) {
-		final ArrayStore as = ArrayStore.convert(term);
+		final ArrayStore as = ArrayStore.of(term);
 		if (as == null) {
 			return false;
 		}

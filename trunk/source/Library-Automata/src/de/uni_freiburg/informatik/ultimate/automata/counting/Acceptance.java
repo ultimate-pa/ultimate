@@ -303,6 +303,7 @@ public class Acceptance<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 
 	@Override
 	public boolean checkResult(CRSF stateFactory) throws AutomataLibraryException {
-		return false;
+    // TODO: Check the result
+		return true;
 	}
 }

@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimizationStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.TreeAutomizerTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.ChcTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogCsv;
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithVMParameters;
@@ -66,7 +66,7 @@ public abstract class AbstractConstraintHornClauseSolverTestSuite extends Abstra
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
-		return new TreeAutomizerTestResultDecider(ultimateRunDefinition, true);
+		return new ChcTestResultDecider(ultimateRunDefinition, true);
 	}
 
 	@Override

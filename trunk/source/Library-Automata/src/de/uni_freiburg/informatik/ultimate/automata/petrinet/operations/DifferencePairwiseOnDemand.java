@@ -44,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
@@ -79,7 +81,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 	 * https://github.com/ultimate-pa/ultimate/issues/448#issuecomment-608669868
 	 */
 	private static final boolean ADD_FINITE_PREFIX_STATISTICS = true;
-	private final IPetriNet<LETTER, PLACE> mMinuend;
+	private final IPetriNetSuccessorProvider<LETTER, PLACE> mMinuend;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> mSubtrahend;
 
 	private final FinitePrefix<LETTER, PLACE> mFinitePrefixOfDifference;
@@ -88,7 +90,8 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 	private final DifferenceSynchronizationInformation<LETTER, PLACE> mDifferenceSynchronizationInformation;
 	private Map<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> mTransitionBacktranslation;
 
-	public DifferencePairwiseOnDemand(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> minuendNet,
+	public DifferencePairwiseOnDemand(final AutomataLibraryServices services,
+			final IPetriNetSuccessorProvider<LETTER, PLACE> minuendNet,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahendDfa,
 			final Set<LETTER> userProvidedUniversalSubtrahendLoopers)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
@@ -143,7 +146,8 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 		}
 	}
 
-	public DifferencePairwiseOnDemand(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> minuendNet,
+	public DifferencePairwiseOnDemand(final AutomataLibraryServices services,
+			final IPetriNetSuccessorProvider<LETTER, PLACE> minuendNet,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahendDfa)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		this(services, minuendNet, subtrahendDfa, null);
@@ -174,12 +178,13 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 		statistics.addKeyValuePair(StatisticsType.PETRI_PLACES, mResult.getPlaces().size());
 		statistics.addKeyValuePair(StatisticsType.PETRI_TRANSITIONS, mResult.getTransitions().size());
 		statistics.addKeyValuePair(StatisticsType.PETRI_FLOW, mResult.flowSize());
-		statistics.addKeyValuePair(StatisticsType.PETRI_DIFFERENCE_MINUEND_PLACES, mMinuend.getPlaces().size());
-		statistics.addKeyValuePair(StatisticsType.PETRI_DIFFERENCE_MINUEND_TRANSITIONS,
-				mMinuend.getTransitions().size());
-		if (mMinuend instanceof BoundedPetriNet) {
-			statistics.addKeyValuePair(StatisticsType.PETRI_DIFFERENCE_MINUEND_FLOW,
-					((BoundedPetriNet<LETTER, PLACE>) mMinuend).flowSize());
+		if (mMinuend instanceof IPetriNet) {
+			final IPetriNet<LETTER, PLACE> minuendPetriNet = (IPetriNet<LETTER, PLACE>) mMinuend;
+			statistics.addKeyValuePair(StatisticsType.PETRI_DIFFERENCE_MINUEND_PLACES,
+					minuendPetriNet.getPlaces().size());
+			statistics.addKeyValuePair(StatisticsType.PETRI_DIFFERENCE_MINUEND_TRANSITIONS,
+					minuendPetriNet.getTransitions().size());
+			statistics.addKeyValuePair(StatisticsType.PETRI_DIFFERENCE_MINUEND_FLOW, minuendPetriNet.flowSize());
 		}
 		if (mSubtrahend instanceof INestedWordAutomaton) {
 			statistics.addKeyValuePair(StatisticsType.PETRI_DIFFERENCE_SUBTRAHEND_STATES,
@@ -213,12 +218,11 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 			subtrahend = new RemoveDeadEnds<>(mServices, mSubtrahend).getResult();
 		}
 
-		if (!(mMinuend instanceof BoundedPetriNet)) {
+		if (!(mMinuend instanceof IPetriNetTransitionProvider)) {
 			throw new UnsupportedOperationException("Convert minuend to fully constructed net");
 		}
-		final BoundedPetriNet<LETTER, PLACE> minuend = (BoundedPetriNet<LETTER, PLACE>) mMinuend;
-		final boolean correct =
-				PetriNetUtils.doDifferenceLanguageCheck(mServices, stateFactory, minuend, subtrahend, mResult);
+		final boolean correct = PetriNetUtils.doDifferenceLanguageCheck(mServices, stateFactory,
+				(IPetriNetTransitionProvider<LETTER, PLACE>) mMinuend, subtrahend, mResult);
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + getOperationName());

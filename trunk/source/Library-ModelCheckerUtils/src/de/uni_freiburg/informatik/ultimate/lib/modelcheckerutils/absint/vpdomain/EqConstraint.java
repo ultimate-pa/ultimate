@@ -33,9 +33,12 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -266,7 +269,9 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 				.forEach(node -> constants.addAll(SmtUtils.extractConstants(node.getTerm(), false)));
 		// TODO do we need to find literals here, too?? (i.e. ConstantTerms)
 
-		mPvocs.addAll(constants.stream().map(c -> symbolTable.getProgramConst(c)).collect(Collectors.toSet()));
+		final Function<IProgramFunction, IProgramConst> cast = (x -> (IProgramConst) x);
+		mPvocs.addAll(constants.stream().map(c -> symbolTable.getProgramFun(c.getFunction())).map(cast)
+				.collect(Collectors.toSet()));
 
 		assert !mPvocs.stream().anyMatch(Objects::isNull);
 		return mPvocs;
@@ -290,9 +295,26 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 			return other;
 		}
 		final WeqCongruenceClosure<NODE> newPartialArrangement =
-				mFactory.getWeqCcManager().join(this.mWeqCc, other.mWeqCc, true);
-		final EqConstraint<NODE> res = mFactory.getEqConstraint(newPartialArrangement, true);
-		return res;
+				mFactory.getWeqCcManager().join(mWeqCc, other.mWeqCc, true);
+		return mFactory.getEqConstraint(newPartialArrangement, true);
+	}
+
+	public EqConstraint<NODE> widen(final EqConstraint<NODE> other) {
+		if (this.isBottom()) {
+			return other;
+		}
+		if (other.isBottom()) {
+			return this;
+		}
+		if (this.isTop()) {
+			return this;
+		}
+		if (other.isTop()) {
+			return other;
+		}
+		final WeqCongruenceClosure<NODE> newPartialArrangement =
+				mFactory.getWeqCcManager().widen(mWeqCc, other.mWeqCc, true);
+		return mFactory.getEqConstraint(newPartialArrangement, true);
 	}
 
 	/**

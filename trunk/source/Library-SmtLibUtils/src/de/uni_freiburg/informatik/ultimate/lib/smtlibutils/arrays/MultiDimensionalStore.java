@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -58,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * mStoreTerm.
  * @author Matthias Heizmann
  */
-public class MultiDimensionalStore {
+public class MultiDimensionalStore implements ITermProvider {
 	private final Term mArray;
 	private final ArrayIndex mIndex;
 	private final Term mValue;
@@ -121,8 +122,16 @@ public class MultiDimensionalStore {
 	}
 
 	static boolean isCompatibleSelect(final Term term, final Term array, final List<Term> index) {
-		final MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(term);
-		return mdSelect.getArray() == array && index.equals(mdSelect.getIndex());
+		if (index.isEmpty()) {
+			return term == array;
+		} else {
+			final MultiDimensionalSelect mdSelect = MultiDimensionalSelect.of(term);
+			if (mdSelect == null) {
+				return false;
+			} else {
+				return mdSelect.getArray() == array && index.equals(mdSelect.getIndex());
+			}
+		}
 	}
 
 	public Term getArray() {
@@ -145,6 +154,7 @@ public class MultiDimensionalStore {
 		return getIndex().size();
 	}
 
+	@Override
 	public Term toTerm(final Script script) {
 		return SmtUtils.multiDimensionalStore(script, getArray(), getIndex(), getValue());
 	}
@@ -169,11 +179,11 @@ public class MultiDimensionalStore {
 		if (dim > getDimension()) {
 			throw new IllegalArgumentException("cannot extract more dimensions than this array has");
 		}
-		ArrayStore as = ArrayStore.convert(mStoreTerm);
+		ArrayStore as = ArrayStore.of(mStoreTerm);
 		for (int i = 0; i < getDimension() - dim; i++) {
-			as = ArrayStore.convert(as.getValue());
+			as = ArrayStore.of(as.getValue());
 		}
-		return MultiDimensionalStore.convert(as.asTerm());
+		return MultiDimensionalStore.convert(as.getTerm());
 	}
 
 	public static MultiDimensionalStore convert(final Term term) {

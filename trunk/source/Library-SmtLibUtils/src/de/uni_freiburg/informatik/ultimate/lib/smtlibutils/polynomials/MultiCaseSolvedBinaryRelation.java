@@ -33,7 +33,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
+public class MultiCaseSolvedBinaryRelation implements ITermProvider {
 
 	public enum IntricateOperation {
 		/**
@@ -150,8 +150,8 @@ public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
 	}
 
 	@Override
-	public Term asTerm(final Script script) {
-		final Collection<Term> params = mCases.stream().map(x -> x.asTerm(script)).collect(Collectors.toList());
+	public Term toTerm(final Script script) {
+		final Collection<Term> params = mCases.stream().map(x -> x.toTerm(script)).collect(Collectors.toList());
 		final Term body;
 		final int quantifier;
 		switch (mXnf) {
@@ -201,7 +201,7 @@ public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
 			}
 		}
 		for (final SupportingTerm st : c.getSupportingTerms()) {
-			final boolean containsSubject = SmtUtils.isSubterm(st.asTerm(), subject);
+			final boolean containsSubject = SmtUtils.isSubterm(st.getTerm(), subject);
 			if (containsSubject) {
 				return false;
 			}

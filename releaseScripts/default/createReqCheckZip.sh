@@ -3,23 +3,11 @@
 # It takes additional binaries from the adds/ folder. Currently, we use z3, cvc4 and mathsat
 # It also adds README, Ultimate.py, and various license files
 
-function test {
-    "$@"
-    local status=$?
-    if [ $status -ne 0 ]; then
-        echo "$@ failed with $1"
-        exit $status
-    fi
-    return $status
-}
+## Include the makeSettings shared functions 
+DIR="${BASH_SOURCE%/*}"
+if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
+. "$DIR/makeSettings.sh"
 
-function copy_if_non_empty {
-    local source="$1"
-    local target="$2"
-    if [ ! -z "$source" ]; then
-        test cp "$source" "$target"
-    fi
-}
 
 if [ $# -lt 4 ]; then
     echo "Not enough arguments supplied -- use arguments in the following order"
@@ -107,10 +95,10 @@ mkdir "$TARGETDIR"
 mkdir "$CONFIGDIR"
 mkdir "$DATADIR"
 
-test cp -a ../../trunk/source/BA_SiteRepository/target/${ARCHPATH}/* "$TARGETDIR"/
+exit_on_fail cp -a ../../trunk/source/BA_SiteRepository/target/${ARCHPATH}/* "$TARGETDIR"/
 copy_if_non_empty "$TOOLCHAIN" "$CONFIGDIR"/ReqCheck.xml
 copy_if_non_empty "$TESTTOOLCHAIN" "$CONFIGDIR"/ReqToTest.xml
-test cp ${SETTINGS} "$CONFIGDIR"/.
+exit_on_fail cp ${SETTINGS} "$CONFIGDIR"/.
 
 ## copy all adds to target dir
 for add in "${ADDS[@]}" ; do
@@ -118,9 +106,9 @@ for add in "${ADDS[@]}" ; do
         echo "$add does not exist, aborting..."
         exit 1
     fi
-    test cp $add "$TARGETDIR"/
+    exit_on_fail cp $add "$TARGETDIR"/
 done
 
 ## creating new zipfile
 echo "Creating .zip"
-test zip -q ${ZIPFILE} -r "$TARGETDIR"/*
+exit_on_fail zip -q ${ZIPFILE} -r "$TARGETDIR"/*

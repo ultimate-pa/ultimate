@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 /**
  *
  * {@link TermTransformer} that applies
- * {@link SmtUtils#termWithLocalSimplification(Script, String, Term...)} to all sub-terms in
+ * {@link SmtUtils#unfTerm(Script, String, Term...)} to all sub-terms in
  * order to create a new term in Ultimate normal form.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -90,11 +90,11 @@ public class UnfTransformer extends TermTransformer {
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		final FunctionSymbol fun = appTerm.getFunction();
 		final String appString = fun.getApplicationString();
-		Term result = SmtUtils.termWithLocalSimplification(mScript, fun, newArgs);
+		Term result = SmtUtils.unfTerm(mScript, fun, newArgs);
 		if (mRelationSymbols.contains(appString)) {
-			final PolynomialRelation polyPolyRel = PolynomialRelation.convert(mScript, result);
+			final PolynomialRelation polyPolyRel = PolynomialRelation.of(mScript, result);
 			if (polyPolyRel != null) {
-				result = polyPolyRel.positiveNormalForm(mScript);
+				result = polyPolyRel.toTerm(mScript);
 			}
 		}
 		setResult(result);

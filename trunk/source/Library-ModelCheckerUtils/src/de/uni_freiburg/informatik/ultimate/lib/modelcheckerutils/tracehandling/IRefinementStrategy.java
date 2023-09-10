@@ -146,4 +146,15 @@ public interface IRefinementStrategy<L extends IAction> {
 	 */
 	IPredicateUnifier getPredicateUnifier(IRefinementEngine<L, ?> engine);
 
+	/**
+	 * Merges the interpolants {@code perfectIpps} and {@code imperfectIpps} and optionally discards some of them.
+	 *
+	 * @param perfectIpps
+	 *            A collection of perfect interpolants.
+	 * @param imperfectIpps
+	 *            A collection of imperfect interpolants.
+	 * @return A subset of the union of {@code perfectIpps} and {@code imperfectIpps} that should be processed further.
+	 */
+	List<QualifiedTracePredicates> mergeInterpolants(List<QualifiedTracePredicates> perfectIpps,
+			List<QualifiedTracePredicates> imperfectIpps);
 }

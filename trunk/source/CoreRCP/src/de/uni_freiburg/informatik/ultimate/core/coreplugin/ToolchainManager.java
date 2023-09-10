@@ -183,7 +183,7 @@ public class ToolchainManager {
 			final ProgressMonitorService monitorService =
 					new ProgressMonitorService(monitor, mLogger, mToolchainWalker);
 			mToolchainData.getStorage().putStorable(ProgressMonitorService.getServiceKey(), monitorService);
-
+			mToolchainData = mCurrentController.prerun(this);
 		}
 
 		@Override
@@ -196,7 +196,7 @@ public class ToolchainManager {
 			}
 
 			// present selection dialog
-			final IToolchainData<RunDefinition> rtr = mCurrentController.selectTools(tools);
+			final IToolchainData<RunDefinition> rtr = mCurrentController.selectTools(this, tools);
 			return setToolSelection(monitor, rtr);
 		}
 
@@ -313,11 +313,10 @@ public class ToolchainManager {
 				}
 
 				final Collection<ISource> parsers = mFiles2Parser.values();
-				mToolchainData = mCurrentController.prerun(mToolchainData);
-				final CompleteToolchainData data = new CompleteToolchainData(mToolchainData,
+				final CompleteToolchainData data = new CompleteToolchainData(this,
 						parsers.toArray(new ISource[parsers.size()]), mCurrentController);
-				currentToolchainServices = data.getToolchain().getServices();
-				return mToolchainWalker.walk(data, currentToolchainServices.getProgressMonitorService(), monitor);
+				currentToolchainServices = data.getServices();
+				return mToolchainWalker.walk(this, data, currentToolchainServices.getProgressMonitorService(), monitor);
 
 			} finally {
 				final IResultService resultService = currentToolchainServices.getResultService();
@@ -354,7 +353,7 @@ public class ToolchainManager {
 							p -> !(p instanceof StatisticsResult<?>));
 				}
 				ResultUtil.logResults(controllerLogger, results, appendCompleteLongDescription);
-				mCurrentController.displayToolchainResults(mToolchainData, resultService.getResults());
+				mCurrentController.displayToolchainResults(this, resultService.getResults());
 				mModelManager.removeAll();
 				mToolchainWalker.endToolchain();
 			}
@@ -397,11 +396,11 @@ public class ToolchainManager {
 						+ "\". The following plugins are currently available:");
 				printAvailableTools();
 				return false;
-			} else if (elem instanceof SubchainType) {
-				return checkToolchain(((SubchainType) elem).getPluginOrSubchain());
-			} else {
-				throw new IllegalArgumentException("Found unknown type in toolchain: " + elem.getClass());
 			}
+			if (elem instanceof SubchainType) {
+				return checkToolchain(((SubchainType) elem).getPluginOrSubchain());
+			}
+			throw new IllegalArgumentException("Found unknown type in toolchain: " + elem.getClass());
 		}
 
 		private void printAvailableTools() {

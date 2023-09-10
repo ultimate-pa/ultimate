@@ -40,6 +40,7 @@ import org.eclipse.core.runtime.IPath;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -101,7 +102,8 @@ public class TranslationTestResultDecider extends TestResultDecider {
 			for (final Entry<String, List<IResult>> x : resultSet) {
 				for (final IResult result : x.getValue()) {
 					if (result instanceof TypeErrorResult || result instanceof SyntaxErrorResult
-							|| result instanceof ExceptionOrErrorResult || result instanceof ITimeoutResult) {
+							|| result instanceof ExceptionOrErrorResult || result instanceof ITimeoutResult
+							|| result instanceof UnsupportedSyntaxResult) {
 						setResultCategory(result.getShortDescription());
 						setResultMessage(result.getShortDescription());
 						fail = true;

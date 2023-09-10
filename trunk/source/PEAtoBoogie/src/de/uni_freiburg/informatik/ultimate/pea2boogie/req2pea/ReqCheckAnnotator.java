@@ -279,19 +279,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return sb.toString();
 	}
 
-	/**
-	 * Generate the assertion that is violated if the requirement represented by the given automaton is non-vacuous. The
-	 * assertion expresses that the automaton always stays in the early phases and never reaches the last phase. It may
-	 * be false if all phases of the automaton are part of the last phase, in which case this function returns null.
-	 *
-	 * @param req
-	 *            The requirement for which vacuity is checked.
-	 * @param aut
-	 *            The automaton for which vacuity is checked.
-	 * @param bl
-	 *            A boogie location used for all statements.
-	 * @return The assertion for non-vacousness or null if the assertion would be false.
-	 */
 	private static AssertStatement createAssert(final Expression expr, final ReqCheck check, final String label) {
 		final CheckedReqLocation loc = new CheckedReqLocation(check);
 		final NamedAttribute[] attr =
@@ -325,6 +312,19 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 	}
 
+	/**
+	 * Generate the assertion that is violated if the requirement represented by the given automaton is non-vacuous. The
+	 * assertion expresses that the automaton always stays in the early phases and never reaches the last phase. It may
+	 * be false if all phases of the automaton are part of the last phase, in which case this function returns null.
+	 *
+	 * @param req
+	 *            The requirement for which vacuity is checked.
+	 * @param aut
+	 *            The automaton for which vacuity is checked.
+	 * @param bl
+	 *            A boogie location used for all statements.
+	 * @return The assertion for non-vacousness or null if the assertion would be false.
+	 */
 	private Statement genAssertNonVacuous(final PatternType<?> req, final PhaseEventAutomata aut,
 			final BoogieLocation bl) {
 		final Phase[] phases = aut.getPhases();
@@ -348,10 +348,12 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 		// check that one of those phases is eventually reached.
 		final List<Expression> checkReached = new ArrayList<>();
-		for (int i = 0; i < phases.length; i++) {
-			final PhaseBits bits = phases[i].getPhaseBits();
-			if (bits == null || (bits.getActive() & 1 << pnr - 1) == 0) {
-				checkReached.add(genComparePhaseCounter(i, mSymbolTable.getPcName(aut), bl));
+		if (pnr > 0) {
+			for (int i = 0; i < phases.length; i++) {
+				final PhaseBits bits = phases[i].getPhaseBits();
+				if (bits == null || (bits.getActive() & (1 << (pnr - 1))) == 0) {
+					checkReached.add(genComparePhaseCounter(i, mSymbolTable.getPcName(aut), bl));
+				}
 			}
 		}
 		if (checkReached.isEmpty()) {

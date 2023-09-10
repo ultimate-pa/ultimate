@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -146,7 +147,7 @@ public final class BitvectorUtils {
 		return true;
 	}
 
-	public static Term termWithLocalSimplification(final Script script, final String funcname,
+	public static Term unfTerm(final Script script, final String funcname,
 			final BigInteger[] indices, final Term... params) {
 		final Term result;
 		final BvOp bvop = BvOp.valueOf(funcname);
@@ -164,12 +165,10 @@ public final class BitvectorUtils {
 			result = new Concat().simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvadd:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvadd(x, y))
-					.simplifiedResult(script, funcname, indices, params);
+			result = SmtUtils.sum(script, funcname, params);
 			break;
 		case bvsub:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvsub(x, y))
-					.simplifiedResult(script, funcname, indices, params);
+			result = SmtUtils.minus(script, params);
 			break;
 		case bvudiv:
 			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvudiv(x, y))
@@ -192,8 +191,7 @@ public final class BitvectorUtils {
 					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvmul:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvmul(x, y))
-					.simplifiedResult(script, funcname, indices, params);
+			result = SmtUtils.mul(script, funcname, params);
 			break;
 		case bvand:
 			result = new Bvand().simplifiedResult(script, funcname, indices, params);
@@ -270,10 +268,15 @@ public final class BitvectorUtils {
 
 		public final Term simplifiedResult(final Script script, final String funcname, final BigInteger[] indices,
 				final Term... params) {
-			assert getFunctionName().equals(funcname) : "wrong function name";
-			assert getNumberOfIndices() == 0 && indices == null
-					|| getNumberOfIndices() == indices.length : "wrong number of indices";
-			assert getNumberOfParams() == params.length : "wrong number of params";
+			if (!getFunctionName().equals(funcname)) {
+				throw new AssertionError("Wrong function name: " + funcname);
+			}
+			assert (getNumberOfIndices() == 0 && indices == null
+					|| getNumberOfIndices() == indices.length) : "Wrong number of indices:" + Arrays.toString(indices);
+			if (getNumberOfParams() != params.length) {
+				throw new AssertionError(String.format("%s: params expected %s, params provided %s", funcname,
+						getNumberOfParams(), params.length));
+			}
 			final BitvectorConstant[] bvs = new BitvectorConstant[params.length];
 			boolean allConstant = true;
 			for (int i = 0; i < params.length; i++) {

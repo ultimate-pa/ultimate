@@ -9,7 +9,6 @@ file_export_version=3.0
 
 #Fri Oct 24 16:34:36 CEST 2014
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Translation\ Mode\:=SV_COMP14
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ long=4
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ POINTER=4
@@ -24,7 +23,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Overapproximate\ operations\ on\ floating\ types=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Use\ constant\ arrays=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Adapt\ memory\ model\ on\ pointer\ casts\ if\ necessary=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ unreachability\ of\ error\ function\ in\ SV-COMP\ mode=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ unreachability\ of\ reach_error\ function=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ absence\ of\ data\ races\ in\ concurrent\ programs=true
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
 
@@ -57,7 +56,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Automaton\ type\ used\ in\ concurrency\ analysis=PARTIAL_ORDER_FA
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Apply\ one-shot\ large\ block\ encoding\ in\ concurrent\ analysis=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Partial\ Order\ Reduction\ in\ concurrent\ analysis=PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/DFS\ Order\ used\ in\ POR=PSEUDO_LOCKSTEP
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Abstraction\ used\ for\ commutativity\ in\ POR=VARIABLES_GLOBAL
 
 

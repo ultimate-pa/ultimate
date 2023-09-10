@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -172,7 +173,13 @@ public class SemanticIndependenceConditionGenerator {
 	}
 
 	private final Term quantify(final Set<TermVariable> vars, final Term formula) {
-		return PartialQuantifierElimination.quantifier(mServices, mLogger, mMgdScript, SIMPLIFICATION_TECHNIQUE,
-				XNF_CONVERSION_TECHNIQUE, QuantifiedFormula.EXISTS, vars, formula);
+		Term quantified = SmtUtils.quantifier(mMgdScript.getScript(), QuantifiedFormula.EXISTS, vars, formula);
+		final boolean eliminateLight = true;
+		if (eliminateLight) {
+			return PartialQuantifierElimination.eliminateLight(mServices, mMgdScript, quantified);
+		} else {
+			return PartialQuantifierElimination.eliminate(mServices, mMgdScript, quantified,
+					SIMPLIFICATION_TECHNIQUE);
+		}
 	}
 }

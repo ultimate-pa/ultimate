@@ -1,17 +1,14 @@
 #Mon Nov 27 17:23:30 CET 2017
+file_export_version=3.0
+
+@de.uni_freiburg.informatik.ultimate.core=0.1.22
 \!/instance/de.uni_freiburg.informatik.ultimate.core=
 /instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ class=de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher\=ERROR;
-file_export_version=3.0
-@de.uni_freiburg.informatik.ultimate.core=0.1.22
 
 
-#Fri Oct 24 16:34:36 CEST 2014
-file_export_version=3.0
-
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Use\ constant\ arrays=true
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Translation\ Mode\:=SV_COMP14
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Use\ constant\ arrays=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ long=4
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ POINTER=4
@@ -25,7 +22,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=ASSUME
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Assume\ nondeterminstic\ values\ are\ in\ range=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Overapproximate\ operations\ on\ floating\ types=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ unreachability\ of\ error\ function\ in\ SV-COMP\ mode=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ unreachability\ of\ reach_error\ function=false
 
 
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
@@ -34,7 +31,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ SMT\ script\ to\ file=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
 
 
 @de.uni_freiburg.informatik.ultimate.plugins.blockencoding=0.1.9
@@ -56,5 +52,10 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Try\ twofold\ refinement=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Compute\ Interpolants\ along\ a\ Counterexample=Craig_TreeInterpolation
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ old\ map\ elimination=false
+
+
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ exception\ blacklist=DEPENDING

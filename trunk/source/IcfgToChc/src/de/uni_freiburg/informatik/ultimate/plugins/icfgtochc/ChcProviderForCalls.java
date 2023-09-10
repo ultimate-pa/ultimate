@@ -192,7 +192,7 @@ public class ChcProviderForCalls implements IChcProvider {
 			final Term constraintRaw = SmtUtils.and(mMgdScript.getScript(),
 					SmtUtils.not(mMgdScript.getScript(), assertionViolatedHeadVar.getTermVariable()),
 					equateGlobalsWithTheirOldVars);
-			final Term constraintFinal = new PureSubstitution(mMgdScript, substitutionMapping).transform(constraintRaw);
+			final Term constraintFinal = PureSubstitution.apply(mMgdScript, substitutionMapping, constraintRaw);
 
 			updateLogicWrtConstraint(constraintFinal);
 
@@ -478,12 +478,10 @@ public class ChcProviderForCalls implements IChcProvider {
 								secondBodyPredAssertionViolatedVar.getTermVariable()));
 
 		final Term constraint = SmtUtils.and(mMgdScript.getScript(),
-				new PureSubstitution(mMgdScript, substitutionForAssignmentOfCall)
-						.transform(localVarsAssignmentOfCall.getFormula()),
-				new PureSubstitution(mMgdScript, substitutionForAssignmentOfReturn)
-						.transform(assignmentOfReturn.getFormula()),
-				new PureSubstitution(mMgdScript, substitutionForOldVarsAssignment)
-						.transform(oldVarsAssignment.getFormula()),
+				PureSubstitution.apply(mMgdScript, substitutionForAssignmentOfCall,
+						localVarsAssignmentOfCall.getFormula()),
+				PureSubstitution.apply(mMgdScript, substitutionForAssignmentOfReturn, assignmentOfReturn.getFormula()),
+				PureSubstitution.apply(mMgdScript, substitutionForOldVarsAssignment, oldVarsAssignment.getFormula()),
 				updateAssertionViolatedVar);
 
 		if (!assertNoFreeVars(headVars, bodyVars, constraint)) {
@@ -638,7 +636,7 @@ public class ChcProviderForCalls implements IChcProvider {
 		}
 
 		final Term constraintAndAssertionViolated = SmtUtils.and(mMgdScript.getScript(),
-				new PureSubstitution(mMgdScript, substitutionMapping).transform(tf.getFormula()),
+				PureSubstitution.apply(mMgdScript, substitutionMapping, tf.getFormula()),
 				assertionViolatedHeadVar.getTermVariable());
 
 		final Term constraintFinal = constraintAndAssertionViolated;
@@ -770,7 +768,7 @@ public class ChcProviderForCalls implements IChcProvider {
 
 		final Term constraintOrAssertionViolated;
 		{
-			final Term constraint = new PureSubstitution(mMgdScript, substitutionMapping).transform(tf.getFormula());
+			final Term constraint = PureSubstitution.apply(mMgdScript, substitutionMapping, tf.getFormula());
 			constraintOrAssertionViolated =
 					SmtUtils.or(mMgdScript.getScript(), assertionViolatedHeadVar.getTermVariable(), constraint);
 		}

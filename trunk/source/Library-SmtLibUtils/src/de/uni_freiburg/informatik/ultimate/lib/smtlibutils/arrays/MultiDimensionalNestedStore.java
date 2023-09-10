@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -42,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class MultiDimensionalNestedStore {
+public class MultiDimensionalNestedStore implements ITermProvider {
 	private final Term mArray;
 	private final List<ArrayIndex> mIndices;
 	private final List<Term> mValues;
@@ -92,6 +93,7 @@ public class MultiDimensionalNestedStore {
 	}
 
 
+	@Override
 	public Term toTerm(final Script script) {
 		Term array = mArray;
 		for (int i = 0; i < mIndices.size(); i++) {
@@ -214,7 +216,7 @@ public class MultiDimensionalNestedStore {
 	}
 
 	public static MultiDimensionalNestedStore convert1mdseq(final Script script, final Term term) {
-		final ArrayStore as = ArrayStore.convert(term);
+		final ArrayStore as = ArrayStore.of(term);
 		if (as == null) {
 			return null;
 		}
@@ -248,5 +250,8 @@ public class MultiDimensionalNestedStore {
 				ArrayIndex.appendEntriesAtBeginning(mIndices, indexEntries), mValues);
 	}
 
-
+	@Override
+	public String toString() {
+		return String.format("(%s %s %s)", mArray, mIndices, mValues);
+	}
 }

@@ -1,3 +1,13 @@
+**/.metadata/*
+**/.settings/*
+**/target/*
+**/bin/*
+**.swp
+**/.recommenders/*
+**/.gitignore
+**/.idea/*
+hs_err_pid*
+
 /releaseScripts/default/DeltaDebugger-linux/*
 /releaseScripts/default/DeltaDebugger-win32/*
 /releaseScripts/default/UAutomizer-linux/*
@@ -10,6 +20,21 @@
 /releaseScripts/default/UTaipan-win32/*
 /releaseScripts/default/UTaipan-win32/
 /releaseScripts/default/*.zip
+/releaseScripts/default/WebBackend
+/releaseScripts/default/WebFrontend
+/releaseScripts/2018chccomp/Unihorn/StarExecArchive/*
+/releaseScripts/2018chccomp/Unihorn/StarExecArchive
+/releaseScripts/2018chccomp/Unihorn/UltimateCommandline.zip
+/releaseScripts/2018chccomp/TreeAutomizer/StarExecArchive/*
+/releaseScripts/2018chccomp/TreeAutomizer/StarExecArchive
+/releaseScripts/2018chccomp/TreeAutomizer/UltimateCommandline.zip
+/releaseScripts/benchmark-processing/.idea
+/releaseScripts/default/UReqCheck-linux/
+/releaseScripts/default/UReqCheck-win32/
+/releaseScripts/default/update-smtinterpol-firestation.sh
+
+/trunk/runtime-*/*
+/trunk/examples/Requirements/failure-paths/*
 /trunk/examples/svcomp
 /trunk/examples/svcomp/*
 /trunk/examples/ultbench
@@ -32,12 +57,6 @@ trunk/examples/concurrent/bpl/weaver-benchmarks/weaver
 /trunk/source/Servers
 /trunk/source/.sonarlint/*
 /trunk/source/*.log
-hs_err_pid*
-
-/trunk/source/Website/WebContent/WEB-INF/classes
-/trunk/source/Website/WebContent/json/*.json
-
-/trunk/source/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/examples/*
 
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLResultExpression.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLTransformer.java
@@ -241,6 +260,7 @@ hs_err_pid*
 /trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2/LexerSymbols.java
 /trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2/Parser.java
 /trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofLexer.java
+/trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofLexer.java~
 /trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofParser.java
 /trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofSymbols.java
 
@@ -273,29 +293,11 @@ hs_err_pid*
 /trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/Query.java
 /trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/Union.java
 
-
 /trunk/source/JavaCup/bootstrap/java_cup/*
 /trunk/source/JavaCup/classes/java_cup
 /trunk/source/JavaCup/dist
 /trunk/source/JavaCup/java/java_cup
 /trunk/source/CoreRCP/version.properties
-/releaseScripts/default/adds/.idea
-/releaseScripts/svcomp2018/adds/.idea
-/trunk/source/UltimateTest/automata-dump
-
-/releaseScripts/2018chccomp/Unihorn/StarExecArchive/*
-/releaseScripts/2018chccomp/Unihorn/StarExecArchive
-/releaseScripts/2018chccomp/Unihorn/UltimateCommandline.zip
-/releaseScripts/2018chccomp/TreeAutomizer/StarExecArchive/*
-/releaseScripts/2018chccomp/TreeAutomizer/StarExecArchive
-/releaseScripts/2018chccomp/TreeAutomizer/UltimateCommandline.zip
-/releaseScripts/benchmark-processing/.idea
-
-releaseScripts/default/UReqCheck-linux/
-
-releaseScripts/default/UReqCheck-win32/
-/trunk/examples/Requirements/failure-paths/*
-
 /trunk/source/JavaCup/bootstrap/com/github/jhoenicke/javacup
 /trunk/source/JavaCup/classes/com/github/jhoenicke/javacup
 /trunk/source/JavaCup/java/com/github/jhoenicke/javacup
@@ -304,3 +306,5 @@ releaseScripts/default/UReqCheck-win32/
 /trunk/runtime-Debug-E4.product
 /trunk/runtime-WebBackend.product
 
+trunk/source/WebsiteStatic/bootstrap_dev/node_modules/
+trunk/source/WebsiteStatic/config/config.js

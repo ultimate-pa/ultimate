@@ -39,6 +39,7 @@ public class AutomizerChcTest extends AbstractModelCheckerTestSuiteWithIncrement
 	private static final String TOOLCHAIN = "examples/toolchains/AutomizerCHC.xml";
 	private static final String SETTINGS_FILE = "examples/settings/chc/AutomizerCHC/AutomizerCHC_Goto.epf";
 //	private static final String SETTINGS_FILE = "examples/settings/chc/AutomizerCHC/AutomizerCHC_No_Goto.epf";
+//	private static final String SETTINGS_FILE = "examples/settings/default/unihorn/chccomp-Unihorn_Default.epf";
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {

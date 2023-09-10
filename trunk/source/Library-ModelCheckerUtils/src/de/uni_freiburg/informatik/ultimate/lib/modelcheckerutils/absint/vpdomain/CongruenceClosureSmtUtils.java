@@ -34,7 +34,7 @@ public class CongruenceClosureSmtUtils {
 				.map(en -> SmtUtils.binaryEquality(script, en.getKey().getTerm(), en.getValue().getTerm()))
 				.collect(Collectors.toList());
 		final List<Term> elementDisequalities = pa.getElementDisequalities().getSetOfPairs().stream()
-				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
+				.map(pair -> SmtUtils.distinct(script, pair.getKey().getTerm(), pair.getValue().getTerm()))
 				.collect(Collectors.toList());
 
 		final List<Term> result = new ArrayList<>(elementEqualities.size() + elementDisequalities.size());

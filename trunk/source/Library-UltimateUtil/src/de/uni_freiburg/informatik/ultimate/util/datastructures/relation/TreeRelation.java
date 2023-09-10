@@ -53,4 +53,14 @@ public class TreeRelation<D,R> extends AbstractRelation<D, R, TreeSet<R>, TreeMa
 		return super.mMap.descendingKeySet();
 	}
 
+	@Override
+	public NavigableSet<D> getDomain() {
+		return super.mMap.navigableKeySet();
+	}
+
+	@Override
+	public TreeSet<R> getImage(final D domainElem) {
+		return mMap.get(domainElem);
+	}
+
 }

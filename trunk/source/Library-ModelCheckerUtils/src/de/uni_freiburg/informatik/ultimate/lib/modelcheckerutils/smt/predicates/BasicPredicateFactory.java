@@ -80,7 +80,8 @@ public class BasicPredicateFactory extends SmtFreePredicateFactory {
 				|| UltimateNormalFormUtils.respectsUltimateNormalForm(term) : "Term not in UltimateNormalForm";
 		final TermVarsProc termVarsProc = constructTermVarsProc(term);
 		final BasicPredicate predicate = new BasicPredicate(constructFreshSerialNumber(), termVarsProc.getProcedures(),
-				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
+				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getFuns(),
+				termVarsProc.getClosedFormula());
 		return predicate;
 	}
 
@@ -95,14 +96,14 @@ public class BasicPredicateFactory extends SmtFreePredicateFactory {
 	}
 
 	private TermVarsProc constructDontCare() {
-		return new TermVarsProc(mDontCareTerm, EMPTY_VARS, NO_PROCEDURE, mDontCareTerm);
+		return new TermVarsProc(mDontCareTerm, EMPTY_VARS, Collections.emptySet(), NO_PROCEDURE, mDontCareTerm);
 	}
 
 	public IPredicate newBuchiPredicate(final Set<IPredicate> inputPreds) {
 		final Term conjunction = andTermFromPreds(inputPreds, SimplificationTechnique.NONE);
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunction, mMgdScript, mSymbolTable);
 		return new BuchiPredicate(constructFreshSerialNumber(), tvp.getProcedures(), tvp.getFormula(), tvp.getVars(),
-				tvp.getClosedFormula(), inputPreds);
+				tvp.getFuns(), tvp.getClosedFormula(), inputPreds);
 	}
 
 	public IPredicate and(final IPredicate... preds) {

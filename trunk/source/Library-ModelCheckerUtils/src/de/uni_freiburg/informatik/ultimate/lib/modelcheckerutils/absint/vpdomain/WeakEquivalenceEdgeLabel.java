@@ -912,8 +912,8 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 				resultConstraint = cc;
 			} else {
 				resultConstraint = mWeqCcManager.getCcManager().getSetConstraintManager().join(
-						mWeakEquivalenceGraph.mWeqCc.getCongruenceClosure().getLiteralSetConstraints(),
-						resultConstraint, cc);
+						resultConstraint,
+						cc);
 			}
 		}
 

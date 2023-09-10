@@ -67,7 +67,7 @@ public class QuantifierPushUtilsForLocalEliminatees {
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
 			final IQuantifierEliminator qe) {
-		Term[] currentDualFiniteJuncts = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
+		Term[] currentDualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), et.getTerm());
 		if (currentDualFiniteJuncts.length <= 1) {
 			throw new AssertionError(QuantifierPushUtils.NOT_DUAL_FINITE_CONNECTIVE);
 		}
@@ -90,7 +90,7 @@ public class QuantifierPushUtilsForLocalEliminatees {
 			// 20200407 Matthias: Maybe we should simplify the whole dualJunction here,
 			// however in a experiment simplification here was not helpful.
 			currentEt = new EliminationTask(currentEt.getQuantifier(), otherEliminatess, tmp, currentEt.getContext());
-			currentDualFiniteJuncts = QuantifierUtils.getDualFiniteJunction(currentEt.getQuantifier(), tmp);
+			currentDualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(currentEt.getQuantifier(), tmp);
 			if (currentDualFiniteJuncts.length <= 1) {
 				return currentEt.toTerm(mgdScript.getScript());
 			}
@@ -117,7 +117,7 @@ public class QuantifierPushUtilsForLocalEliminatees {
 			final SimplificationTechnique simplificationTechnique, final int quantifier, final Term dualFiniteJunction,
 			final Pair<Term, Set<TermVariable>> dualJunctEliminateesPair, final Context context,
 			final IQuantifierEliminator qe) {
-		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJunction(quantifier, dualFiniteJunction);
+		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(quantifier, dualFiniteJunction);
 		if (dualFiniteJuncts.length <= 1) {
 			throw new AssertionError(QuantifierPushUtils.NOT_DUAL_FINITE_CONNECTIVE);
 		}
@@ -141,7 +141,7 @@ public class QuantifierPushUtilsForLocalEliminatees {
 	 * null if no dualFiniteJunct has local eliminatees.
 	 */
 	static Pair<Term, Set<TermVariable>> findSomePushableLocalEliminateeSet(final EliminationTask et) {
-		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
+		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), et.getTerm());
 		assert dualFiniteJuncts.length > 1 : QuantifierPushUtils.NOT_DUAL_FINITE_CONNECTIVE;
 		final HashRelation<TermVariable, Term> eliminatee2DualJuncts = new HashRelation<>();
 		for (final Term dualJunct : dualFiniteJuncts) {

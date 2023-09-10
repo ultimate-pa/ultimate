@@ -27,8 +27,11 @@
 
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
@@ -38,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.util.RcpUtils;
@@ -217,10 +221,11 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 		final UltimatePreferenceItemContainer pluginSpecificLevels =
 				new UltimatePreferenceItemContainer("Plugin-specific log levels");
 
-		final String[] plugins = UltimateCore.getPluginNames();
-		Arrays.sort(plugins);
-		for (int i = 0; i < plugins.length; i++) {
-			pluginSpecificLevels.addItem(new UltimatePreferenceItem<>(getLabelLogLevelForSpecificPlugin(plugins[i]),
+		final List<String> plugins =
+				new ArrayList<>(Arrays.stream(UltimateCore.getPluginNames()).collect(Collectors.toSet()));
+		Collections.sort(plugins);
+		for (final String plugin : plugins) {
+			pluginSpecificLevels.addItem(new UltimatePreferenceItem<>(getLabelLogLevelForSpecificPlugin(plugin),
 					InheritableLogLevel.INHERITED, PreferenceType.Combo, InheritableLogLevel.values()));
 		}
 
@@ -239,11 +244,11 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 						DESC_PRINT_STATISTICS_RESULTS, PreferenceType.Boolean),
 
 				// Log files
-				new UltimatePreferenceItem<String>(DESC_LOGFILE, null, PreferenceType.Label),
-				new UltimatePreferenceItem<>(LABEL_LOGFILE, VALUE_LOGFILE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_APPEXLOGFILE, VALUE_APPEXLOGFILE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_LOGFILE_NAME, VALUE_LOGFILE_NAME, PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_LOGFILE_DIR, VALUE_LOGFILE_DIR, PreferenceType.Directory),
+				new UltimatePreferenceItemGroup("Logfile", DESC_LOGFILE,
+						new UltimatePreferenceItem<>(LABEL_LOGFILE, VALUE_LOGFILE, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_APPEXLOGFILE, VALUE_APPEXLOGFILE, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_LOGFILE_NAME, VALUE_LOGFILE_NAME, PreferenceType.String),
+						new UltimatePreferenceItem<>(LABEL_LOGFILE_DIR, VALUE_LOGFILE_DIR, PreferenceType.Directory)),
 
 				// ModelManager
 				new UltimatePreferenceItem<>(LABEL_DROP_MODELS, VALUE_DROP_MODELS, PreferenceType.Boolean),
@@ -254,22 +259,22 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 						PreferenceType.String),
 
 				// Log levels
-				new UltimatePreferenceItem<String>(LOGGING_PREFERENCES_DESC, null, PreferenceType.Label),
-				new UltimatePreferenceItem<>(LABEL_ROOT_PREF, DEFAULT_VALUE_ROOT_PREF, PreferenceType.String, null,
-						new LogLevelValidator()),
-				new UltimatePreferenceItem<>(LABEL_CORE_PREF, DEFAULT_VALUE_CORE_PREF, PreferenceType.String, null,
-						new LogLevelValidator()),
-				new UltimatePreferenceItem<>(LABEL_CONTROLLER_PREF, DEFAULT_VALUE_CONTROLLER_PREF,
-						PreferenceType.String, null, new LogLevelValidator()),
-				new UltimatePreferenceItem<>(LABEL_PLUGINS_PREF, DEFAULT_VALUE_PLUGINS_PREF, PreferenceType.String,
-						null, new LogLevelValidator()),
-				new UltimatePreferenceItem<>(LABEL_TOOLS_PREF, DEFAULT_VALUE_TOOLS_PREF, PreferenceType.String, null,
-						new LogLevelValidator()),
+				new UltimatePreferenceItemGroup("Log Levels", LOGGING_PREFERENCES_DESC,
+						new UltimatePreferenceItem<>(LABEL_ROOT_PREF, DEFAULT_VALUE_ROOT_PREF, PreferenceType.String,
+								null, new LogLevelValidator()),
+						new UltimatePreferenceItem<>(LABEL_CORE_PREF, DEFAULT_VALUE_CORE_PREF, PreferenceType.String,
+								null, new LogLevelValidator()),
+						new UltimatePreferenceItem<>(LABEL_CONTROLLER_PREF, DEFAULT_VALUE_CONTROLLER_PREF,
+								PreferenceType.String, null, new LogLevelValidator()),
+						new UltimatePreferenceItem<>(LABEL_PLUGINS_PREF, DEFAULT_VALUE_PLUGINS_PREF,
+								PreferenceType.String, null, new LogLevelValidator()),
+						new UltimatePreferenceItem<>(LABEL_TOOLS_PREF, DEFAULT_VALUE_TOOLS_PREF, PreferenceType.String,
+								null, new LogLevelValidator()),
 
-				new UltimatePreferenceItem<>(LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC, Collections.emptyMap(),
-						PreferenceType.KeyValue),
-				new UltimatePreferenceItem<>(LABEL_LOGLEVEL_CLAZZ_SPECIFIC, Collections.emptyMap(),
-						PreferenceType.KeyValue),
+						new UltimatePreferenceItem<>(LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC, Collections.emptyMap(),
+								PreferenceType.KeyValue),
+						new UltimatePreferenceItem<>(LABEL_LOGLEVEL_CLAZZ_SPECIFIC, Collections.emptyMap(),
+								PreferenceType.KeyValue)),
 
 				// Log colours
 				new UltimatePreferenceItem<>(LABEL_COLOR_DEBUG, DEFAULT_VALUE_COLOR_DEBUG, PreferenceType.Color),

@@ -1,0 +1,20 @@
+RabinAutomaton automaton = (
+	alphabet = {a},
+	states = {s0 s1},
+	initialStates = {s0},
+	acceptingStates = {s1},
+	finiteStates = {s0},
+	transitions = { (s0 a s1) (s1 a s0) }
+);
+
+RabinAutomaton automatonWithSelfLoop = (
+	alphabet = {a},
+	states = {s0 s1},
+	initialStates = {s0},
+	acceptingStates = {s1},
+	finiteStates = {s0},
+	transitions = { (s0 a s1) (s1 a s0) (s1 a s1) }
+);
+
+assert(isEmpty(automaton));
+assert(!isEmpty(automatonWithSelfLoop));

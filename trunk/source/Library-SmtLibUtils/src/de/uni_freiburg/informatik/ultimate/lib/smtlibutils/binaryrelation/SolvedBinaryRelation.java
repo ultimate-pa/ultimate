@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation;
 import java.util.Arrays;
 import java.util.EnumSet;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class SolvedBinaryRelation implements ITermProviderOnDemand {
+public class SolvedBinaryRelation implements ITermProvider {
 
 	public enum AssumptionForSolvability {
 		INTEGER_DIVISIBLE_BY_CONSTANT, REAL_DIVISOR_NOT_ZERO, INTEGER_DIVISOR_NOT_ZERO, INTEGER_DIVISIBLE_BY_VARIABLE
@@ -102,7 +102,7 @@ public class SolvedBinaryRelation implements ITermProviderOnDemand {
 	 * @return This relation as SMT term. (Without the additional assumption.)
 	 */
 	@Override
-	public Term asTerm(final Script script) {
+	public Term toTerm(final Script script) {
 		return script.term(mRelationSymbol.toString(), mLeftHandSide, mRightHandSide);
 	}
 

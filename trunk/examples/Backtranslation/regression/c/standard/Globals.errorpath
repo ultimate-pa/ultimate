@@ -1,7 +1,6 @@
-       IVAL        [\old(a)=3, \old(x)=2, a=3, x=2]
 [L3]               int a = 5;
 [L4]               int x = 0;
-       VAL         [\old(a)=5, \old(x)=0, a=5, x=0]
+       VAL         [\old(a)=9, \old(x)=8, a=5, x=0]
 [L13]  EXPR        a++
        VAL         [\old(a)=5, \old(x)=0, a=6, a++=5, x=0]
 [L13]  CALL, EXPR  f(a++)

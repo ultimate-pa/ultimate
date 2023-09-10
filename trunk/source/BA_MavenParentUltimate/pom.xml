@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>mavenparent</artifactId>
-	<version>0.2.2</version>
+	<version>0.2.3</version>
 	<packaging>pom</packaging>
 
 	<name>Ultimate</name>
@@ -16,7 +16,7 @@
 	</scm>
 
 	<properties>
-		<ultimate-version>0.2.2</ultimate-version>
+		<ultimate-version>0.2.3</ultimate-version>
 
 		<!-- maven plugin versions -->
 		<!-- https://mvnrepository.com/artifact/org.eclipse.tycho/tycho-core -->
@@ -70,7 +70,6 @@
 		<srparseparserDir>${workspaceDir}/Library-srParse/src/de/uni_freiburg/informatik/ultimate/lib/srparse</srparseparserDir>
 		<crocottaDir>${workspaceDir}/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta</crocottaDir>
 		<examplesDir>${workspaceDir}/../examples</examplesDir>
-		<websiteExamplesDir>${workspaceDir}/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/examples</websiteExamplesDir>
 		<websiteHtmlDir>${workspaceDir}/Website/html</websiteHtmlDir>
 		<websiteJsonDir>${workspaceDir}/Website/WebContent/json</websiteJsonDir>
 
@@ -93,8 +92,8 @@
 			jenkins the dir is /storage/jenkins/jenkins_home/jobs/Ultimate Nightly/workspace) 
 			find . -path '*jacoco.xml' | sed 's/\.\/trunk\/source//' | sed 's/.*/${workspaceDir}&/' | sort | tr '\n' ',' 
 			and copy it to the sonar.coverage.jacoco.xmlReportPaths property. -->
-		<sonar.coverage.jacoco.xmlReportPaths>${workspaceDir}/AbstractInterpretationV2/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AbstractInterpretationV2Test/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ACSLParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ASTBuilder/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AutomataScriptInterpreter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AutomataScriptParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AutomatonDeltaDebugger/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BA_MavenParentUltimate/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BlockEncoding/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BlockEncodingV2/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogieModSetAnnotator/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogiePLParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogiePreprocessor/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogiePreprocessorTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogiePrinter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogieProcedureInliner/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BuchiAutomizer/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BuchiProgramProduct/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CACSL2BoogieTranslator/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CDTParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CDTPlugin/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ChcSmtPrinter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ChcToBoogie/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CodeCheck/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CoreRCP/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CoreRCPTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Crocotta/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/GUIGeneratedPreferencePages/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/GUILoggingWindow/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/GuiRCP/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/IcfgToChc/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/IcfgTransformation/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/InvariantSynthesis/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/IRSDependencies/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/JavaCup/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/JungVisualization/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/LassoRanker/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-AcceleratedInterpolation/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ApacheCommonsCLI/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ApacheCommonsLang/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-Automata/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-AutomataTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-BoogieAST/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-CHC/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-CZT/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-Disruptor/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-IcfgTransformer/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-IcfgTransformerTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-JavaBDD/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-Jung/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-LassoRanker/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-MCR/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ModelCheckerUtils/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ModelCheckerUtilsTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-TraceCheckerUtilsTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-MSOD/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-MSODTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ojAlgo/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-PathExpressions/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-PathExpressionsTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-PDR/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-PEA/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-Sifa/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-SifaTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-SMTLIB/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-SMTLIBTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-SmtLibUtils/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-srParse/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-srParseTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-TraceCheckerUtils/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateCore/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateModel/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateTestTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateUtil/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateUtilTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/LTL2aut/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/PeaExampleGenerator/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/PEAtoBoogie/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/PEAtoBoogieTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/RCFGBuilder/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ReachingDefinitions/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Referee/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ReqParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ReqPrinter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ReqToTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Sifa/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SMTInterpol/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SMTInterpolTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SmtParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SMTSolverBridge/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SMTSolverBridgeTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SpaceExParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SpaceExParserTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SyntaxChecker/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/TraceAbstractionConcurrent/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/TraceAbstraction/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/TraceAbstractionWithAFAs/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/TreeAutomizer/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateCLI/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateDeltaDebugger/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateEliminatorController/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateRegressionTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/WitnessParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/WitnessPrinter/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-		
+		<sonar.coverage.jacoco.xmlReportPaths>${workspaceDir}/AbstractInterpretationV2/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AbstractInterpretationV2Test/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ACSLParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ASTBuilder/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AutomataScriptInterpreter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AutomataScriptParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/AutomatonDeltaDebugger/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BA_MavenParentUltimate/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BlockEncoding/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BlockEncodingV2/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogieModSetAnnotator/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogiePLParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogiePreprocessor/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogiePreprocessorTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogiePrinter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BoogieProcedureInliner/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BuchiAutomizer/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/BuchiProgramProduct/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CACSL2BoogieTranslator/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CDTParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CDTPlugin/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ChcSmtPrinter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ChcToBoogie/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CodeCheck/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CoreRCP/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/CoreRCPTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Crocotta/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/GUIGeneratedPreferencePages/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/GUILoggingWindow/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/GuiRCP/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/IcfgToChc/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/IcfgTransformation/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/InvariantSynthesis/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/IRSDependencies/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/JavaCup/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/JungVisualization/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/LassoRanker/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-AcceleratedInterpolation/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ApacheCommonsCLI/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ApacheCommonsLang/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-Automata/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-AutomataTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-BoogieAST/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-CHC/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-CZT/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-IcfgTransformer/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-IcfgTransformerTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-JavaBDD/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-Jung/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-LassoRanker/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-MCR/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ModelCheckerUtils/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ModelCheckerUtilsTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-TraceCheckerUtilsTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-MSOD/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-MSODTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-ojAlgo/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-PathExpressions/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-PathExpressionsTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-PDR/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-PEA/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-Sifa/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-SifaTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-SMTLIB/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-SMTLIBTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-SmtLibUtils/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-srParse/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-srParseTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-TraceCheckerUtils/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateCore/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateModel/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateTestTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateUtil/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Library-UltimateUtilTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/LTL2aut/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/PeaExampleGenerator/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/PEAtoBoogie/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/PEAtoBoogieTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/RCFGBuilder/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ReachingDefinitions/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Referee/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ReqParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ReqPrinter/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/ReqToTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/Sifa/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SMTInterpol/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SMTInterpolTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SmtParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SMTSolverBridge/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SMTSolverBridgeTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SpaceExParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SpaceExParserTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/SyntaxChecker/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/TraceAbstractionConcurrent/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/TraceAbstraction/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/TraceAbstractionWithAFAs/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/TreeAutomizer/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateCLI/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateDeltaDebugger/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateEliminatorController/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateRegressionTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/UltimateTest/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/WitnessParser/target/site/jacoco-aggregate/jacoco.xml,${workspaceDir}/WitnessPrinter/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+
 		<!-- Exclude files from Sonar coverage analysis -->
 		<sonar.coverage.exclusions>
 			**/src/de/uni_freiburg/informatik/ultimate/ultimatetest/**,
@@ -103,7 +102,6 @@
 		<!-- Exclude completely from any Sonar analysis (including coverage) -->
 		<sonar.exclusions>
 			**/src/smtcomp/**,
-			**/src/com/lmax/disruptor/**,
 			**/src/jdd/**,
 			**/src/net/sf/javabdd/**,
 			**/src/com/github/jhoenicke/javacup/**,
@@ -364,6 +362,11 @@
 							<ws>gtk</ws>
 							<arch>x86_64</arch>
 						</environment>
+						<environment>
+							<os>macosx</os>
+							<ws>cocoa</ws>
+							<arch>x86_64</arch>
+						</environment>
 					</environments>
 				</configuration>
 			</plugin>
@@ -392,7 +395,7 @@
 					<generateGitPropertiesFilename>${workspaceDir}/CoreRCP/version.properties</generateGitPropertiesFilename>
 					<dotGitDirectory>${workspaceDir}/../../.git</dotGitDirectory>
 					<format>properties</format>
-					<useNativeGit>false</useNativeGit>
+					<useNativeGit>true</useNativeGit>
 
 					<skipPoms>false</skipPoms>
 					<runOnlyOnce>true</runOnlyOnce>
@@ -495,6 +498,7 @@
 		<module>../CDTParser</module>
 		<module>../CDTPlugin</module>
 		<module>../ChcSmtPrinter</module>
+		<module>../ChcSolver</module>
 		<module>../ChcToBoogie</module>
 		<module>../CodeCheck</module>
 		<module>../CoreRCP</module>
@@ -509,13 +513,13 @@
 		<module>../JavaCup</module>
 		<module>../JungVisualization</module>
 		<module>../LassoRanker</module>
+		<module>../Library-AcceleratedInterpolation</module>
 		<module>../Library-ApacheCommonsCLI</module>
 		<module>../Library-ApacheCommonsLang</module>
 		<module>../Library-Automata</module>
 		<module>../Library-BoogieAST</module>
 		<module>../Library-CHC</module>
 		<module>../Library-CZT</module>
-		<module>../Library-Disruptor</module>
 		<module>../Library-IcfgTransformer</module>
 		<module>../Library-JavaBDD</module>
 		<module>../Library-Jung</module>
@@ -526,12 +530,12 @@
 		<module>../Library-ojAlgo</module>
 		<module>../Library-PathExpressions</module>
 		<module>../Library-PDR</module>
-		<module>../Library-AcceleratedInterpolation</module>
 		<module>../Library-PEA</module>
-		<module>../Library-SMTLIB</module>
-		<module>../Library-srParse</module>
+		<module>../Library-PreferenceJson</module>
 		<module>../Library-Sifa</module>
+		<module>../Library-SMTLIB</module>
 		<module>../Library-SmtLibUtils</module>
+		<module>../Library-srParse</module>
 		<module>../Library-TraceCheckerUtils</module>
 		<module>../Library-UltimateCore</module>
 		<module>../Library-UltimateModel</module>
@@ -545,21 +549,23 @@
 		<module>../ReqParser</module>
 		<module>../ReqPrinter</module>
 		<module>../ReqToTest</module>
+		<module>../Sifa</module>
 		<module>../SMTInterpol</module>
 		<module>../SmtParser</module>
 		<module>../SMTSolverBridge</module>
 		<module>../SpaceExParser</module>
 		<module>../SyntaxChecker</module>
-		<module>../Sifa</module>
-		<module>../TraceAbstractionConcurrent</module>
 		<module>../TraceAbstraction</module>
+		<module>../TraceAbstractionConcurrent</module>
 		<module>../TraceAbstractionWithAFAs</module>
 		<module>../TreeAutomizer</module>
 		<module>../UltimateCLI</module>
 		<module>../UltimateDeltaDebugger</module>
+		<module>../UltimateEliminatorController</module>
+		<module>../WebBackend</module>
 		<module>../WitnessParser</module>
 		<module>../WitnessPrinter</module>
-		<module>../UltimateEliminatorController</module>
+
 	</modules>
 
 	<profiles>
@@ -600,6 +606,16 @@
 						<enabled>false</enabled>
 					</snapshots>
 				</repository>
+				
+				<repository>
+					<id>p2-repository-ultimate-dependencies</id>
+					<layout>p2</layout>
+					<url>https://struebli.informatik.uni-freiburg.de/p2-repository-ultimate-dependencies/</url>
+					<snapshots>
+						<enabled>false</enabled>
+					</snapshots>
+				</repository>
+				
 			</repositories>
 		</profile>
 
@@ -635,7 +651,7 @@
 							<failIfNoTests>false</failIfNoTests>
 							<trimStackTrace>true</trimStackTrace>
 							<redirectTestOutputToFile>true</redirectTestOutputToFile>
-							
+
 							<!-- if you want to change the argLine, use the global property -->
 							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
 
@@ -645,7 +661,7 @@
 
 							<!-- Use this for global timeouts per class -->
 							<!-- <forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds> -->
-							
+
 							<includes>
 								<include>**/*.java</include>
 							</includes>
@@ -666,7 +682,6 @@
 								<exclude>**/net/sf/javabdd/**/*</exclude>
 								<exclude>**/com/github/jhoenicke/javacup/**/*</exclude>
 								<exclude>**/org/apache/commons/cli/**/*</exclude>
-								<exclude>**/com/lmax/disruptor/**/*</exclude>
 								<exclude>**/de/uni_freiburg/informatik/ultimate/ultimatetest/suites/**/*</exclude>
 							</excludes>
 						</configuration>
@@ -890,18 +905,13 @@
 			<id>materialize</id>
 			<modules>
 				<module>../BA_FeatureDependenciesCommon</module>
-				<module>../BA_FeatureDependenciesCommandlineE4</module>
 				<module>../BA_FeatureDependenciesDebugE4</module>
 				<module>../BA_FeatureUltimateCommon</module>
 				<module>../BA_FeatureUltimateDebug</module>
 				<module>../BA_FeatureUltimateCommandLine</module>
 				<module>../BA_FeatureUltimateDeltaDebugger</module>
-				<module>../BA_FeatureUltimateWebbridge</module>
-				<module>../WebInterface</module>
-				<module>../Website</module>
-				<module>../WebUltimateBridge</module>
+				<module>../BA_FeatureWebBackend</module>
 				<module>../BA_SiteRepository</module>
-				<module>../BA_Website</module>
 			</modules>
 		</profile>
 	</profiles>

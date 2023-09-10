@@ -1,17 +1,16 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 		<artifactId>mavenparent</artifactId>
-		<version>0.2.2</version>
+		<version>0.2.3</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
 	<artifactId>UltimateRepository</artifactId>
 	<packaging>eclipse-repository</packaging>
-	
+
 	<profiles>
 		<profile>
 			<id>materialize</id>
@@ -55,15 +54,44 @@
 									<attachId>UltimateDeltaDebugger</attachId>
 								</product>
 								<product>
-									<id>Webbridge</id>
-									<attachId>Webbridge</attachId>
-								</product>
-								<product>
 									<id>UltimateEliminator</id>
 									<attachId>UltimateEliminator</attachId>
 								</product>
+								<product>
+									<id>WebBackend</id>
+									<attachId>WebBackend</attachId>
+								</product>
 							</products>
 						</configuration>
+					</plugin>
+					<plugin>
+						<artifactId>maven-resources-plugin</artifactId>
+						<version>${maven-resources-version}</version>
+						<executions>
+							<execution>
+								<id>copy-resources-frontend</id>
+								<phase>package</phase>
+								<goals>
+									<goal>copy-resources</goal>
+								</goals>
+								<configuration>
+									<outputDirectory>${basedir}/target/products/WebsiteStatic</outputDirectory>
+									<resources>
+										<resource>
+											<directory>${basedir}/../WebsiteStatic</directory>
+											<excludes>
+												<exclude>**/*.py</exclude>
+												<exclude>**/*.editorconfig</exclude>
+												<exclude>**/*.project</exclude>
+												<exclude>**/bootstrap_dev/**</exclude>
+												<exclude>**/test/**</exclude>
+												<exclude>**/.idea/**</exclude>
+											</excludes>
+										</resource>
+									</resources>
+								</configuration>
+							</execution>
+						</executions>
 					</plugin>
 				</plugins>
 			</build>

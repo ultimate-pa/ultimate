@@ -54,10 +54,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuseEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InsufficientError;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.McrInterpolantMethod;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.OrderOfErrorLocations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
 
@@ -118,18 +118,17 @@ public final class TAPreferences {
 
 		mPrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		mInterprocedural = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPROCEDUTAL);
+		mInterprocedural = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPROCEDURAL);
 
 		mMaxIterations = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_ITERATIONS);
 		mWatchIteration = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_WATCHITERATION);
 
 		mArtifact = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ARTIFACT, Artifact.class);
 
-		mHoare = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HOARE,
-				TraceAbstractionPreferenceInitializer.DEF_HOARE);
+		mHoare = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HOARE);
 
 		mHoareAnnotationPositions = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HOARE_POSITIONS,
-				TraceAbstractionPreferenceInitializer.DEF_HOARE_POSITIONS, HoareAnnotationPositions.class);
+				HoareAnnotationPositions.class);
 
 		mInterpolation = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
 				InterpolationTechnique.class);
@@ -215,9 +214,9 @@ public final class TAPreferences {
 		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_STOP_AFTER_FIRST_VIOLATION);
 	}
 
-	public InsufficientError insufficientThreadErrorsVsProgramErrors() {
-		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INSUFFICIENT_THREAD_ERRORS_VS_PROGRAM_ERRORS,
-				InsufficientError.class);
+	public OrderOfErrorLocations getOrderOfErrorLocations() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ORDER_OF_ERROR_LOCATIONS,
+				OrderOfErrorLocations.class);
 	}
 
 	public boolean readInitialProof() {

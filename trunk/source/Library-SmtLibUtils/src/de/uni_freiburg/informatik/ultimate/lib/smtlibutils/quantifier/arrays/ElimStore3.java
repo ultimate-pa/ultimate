@@ -480,8 +480,7 @@ public class ElimStore3 {
 			mQuantifier = quantifier;
 			final Set<MultiDimensionalSelect> set = new HashSet<>();
 			for (final Term conjunct : conjuncts) {
-				for (final MultiDimensionalSelect mdSelect : MultiDimensionalSelect.extractSelectDeep(conjunct,
-						false)) {
+				for (final MultiDimensionalSelect mdSelect : MultiDimensionalSelect.extractSelectDeep(conjunct)) {
 					if (mdSelect.getArray().equals(array)) {
 						set.add(mdSelect);
 					}
@@ -493,12 +492,12 @@ public class ElimStore3 {
 			mValues = new Term[arrayReads.length];
 			mNewAuxVars = new HashSet<>();
 			for (int i = 0; i < arrayReads.length; i++) {
-				mSelectTerm[i] = arrayReads[i].getSelectTerm();
+				mSelectTerm[i] = arrayReads[i].toTerm(mgdScript.getScript());
 				mIndices[i] = arrayReads[i].getIndex();
-				final EqualityInformation eqInfo = EqualityInformation.getEqinfo(mMgdScript.getScript(), arrayReads[i].getSelectTerm(),
-						conjuncts, array, mQuantifier);
+				final EqualityInformation eqInfo = EqualityInformation.getEqinfo(mMgdScript.getScript(),
+						arrayReads[i].toTerm(mgdScript.getScript()), conjuncts, array, mQuantifier);
 				if (eqInfo == null) {
-					final Term select = arrayReads[i].getSelectTerm();
+					final Term select = arrayReads[i].toTerm(mgdScript.getScript());
 					final TermVariable auxVar =
 							mMgdScript.constructFreshTermVariable(s_FreshVariableString, select.getSort());
 					mNewAuxVars.add(auxVar);

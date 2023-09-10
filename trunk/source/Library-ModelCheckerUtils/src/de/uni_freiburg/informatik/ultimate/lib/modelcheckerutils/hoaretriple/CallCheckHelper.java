@@ -107,6 +107,11 @@ class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 			return null;
 		}
 
+		if (!disjointFunctions(pre, post)) {
+			// If pre and post both refer to the same constant (or function), the triple could be valid.
+			return null;
+		}
+
 		for (final IProgramVar bv : post.getVars()) {
 			if (bv.isOldvar()) {
 				// If post contains old vars, e.g. post is (= x |old(x)|), the triple could be valid.

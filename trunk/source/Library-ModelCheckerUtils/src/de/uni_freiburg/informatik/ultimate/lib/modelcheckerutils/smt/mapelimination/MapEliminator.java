@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityanalysis.IndexAnalyzer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
@@ -344,9 +345,9 @@ public class MapEliminator {
 		final List<Term> conjuncts = new ArrayList<>();
 		// First remove all array inequalities by replacing them with true as an overapproximation
 		final Term replacedTerm = replaceArrayInequalities(term);
-		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectDeep(replacedTerm, false)) {
-			if (SmtUtils.isFunctionApplication(select.getArray(), "store")) {
-				final Term selectTerm = select.getSelectTerm();
+		for (final MultiDimensionalSelect mds : MultiDimensionalSelect.extractSelectDeep(replacedTerm)) {
+			if (SmtUtils.isFunctionApplication(mds.getArray(), "store") && !SmtSortUtils.isArraySort(mds.getSort())) {
+				final Term selectTerm = mds.toTerm(mScript);
 				substitutionMap.put(selectTerm,
 						replaceSelectStoreTerm(selectTerm, transformula, invariants, conjuncts, auxVars));
 			}
@@ -391,7 +392,7 @@ public class MapEliminator {
 	private TermVariable replaceSelectStoreTerm(final Term term, final ModifiableTransFormula transformula,
 			final EqualityAnalysisResult invariants, final List<Term> auxVarEqualities,
 			final Set<TermVariable> auxVars) {
-		final MultiDimensionalSelect multiDimensionalSelect = new MultiDimensionalSelect(term);
+		final MultiDimensionalSelect multiDimensionalSelect = MultiDimensionalSelect.of(term);
 		final ArrayIndex index = multiDimensionalSelect.getIndex();
 		final ArrayWrite arrayWrite = new ArrayWrite(multiDimensionalSelect.getArray(), mScript);
 		final Set<ArrayIndex> processedIndices = new HashSet<>();

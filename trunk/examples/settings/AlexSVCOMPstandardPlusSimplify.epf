@@ -22,7 +22,6 @@ file_export_version=3.0
 file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Translation\ Mode\:=SV_COMP14
 #Tue Nov 05 17:28:40 CET 2013
 file_export_version=3.0
 /instance/CodeCheck/SolverAndInterpolator=Z3SPWP

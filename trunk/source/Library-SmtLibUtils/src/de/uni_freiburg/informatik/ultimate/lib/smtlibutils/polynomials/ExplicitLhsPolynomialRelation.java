@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.IBinaryRelation;
@@ -72,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProviderOnDemand {
+public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProvider {
 
 	private static final boolean THROW_EXCEPTION_IF_NOT_SOLVABLE = false;
 
@@ -185,7 +185,7 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		}
 		final ExplicitLhsPolynomialRelation result =
 				new ExplicitLhsPolynomialRelation(resultRelationSymbol, newLhsCoefficient, mLhsMonomial, newRhs);
-		assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(asTerm(script), result.asTerm(script),
+		assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(toTerm(script), result.toTerm(script),
 				script) != LBool.SAT : "mul unsound";
 		return result;
 	}
@@ -685,8 +685,10 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 	 * <li>the sort is Int and the lhs coefficient is positive and there is no
 	 * equivalent {@link ExplicitLhsPolynomialRelation} that has a smaller lhs
 	 * coefficient but the same monomials (i.e., it is not allowed to obtain the
-	 * smaller lhs coefficient by a division that introduces a div term on the
-	 * rhs).
+	 * smaller lhs coefficient by a division that introduces a div term on the rhs).
+	 * TODO 20230219 Matthias: Revise this documentation. Since the
+	 * {@link PolynomialRelation} divides by the GCD the work that is done here can
+	 * be explained more precisely.
 	 */
 	public ExplicitLhsPolynomialRelation makeTight() {
 		Rational divisor;
@@ -699,8 +701,12 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 			}
 			divisor = mLhsCoefficient;
 		} else if (SmtSortUtils.isIntSort(mRhs.getSort())) {
-			final Rational gcd = mLhsCoefficient.gcd(mRhs.computeGcdOfCoefficients());
-			if (!gcd.isNegative() && mLhsCoefficient.isNegative()) {
+			final Rational gcd = mLhsCoefficient.gcd(mRhs.computeGcdOfCoefficients()).abs();
+			assert !gcd.isNegative();
+			if (!gcd.equals(Rational.ONE)) {
+				throw new AssertionError("The PolynomialRelation should have divided by the GCD!");
+			}
+			if (mLhsCoefficient.isNegative()) {
 				divisor = gcd.negate();
 			} else {
 				divisor = gcd;
@@ -728,7 +734,7 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 	}
 
 	@Override
-	public Term asTerm(final Script script) {
+	public Term toTerm(final Script script) {
 		final Term lhs = SmtUtils.mul(script, mLhsCoefficient, mLhsMonomial.toTerm(script));
 		return mRelationSymbol.constructTerm(script, lhs, mRhs.toTerm(script));
 	}

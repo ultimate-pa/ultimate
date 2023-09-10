@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
@@ -60,11 +61,11 @@ public class TestPredicateFactory {
 
 	public TestPredicate pred(final String op, final IProgramVar var, final int value) {
 		return new TestPredicate(mScript.term(op, var.getTermVariable(), mScript.numeral(String.valueOf(value))),
-				Collections.singleton(var), mMgdScript);
+				Collections.singleton(var), Collections.emptySet(), mMgdScript);
 	}
 
 	public TestPredicate neg(final TestPredicate pred) {
-		return new TestPredicate(mScript.term("not", pred.getFormula()), pred.getVars(), mMgdScript);
+		return new TestPredicate(mScript.term("not", pred.getFormula()), pred.getVars(), pred.getFuns(), mMgdScript);
 	}
 
 	public TestPredicate and(final TestPredicate... preds) {
@@ -74,7 +75,9 @@ public class TestPredicateFactory {
 		final List<Term> operands = Arrays.stream(preds).map(a -> a.getFormula()).collect(Collectors.toList());
 		final Set<IProgramVar> vars = Arrays.stream(preds).map(a -> a.getVars()).reduce(new HashSet<>(),
 				(a, b) -> DataStructureUtils.union(a, b));
-		return new TestPredicate(SmtUtils.and(mScript, operands), vars, mMgdScript);
+		final Set<IProgramFunction> funs = Arrays.stream(preds).map(a -> a.getFuns()).reduce(new HashSet<>(),
+				(a, b) -> DataStructureUtils.union(a, b));
+		return new TestPredicate(SmtUtils.and(mScript, operands), vars, funs, mMgdScript);
 	}
 
 	public TestPredicate or(final TestPredicate... preds) {
@@ -84,7 +87,9 @@ public class TestPredicateFactory {
 		final List<Term> operands = Arrays.stream(preds).map(a -> a.getFormula()).collect(Collectors.toList());
 		final Set<IProgramVar> vars = Arrays.stream(preds).map(a -> a.getVars()).reduce(new HashSet<>(),
 				(a, b) -> DataStructureUtils.union(a, b));
-		return new TestPredicate(SmtUtils.or(mScript, operands), vars, mMgdScript);
+		final Set<IProgramFunction> funs = Arrays.stream(preds).map(a -> a.getFuns()).reduce(new HashSet<>(),
+				(a, b) -> DataStructureUtils.union(a, b));
+		return new TestPredicate(SmtUtils.or(mScript, operands), vars, funs, mMgdScript);
 	}
 
 	public IProgramNonOldVar constructProgramVar(final String identifier) {

@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Library-LassoRanker
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.lassoranker
 Bundle-Version: 0.9.5
-Bundle-Activator: de.uni_freiburg.informatik.ultimate.analysis.lassoranker.Activator
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.lassoranker.Activator
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.core,

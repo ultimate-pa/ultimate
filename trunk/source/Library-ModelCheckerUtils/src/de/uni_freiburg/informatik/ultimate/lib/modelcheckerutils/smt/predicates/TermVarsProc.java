@@ -26,26 +26,35 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class TermVarsProc {
 	private final Term mTerm;
 	private final Set<IProgramVar> mVars;
+	private final Set<IProgramFunction> mFuns;
 	private final String[] mProcedures;
 	private final Term mClosedTerm;
 
-	public TermVarsProc(final Term term, final Set<IProgramVar> vars, final String[] procedures,
-			final Term closedTerm) {
+	public TermVarsProc(final Term term, final Set<IProgramVar> vars, final Set<IProgramFunction> funs,
+			final String[] procedures, final Term closedTerm) {
 		mTerm = term;
 		mVars = vars;
+		mFuns = funs;
 		mProcedures = procedures;
 		mClosedTerm = closedTerm;
 	}
@@ -66,21 +75,28 @@ public class TermVarsProc {
 		return mVars;
 	}
 
-	/**
-	 * Given a term in which every free variable is the TermVariable of a BoogieVar. Compute the BoogieVars of the free
-	 * variables and the procedures of these BoogieVariables.
-	 */
-	public static TermVarsProc computeTermVarsProc(final Term term, final ManagedScript mgdScript,
-			final IIcfgSymbolTable symbolTable) {
-		return computeTermVarsProc(term, mgdScript, symbolTable::getProgramVar);
+	public Set<IProgramFunction> getFuns() {
+		return mFuns;
 	}
 
 	/**
-	 * Given a term in which every free variable is the TermVariable of a BoogieVar. Compute the BoogieVars of the free
-	 * variables and the procedures of these BoogieVariables.
+	 * Given a term in which every free variable is the TermVariable of a BoogieVar.
+	 * Compute the BoogieVars of the free variables and the procedures of these
+	 * BoogieVariables.
 	 */
 	public static TermVarsProc computeTermVarsProc(final Term term, final ManagedScript mgdScript,
-			final Function<TermVariable, IProgramVar> funTermVar2ProgVar) {
+			final IIcfgSymbolTable symbolTable) {
+		return computeTermVarsProc(term, mgdScript, symbolTable::getProgramVar, symbolTable::getProgramFun);
+	}
+
+	/**
+	 * Given a term in which every free variable is the TermVariable of a BoogieVar.
+	 * Compute the BoogieVars of the free variables and the procedures of these
+	 * BoogieVariables.
+	 */
+	public static TermVarsProc computeTermVarsProc(final Term term, final ManagedScript mgdScript,
+			final Function<TermVariable, IProgramVar> funTermVar2ProgVar,
+			final Function<FunctionSymbol, IProgramFunction> funcSymb2ProgFunc) {
 		final HashSet<IProgramVar> vars = new HashSet<>();
 		final Set<String> procs = new HashSet<>();
 		for (final TermVariable tv : term.getFreeVars()) {
@@ -93,7 +109,33 @@ public class TermVarsProc {
 				procs.add(bv.getProcedure());
 			}
 		}
+		final Predicate<Term> isNonTheoryApplicationTerm = (x -> ((x instanceof ApplicationTerm)
+				&& !((ApplicationTerm) x).getFunction().isIntern()));
+		final Set<ApplicationTerm> nonTheoryAppTerms = findNonTheoryApplicationTerms(term);
+		Set<IProgramFunction> programFunctions;
+		if (nonTheoryAppTerms.isEmpty()) {
+			programFunctions = Collections.emptySet();
+		} else {
+			final Set<IProgramFunction> tmp = new HashSet<>();
+			for (final ApplicationTerm nonTheoryAppTerm : nonTheoryAppTerms) {
+				final IProgramFunction progFunc = funcSymb2ProgFunc.apply(nonTheoryAppTerm.getFunction());
+				if (progFunc == null) {
+					throw new AssertionError("No corresponding IProgramFunction for " + nonTheoryAppTerm.getFunction());
+				}
+				tmp.add(progFunc);
+			}
+			programFunctions = DataStructureUtils.getUnmodifiable(tmp);
+		}
+
 		final Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, mgdScript);
-		return new TermVarsProc(term, vars, procs.toArray(new String[procs.size()]), closedTerm);
+		return new TermVarsProc(term, vars, programFunctions, procs.toArray(new String[procs.size()]), closedTerm);
+	}
+
+	public static Set<ApplicationTerm> findNonTheoryApplicationTerms(final Term term) {
+		final Predicate<Term> isNonTheoryApplicationTerm = (x -> ((x instanceof ApplicationTerm)
+				&& !((ApplicationTerm) x).getFunction().isIntern()));
+		final Set tmp = SubTermFinder.find(term, isNonTheoryApplicationTerm, false);
+		final Set<ApplicationTerm> nonTheoryAppTerms = tmp;
+		return nonTheoryAppTerms;
 	}
 }

@@ -27,9 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.core.lib.translation;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
@@ -129,36 +128,17 @@ public class ProgramExecutionFormatter<TE, E> {
 	}
 
 	private String getValuesAsString(final ProgramState<E> programState) {
-		if (programState == null) {
+		if (programState == null || programState.getVariables().isEmpty()) {
 			return null;
 		}
-
-		final List<E> keys = new ArrayList<>(programState.getVariables());
-		if (keys.isEmpty()) {
-			return null;
-		}
-
-		Collections.sort(keys, (arg0, arg1) -> mStringProvider.getStringFromExpression(arg0)
-				.compareToIgnoreCase(mStringProvider.getStringFromExpression(arg1)));
-
-		final StringBuilder sb = new StringBuilder();
-		sb.append("[");
-		int i = 0;
-		for (final E variable : keys) {
-			i++;
+		final List<String> values = new ArrayList<>();
+		for (final E variable : programState.getVariables()) {
 			final String varName = mStringProvider.getStringFromExpression(variable);
-			final Collection<E> values = programState.getValues(variable);
-			for (final E value : values) {
-				sb.append(varName);
-				sb.append("=");
-				sb.append(mStringProvider.getStringFromExpression(value));
-				if (i < keys.size()) {
-					sb.append(", ");
-				}
+			for (final E value : programState.getValues(variable)) {
+				values.add(varName + "=" + mStringProvider.getStringFromExpression(value));
 			}
 		}
-		sb.append("]");
-		return sb.toString();
+		return "[" + values.stream().sorted().collect(Collectors.joining(", ")) + "]";
 	}
 
 	private static void addFixedLength(final StringBuilder sb, final String actualString, final int fillLength,

@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Set;
 import com.github.jhoenicke.javacup.runtime.Symbol;
 import com.github.jhoenicke.javacup.runtime.SimpleSymbolFactory;
 import java.util.Iterator;
@@ -324,6 +325,8 @@ non terminal Term[] gaResponse;
 non terminal Object proof;
 non terminal Object gpResponse;
 non terminal Object goResponse;
+non terminal ModelDescription gmResponse;
+non terminal FunctionDefinition funDef;
 non terminal Term[] gucResponse;
 non terminal Term[] ginterpolResponse;
 non terminal HashMap valuationPair;
@@ -341,7 +344,8 @@ goal ::= SUCCESS genResponse {: RESULT = null; :}
        | GETOPTION goResponse:o {: RESULT = o; :}
        | GETINTERPOLANTS ginterpolResponse:o {: RESULT = o; :}
        | GETTERM term:t {: if (t == null) System.err.println(getError());
-       							RESULT = t; :};
+       							RESULT = t; :}
+       | GETMODEL gmResponse:m {: RESULT = m; :};
 
 specConstant ::= NUMERAL:n {: RESULT = n; :}
              | DECIMAL:n {: RESULT = n; :}
@@ -580,3 +584,29 @@ goResponse ::= TRUE {: RESULT = true; :}
 			 | STDOUT:s {: RESULT = s; :}
 			 | STDERR:s {: RESULT = s; :}
 			 | errorResponse;
+
+/* get-model response, currently only for Horn solvers */
+gmResponse ::= LPAR funDef*:d {: RESULT = new ModelDescription(Set.of(d)); :} RPAR
+               /* CHC solver golem does not output enclosing parentheses */
+             | funDef*:d {: RESULT = new ModelDescription(Set.of(d)); :};
+
+funDef ::= LPAR DEFINEFUN {: localVars.beginScope(); :} symbol:fun
+                      LPAR sortedVar*:vars RPAR sort:resultSort term:body RPAR
+            {: localVars.endScope();
+               try {
+                       // TODO Support definition of auxiliary functions
+                       // Some solvers, especially z3, define auxiliary functions as part of their model.
+                       // For example, z3 often uses such auxiliary function symbols to give values of array variables.
+                       // This will require special support, otherwise the parser crashes when such an auxiliary
+                       // function symbol is used.
+                       var sym = parser.getScript().getFunctionSymbol(fun);
+                       if (!java.util.Objects.equals(sym.getReturnSort().getRealSort(), resultSort.getRealSort())) {
+                           throw new SMTLIBException("unexpected return sort " + resultSort + " for function " + sym);
+                       }
+                       RESULT = new FunctionDefinition(sym, vars, body);
+                   } catch (SMTLIBException se) {
+                       parser.report_error(se.getMessage(), fun$);
+                       throw se;
+                   }
+            :};
+

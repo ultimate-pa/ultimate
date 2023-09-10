@@ -93,12 +93,12 @@ public class PreferenceLayer implements IPreferenceProvider {
 
 	@Override
 	public byte[] getByteArray(final String key) {
-		return getFromOverlay(key, a -> a.getBytes(), mBacking::getByteArray);
+		return getFromOverlay(key, String::getBytes, mBacking::getByteArray);
 	}
 
 	@Override
 	public byte[] getByteArray(final String key, final byte[] defaultValue) {
-		return getFromOverlay(key, a -> a.getBytes(), a -> mBacking.getByteArray(a, defaultValue));
+		return getFromOverlay(key, String::getBytes, a -> mBacking.getByteArray(a, defaultValue));
 	}
 
 	@Override
@@ -182,6 +182,18 @@ public class PreferenceLayer implements IPreferenceProvider {
 	@Override
 	public String getSingleLinePreferenceString() {
 		throw new UnsupportedOperationException("Overlays do not support showing all available settings");
+	}
+
+	@Override
+	public Map<String, Object> getDefaultPreferences() {
+		return mBacking.getDefaultPreferences();
+	}
+
+	@Override
+	public Map<String, Object> getPreferences() {
+		final Map<String, Object> backingPrefs = mBacking.getPreferences();
+		backingPrefs.putAll(mPreferenceOverlay);
+		return backingPrefs;
 	}
 
 }

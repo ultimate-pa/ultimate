@@ -109,7 +109,7 @@ public class MapEliminationPreAnalysis {
 	 */
 	private void findIndices(final ModifiableTransFormula transformula) {
 		final Term term = transformula.getFormula();
-		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectDeep(term, false)) {
+		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectDeep(term)) {
 			final ArrayWrite arrayWrite = new ArrayWrite(select.getArray(), mScript);
 			findIndicesArrayWrite(arrayWrite, transformula);
 			addArrayAccessToRelation(arrayWrite.getOldArray(), select.getIndex(), transformula);
@@ -229,7 +229,7 @@ public class MapEliminationPreAnalysis {
 	}
 
 	public Stream<Term> findMapReads(final Term term) {
-		final Stream<Term> arrays =
+		final Stream<ApplicationTerm> arrays =
 				SmtUtils.extractApplicationTerms("select", term, true).stream().filter(x -> !x.getSort().isArraySort());
 		final Stream<Term> functions =
 				mUninterpretedFunctions.stream().flatMap(x -> SmtUtils.extractApplicationTerms(x, term, true).stream());

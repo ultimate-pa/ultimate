@@ -38,13 +38,17 @@ public final class EQAnnotation implements IAnnotation {
 	 */
 	public static final EQAnnotation EQ = new EQAnnotation();
 
-	private final Annotation[] mAnnots = new Annotation[] { new Annotation(":EQ", null) };
+	private static final Annotation[] mAnnots = new Annotation[] { new Annotation(":EQ", null) };
 
 	private EQAnnotation() {
 	}
 
+	public static Annotation[] getAnnotation() {
+		return mAnnots;
+	}
+
 	@Override
 	public Term toTerm(final Clause cls, final ProofRules proofRules) {
-		return proofRules.oracle(cls.toProofLiterals(proofRules), mAnnots);
+		return proofRules.oracle(cls.toProofLiterals(proofRules), getAnnotation());
 	}
 }

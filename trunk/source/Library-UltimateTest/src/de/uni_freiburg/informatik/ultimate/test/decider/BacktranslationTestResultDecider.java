@@ -395,8 +395,8 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 				if (!singleDesVal[0].equals(singleActVal[0])) {
 					return false;
 				}
-				// check the value; if the desired value is *, we allow all values for the actual value
-				if ("*".equals(singleDesVal[1])) {
+				// check if the value is a pointer, we allow all values for the actual value
+				if (singleDesVal.length != 2 || "*".equals(singleDesVal[1]) || singleDesVal[1].contains(":")) {
 					continue;
 				}
 				if (!singleDesVal[1].equals(singleActVal[1])) {

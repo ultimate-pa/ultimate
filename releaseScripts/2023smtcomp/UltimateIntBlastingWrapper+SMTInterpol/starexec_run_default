@@ -1,0 +1,53 @@
+#!/bin/sh
+if [ ! "$1" ]; then
+    echo "First argument has to be the file that we analyze"
+    exit
+fi
+
+if [ ! "$2" ]; then
+    echo "No Second argument! On StarExec, the second argument is an absolute path to a directory in which we can write output for debugging. If you run this script on you machine the second argument has to be an absolute path to some directory with write access."
+    exit
+fi
+
+# test if stdin or file
+#if test -n "$1"; then
+#    echo "Read from $1";
+#elif test ! -t 0; then
+#    echo "Read from stdin"
+#else
+#    echo "No data provided..."
+#fi
+
+pushd ../Ultimate > /dev/null
+./jdk-11.0.2/bin/java \
+-Dosgi.configuration.area=config/ \
+-Xmx40G \
+-Xss4m \
+-jar plugins/org.eclipse.equinox.launcher_1.5.800.v20200727-1323.jar \
+-data "$TMPDIR" \
+-tc ./../Empty.xml \
+-s ./../smtinterpolCongruenceBased.epf \
+-i $1  &> "$2"/output.txt
+popd > /dev/null
+
+RESULT_UNSAT=`cat "$2"/output.txt | grep "^unsat"`
+RESULT_SAT=`cat "$2"/output.txt | grep "^sat"`
+
+
+if [ "$RESULT_SAT" ]; then
+	echo "sat"
+	echo ""
+	cat "$2"/output.txt
+	exit
+fi
+    
+if [ "$RESULT_UNSAT" ]; then
+	echo "unsat"
+	echo ""
+	cat "$2"/output.txt
+	exit
+fi
+    
+echo "unknown"
+echo ""
+cat "$2"/output.txt

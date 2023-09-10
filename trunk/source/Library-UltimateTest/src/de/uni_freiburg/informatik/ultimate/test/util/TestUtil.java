@@ -611,17 +611,11 @@ public final class TestUtil {
 		final Map<String, SafetyCheckerOverallResult> map = new HashMap<>();
 		map.put("#Safe", SafetyCheckerOverallResult.SAFE);
 		map.put("#Unsafe", SafetyCheckerOverallResult.UNSAFE);
+		map.put("#Unknown", SafetyCheckerOverallResult.UNKNOWN);
 		map.put("#SyntaxError", SafetyCheckerOverallResult.SYNTAX_ERROR);
 		// we use the following two keywords for concurrent programs
 		map.put("#cSafe", SafetyCheckerOverallResult.SAFE);
 		map.put("#cUnsafe", SafetyCheckerOverallResult.UNSAFE);
-		return map;
-	}
-
-	public static Map<String, SafetyCheckerOverallResult> constructFirstlineKeywordMapUnknownSafetyChecker() {
-		final Map<String, SafetyCheckerOverallResult> map = new HashMap<>();
-		map.putAll(constructFirstlineKeywordMap_SafetyChecker());
-		map.put("#Unknown", SafetyCheckerOverallResult.UNKNOWN);
 		return map;
 	}
 

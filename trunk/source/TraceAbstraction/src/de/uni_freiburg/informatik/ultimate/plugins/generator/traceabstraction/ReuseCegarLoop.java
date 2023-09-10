@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleCheckerMap;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.ChainingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
@@ -533,7 +533,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop<L
 			chain = chain.andThen(HoareTripleCheckerUtils.constructSmtHoareTripleChecker(mLogger,
 					HoareTripleChecks.INCREMENTAL, mCsToolkit, getPredicateUnifier()));
 
-			return new CachingHoareTripleCheckerMap(getServices(), chain, getPredicateUnifier());
+			return new CachingHoareTripleChecker(getServices(), chain, getPredicateUnifier());
 		}
 
 		private Set<L> constructOldAlphabet() {

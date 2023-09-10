@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
@@ -63,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
@@ -172,8 +170,7 @@ public class ACSLHandler implements IACSLHandler {
 
 	public ACSLHandler(final boolean witnessInvariantMode, final FlatSymbolTable symboltable,
 			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
-			final ProcedureManager procedureManager, final LocationFactory locationFactory,
-			final CHandler chandler) {
+			final ProcedureManager procedureManager, final LocationFactory locationFactory, final CHandler chandler) {
 		mWitnessInvariantMode = witnessInvariantMode;
 		mSymboltable = symboltable;
 		mExpressionTranslation = expressionTranslation;
@@ -220,7 +217,7 @@ public class ACSLHandler implements IACSLHandler {
 			} else {
 				check = new Check(Check.Spec.ASSERT);
 			}
-			final ILocation loc = mLocationFactory.createACSLLocation(node, check);
+			final ILocation loc = mLocationFactory.createACSLLocation(node);
 
 			ExpressionResult formula = (ExpressionResult) main
 					.dispatch(((Assertion) ((CodeAnnotStmt) node).getCodeStmt()).getFormula(), main.getAcslHook());
@@ -388,7 +385,7 @@ public class ACSLHandler implements IACSLHandler {
 			final ExpressionResult right =
 					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getRight());
 			final int op = getCASTBinaryExprOperator(node.getOperator());
-			return mCExpressionTranslator.handleMultiplicativeOperation(loc, op, left, right, main.getAcslHook());
+			return mCExpressionTranslator.handleMultiplicativeOperation(loc, op, left, right);
 		}
 		case ARITHMINUS:
 		case ARITHPLUS: {
@@ -397,7 +394,7 @@ public class ACSLHandler implements IACSLHandler {
 			final ExpressionResult right =
 					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getRight());
 			final int op = getCASTBinaryExprOperator(node.getOperator());
-			return mCExpressionTranslator.handleAdditiveOperation(loc, op, left, right, main.getAcslHook());
+			return mCExpressionTranslator.handleAdditiveOperation(loc, op, left, right);
 		}
 		case COMPEQ:
 		case COMPNEQ: {
@@ -490,14 +487,11 @@ public class ACSLHandler implements IACSLHandler {
 
 		switch (node.getOperator()) {
 		case LOGICNEG:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_not, res,
-					main.getAcslHook());
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_not, res);
 		case MINUS:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus, res,
-					main.getAcslHook());
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus, res);
 		case PLUS:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus, res,
-					main.getAcslHook());
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus, res);
 		case POINTER:
 		case ADDROF:
 		case LOGICCOMPLEMENT:
@@ -537,53 +531,27 @@ public class ACSLHandler implements IACSLHandler {
 		final String id = lookupId(main, node, loc);
 
 		final String cId = mSymboltable.getCIdForBoogieId(id);
+		final SymbolTableValue stv = mSymboltable.findCSymbol(main.getAcslHook(), cId);
 		final CType cType;
-		SymbolTableValue stv;
-		if (mSpecType != ACSLHandler.SPEC_TYPE.REQUIRES && mSpecType != ACSLHandler.SPEC_TYPE.ENSURES) {
-			// TODO : the translation is sometimes wrong, for requires and
-			// ensures! i.e. when referring to inparams in ensures clauses!
-			// The ensures clause will refer to the in-parameter listed in the
-			// in parameter declaration. However, these variables will not be
-			// changed, but only assigned to #in~NAME!
-			// This cannot be solved by just appending "#in~" to all
-			// identifiers, since the identifier could also refer to a global
-			// variable! However, we don't know that at this moment!
-
-			stv = mSymboltable.findCSymbol(main.getAcslHook(), cId);
 			if (stv != null) {
 				cType = stv.getCType();
 			} else {
 				throw new UnsupportedOperationException(
 						"not yet implemented: " + "unable to determine CType for variable " + id);
 			}
-		} else {
-			throw new UnsupportedOperationException(
-					"not yet implemented: " + "unable to determine CType for variable " + id);
-		}
 
 		// FIXME: dereferencing does not work for ACSL yet, because we cannot pass
 		// the necessary auxiliary statements on.
 		// EDIT: (alex feb 18:) does this fixme still apply?
 
-		// TODO seems quite hacky, how we obtain storage class and procedure id ..
-		final ASTType astType;
-		if (stv.getBoogieDecl() instanceof VariableDeclaration) {
-			astType = ((VariableDeclaration) stv.getBoogieDecl()).getVariables()[0].getType();
-		} else if (stv.getBoogieDecl() instanceof ConstDeclaration) {
-			astType = ((ConstDeclaration) stv.getBoogieDecl()).getVarList().getType();
-		} else {
-			throw new UnsupportedOperationException("todo: handle this case");
-		}
-		final StorageClass sc = stv.isBoogieGlobalVar() ? StorageClass.GLOBAL : StorageClass.LOCAL;
-		final String procId = sc == StorageClass.GLOBAL ? null : mProcedureManager.getCurrentProcedureID();
-		LRValue lrVal;
+		final LRValue lrVal;
 		if (mCHandler.isHeapVar(id)) {
 			final IdentifierExpression idExp = ExpressionFactory.constructIdentifierExpression(loc,
-					mTypeHandler.getBoogieTypeForBoogieASTType(astType), id, new DeclarationInformation(sc, procId));
+					mTypeHandler.getBoogieTypeForBoogieASTType(stv.getAstType()), id, stv.getDeclarationInformation());
 			lrVal = LRValueFactory.constructHeapLValue(mTypeHandler, idExp, cType, null);
 		} else {
 			final VariableLHS idLhs = ExpressionFactory.constructVariableLHS(loc,
-					mTypeHandler.getBoogieTypeForBoogieASTType(astType), id, new DeclarationInformation(sc, procId));
+					mTypeHandler.getBoogieTypeForBoogieASTType(stv.getAstType()), id, stv.getDeclarationInformation());
 			lrVal = new LocalLValue(idLhs, cType, null);
 		}
 		return new ExpressionResult(lrVal);
@@ -650,7 +618,7 @@ public class ACSLHandler implements IACSLHandler {
 		mSpecType = ACSLHandler.SPEC_TYPE.REQUIRES;
 		final Expression formula = ((ExpressionResult) main.dispatch(node.getFormula())).getLrValue().getValue();
 		final Check check = new Check(Check.Spec.PRE_CONDITION);
-		final ILocation reqLoc = mLocationFactory.createACSLLocation(node, check);
+		final ILocation reqLoc = mLocationFactory.createACSLLocation(node);
 		final RequiresSpecification req = new RequiresSpecification(reqLoc, false, formula);
 		check.annotate(req);
 		return new ContractResult(new Specification[] { req });
@@ -669,7 +637,7 @@ public class ACSLHandler implements IACSLHandler {
 		mSpecType = ACSLHandler.SPEC_TYPE.ENSURES;
 		final Expression formula = ((ExpressionResult) main.dispatch(e)).getLrValue().getValue();
 		final Check check = new Check(Check.Spec.POST_CONDITION);
-		final ILocation ensLoc = mLocationFactory.createACSLLocation(node, check);
+		final ILocation ensLoc = mLocationFactory.createACSLLocation(node);
 		final EnsuresSpecification ens = new EnsuresSpecification(ensLoc, false, formula);
 		check.annotate(ens);
 		return new ContractResult(new Specification[] { ens });
@@ -706,8 +674,9 @@ public class ACSLHandler implements IACSLHandler {
 		final String id = SFO.RES;
 		final CACSLLocation loc = mLocationFactory.createACSLLocation(node);
 		// TODO: what is the right storageclass here? and procedure?..
-		final IdentifierExpression idEx = ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, id,
-				new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID()));
+		final IdentifierExpression idEx = ExpressionFactory.constructIdentifierExpression(loc,
+				mTypeHandler.getBoogieTypeForCType(new CPrimitive(CPrimitives.INT)), id,
+				new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, mProcedureManager.getCurrentProcedureID()));
 		return new ExpressionResult(new RValue(idEx, new CPrimitive(CPrimitives.INT)));
 	}
 
@@ -747,7 +716,7 @@ public class ACSLHandler implements IACSLHandler {
 
 		assert res != null && res.getLrValue().getValue() != null;
 		final Check check = new Check(Check.Spec.INVARIANT);
-		final ILocation invLoc = mLocationFactory.createACSLLocation(node, check);
+		final ILocation invLoc = mLocationFactory.createACSLLocation(node);
 		final LoopInvariantSpecification lis =
 				new LoopInvariantSpecification(invLoc, false, res.getLrValue().getValue());
 		check.annotate(lis);

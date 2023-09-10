@@ -62,10 +62,10 @@ public final class TemplateComposition {
 				f[j] = 0;
 			}
 			while (true) {
-				final List<T> disjuction =
+				final List<T> disjunction =
 						new ArrayList<T>();
 				for (int j = 0; j < f.length; ++j) {
-					disjuction.addAll(i.get(j).get(f[j]));
+					disjunction.addAll(i.get(j).get(f[j]));
 				}
 				
 				// advance counter
@@ -79,7 +79,7 @@ public final class TemplateComposition {
 						break;
 					}
 				}
-				conjunction.add(disjuction);
+				conjunction.add(disjunction);
 				if (j == f.length) {
 					break;
 				}

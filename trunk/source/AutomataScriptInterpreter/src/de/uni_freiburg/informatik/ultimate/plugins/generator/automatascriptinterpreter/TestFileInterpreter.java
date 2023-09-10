@@ -1176,7 +1176,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 				"de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi",
 				"de.uni_freiburg.informatik.ultimate.automata.nestedword.operations",
 				"de.uni_freiburg.informatik.ultimate.automata.petrinet",
-				"de.uni_freiburg.informatik.ultimate.automata.tree.operations" };
+				"de.uni_freiburg.informatik.ultimate.automata.tree.operations",
+				"de.uni_freiburg.informatik.ultimate.automata.rabin" };
 		for (final String packageName : packages) {
 			final Collection<File> files = filesInDirectory(getPathFromPackageName(packageName));
 
@@ -1194,6 +1195,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private boolean addClassIfOperation(final Map<String, Set<Class<?>>> result, final String packageName,
 			final File file, final String filename) {
 		if (!filename.endsWith(".class")) {
+			return false;
+		}
+		if (filename.contains("$")) {
+			// Do not check nested classes
 			return false;
 		}
 		final Class<?> clazz = getClassFromFile(packageName, file);

@@ -143,7 +143,7 @@ public class QuantifierOverapproximatingSolver extends WrapperScript {
 	}
 
 	private Term overApproximate(final Term term) {
-		final Term nnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP, true).transform(term);
+		final Term nnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP).transform(term);
 		// Optimization 2
 		final Term pushed = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript, true,
 				PqeTechniques.ALL_LOCAL, SimplificationTechnique.NONE, nnf);

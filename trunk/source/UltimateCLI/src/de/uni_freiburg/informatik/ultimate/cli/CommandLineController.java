@@ -59,13 +59,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.RcpUtils;
+import de.uni_freiburg.informatik.ultimate.preferencejson.PreferenceUtil;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
@@ -123,6 +126,16 @@ public class CommandLineController implements IController<RunDefinition> {
 			return IApplication.EXIT_OK;
 		}
 
+		if (toolchainStageParams.isFrontendSettingsRequested()) {
+			mLogger.info(PreferenceUtil.generateFrontendSettingsJsonFromDefaultSettings(core));
+			return IApplication.EXIT_OK;
+		}
+
+		if (toolchainStageParams.isBackendWhitelistRequested()) {
+			mLogger.info(PreferenceUtil.generateBackendWhitelistJsonFromDefaultSettings(core));
+			return IApplication.EXIT_OK;
+		}
+
 		if (!toolchainStageParams.hasToolchain()) {
 			if (toolchainStageParams.isHelpRequested()) {
 				printHelp(onlyCliHelpParser, toolchainStageParams);
@@ -162,6 +175,18 @@ public class CommandLineController implements IController<RunDefinition> {
 			}
 			final IToolchainData<RunDefinition> currentToolchain = prepareToolchain(core, fullParams);
 			assert currentToolchain == mToolchain;
+
+			if (fullParams.isFrontendSettingsDeltaRequested()) {
+				mLogger.info(
+						PreferenceUtil.generateFrontendSettingsJsonFromDeltaSettings(mToolchain.getServices(), core));
+				return IApplication.EXIT_OK;
+			}
+			if (fullParams.isBackendWhitelistDeltaRequested()) {
+				mLogger.info(
+						PreferenceUtil.generateBackendWhitelistJsonFromDeltaSettings(mToolchain.getServices(), core));
+				return IApplication.EXIT_OK;
+			}
+
 			// from now on, use the shutdown hook that disables the toolchain if the user presses CTRL+C (hopefully)
 			Runtime.getRuntime().addShutdownHook(new Thread(new SigIntTrap(currentToolchain, mLogger), "SigIntTrap"));
 			startExecutingToolchain(core, fullParams, mLogger, currentToolchain);
@@ -186,9 +211,9 @@ public class CommandLineController implements IController<RunDefinition> {
 		mLogger.info("Version is " + RcpUtils.getVersion(Activator.PLUGIN_ID));
 		mLogger.info("Maximal heap size is set to "
 				+ CoreUtil.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true));
-		final String[] sysProps = new String[] { "java.version", "java.specification.name", "java.specification.vendor",
-				"java.specification.version", "java.runtime.version", "java.vm.name", "java.vm.vendor",
-				"java.vm.version", };
+		final String[] sysProps =
+				{ "java.version", "java.specification.name", "java.specification.vendor", "java.specification.version",
+						"java.runtime.version", "java.vm.name", "java.vm.vendor", "java.vm.version", };
 
 		for (final String sysProp : sysProps) {
 			String value = System.getProperty(sysProp);
@@ -267,7 +292,7 @@ public class CommandLineController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public ISource selectParser(final Collection<ISource> parser) {
+	public ISource selectParser(final IToolchain<RunDefinition> toolchain, final Collection<ISource> parser) {
 		throw new UnsupportedOperationException("Interactively selecting parsers is not supported in CLI mode");
 	}
 
@@ -282,17 +307,18 @@ public class CommandLineController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public IToolchainData<RunDefinition> selectTools(final List<ITool> tools) {
+	public IToolchainData<RunDefinition> selectTools(final IToolchain<RunDefinition> toolchain,
+			final List<ITool> tools) {
 		return mToolchain;
 	}
 
 	@Override
-	public List<String> selectModel(final List<String> modelNames) {
+	public List<String> selectModel(final IToolchain<RunDefinition> toolchain, final List<String> modelNames) {
 		throw new UnsupportedOperationException("Interactively selecting models is not supported in CLI mode");
 	}
 
 	@Override
-	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
+	public void displayToolchainResults(final IToolchain<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
 		final ResultSummarizer summarizer = new ResultSummarizer(results);
 		switch (summarizer.getResultSummary()) {
@@ -311,7 +337,7 @@ public class CommandLineController implements IController<RunDefinition> {
 
 		if (mCliParams.generateCsvs()) {
 			final List<ICsvProviderProvider<?>> csvProviders = ResultUtil.filterResults(results, StatisticsResult.class)
-					.stream().map(a -> a.getStatistics()).collect(Collectors.toList());
+					.stream().map(StatisticsResult::getStatistics).collect(Collectors.toList());
 			writeCsvLogs(csvProviders, summarizer);
 		}
 	}
@@ -383,9 +409,9 @@ public class CommandLineController implements IController<RunDefinition> {
 	private static List<Object> repeatValue(final int rowCount, final Object value) {
 		Object actualValue;
 		if (value instanceof Object[]) {
-			actualValue = Arrays.stream((Object[]) value).map(a -> String.valueOf(a)).collect(Collectors.joining(";"));
+			actualValue = Arrays.stream((Object[]) value).map(String::valueOf).collect(Collectors.joining(";"));
 		} else if (value instanceof Collection) {
-			actualValue = ((Collection<?>) value).stream().map(a -> String.valueOf(a)).collect(Collectors.joining(";"));
+			actualValue = ((Collection<?>) value).stream().map(String::valueOf).collect(Collectors.joining(";"));
 		} else {
 			actualValue = String.valueOf(value);
 		}
@@ -398,7 +424,7 @@ public class CommandLineController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
+	public void displayException(final IToolchain<RunDefinition> toolchain, final String description,
 			final Throwable ex) {
 		mLogger.fatal("RESULT: An exception occured during the execution of Ultimate: " + description, ex);
 	}
@@ -419,16 +445,14 @@ public class CommandLineController implements IController<RunDefinition> {
 			final File toolchainFileOrDir) {
 		final ToolchainLocator locator = new ToolchainLocator(toolchainFileOrDir, core, mLogger);
 
-		final Set<String> allowedIds = new HashSet<>();
-		// all plugins in the toolchain are allowed
-		allowedIds.addAll(locator.createFilterForAvailableTools());
+		final Set<String> allowedIds = new HashSet<>(locator.createFilterForAvailableTools());
 		// the the core is allowed
 		allowedIds.add(de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator.PLUGIN_ID);
 		// the current controller (aka, we) are allowed
 		allowedIds.add(getPluginID());
 		// parser are allowed
-		Arrays.stream(core.getRegisteredUltimatePlugins()).filter(a -> a instanceof ISource).map(a -> a.getPluginID())
-				.forEach(allowedIds::add);
+		Arrays.stream(core.getRegisteredUltimatePlugins()).filter(a -> a instanceof ISource)
+				.map(IUltimatePlugin::getPluginID).forEach(allowedIds::add);
 
 		// convert to lower case and build matching predicate
 		return getLowerCaseFilter(allowedIds);
@@ -458,8 +482,8 @@ public class CommandLineController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public IToolchainData<RunDefinition> prerun(final IToolchainData<RunDefinition> tcData) {
-		return tcData;
+	public IToolchainData<RunDefinition> prerun(final IToolchain<RunDefinition> toolchain) {
+		return toolchain.getCurrentToolchainData();
 	}
 
 	private static final class SigIntTrap implements Runnable {

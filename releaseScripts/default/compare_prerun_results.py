@@ -27,6 +27,7 @@ categories = [
   "valid-memsafety.ConcurrencySafety-MemSafety",
 ]
 data_layout = {
+  'raw_score'                 : { 'row': 'all results',                 'column': 3 },
   'correct_confirmed'         : { 'row': 'correct results',             'column': 2 },
   'correct_true_confirmed'    : { 'row': 'correct true',                'column': 2 },
   'correct_false_confirmed'   : { 'row': 'correct false',               'column': 2 },
@@ -67,7 +68,7 @@ def extract_data(rows):
   for key, info in data_layout.items():
     row = find_row(rows, info["row"])
     if row is not None:
-      data[key] = int(row.find("div.td[role='cell']")[2].text)
+      data[key] = int(row.find("div.td[role='cell']")[info['column']].text)
     elif not info.get("optional", False):
       print(f"    missing row: {info['row']}")
       return None
@@ -79,10 +80,10 @@ def print_table(category, results):
   print("--------------------------------------------------------------------------------")
   
   print()
-  print("| tool            || correct (conf.) | correct true   | correct false   || incorrect | incorrect true | incorrect false |")
-  print("|-----------------||-----------------|----------------|-----------------||-----------|----------------|-----------------|")
+  print("| tool            || score   | correct (conf.) | correct true   | correct false   || incorrect | incorrect true | incorrect false |")
+  print("|-----------------||---------|-----------------|----------------|-----------------||-----------|----------------|-----------------|")
   for tool, data in results.items():
-    print(f"| {tool:<15} ||       {data['correct_confirmed']+data.get('correct_unconfirmed',0):3} ({data['correct_confirmed']:3}) |      {data['correct_true_confirmed']+data.get('correct_true_unconfirmed',0):3} ({data['correct_true_confirmed']:3}) |       {data['correct_false_confirmed']+data.get('correct_falseunconfirmed',0):3} ({data['correct_false_confirmed']:3}) ||       {data['incorrect']:3} |            {data['incorrect_true']:3} |             {data['incorrect_false']:3} |")
+    print(f"| {tool:<15} ||   {data['raw_score']:5} |       {data['correct_confirmed']+data.get('correct_unconfirmed',0):3} ({data['correct_confirmed']:3}) |      {data['correct_true_confirmed']+data.get('correct_true_unconfirmed',0):3} ({data['correct_true_confirmed']:3}) |       {data['correct_false_confirmed']+data.get('correct_falseunconfirmed',0):3} ({data['correct_false_confirmed']:3}) ||       {data['incorrect']:3} |            {data['incorrect_true']:3} |             {data['incorrect_false']:3} |")
   print()
   
   print()

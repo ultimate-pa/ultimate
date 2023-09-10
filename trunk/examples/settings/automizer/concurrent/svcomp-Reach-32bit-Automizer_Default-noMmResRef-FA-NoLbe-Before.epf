@@ -9,7 +9,6 @@ file_export_version=3.0
 
 #Fri Oct 24 16:34:36 CEST 2014
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Translation\ Mode\:=SV_COMP14
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ long=4
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ POINTER=4
@@ -53,7 +52,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Automaton\ type\ used\ in\ concurrency\ analysis=FINITE_AUTOMATA
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Apply\ one-shot\ large\ block\ encoding\ in\ concurrent\ analysis=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/When\ to\ check\ the\ insufficient\ erros\ location\ relative\ to\ the\ other\ error\ locations=BEFORE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Order\ of\ the\ error\ locations\ to\ be\ checked=INSUFFICIENT_FIRST
 
 
 #Thu Oct 29 23:01:13 CET 2015

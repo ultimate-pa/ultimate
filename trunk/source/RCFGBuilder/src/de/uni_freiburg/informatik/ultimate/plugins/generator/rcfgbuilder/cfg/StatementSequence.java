@@ -33,6 +33,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -133,6 +134,35 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 			return "#" + getSerialNumber() + "#" + getPrettyPrintedStatements();
 		}
 		return getPrettyPrintedStatements();
+	}
+
+	/**
+	 * We call a StatementSequence trivial if it is empty or contains only `assume
+	 * true` statements.
+	 */
+	public boolean isTrivial() {
+		if (mStatements.isEmpty()) {
+			return true;
+		}
+		for (final Statement st : mStatements) {
+			if (!isAssumeTrueStatement(st)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static boolean isAssumeTrueStatement(final Statement st) {
+		if (st instanceof AssumeStatement) {
+			final AssumeStatement as = (AssumeStatement) st;
+			if (as.getFormula() instanceof BooleanLiteral) {
+				final BooleanLiteral bl = (BooleanLiteral) as.getFormula();
+				if (bl.getValue()) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 }

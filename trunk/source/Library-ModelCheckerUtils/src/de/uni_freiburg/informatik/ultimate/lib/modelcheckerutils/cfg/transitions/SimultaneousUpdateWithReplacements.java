@@ -39,12 +39,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * @deprecated The idea of this class was to introduce auxiliary variables for
@@ -68,7 +68,7 @@ public class SimultaneousUpdateWithReplacements extends SimultaneousUpdate {
 	private final Map<TermVariable, Term> mIdxRepAssignments;
 
 	public SimultaneousUpdateWithReplacements(final Map<IProgramVar, Term> deterministicAssignment,
-			final NestedMap2<IProgramVar, ArrayIndex, Term> deterministicArrayWrites,
+			final Map<IProgramVar, MultiDimensionalNestedStore> deterministicArrayWrites,
 			final Set<IProgramVar> havocedVars, final Set<IProgramVar> readonlyVars,
 			final NestedMap2<IProgramVar, ArrayIndex, Term> array2Index2value,
 			final Map<TermVariable, Term> idxRepAssignments) {
@@ -93,15 +93,19 @@ public class SimultaneousUpdateWithReplacements extends SimultaneousUpdate {
 			idxRepAssignments.putAll(tmp2.getSecond());
 			newDeterministicAssignments.put(entry.getKey(), tmp2.getFirst());
 		}
-		for (final Triple<IProgramVar, ArrayIndex, Term> triple : su.getDeterministicArrayWrites().entrySet()) {
-			final Pair<ArrayIndex, Map<TermVariable, Term>> tmp1 = replaceIndex(mgdScript, triple.getSecond());
+		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : su.getDeterministicArrayWrites().entrySet()) {
+			if (entry.getValue().getIndices().size() != 1) {
+				throw new AssertionError("Nested stores!");
+			}
+			final Pair<ArrayIndex, Map<TermVariable, Term>> tmp1 = replaceIndex(mgdScript, entry.getValue().getIndices().get(0));
 			idxRepAssignments.putAll(tmp1.getSecond());
 			final Pair<Term, Map<TermVariable, Term>> tmp2 = replaceArrayIndices(mgdScript, defaultVarsOfAssignedVars,
-					triple.getThird());
+					entry.getValue().getValues().get(0));
 			idxRepAssignments.putAll(tmp2.getSecond());
-			newDeterministicArrayWrites.put(triple.getFirst(), tmp1.getFirst(), tmp2.getFirst());
+			newDeterministicArrayWrites.put(entry.getKey(), tmp1.getFirst(), tmp2.getFirst());
 		}
-		return new SimultaneousUpdateWithReplacements(newDeterministicAssignments, newDeterministicArrayWrites,
+		// FIXME Matthias 2023-06-04: Second argument is null. Was not willing to support this class further.
+		return new SimultaneousUpdateWithReplacements(newDeterministicAssignments, null,
 				su.getHavocedVars(), su.getReadonlyVars(), newDeterministicArrayWrites, idxRepAssignments);
 	}
 
@@ -121,7 +125,7 @@ public class SimultaneousUpdateWithReplacements extends SimultaneousUpdate {
 
 	private static Pair<Term, Map<TermVariable, Term>> replaceArrayIndices(final ManagedScript mgdScript,
 			final Set<TermVariable> defaultVarsOfAssignedVars, final Term term) {
-		final List<MultiDimensionalSelect> tmp = MultiDimensionalSelect.extractSelectShallow(term, false);
+		final List<MultiDimensionalSelect> tmp = MultiDimensionalSelect.extractSelectShallow(term);
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		final Map<TermVariable, Term> replacementMapping = new LinkedHashMap<>();
 		for (final MultiDimensionalSelect mds : tmp) {

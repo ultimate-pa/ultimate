@@ -35,6 +35,13 @@
 			<unit id="org.apache.batik.util.gui" version="1.9.1.v20190730-1743"/>
 			<unit id="org.apache.batik.xml" version="1.9.1.v20190730-1743"/>
 		</location>
+		<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<repository location="https://struebli.informatik.uni-freiburg.de/p2-repository-ultimate-dependencies/"/>
+			<unit id="eo-yaml" version="7.0.8"/>
+			<unit id="eo-yaml.source" version="7.0.8"/>
+			<unit id="com.lmax.disruptor" version="3.3.5"/>
+			<unit id="com.lmax.disruptor.source" version="3.3.5"/>
+		</location>
 	</locations>
 	<includeBundles>
 		<plugin id="com.google.gson.source"/>
@@ -50,6 +57,7 @@
 		<plugin id="javax.inject.source" version="1.0.0.v20091030"/>
 		<plugin id="javax.inject" version="1.0.0.v20091030"/>
 		<plugin id="javax.xml.bind"/>
+		<plugin id="javax.xml.bind.source"/>
 		<plugin id="javax.xml.stream" version="1.0.1.v201004272200"/>
 		<plugin id="javax.xml" version="1.3.4.v201005080400"/>
 		<plugin id="org.apache.batik.anim"/>
@@ -188,6 +196,7 @@
 		<plugin id="org.eclipse.equinox.registry" version="3.9.0.v20200625-1425"/>
 		<plugin id="org.eclipse.equinox.registry.source" version="3.9.0.v20200625-1425"/>
 		<plugin id="org.eclipse.help" version="3.8.800.v20200525-0755"/>
+		<plugin id="org.eclipse.help.source"/>
 		<plugin id="org.eclipse.jface.databinding.source" version="1.12.0.v20200717-1533"/>
 		<plugin id="org.eclipse.jface.databinding" version="1.12.0.v20200717-1533"/>
 		<plugin id="org.eclipse.jface" version="3.21.0.v20200821-1458"/>
@@ -195,6 +204,7 @@
 		<plugin id="org.eclipse.ltk.core.refactoring" version="3.11.100.v20200720-0748"/>
 		<plugin id="org.eclipse.ltk.core.refactoring.source" version="3.11.100.v20200720-0748"/>
 		<plugin id="org.eclipse.osgi.services" version="3.9.0.v20200511-1725"/>
+		<plugin id="org.eclipse.osgi.services.source"/>
 		<plugin id="org.eclipse.osgi.source" version="3.16.0.v20200828-0759"/>
 		<plugin id="org.eclipse.osgi" version="3.16.0.v20200828-0759"/>
 		<plugin id="org.eclipse.osgi.util" version="3.5.300.v20190708-1141"/>
@@ -309,5 +319,30 @@
 		<plugin id="org.eclipse.pde.junit.runtime.source"/>
 		<plugin id="org.eclipse.jdt.junit4.runtime"/>
 		<plugin id="org.eclipse.jdt.junit4.runtime.source"/>
+		<plugin id="org.eclipse.cdt.managedbuilder.core"/>
+		<plugin id="org.eclipse.cdt.make.core"/>
+		<plugin id="org.eclipse.jdt.annotation" version="2.2.600.v20200408-1511"/>
+		<plugin id="org.eclipse.tools.templates.freemarker"/>
+		<plugin id="org.freemarker"/>
+		<plugin id="org.eclipse.cdt.managedbuilder.core.source"/>
+		<plugin id="org.eclipse.cdt.make.core.source"/>
+		<plugin id="org.eclipse.cdt.build.gcc.core"/>
+		<plugin id="org.eclipse.cdt.build.gcc.core.source"/>
+		<plugin id="org.eclipse.jetty.util"/>
+		<plugin id="org.eclipse.jetty.util.source"/>
+		<plugin id="org.eclipse.jetty.servlet"/>
+		<plugin id="org.eclipse.jetty.servlet.source"/>
+		<plugin id="org.eclipse.jetty.server"/>
+		<plugin id="org.eclipse.jetty.server.source"/>
+		<plugin id="org.eclipse.jetty.security"/>
+		<plugin id="org.eclipse.jetty.security.source"/>
+		<plugin id="org.eclipse.jetty.io"/>
+		<plugin id="org.eclipse.jetty.io.source"/>
+		<plugin id="org.eclipse.jetty.http"/>
+		<plugin id="org.eclipse.jetty.http.source"/>
+		<plugin id="eo-yaml" version="7.0.8"/>
+		<plugin id="eo-yaml.source" version="7.0.8"/>
+		<plugin id="com.lmax.disruptor"/>
+		<plugin id="com.lmax.disruptor.source"/>
 	</includeBundles>
 </target>

@@ -123,6 +123,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantconsolidation.InterpolantGeneratorWithConsolidation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**
@@ -179,7 +180,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		mPredicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(), mCsToolkit.getSymbolTable());
 
 		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(CodeCheckPreferenceInitializer.LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER)) {
+				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER)) {
 			mPredicateUnifier = new BPredicateUnifier(mServices, mLogger, mCsToolkit.getManagedScript(),
 					mPredicateFactory, mOriginalRoot.getCfgSmtToolkit().getSymbolTable());
 		} else {
@@ -538,9 +539,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			final IBacktranslationService backTranslatorService) {
 		final Term trueterm = csToolkit.getManagedScript().getScript().term("true");
 
-		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>();
+		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>(IcfgUtils.getPotentialCycleProgramPoints(icfg));
 
-		locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
 		locsForLoopLocations.addAll(icfg.getLoopLocations());
 		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
 
@@ -699,8 +699,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		// FIXME: 2016-11-05 Matthias: I cannot solve this, passing null.
 		final ImpRootNode newRoot = new ImpRootNode();
 		copy.put(root, newRoot);
-		final Deque<AnnotatedProgramPoint> stack = new ArrayDeque<>();
-		stack.addAll(root.getOutgoingNodes());
+		final Deque<AnnotatedProgramPoint> stack = new ArrayDeque<>(root.getOutgoingNodes());
 		while (!stack.isEmpty()) {
 			final AnnotatedProgramPoint current = stack.pop();
 			if (copy.containsKey(current)) {
@@ -774,17 +773,17 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	public IcfgLocation getErrorPP(final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> rcfgProgramExecution) {
 		final int lastPosition = rcfgProgramExecution.getLength() - 1;
 		final IIcfgTransition<?> last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
-		final IcfgLocation errorPP = last.getTarget();
-		return errorPP;
+		return last.getTarget();
 	}
 
 	private void reportTimeoutResult(final Collection<IcfgLocation> errorLocs) {
 		for (final IcfgLocation errorIpp : errorLocs) {
 			final ILocation origin = ILocation.getAnnotation(errorIpp);
-			String timeOutMessage = "Unable to prove that " + Check.getAnnotation(errorIpp).getPositiveMessage();
-			timeOutMessage += " (line " + origin.getStartLine() + ")";
+			StringBuilder timeOutMessage = new StringBuilder("Unable to prove that ")
+					.append(Check.getAnnotation(errorIpp).getPositiveMessage());
+			timeOutMessage.append(" (line ").append(origin.getStartLine()).append(")");
 			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorIpp,
-					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
+					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage.toString());
 			reportResult(timeOutRes);
 		}
 	}

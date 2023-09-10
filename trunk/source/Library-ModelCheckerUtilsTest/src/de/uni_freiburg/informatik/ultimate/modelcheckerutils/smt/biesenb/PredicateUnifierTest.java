@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.biesenb;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -386,7 +387,8 @@ public class PredicateUnifierTest {
 
 		final TestPredicate pred5 = and(neg(pred(">", mA, 2)), neg(pred("<", mA, 2)));
 		final TestPredicate pred6 = and(neg(pred(">", mA, 2)), pred("<", mA, 2));
-		final IPredicate pred7 = new TestPredicate(mScript.term("true"), new HashSet<>(), mMgdScript);
+		final IPredicate pred7 = new TestPredicate(mScript.term("true"), Collections.emptySet(), Collections.emptySet(),
+				mMgdScript);
 
 		Assert.assertThat("1", unifier.isRepresentative(pred1), Is.is(oUnifier.isRepresentative(pred1)));
 		Assert.assertThat("2", unifier.isRepresentative(pred2), Is.is(oUnifier.isRepresentative(pred2)));

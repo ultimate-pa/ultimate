@@ -29,12 +29,14 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -55,26 +57,28 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * <br>
  * Note that due to the select-over-store optimization the resulting term may
  * not necessarily be an ApplicationTerm.
+ * Note that we also allow indices of size 0 and hence every Term can be the
+ * mArray or mSelectTerm of this class.
  * @author Matthias Heizmann
  *
  */
-public class MultiDimensionalSelect {
+public class MultiDimensionalSelect implements ITermProvider {
 
 	private final Term mArray;
 	private final ArrayIndex mIndex;
-	private final Term mSelectTerm;
+
+	public MultiDimensionalSelect(final Term array, final ArrayIndex index) {
+		super();
+		mArray = array;
+		mIndex = index;
+	}
 
 	/**
 	 * Translate a (possibly) nested SMT term into this data structure.
 	 * @param term term of the form ("select" a i2) for some array a and some
 	 * index i2.
 	 */
-	public MultiDimensionalSelect(Term term) {
-		if (term instanceof ApplicationTerm) {
-			mSelectTerm = term;
-		} else {
-			mSelectTerm = null;
-		}
+	public static MultiDimensionalSelect of(Term term) {
 		final ArrayList<Term> index = new ArrayList<Term>();
 		while (true) {
 			if (!(term instanceof ApplicationTerm)) {
@@ -88,63 +92,10 @@ public class MultiDimensionalSelect {
 			index.add(0,appTerm.getParameters()[1]);
 			term = appTerm.getParameters()[0];
 		}
-		mIndex = new ArrayIndex(index);
-		mArray = term;
-		assert classInvariant();
-	}
-
-
-
-	public MultiDimensionalSelect(final Term array, final ArrayIndex index, final Script script) {
-		super();
-		mArray = array;
-		mIndex = index;
-		Term tmp = array;
-		for (final Term entry : index) {
-			tmp = SmtUtils.select(script, tmp, entry);
+		if (index.isEmpty()) {
+			return null;
 		}
-		mSelectTerm = tmp;
-	}
-
-	/**
-	 * Extract from this {@link MultiDimensionalSelect} the
-	 * {@link MultiDimensionalSelect} on the innermost dim dimensions. That is the
-	 * {@link MultiDimensionalSelect}
-	 * <ul>
-	 * <li>whose array is the same as the array of this
-	 * {@link MultiDimensionalSelect}
-	 * <li>whose index consists only of the first dim entries of this arrays' index,
-	 * and
-	 * <li>whose SMT sort is dim dimensions higher than the sort of this
-	 * {@link MultiDimensionalSelect}. E.g., if the sort of this
-	 * {@link MultiDimensionalSelect} is Int (hence 0-dimensional) and dim=2 then
-	 * the sort of the returned {@link MultiDimensionalSelect} is a 2-dimensional
-	 * array.
-	 * </ul>
-	 */
-	public MultiDimensionalSelect getInnermost(final int dim) {
-		if (dim < 1) {
-			throw new IllegalArgumentException("result must have at least dimension one");
-		}
-		if (dim > getDimension()) {
-			throw new IllegalArgumentException("cannot extract more dimensions than this array has");
-		}
-		ArraySelect as = ArraySelect.convert(mSelectTerm);
-		for (int i = 0; i < getDimension() - dim; i++) {
-			as = ArraySelect.convert(as.getArray());
-		}
-		return MultiDimensionalSelect.convert(as.asTerm());
-	}
-
-
-
-	private boolean classInvariant() {
-		if (mSelectTerm == null) {
-			return mIndex.size() == 0;
-		} else {
-			return MultiDimensionalSort.
-					areDimensionsConsistent(mArray, mIndex, mSelectTerm);
-		}
+		return new MultiDimensionalSelect(term, new ArrayIndex(index));
 	}
 
 	public Term getArray() {
@@ -155,105 +106,92 @@ public class MultiDimensionalSelect {
 		return mIndex;
 	}
 
-	public Term getSelectTerm() {
-		return mSelectTerm;
-	}
-
 	public int getDimension() {
 		return getIndex().size();
 	}
 
-	public Term toTerm(final Script script) {
-		return SmtUtils.multiDimensionalSelect(script, getArray(), getIndex());
+	/**
+	 * Returns the sort of the select that is represented by this class.
+	 */
+	public Sort getSort() {
+		Sort result = mArray.getSort();
+		for (int i = 0; i < getDimension(); i++) {
+			assert result.getArguments().length == 2;
+			result = result.getArguments()[1];
+		}
+		return result;
 	}
 
-
-	public static MultiDimensionalSelect convert(final Term term) {
-		if (!(term instanceof ApplicationTerm)) {
-			return null;
-		}
-		final MultiDimensionalSelect mds = new MultiDimensionalSelect(term);
-		if (mds.getArray() == null) {
-			return null;
-		} else {
-			return mds;
-		}
+	@Override
+	public Term toTerm(final Script script) {
+		final Term result = SmtUtils.multiDimensionalSelect(script, getArray(), getIndex());
+		assert result.getSort() == getSort();
+		return result;
 	}
 
 	@Override
 	public String toString() {
-		return mSelectTerm.toString();
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (obj instanceof MultiDimensionalSelect) {
-			return mSelectTerm.equals(((MultiDimensionalSelect) obj).getSelectTerm());
-		} else {
-			return false;
-		}
+		// not SMT-LIB syntax, but easier to read
+		return String.format("(select %s %s)", mArray, mIndex);
 	}
 
 	@Override
 	public int hashCode() {
-		return mSelectTerm.hashCode();
+		return Objects.hash(mArray, mIndex);
 	}
 
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final MultiDimensionalSelect other = (MultiDimensionalSelect) obj;
+		return Objects.equals(mArray, other.mArray) && Objects.equals(mIndex, other.mIndex);
+	}
 
 	/**
-	 * Return all MultiDimensionalSelect Objects for all multidimensional
-	 * select expressions that occur in term.
-	 * If one multidimensional expression occurs in another multidimensional
-	 * select expression (e.g. as index) the nested one is not returned by
-	 * this method.
-	 * If an select term occurs multiple times it is contained multiple times
-	 * in the result.
-	 * @param allowArrayValues allow also MultiDimensionalSelect terms whose
-	 * Sort is an array Sort (these select terms occur usually in
-	 * multidimensional store terms).
+	 * Return all MultiDimensionalSelect Objects for all multidimensional select
+	 * expressions that occur in term. If one multidimensional expression occurs in
+	 * another multidimensional select expression (e.g. as index) the nested one is
+	 * not returned by this method. If an select term occurs multiple times it is
+	 * contained multiple times in the result.
 	 */
-	public static List<MultiDimensionalSelect> extractSelectShallow(
-			final Term term, final boolean allowArrayValues) {
+	public static List<MultiDimensionalSelect> extractSelectShallow(final Term term) {
 		final List<MultiDimensionalSelect> result = new ArrayList<MultiDimensionalSelect>();
-		final Set<ApplicationTerm> selectTerms =
-				(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
+		final Set<ApplicationTerm> selectTerms = SmtUtils.extractApplicationTerms("select", term, true);
 		for (final Term storeTerm : selectTerms) {
-			if (allowArrayValues || !storeTerm.getSort().isArraySort()) {
-				final MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(storeTerm);
-				if (mdSelect.getIndex().size() == 0) {
-					throw new AssertionError("select must not have dimension 0");
-				}
-				result.add(mdSelect);
+			final MultiDimensionalSelect mdSelect = MultiDimensionalSelect.of(storeTerm);
+			if (mdSelect.getIndex().size() == 0) {
+				throw new AssertionError("MultiDimensionalSelect must not have dimension 0 here");
 			}
+			result.add(mdSelect);
 		}
 		return result;
 	}
 
 	/**
-	 * Return all MultiDimensionalSelect Objects for all select expressions
-	 * that occur in term. This method also return the inner multidimensional
-	 * select expressions in other multidimensional select expressions.
-	 * If an select term occurs multiple times it is contained multiple times
-	 * in the result.
-	 * If multidimensional selects are nested, the inner ones occur earlier
-	 * in the resulting list.
-	 * @param allowArrayValues allow also MultiDimensionalSelect terms whose
-	 * Sort is an array Sort (these select terms occur usually in
-	 * multidimensional store terms).
+	 * Return all MultiDimensionalSelect Objects for all select expressions that
+	 * occur in term. This method also return the inner multidimensional select
+	 * expressions in other multidimensional select expressions. If an select term
+	 * occurs multiple times it is contained multiple times in the result. If
+	 * multidimensional selects are nested, the inner ones occur earlier in the
+	 * resulting list.
 	 */
-	public static List<MultiDimensionalSelect> extractSelectDeep(
-			final Term term, final boolean allowArrayValues) {
+	public static List<MultiDimensionalSelect> extractSelectDeep(final Term term) {
 		final List<MultiDimensionalSelect> result = new LinkedList<MultiDimensionalSelect>();
-		List<MultiDimensionalSelect> foundInThisIteration = extractSelectShallow(term, allowArrayValues);
+		List<MultiDimensionalSelect> foundInThisIteration = extractSelectShallow(term);
 		while (!foundInThisIteration.isEmpty()) {
 			result.addAll(0, foundInThisIteration);
 			final List<MultiDimensionalSelect> foundInLastIteration = foundInThisIteration;
 			foundInThisIteration = new ArrayList<MultiDimensionalSelect>();
 			for (final MultiDimensionalSelect mdSelect : foundInLastIteration) {
-				foundInThisIteration.addAll(extractSelectShallow(mdSelect.getArray(), allowArrayValues));
+				foundInThisIteration.addAll(extractSelectShallow(mdSelect.getArray()));
 				final ArrayIndex index = mdSelect.getIndex();
 				for (final Term entry : index) {
-					foundInThisIteration.addAll(extractSelectShallow(entry, allowArrayValues));
+					foundInThisIteration.addAll(extractSelectShallow(entry));
 				}
 			}
 		}

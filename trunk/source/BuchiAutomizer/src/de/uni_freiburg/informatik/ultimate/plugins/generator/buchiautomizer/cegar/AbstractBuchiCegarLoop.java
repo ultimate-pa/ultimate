@@ -151,7 +151,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	/**
 	 * Intermediate layer to encapsulate preferences.
 	 */
-	private final TAPreferences mPref;
+	protected final TAPreferences mPref;
 
 	private final BuchiAutomizerModuleDecompositionBenchmark mMDBenchmark;
 

@@ -2,7 +2,7 @@
 <feature
       id="BA_FeatureDependenciesCommon"
       label="BA_FeatureDependenciesCommon"
-      version="0.2.2"
+      version="0.2.3"
       arch="x86_64">
 
    <description url="http://www.example.com/description">
@@ -33,13 +33,6 @@
 
    <plugin
          id="com.sun.xml.bind"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="javax.activation"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -166,6 +159,15 @@
          unpack="false"/>
 
    <plugin
+         id="org.eclipse.cdt.core.macosx"
+         os="macosx"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"
+         unpack="false"/>
+
+   <plugin
          id="org.eclipse.core.commands"
          download-size="0"
          install-size="0"
@@ -214,6 +216,15 @@
          id="org.eclipse.core.filesystem.linux.x86_64"
          os="linux"
          arch="x86_64"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.core.filesystem.macosx"
+         os="macosx"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -361,6 +372,62 @@
          download-size="0"
          install-size="0"
          version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.cdt.managedbuilder.core"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.cdt.make.core"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.jdt.annotation"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.tools.templates.freemarker"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.freemarker"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.cdt.build.gcc.core"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.tools.templates.core"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="javax.activation"
+         download-size="0"
+         install-size="0"
+         version="1.1.0.v201211130549"
          unpack="false"/>
 
 </feature>

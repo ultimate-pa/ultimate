@@ -1,4 +1,4 @@
-//#Unsafe
+//#Safe
 /*
  * 2020-04-23
  * Delta-debugged example from recursive/recHanoi01.c

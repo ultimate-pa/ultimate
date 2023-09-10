@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermUtils.GeneralizedConstructor;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -26,6 +27,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * </pre>
  *
  * where c_i, c, e_i are literals, and x_i are variables.
+ *
+ * TODO 20230107 Matthias: Revise construction methods. Try to utilize abstract
+ * superclass. Convert operands to PolynomialTerm if needed. Convert
+ * construction result to AffineTerm if needed.
  *
  * @author Leonard Fichtner (leonard.fichtner@web.de)
  *
@@ -77,9 +82,16 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 */
 	public static AbstractGeneralizedAffineTerm<?> mul(final IPolynomialTerm polynomialTerm,
 			final Rational multiplier) {
-		final GeneralizedConstructor<Monomial, AbstractGeneralizedAffineTerm<?>> constructor = PolynomialTerm::minimalRepresentation;
-		return PolynomialTermUtils.constructMul(x -> ((PolynomialTerm) x).getMonomial2Coefficient(), constructor,
-				polynomialTerm, multiplier);
+		if (polynomialTerm.isAffine()) {
+			final GeneralizedConstructor<Term, AbstractGeneralizedAffineTerm<Term>> constructor = AffineTerm::new;
+			return PolynomialTermUtils.constructMul(x -> ((AffineTerm) x).getAbstractVariable2Coefficient(),
+					constructor, polynomialTerm, multiplier);
+		} else {
+			final GeneralizedConstructor<Monomial, AbstractGeneralizedAffineTerm<?>> constructor = PolynomialTerm::minimalRepresentation;
+			return PolynomialTermUtils.constructMul(
+					x -> ((AbstractGeneralizedAffineTerm<?>) x).getMonomial2Coefficient(), constructor, polynomialTerm,
+					multiplier);
+		}
 	}
 
 	/**
@@ -260,8 +272,29 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	@Override
 	protected Pair<Rational, Rational> computeMinMax() {
 		// TODO implement for analogously to method in AffineTerm,
-		// helps only if all variables in all all monomials are variables
+		// helps only if all variables in all monomials are variables
 		return null;
+	}
+
+	@Override
+	public PolynomialTerm add(final Rational offset) {
+		final Rational newConstant;
+		if (SmtSortUtils.isRealSort(getSort())) {
+			newConstant = getConstant().add(offset);
+		} else if (SmtSortUtils.isIntSort(getSort())) {
+			if (!offset.isIntegral()) {
+				throw new UnsupportedOperationException("Cannot add non-integral summand if sort is " + getSort());
+			}
+			newConstant = getConstant().add(offset);
+		} else if (SmtSortUtils.isBitvecSort(getSort())) {
+			if (!offset.isIntegral()) {
+				throw new UnsupportedOperationException("Cannot add non-integral summand if sort is " + getSort());
+			}
+			newConstant = PolynomialTermUtils.bringBitvectorValueInRange(getConstant().add(offset), getSort());
+		} else {
+			throw new AssertionError("unsupported Sort " + getSort());
+		}
+		return new PolynomialTerm(getSort(), newConstant, getAbstractVariable2Coefficient());
 	}
 
 	@Override
@@ -289,7 +322,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	}
 
 	@Override
-	public PolynomialTerm divInvertible(final Rational divisor) {
+	public AbstractGeneralizedAffineTerm<?> divInvertible(final Rational divisor) {
 		final HashMap<Monomial, Rational> newAbstractVariable2Coefficient = new HashMap<>();
 		for (final Entry<Monomial, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
 			final Rational newCoefficient = PolynomialTermUtils.divInvertible(getSort(), entry.getValue(), divisor);

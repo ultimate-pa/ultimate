@@ -905,7 +905,7 @@ public final class TransFormulaUtils {
 				continue;
 			}
 			if (cellPrecisionForArrays && SmtSortUtils.isArraySort(bv.getTermVariable().getSort())) {
-				final Set<Term> stores = SmtUtils.extractApplicationTerms("store", tf.getFormula(), false);
+				final Set<ApplicationTerm> stores = SmtUtils.extractApplicationTerms("store", tf.getFormula(), false);
 				for (final Term store : stores) {
 					final ApplicationTerm appTerm = (ApplicationTerm) store;
 					final Term storedValue = appTerm.getParameters()[2];
@@ -1325,7 +1325,7 @@ public final class TransFormulaUtils {
 			resultEqualities.add(equalitiy);
 			final Term resultStore =
 					mgdScript.getScript().term("store", arrTriple.getFirst(), idxTriple.getFirst(), newAuxVar);
-			substitutionMapping.put(arrayStore.asTerm(), resultStore);
+			substitutionMapping.put(arrayStore.getTerm(), resultStore);
 		}
 		final Term resultTerm = Substitution.apply(mgdScript, substitutionMapping, term);
 		return new Triple<>(resultTerm, resultVariables, resultEqualities);

@@ -210,13 +210,13 @@ public class Expression2Term {
 						binexp.getLeft().getType(), binexp.getRight().getType());
 				final String negationFuncname =
 						mOperationTranslator.opTranslation(UnaryExpression.Operator.LOGICNEG, BoogieType.TYPE_BOOL);
-				return SmtUtils.termWithLocalSimplification(mScript, negationFuncname, null, null,
-						SmtUtils.termWithLocalSimplification(mScript, equalityFuncname, null, null,
+				return SmtUtils.unfTerm(mScript, negationFuncname, null, null,
+						SmtUtils.unfTerm(mScript, equalityFuncname, null, null,
 								translate(binexp.getLeft()), translate(binexp.getRight())));
 			}
 			final String funcname =
 					mOperationTranslator.opTranslation(op, binexp.getLeft().getType(), binexp.getRight().getType());
-			return SmtUtils.termWithLocalSimplification(mScript, funcname, null, null, translate(binexp.getLeft()),
+			return SmtUtils.unfTerm(mScript, funcname, null, null, translate(binexp.getLeft()),
 					translate(binexp.getRight()));
 		} else if (exp instanceof UnaryExpression) {
 			final UnaryExpression unexp = (UnaryExpression) exp;
@@ -228,7 +228,7 @@ public class Expression2Term {
 				return term;
 			}
 			final String funcname = mOperationTranslator.opTranslation(op, unexp.getExpr().getType());
-			return SmtUtils.termWithLocalSimplification(mScript, funcname, null, null, translate(unexp.getExpr()));
+			return SmtUtils.unfTerm(mScript, funcname, null, null, translate(unexp.getExpr()));
 		} else if (exp instanceof RealLiteral) {
 			final Term result = mOperationTranslator.realTranslation((RealLiteral) exp);
 			assert result != null;
@@ -402,7 +402,7 @@ public class Expression2Term {
 				result = mScript.term(funcSymb, indices, null, parameters);
 			} else {
 				// simplification is overkill for non-bv operations
-				result = SmtUtils.termWithLocalSimplification(mScript, funcSymb, indices, null, parameters);
+				result = SmtUtils.unfTerm(mScript, funcSymb, indices, null, parameters);
 			}
 		}
 		return result;

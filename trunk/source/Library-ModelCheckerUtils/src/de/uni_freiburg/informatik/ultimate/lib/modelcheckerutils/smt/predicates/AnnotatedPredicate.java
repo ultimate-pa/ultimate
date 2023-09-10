@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates
 import java.util.Objects;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -59,6 +60,11 @@ public abstract class AnnotatedPredicate<P extends IPredicate, A> implements IPr
 	@Override
 	public Set<IProgramVar> getVars() {
 		return mUnderlying.getVars();
+	}
+
+	@Override
+	public Set<IProgramFunction> getFuns() {
+		return mUnderlying.getFuns();
 	}
 
 	@Override

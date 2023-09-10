@@ -60,7 +60,7 @@ public class ParameterPartition {
 	private Term mTermWithPushedQuantifier;
 
 	public ParameterPartition(final Script script, final EliminationTask et) {
-		final Term[] params = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
+		final Term[] params = QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), et.getTerm());
 		if (params.length == 1) {
 			throw new IllegalArgumentException("Expected dual finite junction");
 		}

@@ -137,7 +137,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 				indices[0] = BigInteger.valueOf(targetwidth - 1);
 				indices[1] = BigInteger.valueOf(0);
 
-				return BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices, term);
+				return BitvectorUtils.unfTerm(mScript, "extract", indices, term);
 
 
 		} else {
@@ -145,9 +145,9 @@ public class IntToBvBackTranslation extends TermTransformer {
 			final BigInteger[] indices = new BigInteger[1];
 			indices[0] = BigInteger.valueOf(extendby);
 			if (!argsigned) {
-				return BitvectorUtils.termWithLocalSimplification(mScript, "zero_extend", indices, term);
+				return BitvectorUtils.unfTerm(mScript, "zero_extend", indices, term);
 			} else {
-				return BitvectorUtils.termWithLocalSimplification(mScript, "sign_extend", indices, term);
+				return BitvectorUtils.unfTerm(mScript, "sign_extend", indices, term);
 			}
 		}
 
@@ -219,8 +219,8 @@ public class IntToBvBackTranslation extends TermTransformer {
 		if (appTerm instanceof TermVariable) {
 			return appTerm;
 		}
-		final MultiDimensionalSelect mds = MultiDimensionalSelect.convert(appTerm);
-		if (mds != null) {
+		final MultiDimensionalSelect mds = MultiDimensionalSelect.of(appTerm);
+		if (mds.getIndex().size() > 0) {
 			array = mds.getArray();
 		} else {
 			final MultiDimensionalSelectOverNestedStore mdsons =
@@ -421,7 +421,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 			for (int i = 0; i < args.length; i++) {
 				newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
 			}
-			setResult(BitvectorUtils.termWithLocalSimplification(mScript, "bvand", null, newargs));
+			setResult(BitvectorUtils.unfTerm(mScript, "bvand", null, newargs));
 			return;
 		}
 		if (fsym.isIntern()) {
@@ -443,13 +443,13 @@ public class IntToBvBackTranslation extends TermTransformer {
 					for (int i = 0; i < args.length; i++) {
 						newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
 					}
-					setResult(BitvectorUtils.termWithLocalSimplification(mScript, "bvslt", null, newargs));
+					setResult(BitvectorUtils.unfTerm(mScript, "bvslt", null, newargs));
 					return;
 				} else {
 					for (int i = 0; i < args.length; i++) {
 						newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
 					}
-					setResult(BitvectorUtils.termWithLocalSimplification(mScript, "bvult", null, newargs));
+					setResult(BitvectorUtils.unfTerm(mScript, "bvult", null, newargs));
 					return;
 				}
 			}
@@ -458,13 +458,13 @@ public class IntToBvBackTranslation extends TermTransformer {
 					for (int i = 0; i < args.length; i++) {
 						newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
 					}
-					setResult(BitvectorUtils.termWithLocalSimplification(mScript, "bvsle", null, newargs));
+					setResult(BitvectorUtils.unfTerm(mScript, "bvsle", null, newargs));
 					return;
 				} else {
 					for (int i = 0; i < args.length; i++) {
 						newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
 					}
-					setResult(BitvectorUtils.termWithLocalSimplification(mScript, "bvule", null, newargs));
+					setResult(BitvectorUtils.unfTerm(mScript, "bvule", null, newargs));
 					return;
 				}
 			}
@@ -473,13 +473,13 @@ public class IntToBvBackTranslation extends TermTransformer {
 					for (int i = 0; i < args.length; i++) {
 						newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
 					}
-					setResult(BitvectorUtils.termWithLocalSimplification(mScript, "bvsge", null, newargs));
+					setResult(BitvectorUtils.unfTerm(mScript, "bvsge", null, newargs));
 					return;
 				} else {
 					for (int i = 0; i < args.length; i++) {
 						newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
 					}
-					setResult(BitvectorUtils.termWithLocalSimplification(mScript, "bvuge", null, newargs));
+					setResult(BitvectorUtils.unfTerm(mScript, "bvuge", null, newargs));
 					return;
 				}
 			}
@@ -488,13 +488,13 @@ public class IntToBvBackTranslation extends TermTransformer {
 					for (int i = 0; i < args.length; i++) {
 						newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
 					}
-					setResult(BitvectorUtils.termWithLocalSimplification(mScript, "bvsgt", null, newargs));
+					setResult(BitvectorUtils.unfTerm(mScript, "bvsgt", null, newargs));
 					return;
 				} else {
 					for (int i = 0; i < args.length; i++) {
 						newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
 					}
-					setResult(BitvectorUtils.termWithLocalSimplification(mScript, "bvugt", null, newargs));
+					setResult(BitvectorUtils.unfTerm(mScript, "bvugt", null, newargs));
 					return;
 				}
 			}
@@ -518,7 +518,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 								new BitvectorConstant(BigInteger.ZERO, BigInteger.valueOf(getTwoExponent(value))));
 
 						setResult(
-								BitvectorUtils.termWithLocalSimplification(mScript, "concat", null, args[0],
+								BitvectorUtils.unfTerm(mScript, "concat", null, args[0],
 								extendby));
 						return;
 					}
@@ -527,7 +527,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 				for (int i = 0; i < args.length; i++) {
 					newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
 				}
-				setResult(BitvectorUtils.termWithLocalSimplification(mScript, "bvmul", null, newargs));
+				setResult(BitvectorUtils.unfTerm(mScript, "bvmul", null, newargs));
 				return;
 			}
 			case "-": {
@@ -540,7 +540,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 					for (int i = 0; i < args.length; i++) {
 						newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
 					}
-					setResult(BitvectorUtils.termWithLocalSimplification(mScript, "bvsub", null, newargs));
+					setResult(BitvectorUtils.unfTerm(mScript, "bvsub", null, newargs));
 					return;
 				}
 
@@ -556,7 +556,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 						indices[1] = BigInteger.valueOf(0);
 						// translate: (mod s t)-> (extract s)
 						// TODO argument smaller than expoenent
-						setResult(BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices, args[0]));
+						setResult(BitvectorUtils.unfTerm(mScript, "extract", indices, args[0]));
 						return;
 					}
 				}
@@ -571,18 +571,18 @@ public class IntToBvBackTranslation extends TermTransformer {
 					final BigInteger[] indices = new BigInteger[2];
 					indices[0] = BigInteger.valueOf(width - 1);
 					indices[1] = BigInteger.valueOf(width - 1);
-					final Term bvsmod = BitvectorUtils.termWithLocalSimplification(mScript, "bvsmod", null, newargs);
+					final Term bvsmod = BitvectorUtils.unfTerm(mScript, "bvsmod", null, newargs);
 					final Term ifTerm = SmtUtils.binaryEquality(mScript,
-							BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices, newargs[1]), one);
-					final Term thenTerm = BitvectorUtils.termWithLocalSimplification(mScript, "bvneg", null,
-							BitvectorUtils.termWithLocalSimplification(mScript, "bvsub", null, newargs[1], bvsmod));
+							BitvectorUtils.unfTerm(mScript, "extract", indices, newargs[1]), one);
+					final Term thenTerm = BitvectorUtils.unfTerm(mScript, "bvneg", null,
+							BitvectorUtils.unfTerm(mScript, "bvsub", null, newargs[1], bvsmod));
 					setResult(Util.ite(mScript, ifTerm, thenTerm, bvsmod));
 					return;
 				} else {
 					for (int i = 0; i < args.length; i++) {
 						newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
 					}
-					setResult(BitvectorUtils.termWithLocalSimplification(mScript, "bvurem", null, newargs));
+					setResult(BitvectorUtils.unfTerm(mScript, "bvurem", null, newargs));
 					return;
 				}
 			}
@@ -607,7 +607,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 						indices[1] = BigInteger.valueOf(twoExpo);
 
 
-						setResult(BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices, args[0]));
+						setResult(BitvectorUtils.unfTerm(mScript, "extract", indices, args[0]));
 						return;
 					}
 					}
@@ -618,8 +618,8 @@ public class IntToBvBackTranslation extends TermTransformer {
 					for (int i = 0; i < args.length; i++) {
 						newargs[i] = bringTermToWidth(args[i], width, isSigned(oldargs[i]));
 					}
-					final Term bvsdiv = BitvectorUtils.termWithLocalSimplification(mScript, "bvsdiv", null, newargs);
-					final Term bvurem = BitvectorUtils.termWithLocalSimplification(mScript, "bvurem", null, newargs);
+					final Term bvsdiv = BitvectorUtils.unfTerm(mScript, "bvsdiv", null, newargs);
+					final Term bvurem = BitvectorUtils.unfTerm(mScript, "bvurem", null, newargs);
 					final Term zeroK = BitvectorUtils.constructTerm(mScript,
 							new BitvectorConstant(BigInteger.ZERO, BigInteger.valueOf(width)));
 					final Term oneK = BitvectorUtils.constructTerm(mScript,
@@ -632,12 +632,12 @@ public class IntToBvBackTranslation extends TermTransformer {
 					indices[0] = BigInteger.valueOf(width - 1);
 					indices[1] = BigInteger.valueOf(width - 1);
 					final Term extractLHS =
-							BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices, newargs[0]);
+							BitvectorUtils.unfTerm(mScript, "extract", indices, newargs[0]);
 					final Term extractRHS =
-							BitvectorUtils.termWithLocalSimplification(mScript, "extract", indices, newargs[1]);
+							BitvectorUtils.unfTerm(mScript, "extract", indices, newargs[1]);
 
-					final Term bvsub = BitvectorUtils.termWithLocalSimplification(mScript, "bvsub", null, bvsdiv, oneK);
-					final Term bvadd = BitvectorUtils.termWithLocalSimplification(mScript, "bvadd", null, bvsdiv, oneK);
+					final Term bvsub = BitvectorUtils.unfTerm(mScript, "bvsub", null, bvsdiv, oneK);
+					final Term bvadd = BitvectorUtils.unfTerm(mScript, "bvadd", null, bvsdiv, oneK);
 
 					final Term ifTerm3 = SmtUtils.and(mScript, SmtUtils.binaryEquality(mScript, extractLHS, one),
 							SmtUtils.binaryEquality(mScript, extractRHS, one));
@@ -657,7 +657,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 						for (int i = 0; i < args.length; i++) {
 							newargs[i] = bringTermToWidth(args[i], getWidth(appTerm), isSigned(oldargs[i]));
 						}
-						setResult(BitvectorUtils.termWithLocalSimplification(mScript, "bvudiv", null, newargs));
+						setResult(BitvectorUtils.unfTerm(mScript, "bvudiv", null, newargs));
 						return;
 
 
@@ -669,16 +669,16 @@ public class IntToBvBackTranslation extends TermTransformer {
 				return;
 			}
 			case "select": {
+				final var index = bringTermToWidth(args[1],
+						Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]), false);
 				if (Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]) != Integer
-						.parseInt(args[1].getSort().getIndices()[0])) {
+						.parseInt(index.getSort().getIndices()[0])) {
 					// TODO why does bringTermToWidth not work?
 					throw new AssertionError(String.format("Cannot access array with %sbit indices via %sbit term.",
 							Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]),
-							Integer.parseInt(args[1].getSort().getIndices()[0])));
+							Integer.parseInt(index.getSort().getIndices()[0])));
 				}
-				setResult(mScript.term("select", args[0],
-						bringTermToWidth(args[1], Integer.parseInt(args[0].getSort().getArguments()[0].getIndices()[0]),
-								false)));
+				setResult(mScript.term("select", args[0], index));
 				return;
 			}
 			case "store": {
@@ -699,7 +699,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 			}
 
 			default:
-				setResult(SmtUtils.termWithLocalSimplification(mScript, fsym, args));
+				setResult(SmtUtils.unfTerm(mScript, fsym, args));
 				return;
 
 			}

@@ -106,7 +106,7 @@ public class DerPreprocessor extends TermTransformer {
 		boolean existsEqualityThatIsNotOnTopLevel = false;
 		BinaryEqualityRelation someTopLevelEquality = null;
 		DerCase derCase = null;
-		final Set<Term> topLevelDualJuncts = Arrays.stream(QuantifierUtils.getXjunctsInner(quantifier, input))
+		final Set<Term> topLevelDualJuncts = Arrays.stream(QuantifierUtils.getDualFiniteJuncts(quantifier, input))
 				.collect(Collectors.toSet());
 		for (final BinaryEqualityRelation ber : classification.getImage(DerCase.CLASSICAL_DER)) {
 			if (topLevelDualJuncts.contains(ber.toTerm(mgdScript.getScript()))) {
@@ -183,7 +183,7 @@ public class DerPreprocessor extends TermTransformer {
 		Term result;
 		switch (derCase) {
 		case EQ_SELECT:
-			final MultiDimensionalSelect as = MultiDimensionalSelect.convert(otherSide);
+			final MultiDimensionalSelect as = MultiDimensionalSelect.of(otherSide);
 			result = constructReplacementForSelectCase(as.getArray(), as.getIndex(), mgdScript, eliminatee, quantifier,
 					airc);
 			break;
@@ -238,8 +238,8 @@ public class DerPreprocessor extends TermTransformer {
 				}
 			}
 		}
-		final MultiDimensionalSelect arraySelect = MultiDimensionalSelect.convert(otherSide);
-		if (arraySelect != null) {
+		final MultiDimensionalSelect arraySelect = MultiDimensionalSelect.of(otherSide);
+		if (arraySelect.getIndex().size() > 0) {
 			return DerCase.EQ_SELECT;
 		}
 		throw new UnsupportedOperationException("DerPreprocessor supports only store and select, but not " + otherSide);
@@ -332,7 +332,7 @@ public class DerPreprocessor extends TermTransformer {
 		if (newIndex == arrayIndex) {
 			throw new AssertionError("no need to replace index");
 		}
-		final MultiDimensionalSelect mds = new MultiDimensionalSelect(array, newIndex, mgdScript.getScript());
+		final MultiDimensionalSelect mds = new MultiDimensionalSelect(array, newIndex);
 		final Term result = QuantifierUtils.applyDerOperator(mgdScript.getScript(), quantifier, eliminatee,
 				mds.toTerm(mgdScript.getScript()));
 		return result;
@@ -351,7 +351,7 @@ public class DerPreprocessor extends TermTransformer {
 	private static Term constructDisjointIndexImplication(final ArrayIndex innermostIndex,
 			final LinkedList<ArrayIndex> indices, final Term innermostValue, final Term arr, final Script script,
 			final int quantifier, final ArrayIndexEqualityManager aiem) {
-		final Term select = new MultiDimensionalSelect(arr, innermostIndex, script).toTerm(script);
+		final Term select = new MultiDimensionalSelect(arr, innermostIndex).toTerm(script);
 		final ArrayList<Term> correspondingFiniteJuncts = new ArrayList(
 				indices.stream().map(x -> aiem.constructDerRelation(script, quantifier, innermostIndex, x))
 						.collect(Collectors.toList()));

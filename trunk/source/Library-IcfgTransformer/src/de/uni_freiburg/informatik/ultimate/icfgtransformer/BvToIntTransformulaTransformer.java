@@ -190,14 +190,19 @@ public final class BvToIntTransformulaTransformer implements ITransformulaTransf
 
 	@Override
 	public AxiomTransformationResult transform(final IPredicate oldAxioms) {
+		if (!oldAxioms.getFuns().isEmpty()) {
+			throw new UnsupportedOperationException(String.format(
+					"Cannot yet translate axioms but CFG has axioms that contain %s uninterpreted function symbols",
+					oldAxioms.getFuns().size()));
+		}
 
 		final Triple<Term, Set<TermVariable>, Boolean> result =
 				translateTerm(mMgdScript, new HashMap<>(mVarTrans.getIProgramConstTermMap()), oldAxioms.getFormula());
 		// Quantify auxiliary variables
 		final Term withoutAuxVars = SmtUtils.quantifier(mMgdScript.getScript(), QuantifiedFormula.EXISTS,
 				result.getSecond(), result.getFirst());
-		final IPredicate transformedAxiom =
-				new BasicPredicate(0, new String[0], withoutAuxVars, Collections.emptySet(), withoutAuxVars);
+		final IPredicate transformedAxiom = new BasicPredicate(0, new String[0], withoutAuxVars, Collections.emptySet(),
+				oldAxioms.getFuns(), withoutAuxVars);
 		final boolean isOverappoximation = result.getThird();
 		return new AxiomTransformationResult(transformedAxiom, isOverappoximation);
 	}

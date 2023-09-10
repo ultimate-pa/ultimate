@@ -168,9 +168,8 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 			final String randomWorkspaceLoc = Path.fromOSString(workspaceLoc).append(randomSubDir).toOSString();
 			instanceLocation.set(new URL("file", null, randomWorkspaceLoc), false);
 			final File toDelete = new File(randomWorkspaceLoc);
-			// hacky: We "load" CoreUtil by resolving CoreUtil.class, or else it crashes (possibly RCP bug)
 			final Thread deleteWorkspaceThread =
-					new Thread(new DeleteDir(toDelete), "DeleteRandomWorkspace_" + CoreUtil.class.getSimpleName());
+					new Thread(() -> CoreUtil.deleteDirectory(toDelete), "DeleteRandomWorkspace");
 			Runtime.getRuntime().addShutdownHook(deleteWorkspaceThread);
 		}
 
@@ -220,7 +219,7 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 			return null;
 		}
 
-		final String[] recognizedProperties = new String[] { "@user.home" };
+		final String[] recognizedProperties = { "@user.home" };
 		for (final String recognizedProperty : recognizedProperties) {
 			if (workspaceloc.contains(recognizedProperty)) {
 				workspaceloc =
@@ -241,7 +240,6 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 			mLogger.fatal("Could not find a controller. Ultimate will exit.");
 			return -1;
 		}
-		// TODO: Find better way than this cast
 		mLoggingService.setCurrentControllerID(getCurrentControllerID());
 		final int returnCode = getCurrentController().init(this);
 		final String msg = "Preparing to exit Ultimate with return code " + returnCode;
@@ -317,7 +315,7 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 			}
 			return;
 		}
-		assert controller != null;
+		assert controller != null : "There is no controller";
 		mCurrentController = controller;
 	}
 
@@ -389,6 +387,22 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 		return mCoreStorage.getPreferenceProvider(pluginId);
 	}
 
+	public static final class UltimateJobChangeAdapter extends JobChangeAdapter {
+		private final ILogger mLogger;
+
+		private UltimateJobChangeAdapter(final ILogger logger) {
+			mLogger = logger;
+		}
+
+		@Override
+		public void done(final IJobChangeEvent event) {
+			if (event == null || event.getResult() == null || event.getResult().getException() == null) {
+				return;
+			}
+			mLogger.error("Error during toolchain job processing:", event.getResult().getException());
+		}
+	}
+
 	@Override
 	public String getUltimateVersionString() {
 		if (mUltimateVersion == null) {
@@ -413,42 +427,6 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 			return major;
 		}
 		return major + "-" + gitVersion;
-	}
-
-	private static final class UltimateJobChangeAdapter extends JobChangeAdapter {
-		private final ILogger mLogger;
-
-		private UltimateJobChangeAdapter(final ILogger logger) {
-			mLogger = logger;
-		}
-
-		@Override
-		public void done(final IJobChangeEvent event) {
-			if (event == null) {
-				return;
-			}
-			if (event.getResult() == null) {
-				return;
-			}
-			if (event.getResult().getException() == null) {
-				return;
-			}
-			mLogger.error("Error during toolchain job processing:", event.getResult().getException());
-		}
-	}
-
-	private static final class DeleteDir implements Runnable {
-
-		private final File mToDelete;
-
-		private DeleteDir(final File toDelete) {
-			mToDelete = toDelete;
-		}
-
-		@Override
-		public void run() {
-			CoreUtil.deleteDirectory(mToDelete);
-		}
 	}
 
 }

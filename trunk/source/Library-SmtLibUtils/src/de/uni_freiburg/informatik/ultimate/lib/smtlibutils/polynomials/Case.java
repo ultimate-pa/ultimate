@@ -32,7 +32,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class Case implements ITermProviderOnDemand {
+public class Case implements ITermProvider {
 
 	protected final SolvedBinaryRelation mSolvedBinaryRelation;
 	protected final Set<SupportingTerm> mSupportingTerms;
@@ -98,10 +98,10 @@ public class Case implements ITermProviderOnDemand {
 	}
 
 	@Override
-	public Term asTerm(final Script script) {
-		final Collection<Term> params = mSupportingTerms.stream().map(x -> x.asTerm()).collect(Collectors.toList());
+	public Term toTerm(final Script script) {
+		final Collection<Term> params = mSupportingTerms.stream().map(x -> x.getTerm()).collect(Collectors.toList());
 		if (mSolvedBinaryRelation != null) {
-			params.add(mSolvedBinaryRelation.asTerm(script));
+			params.add(mSolvedBinaryRelation.toTerm(script));
 		}
 		final Term result;
 		switch (mXnf) {

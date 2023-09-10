@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.LocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
@@ -178,10 +179,11 @@ public final class MappedTerm2Expression implements Serializable {
 				final IBoogieType booleanType = mTypeSortTranslator.getType(SmtSortUtils.getBoolSort(mScript));
 				return new BooleanLiteral(null, booleanType, false);
 			}
-			final ProgramConst boogieConst = mBoogie2SmtSymbolTable.getProgramConst(term);
-			if (boogieConst != null) {
+			final ProgramFunction programFun = mBoogie2SmtSymbolTable.getProgramFun(term.getFunction());
+			if (programFun instanceof ProgramConst) {
 				return new IdentifierExpression(null, mTypeSortTranslator.getType(term.getSort()),
-						boogieConst.getIdentifier(), new DeclarationInformation(StorageClass.GLOBAL, null));
+						((ProgramConst) programFun).getIdentifier(),
+						new DeclarationInformation(StorageClass.GLOBAL, null));
 			}
 			if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
 				return translateWithSymbolTable(symb, type, termParams, variableRewriteMap, alternateOldNames);

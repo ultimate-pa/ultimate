@@ -64,9 +64,9 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DotWriterNew;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
@@ -147,7 +147,7 @@ public class RtInconcistencyConditionGenerator {
 	private int mQuantifiedQuery;
 	private int mQelimQuery;
 
-	private final PureSubstitution mConstInliner;
+	private final Map<Term, Term> mConstInlineMap;
 
 	private final ILogger mPQELogger;
 	private final IEpsilonTransformer mEpsilonTransformer;
@@ -197,7 +197,7 @@ public class RtInconcistencyConditionGenerator {
 			mEpsilonTransformer = IEpsilonTransformer.identity();
 		}
 		final Map<Term, Term> constToValue = createConst2Value(mScript, mReqSymboltable, mBoogie2Smt);
-		mConstInliner = new PureSubstitution(mScript, constToValue);
+		mConstInlineMap = Collections.unmodifiableMap(constToValue);
 
 		if (mSeparateInvariantHandling) {
 			mPrimedInvariant = toNormalform(constructPrimedStateInvariant(reqPeas));
@@ -271,9 +271,6 @@ public class RtInconcistencyConditionGenerator {
 
 		SolverSettings settings = SolverBuilder.constructSolverSettings()
 				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
-		// SolverSettings settings =
-		// SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.Internal_SMTInterpol)
-		// .setSolverLogics(Logics.ALL);
 		if (SOLVER_LOG_DIR != null) {
 			settings = settings.setDumpSmtScriptToFile(true, SOLVER_LOG_DIR,
 					RtInconcistencyConditionGenerator.class.getSimpleName(), false);
@@ -399,7 +396,7 @@ public class RtInconcistencyConditionGenerator {
 			subst.put(var, newVar);
 		}
 		assert subst.values().stream().anyMatch(oldVars::contains) : "Var with same name already exists";
-		final Term subForm = new PureSubstitution(mScript, subst).transform(formula.getSubformula());
+		final Term subForm = PureSubstitution.apply(mScript, subst, formula.getSubformula());
 		final Term renamedQuantifiedFormula =
 				mScript.quantifier(formula.getQuantifier(), newQuantVars, subForm, new Term[0]);
 		mLogger.info(prefix + ": Renamed quantified formula: " + renamedQuantifiedFormula.toStringDirect());
@@ -554,6 +551,9 @@ public class RtInconcistencyConditionGenerator {
 		mQelimQuery++;
 		final Term afterQelimFormula;
 		try {
+			// use this to generate test cases for quantifier elimination
+			// mLogger.warn(SmtTestGenerationUtils.generateQuantifierEliminationTest("nonDlc" + mQelimQuery,
+			// quantifiedFormula));
 			afterQelimFormula = tryToEliminate(quantifiedFormula);
 		} catch (final SMTLIBException ex) {
 			mLogger.fatal("Exception occured during PQE of " + term);
@@ -574,7 +574,7 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	private Term inlineConsts(final Term term) {
-		return mConstInliner.transform(term);
+		return PureSubstitution.apply(mManagedScript, mConstInlineMap, term);
 	}
 
 	private boolean querySolverIsTrue(final Term term) {

@@ -38,22 +38,31 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -224,5 +233,28 @@ public final class TraceAbstractionUtils {
 		sb.append(" }");
 		sb.append(System.lineSeparator());
 		return sb.toString();
+	}
+
+	public static <L> HoareTripleCheckerCache
+			extractHoareTriplesfromAutomaton(final NestedWordAutomaton<L, IPredicate> infeasibilityProof) {
+		final HoareTripleCheckerCache htcc = new HoareTripleCheckerCache();
+		if (infeasibilityProof == null) {
+			return htcc;
+		}
+		for (final IPredicate state : infeasibilityProof.getStates()) {
+			for (final OutgoingInternalTransition<L, IPredicate> succ : infeasibilityProof.internalSuccessors(state)) {
+				htcc.putInternal(state, (IInternalAction) succ.getLetter(), succ.getSucc(), Validity.VALID);
+			}
+
+			for (final OutgoingCallTransition<L, IPredicate> succ : infeasibilityProof.callSuccessors(state)) {
+				htcc.putCall(state, (ICallAction) succ.getLetter(), succ.getSucc(), Validity.VALID);
+			}
+
+			for (final OutgoingReturnTransition<L, IPredicate> succ : infeasibilityProof.returnSuccessors(state)) {
+				htcc.putReturn(state, succ.getHierPred(), (IReturnAction) succ.getLetter(), succ.getSucc(),
+						Validity.VALID);
+			}
+		}
+		return htcc;
 	}
 }

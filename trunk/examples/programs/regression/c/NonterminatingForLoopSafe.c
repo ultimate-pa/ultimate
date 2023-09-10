@@ -10,9 +10,9 @@
 
 int main() {
 	int i = 5;
-	int x = 1;
+	int x = 0;
 	for (;;) {
-		i = i * x;
+		i = i + x;
 		//@ assert i == 5;
 	}
 }

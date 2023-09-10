@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
 import java.util.Objects;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -184,6 +185,15 @@ public abstract class SdHoareTripleCheckHelper<L extends IAction> {
 
 	protected static boolean varsDisjointFromAssignedVars(final IPredicate state, final UnmodifiableTransFormula tf) {
 		return DataStructureUtils.haveEmptyIntersection(state.getVars(), tf.getAssignedVars());
+	}
+
+	protected static boolean disjointFunctions(final IPredicate state, final UnmodifiableTransFormula tf) {
+		// TODO Use tf.getNonTheoryFunctions() once it is supported
+		return DataStructureUtils.haveEmptyIntersection(state.getFuns(), (Set) tf.getNonTheoryConsts());
+	}
+
+	protected static boolean disjointFunctions(final IPredicate pred1, final IPredicate pred2) {
+		return DataStructureUtils.haveEmptyIntersection(pred1.getFuns(), pred2.getFuns());
 	}
 
 	/**

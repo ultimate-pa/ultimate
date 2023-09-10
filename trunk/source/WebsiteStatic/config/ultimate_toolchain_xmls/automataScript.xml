@@ -1,0 +1,5 @@
+<rundefinition>
+<name>AutomtaScriptTC</name>
+<toolchain>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter"/>
+</toolchain></rundefinition>

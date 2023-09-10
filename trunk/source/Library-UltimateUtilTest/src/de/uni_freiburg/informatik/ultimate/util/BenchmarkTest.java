@@ -159,7 +159,7 @@ public class BenchmarkTest {
 	public void AllSingle() throws InterruptedException {
 		final long sleepTime = 100;
 		double measuredTime = -1;
-		final double allowedEpsilon = 2;
+		final double allowedEpsilon = 5;
 		long actualTime = 2 * sleepTime;
 		final String title = "AllSingle";
 

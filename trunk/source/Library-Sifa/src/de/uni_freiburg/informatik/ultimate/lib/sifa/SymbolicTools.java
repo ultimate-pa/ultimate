@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
@@ -50,10 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPushTermWalker;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -95,7 +93,7 @@ public class SymbolicTools {
 		final Script script = mMngdScript.getScript();
 		mFactory = new BasicPredicateFactory(services, mMngdScript, icfg.getCfgSmtToolkit().getSymbolTable());
 		mTransformer = new PredicateTransformer<>(mMngdScript,
-				new EliminatingTermDomainOperationProvider(services, mMngdScript));
+				new TermDomainOperationProviderWithLightElimination(services, mMngdScript));
 		mTop = mFactory.newPredicate(script.term("true"));
 		mBottom = mFactory.newPredicate(script.term("false"));
 	}
@@ -155,14 +153,18 @@ public class SymbolicTools {
 		return postState;
 	}
 
+	public Term[] dnfDisjuncts(final IPredicate pred, final UnaryOperator<Term> termTransformer) {
+		final Term dnf =
+				SmtUtils.toDnf(mServices, mMngdScript, termTransformer.apply(pred.getFormula()), mXnfConversion);
+		return SmtUtils.getDisjuncts(dnf);
+	}
+
 	public Term[] dnfDisjuncts(final IPredicate pred) {
 		// TODO consider using QuantifierPusher to push quantifiers as inward as possible
 
 		// you can ensure that there are no let terms by using the unletter, but there should not be any let terms
 		// final Term unletedTerm = new FormulaUnLet().transform(pred.getFormula());
-
-		final Term dnf = SmtUtils.toDnf(mServices, mMngdScript, pred.getFormula(), mXnfConversion);
-		return SmtUtils.getDisjuncts(dnf);
+		return dnfDisjuncts(pred, x -> x);
 	}
 
 	public IPredicate top() {
@@ -248,16 +250,17 @@ public class SymbolicTools {
 	}
 
 	/**
-	 * A {@link TermDomainOperationProvider} for {@link PredicateTransformer} that tries to eliminate all quantifiers
-	 * during projection.
+	 * A {@link TermDomainOperationProvider} for {@link PredicateTransformer} that tries only uses light quantifier
+	 * elimination.
 	 *
 	 * It also logs only warning messages for PQE to avoid polluting the log.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
 	 */
-	private final class EliminatingTermDomainOperationProvider extends TermDomainOperationProvider {
+	private final class TermDomainOperationProviderWithLightElimination extends TermDomainOperationProvider {
 
-		public EliminatingTermDomainOperationProvider(final IUltimateServiceProvider services,
+		public TermDomainOperationProviderWithLightElimination(final IUltimateServiceProvider services,
 				final ManagedScript mgdScript) {
 			super(services, mgdScript);
 		}
@@ -278,15 +281,7 @@ public class SymbolicTools {
 			mStats.start(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
 			final Term quantifiedFormula =
 					SmtUtils.quantifier(mMngdScript.getScript(), quantifier, varsToQuantify, term);
-			final Term lightResult = QuantifierPushTermWalker.eliminate(mServices, mMngdScript, false,
-					PqeTechniques.LIGHT, SimplificationTechnique.NONE, quantifiedFormula);
-			Term result;
-			if (new SubtermPropertyChecker(QuantifiedFormula.class::isInstance).isSatisfiedBySomeSubterm(lightResult)) {
-				result = QuantifierPushTermWalker.eliminate(mServices, mMngdScript, true, PqeTechniques.ALL,
-						SimplificationTechnique.POLY_PAC, lightResult);
-			} else {
-				result = lightResult;
-			}
+			final Term result = PartialQuantifierElimination.eliminateLight(mServices, mMgdScript, quantifiedFormula);
 			mStats.stop(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
 			mStats.stopMax(SifaStats.Key.TOOLS_QUANTIFIERELIM_MAX_TIME);
 			return result;

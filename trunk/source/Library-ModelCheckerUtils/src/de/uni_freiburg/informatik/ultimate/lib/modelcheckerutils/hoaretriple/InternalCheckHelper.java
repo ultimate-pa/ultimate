@@ -73,9 +73,7 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper<IInternalAction> {
 		case INFEASIBLE:
 			return Validity.VALID;
 		case UNPROVEABLE:
-			// TODO We could instead check if tf has any constants in common with pre.
-			// However, this requires IAbstractPredicate::getConstants to be supported.
-			if (varsDisjointFromInVars(pre, tf) && tf.getNonTheoryConsts().isEmpty()
+			if (varsDisjointFromInVars(pre, tf) && disjointFunctions(pre, tf)
 					&& !containsConflictingNonModifiableOldVars(act.getPrecedingProcedure(), pre)) {
 				mStatistics.getSDtfsCounter().incIn();
 				return Validity.INVALID;
@@ -151,9 +149,7 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper<IInternalAction> {
 			return null;
 		}
 
-		if (!tf.getNonTheoryConsts().isEmpty()) {
-			// TODO We could instead check if tf has any constants in common with pre or post.
-			// However, this requires IAbstractPredicate::getConstants to be supported.
+		if (!disjointFunctions(pre, tf) || !disjointFunctions(post, tf)) {
 			return null;
 		}
 

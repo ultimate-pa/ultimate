@@ -50,7 +50,7 @@ public class EquivalenceFinder {
 		final Set<PolynomialRelation> result = new HashSet<>();
 		final Set<AffineTerm> leqTerms = new HashSet<>();
 		for (final Term conjunct : SmtUtils.getConjuncts(term)) {
-			final PolynomialRelation polyRel = PolynomialRelation.convert(mScript, conjunct, TransformInequality.STRICT2NONSTRICT);
+			final PolynomialRelation polyRel = PolynomialRelation.of(mScript, conjunct, TransformInequality.STRICT2NONSTRICT);
 			if (polyRel == null) {
 				continue;
 			}
@@ -67,7 +67,7 @@ public class EquivalenceFinder {
 				final AffineTerm negative = symbol == RelationSymbol.LEQ ? affine2 : affine1;
 				if (leqTerms.contains(negative)) {
 					leqTerms.remove(negative);
-					result.add(new PolynomialRelation(mScript, positive, RelationSymbol.EQ));
+					result.add(PolynomialRelation.of(positive, RelationSymbol.EQ));
 				} else {
 					leqTerms.add(positive);
 				}

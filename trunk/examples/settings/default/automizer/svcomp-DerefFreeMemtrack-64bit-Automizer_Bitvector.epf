@@ -7,14 +7,13 @@ file_export_version=3.0
 
 #Fri Oct 24 16:34:36 CEST 2014
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Translation\ Mode\:=SV_COMP14
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ division\ by\ zero=IGNORE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ for\ the\ main\ procedure\ if\ all\ allocated\ memory\ was\ freed=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/If\ two\ pointers\ are\ subtracted\ or\ compared\ they\ have\ the\ same\ base\ address=IGNORE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Use\ bitvectors\ instead\ of\ ints=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Overapproximate\ operations\ on\ floating\ types=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ unreachability\ of\ error\ function\ in\ SV-COMP\ mode=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ unreachability\ of\ reach_error\ function=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Bitprecise\ bitfields=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/SV-COMP\ memtrack\ compatibility\ mode=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Memory\ model=HoenickeLindenmann_4ByteResolution
@@ -47,6 +46,11 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=cvc4 --incremental --print-success --lang smt 
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=WOLF
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ exception\ blacklist=DEPENDING
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Automaton\ type\ used\ in\ concurrency\ analysis=PETRI_NET
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Apply\ one-shot\ large\ block\ encoding\ in\ concurrent\ analysis=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Independence\ relation\ used\ for\ large\ block\ encoding\ in\ concurrent\ analysis=SYNTACTIC
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Looper\ check\ in\ Petri\ net\ analysis=SEMANTIC
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Order\ on\ configurations\ for\ Petri\ net\ unfoldings=DBO
 
 #Thu Oct 29 23:01:13 CET 2015
 file_export_version=3.0

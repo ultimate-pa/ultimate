@@ -27,11 +27,13 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
@@ -47,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * This class manages objects (in the meaning that the word has in the C-standard) with static storage duration.
@@ -69,7 +72,9 @@ public class StaticObjectsHandler {
 	private final List<Axiom> mAxioms = new ArrayList<>();
 
 	private boolean mIsFrozen;
-	private final HashRelation<String, Pair<VariableDeclaration, CDeclaration>> mGlobalVarsForCVars = new HashRelation<>();
+	private int mDeclCounter;
+	private final HashRelation<String, Triple<VariableDeclaration, CDeclaration, Integer>> mGlobalVarsForCVars =
+			new HashRelation<>();
 	private final List<VariableDeclaration> mGlobalVarsWithoutCVar = new ArrayList<>();
 
 	private final Map<TypeDeclaration, CDeclaration> mTypeDeclarationToCDeclaration;
@@ -128,33 +133,34 @@ public class StaticObjectsHandler {
 	}
 
 	public void addGlobalVariableDeclaration(final VariableDeclaration boogieDec, final CDeclaration cDec) {
-		mGlobalVarsForCVars.addPair(cDec.getName(), new Pair<>(boogieDec, cDec));
+		mGlobalVarsForCVars.addPair(cDec.getName(), new Triple<>(boogieDec, cDec, mDeclCounter));
+		mDeclCounter++;
 	}
 
 	/**
-	 * If the same variable is declared multiple times (within the same scope), we
-	 * only keep one declaration if one of them has an initializer, we keep that
-	 * one.
+	 * If the same variable is declared multiple times (within the same scope), we only keep one declaration. If one of
+	 * them has an initializer, we keep that one.
 	 */
 	public List<Pair<VariableDeclaration, CDeclaration>> computeSuitableGlobalVarDecls() {
 		// Matthias 20221110: Unfortunately, we cannot require that this object is frozen.
 		// This method is called by the PostProcessor and something modifies this object afterwards.
-		final List<Pair<VariableDeclaration, CDeclaration>> result = new ArrayList<>();
+		final List<Triple<VariableDeclaration, CDeclaration, Integer>> result = new ArrayList<>();
 		for (final String id : mGlobalVarsForCVars.getDomain()) {
-			final Set<Pair<VariableDeclaration, CDeclaration>> decls = mGlobalVarsForCVars.getImage(id);
-			final Pair<VariableDeclaration, CDeclaration> varDecl = computeSuitableVarDecl(decls);
+			final Set<Triple<VariableDeclaration, CDeclaration, Integer>> decls = mGlobalVarsForCVars.getImage(id);
+			final Triple<VariableDeclaration, CDeclaration, Integer> varDecl = computeSuitableVarDecl(decls);
 			result.add(varDecl);
 		}
-		return result;
+		return result.stream().sorted(Comparator.comparingInt(Triple::getThird))
+				.map(trip -> new Pair<>(trip.getFirst(), trip.getSecond())).collect(Collectors.toList());
 	}
 
-	private Pair<VariableDeclaration, CDeclaration> computeSuitableVarDecl(
-			final Set<Pair<VariableDeclaration, CDeclaration>> decls) {
+	private Triple<VariableDeclaration, CDeclaration, Integer>
+			computeSuitableVarDecl(final Set<Triple<VariableDeclaration, CDeclaration, Integer>> decls) {
 		if (decls.size() == 1) {
 			return decls.iterator().next();
 		} else {
-			Pair<VariableDeclaration, CDeclaration> suiteableDecl = null;
-			for (final Pair<VariableDeclaration, CDeclaration> pair : decls) {
+			Triple<VariableDeclaration, CDeclaration, Integer> suiteableDecl = null;
+			for (final Triple<VariableDeclaration, CDeclaration, Integer> pair : decls) {
 				if (pair.getSecond().getInitializer() != null) {
 					if (suiteableDecl == null) {
 						suiteableDecl = pair;

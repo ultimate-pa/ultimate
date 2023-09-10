@@ -1,0 +1,85 @@
+{
+	"de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction": [
+		"SMT solver",
+		"Compute Interpolants along a Counterexample",
+		"Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
+		"Positions where we compute the Hoare Annotation",
+		"Trace refinement exception blacklist",
+		"Trace refinement strategy",
+		"Abstract interpretation Mode",
+		"Automaton type used in concurrency analysis",
+		"Apply one-shot large block encoding in concurrent analysis",
+		"Partial Order Reduction in concurrent analysis",
+		"CEGAR restart behaviour",
+		"Partial Order Reduction in concurrent analysis",
+		"DFS Order used in POR"
+	],
+	"de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder": [
+		"SMT solver",
+		"Size of a code block"
+	],
+	"de.uni_freiburg.informatik.ultimate.source.smtparser": [
+		"SMT solver",
+		"SmtParser Mode"
+	],
+	"de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck": [
+		"Use standard solver (from RCFGBuilder) with FP interpolation as fallback",
+		"interpolation mode",
+		"Choose which separate solver to use for tracechecks"
+	],
+	"de.uni_freiburg.informatik.ultimate.boogie.procedureinliner": [
+		"Ignore calls to procedures called more than once",
+		"User list type"
+	],
+	"de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator": [
+		"Check absence of data races in concurrent programs",
+		"Pointer base address is valid at dereference",
+		"Check if freed pointer was valid",
+		"Check unreachability of error function in SV-COMP mode",
+		"If two pointers are subtracted or compared they have the same base address",
+		"Check array bounds for arrays that are off heap",
+		"Use constant arrays",
+		"Check division by zero",
+		"Overapproximate operations on floating types",
+		"Pointer to allocated memory at dereference",
+		"Check for the main procedure if all allocated memory was freed",
+		"Check absence of signed integer overflows",
+		"Use bitvectors instead of ints",
+		"Memory model",
+		"Adapt memory model on pointer casts if necessary",
+		"Entry function",
+		"Report unsoundness warnings"
+	],
+	"de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer": [
+		"Try twofold refinement",
+		"Use old map elimination"
+	],
+	"de.uni_freiburg.informatik.ultimate.plugins.blockencoding": [
+		"Use SBE",
+		"Minimize states even if more edges are added than removed.",
+		"Rewrite not-equals",
+		"Create parallel compositions if possible",
+		"Minimize states using LBE with the strategy"
+	],
+	"de.uni_freiburg.informatik.ultimate.core": [
+		"Log level for class"
+	],
+	"de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker": [
+		"Only non-decreasing invariants",
+		"Nontermination analysis",
+		"Termination analysis"
+	],
+	"de.uni_freiburg.informatik.ultimate.plugins.sifa": [
+		"Call Summarizer",
+		"Simplification Technique"
+	],
+	"de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2": [
+		"Explicit value domain",
+		"Octagon Domain",
+		"Use the RCFG-of-the-future interface",
+		"Abstract domain for RCFG-of-the-future",
+		"Check feasibility of abstract posts with an SMT solver",
+		"Interval Domain",
+		"Abstract domain"
+	]
+}

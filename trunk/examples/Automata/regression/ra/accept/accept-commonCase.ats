@@ -1,0 +1,14 @@
+// Author: pm251@venus.uni-freiburg.de
+// Date: 2023-03-31
+
+RabinAutomaton automaton = (
+	alphabet = {a b},
+	states = {q1 q2 q3 q4 q5 q6},
+	initialStates = {q1 q4},
+	acceptingStates = {q2 q5},
+	finiteStates = {q3 q6},
+	transitions = { (q1 a q2) (q2 b q1) (q2 a q3) (q3 b q1) (q4 a q5) (q5 b q4) (q5 a q6) (q6 b q4) }
+);
+
+assert(accepts(automaton, [a a b , a b]));
+assert(!accepts(automaton, [, a a b]));

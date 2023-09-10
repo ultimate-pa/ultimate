@@ -3,21 +3,35 @@
     
 	<option name="--force-no-wrapper" />
   <option name="-tc">../../../trunk/examples/toolchains/BuchiAutomizerCInline.xml</option>
-
-  <rundefinition name="BuchiAutomizer (no LBE)">
+<!--
+  <rundefinition name="Buchi Automaton (no LBE)">
     <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-noLbe.epf</option>
 	</rundefinition>
-
-  <rundefinition name="BuchiAutomizer (semantic LBE)">
+-->
+  <rundefinition name="Buchi Automaton (semantic LBE)">
     <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-semanticLbe.epf</option>
 	</rundefinition>
-	
-	<rundefinition name="BuchiAutomizer (syntactic LBE)">
+<!--	
+	<rundefinition name="Buchi Automaton (syntactic LBE)">
     <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-syntacticLbe.epf</option>
 	</rundefinition>
-    
+  
+  <rundefinition name="Buchi PN (no LBE)">
+    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-buchi-pn-noLbe.epf</option>
+	</rundefinition>
+-->
+  <rundefinition name="Buchi PN (semantic LBE)">
+    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-buchi-pn-semanticLbe.epf</option>
+	</rundefinition>
+<!--	
+	<rundefinition name="Buchi PN (syntactic LBE)">
+    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-buchi-pn-syntacticLbe.epf</option>
+	</rundefinition>
+-->
 	<tasks name="SVCOMP ConcurrencySafety-Main">
 		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/termination.prp</propertyfile>
 	</tasks>
+  
+  <resultfiles></resultfiles>
 </benchmark>

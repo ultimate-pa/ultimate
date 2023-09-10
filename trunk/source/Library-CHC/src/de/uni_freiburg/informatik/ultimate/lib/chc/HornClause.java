@@ -10,8 +10,8 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -204,9 +204,8 @@ public class HornClause implements IRankedLetter {
 			for (int i = 0; i < mBodyPredToArgs.size(); ++i) {
 				bodySb.append(" ");
 				bodySb.append(mBodyPreds.get(i));
-				bodySb.append(mBodyPredToArgs.get(i).stream().map(
-						t -> new PureSubstitution(mHornClauseSymbolTable.getManagedScript(), prettyVariableSubstitution)
-								.transform(t))
+				bodySb.append(mBodyPredToArgs.get(i).stream().map(t -> PureSubstitution
+						.apply(mHornClauseSymbolTable.getManagedScript(), prettyVariableSubstitution, t))
 						.collect(Collectors.toList()));
 				// bodySb.append(")");
 			}
@@ -223,13 +222,12 @@ public class HornClause implements IRankedLetter {
 			final String headPred = mHeadIsFalse ? "false" : mHeadPredicate.getName();
 			head = headPred
 					+ mHeadPredVariables.stream()
-							.map(t -> new PureSubstitution(mHornClauseSymbolTable.getManagedScript(),
-									prettyVariableSubstitution).transform(t.getTermVariable()))
+							.map(t -> PureSubstitution.apply(mHornClauseSymbolTable.getManagedScript(),
+									prettyVariableSubstitution, t.getTermVariable()))
 							.collect(Collectors.toList());
 		}
-		return String.format("%s(%s) /\\ (%s) --> %s", hasComment() ? (getComment() + "| ") : "", body,
-				new PureSubstitution(mHornClauseSymbolTable.getManagedScript(), prettyVariableSubstitution)
-						.transform(mFormula).toString(),
+		return String.format("%s(%s) /\\ (%s) --> %s", hasComment() ? (getComment() + "| ") : "", body, PureSubstitution
+				.apply(mHornClauseSymbolTable.getManagedScript(), prettyVariableSubstitution, mFormula).toString(),
 				head);
 	}
 
@@ -314,21 +312,34 @@ public class HornClause implements IRankedLetter {
 			result = mgdScript.getScript().quantifier(QuantifiedFormula.FORALL, qVars, clause);
 		}
 
-		Term resultFinal;
+		final Term resultFinal;
 		if (nameAssertedTerms) {
-			// TODO: naming is rather hacky, e.g., on a hash collision, only the first term will get a name.
-			try {
-				final String qos = "t" + hashCode();
-				resultFinal = mgdScript.getScript().annotate(result, new Annotation(":named", qos));
-			} catch (final SMTLIBException sle) {
-				resultFinal = result;
-			}
+			resultFinal = nameTerm(mgdScript, result);
 		} else {
 			resultFinal = result;
 		}
 
 		mgdScript.unlock(this);
 		return resultFinal;
+	}
+
+	private Term nameTerm(final ManagedScript mgdScript, final Term term) {
+		// TODO naming is a bit hacky
+		final String qos = "t" + hashCode();
+		for (int i = 0;; i++) {
+			final var name = qos + (i == 0 ? "" : ("_" + i));
+			final var expectedError = "Function " + name + " is already defined.";
+			try {
+				return mgdScript.getScript().annotate(term, new Annotation(":named", name));
+			} catch (final SMTLIBException sle) {
+				if (expectedError.equals(sle.getMessage())) {
+					// indicates a name conflict
+					// do nothing, increment i and try again
+				} else {
+					throw sle;
+				}
+			}
+		}
 	}
 
 	@Override

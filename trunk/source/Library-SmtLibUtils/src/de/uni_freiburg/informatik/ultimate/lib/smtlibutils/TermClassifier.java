@@ -51,6 +51,12 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class TermClassifier extends NonRecursive {
 
+	/**
+	 * Follow the current (rather questionable) definition of SMT-LIB logics where
+	 * `div` and `mod` must not occur in *LIA logics.
+	 */
+	private static final boolean DIV_MOD_NEVER_LINEAR = false;
+
 	private Set<Term> mTermsInWhichWeAlreadyDescended;
 
 	private final Set<String> mOccuringSortNames;
@@ -120,11 +126,11 @@ public class TermClassifier extends NonRecursive {
 						}
 					}
 					if (appTerm.getFunction().getName().equals("mod")
-							&& !(appTerm.getParameters()[1] instanceof ConstantTerm)) {
+							&& (DIV_MOD_NEVER_LINEAR || !(appTerm.getParameters()[1] instanceof ConstantTerm))) {
 						mHasNonlinearArithmetic = true;
 					}
-					if (appTerm.getFunction().getName().equals("div")
-							&& !SolveForSubjectUtils.tailIsConstant(Arrays.asList(appTerm.getParameters()))) {
+					if (appTerm.getFunction().getName().equals("div") && (DIV_MOD_NEVER_LINEAR
+							|| !SolveForSubjectUtils.tailIsConstant(Arrays.asList(appTerm.getParameters())))) {
 						mHasNonlinearArithmetic = true;
 					}
 				}

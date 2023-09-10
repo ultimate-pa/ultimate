@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -65,7 +66,7 @@ public class PureSubstitution extends TermTransformer {
 	protected final ManagedScript mMgdScript;
 	private final ScopedHashMap<Term, Term> mScopedSubstitutionMapping;
 
-	public PureSubstitution(final Script script, final Map<? extends Term, ? extends Term> substitutionMapping) {
+	private PureSubstitution(final Script script, final Map<? extends Term, ? extends Term> substitutionMapping) {
 		super();
 		mMgdScript = null;
 		mScript = script;
@@ -73,12 +74,23 @@ public class PureSubstitution extends TermTransformer {
 		mScopedSubstitutionMapping.putAll(substitutionMapping);
 	}
 
-	public PureSubstitution(final ManagedScript mgdScript, final Map<? extends Term, ? extends Term> substitutionMapping) {
+	protected PureSubstitution(final ManagedScript mgdScript,
+			final Map<? extends Term, ? extends Term> substitutionMapping) {
 		super();
 		mMgdScript = mgdScript;
 		mScript = mgdScript.getScript();
 		mScopedSubstitutionMapping = new ScopedHashMap<>();
 		mScopedSubstitutionMapping.putAll(substitutionMapping);
+	}
+
+	public static Term apply(final Script script,
+			final Map<? extends Term, ? extends Term> substitutionMapping, final Term term) {
+		return new PureSubstitution(script, substitutionMapping).transform(term);
+	}
+
+	public static Term apply(final ManagedScript mgdScript,
+			final Map<? extends Term, ? extends Term> substitutionMapping, final Term term) {
+		return new PureSubstitution(mgdScript, substitutionMapping).transform(term);
 	}
 
 	@Override
@@ -116,7 +128,7 @@ public class PureSubstitution extends TermTransformer {
 					+ "containes quantified variable. This (rare) case is "
 					+ "only supported if you call substitution with fresh " + "variable construction.");
 		}
-		return SmtUtils.renameQuantifiedVariables(mMgdScript, qFormula, toRename, "subst");
+		return renameQuantifiedVariables(mMgdScript, qFormula, toRename, "subst");
 
 	}
 
@@ -203,5 +215,41 @@ public class PureSubstitution extends TermTransformer {
 	@Override
 	public String toString() {
 		return "Substitution " + mScopedSubstitutionMapping.toString();
+	}
+
+	/**
+	 * Given a quantified formula, rename all variables that are bound by the quantifier and occur in the set toRename
+	 * to fresh variables.
+	 *
+	 * @param freshVarPrefix
+	 *            prefix of the fresh variables
+	 */
+	private Term renameQuantifiedVariables(final ManagedScript mgdScript, final QuantifiedFormula qFormula,
+			final Set<TermVariable> toRename, final String freshVarPrefix) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final TermVariable tv : toRename) {
+			final TermVariable freshVariable = mgdScript.constructFreshTermVariable(freshVarPrefix, tv.getSort());
+			substitutionMapping.put(tv, freshVariable);
+		}
+		final Term newBody = applySubsititution(substitutionMapping, qFormula.getSubformula());
+
+		final TermVariable[] vars = new TermVariable[qFormula.getVariables().length];
+		for (int i = 0; i < vars.length; i++) {
+			final TermVariable renamed = (TermVariable) substitutionMapping.get(qFormula.getVariables()[i]);
+			if (renamed != null) {
+				vars[i] = renamed;
+			} else {
+				vars[i] = qFormula.getVariables()[i];
+			}
+		}
+		return mgdScript.getScript().quantifier(qFormula.getQuantifier(), vars, newBody);
+	}
+
+	protected Term applySubsititution(final Map<Term, Term> substitutionMapping, final Term term) {
+		if (mMgdScript == null) {
+			return PureSubstitution.apply(mScript, substitutionMapping, term);
+		} else {
+			return PureSubstitution.apply(mMgdScript, substitutionMapping, term);
+		}
 	}
 }

@@ -403,11 +403,11 @@ public class FastUPRCore {
 
 			// Get Term in positive Normal Form
 
-			final PolynomialRelation polyRel = PolynomialRelation.convert(script, t);
+			final PolynomialRelation polyRel = PolynomialRelation.of(script, t);
 			if (polyRel == null) {
 				return false;
 			}
-			t = polyRel.positiveNormalForm(script);
+			t = polyRel.toTerm(script);
 			mUtils.debug("Term as Positive Normal Form:");
 			mUtils.debug(t.toString());
 

@@ -63,7 +63,7 @@ public class AbsIntPredicate<STATE extends IAbstractState<STATE>> extends BasicP
 
 	public AbsIntPredicate(final IPredicate classicPredicate, final Set<STATE> abstractState) {
 		super(classicPredicate.hashCode(), classicPredicate.getProcedures(), classicPredicate.getFormula(),
-				classicPredicate.getVars(), classicPredicate.getClosedFormula());
+				classicPredicate.getVars(), classicPredicate.getFuns(), classicPredicate.getClosedFormula());
 		mAbstractStates = Objects.requireNonNull(abstractState);
 		mPredicate = Objects.requireNonNull(classicPredicate);
 		assert !mAbstractStates.isEmpty();

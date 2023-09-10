@@ -40,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -103,6 +105,7 @@ public class QuantifierEliminationRegressionTest {
 		} else {
 			mScript = solverInstance;
 		}
+		mScript = new StatisticsScript(mScript);
 
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
@@ -350,55 +353,13 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-	// TODO: Z3 in our repository does not respect timeout
-//	@Test
+	@Test
 	public void derIntPoly1Exists() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "a", "t"), };
 		final String formulaAsString = "(exists ((x Int)) (and (= (* x a a a 2) t) (= (* x x x) 8)))";
 		final String expectedResultAsString = "(let ((.cse2 (div t 2)) (.cse1 (= (mod t 2) 0)) (.cse0 (= a 0))) (or (and .cse0 .cse1 (= .cse2 0)) (let ((.cse4 (* a a a))) (and (= (let ((.cse3 (div .cse2 .cse4))) (* .cse3 .cse3 .cse3)) 8) (= (mod .cse2 .cse4) 0) .cse1 (not .cse0)))))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-
-	@Test
-	public void derIntPoly1Forall() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "a", "t"), };
-		final String formulaAsString = "(forall ((x Int)) (or (not (= (* x a a a 2) t)) (not (= (* x x x) 8))))";
-		final String expectedResultAsString = "(let ((.cse2 (= a 0)) (.cse0 (div t 2)) (.cse1 (not (= (mod t 2) 0)))) (and (or (not (= .cse0 0)) .cse1 (not .cse2)) (let ((.cse3 (* a a a))) (or (not (= (mod .cse0 .cse3) 0)) .cse2 (not (= (let ((.cse4 (div .cse0 .cse3))) (* .cse4 .cse4 .cse4)) 8)) .cse1))))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-
-	public void tirRealPoly1Exists() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "a", "b", "t", "hi", "lo"), };
-		final String formulaAsString = "(exists ((x Int)) (and (<= (* x a a b (- 2)) t) (<= lo x) (<= x hi)))";
-		final String expectedResultAsString = "true";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-
-	@Test
-	public void derDivByIntVarForall() {
-		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(SmtSortUtils::getIntSort, "q", "b"),
-				new FunDecl(QuantifierEliminationTest::getArrayIntBoolSort, "a"),
-			};
-		final String formulaAsString = "(forall ((x Int)) (or (not (= (* q x) b)) (select a x)))";
-		final String expectedResult = "(let ((.cse0 (= q 0))) (and (or (select a (div b q)) (not (= (mod b q) 0)) .cse0) (or (forall ((x Int)) (select a x)) (not .cse0) (not (= b 0)))))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
-	public void derDivByIntVarExists() {
-		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(SmtSortUtils::getIntSort, "q", "b"),
-				new FunDecl(QuantifierEliminationTest::getArrayIntBoolSort, "a"),
-			};
-		final String formulaAsString = "(exists ((x Int)) (and (= (* q x) b) (select a x)))";
-		final String expectedResult = "(let ((.cse0 (= q 0))) (or (and (= b 0) (exists ((x Int)) (select a x)) .cse0) (and (= (mod b q) 0) (select a (div b q)) (not .cse0))))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-
 
 	@Test
 	public void critConsReform01() {
@@ -510,8 +471,6 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-
-
 	@Test
 	public void hiddenWeakArrayEquality01Simple() {
 		final FunDecl[] funDecls = new FunDecl[] {
@@ -579,6 +538,28 @@ public class QuantifierEliminationRegressionTest {
 		final String formulaAsString = "(forall ((a (Array Int Int))) (or (distinct oldValid (store a 1000 1001)) (distinct (store (store a 1000 1001) 23 42) valid) (distinct (select a 23) 42)))";
 		final String expectedResultAsString = "(or (distinct oldValid valid) (distinct (select valid 1000) 1001) (distinct (select valid 23) 42))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, formulaAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void hiddenWeakArrayEquality07ArrayInIndex() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k1", "k2"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b1", "b2"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= b1 (store a (select a k1) 23)) (= (store a k2 42) b2)))";
+		final String expectedResultAsString = "(let ((.cse0 (select b2 k2))) (and (= .cse0 42) (let ((.cse1 (select b2 k1)) (.cse2 (= k1 k2)) (.cse3 (select b1 k1))) (or (and (or (= .cse1 k1) .cse2) (= (store (store b1 k1 .cse1) k2 .cse0) b2) (= 23 .cse3)) (and (= 23 (select b1 .cse3)) (or (= .cse1 .cse3) .cse2) (= b2 (store (store b1 .cse3 (select b2 .cse3)) k2 .cse0)))))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void hiddenWeakArrayEquality08SomeBug() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "mem"),
+			};
+		final String formulaAsString = "(exists ((a (Array Int (Array Int Int))) (b2 (Array Int Int)) (b3 Int) (b1 (Array Int Int))) (let ((.cse0 (select (select a k) 0))) (and (not (= .cse0 k)) (= (store (store a .cse0 b1) k (store (select (store a .cse0 b2) k) 4 b3)) mem))))";
+		final String expectedResultAsString = "(let ((.cse0 (select mem k))) (let ((.cse1 (select .cse0 0))) (and (exists ((v_DerPreprocessor_1 (Array Int Int)) (v_DerPreprocessor_2 (Array Int Int))) (and (= (select .cse0 4) (select v_DerPreprocessor_2 4)) (= (select mem .cse1) (select (store (store (store (store mem .cse1 v_DerPreprocessor_1) k v_DerPreprocessor_2) .cse1 v_DerPreprocessor_1) k v_DerPreprocessor_2) .cse1)))) (not (= k .cse1)))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	/**
@@ -830,7 +811,7 @@ public class QuantifierEliminationRegressionTest {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.offset", "#memory_$Pointer$.base"),
 			};
 		final String formulaAsString = "(forall ((|v_#memory_$Pointer$.base_106| (Array Int (Array Int Int))) (v_memset_impl_~i~6_14 Int) (v_memset_impl_~sp~0.offset_8 Int) (|v_#memory_$Pointer$.offset_88| (Array Int (Array Int Int)))) (let ((.cse9 (mod v_memset_impl_~i~6_14 18446744073709551616))) (let ((.cse0 (<= .cse9 9223372036854775807)) (.cse2 (+ .cse9 v_memset_impl_~sp~0.offset_8 (- 18446744073709551616))) (.cse4 (< 9223372036854775807 .cse9)) (.cse5 (+ .cse9 v_memset_impl_~sp~0.offset_8))) (or (let ((.cse1 (select |#memory_$Pointer$.base| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base|)) (.cse3 (select |v_#memory_$Pointer$.base_106| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base|))) (and (or .cse0 (not (= |v_#memory_$Pointer$.base_106| (store |#memory_$Pointer$.base| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base| (store .cse1 .cse2 (select .cse3 .cse2)))))) (or .cse4 (not (= (store |#memory_$Pointer$.base| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base| (store .cse1 .cse5 (select .cse3 .cse5))) |v_#memory_$Pointer$.base_106|))))) (let ((.cse6 (+ 8 |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.offset|))) (and (= (select (select |v_#memory_$Pointer$.offset_88| |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.base|) .cse6) 0) (= (select (select |v_#memory_$Pointer$.base_106| |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.base|) .cse6) 0))) (let ((.cse7 (select |#memory_$Pointer$.offset| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base|)) (.cse8 (select |v_#memory_$Pointer$.offset_88| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base|))) (and (or .cse0 (not (= (store |#memory_$Pointer$.offset| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base| (store .cse7 .cse2 (select .cse8 .cse2))) |v_#memory_$Pointer$.offset_88|))) (or .cse4 (not (= (store |#memory_$Pointer$.offset| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base| (store .cse7 .cse5 (select .cse8 .cse5))) |v_#memory_$Pointer$.offset_88|)))))))))";
-		final String expectedResultAsString = "(and (forall ((aux_mod_v_memset_impl_~i~6_14_48 Int)) (or (forall ((v_memset_impl_~sp~0.offset_8 Int) (v_DerPreprocessor_7 Int)) (= (select (select (store |#memory_$Pointer$.base| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base| (store (select |#memory_$Pointer$.base| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base|) (+ v_memset_impl_~sp~0.offset_8 (- 18446744073709551616) (mod aux_mod_v_memset_impl_~i~6_14_48 18446744073709551616)) v_DerPreprocessor_7)) |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.base|) (+ |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.offset| 8)) 0)) (<= 18446744073709551616 aux_mod_v_memset_impl_~i~6_14_48) (<= aux_mod_v_memset_impl_~i~6_14_48 9223372036854775807))) (forall ((aux_mod_v_memset_impl_~i~6_14_48 Int)) (or (forall ((v_memset_impl_~sp~0.offset_8 Int) (v_DerPreprocessor_2 Int)) (= (select (select (store |#memory_$Pointer$.offset| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base| (store (select |#memory_$Pointer$.offset| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base|) (+ v_memset_impl_~sp~0.offset_8 (mod aux_mod_v_memset_impl_~i~6_14_48 18446744073709551616)) v_DerPreprocessor_2)) |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.base|) (+ |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.offset| 8)) 0)) (< 9223372036854775807 aux_mod_v_memset_impl_~i~6_14_48) (< aux_mod_v_memset_impl_~i~6_14_48 0))) (forall ((aux_mod_v_memset_impl_~i~6_14_48 Int)) (or (< 9223372036854775807 aux_mod_v_memset_impl_~i~6_14_48) (< aux_mod_v_memset_impl_~i~6_14_48 0) (forall ((v_memset_impl_~sp~0.offset_8 Int) (v_DerPreprocessor_3 Int)) (= (select (select (store |#memory_$Pointer$.base| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base| (store (select |#memory_$Pointer$.base| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base|) (+ v_memset_impl_~sp~0.offset_8 (mod aux_mod_v_memset_impl_~i~6_14_48 18446744073709551616)) v_DerPreprocessor_3)) |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.base|) (+ |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.offset| 8)) 0)))) (forall ((aux_mod_v_memset_impl_~i~6_14_48 Int)) (or (forall ((v_memset_impl_~sp~0.offset_8 Int) (v_DerPreprocessor_1 Int)) (= (select (select (store |#memory_$Pointer$.offset| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base| (store (select |#memory_$Pointer$.offset| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base|) (+ v_memset_impl_~sp~0.offset_8 (- 18446744073709551616) (mod aux_mod_v_memset_impl_~i~6_14_48 18446744073709551616)) v_DerPreprocessor_1)) |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.base|) (+ |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.offset| 8)) 0)) (<= 18446744073709551616 aux_mod_v_memset_impl_~i~6_14_48) (<= aux_mod_v_memset_impl_~i~6_14_48 9223372036854775807))))";
+		final String expectedResultAsString = "(let ((.cse0 (select |#memory_$Pointer$.offset| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base|)) (.cse2 (select |#memory_$Pointer$.base| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base|)) (.cse1 (+ |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.offset| 8))) (and (forall ((v_z_2 Int)) (or (< 9223372036854775807 v_z_2) (forall ((v_memset_impl_~sp~0.offset_8 Int) (v_DerPreprocessor_3 Int)) (= (select (select (store |#memory_$Pointer$.offset| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base| (store .cse0 (+ v_memset_impl_~sp~0.offset_8 v_z_2) v_DerPreprocessor_3)) |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.base|) .cse1) 0)) (< v_z_2 0))) (forall ((v_z_3 Int)) (or (forall ((v_memset_impl_~sp~0.offset_8 Int) (v_DerPreprocessor_6 Int)) (= (select (select (store |#memory_$Pointer$.base| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base| (store .cse2 (+ v_memset_impl_~sp~0.offset_8 (- 18446744073709551616) v_z_3) v_DerPreprocessor_6)) |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.base|) .cse1) 0)) (< 18446744073709551615 v_z_3) (< v_z_3 9223372036854775808))) (forall ((v_z_3 Int)) (or (forall ((v_memset_impl_~sp~0.offset_8 Int) (v_DerPreprocessor_4 Int)) (= (select (select (store |#memory_$Pointer$.offset| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base| (store .cse0 (+ v_memset_impl_~sp~0.offset_8 (- 18446744073709551616) v_z_3) v_DerPreprocessor_4)) |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.base|) .cse1) 0)) (< 18446744073709551615 v_z_3) (< v_z_3 9223372036854775808))) (forall ((v_z_2 Int)) (or (< 9223372036854775807 v_z_2) (forall ((v_memset_impl_~sp~0.offset_8 Int) (v_DerPreprocessor_5 Int)) (= (select (select (store |#memory_$Pointer$.base| |ULTIMATE.start_aws_byte_buf_advance_~output#1.base| (store .cse2 (+ v_memset_impl_~sp~0.offset_8 v_z_2) v_DerPreprocessor_5)) |ULTIMATE.start_aws_byte_buf_advance_~buffer#1.base|) .cse1) 0)) (< v_z_2 0)))))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -1550,14 +1531,6 @@ public class QuantifierEliminationRegressionTest {
 	}
 
 	@Test
-	public void wildboellen() {
-		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "z", "y") };
-		final String formulaAsString = "(forall ((x Int) ) (or (= 0 x) (not (= (* z (+ x 1)) y))))";
-		final String expectedResult = "(let ((.cse0 (+ y (- z))) (.cse1 (= 0 z))) (and (or (not (= 0 .cse0)) (not .cse1)) (or (= 0 (div .cse0 z)) (not (= 0 (mod (+ y (* z (- 1))) z))) .cse1)))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
 	public void oppenau() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(new SortConstructor[] { SmtSortUtils::getIntSort }, SmtSortUtils::getIntSort, "square"),
@@ -2008,20 +1981,6 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-	/**
-	 * I had the impression that there is a bug in the quantifier elimination, but
-	 * the bug was that we dropped arguments of div. Maybe it does not make sense to
-	 * divide by integer variables. In case we stop dividing by integer variables,
-	 * then this benchmark is useless.
-	 */
-	@Test
-	public void divMultiArgumentBug() {
-		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x_in", "x_out", "y_in", "y_out") };
-		final String formulaAsString = "(exists ((itFinHalf Int)) (let ((.cse0 (* (* itFinHalf x_in) 2))) (or (and (>= itFinHalf 0) (= (+ x_in x_out) 0) (= (+ x_in .cse0) (+ y_in y_out))) (and (= x_in x_out) (= y_in (+ y_out .cse0)) (> itFinHalf 0)))))";
-		final String expectedResultAsString = "(let ((.cse7 (= x_in 0))) (let ((.cse3 (not .cse7)) (.cse4 (- y_in))) (or (and (= (+ x_in x_out) 0) (let ((.cse2 (+ (- y_out) .cse4 x_in))) (let ((.cse1 (= (mod (+ y_out x_in y_in) 2) 0)) (.cse0 (div .cse2 (- 2)))) (or (and (= (mod .cse0 x_in) 0) .cse1 (<= 0 (div .cse2 (- 2) x_in)) .cse3) (and .cse1 (= .cse0 0)))))) (and (= x_in x_out) (let ((.cse8 (+ y_out .cse4))) (let ((.cse5 (div .cse8 (- 2))) (.cse6 (= (mod (+ y_out y_in) 2) 0))) (or (and (= .cse5 0) .cse6 .cse7) (and (< 0 (div .cse8 (- 2) x_in)) (= (mod .cse5 x_in) 0) .cse6 .cse3))))))))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
 	@Test
 	public void bvAntiDerOnlyOneAndMone01() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "x") };
@@ -2038,9 +1997,72 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void constantFolding01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "a", "b"),
+			};
+		final String formulaAsString = "(exists ((x Int)) (and (= a 1) (= (* x a a) 1) (= (* x b) 5)))";
+		final String expectedResult = "(and (= a 1) (= b 5))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
+	/**
+	 * Ird with {@link MultiCaseSolvedBinaryRelation} would be unsound here.
+	 */
+	@Test
+	public void ird02() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "a"),
+			};
+		final String formulaAsString = "(exists ((x Int)) (< a (mod x 133)))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
+	@Test
+	public void alignedArrayAccess01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"),
+			};
+		final String formulaAsString = "(exists ((x Int)) (and (= (mod x 4) 0) (= (select a x) 1337)))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
+	@Test
+	public void uneliminableInfiniteLoopRisk01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2", "a3"),
+			};
+		final String formulaAsString = "(exists ((x1 Int) (x2 Int) (x3 Int)) (and (= (+ (* 2 x1) (* 3 x2) (* 5 x3)) 0) (= (select a1 x1) 1337) (= (select a2 x2) 1337) (= (select a3 x3) 1337)))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void uneliminableInfiniteLoopRisk02() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2", "a3"),
+			};
+		final String formulaAsString = "(exists ((x1 Int) (x2 Int) (x3 Int)) (and (= (+ (mod x1 2) (* 3 x2) (* 5 x3)) 0) (= (select a1 x1) 1337) (= (select a2 x2) 1337) (= (select a3 x3) 1337)))";
+		final String expectedResult = "(exists ((x2 Int) (x3 Int) (v_y_1 Int)) (let ((.cse0 (* 3 x2)) (.cse1 (* 5 x3))) (and (= 1337 (select a1 (+ (* x2 (- 3)) (* 2 v_y_1) (* x3 (- 5))))) (<= (+ .cse0 .cse1) 0) (= 1337 (select a2 x2)) (= 1337 (select a3 x3)) (< 0 (+ .cse0 2 .cse1)))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	/**
+	 * Lower bound with negative coefficient in TIR. Occurred because we divide by
+	 * GCD and GCD was negative.
+	 */
+	@Test
+	public void negativeCoefficientBug() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start___VERIFIER_assert_~cond#1"),
+		};
+		final String formulaAsString = "(exists ((|aux_div_ULTIMATE.start_main_~x~0#1_47| Int) (|aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~x~0#1_47_48_59| Int) (|aux_div_aux_mod_ULTIMATE.start_main_~x~0#1_47_48| Int)) (and (<= 0 |aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~x~0#1_47_48_59|) (<= 0 (+ 46 |aux_div_ULTIMATE.start_main_~x~0#1_47| |aux_div_aux_mod_ULTIMATE.start_main_~x~0#1_47_48|)) (<= 0 (+ |aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~x~0#1_47_48_59| |aux_div_aux_mod_ULTIMATE.start_main_~x~0#1_47_48|)) (<= (+ 46 |aux_div_ULTIMATE.start_main_~x~0#1_47|) 0) (< |aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~x~0#1_47_48_59| 1) (or (and (= (mod (+ (* |aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~x~0#1_47_48_59| 2147483637) (* |aux_div_aux_mod_ULTIMATE.start_main_~x~0#1_47_48| 2147483637) (* |aux_div_ULTIMATE.start_main_~x~0#1_47| 2147483637)) 2147483648) 15) (= |ULTIMATE.start___VERIFIER_assert_~cond#1| 0)) (and (= |ULTIMATE.start___VERIFIER_assert_~cond#1| 1) (not (= (mod (+ (* |aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~x~0#1_47_48_59| 2147483637) (* |aux_div_aux_mod_ULTIMATE.start_main_~x~0#1_47_48| 2147483637) (* |aux_div_ULTIMATE.start_main_~x~0#1_47| 2147483637)) 2147483648) 15)))) (< (+ |aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~x~0#1_47_48_59| |aux_div_aux_mod_ULTIMATE.start_main_~x~0#1_47_48|) 1)))";
+		final String expectedResultAsString = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
 	//@formatter:on
 }

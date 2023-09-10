@@ -102,7 +102,7 @@ public class BitvectorFactory {
 		case bvult:
 		case bvurem:
 		case bvxor:
-			return AUXILIARY_FUNCTION_PREFIX + bvop.toString() + bitsize;
+			return AUXILIARY_FUNCTION_PREFIX + bvop.toString() + AUXILIARY_FUNCTION_PREFIX + bitsize;
 		case concat:
 		case extract:
 			throw new IllegalArgumentException("Boogie has native support for this operation.");

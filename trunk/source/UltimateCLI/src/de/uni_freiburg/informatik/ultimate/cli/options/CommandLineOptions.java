@@ -50,6 +50,11 @@ public final class CommandLineOptions {
 	public static final String OPTION_LONG_NAME_EXPERIMENTAL = "experimental";
 	public static final String OPTION_LONG_NAME_CSV_DIR = "csv-dir";
 	public static final String OPTION_LONG_NAME_GENERATE_CSV = "generate-csv";
+	public static final String OPTION_LONG_NAME_FRONTEND_JSON_FROM_DEFAULTS = "generate-frontend-json-from-defaults";
+	public static final String OPTION_LONG_NAME_BACKEND_WHITELIST_JSON_FROM_DEFAULTS =
+			"generate-backend-json-from-defaults";
+	public static final String OPTION_LONG_NAME_FRONTEND_JSON_FROM_DELTA = "generate-frontend-json-from-delta";
+	public static final String OPTION_LONG_NAME_BACKEND_WHITELIST_JSON_FROM_DELTA = "generate-backend-json-from-delta";
 
 	private CommandLineOptions() {
 		// this is a utility class
@@ -96,6 +101,17 @@ public final class CommandLineOptions {
 		rtr.add(Option.builder().longOpt(OPTION_LONG_NAME_VERSION).type(Boolean.class).build());
 		rtr.add(Option.builder().longOpt(OPTION_LONG_NAME_EXPERIMENTAL).type(Boolean.class)
 				.desc("Also show experimental options (even if they do not have a description).").build());
+
+		rtr.add(Option.builder().longOpt(OPTION_LONG_NAME_FRONTEND_JSON_FROM_DEFAULTS).type(Boolean.class)
+				.desc("Generate JSON for web frontend 'frontend_settings' from Ultimate default settings.").build());
+		rtr.add(Option.builder().longOpt(OPTION_LONG_NAME_BACKEND_WHITELIST_JSON_FROM_DEFAULTS).type(Boolean.class)
+				.desc("Generate JSON for web backend whitelist from Ultimate default settings.").build());
+		rtr.add(Option.builder().longOpt(OPTION_LONG_NAME_FRONTEND_JSON_FROM_DELTA).type(Boolean.class).desc(
+				"Generate JSON for web frontend 'frontend_settings' for Ultimate settings that differ from their defaults.")
+				.build());
+		rtr.add(Option.builder().longOpt(OPTION_LONG_NAME_BACKEND_WHITELIST_JSON_FROM_DELTA).type(Boolean.class)
+				.desc("Generate JSON for web backend whitelist for Ultimate settings that differ from their defaults.")
+				.build());
 		return rtr;
 	}
 }

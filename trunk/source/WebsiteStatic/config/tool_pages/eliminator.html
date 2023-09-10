@@ -1,0 +1,50 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<body>
+<h1>Eliminator</h1>
+
+	<p><span style="font-variant:small-caps">Ultimate Eliminator</span> is a tool that takes as an input a formula that may contain quantifiers
+	and tries to find a logically equivalent formula without quantifiers.
+	We call this task <i>quantifier elimination</i>.
+
+	<p>Quantified formulas are notoriously difficult to solve and several state-of-the-art SMT solvers support only quantifier-free formulas.
+	Several algorithms that are used in the <<a href="?ui=tool&tool=automizer"><span style="font-variant:small-caps">Ultimate Automizer</span></a>
+	software verifier produce quantified formulas.
+	In order to make these formulas fit for a larger number of SMT solvers and algorithms that require quantifier-free formulas
+	the developers of <span style="font-variant:small-caps">Ultimate Automizer</span> implemented several simple techniques that try to eliminate quantifiers.
+	For example, one of these algorithms replaces a formula of the form ∃x.φ(x) ∧ x = t by the formula φ(t).</p>
+	<p> Our motivation for developing <span style="font-variant:small-caps">Ultimate Eliminator</span>
+	was to make these quantifier elimination techniques accessible to users that want to eliminate quantifiers.</p>
+
+	<p> The current version of <span style="font-variant:small-caps">Ultimate Eliminator</span> is only a prototype that should demonstrate the power of
+	<span style="font-variant:small-caps">Ultimate</span>&apos;s quantifier elimination techniques.
+	This tool is a user interface that
+	takes SMT-LIB~2.6 compatible input
+	tries to eliminate quantifiers in this input
+	and passes the modified input to
+	a user defined SMT-LIB 2.6 compatible solver.
+	I.e., it is a wrapper for an SMT solver that give this solver capabilities to handle quantified formulas.
+</p>
+
+
+<h2>Web Interface</h2>
+<p><span style="font-variant:small-caps">Ultimate Eliminator</span> is available via a <a href="?ui=int&tool=eliminator">web interface</a>.
+In this web interface <span style="font-variant:small-caps">Ultimate Eliminator</span> wraps the <a href="https://ultimate.informatik.uni-freiburg.de/smtinterpol">SMTInterpol</a> SMT solver.
+</p>
+
+
+<h2>Input/Output Format</h2>
+<p>Currently, <span style="font-variant:small-caps">Ultimate Eliminator</span> is only a wrapper for SMT solvers.
+We also want to make the quantifier elimination directly accessible to users but have not yet decided for an interface.
+Current ideas are a new <tt>eliminate-quantifiers</tt> SMT command or the possibility to pass a formula via the command line.
+If you would like to use <span style="font-variant:small-caps">Ultimate Eliminator</span> we are open to other ideas as well.
+Please contact <a href="https://swt.informatik.uni-freiburg.de/staff/heizmann/">Matthias Heizmann</a>.
+</p>
+
+<h2>Source Code</h2>
+<p>
+The source code of <span style="font-variant:small-caps">Ultimate Eliminator</span> and all quantifier elimination techniques
+is <a href="https://github.com/ultimate-pa/ultimate">available at GitHub.</a>.
+</p>
+
+</body>
+</html>

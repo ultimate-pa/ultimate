@@ -29,9 +29,11 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
@@ -59,7 +61,7 @@ public interface IIcfgSymbolTable {
 	 *            {@link IProgramConst}
 	 * @return {@link IProgramConst} such that parameter at is {@link IProgramConst#getDefaultConstant()}
 	 */
-	IProgramConst getProgramConst(ApplicationTerm at);
+	public IProgramFunction getProgramFun(final FunctionSymbol funSym);
 
 	/**
 	 * @return Set of all global (non-old) variables that occur in the ICFG.

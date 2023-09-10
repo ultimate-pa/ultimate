@@ -107,6 +107,8 @@ known_exceptions:
   "de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.ParserInitializationException: Parser initialization failed":
   "RESULT: Ultimate could not prove your program: Toolchain returned no result.":
   "unknown constant":
+  "AssertionError: enhanced interpolant automaton in iteration":
+  "AssertionError: Expected only CPrimitive but got":
 
 known_timeouts:
   "Cannot interrupt operation gracefully because timeout expired. Forcing shutdown":
@@ -122,6 +124,7 @@ known_safe:
   "We were not able to verify any specification because the program does not contain any specification":
   "specifications checked. All of them hold":
   "TerminationAnalysisResult: Termination proven":
+  "AllSpecificationsHoldResult: All specifications hold":
 
 known_unsafe:
   "CounterExampleResult":

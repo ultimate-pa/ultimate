@@ -73,6 +73,8 @@ public class PolynomialRelationTest {
 			"z3 SMTLIB2_COMPLIANT=true -t:6000 -memory:2024 -smt2 -in smt.arith.solver=2";
 	private static final String SOLVER_COMMAND_CVC4 = "cvc4 --incremental --print-success --lang smt --tlimit-per=6000";
 	private static final String SOLVER_COMMAND_MATHSAT = "mathsat";
+	private static final String SOLVER_COMMAND_SMTINTERPOL = "INTERNAL_SMTINTERPOL:6000";
+	private static final String SOLVER_COMMAND_YICES = "yices-smt2 --incremental --timeout=6 --mcsat";
 	/**
 	 * If DEFAULT_SOLVER_COMMAND is not null we ignore the solver specified for each test and use only the solver
 	 * specified here. This can be useful to check if there is a suitable solver for all tests and this can be useful
@@ -83,6 +85,7 @@ public class PolynomialRelationTest {
 	private static final boolean USE_QUANTIFIER_ELIMINATION_TO_SIMPLIFY_INPUT_OF_EQUIVALENCE_CHECK = false;
 
 	private final IUltimateServiceProvider mServices = UltimateMocks.createUltimateServiceProviderMock(LogLevel.INFO);
+	private final ILogger mLogger = mServices.getLoggingService().getLogger("myLogger");
 	private Script mScript;
 
 	@Before
@@ -419,7 +422,7 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationIntPolyDistinctSimplified() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "a", "t") };
-		final String inputSTR = "(not (= (* 2 a x) 1337 ))";
+		final String inputSTR = "(not (= (* 2 a x) 1338 ))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
@@ -474,7 +477,7 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationIntPolyEqRhsLiteral() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
-		final String inputSTR = "(= (* 17 y z x) 42 )";
+		final String inputSTR = "(= (* 21 y z x) 42 )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
@@ -577,10 +580,9 @@ public class PolynomialRelationTest {
 	}
 
 	/**
-	 * Currently fails because some coefficient is null, this probably will be handled when the "Todo if no constantTErm
-	 * throw error or handle it" is finished
+	 * Currently fails because div with more than two parameters is not supported yet.
 	 */
-	@Test
+	@Test(expected = UnsupportedOperationException.class)
 	public void relationIntPolyUnknownEQ16() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (div (div x 5 2) (div y z)) y))";
@@ -596,8 +598,8 @@ public class PolynomialRelationTest {
 		mScript = script;
 		final Term subject = TermParseUtils.parseTerm(mScript, "x");
 		final MultiCaseSolvedBinaryRelation sbr = PolynomialRelation
-				.convert(mScript, TermParseUtils.parseTerm(mScript, inputAsString))
-				.solveForSubject(new ManagedScript(mServices, script), subject, Xnf.DNF, Collections.emptySet());
+				.of(mScript, TermParseUtils.parseTerm(mScript, inputAsString))
+				.solveForSubject(new ManagedScript(mServices, script), subject, Xnf.DNF, Collections.emptySet(), true);
 		Assert.assertNull(sbr);
 	}
 
@@ -615,6 +617,24 @@ public class PolynomialRelationTest {
 		testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.CNF); // this is not yet implemented?
 	}
 
+	private void testNormalForm(final String solverCommand, final String inputAsString,
+			final String expectedResultAsString, final VarDecl... varDecls) {
+		final Script script = createSolver(solverCommand);
+		script.setLogic(Logics.ALL);
+		for (final VarDecl varDecl : varDecls) {
+			varDecl.declareVars(script);
+		}
+		mScript = script;
+		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
+		final PolynomialRelation polyRel = PolynomialRelation.of(mScript, inputAsTerm);
+		Assert.assertTrue(polyRel != null);
+		final Term result = polyRel.toTerm(script);
+		mLogger.info("Result: " + result);
+		Assert.assertTrue(SmtUtils.areFormulasEquivalent(inputAsTerm, result, mScript));
+		final Term expectedResultAsTerm = TermParseUtils.parseTerm(mScript, expectedResultAsString);
+		Assert.assertTrue(expectedResultAsTerm.equals(result));
+	}
+
 	private void testSolveForXMultiCaseOnly(final String solverCommand, final String inputAsString,
 			final VarDecl... varDecls) {
 		final Script script = createSolver(solverCommand);
@@ -626,23 +646,23 @@ public class PolynomialRelationTest {
 		final Term inputAsTerm = TermParseUtils.parseTerm(script, inputAsString);
 		final Term subject = TermParseUtils.parseTerm(script, "x");
 		final SolvedBinaryRelation sbr =
-				PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, subject);
+				PolynomialRelation.of(mScript, inputAsTerm).solveForSubject(mScript, subject);
 		Assert.assertNull("Solvable, but unsolvable expected", sbr);
 		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.DNF);
 		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.CNF);
 	}
 
 	private void testSingleCaseSolveForSubject(final Term inputAsTerm, final Term x) {
-		final SolvedBinaryRelation sbr = PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x);
+		final SolvedBinaryRelation sbr = PolynomialRelation.of(mScript, inputAsTerm).solveForSubject(mScript, x);
 		mScript.echo(new QuotedObject("Checking if input and output of solveForSubject are equivalent"));
-		Assert.assertTrue(SmtUtils.areFormulasEquivalent(sbr.asTerm(mScript), inputAsTerm, mScript));
+		Assert.assertTrue(SmtUtils.areFormulasEquivalent(sbr.toTerm(mScript), inputAsTerm, mScript));
 	}
 
 	private void testMultiCaseSolveForSubject(final Term inputAsTerm, final Term x, final Xnf xnf) {
-		final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation.convert(mScript, inputAsTerm)
-				.solveForSubject(new ManagedScript(mServices, mScript), x, xnf, Collections.emptySet());
+		final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation.of(mScript, inputAsTerm)
+				.solveForSubject(new ManagedScript(mServices, mScript), x, xnf, Collections.emptySet(), true);
 		mScript.echo(new QuotedObject("Checking if input and output of multiCaseSolveForSubject are equivalent"));
-		final Term solvedAsTerm = mcsbr.asTerm(mScript);
+		final Term solvedAsTerm = mcsbr.toTerm(mScript);
 		final Term tmp;
 		if (USE_QUANTIFIER_ELIMINATION_TO_SIMPLIFY_INPUT_OF_EQUIVALENCE_CHECK) {
 			final IUltimateServiceProvider services = UltimateMocks.createUltimateServiceProviderMock();
@@ -950,7 +970,7 @@ public class PolynomialRelationTest {
 	public void relationIntDivModStickyPaint() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(<= (div (+ z (* y (- 1)) x) (- 8)) 9)";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, vars);
 	}
 
 	@Test
@@ -1017,6 +1037,63 @@ public class PolynomialRelationTest {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(<= (+ (* 7 x) (* 7 (div (+ y (- 7)) 7)) (* (- 1) y) 7) 0)";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	@Test
+	public void gcdNormalization01() {
+		final VarDecl[] varDecls = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(= (+ (* 6 x) (* 8 y)) 10)";
+		final String expectedResultAsString = "(= (+ (* 3 x) (* y 4)) 5)";
+		testNormalForm(SOLVER_COMMAND_Z3, inputSTR, expectedResultAsString, varDecls);
+	}
+
+
+	@Test
+	public void gcdNormalization02() {
+		final VarDecl[] varDecls = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(= (+ (* 6 x) (* 8 y)) 9)";
+		final String expectedResultAsString = "false";
+		testNormalForm(SOLVER_COMMAND_Z3, inputSTR, expectedResultAsString, varDecls);
+	}
+
+	@Test
+	public void gcdNormalization03() {
+		final VarDecl[] varDecls = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(distinct (+ (* 6 x) (* 8 y))  9)";
+		final String expectedResultAsString = "true";
+		testNormalForm(SOLVER_COMMAND_Z3, inputSTR, expectedResultAsString, varDecls);
+	}
+
+	@Test
+	public void gcdNormalization04() {
+		final VarDecl[] varDecls = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(<= (+ (* 6 x) (* 8 y)) 9)";
+		final String expectedResultAsString = "(<= (+ (* 3 x) (* y 4)) 4)";
+		testNormalForm(SOLVER_COMMAND_Z3, inputSTR, expectedResultAsString, varDecls);
+	}
+
+	@Test
+	public void gcdNormalization05() {
+		final VarDecl[] varDecls = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(< (+ (* 6 x) (* 8 y))  9)";
+		final String expectedResultAsString = "(< (+ (* 3 x) (* y 4)) 5)";
+		testNormalForm(SOLVER_COMMAND_Z3, inputSTR, expectedResultAsString, varDecls);
+	}
+
+	@Test
+	public void gcdNormalization07() {
+		final VarDecl[] varDecls = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(>= (+ (* 6 x) (* 8 y)) 9)";
+		final String expectedResultAsString = "(<= 5 (+ (* 3 x) (* y 4)))";
+		testNormalForm(SOLVER_COMMAND_Z3, inputSTR, expectedResultAsString, varDecls);
+	}
+
+	@Test
+	public void gcdNormalization08() {
+		final VarDecl[] varDecls = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(> (+ (* 6 x) (* 8 y)) 9)";
+		final String expectedResultAsString = "(< 4 (+ (* 3 x) (* y 4)))";
+		testNormalForm(SOLVER_COMMAND_Z3, inputSTR, expectedResultAsString, varDecls);
 	}
 
 }

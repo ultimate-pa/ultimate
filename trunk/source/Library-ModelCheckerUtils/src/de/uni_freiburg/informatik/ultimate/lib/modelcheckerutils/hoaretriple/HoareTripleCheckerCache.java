@@ -27,9 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
@@ -37,16 +34,23 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 
 /**
  * A cache for results of Hoare triple checks.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class HoareTripleCheckerCache {
 	private final NestedMap3<IAction, IPredicate, IPredicate, Validity> mInternalCache = new NestedMap3<>();
 	private final NestedMap3<IAction, IPredicate, IPredicate, Validity> mCallCache = new NestedMap3<>();
-	private final Map<IPredicate, NestedMap3<IAction, IPredicate, IPredicate, Validity>> mReturnCache = new HashMap<>();
+	/**
+	 * The second component is the hierarchical predecessor, the third component is
+	 * the linear predecessor. We presume that this order is better because we
+	 * typically have fewer hierarchical predecessors than linear predecessors.
+	 */
+	private final NestedMap4<IAction, IPredicate, IPredicate, IPredicate, Validity> mReturnCache = new NestedMap4<>();
 
 	/**
 	 * Gets the cache result of the given Hoare triple (for an internal action).
@@ -129,11 +133,7 @@ public class HoareTripleCheckerCache {
 	 */
 	public Validity getReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
 			final IPredicate post) {
-		final NestedMap3<IAction, IPredicate, IPredicate, Validity> map = mReturnCache.get(preHier);
-		if (map == null) {
-			return null;
-		}
-		return map.get(act, preLin, post);
+		return mReturnCache.get(act, preHier, preLin, post);
 	}
 
 	/**
@@ -152,7 +152,7 @@ public class HoareTripleCheckerCache {
 	 */
 	public void putReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
 			final IPredicate post, final Validity result) {
-		getReturnCache(preHier).put(act, preLin, post, result);
+		mReturnCache.put(act, preHier, preLin, post, result);
 	}
 
 	NestedMap3<IAction, IPredicate, IPredicate, Validity> getInternalCache() {
@@ -163,7 +163,10 @@ public class HoareTripleCheckerCache {
 		return mCallCache;
 	}
 
-	NestedMap3<IAction, IPredicate, IPredicate, Validity> getReturnCache(final IPredicate preHier) {
-		return mReturnCache.computeIfAbsent(preHier, x -> new NestedMap3<>());
+	public NestedMap4<IAction, IPredicate, IPredicate, IPredicate, Validity> getReturnCache() {
+		return mReturnCache;
 	}
+
+
+
 }

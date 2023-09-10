@@ -62,7 +62,7 @@ public class SimplifyQuick {
 				SolverBuilder.constructSolverSettings().setSmtInterpolTimeout(TIMOUT_IN_SECONDS * 1000);
 		final Script simplificationScript = SolverBuilder.buildScript(mServices, settings);
 		simplificationScript.setLogic(Logics.CORE);
-		final TermTransferrer towards = new TermTransferrerBooleanCore(mScript, simplificationScript);
+		final TermTransferrerBooleanCore towards = new TermTransferrerBooleanCore(mScript, simplificationScript);
 		final Term foreign = towards.transform(inputTerm);
 
 		simplificationScript.setOption(":check-type", "QUICK");
@@ -71,7 +71,7 @@ public class SimplifyQuick {
 		// simplificationScript.setOption(":check-type", "FULL");
 
 		final TermTransferrer back =
-				new TermTransferrer(simplificationScript, mScript, towards.getBacktranferMapping(), false);
+				new TermTransferrer(simplificationScript, mScript, towards.getBacktransferMapping(), false);
 		final Term simplified = back.transform(foreignsimplified);
 		simplificationScript.exit();
 

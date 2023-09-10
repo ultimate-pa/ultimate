@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: UltimateRegressionTest
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.regressiontest;singleton:=true
-Bundle-Version: 0.2.2
+Bundle-Version: 0.2.3
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Require-Bundle: org.junit,
  de.uni_freiburg.informatik.ultimate.lib.core,
@@ -20,6 +20,7 @@ Require-Bundle: org.junit,
  de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding,
  de.uni_freiburg.informatik.ultimate.plugins.blockencoding,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
+ de.uni_freiburg.informatik.ultimate.plugins.chcsolver,
  de.uni_freiburg.informatik.ultimate.boogie.procedureinliner,
  de.uni_freiburg.informatik.ultimate.ltl2aut,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent,
@@ -27,6 +28,7 @@ Require-Bundle: org.junit,
  de.uni_freiburg.informatik.ultimate.source.smtparser,
  de.uni_freiburg.informatik.ultimate.reqparser,
  de.uni_freiburg.informatik.ultimate.pea2boogie,
+ de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation,
  de.uni_freiburg.informatik.ultimate.lib.sifa,
  de.uni_freiburg.informatik.ultimate.plugins.sifa
 Import-Package: de.uni_freiburg.informatik.ultimate.lib.pea,

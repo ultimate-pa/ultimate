@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermUtils.GeneralizedConstructor;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -209,6 +210,27 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 		minimalValue = minimalValue.add(getConstant());
 		maximalValue = maximalValue.add(getConstant());
 		return new Pair<>(maximalValue, minimalValue);
+	}
+
+	@Override
+	public AffineTerm add(final Rational offset) {
+		final Rational newConstant;
+		if (SmtSortUtils.isRealSort(getSort())) {
+			newConstant = getConstant().add(offset);
+		} else if (SmtSortUtils.isIntSort(getSort())) {
+			if (!offset.isIntegral()) {
+				throw new UnsupportedOperationException("Cannot add non-integral summand if sort is " + getSort());
+			}
+			newConstant = getConstant().add(offset);
+		} else if (SmtSortUtils.isBitvecSort(getSort())) {
+			if (!offset.isIntegral()) {
+				throw new UnsupportedOperationException("Cannot add non-integral summand if sort is " + getSort());
+			}
+			newConstant = PolynomialTermUtils.bringBitvectorValueInRange(getConstant().add(offset), getSort());
+		} else {
+			throw new AssertionError("unsupported Sort " + getSort());
+		}
+		return new AffineTerm(getSort(), newConstant, getAbstractVariable2Coefficient());
 	}
 
 	@Override

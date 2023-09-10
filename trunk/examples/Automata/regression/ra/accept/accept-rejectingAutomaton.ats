@@ -1,0 +1,15 @@
+RabinAutomaton automaton = (
+	alphabet = {a b},
+	states = {s1 s2},
+	initialStates = {s1 },
+	acceptingStates = {s2},
+	finiteStates = {s2 },
+	transitions = { (s1 a s2) (s1 a s1) (s1 b s1) (s2 a s2) (s2 b s2) }
+);
+
+
+assert(!accepts(automaton, [a a, a b]));
+assert(!accepts(automaton, [a a a a a a a a a b , a b]));
+assert(!accepts(automaton, [, a b]));
+assert(!accepts(automaton, [, b a]));
+assert(!accepts(automaton, [, a b]));

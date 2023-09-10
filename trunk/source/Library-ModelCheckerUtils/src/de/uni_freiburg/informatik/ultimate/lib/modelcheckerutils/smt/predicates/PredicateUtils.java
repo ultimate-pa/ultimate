@@ -392,7 +392,7 @@ public class PredicateUtils {
 			}
 			substitutionMapping.put(bv.getTermVariable(), constant);
 		}
-		final Term result = (new PureSubstitution(script, substitutionMapping)).transform(postcond.getFormula());
+		final Term result = (PureSubstitution.apply(script, substitutionMapping, postcond.getFormula()));
 		assert result.getFreeVars().length == 0 : "there are free vars";
 		return result;
 	}

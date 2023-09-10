@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Ultimate-CommandLine" uid="CLI-E4" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.2.2" useFeatures="true" includeLaunchers="true">
+<product name="Ultimate-CommandLine" uid="CLI-E4" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.2.3" useFeatures="true" includeLaunchers="true">
 
    <aboutInfo>
       <text>
@@ -44,7 +44,6 @@
 
    <features>
       <feature id="BA_FeatureUltimateCommandLine"/>
-      <feature id="BA_FeatureDependenciesCommandlineE4"/>
       <feature id="BA_FeatureUltimateCommon"/>
       <feature id="BA_FeatureDependenciesCommon"/>
    </features>

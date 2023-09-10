@@ -412,7 +412,7 @@ public class ArrayIndexEqualityManager {
 			return correspondingFiniteJunction;
 		}
 		final Term idxAntiDerUidx = constructAntiDerRelation(script, quantifier, idx, updateIndex);
-		final MultiDimensionalSelect idxCellOfArrayRes = new MultiDimensionalSelect(arrayRes, idx, script);
+		final MultiDimensionalSelect idxCellOfArrayRes = new MultiDimensionalSelect(arrayRes, idx);
 		final Term updateValueDerRelation = constructDerRelation(script, quantifier, idxCellOfArrayRes.toTerm(script),
 				updateValue);
 		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier,

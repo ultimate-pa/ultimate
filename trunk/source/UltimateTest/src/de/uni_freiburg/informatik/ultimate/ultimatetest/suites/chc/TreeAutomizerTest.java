@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Tr
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.TreeAutomizerTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.ChcTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogCsv;
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
@@ -104,6 +104,6 @@ public class TreeAutomizerTest extends AbstractModelCheckerTestSuiteWithIncremen
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
-		return new TreeAutomizerTestResultDecider(urd, true);
+		return new ChcTestResultDecider(urd, true);
 	}
 }

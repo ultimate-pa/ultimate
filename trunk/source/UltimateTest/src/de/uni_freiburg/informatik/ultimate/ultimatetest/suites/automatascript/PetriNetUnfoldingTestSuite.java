@@ -78,6 +78,7 @@ public class PetriNetUnfoldingTestSuite extends UltimateTestSuite {
 //			"examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/esken",
 //			"examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/christmas/",
 //			"examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/epiphany/",
+//			"examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/southTyrol/",
 //			"examples/Automata/benchmarks/pn/difference-materialistic/",
 	};
 

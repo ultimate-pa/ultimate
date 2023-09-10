@@ -1166,7 +1166,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 			return EvalResult.FALSE;
 		}
 		final OctagonRelation octRel;
-		final PolynomialRelation polyRel = PolynomialRelation.convert(script, term);
+		final PolynomialRelation polyRel = PolynomialRelation.of(script, term);
 		if (polyRel == null || !polyRel.isAffine()) {
 			//term is not an affine relation
 			return EvalResult.UNKNOWN; // alternatively apply SMT solver

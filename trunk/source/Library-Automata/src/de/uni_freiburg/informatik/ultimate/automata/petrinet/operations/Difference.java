@@ -296,15 +296,30 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 		// ... but field "constantTokenAmmount" has to be set in constructor and cannot be changed afterwards.
 		final boolean constantTokenAmount = false;
 		mResult = new BoundedPetriNet<>(mServices, mMinuend.getAlphabet(), constantTokenAmount);
+		final boolean initialStateIsFinal = isInitialStateFinal();
 
 		for (final PLACE oldPlace : mMinuend.getPlaces()) {
-			final boolean isInitial = mMinuend.getInitialPlaces().contains(oldPlace);
+			final boolean isInitial = !initialStateIsFinal && mMinuend.getInitialPlaces().contains(oldPlace);
 			final boolean isAccepting = mMinuend.getAcceptingPlaces().contains(oldPlace);
 			final boolean newlyAdded = mResult.addPlace(oldPlace, isInitial, isAccepting);
 			if (!newlyAdded) {
 				throw new AssertionError("Must not add place twice: " + oldPlace);
 			}
 		}
+	}
+
+	private boolean isInitialStateFinal() {
+		final Iterator<PLACE> it = mSubtrahend.getInitialStates().iterator();
+		if (!it.hasNext()) {
+			throw new UnsupportedOperationException(
+					"Subtrahend has no initial states! We could soundly return the minuend as result (implement this if required). "
+							+ "However we presume that in most cases, such a subtrahend was passed accidentally");
+		}
+		final PLACE automatonInitialState = it.next();
+		if (it.hasNext()) {
+			throw new IllegalArgumentException("subtrahend not deterministic");
+		}
+		return mSubtrahend.isFinal(automatonInitialState);
 	}
 
 	/**

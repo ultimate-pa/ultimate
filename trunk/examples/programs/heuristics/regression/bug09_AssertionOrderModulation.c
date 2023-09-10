@@ -1,3 +1,4 @@
+//#Safe
 int gl_list = {& gl_list   };
 
 void list_add(int  new , int *head )

@@ -5,7 +5,7 @@
  * 
  */
 
-var x, y, z : int;
+var x, y, z, a : int;
 
 
 procedure main() returns () 
@@ -15,7 +15,7 @@ modifies x,y,z;
   x := 5;
   y := 4;
   z := 3;
-  while(*)
+  while(x + a >= 42)
   {
       x := y;
       y := z;

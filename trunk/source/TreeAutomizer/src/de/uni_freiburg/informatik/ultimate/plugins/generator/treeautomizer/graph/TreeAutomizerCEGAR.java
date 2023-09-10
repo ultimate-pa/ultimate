@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
+import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
@@ -50,9 +52,9 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.operations.difference.D
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.difference.LazyDifference;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.Minimize;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.hopcroft.MinimizeNftaHopcroft;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerSatResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerUnsatResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -62,6 +64,8 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
+import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcSatResult;
+import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcUnsatResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -138,14 +142,14 @@ public class TreeAutomizerCEGAR {
 		mServices = services;
 
 		mPredicateFactory = new HCPredicateFactory(services, mBackendSmtSolverScript, mSymbolTable,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED);
-
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 		mInitialPredicate = mPredicateFactory.getTrueLocationPredicate();
 		mFinalPredicate = mPredicateFactory.getFalseLocationPredicate();
 
 		mPredicateUnifier = new PredicateUnifier(mLogger, services, mBackendSmtSolverScript, mPredicateFactory,
-				mSymbolTable, SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED, mInitialPredicate);
+				mSymbolTable, SimplificationTechnique.SIMPLIFY_DDA,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, mInitialPredicate);
 
 		mHoareTripleChecker = new HCHoareTripleChecker(mPredicateUnifier, mBackendSmtSolverScript, mSymbolTable);
 		mStateFactory = new HCStateFactory(mBackendSmtSolverScript, mPredicateFactory, mServices, mLogger,
@@ -181,7 +185,7 @@ public class TreeAutomizerCEGAR {
 					mLogger.info(state.toString());
 				}
 
-				return new TreeAutomizerSatResult(Activator.PLUGIN_ID, "SAT", "The given horn clause set is SAT");
+				return new ChcSatResult(Activator.PLUGIN_ID, "The given horn clause set is SAT", null);
 			}
 
 			mBackendSmtSolverScript.lock(this);
@@ -193,7 +197,9 @@ public class TreeAutomizerCEGAR {
 				mLogger.info(counterExample.getTree());
 				mBackendSmtSolverScript.pop(this, 1);
 				mBackendSmtSolverScript.unlock(this);
-				return new TreeAutomizerUnsatResult(Activator.PLUGIN_ID, "UNSAT", "The given horn clause set is UNSAT");
+
+				return new ChcUnsatResult(Activator.PLUGIN_ID, "The given horn clause set is UNSAT", null,
+						extractUnsatCore(counterExample.getTree()));
 			}
 			mLogger.debug("Getting Interpolants...");
 			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap = retrieveInterpolantsMap(
@@ -212,6 +218,19 @@ public class TreeAutomizerCEGAR {
 		}
 		mLogger.info("The program is not decieded...");
 		return new TimeoutResult(Activator.PLUGIN_ID, "TreeAutomizer says UNKNOWN/TIMEOUT");
+	}
+
+	private static Set<HornClause> extractUnsatCore(final Tree<HornClause> tree) {
+		final var result = new HashSet<HornClause>();
+		final var worklist = new ArrayDeque<Tree<HornClause>>();
+		worklist.push(tree);
+
+		while (!worklist.isEmpty()) {
+			final var current = worklist.pop();
+			result.add(current.getSymbol());
+			worklist.addAll(current.getChildren());
+		}
+		return result;
 	}
 
 	protected void getInitialAbstraction() throws AutomataLibraryException {
@@ -310,7 +329,7 @@ public class TreeAutomizerCEGAR {
 			for (final TreeAutomatonRule<HornClause, IPredicate> rule : automaton.getSuccessors(source)) {
 				final Validity validity = mHoareTripleChecker.check(rule.getSource(), rule.getLetter(), rule.getDest());
 				if (validity != Validity.VALID) {
-					assert false;
+					assert false : "Rule is not inductive: " + rule;
 					return false;
 				}
 			}
@@ -363,8 +382,12 @@ public class TreeAutomizerCEGAR {
 
 		if (mPreferences.getEnum(TreeAutomizerPreferenceInitializer.LABEL_MinimizationAlgorithm, TaMinimization.class)
 				== TaMinimization.NAIVE) {
-			mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Minimize<>(mAutomataLibraryServices,
-					mStateFactory, mAbstraction)).getResult();
+			try {
+				mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Minimize<>(mAutomataLibraryServices,
+						mStateFactory, mAbstraction)).getResult();
+			} catch (final AutomataOperationCanceledException e) {
+				throw new ToolchainCanceledException(e, new RunningTaskInfo(getClass(), "refining abstraction"));
+			}
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(String.format("Abstraction after naive minimization has  %d states, %d rules.",
 						mAbstraction.getStates().size(),

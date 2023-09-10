@@ -141,8 +141,8 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 	 *
 	 * @param left
 	 */
-	public Set<R> removeDomainElement(final D left) {
-		final Set<R> result = mMap.remove(left);
+	public SET removeDomainElement(final D left) {
+		final SET result = mMap.remove(left);
 		assert sanityCheck();
 		return result;
 	}
