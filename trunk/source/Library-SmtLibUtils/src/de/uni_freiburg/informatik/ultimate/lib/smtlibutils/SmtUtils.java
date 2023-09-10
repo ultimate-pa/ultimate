@@ -26,6 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -74,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.simplify.SimplifyQuic
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -126,6 +131,8 @@ public final class SmtUtils {
 
 		SIMPLIFY_DDA(true),
 
+		SIMPLIFY_DDA2(true),
+
 		POLY_PAC(false),
 
 		NONE(false);
@@ -173,6 +180,7 @@ public final class SmtUtils {
 		}
 		if (!SmtUtils.isTrueLiteral(context) && simplificationTechnique != SimplificationTechnique.POLY_PAC
 				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA
+				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA2
 				&& simplificationTechnique != SimplificationTechnique.NONE) {
 			throw new UnsupportedOperationException(
 					simplificationTechnique + " does not support simplification with respect to context");
@@ -186,6 +194,9 @@ public final class SmtUtils {
 			case SIMPLIFY_DDA:
 				simplified = new SimplifyDDAWithTimeout(script.getScript(), true, services, context)
 						.getSimplifiedTerm(formula);
+				break;
+			case SIMPLIFY_DDA2:
+				simplified = SimplifyDDA2.simplify(services, script, context, formula);
 				break;
 			case SIMPLIFY_QUICK:
 				simplified = new SimplifyQuick(script.getScript(), services).getSimplifiedTerm(formula);
@@ -221,6 +232,22 @@ public final class SmtUtils {
 				sb.append(" (called from ").append(ReflectionUtil.getCallerSignatureFiltered(Set.of(SmtUtils.class)))
 						.append(")");
 				logger.warn(sb);
+				// Matthias 2023-08-01: The following is a hack for writing simplification
+				// benchmarks to a file. We write only if the simplification took at least 5s
+				// (see if above) and if the context is equivalent to true.
+				final boolean writeSimplificationBenchmarksToFile = false;
+				if (writeSimplificationBenchmarksToFile && SmtUtils.isTrueLiteral(context)) {
+					try (FileWriter fw = new FileWriter("SimplificationBenchmark_" + overallTimeMs);
+							BufferedWriter bw = new BufferedWriter(fw);
+							PrintWriter out = new PrintWriter(bw)) {
+						out.println(SmtTestGenerationUtils.generateStringForTestfile(formula));
+						out.close();
+						bw.close();
+						fw.close();
+					} catch (final IOException e) {
+						throw new AssertionError(e);
+					}
+				}
 			}
 			// TODO: DD 2019-11-19: This call is a dirty hack! SimplifyDDAWithTimeout leaves an empty stack frame open,
 			// but I do not want to try and debug how it is happening.
@@ -229,7 +256,7 @@ public final class SmtUtils {
 				// TODO: Matthias 2019-11-19 SimplifyDDA can produce nested
 				// conjunctions or disjunctions. Use UnfTransformer to get
 				// rid of these.
-				return new UnfTransformer(mgdScript.getScript()).transform(simplified);
+				return new UnfTransformer(script.getScript()).transform(simplified);
 			}
 			return simplified;
 		} catch (final ToolchainCanceledException t) {
@@ -1502,7 +1529,7 @@ public final class SmtUtils {
 	public static Term select(final Script script, final Term array, final Term index) {
 		final Term result;
 		if (FLATTEN_ARRAY_TERMS) {
-			final ArrayStore as = ArrayStore.convert(array);
+			final ArrayStore as = ArrayStore.of(array);
 			if (as != null) {
 				result = selectOverStore(script, as, index);
 			} else {
@@ -1525,7 +1552,7 @@ public final class SmtUtils {
 			final IPolynomialTerm selectIndex = PolynomialTermTransformer.convert(script, index);
 			final IPolynomialTerm storeIndex = PolynomialTermTransformer.convert(script, as.getIndex());
 			if (selectIndex == null || storeIndex == null) {
-				result = script.term("select", as.asTerm(), index);
+				result = script.term("select", as.getTerm(), index);
 			} else {
 				final Equivalence comparison = selectIndex.compare(storeIndex);
 				switch (comparison) {
@@ -1536,7 +1563,7 @@ public final class SmtUtils {
 					result = as.getValue();
 					break;
 				case INCOMPARABLE:
-					result = script.term("select", as.asTerm(), index);
+					result = script.term("select", as.getTerm(), index);
 					break;
 				default:
 					throw new AssertionError("unknown value " + comparison);
@@ -1844,7 +1871,7 @@ public final class SmtUtils {
 			throw new IllegalArgumentException("dividend has to be integral");
 		}
 		if (!integralRational.denominator().equals(BigInteger.ONE)) {
-			throw new IllegalArgumentException("denominator has to be zero");
+			throw new IllegalArgumentException("denominator has to be one");
 		}
 		return integralRational.numerator();
 	}
@@ -1875,7 +1902,7 @@ public final class SmtUtils {
 
 	/**
 	 * Check if term represents a literal. If this is the case, then return its value as a {@link Rational} otherwise
-	 * return true.
+	 * return null.
 	 */
 	public static Rational tryToConvertToLiteral(final Term term) {
 		final Rational result;
@@ -2280,6 +2307,17 @@ public final class SmtUtils {
 	}
 
 	/**
+	 * @return LBool.UNSAT if the SMT solver was able to prove that the antecedent
+	 *         implies the succedent, LBool.SAT if the SMT was able to prove that
+	 *         the antecent does not imply the succedent, and LBool.UNKNOWN
+	 *         otherwise.
+	 */
+	public static LBool checkImplication(final Term antecedent, final Term succedent, final Script script) {
+		final Term notImply = SmtUtils.and(script, antecedent, SmtUtils.not(script, succedent));
+		return Util.checkSat(script, notImply);
+	}
+
+	/**
 	 * Returns true iff the boolean formulas formula1 and formula2 are equivalent under the given assumption w.r.t
 	 * script.
 	 */
@@ -2495,6 +2533,10 @@ public final class SmtUtils {
 		return (Set) SubTermFinder.find(term, p, false);
 	}
 
+	/**
+	 * If the term is a negated formula return the subformula of the `not` operator,
+	 * otherwise return null.
+	 */
 	public static Term unzipNot(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
@@ -2655,6 +2697,54 @@ public final class SmtUtils {
 
 	public BigInteger computeLargestRepresentableBitvector(final Sort bv, final BvSignedness signedness) {
 		return null;
+	}
+
+	public static boolean isAbsorbingElement(final String booleanConnective, final Term term) {
+		if (booleanConnective.equals("and")) {
+			return isFalseLiteral(term);
+		} else if (booleanConnective.equals("or")) {
+			return isTrueLiteral(term);
+		} else {
+			throw new AssertionError("unsupported connective " + booleanConnective);
+		}
+	}
+
+	public static boolean isNeutralElement(final String booleanConnective, final Term term) {
+		if (booleanConnective.equals("and")) {
+			return isTrueLiteral(term);
+		} else if (booleanConnective.equals("or")) {
+			return isFalseLiteral(term);
+		} else {
+			throw new AssertionError("unsupported connective " + booleanConnective);
+		}
+	}
+
+	/**
+	 * Auxiliary method that replaces all free variables in a term by constant
+	 * symbols (i.e., 0-ary function symbols). These constant symbols are declared
+	 * in the script. <br>
+	 * Use this method with caution. The constant symbols will live forever in the
+	 * current stack frame, hence this method should be used in combination with
+	 * push/pop in order to remove the constant symbols from the assertion stack
+	 * after they are not needed any more. <br>
+	 * The name for the new constant symbols are defined by the method
+	 * {@link SmtUtils#termVariable2constant}).
+	 */
+	public static Term replaceFreeVariablesByConstants(final Script script, final Term term) {
+		final TermVariable[] vars = term.getFreeVars();
+		final Term[] values = new Term[vars.length];
+		for (int i = 0; i < vars.length; i++) {
+			values[i] = termVariable2constant(script, vars[i]);
+		}
+		return new FormulaUnLet().unlet(script.let(vars, values, term));
+	}
+
+	private static Term termVariable2constant(final Script script, final TermVariable tv) {
+		final String name = tv.getName() + "_const_" + tv.hashCode();
+		final Sort[] paramSorts = {};
+		final Sort resultSort = tv.getSort();
+		script.declareFun(name, paramSorts, resultSort);
+		return script.term(name);
 	}
 
 }

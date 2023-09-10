@@ -1197,6 +1197,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 		if (!filename.endsWith(".class")) {
 			return false;
 		}
+		if (filename.contains("$")) {
+			// Do not check nested classes
+			return false;
+		}
 		final Class<?> clazz = getClassFromFile(packageName, file);
 		if (clazz == null) {
 			return false;

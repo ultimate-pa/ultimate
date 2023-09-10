@@ -131,7 +131,7 @@ public class OptionBuilder {
 
 	public Options filterExperimentalOptions(final Options opts) {
 		final Options rtr = new Options();
-		opts.getOptions().stream().sequential().filter(a -> !isUltimateOptionWithoutDesc(a)).forEach(rtr::addOption);
+		opts.getOptions().stream().sequential().filter(a -> !isExperimentalUltimateOption(a)).forEach(rtr::addOption);
 		return rtr;
 	}
 
@@ -144,14 +144,13 @@ public class OptionBuilder {
 		return pluginNameFilter.test(triple.getFirst());
 	}
 
-	private boolean isUltimateOptionWithoutDesc(final Option option) {
+	private boolean isExperimentalUltimateOption(final Option option) {
 		final Triple<String, String, UltimatePreferenceItem<?>> triple =
 				mCliName2UltimatePreferences.get(option.getLongOpt());
 		if (triple == null) {
 			return false;
 		}
-		final String desc = triple.getThird().getToolTip();
-		return desc == null || desc.isEmpty();
+		return triple.getThird().isExperimental();
 	}
 
 	private static Options createCliOptions(final boolean requireToolchain, final boolean requireInputFiles) {
@@ -266,8 +265,8 @@ public class OptionBuilder {
 	private static String createDescription(final UltimatePreferenceItem<?> item) {
 		final StringBuilder sb = new StringBuilder();
 
-		if (item.getToolTip() != null) {
-			sb.append(item.getToolTip());
+		if (item.getDescription() != null) {
+			sb.append(item.getDescription());
 			sb.append(" ");
 		}
 

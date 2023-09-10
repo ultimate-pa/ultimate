@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 
 /**
  *
@@ -164,6 +165,7 @@ public class QuantifierEliminationTest {
 		} else {
 			mScript = solverInstance;
 		}
+		mScript = new StatisticsScript(mScript);
 
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
@@ -276,7 +278,8 @@ public class QuantifierEliminationTest {
 		Term letFree = new FormulaUnLet().transform(formulaAsTerm);
 		letFree = new CommuhashNormalForm(services, mgdScript.getScript()).transform(letFree);
 		letFree = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(letFree);
-		csvWriter.reportEliminationBegin(letFree);
+		final String testId = ReflectionUtil.getCallerMethodName(4);
+		csvWriter.reportEliminationBegin(letFree, testId);
 		final Term result = PartialQuantifierElimination.eliminate(services, mgdScript, letFree,
 				SimplificationTechnique.SIMPLIFY_DDA);
 		logger.info("Result: " + result);
@@ -301,7 +304,7 @@ public class QuantifierEliminationTest {
 		if (expectedResultAsString != null) {
 			checkLogicalEquivalence(mgdScript.getScript(), result, expectedResultAsString);
 		}
-		csvWriter.reportEliminationSuccess(result);
+		csvWriter.reportEliminationSuccess(result, testId, (StatisticsScript) mgdScript.getScript());
 	}
 
 	private static void checkLogicalEquivalence(final Script script, final Term result,

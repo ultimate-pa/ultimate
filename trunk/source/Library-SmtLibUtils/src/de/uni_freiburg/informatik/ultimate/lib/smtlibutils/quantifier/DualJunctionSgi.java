@@ -30,8 +30,22 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  *
@@ -57,7 +71,159 @@ public class DualJunctionSgi extends DualJunctionQuantifierElimination {
 
 	@Override
 	public EliminationResult tryToEliminate(final EliminationTask inputEt) {
+		final Term[] candidateDualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(),
+				inputEt.getContext().getCriticalConstraint());
+		final Term[] qSubformulaDualFiniteJuncts =
+				QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
+		final List<Term> candidateConjunctsList = Arrays.asList(candidateDualFiniteJuncts);
+		final List<Term> qSubformulaConjunctsList = Arrays.asList(qSubformulaDualFiniteJuncts);
+
+		final List<Map<TermVariable, Term>> finalresult =
+				instantiateCartesian(inputEt.getEliminatees(), qSubformulaConjunctsList, candidateConjunctsList);
+		if (finalresult != null) {
+			return new EliminationResult(inputEt.update(mScript.term("true")), Collections.emptySet());
+		}
 		return null;
 	}
 
+	public List<Map<TermVariable, Term>> instantiateCartesian(final Set<TermVariable> instantiatees,
+			final List<Term> qsubformulas, final List<Term> candidates) {
+		boolean found = false;
+		final List<Map<TermVariable, Term>> mapList = new ArrayList<>();
+		rotationLoop: for (int r = 0; r < qsubformulas.size(); r++) {
+			Collections.rotate(qsubformulas, 1);
+			List<Map<TermVariable, Term>> mapForThisRotation = new ArrayList<>();
+			final Set<Integer> bannedcandidates = new HashSet<>();
+			boolean foundInRotation = false;
+			for (int i = 0; i < qsubformulas.size(); i++) {
+				List<Map<TermVariable, Term>> res = null;
+				for (int j = 0; j < candidates.size(); j++) {
+					if (bannedcandidates.contains(j)) {
+						continue;
+					}
+					res = matchExpression(instantiatees, qsubformulas.get(i), candidates.get(j));
+					if (res != null) {
+						final List<Map<TermVariable, Term>> mapForThisMatch = mergeAllMaps(mapForThisRotation, res);
+						if (mapForThisMatch == null) {
+							continue;
+						}
+						mapForThisRotation = mapForThisMatch;
+						foundInRotation = true;
+						bannedcandidates.add(j);
+						break;
+					}
+				}
+				if (res == null) {
+					continue rotationLoop;
+				}
+			}
+			found = found || foundInRotation;
+			mapList.addAll(mapForThisRotation);
+		}
+		if (found) {
+
+			return mapList;
+		}
+		return null;
+	}
+
+	public List<Map<TermVariable, Term>> instantiatePairwise(final Set<TermVariable> instantiatees,
+			final List<Term> qsubformulas, final List<Term> candidates) {
+		List<Map<TermVariable, Term>> mapList = new ArrayList<>();
+		for (int i = 0; i < qsubformulas.size(); i++) {
+			List<Map<TermVariable, Term>> res = null;
+
+			res = matchExpression(instantiatees, qsubformulas.get(i), candidates.get(i));
+			if (res != null) {
+				mapList = mergeAllMaps(mapList, res);
+				if (mapList == null) {
+					return null;
+				}
+			} else {
+				return null;
+			}
+		}
+		return mapList;
+	}
+
+	public List<Map<TermVariable, Term>> mergeAllMaps(final List<Map<TermVariable, Term>> mergedmap,
+			final List<Map<TermVariable, Term>> tobemerged) {
+		final List<Map<TermVariable, Term>> finalMergedMap = new ArrayList<>();
+		if (mergedmap.isEmpty()) {
+			finalMergedMap.addAll(tobemerged);
+			return finalMergedMap;
+		}
+		for (int i = 0; i < mergedmap.size(); i++) {
+			for (int j = 0; j < tobemerged.size(); j++) {
+				final Map<TermVariable, Term> mergeTwoMapsResult = mergeTwoMaps(mergedmap.get(i), tobemerged.get(j));
+				if (mergeTwoMapsResult == null) {
+					continue;
+				}
+				finalMergedMap.add(mergeTwoMapsResult);
+			}
+		}
+		if (finalMergedMap.isEmpty()) {
+			return null;
+		}
+		return finalMergedMap;
+	}
+
+	public Map<TermVariable, Term> mergeTwoMaps(final Map<TermVariable, Term> fromMerged,
+			final Map<TermVariable, Term> toMerge) {
+		final Map<TermVariable, Term> mergedmap = new HashMap<>();
+		for (final TermVariable key : fromMerged.keySet()) {
+			if ((toMerge.containsKey(key)) && (fromMerged.get(key) != toMerge.get(key))) {
+				return null;
+			}
+		}
+		mergedmap.putAll(fromMerged);
+		mergedmap.putAll(toMerge);
+		return mergedmap;
+	}
+
+	public List<Map<TermVariable, Term>> matchExpression(final Set<TermVariable> instantiatees, final Term qsubformula,
+			final Term candidate) {
+		if ((qsubformula instanceof ApplicationTerm) && (candidate instanceof ApplicationTerm)) {
+			final ApplicationTerm qsubformulaAppTerm = (ApplicationTerm) qsubformula;
+			final ApplicationTerm candidateAppTerm = (ApplicationTerm) candidate;
+			if (qsubformulaAppTerm.getFunction() == candidateAppTerm.getFunction()) {
+				final Boolean isCommutative =
+						CommuhashUtils.isKnownToBeCommutative(qsubformulaAppTerm.getFunction().getName());
+				List<Map<TermVariable, Term>> res;
+
+				if (Arrays.asList(qsubformulaAppTerm.getParameters()).size() == Arrays
+						.asList(candidateAppTerm.getParameters()).size()) {
+					if (isCommutative) {
+						res = instantiateCartesian(instantiatees, Arrays.asList(qsubformulaAppTerm.getParameters()),
+								Arrays.asList(candidateAppTerm.getParameters()));
+					} else {
+						res = instantiatePairwise(instantiatees, Arrays.asList(qsubformulaAppTerm.getParameters()),
+								Arrays.asList(candidateAppTerm.getParameters()));
+					}
+					return res;
+				}
+			} else {
+				return null;
+			}
+		}
+
+		if (qsubformula instanceof TermVariable) {
+			if (instantiatees.contains(qsubformula)) {
+				return List.of(Collections.singletonMap((TermVariable) qsubformula, candidate));
+			}
+			if (qsubformula == candidate) {
+				return List.of(Collections.emptyMap());
+			}
+			if (qsubformula != candidate) {
+				return null;
+			}
+		}
+
+		if ((qsubformula instanceof ConstantTerm) && (candidate instanceof ConstantTerm)
+				&& (((ConstantTerm) qsubformula).getValue() == ((ConstantTerm) candidate).getValue())) {
+			return List.of(Collections.emptyMap());
+			// find alternative to getValue
+		}
+		return null;
+	}
 }

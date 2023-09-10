@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePr
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 
 /**
  * Preferences for the compound domain.
@@ -74,11 +75,9 @@ public class CompoundDomainPreferences {
 		final UltimatePreferenceItemContainer compoundContainer =
 				new UltimatePreferenceItemContainer("Compound Domain");
 
-		compoundContainer.addItem(new UltimatePreferenceItem<String>(LABEL_DESCRIPTION_CHOOSE_ABSTRACT_DOMAINS, null,
-				PreferenceType.Label));
-		compoundContainer.addItems(addAbstractDomains());
+		compoundContainer.addItem(new UltimatePreferenceItemGroup("Abstract Domains",
+				LABEL_DESCRIPTION_CHOOSE_ABSTRACT_DOMAINS, addAbstractDomains()));
 
-		compoundContainer.addItem(new UltimatePreferenceItem<String>("", null, PreferenceType.Label));
 		compoundContainer.addItem(
 				new UltimatePreferenceItem<>(LABEL_CREATE_ASSUMPTIONS, DEF_CREATE_ASSUMPTIONS, PreferenceType.Boolean));
 		compoundContainer.addItem(new UltimatePreferenceItem<>(LABEL_SIMPLIFY_ASSUMPTIONS, DEF_SIMPLIFY_ASSUMPTIONS,
@@ -90,8 +89,8 @@ public class CompoundDomainPreferences {
 		return returnList;
 	}
 
-	private static List<UltimatePreferenceItem<?>> addAbstractDomains() {
-		final List<UltimatePreferenceItem<?>> abstractDomains = new ArrayList<>();
+	private static List<BaseUltimatePreferenceItem> addAbstractDomains() {
+		final List<BaseUltimatePreferenceItem> abstractDomains = new ArrayList<>();
 
 		abstractDomains.add(
 				new UltimatePreferenceItem<>(LABEL_USE_EMPTY_DOMAIN, DEF_USE_EMPTY_DOMAIN, PreferenceType.Boolean));

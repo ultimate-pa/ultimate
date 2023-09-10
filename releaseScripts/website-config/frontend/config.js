@@ -5,17 +5,17 @@ const _CONFIG = {
 	},
 	backend: {
 		// web_bridge_url: URL to the WebBackend API.
-        web_bridge_url: 'https://ultimate.sopranium.de/api'
+		web_bridge_url: 'https://ultimate-pa.org/api'
 	},
 	editor: {
 		// Default content of the editor.
 		init_code: '// Enter code here ...',
-		// default_msg_orientation: one of ["bottom" | "left"], 
+		// default_msg_orientation: one of ["bottom" | "left"],
 		//                          determines the ultimate response messages default orientation.
 		default_msg_orientation: "left"
 	},
 	// code_file_extensions: Determines the file extension to be used as input for the ultimate tool.
-	//                       The key is the language of the tool in the frontend; 
+	//                       The key is the language of the tool in the frontend;
 	//                       The value is the file extension to be used by ultimate.
 	code_file_extensions: {
 		c: '.c',
@@ -53,7 +53,7 @@ const _CONFIG = {
 	 */
 	//  * Id (`id`).
 	//  * Front-page entry (`name`, `description`, `languages`).
-	//  * Supported languages and specific settings (`workers`).  
+	//  * Supported languages and specific settings (`workers`).
 	tools: [
 		{
 			// name: A Human readable name of this tool. Used as Heading in the frontend.
@@ -96,8 +96,9 @@ const _CONFIG = {
 							"name": "Check division by zero",
 							"key": "Check division by zero",
 							"id": "cacsl2boogietranslator.check.division.by.zero",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -105,7 +106,7 @@ const _CONFIG = {
 							"name": "Check if freed pointer was valid",
 							"key": "Check if freed pointer was valid",
 							"id": "cacsl2boogietranslator.check.if.freed.pointer.was.valid",
-							"visible": false,
+							"visible": true,
 							"default": false,
 							"type": "bool"
 						},
@@ -114,8 +115,9 @@ const _CONFIG = {
 							"name": "Pointer to allocated memory at dereference",
 							"key": "Pointer to allocated memory at dereference",
 							"id": "cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -123,8 +125,9 @@ const _CONFIG = {
 							"name": "Check array bounds for arrays that are off heap",
 							"key": "Check array bounds for arrays that are off heap",
 							"id": "cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -150,8 +153,9 @@ const _CONFIG = {
 							"name": "Pointer base address is valid at dereference",
 							"key": "Pointer base address is valid at dereference",
 							"id": "cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -508,8 +512,9 @@ const _CONFIG = {
 							"name": "Check division by zero",
 							"key": "Check division by zero",
 							"id": "cacsl2boogietranslator.check.division.by.zero",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -517,7 +522,7 @@ const _CONFIG = {
 							"name": "Check if freed pointer was valid",
 							"key": "Check if freed pointer was valid",
 							"id": "cacsl2boogietranslator.check.if.freed.pointer.was.valid",
-							"visible": false,
+							"visible": true,
 							"default": false,
 							"type": "bool"
 						},
@@ -526,8 +531,9 @@ const _CONFIG = {
 							"name": "Pointer to allocated memory at dereference",
 							"key": "Pointer to allocated memory at dereference",
 							"id": "cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -535,8 +541,9 @@ const _CONFIG = {
 							"name": "Check array bounds for arrays that are off heap",
 							"key": "Check array bounds for arrays that are off heap",
 							"id": "cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -562,8 +569,9 @@ const _CONFIG = {
 							"name": "Pointer base address is valid at dereference",
 							"key": "Pointer base address is valid at dereference",
 							"id": "cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -967,8 +975,9 @@ const _CONFIG = {
 							"name": "Check division by zero",
 							"key": "Check division by zero",
 							"id": "cacsl2boogietranslator.check.division.by.zero",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -976,7 +985,7 @@ const _CONFIG = {
 							"name": "Check if freed pointer was valid",
 							"key": "Check if freed pointer was valid",
 							"id": "cacsl2boogietranslator.check.if.freed.pointer.was.valid",
-							"visible": false,
+							"visible": true,
 							"default": false,
 							"type": "bool"
 						},
@@ -985,8 +994,9 @@ const _CONFIG = {
 							"name": "Pointer to allocated memory at dereference",
 							"key": "Pointer to allocated memory at dereference",
 							"id": "cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -994,8 +1004,9 @@ const _CONFIG = {
 							"name": "Check array bounds for arrays that are off heap",
 							"key": "Check array bounds for arrays that are off heap",
 							"id": "cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -1021,8 +1032,9 @@ const _CONFIG = {
 							"name": "Pointer base address is valid at dereference",
 							"key": "Pointer base address is valid at dereference",
 							"id": "cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference",
-							"visible": false,
+							"visible": true,
 							"default": "IGNORE",
+							"options": ["IGNORE", "ASSUME", "ASSERTandASSUME"],
 							"type": "string"
 						},
 						{
@@ -1561,7 +1573,60 @@ const _CONFIG = {
 					language: "c",
 					id: "cReferee",
 					task_id: "REFEREE_C",
-					frontend_settings: []
+					"frontend_settings": [
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"default": "",
+							"visible": false,
+							"name": "Entry function",
+							"id": "cacsl2boogietranslator_entry_function",
+							"type": "string",
+							"key": "Entry function"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"default": true,
+							"visible": false,
+							"name": "Use bitvectors instead of ints",
+							"id": "cacsl2boogietranslator_use_bitvectors_instead_of_ints",
+							"type": "bool",
+							"key": "Use bitvectors instead of ints"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"default": "HoenickeLindenmann_4ByteResolution",
+							"visible": false,
+							"name": "Memory model",
+							"options": [
+								"HoenickeLindenmann_Original",
+								"HoenickeLindenmann_1ByteResolution",
+								"HoenickeLindenmann_2ByteResolution",
+								"HoenickeLindenmann_4ByteResolution",
+								"HoenickeLindenmann_8ByteResolution"
+							],
+							"id": "cacsl2boogietranslator_memory_model",
+							"type": "string",
+							"key": "Memory model"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"default": true,
+							"visible": false,
+							"name": "Adapt memory model on pointer casts if necessary",
+							"id": "cacsl2boogietranslator_adapt_memory_model_on_pointer_casts_if_necessary",
+							"type": "bool",
+							"key": "Adapt memory model on pointer casts if necessary"
+						},
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+							"default": false,
+							"visible": false,
+							"name": "Report unsoundness warnings",
+							"id": "cacsl2boogietranslator_report_unsoundness_warnings",
+							"type": "bool",
+							"key": "Report unsoundness warnings"
+						},
+					]
 				},
 				{
 					language: "boogie",

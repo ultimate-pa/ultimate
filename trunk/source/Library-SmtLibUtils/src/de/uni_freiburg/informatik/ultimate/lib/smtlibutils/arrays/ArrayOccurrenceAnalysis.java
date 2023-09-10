@@ -429,7 +429,7 @@ public class ArrayOccurrenceAnalysis {
 	}
 
 	public static boolean isStoreWhereWantedArrayIsValue(final Term term, final Term wantedArray) {
-		final ArrayStore as = ArrayStore.convert(term);
+		final ArrayStore as = ArrayStore.of(term);
 		if (as == null) {
 			return false;
 		}

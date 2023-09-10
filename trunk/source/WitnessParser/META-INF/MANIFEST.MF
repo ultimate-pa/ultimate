@@ -7,9 +7,11 @@ Bundle-Activator: de.uni_freiburg.informatik.ultimate.witnessparser.Activator
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  edu.uci.ics.jung,
  de.uni_freiburg.informatik.ultimate.lib.core,
- de.uni_freiburg.informatik.ultimate.lib.ultimatemodel
+ de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
+ eo-yaml;bundle-version="7.0.8"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Export-Package: de.uni_freiburg.informatik.ultimate.witnessparser.graph,
- de.uni_freiburg.informatik.ultimate.witnessparser.preferences
+ de.uni_freiburg.informatik.ultimate.witnessparser.preferences,
+ de.uni_freiburg.informatik.ultimate.witnessparser.yaml
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.witnessparser

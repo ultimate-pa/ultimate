@@ -67,8 +67,8 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 			final IThreadModularPreferenceOrder preferenceOrder, final IcfgToChcPreferences prefs) {
 		super(services, mgdScript, icfg, symbolTable, prefs);
 		mIndependenceChecker = new IndependenceChecker(services, icfg.getCfgSmtToolkit(), independence);
-		mThreadLocations = icfg.getProgramPoints().entrySet().stream()
-				.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().values()));
+		mThreadLocations = icfg.getProgramPoints().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+				e -> e.getValue().values().stream().filter(this::isRelevantLocation).collect(Collectors.toList())));
 
 		if (mPrefs.breakPreferenceOrderSymmetry()) {
 			mIdVars = null;
@@ -324,7 +324,7 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 			}
 
 			final var conjunct =
-					mIndependenceChecker.getIndependenceCondition(clause, otherThread, edge, activeThread, activeEdge);
+					mIndependenceChecker.getIndependenceCondition(clause, activeThread, activeEdge, otherThread, edge);
 			if (SmtUtils.isFalseLiteral(conjunct)) {
 				// escape early if one outgoing edge does not commute under any circumstances
 				return mScript.term(SMTLIBConstants.FALSE);

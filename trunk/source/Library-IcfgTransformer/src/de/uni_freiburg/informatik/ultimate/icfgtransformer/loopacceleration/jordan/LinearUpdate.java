@@ -187,8 +187,7 @@ public class LinearUpdate {
 					// If the term is not a select term, are there select terms inside?
 					// This occurs hopefully very seldomly and we have to analyze how we are going
 					// to handle this case
-					final List<MultiDimensionalSelect> innerArrayWrites = MultiDimensionalSelect.extractSelectDeep(term,
-							true);
+					final List<MultiDimensionalSelect> innerArrayWrites = MultiDimensionalSelect.extractSelectDeep(term);
 					if (!innerArrayWrites.isEmpty()) {
 						final String errorMessage = String.format("Yet unsupported inner array read. Monomial %s",
 								monomialAsTerm);
@@ -215,7 +214,7 @@ public class LinearUpdate {
 					final Set<TermVariable> freeVarsOfIndex = mds.getIndex().getFreeVars();
 					freeVarsOfIndex.retainAll(termVariablesOfModified);
 					final String errorMessage = String.format(
-							"Update contains array read whose index is moving. Array read %s, modified variable %s",
+							"Non-array update contains array read whose index is moving. Array read %s, modified variable %s",
 							mds, freeVarsOfIndex);
 					return new Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String>(null, null, null,
 							errorMessage);

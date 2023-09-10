@@ -332,7 +332,7 @@ public class DerPreprocessor extends TermTransformer {
 		if (newIndex == arrayIndex) {
 			throw new AssertionError("no need to replace index");
 		}
-		final MultiDimensionalSelect mds = new MultiDimensionalSelect(array, newIndex, mgdScript.getScript());
+		final MultiDimensionalSelect mds = new MultiDimensionalSelect(array, newIndex);
 		final Term result = QuantifierUtils.applyDerOperator(mgdScript.getScript(), quantifier, eliminatee,
 				mds.toTerm(mgdScript.getScript()));
 		return result;
@@ -351,7 +351,7 @@ public class DerPreprocessor extends TermTransformer {
 	private static Term constructDisjointIndexImplication(final ArrayIndex innermostIndex,
 			final LinkedList<ArrayIndex> indices, final Term innermostValue, final Term arr, final Script script,
 			final int quantifier, final ArrayIndexEqualityManager aiem) {
-		final Term select = new MultiDimensionalSelect(arr, innermostIndex, script).toTerm(script);
+		final Term select = new MultiDimensionalSelect(arr, innermostIndex).toTerm(script);
 		final ArrayList<Term> correspondingFiniteJuncts = new ArrayList(
 				indices.stream().map(x -> aiem.constructDerRelation(script, quantifier, innermostIndex, x))
 						.collect(Collectors.toList()));

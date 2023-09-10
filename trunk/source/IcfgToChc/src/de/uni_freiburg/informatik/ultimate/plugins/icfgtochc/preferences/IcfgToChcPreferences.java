@@ -26,6 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ConcurrencyMode;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferenceInitializer.ConditionalIndependence;
@@ -58,6 +62,7 @@ public class IcfgToChcPreferences {
 		return mPrefs.getInt(IcfgToChcPreferenceInitializer.LABEL_THREADMODULAR_LEVEL);
 	}
 
+	// TODO Currently unused
 	public boolean explicitLocations() {
 		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_EXPLICIT_LOCATIONS);
 	}
@@ -78,6 +83,7 @@ public class IcfgToChcPreferences {
 		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_BREAK_PREFORDER_SYMMETRY);
 	}
 
+	// TODO Currently unused
 	public boolean explicitSleep() {
 		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_EXPLICIT_SLEEP);
 	}
@@ -93,5 +99,21 @@ public class IcfgToChcPreferences {
 
 	public boolean useSemicommutativity() {
 		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_SEMICOMMUTATIVITY);
+	}
+
+	public List<String> getParametricTemplates() {
+		return getList(IcfgToChcPreferenceInitializer.LABEL_PARAMETRIC_TEMPLATES);
+	}
+
+	public List<String> getParametricSingleThreads() {
+		return getList(IcfgToChcPreferenceInitializer.LABEL_PARAMETRIC_SINGLE_THREADS);
+	}
+
+	private List<String> getList(final String key) {
+		final var value = mPrefs.getString(key);
+		if (value == null || value.isBlank()) {
+			return null;
+		}
+		return Arrays.stream(value.split(",")).map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList());
 	}
 }

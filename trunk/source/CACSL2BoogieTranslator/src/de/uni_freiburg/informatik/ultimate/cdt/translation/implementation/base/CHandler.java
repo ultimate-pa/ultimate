@@ -129,7 +129,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
@@ -219,6 +218,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.StringLiteralResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
@@ -250,6 +250,8 @@ public class CHandler {
 	 * casts of pointers soundly. However these soundness errors occur seldom.
 	 */
 	private static final boolean POINTER_CAST_IS_UNSUPPORTED_SYNTAX = false;
+
+	private static final boolean ADD_HAVOCS_AT_SCOPE_END = true;
 
 	private final MemoryHandler mMemoryHandler;
 
@@ -710,13 +712,8 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTASMDeclaration node) {
-		if (mSettings.isSvcompMode()) {
-			// workaround for now: ignore inline assembler instructions
-			return new SkipResult();
-		}
-		final String msg = "CHandler: Not yet implemented: \"" + node.getRawSignature() + "\" (Type: "
-				+ node.getClass().getName() + ")";
-		throw new UnsupportedSyntaxException(mLocationFactory.createCLocation(node), msg);
+		mReporter.warn(mLocationFactory.createCLocation(node), "Ignoring inline assembler instruction");
+		return new SkipResult();
 	}
 
 	public Result visit(final IDispatcher main, final IASTBinaryExpression node) {
@@ -1066,6 +1063,11 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTCompoundStatement node) {
+		return handleCompoundStatement(main, node, false);
+	}
+
+	private Result handleCompoundStatement(final IDispatcher main, final IASTCompoundStatement node,
+			final boolean useRValue) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		LRValue expr = null;
 		final IASTNode parent = node.getParent();
@@ -1101,12 +1103,28 @@ public class CHandler {
 			}
 		}
 		checkForACSL(main, resultBuilder, null, node, true);
+		if (useRValue && expr != null) {
+			final ILocation loc = mLocationFactory.createCLocation(node);
+			if (expr instanceof HeapLValue) {
+				// The read already creates an aux-var, so we just use the RValue of the read
+				resultBuilder.addAllIncludingLrValue(
+						mMemoryHandler.getReadCall(((HeapLValue) expr).getAddress(), expr.getCType()));
+			} else {
+				final AuxVarInfo auxVarInfo =
+						mAuxVarInfoBuilder.constructAuxVarInfo(loc, expr.getCType(), AUXVAR.NONDET);
+				resultBuilder.addAuxVar(auxVarInfo).addDeclaration(auxVarInfo.getVarDec());
+				resultBuilder.setLrValue(new RValue(auxVarInfo.getExp(), expr.getCType()));
+				resultBuilder.addStatement(
+						StatementFactory.constructSingleAssignmentStatement(loc, auxVarInfo.getLhs(), expr.getValue()));
+			}
+		}
 		if (isNewScopeRequired(parent)) {
 			updateStmtsAndDeclsAtScopeEnd(resultBuilder, node);
-
+			if (ADD_HAVOCS_AT_SCOPE_END) {
+				resultBuilder.addStatements(getHavocsAtScopeEnd(mLocationFactory.createCLocation(node), node));
+			}
 			endScope();
 		}
-		resultBuilder.setLrValue(expr);
 		return resultBuilder.build();
 	}
 
@@ -1384,8 +1402,7 @@ public class CHandler {
 		mInnerMostLoopLabel.push(loopLabel);
 		final Result bodyResult = main.dispatch(node.getBody());
 		mInnerMostLoopLabel.pop();
-		final LoopInvariantSpecification witnessInvariant = main.fetchInvariantAtLoop(node);
-		return handleLoops(main, node, bodyResult, condResult, loopLabel, witnessInvariant);
+		return handleLoops(main, node, bodyResult, condResult, loopLabel);
 	}
 
 	public Result visit(final IDispatcher main, final IASTEqualsInitializer node) {
@@ -1444,8 +1461,7 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTForStatement node) {
 		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
-		final LoopInvariantSpecification witnessInvariant = main.fetchInvariantAtLoop(node);
-		return handleLoops(main, node, null, null, loopLabel, witnessInvariant);
+		return handleLoops(main, node, null, null, loopLabel);
 	}
 
 	public Result visit(final IDispatcher main, final IASTFunctionCallExpression node) {
@@ -1485,15 +1501,13 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTGotoStatement node) {
 		final ArrayList<Statement> stmt = new ArrayList<>();
-		if (!mIsPrerun) {
-			final AssertStatement assertWitnessInvariant = ((MainDispatcher) main).fetchInvariantAtGoto(node);
-			if (assertWitnessInvariant != null) {
-				stmt.add(assertWitnessInvariant);
-			}
-		}
 		final String[] name = { node.getName().toString() };
 		stmt.add(new GotoStatement(mLocationFactory.createCLocation(node), name));
-		return new ExpressionResult(stmt, null);
+		final ExpressionResult result = new ExpressionResult(stmt, null);
+		if (mIsPrerun) {
+			return result;
+		}
+		return main.transformWithWitness(node, result);
 	}
 
 	public Result visit(final IDispatcher main, final IASTIdExpression node) {
@@ -1863,11 +1877,6 @@ public class CHandler {
 		// LinkedHashMap<>(0);
 		final List<Overapprox> overappr = new ArrayList<>();
 		final String label = node.getName().toString();
-		if ("ERROR".equals(label)) {
-			final String longDescription =
-					"The label \"ERROR\" does not have a special meaning in the translation mode you selected. You might want to change your settings and use the SV-COMP translation mode.";
-			mReporter.warn(loc, longDescription);
-		}
 		stmt.add(new Label(loc, label));
 		final Result r = main.dispatch(node.getNestedStatement());
 		if (r instanceof ExpressionResult) {
@@ -2502,12 +2511,11 @@ public class CHandler {
 		mInnerMostLoopLabel.push(loopLabel);
 		final Result bodyResult = main.dispatch(node.getBody());
 		mInnerMostLoopLabel.pop();
-		final LoopInvariantSpecification witnessInvariant = main.fetchInvariantAtLoop(node);
-		return handleLoops(main, node, bodyResult, condResult, loopLabel, witnessInvariant);
+		return handleLoops(main, node, bodyResult, condResult, loopLabel);
 	}
 
 	public Result visit(final IDispatcher main, final IGNUASTCompoundStatementExpression node) {
-		return main.dispatch(node.getCompoundStatement());
+		return handleCompoundStatement(main, node.getCompoundStatement(), true);
 	}
 
 	/**
@@ -2783,6 +2791,18 @@ public class CHandler {
 		}
 	}
 
+	private List<Statement> getHavocsAtScopeEnd(final ILocation loc, final IASTStatement hook) {
+		final List<Statement> havocs = new ArrayList<>();
+		for (final SymbolTableValue stv : mSymbolTable.getInnermostCScopeValues(hook)) {
+			if (!stv.isBoogieGlobalVar() && stv.getBoogieDecl() != null) {
+				final VariableLHS lhs = new VariableLHS(loc, stv.getAstType().getBoogieType(), stv.getBoogieName(),
+						stv.getDeclarationInformation());
+				havocs.add(new HavocStatement(loc, new VariableLHS[] { lhs }));
+			}
+		}
+		return havocs;
+	}
+
 	/**
 	 * @return true iff this is called while in prerun mode, false otherwise
 	 */
@@ -2864,7 +2884,7 @@ public class CHandler {
 		// this is only to have a minimal symbolTableEntry (containing boogieID) for
 		// translation of the initializer
 		mSymbolTable.storeCSymbol(hook, cDec.getName(),
-				new SymbolTableValue(bId, null, cDec, declarationInformation, hook, false));
+				new SymbolTableValue(bId, null, null, cDec, declarationInformation, hook, false));
 		final InitializerResult initializer = translateInitializer(main, cDec);
 		cDec.setInitializerResult(initializer);
 
@@ -2992,7 +3012,7 @@ public class CHandler {
 		// TODO: Unnamed struct fields have cDec.getName() == "" ; is this supposed to
 		// happen?
 		mSymbolTable.storeCSymbol(hook, cDec.getName(),
-				new SymbolTableValue(bId, boogieDec, cDec, declarationInformation, hook, false));
+				new SymbolTableValue(bId, boogieDec, translatedType, cDec, declarationInformation, hook, false));
 		return result;
 	}
 
@@ -3426,11 +3446,10 @@ public class CHandler {
 	 * @param condResult
 	 *            the condition of the loop
 	 * @param loopLabel
-	 * @param witnessInvariant
 	 * @return a result object holding the translated loop (i.e. a while loop)
 	 */
 	private Result handleLoops(final IDispatcher main, final IASTStatement node, Result bodyResult,
-			ExpressionResult condResult, final String loopLabel, final LoopInvariantSpecification witnessInvariant) {
+			ExpressionResult condResult, final String loopLabel) {
 		assert node instanceof IASTWhileStatement || node instanceof IASTDoStatement
 				|| node instanceof IASTForStatement;
 
@@ -3438,6 +3457,7 @@ public class CHandler {
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
+		final List<Statement> afterLoopStatements = new ArrayList<>();
 		Result iterator = null;
 		if (node instanceof IASTForStatement) {
 			final IASTForStatement forStmt = (IASTForStatement) node;
@@ -3449,6 +3469,10 @@ public class CHandler {
 				if (initializer instanceof ExpressionResult) {
 					final ExpressionResult rExp = (ExpressionResult) initializer;
 					resultBuilder.addAllExceptLrValue(rExp);
+					// Havoc all variables that are declared in the initializer statement after the loop
+					if (ADD_HAVOCS_AT_SCOPE_END) {
+						afterLoopStatements.addAll(getHavocsAtScopeEnd(loc, cInitStmt));
+					}
 				} else if (initializer instanceof SkipResult) {
 					// this is an empty statement in the C Code. We will skip it
 				} else {
@@ -3556,9 +3580,6 @@ public class CHandler {
 			spec = new LoopInvariantSpecification[0];
 		} else {
 			final List<LoopInvariantSpecification> specList = new ArrayList<>();
-			if (witnessInvariant != null) {
-				specList.add(witnessInvariant);
-			}
 			if (node instanceof IASTForStatement || node instanceof IASTWhileStatement
 					|| node instanceof IASTDoStatement) {
 				for (int i = 0; i < mContract.size(); i++) {
@@ -3599,11 +3620,15 @@ public class CHandler {
 				new WhileStatement(ignoreLocation, ExpressionFactory.createBooleanLiteral(ignoreLocation, true), spec,
 						bodyBlock.toArray(new Statement[bodyBlock.size()]));
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
-		resultBuilder.addStatement(whileStmt);
+		resultBuilder.addStatement(whileStmt).addStatements(afterLoopStatements);
 
 		assert resultBuilder.getLrValue() == null : "there is an lrvalue although there should be none";
 		assert resultBuilder.getAuxVars().isEmpty() : "auxvars were added although they should have been havoced";
-		return resultBuilder.build();
+		final ExpressionResult result = resultBuilder.build();
+		if (mIsPrerun) {
+			return result;
+		}
+		return main.transformWithWitness(node, result);
 	}
 
 }

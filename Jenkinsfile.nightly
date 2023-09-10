@@ -1,37 +1,5 @@
 def scmVars
-mmMessage = ''
-
-def prepare_post(def scmResult) {
-  switch (currentBuild.currentResult) {
-    case 'SUCCESS':
-      env.mm_color = 'good'
-      break
-    case 'UNSTABLE':
-      env.mm_color = '#ebc934'
-      break
-    default:
-      env.mm_color = 'danger'
-      break
-  }
-
-  def changeLogSets = currentBuild.changeSets
-  def changeMessage = ''
-  for (int i = 0; i < changeLogSets.size(); i++) {
-    def entries = changeLogSets[i].items
-    for (int j = 0; j < entries.length; j++) {
-      def entry = entries[j]
-      changeMessage += "  * ${entry.commitId} by ${entry.author} on ${new Date(entry.timestamp)}: ${entry.msg}\n"
-    }
-  }
-  mmMessage = """Build ${currentBuild.id} of **${java.net.URLDecoder.decode env.JOB_NAME, 'UTF-8'}** finished with **${currentBuild.currentResult}**.
-#### Links
-* <${env.BUILD_URL}display/redirect|Open Jenkins log>
-* <${env.RUN_CHANGES_DISPLAY_URL}|Open changes in Jenkins>
-* <${scmResult.GIT_URL}|Open project in GitHub>
-#### Changes
-${changeMessage}
-"""
-}
+@Library('jenkins-shared-lib') _
 
 // TODO
 // * Generate badge for test failure and add it to the readme.md
@@ -167,12 +135,12 @@ pipeline {
   }
   post {
     unsuccessful {
-      script { prepare_post(scmVars) }
+      script { string mmMessage = mattermost.create_mattermost_message(scmVars) }
       emailext(body: '$DEFAULT_CONTENT', mimeType: 'text/plain', recipientProviders: [culprits(), developers(), requestor()], replyTo: 'dietsch@informatik.uni-freiburg.de', subject: '$DEFAULT_SUBJECT')
       mattermostSend(color: "${env.mm_color}", message: "${mmMessage}", text: '', channel: '#ultimate', icon: 'https://jenkins.sopranium.de/static/0e41ff2a/images/jenkins-header-logo-v2.svg')
     }
     fixed {
-      script { prepare_post(scmVars) }
+      script { string mmMessage = mattermost.create_mattermost_message(scmVars) }
       emailext(body: '$DEFAULT_CONTENT', mimeType: 'text/plain', recipientProviders: [culprits(), developers(), requestor()], replyTo: 'dietsch@informatik.uni-freiburg.de', subject: '$DEFAULT_SUBJECT')
       mattermostSend(color: "${env.mm_color}", message: "${mmMessage}", text: '', channel: '#ultimate', icon: 'https://jenkins.sopranium.de/static/0e41ff2a/images/jenkins-header-logo-v2.svg')
     }

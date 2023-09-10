@@ -33,10 +33,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public enum ConcurrencyMode {
@@ -63,12 +65,25 @@ public enum ConcurrencyMode {
 	 *         the second component contains all threads that may have more than {@code level} instances.
 	 */
 	public Pair<Map<String, Integer>, Set<String>> getThreadNumbersAndUnboundedThreads(final IIcfg<?> icfg,
-			final int level) {
+			final IcfgToChcPreferences prefs) {
+		final int level = prefs.getThreadModularProofLevel();
+
 		if (this == ConcurrencyMode.PARAMETRIC) {
-			final var numberOfThreads =
-					icfg.getInitialNodes().stream().collect(Collectors.toMap(loc -> loc.getProcedure(), loc -> level));
-			final var unbounded = Set.copyOf(numberOfThreads.keySet());
-			return new Pair<>(numberOfThreads, unbounded);
+			// get templates either from setting, or initial locs of ICFG
+			final var prefTemplates = prefs.getParametricTemplates();
+			final var templates = prefTemplates == null
+					? icfg.getInitialNodes().stream().map(IcfgLocation::getProcedure).collect(Collectors.toList())
+					: prefTemplates;
+			final var templateInstances = templates.stream().map(proc -> new Pair<>(proc, level));
+
+			// get single-instance threads from settings, if any
+			final var prefSingleThreads = prefs.getParametricSingleThreads();
+			final Stream<Pair<String, Integer>> singleThreads = prefSingleThreads == null ? Stream.empty()
+					: prefSingleThreads.stream().map(proc -> new Pair<>(proc, 1));
+
+			final var numberOfThreads = Stream.concat(templateInstances, singleThreads)
+					.collect(Collectors.toMap(Pair::getKey, Pair::getValue));
+			return new Pair<>(numberOfThreads, Set.copyOf(templates));
 		}
 
 		assert this == ConcurrencyMode.SINGLE_MAIN_THREAD : "Unknown mode: " + this;
@@ -108,12 +123,23 @@ public enum ConcurrencyMode {
 	 * @return A mapping from initially running thread instances to their initial locations
 	 */
 	public Map<ThreadInstance, IcfgLocation> getInitialLocations(final IIcfg<?> icfg,
-			final List<ThreadInstance> instances) {
+			final List<ThreadInstance> instances, final IcfgToChcPreferences prefs) {
 		switch (this) {
 		case PARAMETRIC:
-			// combine each initial location (usually there is only one) with ALL instances of its template
-			return icfg
-					.getInitialNodes().stream().flatMap(l -> instances.stream()
+			// get templates either from setting, or initial locs of ICFG
+			final var prefTemplates = prefs.getParametricTemplates();
+			final Stream<? extends IcfgLocation> templateInitLocs =
+					prefTemplates == null ? icfg.getInitialNodes().stream()
+							: prefTemplates.stream().map(proc -> icfg.getProcedureEntryNodes().get(proc));
+
+			// get single-instance threads from settings, if any
+			final var prefSingleThreads = prefs.getParametricSingleThreads();
+			final Stream<? extends IcfgLocation> singleThreadInitLocs = prefSingleThreads == null ? Stream.empty()
+					: prefSingleThreads.stream().map(proc -> icfg.getProcedureEntryNodes().get(proc));
+
+			// combine each initial location with ALL instances of its template
+			return Stream
+					.concat(templateInitLocs, singleThreadInitLocs).flatMap(l -> instances.stream()
 							.filter(i -> i.getTemplateName().equals(l.getProcedure())).map(i -> new Pair<>(i, l)))
 					.collect(Collectors.toMap(Pair::getKey, Pair::getValue));
 		case SINGLE_MAIN_THREAD:

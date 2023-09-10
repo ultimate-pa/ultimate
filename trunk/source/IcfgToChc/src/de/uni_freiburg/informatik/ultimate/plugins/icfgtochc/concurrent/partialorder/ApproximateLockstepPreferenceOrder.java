@@ -91,8 +91,10 @@ public class ApproximateLockstepPreferenceOrder implements IThreadModularPrefere
 		final var greaterLocs = mDepth.entrySet().stream()
 				// consider only locations with greater depth
 				.filter(e -> comparator.test(e.getValue(), loc1Depth))
-				// replace locations by the integers representing the,
+				// replace locations by the integers representing them
 				.map(e -> locationMap.get(e.getKey()))
+				// skip locations not represented in the CHC system
+				.filter(i -> i != null)
 				// sort (to simplify #rangify below) and collect
 				.sorted().collect(Collectors.toList());
 		final var locRanges = rangify(greaterLocs);

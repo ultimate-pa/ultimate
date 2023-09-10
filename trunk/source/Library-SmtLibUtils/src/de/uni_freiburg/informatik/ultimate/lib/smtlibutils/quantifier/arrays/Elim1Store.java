@@ -582,8 +582,7 @@ public class Elim1Store {
 			final ArrayIndex selectIndexRepresentative, final Script script) {
 		Term oldCellValue;
 		{
-			final MultiDimensionalSelect oldSelect = new MultiDimensionalSelect(eliminatee, selectIndexRepresentative,
-					script);
+			final MultiDimensionalSelect oldSelect = new MultiDimensionalSelect(eliminatee, selectIndexRepresentative);
 			final Term oldSelectRepresentative = equalityInformation.getRepresentative(oldSelect.toTerm(script));
 			final Term eqTerm = findNiceReplacementForRepresentative(oldSelectRepresentative, eliminatee,
 					equalityInformation);
@@ -689,7 +688,7 @@ public class Elim1Store {
 					.getRepresentative(entry.getKey().getIndex());
 			final ArrayIndex replacementIndex = indexMapping.get(indexRepresentative);
 			storedValueInformation.add(QuantifierUtils.applyDerOperator(mMgdScript.getScript(), quantifier,
-					new MultiDimensionalSelect(entry.getValue(), replacementIndex, mScript).toTerm(mScript),
+					new MultiDimensionalSelect(entry.getValue(), replacementIndex).toTerm(mScript),
 					Substitution.apply(mMgdScript, substitutionMapping, entry.getKey().getValue())));
 		}
 		return QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, storedValueInformation);
@@ -816,11 +815,11 @@ public class Elim1Store {
 	}
 
 	private static boolean selectTermsWithsimilarArray(final Term term1, final Term term2) {
-		final ArraySelect select1 = ArraySelect.convert(term1);
+		final ArraySelect select1 = ArraySelect.of(term1);
 		if (select1 == null) {
 			return false;
 		} else {
-			final ArraySelect select2 = ArraySelect.convert(term2);
+			final ArraySelect select2 = ArraySelect.of(term2);
 			if (select2 == null) {
 				return false;
 			} else {
@@ -864,8 +863,7 @@ public class Elim1Store {
 				final Term indexEquality = aiem.constructDerRelation(mgdScript.getScript(), quantifier,
 						replacementStoreIndex, replacementSelectIndex);
 
-				final MultiDimensionalSelect newSelect = new MultiDimensionalSelect(newAuxArray, replacementSelectIndex,
-						mgdScript.getScript());
+				final MultiDimensionalSelect newSelect = new MultiDimensionalSelect(newAuxArray, replacementSelectIndex);
 				final Term storeValueReplacement = Substitution.apply(mgdScript,
 						substitutionMapping, storeValue);
 				final Term newValueInCell = QuantifierUtils.applyDerOperator(mgdScript.getScript(), quantifier,
@@ -1018,7 +1016,7 @@ public class Elim1Store {
 
 	private static Term constructOldSelectTerm(final ManagedScript mgdScript, final TermVariable eliminatee,
 			final ArrayIndex selectIndex) {
-		return new MultiDimensionalSelect(eliminatee, selectIndex, mgdScript.getScript()).toTerm(mgdScript.getScript());
+		return new MultiDimensionalSelect(eliminatee, selectIndex).toTerm(mgdScript.getScript());
 	}
 
 	private class AuxVarConstructor {

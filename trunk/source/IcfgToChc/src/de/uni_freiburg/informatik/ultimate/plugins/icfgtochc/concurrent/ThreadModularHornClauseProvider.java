@@ -128,8 +128,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		mCfgSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 		mVariableFilter = variableFilter;
 
-		final var threadInfo =
-				mPrefs.concurrencyMode().getThreadNumbersAndUnboundedThreads(icfg, mPrefs.getThreadModularProofLevel());
+		final var threadInfo = mPrefs.concurrencyMode().getThreadNumbersAndUnboundedThreads(icfg, mPrefs);
 		mTemplates = Set.copyOf(threadInfo.getFirst().keySet());
 		mInstances = getInstances(threadInfo.getFirst());
 		mUnboundedTemplates = threadInfo.getSecond();
@@ -177,21 +176,39 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 	protected Map<IcfgLocation, Integer> createLocationMap(final IIcfg<?> icfg) {
 		final var result = new HashMap<IcfgLocation, Integer>();
-		for (final var entry : icfg.getProcedureEntryNodes().values()) {
+		for (final var entry : icfg.getProcedureEntryNodes().entrySet()) {
+			final var initial = entry.getValue();
+
 			int counter = 0;
-			result.put(entry, counter);
+			result.put(initial, counter);
 			counter++;
-			final var iterator = new IcfgEdgeIterator(entry.getOutgoingEdges());
+
+			final var iterator = new IcfgEdgeIterator(initial.getOutgoingEdges());
 			while (iterator.hasNext()) {
 				final var edge = iterator.next();
 				assert result.containsKey(edge.getSource()) : "edge with unknown source loc";
-				if (!result.containsKey(edge.getTarget())) {
-					result.put(edge.getTarget(), counter);
+				final var loc = edge.getTarget();
+
+				if (!isRelevantLocation(loc)) {
+					continue;
+				}
+
+				if (!result.containsKey(loc)) {
+					result.put(loc, counter);
 					counter++;
 				}
 			}
 		}
 		return result;
+	}
+
+	// do not map error locations to an integer if they do not appear in the CHC system
+	protected boolean isRelevantLocation(final IcfgLocation loc) {
+		if (!mPrefs.skipAssertEdges()) {
+			return true;
+		}
+		final var errorNodes = mIcfg.getProcedureErrorNodes().get(loc.getProcedure());
+		return errorNodes == null || !errorNodes.contains(loc);
 	}
 
 	/**
@@ -360,6 +377,14 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 	// add actual constraints for spec edges, do nothing if not a spec edge
 	protected void transformSpecEdgeClause(final IcfgEdge edge, final HornClauseBuilder clause) {
+		// TODO Fix this for
+		// - parametric programs with some single-instance threads:
+		// ---> i.e. only modify counter for unbounded templates; make sure bounded threads all at exit loc
+		// - parametric programs with multiple unbounded templates:
+		// ---> should there be one counter per template?
+		// - fork/join programs
+		// ---> i.e. we don't need the counter, just assert post after main thread has exited
+
 		if (isPreConditionSpecEdge(edge) && mPrefs.specMode() == SpecMode.POSTCONDITION) {
 			incrementThreadCounter(clause, mRunningThreadsVar, 1L);
 		} else if (isPostConditionSpecEdge(edge)) {
@@ -379,7 +404,6 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		if (!mPrefs.hasPreconditions()) {
 			return false;
 		}
-
 		final var template = edge.getPrecedingProcedure();
 		final var entryLoc = mIcfg.getProcedureEntryNodes().get(template);
 		return edge.getSource().equals(entryLoc);
@@ -389,7 +413,6 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		if (mPrefs.specMode() != SpecMode.POSTCONDITION) {
 			return false;
 		}
-
 		final var template = edge.getPrecedingProcedure();
 		final var exitLoc = mIcfg.getProcedureExitNodes().get(template);
 		return edge.getTarget().equals(exitLoc);
@@ -426,7 +449,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 			return result;
 		}
 		if (edge instanceof IIcfgJoinTransitionThreadCurrent<?>) {
-			assert false : "Joins not supported";
+			throw new UnsupportedOperationException("Joins not supported");
 		}
 
 		return getInstances(edge.getPrecedingProcedure()).stream()
@@ -675,7 +698,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	// -----------------------------------------------------------------------------------------------------------------
 
 	protected Map<ThreadInstance, IcfgLocation> getInitialLocations() {
-		return mPrefs.concurrencyMode().getInitialLocations(mIcfg, mInstances);
+		return mPrefs.concurrencyMode().getInitialLocations(mIcfg, mInstances, mPrefs);
 	}
 
 	protected void addInLocationConstraint(final HornClauseBuilder clause, final ThreadInstance threadInstance,

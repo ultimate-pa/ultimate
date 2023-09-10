@@ -37,9 +37,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
-import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -59,17 +59,16 @@ public class QuantifierEliminationTestCsvWriter {
 
 	public QuantifierEliminationTestCsvWriter(final String testfileId) {
 		mTestfileId = testfileId;
-		final List<String> list =
-				Arrays.asList(new String[] { "TestId", "InputTreesize", "OutputTreesize", "Runtime" });
+		final List<String> list = Arrays.asList(new String[] { "TestId", "InputTreesize", "OutputTreesize", "Runtime",
+				"check-sat time", "#check-sat" });
 		mCsv = new SimpleCsvProvider<>(list);
 
 
 	}
 
-	public void reportEliminationBegin(final Term eliminationInput) {
-		final String testId = ReflectionUtil.getCallerMethodName(5);
+	public void reportEliminationBegin(final Term eliminationInput, final String testId) {
 		if (mCurrentEliminationData == null) {
-			mCurrentEliminationData = new String[4];
+			mCurrentEliminationData = new String[6];
 			mCurrentEliminationData[0] = testId;
 			final long treesize = new DAGSize().treesize(eliminationInput);
 			assert mCurrentEliminationData[1] == null;
@@ -93,8 +92,8 @@ public class QuantifierEliminationTestCsvWriter {
 		}
 	}
 
-	public void reportEliminationSuccess(final Term eliminationOutput) {
-		final String testId = ReflectionUtil.getCallerMethodName(5);
+	public void reportEliminationSuccess(final Term eliminationOutput, final String testId,
+			final StatisticsScript statScript) {
 		if (testId.equals(mCurrentEliminationData[0])) {
 			final long treesize = new DAGSize().treesize(eliminationOutput);
 			assert mCurrentEliminationData[2] == null;
@@ -102,6 +101,10 @@ public class QuantifierEliminationTestCsvWriter {
 			final long duration = computeDurationMiliseconds(mCurrentEliminationStartTime);
 			assert mCurrentEliminationData[3] == null;
 			mCurrentEliminationData[3] = String.valueOf(duration);
+			if (statScript != null) {
+				mCurrentEliminationData[4] = String.valueOf(statScript.getCheckSatTime() / 1000000);
+				mCurrentEliminationData[5] = String.valueOf(statScript.getNumberOfCheckSatCommands());
+			}
 			mCsv.addRow(Arrays.asList(mCurrentEliminationData));
 			mCurrentEliminationData = null;
 		} else {

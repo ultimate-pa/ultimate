@@ -252,7 +252,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 							antiDer.add(new Pair<Term, Term>(bnr.getRhs(), bnr.getRhs()));
 						}
 					} else {
-						assert occursInsideSelectTerm(term, eliminatee) : "should have been removed by DER";
+						assert occursInsideSelectTerm(script, term, eliminatee) : "should have been removed by DER";
 						// no chance to eliminate the variable
 						throw new AssertionError("should have been removed by DER");
 					}
@@ -265,7 +265,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 							antiDer.add(new Pair<Term, Term>(bnr.getRhs(), bnr.getRhs()));
 						}
 					} else {
-						assert occursInsideSelectTerm(term, eliminatee) : "should have been removed by DER";
+						assert occursInsideSelectTerm(script, term, eliminatee) : "should have been removed by DER";
 						// no chance to eliminate the variable
 						throw new AssertionError("should have been removed by DER");
 					}
@@ -381,15 +381,15 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	/**
 	 * @return true iff tv is subterm of some select term in term.
 	 */
-	private static boolean occursInsideSelectTerm(final Term term, final TermVariable tv) {
-		final List<MultiDimensionalSelect> selectTerms = MultiDimensionalSelect.extractSelectShallow(term, true);
+	private static boolean occursInsideSelectTerm(Script script, final Term term, final TermVariable tv) {
+		final List<MultiDimensionalSelect> selectTerms = MultiDimensionalSelect.extractSelectShallow(term);
 		for (final MultiDimensionalSelect mds : selectTerms) {
 			for (final Term index : mds.getIndex()) {
 				if (Arrays.asList(index.getFreeVars()).contains(tv)) {
 					return true;
 				}
 			}
-			if (Arrays.asList(mds.getSelectTerm().getFreeVars()).contains(tv)) {
+			if (Arrays.asList(mds.toTerm(script).getFreeVars()).contains(tv)) {
 				return true;
 			}
 			if (Arrays.asList(mds.getArray().getFreeVars()).contains(tv)) {

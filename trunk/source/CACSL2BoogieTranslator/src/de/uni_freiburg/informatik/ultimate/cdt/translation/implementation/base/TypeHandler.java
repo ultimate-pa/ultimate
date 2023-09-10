@@ -556,8 +556,9 @@ public class TypeHandler implements ITypeHandler {
 		final CDeclaration newCDecl = new CDeclaration(newDefiningType, oldCDecl.getName(),
 				oldCDecl.getIASTInitializer(), oldCDecl.getInitializer(), oldCDecl.isOnHeap(),
 				oldCDecl.getStorageClass(), oldCDecl.getBitfieldSize());
-		final SymbolTableValue val = new SymbolTableValue(oldStv.getBoogieName(), oldStv.getBoogieDecl(), newCDecl,
-				oldStv.getDeclarationInformation(), oldStv.getDeclarationNode(), oldStv.isIntFromPointer());
+		final SymbolTableValue val = new SymbolTableValue(oldStv.getBoogieName(), oldStv.getBoogieDecl(),
+				oldStv.getAstType(), newCDecl, oldStv.getDeclarationInformation(), oldStv.getDeclarationNode(),
+				oldStv.isIntFromPointer());
 		mSymboltable.storeCSymbol(hook, name, val);
 		alreadyRedirected.add(name);
 		return newDefiningType;
@@ -853,7 +854,7 @@ public class TypeHandler implements ITypeHandler {
 				ExpressionFactory.constructIdentifierExpression(loc, getBoogieTypeForBoogieASTType(enumAstType),
 						boogieId, new DeclarationInformation(StorageClass.GLOBAL, null));
 		mSymboltable.storeCSymbol(node, enumConstId,
-				new SymbolTableValue(boogieId, cd,
+				new SymbolTableValue(boogieId, cd, enumAstType,
 						new CDeclaration(typeOfEnumIdentifiers, enumConstId,
 								CHandler.scConstant2StorageClass(node.getStorageClass())),
 						DeclarationInformation.DECLARATIONINFO_GLOBAL, node, false, value));

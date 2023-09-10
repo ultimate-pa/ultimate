@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -61,7 +62,7 @@ public class QuantifierEliminationBenchmarks {
 	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
-	private static final long TEST_TIMEOUT_MILLISECONDS = 00_000;
+	private static final long TEST_TIMEOUT_MILLISECONDS = 60_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final LogLevel LOG_LEVEL_SOLVER = LogLevel.INFO;
 	private static final String SOLVER_COMMAND =
@@ -103,6 +104,7 @@ public class QuantifierEliminationBenchmarks {
 		} else {
 			mScript = solverInstance;
 		}
+		mScript = new StatisticsScript(mScript);
 
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);

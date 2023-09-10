@@ -30,16 +30,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.parser;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.dom.IPDOMManager;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.index.IIndex;
 import org.eclipse.cdt.core.language.settings.providers.ILanguageSettingsProvider;
@@ -54,6 +59,7 @@ import org.eclipse.cdt.core.model.IPathEntry;
 import org.eclipse.cdt.core.model.ISourceEntry;
 import org.eclipse.cdt.core.model.ISourceRoot;
 import org.eclipse.cdt.core.model.ITranslationUnit;
+import org.eclipse.cdt.core.parser.util.ASTPrinter;
 import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
 import org.eclipse.cdt.core.settings.model.ICLanguageSettingEntry;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
@@ -96,7 +102,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.UltimateCdtExternalSettingsProvider.ToolchainDependency;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.LoggerOutputStream;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -170,6 +178,8 @@ public class CDTParser implements ISource {
 				new MultiparseSymbolTable(mLogger, mCdtPProjectHierachyFlag, files.length == 1);
 		for (final IASTTranslationUnit tu : tuCollection) {
 			mLogger.info("Scanning " + normalizeCdtFilename(tu.getFilePath()));
+			dumpAST(tu, ASTPrinter::print, "all AST nodes");
+			dumpAST(tu, ASTPrinter::printProblems, "problem AST nodes");
 			tu.accept(mps);
 		}
 
@@ -181,6 +191,29 @@ public class CDTParser implements ISource {
 		decorator.setSymbolTable(mps);
 
 		return new WrapperNode(null, decorator);
+	}
+
+	/**
+	 * Dumps the AST of a specified translation unit and report AST problem nodes.
+	 * 
+	 * @param tu Translation unit of a parsed input file.
+	 * @param printFunc Operation that prints each {@link IASTNode} to a {@link PrintStream}.
+	 * @param desc Description of printing operation.
+	 */
+	public void dumpAST(final IASTTranslationUnit tu, final BiConsumer<IASTNode, PrintStream> printFunc, final String desc) {
+
+		if (mLogger.isDebugEnabled()) {
+			final String fileName = normalizeCdtFilename(tu.getFilePath());
+			final OutputStream printOutput = new LoggerOutputStream(mLogger::debug);
+			final PrintStream printStream = new PrintStream(printOutput);
+
+			mLogger.debug("======== BEGIN dump AST [" + desc + "] of translation unit for " + fileName);
+			printFunc.accept(tu, printStream);
+			printStream.flush();
+			mLogger.debug("======== END dump AST [" + desc + "] of translation unit for " + fileName);
+
+			printStream.close();
+		}
 	}
 
 	/**

@@ -3,7 +3,6 @@
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Translation\ Mode\:=SV_COMP14
 #Wed Jan 15 21:36:24 CET 2014
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1

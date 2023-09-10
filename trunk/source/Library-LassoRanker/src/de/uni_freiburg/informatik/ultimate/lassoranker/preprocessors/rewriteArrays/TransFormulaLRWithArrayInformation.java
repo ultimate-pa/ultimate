@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -316,11 +315,11 @@ public class TransFormulaLRWithArrayInformation {
 		final ArrayList<MultiDimensionalSelect> result = new ArrayList<>();
 		for (final ArrayUpdate au : arrayUpdates) {
 			for (final Term indexEntry : au.getIndex()) {
-				result.addAll(MultiDimensionalSelect.extractSelectDeep(indexEntry, true));
+				result.addAll(MultiDimensionalSelect.extractSelectDeep(indexEntry));
 			}
-			result.addAll(MultiDimensionalSelect.extractSelectDeep(au.getValue(), true));
+			result.addAll(MultiDimensionalSelect.extractSelectDeep(au.getValue()));
 		}
-		result.addAll(MultiDimensionalSelect.extractSelectDeep(remainderTerm, true));
+		result.addAll(MultiDimensionalSelect.extractSelectDeep(remainderTerm));
 		return result;
 	}
 
@@ -630,7 +629,7 @@ public class TransFormulaLRWithArrayInformation {
 		private List<MultiDimensionalSelect> extractArrayReads(final List<Term> terms) {
 			final ArrayList<MultiDimensionalSelect> result = new ArrayList<>();
 			for (final Term term : terms) {
-				result.addAll(MultiDimensionalSelect.extractSelectDeep(term, true));
+				result.addAll(MultiDimensionalSelect.extractSelectDeep(term));
 			}
 			return result;
 		}
@@ -713,13 +712,27 @@ public class TransFormulaLRWithArrayInformation {
 	}
 
 	private TermVariable computeInVarInstance(final TermVariable arrayInstance) {
-		final TermVariable result = (TermVariable) mOutVars2InVars.get(arrayInstance);
-		return result;
+		if (mInVars2OutVars.containsKey(arrayInstance)) {
+			return arrayInstance;
+		} else {
+			final TermVariable result = (TermVariable) mOutVars2InVars.get(arrayInstance);
+			if (result == null) {
+				throw new AssertionError("Neither inVar nor outVar");
+			}
+			return result;
+		}
 	}
 
 	private TermVariable computeOutVarInstance(final TermVariable arrayInstance) {
-		final TermVariable result = (TermVariable) mInVars2OutVars.get(arrayInstance);
-		return result;
+		if (mOutVars2InVars.keySet().contains(arrayInstance)) {
+			return arrayInstance;
+		} else {
+			final TermVariable result = (TermVariable) mInVars2OutVars.get(arrayInstance);
+			if (result == null) {
+				throw new AssertionError("Neither inVar nor outVar");
+			}
+			return result;
+		}
 	}
 
 	public NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> getArrayCellInVars() {
@@ -780,7 +793,7 @@ public class TransFormulaLRWithArrayInformation {
 			Term disjunct = SmtUtils.and(script, conjuncts);
 			final Set<TermVariable> auxVars = new HashSet<>(sunfts[i].getAuxVars());
 			disjunct = PartialQuantifierElimination.eliminate(services, ftvc, disjunct, simplificationTechnique);
-//					
+//
 //					PartialQuantifierElimination.elim(ftvc, QuantifiedFormula.EXISTS, auxVars, disjunct, services,
 //					logger, simplificationTechnique, xnfConversionTechnique);
 			disjuncts.add(disjunct);

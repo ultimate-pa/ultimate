@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -99,6 +100,7 @@ public class QuantifierEliminationDivMod {
 		} else {
 			mScript = solverInstance;
 		}
+		mScript = new StatisticsScript(mScript);
 
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);

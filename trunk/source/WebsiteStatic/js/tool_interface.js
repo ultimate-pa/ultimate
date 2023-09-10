@@ -74,13 +74,13 @@ function create_persistence_link() {
 	);
 
 	$('#copy_persistence_link_to_clipboard').on({
-		click: function() {
+		click: function () {
 			copy_to_clipboard(link_input);
 		}
 	});
 
 	$('#copy_persistence_link_small_to_clipboard').on({
-		click: function() {
+		click: function () {
 			copy_to_clipboard(link_input_small);
 		}
 	});
@@ -95,7 +95,7 @@ function create_persistence_link() {
 function get_user_session_settings() {
 	let user_frontend_settings = get_user_frontend_settings();
 	// Reduce the size of the frontend settings object to only necessary info needed for recreation.
-	user_frontend_settings = user_frontend_settings.map(function(setting) {
+	user_frontend_settings = user_frontend_settings.map(function (setting) {
 		return {
 			"id": setting.id,
 			"type": setting.type,
@@ -120,11 +120,11 @@ function get_user_session_settings() {
  * @param frontend_settings
  */
 function set_user_frontend_settings(frontend_settings) {
-	frontend_settings.forEach(function(setting) {
+	frontend_settings.forEach(function (setting) {
 		// Todo: implement range, int, ...
 		if (setting.type === 'bool') {
 			$('#' + setting.id).prop('checked', setting.value);
-		} 
+		}
 	});
 }
 
@@ -151,7 +151,7 @@ function load_user_provided_session(user_session_settings) {
 function init_interface_controls() {
 	// Changing the tool Language.
 	$('.language-selection').on({
-		click: function() {
+		click: function () {
 			let language = $(this).data().language;
 			if (language !== get_current_language()) {
 				clear_editor();
@@ -163,7 +163,7 @@ function init_interface_controls() {
 
 	// Handle click on "Execute"
 	$('#navbar_execute_interface').on({
-		click: function() {
+		click: function () {
 			clear_messages();
 			try {
 				const settings = get_execute_settings();
@@ -177,7 +177,7 @@ function init_interface_controls() {
 
 	// Handle click on "Cancel run!"
 	$('#navbar_cancel_interface').on({
-		click: function() {
+		click: function () {
 			clear_messages();
 			try {
 				set_canceling_spinner(true);
@@ -192,7 +192,7 @@ function init_interface_controls() {
 
 	// Highlight code by message click.
 	$(document).on({
-		click: function() {
+		click: function () {
 			let data = $(this).data();
 			highlight_code(data.startLine, data.endLine, data.startCol, data.endCol, data.type);
 		}
@@ -202,7 +202,7 @@ function init_interface_controls() {
 	init_messages_resize();
 
 	$('#move-messages').on({
-		click: function() {
+		click: function () {
 			switch (_CONFIG.context.msg_orientation) {
 				case "left":
 					set_message_orientation("bottom");
@@ -216,7 +216,7 @@ function init_interface_controls() {
 
 	// Let the user create a sharable link encoding the current session.
 	$('#create_persistence_link').on({
-		click: function() {
+		click: function () {
 			create_persistence_link();
 		}
 	});
@@ -257,7 +257,7 @@ function init_messages_resize() {
 				})
 			]
 		})
-		.on('resizemove', function(event) {
+		.on('resizemove', function (event) {
 			messages_container.css("flex-basis", set_flex_basis(event) + 'px');
 			_EDITOR.resize();
 		});
@@ -379,7 +379,7 @@ function Sleep(milliseconds) {
  * Polling stops once there are results.
  */
 function poll_results() {
-	$.get(_CONFIG.backend.web_bridge_url + '/job/get/' + localStorage.getItem('requestId'), function(response) {
+	$.get(_CONFIG.backend.web_bridge_url + '/job/get/' + localStorage.getItem('requestId'), function (response) {
 		switch (response.status.toLowerCase()) {
 			case 'done':
 				add_results_to_editor(response);
@@ -402,7 +402,7 @@ function poll_results() {
  * @param job_jd
  */
 function stop_ultimate_toolchain_job(job_jd) {
-	$.get(_CONFIG.backend.web_bridge_url + '/job/delete/' + job_jd, function(response) {
+	$.get(_CONFIG.backend.web_bridge_url + '/job/delete/' + job_jd, function (response) {
 	});
 }
 
@@ -414,21 +414,21 @@ function run_ultimate_task(settings) {
 	set_execute_spinner(true);
 
 	if (_CONFIG.meta.debug_mode) {
-		$.get('./test/result.json', function(response) {
+		$.get('./test/result.json', function (response) {
 			add_results_to_editor(response);
-		}).fail(function() {
+		}).fail(function () {
 			alert("Could not fetch results. Server error.");
-		}).always(function() {
+		}).always(function () {
 			set_execute_spinner(false);
 		});
 		return
 	}
 
-	$.post(_CONFIG.backend.web_bridge_url, settings, function(response) {
+	$.post(_CONFIG.backend.web_bridge_url, settings, function (response) {
 		localStorage.setItem('requestId', response.requestId);
 		localStorage.setItem('pollingActive', "1");
 		poll_results();
-	}).fail(function() {
+	}).fail(function () {
 		alert("Could not initiate run. Server error.");
 		set_execute_spinner(false);
 	});
@@ -441,9 +441,10 @@ function run_ultimate_task(settings) {
  */
 function get_user_frontend_settings() {
 	let result = [];
-	_CONFIG.context.current_worker.frontend_settings.forEach(function(setting) {
+	_CONFIG.context.current_worker.frontend_settings.forEach(function (setting) {
 		// TODO: implement float, ... settings.
-		let setting_input = $('#' + setting.id);
+		// note: our setting.id contain dots, which have to be escaped
+		let setting_input = $('[id="' + setting.id + '"]')
 		switch (setting["type"]) {
 			case "bool":
 				setting["value"] = setting_input.is(':checked');
@@ -489,16 +490,16 @@ function get_execute_settings() {
  */
 function choose_language(language) {
 	console.log('Set current language to ' + language);
-	_CONFIG.context.tool.workers.forEach(function(worker) {
+	_CONFIG.context.tool.workers.forEach(function (worker) {
 		if (worker.language === language) {
 			_CONFIG.context.current_worker = worker;
 		}
 	});
 
 	// Load the ultimate toolchain file.
-	$.get('./config/ultimate_toolchain_xmls/' + _CONFIG.context.current_worker.id + '.xml', function(response) {
+	$.get('./config/ultimate_toolchain_xmls/' + _CONFIG.context.current_worker.id + '.xml', function (response) {
 		_CONFIG.context.current_worker.ultimate_toolchain_xml = response;
-	}).fail(function() {
+	}).fail(function () {
 		alert("Could not fetch ultimate toolchain xml. Config error.");
 	});
 }
@@ -528,7 +529,7 @@ function highlight_code(start_line, end_line, start_col, end_col, css_type) {
 		new Range(start_line - 1, start_col, end_line, end_col), "color-pop-animation " + css_type, "line"
 	);
 	// Remove the maker after 2 seconds
-	setTimeout(function(marker) {
+	setTimeout(function (marker) {
 		if (marker) _EDITOR.session.removeMarker(marker);
 	}, 2000, maker);
 }
@@ -553,7 +554,7 @@ function process_gutter_click(event) {
 		let current_row = event.getDocumentPosition().row;
 		let annotations = _EDITOR.session.getAnnotations();
 
-		annotations.forEach(function(annotation) {
+		annotations.forEach(function (annotation) {
 			if (annotation.row === current_row) {
 				highlight_code(
 					annotation.row + 1,
@@ -578,7 +579,7 @@ function set_available_code_samples(worker_id) {
 	let example_entries = '';
 
 	try {
-		_CONFIG.code_examples[worker_id].forEach(function(example) {
+		_CONFIG.code_examples[worker_id].forEach(function (example) {
 			example_entries += '<a class="dropdown-item sample-selection" href="#" data-source="' +
 				worker_id + '/' + example.source + '">' + example.name + '</a>';
 		});
@@ -592,7 +593,7 @@ function set_available_code_samples(worker_id) {
 	}
 	samples_menu.html(example_entries);
 	$('.sample-selection').on({
-		click: function() {
+		click: function () {
 			load_sample($(this).data().source);
 		}
 	});
@@ -604,7 +605,7 @@ function set_available_code_samples(worker_id) {
  * @param source
  */
 function load_sample(source) {
-	$.get('config/code_examples/' + source, function(data) {
+	$.get('config/code_examples/' + source, function (data) {
 		clear_messages();
 		_EDITOR.session.setValue(data);
 		_CONFIG.context.sample_source = source;
@@ -619,7 +620,7 @@ function set_available_frontend_settings(language) {
 	let settings_menu = $('#settings_dropdown_menu');
 	let settings_entries = '';
 
-	_CONFIG.context.current_worker.frontend_settings.forEach(function(setting) {
+	_CONFIG.context.current_worker.frontend_settings.forEach(function (setting) {
 		switch (setting.type) {
 			case "bool":
 				settings_entries += '<div class="form-check ' + (setting.visible ? "" : "hidden") + '">' +
@@ -689,12 +690,12 @@ function set_available_frontend_settings(language) {
 	$('#navbar_settings_select_dropdown').removeClass('hidden');
 
 	// Prevent setting menu from closing when clicking checkboxes or selections.
-	$('.form-check, .form-control').on('click', function(e) {
+	$('.form-check, .form-control').on('click', function (e) {
 		e.stopPropagation();
 	});
 
 	// Bind slider updates.
-	$('.custom-range').on('input change', function() {
+	$('.custom-range').on('input change', function () {
 		$(this).siblings('.slider-output').html('Value: ' + $(this).val());
 	});
 }

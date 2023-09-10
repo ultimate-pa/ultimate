@@ -11,7 +11,8 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  org.apache.commons.lang,
  de.uni_freiburg.informatik.ultimate.core,
  edu.uci.ics.jung;visibility:=reexport,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
+ de.uni_freiburg.informatik.ultimate.witnessparser
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Export-Package: de.uni_freiburg.informatik.ultimate.witnessprinter

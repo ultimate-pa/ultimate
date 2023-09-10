@@ -81,7 +81,7 @@ public class IcfgPetrifier {
 				new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
 		final IcfgDuplicator duplicator =
 				new IcfgDuplicator(mLogger, mServices, icfg.getCfgSmtToolkit().getManagedScript(), backtranslator);
-		mPetrifiedIcfg = duplicator.copy(icfg);
+		mPetrifiedIcfg = duplicator.copy(icfg, true);
 		final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> old2newEdgeMapping =
 				duplicator.getOld2NewEdgeMapping();
 		final ConcurrencyInformation concurrency = icfg.getCfgSmtToolkit().getConcurrencyInformation();

@@ -68,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class QuantifierPusher extends TermTransformer {
 
-
 	public enum PqeTechniques {
 		/**
 		 * Apply only the DER partial quantifier elimination technique
@@ -88,8 +87,8 @@ public class QuantifierPusher extends TermTransformer {
 		 */
 		ALL,
 		/**
-		 * Apply only eliminations that will not enlarge the boolean structure of the
-		 * formula and that do not use an SMT-solve.
+		 * Apply only eliminations that will not enlarge the boolean structure of the formula and that do not use an
+		 * SMT-solve.
 		 */
 		LIGHT,
 	}
@@ -99,9 +98,7 @@ public class QuantifierPusher extends TermTransformer {
 	}
 
 	public enum SimplificationOccasion {
-		ATOM,
-		AFTER_ELIMINATION_TECHNIQUES,
-		AFTER_DISTRIBTIVITY;
+		ATOM, AFTER_ELIMINATION_TECHNIQUES, AFTER_DISTRIBTIVITY;
 
 		public String getLogString() {
 			final String result;
@@ -122,9 +119,6 @@ public class QuantifierPusher extends TermTransformer {
 		}
 	}
 
-
-
-
 	private static final boolean DEBUG_CHECK_RESULT = false;
 
 	private final Script mScript;
@@ -142,8 +136,7 @@ public class QuantifierPusher extends TermTransformer {
 
 	private QuantifierPusher(final ManagedScript script, final IUltimateServiceProvider services,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
-			final SimplificationTechnique simplificationTechnique,
-			final Set<TermVariable> bannedForDivCapture) {
+			final SimplificationTechnique simplificationTechnique, final Set<TermVariable> bannedForDivCapture) {
 		mServices = services;
 		mMgdScript = script;
 		mScript = script.getScript();
@@ -326,11 +319,11 @@ public class QuantifierPusher extends TermTransformer {
 		if (!pair.getFirst()) {
 			return pair.getSecond();
 		}
-		final EliminationTask preprocessedEt = new EliminationTask((QuantifiedFormula) pair.getSecond(),
-				et.getContext());
+		final EliminationTask preprocessedEt =
+				new EliminationTask((QuantifiedFormula) pair.getSecond(), et.getContext());
 
-		final Term eliminationResult = applyDualJunctionEliminationTechniques(preprocessedEt, mgdScript, services,
-				pqeTechniques);
+		final Term eliminationResult =
+				applyDualJunctionEliminationTechniques(preprocessedEt, mgdScript, services, pqeTechniques);
 		if (eliminationResult != null) {
 			// quantifier was at least partially removed
 			return eliminationResult;
@@ -363,13 +356,10 @@ public class QuantifierPusher extends TermTransformer {
 		}
 	}
 
-
-
 	public static Term applyDistributivityAndPush(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final PqeTechniques pqeTechniques,
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
-			final IQuantifierEliminator qe,
-			final boolean derBasedDistributivityParameterPreselection,
+			final IQuantifierEliminator qe, final boolean derBasedDistributivityParameterPreselection,
 			final boolean evaluateSuccessOfDistributivityApplication) {
 		final Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), et.getTerm());
 		if (dualFiniteParams.length == 1) {
@@ -428,10 +418,6 @@ public class QuantifierPusher extends TermTransformer {
 		// failed to apply distributivity, return original
 		return null;
 	}
-
-
-
-
 
 	private Map<TermVariable, Long> computeTreesizeOfInhabitedParams(final List<TermVariable> eliminatees,
 			final List<Term> currentDualFiniteParams) {
@@ -511,7 +497,8 @@ public class QuantifierPusher extends TermTransformer {
 		}
 		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(mgdScript.getScript(), quantifier,
 				resultOuterParams);
-		final Term simplifiedResult = simplify(services, mgdScript, SimplificationOccasion.AFTER_DISTRIBTIVITY, SimplificationTechnique.POLY_PAC, context, result);
+		final Term simplifiedResult = simplify(services, mgdScript, SimplificationOccasion.AFTER_DISTRIBTIVITY,
+				SimplificationTechnique.POLY_PAC, context, result);
 		return simplifiedResult;
 	}
 
@@ -530,8 +517,8 @@ public class QuantifierPusher extends TermTransformer {
 
 	private static Term applyNewEliminationTechniquesExhaustively(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final PqeTechniques pqeTechniques, final EliminationTask inputEt) {
-		final List<DualJunctionQuantifierElimination> elimtechniques = generateNewEliminationTechniques(pqeTechniques,
-				mgdScript, services);
+		final List<DualJunctionQuantifierElimination> elimtechniques =
+				generateNewEliminationTechniques(pqeTechniques, mgdScript, services);
 		final EliminationResult er = tryToEliminateOne(services, inputEt, elimtechniques);
 		if (er == null) {
 			// no elimination possible
@@ -541,9 +528,9 @@ public class QuantifierPusher extends TermTransformer {
 			assert (resultEt.getContext() == inputEt.getContext()) : "Illegal modification of context";
 			// 20220807 Matthias: This simplification reduced the size of the formula in
 			// 32 of 191 regression tests.
-			final Term simplifiedTerm = simplify(services, mgdScript,
-					SimplificationOccasion.AFTER_ELIMINATION_TECHNIQUES, SimplificationTechnique.POLY_PAC,
-					resultEt.getContext(), resultEt.getTerm());
+			final Term simplifiedTerm =
+					simplify(services, mgdScript, SimplificationOccasion.AFTER_ELIMINATION_TECHNIQUES,
+							SimplificationTechnique.POLY_PAC, resultEt.getContext(), resultEt.getTerm());
 			resultEt = resultEt.update(simplifiedTerm);
 			return resultEt.toTerm(mgdScript.getScript());
 		}

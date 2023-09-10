@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jor
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
@@ -240,15 +242,36 @@ public class JordanLoopAcceleration {
 		// we support at least array writes where indices contain arrays that are not
 		// modified.
 		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : su.getDeterministicArrayWrites().entrySet()) {
-			for (final ArrayIndex idx : entry.getValue().getIndices()) {
+			for (int i = 0; i < entry.getValue().getIndices().size(); i++) {
+				final ArrayIndex idx = entry.getValue().getIndices().get(i);
 				for (final TermVariable tv : idx.getFreeVars()) {
 					if (SmtSortUtils.isArraySort(tv.getSort())) {
-						throw new UnsupportedOperationException("ArrayIndex contains array variable");
-//						throw new UnsupportedOperationException("ArrayIndex contains modified array variable");
+						throw new UnsupportedOperationException("ArrayIndex contains some array variable");
 					}
 				}
-			}
-			for (final Term value : entry.getValue().getValues()) {
+				final Term value = entry.getValue().getValues().get(i);
+				final Collection<ArrayStore> stores = ArrayStore.extractStores(value, true);
+				if (!stores.isEmpty()) {
+					throw new UnsupportedOperationException("Written value contains store");
+				}
+
+				final List<MultiDimensionalSelect> selects = MultiDimensionalSelect.extractSelectDeep(value);
+				if (selects.size() > 1) {
+					// FIXME 20230606 Matthias: Occurs sedomly, do not support by now
+					throw new UnsupportedOperationException("Written value contains several selects");
+				}
+				if (selects.size() == 1) {
+					final MultiDimensionalSelect mds = selects.get(0);
+					if (entry.getValue().getArray() == mds.getArray()) {
+						throw new UnsupportedOperationException(String.format(
+								"Array update for index %s writes a value that reads the same array at index %s", idx,
+								mds.getIndex()));
+					} else {
+						throw new UnsupportedOperationException(
+								String.format("Update of array %s with value that reads from array %s",
+										entry.getValue().getArray(), mds.getArray()));
+					}
+				}
 				for (final TermVariable tv : Arrays.asList(value.getFreeVars())) {
 					if (SmtSortUtils.isArraySort(tv.getSort())) {
 						throw new UnsupportedOperationException("Written value contains modified array variable");
@@ -286,8 +309,9 @@ public class JordanLoopAcceleration {
 		}
 		final NestedMap2<IProgramVar, ArrayIndex, Term> array2Index2values = applySubstitutionToIndexAndValue(mgdScript,
 				substitutionMapping, su.getDeterministicArrayWrites());
+		final ClosedFormOfUpdate res = new ClosedFormOfUpdate(closedFormForProgramVar, array2Index2values);
 		checkIndices(mgdScript, array2Index2values, it);
-		return new ClosedFormOfUpdate(closedFormForProgramVar, array2Index2values);
+		return res;
 	}
 
 	private static void checkIndices(final ManagedScript mgdScript,
@@ -642,8 +666,7 @@ public class JordanLoopAcceleration {
 			final Term conjunct1;
 			{
 				final Term valueUpdate = SmtUtils.equality(script,
-						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx),
-								script).toTerm(script),
+						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx)).toTerm(script),
 						value);
 				final Term impl1 = SmtUtils.implies(script, inRangeIndexEquality, valueUpdate);
 				final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, Collections.singleton(it),
@@ -654,9 +677,8 @@ public class JordanLoopAcceleration {
 			final Term conjunct2;
 			{
 				final Term valueConstancy = SmtUtils.equality(script,
-						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx),
-								script).toTerm(script),
-						new MultiDimensionalSelect(loopTransFormula.getInVars().get(array), new ArrayIndex(idx), script)
+						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx)).toTerm(script),
+						new MultiDimensionalSelect(loopTransFormula.getInVars().get(array), new ArrayIndex(idx))
 								.toTerm(script));
 				final Term existsInRangeEquality = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS,
 						Collections.singleton(it), inRangeIndexEquality);
@@ -780,7 +802,7 @@ public class JordanLoopAcceleration {
 		final List<Term> terms = new ArrayList<>();
 		for (final Triple<IProgramVar, ArrayIndex, Term> triple : arrayUpdates.entrySet()) {
 			final TermVariable arrayOutVar = outVars.get(triple.getFirst());
-			final MultiDimensionalSelect mds = new MultiDimensionalSelect(arrayOutVar, triple.getSecond(), script);
+			final MultiDimensionalSelect mds = new MultiDimensionalSelect(arrayOutVar, triple.getSecond());
 			terms.add(SmtUtils.equality(script, mds.toTerm(script), triple.getThird()));
 		}
 		return SmtUtils.and(script, terms);
