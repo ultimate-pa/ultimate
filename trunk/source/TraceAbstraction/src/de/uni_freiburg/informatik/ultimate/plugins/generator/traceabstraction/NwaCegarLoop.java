@@ -349,14 +349,13 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 	private void writeEvalRow(final long estimatedTime, final long longTraceTime) {
 		String asd = "";
-		final File fold = new File("C:\\Users\\maxba\\ultimate\\testcomp\\TestGenerationEvalCoverage.csv");
+		final File fold = new File("TestGenerationEvalCoverage.csv");
 		if (fold.exists() && !fold.isDirectory()) {
 			asd = readEvalCoverage();
 			fold.delete();
 		}
 
-		try (FileWriter fw =
-				new FileWriter("C:\\Users\\maxba\\ultimate\\testcomp\\TestGenerationEvalCoverage.csv", true);
+		try (FileWriter fw = new FileWriter("TestGenerationEvalCoverage.csv", true);
 
 				BufferedWriter bw = new BufferedWriter(fw);
 				PrintWriter out = new PrintWriter(bw)) {
@@ -374,8 +373,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	private String readEvalCoverage() {
 		final StringBuilder resultStringBuilder = new StringBuilder();
 		String fileCOntentWithoutLastLine = "";
-		try (final FileReader fr =
-				new FileReader("C:\\Users\\maxba\\ultimate\\testcomp\\TestGenerationEvalCoverage.csv");
+		try (final FileReader fr = new FileReader("TestGenerationEvalCoverage.csv");
 				final BufferedReader br = new BufferedReader(fr)) {
 			String line;
 

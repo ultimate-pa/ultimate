@@ -475,8 +475,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	}
 
 	private void writeEvalRow() {
-		try (FileWriter fw =
-				new FileWriter("C:\\Users\\maxba\\ultimate\\testcomp\\TestGenerationEvalTestCases.csv", true);
+		try (FileWriter fw = new FileWriter("TestGenerationEvalTestCases.csv", true);
 
 				BufferedWriter bw = new BufferedWriter(fw);
 				PrintWriter out = new PrintWriter(bw)) {

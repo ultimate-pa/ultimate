@@ -279,6 +279,7 @@ public class CfgBuilder {
 		case LoopFreeBlock:
 			new LargeBlockEncoding(InternalLbeMode.ALL);
 			break;
+		case SequenceOfStatementsBreakOnNondet:
 		case SequenceOfStatements: // handled in ProcedureCfgBuilder
 		case OneNontrivialStatement:
 		case SingleStatement:
