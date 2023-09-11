@@ -71,6 +71,10 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 				e -> e.getValue().values().stream().filter(this::isRelevantLocation).collect(Collectors.toList())));
 
 		if (mPrefs.breakPreferenceOrderSymmetry()) {
+			if (mPrefs.useSymmetryClauses()) {
+				throw new UnsupportedOperationException(
+						"Symmetry clauses cannot be combined with preference order symmetry breaking");
+			}
 			mIdVars = null;
 			mPreferenceManager = new ExplicitPreferenceOrderManager(preferenceOrder, mScript, mLocationIndices);
 		} else {

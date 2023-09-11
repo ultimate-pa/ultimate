@@ -62,6 +62,10 @@ public class IcfgToChcPreferences {
 		return mPrefs.getInt(IcfgToChcPreferenceInitializer.LABEL_THREADMODULAR_LEVEL);
 	}
 
+	public boolean useSymmetryClauses() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_SYMMETRY_CLAUSES);
+	}
+
 	// TODO Currently unused
 	public boolean explicitLocations() {
 		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_EXPLICIT_LOCATIONS);

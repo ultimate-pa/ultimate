@@ -298,6 +298,11 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 			}
 		}
 
+		// add symmetry clauses, if enabled
+		if (mPrefs.useSymmetryClauses()) {
+			result.addAll(buildSymmetryClauses());
+		}
+
 		// add safety clauses
 		switch (mPrefs.specMode()) {
 		case ASSERT_VIOLATIONS:
@@ -425,6 +430,15 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		return errorLocs.contains(edge.getTarget());
 	}
 
+	private List<ThreadInstance> getCandidateInstancesForClause(final String templateName) {
+		if (mPrefs.useSymmetryClauses()) {
+			// If symmetry clauses are used, we only generate clauses for the first instance.
+			return getInstances(templateName).stream().limit(1L).collect(Collectors.toList());
+		}
+		// Otherwise we generate clauses for each instance.
+		return getInstances(templateName);
+	}
+
 	private List<Triple<Map<ThreadInstance, IcfgLocation>, Map<ThreadInstance, IcfgLocation>, ThreadInstance>>
 			getCartesianPrePostProduct(final IcfgEdge edge) {
 		if (edge instanceof IIcfgForkTransitionThreadCurrent<?>) {
@@ -432,9 +446,9 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 			final var forkEntry = mIcfg.getProcedureEntryNodes().get(forkCurrent.getNameOfForkedProcedure());
 			final var result =
 					new ArrayList<Triple<Map<ThreadInstance, IcfgLocation>, Map<ThreadInstance, IcfgLocation>, ThreadInstance>>();
-			for (final var instance : getInstances(edge.getPrecedingProcedure())) {
+			for (final var instance : getCandidateInstancesForClause(edge.getPrecedingProcedure())) {
 				final var preds = Map.of(instance, edge.getSource());
-				for (final var forked : getInstances(forkCurrent.getNameOfForkedProcedure())) {
+				for (final var forked : getCandidateInstancesForClause(forkCurrent.getNameOfForkedProcedure())) {
 					if (Objects.equals(instance, forked)) {
 						continue;
 					}
@@ -448,7 +462,7 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 			throw new UnsupportedOperationException("Joins not supported");
 		}
 
-		return getInstances(edge.getPrecedingProcedure()).stream()
+		return getCandidateInstancesForClause(edge.getPrecedingProcedure()).stream()
 				.map(t -> new Triple<>(Map.of(t, edge.getSource()), Map.of(t, edge.getTarget()), t))
 				.collect(Collectors.toList());
 	}
@@ -675,6 +689,45 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		final var locals = Stream.concat(mLocalVars.values(), getInterferingLocals(interferingThread))
 				.collect(Collectors.toList());
 		addTransitionConstraint(clause, transition, interferingThread, locals);
+
+		return clause;
+	}
+
+	protected List<HornClauseBuilder> buildSymmetryClauses() {
+		final var result = new ArrayList<HornClauseBuilder>();
+
+		final var groups = mInstances.stream().collect(Collectors.groupingBy(ThreadInstance::getTemplateName));
+		for (final var group : groups.values()) {
+			// skip trivial groups
+			if (group.size() <= 1) {
+				continue;
+			}
+
+			for (int i = 0; i < group.size() - 1; ++i) {
+				final var current = group.get(i);
+				final var next = group.get(i + 1);
+				final var transposition = Map.of(current, next, next, current);
+				result.add(buildSymmetryClause(transposition));
+			}
+		}
+
+		return result;
+	}
+
+	protected HornClauseBuilder buildSymmetryClause(final Map<ThreadInstance, ThreadInstance> permutation) {
+		final var clause = createBuilder(mInvariantPredicate, "symmetry clause");
+		final var bodyArgs = new ArrayList<>(mInvariantPredicate.getParameters());
+
+		for (final var entry : permutation.entrySet()) {
+			assert !entry.getKey().equals(entry.getValue()) : "Identity permutations should be omitted";
+			assert entry.getKey().getTemplateName()
+					.equals(entry.getValue().getTemplateName()) : "Must not permute threads with different templates";
+			assert permutation.containsKey(entry.getValue()) : "Not a permutation: " + permutation;
+			replaceThreadVariables(bodyArgs, entry.getValue(), mThreadSpecificVars.get(entry.getKey()));
+		}
+
+		final var bodyTerms = bodyArgs.stream().map(v -> clause.getBodyVar(v).getTerm()).collect(Collectors.toList());
+		clause.addBodyPredicate(mInvariantPredicate, bodyTerms);
 
 		return clause;
 	}

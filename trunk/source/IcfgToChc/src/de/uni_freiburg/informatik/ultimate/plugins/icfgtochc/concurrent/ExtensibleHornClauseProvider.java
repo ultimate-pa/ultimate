@@ -51,8 +51,8 @@ public abstract class ExtensibleHornClauseProvider {
 		mSymbolTable = symbolTable;
 	}
 
-	protected final HornClauseBuilder createBuilder(final PredicateInfo predicate, final String comment) {
-		return new HornClauseBuilder(mManagedScript, mSymbolTable, Objects.requireNonNull(predicate), comment);
+	protected final HornClauseBuilder createBuilder(final PredicateInfo headPredicate, final String comment) {
+		return new HornClauseBuilder(mManagedScript, mSymbolTable, Objects.requireNonNull(headPredicate), comment);
 	}
 
 	protected final HornClauseBuilder createBuilder(final String comment) {

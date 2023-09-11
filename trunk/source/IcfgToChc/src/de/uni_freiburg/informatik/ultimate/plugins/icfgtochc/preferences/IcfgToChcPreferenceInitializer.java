@@ -85,6 +85,9 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 			"The level at which thread-modular proofs should be computed";
 	private static final int DEF_THREADMODULAR_LEVEL = 2;
 
+	public static final String LABEL_SYMMETRY_CLAUSES = "Use symmetry clauses";
+	private static final boolean DEF_SYMMETRY_CLAUSES = false;
+
 	// TODO Currently unused
 	public static final String LABEL_EXPLICIT_LOCATIONS = "Encode control locations explicitly";
 	private static final String DESC_EXPLICIT_LOCATIONS = "Control locations can be encoded symbolically "
@@ -161,6 +164,7 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 				// Settings for thread-modular proofs
 				new UltimatePreferenceItem<>(LABEL_THREADMODULAR_LEVEL, DEF_THREADMODULAR_LEVEL,
 						DESC_THREADMODULAR_LEVEL, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_SYMMETRY_CLAUSES, DEF_SYMMETRY_CLAUSES, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_EXPLICIT_LOCATIONS, DEF_EXPLICIT_LOCATIONS, DESC_EXPLICIT_LOCATIONS,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_LIPTON_REDUCTION, DEF_LIPTON_REDUCTION, DESC_LIPTON_REDUCTION,
