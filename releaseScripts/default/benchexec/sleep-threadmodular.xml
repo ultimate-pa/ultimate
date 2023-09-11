@@ -75,6 +75,47 @@
     <option name="--rcfgbuilder.smt.solver">Internal_SMTInterpol</option>
   </rundefinition>
 
+  <rundefinition name="SleepSymbolic-Symmetry.Eldarica">
+    <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">false</option>
+    <option name="--icfgtochc.use.symmetry.clauses">true</option>
+    <option name="--chcsolver.chc.solver.backend">ELDARICA</option>
+    <option name="--chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <option name="--chcsolver.produce.derivation.if.query.is.unsat">true</option>
+    <option name="--chcsolver.produce.unsat.core.if.query.is.unsat">true</option>
+  </rundefinition>
+
+  <rundefinition name="SleepSymbolic-Symmetry.Z3">
+    <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">false</option>
+    <option name="--icfgtochc.use.symmetry.clauses">true</option>
+    <option name="--chcsolver.chc.solver.backend">Z3</option>
+    <option name="--chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <option name="--chcsolver.produce.derivation.if.query.is.unsat">false</option>
+    <option name="--chcsolver.produce.unsat.core.if.query.is.unsat">false</option>
+  </rundefinition>
+
+  <rundefinition name="SleepSymbolic-Symmetry.Golem">
+    <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">false</option>
+    <option name="--icfgtochc.use.symmetry.clauses">true</option>
+    <option name="--chcsolver.chc.solver.backend">GOLEM</option>
+    <option name="--chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <option name="--chcsolver.produce.derivation.if.query.is.unsat">false</option>
+    <option name="--chcsolver.produce.unsat.core.if.query.is.unsat">false</option>
+  </rundefinition>
+
+  <rundefinition name="SleepSymbolic-Symmetry.TreeAutomizer">
+    <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">false</option>
+    <option name="--icfgtochc.use.symmetry.clauses">true</option>
+    <option name="--chcsolver.chc.solver.backend">TREEAUTOMIZER</option>
+    <option name="--chcsolver.produce.chc.model.if.query.is.sat">false</option>
+    <option name="--chcsolver.produce.derivation.if.query.is.unsat">false</option>
+    <option name="--chcsolver.produce.unsat.core.if.query.is.unsat">true</option>
+    <option name="--rcfgbuilder.smt.solver">Internal_SMTInterpol</option>
+  </rundefinition>
+
   <rundefinition name="NoSleep.Eldarica">
     <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
     <option name="--icfgtochc.enable.sleep.set.reduction">false</option>
