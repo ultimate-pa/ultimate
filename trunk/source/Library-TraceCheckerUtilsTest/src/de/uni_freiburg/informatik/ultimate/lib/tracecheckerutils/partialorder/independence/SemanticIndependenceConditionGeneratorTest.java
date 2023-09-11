@@ -81,7 +81,6 @@ public class SemanticIndependenceConditionGeneratorTest {
 	private ManagedScript mMgdScript;
 	private final DefaultIcfgSymbolTable mSymbolTable = new DefaultIcfgSymbolTable();
 	private BasicPredicateFactory mPredicateFactory;
-	private SemanticIndependenceConditionGenerator mGenerator;
 	private SemanticIndependenceRelation<BasicInternalAction> mIndependence;
 
 	// variables for SimpleSet example
@@ -107,7 +106,6 @@ public class SemanticIndependenceConditionGeneratorTest {
 		setupArrayStack();
 
 		mPredicateFactory = new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable);
-		mGenerator = new SemanticIndependenceConditionGenerator(mServices, mMgdScript, mPredicateFactory, SYMMETRIC);
 		mIndependence = new SemanticIndependenceRelation<>(mServices, mMgdScript, true, SYMMETRIC);
 	}
 
@@ -168,7 +166,8 @@ public class SemanticIndependenceConditionGeneratorTest {
 		// only guarantees equivalence "with respect to stack semantics", i.e., observational equivalence.
 		// Instead, we find the trivial case of a full 0-capacity stack, which guarantees our notion of commutativity.
 		final Term expected = parseWithVariables("(and (= top (- max 1)) (= max 0))");
-		testArrayStack(pop(s1), push(e1, r1), expected);
+		// NOTE: This only works with strong quantifier elimination.
+		testArrayStack(pop(s1), push(e1, r1), expected, true);
 	}
 
 	@Test
@@ -201,13 +200,25 @@ public class SemanticIndependenceConditionGeneratorTest {
 
 	private void testArrayStack(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB,
 			final Term expected) {
-		runTest(tfA, tfB, mArrayStackAxioms, expected);
+		testArrayStack(tfA, tfB, expected, false);
+	}
+
+	private void testArrayStack(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB,
+			final Term expected, final boolean strongQuantElim) {
+		runTest(tfA, tfB, mArrayStackAxioms, expected, strongQuantElim);
 	}
 
 	private void runTest(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB, final Term axioms,
 			final Term expected) {
+		runTest(tfA, tfB, axioms, expected, false);
+	}
+
+	private void runTest(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB, final Term axioms,
+			final Term expected, final boolean needsStrongQuantElim) {
 		final IPredicate axiomPredicate = mPredicateFactory.newPredicate(axioms);
-		final IPredicate actual = mGenerator.generateCondition(axiomPredicate, tfA, tfB);
+		final var generator = new SemanticIndependenceConditionGenerator(mServices, mMgdScript, mPredicateFactory,
+				SYMMETRIC, needsStrongQuantElim);
+		final IPredicate actual = generator.generateCondition(axiomPredicate, tfA, tfB);
 		if (expected == null) {
 			if (actual != null) {
 				assert checkIndependence(axiomPredicate, actual, tfA,

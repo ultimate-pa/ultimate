@@ -57,11 +57,14 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  */
 public class Abducer {
+	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final ToIntFunction<TermVariable> mCost;
 	private final Set<TermVariable> mForbiddenVars;
+	private final boolean mStrongQuantifierElimination;
 
 	/**
 	 * Creates a new abducer.
@@ -72,7 +75,24 @@ public class Abducer {
 	 *            Script instance, used for satisfiability checks and quantifier elimination
 	 */
 	public Abducer(final IUltimateServiceProvider services, final ManagedScript script) {
-		this(services, script, Collections.emptySet());
+		this(services, script, Collections.emptySet(), false);
+	}
+
+	/**
+	 * Creates a new abducer.
+	 *
+	 * @param services
+	 *            Ultimate services, used in quantifier elimination
+	 * @param script
+	 *            Script instance, used for satisfiability checks and quantifier elimination
+	 * @param strongQuantifierElimination
+	 *            If set to true, a more expensive and more powerful quantifier elimination algorithm is used. This
+	 *            helps in cases where otherwise no solution can be found, because solvers return UNKNOWN for complex
+	 *            quantified formulae.
+	 */
+	public Abducer(final IUltimateServiceProvider services, final ManagedScript script,
+			final boolean strongQuantifierElimination) {
+		this(services, script, Collections.emptySet(), strongQuantifierElimination);
 	}
 
 	/**
@@ -85,10 +105,14 @@ public class Abducer {
 	 * @param forbiddenVars
 	 *            A set of variables that may not be used in the resulting formula (phi' in the description above). Note
 	 *            that this restricts the problem and may lead to no solution being found.
+	 * @param strongQuantifierElimination
+	 *            If set to true, a more expensive and more powerful quantifier elimination algorithm is used. This
+	 *            helps in cases where otherwise no solution can be found, because solvers return UNKNOWN for complex
+	 *            quantified formulae.
 	 */
 	public Abducer(final IUltimateServiceProvider services, final ManagedScript script,
-			final Set<TermVariable> forbiddenVars) {
-		this(services, script, x -> 1, forbiddenVars);
+			final Set<TermVariable> forbiddenVars, final boolean strongQuantifierElimination) {
+		this(services, script, x -> 1, forbiddenVars, strongQuantifierElimination);
 	}
 
 	/**
@@ -105,14 +129,20 @@ public class Abducer {
 	 * @param forbiddenVars
 	 *            A set of variables that may not be used in the resulting formula (phi' in the description above). Note
 	 *            that this restricts the problem and may lead to no solution being found.
+	 * @param strongQuantifierElimination
+	 *            If set to true, a more expensive and more powerful quantifier elimination algorithm is used. This
+	 *            helps in cases where otherwise no solution can be found, because solvers return UNKNOWN for complex
+	 *            quantified formulae.
 	 */
 	public Abducer(final IUltimateServiceProvider services, final ManagedScript script,
-			final ToIntFunction<TermVariable> cost, final Set<TermVariable> forbiddenVars) {
+			final ToIntFunction<TermVariable> cost, final Set<TermVariable> forbiddenVars,
+			final boolean strongQuantifierElimination) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Abducer.class);
 		mScript = script;
 		mCost = cost;
 		mForbiddenVars = forbiddenVars;
+		mStrongQuantifierElimination = strongQuantifierElimination;
 	}
 
 	/**
@@ -161,18 +191,15 @@ public class Abducer {
 		final Term unsimplified =
 				new MaximumUniversalSetComputation(mServices, mScript, quantifiedFormula, invariant, mCost)
 						.getQuantifiedFormula();
-		return SmtUtils.simplify(mScript, unsimplified, invariant, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+		return SmtUtils.simplify(mScript, unsimplified, invariant, mServices, SIMPLIFICATION_TECHNIQUE);
 	}
 
 	private Term tryEliminateForall(final Set<TermVariable> vars, final Term formula) {
 		final Term quantified = SmtUtils.quantifier(mScript.getScript(), QuantifiedFormula.FORALL, vars, formula);
-		final boolean eliminateLight = true;
-		if (eliminateLight) {
-			return PartialQuantifierElimination.eliminateLight(mServices, mScript, quantified);
-		} else {
-			return PartialQuantifierElimination.eliminate(mServices, mScript, quantified,
-					SimplificationTechnique.SIMPLIFY_DDA);
+		if (mStrongQuantifierElimination) {
+			return PartialQuantifierElimination.eliminate(mServices, mScript, quantified, SIMPLIFICATION_TECHNIQUE);
 		}
+		return PartialQuantifierElimination.eliminateLight(mServices, mScript, quantified);
 	}
 
 	private boolean checkResult(final Term lhs, final Term rhs, final Term solution, final boolean equiv) {
