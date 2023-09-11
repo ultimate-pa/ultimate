@@ -1135,9 +1135,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				final ScoringMethod scoringMethod, final long seed, final Integer testGoalWithHighesID,
 				final List<Integer> testGoalTodoStack) {
 			switch (astarHeuristic) {
-
-			case TESTCOMP:
-				return IHeuristic.getTestCompHeuristic(testGoalWithHighesID, testGoalTodoStack);
 			default:
 				throw new UnsupportedOperationException("Unknown heuristic: " + astarHeuristic.toString());
 
@@ -1199,12 +1196,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				getSmtFeatureHeuristic(final ScoringMethod scoringMethod) {
 			return new SmtFeatureHeuristic<>(scoringMethod);
 		}
-
-		public static <STATE, LETTER> TestCompHeuristic<STATE, LETTER>
-				getTestCompHeuristic(final Integer testGoalWithHighesID, final List<Integer> testGoalTodoStack) {
-			return new TestCompHeuristic<>(testGoalWithHighesID, testGoalTodoStack);
-		}
-
 	}
 
 	/**
