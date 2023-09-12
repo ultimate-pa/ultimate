@@ -174,11 +174,10 @@ public class ChcTransferrer {
 
 			final var constraint = transfer(clause.getConstraintFormula());
 			if (clause.isHeadFalse()) {
-				return new HornClause(mTargetScript, mTargetSymbolTable, constraint, bodyPreds, bodyArgs, bodyVars);
+				return new HornClause(mTargetSymbolTable, constraint, bodyPreds, bodyArgs, bodyVars);
 			}
 
-			return new HornClause(mTargetScript, mTargetSymbolTable, constraint, head, headVars, bodyPreds, bodyArgs,
-					bodyVars);
+			return new HornClause(mTargetSymbolTable, constraint, head, headVars, bodyPreds, bodyArgs, bodyVars);
 		});
 	}
 

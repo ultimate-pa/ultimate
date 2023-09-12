@@ -131,13 +131,12 @@ public class HornClauseBuilder {
 
 		HornClause clause;
 		if (mHeadPredicate == null) {
-			clause = new HornClause(mManagedScript, mSymbolTable, constraint, mBodyPreds, substitutedBodyArgs,
-					mBodyVars);
+			clause = new HornClause(mSymbolTable, constraint, mBodyPreds, substitutedBodyArgs, mBodyVars);
 		} else {
 			final var headArgs =
 					mHeadPredicate.getParameters().stream().map(this::getHeadVar).collect(Collectors.toList());
-			clause = new HornClause(mManagedScript, mSymbolTable, constraint, mHeadPredicate.getPredicate(), headArgs,
-					mBodyPreds, substitutedBodyArgs, mBodyVars);
+			clause = new HornClause(mSymbolTable, constraint, mHeadPredicate.getPredicate(), headArgs, mBodyPreds,
+					substitutedBodyArgs, mBodyVars);
 		}
 		if (mComment != null) {
 			clause.setComment(mComment);

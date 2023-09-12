@@ -88,17 +88,15 @@ public class HornClause implements IRankedLetter {
 	 * @param bodyPreds
 	 * @param bodyPredToArguments
 	 */
-	public HornClause(final ManagedScript mgdScript, final HcSymbolTable hcSymbolTable, final Term constraint,
-			final List<HcPredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToArguments,
-			final Set<HcVar> bodyVars) {
-		this(mgdScript, hcSymbolTable, constraint, null, Collections.emptyList(), bodyPreds, bodyPredToArguments,
-				bodyVars, false);
+	public HornClause(final HcSymbolTable hcSymbolTable, final Term constraint, final List<HcPredicateSymbol> bodyPreds,
+			final List<List<Term>> bodyPredToArguments, final Set<HcVar> bodyVars) {
+		this(hcSymbolTable, constraint, null, Collections.emptyList(), bodyPreds, bodyPredToArguments, bodyVars, false);
 	}
 
-	public HornClause(final ManagedScript mgdScript, final HcSymbolTable hcSymbolTable, final Term constraint,
-			final HcPredicateSymbol headPred, final List<HcHeadVar> headVars, final List<HcPredicateSymbol> bodyPreds,
+	public HornClause(final HcSymbolTable hcSymbolTable, final Term constraint, final HcPredicateSymbol headPred,
+			final List<HcHeadVar> headVars, final List<HcPredicateSymbol> bodyPreds,
 			final List<List<Term>> bodyPredToArguments, final Set<HcVar> bodyVars) {
-		this(mgdScript, hcSymbolTable, constraint, headPred, headVars, bodyPreds, bodyPredToArguments, bodyVars, false);
+		this(hcSymbolTable, constraint, headPred, headVars, bodyPreds, bodyPredToArguments, bodyVars, false);
 		assert headPred != null : "use other constructor for '... -> False' case";
 	}
 
@@ -106,8 +104,6 @@ public class HornClause implements IRankedLetter {
 	 * Constructor for a Horn clause of the form b1 /\ ... /\ bn /\ constraint --> h. Where b1 .. bn, and h, are
 	 * uninterpreted predicates and constraint is a Term.
 	 *
-	 * @param script
-	 *            The script that will be used in TreeAutomizer (not the HornClauseParserScript)
 	 * @param symbolTable
 	 * @param constraint
 	 * @param headPred
@@ -117,8 +113,8 @@ public class HornClause implements IRankedLetter {
 	 * @param dummy
 	 *            dummy parameter to allow for an extra constructor
 	 */
-	private HornClause(final ManagedScript script, final HcSymbolTable symbolTable, final Term constraint,
-			final HcPredicateSymbol headPred, final List<HcHeadVar> headVars, final List<HcPredicateSymbol> bodyPreds,
+	private HornClause(final HcSymbolTable symbolTable, final Term constraint, final HcPredicateSymbol headPred,
+			final List<HcHeadVar> headVars, final List<HcPredicateSymbol> bodyPreds,
 			final List<List<Term>> bodyPredToArgs, final Set<HcVar> bodyVars, final boolean dummy) {
 
 		mHornClauseSymbolTable = symbolTable;

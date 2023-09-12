@@ -110,14 +110,14 @@ public class HornClauseHead {
 		final List<List<Term>> bodyArgs = mBody.getPredicateToVars(symbolTable);
 
 		if (mHead == null) {
-			return new HornClause(solverScript, symbolTable, getTransitionFormula(solverScript.getScript()),
-					bodySymbols, bodyArgs, bodyVars);
+			return new HornClause(symbolTable, getTransitionFormula(solverScript.getScript()), bodySymbols, bodyArgs,
+					bodyVars);
 		}
 
 		final List<HcHeadVar> headVars = symbolTable.getHcHeadVarsForPredSym(headSymbol, false);
 
-		return new HornClause(solverScript, symbolTable, getTransitionFormula(solverScript.getScript()), headSymbol,
-				headVars, bodySymbols, bodyArgs, bodyVars);
+		return new HornClause(symbolTable, getTransitionFormula(solverScript.getScript()), headSymbol, headVars,
+				bodySymbols, bodyArgs, bodyVars);
 	}
 
 	/**
