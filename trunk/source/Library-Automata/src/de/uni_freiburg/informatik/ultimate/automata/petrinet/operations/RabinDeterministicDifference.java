@@ -43,8 +43,9 @@ public class RabinDeterministicDifference<LETTER, PLACE>
 	 * @throws AutomataLibraryException
 	 *             a exception to be thrown when the automaton is not complete or deterministic
 	 */
-	public RabinDeterministicDifference(final AutomataLibraryServices services, final IRabinPetriNet<LETTER, PLACE> petriNet,
-			final INestedWordAutomaton<LETTER, PLACE> buchiAutomaton) throws AutomataLibraryException {
+	public RabinDeterministicDifference(final AutomataLibraryServices services,
+			final IRabinPetriNet<LETTER, PLACE> petriNet, final INestedWordAutomaton<LETTER, PLACE> buchiAutomaton)
+			throws AutomataLibraryException {
 		super(services);
 		mPetriNet = petriNet;
 		mBuchiAutomaton = buchiAutomaton;
@@ -52,9 +53,7 @@ public class RabinDeterministicDifference<LETTER, PLACE>
 			throw new IllegalArgumentException("Buchi with multiple initial states not supported.");
 		}
 		mDifferenceNet = new BoundedRabinPetriNet<>(services, petriNet.getAlphabet(), false);
-		for (final PLACE place : mBuchiAutomaton.getFinalStates()) {
-			mDifferenceNet.addFinitePlace(place);
-		}
+
 		constructIntersectionNet();
 	}
 
@@ -76,6 +75,9 @@ public class RabinDeterministicDifference<LETTER, PLACE>
 	private final void addOriginalPetriPlaces() {
 		for (final PLACE place : mPetriNet.getPlaces()) {
 			mDifferenceNet.addPlace(place, mPetriNet.getInitialPlaces().contains(place), mPetriNet.isAccepting(place));
+			if (mPetriNet.isFinite(place)) {
+				mDifferenceNet.addFinitePlace(place);
+			}
 		}
 	}
 

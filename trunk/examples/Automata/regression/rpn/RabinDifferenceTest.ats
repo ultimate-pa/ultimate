@@ -24,13 +24,13 @@ NestedWordAutomaton bAutomata = (
 	returnTransitions = {}
 );
 
-assert(rabinAccepts(rabinDifference(bNet, bAutomata), [a , b]));
-assert(rabinAccepts(rabinDifference(bNet, bAutomata), [a , b b]));
+assert(rabinAccepts(rabinDeterministicDifference(bNet, bAutomata), [a , b]));
+assert(rabinAccepts(rabinDeterministicDifference(bNet, bAutomata), [a , b b]));
 
-assert(!rabinAccepts(rabinDifference(bNet, bAutomata), [a , a]));
-assert(!rabinAccepts(rabinDifference(bNet, bAutomata), [a , a a]));
-assert(!rabinAccepts(rabinDifference(bNet, bAutomata), [a , a b]));
-assert(!rabinAccepts(rabinDifference(bNet, bAutomata), [a , b a]));
+assert(!rabinAccepts(rabinDeterministicDifference(bNet, bAutomata), [a , a]));
+assert(!rabinAccepts(rabinDeterministicDifference(bNet, bAutomata), [a , a a]));
+assert(!rabinAccepts(rabinDeterministicDifference(bNet, bAutomata), [a , a b]));
+assert(!rabinAccepts(rabinDeterministicDifference(bNet, bAutomata), [a , b a]));
 
 
 RabinPetriNet testNet = (
@@ -55,13 +55,13 @@ NestedWordAutomaton testAutomata = (
 	returnTransitions = {}
 );
 
-assert(rabinAccepts(rabinDifference(testNet, testAutomata), [a , b]));
-assert(rabinAccepts(rabinDifference(testNet, testAutomata), [a , b b]));
+assert(rabinAccepts(rabinDeterministicDifference(testNet, testAutomata), [a , b]));
+assert(rabinAccepts(rabinDeterministicDifference(testNet, testAutomata), [a , b b]));
 
-assert(!rabinAccepts(rabinDifference(testNet, testAutomata), [a , c]));
-assert(!rabinAccepts(rabinDifference(testNet, testAutomata), [a , c c]));
-assert(!rabinAccepts(rabinDifference(testNet, testAutomata), [a , b c b]));
-assert(!rabinAccepts(rabinDifference(testNet, testAutomata), [a , c c b]));
+assert(!rabinAccepts(rabinDeterministicDifference(testNet, testAutomata), [a , c]));
+assert(!rabinAccepts(rabinDeterministicDifference(testNet, testAutomata), [a , c c]));
+assert(!rabinAccepts(rabinDeterministicDifference(testNet, testAutomata), [a , b c b]));
+assert(!rabinAccepts(rabinDeterministicDifference(testNet, testAutomata), [a , c c b]));
 
 
 RabinPetriNet test2Net = (
@@ -86,13 +86,13 @@ NestedWordAutomaton test2Automata = (
 	returnTransitions = {}
 );
 
-assert(rabinAccepts(rabinDifference(test2Net, test2Automata), [a , b]));
-assert(rabinAccepts(rabinDifference(test2Net, test2Automata), [a , b b]));
-assert(rabinAccepts(rabinDifference(test2Net, test2Automata), [a , b c b]));
-assert(rabinAccepts(rabinDifference(test2Net, test2Automata), [a , c c b]));
+assert(rabinAccepts(rabinDeterministicDifference(test2Net, test2Automata), [a , b]));
+assert(rabinAccepts(rabinDeterministicDifference(test2Net, test2Automata), [a , b b]));
+assert(rabinAccepts(rabinDeterministicDifference(test2Net, test2Automata), [a , b c b]));
+assert(rabinAccepts(rabinDeterministicDifference(test2Net, test2Automata), [a , c c b]));
 
-assert(!rabinAccepts(rabinDifference(test2Net, test2Automata), [a , c]));
-assert(!rabinAccepts(rabinDifference(test2Net, test2Automata), [a , c c]));
+assert(!rabinAccepts(rabinDeterministicDifference(test2Net, test2Automata), [a , c]));
+assert(!rabinAccepts(rabinDeterministicDifference(test2Net, test2Automata), [a , c c]));
 
 
 RabinPetriNet test3Net = (
@@ -116,9 +116,9 @@ NestedWordAutomaton test3Automata = (
 	returnTransitions = {}
 );
 
-assert(rabinAccepts(rabinDifference(test3Net, test3Automata), [a , b]));
-assert(rabinAccepts(rabinDifference(test3Net, test3Automata), [a , b b]));
-assert(rabinAccepts(rabinDifference(test3Net, test3Automata), [a , b c b]));
-assert(rabinAccepts(rabinDifference(test3Net, test3Automata), [a , c c b]));
-assert(rabinAccepts(rabinDifference(test3Net, test3Automata), [a , c]));
-assert(rabinAccepts(rabinDifference(test3Net, test3Automata), [a , c c]));
+assert(rabinAccepts(rabinDeterministicDifference(test3Net, test3Automata), [a , b]));
+assert(rabinAccepts(rabinDeterministicDifference(test3Net, test3Automata), [a , b b]));
+assert(rabinAccepts(rabinDeterministicDifference(test3Net, test3Automata), [a , b c b]));
+assert(rabinAccepts(rabinDeterministicDifference(test3Net, test3Automata), [a , c c b]));
+assert(rabinAccepts(rabinDeterministicDifference(test3Net, test3Automata), [a , c]));
+assert(rabinAccepts(rabinDeterministicDifference(test3Net, test3Automata), [a , c c]));
