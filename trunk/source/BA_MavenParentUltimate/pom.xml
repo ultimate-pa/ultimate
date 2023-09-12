@@ -474,6 +474,16 @@
 						</lifecycleMappingMetadata>
 					</configuration>
 				</plugin>
+
+				<!-- Tests are skipped in the default profile. -->
+				<plugin>
+					<groupId>org.eclipse.tycho</groupId>
+					<artifactId>tycho-surefire-plugin</artifactId>
+					<version>${tycho-version}</version>
+					<configuration>
+						<skipTests>true</skipTests>
+					</configuration>
+				</plugin>
 			</plugins>
 		</pluginManagement>
 	</build>
@@ -566,6 +576,37 @@
 		<module>../WitnessParser</module>
 		<module>../WitnessPrinter</module>
 
+		<!--
+		  We include test modules here in order to make sure they build successfully.
+		  Further above we specify that tests should not be executed though.
+		-->
+		<!-- modules containing test utilities -->
+		<module>../Library-UltimateTest</module>
+		<!-- modules containing unit tests -->
+		<module>../AbstractInterpretationV2Test</module>
+		<module>../BoogiePreprocessorTest</module>
+		<module>../CoreRCPTest</module>
+		<module>../Library-AutomataTest</module>
+		<module>../Library-IcfgTransformerTest</module>
+		<module>../Library-ModelCheckerUtilsTest</module>
+		<module>../Library-TraceCheckerUtilsTest</module>
+		<module>../Library-MSODTest</module>
+		<module>../Library-SMTLIBTest</module>
+		<module>../Library-srParseTest</module>
+		<module>../Library-UltimateTestTest</module>
+		<module>../Library-UltimateUtilTest</module>
+		<module>../Library-PathExpressionsTest</module>
+		<module>../Library-SifaTest</module>
+		<module>../SMTInterpolTest</module>
+		<module>../SMTSolverBridgeTest</module>
+		<module>../SpaceExParserTest</module>
+		<module>../PEAtoBoogieTest</module>
+
+		<!-- UltimateRegressionTest contains system tests that are relatively fast -->
+		<module>../UltimateRegressionTest</module>
+
+		<!-- UltimateTest contains system tests, but should not be run. It is excluded in surefire. -->
+		<module>../UltimateTest</module>
 	</modules>
 
 	<profiles>
@@ -642,6 +683,7 @@
 						<artifactId>tycho-surefire-plugin</artifactId>
 						<version>${tycho-version}</version>
 						<configuration>
+							<skipTests>false</skipTests>
 							<providerHint>junit47</providerHint>
 							<useUIHarness>false</useUIHarness>
 							<useUIThread>false</useUIThread>
@@ -702,38 +744,6 @@
 					</plugin>
 				</plugins>
 			</build>
-
-			<modules>
-				<!-- modules containing test utilities -->
-				<module>../Library-UltimateTest</module>
-				<!-- modules containing unit tests -->
-				<module>../AbstractInterpretationV2Test</module>
-				<module>../BoogiePreprocessorTest</module>
-				<module>../CoreRCPTest</module>
-				<module>../Library-AutomataTest</module>
-				<module>../Library-IcfgTransformerTest</module>
-				<module>../Library-ModelCheckerUtilsTest</module>
-				<module>../Library-TraceCheckerUtilsTest</module>
-				<module>../Library-MSODTest</module>
-				<module>../Library-SMTLIBTest</module>
-				<module>../Library-srParseTest</module>
-				<module>../Library-UltimateTestTest</module>
-				<module>../Library-UltimateUtilTest</module>
-				<module>../Library-PathExpressionsTest</module>
-				<module>../Library-SifaTest</module>
-				<module>../SMTInterpolTest</module>
-				<module>../SMTSolverBridgeTest</module>
-				<module>../SpaceExParserTest</module>
-				<module>../PEAtoBoogieTest</module>
-
-				<!-- UltimateRegressionTest contains system tests that are relatively 
-					fast -->
-				<module>../UltimateRegressionTest</module>
-
-				<!-- UltimateTest contains system tests, but should not be run. It is 
-					excluded in surefire. -->
-				<module>../UltimateTest</module>
-			</modules>
 		</profile>
 
 		<profile>
@@ -750,6 +760,7 @@
 						<artifactId>tycho-surefire-plugin</artifactId>
 						<version>${tycho-version}</version>
 						<configuration>
+							<skipTests>false</skipTests>
 							<providerHint>junit47</providerHint>
 							<useUIHarness>false</useUIHarness>
 							<useUIThread>false</useUIThread>
@@ -791,29 +802,6 @@
 
 				</plugins>
 			</build>
-
-			<modules>
-				<!-- modules containing test utilities -->
-				<module>../Library-UltimateTest</module>
-				<!-- modules containing unit tests -->
-				<module>../AbstractInterpretationV2Test</module>
-				<module>../BoogiePreprocessorTest</module>
-				<module>../CoreRCPTest</module>
-				<module>../Library-AutomataTest</module>
-				<module>../Library-IcfgTransformerTest</module>
-				<module>../Library-ModelCheckerUtilsTest</module>
-				<module>../Library-TraceCheckerUtilsTest</module>
-				<module>../Library-MSODTest</module>
-				<module>../Library-SMTLIBTest</module>
-				<module>../Library-srParseTest</module>
-				<module>../Library-UltimateTestTest</module>
-				<module>../Library-UltimateUtilTest</module>
-				<module>../Library-PathExpressionsTest</module>
-				<module>../SMTInterpolTest</module>
-				<module>../SMTSolverBridgeTest</module>
-				<module>../SpaceExParserTest</module>
-				<module>../PEAtoBoogieTest</module>
-			</modules>
 		</profile>
 
 		<profile>
@@ -838,6 +826,7 @@
 						<artifactId>tycho-surefire-plugin</artifactId>
 						<version>${tycho-version}</version>
 						<configuration>
+							<skipTests>false</skipTests>
 							<providerHint>junit47</providerHint>
 							<useUIHarness>false</useUIHarness>
 							<useUIThread>false</useUIThread>
@@ -867,38 +856,6 @@
 					</plugin>
 				</plugins>
 			</build>
-
-			<modules>
-				<!-- modules containing test utilities -->
-				<module>../Library-UltimateTest</module>
-
-				<!-- modules containing unit tests -->
-				<module>../AbstractInterpretationV2Test</module>
-				<module>../BoogiePreprocessorTest</module>
-				<module>../CoreRCPTest</module>
-				<module>../Library-AutomataTest</module>
-				<module>../Library-IcfgTransformerTest</module>
-				<module>../Library-ModelCheckerUtilsTest</module>
-				<module>../Library-TraceCheckerUtilsTest</module>
-				<module>../Library-MSODTest</module>
-				<module>../Library-SMTLIBTest</module>
-				<module>../Library-srParseTest</module>
-				<module>../Library-UltimateTestTest</module>
-				<module>../Library-UltimateUtilTest</module>
-				<module>../Library-PathExpressionsTest</module>
-				<module>../SMTInterpolTest</module>
-				<module>../SMTSolverBridgeTest</module>
-				<module>../SpaceExParserTest</module>
-				<module>../PEAtoBoogieTest</module>
-
-				<!-- UltimateRegressionTest contains system tests that are relatively 
-					fast -->
-				<module>../UltimateRegressionTest</module>
-
-				<!-- UltimateTest contains system tests, but should not be run. It is 
-					excluded in surefire. -->
-				<module>../UltimateTest</module>
-			</modules>
 		</profile>
 
 		<profile>
