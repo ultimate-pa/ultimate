@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -122,7 +123,7 @@ public class HornClause implements IRankedLetter {
 
 		mHornClauseSymbolTable = symbolTable;
 
-		mFormula = constraint;
+		mFormula = Objects.requireNonNull(constraint, "Constraint must not be null (use 'true' instead)");
 
 		mHeadIsFalse = headPred == null;
 		mHeadPredicate = headPred;

@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -166,7 +167,7 @@ public class HornClauseBuilder {
 
 	private Term getSubstitutedConstraint() {
 		if (mConstraints.isEmpty()) {
-			return null;
+			return mManagedScript.getScript().term(SMTLIBConstants.TRUE);
 		}
 		return substitute(SmtUtils.and(mManagedScript.getScript(), mConstraints));
 	}
