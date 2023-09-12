@@ -105,6 +105,22 @@ public class Abducer {
 	 * @param forbiddenVars
 	 *            A set of variables that may not be used in the resulting formula (phi' in the description above). Note
 	 *            that this restricts the problem and may lead to no solution being found.
+	 */
+	public Abducer(final IUltimateServiceProvider services, final ManagedScript script,
+			final Set<TermVariable> forbiddenVars) {
+		this(services, script, forbiddenVars, false);
+	}
+
+	/**
+	 * Creates a new abducer that restricts the variables that can be used in the resulting formula.
+	 *
+	 * @param services
+	 *            Ultimate services, used in quantifier elimination
+	 * @param script
+	 *            Script instance, used for satisfiability checks and quantifier elimination
+	 * @param forbiddenVars
+	 *            A set of variables that may not be used in the resulting formula (phi' in the description above). Note
+	 *            that this restricts the problem and may lead to no solution being found.
 	 * @param strongQuantifierElimination
 	 *            If set to true, a more expensive and more powerful quantifier elimination algorithm is used. This
 	 *            helps in cases where otherwise no solution can be found, because solvers return UNKNOWN for complex
