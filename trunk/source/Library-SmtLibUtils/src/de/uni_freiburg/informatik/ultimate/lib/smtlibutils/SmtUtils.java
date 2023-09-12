@@ -122,6 +122,28 @@ public final class SmtUtils {
 	 */
 	public static final String FP_TO_IEEE_BV_EXTENSION = "fp.to_ieee_bv";
 
+
+	/**
+	 * Enum for conjunctions and disjunctions. The toString method returns the
+	 * string that is required to construct a term via {@link Script#term} or
+	 * {@link SmtUtils#unfTerm}
+	 *
+	 */
+	public enum Junction {
+		AND {
+			@Override
+			public String toString() {
+				return "and";
+			}
+		},
+		OR {
+			@Override
+			public String toString() {
+				return "or";
+			}
+		}
+	}
+
 	public enum XnfConversionTechnique {
 		BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION
 	}
