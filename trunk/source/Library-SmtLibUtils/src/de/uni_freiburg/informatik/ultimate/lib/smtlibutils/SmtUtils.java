@@ -721,7 +721,7 @@ public final class SmtUtils {
 				}
 				if (funcName.equals("<") || funcName.equals("<=") || funcName.equals(">") || funcName.equals(">=")) {
 					final PolynomialRelation polyRel = PolynomialRelation.of(script, term);
-					return polyRel.negate(script).toTerm(script);
+					return polyRel.negate().toTerm(script);
 				}
 			}
 			return Util.not(script, term);

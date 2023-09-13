@@ -567,7 +567,7 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 		return mPolynomialTerm.isVariable(var);
 	}
 
-	public PolynomialRelation negate(final Script script) {
+	public PolynomialRelation negate() {
 		return new PolynomialRelation(mPolynomialTerm, mRelationSymbol.negate());
 	}
 

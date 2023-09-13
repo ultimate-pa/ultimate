@@ -95,7 +95,7 @@ public class PolyPoNe {
 				polyPolyRel = PolynomialRelation.of(mScript, param, TransformInequality.STRICT2NONSTRICT);
 			}
 			if (polyPolyRel != null) {
-				final PolynomialRelation addedRel = negate ? polyPolyRel.negate(mScript) : polyPolyRel;
+				final PolynomialRelation addedRel = negate ? polyPolyRel.negate() : polyPolyRel;
 				final boolean isInconsistent = addPolyRel(mScript, addedRel, true);
 				if (isInconsistent) {
 					mInconsistent = true;
@@ -324,7 +324,7 @@ public class PolyPoNe {
 		}
 		final List<Term> params = new ArrayList<>();
 		for (final Entry<Map<?, Rational>, PolynomialRelation> pair : mPolyRels.getSetOfPairs()) {
-			params.add(pair.getValue().negate(mScript).toTerm(mScript));
+			params.add(pair.getValue().negate().toTerm(mScript));
 		}
 		for (final Term term : mPositive) {
 			params.add(SmtUtils.not(mScript, term));
