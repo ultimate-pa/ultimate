@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="15GB" timelimit="1800" hardtimelimit="1820" cpuCores="2">
+<benchmark tool="ultimateautomizer" memlimit="22GB" timelimit="7200" hardtimelimit="7220" cpuCores="2">
   <resultfiles>${taskdef_path}/CHC_*.smt2</resultfiles>
 
   <option name="&#45;-force-no-wrapper" />
@@ -189,6 +189,11 @@
 
   <tasks name="threadmodular-examples">
     <include>../../../trunk/examples/threadmodular/regression/*/*.yml</include>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="threadmodular-unsolved">
+    <includesfile>../../../trunk/examples/threadmodular/regression/unsolved.set</includesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
   </tasks>
 </benchmark>
