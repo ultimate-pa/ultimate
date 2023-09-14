@@ -60,6 +60,8 @@ public class ChcSolverPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String LABEL_PRODUCE_UNSAT_CORES = "Produce UNSAT core if query is UNSAT";
 	private static final boolean DEF_PRODUCE_UNSAT_CORES = false;
 
+	public static final String LABEL_ELDARICA_HINTS_FILE = "Hints for eldarica";
+
 	public ChcSolverPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
@@ -74,7 +76,8 @@ public class ChcSolverPreferenceInitializer extends UltimatePreferenceInitialize
 				new UltimatePreferenceItem<>(LABEL_PRODUCE_MODEL, DEF_PRODUCE_MODEL, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_PRODUCE_DERIVATION, DEF_PRODUCE_DERIVATION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_PRODUCE_UNSAT_CORES, DEF_PRODUCE_UNSAT_CORES,
-						PreferenceType.Boolean) };
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_ELDARICA_HINTS_FILE, "", PreferenceType.File) };
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {

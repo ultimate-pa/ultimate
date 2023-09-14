@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.chc;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -54,6 +55,7 @@ public class EldaricaCliChcScript implements IChcScript {
 	private final ILogger mLogger;
 	private final ManagedScript mMgdScript;
 	private final long mDefaultQueryTimeout;
+	private final Path mPredicates;
 
 	private boolean mProduceModels = false;
 
@@ -61,15 +63,21 @@ public class EldaricaCliChcScript implements IChcScript {
 	private Model mLastModel = null;
 
 	public EldaricaCliChcScript(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
-		this(services, mgdScript, -1L);
+		this(services, mgdScript, null);
 	}
 
 	public EldaricaCliChcScript(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final long defaultTimeout) {
+			final Path predicates) {
+		this(services, mgdScript, -1L, predicates);
+	}
+
+	public EldaricaCliChcScript(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final long defaultTimeout, final Path predicates) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mMgdScript = mgdScript;
 		mDefaultQueryTimeout = defaultTimeout;
+		mPredicates = predicates;
 	}
 
 	@Override
@@ -105,6 +113,12 @@ public class EldaricaCliChcScript implements IChcScript {
 			final var executor = new Executor(getCommand(tmpFile), mMgdScript.getScript(), mLogger, mServices,
 					"eldarica", null, null, null, determineTimeout(timeout));
 
+			if (mPredicates != null) {
+				// Skip the line in stdout that says:
+				// "---------------------------- Loading CEGAR hints -------------------------------"
+				executor.skipLine();
+			}
+
 			mLastResult = executor.parseCheckSatResult();
 			mLastModel = (mLastResult == LBool.SAT && mProduceModels) ? executor.parseGetModelResult() : null;
 
@@ -125,6 +139,9 @@ public class EldaricaCliChcScript implements IChcScript {
 		}
 		if (mProduceModels) {
 			command += " -ssol";
+		}
+		if (mPredicates != null) {
+			command += " -hints:" + mPredicates;
 		}
 		return command + " " + file.getAbsolutePath();
 	}
