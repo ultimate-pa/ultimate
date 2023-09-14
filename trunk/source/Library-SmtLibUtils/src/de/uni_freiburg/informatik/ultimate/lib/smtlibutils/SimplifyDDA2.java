@@ -224,7 +224,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 * symbol for each {@link TermVariable} and return a map that maps each
 	 * {@link TermVariable} to its fresh constant symbol.
 	 */
-	private Map<TermVariable, Term> constructFreshConstantSymbols(ManagedScript mgdScript, Collection<TermVariable> tvs) {
+	private Map<TermVariable, Term> constructFreshConstantSymbols(ManagedScript mgdScript,
+			Collection<TermVariable> tvs) {
 		Map<TermVariable, Term> result = new HashMap<>();
 		for (TermVariable tv : tvs) {
 			Term constantSymbol = constructFreshConstantSymbol(mgdScript, tv);
