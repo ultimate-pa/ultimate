@@ -33,8 +33,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -224,7 +226,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 * symbol for each {@link TermVariable} and return a map that maps each
 	 * {@link TermVariable} to its fresh constant symbol.
 	 */
-	private Map<TermVariable, Term> constructFreshConstantSymbols(ManagedScript mgdScript,
+	private static Map<TermVariable, Term> constructFreshConstantSymbols(ManagedScript mgdScript,
 			Collection<TermVariable> tvs) {
 		Map<TermVariable, Term> result = new HashMap<>();
 		for (TermVariable tv : tvs) {
@@ -243,10 +245,10 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 * copy of the {@link TermVariable} and hope that its identifier was not used
 	 * before.
 	 */
-	private Term constructFreshConstantSymbol(ManagedScript mgdScript, TermVariable tv) {
+	private static Term constructFreshConstantSymbol(ManagedScript mgdScript, TermVariable tv) {
 		final TermVariable freshVariable = mgdScript.constructFreshCopy(tv);
-		mgdScript.declareFun(this, freshVariable.getName(), new Sort[0], freshVariable.getSort());
-		return mgdScript.term(this, freshVariable.getName());
+		mgdScript.getScript().declareFun(freshVariable.getName(), new Sort[0], freshVariable.getSort());
+		return mgdScript.getScript().term(freshVariable.getName());
 	}
 
 	private static boolean checkRedundancyForNode(final Term term) {
@@ -424,13 +426,26 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final SimplifyDDA2 simplifyDDA2 = new SimplifyDDA2(services, mgdScript);
 		// do initial push
 		mgdScript.getScript().push(1);
-		mgdScript.getScript().assertTerm(context);
+		final Set<TermVariable> freeVariables = new HashSet<>();
+		freeVariables.addAll(Arrays.asList(context.getFreeVars()));
+		freeVariables.addAll(Arrays.asList(term.getFreeVars()));
+		final Map<TermVariable, Term> substitutionMapping = constructFreshConstantSymbols(mgdScript, freeVariables);
+		final Term closedContext = Substitution.apply(mgdScript, substitutionMapping, context);
+		final Term closedTerm = Substitution.apply(mgdScript, substitutionMapping, term);
+		mgdScript.getScript().assertTerm(closedContext);
 		try {
-			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(term);
+			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(closedTerm);
 			final Comparator<Term> siblingOrder = null;
 			// TODO Matthias 20230810: Some example for an order in the next line.
 			// final Comparator<Term> siblingOrder = new TreeSizeComperator(CommuhashUtils.HASH_BASED_COMPERATOR);
-			result = TermContextTransformationEngine.transform(simplifyDDA2, siblingOrder, context, nnf);
+			final Term intermediateResult = TermContextTransformationEngine.transform(simplifyDDA2, siblingOrder,
+					closedContext, nnf);
+			if (substitutionMapping.isEmpty()) {
+				result = intermediateResult;
+			} else {
+				Map<Term, TermVariable> reversedSubstitutionMapping = reverseMap(substitutionMapping);
+				result = Substitution.apply(mgdScript, reversedSubstitutionMapping, intermediateResult);
+			}
 			final ILogger logger = services.getLoggingService().getLogger(SimplifyDDA2.class);
 			if (logger.isInfoEnabled()) {
 				logger.info(simplifyDDA2.generateExitMessage());
@@ -476,10 +491,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	protected Term constructResultForQuantifiedFormula(final Term context,
 			final QuantifiedFormula originalQuantifiedFormula, final Term resultSubformula) {
 		Map<TermVariable, Term> orginalTvsToFreshConstants = mRenamingMaps.pop();
-		final Map<Term, TermVariable> reverseMap = new HashMap<>();
-		for (final Map.Entry<TermVariable, Term> entry : orginalTvsToFreshConstants.entrySet()) {
-			reverseMap.put(entry.getValue(), entry.getKey());
-		}
+		final Map<Term, TermVariable> reverseMap = reverseMap(orginalTvsToFreshConstants);
 		final Term subformulaWithOriginalVariables = Substitution.apply(mMgdScript, reverseMap, resultSubformula);
 		if (USE_ECHO_COMMANDS) {
 			mMgdScript.lock(this);
@@ -491,6 +503,14 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		assert mAssertionStackHeight >= 0;
 		return SmtUtils.quantifier(mMgdScript.getScript(), originalQuantifiedFormula.getQuantifier(),
 				orginalTvsToFreshConstants.keySet(), subformulaWithOriginalVariables);
+	}
+
+	private static <A, B> Map<B, A> reverseMap(Map<A, B> map) {
+		final Map<B, A> reverseMap = new HashMap<>();
+		for (final Map.Entry<A, B> entry : map.entrySet()) {
+			reverseMap.put(entry.getValue(), entry.getKey());
+		}
+		return reverseMap;
 	}
 
 	@Override
