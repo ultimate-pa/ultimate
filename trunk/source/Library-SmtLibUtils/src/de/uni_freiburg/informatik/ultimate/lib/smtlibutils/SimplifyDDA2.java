@@ -94,7 +94,6 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private long mCheckSatTime = 0;
 	private final long mStartTime = System.nanoTime();
 	private final ScopedHashMap<TermVariable, TermVariable> mRenamingMap;
-	private boolean mPreviousWasQuantified = false;
 
 	private SimplifyDDA2(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		super();
@@ -209,7 +208,6 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	}
 
 	private Term preprocessQuantifiedFormula(final QuantifiedFormula term) {
-		mPreviousWasQuantified = true;
 		final QuantifiedFormula termAsQuantifiedFormula = term;
 		mRenamingMap.beginScope();
 		mMgdScript.lock(this);
