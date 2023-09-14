@@ -150,7 +150,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	private final boolean mNaiveLongTrace = false;
 
 	// TestGeneration Statistiks
-	private final boolean mWriteEvaluationToFile = true;
+	private final boolean mWriteEvaluationToFile = false; // TODO add setting or remove in final version
 	private final long startTime = System.nanoTime();
 	private int CegarLoopIterations = 1;
 	private double Covered = 0;
@@ -277,21 +277,18 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		// TODO auslagern: remove collect COvered Testgoals
 
 		final List<?> a = mCounterexample.getStateSequence();
-		String print = "";
+
 		for (int i = 0; i < a.size(); i++) {
 			if (a.get(i) instanceof ISLPredicate) {
 				final ISLPredicate stmt = (ISLPredicate) a.get(i);
 				if (stmt.getProgramPoint().getPayload().getAnnotations()
 						.containsKey(TestGoalAnnotation.class.getName())) {
-					print = print + " " + ((TestGoalAnnotation) stmt.getProgramPoint().getPayload().getAnnotations()
-							.get(TestGoalAnnotation.class.getName())).mId;
 					mTestGoalsInCurrentTrace.add(((TestGoalAnnotation) stmt.getProgramPoint().getPayload()
 							.getAnnotations().get(TestGoalAnnotation.class.getName())).mId);
 				}
 
 			}
 		}
-		System.out.println(print);
 
 		if (mPref.dumpAutomata()) {
 			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
