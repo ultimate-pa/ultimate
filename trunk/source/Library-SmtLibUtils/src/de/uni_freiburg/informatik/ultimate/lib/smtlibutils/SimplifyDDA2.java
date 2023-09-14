@@ -27,8 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -59,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
  * @author Xinyu Jiang
@@ -93,13 +94,13 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private int mNonRelaxingNodes = 0;
 	private long mCheckSatTime = 0;
 	private final long mStartTime = System.nanoTime();
-	private final ScopedHashMap<TermVariable, TermVariable> mRenamingMap;
+	private final ArrayDeque<Map<TermVariable, Term>> mRenamingMaps;
 
 	private SimplifyDDA2(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		super();
 		mServices = services;
 		mMgdScript = mgdScript;
-		mRenamingMap = new ScopedHashMap<>();
+		mRenamingMaps = new ArrayDeque<>();
 	}
 
 	@Override
@@ -207,25 +208,44 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		return null;
 	}
 
-	private Term preprocessQuantifiedFormula(final QuantifiedFormula term) {
-		final QuantifiedFormula termAsQuantifiedFormula = term;
-		mRenamingMap.beginScope();
+	private QuantifiedFormula preprocessQuantifiedFormula(final QuantifiedFormula term) {
 		mMgdScript.lock(this);
-		final ArrayList<TermVariable> substitutedTermVariables = new ArrayList<>();
-		for (final TermVariable quantifiedVariable : termAsQuantifiedFormula.getVariables()) {
-			final TermVariable freshVariable = mMgdScript.constructFreshCopy(quantifiedVariable);
-			mRenamingMap.put(quantifiedVariable, freshVariable);
-			substitutedTermVariables.add(freshVariable);
-			mMgdScript.declareFun(this, freshVariable.getName(), new Sort[0], freshVariable.getSort());
-		}
+		Map<TermVariable, Term> substitutionMapping = constructFreshConstantSymbols(mMgdScript,
+				Arrays.asList(term.getVariables()));
+		mRenamingMaps.push(substitutionMapping);
 		mMgdScript.unlock(this);
+		final Term substitutedSubformula = Substitution.apply(mMgdScript, substitutionMapping, term.getSubformula());
+		return (QuantifiedFormula) mMgdScript.getScript().quantifier(term.getQuantifier(), term.getVariables(),
+				substitutedSubformula);
+	}
 
-		final Term substitutedSubformula =
-				Substitution.apply(mMgdScript, mRenamingMap, termAsQuantifiedFormula.getSubformula());
-		final QuantifiedFormula substitutedQuantifiedFormula =
-				(QuantifiedFormula) SmtUtils.quantifier(mMgdScript.getScript(), termAsQuantifiedFormula.getQuantifier(),
-						substitutedTermVariables, substitutedSubformula);
-		return substitutedQuantifiedFormula;
+	/**
+	 * Given a collection of {@link TermVariable}s, construct a fresh constant
+	 * symbol for each {@link TermVariable} and return a map that maps each
+	 * {@link TermVariable} to its fresh constant symbol.
+	 */
+	private Map<TermVariable, Term> constructFreshConstantSymbols(ManagedScript mgdScript, Collection<TermVariable> tvs) {
+		Map<TermVariable, Term> result = new HashMap<>();
+		for (TermVariable tv : tvs) {
+			Term constantSymbol = constructFreshConstantSymbol(mgdScript, tv);
+			result.put(tv, constantSymbol);
+		}
+		return result;
+	}
+
+	/**
+	 * Construct a constant symbol (reminder constant symbol is a 0-ary
+	 * {@link ApplicationTerm}). The constant symbol should be fresh (i.e.,
+	 * different from all constant symbols that have been declared already.
+	 * Unfortunately, we do not have a reliable mechanism for getting fresh constant
+	 * symbols. As a workaround we let the {@link ManagedScript} construct a fresh
+	 * copy of the {@link TermVariable} and hope that its identifier was not used
+	 * before.
+	 */
+	private Term constructFreshConstantSymbol(ManagedScript mgdScript, TermVariable tv) {
+		final TermVariable freshVariable = mgdScript.constructFreshCopy(tv);
+		mgdScript.declareFun(this, freshVariable.getName(), new Sort[0], freshVariable.getSort());
+		return mgdScript.term(this, freshVariable.getName());
 	}
 
 	private static boolean checkRedundancyForNode(final Term term) {
@@ -454,14 +474,12 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	@Override
 	protected Term constructResultForQuantifiedFormula(final Term context,
 			final QuantifiedFormula originalQuantifiedFormula, final Term resultSubformula) {
-		final HashMap<TermVariable, TermVariable> swapped = new HashMap<>();
-		final ArrayList<TermVariable> revertedTermVariables = new ArrayList<>();
-		for (final Map.Entry<TermVariable, TermVariable> entry : mRenamingMap.currentScopeEntries()) {
-			swapped.put(entry.getValue(), entry.getKey());
-			revertedTermVariables.add(entry.getKey());
+		Map<TermVariable, Term> orginalTvsToFreshConstants = mRenamingMaps.pop();
+		final Map<Term, TermVariable> reverseMap = new HashMap<>();
+		for (final Map.Entry<TermVariable, Term> entry : orginalTvsToFreshConstants.entrySet()) {
+			reverseMap.put(entry.getValue(), entry.getKey());
 		}
-		final Term revertedSubformula = Substitution.apply(mMgdScript, swapped, resultSubformula);
-		mRenamingMap.endScope();
+		final Term subformulaWithOriginalVariables = Substitution.apply(mMgdScript, reverseMap, resultSubformula);
 		if (USE_ECHO_COMMANDS) {
 			mMgdScript.lock(this);
 			mMgdScript.echo(this, new QuotedObject("pop in constructResultForQuantifiedFormula"));
@@ -471,7 +489,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		mAssertionStackHeight--;
 		assert mAssertionStackHeight >= 0;
 		return SmtUtils.quantifier(mMgdScript.getScript(), originalQuantifiedFormula.getQuantifier(),
-				revertedTermVariables, revertedSubformula);
+				orginalTvsToFreshConstants.keySet(), subformulaWithOriginalVariables);
 	}
 
 	@Override
