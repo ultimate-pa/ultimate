@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ISimpleAST;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
@@ -133,6 +134,9 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 
 	public static Check createDefaultCheck(final BoogieASTNode node) {
 		if (node instanceof AssertStatement) {
+			if (node.getPayload().getAnnotations().containsKey(TestGoalAnnotation.class.getName())) {
+				return new Check(Check.Spec.TEST_GOAL_ANNOTATION);
+			}
 			final NamedAttribute[] attrib = ((AssertStatement) node).getAttributes();
 			if (attrib != null && attrib.length > 0) {
 				final String namedAttribStr = BoogiePrettyPrinter.print(attrib);
