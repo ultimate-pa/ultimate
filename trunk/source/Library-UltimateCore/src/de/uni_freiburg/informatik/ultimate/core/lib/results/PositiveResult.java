@@ -31,6 +31,7 @@
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 
@@ -68,13 +69,18 @@ public class PositiveResult<ELEM extends IElement> extends AbstractResultAtEleme
 
 	@Override
 	public String getLongDescription() {
+		if (mCheckedSpecification.getSpec().equals(Spec.TEST_GOAL_ANNOTATION)) {
+			return "TestGeneration";
+		}
 		if (mCheckedSpecification == null) {
 			return "some specification holds - ERROR (information lost during translation process)";
 		}
 		final StringBuilder sb = new StringBuilder();
 		sb.append("For all program executions holds that ");
 		sb.append(mCheckedSpecification.getPositiveMessage());
-		sb.append(" at this location");
+		if (!mCheckedSpecification.getSpec().equals(Spec.TEST_GOAL_ANNOTATION)) {
+			sb.append(" at this location");
+		}
 		return sb.toString();
 	}
 

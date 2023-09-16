@@ -39,6 +39,7 @@ type_errorstring = "Type Error"
 witness_errorstring = "InvalidWitnessErrorResult"
 exception_errorstring = "ExceptionOrErrorResult"
 safety_string = "Ultimate proved your program to be correct"
+testGen_string = "TestGeneration"
 all_spec_string = "AllSpecificationsHoldResult"
 unsafety_string = "Ultimate proved your program to be incorrect"
 mem_deref_false_string = "pointer dereference may fail"
@@ -448,10 +449,13 @@ def run_ultimate(ultimate_call, prop, verbose=False):
                     blank_lines += 1
                 else:
                     reading_error_path = False 
-        # elif prop.is_cover_error():
-            # TODO result
-        # elif prop.is_cover_edges():
-            # TODO
+        elif prop.is_cover_error():
+            if line.find(testGen_string) != -1:
+                result = "DONE"
+        elif prop.is_cover_edges():
+            print(line)
+            if line.find(testGen_string) != -1:
+                result = "DONE"
         else:
             if line.find(safety_string) != -1 or line.find(all_spec_string) != -1:
                 result = "TRUE"

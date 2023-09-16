@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHol
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DataRaceFoundResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TestGenerationResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
@@ -56,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
 /**
  *
@@ -68,6 +70,8 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 	private final BiConsumer<IcfgLocation, IResult> mReportFunction;
 	private final String mPluginId;
 	private final String mPluginName;
+	protected final TAPreferences mPref;
+	protected final boolean mTestGeneration;
 
 	/**
 	 * Constructor s.t. the {@link CegarLoopResultReporter} reports all created results immediately to
@@ -76,10 +80,13 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 	public CegarLoopResultReporter(final IUltimateServiceProvider services, final ILogger logger, final String pluginId,
 			final String pluginName) {
 		mServices = services;
+
 		mLogger = logger;
 		mPluginId = pluginId;
 		mPluginName = pluginName;
 		mReportFunction = (errorLoc, result) -> this.reportResult(result);
+		mPref = new TAPreferences(mServices);
+		mTestGeneration = mPref.getTestGeneration();
 	}
 
 	/**
@@ -93,6 +100,8 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 		mPluginId = pluginId;
 		mPluginName = pluginName;
 		mReportFunction = reportFunction;
+		mPref = new TAPreferences(mServices);
+		mTestGeneration = mPref.getTestGeneration();
 	}
 
 	public void reportCegarLoopResult(final CegarLoopResult<L> clres) {
@@ -116,6 +125,9 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 			case UNKNOWN:
 				final IProgramExecution<L, Term> pe = localResult.getProgramExecution();
 				reportUnproveableResult(errorLoc, pe, localResult.getUnprovabilityReasons());
+				break;
+			case TEST_GENERATION:
+				reportTestGenerationResult(errorLoc, localResult.getProgramExecution());
 				break;
 			default:
 				throw new UnsupportedOperationException("Unknown result type " + localResult.getResult());
@@ -146,11 +158,13 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 		mReportFunction.accept(errorLoc, pResult);
 	}
 
+	private void reportTestGenerationResult(final IcfgLocation errorLoc, final IProgramExecution<L, Term> pe) {
+		final IResult cexResult = new TestGenerationResult(mPluginName);
+		mReportFunction.accept(errorLoc, cexResult);
+	}
+
 	private void reportCounterexampleResult(final IcfgLocation errorLoc, final IProgramExecution<L, Term> pe) {
-		final boolean testcomp = true;
-		if (testcomp) {
-			return;
-		}
+
 		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
 		if (!upreasons.isEmpty()) {
 			reportUnproveableResult(errorLoc, pe, upreasons);
@@ -168,6 +182,7 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 		} else {
 			cexResult = new CounterExampleResult<>(errorLoc, mPluginName, mServices.getBacktranslationService(), pe);
 		}
+
 		mReportFunction.accept(errorLoc, cexResult);
 	}
 

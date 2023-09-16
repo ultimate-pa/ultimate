@@ -101,9 +101,8 @@ public class Check extends ModernAnnotations {
 		 */
 		MALLOC_NONNEGATIVE,
 		/**
-		 * Pointer arithmetic that is not allowed by C. E.g. - computing the
-		 * difference of two pointers that point to completely different arrays
-		 * - comparing pointers that point to completely different arrays
+		 * Pointer arithmetic that is not allowed by C. E.g. - computing the difference of two pointers that point to
+		 * completely different arrays - comparing pointers that point to completely different arrays
 		 */
 		ILLEGAL_POINTER_ARITHMETIC,
 		/**
@@ -276,7 +275,8 @@ public class Check extends ModernAnnotations {
 			return "there are no data races";
 		case CHC_SATISFIABILITY:
 			return "the set of constraint Horn clauses is satisfiable";
-
+		case TEST_GOAL_ANNOTATION:
+			return "this test goal is not reachable";
 		default:
 			return "a specification is correct but has no positive message: " + spec;
 		}
@@ -332,6 +332,8 @@ public class Check extends ModernAnnotations {
 			return "the program contains a data race";
 		case CHC_SATISFIABILITY:
 			return "the set of constraint Horn clauses is unsatisfiable";
+		case TEST_GOAL_ANNOTATION:
+			return "test goal reachable";
 		default:
 			return "a specification may be violated but has no negative message: " + spec;
 		}
@@ -386,8 +388,7 @@ public class Check extends ModernAnnotations {
 	}
 
 	/**
-	 * Return the checked specification that is checked at this location or
-	 * null.
+	 * Return the checked specification that is checked at this location or null.
 	 */
 	public static Check getAnnotation(final IElement node) {
 		return ModelUtils.getAnnotation(node, KEY, a -> (Check) a);
