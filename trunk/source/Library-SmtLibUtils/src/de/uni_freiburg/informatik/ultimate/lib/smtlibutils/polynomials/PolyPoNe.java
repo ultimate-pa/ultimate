@@ -35,6 +35,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Junction;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm.ComparisonResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
@@ -66,17 +67,19 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class PolyPoNe {
 
 	protected enum Check {
-		REDUNDANT, INCONSISTENT, MAYBE_USEFUL, FUSIBLE
+		REDUNDANT, INCONSISTENT, MAYBE_USEFUL
 	};
 
 	protected final Script mScript;
+	protected final Junction mJunction;
 	private final Set<Term> mPositive = new HashSet<>();
 	private final Set<Term> mNegative = new HashSet<>();
 	private final HashRelation<Map<?, Rational>, PolynomialRelation> mPolyRels = new HashRelation<>();
 	private boolean mInconsistent = false;
 
-	PolyPoNe(final Script script) {
+	PolyPoNe(final Script script, final Junction junction) {
 		mScript = script;
+		mJunction = junction;
 	}
 
 	public boolean isInconsistent() {
@@ -122,24 +125,20 @@ public class PolyPoNe {
 		return or();
 	}
 
-	protected Check checkPolyRel(final Script script, final PolynomialRelation newPolyRel,
+	protected final Check checkPolyRel(final Script script, final PolynomialRelation newPolyRel,
 			final boolean removeExpliedPolyRels) {
 		final Check res1 = compareToExistingRepresentations(newPolyRel, removeExpliedPolyRels);
 		if (res1 == Check.INCONSISTENT || res1 == Check.REDUNDANT) {
 			return res1;
 		}
-		assert res1 == null || res1 == Check.FUSIBLE;
+		assert res1 == null;
 		final PolynomialRelation alternativeRepresentation = newPolyRel.mul(mScript, Rational.MONE);
 		final Check res2 = compareToExistingRepresentations(alternativeRepresentation, removeExpliedPolyRels);
 		if (res2 == Check.INCONSISTENT || res2 == Check.REDUNDANT) {
 			return res2;
 		}
-		assert res2 == null || res2 == Check.FUSIBLE;
-		if (res1 == Check.FUSIBLE || res2 == Check.FUSIBLE) {
-			return Check.FUSIBLE;
-		} else {
-			return Check.MAYBE_USEFUL;
-		}
+		assert res2 == null;
+		return Check.MAYBE_USEFUL;
 	}
 
 	private Check compareToExistingRepresentations(final PolynomialRelation newPolyRel,
@@ -147,7 +146,6 @@ public class PolyPoNe {
 		final Set<PolynomialRelation> existingPolyRels = mPolyRels
 				.getImage(newPolyRel.getPolynomialTerm().getAbstractVariable2Coefficient());
 		final List<PolynomialRelation> existingThatExplyNew = new ArrayList<>();
-		boolean isFusible = false;
 		for (final PolynomialRelation existingPolyRel : existingPolyRels) {
 			final ComparisonResult comp = AbstractGeneralizedAffineTerm.compareRepresentation(existingPolyRel,
 					newPolyRel);
@@ -163,20 +161,6 @@ public class PolyPoNe {
 					break;
 				case INCONSISTENT:
 					return Check.INCONSISTENT;
-				case FUSIBLE:
-					// If this PolynomialRelation can be fused, we will change its relation symbol
-					// and hence this changed PolynomialRelation explies the existing
-					// PolynomialRelation. If the newPolyRel is fusible it can still exply others.
-					// However, it must not be implied by others. If it would be implied by others
-					// the existing relations would be inconsistent or have been fused already.
-					// (One may wonder: is it really safe to remove the existingPolyRel? Couldn't it
-					// happen that we never add the fused relation? The arguments above explain that
-					// the removal is safe.)
-					if (removeExpliedPolyRels) {
-						existingThatExplyNew.add(existingPolyRel);
-					}
-					isFusible = true;
-					break;
 				default:
 					throw new AssertionError("unknown value " + comp);
 				}
@@ -186,30 +170,61 @@ public class PolyPoNe {
 			// remove all existing relations that exply the new relation (i.e., all that are
 			// implied by the new relation)
 			for (final PolynomialRelation existing : existingThatExplyNew) {
-				final boolean modified = mPolyRels.removePair(existing.getPolynomialTerm().getAbstractVariable2Coefficient(),
-						existing);
+				final boolean modified = mPolyRels
+						.removePair(existing.getPolynomialTerm().getAbstractVariable2Coefficient(), existing);
 				assert modified : "nothing removed";
 			}
 		}
-		if (isFusible) {
-			return Check.FUSIBLE;
-		} else {
-			return null;
-		}
+		return null;
 	}
 
-	protected final boolean addPolyRel(final Script script, final PolynomialRelation polyRel,
+	protected PolynomialRelation isFusibleWithExistingRelations(final Script script, final Junction junction,
+			final PolynomialRelation newPolyRel) {
+		final PolynomialRelation res1 = isFusibleWithExistingRepresentation(junction, newPolyRel);
+		if (res1 != null) {
+			return res1;
+		}
+		final PolynomialRelation alternativeRepresentation = newPolyRel.mul(mScript, Rational.MONE);
+		final PolynomialRelation res2 = isFusibleWithExistingRepresentation(junction, alternativeRepresentation);
+		if (res2 != null) {
+			return res2;
+		}
+		return null;
+	}
+
+	private PolynomialRelation isFusibleWithExistingRepresentation(final Junction junction,
+			final PolynomialRelation newPolyRel) {
+		final Set<PolynomialRelation> existingPolyRels = mPolyRels
+				.getImage(newPolyRel.getPolynomialTerm().getAbstractVariable2Coefficient());
+		for (final PolynomialRelation existingPolyRel : existingPolyRels) {
+			final boolean res = AbstractGeneralizedAffineTerm.areRepresentationsFusible(junction, existingPolyRel,
+					newPolyRel);
+			if (res) {
+				return existingPolyRel;
+			}
+		}
+		return null;
+	}
+
+	protected boolean addPolyRel(final Script script, final PolynomialRelation polyRel,
 			final boolean removeExpliedPolyRels) {
 		if (mInconsistent) {
 			throw new AssertionError("must not add if already inconsistent");
 		}
+
 		final Check check = checkPolyRel(script, polyRel, removeExpliedPolyRels);
-		if (check == Check.FUSIBLE) {
-			assert polyRel.getRelationSymbol() == RelationSymbol.LEQ || polyRel.getRelationSymbol() == RelationSymbol.GEQ;
-			final PolynomialRelation fusedPolyRel = PolynomialRelation.of(polyRel.getPolynomialTerm(), RelationSymbol.EQ);
-			mPolyRels.addPair(polyRel.getPolynomialTerm().getAbstractVariable2Coefficient(), fusedPolyRel);
-			return false;
-		} else if (check == Check.MAYBE_USEFUL) {
+		if (check == Check.MAYBE_USEFUL) {
+			if (polyRel.getRelationSymbol().isConvexInequality()) {
+				final PolynomialRelation fusionPartner = isFusibleWithExistingRelations(mScript, Junction.AND, polyRel);
+				if (fusionPartner != null) {
+					mPolyRels.removePair(fusionPartner.getPolynomialTerm().getAbstractVariable2Coefficient(),
+							fusionPartner);
+					final PolynomialRelation fusion = PolynomialRelation.of(polyRel.getPolynomialTerm(),
+							RelationSymbol.EQ);
+					mPolyRels.addPair(fusion.getPolynomialTerm().getAbstractVariable2Coefficient(), fusion);
+					return false;
+				}
+			}
 			mPolyRels.addPair(polyRel.getPolynomialTerm().getAbstractVariable2Coefficient(), polyRel);
 			return false;
 		} else if (check == Check.REDUNDANT) {
