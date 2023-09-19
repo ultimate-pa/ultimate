@@ -676,6 +676,11 @@ public class ExpressionFactory {
 		return new StringLiteral(loc, value);
 	}
 
+	public static IdentifierExpression createVoidDummyExpression(final ILocation loc) {
+		return constructIdentifierExpression(loc, BoogieType.TYPE_ERROR, DUMMY_VOID,
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
+	}
+
 	/**
 	 * Returns an Expression that is the same as the given expression, except that its BoogieType has been changed to
 	 * the given BoogieType.
@@ -738,11 +743,6 @@ public class ExpressionFactory {
 		} else {
 			throw new AssertionError("unexpected expression type: " + oe.getClass());
 		}
-	}
-
-	public static IdentifierExpression createVoidDummyExpression(final ILocation loc) {
-		return constructIdentifierExpression(loc, BoogieType.TYPE_ERROR, DUMMY_VOID,
-				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 	public static Expression constructBooleanWildCardExpression(final ILocation loc) {

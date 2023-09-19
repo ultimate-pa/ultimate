@@ -36,7 +36,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-
+import de.uni_freiburg.informatik.ultimate.automata.alternating.BooleanExpression;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GetAcceptedLassoWord;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -47,9 +48,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
@@ -63,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
+import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
@@ -222,20 +227,30 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	 * @return The assertion for non-complementness
 	 */
 	private Statement genAssertComplement(ReqPeas reqPeasOriginal, ReqPeas reqPeasTotal, ReqPeas reqPeasComplement, final BoogieLocation bl) {
-		
-		final Expression complementPeaAccepts = getPcInSinkExpression(reqPeasComplement, bl);
-		final Expression complementPeaRejects = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, complementPeaAccepts);
+		final Expression complementPeaAccepts;
+		final Expression complementPeaRejects;
 		final Expression totalPeaRejects;
 		final Expression totalPeaAccepts;
 		
 		if (reqPeasOriginal.isStrict()) {
-			totalPeaRejects = getPcInSinkExpression(reqPeasTotal, bl);
-			totalPeaAccepts = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, totalPeaRejects);
+			List<Expression>  totalPeaRejectsList = new ArrayList<>();
+			List<Expression>  totalPeaAcceptsList = new ArrayList<>();
+			genStrictPeaExpressions(reqPeasTotal, totalPeaRejectsList, totalPeaAcceptsList, bl);
+			totalPeaAccepts = ExpressionFactory.or(bl, totalPeaAcceptsList);
+			totalPeaRejects = ExpressionFactory.or(bl, totalPeaRejectsList);
+			
+			List<Expression>  complementPeaAcceptsList = new ArrayList<>();
+			List<Expression>  complementPeaRejectsList = new ArrayList<>();
+			genStrictPeaExpressions(reqPeasComplement, complementPeaAcceptsList, complementPeaRejectsList , bl);			
+			complementPeaAccepts = ExpressionFactory.or(bl, complementPeaAcceptsList);
+			complementPeaRejects = ExpressionFactory.or(bl, complementPeaRejectsList);
 		} else {
 			totalPeaRejects = getPcInSinkExpression(reqPeasTotal, bl);
 			totalPeaAccepts = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, totalPeaRejects);
+			
+			complementPeaAccepts = getPcInSinkExpression(reqPeasComplement, bl);
+			complementPeaRejects = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, complementPeaAccepts);
 		}
-		
 		final Expression bothAccept = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, totalPeaAccepts, complementPeaAccepts);
 		final Expression bothReject = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, totalPeaRejects, complementPeaRejects);
 		
@@ -247,7 +262,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final String label = "Complement_" + reqPeasTotal.toString() + "_" + reqPeasComplement.toString();
 		return createAssert(assertion, check, label);
 	}
-	
 	
 	private Expression getPcInSinkExpression(ReqPeas reqPeas, BoogieLocation bl) {
 		List<Entry<CounterTrace, PhaseEventAutomata>> peaList = reqPeas.getCounterTrace2Pea();
@@ -261,6 +275,47 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return terminalExpression;
 	}
 	
+	private void genStrictPeaExpressions(ReqPeas strictPea, List<Expression> eqExpressions, List<Expression>  ltExpressions, BoogieLocation bl) {
+		List<Entry<CounterTrace, PhaseEventAutomata>> peaList = strictPea.getCounterTrace2Pea();
+		for (Entry<CounterTrace, PhaseEventAutomata> entry : peaList) {
+			PhaseEventAutomata pea = entry.getValue();
+			Phase[] phases = pea.getPhases();
+			
+			for (int i = 0; i < phases.length; i++) {
+				Phase phase = phases[i];
+				Expression pcExpression = genComparePhaseCounter(i, mSymbolTable.getPcName(pea), bl);
+				if (phase.getModifiedConstraints().isPresent()) {
+					List<RangeDecision> modifiedConstraints = phase.getModifiedConstraints().get();
+					
+					List<Expression>  clockEqExpressions = new ArrayList<>();
+					clockEqExpressions.add(pcExpression);
+					List<Expression>  clockLtExpressions = new ArrayList<>();
+					clockLtExpressions.add(pcExpression);
+					
+					for (RangeDecision strictClockConstraint : modifiedConstraints) {
+						Integer clockValueInteger = strictClockConstraint.getVal(0);
+						String clockVariableString = strictClockConstraint.getVar();
+						
+						Expression clockEq = genCompareClock(clockValueInteger.floatValue(), clockVariableString, BinaryExpression.Operator.COMPEQ, bl);
+						clockEqExpressions.add(clockEq);
+						Expression clockLt = genCompareClock(clockValueInteger.floatValue(), clockVariableString, BinaryExpression.Operator.COMPLT, bl);
+						clockLtExpressions.add(clockLt);
+					}
+					Expression pcAndEqExpression = ExpressionFactory.and(bl, clockEqExpressions);
+					eqExpressions.add(pcAndEqExpression);
+					Expression pcAndLtExpression = ExpressionFactory.and(bl, clockLtExpressions);
+					ltExpressions.add(pcAndLtExpression);
+				}
+				else {
+					if (phase.getTerminal()) {
+						eqExpressions.add(pcExpression);
+						ltExpressions.add(pcExpression);
+					}
+				}
+				
+			}		
+		}
+	}
 
 	@SuppressWarnings("unchecked")
 	private List<Statement> genChecksRTInconsistency(final BoogieLocation bl) {
@@ -515,6 +570,12 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final IdentifierExpression identifier = mSymbolTable.getIdentifierExpression(pcName);
 		final IntegerLiteral intLiteral = ExpressionFactory.createIntegerLiteral(bl, Integer.toString(phaseIndex));
 		return ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.COMPEQ, identifier, intLiteral);
+	}
+	
+	private Expression genCompareClock(final float clockValue, final String clockName, BinaryExpression.Operator op, final BoogieLocation bl) {
+		final IdentifierExpression identifier = mSymbolTable.getIdentifierExpression(clockName);
+		final RealLiteral realLiteral = ExpressionFactory.createRealLiteral(bl, Float.toString(clockValue));
+		return ExpressionFactory.newBinaryExpression(bl, op, identifier, realLiteral);
 	}
 
 	@Override
