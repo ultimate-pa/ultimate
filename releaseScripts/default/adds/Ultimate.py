@@ -453,7 +453,6 @@ def run_ultimate(ultimate_call, prop, verbose=False):
             if line.find(testGen_string) != -1:
                 result = "DONE"
         elif prop.is_cover_edges():
-            print(line)
             if line.find(testGen_string) != -1:
                 result = "DONE"
         else:

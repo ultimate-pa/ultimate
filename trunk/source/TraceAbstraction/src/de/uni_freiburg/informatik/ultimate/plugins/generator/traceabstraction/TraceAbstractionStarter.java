@@ -84,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.OrderOfErrorLocations;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.TestGenerationMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
@@ -126,6 +127,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private final Map<IcfgLocation, IResult> mResultsPerLocation;
 	private final CegarLoopResultReporter<L> mResultReporter;
 
+	protected TestGenerationMode mTestGeneration;
+
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
@@ -140,7 +143,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		mIsConcurrent = IcfgUtils.isConcurrent(icfg);
 		mResultReporter = new CegarLoopResultReporter<>(mServices, mLogger, Activator.PLUGIN_ID, Activator.PLUGIN_NAME,
 				this::recordLocationResult);
-
+		mTestGeneration = mPrefs.getTestGeneration();
 		if (mPrefs.computeHoareAnnotation() && mIsConcurrent) {
 			mLogger.warn("Switching off computation of Hoare annotation because input is a concurrent program");
 			mComputeHoareAnnotation = false;
@@ -177,6 +180,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 		mLogger.info("Computing trace abstraction results");
 		// Report results that were buffered because they may be overridden or amended.
+
 		reportLocationResults();
 		reportBenchmarkResults();
 

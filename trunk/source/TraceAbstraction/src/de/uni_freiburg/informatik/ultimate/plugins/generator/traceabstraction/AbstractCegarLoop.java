@@ -97,6 +97,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.TestGenerationMode;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -119,8 +120,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	protected final Class<L> mTransitionClazz;
 
 	final Set<IPredicate> mNotReachedLongTraceStates = new HashSet<>();
-	private long TraceCeckTime = 0;
-	private long ExportedTestVectors = 0;
+	private final long TraceCeckTime = 0;
+	private final long ExportedTestVectors = 0;
 	/**
 	 * Interprocedural control flow graph.
 	 */
@@ -171,8 +172,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 */
 	protected NestedWordAutomaton<L, IPredicate> mInterpolAutomaton;
 
-	protected final boolean mTestGeneration;
-	protected boolean mLongTraceOptimization;
+	protected TestGenerationMode mTestGeneration;
 
 	// used for debugging only
 	protected IAutomaton<L, IPredicate> mArtifactAutomaton;
@@ -236,7 +236,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		mResultBuilder = new CegarLoopResultBuilder();
 		// Test-Generation Settings
 		mTestGeneration = mPref.getTestGeneration();
-		mLongTraceOptimization = mPref.getLongTraceOpti(); // Skips Unsat Long Traces;
 	}
 
 	/**
@@ -440,16 +439,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 					mDumper = new Dumper(mLogger, mPref, mName, mIteration);
 				}
 				try {
-					final long startTime = System.nanoTime();
 					final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible();
-					final long estimatedTime = System.nanoTime() - startTime;
-					TraceCeckTime += estimatedTime;
-					System.out.println("TimeSpendinTraceCecking: " + TraceCeckTime);
-					if (isCexResult.getFirst() == Script.LBool.SAT) {
-						ExportedTestVectors += 1;
-						System.out.println("Exported tests: " + ExportedTestVectors);
-					}
-					if (isCexResult.getFirst() != Script.LBool.UNSAT || !mLongTraceOptimization) {
+					if (isCexResult.getFirst() != Script.LBool.UNSAT
+							|| !mTestGeneration.equals(TestGenerationMode.SearchMultiGoal)) {
+						// TestGen, LongTrace ignores UNSAT traces
 						final AutomatonType automatonType = processFeasibilityCheckResult(isCexResult.getFirst(),
 								isCexResult.getSecond(), currentErrorLoc);
 						if (mPref.stopAfterFirstViolation() && automatonType != AutomatonType.INTERPOLANT) {
@@ -547,7 +540,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			final IProgramExecution<L, Term> programExecution, final IcfgLocation currentErrorLoc) {
 		if (isCounterexampleFeasible == Script.LBool.SAT) {
 
-			if (mTestGeneration) {
+			if (!mTestGeneration.equals(TestGenerationMode.None)) {
 				final List<?> sequence = mCounterexample.getStateSequence();
 				for (int i = 0; i < sequence.size(); i++) {
 					if (sequence.get(i) instanceof ISLPredicate) {

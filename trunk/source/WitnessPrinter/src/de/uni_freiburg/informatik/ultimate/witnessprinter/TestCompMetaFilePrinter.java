@@ -27,18 +27,11 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessprinter;
 
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -86,11 +79,10 @@ public class TestCompMetaFilePrinter<TTE, TE> extends BaseWitnessGenerator<TTE, 
 		mIsACSLForbidden =
 				PreferenceInitializer.getPreferences(services).getBoolean(PreferenceInitializer.LABEL_DO_NOT_USE_ACSL);
 		mServices = services;
-		final boolean mPrintEval = true;
-		if (mPrintEval) {
-			writeEvalRow();
-		}
 
+	}
+
+	public void printMetaFile() throws Exception {
 		try {
 			final String outputDir = "testsuite_" + mTranslatedCFG.getFilename().substring(
 					mTranslatedCFG.getFilename().lastIndexOf("\\") + 1, mTranslatedCFG.getFilename().length() - 2);
@@ -102,7 +94,6 @@ public class TestCompMetaFilePrinter<TTE, TE> extends BaseWitnessGenerator<TTE, 
 		} catch (final IOException | TransformerException | ParserConfigurationException e) {
 			throw e;
 		}
-
 	}
 
 	public Document createXML() throws ParserConfigurationException {
@@ -129,16 +120,9 @@ public class TestCompMetaFilePrinter<TTE, TE> extends BaseWitnessGenerator<TTE, 
 
 		// <!ELEMENT specification (#PCDATA)>
 		final Element specification = dom.createElement("specification");
-		if (true) { // TODO
-					// ups.getString(PreferenceInitializer.LABEL_GRAPH_DATA_SPECIFICATION)
-			specification.appendChild(dom.createTextNode("CHECK( FQL(cover EDGES(@CONDITIONEDGE)) )"));
-		} else {
-			specification.appendChild(dom.createTextNode("CHECK( LTL(G ! call(__VERIFIER_error())) )"));
 
-			specification.appendChild(
-					dom.createTextNode(ups.getString(PreferenceInitializer.LABEL_GRAPH_DATA_SPECIFICATION)));
-
-		}
+		specification
+				.appendChild(dom.createTextNode(ups.getString(PreferenceInitializer.LABEL_GRAPH_DATA_SPECIFICATION)));
 
 		rootEle.appendChild(specification);
 
@@ -197,44 +181,6 @@ public class TestCompMetaFilePrinter<TTE, TE> extends BaseWitnessGenerator<TTE, 
 
 		transformer.transform(source, result);
 
-	}
-
-	@SuppressWarnings("resource")
-	public String calcSHA256(final String filepath) {
-
-		try {
-			MessageDigest md = MessageDigest.getInstance("SHA-256");
-
-			final DigestInputStream dis = new DigestInputStream(new FileInputStream(filepath), md);
-			while (dis.read() != -1) {
-				; // empty loop to clear the data
-			}
-			md = dis.getMessageDigest();
-			// bytes to hex
-			final StringBuilder result = new StringBuilder();
-			for (final byte b : md.digest()) {
-				result.append(String.format("%02x", b));
-			}
-			return result.toString();
-		} catch (final IOException | NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return "";
-
-	}
-
-	private void writeEvalRow() {
-		try (FileWriter fw = new FileWriter("TestGenerationEval1.csv", true);
-				// create a File linked to the same file using the name of this one;
-
-				final BufferedWriter bw = new BufferedWriter(fw);
-				final PrintWriter out = new PrintWriter(bw)) {
-			out.println(
-					"./" + mTranslatedCFG.getFilename().substring(mTranslatedCFG.getFilename().lastIndexOf("\\") + 1));
-		} catch (final IOException e) {
-			throw new AssertionError(e);
-		}
 	}
 
 	@Override

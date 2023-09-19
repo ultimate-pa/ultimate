@@ -132,8 +132,7 @@ public class WitnessPrinter implements IOutput {
 			if (TestCompMetaFileTODO) { // TODO
 				mLogger.info("Generating MetaFile for TestComp Reults");
 				generateMetaFile(cexVerifier, results);
-			}
-			if (results.stream().anyMatch(a -> a instanceof CounterExampleResult<?, ?, ?>)) {
+			} else if (results.stream().anyMatch(a -> a instanceof CounterExampleResult<?, ?, ?>)) {
 				mLogger.info("Generating witness for reachability counterexample");
 				generateReachabilityCounterexampleWitness(cexVerifier, results);
 			} else if (results.stream().anyMatch(a -> a instanceof LassoShapedNonTerminationArgument<?, ?>)) {
@@ -159,8 +158,7 @@ public class WitnessPrinter implements IOutput {
 		final BacktranslatedCFG<?, IcfgEdge> origCfg =
 				new BacktranslatedCFG<>(filename, IcfgGraphProvider.getVirtualRoot(root), IcfgEdge.class);
 
-		final TestCompMetaFilePrinter asd =
-				new TestCompMetaFilePrinter(backtrans.translateCFG(origCfg), mLogger, mServices);
+		new TestCompMetaFilePrinter<>(backtrans.translateCFG(origCfg), mLogger, mServices).printMetaFile();
 
 	}
 

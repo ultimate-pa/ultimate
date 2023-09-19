@@ -423,8 +423,37 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			funGetValue = this::getValue;
 		}
 
-		final TestVector testV = new TestVector();
+		final boolean mTestGeneration = true;
+		if (mTestGeneration) {
+			final TestVector testV = extractTestVector(nsb, funGetValue, rpeb);
+			final boolean mExportTests = true;
+			if (mExportTests) {
+				final boolean mExportAllInOneFile = true;
+				exportTest(testV, rpeb.mTrace.hashCode(), mExportAllInOneFile);
+			}
+		} else {
+			for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
+				final IProgramVar bv = entry.getKey();
+				final Map<Integer, Term> indexedRepresentatives = entry.getValue();
+				if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
+					for (final var representative : indexedRepresentatives.entrySet()) {
+						final Integer index = representative.getKey();
+						final Term indexedVar = representative.getValue();
+						final Term valueT = funGetValue.apply(indexedVar);
+						rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
 
+					}
+				}
+			}
+		}
+		cleanupAndUnlockSolver();
+		return rpeb.getIcfgProgramExecution();
+	}
+
+	// does rpeb.addValueAtVarAssignmentPosition and creates a testVector at the same time
+	private TestVector extractTestVector(final NestedSsaBuilder<L> nsb, final Function<Term, Term> funGetValue,
+			final IcfgProgramExecutionBuilder<L> rpeb) {
+		final TestVector testV = new TestVector();
 		for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
 			final IProgramVar bv = entry.getKey();
 			final Map<Integer, Term> indexedRepresentatives = entry.getValue();
@@ -449,20 +478,18 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 				}
 			}
 		}
+		return testV;
+	}
 
+	private void exportTest(final TestVector testV, final int identifier, final boolean allInOneFile) {
 		try {
-			final boolean mExportTestCase = true; // TODO Setting
-			if (!testV.isEmpty() && mExportTestCase) {
-				TestExporter.getInstance().exportTests(testV, rpeb.mTrace.hashCode());
+			if (!testV.isEmpty()) {
+				TestExporter.getInstance().exportTests(testV, identifier, allInOneFile);
 			}
-
 		} catch (final Exception e) {
 			// TODO TestGeneration Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		cleanupAndUnlockSolver();
-		return rpeb.getIcfgProgramExecution();
 	}
 
 	protected AnnotateAndAssertCodeBlocks<L> getAnnotateAndAsserterCodeBlocks(final NestedFormulas<L, Term, Term> ssa) {

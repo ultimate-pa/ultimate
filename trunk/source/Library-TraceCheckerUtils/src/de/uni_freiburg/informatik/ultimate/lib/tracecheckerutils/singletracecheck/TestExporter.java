@@ -40,7 +40,7 @@ public class TestExporter {
 	 * 1: one directory for all programs
 	 * 2: one directory for each program
 	 */
-	public void exportTests(final TestVector testV, final int i) throws Exception {
+	public void exportTests(final TestVector testV, final int i, final boolean allInOneFile) throws Exception {
 		if (!foundMakefileAndDir) {
 			findMakeFileAndDir();
 		}
@@ -127,12 +127,10 @@ public class TestExporter {
 	 * Can be Used to create one Dir for each program
 	 */
 	public void findMakeFileAndDir() {
-		System.out.println("Test " + mDirName);
 		final File dir = new File("tests");
 		final File[] files = dir.listFiles();
 		final File lastModified = Arrays.stream(files).filter(File::isDirectory)
 				.max(Comparator.comparing(File::lastModified)).orElse(null);
-		System.out.println(lastModified);
 		mDirName = lastModified.toString();
 		foundMakefileAndDir = true;
 	}

@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.TestGenerationMode;
 
 /**
  *
@@ -71,7 +72,7 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 	private final String mPluginId;
 	private final String mPluginName;
 	protected final TAPreferences mPref;
-	protected final boolean mTestGeneration;
+	protected TestGenerationMode mTestGeneration;
 
 	/**
 	 * Constructor s.t. the {@link CegarLoopResultReporter} reports all created results immediately to

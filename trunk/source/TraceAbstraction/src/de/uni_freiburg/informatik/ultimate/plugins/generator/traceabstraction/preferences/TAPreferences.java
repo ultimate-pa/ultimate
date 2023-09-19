@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.OrderOfErrorLocations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.TestGenerationMode;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
 
 public final class TAPreferences {
@@ -556,11 +557,7 @@ public final class TAPreferences {
 		return mMcrInterpolantMethod;
 	}
 
-	public boolean getTestGeneration() {
-		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_TESTGENERATION);
-	}
-
-	public boolean getLongTraceOpti() {
-		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LONGTRACEOPTIMIZATION);
+	public TestGenerationMode getTestGeneration() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_TEST_GEN_MODE, TestGenerationMode.class);
 	}
 }

@@ -497,12 +497,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	// Test Generation
 	// ========================================================================
-	public static final String LABEL_TESTGENERATION = "Enable Test Generation";
-	private static final boolean DEF_TESTGENERATION = false;
-	private static final String DESC_TESTGENERATION = "TODO";
-	public static final String LABEL_LONGTRACEOPTIMIZATION = "Enable Test Long Trace Optimization";
-	private static final boolean DEF_LONGTRACEOPTIMIZATION = false;
-	private static final String DESC_LONGTRACEOPTIMIZATION = "TODO";
+	private static final TestGenerationMode DEF_TEST_GEN_MODE = TestGenerationMode.None;
+	public static final String LABEL_TEST_GEN_MODE = "Test Generation Mode";
+	private static final String DESC_TEST_GEN_MODE =
+			"None deactivates Test Generation, Standart standart Test Generation for Model Checkers, Search-MultiGoal uses the A* to find Multi Goal test cases and ignores ifeasible traces during the search, Naive-MultiGoal starts the CEGAR with the last added Test Goal and adds a new Test Goal every iteration";
 
 	/**
 	 * Constructor.
@@ -718,11 +716,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	public UltimatePreferenceItemContainer getTestGenerationSettings() {
-		return new UltimatePreferenceItemContainer("Test Generation",
-				new UltimatePreferenceItem<>(LABEL_TESTGENERATION, DEF_TESTGENERATION, DESC_TESTGENERATION,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_LONGTRACEOPTIMIZATION, DEF_LONGTRACEOPTIMIZATION,
-						DESC_LONGTRACEOPTIMIZATION, PreferenceType.Boolean)
+		return new UltimatePreferenceItemContainer("Test Generation", new UltimatePreferenceItem<>(LABEL_TEST_GEN_MODE,
+				DEF_TEST_GEN_MODE, DESC_TEST_GEN_MODE, PreferenceType.Combo, TestGenerationMode.values())
 
 		);
 	}
@@ -1066,4 +1061,29 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public enum PathProgramDumpStop {
 		NEVER, AFTER_FIRST_DUMP, BEFORE_FIRST_DUPLICATE
 	}
+
+	/**
+	 * Differnt modes of Test Generation
+	 *
+	 * @author Max Barth (Max.Barth@gmx.de)
+	 */
+	public enum TestGenerationMode {
+		/**
+		 * No Test Generation.
+		 */
+		None,
+		/**
+		 * Standart Test Generation for Model Checkers
+		 */
+		Standard,
+		/**
+		 * Use the A* to search a trace that covers multiple test goals. Ignore the trace if it is UNSAT
+		 */
+		SearchMultiGoal,
+		/**
+		 * Does NOT ignore the trace if it is UNSAT.
+		 */
+		NaiveMultiGoal
+	}
+
 }
