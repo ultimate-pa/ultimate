@@ -15,7 +15,6 @@ file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 #Thu Nov 06 16:26:23 CET 2014
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ plugins=DEBUG
