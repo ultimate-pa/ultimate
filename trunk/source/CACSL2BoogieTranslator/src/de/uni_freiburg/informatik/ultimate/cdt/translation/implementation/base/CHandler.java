@@ -1120,9 +1120,7 @@ public class CHandler {
 		}
 		if (isNewScopeRequired(parent)) {
 			updateStmtsAndDeclsAtScopeEnd(resultBuilder, node);
-			if (ADD_HAVOCS_AT_SCOPE_END) {
-				resultBuilder.addStatements(getHavocsAtScopeEnd(mLocationFactory.createCLocation(node), node));
-			}
+			addHavocsAtScopeEnd(mLocationFactory.createCLocation(node), node, resultBuilder);
 			endScope();
 		}
 		return resultBuilder.build();
@@ -2791,16 +2789,22 @@ public class CHandler {
 		}
 	}
 
-	private List<Statement> getHavocsAtScopeEnd(final ILocation loc, final IASTStatement hook) {
-		final List<Statement> havocs = new ArrayList<>();
+	private void addHavocsAtScopeEnd(final ILocation loc, final IASTStatement hook,
+			final ExpressionResultBuilder builder) {
+		if (!ADD_HAVOCS_AT_SCOPE_END) {
+			return;
+		}
+		final List<VariableLHS> vars = new ArrayList<>();
 		for (final SymbolTableValue stv : mSymbolTable.getInnermostCScopeValues(hook)) {
 			if (!stv.isBoogieGlobalVar() && stv.getBoogieDecl() != null) {
 				final VariableLHS lhs = new VariableLHS(loc, stv.getAstType().getBoogieType(), stv.getBoogieName(),
 						stv.getDeclarationInformation());
-				havocs.add(new HavocStatement(loc, new VariableLHS[] { lhs }));
+				vars.add(lhs);
 			}
 		}
-		return havocs;
+		if (!vars.isEmpty()) {
+			builder.addStatement(new HavocStatement(loc, vars.toArray(VariableLHS[]::new)));
+		}
 	}
 
 	/**
@@ -3617,9 +3621,9 @@ public class CHandler {
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
 		resultBuilder.addStatement(whileStmt);
 
-		if (node instanceof IASTForStatement && ADD_HAVOCS_AT_SCOPE_END) {
+		if (node instanceof IASTForStatement) {
 			// Havoc all variables that are declared in the loop (including the initializer) afterwards
-			resultBuilder.addStatements(getHavocsAtScopeEnd(loc, node));
+			addHavocsAtScopeEnd(loc, node, resultBuilder);
 		}
 
 		assert resultBuilder.getLrValue() == null : "there is an lrvalue although there should be none";
