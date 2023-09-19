@@ -568,9 +568,8 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
         ret.append("--witnessprinter.graph.data.architecture")
         ret.append(architecture)
         ret.append("--witnessprinter.graph.data.programhash")
-
-        #sha = call_desperate(["sha256sum", c_file[0]])
-        #ret.append(sha.communicate()[0].split()[0].decode("utf-8", "ignore"))
+        sha = call_desperate(["sha256sum", c_file[0]])
+        ret.append(sha.communicate()[0].split()[0].decode("utf-8", "ignore"))
 
     return ret
 

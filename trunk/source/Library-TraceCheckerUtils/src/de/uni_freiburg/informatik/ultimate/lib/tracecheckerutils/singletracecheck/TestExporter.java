@@ -43,8 +43,8 @@ public class TestExporter {
 
 		final FileOutputStream output;
 		final String name = "testcase" + i;
-		final boolean noDirectories = false;
-		final boolean allInOneDirecotry = true;
+		final boolean noDirectories = true;
+		final boolean allInOneDirecotry = false;
 		if (noDirectories) {
 			output = new FileOutputStream(name + ".xml");
 		} else if (allInOneDirecotry) {

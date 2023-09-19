@@ -83,8 +83,8 @@ public class TestCompMetaFilePrinter<TTE, TE> extends BaseWitnessGenerator<TTE, 
 	}
 
 	public void printMetaFile() throws Exception {
-		final boolean noDirectories = false;
-		final boolean allInOneDirecotry = true;
+		final boolean noDirectories = true;
+		final boolean allInOneDirecotry = false;
 		try {
 			final FileOutputStream output;
 			if (noDirectories) {
