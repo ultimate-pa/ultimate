@@ -248,13 +248,10 @@ public class BitabsTranslation {
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, leftWrapped);
 		final Expression greaterRight =
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, rightWrapped);
-		final Expression sum = applyWraparoundIfNecessary(loc,
-				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right), type);
-		final Expression leqSum = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, sum);
 
 		final List<Expression> assumptions;
 		if (mTypeSizes.isUnsigned(type)) {
-			assumptions = List.of(greaterLeft, greaterRight, leqSum);
+			assumptions = List.of(greaterLeft, greaterRight);
 		} else {
 			final Expression leftNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, left, zero);
 			final Expression rightNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right, zero);
@@ -279,6 +276,8 @@ public class BitabsTranslation {
 					greaterLeft);
 
 			// If a >= 0 or b >= 0, then a | b <= a + b
+			final Expression sum = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right);
+			final Expression leqSum = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, sum);
 			final Expression leqSumImplication =
 					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, leqSum);
 
@@ -351,14 +350,10 @@ public class BitabsTranslation {
 		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, type);
 		final Expression rightWrapped = applyWraparoundIfNecessary(loc, right, type);
 
-		final Expression sum = applyWraparoundIfNecessary(loc,
-				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right), type);
-		final Expression leqSum = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, sum);
-
 		List<Expression> assumptions;
 
 		if (mTypeSizes.isUnsigned(type)) {
-			assumptions = List.of(leqSum);
+			assumptions = List.of();
 		} else {
 			final Expression leftNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, left, zero);
 			final Expression rightNegative = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT, right, zero);
@@ -386,6 +381,8 @@ public class BitabsTranslation {
 			final Expression negativeCase2 =
 					ExpressionFactory.or(loc, List.of(leftNonNegative, rightNegative, negative));
 			// If a >= 0 or b >= 0, then a ^ b <= a + b
+			final Expression sum = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right);
+			final Expression leqSum = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, sum);
 			final Expression leqSumImplication =
 					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, oneNegative, leqSum);
 			final BigInteger minValue = mTypeSizes.getMinValueOfPrimitiveType(type);
