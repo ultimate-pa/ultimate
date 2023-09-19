@@ -83,13 +83,24 @@ public class TestCompMetaFilePrinter<TTE, TE> extends BaseWitnessGenerator<TTE, 
 	}
 
 	public void printMetaFile() throws Exception {
+		final boolean noDirectories = false;
+		final boolean allInOneDirecotry = true;
 		try {
-			final String outputDir = "testsuite_" + mTranslatedCFG.getFilename().substring(
-					mTranslatedCFG.getFilename().lastIndexOf("\\") + 1, mTranslatedCFG.getFilename().length() - 2);
+			final FileOutputStream output;
+			if (noDirectories) {
+				output = new FileOutputStream("metadata.xml");
+			} else if (allInOneDirecotry) {
+				Files.createDirectories(Paths.get("testsuites"));
+				output = new FileOutputStream("testsuites/metadata.xml");
+				// output = new FileOutputStream("metadata.xml");
+			} else {
+				final String outputDir = "testsuite_" + mTranslatedCFG.getFilename().substring(
+						mTranslatedCFG.getFilename().lastIndexOf("\\") + 1, mTranslatedCFG.getFilename().length() - 2);
 
-			Files.createDirectories(Paths.get("tests"));
-			Files.createDirectories(Paths.get("tests/testsuite_" + outputDir));
-			final FileOutputStream output = new FileOutputStream("tests/testsuite_" + outputDir + "/metadata.xml");
+				Files.createDirectories(Paths.get("tests"));
+				Files.createDirectories(Paths.get("tests/testsuite_" + outputDir));
+				output = new FileOutputStream("tests/testsuite_" + outputDir + "/metadata.xml");
+			}
 			writeXml(createXML(), output);
 		} catch (final IOException | TransformerException | ParserConfigurationException e) {
 			throw e;

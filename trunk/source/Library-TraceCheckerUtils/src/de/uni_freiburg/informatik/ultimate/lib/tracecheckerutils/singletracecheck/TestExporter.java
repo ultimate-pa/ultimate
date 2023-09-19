@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletraceche
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -41,33 +40,30 @@ public class TestExporter {
 	 * 2: one directory for each program
 	 */
 	public void exportTests(final TestVector testV, final int i, final boolean allInOneFile) throws Exception {
-		if (!foundMakefileAndDir) {
-			findMakeFileAndDir();
-		}
-		if (mDirName == null) {
-			// useDefaultFodler;
 
-			try {
-				Files.createDirectories(Paths.get("testsuite"));
-
-				final String name = "testcase" + i;
-
-				final FileOutputStream output = new FileOutputStream("testsuite/" + name + ".xml");
-				writeXml(createXML(testV), output); // TODO Setting
-			} catch (final IOException e) {
-				throw e;
+		final FileOutputStream output;
+		final String name = "testcase" + i;
+		final boolean noDirectories = false;
+		final boolean allInOneDirecotry = true;
+		if (noDirectories) {
+			output = new FileOutputStream(name + ".xml");
+		} else if (allInOneDirecotry) {
+			Files.createDirectories(Paths.get(mDirName));
+			output = new FileOutputStream("testsuites/" + name + ".xml");
+		} else { // testsuites directory and subdirectory for every program that contains the tests
+			if (!foundMakefileAndDir) {
+				findMakeFileAndDir();
 			}
-		} else {
-			try {
-				final String name = "testcase" + i;
+			if (mDirName == null) {
+				Files.createDirectories(Paths.get("testsuites"));
+
+				output = new FileOutputStream("testsuites/" + name + ".xml");
+			} else {
 				Files.createDirectories(Paths.get(mDirName));
-				final FileOutputStream output = new FileOutputStream(mDirName + "/" + name + ".xml");
-				writeXml(createXML(testV), output); // TODO Setting
-			} catch (final IOException e) {
-				throw e;
+				output = new FileOutputStream("testsuites/" + name + ".xml");
 			}
 		}
-
+		writeXml(createXML(testV), output); // TODO Setting
 	}
 
 	public static TestExporter getInstance() {

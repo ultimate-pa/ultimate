@@ -300,8 +300,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 				assert checkIsEmptyHeuristic(abstraction) : "IsEmptyHeuristic did not match IsEmpty";
 			} else {
-				mLogger.info("TestGen, Time spent Search-MultiGoal Preprocess: " + mLongTraceTime / 1000000000 + "s");
-				mLogger.info("TestGen, Coverage during Optimization: " + CoveredLongTrace / mErrorLocs.size());
+				mLogger.debug("TestGen, Time spent Search-MultiGoal Preprocess: " + mLongTraceTime / 1000000000 + "s");
+				mLogger.debug("TestGen, Coverage during Optimization: " + CoveredLongTrace / mErrorLocs.size());
 
 				mCounterexample =
 						new IsEmpty<>(new AutomataLibraryServices(getServices()), abstraction, mSearchStrategy)
@@ -318,14 +318,14 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		}
 		if (mCounterexample == null) {
-			mLogger.info("TestGen, CEGAR Iterations: " + CegarLoopIterations);
-			mLogger.info("TestGen, Coverage: " + Covered / mErrorLocs.size());
+			mLogger.debug("TestGen, CEGAR Iterations: " + CegarLoopIterations);
+			mLogger.debug("TestGen, Coverage: " + Covered / mErrorLocs.size());
 			if (mTestGeneration.equals(TestGenerationMode.SearchMultiGoal)) {
 				mLongTraceTime = System.nanoTime() - startTime;
-				mLogger.info("TestGen, Time spent Sear-MultiGoal Preprocess: " + mLongTraceTime);
-				mLogger.info("TestGen, Coverage during Optimization: " + CoveredLongTrace / mErrorLocs.size());
+				mLogger.debug("TestGen, Time spent Sear-MultiGoal Preprocess: " + mLongTraceTime);
+				mLogger.debug("TestGen, Coverage during Optimization: " + CoveredLongTrace / mErrorLocs.size());
 			}
-			mLogger.info("TestGen, Amount of Tests Exported: " + mTestsExported);
+			mLogger.debug("TestGen, Amount of Tests Exported: " + mTestsExported);
 			final long estimatedTime = System.nanoTime() - startTime;
 			if (mWriteEvaluationToFile) {
 				writeEvalRow(estimatedTime, mLongTraceTime);
