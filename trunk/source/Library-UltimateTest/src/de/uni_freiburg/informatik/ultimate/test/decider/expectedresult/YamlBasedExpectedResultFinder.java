@@ -26,14 +26,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.test.decider.expectedresult;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import com.amihaiemil.eoyaml.Yaml;
+import com.amihaiemil.eoyaml.YamlInput;
+import com.amihaiemil.eoyaml.YamlMapping;
+import com.amihaiemil.eoyaml.YamlNode;
+import com.amihaiemil.eoyaml.YamlSequence;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -49,8 +53,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  *
  */
 public class YamlBasedExpectedResultFinder<OVERALL_RESULT> extends AbstractExpectedResultFinder<OVERALL_RESULT> {
-	private static final String VERDICT_TRUE = "expected_verdict: true";
-	private static final String VERDICT_FALSE = "expected_verdict: false";
 	private final NestedMap2<String, String, OVERALL_RESULT> mResultMap;
 
 	public YamlBasedExpectedResultFinder(final NestedMap2<String, String, OVERALL_RESULT> resultMap) {
@@ -100,51 +102,37 @@ public class YamlBasedExpectedResultFinder<OVERALL_RESULT> extends AbstractExpec
 
 	private OVERALL_RESULT extractResultForPropertyFile(final File yamlFile, final String propertyFile)
 			throws IOException {
-		final BufferedReader br = new BufferedReader(new FileReader(yamlFile));
-		String line = br.readLine();
-		while (line != null) {
-			if (line.contains(propertyFile)) {
-				final String nextLine = br.readLine();
-				if (nextLine == null) {
-					throw new UnsupportedOperationException("Cannot understand YAML file");
+		final YamlInput yamlInput = Yaml.createYamlInput(yamlFile);
+		final YamlMapping rootMapping = yamlInput.readYamlMapping();
+		final YamlSequence propertySequence = rootMapping.yamlSequence("properties");
+		for (final YamlNode propertyNode : propertySequence) {
+			final YamlMapping yamlMapForPropery = propertyNode.asMapping();
+			final String test = yamlMapForPropery.string("property_file");
+			if (test.endsWith(propertyFile)) {
+				final String expectedVerdict = yamlMapForPropery.string("expected_verdict");
+				if (Boolean.valueOf(expectedVerdict) == null) {
+					throw new IllegalArgumentException("expected_verdict has to be either true or false");
+				}
+				if (Boolean.valueOf(expectedVerdict)) {
+					return mResultMap.get(propertyFile, String.valueOf(true));
 				} else {
-					if (nextLine.toLowerCase().contains(VERDICT_TRUE)) {
-						br.close();
-						return mResultMap.get(propertyFile, String.valueOf(true));
-					} else if (nextLine.toLowerCase().contains(VERDICT_FALSE)) {
-						final Map<String, OVERALL_RESULT> map = mResultMap.get(propertyFile);
-						if (map.containsKey(String.valueOf(false))) {
-							// there are no subproperties for this property
-							br.close();
-							return mResultMap.get(propertyFile, String.valueOf(false));
+					assert !Boolean.valueOf(expectedVerdict);
+					final Map<String, OVERALL_RESULT> map = mResultMap.get(propertyFile);
+					if (map.containsKey(String.valueOf(false))) {
+						// there are no subproperties for this property
+						return mResultMap.get(propertyFile, String.valueOf(false));
+					} else {
+						final String subproperty = yamlMapForPropery.string("subproperty");
+						if (subproperty == null) {
+							throw new UnsupportedOperationException("Cannot understand YAML file");
 						} else {
-							final String secondNextLine = br.readLine();
-							final String subproperty = getSubproperty(secondNextLine, map.keySet());
-							if (subproperty == null) {
-								throw new UnsupportedOperationException("Cannot understand YAML file");
-							} else {
-								br.close();
-								return mResultMap.get(propertyFile, subproperty);
-							}
+							return mResultMap.get(propertyFile, subproperty);
 						}
 					}
 				}
 			}
-			line = br.readLine();
+
 		}
 		return null;
 	}
-
-	private static String getSubproperty(final String secondNextLine, final Set<String> subproperties) {
-		if (secondNextLine == null) {
-			return null;
-		}
-		for (final String subProperty : subproperties) {
-			if (secondNextLine.contains(subProperty)) {
-				return subProperty;
-			}
-		}
-		return null;
-	}
-
 }
