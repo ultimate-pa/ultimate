@@ -3457,7 +3457,6 @@ public class CHandler {
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
-		final List<Statement> afterLoopStatements = new ArrayList<>();
 		Result iterator = null;
 		if (node instanceof IASTForStatement) {
 			final IASTForStatement forStmt = (IASTForStatement) node;
@@ -3469,10 +3468,6 @@ public class CHandler {
 				if (initializer instanceof ExpressionResult) {
 					final ExpressionResult rExp = (ExpressionResult) initializer;
 					resultBuilder.addAllExceptLrValue(rExp);
-					// Havoc all variables that are declared in the initializer statement after the loop
-					if (ADD_HAVOCS_AT_SCOPE_END) {
-						afterLoopStatements.addAll(getHavocsAtScopeEnd(loc, cInitStmt));
-					}
 				} else if (initializer instanceof SkipResult) {
 					// this is an empty statement in the C Code. We will skip it
 				} else {
@@ -3620,7 +3615,12 @@ public class CHandler {
 				new WhileStatement(ignoreLocation, ExpressionFactory.createBooleanLiteral(ignoreLocation, true), spec,
 						bodyBlock.toArray(new Statement[bodyBlock.size()]));
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
-		resultBuilder.addStatement(whileStmt).addStatements(afterLoopStatements);
+		resultBuilder.addStatement(whileStmt);
+
+		if (node instanceof IASTForStatement && ADD_HAVOCS_AT_SCOPE_END) {
+			// Havoc all variables that are declared in the loop (including the initializer) afterwards
+			resultBuilder.addStatements(getHavocsAtScopeEnd(loc, node));
+		}
 
 		assert resultBuilder.getLrValue() == null : "there is an lrvalue although there should be none";
 		assert resultBuilder.getAuxVars().isEmpty() : "auxvars were added although they should have been havoced";
