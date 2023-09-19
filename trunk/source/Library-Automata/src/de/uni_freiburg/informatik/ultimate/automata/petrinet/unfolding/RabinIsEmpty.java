@@ -8,7 +8,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IRabinPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Rpn2ra;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
+import de.uni_freiburg.informatik.ultimate.automata.rabin.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 
 /**
@@ -19,8 +22,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  * @param <PLACE>
  *            place content type
  */
-public final class RabinIsEmpty<LETTER, PLACE>
-		extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
+public final class RabinIsEmpty<LETTER, PLACE, FACTORY extends IBlackWhiteStateFactory<PLACE> & IPetriNet2FiniteAutomatonStateFactory<PLACE>>
+		extends UnaryNetOperation<LETTER, PLACE, FACTORY> {
 	private final IRabinPetriNet<LETTER, PLACE> mOperand;
 	private final PetriNetLassoRun<LETTER, PLACE> mRun;
 
@@ -86,8 +89,8 @@ public final class RabinIsEmpty<LETTER, PLACE>
 	}
 
 	@Override
-	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory)
-			throws AutomataLibraryException {
-		return true;
+	public boolean checkResult(final FACTORY stateFactory) throws AutomataLibraryException {
+		return getResult() == new IsEmpty<>(mServices, new Rpn2ra<>(mServices, stateFactory, mOperand).getResult())
+				.getResult();
 	}
 }
