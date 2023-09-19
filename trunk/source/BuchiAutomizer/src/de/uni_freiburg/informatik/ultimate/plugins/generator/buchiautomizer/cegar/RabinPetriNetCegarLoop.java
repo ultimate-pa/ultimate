@@ -55,8 +55,10 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 	@Override
 	protected boolean isAbstractionEmpty(final IRabinPetriNet<L, IPredicate> abstraction)
 			throws AutomataLibraryException {
+		mLogger.error(abstraction);
 		final var isempty = new RabinIsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mPref.eventOrder(),
 				mPref.cutOffRequiresSameTransition(), true);
+		assert isempty.checkResult(mDefaultStateFactory);
 		final PetriNetLassoRun<L, IPredicate> run = isempty.getRun();
 		if (run == null) {
 			return true;
@@ -76,8 +78,11 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
 			throws AutomataLibraryException {
 		try {
-			return (IRabinPetriNet<L, IPredicate>) new RabinDifferencePairwiseOnDemand<>(
-					new AutomataLibraryServices(mServices), abstraction, interpolantAutomaton).getResult();
+			final IRabinPetriNet<L, IPredicate> result =
+					(IRabinPetriNet<L, IPredicate>) new RabinDifferencePairwiseOnDemand<>(
+							new AutomataLibraryServices(mServices), abstraction, interpolantAutomaton).getResult();
+			mLogger.error(result);
+			return result;
 		} catch (AutomataOperationCanceledException | PetriNetNot1SafeException e) {
 			throw new AutomataLibraryException(getClass(), e.toString());
 		}
@@ -92,6 +97,7 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 					new RabinDeterministicDifference<>(new AutomataLibraryServices(mServices), abstraction,
 							new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(mServices),
 									new TotalizeNwa<>(interpolantAutomaton, mDefaultStateFactory, false)));
+			mLogger.error(difference.getResult());
 			return difference.getResult();
 		}
 		final IStateDeterminizer<L, IPredicate> stateDeterminizer =
@@ -102,6 +108,7 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 
 		final RabinIntersect<L, IPredicate> intersection = new RabinIntersect<>(new AutomataLibraryServices(mServices),
 				mDefaultStateFactory, abstraction, complNwa.getResult());
+		mLogger.error(intersection.getResult());
 		return intersection.getResult();
 	}
 
