@@ -396,4 +396,13 @@ public class PhaseEventAutomata implements Comparable<Object> {
 			}
 		}
 	}
+	
+	public boolean isStrict() {
+		for (Phase phase : mPhases) {
+			if (phase.isStrict()) {
+				return true;
+			}
+		}
+		return false;
+	}
 }
