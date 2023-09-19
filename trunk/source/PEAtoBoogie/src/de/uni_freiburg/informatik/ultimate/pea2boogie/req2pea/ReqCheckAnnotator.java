@@ -197,10 +197,11 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 	private List<Statement> genCheckComplement(final BoogieLocation bl) {
 		final List<Statement> stmtList = new ArrayList<>();
-		ReqPeas reqPeaTotal = mReqPeas.get(0);
-		ReqPeas reqPeaComplement = mReqPeas.get(1);
+		ReqPeas reqPeasOriginal = mReqPeas.get(0);
+		ReqPeas reqPeasTotal = mReqPeas.get(1);
+		ReqPeas reqPeasComplement = mReqPeas.get(2);
 		// we can only check for complement if we have exactly two PEAs
-		final Statement assertComplement = genAssertComplement(reqPeaTotal, reqPeaComplement, bl);
+		final Statement assertComplement = genAssertComplement(reqPeasOriginal ,reqPeasTotal, reqPeasComplement, bl);
 		if (assertComplement != null) {
 			stmtList.add(assertComplement);
 		}
@@ -219,59 +220,35 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	 *            A boogie location used for all statements.
 	 * @return The assertion for non-complementness
 	 */
-	private Statement genAssertComplement(ReqPeas reqPeasTotal, ReqPeas reqPeasComplement, final BoogieLocation bl) {
+	private Statement genAssertComplement(ReqPeas reqPeasOriginal, ReqPeas reqPeasTotal, ReqPeas reqPeasComplement, final BoogieLocation bl) {
 		
-		final Expression terminalExpressionCompPea = getTerminalExpressionComplement(reqPeasComplement, bl);
-		final Expression nonTerminalExpressionCompPea = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, terminalExpressionCompPea);
+		final Expression complementPeaAccepts = getPcInSinkExpression(reqPeasComplement, bl);
+		final Expression complementPeaRejects = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, complementPeaAccepts);
+		final Expression totalPeaRejects;
+		final Expression totalPeaAccepts;
 		
-		final Expression nonTerminalExpressionTotalPEA = getTerminalExpressionComplement(reqPeasTotal, bl);
-		final Expression terminalExpressionTotalPea = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, nonTerminalExpressionTotalPEA);
+		if (reqPeasOriginal.isStrict()) {
+			totalPeaRejects = getPcInSinkExpression(reqPeasTotal, bl);
+			totalPeaAccepts = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, totalPeaRejects);
+		} else {
+			totalPeaRejects = getPcInSinkExpression(reqPeasTotal, bl);
+			totalPeaAccepts = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, totalPeaRejects);
+		}
 		
+		final Expression bothAccept = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, totalPeaAccepts, complementPeaAccepts);
+		final Expression bothReject = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, totalPeaRejects, complementPeaRejects);
 		
-		final Expression terminalConjunction = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, terminalExpressionTotalPea, terminalExpressionCompPea);
+		final Expression bothAcceptOrBothReject = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICOR, bothAccept, bothReject);
 		
-		final Expression nonTerminalConjunction = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, nonTerminalExpressionTotalPEA, nonTerminalExpressionCompPea);
-		
-		final Expression disjunction = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICOR, terminalConjunction, nonTerminalConjunction);
-		
-		final Expression assertion = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, disjunction);
+		final Expression assertion = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, bothAcceptOrBothReject);
 		
 		final ReqCheck check = new ReqCheck(Spec.COMPLEMENT);
 		final String label = "Complement_" + reqPeasTotal.toString() + "_" + reqPeasComplement.toString();
 		return createAssert(assertion, check, label);
 	}
 	
-	private Pair<Expression, Expression>  getExpressions(ReqPeas reqPeas, BoogieLocation bl) {
-		List<Entry<CounterTrace, PhaseEventAutomata>> peaList = reqPeas.getCounterTrace2Pea();
-		
-		Expression resultTerminalExpression = ExpressionFactory.createBooleanLiteral(bl, true);
-		Expression resultNonTerminalExpression = ExpressionFactory.createBooleanLiteral(bl, false);
-		
-		
-		for (Entry<CounterTrace, PhaseEventAutomata> entry : peaList) {
-			List<Expression>  terminalExpressions = new ArrayList<>();
-			List<Expression>  nonTerminalExpressions = new ArrayList<>();
-			PhaseEventAutomata pea = entry.getValue();
-			Phase[] phases = pea.getPhases();
-			for (int i = 0; i < phases.length; i++) {
-				Expression expression = genComparePhaseCounter(i, mSymbolTable.getPcName(pea), bl);
-				if (phases[i].getTerminal() ) {
-					terminalExpressions.add(expression);
-				} else {
-					nonTerminalExpressions.add(expression);
-				}
-			}
-			Expression terminalExpression = genDisjunction(terminalExpressions, bl);
-			resultTerminalExpression = ExpressionFactory.and(bl,Collections.singletonList(terminalExpression));
-			Expression nonTerminalExpression = genDisjunction(nonTerminalExpressions, bl);
-			resultNonTerminalExpression = ExpressionFactory.or(bl,Collections.singletonList(nonTerminalExpression));
-		}
-		
-		Pair<Expression, Expression> result = new Pair<Expression, Expression>(resultTerminalExpression, resultNonTerminalExpression);
-		return result;
-	}
 	
-	private Expression getTerminalExpressionComplement(ReqPeas reqPeas, BoogieLocation bl) {
+	private Expression getPcInSinkExpression(ReqPeas reqPeas, BoogieLocation bl) {
 		List<Entry<CounterTrace, PhaseEventAutomata>> peaList = reqPeas.getCounterTrace2Pea();
 		List<Expression>  terminalExpressions = new ArrayList<>();
 		for (Entry<CounterTrace, PhaseEventAutomata> entry : peaList) {
@@ -282,6 +259,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		Expression terminalExpression = ExpressionFactory.or(bl, terminalExpressions);
 		return terminalExpression;
 	}
+	
 
 	@SuppressWarnings("unchecked")
 	private List<Statement> genChecksRTInconsistency(final BoogieLocation bl) {

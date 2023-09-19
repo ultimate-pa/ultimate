@@ -77,12 +77,14 @@ public class ComplementTransformerReq2Pea implements IReq2Pea {
 			PhaseEventAutomata totalisedPea = complementPea.getTotalisedPEA();
 			PhaseEventAutomata complementedPEA = complementPea.getComplementPEA();
 			totalCt2pea.add(new Pair<>(pea.getKey(), totalisedPea));
+			builder.addPea(reqPeas.getPattern(), pea.getValue());
 			builder.addPea(pattern, totalisedPea);
-			// The countertrace is wrong for the complemented Pea. I dont know how to negate a DC formula.
+			// TODO: add negated DC Formula
 			builder.addPea(pattern, complementedPEA);
 			complementCt2pea.add(new Pair<>(pea.getKey(), complementedPEA));
 			
-		}		
+		}
+		mReqPeas.add(reqPeas);
 		mReqPeas.add(new ReqPeas(pattern, totalCt2pea));
 		mReqPeas.add(new ReqPeas(pattern, complementCt2pea));
 		mSymbolTable = builder.constructSymbolTable();
