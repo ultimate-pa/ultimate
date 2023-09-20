@@ -860,24 +860,29 @@ public class CACSL2BoogieBacktranslator
 				} else if (cnode instanceof CASTIfStatement) {
 					final CASTIfStatement ifstmt = (CASTIfStatement) cnode;
 					edge = new MultigraphEdge<>(currentSource,
-							getConditionLoc(isNegated, ifstmt.getConditionExpression()), lastTarget);
+							(CLocation) mLocationFactory.createCLocation(ifstmt.getConditionExpression()), lastTarget);
 					new ConditionAnnotation(isNegated).annotate(edge);
 				} else if (cnode instanceof CASTWhileStatement) {
 					final CASTWhileStatement whileStmt = (CASTWhileStatement) cnode;
-					edge = new MultigraphEdge<>(currentSource, getConditionLoc(isNegated, whileStmt.getCondition()),
+					edge = new MultigraphEdge<>(currentSource, (CLocation) mLocationFactory.createCLocation(whileStmt.getCondition()),
 							lastTarget);
 					new ConditionAnnotation(isNegated).annotate(edge);
 				} else if (cnode instanceof CASTDoStatement) {
 					// same as while
 					final CASTDoStatement doStmt = (CASTDoStatement) cnode;
-					edge = new MultigraphEdge<>(currentSource, getConditionLoc(isNegated, doStmt.getCondition()),
+					edge = new MultigraphEdge<>(currentSource, (CLocation) mLocationFactory.createCLocation(doStmt.getCondition()),
 							lastTarget);
 					new ConditionAnnotation(isNegated).annotate(edge);
 				} else if (cnode instanceof CASTForStatement) {
 					// same as while
 					final CASTForStatement forStmt = (CASTForStatement) cnode;
-					edge = new MultigraphEdge<>(currentSource,
-							getConditionLoc(isNegated, forStmt.getConditionExpression()), lastTarget);
+					// If there is a condition in the for-loop use it as a location.
+					// Otherwise fall back to a dummy "1" expression (with for-loop as backing location).
+					IASTExpression condition = forStmt.getConditionExpression();
+					if (condition == null) {
+						condition = new FakeExpression(forStmt, "1", null);
+					}
+					edge = new MultigraphEdge<>(currentSource, (CLocation) mLocationFactory.createCLocation(condition), lastTarget);
 					new ConditionAnnotation(isNegated).annotate(edge);
 				} else if (cnode instanceof CASTFunctionCallExpression) {
 					edge = new MultigraphEdge<>(currentSource, cloc, lastTarget);
@@ -896,15 +901,6 @@ public class CACSL2BoogieBacktranslator
 					UNFINISHED_BACKTRANSLATION + ": Invalid location (Location is no CACSLLocation)");
 			edge = new MultigraphEdge<>(currentSource, null, lastTarget);
 		}
-	}
-
-	private CLocation getConditionLoc(final boolean isNegated, final IASTExpression condExpr) {
-		if (condExpr == null) {
-			// We should not call mLocationFactory.createCLocation with null
-			// TODO: Is null good to return here?
-			return null;
-		}
-		return (CLocation) mLocationFactory.createCLocation(condExpr);
 	}
 
 	private IBacktranslatedCFG<String, CACSLLocation>
