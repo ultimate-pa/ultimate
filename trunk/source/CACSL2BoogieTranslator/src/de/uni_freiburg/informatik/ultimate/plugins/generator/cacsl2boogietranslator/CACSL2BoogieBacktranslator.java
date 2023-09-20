@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
@@ -1056,6 +1057,10 @@ public class CACSL2BoogieBacktranslator
 			return translateBitvecLiteral(cType, (BitvecLiteral) expression, hook);
 		} else if (expression instanceof FunctionApplication) {
 			return translateFunctionApplication(cType, (FunctionApplication) expression);
+		} else if (expression instanceof QuantifierExpression) {
+			// TODO: For now just overapproximate quantifiers by true
+			mLogger.warn("Quantifier found, overapproximating it with true");
+			return translateBooleanLiteral(new BooleanLiteral(null, true));
 		} else {
 			// things that land here are typically synthesized contracts or
 			// things like that. Here we replace Boogie variable names with C variable names
