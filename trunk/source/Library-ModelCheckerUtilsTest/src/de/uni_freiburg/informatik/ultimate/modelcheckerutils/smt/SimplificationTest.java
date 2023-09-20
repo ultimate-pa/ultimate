@@ -687,6 +687,15 @@ public class SimplificationTest {
 	}
 
 	@Test
+	public void constantFolding02() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
+		final String formulaAsString = "(or (distinct x 1) (and (<= y (* x x)) (< y (* x x))))";
+		final String simplified = "(or (not (= x 1)) (< y 1))";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
 	public void nonConstraining01() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"),
 				new FunDecl(SmtSortUtils::getBoolSort, "A", "B") };
