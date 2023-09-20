@@ -1183,6 +1183,10 @@ public class CACSL2BoogieBacktranslator
 				return null;
 			}
 		}
+		// TODO: Workaround to ignore signExtend and zeroExtend (possibly unsound), support it properly
+		if (fun.getIdentifier().startsWith("~sign_extend") || fun.getIdentifier().startsWith("~zero_extend")) {
+			return translatedArguments[0];
+		}
 		final Pair<String, CPrimitives> reversed = SFO.reverseBoogieFunctionName(fun.getIdentifier());
 		if (reversed == null) {
 			reportUnfinishedBacktranslation(
