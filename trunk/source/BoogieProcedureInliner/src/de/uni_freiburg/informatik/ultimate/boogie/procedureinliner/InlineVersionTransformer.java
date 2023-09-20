@@ -997,7 +997,9 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			final Statement assignStat = processStatement(new AssignmentStatement(callLocation, inVarLHSs, inVarRHSs));
 			addBacktranslation(assignStat, null);
 			writeToInParams.add(assignStat);
-			localHavocs.add(processStatement(new HavocStatement(callLocation, inVarLHSs)));
+			final Statement havocInParams = processStatement(new HavocStatement(callLocation, inVarLHSs));
+			addBacktranslation(havocInParams, null);
+			localHavocs.add(havocInParams);
 		}
 
 		// --------- assign out-parameters to target variables from call statement ---------
