@@ -82,7 +82,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private static final boolean DESCEND_INTO_QUANTIFIED_FORMULAS = true;
 	private static final boolean OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT = true;
 	private static final boolean SIMPLIFY_REPEATEDLY = true;
-	private static final CheckedNodes CHECKED_NODES = CheckedNodes.ALL_NODES;
+	private static final CheckedNodes CHECKED_NODES = CheckedNodes.ONLY_LEAVES;
 
 	private enum CheckedNodes {
 		ONLY_LEAVES, ALL_NODES, ONLY_LEAVES_AND_QUANTIFIED_NODES
