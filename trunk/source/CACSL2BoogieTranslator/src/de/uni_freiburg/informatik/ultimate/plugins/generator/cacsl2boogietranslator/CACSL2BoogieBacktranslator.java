@@ -1187,6 +1187,7 @@ public class CACSL2BoogieBacktranslator
 		if (reversed == null) {
 			reportUnfinishedBacktranslation(
 					UNFINISHED_BACKTRANSLATION + " cannot identify Boogie2SMT function " + fun.getIdentifier());
+			mLogger.error("Missing backtranslation for function " + fun.getIdentifier());
 			return null;
 		}
 		final String smtFunction = reversed.getFirst();
