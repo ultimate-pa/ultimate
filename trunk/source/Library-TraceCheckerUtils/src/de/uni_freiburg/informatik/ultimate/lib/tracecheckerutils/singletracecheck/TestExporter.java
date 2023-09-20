@@ -43,13 +43,13 @@ public class TestExporter {
 
 		final FileOutputStream output;
 		final String name = "testcase" + i;
-		final boolean noDirectories = true;
-		final boolean allInOneDirecotry = false;
+		final boolean noDirectories = false;
+		final boolean allInOneDirecotry = true;
 		if (noDirectories) {
 			output = new FileOutputStream(name + ".xml");
 		} else if (allInOneDirecotry) {
-			Files.createDirectories(Paths.get(mDirName));
-			output = new FileOutputStream("testsuites/" + name + ".xml");
+			Files.createDirectories(Paths.get("test-suite"));
+			output = new FileOutputStream("test-suite/" + name + ".xml");
 		} else { // testsuites directory and subdirectory for every program that contains the tests
 			if (!foundMakefileAndDir) {
 				findMakeFileAndDir();

@@ -83,15 +83,15 @@ public class TestCompMetaFilePrinter<TTE, TE> extends BaseWitnessGenerator<TTE, 
 	}
 
 	public void printMetaFile() throws Exception {
-		final boolean noDirectories = true;
-		final boolean allInOneDirecotry = false;
+		final boolean noDirectories = false;
+		final boolean allInOneDirecotry = true;
 		try {
 			final FileOutputStream output;
 			if (noDirectories) {
 				output = new FileOutputStream("metadata.xml");
 			} else if (allInOneDirecotry) {
-				Files.createDirectories(Paths.get("testsuites"));
-				output = new FileOutputStream("testsuites/metadata.xml");
+				Files.createDirectories(Paths.get("test-suite"));
+				output = new FileOutputStream("test-suite/metadata.xml");
 				// output = new FileOutputStream("metadata.xml");
 			} else {
 				final String outputDir = "testsuite_" + mTranslatedCFG.getFilename().substring(
