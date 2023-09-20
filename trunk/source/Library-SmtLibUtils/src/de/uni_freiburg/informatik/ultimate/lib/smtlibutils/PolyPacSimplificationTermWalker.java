@@ -131,27 +131,45 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 			return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 		}
 		if (APPLY_CONSTANT_FOLDING) {
-			final Map<Term, Term> substitutionMapping = new HashMap<>();
-			for (final Term conjunct : SmtUtils.getConjuncts(context)) {
-				if (!SmtUtils.isFunctionApplication(conjunct, "=")) {
-					continue;
-				}
-				final PolynomialRelation polyRel = PolynomialRelation.of(mMgdScript.getScript(), conjunct);
-				if (polyRel != null) {
-					final SolvedBinaryRelation sbr = polyRel.isSimpleEquality(mMgdScript.getScript());
-					if (sbr != null) {
-						substitutionMapping.put(sbr.getLeftHandSide(), sbr.getRightHandSide());
-					}
-				}
-			}
-			if (!substitutionMapping.isEmpty()) {
-				final Term renamed = Substitution.apply(mMgdScript, substitutionMapping, term);
-				if (renamed != term) {
-					return new TermContextTransformationEngine.FinalResultForAscend(renamed);
-				}
+			final Term tmp = applyConstantFolding(mMgdScript, context, term);
+			if (tmp != term) {
+				return new TermContextTransformationEngine.FinalResultForAscend(tmp);
 			}
 		}
 		return new TermContextTransformationEngine.FinalResultForAscend(term);
+	}
+
+	/**
+	 * Use equalities of the form `x=l` (where x is a constant symbol or variable
+	 * and l is a number) to substitute all occurrences of x by the number l.
+	 *
+	 * @param context Term that we check for equalities. This term is not added to
+	 *                the result. E.g., in the
+	 *                {@link PolyPacSimplificationTermWalker} this is the critical
+	 *                constraint.
+	 * @param term    Term in which we apply the substitution.
+	 */
+	public static Term applyConstantFolding(final ManagedScript mgdScript, final Term context, final Term term) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final Term conjunct : SmtUtils.getConjuncts(context)) {
+			if (!SmtUtils.isFunctionApplication(conjunct, "=")) {
+				continue;
+			}
+			final PolynomialRelation polyRel = PolynomialRelation.of(mgdScript.getScript(), conjunct);
+			if (polyRel != null) {
+				final SolvedBinaryRelation sbr = polyRel.isSimpleEquality(mgdScript.getScript());
+				if (sbr != null) {
+					substitutionMapping.put(sbr.getLeftHandSide(), sbr.getRightHandSide());
+				}
+			}
+		}
+		final Term result;
+		if (!substitutionMapping.isEmpty()) {
+			result = Substitution.apply(mgdScript, substitutionMapping, term);
+		} else {
+			result = term;
+		}
+		return result;
 	}
 
 	@Override
