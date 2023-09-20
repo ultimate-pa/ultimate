@@ -318,17 +318,17 @@ public class ACSLHandler implements IACSLHandler {
 		case ARITHPLUS:
 			return IASTBinaryExpression.op_plus;
 		case BITAND:
-			break;
+			return IASTBinaryExpression.op_binaryAnd;
 		case BITIFF:
 			break;
 		case BITIMPLIES:
 			break;
 		case BITOR:
-			break;
+			return IASTBinaryExpression.op_binaryOr;
 		case BITVECCONCAT:
 			break;
 		case BITXOR:
-			break;
+			return IASTBinaryExpression.op_binaryXor;
 		case COMPEQ:
 			return IASTBinaryExpression.op_equals;
 		case COMPGEQ:
@@ -460,10 +460,15 @@ public class ACSLHandler implements IACSLHandler {
 			return resultBuilder.build();
 		}
 		case BITAND:
-		case BITIFF:
-		case BITIMPLIES:
 		case BITOR:
 		case BITXOR:
+			final ExpressionResult left = dispatchSwitch(main, node.getLeft(), loc);
+			final ExpressionResult right = dispatchSwitch(main, node.getRight(), loc);
+			return mCExpressionTranslator.handleBitwiseArithmeticOperation(loc,
+					getCASTBinaryExprOperator(node.getOperator()), left, right);
+
+		case BITIFF:
+		case BITIMPLIES:
 
 		case BITVECCONCAT:
 		case COMPPO:
