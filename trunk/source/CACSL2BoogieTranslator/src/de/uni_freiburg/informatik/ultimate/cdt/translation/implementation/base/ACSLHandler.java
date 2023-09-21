@@ -539,12 +539,12 @@ public class ACSLHandler implements IACSLHandler {
 		final String cId = mSymboltable.getCIdForBoogieId(id);
 		final SymbolTableValue stv = mSymboltable.findCSymbol(main.getAcslHook(), cId);
 		final CType cType;
-			if (stv != null) {
-				cType = stv.getCType();
-			} else {
-				throw new UnsupportedOperationException(
-						"not yet implemented: " + "unable to determine CType for variable " + id);
-			}
+		if (stv != null) {
+			cType = stv.getCType();
+		} else {
+			throw new UnsupportedOperationException(
+					"not yet implemented: " + "unable to determine CType for variable " + id);
+		}
 
 		// FIXME: dereferencing does not work for ACSL yet, because we cannot pass
 		// the necessary auxiliary statements on.
