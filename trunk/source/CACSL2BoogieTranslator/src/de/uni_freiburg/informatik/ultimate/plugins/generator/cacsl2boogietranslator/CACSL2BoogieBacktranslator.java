@@ -1208,6 +1208,10 @@ public class CACSL2BoogieBacktranslator
 			return new FakeExpression(String.format("(%s | %s)", translatedArguments[0], translatedArguments[1]));
 		case "bvxor":
 			return new FakeExpression(String.format("(%s ^ %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvshl":
+			return new FakeExpression(String.format("(%s << %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvashr":
+			return new FakeExpression(String.format("(%s >> %s)", translatedArguments[0], translatedArguments[1]));
 		case "bvult":
 			return new FakeExpression(String.format("(%s < %s)", translatedArguments[0], translatedArguments[1]));
 		case "bvule":
