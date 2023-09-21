@@ -1057,9 +1057,14 @@ public class CACSL2BoogieBacktranslator
 			mLogger.warn("Quantifier found, overapproximating it with true");
 			return translateBooleanLiteral(new BooleanLiteral(null, true));
 		} else if (expression instanceof BitVectorAccessExpression) {
-			// TODO: Implement this
-			mLogger.error("Backtranslation for BitVectorAccessExpression is not implemented yet.");
-			return null;
+			final BitVectorAccessExpression bva = (BitVectorAccessExpression) expression;
+			final IASTExpression bv = translateExpression(bva.getBitvec(), cType, hook);
+			final int start = bva.getStart();
+			final int end = bva.getEnd();
+			if (start == 0) {
+				return new FakeExpression(String.format("(%s & %d)", bv, (1L << end) - 1));
+			}
+			return new FakeExpression(String.format("((%s >> %d) & %d)", bv, start, (1L << (end - start)) - 1));
 		} else {
 			// things that land here are typically synthesized contracts or
 			// things like that. Here we replace Boogie variable names with C variable names
