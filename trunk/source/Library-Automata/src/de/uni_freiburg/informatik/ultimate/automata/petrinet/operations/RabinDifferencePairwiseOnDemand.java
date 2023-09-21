@@ -32,6 +32,11 @@ public class RabinDifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetriN
 		return mWrappedResult;
 	}
 
+	@Override
+	public String toString() {
+		return mWrappedResult.toString();
+	}
+
 	private static class RabinWrapper<LETTER, PLACE> implements IRabinPetriNet<LETTER, PLACE> {
 		final IPetriNet<LETTER, PLACE> mDifferenceNet;
 		final Set<PLACE> mFinitePlaces;
@@ -116,6 +121,18 @@ public class RabinDifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetriN
 		@Override
 		public boolean isFinite(final PLACE place) {
 			return mFinitePlaces.contains(place);
+		}
+
+		@Override
+		public String toString() {
+			final StringBuilder result = new StringBuilder(mDifferenceNet.toString());
+			result.insert(0, "Rabin");
+			result.delete(result.lastIndexOf("}") + 1, result.length());
+			result.append(",\n");
+			result.append("finitePlaces = {");
+			result.append(mFinitePlaces.toString());
+			result.append("}+\n);");
+			return result.toString();
 		}
 	}
 
