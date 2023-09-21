@@ -178,7 +178,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		mScoringMethod = taPrefs.getHeuristicEmptinessCheckScoringMethod();
 		mAStarHeuristic = taPrefs.getHeuristicEmptinessCheckAStarHeuristic();
 		mAStarRandomHeuristicSeed = taPrefs.getHeuristicEmptinessCheckAStarHeuristicRandomSeed();
-		mLogger.fatal("TestGen, Mode: " + mTestGeneration);
+		mLogger.info("TestGen, Mode: " + mTestGeneration);
 		if (!mTestGeneration.equals(TestGenerationMode.None)) { // Necessary to fill mTestGoalTodoStack for Statistics
 			for (int i = 0; i < mErrorLocs.size() - 1; i = i + 1) {
 				mTestGoalTodoStack.add(i); // maybe dont fill it fully up
@@ -279,16 +279,19 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 						}
 					}
 				}
-				mTestGoalWorkingSet.clear(); // If Skips Unsat Long Traces activated
-
+				if (!mTestGeneration.equals(TestGenerationMode.NaiveMultiGoal)) {
+					mTestGoalWorkingSet.clear(); // If Skips Unsat Long Traces activated
+				}
 				mCounterexample = longTraceRun(mAbstraction, longTraceGoalStates);
 				if (mCounterexample == null) { // mTestGoalTodoStack can be not Empty but mCounterexample can be null
 					// If more testgoals than iterations
 					if (mTestGeneration.equals(TestGenerationMode.NaiveMultiGoal)) {
 						mCurrentTestGoalId -= 1;
+					} else {
+						mTestGeneration = TestGenerationMode.Standard;
 					}
 					mLongTraceTime = System.nanoTime() - startTime;
-					mTestGeneration = TestGenerationMode.Standard;
+
 					mCounterexample =
 							new IsEmpty<>(new AutomataLibraryServices(getServices()), abstraction, mSearchStrategy)
 									.getNestedRun();
@@ -300,8 +303,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 				assert checkIsEmptyHeuristic(abstraction) : "IsEmptyHeuristic did not match IsEmpty";
 			} else {
-				mLogger.fatal("TestGen, Time spent Search-MultiGoal Preprocess: " + mLongTraceTime / 1000000000 + "s");
-				mLogger.fatal("TestGen, Coverage during Optimization: " + CoveredLongTrace / mErrorLocs.size());
+				mLogger.info("TestGen, Time spent Search-MultiGoal Preprocess: " + mLongTraceTime / 1000000000 + "s");
+				mLogger.info("TestGen, Coverage during Optimization: " + CoveredLongTrace / mErrorLocs.size());
 
 				mCounterexample =
 						new IsEmpty<>(new AutomataLibraryServices(getServices()), abstraction, mSearchStrategy)
@@ -318,20 +321,21 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		}
 		if (mCounterexample == null) {
-			mLogger.fatal("TestGen, CEGAR Iterations: " + CegarLoopIterations);
-			mLogger.fatal("TestGen, Coverage: " + Covered / mErrorLocs.size());
+			mLogger.info("TestGen, CEGAR Iterations: " + CegarLoopIterations);
+			mLogger.info("TestGen, Coverage: " + Covered / mErrorLocs.size());
 			if (mTestGeneration.equals(TestGenerationMode.SearchMultiGoal)) {
 				mLongTraceTime = System.nanoTime() - startTime;
-				mLogger.fatal("TestGen, Time spent Sear-MultiGoal Preprocess: " + mLongTraceTime);
-				mLogger.fatal("TestGen, Coverage during Optimization: " + CoveredLongTrace / mErrorLocs.size());
+				mLogger.info("TestGen, Time spent Sear-MultiGoal Preprocess: " + mLongTraceTime);
+				mLogger.info("TestGen, Coverage during Optimization: " + CoveredLongTrace / mErrorLocs.size());
 			}
-			mLogger.fatal("TestGen, Amount of Tests Exported: " + mTestsExported);
+			mLogger.info("TestGen, Amount of Tests Exported: " + mTestsExported);
 			final long estimatedTime = System.nanoTime() - startTime;
 			if (mWriteEvaluationToFile) {
 				writeEvalRow(estimatedTime, mLongTraceTime);
 			}
 			return;
 		}
+		mLogger.info("TestGen, Amount of Tests Exported: " + mTestsExported);
 		final List<?> a = mCounterexample.getStateSequence();
 		for (int i = 0; i < a.size(); i++) {
 			if (a.get(i) instanceof ISLPredicate) {
@@ -555,9 +559,13 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				Covered += 1;
 				if (mTestGeneration.equals(TestGenerationMode.SearchMultiGoal)) {
 					CoveredLongTrace += 1;
+					mLogger.info("TestGen, Time spent Sear-MultiGoal Preprocess: " + mLongTraceTime);
+					mLogger.info("TestGen, Coverage: " + CoveredLongTrace / mErrorLocs.size());
 				}
 			}
 		}
+
+		mLogger.info("TestGen, Coverage: " + Covered / mErrorLocs.size());
 		mTestGoalTodoStack.removeAll(mTestGoalsInCurrentTrace);
 	}
 

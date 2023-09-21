@@ -92,7 +92,6 @@ public class TestCompMetaFilePrinter<TTE, TE> extends BaseWitnessGenerator<TTE, 
 			} else if (allInOneDirecotry) {
 				Files.createDirectories(Paths.get("test-suite"));
 				output = new FileOutputStream("test-suite/metadata.xml");
-				// output = new FileOutputStream("metadata.xml");
 			} else {
 				final String outputDir = "testsuite_" + mTranslatedCFG.getFilename().substring(
 						mTranslatedCFG.getFilename().lastIndexOf("\\") + 1, mTranslatedCFG.getFilename().length() - 2);
