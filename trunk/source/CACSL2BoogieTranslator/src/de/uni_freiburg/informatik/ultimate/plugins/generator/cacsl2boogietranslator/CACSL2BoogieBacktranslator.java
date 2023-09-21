@@ -1635,24 +1635,6 @@ public class CACSL2BoogieBacktranslator
 				.formatProgramExecution(new CACSLProgramExecution(trace.subList(0, i), false)));
 	}
 
-	private class SynthesizedExpressionTransformer extends BoogieTransformer {
-
-		@Override
-		protected Expression processExpression(final Expression expr) {
-			if (expr instanceof IdentifierExpression) {
-				final IdentifierExpression ident = (IdentifierExpression) expr;
-				final ILocation loc = ident.getLocation();
-				if (loc instanceof CACSLLocation) {
-					final TranslatedVariable translated = translateIdentifierExpression(ident);
-					if (translated != null) {
-						return translated;
-					}
-				}
-			}
-			return super.processExpression(expr);
-		}
-	}
-
 	private class CheckForTempVars extends BoogieTransformer {
 
 		private boolean mAllAreTemp = true;
