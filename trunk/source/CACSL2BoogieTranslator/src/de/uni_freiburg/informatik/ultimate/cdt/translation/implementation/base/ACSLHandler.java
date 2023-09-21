@@ -325,6 +325,10 @@ public class ACSLHandler implements IACSLHandler {
 			break;
 		case BITOR:
 			return IASTBinaryExpression.op_binaryOr;
+		case BITSHIFTLEFT:
+			return IASTBinaryExpression.op_shiftLeft;
+		case BITSHIFTRIGHT:
+			return IASTBinaryExpression.op_shiftRight;
 		case BITVECCONCAT:
 			break;
 		case BITXOR:
@@ -462,10 +466,13 @@ public class ACSLHandler implements IACSLHandler {
 		case BITAND:
 		case BITOR:
 		case BITXOR:
-			final ExpressionResult left = dispatchSwitch(main, node.getLeft(), loc);
-			final ExpressionResult right = dispatchSwitch(main, node.getRight(), loc);
 			return mCExpressionTranslator.handleBitwiseArithmeticOperation(loc,
-					getCASTBinaryExprOperator(node.getOperator()), left, right);
+					getCASTBinaryExprOperator(node.getOperator()), dispatchSwitch(main, node.getLeft(), loc),
+					dispatchSwitch(main, node.getRight(), loc));
+		case BITSHIFTLEFT:
+		case BITSHIFTRIGHT:
+			return mCExpressionTranslator.handleBitshiftOperation(loc, getCASTBinaryExprOperator(node.getOperator()),
+					dispatchSwitch(main, node.getLeft(), loc), dispatchSwitch(main, node.getRight(), loc));
 
 		case BITIFF:
 		case BITIMPLIES:
