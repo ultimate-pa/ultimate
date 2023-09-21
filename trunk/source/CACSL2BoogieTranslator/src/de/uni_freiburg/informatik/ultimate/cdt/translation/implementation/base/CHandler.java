@@ -3418,7 +3418,7 @@ public class CHandler {
 	 * Handle the indirection operator according to Section 6.5.3.2 of C11. (The indirection operator is the star for
 	 * pointer dereference.)
 	 */
-	private Result handleIndirectionOperator(final ExpressionResult expr, final ILocation loc, final IASTNode hook) {
+	public Result handleIndirectionOperator(final ExpressionResult expr, final ILocation loc, final IASTNode hook) {
 		final ExpressionResult rop = mExprResultTransformer.makeRepresentationReadyForConversion(expr, loc,
 				new CPointer(new CPrimitive(CPrimitives.VOID)), hook);
 		final RValue rValue = (RValue) rop.getLrValue();

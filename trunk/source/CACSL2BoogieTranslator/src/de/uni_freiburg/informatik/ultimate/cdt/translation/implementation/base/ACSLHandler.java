@@ -507,6 +507,8 @@ public class ACSLHandler implements IACSLHandler {
 		case LOGICCOMPLEMENT:
 			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_tilde, res);
 		case POINTER:
+			// TODO: We don't have the hook available here, does null always work here?
+			return mCHandler.handleIndirectionOperator(res, loc, null);
 		case ADDROF:
 		default:
 			final String msg = "Unknown or unsupported unary operation: " + node.getOperator();
