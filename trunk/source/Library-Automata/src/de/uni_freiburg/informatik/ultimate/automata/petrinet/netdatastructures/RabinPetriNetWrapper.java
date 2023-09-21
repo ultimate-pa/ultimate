@@ -102,6 +102,16 @@ public class RabinPetriNetWrapper<LETTER, PLACE> implements IRabinPetriNet<LETTE
 	}
 
 	@Override
+	public String toString() {
+		final StringBuilder result = new StringBuilder(mPetriNet.toString());
+		result.insert(0, "Rabin");
+		result.delete(result.lastIndexOf("}") + 1, result.length());
+		result.append(",\n");
+		result.append("	finitePlaces = {}\n);");
+		return result.toString();
+	}
+
+	@Override
 	public Set<PLACE> getFinitePlaces() {
 		return Set.of();
 	}

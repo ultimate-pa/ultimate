@@ -40,7 +40,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p2")));
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p2")));
 
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
@@ -58,7 +58,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p2")));
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p2")));
 
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
@@ -77,7 +77,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p2")));
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p2")));
 
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", !notEmpty);
@@ -98,7 +98,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p2", "p3")));
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p4")));
 
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
 
@@ -120,7 +120,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p2", "p3")));
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p4")));
 
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should not be found.", !notEmpty);
 
@@ -142,7 +142,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p2", "p3")));
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p4")));
 
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
 
@@ -162,7 +162,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("c", ImmutableSet.of(Set.of("p3")), ImmutableSet.of(Set.of("p5")));
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p4", "p5")), ImmutableSet.of(Set.of("p2", "p3")));
 
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
 	}
@@ -185,7 +185,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("d", ImmutableSet.of(Set.of("p4", "p5", "p7")),
 				ImmutableSet.of(Set.of("p2", "p3", "p6")));
 		petriNet.addTransition("a", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p7")));
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
 
@@ -208,7 +208,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p3")));
 
 		petriNet.addTransition("u", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p6")));
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		isempty.checkResult(new StringFactory());
 		assertThat("Lasso should be found.", notEmpty);
@@ -232,7 +232,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p3")));
 
 		petriNet.addTransition("u", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p6")));
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		isempty.checkResult(new StringFactory());
 		assertThat("Lasso should be found.", !notEmpty);
@@ -256,7 +256,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p1")), ImmutableSet.of(Set.of("p3")));
 
 		petriNet.addTransition("u", ImmutableSet.of(Set.of("p2")), ImmutableSet.of(Set.of("p6")));
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		isempty.checkResult(new StringFactory());
 		assertThat("Lasso should be found.", notEmpty);
@@ -274,7 +274,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("a", ImmutableSet.of(Set.of("p1", "p2")), ImmutableSet.of(Set.of("p1", "p4")));
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p3", "p4")), ImmutableSet.of(Set.of("p3", "p2")));
 
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
@@ -293,7 +293,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("a", ImmutableSet.of(Set.of("p1", "p2")), ImmutableSet.of(Set.of("p1", "p4")));
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p3", "p4")), ImmutableSet.of(Set.of("p3", "p2")));
 
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", !notEmpty);
@@ -316,7 +316,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("a", ImmutableSet.of(Set.of("p1", "p2")), ImmutableSet.of(Set.of("p1", "p4")));
 		petriNet.addTransition("b", ImmutableSet.of(Set.of("p3", "p4")), ImmutableSet.of(Set.of("p3", "p2")));
 
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 
 		final boolean notEmpty = !isempty.getResult();
 		assertThat("Lasso should be found.", notEmpty);
@@ -344,7 +344,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("g", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p4")));
 		petriNet.addTransition("h", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p5")));
 
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		isempty.checkResult(new StringFactory());
 		assertThat("Lasso should be found.", notEmpty);
@@ -373,7 +373,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("g", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p4")));
 		petriNet.addTransition("h", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p5")));
 
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		isempty.checkResult(new StringFactory());
 		assertThat("Lasso should be found.", !notEmpty);
@@ -402,7 +402,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("g", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p4")));
 		petriNet.addTransition("h", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p5")));
 
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		isempty.checkResult(new StringFactory());
 		assertThat("Lasso should be found.", notEmpty);
@@ -431,7 +431,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("g", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p4")));
 		petriNet.addTransition("h", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p5")));
 
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		isempty.checkResult(new StringFactory());
 		assertThat("Lasso should be found.", !notEmpty);
@@ -460,7 +460,7 @@ public class IsEmptyRabinTest {
 		petriNet.addTransition("g", ImmutableSet.of(Set.of("p5")), ImmutableSet.of(Set.of("p4")));
 		petriNet.addTransition("h", ImmutableSet.of(Set.of("p6")), ImmutableSet.of(Set.of("p5")));
 
-		final RabinIsEmpty<String, String> isempty = new RabinIsEmpty<>(mServices, petriNet);
+		final RabinIsEmpty<String, String, StringFactory> isempty = new RabinIsEmpty<>(mServices, petriNet);
 		final boolean notEmpty = !isempty.getResult();
 		isempty.checkResult(new StringFactory());
 		assertThat("Lasso should be found.", notEmpty);
