@@ -458,7 +458,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				continue;
 			}
 			final String inv = backTranslatorService.translateExpressionToString(formula, Term.class);
-			new WitnessInvariant(inv).annotate(locNode);
+			if (inv != null) {
+				new WitnessInvariant(inv).annotate(locNode);
+			}
 		}
 	}
 
