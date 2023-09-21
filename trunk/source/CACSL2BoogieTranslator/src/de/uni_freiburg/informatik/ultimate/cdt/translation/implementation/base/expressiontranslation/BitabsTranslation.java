@@ -444,10 +444,10 @@ public class BitabsTranslation {
 			return new ExpressionResult(new RValue(left, typeLeft));
 		}
 		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, typeLeft);
-		if (rightValue != null) {
-			final Expression value =
-					constructShiftWithLiteralOptimization(loc, leftWrapped, typeRight, rightValue, shiftOperator);
-			return new ExpressionResult(new RValue(value, typeLeft));
+		final Expression constantValue =
+				constructShiftWithLiteralOptimization(loc, leftWrapped, typeRight, rightValue, shiftOperator);
+		if (constantValue != null) {
+			return new ExpressionResult(new RValue(constantValue, typeLeft));
 		}
 		final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
@@ -465,11 +465,18 @@ public class BitabsTranslation {
 
 	private Expression constructShiftWithLiteralOptimization(final ILocation loc, final Expression left,
 			final CPrimitive typeRight, final BigInteger integerLiteralValue, final Operator operator) {
+		if (integerLiteralValue == null) {
+			return null;
+		}
 		final int exponent;
 		try {
 			exponent = integerLiteralValue.intValueExact();
 		} catch (final ArithmeticException ae) {
-			throw new UnsupportedOperationException("RHS of shift is larger than C standard allows " + ae);
+			// We shift right by a huge constant, so we can just return 0
+			if (operator == Operator.ARITHDIV) {
+				return ExpressionFactory.createIntegerLiteral(loc, "0");
+			}
+			return null;
 		}
 		final Expression shiftFactorExpr =
 				mTypeSizes.constructLiteralForIntegerType(loc, typeRight, BigInteger.TWO.pow(exponent));
