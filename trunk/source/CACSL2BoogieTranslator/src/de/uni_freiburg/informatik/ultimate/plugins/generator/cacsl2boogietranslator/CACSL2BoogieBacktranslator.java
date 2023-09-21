@@ -1225,6 +1225,7 @@ public class CACSL2BoogieBacktranslator
 		default:
 			reportUnfinishedBacktranslation(
 					UNFINISHED_BACKTRANSLATION + " could not match function " + fun.getIdentifier());
+			mLogger.error("Missing backtranslation for function " + fun.getIdentifier());
 			return null;
 		}
 	}
