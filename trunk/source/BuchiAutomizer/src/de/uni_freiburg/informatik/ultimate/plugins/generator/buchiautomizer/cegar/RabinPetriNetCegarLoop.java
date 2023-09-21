@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStyle;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 
@@ -41,15 +42,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 		extends AbstractBuchiCegarLoop<L, IRabinPetriNet<L, IPredicate>> {
 	private final Marking2MLPredicate mMarking2MLPredicate;
+	private final PredicateFactoryRefinement mStateFactory;
 
 	public RabinPetriNetCegarLoop(final IIcfg<?> icfg, final RankVarConstructor rankVarConstructor,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
 			final IRabinPetriNet<L, IPredicate> initialAbstraction,
-			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
+			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator, final PredicateFactoryRefinement stateFactory) {
 		super(icfg, rankVarConstructor, predicateFactory, taPrefs, services, transitionClazz, initialAbstraction,
 				benchmarkGenerator);
 		mMarking2MLPredicate = new Marking2MLPredicate(predicateFactory);
+		mStateFactory = stateFactory;
 	}
 
 	@Override
@@ -58,7 +61,7 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 		mLogger.error(abstraction);
 		final var isempty = new RabinIsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mPref.eventOrder(),
 				mPref.cutOffRequiresSameTransition(), true);
-		assert isempty.checkResult(mDefaultStateFactory);
+		assert isempty.checkResult(mStateFactory);
 		final PetriNetLassoRun<L, IPredicate> run = isempty.getRun();
 		if (run == null) {
 			return true;

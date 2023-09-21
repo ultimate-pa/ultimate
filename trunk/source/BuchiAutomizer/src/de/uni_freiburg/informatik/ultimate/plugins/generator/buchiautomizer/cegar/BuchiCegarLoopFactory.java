@@ -127,7 +127,7 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 		case RABIN_PETRI_NET:
 			return new RabinPetriNetCegarLoop<>(icfg, rankVarConstructor, predicateFactory, mPrefs, mServices,
 					mTransitionClazz, new RabinPetriNetWrapper<>(constructInitialAbstraction(petriNetProvider, icfg)),
-					mCegarLoopBenchmark);
+					mCegarLoopBenchmark, stateFactoryForRefinement);
 		default:
 			throw new UnsupportedOperationException(
 					"The type " + automatonTypeConcurrent + " is currently not supported.");
