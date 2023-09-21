@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -1055,6 +1056,10 @@ public class CACSL2BoogieBacktranslator
 			// TODO: For now just overapproximate quantifiers by true
 			mLogger.warn("Quantifier found, overapproximating it with true");
 			return translateBooleanLiteral(new BooleanLiteral(null, true));
+		} else if (expression instanceof BitVectorAccessExpression) {
+			// TODO: Implement this
+			mLogger.error("Backtranslation for BitVectorAccessExpression is not implemented yet.");
+			return null;
 		} else {
 			// things that land here are typically synthesized contracts or
 			// things like that. Here we replace Boogie variable names with C variable names
