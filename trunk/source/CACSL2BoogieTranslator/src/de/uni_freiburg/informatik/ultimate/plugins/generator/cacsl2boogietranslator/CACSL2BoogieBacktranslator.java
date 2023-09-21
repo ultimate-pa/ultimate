@@ -1201,7 +1201,7 @@ public class CACSL2BoogieBacktranslator
 		case "bvmul":
 			return new FakeExpression(String.format("(%s * %s)", translatedArguments[0], translatedArguments[1]));
 		case "bvsub":
-			return new FakeExpression(String.format("(%s * %s)", translatedArguments[0], translatedArguments[1]));
+			return new FakeExpression(String.format("(%s - %s)", translatedArguments[0], translatedArguments[1]));
 		case "bvand":
 			return new FakeExpression(String.format("(%s & %s)", translatedArguments[0], translatedArguments[1]));
 		case "bvor":
