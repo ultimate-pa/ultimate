@@ -1065,26 +1065,11 @@ public class CACSL2BoogieBacktranslator
 				return new FakeExpression(String.format("(%s & %d)", bv, (1L << end) - 1));
 			}
 			return new FakeExpression(String.format("((%s >> %d) & %d)", bv, start, (1L << (end - start)) - 1));
-		} else {
-			// things that land here are typically synthesized contracts or
-			// things like that. Here we replace Boogie variable names with C variable names
-			final Expression translated = new SynthesizedExpressionTransformer().processExpression(expression);
-			if (translated != null) {
-				String translatedString = BoogiePrettyPrinter.print(translated);
-				// its ugly, but the easiest way to backtranslate a synthesized boogie expression
-				// we just replace operators that "look" different in C
-				// TODO: We need a new BoogiePrettyPrinter for "FakeC" that takes care of quantifiers and such things
-				// (using ACSL).
-				translatedString = translatedString.replaceAll("old\\(", "\\\\old\\(")
-						.replaceAll("(\\\\)*old", "\\\\old").replaceAll("exists", "\\\\exists");
-				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": Expression "
-						+ BoogiePrettyPrinter.print(expression) + " was only translated via a workaround.");
-				return new FakeExpression(translatedString);
-			}
-			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": Expression "
-					+ BoogiePrettyPrinter.print(expression) + " has no CACSLLocation");
-			return null;
 		}
+		final String msg = "Missing case for expression " + BoogiePrettyPrinter.print(expression);
+		mLogger.error(msg);
+		reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + msg);
+		return null;
 	}
 
 	private IASTExpression handleUnaryExpression(final UnaryExpression expr, final CType cType) throws AssertionError {
