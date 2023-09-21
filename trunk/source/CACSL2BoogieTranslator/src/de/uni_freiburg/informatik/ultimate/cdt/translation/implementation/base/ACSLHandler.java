@@ -497,9 +497,10 @@ public class ACSLHandler implements IACSLHandler {
 			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus, res);
 		case PLUS:
 			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus, res);
+		case LOGICCOMPLEMENT:
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_tilde, res);
 		case POINTER:
 		case ADDROF:
-		case LOGICCOMPLEMENT:
 		default:
 			final String msg = "Unknown or unsupported unary operation: " + node.getOperator();
 			throw new UnsupportedSyntaxException(loc, msg);
