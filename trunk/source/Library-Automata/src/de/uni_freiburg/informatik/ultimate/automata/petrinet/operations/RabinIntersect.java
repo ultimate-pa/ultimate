@@ -53,6 +53,11 @@ public class RabinIntersect<LETTER, PLACE>
 		return mResult;
 	}
 
+	@Override
+	public String toString() {
+		return mResult.toString();
+	}
+
 	/**
 	 * A wrapper for generating a RabinPetriNet using BuchiIntersect, passes through the finiteness of finite places
 	 *
@@ -148,6 +153,18 @@ public class RabinIntersect<LETTER, PLACE>
 		@Override
 		public boolean isFinite(final PLACE place) {
 			return mFinitePlaces.contains(place);
+		}
+
+		@Override
+		public String toString() {
+			final StringBuilder result = new StringBuilder(mIntersectionNet.toString());
+			result.insert(0, "Rabin");
+			result.delete(result.lastIndexOf("}") + 1, result.length());
+			result.append(",\n");
+			result.append("finitePlaces = {");
+			result.append(mFinitePlaces.toString());
+			result.append("}+\n);");
+			return result.toString();
 		}
 	}
 
