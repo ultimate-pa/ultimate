@@ -409,9 +409,7 @@ public class CACSL2BoogieBacktranslator
 			return set;
 		}
 		final EnumSet<T> rtr = EnumSet.copyOf(set);
-		for (final T elem : elems) {
-			rtr.add(elem);
-		}
+		Collections.addAll(rtr, elems);
 		return rtr;
 	}
 
@@ -860,17 +858,17 @@ public class CACSL2BoogieBacktranslator
 				} else if (cnode instanceof CASTIfStatement) {
 					final CASTIfStatement ifstmt = (CASTIfStatement) cnode;
 					edge = new MultigraphEdge<>(currentSource,
-							(CLocation) mLocationFactory.createCLocation(ifstmt.getConditionExpression()), lastTarget);
+							mLocationFactory.createCLocation(ifstmt.getConditionExpression()), lastTarget);
 					new ConditionAnnotation(isNegated).annotate(edge);
 				} else if (cnode instanceof CASTWhileStatement) {
 					final CASTWhileStatement whileStmt = (CASTWhileStatement) cnode;
-					edge = new MultigraphEdge<>(currentSource, (CLocation) mLocationFactory.createCLocation(whileStmt.getCondition()),
-							lastTarget);
+					edge = new MultigraphEdge<>(currentSource,
+							mLocationFactory.createCLocation(whileStmt.getCondition()), lastTarget);
 					new ConditionAnnotation(isNegated).annotate(edge);
 				} else if (cnode instanceof CASTDoStatement) {
 					// same as while
 					final CASTDoStatement doStmt = (CASTDoStatement) cnode;
-					edge = new MultigraphEdge<>(currentSource, (CLocation) mLocationFactory.createCLocation(doStmt.getCondition()),
+					edge = new MultigraphEdge<>(currentSource, mLocationFactory.createCLocation(doStmt.getCondition()),
 							lastTarget);
 					new ConditionAnnotation(isNegated).annotate(edge);
 				} else if (cnode instanceof CASTForStatement) {
@@ -882,7 +880,7 @@ public class CACSL2BoogieBacktranslator
 					if (condition == null) {
 						condition = new FakeExpression(forStmt, "1", null);
 					}
-					edge = new MultigraphEdge<>(currentSource, (CLocation) mLocationFactory.createCLocation(condition), lastTarget);
+					edge = new MultigraphEdge<>(currentSource, mLocationFactory.createCLocation(condition), lastTarget);
 					new ConditionAnnotation(isNegated).annotate(edge);
 				} else if (cnode instanceof CASTFunctionCallExpression) {
 					edge = new MultigraphEdge<>(currentSource, cloc, lastTarget);
@@ -1173,7 +1171,7 @@ public class CACSL2BoogieBacktranslator
 
 	private IASTExpression translateFunctionApplication(final CType cType, final FunctionApplication fun) {
 		final IASTExpression[] translatedArguments = new IASTExpression[fun.getArguments().length];
-		for(int i = 0; i < fun.getArguments().length; i++) {
+		for (int i = 0; i < fun.getArguments().length; i++) {
 			translatedArguments[i] = translateExpression(fun.getArguments()[i]);
 			if (translatedArguments[i] == null) {
 				return null;
@@ -1539,9 +1537,7 @@ public class CACSL2BoogieBacktranslator
 
 		// first, compute lookup data structure
 		final Map<AtomicTraceElement<CACSLLocation>, Set<IASTNode>> ateToParents = new HashMap<>();
-		for (int i = 0; i < translatedAtomicTraceElements.size(); ++i) {
-			final AtomicTraceElement<CACSLLocation> ate = translatedAtomicTraceElements.get(i);
-
+		for (final AtomicTraceElement<CACSLLocation> ate : translatedAtomicTraceElements) {
 			if (!(ate.getStep() instanceof CLocation)) {
 				continue;
 			}
