@@ -1206,6 +1206,8 @@ public class CACSL2BoogieBacktranslator
 			return new FakeExpression(String.format("(%s & %s)", translatedArguments[0], translatedArguments[1]));
 		case "bvor":
 			return new FakeExpression(String.format("(%s | %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvxor":
+			return new FakeExpression(String.format("(%s ^ %s)", translatedArguments[0], translatedArguments[1]));
 		case "bvult":
 			return new FakeExpression(String.format("(%s < %s)", translatedArguments[0], translatedArguments[1]));
 		case "bvule":
@@ -1222,6 +1224,10 @@ public class CACSL2BoogieBacktranslator
 			return new FakeExpression(String.format("(%s > %s)", translatedArguments[0], translatedArguments[1]));
 		case "bvsge":
 			return new FakeExpression(String.format("(%s >= %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvneg":
+			return new FakeExpression(String.format("-(%s)", translatedArguments[0]));
+		case "bvnot":
+			return new FakeExpression(String.format("~(%s)", translatedArguments[0]));
 		default:
 			reportUnfinishedBacktranslation(
 					UNFINISHED_BACKTRANSLATION + " could not match function " + fun.getIdentifier());
