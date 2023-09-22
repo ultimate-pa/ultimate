@@ -368,8 +368,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 		if (op == IASTBinaryExpression.op_shiftLeft || op == IASTBinaryExpression.op_shiftLeftAssign) {
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder(result);
-			CExpressionTranslator.addOverflowAssertion(loc,
-					constructOverflowCheckForLeftShift(loc, left, typeLeft, typeRight, right), builder);
 			final Pair<Expression, Expression> minMax = constructMinMaxCheckForLeftShift(loc, typeLeft, left, right);
 			CExpressionTranslator.addOverflowAssertion(loc, minMax.getFirst(), builder);
 			CExpressionTranslator.addOverflowAssertion(loc, minMax.getSecond(), builder);

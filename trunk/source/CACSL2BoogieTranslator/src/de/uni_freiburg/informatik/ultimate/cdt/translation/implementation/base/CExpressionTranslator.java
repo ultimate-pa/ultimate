@@ -410,7 +410,7 @@ public class CExpressionTranslator {
 				mExprResultTransformer.performImplicitConversion(right, typeOfResult, loc);
 
 		final ExpressionResult result =
-				mExpressionTranslation.handleBinaryBitwiseExpression(loc, op, leftPromoted.getLrValue().getValue(),
+				mExpressionTranslation.handleBitshiftExpression(loc, op, leftPromoted.getLrValue().getValue(),
 						typeOfResult, rightConverted.getLrValue().getValue(), typeOfResult, mAuxVarInfoBuilder);
 		final ExpressionResultBuilder builder =
 				new ExpressionResultBuilder().addAllExceptLrValue(leftPromoted, rightConverted);

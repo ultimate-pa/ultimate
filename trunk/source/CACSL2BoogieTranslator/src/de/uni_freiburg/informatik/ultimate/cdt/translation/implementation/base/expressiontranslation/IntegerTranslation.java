@@ -190,10 +190,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return result;
 		}
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		// We need to add the trivial overflow check (one of the arguments is negative or rhs is too big for the type)
-		// before the actual result to avoid overapproximations.
-		CExpressionTranslator.addOverflowAssertion(loc,
-				constructOverflowCheckForLeftShift(loc, left, typeLeft, typeRight, right), builder);
 		final Expression expr = result.getLrValue().getValue();
 		builder.addAllIncludingLrValue(result);
 		CExpressionTranslator.addOverflowAssertion(loc, constructBiggerMinIntExpression(loc, typeLeft, expr), builder);

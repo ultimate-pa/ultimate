@@ -444,10 +444,12 @@ public class BitabsTranslation {
 			return new ExpressionResult(new RValue(left, typeLeft));
 		}
 		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, typeLeft);
-		final Expression constantValue =
-				constructShiftWithLiteralOptimization(loc, leftWrapped, typeRight, rightValue, shiftOperator);
-		if (constantValue != null) {
-			return new ExpressionResult(new RValue(constantValue, typeLeft));
+		if (rightValue != null) {
+			final Expression shiftFactorExpr = mTypeSizes.constructLiteralForIntegerType(loc, typeRight,
+					BigInteger.TWO.pow(rightValue.intValueExact()));
+			final Expression value =
+					ExpressionFactory.newBinaryExpression(loc, shiftOperator, leftWrapped, shiftFactorExpr);
+			return new ExpressionResult(new RValue(value, typeLeft));
 		}
 		final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
@@ -461,26 +463,6 @@ public class BitabsTranslation {
 				applyWraparoundIfNecessary(loc, auxVar.getExp(), typeLeft), leftWrapped);
 		return buildExpressionResult(loc, functionName, typeLeft, auxVar,
 				List.of(new Pair<>(leftOrRightEqualsZero, left)), List.of(compLeft));
-	}
-
-	private Expression constructShiftWithLiteralOptimization(final ILocation loc, final Expression left,
-			final CPrimitive typeRight, final BigInteger integerLiteralValue, final Operator operator) {
-		if (integerLiteralValue == null) {
-			return null;
-		}
-		final int exponent;
-		try {
-			exponent = integerLiteralValue.intValueExact();
-		} catch (final ArithmeticException ae) {
-			// We shift right by a huge constant, so we can just return 0
-			if (operator == Operator.ARITHDIV) {
-				return ExpressionFactory.createIntegerLiteral(loc, "0");
-			}
-			return null;
-		}
-		final Expression shiftFactorExpr =
-				mTypeSizes.constructLiteralForIntegerType(loc, typeRight, BigInteger.TWO.pow(exponent));
-		return ExpressionFactory.newBinaryExpression(loc, operator, left, shiftFactorExpr);
 	}
 
 	private Expression applyWraparoundIfNecessary(final ILocation loc, final Expression expr, final CPrimitive type) {
