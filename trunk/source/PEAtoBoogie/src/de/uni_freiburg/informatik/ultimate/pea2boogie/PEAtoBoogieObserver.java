@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePref
 import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.Req2CauseTrackingPeaTransformer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.ReqTestResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ComplementTransformer;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.RedundancyTransformer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
 import jdk.jshell.spi.ExecutionControl.NotImplementedException;
 
@@ -107,8 +108,15 @@ public class PEAtoBoogieObserver extends BaseObserver {
 	}
 	
 	private IElement generateReqCheckRedundancyBoogie(final List<PatternType<?>> patterns) {
-		// TODO
-		return null;
+		final RedundancyTransformer transformer = new RedundancyTransformer(mServices, mLogger);
+		final Req2BoogieTranslator translator =
+				new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.singletonList(transformer));
+		final VerificationResultTransformer reporter =
+				new VerificationResultTransformer(mLogger, mServices, translator.getReqSymbolTable());
+		// register CEX transformer that removes program executions from CEX.
+		final UnaryOperator<IResult> resultTransformer = reporter::convertTraceAbstractionResult;
+		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
+		return translator.getUnit();
 	}
 
 }

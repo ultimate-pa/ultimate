@@ -69,7 +69,11 @@ public class ComplementPEA {
 			CDD clockInv = phase.getClockInvariant();
 			CDD guardToSink = phase.stateInv.and(RangeDecision.strict(clockInv));
 			Phase totalisedPhase = new Phase(phase.name, phase.stateInv, phase.clockInv);
-			totalisedPhase.setInit(phase.isInit);
+			if (phase.getInitialTransition().isPresent()) {
+				InitialTransition initialTransition = phase.getInitialTransition().get();
+				InitialTransition newInitialTransition = new InitialTransition(initialTransition.getGuard(), totalisedPhase);
+				totalisedPhase.setInitialTransition(newInitialTransition);
+			}
 			
 			
 			for (Transition transition : phase.transitions) {
@@ -180,7 +184,6 @@ public class ComplementPEA {
 			initialTransitionSinkGuard = initialTransitionSinkGuard.or(conjunction);
 		}
 		if (initialTransitionSinkGuard != CDD.TRUE) {
-			sinkPhase.setInit(true);
 			InitialTransition sinkInitialTransition = new InitialTransition(initialTransitionSinkGuard.negate(), sinkPhase);
 			sinkPhase.setInitialTransition(sinkInitialTransition);
 		} else {
