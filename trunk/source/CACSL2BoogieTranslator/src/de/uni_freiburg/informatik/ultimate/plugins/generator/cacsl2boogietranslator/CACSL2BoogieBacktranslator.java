@@ -962,11 +962,7 @@ public class CACSL2BoogieBacktranslator
 
 	@Override
 	public IASTExpression translateExpression(final Expression expression) {
-		final IASTExpression result = translateExpression(expression, null, null);
-		if (result == null) {
-			throw new AssertionError("Failed to backtranslate " + BoogiePrettyPrinter.print(expression));
-		}
-		return result;
+		return translateExpression(expression, null, null);
 	}
 
 	private IASTExpression translateExpression(final Expression expression, final CType cType, final IASTNode hook) {
