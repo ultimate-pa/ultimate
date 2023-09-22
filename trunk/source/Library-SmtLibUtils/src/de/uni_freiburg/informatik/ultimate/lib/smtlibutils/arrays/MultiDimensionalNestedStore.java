@@ -102,13 +102,8 @@ public class MultiDimensionalNestedStore implements ITermProvider {
 		return array;
 	}
 
-	public MultiDimensionalStore getInnermost() {
-		MultiDimensionalStore mds = MultiDimensionalStore.convert(mTerm);
-		while (mds.getArray() != mArray) {
-			mds = MultiDimensionalStore.convert(mds.getArray());
-		}
-		assert mArray == mds.getArray();
-		return mds;
+	public MultiDimensionalStore getInnermost(final Script script) {
+		return new MultiDimensionalStore(mArray, mIndices.get(0), mValues.get(0), script);
 	}
 
 	@Override
