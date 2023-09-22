@@ -152,7 +152,7 @@ public abstract class ExpressionTranslation {
 		if (nodeOperator == IASTBinaryExpression.op_shiftLeft
 				|| nodeOperator == IASTBinaryExpression.op_shiftLeftAssign) {
 			final Pair<Expression, Expression> checks =
-					constructOverflowCheckForLeftShift(loc, type2, exp1, exp2, result);
+					constructOverflowCheckForLeftShift(loc, type1, exp1, exp2, result);
 			CExpressionTranslator.addOverflowAssertion(loc, checks.getFirst(), builder);
 			CExpressionTranslator.addOverflowAssertion(loc, checks.getSecond(), builder);
 		}
