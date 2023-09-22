@@ -562,6 +562,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			reqIds.add(complementedPeaPattern.getId());
 		}
 		// final ReqCheck check = createReqCheck(Spec.REDUNDANCY, (Entry<PatternType<?>, PhaseEventAutomata>[]) peaList.toArray());
+		// iwie richtige namen ausgeben??
 		final ReqCheck check = new ReqCheck(Spec.REDUNDANCY, reqIds.toArray(new String[reqIds.size()]), peaNames.toArray(new String[reqIds.size()]));
 		final String label = "REDUNDANT_" + complementedPea.getPattern().toString();
 		Statement assertStatement = createAssert(ExpressionFactory.and(bl, peaAccepts), check, label);
