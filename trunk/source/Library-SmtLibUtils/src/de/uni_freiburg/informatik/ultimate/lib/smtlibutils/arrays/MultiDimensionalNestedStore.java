@@ -199,6 +199,26 @@ public class MultiDimensionalNestedStore implements ITermProvider {
 				mValues);
 	}
 
+	public MultiDimensionalNestedStore removeOneIndex(final Script script, final int i) {
+		final List<ArrayIndex> newIndices = copyAllButOne(i, mIndices);
+		final List<Term> newValues = copyAllButOne(i, mValues);
+		return new MultiDimensionalNestedStore(mArray, newIndices, newValues);
+	}
+
+	private static <E> List<E> copyAllButOne(final int indexOfRemoved, final List<E> list) {
+		final List<E> result = new ArrayList<>(list.size() -1);
+		int i = 0;
+		for (final E elem : list) {
+			if (i != indexOfRemoved) {
+				result.add(elem);
+			}
+			i++;
+		}
+		assert i == result.size();
+		assert result.size() == list.size() - 1;
+		return result;
+	}
+
 	@Override
 	public String toString() {
 		// not SMT-LIB syntax, but easier to read

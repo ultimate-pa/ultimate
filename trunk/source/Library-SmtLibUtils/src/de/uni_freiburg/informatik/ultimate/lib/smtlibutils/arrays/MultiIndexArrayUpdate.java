@@ -59,6 +59,11 @@ public class MultiIndexArrayUpdate {
 		return mMultiDimensionalNestedStore;
 	}
 
+	public MultiIndexArrayUpdate removeOneIndex(final Script script, final int i) {
+		return new MultiIndexArrayUpdate(getRelationSymbol(), getNewArray(),
+				getMultiDimensionalNestedStore().removeOneIndex(script, i));
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -117,7 +122,6 @@ public class MultiIndexArrayUpdate {
 	public String toString() {
 		return String.format("(%s %s %s)", mRelationSymbol, mNewArray, mMultiDimensionalNestedStore);
 	}
-
 
 
 }
