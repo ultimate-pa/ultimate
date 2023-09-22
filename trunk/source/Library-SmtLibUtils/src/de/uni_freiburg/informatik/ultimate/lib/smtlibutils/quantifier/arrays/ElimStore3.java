@@ -214,7 +214,7 @@ public class ElimStore3 {
 				if (store == null) {
 					store = update.getMultiDimensionalStore();
 				}
-				final Map<Term, Term> auxMap = Collections.singletonMap((Term) store.getStoreTerm(), (Term) auxArray);
+				final Map<Term, Term> auxMap = Collections.singletonMap(store.toTerm(mScript), (Term) auxArray);
 				Term auxTerm = Substitution.apply(mMgdScript, auxMap, term);
 				final Term auxVarDef = SmtUtils.binaryEquality(mScript, auxArray, store.getStoreTerm());
 				if (quantifier == QuantifiedFormula.EXISTS) {
