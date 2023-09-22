@@ -77,7 +77,11 @@ public class YamlCorrectnessWitnessGenerator {
 			}
 			final Set<Location> locationCandidates = new HashSet<>();
 			for (final var outgoing : node.getOutgoingEdges()) {
+				worklist.add(outgoing.getTarget());
 				final ILocation loc = (ILocation) outgoing.getLabel();
+				if (loc == null) {
+					continue;
+				}
 				// If the column is unknown (-1), use the first position of the line
 				final int column = Math.max(loc.getStartColumn(), 0);
 				final String function = loc.getFunction();
@@ -86,7 +90,6 @@ public class YamlCorrectnessWitnessGenerator {
 					continue;
 				}
 				locationCandidates.add(new Location(loc.getFileName(), hash, loc.getStartLine(), column, function));
-				worklist.add(outgoing.getTarget());
 			}
 			final String invariant = filterInvariant(node);
 			// TODO: Can we do anything if there are multiple locationCandidates?
