@@ -558,6 +558,7 @@ public class VerificationResultTransformer {
 		case VACUOUS:
 		case RTINCONSISTENT:
 		case COMPLEMENT:
+		case REDUNDANCY:
 			return;
 		default:
 			throw new UnsupportedOperationException("Unknown spec type " + spec);

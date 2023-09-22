@@ -305,6 +305,28 @@ public abstract class PatternType<T extends PatternType<?>> {
 			}
 			return false;
 		}
+		
+		public boolean isTotal() {
+			for (Entry<CounterTrace, PhaseEventAutomata> entry: mPeas) {
+				PhaseEventAutomata automata = entry.getValue();
+				String automataName = automata.getName();
+				if (automataName.endsWith("t"))  {
+					return true;
+				}
+			}
+			return false;
+		}
+		
+		public boolean isComplemented() {
+			for (Entry<CounterTrace, PhaseEventAutomata> entry: mPeas) {
+				PhaseEventAutomata automata = entry.getValue();
+				String automataName = automata.getName();
+				if (automataName.endsWith("c"))  {
+					return true;
+				}
+			}
+			return false;
+		}
 	}
 
 }

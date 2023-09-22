@@ -221,17 +221,17 @@ public class ComplementPEATest {
 		assertTrue(phases.length == testPEA.getPhases().length + 1);
 		Phase sink = phases[0];
 		assertTrue(sink.getTerminal());
-		Phase originalPhase1 = phases[2];
+		Phase phase1 = phases[2];
 		CDD expectedClkInv = RangeDecision.create("c0", RangeDecision.OP_LTEQ, 5);
-		assertEquals(expectedClkInv, originalPhase1.getClockInvariant());
-		List<Transition> phase1OutgoingTransitions = originalPhase1.getTransitions();
+		assertEquals(expectedClkInv, phase1.getClockInvariant());
+		List<Transition> phase1OutgoingTransitions = phase1.getTransitions();
 		for (Transition transition : phase1OutgoingTransitions) {
-			if (transition.getDest() == phases[1]) {
+			if (transition.getDest() != sink) {
 				CDD expectedGuard = RangeDecision.create("c0", RangeDecision.OP_LT, 5);
 				assertEquals(expectedGuard, transition.getGuard());
 			}
 		}
-		assertTrue(originalPhase1.getModifiedConstraints().get().size() == 1);
+		assertTrue(phase1.getModifiedConstraints().get().size() == 1);
 	}
 	
 }
