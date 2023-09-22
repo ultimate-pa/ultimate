@@ -278,6 +278,7 @@ public class Phase implements Comparable<Phase> {
 
     public void setInitialTransition(InitialTransition initialTransition) {
         mInitialTransition = Optional.ofNullable(initialTransition);
+        isInit = true;
     }
 
     public Optional<InitialTransition> getInitialTransition() {

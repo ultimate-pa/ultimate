@@ -1,0 +1,5 @@
+Input R is bool
+Input S is bool
+
+ID000: Globally, it is always the case that "R" holds
+ID001: Globally, it is always the case that "S" holds
