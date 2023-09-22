@@ -148,8 +148,20 @@ public abstract class ExpressionTranslation {
 		// TODO: Is this really a overflow or some other undefined behavior?
 		CExpressionTranslator.addOverflowAssertion(loc,
 				constructTypeCheckForShift(loc, exp1, type1, type2, exp2, nodeOperator), builder);
-		return builder.addAllIncludingLrValue(result).build();
+		builder.addAllIncludingLrValue(result);
+		if (nodeOperator == IASTBinaryExpression.op_shiftLeft
+				|| nodeOperator == IASTBinaryExpression.op_shiftLeftAssign) {
+			final Pair<Expression, Expression> checks =
+					constructOverflowCheckForLeftShift(loc, type2, exp1, exp2, result);
+			CExpressionTranslator.addOverflowAssertion(loc, checks.getFirst(), builder);
+			CExpressionTranslator.addOverflowAssertion(loc, checks.getSecond(), builder);
+		}
+		return builder.build();
 	}
+
+	protected abstract Pair<Expression, Expression> constructOverflowCheckForLeftShift(final ILocation loc,
+			final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand,
+			final ExpressionResult exprResult);
 
 	// TODO 20221121 Matthias: If types of LHS and RHS differ, we have to extend/reduce the RHS
 	private Expression constructTypeCheckForShift(final ILocation loc, final Expression left,

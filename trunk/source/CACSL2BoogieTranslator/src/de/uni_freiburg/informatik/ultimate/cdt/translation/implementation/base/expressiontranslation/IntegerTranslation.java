@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -173,28 +172,13 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return mBitabsTranslation.abstractXor(loc, left, right, typeLeft, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign:
-			return handleLeftShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
+			return mBitabsTranslation.abstractLeftShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftRightAssign:
 			return mBitabsTranslation.abstractRightShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 		default:
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported bitwise expression");
 		}
-	}
-
-	private ExpressionResult handleLeftShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
-		final ExpressionResult result =
-				mBitabsTranslation.abstractLeftShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
-		if (!mSettings.checkSignedIntegerBounds() || !typeLeft.isIntegerType() || mTypeSizes.isUnsigned(typeLeft)) {
-			return result;
-		}
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final Expression expr = result.getLrValue().getValue();
-		builder.addAllIncludingLrValue(result);
-		CExpressionTranslator.addOverflowAssertion(loc, constructBiggerMinIntExpression(loc, typeLeft, expr), builder);
-		CExpressionTranslator.addOverflowAssertion(loc, constructSmallerMaxIntExpression(loc, typeLeft, expr), builder);
-		return builder.build();
 	}
 
 	@Override
@@ -785,5 +769,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final Expression expression) {
 		return ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, expression, ExpressionFactory
 				.createIntegerLiteral(loc, mTypeSizes.getMinValueOfPrimitiveType(primType).toString()));
+	}
+
+	@Override
+	protected Pair<Expression, Expression> constructOverflowCheckForLeftShift(final ILocation loc,
+			final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand,
+			final ExpressionResult exprResult) {
+		return constructOverflowCheck(loc, resultType, exprResult.getLrValue().getValue());
 	}
 }
