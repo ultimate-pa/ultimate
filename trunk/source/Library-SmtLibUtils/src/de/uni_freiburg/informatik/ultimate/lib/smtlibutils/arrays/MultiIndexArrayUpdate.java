@@ -102,8 +102,8 @@ public class MultiIndexArrayUpdate {
 		if (!SmtSortUtils.isArraySort(ber.getLhs().getSort())) {
 			return null;
 		}
-		final MultiDimensionalNestedStore mdnsLhs = MultiDimensionalNestedStore.convert(script, ber.getLhs());
-		final MultiDimensionalNestedStore mdnsRhs = MultiDimensionalNestedStore.convert(script, ber.getRhs());
+		final MultiDimensionalNestedStore mdnsLhs = MultiDimensionalNestedStore.of(ber.getLhs());
+		final MultiDimensionalNestedStore mdnsRhs = MultiDimensionalNestedStore.of(ber.getRhs());
 		if (mdnsRhs != null && mdnsLhs == null) {
 			return new MultiIndexArrayUpdate(ber.getRelationSymbol(), ber.getLhs(), mdnsRhs);
 		} else if (mdnsLhs != null && mdnsRhs == null) {

@@ -275,7 +275,7 @@ public class ArrayOccurrenceAnalysis {
 						walker.enqueueWalker(new MyWalker(negatedAtom));
 					}
 				} else if (fun.equals("store")) {
-					MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(mScript, term);
+					MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.of(term);
 					if (nas != null) {
 						final Set<Term> swwaiv =
 								SubTermFinder.find(term, x -> isStoreWhereWantedArrayIsValue(x, mWantedArray), false);

@@ -178,7 +178,7 @@ public class SimultaneousUpdate {
 							deterministicAssignment.put(pv, renamed);
 						} else {
 							final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore
-									.convert(mgdScript.getScript(), renamed);
+									.of(renamed);
 							if (mdns.getIndices().size() > 1) {
 								throw new UnsupportedOperationException(String.format(
 										"NestedStore not yet supported. Array: %s, Indices: %s, Values: %s",

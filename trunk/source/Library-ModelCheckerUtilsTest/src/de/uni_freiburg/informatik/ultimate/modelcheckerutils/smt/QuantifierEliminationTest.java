@@ -348,7 +348,7 @@ public class QuantifierEliminationTest {
 		final String formulaAsString =
 				"(store |v_#memory_int_BEFORE_CALL_2| nonMain_~dst~0.base (store (store (select |v_#memory_int_BEFORE_CALL_2| nonMain_~dst~0.base) (+ |v_#Ultimate.C_memcpy_#t~loopctr6_8| |#Ultimate.C_memcpy_dest.offset|) v_prenex_1) (+ |v_#Ultimate.C_memcpy_#t~loopctr6_9| |#Ultimate.C_memcpy_dest.offset|) |#Ultimate.C_memcpy_#t~mem7|))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.convert(mScript, formulaAsTerm);
+		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.of(formulaAsTerm);
 		Assert.assertTrue(mdns.getDimension() == 2);
 	}
 

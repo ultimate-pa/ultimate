@@ -50,7 +50,7 @@ public class MultiDimensionalSelectOverNestedStore {
 		if (!select.getIndex().isEmpty()) {
 			final Term innerArray = select.getArray();
 			if (innerArray instanceof ApplicationTerm) {
-				final MultiDimensionalNestedStore store = MultiDimensionalNestedStore.convert(script, innerArray);
+				final MultiDimensionalNestedStore store = MultiDimensionalNestedStore.of(innerArray);
 				if (store != null && store.getIndices().get(0).size() == select.getIndex().size()) {
 					mSelect = select;
 					mNestedStore = store;

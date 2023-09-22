@@ -167,8 +167,7 @@ public class DerPreprocessor extends TermTransformer {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final BinaryEqualityRelation selfUpdate : selfupdates) {
 			final Term otherSide = getOtherSide(selfUpdate, eliminatee);
-			final MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(mgdScript.getScript(),
-					otherSide);
+			final MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.of(otherSide);
 			final Term selfUpdateReplacement = constructReplacementForStoreCase(nas, mgdScript, eliminatee, quantifier,
 					airc, aiem);
 			substitutionMapping.put(selfUpdate.toTerm(mgdScript.getScript()), selfUpdateReplacement);
@@ -188,8 +187,7 @@ public class DerPreprocessor extends TermTransformer {
 					airc);
 			break;
 		case EQ_STORE:
-			final MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(mgdScript.getScript(),
-					otherSide);
+			final MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.of(otherSide);
 			result = constructReplacementForStoreCase(nas, mgdScript, eliminatee, quantifier, airc, aiem);
 			break;
 		case SELF_UPDATE:
@@ -226,7 +224,7 @@ public class DerPreprocessor extends TermTransformer {
 		if (!Arrays.asList(otherSide.getFreeVars()).contains(eliminatee)) {
 			return DerCase.CLASSICAL_DER;
 		}
-		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.convert(script, otherSide);
+		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.of(otherSide);
 		if (mdns != null) {
 			if (mdns.getArray() == eliminatee) {
 				return DerCase.SELF_UPDATE;
@@ -297,7 +295,7 @@ public class DerPreprocessor extends TermTransformer {
 						"We have to descend beyond store chains. Introduce auxiliary variables only for arrays of lower dimension to avoid non-termination.");
 			}
 			result = QuantifierUtils.applyDerOperator(mgdScript.getScript(), quantifier,
-					new MultiDimensionalNestedStore(mgdScript.getScript(), nas.getArray(), newIndices, newValues)
+					new MultiDimensionalNestedStore(nas.getArray(), newIndices, newValues)
 							.toTerm(mgdScript.getScript()),
 					eliminatee);
 		}
