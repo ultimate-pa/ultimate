@@ -199,7 +199,7 @@ public class MultiDimensionalNestedStore implements ITermProvider {
 				mValues);
 	}
 
-	public MultiDimensionalNestedStore removeOneIndex(final Script script, final int i) {
+	public MultiDimensionalNestedStore removeOneIndex(final int i) {
 		final List<ArrayIndex> newIndices = copyAllButOne(i, mIndices);
 		final List<Term> newValues = copyAllButOne(i, mValues);
 		return new MultiDimensionalNestedStore(mArray, newIndices, newValues);

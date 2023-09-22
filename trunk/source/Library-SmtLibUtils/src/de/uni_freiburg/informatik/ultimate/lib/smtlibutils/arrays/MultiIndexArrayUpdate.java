@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
@@ -35,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class MultiIndexArrayUpdate {
+public class MultiIndexArrayUpdate implements ITermProvider {
 	private final RelationSymbol mRelationSymbol;
 	private final Term mNewArray;
 	private final MultiDimensionalNestedStore mMultiDimensionalNestedStore;
@@ -59,9 +60,9 @@ public class MultiIndexArrayUpdate {
 		return mMultiDimensionalNestedStore;
 	}
 
-	public MultiIndexArrayUpdate removeOneIndex(final Script script, final int i) {
+	public MultiIndexArrayUpdate removeOneIndex(final int i) {
 		return new MultiIndexArrayUpdate(getRelationSymbol(), getNewArray(),
-				getMultiDimensionalNestedStore().removeOneIndex(script, i));
+				getMultiDimensionalNestedStore().removeOneIndex(i));
 	}
 
 	@Override
@@ -123,5 +124,9 @@ public class MultiIndexArrayUpdate {
 		return String.format("(%s %s %s)", mRelationSymbol, mNewArray, mMultiDimensionalNestedStore);
 	}
 
+	@Override
+	public Term toTerm(final Script script) {
+		return mRelationSymbol.constructTerm(script, mNewArray, mMultiDimensionalNestedStore.toTerm(script));
+	}
 
 }
