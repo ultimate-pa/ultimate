@@ -104,7 +104,7 @@ public class SingleUpdateNormalFormTransformer {
 		auxArray = mFreshAuxVarGenerator.constructFreshCopy(oldArray);
 		assert mStore2TermVariable.isEmpty();
 		mStore2TermVariable =
-				Collections.singletonMap((Term) mdStore.getStoreTerm(), (Term) auxArray);
+				Collections.singletonMap(mdStore.toTerm(mScript), (Term) auxArray);
 		{
 			final Term newUpdate = mScript.term("=", auxArray, mdStore.getStoreTerm());
 			final ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, newUpdate);
