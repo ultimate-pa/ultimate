@@ -399,7 +399,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	
 	public boolean isStrict() {
 		for (Phase phase : mPhases) {
-			if (phase.isStrict()) {
+			if (phase.isStrict() || phase.getModifiedConstraints().isPresent()) {
 				return true;
 			}
 		}

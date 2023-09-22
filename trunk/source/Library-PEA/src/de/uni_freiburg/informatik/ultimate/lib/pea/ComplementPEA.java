@@ -111,12 +111,14 @@ public class ComplementPEA {
 				totalisedPhase.clockInv = nonStrictClockInvariant;
 
 				for (Transition transition : totalisedPhase.transitions) {
-					CDD modifiedGuard = transition.getGuard();
-					for (RangeDecision clockConstraint : modifiedClockConstraints) {
-						CDD clockConstraintCdd = RangeDecision.create(clockConstraint.getVar(), RangeDecision.OP_LT, clockConstraint.getVal(0));
-						modifiedGuard.and(clockConstraintCdd);
+					if (transition.getDest().getName() != "sink" ) {
+						CDD modifiedGuard = transition.getGuard();
+						for (RangeDecision clockConstraint : modifiedClockConstraints) {
+							CDD clockConstraintCdd = RangeDecision.create(clockConstraint.getVar(), RangeDecision.OP_LT, clockConstraint.getVal(0));
+							modifiedGuard = modifiedGuard.and(clockConstraintCdd);
+						}
+						transition.setGuard(modifiedGuard);
 					}
-					transition.setGuard(modifiedGuard);
 				}
 				
 			}

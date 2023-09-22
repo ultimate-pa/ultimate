@@ -82,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
+import jdk.jshell.spi.ExecutionControl.NotImplementedException;
 
 /**
  *
@@ -187,7 +188,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			annotations.addAll(genCheckComplement(mUnitLocation));
 		}
 		if (mCheckRedundancy) {
-			// TODO : implement check for Reduncancy 
+			annotations.addAll(genChecksRedundancy(mUnitLocation)); 
 		}
 		annotations.addAll(genChecksRTInconsistency(mUnitLocation));
 		return annotations;
@@ -244,10 +245,10 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			complementPeaAccepts = ExpressionFactory.or(bl, complementPeaAcceptsList);
 			complementPeaRejects = ExpressionFactory.or(bl, complementPeaRejectsList);
 		} else {
-			totalPeaRejects = getPcInSinkExpression(reqPeasTotal, bl);
+			totalPeaRejects = genPcInSinkExpression(reqPeasTotal, bl);
 			totalPeaAccepts = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, totalPeaRejects);
 			
-			complementPeaAccepts = getPcInSinkExpression(reqPeasComplement, bl);
+			complementPeaAccepts = genPcInSinkExpression(reqPeasComplement, bl);
 			complementPeaRejects = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, complementPeaAccepts);
 		}
 		final Expression bothAccept = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, totalPeaAccepts, complementPeaAccepts);
@@ -262,16 +263,16 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return createAssert(assertion, check, label);
 	}
 	
-	private Expression getPcInSinkExpression(ReqPeas reqPeas, BoogieLocation bl) {
+	private Expression genPcInSinkExpression(ReqPeas reqPeas, BoogieLocation bl) {
 		List<Entry<CounterTrace, PhaseEventAutomata>> peaList = reqPeas.getCounterTrace2Pea();
-		List<Expression>  terminalExpressions = new ArrayList<>();
+		List<Expression>  pcInSinkExpressions = new ArrayList<>();
 		for (Entry<CounterTrace, PhaseEventAutomata> entry : peaList) {
 			PhaseEventAutomata pea = entry.getValue();
 			Expression expression = genComparePhaseCounter(0, mSymbolTable.getPcName(pea), bl);
-			terminalExpressions.add(expression);
+			pcInSinkExpressions.add(expression);
 		}
-		Expression terminalExpression = ExpressionFactory.or(bl, terminalExpressions);
-		return terminalExpression;
+		Expression pcInSinkExpression = ExpressionFactory.or(bl, pcInSinkExpressions);
+		return pcInSinkExpression;
 	}
 	
 	private void genStrictPeaExpressions(ReqPeas strictPea, List<Expression> eqExpressions, List<Expression>  ltExpressions, BoogieLocation bl) {
@@ -447,6 +448,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return stmtList;
 
 	}
+	
 
 	/**
 	 * Generate the assertion that is violated if the requirement represented by the given automaton is non-vacuous. The
@@ -500,6 +502,71 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final String label = "VACUOUS_" + aut.getName();
 		return createAssert(disjunction, check, label);
 	}
+	
+	private List<Statement> genChecksRedundancy(final BoogieLocation bl) {
+		if (!mCheckRedundancy) {
+			return Collections.emptyList();
+		}
+		final List<Statement> stmtList = new ArrayList<>();
+		List<ReqPeas> totalPeas = new ArrayList<>();
+		List<ReqPeas> complementPeas = new ArrayList<>();
+		for (final ReqPeas reqPeas : mReqPeas) {
+			if (reqPeas.isTotal()) {
+				totalPeas.add(reqPeas);
+			} else if (reqPeas.isComplemented()) {
+				complementPeas.add(reqPeas);
+			}
+		}
+		for (int i = 0; i < totalPeas.size(); i++) {
+			List<ReqPeas> assertPeas = new ArrayList<>();
+			assertPeas.addAll(totalPeas);
+			assertPeas.remove(i);
+			assertPeas.add(i, complementPeas.get(i));
+			Statement assertStmt = genAssertRedundancy(assertPeas, bl);
+			if (assertStmt != null) {
+				stmtList.add(assertStmt);
+			}
+		}
+		return stmtList;	
+	}
+
+	private Statement genAssertRedundancy(List<ReqPeas> assertPeas, final BoogieLocation bl) {
+		ArrayList<Expression> peaAccepts = new ArrayList<>();
+		ReqPeas complementedPea = null;
+		for (ReqPeas reqPeas : assertPeas) {
+			if (reqPeas.isStrict()) {
+				if (reqPeas.isTotal()) {
+					genStrictPeaExpressions(reqPeas, Collections.emptyList(), peaAccepts, bl);
+				}
+				if (reqPeas.isComplemented()) {
+					complementedPea = reqPeas;
+					genStrictPeaExpressions(reqPeas, peaAccepts, Collections.emptyList(), bl);
+				}
+			} else {
+				Expression pcInSinkExpression = genPcInSinkExpression(reqPeas, bl);
+				if (reqPeas.isTotal()) {
+					peaAccepts.add(ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, pcInSinkExpression));
+				}
+				if (reqPeas.isComplemented()) {
+					complementedPea = reqPeas;
+					peaAccepts.add(pcInSinkExpression);
+				}
+			}
+		}
+		final PatternType<?> complementedPeaPattern = complementedPea.getPattern();
+		ArrayList<String> reqIds = new ArrayList<String>();
+		ArrayList<String> peaNames = new ArrayList<String>();
+		for (Entry<CounterTrace, PhaseEventAutomata>  pea : complementedPea.getCounterTrace2Pea()) {
+			peaNames.add(pea.getValue().getName());
+			reqIds.add(complementedPeaPattern.getId());
+		}
+		// final ReqCheck check = createReqCheck(Spec.REDUNDANCY, (Entry<PatternType<?>, PhaseEventAutomata>[]) peaList.toArray());
+		final ReqCheck check = new ReqCheck(Spec.REDUNDANCY, reqIds.toArray(new String[reqIds.size()]), peaNames.toArray(new String[reqIds.size()]));
+		final String label = "REDUNDANT_" + complementedPea.getPattern().toString();
+		Statement assertStatement = createAssert(ExpressionFactory.and(bl, peaAccepts), check, label);
+		return assertStatement;
+	}
+
 
 	@SafeVarargs
 	private static ReqCheck createReqCheck(final Spec reqSpec,
