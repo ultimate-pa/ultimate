@@ -267,6 +267,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				mTestGoalWorkingSet.add(mCurrentTestGoalId);
 				if (!mTestGeneration.equals(TestGenerationMode.NaiveMultiGoal)) {
 					mCurrentTestGoalId -= 1;
+					assert mTestGoalWorkingSet.size() == 1;
 				}
 				for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
 					final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
@@ -337,6 +338,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		}
 		mLogger.info("TestGen, Amount of Tests Exported: " + mTestsExported);
 		final List<?> a = mCounterexample.getStateSequence();
+		mTestGoalsInCurrentTrace.clear();
 		for (int i = 0; i < a.size(); i++) {
 			if (a.get(i) instanceof ISLPredicate) {
 				final ISLPredicate stmt = (ISLPredicate) a.get(i);
@@ -345,7 +347,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 					mTestGoalsInCurrentTrace.add(((TestGoalAnnotation) stmt.getProgramPoint().getPayload()
 							.getAnnotations().get(TestGoalAnnotation.class.getName())).mId);
 				}
-
 			}
 		}
 		CegarLoopIterations += 1;
@@ -564,9 +565,9 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				}
 			}
 		}
-
 		mLogger.info("TestGen, Coverage: " + Covered / mErrorLocs.size());
 		mTestGoalTodoStack.removeAll(mTestGoalsInCurrentTrace);
+
 	}
 
 	private void computeAutomataDifference(final INestedWordAutomaton<L, IPredicate> minuend,
