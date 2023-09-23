@@ -136,13 +136,26 @@ public class StateRecoverabilityGenerator {
 		Map<StateRecoverabilityVerificationCondition, Set<PeaPhaseProgramCounter>> veLocation = new HashMap<>();
 		Set<ReqPeas> reqPeasSet = new HashSet<>(reqPeasList);
 		Set<String> declaredConstants = new HashSet<>();
-		Map<ReqPeas, Term> reqPeasTerm = new HashMap<>();
+		Map<ReqPeas, Map<Phase, Term>> termPerPhase = new HashMap<>();
 
-		// Create Terms for every location
+		// Create Terms for every location		
 		for (ReqPeas reqPeas : reqPeasList) {
 			List<Entry<CounterTrace, PhaseEventAutomata>> ctPeaList = reqPeas.getCounterTrace2Pea();
-			Term parallelAutomaton = generateParallelAutomatonTerm(removeReqPeas(reqPeasSet, reqPeas));
-			reqPeasTerm.put(reqPeas, parallelAutomaton);
+			
+			for(Entry<CounterTrace, PhaseEventAutomata> entry : ctPeaList) {
+				PhaseEventAutomata pea = entry.getValue();
+				Phase[] phases = pea.getPhases();
+				for (int i = 0; i < phases.length; ++i) {
+					Phase phase = phases[i];
+					CDD invariantPhaseGuardCDD = phase.getStateInvariant().and(phase.getClockInvariant());
+					Term parallelAutomaton = generateParallelAutomatonTerm(removeReqPeas(reqPeasSet, reqPeas), invariantPhaseGuardCDD);
+					
+					if(!termPerPhase.containsKey(reqPeas)) {
+						termPerPhase.put(reqPeas, new HashMap<>());
+					}
+					termPerPhase.get(reqPeas).put(phase, parallelAutomaton);
+				}
+			}
 		}
 
 		for (ReqPeas reqPea : reqPeasList) {
@@ -176,9 +189,10 @@ public class StateRecoverabilityGenerator {
 								veLocation.put(ve, new HashSet<>());
 							}
 
+							//Term possibleStartPhase =
+									//possibleStartPhase(phase, reqPea, reqPeasTerm.get(reqPea), termVe);
 							Term possibleStartPhase =
-									possibleStartPhase(phase, reqPea, reqPeasTerm.get(reqPea), termVe);
-
+									possibleStartPhase(phase, reqPea, termPerPhase.get(reqPea).get(phase), termVe);
 							// Declare constants for Z3
 							declareConstants(mScript, possibleStartPhase, declaredConstants);
 
@@ -237,8 +251,8 @@ public class StateRecoverabilityGenerator {
 	 * 
 	 * @param reqPeas
 	 * @return term
-	 */
-	private Term generateParallelAutomatonTerm(Set<ReqPeas> reqPeas) {
+	 */	
+	private Term generateParallelAutomatonTerm(Set<ReqPeas> reqPeas, CDD currentReqLocationCDD) {
 		Map<ReqPeas, PhaseEventAutomata[]> reqPeasPeaArrayMap = createPeaArray(reqPeas);
 		CDD reqsCDD = null;
 		for (Map.Entry<ReqPeas, PhaseEventAutomata[]> entry : reqPeasPeaArrayMap.entrySet()) {
@@ -257,7 +271,7 @@ public class StateRecoverabilityGenerator {
 					invariantPhaseGuardArrayPerPea[i] = invariantPhaseGuardCDD;
 				}
 
-				// Link every location-guard CDD with OR
+				// Link every location invariant-guard CDD with OR
 				CDD peaCDD = null;
 				for (int i = 0; i < invariantPhaseGuardArrayPerPea.length; ++i) {
 					if (peaCDD == null) {
@@ -279,6 +293,12 @@ public class StateRecoverabilityGenerator {
 			} else {
 				reqsCDD.and(peasCDD);
 			}
+		}
+		// Attaches the current req location CDD to the CDDs of all other requirements
+		if(reqsCDD != null) {
+			reqsCDD.and(currentReqLocationCDD);
+		} else {
+			reqsCDD = currentReqLocationCDD;
 		}
 		// Check for Null in case there is no start location, then deliver a false condition
 		Term term;
