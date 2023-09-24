@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * Data structure that represents a sequence of {@link MultiDimensionalStore}s
@@ -200,23 +201,9 @@ public class MultiDimensionalNestedStore implements ITermProvider {
 	}
 
 	public MultiDimensionalNestedStore removeOneIndex(final int i) {
-		final List<ArrayIndex> newIndices = copyAllButOne(i, mIndices);
-		final List<Term> newValues = copyAllButOne(i, mValues);
+		final List<ArrayIndex> newIndices = DataStructureUtils.copyAllButOne(mIndices, i);
+		final List<Term> newValues = DataStructureUtils.copyAllButOne(mValues, i);
 		return new MultiDimensionalNestedStore(mArray, newIndices, newValues);
-	}
-
-	private static <E> List<E> copyAllButOne(final int indexOfRemoved, final List<E> list) {
-		final List<E> result = new ArrayList<>(list.size() -1);
-		int i = 0;
-		for (final E elem : list) {
-			if (i != indexOfRemoved) {
-				result.add(elem);
-			}
-			i++;
-		}
-		assert i == result.size();
-		assert result.size() == list.size() - 1;
-		return result;
 	}
 
 	@Override

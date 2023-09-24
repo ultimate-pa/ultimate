@@ -465,4 +465,27 @@ public class DataStructureUtils {
 			return Collections.unmodifiableSet(set);
 		}
 	}
+
+
+	/**
+	 * Construct a new {@link ArrayList} that is a almost a copy of the input list
+	 * but where one given index is missing.
+	 *
+	 */
+	public static <E> List<E> copyAllButOne(final List<E> list, final int indexToBeRemoved) {
+		if (indexToBeRemoved < 0 || indexToBeRemoved >= list.size()) {
+			throw new IllegalArgumentException("Index where we remove must be inside array");
+		}
+		final List<E> result = new ArrayList<>(list.size() -1);
+		int i = 0;
+		for (final E elem : list) {
+			if (i != indexToBeRemoved) {
+				result.add(elem);
+			}
+			i++;
+		}
+		assert i == result.size();
+		assert result.size() == list.size() - 1;
+		return result;
+	}
 }
