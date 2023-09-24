@@ -484,7 +484,7 @@ public class DataStructureUtils {
 			}
 			i++;
 		}
-		assert i == result.size();
+		assert i == list.size();
 		assert result.size() == list.size() - 1;
 		return result;
 	}
