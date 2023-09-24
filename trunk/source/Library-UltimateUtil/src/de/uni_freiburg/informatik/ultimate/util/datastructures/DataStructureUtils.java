@@ -198,6 +198,21 @@ public class DataStructureUtils {
 		return !haveNonEmptyIntersection(set1, set2);
 	}
 
+	/**
+	 * Returns true, if the given collection and set have at least one common
+	 * element.
+	 */
+	public static <T> boolean haveNonEmptyIntersection(final Collection<T> collection, final Set<T> set) {
+		return collection.stream().anyMatch(set::contains);
+	}
+
+	/**
+	 * @return The collection and the set are disjoint
+	 */
+	public static <T> boolean haveEmptyIntersection(final Collection<T> collection, final Set<T> set) {
+		return !haveNonEmptyIntersection(collection, set);
+	}
+
 	public static <E> String prettyPrint(final Set<E> set) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Set: \n");
