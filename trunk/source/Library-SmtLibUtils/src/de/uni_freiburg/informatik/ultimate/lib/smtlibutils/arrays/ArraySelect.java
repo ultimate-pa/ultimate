@@ -63,6 +63,33 @@ public class ArraySelect implements ITermWrapper {
 		return String.valueOf(mTerm);
 	}
 
+	@Override
+	public int hashCode() {
+		// ArraySelects are similar if they have the same term.
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mTerm == null) ? 0 : mTerm.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		// ArraySelects are similar if they have the same term.
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final ArraySelect other = (ArraySelect) obj;
+		if (mTerm == null) {
+			if (other.mTerm != null)
+				return false;
+		} else if (!mTerm.equals(other.mTerm))
+			return false;
+		return true;
+	}
+
 	public static ArraySelect of(final Term term) {
 		if (!(term instanceof ApplicationTerm)) {
 			return null;
