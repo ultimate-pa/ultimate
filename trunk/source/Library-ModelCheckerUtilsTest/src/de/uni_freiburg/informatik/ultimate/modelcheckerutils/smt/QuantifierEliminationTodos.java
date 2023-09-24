@@ -452,7 +452,7 @@ public class QuantifierEliminationTodos {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
 		};
 		final String formulaAsString = "(exists ((x Int)) (= a2 (store a1 k x)))";
-		final String expectedResult = null;
+		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -463,7 +463,7 @@ public class QuantifierEliminationTodos {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
 		};
 		final String formulaAsString = "(forall ((x Int)) (distinct a2 (store a1 k (+ x 1))))";
-		final String expectedResult = "(forall ((x Int)) (not (= (store a1 k (+ x 1)) a2)))";
+		final String expectedResult = "(not (= a2 (store a1 k (select a2 k))))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
@@ -471,12 +471,60 @@ public class QuantifierEliminationTodos {
 	public void avt03() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(SmtSortUtils::getIntSort, "k"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntBoolSort, "b"),
+		};
+		final String formulaAsString = "(exists ((x Int)) (and (= a2 (store a1 k (+ x 1))) (select b x)))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void avt04TwoNondetValues() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "a1", "a2"),
 		};
 		final String formulaAsString = "(exists ((x Int) (y Int)) (= a2 (store (store a1 k (store (select a1 k) 23 x)) k (store (select (store a1 k (store (select a1 k) 23 x)) k) 42 y))))";
-		final String expectedResult = null;
+		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
+	@Test
+	public void avt05() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k", "i", "y"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
+		};
+		final String formulaAsString = "(and (= k y) (exists ((x Int)) (and (distinct x 0) (= a2 (store (store a1 k x) y 0)))))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void avt06CaseDistinctionExists() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k", "j"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntBoolSort, "b"),
+		};
+		final String formulaAsString = "(exists ((x Int)) (and (= a2 (store (store a1 k x) j 7)) (select b x)))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void avt07CaseDistinctionForall() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k", "j"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntBoolSort, "b"),
+		};
+		final String formulaAsString = "(forall ((x Int)) (or (distinct a2 (store (store a1 k x) j 7)) (select b x)))";
+		final String expectedResult = formulaAsString;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 	//@formatter:on
 }
