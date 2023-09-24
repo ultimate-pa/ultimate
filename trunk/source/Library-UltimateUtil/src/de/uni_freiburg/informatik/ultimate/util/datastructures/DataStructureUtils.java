@@ -192,7 +192,7 @@ public class DataStructureUtils {
 	}
 
 	/**
-	 * @return Both sets are disjunct
+	 * @return Both sets are disjoint
 	 */
 	public static <T> boolean haveEmptyIntersection(final Set<T> set1, final Set<T> set2) {
 		return !haveNonEmptyIntersection(set1, set2);
