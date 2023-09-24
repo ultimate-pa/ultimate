@@ -27,11 +27,14 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermWrapper;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -72,6 +75,17 @@ public class ArrayStore implements ITermWrapper {
 	@Override
 	public String toString() {
 		return String.valueOf(mTerm);
+	}
+
+	public ArrayStore applySubstitution(final ManagedScript mgdScript, final Map<Term, Term> substitutionMapping) {
+		final Term newArray = Substitution.apply(mgdScript, substitutionMapping, mArray);
+		final Term newIndex = Substitution.apply(mgdScript, substitutionMapping, mIndex);
+		final Term newValue = Substitution.apply(mgdScript, substitutionMapping, mValue);
+		if (newArray == mArray && newIndex == mIndex && newValue == mValue) {
+			return this;
+		}
+		final Term newTerm = SmtUtils.store(mgdScript.getScript(), newArray, newIndex, newValue);
+		return new ArrayStore(newArray, newIndex, newValue, newTerm);
 	}
 
 	@Override
