@@ -1173,14 +1173,17 @@ public class CACSL2BoogieBacktranslator
 			}
 		}
 		// TODO: Workaround to ignore signExtend and zeroExtend (possibly unsound), support it properly
-		if (fun.getIdentifier().startsWith("~sign_extend") || fun.getIdentifier().startsWith("~zero_extend")) {
+		final String function = fun.getIdentifier();
+		if (function.startsWith("~sign_extend") || function.startsWith("~zero_extend")) {
+			mLogger.warn("Ignoring function application for %s(%s), might lead to unsoundness.", function,
+					translatedArguments[0]);
 			return translatedArguments[0];
 		}
-		final Pair<String, CPrimitives> reversed = SFO.reverseBoogieFunctionName(fun.getIdentifier());
+		final Pair<String, CPrimitives> reversed = SFO.reverseBoogieFunctionName(function);
 		if (reversed == null) {
 			reportUnfinishedBacktranslation(
-					UNFINISHED_BACKTRANSLATION + " cannot identify Boogie2SMT function " + fun.getIdentifier());
-			mLogger.error("Missing backtranslation for function " + fun.getIdentifier());
+					UNFINISHED_BACKTRANSLATION + " cannot identify Boogie2SMT function " + function);
+			mLogger.error("Missing backtranslation for function " + function);
 			return null;
 		}
 		final String smtFunction = reversed.getFirst();
@@ -1228,9 +1231,8 @@ public class CACSL2BoogieBacktranslator
 		case "bvnot":
 			return new FakeExpression(String.format("~(%s)", translatedArguments[0]));
 		default:
-			reportUnfinishedBacktranslation(
-					UNFINISHED_BACKTRANSLATION + " could not match function " + fun.getIdentifier());
-			mLogger.error("Missing backtranslation for function " + fun.getIdentifier());
+			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " could not match function " + function);
+			mLogger.error("Missing backtranslation for function " + function);
 			return null;
 		}
 	}
