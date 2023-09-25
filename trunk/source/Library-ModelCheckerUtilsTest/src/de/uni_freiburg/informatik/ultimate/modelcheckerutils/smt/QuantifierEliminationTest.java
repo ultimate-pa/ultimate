@@ -136,6 +136,12 @@ public class QuantifierEliminationTest {
 				SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script), SmtSortUtils.getIntSort(script)));
 	}
 
+	public static Sort getArrayIntIntIntIntSort(final Script script) {
+		return SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script), SmtSortUtils.getArraySort(script,
+				SmtSortUtils.getIntSort(script),
+				SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script), SmtSortUtils.getIntSort(script))));
+	}
+
 	@BeforeClass
 	public static void beforeAllTests() {
 		mCsvWriter = new QuantifierEliminationTestCsvWriter(QuantifierEliminationTest.class.getSimpleName());
