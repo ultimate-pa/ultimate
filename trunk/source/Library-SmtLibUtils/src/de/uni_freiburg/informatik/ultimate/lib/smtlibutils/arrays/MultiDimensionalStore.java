@@ -211,6 +211,21 @@ public class MultiDimensionalStore implements ITermProvider {
 		return new MultiDimensionalStore(array, new ArrayIndex(index), remainder, term);
 	}
 
+	public MultiDimensionalStore getOutermost(final Script script, final int k) {
+		if (k <= 0) {
+			throw new AssertionError("Must extract at least one dimension");
+		}
+		if (k >= getDimension()) {
+			throw new AssertionError("Must not extract all dimensions");
+		}
+		final ArrayIndex lowerIndex = mIndex.getFirst(k);
+		final ArrayIndex higherIndex = mIndex.getLast(mIndex.size() - k);
+		final MultiDimensionalSelect selectInner = new MultiDimensionalSelect(mArray, lowerIndex);
+		final MultiDimensionalStore updateInner = new MultiDimensionalStore(selectInner.toTerm(script), higherIndex,
+				mValue, script);
+		return new MultiDimensionalStore(mArray, lowerIndex, updateInner.toTerm(script), script);
+	}
+
 	@Override
 	public String toString() {
 		return mStoreTerm.toString();
