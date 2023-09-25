@@ -2152,6 +2152,30 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void saaDowngrade01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k1", "k2", "k3", "j1"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "b"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntIntSort, "c"),
+		};
+		final String formulaAsString = "(exists ((a (Array Int(Array Int (Array Int Int))))) (and (= c (store a k1 (store (select a k1) k2 (store (select (select a k1) k2) k3 42))))  (= (select a j1) b)))";
+		final String expectedResult = "(let ((.cse0 (= j1 k1))) (and (let ((.cse1 (select c k1))) (or (and (not .cse0) (= 42 (select (select .cse1 k2) k3))) (= .cse1 (store b k2 (store (select b k2) k3 42))))) (or .cse0 (= b (select c j1)))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void saaDowngrade02() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "k1", "k2", "k3", "j1", "j2"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntIntSort, "c"),
+		};
+		final String formulaAsString = "(exists ((a (Array Int(Array Int (Array Int Int))))) (and (= c (store a k1 (store (select a k1) k2 (store (select (select a k1) k2) k3 42))))  (= (select (select a j1) j2) b)))";
+		final String expectedResult = "(let ((.cse0 (= j1 k1)) (.cse1 (= j2 k2))) (and (or (and .cse0 .cse1) (= (select (select c j1) j2) b)) (let ((.cse3 (select (select c k1) k2))) (let ((.cse2 (= 42 (select .cse3 k3)))) (or (and (not .cse0) .cse2) (= .cse3 (store b k3 42)) (and (not .cse1) .cse2))))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 	//@formatter:on
 }
