@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.pea.ComplementPEA;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PEAComplement;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
@@ -73,7 +73,7 @@ public class ComplementTransformerReq2Pea implements IReq2Pea {
 		
 		for (Entry<CounterTrace, PhaseEventAutomata> pea : ct2pea) {
 			PhaseEventAutomata peaToComplement = pea.getValue();
-			ComplementPEA complementPea= new ComplementPEA(peaToComplement);
+			PEAComplement complementPea= new PEAComplement(peaToComplement);
 			PhaseEventAutomata totalisedPea = complementPea.getTotalisedPEA();
 			PhaseEventAutomata complementedPEA = complementPea.getComplementPEA();
 			totalCt2pea.add(new Pair<>(pea.getKey(), totalisedPea));

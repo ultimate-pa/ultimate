@@ -17,7 +17,7 @@ import java.util.jar.Attributes.Name;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
-import de.uni_freiburg.informatik.ultimate.lib.pea.ComplementPEA;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PEAComplement;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.InitialTransition;
@@ -172,7 +172,7 @@ public class ComplementPEATest {
 	@Test
 	public void testComplementResponseDelayGlobally() {
 		PhaseEventAutomata testPEA = mTestAutomata.get(0);
-		ComplementPEA complementPEA = new ComplementPEA(testPEA);
+		PEAComplement complementPEA = new PEAComplement(testPEA);
 		PhaseEventAutomata complementAutomaton = complementPEA.getComplementPEA();
 		Phase[] originalPhases = testPEA.getPhases();
 		Phase[] phases = complementAutomaton.getPhases();
@@ -196,7 +196,7 @@ public class ComplementPEATest {
 	@Test
 	public void testComplementUniversalityGlobally() {
 		PhaseEventAutomata testPEA = mTestAutomata.get(1);
-		ComplementPEA complementPEA = new ComplementPEA(testPEA);
+		PEAComplement complementPEA = new PEAComplement(testPEA);
 		PhaseEventAutomata complementAutomaton = complementPEA.getComplementPEA();
 		Phase[] phases = complementAutomaton.getPhases();
 		Phase sink = phases[0];
@@ -215,7 +215,7 @@ public class ComplementPEATest {
 	@Test
 	public void testComplementDurationBoundUGlobally() {
 		PhaseEventAutomata testPEA = mTestAutomata.get(2);
-		ComplementPEA complementPEA = new ComplementPEA(testPEA);
+		PEAComplement complementPEA = new PEAComplement(testPEA);
 		PhaseEventAutomata complementAutomaton = complementPEA.getComplementPEA();
 		Phase[] phases = complementAutomaton.getPhases();
 		assertTrue(phases.length == testPEA.getPhases().length + 1);
