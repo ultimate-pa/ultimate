@@ -61,9 +61,6 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		if (mode == PEATransformerMode.REQ_TEST) {
 			return generateReqTestBoogie(patterns);
 		}
-		if (mode == PEATransformerMode.REQ_COMP) {
-			return  generateReqComplementCheckBoogie(patterns);
-		}
 		if (mode == PEATransformerMode.REQ_RED) {
 			return generateReqCheckRedundancyBoogie(patterns);
 		}
@@ -91,18 +88,6 @@ public class PEAtoBoogieObserver extends BaseObserver {
 				new ReqTestResultUtil(mLogger, mServices, translator.getReqSymbolTable(), transformer.getEffectStore());
 		// register CEX transformer that removes program executions from CEX.
 		final UnaryOperator<IResult> resultTransformer = mReporter::convertTraceAbstractionResult;
-		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
-		return translator.getUnit();
-	}
-	
-	private IElement generateReqComplementCheckBoogie(final List<PatternType<?>> patterns) {
-		final ComplementTransformer transformer = new ComplementTransformer(mServices, mLogger);
-		final Req2BoogieTranslator translator =
-				new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.singletonList(transformer));
-		final VerificationResultTransformer reporter =
-				new VerificationResultTransformer(mLogger, mServices, translator.getReqSymbolTable());
-		// register CEX transformer that removes program executions from CEX.
-		final UnaryOperator<IResult> resultTransformer = reporter::convertTraceAbstractionResult;
 		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
 		return translator.getUnit();
 	}

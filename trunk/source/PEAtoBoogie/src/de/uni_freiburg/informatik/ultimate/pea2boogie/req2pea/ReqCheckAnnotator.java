@@ -77,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.PEATransformerMode;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CheckedReqLocation;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
@@ -144,17 +145,16 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mCheckConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
 		mReportTrivialConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY);
 		mSeparateInvariantHandling = prefs.getBoolean(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS);
-		mCheckComplement = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_COMPLEMENT);
-		mCheckRedundancy = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_REDUNDANCY);
-
+		mCheckRedundancy = prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE, PEATransformerMode.class)
+				== PEATransformerMode.REQ_RED;
+		
 		// log preferences
-		mLogger.info(String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s, %s=%s", Pea2BoogiePreferences.LABEL_CHECK_VACUITY,
-				mCheckVacuity, Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE, mCombinationNum,
+		mLogger.info(String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s", 
+				Pea2BoogiePreferences.LABEL_CHECK_VACUITY, mCheckVacuity, 
+				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE, mCombinationNum,
 				Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY, mCheckConsistency,
 				Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, mReportTrivialConsistency,
-				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS, mSeparateInvariantHandling,
-				Pea2BoogiePreferences.LABEL_CHECK_COMPLEMENT, mCheckComplement), 
-				Pea2BoogiePreferences.LABEL_CHECK_REDUNDANCY, mCheckRedundancy);
+				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS, mSeparateInvariantHandling));
 
 		final List<Declaration> decls = new ArrayList<>();
 		decls.addAll(mSymbolTable.getDeclarations());
