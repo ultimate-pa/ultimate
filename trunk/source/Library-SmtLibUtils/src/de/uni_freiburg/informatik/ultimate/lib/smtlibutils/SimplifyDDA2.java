@@ -88,17 +88,24 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private static final CheckedNodes CHECKED_NODES = CheckedNodes.ONLY_LEAVES;
 
 	/**
-	 * Options for which nodes to check for redundancy.
-	 * 
-	 * Only leaves checks only nodes that are considered leaves, including negated atoms. Quantified formulas are never
-	 * considered as leaves.
-	 * 
-	 * Only leaves and quantified nodes additionally includes quantified nodes.
-	 * 
-	 * All nodes checks every node for redundancy.
+	 * Options for which nodes to check for redundancy. To check redundancy, we check if the critical constraint at the
+	 * current node implies either the formula at the node, or its negation. If a node is redundant, it will be replaces
+	 * with `true` or `false`.
 	 */
 	private enum CheckedNodes {
-		ONLY_LEAVES, ALL_NODES, ONLY_LEAVES_AND_QUANTIFIED_NODES
+		/**
+		 * Only leaves checks only nodes that are considered leaves, including negated atoms. Quantified formulas are
+		 * never considered as leaves.
+		 */
+		ONLY_LEAVES,
+		/**
+		 * All nodes checks every node for redundancy.
+		 */
+		ALL_NODES,
+		/**
+		 * Only leaves and quantified nodes treats quantified nodes as leaves.
+		 */
+		ONLY_LEAVES_AND_QUANTIFIED_NODES
 	}
 
 	private final IUltimateServiceProvider mServices;
@@ -465,9 +472,9 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		mgdScript.getScript().assertTerm(closedContext);
 		try {
 			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(closedTerm);
-			final Comparator<Term> siblingOrder = null;
+			// final Comparator<Term> siblingOrder = null;
 			// TODO Matthias 20230810: Some example for an order in the next line.
-			// final Comparator<Term> siblingOrder = new TreeSizeComperator(CommuhashUtils.HASH_BASED_COMPERATOR);
+			final Comparator<Term> siblingOrder = new TreeSizeComperator(CommuhashUtils.HASH_BASED_COMPERATOR);
 			// final Comparator<Term> siblingOrder = new TreeHeightComperator(CommuhashUtils.HASH_BASED_COMPERATOR);
 			final Term intermediateResult =
 					TermContextTransformationEngine.transform(simplifyDDA2, siblingOrder, closedContext, nnf);
