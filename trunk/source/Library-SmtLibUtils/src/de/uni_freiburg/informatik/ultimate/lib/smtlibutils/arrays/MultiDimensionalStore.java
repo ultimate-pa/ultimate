@@ -53,10 +53,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * (store a i1 (store (select a i1) i2 v))
  * This is data structure is a wrapper for such a nested select expression which
  * allows you to directly access the array, the indices and the value.
- * This data structure allows also multidimensional arrays of dimension 0. In
- * this case, mArray is null, mIndex is empty and mValue coincides with
- * mStoreTerm. <br />
- * TODO Matthias 2023-09-25 check if support for 0-dimensional MultiDimensionalStore is still required
+
  * @author Matthias Heizmann
  */
 public class MultiDimensionalStore implements ITermProvider {
@@ -66,6 +63,9 @@ public class MultiDimensionalStore implements ITermProvider {
 
 	public MultiDimensionalStore(final Term array, final ArrayIndex index, final Term value) {
 		super();
+		if (index.isEmpty()) {
+			throw new AssertionError("Zero dimensions are not supported");
+		}
 		assert MultiDimensionalSort.areDimensionsConsistent(array, index, value);
 		mArray = array;
 		mIndex = index;
