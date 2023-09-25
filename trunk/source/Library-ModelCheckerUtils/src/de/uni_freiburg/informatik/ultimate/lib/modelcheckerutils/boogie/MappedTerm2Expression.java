@@ -170,6 +170,11 @@ public final class MappedTerm2Expression implements Serializable {
 			params[i] = translate(termParams[i], variableRewriteMap, alternateOldNames);
 		}
 		final IBoogieType type = mTypeSortTranslator.getType(symb.getReturnSort());
+		final Expression symbResult =
+				translateWithSymbolTable(symb, type, termParams, variableRewriteMap, alternateOldNames);
+		if (symbResult != null) {
+			return symbResult;
+		}
 		if (symb.getParameterSorts().length == 0) {
 			if (SmtUtils.isTrueLiteral(term)) {
 				final IBoogieType booleanType = mTypeSortTranslator.getType(SmtSortUtils.getBoolSort(mScript));
@@ -185,9 +190,6 @@ public final class MappedTerm2Expression implements Serializable {
 						((ProgramConst) programFun).getIdentifier(),
 						new DeclarationInformation(StorageClass.GLOBAL, null));
 			}
-			if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
-				return translateWithSymbolTable(symb, type, termParams, variableRewriteMap, alternateOldNames);
-			}
 			throw new IllegalArgumentException();
 		} else if ("ite".equals(symb.getName())) {
 			return new IfThenElseExpression(null, type, params[0], params[1], params[2]);
@@ -198,8 +200,6 @@ public final class MappedTerm2Expression implements Serializable {
 					&& !"=".equals(symb.getName()) && !"distinct".equals(symb.getName())) {
 				if ("extract".equals(symb.getName())) {
 					return translateBitvectorAccess(type, term, variableRewriteMap, alternateOldNames);
-				} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
-					return translateWithSymbolTable(symb, type, termParams, variableRewriteMap, alternateOldNames);
 				} else {
 					throw new UnsupportedOperationException(
 							"translation of " + symb + " not yet implemented, please contact Matthias");
@@ -234,12 +234,9 @@ public final class MappedTerm2Expression implements Serializable {
 							"don't know symbol" + " which is neither leftAssoc, rightAssoc, chainable, or pairwise.");
 				}
 			}
-		} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
-			return translateWithSymbolTable(symb, type, termParams, variableRewriteMap, alternateOldNames);
-		} else {
-			throw new UnsupportedOperationException(
-					"translation of " + symb + " not yet implemented, please contact Matthias");
 		}
+		throw new UnsupportedOperationException(
+				"translation of " + symb + " not yet implemented, please contact Matthias");
 	}
 
 	private Expression translateBitvectorAccess(final IBoogieType type, final ApplicationTerm term,
@@ -262,7 +259,10 @@ public final class MappedTerm2Expression implements Serializable {
 	private Expression translateWithSymbolTable(final FunctionSymbol symb, final IBoogieType type,
 			final Term[] termParams, final Set<TermVariable> variableNameRetainment,
 			final Map<TermVariable, String> alternateOldNames) {
-		final String identifier = mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().get(symb.getName());
+		final String identifier = mBoogie2SmtSymbolTable.translateToBoogieFunction(symb.getName(), type);
+		if (identifier == null) {
+			return null;
+		}
 		final Expression[] arguments = new Expression[termParams.length];
 		for (int i = 0; i < termParams.length; i++) {
 			arguments[i] = translate(termParams[i], variableNameRetainment, alternateOldNames);

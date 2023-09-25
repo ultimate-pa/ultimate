@@ -81,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  * Stores a mapping from Boogie identifiers to {@link ProgramVar}s and a mapping
@@ -140,7 +141,7 @@ public class Boogie2SmtSymbolTable
 	private final Map<ApplicationTerm, ProgramConst> mSmtConst2ProgramConst = new HashMap<>();
 
 	private final Map<String, String> mBoogieFunction2SmtFunction = new HashMap<>();
-	private final Map<String, String> mSmtFunction2BoogieFunction = new HashMap<>();
+	private final NestedMap2<String, IBoogieType, String> mSmtFunction2BoogieFunction = new NestedMap2<>();
 	private final Map<String, Map<String, Expression[]>> mBoogieFunction2Attributes = new HashMap<>();
 
 	private final DefaultIcfgSymbolTable mIcfgSymbolTable = new DefaultIcfgSymbolTable();
@@ -418,7 +419,7 @@ public class Boogie2SmtSymbolTable
 			}
 		}
 		mBoogieFunction2SmtFunction.put(id, smtID);
-		mSmtFunction2BoogieFunction.put(smtID, id);
+		mSmtFunction2BoogieFunction.put(smtID, resultType, id);
 	}
 
 	/**
@@ -489,8 +490,8 @@ public class Boogie2SmtSymbolTable
 	}
 
 	@Override
-	public Map<String, String> getSmtFunction2BoogieFunction() {
-		return Collections.unmodifiableMap(mSmtFunction2BoogieFunction);
+	public String translateToBoogieFunction(final String smtFunctionName, final IBoogieType type) {
+		return mSmtFunction2BoogieFunction.get(smtFunctionName, type);
 	}
 
 	public Map<String, String> getBoogieFunction2SmtFunction() {
