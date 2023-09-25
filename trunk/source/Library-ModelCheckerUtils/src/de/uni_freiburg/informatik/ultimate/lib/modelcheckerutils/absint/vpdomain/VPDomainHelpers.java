@@ -138,7 +138,7 @@ public class VPDomainHelpers {
 			}
 			return mds.getArray();
 		} else if (at.getFunction().getName().equals("store")) {
-			final MultiDimensionalStore mds = MultiDimensionalStore.convert(at);
+			final MultiDimensionalStore mds = MultiDimensionalStore.of(at);
 			if (mds.getArray() instanceof ApplicationTerm
 					&& (((ApplicationTerm) mds.getArray()).getFunction().getName().equals("select")
 							|| ((ApplicationTerm) mds.getArray()).getFunction().getName().equals("store"))) {

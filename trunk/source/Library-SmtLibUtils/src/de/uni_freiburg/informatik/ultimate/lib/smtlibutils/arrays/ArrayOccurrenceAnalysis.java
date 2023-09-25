@@ -293,7 +293,7 @@ public class ArrayOccurrenceAnalysis {
 								throw new AssertionError("downgrade");
 							}
 							nas = new MultiDimensionalNestedStore(
-									nas.getInnermost(mScript).getOutermost(mScript, mDimensionUpperLimit));
+									nas.getInnermost().getOutermost(mScript, mDimensionUpperLimit));
 							assert nas.getArray() == mWantedArray;
 						}
 						assert nas.getArray() == mWantedArray;

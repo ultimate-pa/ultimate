@@ -89,8 +89,8 @@ public class MultiDimensionalNestedStore implements ITermProvider {
 		return array;
 	}
 
-	public MultiDimensionalStore getInnermost(final Script script) {
-		return new MultiDimensionalStore(mArray, mIndices.get(0), mValues.get(0), script);
+	public MultiDimensionalStore getInnermost() {
+		return new MultiDimensionalStore(mArray, mIndices.get(0), mValues.get(0));
 	}
 
 	@Override
@@ -189,8 +189,7 @@ public class MultiDimensionalNestedStore implements ITermProvider {
 				return result;
 			}
 		}
-		final MultiDimensionalStore mds = new MultiDimensionalStore(array, new ArrayIndex(indexEntries), remainingValue,
-				term);
+		final MultiDimensionalStore mds = new MultiDimensionalStore(array, new ArrayIndex(indexEntries), remainingValue);
 		return new MultiDimensionalNestedStore(mds);
 	}
 
