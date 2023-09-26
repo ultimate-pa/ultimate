@@ -1240,6 +1240,7 @@ public class CACSL2BoogieBacktranslator
 
 	private static IASTExpression createFakeFloat(final BitvecLiteral sign, final BitvecLiteral exponent,
 			final BitvecLiteral fraction) {
+		// TODO: Should we rather represent this C-float using scientific notation (e.g. -1.57E13)?
 		final String bit = bitvecToString(sign) + bitvecToString(exponent) + bitvecToString(fraction);
 		final BigDecimal f = getDecimalFromBinaryString(bit);
 		return new FakeExpression(f.toPlainString());
