@@ -1187,6 +1187,13 @@ public class CACSL2BoogieBacktranslator
 			return null;
 		}
 		final String smtFunction = reversed.getFirst();
+		final Integer bitSize = reversed.getSecond();
+
+		if (smtFunction.startsWith("bv") && bitSize == null) {
+			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " could not match function " + function);
+			mLogger.error("Missing backtranslation for function " + function);
+			return null;
+		}
 
 		switch (smtFunction) {
 		case "fp":
@@ -1196,11 +1203,13 @@ public class CACSL2BoogieBacktranslator
 		case "NaN":
 			return new FakeExpression(String.valueOf(Float.NaN));
 		case "bvadd":
-			return new FakeExpression(String.format("(%s + %s)", translatedArguments[0], translatedArguments[1]));
+			return new FakeExpression(
+					String.format("((%s + %s) %% %d)", translatedArguments[0], translatedArguments[1], 1L << bitSize));
 		case "bvmul":
 			return new FakeExpression(String.format("(%s * %s)", translatedArguments[0], translatedArguments[1]));
 		case "bvsub":
-			return new FakeExpression(String.format("(%s - %s)", translatedArguments[0], translatedArguments[1]));
+			return new FakeExpression(
+					String.format("((%s - %s) %% %d)", translatedArguments[0], translatedArguments[1], 1L << bitSize));
 		case "bvand":
 			return new FakeExpression(String.format("(%s & %s)", translatedArguments[0], translatedArguments[1]));
 		case "bvor":
