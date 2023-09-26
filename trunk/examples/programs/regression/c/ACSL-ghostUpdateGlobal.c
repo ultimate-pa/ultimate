@@ -6,7 +6,7 @@
 
 int main() {
   int x = 0;
-  //@ ghost x = i;
+  //@ ghost i = x;
   //@ assert x == i;
   return 0;
 }
