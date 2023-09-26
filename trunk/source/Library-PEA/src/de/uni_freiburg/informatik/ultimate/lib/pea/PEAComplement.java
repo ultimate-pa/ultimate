@@ -1,20 +1,23 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * This class implements an algorithm for complementing Phase Event Automata as described in my bachelors thesis.
  * Documentation to be continued...
  *
- * aa TODO: split Alg up in multiple methods
+ * TODO: split Alg up in multiple methods
  *
  * @author Lena Funk
  */
 public class PEAComplement {
+
+	private static String TOTAL_POSTFIX = "_total";
 
 	final PhaseEventAutomata mPEAtoComplement;
 	final PhaseEventAutomata mTotalisedPEA;
@@ -33,7 +36,7 @@ public class PEAComplement {
 	 */
 	public PhaseEventAutomata totalise(PhaseEventAutomata sourcePea) {
 		// create arrayList to collect phases for complement automaton
-		List<Phase> phases = new ArrayList<>();
+		final Map<String, Phase> totalisedPhases = new HashMap<>();
 		// add sink with loop transition
 		Phase sinkPhase = new Phase("sink", CDD.TRUE, CDD.TRUE);
 		sinkPhase.addTransition(sinkPhase, CDD.TRUE, new String[] {});
@@ -41,31 +44,44 @@ public class PEAComplement {
 		sinkPhase.setTerminal(false);
 
 		computeInitialTransitionSink(sourcePea, sinkPhase);
-		phases.add(sinkPhase);
-
-		// needed for priming and unpriming
-		Set<String> clockVarSet = new HashSet<>();
-		clockVarSet.addAll(sourcePea.getClocks());
-
+		totalisedPhases.put(sinkPhase.name, sinkPhase);
 		for (Phase phase : sourcePea.getPhases()) {
-			CDD clockInv = phase.getClockInvariant();
-			CDD guardToSink = phase.stateInv.and(RangeDecision.strict(clockInv));
 			Phase totalisedPhase = new Phase(phase.name, phase.stateInv, phase.clockInv);
+			totalisedPhases.put(totalisedPhase.name, totalisedPhase);
 			if (phase.getInitialTransition().isPresent()) {
 				InitialTransition initialTransition = phase.getInitialTransition().get();
 				InitialTransition newInitialTransition =
 						new InitialTransition(initialTransition.getGuard(), totalisedPhase);
 				totalisedPhase.setInitialTransition(newInitialTransition);
 			}
+		}
+
+		// prepare initial phases
+		ArrayList<Phase> totalisedInit = new ArrayList<>();
+		for (Phase p : sourcePea.getInit()) {
+			totalisedInit.add(totalisedPhases.get(p.name));
+		}
+		if (sinkPhase.isInit) {
+			totalisedInit.add(sinkPhase);
+		}
+
+		// needed for priming and unpriming
+		Set<String> clockVarSet = new HashSet<>();
+		clockVarSet.addAll(sourcePea.getClocks());
+
+		for (Phase phase : sourcePea.getPhases()) {
+			Phase totalisedPhase = totalisedPhases.get(phase.name);
+			CDD clockInv = phase.getClockInvariant();
+			CDD guardToSink = phase.stateInv.and(RangeDecision.strict(clockInv));
 
 			for (Transition transition : phase.transitions) {
 				// add transition to new phase
-				totalisedPhase.addTransition(transition.getDest(), transition.getGuard(), transition.getResets());
+				Phase totalisedSuccessor = totalisedPhases.get(transition.getDest().name);
+				totalisedPhase.addTransition(totalisedSuccessor, transition.getGuard(), transition.getResets());
 				String[] reset = transition.getResets();
 
-				Phase successorPhase = transition.getDest();
-				CDD successorStateInv = successorPhase.stateInv;
-				CDD successorClockInv = successorPhase.clockInv;
+				CDD successorStateInv = totalisedSuccessor.stateInv;
+				CDD successorClockInv = totalisedSuccessor.clockInv;
 
 				// compute guard to sink
 				// we do not use the clock invariant of the successor phase
@@ -110,18 +126,17 @@ public class PEAComplement {
 				}
 
 			}
-			phases.add(totalisedPhase);
-		}
-		ArrayList<Phase> totalisedInit = new ArrayList<>(Arrays.asList(sourcePea.getInit()));
-		if (sinkPhase.isInit) {
-			totalisedInit.add(sinkPhase);
+			totalisedPhases.put(totalisedPhase.name, totalisedPhase);
 		}
 		Phase[] totalisedInitArray = totalisedInit.toArray(new Phase[totalisedInit.size()]);
-		PhaseEventAutomata totalisedPEA = new PhaseEventAutomata(sourcePea.getName() + "_t",
-				phases.toArray(new Phase[phases.size()]), sourcePea.mInit);
+		PhaseEventAutomata totalisedPEA = new PhaseEventAutomata(sourcePea.getName() + TOTAL_POSTFIX,
+				totalisedPhases.values().toArray(new Phase[totalisedPhases.size()]), sourcePea.mInit);
 		totalisedPEA.setInit(totalisedInitArray);
-		totalisedPEA.mVariables = sourcePea.mVariables;
-		totalisedPEA.mClocks = sourcePea.mClocks;
+		totalisedPEA.mVariables = new HashMap<String, String>(sourcePea.mVariables);
+
+		for (String s : sourcePea.mClocks) {
+			totalisedPEA.mClocks.add(s + TOTAL_POSTFIX);
+		}
 		return totalisedPEA;
 	}
 
