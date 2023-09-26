@@ -212,7 +212,7 @@ public class ComplementPEATest {
 		PEAComplement complementPEA = new PEAComplement(testPEA);
 		PhaseEventAutomata complementAutomaton = complementPEA.getComplementPEA();
 		Phase[] phases = complementAutomaton.getPhases();
-		Phase sink = phases[0];
+		Phase sink = Arrays.asList(phases).stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
 		assertTrue(sink.getInitialTransition().isPresent());
 		InitialTransition sinkInitialTransition = sink.getInitialTransition().get();
 		CDD guard = sinkInitialTransition.getGuard();
@@ -235,8 +235,8 @@ public class ComplementPEATest {
 		Phase sink = Arrays.asList(phases).stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
 		assertTrue(sink.getName().equals("sink"));
 		assertTrue(sink.getTerminal());
-		// TODO: phases are not ordered anymore, we do not know this either
-		Phase phase1 = phases[2];
+		Phase phase1 =
+				Arrays.asList(phases).stream().filter(p -> p.getClockInvariant() != CDD.TRUE).findAny().orElse(null);
 		CDD expectedClkInv = RangeDecision.create("c0", RangeDecision.OP_LTEQ, 5);
 		assertEquals(expectedClkInv, phase1.getClockInvariant());
 		List<Transition> phase1OutgoingTransitions = phase1.getTransitions();
@@ -246,7 +246,7 @@ public class ComplementPEATest {
 				assertEquals(expectedGuard, transition.getGuard());
 			}
 		}
-		assertTrue(phase1.getModifiedConstraints().get().size() == 1);
+		assertTrue(phase1.getModifiedConstraints().size() == 1);
 	}
 
 }

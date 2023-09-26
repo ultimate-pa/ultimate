@@ -27,14 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
@@ -58,7 +56,6 @@ public class PhaseEventAutomata implements Comparable<Object> {
 
 	// Additional declarations needed when processing this PEA.
 	protected List<String> mDeclarations;
-	
 
 	public PhaseEventAutomata(final String name, final Phase[] phases, final Phase[] init) {
 		this(name, phases, init, new ArrayList<String>());
@@ -94,8 +91,8 @@ public class PhaseEventAutomata implements Comparable<Object> {
 		mName = name;
 		mPhases = phases;
 		mVariables = variables;
-		
-		// add initial transition to Phases in initPhases 
+
+		// add initial transition to Phases in initPhases
 		for (Phase phase : mInit) {
 			if (phase.getInitialTransition().isEmpty()) {
 				InitialTransition initialTransition = new InitialTransition(CDD.TRUE, phase);
@@ -184,8 +181,8 @@ public class PhaseEventAutomata implements Comparable<Object> {
 
 		final Phase[] allPhases = newPhases.values().toArray(new Phase[newPhases.size()]);
 		final Phase[] initPhases = newInit.toArray(new Phase[newInit.size()]);
-		
-		// add initial transition to Phases in initPhases 
+
+		// add initial transition to Phases in initPhases
 		for (Phase phase : initPhases) {
 			InitialTransition initialTransition = new InitialTransition(phase.clockInv, phase);
 			phase.setInitialTransition(initialTransition);
@@ -396,10 +393,10 @@ public class PhaseEventAutomata implements Comparable<Object> {
 			}
 		}
 	}
-	
+
 	public boolean isStrict() {
 		for (Phase phase : mPhases) {
-			if (phase.isStrict() || phase.getModifiedConstraints().isPresent()) {
+			if (phase.isStrict() || !phase.getModifiedConstraints().isEmpty()) {
 				return true;
 			}
 		}

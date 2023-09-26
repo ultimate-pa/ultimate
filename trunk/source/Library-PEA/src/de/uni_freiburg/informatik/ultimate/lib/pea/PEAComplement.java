@@ -18,6 +18,7 @@ import java.util.Set;
 public class PEAComplement {
 
 	private static String TOTAL_POSTFIX = "_total";
+	private static String COMPLEMENT_POSTFIX = "_complement";
 
 	final PhaseEventAutomata mPEAtoComplement;
 	final PhaseEventAutomata mTotalisedPEA;
@@ -142,25 +143,36 @@ public class PEAComplement {
 	 */
 	public PhaseEventAutomata complement(PhaseEventAutomata sourcePea) {
 		List<Phase> phases = new ArrayList<>();
-		for (Phase phase : sourcePea.getPhases()) {
-			Phase complementPhase = new Phase(phase.name, phase.stateInv, phase.clockInv);
-			boolean newTerminal = !phase.getTerminal();
+		Map<String, Phase> complementPhases = copyPhases(sourcePea.mPhases);
+		for (Phase sourcePhase : sourcePea.getPhases()) {
+			Phase complementPhase = complementPhases.get(sourcePhase.name);
+			boolean newTerminal = !sourcePhase.getTerminal();
 			complementPhase.setTerminal(newTerminal);
-			for (Transition transition : phase.transitions) {
-				complementPhase.addTransition(transition.getDest(), transition.getGuard(), transition.getResets());
+			for (Transition transition : sourcePhase.transitions) {
+				complementPhase.addTransition(complementPhases.get(transition.getDest().name), transition.getGuard(),
+						transition.getResets());
 			}
-			if (!phase.getInitialTransition().isEmpty()) {
-				complementPhase.setInitialTransition(phase.getInitialTransition().get());
-			}
-			if (!phase.getModifiedConstraints().isEmpty()) {
-				complementPhase.setModifiedConstraints(phase.getModifiedConstraints().get());
-			}
+			// if (!complementPhase.getInitialTransition().isEmpty()) {
+			// complementPhase.setInitialTransition(complementPhase.getInitialTransition().get());
+			// }
 			phases.add(complementPhase);
 		}
-		PhaseEventAutomata complementPEA = new PhaseEventAutomata(sourcePea.getName() + "_c",
-				phases.toArray(new Phase[phases.size()]), sourcePea.mInit);
+		ArrayList<Phase> complementedInit = new ArrayList<>();
+		for (Phase p : sourcePea.getInit()) {
+			complementedInit.add(complementPhases.get(p.name));
+		}
+		Phase[] complementInitArray = complementedInit.toArray(new Phase[complementedInit.size()]);
+		PhaseEventAutomata complementPEA = new PhaseEventAutomata(sourcePea.getName() + COMPLEMENT_POSTFIX,
+				phases.toArray(new Phase[phases.size()]), complementInitArray);
+
+		complementPEA.setInit(complementInitArray);
 		complementPEA.mVariables = sourcePea.mVariables;
-		complementPEA.mClocks = sourcePea.mClocks;
+		complementPEA.mVariables = new HashMap<String, String>(sourcePea.mVariables);
+
+		for (String s : sourcePea.getClocks()) {
+			complementPEA.mClocks.add(s + COMPLEMENT_POSTFIX);
+		}
+
 		return complementPEA;
 	}
 
@@ -220,14 +232,16 @@ public class PEAComplement {
 	private Map<String, Phase> copyPhases(Phase[] phases) {
 		Map<String, Phase> copy = new HashMap<String, Phase>();
 		for (Phase phase : phases) {
-			Phase totalisedPhase = new Phase(phase.name, phase.stateInv, phase.clockInv);
-			copy.put(totalisedPhase.name, totalisedPhase);
+			Phase copiedPhase = new Phase(phase.name, phase.stateInv, phase.clockInv);
+			copiedPhase.setTerminal(phase.getTerminal());
+			copy.put(copiedPhase.name, copiedPhase);
 			if (phase.getInitialTransition().isPresent()) {
 				InitialTransition initialTransition = phase.getInitialTransition().get();
 				InitialTransition newInitialTransition =
-						new InitialTransition(initialTransition.getGuard(), totalisedPhase);
-				totalisedPhase.setInitialTransition(newInitialTransition);
+						new InitialTransition(initialTransition.getGuard(), copiedPhase);
+				copiedPhase.setInitialTransition(newInitialTransition);
 			}
+			copiedPhase.setModifiedConstraints(phase.getModifiedConstraints());
 		}
 		return copy;
 	}
