@@ -37,9 +37,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
@@ -179,7 +177,6 @@ public class ACSLHandler implements IACSLHandler {
 	private final LocationFactory mLocationFactory;
 	private final CHandler mCHandler;
 	private final CExpressionTranslator mCExpressionTranslator;
-	private final Set<String> mGhostVariables = new HashSet<>();
 
 	public ACSLHandler(final boolean witnessInvariantMode, final FlatSymbolTable symboltable,
 			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
@@ -261,7 +258,7 @@ public class ACSLHandler implements IACSLHandler {
 					throw new IncorrectSyntaxException(loc,
 							"Undeclared variable in ACSL expression: " + update.getIdentifier());
 				}
-				if (!mGhostVariables.contains(stv.getBoogieName())) {
+				if (!stv.getBoogieName().startsWith(SFO.GHOST)) {
 					throw new IncorrectSyntaxException(loc,
 							"C variable " + update.getIdentifier() + " cannot be assigned in ghost statement.");
 				}
@@ -273,7 +270,6 @@ public class ACSLHandler implements IACSLHandler {
 			if (codeStmt instanceof GhostDeclaration) {
 				final GhostDeclaration decl = (GhostDeclaration) codeStmt;
 				final String boogieName = SFO.GHOST + decl.getIdentifier();
-				mGhostVariables.add(boogieName);
 				final CPrimitive cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
 				final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
 				final Declaration boogieDecl = new VariableDeclaration(loc, new Attribute[0],
