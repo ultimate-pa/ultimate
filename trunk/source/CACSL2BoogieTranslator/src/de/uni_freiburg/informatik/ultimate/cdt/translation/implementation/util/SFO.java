@@ -438,7 +438,8 @@ public final class SFO {
 		try {
 			bitSize = Integer.parseInt(splitted[2]);
 		} catch (final NumberFormatException e) {
-			// Could not extract bit-size, leave it null
+			// Function name does not match
+			return null;
 		}
 		return new Pair<>(smtFunctionName, bitSize);
 	}

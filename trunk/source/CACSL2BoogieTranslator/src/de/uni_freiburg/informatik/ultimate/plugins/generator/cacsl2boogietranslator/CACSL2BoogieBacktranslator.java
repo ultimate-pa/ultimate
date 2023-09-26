@@ -1172,13 +1172,7 @@ public class CACSL2BoogieBacktranslator
 				return null;
 			}
 		}
-		// TODO: Workaround to ignore signExtend and zeroExtend (possibly unsound), support it properly
 		final String function = fun.getIdentifier();
-		if (function.startsWith("~sign_extend") || function.startsWith("~zero_extend")) {
-			mLogger.warn("Ignoring function application for %s(%s), might lead to unsoundness.", function,
-					translatedArguments[0]);
-			return translatedArguments[0];
-		}
 		final Pair<String, Integer> reversed = SFO.reverseBoogieFunctionName(function);
 		if (reversed == null) {
 			reportUnfinishedBacktranslation(
@@ -1186,16 +1180,13 @@ public class CACSL2BoogieBacktranslator
 			mLogger.error("Missing backtranslation for function " + function);
 			return null;
 		}
-		final String smtFunction = reversed.getFirst();
 		final Integer bitSize = reversed.getSecond();
 
-		if (smtFunction.startsWith("bv") && bitSize == null) {
-			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " could not match function " + function);
-			mLogger.error("Missing backtranslation for function " + function);
-			return null;
-		}
-
-		switch (smtFunction) {
+		switch (reversed.getFirst()) {
+		case "sign_extend":
+		case "zero_extend":
+			// TODO: This might be problematic for signed types!
+			return translatedArguments[0];
 		case "fp":
 			// this function is used to construct floating points
 			return createFakeFloat((BitvecLiteral) fun.getArguments()[0], (BitvecLiteral) fun.getArguments()[1],
