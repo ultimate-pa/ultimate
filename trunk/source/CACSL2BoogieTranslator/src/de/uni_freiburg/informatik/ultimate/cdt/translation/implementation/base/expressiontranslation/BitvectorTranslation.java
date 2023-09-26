@@ -318,7 +318,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 		assert type1.getType() == type2.getType() : "Probably incompatible types! Did you forget a conversion?";
 		final int bitsize = computeBitsize(type1);
-		declareBitvectorFunction(loc, bvop, generateBoogieFunctionNameForOrdinaryBitvecOp(bvop, bitsize), true,
+		declareBitvectorFunction(loc, bvop, SFO.getBoogieFunctionName(bvop.toString(), bitsize), true,
 				new CPrimitive(CPrimitives.BOOL), null, type1, type2);
 		final Expression result = BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop, exp1, exp2);
 		return result;
@@ -431,13 +431,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported arithmetic expression");
 		}
 		final int bitsize = computeBitsize(type1);
-		final String boogieFunctionName = generateBoogieFunctionNameForOrdinaryBitvecOp(bvop, bitsize);
+		final String boogieFunctionName = SFO.getBoogieFunctionName(bvop.toString(), bitsize);
 		declareBitvectorFunction(loc, bvop, boogieFunctionName, false, type1, null, type1, type2);
 		return BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop, new Expression[] { exp1, exp2 });
-	}
-
-	private static String generateBoogieFunctionNameForOrdinaryBitvecOp(final BvOp bvop, final int bitsize) {
-		return SFO.AUXILIARY_FUNCTION_PREFIX + bvop + SFO.AUXILIARY_FUNCTION_PREFIX + bitsize;
 	}
 
 	public void declareBitvectorFunction(final ILocation loc, final BvOp smtFunctionName,
@@ -458,7 +454,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				|| smtFunctionName == BvOp.bvor || smtFunctionName == BvOp.bvsdiv || smtFunctionName == BvOp.bvsmod
 				|| smtFunctionName == BvOp.bvsrem || smtFunctionName == BvOp.bvxor || smtFunctionName == BvOp.bvsub
 				|| smtFunctionName == BvOp.bvshl;
-		final String boogieFunctionName = generateBoogieFunctionNameForOrdinaryBitvecOp(smtFunctionName, bitsize);
+		final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName.toString(), bitsize);
 		if (mFunctionDeclarations.getDeclaredFunctions().containsKey(boogieFunctionName)) {
 			// function already declared
 			return;
@@ -475,7 +471,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		assert smtFunctionName == BvOp.bvule || smtFunctionName == BvOp.bvult || smtFunctionName == BvOp.bvuge
 				|| smtFunctionName == BvOp.bvugt || smtFunctionName == BvOp.bvsle || smtFunctionName == BvOp.bvslt
 				|| smtFunctionName == BvOp.bvsge || smtFunctionName == BvOp.bvsgt;
-		final String boogieFunctionName = generateBoogieFunctionNameForOrdinaryBitvecOp(smtFunctionName, bitsize);
+		final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName.toString(), bitsize);
 		if (mFunctionDeclarations.getDeclaredFunctions().containsKey(boogieFunctionName)) {
 			// function already declared
 			return;
@@ -488,7 +484,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	private void declareBitvectorFunctionBvNeg(final ILocation loc, final int bitsize) {
 		final BvOp smtFunctionName = BvOp.bvneg;
-		final String boogieFunctionName = generateBoogieFunctionNameForOrdinaryBitvecOp(smtFunctionName, bitsize);
+		final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName.toString(), bitsize);
 		if (mFunctionDeclarations.getDeclaredFunctions().containsKey(boogieFunctionName)) {
 			// function already declared
 			return;
