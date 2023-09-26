@@ -47,16 +47,13 @@ public class Phase implements Comparable<Phase> {
 	Set<String> stoppedClocks;
 	List<Transition> transitions;
 	public int ID;
-	
+
 	private boolean mIsTerminal;
 	private boolean mIsStrict;
 	private Optional<InitialTransition> mInitialTransition;
 	// clock constraints that have been modified in the complementation procedure
 	// in the case of a phase with a strict clock constraints
-	private Optional<List<RangeDecision>> mModifiedConstraints;
-	
-	
-	
+	private final List<RangeDecision> mModifiedConstraints;
 
 	/**
 	 * The phase bits used by the powerset construction. This is only set for automata built from CounterExample traces.
@@ -75,11 +72,11 @@ public class Phase implements Comparable<Phase> {
 		isEntry = false;
 		isExit = false;
 		incomming = new Vector<>();
-		
+
 		mIsTerminal = true;
 		mInitialTransition = Optional.empty();
 		mIsStrict = RangeDecision.isStrictLess(clockInv);
-		mModifiedConstraints = Optional.empty();
+		mModifiedConstraints = new ArrayList<RangeDecision>();
 	}
 
 	public Phase(final String name, final CDD stateInv, final CDD clockInv) {
@@ -209,7 +206,8 @@ public class Phase implements Comparable<Phase> {
 
 		while (it.hasNext()) {
 			final Transition t = it.next();
-			System.out.println("  " + t.getSrc().name + " -> " + t.getDest().name + " [ label = \"" + t.getGuard() + "\" ]");
+			System.out.println(
+					"  " + t.getSrc().name + " -> " + t.getDest().name + " [ label = \"" + t.getGuard() + "\" ]");
 		}
 	}
 
@@ -265,35 +263,33 @@ public class Phase implements Comparable<Phase> {
 	public int getID() {
 		return ID;
 	}
-	
-	
+
 	public boolean getTerminal() {
 		return mIsTerminal;
 	}
-	
+
 	public void setTerminal(final boolean val) {
 		mIsTerminal = val;
 	}
-	
 
-    public void setInitialTransition(InitialTransition initialTransition) {
-        mInitialTransition = Optional.ofNullable(initialTransition);
-        isInit = true;
-    }
-
-    public Optional<InitialTransition> getInitialTransition() {
-        return mInitialTransition;
-    }
-    
-    public void setModifiedConstraints(List<RangeDecision> modifiedConstraints) {
-		mModifiedConstraints = Optional.ofNullable(modifiedConstraints);
+	public void setInitialTransition(InitialTransition initialTransition) {
+		mInitialTransition = Optional.ofNullable(initialTransition);
+		isInit = true;
 	}
-    
-    public Optional<List<RangeDecision>> getModifiedConstraints() {
+
+	public Optional<InitialTransition> getInitialTransition() {
+		return mInitialTransition;
+	}
+
+	public void setModifiedConstraints(List<RangeDecision> modifiedConstraints) {
+		mModifiedConstraints.addAll(modifiedConstraints);
+	}
+
+	public List<RangeDecision> getModifiedConstraints() {
 		return mModifiedConstraints;
 	}
-    
-    public boolean isStrict() {
+
+	public boolean isStrict() {
 		return mIsStrict;
 	}
 }
