@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1595,24 +1596,38 @@ public final class SmtUtils {
 		return result;
 	}
 
+	/**
+	 * Construct store term from the array theory. Uses an optimization for
+	 * (syntactically) similar indices. E.g., if we have a store term of the form
+	 * `(store (store (store (store a k 0) j 1) k 2) j 3)`, the two innermost store
+	 * terms are dropped because the outer store terms use also index k and j.
+	 */
 	public static Term store(final Script script, final Term array, final Term index, final Term value) {
-		final Term result;
-		if (FLATTEN_ARRAY_TERMS) {
-			final Term nestedIdx = getArrayStoreIdx(array);
-			if (nestedIdx != null) {
-				// Check for store-over-store
-				if (nestedIdx.equals(index)) {
-					// Found store-over-store => ignore inner store
-					final ApplicationTerm appArray = (ApplicationTerm) array;
-					result = script.term("store", appArray.getParameters()[0], index, value);
-				} else {
-					result = script.term("store", array, index, value);
-				}
-			} else {
-				result = script.term("store", array, index, value);
+		ArrayStore as = ArrayStore.of(array);
+		if (as == null) {
+			// no nested store
+			return script.term("store", array, index, value);
+		}
+		final Set<Term> indices = new HashSet<>();
+		indices.add(index);
+		// index-value pairs that we will have in the result, pairs of inner stores
+		// at the beginning
+		final ArrayDeque<Pair<Term, Term>> indexValueSequence = new ArrayDeque<>();
+		indexValueSequence.addFirst(new Pair<>(index, value));
+		Term currentArray = array;
+		while (as != null) {
+			// for indices that occurred already in the outer stores, we drop the inner
+			// index-value pairs
+			if (!indices.contains(as.getIndex())) {
+				indexValueSequence.addFirst(new Pair<>(as.getIndex(), as.getValue()));
+				indices.add(as.getIndex());
 			}
-		} else {
-			result = script.term("store", array, index, value);
+			currentArray = as.getArray();
+			as = ArrayStore.of(currentArray);
+		}
+		Term result = currentArray;
+		for (final Pair<Term, Term> indexValue : indexValueSequence) {
+			result = script.term("store", result, indexValue.getFirst(), indexValue.getSecond());
 		}
 		return result;
 	}
