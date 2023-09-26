@@ -229,7 +229,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnotStmt;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalGhostDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.ICACSL2BoogieBacktranslatorMapping;
@@ -3246,8 +3246,8 @@ public class CHandler {
 				}
 				if (globAcsl instanceof CodeAnnotStmt) {
 					final CodeStatement codeStmt = ((CodeAnnotStmt) globAcsl).getCodeStmt();
-					if (codeStmt instanceof GhostDeclaration) {
-						final GhostDeclaration decl = (GhostDeclaration) codeStmt;
+					if (codeStmt instanceof GlobalGhostDeclaration) {
+						final GlobalGhostDeclaration decl = (GlobalGhostDeclaration) codeStmt;
 						final String boogieName = "#ghost~" + decl.getIdentifier();
 						final CPrimitive cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
 						final ILocation loc = mLocationFactory.createCLocation(next);

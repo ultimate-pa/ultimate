@@ -29,6 +29,10 @@ CodeStatement ::=
  		type : ACSLType
 	    identifier : String
 	    expr : Expression
+	| { GlobalGhostDeclaration }
+ 		type : ACSLType
+	    identifier : String
+	    expr : Expression
 	| { GhostUpdate }
 	    identifier : String
 	    expr : Expression

@@ -1181,10 +1181,10 @@ decl::=
  {: parser.setAcslNode(ldef); :}
 | GHOST:g type_spec:t IDENTIFIER:i SEMICOLON:s 
   {: 
-	 parser.setAcslNode(setNodeLocationFromSymbols(new CodeAnnotStmt(setNodeLocationFromSymbols(new GhostDeclaration(new ACSLType(t), i, null), t$, i$)), g$, s$)); :}
+	 parser.setAcslNode(setNodeLocationFromSymbols(new CodeAnnotStmt(setNodeLocationFromSymbols(new GlobalGhostDeclaration(new ACSLType(t), i, null), t$, i$)), g$, s$)); :}
 | GHOST:g type_spec:t IDENTIFIER:i EQUAL lexpr:expr SEMICOLON:s 
   {: 
-	 parser.setAcslNode(setNodeLocationFromSymbols(new CodeAnnotStmt(setNodeLocationFromSymbols(new GhostDeclaration(new ACSLType(t), i, expr), t$, expr$)), g$, s$)); :}
+	 parser.setAcslNode(setNodeLocationFromSymbols(new CodeAnnotStmt(setNodeLocationFromSymbols(new GlobalGhostDeclaration(new ACSLType(t), i, expr), t$, expr$)), g$, s$)); :}
 ;
 
 type_annot::=
