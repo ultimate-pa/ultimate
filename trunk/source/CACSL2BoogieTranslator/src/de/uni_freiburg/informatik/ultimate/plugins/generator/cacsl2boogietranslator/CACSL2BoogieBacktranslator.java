@@ -1191,9 +1191,10 @@ public class CACSL2BoogieBacktranslator
 		switch (smtFunction) {
 		case "fp":
 			// this function is used to construct floating points
-			return translateFloatConstConstructor(cType, fun, reversed.getSecond());
+			return createFakeFloat((BitvecLiteral) fun.getArguments()[0], (BitvecLiteral) fun.getArguments()[1],
+					(BitvecLiteral) fun.getArguments()[2]);
 		case "NaN":
-			return translateFloatNaNConstructor(cType, fun, reversed.getSecond());
+			return new FakeExpression(String.valueOf(Float.NaN));
 		case "bvadd":
 			return new FakeExpression(String.format("(%s + %s)", translatedArguments[0], translatedArguments[1]));
 		case "bvmul":
@@ -1233,73 +1234,6 @@ public class CACSL2BoogieBacktranslator
 		default:
 			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " could not match function " + function);
 			mLogger.error("Missing backtranslation for function " + function);
-			return null;
-		}
-	}
-
-	private IASTExpression translateFloatConstConstructor(final CType cType, final FunctionApplication fun,
-			final CPrimitives floatType) {
-		switch (floatType) {
-		case LONGDOUBLE:
-			// ~fp~LONGDOUBLE(in0 : bv1, in1 : bv15, in2 : bv112)
-			final BitvecLiteral sign = (BitvecLiteral) fun.getArguments()[0];
-			final BitvecLiteral exponent = (BitvecLiteral) fun.getArguments()[1];
-			final BitvecLiteral fraction = (BitvecLiteral) fun.getArguments()[2];
-			return createFakeFloat(sign, exponent, fraction);
-		case BOOL:
-		case CHAR:
-		case INT:
-		case LONG:
-		case LONGLONG:
-		case SCHAR:
-		case SHORT:
-		case UCHAR:
-		case UINT:
-		case ULONG:
-		case ULONGLONG:
-		case USHORT:
-		case VOID:
-			throw new IllegalArgumentException(floatType + " is not a float type");
-		case COMPLEX_DOUBLE:
-		case COMPLEX_FLOAT:
-		case COMPLEX_LONGDOUBLE:
-		case DOUBLE:
-		case FLOAT:
-		default:
-			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " " + floatType + " is not yet converted ("
-					+ fun.getIdentifier() + ")");
-			return null;
-		}
-	}
-
-	private IASTExpression translateFloatNaNConstructor(final CType cType, final FunctionApplication fun,
-			final CPrimitives floatType) {
-		switch (floatType) {
-		case BOOL:
-		case CHAR:
-		case INT:
-		case LONG:
-		case LONGLONG:
-		case SCHAR:
-		case SHORT:
-		case UCHAR:
-		case UINT:
-		case ULONG:
-		case ULONGLONG:
-		case USHORT:
-		case VOID:
-			throw new IllegalArgumentException(floatType + " is not a float type");
-		case COMPLEX_DOUBLE:
-		case COMPLEX_FLOAT:
-		case COMPLEX_LONGDOUBLE:
-		case DOUBLE:
-		case FLOAT:
-		case LONGDOUBLE:
-			// ~NaN~FLOAT() returns (out : C_FLOAT)
-			return new FakeExpression(String.valueOf(Float.NaN));
-		default:
-			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " " + floatType + " is not yet converted ("
-					+ fun.getIdentifier() + ")");
 			return null;
 		}
 	}
