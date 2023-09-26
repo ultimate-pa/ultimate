@@ -36,8 +36,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.alternating.BooleanExpression;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GetAcceptedLassoWord;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -50,10 +48,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -83,7 +78,6 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
-import jdk.jshell.spi.ExecutionControl.NotImplementedException;
 
 /**
  *
@@ -144,13 +138,12 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mCheckConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
 		mReportTrivialConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY);
 		mSeparateInvariantHandling = prefs.getBoolean(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS);
-		mCheckRedundancy = prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE, PEATransformerMode.class)
-				== PEATransformerMode.REQ_RED;
-		
+		mCheckRedundancy = prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE,
+				PEATransformerMode.class) == PEATransformerMode.REQ_RED;
+
 		// log preferences
-		mLogger.info(String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s", 
-				Pea2BoogiePreferences.LABEL_CHECK_VACUITY, mCheckVacuity, 
-				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE, mCombinationNum,
+		mLogger.info(String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s", Pea2BoogiePreferences.LABEL_CHECK_VACUITY,
+				mCheckVacuity, Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE, mCombinationNum,
 				Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY, mCheckConsistency,
 				Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, mReportTrivialConsistency,
 				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS, mSeparateInvariantHandling));
@@ -188,7 +181,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			annotations.addAll(genCheckComplement(mUnitLocation));
 		}
 		if (mCheckRedundancy) {
-			annotations.addAll(genChecksRedundancy(mUnitLocation)); 
+			annotations.addAll(genChecksRedundancy(mUnitLocation));
 		}
 		annotations.addAll(genChecksRTInconsistency(mUnitLocation));
 		return annotations;
@@ -199,7 +192,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final Expression expr = ExpressionFactory.createBooleanLiteral(bl, false);
 		return Collections.singletonList(createAssert(expr, check, "CONSISTENCY"));
 	}
-	
 
 	private List<Statement> genCheckComplement(final BoogieLocation bl) {
 		final List<Statement> stmtList = new ArrayList<>();
@@ -207,18 +199,19 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		ReqPeas reqPeasTotal = mReqPeas.get(1);
 		ReqPeas reqPeasComplement = mReqPeas.get(2);
 		// we can only check for complement if we have exactly two PEAs
-		final Statement assertComplement = genAssertComplement(reqPeasOriginal ,reqPeasTotal, reqPeasComplement, bl);
+		final Statement assertComplement = genAssertComplement(reqPeasOriginal, reqPeasTotal, reqPeasComplement, bl);
 		if (assertComplement != null) {
 			stmtList.add(assertComplement);
 		}
 		return stmtList;
 	}
-	
+
 	/**
 	 * Generate the assertion that is violated if the TWO given automata are NOT complements of each other. The
-	 * assertion expresses that the automata will never accept or reject the same words if one is the complement automaton of the other, 
-	 * i.e. pea 1 can not be in a terminal state if pea 2 is, and pea 1 can not be in a non-terminal state if pea 2 is. 
-	 * If this is the case, they have a word "in common" and are NOT complements of each other.
+	 * assertion expresses that the automata will never accept or reject the same words if one is the complement
+	 * automaton of the other, i.e. pea 1 can not be in a terminal state if pea 2 is, and pea 1 can not be in a
+	 * non-terminal state if pea 2 is. If this is the case, they have a word "in common" and are NOT complements of each
+	 * other.
 	 *
 	 * @param peas
 	 *            List of peas, should contain only two elements
@@ -226,46 +219,52 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	 *            A boogie location used for all statements.
 	 * @return The assertion for non-complementness
 	 */
-	private Statement genAssertComplement(ReqPeas reqPeasOriginal, ReqPeas reqPeasTotal, ReqPeas reqPeasComplement, final BoogieLocation bl) {
+	private Statement genAssertComplement(ReqPeas reqPeasOriginal, ReqPeas reqPeasTotal, ReqPeas reqPeasComplement,
+			final BoogieLocation bl) {
 		final Expression complementPeaAccepts;
 		final Expression complementPeaRejects;
 		final Expression totalPeaRejects;
 		final Expression totalPeaAccepts;
-		
+
 		if (reqPeasOriginal.isStrict()) {
-			List<Expression>  totalPeaRejectsList = new ArrayList<>();
-			List<Expression>  totalPeaAcceptsList = new ArrayList<>();
+			List<Expression> totalPeaRejectsList = new ArrayList<>();
+			List<Expression> totalPeaAcceptsList = new ArrayList<>();
 			genStrictPeaExpressions(reqPeasTotal, totalPeaRejectsList, totalPeaAcceptsList, bl);
 			totalPeaAccepts = ExpressionFactory.or(bl, totalPeaAcceptsList);
 			totalPeaRejects = ExpressionFactory.or(bl, totalPeaRejectsList);
-			
-			List<Expression>  complementPeaAcceptsList = new ArrayList<>();
-			List<Expression>  complementPeaRejectsList = new ArrayList<>();
-			genStrictPeaExpressions(reqPeasComplement, complementPeaAcceptsList, complementPeaRejectsList , bl);			
+
+			List<Expression> complementPeaAcceptsList = new ArrayList<>();
+			List<Expression> complementPeaRejectsList = new ArrayList<>();
+			genStrictPeaExpressions(reqPeasComplement, complementPeaAcceptsList, complementPeaRejectsList, bl);
 			complementPeaAccepts = ExpressionFactory.or(bl, complementPeaAcceptsList);
 			complementPeaRejects = ExpressionFactory.or(bl, complementPeaRejectsList);
 		} else {
 			totalPeaRejects = genPcInSinkExpression(reqPeasTotal, bl);
 			totalPeaAccepts = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, totalPeaRejects);
-			
+
 			complementPeaAccepts = genPcInSinkExpression(reqPeasComplement, bl);
-			complementPeaRejects = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, complementPeaAccepts);
+			complementPeaRejects =
+					ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, complementPeaAccepts);
 		}
-		final Expression bothAccept = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, totalPeaAccepts, complementPeaAccepts);
-		final Expression bothReject = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, totalPeaRejects, complementPeaRejects);
-		
-		final Expression bothAcceptOrBothReject = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICOR, bothAccept, bothReject);
-		
-		final Expression assertion = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, bothAcceptOrBothReject);
-		
+		final Expression bothAccept = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND,
+				totalPeaAccepts, complementPeaAccepts);
+		final Expression bothReject = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND,
+				totalPeaRejects, complementPeaRejects);
+
+		final Expression bothAcceptOrBothReject =
+				ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICOR, bothAccept, bothReject);
+
+		final Expression assertion =
+				ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, bothAcceptOrBothReject);
+
 		final ReqCheck check = new ReqCheck(Spec.COMPLEMENT);
 		final String label = "Complement_" + reqPeasTotal.toString() + "_" + reqPeasComplement.toString();
 		return createAssert(assertion, check, label);
 	}
-	
+
 	private Expression genPcInSinkExpression(ReqPeas reqPeas, BoogieLocation bl) {
 		List<Entry<CounterTrace, PhaseEventAutomata>> peaList = reqPeas.getCounterTrace2Pea();
-		List<Expression>  pcInSinkExpressions = new ArrayList<>();
+		List<Expression> pcInSinkExpressions = new ArrayList<>();
 		for (Entry<CounterTrace, PhaseEventAutomata> entry : peaList) {
 			PhaseEventAutomata pea = entry.getValue();
 			Expression expression = genComparePhaseCounter(0, mSymbolTable.getPcName(pea), bl);
@@ -274,46 +273,48 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		Expression pcInSinkExpression = ExpressionFactory.or(bl, pcInSinkExpressions);
 		return pcInSinkExpression;
 	}
-	
-	private void genStrictPeaExpressions(ReqPeas strictPea, List<Expression> eqExpressions, List<Expression>  ltExpressions, BoogieLocation bl) {
+
+	private void genStrictPeaExpressions(ReqPeas strictPea, List<Expression> eqExpressions,
+			List<Expression> ltExpressions, BoogieLocation bl) {
 		List<Entry<CounterTrace, PhaseEventAutomata>> peaList = strictPea.getCounterTrace2Pea();
 		for (Entry<CounterTrace, PhaseEventAutomata> entry : peaList) {
 			PhaseEventAutomata pea = entry.getValue();
 			Phase[] phases = pea.getPhases();
-			
+
 			for (int i = 0; i < phases.length; i++) {
 				Phase phase = phases[i];
 				Expression pcExpression = genComparePhaseCounter(i, mSymbolTable.getPcName(pea), bl);
-				if (phase.getModifiedConstraints().isPresent()) {
-					List<RangeDecision> modifiedConstraints = phase.getModifiedConstraints().get();
-					
-					List<Expression>  clockEqExpressions = new ArrayList<>();
+				if (!phase.getModifiedConstraints().isEmpty()) {
+					List<RangeDecision> modifiedConstraints = phase.getModifiedConstraints();
+
+					List<Expression> clockEqExpressions = new ArrayList<>();
 					clockEqExpressions.add(pcExpression);
-					List<Expression>  clockLtExpressions = new ArrayList<>();
+					List<Expression> clockLtExpressions = new ArrayList<>();
 					clockLtExpressions.add(pcExpression);
-					
+
 					for (RangeDecision strictClockConstraint : modifiedConstraints) {
 						Integer clockValueInteger = strictClockConstraint.getVal(0);
 						String clockVariableString = strictClockConstraint.getVar();
-						
-						Expression clockEq = genCompareClock(clockValueInteger.floatValue(), clockVariableString, BinaryExpression.Operator.COMPEQ, bl);
+
+						Expression clockEq = genCompareClock(clockValueInteger.floatValue(), clockVariableString,
+								BinaryExpression.Operator.COMPEQ, bl);
 						clockEqExpressions.add(clockEq);
-						Expression clockLt = genCompareClock(clockValueInteger.floatValue(), clockVariableString, BinaryExpression.Operator.COMPLT, bl);
+						Expression clockLt = genCompareClock(clockValueInteger.floatValue(), clockVariableString,
+								BinaryExpression.Operator.COMPLT, bl);
 						clockLtExpressions.add(clockLt);
 					}
 					Expression pcAndEqExpression = ExpressionFactory.and(bl, clockEqExpressions);
 					eqExpressions.add(pcAndEqExpression);
 					Expression pcAndLtExpression = ExpressionFactory.and(bl, clockLtExpressions);
 					ltExpressions.add(pcAndLtExpression);
-				}
-				else {
+				} else {
 					if (phase.getTerminal()) {
 						eqExpressions.add(pcExpression);
 						ltExpressions.add(pcExpression);
 					}
 				}
-				
-			}		
+
+			}
 		}
 	}
 
@@ -448,7 +449,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return stmtList;
 
 	}
-	
 
 	/**
 	 * Generate the assertion that is violated if the requirement represented by the given automaton is non-vacuous. The
@@ -502,7 +502,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final String label = "VACUOUS_" + aut.getName();
 		return createAssert(disjunction, check, label);
 	}
-	
+
 	private List<Statement> genChecksRedundancy(final BoogieLocation bl) {
 		if (!mCheckRedundancy) {
 			return Collections.emptyList();
@@ -527,7 +527,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 				stmtList.add(assertStmt);
 			}
 		}
-		return stmtList;	
+		return stmtList;
 	}
 
 	private Statement genAssertRedundancy(List<ReqPeas> assertPeas, final BoogieLocation bl) {
@@ -545,7 +545,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			} else {
 				Expression pcInSinkExpression = genPcInSinkExpression(reqPeas, bl);
 				if (reqPeas.isTotal()) {
-					peaAccepts.add(ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, pcInSinkExpression));
+					peaAccepts
+							.add(ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, pcInSinkExpression));
 				}
 				if (reqPeas.isComplemented()) {
 					complementedPea = reqPeas;
@@ -556,18 +557,19 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final PatternType<?> complementedPeaPattern = complementedPea.getPattern();
 		ArrayList<String> reqIds = new ArrayList<String>();
 		ArrayList<String> peaNames = new ArrayList<String>();
-		for (Entry<CounterTrace, PhaseEventAutomata>  pea : complementedPea.getCounterTrace2Pea()) {
+		for (Entry<CounterTrace, PhaseEventAutomata> pea : complementedPea.getCounterTrace2Pea()) {
 			peaNames.add(pea.getValue().getName());
 			reqIds.add(complementedPeaPattern.getId());
 		}
-		// final ReqCheck check = createReqCheck(Spec.REDUNDANCY, (Entry<PatternType<?>, PhaseEventAutomata>[]) peaList.toArray());
+		// final ReqCheck check = createReqCheck(Spec.REDUNDANCY, (Entry<PatternType<?>, PhaseEventAutomata>[])
+		// peaList.toArray());
 		// iwie richtige namen ausgeben??
-		final ReqCheck check = new ReqCheck(Spec.REDUNDANCY, reqIds.toArray(new String[reqIds.size()]), peaNames.toArray(new String[reqIds.size()]));
+		final ReqCheck check = new ReqCheck(Spec.REDUNDANCY, reqIds.toArray(new String[reqIds.size()]),
+				peaNames.toArray(new String[reqIds.size()]));
 		final String label = "REDUNDANT_" + complementedPea.getPattern().toString();
 		Statement assertStatement = createAssert(ExpressionFactory.and(bl, peaAccepts), check, label);
 		return assertStatement;
 	}
-
 
 	@SafeVarargs
 	private static ReqCheck createReqCheck(final Spec reqSpec,
@@ -612,7 +614,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return mNormalFormTransformer.toNnf(cnf);
 	}
 
-	
 	/**
 	 * Generate the conjunction of a list of expressions.
 	 *
@@ -633,14 +634,15 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 		return mNormalFormTransformer.toNnf(cnf);
 	}
-	
+
 	private Expression genComparePhaseCounter(final int phaseIndex, final String pcName, final BoogieLocation bl) {
 		final IdentifierExpression identifier = mSymbolTable.getIdentifierExpression(pcName);
 		final IntegerLiteral intLiteral = ExpressionFactory.createIntegerLiteral(bl, Integer.toString(phaseIndex));
 		return ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.COMPEQ, identifier, intLiteral);
 	}
-	
-	private Expression genCompareClock(final float clockValue, final String clockName, BinaryExpression.Operator op, final BoogieLocation bl) {
+
+	private Expression genCompareClock(final float clockValue, final String clockName, BinaryExpression.Operator op,
+			final BoogieLocation bl) {
 		final IdentifierExpression identifier = mSymbolTable.getIdentifierExpression(clockName);
 		final RealLiteral realLiteral = ExpressionFactory.createRealLiteral(bl, Float.toString(clockValue));
 		return ExpressionFactory.newBinaryExpression(bl, op, identifier, realLiteral);
