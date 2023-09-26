@@ -152,10 +152,6 @@ public final class SFO {
 	 */
 	public static final String SIZEOF_POINTER_ID = SFO.SIZEOF + SFO.POINTER;
 	/**
-	 * Identifier of the null pointer.
-	 */
-	public static final String NULL = "#NULL";
-	/**
 	 * Identifier for function pointers.
 	 */
 	public static final String FUNCTION_ADDRESS = "#funAddr~";

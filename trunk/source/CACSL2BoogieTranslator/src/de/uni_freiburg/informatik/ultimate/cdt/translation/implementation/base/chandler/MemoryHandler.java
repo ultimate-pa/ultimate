@@ -324,7 +324,6 @@ public class MemoryHandler {
 
 		final ArrayList<Declaration> decl = new ArrayList<>();
 
-		decl.add(constructNullPointerConstant());
 		decl.add(constructValidArrayDeclaration());
 		decl.add(constuctLengthArrayDeclaration());
 
@@ -1176,14 +1175,6 @@ public class MemoryHandler {
 		final VarList vlV =
 				new VarList(ignoreLoc, new String[] { MemoryModelDeclarations.ULTIMATE_VALID.getName() }, validType);
 		return new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { vlV });
-	}
-
-	private VariableDeclaration constructNullPointerConstant() {
-		// NULL Pointer
-		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		final VariableDeclaration result = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] {
-				new VarList(ignoreLoc, new String[] { SFO.NULL }, mTypeHandler.constructPointerType(ignoreLoc)) });
-		return result;
 	}
 
 	/**

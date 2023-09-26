@@ -842,21 +842,6 @@ public class PostProcessor {
 				initStatements.add(0, assignment);
 			}
 			{
-				// set the value of the NULL-constant to NULL = { base : 0,
-				// offset : 0 }
-				final VariableLHS slhs = ExpressionFactory.constructVariableLHS(translationUnitLoc,
-						mTypeHandler.getBoogiePointerType(), SFO.NULL, DeclarationInformation.DECLARATIONINFO_GLOBAL);
-				initStatements.add(0,
-						StatementFactory.constructAssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
-								new Expression[] { ExpressionFactory.constructStructConstructor(translationUnitLoc,
-										new String[] { "base", "offset" },
-										new Expression[] { mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-												mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO),
-												mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-														mExpressionTranslation.getCTypeOfPointerComponents(),
-														BigInteger.ZERO) }) }));
-			}
-			{
 				// Add assume(0 < #StackHeapBarrier) to ensure that the null
 				// pointer is on the heap.
 				final Expression zero = mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
