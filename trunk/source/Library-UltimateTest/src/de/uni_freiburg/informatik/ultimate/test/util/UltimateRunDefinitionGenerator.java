@@ -27,13 +27,23 @@
 package de.uni_freiburg.informatik.ultimate.test.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.amihaiemil.eoyaml.Yaml;
+import com.amihaiemil.eoyaml.YamlInput;
+import com.amihaiemil.eoyaml.YamlMapping;
+import com.amihaiemil.eoyaml.YamlNode;
+import com.amihaiemil.eoyaml.YamlSequence;
+
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -44,6 +54,8 @@ public final class UltimateRunDefinitionGenerator {
 
 	private static final String SETTINGS_PATH = "examples/settings/";
 	private static final String TOOLCHAIN_PATH = "examples/toolchains/";
+
+	private enum SvcompArchitecture { ILP32, LP64 };
 
 	private UltimateRunDefinitionGenerator() {
 		// do not instantiate utility class
@@ -101,7 +113,7 @@ public final class UltimateRunDefinitionGenerator {
 	 * all files with a file ending from <code>fileEndings</code> define a run definition with the settings file
 	 * <code>settings</code> and the toolchain file <code>toolchain</code>. All files are defined by their paths
 	 * relative to the Ultimate trunk directory.
-	 * 
+	 *
 	 * @param timeout
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunk(final String[] directories,
@@ -237,7 +249,7 @@ public final class UltimateRunDefinitionGenerator {
 	 * <li>For each directory, at most <code>limit</code> files are used. They are selected pseudo-randomly but
 	 * deterministic (i.e., multiple runs with the same parameter generate the same result).
 	 * </ul>
-	 * 
+	 *
 	 * @param timelimit
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(
@@ -290,5 +302,85 @@ public final class UltimateRunDefinitionGenerator {
 			final String witnessFolder, final long timeout) {
 		return getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(directories, fileEndings, settings, toolchain,
 				witnessFolder, timeout, 0, -1);
+	}
+
+	public static Collection<UltimateRunDefinition> getRunDefinitionsFromSvcompYaml(final SvcompFolderSubset sfs,
+			final Pair<String, String> settingsPair[], final String toolchain, final long timeout) {
+		final List<UltimateRunDefinition> result = new ArrayList<>();
+		final File toolchainFile = getFileFromToolchainDir(toolchain);
+
+		final Collection<File> selectedYamlFiles = TestUtil.getFilesRegex(getFileFromTrunkDir(sfs.getDirectory()),
+				new String[] { ".*\\.yml" });
+		final Map<File, SvcompArchitecture> inputFileToArchitecture = getInputFilesFromYamlFiles(selectedYamlFiles,
+				sfs.getProperty(), sfs.getExpectedResult());
+		final Collection<File> inputFiles = TestUtil.limitFiles(inputFileToArchitecture.keySet(), sfs.getOffset(),
+				sfs.getLimit());
+
+		for (final File input : inputFiles) {
+			for (final Pair<String, String> settingPair : settingsPair) {
+				final String setting;
+				switch (inputFileToArchitecture.get(input)) {
+				case ILP32:
+					setting = settingPair.getFirst();
+					break;
+				case LP64:
+					setting = settingPair.getSecond();
+					break;
+				default:
+					throw new AssertionError();
+				}
+				final File settingsFile = getFileFromSettingsDir(setting);
+				result.add(new UltimateRunDefinition(input, settingsFile, toolchainFile, timeout));
+			}
+		}
+		return result;
+	}
+
+	private static Map<File, SvcompArchitecture> getInputFilesFromYamlFiles(final Collection<File> selectedYamlFiles, final String property,
+			final Boolean expectedResult) {
+		final Map<File, SvcompArchitecture> result = new HashMap<>();
+		for (final File yamlFile : selectedYamlFiles) {
+			try {
+				final Pair<File, SvcompArchitecture> inputFile = getInputFileFromYamlFile(yamlFile, property, expectedResult);
+				if (inputFile != null) {
+					result.put(inputFile.getFirst(), inputFile.getSecond());
+				}
+			} catch (final IOException e) {
+				throw new AssertionError(e);
+			}
+		}
+		return result;
+	}
+
+	private static Pair<File, SvcompArchitecture> getInputFileFromYamlFile(final File yamlFile, final String propertyFile,
+			final Boolean expectedResult) throws IOException {
+		final YamlInput yamlInput = Yaml.createYamlInput(yamlFile);
+		final YamlMapping rootMapping = yamlInput.readYamlMapping();
+		if (hasProperty(rootMapping, propertyFile, expectedResult)) {
+			final String cFilename = rootMapping.string("input_files");
+			final String filename = yamlFile.getParent() + System.getProperty("file.separator") + cFilename;
+			final YamlMapping optionsMapping = rootMapping.yamlMapping("options");
+			final String architectureString = optionsMapping.string("data_model");
+			final SvcompArchitecture architecture = SvcompArchitecture.valueOf(architectureString);
+			return new Pair<>(new File(filename), architecture);
+		}
+		return null;
+	}
+
+	private static boolean hasProperty(final YamlMapping rootMapping, final String propertyFile,
+			final Boolean expectedResult) {
+		final YamlSequence propertySequence = rootMapping.yamlSequence("properties");
+		for (final YamlNode propertyNode : propertySequence) {
+			final YamlMapping yamlMapForPropery = propertyNode.asMapping();
+			final String prp = yamlMapForPropery.string("property_file");
+			if (prp.endsWith(propertyFile)) {
+				if (expectedResult == null) {
+					return true;
+				}
+				final String expectedVerdict = yamlMapForPropery.string("expected_verdict");
+				return (Boolean.valueOf(expectedVerdict) == expectedResult);
+			}
+		}
+		return false;
 	}
 }
