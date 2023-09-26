@@ -3261,11 +3261,9 @@ public class CHandler {
 						resultBuilder.addDeclaration(boogieDecl);
 						final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression expr = decl.getExpr();
 						if (expr != null) {
-							final ExpressionResultBuilder initBuilder = new ExpressionResultBuilder();
 							final ExpressionResult exprResult =
 									(ExpressionResult) main.dispatch(expr, main.getAcslHook());
-							// TODO: Check that expr does not have any side-effects
-							initBuilder.addAllExceptLrValue(exprResult);
+							resultBuilder.addAllExceptLrValue(exprResult);
 							final VariableLHS lhs = new VariableLHS(loc, mTypeHandler.getBoogieTypeForCType(cType),
 									boogieName, declInfo);
 							final AssignmentStatement assignment = StatementFactory

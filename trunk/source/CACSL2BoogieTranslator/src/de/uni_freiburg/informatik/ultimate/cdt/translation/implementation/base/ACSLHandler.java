@@ -255,7 +255,6 @@ public class ACSLHandler implements IACSLHandler {
 				final GhostUpdate update = (GhostUpdate) codeStmt;
 				final ExpressionResult exprResult =
 						(ExpressionResult) main.dispatch(update.getExpr(), main.getAcslHook());
-				// TODO: Check that expr does not have any side-effects
 				resultBuilder.addAllExceptLrValue(exprResult);
 				final SymbolTableValue stv = mSymboltable.findCSymbol(main.getAcslHook(), update.getIdentifier());
 				if (stv == null) {
@@ -293,7 +292,6 @@ public class ACSLHandler implements IACSLHandler {
 				final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression expr = decl.getExpr();
 				if (expr != null) {
 					final ExpressionResult exprResult = (ExpressionResult) main.dispatch(expr, main.getAcslHook());
-					// TODO: Check that expr does not have any side-effects
 					resultBuilder.addAllExceptLrValue(exprResult);
 					final VariableLHS lhs =
 							new VariableLHS(loc, mTypeHandler.getBoogieTypeForCType(cType), boogieName, declInfo);
