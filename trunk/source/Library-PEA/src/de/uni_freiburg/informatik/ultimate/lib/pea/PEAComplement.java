@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+
 /**
  * This class implements an algorithm for complementing Phase Event Automata as described in my bachelors thesis.
  * Documentation to be continued...
@@ -17,8 +19,8 @@ import java.util.Set;
  */
 public class PEAComplement {
 
-	private static String TOTAL_POSTFIX = "_total";
-	private static String COMPLEMENT_POSTFIX = "_complement";
+	public static String TOTAL_POSTFIX = "_total";
+	public static String COMPLEMENT_POSTFIX = "_complement";
 
 	final PhaseEventAutomata mPEAtoComplement;
 	final PhaseEventAutomata mTotalisedPEA;
@@ -43,7 +45,7 @@ public class PEAComplement {
 		sinkPhase.setTerminal(false);
 
 		computeInitialTransitionSink(sourcePea, sinkPhase);
-		final Map<String, Phase> totalisedPhases = copyPhases(sourcePea.getPhases());
+		final Map<String, Phase> totalisedPhases = copyPhases(sourcePea.getPhases(), TOTAL_POSTFIX);
 		totalisedPhases.put(sinkPhase.name, sinkPhase);
 
 		// prepare initial phases
@@ -84,7 +86,8 @@ public class PEAComplement {
 		for (Transition transition : phase.transitions) {
 			// add transition to new phase
 			Phase totalisedSuccessor = totalisedPhases.get(transition.getDest().name);
-			totalisedPhase.addTransition(totalisedSuccessor, transition.getGuard(), transition.getResets());
+			totalisedPhase.addTransition(totalisedSuccessor, addClockSuffixCDD(transition.getGuard(), TOTAL_POSTFIX),
+					addClockSuffix(transition.getResets(), TOTAL_POSTFIX));
 			String[] reset = transition.getResets();
 
 			CDD successorStateInv = totalisedSuccessor.stateInv;
@@ -106,8 +109,9 @@ public class PEAComplement {
 			}
 		}
 		CDD guardToSinkPrimed = guardToSink.prime(clockVarSet);
+		CDD guardToSinkWithClockSuffix = addClockSuffixCDD(guardToSinkPrimed, TOTAL_POSTFIX);
 		// make transition to sink
-		totalisedPhase.addTransition(sinkPhase, guardToSinkPrimed.negate(), new String[] {});
+		totalisedPhase.addTransition(sinkPhase, guardToSinkWithClockSuffix.negate(), new String[] {});
 
 		// special case
 		if (phase.isStrict()) {
@@ -143,14 +147,15 @@ public class PEAComplement {
 	 */
 	public PhaseEventAutomata complement(PhaseEventAutomata sourcePea) {
 		List<Phase> phases = new ArrayList<>();
-		Map<String, Phase> complementPhases = copyPhases(sourcePea.mPhases);
+		Map<String, Phase> complementPhases = copyPhases(sourcePea.mPhases, COMPLEMENT_POSTFIX);
 		for (Phase sourcePhase : sourcePea.getPhases()) {
 			Phase complementPhase = complementPhases.get(sourcePhase.name);
 			boolean newTerminal = !sourcePhase.getTerminal();
 			complementPhase.setTerminal(newTerminal);
 			for (Transition transition : sourcePhase.transitions) {
-				complementPhase.addTransition(complementPhases.get(transition.getDest().name), transition.getGuard(),
-						transition.getResets());
+				complementPhase.addTransition(complementPhases.get(transition.getDest().name),
+						addClockSuffixCDD(transition.getGuard(), COMPLEMENT_POSTFIX),
+						addClockSuffix(transition.getResets(), COMPLEMENT_POSTFIX));
 			}
 			// if (!complementPhase.getInitialTransition().isEmpty()) {
 			// complementPhase.setInitialTransition(complementPhase.getInitialTransition().get());
@@ -229,10 +234,10 @@ public class PEAComplement {
 		return nonStrictClockInvariant;
 	}
 
-	private Map<String, Phase> copyPhases(Phase[] phases) {
+	private Map<String, Phase> copyPhases(Phase[] phases, String suffix) {
 		Map<String, Phase> copy = new HashMap<String, Phase>();
 		for (Phase phase : phases) {
-			Phase copiedPhase = new Phase(phase.name, phase.stateInv, phase.clockInv);
+			Phase copiedPhase = new Phase(phase.name, phase.stateInv, addClockSuffixCDD(phase.clockInv, suffix));
 			copiedPhase.setTerminal(phase.getTerminal());
 			copy.put(copiedPhase.name, copiedPhase);
 			if (phase.getInitialTransition().isPresent()) {
@@ -246,6 +251,46 @@ public class PEAComplement {
 		return copy;
 	}
 
+	private String[] addClockSuffix(String[] clocks, String suffix) {
+		ArrayList<String> clocksWithSuffix = new ArrayList<>();
+		for (String clock : clocks) {
+			String clockWithSuffix = clock + suffix;
+			clocksWithSuffix.add(clockWithSuffix);
+		}
+		String[] clocksWithSuffixArray = new String[clocksWithSuffix.size()];
+		return clocksWithSuffix.toArray(clocksWithSuffixArray);
+	}
+
+	@SuppressWarnings("unchecked")
+	private CDD addClockSuffixCDD(CDD cdd, String suffix) {
+		ArrayList<ArrayList<Pair<Decision<?>, int[]>>> dnfDecisions = cdd.getDecisionsDNF();
+		ArrayList<CDD> conjunctionsWithSuffix = new ArrayList<>();
+		for (ArrayList<Pair<Decision<?>, int[]>> conjunction : dnfDecisions) {
+			CDD conjunctionWithSuffix = CDD.TRUE;
+			for (Pair<Decision<?>, int[]> pair : conjunction) {
+				if (pair.getFirst() instanceof RangeDecision) {
+					Decision<RangeDecision> decision = (Decision<RangeDecision>) pair.getFirst();
+					RangeDecision rangeDecision = (RangeDecision) decision;
+					int trueChildIndex = pair.getSecond()[0];
+					int op = rangeDecision.getOp(trueChildIndex);
+					int value = rangeDecision.getVal(trueChildIndex);
+					String clockVarWithSuffix = decision.getVar() + suffix;
+					CDD rangeDecisionWithSuffix = RangeDecision.create(clockVarWithSuffix, op, value);
+					conjunctionWithSuffix = conjunctionWithSuffix.and(rangeDecisionWithSuffix);
+				} else { // boolean decision
+					CDD booleanDecision = BooleanDecision.create(pair.getFirst().getVar());
+					conjunctionWithSuffix = conjunctionWithSuffix.and(booleanDecision);
+				}
+			}
+			conjunctionsWithSuffix.add(conjunctionWithSuffix);
+		}
+		CDD disjunctionWithSuffix = CDD.FALSE;
+		for (CDD conjunction : conjunctionsWithSuffix) {
+			disjunctionWithSuffix = disjunctionWithSuffix.or(conjunction);
+		}
+		return disjunctionWithSuffix;
+	}
+
 	public PhaseEventAutomata getTotalisedPEA() {
 		return mTotalisedPEA;
 	}
@@ -253,4 +298,5 @@ public class PEAComplement {
 	public PhaseEventAutomata getComplementPEA() {
 		return mComplementPEA;
 	}
+
 }
