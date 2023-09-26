@@ -354,7 +354,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		default:
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported bitwise expression");
 		}
-		final String boogieFunctionName = BitvectorFactory.generateBoogieFunctionName(bvop, computeBitsize(typeLeft));
+		final String boogieFunctionName = getBoogieFunctionName(bvop.toString(), typeLeft);
 		declareBitvectorFunction(loc, bvop, boogieFunctionName, false, typeLeft, null, typeLeft, typeRight);
 		return BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop, new Expression[] { left, right });
 	}
@@ -382,7 +382,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		default:
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported unary expression");
 		}
-		final String boogieFunctionName = BitvectorFactory.generateBoogieFunctionName(bvop, computeBitsize(type));
+		final String boogieFunctionName = getBoogieFunctionName(bvop.toString(), type);
 		declareBitvectorFunction(loc, bvop, boogieFunctionName, false, type, null, type);
 		return BitvectorFactory.constructUnaryOperation(loc, bvop, expr);
 	}
@@ -1374,8 +1374,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			for (final CPrimitive.CPrimitives cPrimitive : CPrimitive.CPrimitives.values()) {
 				final CPrimitive cPrimitiveO = new CPrimitive(cPrimitive);
 				if (cPrimitiveO.getGeneralType() == CPrimitiveCategory.INTTYPE) {
-					final String boogieFunctionName =
-							BitvectorFactory.generateBoogieFunctionName(bvop, computeBitsize(cPrimitiveO));
+					final String boogieFunctionName = getBoogieFunctionName(bvop.toString(), cPrimitiveO);
 					declareBitvectorFunction(loc, bvop, boogieFunctionName, bvop.isBoolean(), cPrimitiveO, null,
 							cPrimitiveO, cPrimitiveO);
 				}

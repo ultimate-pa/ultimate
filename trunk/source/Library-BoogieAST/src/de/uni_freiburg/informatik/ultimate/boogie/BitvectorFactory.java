@@ -70,7 +70,7 @@ public class BitvectorFactory {
 		}
 	}
 
-	public static String generateBoogieFunctionName(final BvOp bvop, final int bitsize) {
+	private static String generateBoogieFunctionName(final BvOp bvop, final int bitsize) {
 		if (bitsize <= 0) {
 			throw new IllegalArgumentException();
 		}
