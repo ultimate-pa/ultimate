@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -431,7 +430,7 @@ public final class SFO {
 		return SFO.AUXILIARY_FUNCTION_PREFIX + escapedSmtFunctionName + SFO.AUXILIARY_FUNCTION_PREFIX + suffix;
 	}
 
-	public static Pair<String, CPrimitives> reverseBoogieFunctionName(final String functionName) {
+	public static Pair<String, Integer> reverseBoogieFunctionName(final String functionName) {
 		if (functionName == null) {
 			return null;
 		}
@@ -440,20 +439,13 @@ public final class SFO {
 			return null;
 		}
 		final String smtFunctionName = splitted[1];
-		// TODO Matthias 2023-08-08: Cannot always extract C primitive, hence we omit
-		// it. In the future we have to extract the bitsize and use some C type that
-		// suiteable for this bitsize.
-		CPrimitives prim;
+		Integer bitSize = null;
 		try {
-			prim = Enum.valueOf(CPrimitives.class, splitted[2]);
-		} catch (final IllegalArgumentException iea) {
-			if (iea.getMessage().startsWith("No enum constant")) {
-				prim = null;
-			} else {
-				throw iea;
-			}
+			bitSize = Integer.parseInt(splitted[2]);
+		} catch (final NumberFormatException e) {
+			// Could not extract bit-size, leave it null
 		}
-		return new Pair<>(smtFunctionName, prim);
+		return new Pair<>(smtFunctionName, bitSize);
 	}
 
 }

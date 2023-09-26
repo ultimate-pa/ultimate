@@ -1179,7 +1179,7 @@ public class CACSL2BoogieBacktranslator
 					translatedArguments[0]);
 			return translatedArguments[0];
 		}
-		final Pair<String, CPrimitives> reversed = SFO.reverseBoogieFunctionName(function);
+		final Pair<String, Integer> reversed = SFO.reverseBoogieFunctionName(function);
 		if (reversed == null) {
 			reportUnfinishedBacktranslation(
 					UNFINISHED_BACKTRANSLATION + " cannot identify Boogie2SMT function " + function);
