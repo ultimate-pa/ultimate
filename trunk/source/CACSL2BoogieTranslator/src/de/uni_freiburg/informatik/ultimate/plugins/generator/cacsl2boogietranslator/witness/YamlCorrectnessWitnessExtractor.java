@@ -45,6 +45,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostUpdate;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
@@ -84,6 +86,13 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 		final ExtractedCorrectnessWitness rtr = new ExtractedCorrectnessWitness();
 		for (final WitnessEntry entry : mWitness.getEntries()) {
 			final Location location;
+			if (entry instanceof GhostVariable) {
+				final GhostVariable ghost = (GhostVariable) entry;
+				rtr.addGlobalDeclaration(new ExtractedGhostVariable(ghost.getVariable(), ghost.getInitial(),
+						ghost.getType(), Set.of(entry.getMetadata().getUuid().toString()), mTranslationUnit));
+				mStats.success();
+				continue;
+			}
 			final BiConsumer<IASTNode, Boolean> addFunction;
 			if (entry instanceof LocationInvariant) {
 				if (mCheckOnlyLoopInvariants) {
@@ -98,6 +107,15 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			} else if (entry instanceof FunctionContract) {
 				location = ((FunctionContract) entry).getLocation();
 				addFunction = (node, before) -> addFunctionContract((FunctionContract) entry, node, rtr, before);
+			} else if (entry instanceof GhostUpdate) {
+				final GhostUpdate update = (GhostUpdate) entry;
+				location = update.getLocation();
+				addFunction = (node, before) -> {
+					if (Boolean.TRUE.equals(before)) {
+						rtr.addWitnessStatement(node, new ExtractedGhostUpdate(update.getVariable(),
+								update.getExpression(), node, Set.of(update.getMetadata().getUuid().toString())));
+					}
+				};
 			} else {
 				throw new UnsupportedOperationException("Unknown entry type " + entry.getClass().getSimpleName());
 			}

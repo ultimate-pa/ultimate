@@ -47,6 +47,8 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostUpdate;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Invariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
@@ -99,6 +101,19 @@ public class YamlWitnessParser {
 			final Location location = parseLocation((Map<String, Object>) entry.get("location"));
 			final Invariant loopInvariant = parseInvariant((Map<String, String>) entry.get(LoopInvariant.NAME));
 			return Stream.of(new LoopInvariant(metadata, location, loopInvariant));
+		}
+		case GhostVariable.NAME: {
+			final String variable = (String) entry.get("variable");
+			final String initial = (String) entry.get("initial");
+			final String scope = (String) entry.get("scope");
+			final String type = (String) entry.get("type");
+			return Stream.of(new GhostVariable(metadata, variable, initial, scope, type));
+		}
+		case GhostUpdate.NAME: {
+			final Location location = parseLocation((Map<String, Object>) entry.get("location"));
+			final String variable = (String) entry.get("variable");
+			final String expression = (String) entry.get("expression");
+			return Stream.of(new GhostUpdate(metadata, variable, expression, location));
 		}
 		case "invariant_set": {
 			if (formatVersion.getMajor() != 2) {

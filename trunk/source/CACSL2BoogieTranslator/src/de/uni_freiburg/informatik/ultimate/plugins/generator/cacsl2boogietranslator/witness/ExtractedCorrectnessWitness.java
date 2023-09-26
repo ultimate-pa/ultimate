@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class ExtractedCorrectnessWitness {
 	private final HashRelation<IASTNode, IExtractedWitnessEntry> mWitnessStatements = new HashRelation<>();
 	private final HashRelation<IASTNode, ExtractedFunctionContract> mFunctionContracts = new HashRelation<>();
+	private final Set<IExtractedWitnessDeclaration> mGlobalDeclarations = new HashSet<>();
 
 	public void addWitnessStatement(final IASTNode node, final IExtractedWitnessEntry entry) {
 		mWitnessStatements.addPair(node, entry);
@@ -58,6 +60,10 @@ public class ExtractedCorrectnessWitness {
 		mFunctionContracts.addPair(function, contract);
 	}
 
+	public void addGlobalDeclaration(final IExtractedWitnessDeclaration decl) {
+		mGlobalDeclarations.add(decl);
+	}
+
 	public Set<IExtractedWitnessEntry> getWitnessStatements(final IASTNode node) {
 		return mWitnessStatements.getImage(node);
 	}
@@ -66,8 +72,12 @@ public class ExtractedCorrectnessWitness {
 		return mFunctionContracts.getImage(node);
 	}
 
+	public Set<IExtractedWitnessDeclaration> getGlobalDeclarations() {
+		return mGlobalDeclarations;
+	}
+
 	public void printWitness(final Consumer<String> printer) {
-		if (mWitnessStatements.isEmpty() && mFunctionContracts.isEmpty()) {
+		if (mWitnessStatements.isEmpty() && mFunctionContracts.isEmpty() && mGlobalDeclarations.isEmpty()) {
 			printer.accept("Witness did not contain any usable entries.");
 			return;
 		}
@@ -77,6 +87,9 @@ public class ExtractedCorrectnessWitness {
 		}
 		for (final Entry<IASTNode, ExtractedFunctionContract> entry : mFunctionContracts.getSetOfPairs()) {
 			printer.accept(entry.getValue().toString());
+		}
+		for (final var d : mGlobalDeclarations) {
+			printer.accept(d.toString());
 		}
 	}
 }
