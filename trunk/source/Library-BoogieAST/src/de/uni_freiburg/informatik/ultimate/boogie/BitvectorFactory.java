@@ -188,8 +188,8 @@ public class BitvectorFactory {
 
 	public static String generateBoogieFunctionNameForExtend(final ExtendOperation extendOperation,
 			final int inputBitsize, final int outputBitsize) {
-		return AUXILIARY_FUNCTION_PREFIX + extendOperation.toString() + "From" + inputBitsize
-				+ "To" + outputBitsize;
+		return String.join(AUXILIARY_FUNCTION_PREFIX, "", extendOperation.toString(), Integer.toString(outputBitsize),
+				Integer.toString(inputBitsize));
 	}
 
 

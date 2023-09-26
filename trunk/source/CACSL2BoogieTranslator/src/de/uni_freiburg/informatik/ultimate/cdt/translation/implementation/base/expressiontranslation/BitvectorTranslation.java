@@ -728,16 +728,14 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				((TypeHandler) mTypeHandler).byteSize2AstType(loc, CPrimitiveCategory.INTTYPE, bitsAfter / 8);
 		final ASTType inputType =
 				((TypeHandler) mTypeHandler).byteSize2AstType(loc, CPrimitiveCategory.INTTYPE, bitsBefore / 8);
-		final String boogieFunctionName = smtFunctionName + "From" + bitsBefore + "To" + bitsAfter;
-		if (!mFunctionDeclarations.getDeclaredFunctions()
-				.containsKey(SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName)) {
+		final String boogieFunctionName = BitvectorFactory
+				.generateBoogieFunctionNameForExtend(ExtendOperation.sign_extend, bitsBefore, bitsAfter);
+		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(boogieFunctionName)) {
 			final int[] indices = new int[] { bitsAfter - bitsBefore };
 			final Attribute[] attributes = generateAttributes(loc, false, smtFunctionName, indices);
-			mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes,
-					resultType, inputType);
+			mFunctionDeclarations.declareFunction(loc, boogieFunctionName, attributes, resultType, inputType);
 		}
-		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName;
-		return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName, new Expression[] { operand },
+		return ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName, new Expression[] { operand },
 				BoogieType.createBitvectorType(bitsAfter));
 	}
 
