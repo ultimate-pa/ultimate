@@ -35,8 +35,6 @@ public class PEAComplement {
 	 * @return the Totalised PEA of mPEAtoComplement
 	 */
 	public PhaseEventAutomata totalise(PhaseEventAutomata sourcePea) {
-		// create arrayList to collect phases for complement automaton
-		final Map<String, Phase> totalisedPhases = new HashMap<>();
 		// add sink with loop transition
 		Phase sinkPhase = new Phase("sink", CDD.TRUE, CDD.TRUE);
 		sinkPhase.addTransition(sinkPhase, CDD.TRUE, new String[] {});
@@ -44,17 +42,8 @@ public class PEAComplement {
 		sinkPhase.setTerminal(false);
 
 		computeInitialTransitionSink(sourcePea, sinkPhase);
+		final Map<String, Phase> totalisedPhases = copyPhases(sourcePea.getPhases());
 		totalisedPhases.put(sinkPhase.name, sinkPhase);
-		for (Phase phase : sourcePea.getPhases()) {
-			Phase totalisedPhase = new Phase(phase.name, phase.stateInv, phase.clockInv);
-			totalisedPhases.put(totalisedPhase.name, totalisedPhase);
-			if (phase.getInitialTransition().isPresent()) {
-				InitialTransition initialTransition = phase.getInitialTransition().get();
-				InitialTransition newInitialTransition =
-						new InitialTransition(initialTransition.getGuard(), totalisedPhase);
-				totalisedPhase.setInitialTransition(newInitialTransition);
-			}
-		}
 
 		// prepare initial phases
 		ArrayList<Phase> totalisedInit = new ArrayList<>();
@@ -70,64 +59,9 @@ public class PEAComplement {
 		clockVarSet.addAll(sourcePea.getClocks());
 
 		for (Phase phase : sourcePea.getPhases()) {
-			Phase totalisedPhase = totalisedPhases.get(phase.name);
-			CDD clockInv = phase.getClockInvariant();
-			CDD guardToSink = phase.stateInv.and(RangeDecision.strict(clockInv));
-
-			for (Transition transition : phase.transitions) {
-				// add transition to new phase
-				Phase totalisedSuccessor = totalisedPhases.get(transition.getDest().name);
-				totalisedPhase.addTransition(totalisedSuccessor, transition.getGuard(), transition.getResets());
-				String[] reset = transition.getResets();
-
-				CDD successorStateInv = totalisedSuccessor.stateInv;
-				CDD successorClockInv = totalisedSuccessor.clockInv;
-
-				// compute guard to sink
-				// we do not use the clock invariant of the successor phase
-				// if the same clock is in the reset set of the transition
-				CDD guardCdd = transition.getGuard();
-
-				CDD guardUnprimed = guardCdd.unprime(clockVarSet);
-				if (reset.length > 0) {
-					CDD noResetClockInv = RangeDecision.filterCdd(successorClockInv, reset);
-					guardToSink = guardToSink
-							.or(guardUnprimed.and(successorStateInv).and(RangeDecision.strict(noResetClockInv)));
-				} else {
-					guardToSink = guardToSink
-							.or(guardUnprimed.and(successorStateInv).and(RangeDecision.strict(successorClockInv)));
-				}
-			}
-			CDD guardToSinkPrimed = guardToSink.prime(clockVarSet);
-			// make transition to sink
-			totalisedPhase.addTransition(sinkPhase, guardToSinkPrimed.negate(), new String[] {});
-
-			// special case
-			if (phase.isStrict()) {
-				CDD totalisedClockInvariant = totalisedPhase.getClockInvariant();
-				CDD strictClockInvariantDNF = totalisedClockInvariant.toDNF_CDD();
-				List<RangeDecision> modifiedClockConstraints = new ArrayList<>();
-				CDD nonStrictClockInvariant =
-						strictConstraintHandling(strictClockInvariantDNF, CDD.TRUE, modifiedClockConstraints);
-
-				totalisedPhase.setModifiedConstraints(modifiedClockConstraints);
-				totalisedPhase.clockInv = nonStrictClockInvariant;
-
-				for (Transition transition : totalisedPhase.transitions) {
-					if (transition.getDest().getName() != "sink") {
-						CDD modifiedGuard = transition.getGuard();
-						for (RangeDecision clockConstraint : modifiedClockConstraints) {
-							CDD clockConstraintCdd = RangeDecision.create(clockConstraint.getVar(), RangeDecision.OP_LT,
-									clockConstraint.getVal(0));
-							modifiedGuard = modifiedGuard.and(clockConstraintCdd);
-						}
-						transition.setGuard(modifiedGuard);
-					}
-				}
-
-			}
-			totalisedPhases.put(totalisedPhase.name, totalisedPhase);
+			totalizeTransition(phase, sinkPhase, totalisedPhases, clockVarSet);
 		}
+
 		Phase[] totalisedInitArray = totalisedInit.toArray(new Phase[totalisedInit.size()]);
 		PhaseEventAutomata totalisedPEA = new PhaseEventAutomata(sourcePea.getName() + TOTAL_POSTFIX,
 				totalisedPhases.values().toArray(new Phase[totalisedPhases.size()]), sourcePea.mInit);
@@ -138,6 +72,67 @@ public class PEAComplement {
 			totalisedPEA.mClocks.add(s + TOTAL_POSTFIX);
 		}
 		return totalisedPEA;
+	}
+
+	private void totalizeTransition(Phase phase, Phase sinkPhase, Map<String, Phase> totalisedPhases,
+			Set<String> clockVarSet) {
+		Phase totalisedPhase = totalisedPhases.get(phase.name);
+		CDD clockInv = phase.getClockInvariant();
+		CDD guardToSink = phase.stateInv.and(RangeDecision.strict(clockInv));
+
+		for (Transition transition : phase.transitions) {
+			// add transition to new phase
+			Phase totalisedSuccessor = totalisedPhases.get(transition.getDest().name);
+			totalisedPhase.addTransition(totalisedSuccessor, transition.getGuard(), transition.getResets());
+			String[] reset = transition.getResets();
+
+			CDD successorStateInv = totalisedSuccessor.stateInv;
+			CDD successorClockInv = totalisedSuccessor.clockInv;
+
+			// compute guard to sink
+			// we do not use the clock invariant of the successor phase
+			// if the same clock is in the reset set of the transition
+			CDD guardCdd = transition.getGuard();
+
+			CDD guardUnprimed = guardCdd.unprime(clockVarSet);
+			if (reset.length > 0) {
+				CDD noResetClockInv = RangeDecision.filterCdd(successorClockInv, reset);
+				guardToSink =
+						guardToSink.or(guardUnprimed.and(successorStateInv).and(RangeDecision.strict(noResetClockInv)));
+			} else {
+				guardToSink = guardToSink
+						.or(guardUnprimed.and(successorStateInv).and(RangeDecision.strict(successorClockInv)));
+			}
+		}
+		CDD guardToSinkPrimed = guardToSink.prime(clockVarSet);
+		// make transition to sink
+		totalisedPhase.addTransition(sinkPhase, guardToSinkPrimed.negate(), new String[] {});
+
+		// special case
+		if (phase.isStrict()) {
+			CDD totalisedClockInvariant = totalisedPhase.getClockInvariant();
+			CDD strictClockInvariantDNF = totalisedClockInvariant.toDNF_CDD();
+			List<RangeDecision> modifiedClockConstraints = new ArrayList<>();
+			CDD nonStrictClockInvariant =
+					strictConstraintHandling(strictClockInvariantDNF, CDD.TRUE, modifiedClockConstraints);
+
+			totalisedPhase.setModifiedConstraints(modifiedClockConstraints);
+			totalisedPhase.clockInv = nonStrictClockInvariant;
+
+			for (Transition transition : totalisedPhase.transitions) {
+				if (transition.getDest().getName() != "sink") {
+					CDD modifiedGuard = transition.getGuard();
+					for (RangeDecision clockConstraint : modifiedClockConstraints) {
+						CDD clockConstraintCdd = RangeDecision.create(clockConstraint.getVar(), RangeDecision.OP_LT,
+								clockConstraint.getVal(0));
+						modifiedGuard = modifiedGuard.and(clockConstraintCdd);
+					}
+					transition.setGuard(modifiedGuard);
+				}
+			}
+
+		}
+		totalisedPhases.put(totalisedPhase.name, totalisedPhase);
 	}
 
 	/**
@@ -220,6 +215,21 @@ public class PEAComplement {
 			strictConstraintHandling(trueChild, nonStrictClockInvariant, strictClockConstraints);
 		}
 		return nonStrictClockInvariant;
+	}
+
+	private Map<String, Phase> copyPhases(Phase[] phases) {
+		Map<String, Phase> copy = new HashMap<String, Phase>();
+		for (Phase phase : phases) {
+			Phase totalisedPhase = new Phase(phase.name, phase.stateInv, phase.clockInv);
+			copy.put(totalisedPhase.name, totalisedPhase);
+			if (phase.getInitialTransition().isPresent()) {
+				InitialTransition initialTransition = phase.getInitialTransition().get();
+				InitialTransition newInitialTransition =
+						new InitialTransition(initialTransition.getGuard(), totalisedPhase);
+				totalisedPhase.setInitialTransition(newInitialTransition);
+			}
+		}
+		return copy;
 	}
 
 	public PhaseEventAutomata getTotalisedPEA() {
