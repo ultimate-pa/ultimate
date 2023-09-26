@@ -3248,7 +3248,7 @@ public class CHandler {
 					final CodeStatement codeStmt = ((CodeAnnotStmt) globAcsl).getCodeStmt();
 					if (codeStmt instanceof GlobalGhostDeclaration) {
 						final GlobalGhostDeclaration decl = (GlobalGhostDeclaration) codeStmt;
-						final String boogieName = "#ghost~" + decl.getIdentifier();
+						final String boogieName = SFO.GHOST + decl.getIdentifier();
 						final CPrimitive cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
 						final ILocation loc = mLocationFactory.createCLocation(next);
 						final ASTType astType = mTypeHandler.cType2AstType(loc, cType);

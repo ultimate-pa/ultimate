@@ -273,7 +273,7 @@ public class ACSLHandler implements IACSLHandler {
 			}
 			if (codeStmt instanceof GhostDeclaration) {
 				final GhostDeclaration decl = (GhostDeclaration) codeStmt;
-				final String boogieName = "#ghost~" + decl.getIdentifier();
+				final String boogieName = SFO.GHOST + decl.getIdentifier();
 				mGhostVariables.add(boogieName);
 				final CPrimitive cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
 				final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
