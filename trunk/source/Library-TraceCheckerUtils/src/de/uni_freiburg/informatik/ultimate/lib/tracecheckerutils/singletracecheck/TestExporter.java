@@ -20,7 +20,9 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
+import org.w3c.dom.DocumentType;
 import org.w3c.dom.Element;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -85,7 +87,7 @@ public class TestExporter {
 		final Document dom = db.newDocument();
 
 		// create the root element
-		final Element rootEle = dom.createElement("testcases");
+		final Element rootEle = dom.createElement("testcase");
 
 		// create data elements and place them under root
 
@@ -108,6 +110,12 @@ public class TestExporter {
 		final Transformer transformer = transformerFactory.newTransformer();
 		// pretty print XML
 		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		final DOMImplementation domImpl = doc.getImplementation();
+		final DocumentType doctype =
+				domImpl.createDocumentType("testcase", "+//IDN sosy-lab.org//DTD test-format testcase 1.1//EN",
+						"https://sosy-lab.org/test-format/testcase-1.1.dtd");
+		transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, doctype.getPublicId());
+		transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, doctype.getSystemId());
 		final DOMSource source = new DOMSource(doc);
 		final StreamResult result = new StreamResult(output);
 

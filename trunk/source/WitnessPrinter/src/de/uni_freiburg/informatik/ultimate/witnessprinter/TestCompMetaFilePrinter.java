@@ -43,7 +43,9 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
+import org.w3c.dom.DocumentType;
 import org.w3c.dom.Element;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -186,6 +188,12 @@ public class TestCompMetaFilePrinter<TTE, TE> extends BaseWitnessGenerator<TTE, 
 		final Transformer transformer = transformerFactory.newTransformer();
 		// pretty print XML
 		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		final DOMImplementation domImpl = doc.getImplementation();
+		final DocumentType doctype = domImpl.createDocumentType("test-metadata",
+				"+//IDN sosy-lab.org//DTD test-format test-metadata 1.1//EN",
+				"https://sosy-lab.org/test-format/test-metadata-1.1.dtd");
+		transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, doctype.getPublicId());
+		transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, doctype.getSystemId());
 		final DOMSource source = new DOMSource(doc);
 		final StreamResult result = new StreamResult(output);
 

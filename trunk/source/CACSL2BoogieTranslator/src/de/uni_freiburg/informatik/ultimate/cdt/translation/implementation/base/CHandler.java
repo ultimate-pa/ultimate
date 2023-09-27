@@ -2405,6 +2405,20 @@ public class CHandler {
 					resultBuilder.addOverapprox(res.getOverapprs());
 					for (final Statement s : res.getStatements()) {
 						if (s instanceof BreakStatement) {
+							if (mTestGenerationBranchCoverage) {
+								final ArrayList<Statement> ifBlockWithTestGoal = new ArrayList();
+								final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
+								final ILocation loc1 = mLocationFactory.createCLocation(node);
+								final Statement assertFalseThen =
+										new AssertStatement(loc1, ExpressionFactory.createBooleanLiteral(loc1, false));
+								final TestGoalAnnotation tg1 = new TestGoalAnnotation(countTestGoals);
+								countTestGoals += 1;
+								tg1.annotate(assertFalseThen);
+								chk.annotate(assertFalseThen);
+								ifBlockWithTestGoal.add(assertFalseThen);
+								ifBlockWithTestGoal.addAll(ifBlock);
+								ifBlock = ifBlockWithTestGoal;
+							}
 							ifBlock.add(new GotoStatement(locC, new String[] { breakLabelName }));
 						} else {
 							ifBlock.add(s);
@@ -2417,6 +2431,20 @@ public class CHandler {
 					resultBuilder.addDeclarations(Arrays.asList(b.getLocalVars()));
 					for (final Statement s : b.getBlock()) {
 						if (s instanceof BreakStatement) {
+							if (mTestGenerationBranchCoverage) {
+								final ArrayList<Statement> ifBlockWithTestGoal = new ArrayList();
+								final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
+								final ILocation loc1 = mLocationFactory.createCLocation(node);
+								final Statement assertFalseThen =
+										new AssertStatement(loc1, ExpressionFactory.createBooleanLiteral(loc1, false));
+								final TestGoalAnnotation tg1 = new TestGoalAnnotation(countTestGoals);
+								countTestGoals += 1;
+								tg1.annotate(assertFalseThen);
+								chk.annotate(assertFalseThen);
+								ifBlockWithTestGoal.add(assertFalseThen);
+								ifBlockWithTestGoal.addAll(ifBlock);
+								ifBlock = ifBlockWithTestGoal;
+							}
 							ifBlock.add(new GotoStatement(locC, new String[] { breakLabelName }));
 						} else {
 							ifBlock.add(s);
