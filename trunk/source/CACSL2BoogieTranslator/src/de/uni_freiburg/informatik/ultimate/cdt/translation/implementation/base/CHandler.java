@@ -3256,13 +3256,12 @@ public class CHandler {
 								new VarList[] { new VarList(loc, new String[] { boogieName }, astType) });
 						final CDeclaration cDecl = new CDeclaration(cType, decl.getIdentifier());
 						final DeclarationInformation declInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-						mSymbolTable.storeCSymbol(next, decl.getIdentifier(), new SymbolTableValue(boogieName,
-								boogieDecl, astType, cDecl, declInfo, main.getAcslHook(), false));
+						mSymbolTable.storeCSymbol(next, decl.getIdentifier(),
+								new SymbolTableValue(boogieName, boogieDecl, astType, cDecl, declInfo, next, false));
 						resultBuilder.addDeclaration(boogieDecl);
 						final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression expr = decl.getExpr();
 						if (expr != null) {
-							final ExpressionResult exprResult =
-									(ExpressionResult) main.dispatch(expr, main.getAcslHook());
+							final ExpressionResult exprResult = (ExpressionResult) main.dispatch(expr, next);
 							resultBuilder.addAllExceptLrValue(exprResult);
 							final VariableLHS lhs = new VariableLHS(loc, mTypeHandler.getBoogieTypeForCType(cType),
 									boogieName, declInfo);
