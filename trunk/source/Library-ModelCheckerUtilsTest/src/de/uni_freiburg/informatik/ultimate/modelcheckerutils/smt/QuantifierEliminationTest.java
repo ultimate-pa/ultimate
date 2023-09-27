@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.DeclarableFunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -53,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
@@ -280,13 +280,16 @@ public class QuantifierEliminationTest {
 			final String expectedResultAsString, final boolean expectQuantifierFreeResult,
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
 			final QuantifierEliminationTestCsvWriter csvWriter) {
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
-		Term letFree = new FormulaUnLet().transform(formulaAsTerm);
-		letFree = new CommuhashNormalForm(services, mgdScript.getScript()).transform(letFree);
-		letFree = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(letFree);
+		final Term preprocessedInput;
+		{
+			final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
+			final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
+			final Term unf = UnfTransformer.apply(mgdScript.getScript(), letFree);
+			preprocessedInput = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(unf);
+		}
 		final String testId = ReflectionUtil.getCallerMethodName(4);
-		csvWriter.reportEliminationBegin(letFree, testId);
-		final Term result = PartialQuantifierElimination.eliminate(services, mgdScript, letFree,
+		csvWriter.reportEliminationBegin(preprocessedInput, testId);
+		final Term result = PartialQuantifierElimination.eliminate(services, mgdScript, preprocessedInput,
 				SimplificationTechnique.SIMPLIFY_DDA);
 		logger.info("Result: " + result);
 		if (!Arrays.asList(result.getFreeVars()).isEmpty()) {
