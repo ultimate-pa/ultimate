@@ -168,7 +168,7 @@ public class CACSL2BoogieBacktranslator
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mMapping = mapping;
-		mGenerateBacktranslationWarnings = false;
+		mGenerateBacktranslationWarnings = true;
 		mBacktranslationWarned = false;
 		mTypeSizes = typeSizes;
 		mLocationFactory = locationFactory;
@@ -227,8 +227,7 @@ public class CACSL2BoogieBacktranslator
 				final IASTNode cnode = cloc.getNode();
 
 				if (cnode == null) {
-					reportUnfinishedBacktranslation(
-							UNFINISHED_BACKTRANSLATION + ": Skipping invalid CLocation because IASTNode is null");
+					reportUnfinishedBacktranslation("Skipping invalid CLocation because IASTNode is null");
 					continue;
 				}
 
@@ -294,8 +293,7 @@ public class CACSL2BoogieBacktranslator
 				newAte = AtomicTraceElementBuilder.fromReplaceElementAndStep(ate, (CACSLLocation) loc).build();
 			} else {
 				// invalid location
-				reportUnfinishedBacktranslation(
-						UNFINISHED_BACKTRANSLATION + ": Invalid location (Location is no CACSLLocation)");
+				reportUnfinishedBacktranslation("Invalid location (Location is no CACSLLocation)");
 				continue;
 			}
 			if (newAte != null) {
@@ -380,8 +378,8 @@ public class CACSL2BoogieBacktranslator
 	 */
 	private EnumSet<StepInfo> invertConditionInStepInfo(final EnumSet<StepInfo> oldSiSet) {
 		if (!oldSiSet.contains(StepInfo.CONDITION_EVAL_FALSE) && !oldSiSet.contains(StepInfo.CONDITION_EVAL_TRUE)) {
-			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION
-					+ ": Expected StepInfo for loop construct to contain Condition, but it did not");
+			reportUnfinishedBacktranslation(
+					"Expected StepInfo for loop construct to contain Condition, but it did not");
 			return null;
 		}
 		final EnumSet<StepInfo> set = EnumSet.noneOf(StepInfo.class);
@@ -733,7 +731,7 @@ public class CACSL2BoogieBacktranslator
 					final Expression tmpPointerVar = assemblePointer(entry.getFirst(), otherentry.getFirst(), isOld);
 
 					if (entry.getSecond().size() != 1 || otherentry.getSecond().size() != 1) {
-						reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " Pointers with multiple values");
+						reportUnfinishedBacktranslation("Pointers with multiple values");
 					}
 					final var valueBase = DataStructureUtils.getOneAndOnly(entry.getSecond(), "pointer base");
 					final var valueOffset = DataStructureUtils.getOneAndOnly(otherentry.getSecond(), "pointer offset");
@@ -851,8 +849,7 @@ public class CACSL2BoogieBacktranslator
 			} else {
 				final IASTNode cnode = cloc.getNode();
 				if (cnode == null) {
-					reportUnfinishedBacktranslation(
-							UNFINISHED_BACKTRANSLATION + ": Skipping invalid CLocation because IASTNode is null");
+					reportUnfinishedBacktranslation("Skipping invalid CLocation because IASTNode is null");
 					edge = new MultigraphEdge<>(currentSource, null, lastTarget);
 				} else if (cnode instanceof CASTTranslationUnit) {
 					edge = new MultigraphEdge<>(currentSource, null, lastTarget);
@@ -896,8 +893,7 @@ public class CACSL2BoogieBacktranslator
 			edge = new MultigraphEdge<>(currentSource, aloc, lastTarget);
 		} else {
 			// invalid location
-			reportUnfinishedBacktranslation(
-					UNFINISHED_BACKTRANSLATION + ": Invalid location (Location is no CACSLLocation)");
+			reportUnfinishedBacktranslation("Invalid location (Location is no CACSLLocation)");
 			edge = new MultigraphEdge<>(currentSource, null, lastTarget);
 		}
 	}
@@ -976,8 +972,8 @@ public class CACSL2BoogieBacktranslator
 
 		final ILocation loc = expression.getLocation();
 		if (loc instanceof ACSLLocation) {
-			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": Expression "
-					+ BoogiePrettyPrinter.print(expression) + " has an ACSLNode, but we do not support it yet");
+			reportUnfinishedBacktranslation("Expression " + BoogiePrettyPrinter.print(expression)
+					+ " has an ACSLNode, but we do not support it yet");
 			return null;
 
 		}
@@ -992,8 +988,8 @@ public class CACSL2BoogieBacktranslator
 
 			final IASTNode cnode = cloc.getNode();
 			if (cnode == null) {
-				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": Expression "
-						+ BoogiePrettyPrinter.print(expression) + " has no C AST node");
+				reportUnfinishedBacktranslation(
+						"Expression " + BoogiePrettyPrinter.print(expression) + " has no C AST node");
 				return null;
 			}
 
@@ -1013,10 +1009,9 @@ public class CACSL2BoogieBacktranslator
 						return new FakeExpression(cnode, origName.toString(), origName.getCType());
 					}
 				}
-				reportUnfinishedBacktranslation(
-						UNFINISHED_BACKTRANSLATION + ": Expression " + BoogiePrettyPrinter.print(expression)
-								+ " has a CASTFunctionDefinition but is no IdentifierExpression: "
-								+ expression.getClass().getSimpleName());
+				reportUnfinishedBacktranslation("Expression " + BoogiePrettyPrinter.print(expression)
+						+ " has a CASTFunctionDefinition but is no IdentifierExpression: "
+						+ expression.getClass().getSimpleName());
 				return null;
 			} else if (cnode instanceof CASTFunctionDeclarator) {
 
@@ -1030,14 +1025,12 @@ public class CACSL2BoogieBacktranslator
 						return new FakeExpression(cnode, origName.getName(), origName.getCType());
 					}
 				}
-				reportUnfinishedBacktranslation(
-						UNFINISHED_BACKTRANSLATION + ": Expression " + BoogiePrettyPrinter.print(expression)
-								+ " has a C AST node but it is no IASTExpression: " + cnode.getClass());
+				reportUnfinishedBacktranslation("Expression " + BoogiePrettyPrinter.print(expression)
+						+ " has a C AST node but it is no IASTExpression: " + cnode.getClass());
 				return null;
 			} else {
-				reportUnfinishedBacktranslation(
-						UNFINISHED_BACKTRANSLATION + ": Expression " + BoogiePrettyPrinter.print(expression)
-								+ " has a C AST node but it is no IASTExpression: " + cnode.getClass());
+				reportUnfinishedBacktranslation("Expression " + BoogiePrettyPrinter.print(expression)
+						+ " has a C AST node but it is no IASTExpression: " + cnode.getClass());
 				return null;
 			}
 		} else if (expression instanceof BinaryExpression) {
@@ -1066,9 +1059,9 @@ public class CACSL2BoogieBacktranslator
 			}
 			return new FakeExpression(String.format("((%s >> %d) & %d)", bv, start, (1L << (end - start)) - 1));
 		}
-		final String msg = "Missing case for expression " + BoogiePrettyPrinter.print(expression);
-		mLogger.error(msg);
-		reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + msg);
+		reportUnfinishedBacktranslation(
+				String.format("Cannot backtranslate expression %s, type %s is not supported yet",
+						BoogiePrettyPrinter.print(expression), expression.getClass().getSimpleName()));
 		return null;
 	}
 
@@ -1175,9 +1168,7 @@ public class CACSL2BoogieBacktranslator
 		final String function = fun.getIdentifier();
 		final Pair<String, Integer> reversed = SFO.reverseBoogieFunctionName(function);
 		if (reversed == null) {
-			reportUnfinishedBacktranslation(
-					UNFINISHED_BACKTRANSLATION + " cannot identify Boogie2SMT function " + function);
-			mLogger.error("Missing backtranslation for function " + function);
+			reportUnfinishedBacktranslation("Cannot identify Boogie2SMT function " + function);
 			return null;
 		}
 		final Integer bitSize = reversed.getSecond();
@@ -1232,8 +1223,7 @@ public class CACSL2BoogieBacktranslator
 		case "bvnot":
 			return new FakeExpression(String.format("~(%s)", translatedArguments[0]));
 		default:
-			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " could not match function " + function);
-			mLogger.error("Missing backtranslation for function " + function);
+			reportUnfinishedBacktranslation("Missing case for function " + function);
 			return null;
 		}
 	}
@@ -1298,8 +1288,8 @@ public class CACSL2BoogieBacktranslator
 			if (cType.getUnderlyingType() != null) {
 				return translateBitvecLiteral(cType.getUnderlyingType(), lit, hook);
 			}
-			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " cannot tranlate BitvecLiteral "
-					+ BoogiePrettyPrinter.print(lit) + " for unknown CNamed CType " + cType);
+			reportUnfinishedBacktranslation("cannot tranlate BitvecLiteral " + BoogiePrettyPrinter.print(lit)
+					+ " for unknown CNamed CType " + cType);
 			return null;
 		} else if (cType instanceof CPrimitive) {
 			// literal C primitives that are represented as bitvectors have to be converted back according to their
@@ -1309,12 +1299,12 @@ public class CACSL2BoogieBacktranslator
 				value = String.valueOf(mTypeSizes.extractIntegerValue(lit, cType));
 			} else if (primitive.isFloatingType()) {
 				value = naiveBitvecLiteralValueExtraction(lit);
-				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION
-						+ " using integer-interpretation for bitvector literal with floating type because of unification failure: "
-						+ BoogiePrettyPrinter.print(lit) + "=" + value);
+				reportUnfinishedBacktranslation(
+						"using integer-interpretation for bitvector literal with floating type because of unification failure: "
+								+ BoogiePrettyPrinter.print(lit) + "=" + value);
 			} else {
-				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " cannot tranlate BitvecLiteral "
-						+ BoogiePrettyPrinter.print(lit) + " representing " + primitive.getType());
+				reportUnfinishedBacktranslation("cannot tranlate BitvecLiteral " + BoogiePrettyPrinter.print(lit)
+						+ " representing " + primitive.getType());
 				return null;
 			}
 		} else {
@@ -1339,16 +1329,15 @@ public class CACSL2BoogieBacktranslator
 	private void checkLiteral(final CType cType, final Expression expr, final String value) {
 		if (value == null || "null".equals(value)) {
 			if (cType == null) {
-				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + expr.getClass().getSimpleName()
-						+ " " + BoogiePrettyPrinter.print(expr) + " could not be translated");
+				reportUnfinishedBacktranslation(expr.getClass().getSimpleName() + " " + BoogiePrettyPrinter.print(expr)
+						+ " could not be translated");
 			} else {
-				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + expr.getClass().getSimpleName()
-						+ " " + BoogiePrettyPrinter.print(expr) + " could not be translated for associated CType "
-						+ cType);
+				reportUnfinishedBacktranslation(expr.getClass().getSimpleName() + " " + BoogiePrettyPrinter.print(expr)
+						+ " could not be translated for associated CType " + cType);
 			}
 		} else if (value.contains("~fp~LONGDOUBLE")) {
-			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + expr.getClass().getSimpleName() + " "
-					+ BoogiePrettyPrinter.print(expr) + " could not be translated");
+			reportUnfinishedBacktranslation(expr.getClass().getSimpleName() + " " + BoogiePrettyPrinter.print(expr)
+					+ " could not be translated");
 
 		}
 	}
@@ -1370,9 +1359,8 @@ public class CACSL2BoogieBacktranslator
 			final CASTSimpleDeclaration decls) {
 		// this should only happen for IdentifierExpressions
 		if (!(expression instanceof IdentifierExpression)) {
-			reportUnfinishedBacktranslation(
-					UNFINISHED_BACKTRANSLATION + "Expression " + BoogiePrettyPrinter.print(expression)
-							+ " is mapped to a declaration, but is no IdentifierExpression");
+			reportUnfinishedBacktranslation("Expression " + BoogiePrettyPrinter.print(expression)
+					+ " is mapped to a declaration, but is no IdentifierExpression");
 			return null;
 		}
 
@@ -1385,8 +1373,7 @@ public class CACSL2BoogieBacktranslator
 			final IdentifierExpression orgidexp = (IdentifierExpression) expression;
 			final TranslatedVariable origName = translateIdentifierExpression(orgidexp);
 			if (origName == null) {
-				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": No BoogieVar found for "
-						+ BoogiePrettyPrinter.print(expression));
+				reportUnfinishedBacktranslation("No BoogieVar found for " + BoogiePrettyPrinter.print(expression));
 				return null;
 			}
 			return new FakeExpression(decls, decls.getDeclarators()[0].getName().getRawSignature(),
@@ -1397,8 +1384,7 @@ public class CACSL2BoogieBacktranslator
 		final IdentifierExpression orgidexp = (IdentifierExpression) expression;
 		final TranslatedVariable origName = translateIdentifierExpression(orgidexp);
 		if (origName == null) {
-			reportUnfinishedBacktranslation(
-					UNFINISHED_BACKTRANSLATION + ": No BoogieVar found for " + BoogiePrettyPrinter.print(expression));
+			reportUnfinishedBacktranslation("No BoogieVar found for " + BoogiePrettyPrinter.print(expression));
 			return null;
 		}
 		for (final IASTDeclarator decl : decls.getDeclarators()) {
@@ -1406,10 +1392,9 @@ public class CACSL2BoogieBacktranslator
 				return new FakeExpression(decl.getName().getRawSignature());
 			}
 		}
-		reportUnfinishedBacktranslation(
-				UNFINISHED_BACKTRANSLATION + ": IdentifierExpression " + BoogiePrettyPrinter.print(expression)
-						+ " has a CASTSimpleDeclaration, but we were unable to determine the variable name from it: "
-						+ decls.getRawSignature());
+		reportUnfinishedBacktranslation("IdentifierExpression " + BoogiePrettyPrinter.print(expression)
+				+ " has a CASTSimpleDeclaration, but we were unable to determine the variable name from it: "
+				+ decls.getRawSignature());
 		return null;
 	}
 
@@ -1418,9 +1403,10 @@ public class CACSL2BoogieBacktranslator
 		if (!mGenerateBacktranslationWarnings) {
 			return;
 		}
-		mLogger.warn(message);
+		final String fullMessage = UNFINISHED_BACKTRANSLATION + ": " + message;
+		mLogger.warn(fullMessage);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new GenericResult(Activator.PLUGIN_ID, UNFINISHED_BACKTRANSLATION, message, Severity.WARNING));
+				new GenericResult(Activator.PLUGIN_ID, UNFINISHED_BACKTRANSLATION, fullMessage, Severity.WARNING));
 	}
 
 	private TranslatedVariable translateIdentifierExpression(final IdentifierExpression expr) {
