@@ -1095,8 +1095,8 @@ public class CACSL2BoogieBacktranslator
 
 	private IASTExpression translateBinaryExpression(final CType cType, final BinaryExpression expression,
 			final IASTNode hook) {
-		final FakeExpression lhs = (FakeExpression) translateExpression(expression.getLeft(), cType, hook);
-		final FakeExpression rhs = (FakeExpression) translateExpression(expression.getRight(), cType, hook);
+		final IASTExpression lhs = translateExpression(expression.getLeft(), cType, hook);
+		final IASTExpression rhs = translateExpression(expression.getRight(), cType, hook);
 		if (lhs == null || rhs == null) {
 			return null;
 		}
