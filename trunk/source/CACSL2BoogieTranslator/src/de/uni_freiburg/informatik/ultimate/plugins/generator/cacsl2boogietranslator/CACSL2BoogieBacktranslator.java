@@ -1047,7 +1047,7 @@ public class CACSL2BoogieBacktranslator
 			return translateFunctionApplication(cType, (FunctionApplication) expression);
 		} else if (expression instanceof QuantifierExpression) {
 			// TODO: For now just overapproximate quantifiers by true
-			mLogger.warn("Quantifier found, overapproximating it with true");
+			mLogger.warn("Quantifier found, overapproximating it with true: " + BoogiePrettyPrinter.print(expression));
 			return translateBooleanLiteral(new BooleanLiteral(null, true));
 		} else if (expression instanceof BitVectorAccessExpression) {
 			final BitVectorAccessExpression bva = (BitVectorAccessExpression) expression;
