@@ -232,10 +232,7 @@ public class TypeHandler implements ITypeHandler {
 			final CPrimitive cvar = new CPrimitive(node);
 			return (new TypesResult(null, false, true, cvar));
 		}
-		case IASTSimpleDeclSpecifier.t_unspecified: {
-			final String msg = "unspecified type, defaulting to int";
-			mReporter.warn(loc, msg);
-		}
+		case IASTSimpleDeclSpecifier.t_unspecified:
 		case IASTSimpleDeclSpecifier.t_bool:
 		case IASTSimpleDeclSpecifier.t_char:
 		case IASTSimpleDeclSpecifier.t_int: {
