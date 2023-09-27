@@ -295,7 +295,7 @@ public abstract class PatternType<T extends PatternType<?>> {
 		public List<Entry<CounterTrace, PhaseEventAutomata>> getCounterTrace2Pea() {
 			return mPeas;
 		}
-		
+
 		public boolean isStrict() {
 			for (Entry<CounterTrace, PhaseEventAutomata> entry : mPeas) {
 				PhaseEventAutomata automata = entry.getValue();
@@ -305,27 +305,25 @@ public abstract class PatternType<T extends PatternType<?>> {
 			}
 			return false;
 		}
-		
-		public boolean isTotal() {
-			for (Entry<CounterTrace, PhaseEventAutomata> entry: mPeas) {
-				PhaseEventAutomata automata = entry.getValue();
-				String automataName = automata.getName();
-				if (automataName.endsWith("t"))  {
-					return true;
+
+		public boolean isTotalised() {
+			for (Entry<CounterTrace, PhaseEventAutomata> entry : mPeas) {
+				PhaseEventAutomata automaton = entry.getValue();
+				if (!automaton.isTotalised()) {
+					return false;
 				}
 			}
-			return false;
+			return true;
 		}
-		
+
 		public boolean isComplemented() {
-			for (Entry<CounterTrace, PhaseEventAutomata> entry: mPeas) {
-				PhaseEventAutomata automata = entry.getValue();
-				String automataName = automata.getName();
-				if (automataName.endsWith("c"))  {
-					return true;
+			for (Entry<CounterTrace, PhaseEventAutomata> entry : mPeas) {
+				PhaseEventAutomata automaton = entry.getValue();
+				if (!automaton.isComplemented()) {
+					return false;
 				}
 			}
-			return false;
+			return true;
 		}
 	}
 
