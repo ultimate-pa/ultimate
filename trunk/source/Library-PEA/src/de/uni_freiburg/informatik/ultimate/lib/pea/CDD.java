@@ -26,23 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
-import static org.junit.Assert.assertArrayEquals;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-
-import javax.naming.spi.DirStateFactory.Result;
-import javax.swing.text.AsyncBoxView.ChildState;
-
-import org.w3c.dom.Node;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -599,7 +591,7 @@ public final class CDD {
 				return false;
 			}
 		}
-	
+
 		return true;
 	}
 
@@ -862,77 +854,78 @@ public final class CDD {
 		sb.append(")");
 		return sb.toString();
 	}
-	
-	/** 
-	 * Returns an ArrayList of pairs containing all the Decisions in the CDD.
-	 * The first element of each pair is a Decision<?>, the second element is an int signifying the true child of the decision.
-	 * If called on CDD.TRUE or CDD.FALSE, it will return an empty list.
+
+	/**
+	 * Returns an ArrayList of pairs containing all the Decisions in the CDD. The first element of each pair is a
+	 * Decision<?>, the second element is an int signifying the true child of the decision. If called on CDD.TRUE or
+	 * CDD.FALSE, it will return an empty list.
 	 * 
-	 * Assertions: 
-	 *  1. The CDD given as the parameter must be a pure conjunction 
-	 *  (this assertion is commented out because inequality-decisions contain ||)
-	 *  
-	 *  Example:
-	 *  	cdd:  a && !b && c5 >= 5 && c6 <= 5 && c7 == 5  && c8 != 5
-	 *  	result: [(a, [0]) (b, [1]), (c5, [1]), (c6, [0]), (c7, [1]), (c8, [0, 2])]
-	 *  
+	 * Assertions: 1. The CDD given as the parameter must be a pure conjunction (this assertion is commented out because
+	 * inequality-decisions contain ||)
 	 * 
-	 * @param CDD cdd
+	 * Example: cdd: a && !b && c5 >= 5 && c6 <= 5 && c7 == 5 && c8 != 5 result: [(a, [0]) (b, [1]), (c5, [1]), (c6,
+	 * [0]), (c7, [1]), (c8, [0, 2])]
+	 * 
+	 * 
+	 * @param CDD
+	 *            cdd
 	 * @return ArrayList<SimplePair<Decision<?>, Integer>> result
 	 */
 	public ArrayList<Pair<Decision<?>, int[]>> getDecisionsConjunction() {
 		ArrayList<Pair<Decision<?>, int[]>> result = new ArrayList<Pair<Decision<?>, int[]>>();
-		//assert !toString().contains("||");
+		// assert !toString().contains("||");
 		CDD node = this;
-		
+
 		while (node.getChilds() != null) {
 			CDD[] childs = node.getChilds();
 			CDD childLeft = childs[0];
 			CDD childRight = childs[1];
 			Decision<?> decision = node.getDecision();
 			// check which operation
-			if (childLeft == CDD.FALSE) { 
+			if (childLeft == CDD.FALSE) {
 				// c > T, c >= T, c == T
 				// trueChild is [1]
-				int[] trueChilds = {1};
-				Pair<Decision<?>, int[]> pair = new Pair<Decision<?>, int[]>(decision, trueChilds); 
+				int[] trueChilds = { 1 };
+				Pair<Decision<?>, int[]> pair = new Pair<Decision<?>, int[]>(decision, trueChilds);
 				result.add(pair);
 				node = childRight;
-			} else { 
+			} else {
 				// (childRight == CDD.FALSE) because the CDD is a conjunction
 				// c < T, c <= T, c != T
 				if (childs.length == 3) {
 					// c != T
 					// trueChild is [0, 2]
-					int[] trueChilds = {0,2};
+					int[] trueChilds = { 0, 2 };
 					Pair<Decision<?>, int[]> pair = new Pair<Decision<?>, int[]>(decision, trueChilds);
 					result.add(pair);
-				} else { 
+				} else {
 					// c > T, c >= T
 					// trueChild is [0]
-					int[] trueChilds = {0};
+					int[] trueChilds = { 0 };
 					Pair<Decision<?>, int[]> pair = new Pair<Decision<?>, int[]>(decision, trueChilds);
 					result.add(pair);
 				}
 				node = childLeft;
 			}
-			
+
 		}
 		return result;
 	}
-	
+
 	/**
-	 * Converts a CDD into DNF, and, for each conjunction, collects a List of Pairs (Decision<?> decision, int trueChild).
-	 * int trueChild is needed to later build atomic CDDs for each decision, as it is used to determine the operation (see getOp())
+	 * Converts a CDD into DNF, and, for each conjunction, collects a List of Pairs (Decision<?> decision, int
+	 * trueChild). int trueChild is needed to later build atomic CDDs for each decision, as it is used to determine the
+	 * operation (see getOp())
 	 * 
-	 * @return ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> result 	the List of conjunction-Lists
+	 * @return ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> result the List of conjunction-Lists
 	 */
 	public ArrayList<ArrayList<Pair<Decision<?>, int[]>>> getDecisionsDNF() {
-		CDD[] dnf = toDNF();	
-		ArrayList<ArrayList<Pair<Decision<?>, int[]>>> result = new ArrayList<ArrayList<Pair<Decision<?>,int[]>>>();
+		CDD[] dnf = toDNF();
+		ArrayList<ArrayList<Pair<Decision<?>, int[]>>> result = new ArrayList<ArrayList<Pair<Decision<?>, int[]>>>();
 		for (CDD conjunction : dnf) {
 			result.add(conjunction.getDecisionsConjunction());
 		}
 		return result;
 	}
+
 }

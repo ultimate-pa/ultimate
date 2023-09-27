@@ -402,4 +402,12 @@ public class PhaseEventAutomata implements Comparable<Object> {
 		}
 		return false;
 	}
+
+	public boolean isTotalised() {
+		return mName.endsWith(PEAComplement.TOTAL_POSTFIX);
+	}
+
+	public boolean isComplemented() {
+		return mName.endsWith(PEAComplement.COMPLEMENT_POSTFIX);
+	}
 }

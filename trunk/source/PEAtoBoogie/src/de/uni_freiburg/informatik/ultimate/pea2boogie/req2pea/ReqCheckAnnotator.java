@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PEAComplement;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
@@ -267,8 +268,14 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		List<Expression> pcInSinkExpressions = new ArrayList<>();
 		for (Entry<CounterTrace, PhaseEventAutomata> entry : peaList) {
 			PhaseEventAutomata pea = entry.getValue();
-			Expression expression = genComparePhaseCounter(0, mSymbolTable.getPcName(pea), bl);
-			pcInSinkExpressions.add(expression);
+			Phase[] phases = pea.getPhases();
+			for (int i = 0; i < phases.length; i++) {
+				Phase phase = phases[i];
+				if (phase.getName().equals(PEAComplement.SINK_NAME)) {
+					Expression expression = genComparePhaseCounter(i, mSymbolTable.getPcName(pea), bl);
+					pcInSinkExpressions.add(expression);
+				}
+			}
 		}
 		Expression pcInSinkExpression = ExpressionFactory.or(bl, pcInSinkExpressions);
 		return pcInSinkExpression;
@@ -511,7 +518,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		List<ReqPeas> totalPeas = new ArrayList<>();
 		List<ReqPeas> complementPeas = new ArrayList<>();
 		for (final ReqPeas reqPeas : mReqPeas) {
-			if (reqPeas.isTotal()) {
+			if (reqPeas.isTotalised()) {
 				totalPeas.add(reqPeas);
 			} else if (reqPeas.isComplemented()) {
 				complementPeas.add(reqPeas);
@@ -535,7 +542,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		ReqPeas complementedPea = null;
 		for (ReqPeas reqPeas : assertPeas) {
 			if (reqPeas.isStrict()) {
-				if (reqPeas.isTotal()) {
+				if (reqPeas.isTotalised()) {
 					genStrictPeaExpressions(reqPeas, Collections.emptyList(), peaAccepts, bl);
 				}
 				if (reqPeas.isComplemented()) {
@@ -544,7 +551,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 				}
 			} else {
 				Expression pcInSinkExpression = genPcInSinkExpression(reqPeas, bl);
-				if (reqPeas.isTotal()) {
+				if (reqPeas.isTotalised()) {
 					peaAccepts
 							.add(ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, pcInSinkExpression));
 				}
@@ -561,13 +568,16 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			peaNames.add(pea.getValue().getName());
 			reqIds.add(complementedPeaPattern.getId());
 		}
+		final Expression assertion = ExpressionFactory.and(bl, peaAccepts);
+		final Expression assertionNegated =
+				ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, assertion);
 		// final ReqCheck check = createReqCheck(Spec.REDUNDANCY, (Entry<PatternType<?>, PhaseEventAutomata>[])
 		// peaList.toArray());
 		// iwie richtige namen ausgeben??
 		final ReqCheck check = new ReqCheck(Spec.REDUNDANCY, reqIds.toArray(new String[reqIds.size()]),
 				peaNames.toArray(new String[reqIds.size()]));
 		final String label = "REDUNDANT_" + complementedPea.getPattern().toString();
-		Statement assertStatement = createAssert(ExpressionFactory.and(bl, peaAccepts), check, label);
+		Statement assertStatement = createAssert(assertionNegated, check, label);
 		return assertStatement;
 	}
 

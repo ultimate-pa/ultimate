@@ -28,15 +28,10 @@ package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.internal.matchers.Each;
-
-import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class RangeDecision extends Decision<RangeDecision> {
@@ -411,8 +406,9 @@ public class RangeDecision extends Decision<RangeDecision> {
 			return " (= " + var + " " + (mLimits[trueChildIndex] / 2) + ".0)";
 		}
 
-		return "(and (" + (((mLimits[trueChildIndex - 1] & 1) == 1) ? " < " : " <= ") + (mLimits[trueChildIndex - 1] / 2) + ".0 " + var
-				+ ") (" + (((mLimits[trueChildIndex] & 1) == 0) ? " < " : ".0 <= ") + var + " " + (mLimits[trueChildIndex] / 2)
+		return "(and (" + (((mLimits[trueChildIndex - 1] & 1) == 1) ? " < " : " <= ")
+				+ (mLimits[trueChildIndex - 1] / 2) + ".0 " + var + ") ("
+				+ (((mLimits[trueChildIndex] & 1) == 0) ? " < " : ".0 <= ") + var + " " + (mLimits[trueChildIndex] / 2)
 				+ "0. ))";
 	}
 
@@ -487,23 +483,20 @@ public class RangeDecision extends Decision<RangeDecision> {
 	public int compareToSimilar(final Decision<?> other) {
 		return mVar.compareTo(((RangeDecision) other).mVar);
 	}
-	
-	
+
 	/**
-	 * Filters a CDD. 
-	 * Replaces all decisions specified in @param toRemove with the neutral element and
-	 * returns the resulting CDD.
+	 * Filters a CDD. Replaces all decisions specified in @param toRemove with the neutral element and returns the
+	 * resulting CDD.
 	 * 
-	 * Assertions: 
-	 * 		- CDD must only contains RangeDecisions
+	 * Assertions: - CDD must only contains RangeDecisions
 	 * 
-	 * Example: 
-	 * 		- toFilter: (c1 <= 5 && c2 >= 5 && c4 < 5) || (c1 <= 5 && c3 > 5 && c4 < 5)
-	 * 		- toRemove: reset = ["c3". "c4"]
-	 * 		- result: (c1 && c2) || c1 = c1
+	 * Example: - toFilter: (c1 <= 5 && c2 >= 5 && c4 < 5) || (c1 <= 5 && c3 > 5 && c4 < 5) - toRemove: reset = ["c3".
+	 * "c4"] - result: (c1 && c2) || c1 = c1
 	 * 
-	 * @param toFilter	the CDD
-	 * @param toRemove	the list of names to remove from toFilter
+	 * @param toFilter
+	 *            the CDD
+	 * @param toRemove
+	 *            the list of names to remove from toFilter
 	 * @return the filtered CDD
 	 */
 	public static CDD filterCdd(CDD cdd, String[] toRemove) {
@@ -512,10 +505,10 @@ public class RangeDecision extends Decision<RangeDecision> {
 		// this integer is needed to build the atomic CDDs of each decision
 		ArrayList<ArrayList<Pair<Decision<?>, int[]>>> decisionDNF = cdd.getDecisionsDNF();
 		List<String> toRemoveArrayList = Arrays.asList(toRemove);
-			
-		ArrayList<CDD> newConjunctions =  new ArrayList<>();
+
+		ArrayList<CDD> newConjunctions = new ArrayList<>();
 		CDD newDisjunction = CDD.FALSE;
-		
+
 		// look for the decisions to remove in DNF
 		for (ArrayList<Pair<Decision<?>, int[]>> conjunction : decisionDNF) {
 			CDD newConjunction = CDD.TRUE;
@@ -527,7 +520,8 @@ public class RangeDecision extends Decision<RangeDecision> {
 				// build a new conjunction without the decision to remove
 				if (!toRemoveArrayList.contains(var)) {
 					int trueChild = pair.getSecond()[0];
-					CDD newRangeDecision = RangeDecision.create(var, rangeDecision.getOp(trueChild), rangeDecision.getVal(trueChild));
+					CDD newRangeDecision =
+							RangeDecision.create(var, rangeDecision.getOp(trueChild), rangeDecision.getVal(trueChild));
 					newConjunction = newConjunction.and(newRangeDecision);
 				}
 			}
@@ -538,23 +532,23 @@ public class RangeDecision extends Decision<RangeDecision> {
 		}
 		return newDisjunction;
 	}
-	
+
 	/**
-	 * Makes all RangeDecisions in @param CDD non-strict.
+	 * Makes all RangeDecisions in @param CDD strict.
 	 * 
-	 * Example: 
-	 * 		- toStrict: (c1 <= 5 && c2 >= 5 && c4 < 5) || (c1 <= 5 && c3 > 5 && c4 < 5)
-	 * 		- result: (c1 < 5 && c2 > 5 && c4 < 5) || (c1 < 5 && c3 > 5 && c4 < 5)
+	 * Example: - toStrict: (c1 <= 5 && c2 >= 5 && c4 < 5) || (c1 <= 5 && c3 > 5 && c4 < 5) - result: (c1 < 5 && c2 > 5
+	 * && c4 < 5) || (c1 < 5 && c3 > 5 && c4 < 5)
 	 * 
-	 * @param toStrict	the CDD
+	 * @param toStrict
+	 *            the CDD
 	 * @return the CDD with all non-strict RangeDecisions changed into strict ones
 	 */
 	public static CDD strict(CDD toStrict) {
 		// get list of atomic CDDs and their corresponding true child indices
 		ArrayList<ArrayList<Pair<Decision<?>, int[]>>> decisionDNF = toStrict.getDecisionsDNF();
-		ArrayList<CDD> newConjunctions =  new ArrayList<>();
+		ArrayList<CDD> newConjunctions = new ArrayList<>();
 		CDD newDisjunction = CDD.FALSE;
-		
+
 		// look for decisions to strictify in DNF
 		for (ArrayList<Pair<Decision<?>, int[]>> conjunction : decisionDNF) {
 			CDD newConjunction = CDD.TRUE;
@@ -572,14 +566,14 @@ public class RangeDecision extends Decision<RangeDecision> {
 				if (op == OP_LTEQ) {
 					// create new atomic CDD with strict operation
 					CDD newRangeDecision = RangeDecision.create(var, OP_LT, rangeDecision.getVal(trueChild));
-					newConjunction  = newConjunction.and(newRangeDecision);
-					}
+					newConjunction = newConjunction.and(newRangeDecision);
+				}
 				// check if limit is even. if it is, c >= T or c < T
 				// if trueChild is also 1, then it is c >= T and must be strictified
 				else if (op == OP_GTEQ) {
 					CDD newRangeDecision = RangeDecision.create(var, OP_GT, rangeDecision.getVal(trueChild));
-					newConjunction  = newConjunction.and(newRangeDecision);
-				} else { 
+					newConjunction = newConjunction.and(newRangeDecision);
+				} else {
 					// the RangeDecision is already strict
 					// reuse old decision for atomic CDD
 					CDD newRangeDecision = RangeDecision.create(var, op, rangeDecision.getVal(trueChild));
@@ -591,9 +585,9 @@ public class RangeDecision extends Decision<RangeDecision> {
 		for (CDD conjunction : newConjunctions) {
 			newDisjunction = newDisjunction.or(conjunction);
 		}
-		return newDisjunction;	
+		return newDisjunction;
 	}
-	
+
 	public static boolean isStrictLess(CDD cdd) {
 		if (cdd == CDD.TRUE || cdd == CDD.FALSE) {
 			return false;
@@ -605,9 +599,5 @@ public class RangeDecision extends Decision<RangeDecision> {
 		assert cdd.getChilds().length == 2;
 		return isStrictLess(cdd.getChilds()[0]) || isStrictLess(cdd.getChilds()[1]);
 	}
-		
+
 }
-	
-	
-
-
