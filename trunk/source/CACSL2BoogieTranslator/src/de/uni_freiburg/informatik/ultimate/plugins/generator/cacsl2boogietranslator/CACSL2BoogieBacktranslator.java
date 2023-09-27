@@ -1416,33 +1416,45 @@ public class CACSL2BoogieBacktranslator
 	private TranslatedVariable translateBoogieIdentifier(final IdentifierExpression expr, final String boogieId) {
 		final TranslatedVariable result;
 		if (boogieId.equals(SFO.RES)) {
-			result = new TranslatedVariable(expr, "\\result", null, VariableType.RESULT);
+			result = new TranslatedVariable("\\result", null, VariableType.RESULT);
 		} else if (mMapping.hasVar(boogieId, expr.getDeclarationInformation())) {
 			final Pair<String, CType> pair = mMapping.getVar(boogieId, expr.getDeclarationInformation());
-			result = new TranslatedVariable(expr, pair.getFirst(), pair.getSecond(), VariableType.NORMAL);
+			result = new TranslatedVariable(pair.getFirst(), pair.getSecond(), VariableType.NORMAL);
 		} else if (mMapping.hasInVar(boogieId, expr.getDeclarationInformation())) {
 			// invars can only occur in expressions as part of synthetic expressions, and then they represent oldvars
 			final Pair<String, CType> pair = mMapping.getInVar(boogieId, expr.getDeclarationInformation());
-			result = new TranslatedVariable(expr, pair.getFirst(), pair.getSecond(), VariableType.INVAR);
+			result = new TranslatedVariable(pair.getFirst(), pair.getSecond(), VariableType.INVAR);
 		} else if (mMapping.getTempVar2Obj().containsKey(boogieId)) {
-			final SFO.AUXVAR purpose = mMapping.getTempVar2Obj().get(boogieId);
-			result = new TranslatedVariable(expr, boogieId, null, purpose);
+			// if the variable is an aux variable, we just use the C function for which it was introduced and hope for
+			// the best
+			result = new TranslatedVariable(getRealName(expr, boogieId), null, VariableType.AUX);
 		} else if (boogieId.equals(SFO.VALID)) {
-			result = new TranslatedVariable(expr, "\\valid", null, VariableType.VALID);
+			result = new TranslatedVariable("\\valid", null, VariableType.VALID);
 		} else if (boogieId.endsWith(SFO.POINTER_BASE)) {
 			// if its base or offset, try again with them stripped
 			final TranslatedVariable base = translateBoogieIdentifier(expr,
 					boogieId.substring(0, boogieId.length() - SFO.POINTER_BASE.length() - 1));
-			result = new TranslatedVariable(expr, base.getName(), base.getCType(), VariableType.POINTER_BASE);
+			result = new TranslatedVariable(base.getName(), base.getCType(), VariableType.POINTER_BASE);
 		} else if (boogieId.endsWith(SFO.POINTER_OFFSET)) {
 			final TranslatedVariable offset = translateBoogieIdentifier(expr,
 					boogieId.substring(0, boogieId.length() - SFO.POINTER_OFFSET.length() - 1));
-			result = new TranslatedVariable(expr, offset.getName(), offset.getCType(), VariableType.POINTER_OFFSET);
+			result = new TranslatedVariable(offset.getName(), offset.getCType(), VariableType.POINTER_OFFSET);
 		} else {
-			result = new TranslatedVariable(expr, boogieId, null, VariableType.UNKNOWN);
+			result = new TranslatedVariable(boogieId, null, VariableType.UNKNOWN);
 			reportUnfinishedBacktranslation("unknown boogie variable " + boogieId);
 		}
 		return result;
+	}
+
+	private static String getRealName(final IdentifierExpression originalExpression, final String name) {
+		final ILocation loc = originalExpression.getLoc();
+		if (loc instanceof CLocation) {
+			final CLocation cloc = (CLocation) loc;
+			if (cloc.getNode() != null) {
+				return cloc.getNode().getRawSignature();
+			}
+		}
+		return name;
 	}
 
 	private static IRelevanceInformation mergeRelevaneInformation(final IRelevanceInformation... relInfos) {
@@ -1636,42 +1648,13 @@ public class CACSL2BoogieBacktranslator
 		private final String mName;
 		private final CType mCType;
 		private final VariableType mVarType;
-		private final SFO.AUXVAR mPurpose;
-		private final IdentifierExpression mOriginalExpression;
 
-		public TranslatedVariable(final IdentifierExpression originalExpression, final String name, final CType cType,
-				final VariableType varType) {
+		public TranslatedVariable(final String name, final CType cType, final VariableType varType) {
 			super(null);
-			assert varType != VariableType.AUX : "You must supply a purpose for an auxvar";
-			mOriginalExpression = originalExpression;
 			mName = name;
 			mCType = cType;
 			mVarType = varType;
-			mPurpose = null;
 
-		}
-
-		public TranslatedVariable(final IdentifierExpression originalExpression, final String name, final CType cType,
-				final SFO.AUXVAR purpose) {
-			super(null);
-			mOriginalExpression = originalExpression;
-			mCType = cType;
-			mVarType = VariableType.AUX;
-			// if the variable is an aux variable, we just use the C function for which it was introduced and hope for
-			// the best
-			mName = getRealName(originalExpression, name);
-			mPurpose = purpose;
-		}
-
-		private static String getRealName(final IdentifierExpression originalExpression, final String name) {
-			final ILocation loc = originalExpression.getLoc();
-			if (loc instanceof CLocation) {
-				final CLocation cloc = (CLocation) loc;
-				if (cloc.getNode() != null) {
-					return cloc.getNode().getRawSignature();
-				}
-			}
-			return name;
 		}
 
 		public String getName() {
@@ -1680,18 +1663,6 @@ public class CACSL2BoogieBacktranslator
 
 		public CType getCType() {
 			return mCType;
-		}
-
-		public VariableType getVarType() {
-			return mVarType;
-		}
-
-		public SFO.AUXVAR getPurpose() {
-			return mPurpose;
-		}
-
-		public IdentifierExpression getOriginalExpression() {
-			return mOriginalExpression;
 		}
 
 		@Override
