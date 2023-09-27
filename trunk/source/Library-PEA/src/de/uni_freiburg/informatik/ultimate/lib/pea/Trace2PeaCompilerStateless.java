@@ -300,9 +300,9 @@ public class Trace2PeaCompilerStateless {
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.CDD
 	 */
-	private void buildNewTrans(final Phase src, CDD guard, final CDD stateInv, final String[] resets,
+	private void buildNewTrans(final Phase<CDD> src, CDD guard, final CDD stateInv, final String[] resets,
 			final PhaseBits destBits) {
-		Phase dest;
+		Phase<CDD> dest;
 		if (mAllPhases.containsKey(destBits)) {
 			mLogger.debug("Destination phase already exists");
 			dest = mAllPhases.get(destBits);
@@ -331,7 +331,7 @@ public class Trace2PeaCompilerStateless {
 			}
 
 			mLogger.debug("Creating destination phase");
-			dest = new Phase(phaseName(destBits.toString()), stateInv, clockInv);
+			dest = new Phase<CDD>(phaseName(destBits.toString()), stateInv, clockInv);
 			dest.phaseBits = destBits;
 			mAllPhases.put(destBits, dest);
 			mTodo.add(destBits);
@@ -659,7 +659,7 @@ public class Trace2PeaCompilerStateless {
 			mInit = new Phase[initSize];
 			for (int i = 0; i < initSize; i++) {
 				final Transition trans = initTrans.get(i);
-				if (trans.getDest().getName().endsWith("st"))  {
+				if (trans.getDest().getName().endsWith("st")) {
 					/*
 					 * If the first phase is not a true phase we need a special state to enter the garbage state "st"
 					 * only if the predicate of the first phase does not hold.

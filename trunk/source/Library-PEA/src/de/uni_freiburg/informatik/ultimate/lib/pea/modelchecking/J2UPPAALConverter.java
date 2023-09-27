@@ -121,7 +121,7 @@ public class J2UPPAALConverter {
 
 	// Uppaal supports only one initial state; Thus, if a pea has more than one initial state,
 	// we introduce a new state "initialState"
-	private void addInitialStates(final PhaseEventAutomata pea) throws IOException {
+	private void addInitialStates(final PhaseEventAutomata<CDD> pea) throws IOException {
 		final Phase[] init = pea.getInit();
 
 		// the following case should never occur if the pea was properly built, but you can never be sure...
@@ -142,7 +142,7 @@ public class J2UPPAALConverter {
 		}
 	}
 
-	private String getClocksToReset(final Phase state, final List<String> peaClocks) {
+	private String getClocksToReset(final Phase<CDD> state, final List<String> peaClocks) {
 		final String initClockString = state.getClockInvariant().toString();
 		Boolean firstClock = true;
 
@@ -163,7 +163,7 @@ public class J2UPPAALConverter {
 		return reset;
 	}
 
-	private void addInitialTransitions(final PhaseEventAutomata pea) throws IOException {
+	private void addInitialTransitions(final PhaseEventAutomata<CDD> pea) throws IOException {
 		final Phase[] init = pea.getInit();
 		final List<String> peaClocks = pea.getClocks();
 
@@ -174,7 +174,7 @@ public class J2UPPAALConverter {
 		if (init.length > 1) {
 			for (int i = 0; i < init.length; i++) { // for all init states
 
-				final Phase initState = init[i];
+				final Phase<CDD> initState = init[i];
 				final CDD initClock = initState.getClockInvariant();
 
 				// What clocks are part of the clock invariant of the initial state
@@ -196,9 +196,9 @@ public class J2UPPAALConverter {
 		}
 	}
 
-	protected void addPEAStates(final Phase[] phases) throws IOException {
+	protected void addPEAStates(final Phase<CDD>[] phases) throws IOException {
 		for (int i = 0; i < phases.length; i++) {
-			final Phase phase = phases[i];
+			final Phase<CDD> phase = phases[i];
 			writer.write(
 					"<location id = \"" + phase.getName() + "\"" + ">\n" + "  <name>" + phase.getName() + "</name>\n");
 
@@ -236,7 +236,7 @@ public class J2UPPAALConverter {
 		}
 	}
 
-	protected void createPEATransitionString(final Transition transition) {
+	protected void createPEATransitionString(final Transition<CDD> transition) {
 		final String[] disjuncts = getDisjuncts(transition.getGuard());
 		final String[] resets = transition.getResets();
 		final StringBuffer assignment = new StringBuffer();

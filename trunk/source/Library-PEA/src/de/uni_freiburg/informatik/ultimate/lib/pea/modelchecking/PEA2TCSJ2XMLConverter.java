@@ -34,32 +34,33 @@ import java.util.Iterator;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 
 public class PEA2TCSJ2XMLConverter {
 	protected static final String STATE_NAME = "state";
-	
+
 	protected static final String DEFAULT_LOGGER = "PEA2TCSJ2XMLConverter";
-	
+
 	protected ILogger logger = null;
-	
+
 	protected TCSFormulaJ2XMLConverter formulaConverter = null;
-	
+
 	protected FileWriter writer;
-	
+
 	protected List<String> events = null;
 	protected List<String> clocks = null;
 	protected List<String> variables = null;
-	
+
 	protected ArrayList<String>[] additionalVariables = null;
 	protected ArrayList<String>[] additionalTypes = null;
-	
+
 	protected boolean rename = false;
-	
+
 	protected int peaCounter = 0;
-	
+
 	/**
 	 * Initialises the PEA2TCSJ2XMLConverter object. Takes as parameter a string that defines the loggername for the
 	 * built in log4j logger. If the string is empty, the default name <code>PEA2TCSJ2XMLConverter</code> is used. An
@@ -76,21 +77,21 @@ public class PEA2TCSJ2XMLConverter {
 		} else {
 			logger = ILogger.getLogger(loggerName);
 		}
-		
+
 		formulaConverter = new TCSFormulaJ2XMLConverter();
-		
+
 		clocks = new ArrayList<>();
 		events = new ArrayList<>();
 		variables = new ArrayList<>();
 	}
-	
+
 	/**
 	 * Initialises the PEA2TCSJ2XMLConverter object with the default logger.
 	 */
 	public PEA2TCSJ2XMLConverter() throws Exception {
 		this("");
 	}
-	
+
 	public void convert(final PhaseEventAutomata[] peas, final String file, final boolean rename) {
 		try {
 			this.rename = rename;
@@ -100,19 +101,19 @@ public class PEA2TCSJ2XMLConverter {
 			if (peas.length == 0) {
 				throw new RuntimeException("The array of peas is not allowed to be empty");
 			}
-			
+
 			writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 					+ "<tcsn xmlns:xalan=\"http://xml.apache.org/xalan\">\n");
-			
+
 			for (int i = 0; i < peas.length; i++) {
 				logger.info("Trying to create tcsNode " + i);
 				createPhaseEventAutomaton(peas[i]);
 				logger.info("Creating tcsNode " + i + " successful");
 				peaCounter++;
 			}
-			
+
 			writer.write("</tcsn>\n");
-			
+
 			writer.flush();
 			writer.close();
 		} catch (final Exception e) {
@@ -120,7 +121,7 @@ public class PEA2TCSJ2XMLConverter {
 			e.printStackTrace();
 		}
 	}
-	
+
 	protected void createPhaseEventAutomaton(final PhaseEventAutomata pea) throws IOException {
 		if (pea.getPhases().length == 0) {
 			throw new RuntimeException("PEA with phase count = 0 is not allowed");
@@ -128,16 +129,16 @@ public class PEA2TCSJ2XMLConverter {
 		if (pea.getInit().length == 0) {
 			throw new RuntimeException("PEA with initial phase count = 0 is not allowed");
 		}
-		
+
 		clocks.clear();
 		events.clear();
 		variables.clear();
-		
+
 		// Write variable lists
 		writer.write("  <variables>\n");
 		writer.write("    <variable name=\"disc\" type=\"bool\"/>\n");
 		writer.write("    <variable name=\"len\" type=\"time\"/>\n");
-		
+
 		if (additionalVariables != null && !additionalVariables[peaCounter].isEmpty()) {
 			final Iterator<String> addVarIterator = additionalVariables[peaCounter].iterator();
 			final Iterator<String> typesIterator = additionalTypes[peaCounter].iterator();
@@ -148,16 +149,16 @@ public class PEA2TCSJ2XMLConverter {
 			}
 		}
 		writer.write("  </variables>\n");
-		
+
 		writer.write("<tcs name=\"" + pea.getName() + "\">\n");
-		
+
 		// Create phase nodes
 		writer.write("<locations>\n");
-		
+
 		// TODO: THIS SHOULD NOT BE DONE THIS WAY
 		// No need to fill variables and events lists
 		// this.initMaps(pea.getPhases());
-		
+
 		final Phase[] phases = pea.getPhases();
 		if (rename) {
 			int stateCounter = 0;
@@ -172,7 +173,7 @@ public class PEA2TCSJ2XMLConverter {
 		final List<Phase> temp = Arrays.asList(phases);
 		temp.removeAll(Arrays.asList(init));
 		final Phase[] notInitPhases = temp.toArray(new Phase[temp.size()]);
-		
+
 		for (int i = 0; i < init.length; i++) {
 			createPhaseNode(init[i], true);
 		}
@@ -180,7 +181,7 @@ public class PEA2TCSJ2XMLConverter {
 			createPhaseNode(notInitPhases[i], false);
 		}
 		writer.write("</locations>\n");
-		
+
 		// Create transition nodes
 		if (peaHasTransitions(pea)) {
 			writer.write("<transitions>\n");
@@ -190,12 +191,12 @@ public class PEA2TCSJ2XMLConverter {
 				while (transIter.hasNext()) {
 					final Transition trans = (Transition) transIter.next();
 					createTransitionNode(trans);
-					
+
 				}
 			}
 			writer.write("</transitions>\n");
 		}
-		
+
 		// Add additional variables to var list.
 		// if (!this.variables.isEmpty() ||
 		// (this.additionalVariables != null
@@ -222,11 +223,11 @@ public class PEA2TCSJ2XMLConverter {
 		// }
 		// writer.write(" </variables>\n");
 		// }
-		
+
 		writer.write("</tcs>\n");
-		
+
 	}
-	
+
 	private static boolean peaHasTransitions(final PhaseEventAutomata pea) {
 		final Phase[] phases = pea.getPhases();
 		for (int i = 0; i < phases.length; i++) {
@@ -236,8 +237,8 @@ public class PEA2TCSJ2XMLConverter {
 		}
 		return false;
 	}
-	
-	protected void createPhaseNode(final Phase phase, final boolean init) throws IOException {
+
+	protected void createPhaseNode(final Phase<CDD> phase, final boolean init) throws IOException {
 		writer.write("<location name=\"" + phase.getName() + "\" initial=\"" + init + "\">\n");
 		writer.write("<init-constraint>");
 		if (init) {
@@ -277,13 +278,13 @@ public class PEA2TCSJ2XMLConverter {
 		writer.write("</init-constraint>");
 		writer.write("</location>\n");
 	}
-	
-	protected void createTransitionNode(final Transition trans) throws IOException {
+
+	protected void createTransitionNode(final Transition<CDD> trans) throws IOException {
 		final String source = trans.getSrc().getName();
 		final String dest = trans.getDest().getName();
 		final boolean sourceEqualDest = source.equals(dest);
 		logger.info("Creating transition from " + source + " to " + dest);
-		
+
 		//////////////////////////////////////////////////////////////
 		//////////////////////////////////////////////////////////////
 		//////// COMPUTE CONT//////////////////////////////////////////
@@ -305,7 +306,7 @@ public class PEA2TCSJ2XMLConverter {
 					final String actVariable = (String) varIterator.next();
 					cont.append(" /\\ " + actVariable + "' = " + actVariable);
 				}
-				
+
 			}
 			if (!events.isEmpty()) {
 				final Iterator<String> eventIterator = events.iterator();
@@ -315,13 +316,13 @@ public class PEA2TCSJ2XMLConverter {
 				}
 			}
 		}
-		
+
 		//////////////////////////////////////////////////////////////
 		//////////////////////////////////////////////////////////////
 		//////// COMPUTE CONT FINISHED/////////////////////////////////
 		//////////////////////////////////////////////////////////////
 		//////////////////////////////////////////////////////////////
-		
+
 		//////////////////////////////////////////////////////////////
 		//////////////////////////////////////////////////////////////
 		//////// COMPUTE DISC//////////////////////////////////////////
@@ -332,7 +333,7 @@ public class PEA2TCSJ2XMLConverter {
 		final String[] resets = trans.getResets();
 		final List<String> notReset = new ArrayList<>(clocks);
 		notReset.removeAll(Arrays.asList(resets));
-		
+
 		for (int i = 0; i < resets.length; i++) {
 			discConst.append(" /\\ " + resets[i] + "' = 0");
 		}
@@ -341,7 +342,7 @@ public class PEA2TCSJ2XMLConverter {
 			final String aktNotReset = notResetIter.next();
 			discConst.append(" /\\ " + aktNotReset + "' = " + aktNotReset);
 		}
-		
+
 		for (int i = 0; i < guardDis.length; i++) {
 			guardDis[i] += "/\\ " + discConst.toString().trim();
 		}
@@ -350,7 +351,7 @@ public class PEA2TCSJ2XMLConverter {
 		//////// COMPUTE DISC FINISHED/////////////////////////////////
 		//////////////////////////////////////////////////////////////
 		//////////////////////////////////////////////////////////////
-		
+
 		//////////////////////////////////////////////////////////////
 		//////////////////////////////////////////////////////////////
 		//////// COMPUTE INVp2/////////////////////////////////////////
@@ -382,7 +383,7 @@ public class PEA2TCSJ2XMLConverter {
 		//////// COMPUTE INVp2 FINISHED////////////////////////////////
 		//////////////////////////////////////////////////////////////
 		//////////////////////////////////////////////////////////////
-		
+
 		// this.writer.write("<transition src = \""+source+"\" dest = \""+dest+"\">");
 		for (int i = 0; i < invp2.length; i++) {
 			for (int j = 0; j < guardDis.length; j++) {
@@ -392,7 +393,7 @@ public class PEA2TCSJ2XMLConverter {
 				writer.write("<transition src = \"" + source + "\" dest = \"" + dest + "\">");
 				writer.write(invp2[i] + " /\\ " + guardDis[j]);
 				writer.write("</transition>\n");
-				
+
 			}
 			if (sourceEqualDest) {
 				writer.write("<transition src = \"" + source + "\" dest = \"" + dest + "\">");
@@ -403,7 +404,7 @@ public class PEA2TCSJ2XMLConverter {
 		}
 		// this.writer.write("</transition>\n");
 	}
-	
+
 	/**
 	 * @param additionalVariables
 	 *            Sets the list of additional variables that has to be inserted to the output-document.
@@ -411,7 +412,7 @@ public class PEA2TCSJ2XMLConverter {
 	public void setAdditionalVariables(final ArrayList<String>[] additionalVariables) {
 		this.additionalVariables = additionalVariables;
 	}
-	
+
 	/**
 	 * @param types
 	 *            Sets the types belonging to additionalVariables.
@@ -419,7 +420,7 @@ public class PEA2TCSJ2XMLConverter {
 	public void setAdditionalTypes(final ArrayList<String>[] types) {
 		additionalTypes = types;
 	}
-	
+
 	/**
 	 * @param args
 	 */

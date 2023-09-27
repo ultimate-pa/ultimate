@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PEAUtils;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DOTWriter;
@@ -86,7 +87,7 @@ public class TestCase {
 		j2DOTWriter.write("C:/vacuous/testVacuous_1.dot", ctA);
 		ctA2 = compiler.compile("t2", ct2);
 		j2DOTWriter.write("C:/vacuous/testVacuous_2.dot", ctA2);
-		ctA2 = ctA2.parallel(ctA);
+		ctA2 = PEAUtils.parallel(ctA2, ctA);
 		j2DOTWriter.write("C:/vacuous/testVacuous_12.dot", ctA2);
 		final J2UPPAALConverter uppaalConverter = new J2UPPAALConverter();
 		uppaalConverter.writePEA2UppaalFile("C:/vacuous/testVacuous_12.xml", ctA2);
@@ -106,7 +107,7 @@ public class TestCase {
 		j2DOTWriter.write("C:/vacuous/testVacuous_3.dot", ctA);
 		ctA2 = compiler.compile("t2", ct2);
 		j2DOTWriter.write("C:/vacuous/testVacuous_4.dot", ctA2);
-		ctA2 = ctA2.parallel(ctA);
+		ctA2 = PEAUtils.parallel(ctA2, ctA);
 		j2DOTWriter.write("C:/vacuous/testVacuous_34.dot", ctA2);
 		final J2UPPAALConverter uppaalConverter = new J2UPPAALConverter();
 		uppaalConverter.writePEA2UppaalFile("C:/vacuous/testVacuous_34.xml", ctA2);
@@ -265,7 +266,7 @@ public class TestCase {
 				new CounterTrace.DCPhase(A, B.and(C.negate())), new CounterTrace.DCPhase() });
 		ct2A = compiler.compile("T7g2", ct2);
 
-		ctParallel = ct1A.parallel(ct2A);
+		ctParallel = PEAUtils.parallel(ct1A, ct2A);
 
 	}
 
@@ -288,7 +289,7 @@ public class TestCase {
 		ct1A = compiler.compile("T7h1", ct);
 		ct2A = compiler.compile("T7h2", ct2);
 
-		ctParallel = ct1A.parallel(ct2A);
+		ctParallel = PEAUtils.parallel(ct1A, ct2A);
 
 		final J2UPPAALWriter j2uppaalWriter = new J2UPPAALWriter();
 		j2uppaalWriter.writePEA2UppaalFile("AmiTest.xml", ctParallel);
@@ -325,7 +326,8 @@ public class TestCase {
 				new CounterTrace.DCPhase(MotorOnEv, MotorOn.negate()), new CounterTrace.DCPhase() });
 		ct3A = compiler.compile("TMEvent", ct3);
 
-		ctParallel = ct1A.parallel(ct2A).parallel(ct3A);
+		ctParallel = PEAUtils.parallel(PEAUtils.parallel(ct1A, ct2A), ct3A);
+		// ct1A.parallel(ct2A).parallel(ct3A);
 
 	}
 
@@ -352,7 +354,7 @@ public class TestCase {
 		final CounterTrace ct3 = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(A.negate()) });
 		ct3A = compiler.compile("TMEvent", ct3);
 
-		ctParallel = ct1A.parallel(ct2A).parallel(ct3A);
+		ctParallel = PEAUtils.parallel(PEAUtils.parallel(ct1A, ct2A), ct3A);
 	}
 
 	public void run() {

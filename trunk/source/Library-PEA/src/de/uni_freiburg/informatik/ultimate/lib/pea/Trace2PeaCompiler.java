@@ -364,9 +364,9 @@ public class Trace2PeaCompiler {
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.CDD
 	 */
-	private void buildNewTrans(final PhaseBits srcBits, final Phase src, CDD guard, final CDD stateInv,
+	private void buildNewTrans(final PhaseBits srcBits, final Phase<CDD> src, CDD guard, final CDD stateInv,
 			final String[] resets, final PhaseBits destBits) {
-		Phase dest;
+		Phase<CDD> dest;
 		if (mAllPhases.containsKey(destBits)) {
 			mLogger.debug("Destination phase already exists");
 			dest = mAllPhases.get(destBits);

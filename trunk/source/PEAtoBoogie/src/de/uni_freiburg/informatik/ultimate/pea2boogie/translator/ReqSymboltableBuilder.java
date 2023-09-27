@@ -154,7 +154,7 @@ public class ReqSymboltableBuilder {
 	 * Add the variables and clocks of a PEA generated from a pattern to the symbol table.
 	 *
 	 */
-	public void addPea(final PatternType<?> pattern, final PhaseEventAutomata pea) {
+	public void addPea(final PatternType<?> pattern, final PhaseEventAutomata<?> pea) {
 		addVar(getPcName(pea), BoogieType.TYPE_INT, pattern, mPcVars);
 		pea.getClocks().forEach(a -> addVar(a, BoogieType.TYPE_REAL, pattern, mClockVars));
 
@@ -185,7 +185,7 @@ public class ReqSymboltableBuilder {
 		}
 	}
 
-	private void updateEquivalences(final PhaseEventAutomata pea) {
+	private void updateEquivalences(final PhaseEventAutomata<?> pea) {
 		final Set<String> peaVars = new HashSet<>();
 		// add all variable names
 		peaVars.addAll(pea.getVariables().keySet());
@@ -324,7 +324,7 @@ public class ReqSymboltableBuilder {
 	 *            A {@link PhaseEventAutomata}
 	 * @return the variable name of the variable that encodes a PEA state.
 	 */
-	private static String getPcName(final PhaseEventAutomata pea) {
+	private static String getPcName(final PhaseEventAutomata<?> pea) {
 		return getPcName(pea.getName());
 	}
 

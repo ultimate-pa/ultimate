@@ -5,6 +5,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
@@ -15,14 +16,14 @@ public class Req2CauseTrackingPeaTransformer implements IReq2PeaTransformer {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private Map<PhaseEventAutomata, ReqEffectStore> mPea2EffectStore;
+	private Map<PhaseEventAutomata<CDD>, ReqEffectStore> mPea2EffectStore;
 
 	public Req2CauseTrackingPeaTransformer(final IUltimateServiceProvider services, final ILogger logger) {
 		mLogger = logger;
 		mServices = services;
 	}
 
-	public Map<PhaseEventAutomata, ReqEffectStore> getEffectStore() {
+	public Map<PhaseEventAutomata<CDD>, ReqEffectStore> getEffectStore() {
 		return mPea2EffectStore;
 	}
 

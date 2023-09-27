@@ -42,7 +42,7 @@ public class TimedAutomata {
 	private final Collection<String> mClocks;
 	private final State[] mStates;
 
-	public TimedAutomata(final PhaseEventAutomata pea, final CDD[] preds, final String[] predNames) {
+	public TimedAutomata(final PhaseEventAutomata<CDD> pea, final CDD[] preds, final String[] predNames) {
 		mStates = new State[pea.mPhases.length];
 		mClocks = new TreeSet<>();
 		for (int i = 0; i < pea.mPhases.length; i++) {
@@ -62,10 +62,10 @@ public class TimedAutomata {
 			mStates[pea.mInit[i].nr].props += " init";
 		}
 		for (int i = 0; i < pea.mPhases.length; i++) {
-			final Iterator<Transition> it = pea.mPhases[i].transitions.iterator();
+			final Iterator<Transition<CDD>> it = pea.mPhases[i].transitions.iterator();
 			final Collection<Edge> edges = new ArrayList<>();
 			while (it.hasNext()) {
-				final Transition t = it.next();
+				final Transition<CDD> t = it.next();
 				final Guard[][] allGuards = filterCDD(t.getGuard());
 				for (int k = 0; k < allGuards.length; k++) {
 					final Edge e = new Edge();

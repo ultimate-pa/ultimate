@@ -5,6 +5,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PEAUtils;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DOTWriter;
@@ -32,7 +33,7 @@ public class TestUppaalExport {
 				new CounterTrace.DCPhase(P.and(S.negate())), new CounterTrace.DCPhase() });
 
 		ctA2 = compiler.compile("TInvariance2", ct2);
-		ctA = ctA2.parallel(ctA);
+		ctA = PEAUtils.parallel(ctA2, ctA);
 		return ctA;
 	}
 
@@ -54,7 +55,7 @@ public class TestUppaalExport {
 		ct1A = bndInvariance(P, S.negate(), 6);
 		ct2A = bndResp_Glob(P, S, 10);
 
-		ctParallel = ct1A.parallel(ct2A);
+		ctParallel = PEAUtils.parallel(ct1A, ct2A);
 
 		final DOTWriter dotwriter = new DOTWriter("C:/Deadlock.dot", ctParallel);
 		dotwriter.write();

@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PEATestAutomaton;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PEAUtils;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
@@ -22,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.SimplifyPEAs;
 @SuppressWarnings("deprecation")
 public class ElevatorInf {
 
-	PhaseEventAutomata csppart, zpart, dcpart;
+	PhaseEventAutomata<CDD> csppart, zpart, dcpart;
 
 	public static void main(final String[] param) {
 		final CDD cgless = BooleanDecision.create("current <= goal - 1");
@@ -36,7 +37,7 @@ public class ElevatorInf {
 		stateInv = stateInv.and(BooleanDecision.create("Min <= Max"));
 		final CDD transInv = BooleanDecision.create("Min = Min'").and(BooleanDecision.create("Max = Max'"));
 
-		final Phase invP = new Phase("inv", stateInv);
+		final Phase<CDD> invP = new Phase<CDD>("inv", stateInv, CDD.TRUE);
 		invP.addTransition(invP, transInv, new String[0]);
 		final ElevatorInf elev = new ElevatorInf();
 
@@ -44,10 +45,10 @@ public class ElevatorInf {
 		elev.buildCSPPart();
 		elev.buildDCPart();
 
-		final PhaseEventAutomata pea = elev.csppart.parallel(elev.zpart); // .parallel(elev.dcpart);
+		final PhaseEventAutomata<CDD> pea = PEAUtils.parallel(elev.csppart, elev.zpart); // .parallel(elev.dcpart);
 
-		final Phase good = new Phase("ok", CDD.TRUE);
-		final Phase bad = new Phase("FINAL", CDD.TRUE);
+		final Phase<CDD> good = new Phase<CDD>("ok", CDD.TRUE, CDD.TRUE);
+		final Phase<CDD> bad = new Phase<CDD>("FINAL", CDD.TRUE, CDD.TRUE);
 		good.addTransition(good, CDD.TRUE, new String[0]);
 		good.addTransition(bad, /* BooleanDecision.create("Min <= current") */
 				CDD.TRUE.and(BooleanDecision.create("current <= Max")).negate(), new String[0]);
@@ -87,8 +88,8 @@ public class ElevatorInf {
 		final CDD xigoal = BooleanDecision.create("goal' = goal");
 		final CDD xidir = BooleanDecision.create("dir' = dir");
 		final CDD stutter = nnewgoal.and(nstart).and(npassed).and(nstop).and(xicurrent).and(xigoal).and(xidir);
-		final Phase zstate = new Phase("z", CDD.TRUE);
-		final Phase istate = new Phase("zi", BooleanDecision.create("Min = current"));
+		final Phase<CDD> zstate = new Phase<CDD>("z", CDD.TRUE, CDD.TRUE);
+		final Phase<CDD> istate = new Phase<CDD>("zi", BooleanDecision.create("Min = current"), CDD.TRUE);
 		final String[] noresets = new String[0];
 		istate.addTransition(zstate, stutter, noresets);
 		zstate.addTransition(zstate, stutter, noresets);
@@ -115,8 +116,8 @@ public class ElevatorInf {
 
 	public void buildCSPPart() {
 		final String[] noresets = new String[0];
-		final Phase[] p = new Phase[] { new Phase("c0", CDD.TRUE, CDD.TRUE), new Phase("c1", CDD.TRUE, CDD.TRUE),
-				new Phase("c2", CDD.TRUE, CDD.TRUE), };
+		final Phase[] p = new Phase[] { new Phase<CDD>("c0", CDD.TRUE, CDD.TRUE),
+				new Phase<CDD>("c1", CDD.TRUE, CDD.TRUE), new Phase<CDD>("c2", CDD.TRUE, CDD.TRUE), };
 		CDD ev;
 		for (int i = 0; i < 3; i++) {
 			ev = EventDecision.createNeg("newgoal").and(EventDecision.createNeg("start"))
@@ -158,7 +159,7 @@ public class ElevatorInf {
 						new CounterTrace.DCPhase(cgeq.negate()), new CounterTrace.DCPhase(cgeq,
 								CounterTrace.BOUND_GREATEREQUAL, 2, Collections.singleton("stop")),
 						new CounterTrace.DCPhase(CDD.TRUE) }));
-		dcpart = dc1.parallel(dc2);
+		dcpart = PEAUtils.parallel(dc1, dc2);
 	}
 
 }

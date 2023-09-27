@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PEAComplement;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
@@ -106,12 +107,12 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
 	private final IReqSymbolTable mSymbolTable;
-	private final List<ReqPeas> mReqPeas;
+	private final List<ReqPeas<CDD>> mReqPeas;
 
 	private final Durations mDurations;
 
-	public ReqCheckAnnotator(final IUltimateServiceProvider services, final ILogger logger, final List<ReqPeas> reqPeas,
-			final IReqSymbolTable symbolTable, final Durations durations) {
+	public ReqCheckAnnotator(final IUltimateServiceProvider services, final ILogger logger,
+			final List<ReqPeas<CDD>> reqPeas, final IReqSymbolTable symbolTable, final Durations durations) {
 		mLogger = logger;
 		mServices = services;
 		mSymbolTable = symbolTable;
@@ -221,8 +222,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	 *            A boogie location used for all statements.
 	 * @return The assertion for non-complementness
 	 */
-	private Statement genAssertComplement(ReqPeas reqPeasOriginal, ReqPeas reqPeasTotal, ReqPeas reqPeasComplement,
-			final BoogieLocation bl) {
+	private Statement genAssertComplement(ReqPeas<CDD> reqPeasOriginal, ReqPeas<CDD> reqPeasTotal,
+			ReqPeas<CDD> reqPeasComplement, final BoogieLocation bl) {
 		final Expression complementPeaAccepts;
 		final Expression complementPeaRejects;
 		final Expression totalPeaRejects;
@@ -264,11 +265,11 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return createAssert(assertion, check, label);
 	}
 
-	private Expression genPcInSinkExpression(ReqPeas reqPeas, BoogieLocation bl) {
-		List<Entry<CounterTrace, PhaseEventAutomata>> peaList = reqPeas.getCounterTrace2Pea();
+	private Expression genPcInSinkExpression(ReqPeas<CDD> reqPeas, BoogieLocation bl) {
+		List<Entry<CounterTrace, PhaseEventAutomata<CDD>>> peaList = reqPeas.getCounterTrace2Pea();
 		List<Expression> pcInSinkExpressions = new ArrayList<>();
-		for (Entry<CounterTrace, PhaseEventAutomata> entry : peaList) {
-			PhaseEventAutomata pea = entry.getValue();
+		for (Entry<CounterTrace, PhaseEventAutomata<CDD>> entry : peaList) {
+			PhaseEventAutomata<CDD> pea = entry.getValue();
 			Phase[] phases = pea.getPhases();
 			for (int i = 0; i < phases.length; i++) {
 				Phase phase = phases[i];
@@ -282,11 +283,11 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return pcInSinkExpression;
 	}
 
-	private void genStrictPeaExpressions(ReqPeas strictPea, List<Expression> eqExpressions,
+	private void genStrictPeaExpressions(ReqPeas<CDD> strictPea, List<Expression> eqExpressions,
 			List<Expression> ltExpressions, BoogieLocation bl) {
-		List<Entry<CounterTrace, PhaseEventAutomata>> peaList = strictPea.getCounterTrace2Pea();
-		for (Entry<CounterTrace, PhaseEventAutomata> entry : peaList) {
-			PhaseEventAutomata pea = entry.getValue();
+		List<Entry<CounterTrace, PhaseEventAutomata<CDD>>> peaList = strictPea.getCounterTrace2Pea();
+		for (Entry<CounterTrace, PhaseEventAutomata<CDD>> entry : peaList) {
+			PhaseEventAutomata<CDD> pea = entry.getValue();
 			Phase[] phases = pea.getPhases();
 
 			for (int i = 0; i < phases.length; i++) {
@@ -334,7 +335,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 		// get all automata for which conditions should be generated
 
-		final List<Entry<PatternType<?>, PhaseEventAutomata>> consideredAutomata =
+		final List<Entry<PatternType<?>, PhaseEventAutomata<CDD>>> consideredAutomata =
 				mRtInconcistencyConditionGenerator.getRelevantRequirements(mReqPeas);
 
 		final int count = consideredAutomata.size();
@@ -445,9 +446,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 
 		final List<Statement> stmtList = new ArrayList<>();
-		for (final ReqPeas reqpea : mReqPeas) {
+		for (final ReqPeas<CDD> reqpea : mReqPeas) {
 			final PatternType<?> pattern = reqpea.getPattern();
-			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
+			for (final Entry<CounterTrace, PhaseEventAutomata<CDD>> pea : reqpea.getCounterTrace2Pea()) {
 				final Statement assertStmt = genAssertNonVacuous(pattern, pea.getValue(), bl);
 				if (assertStmt != null) {
 					stmtList.add(assertStmt);
@@ -516,9 +517,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			return Collections.emptyList();
 		}
 		final List<Statement> stmtList = new ArrayList<>();
-		List<ReqPeas> totalPeas = new ArrayList<>();
-		List<ReqPeas> complementPeas = new ArrayList<>();
-		for (final ReqPeas reqPeas : mReqPeas) {
+		List<ReqPeas<CDD>> totalPeas = new ArrayList<>();
+		List<ReqPeas<CDD>> complementPeas = new ArrayList<>();
+		for (final ReqPeas<CDD> reqPeas : mReqPeas) {
 			if (reqPeas.isTotalised()) {
 				totalPeas.add(reqPeas);
 			} else if (reqPeas.isComplemented()) {
@@ -526,7 +527,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			}
 		}
 		for (int i = 0; i < totalPeas.size(); i++) {
-			List<ReqPeas> assertPeas = new ArrayList<>();
+			List<ReqPeas<CDD>> assertPeas = new ArrayList<>();
 			assertPeas.addAll(totalPeas);
 			assertPeas.remove(i);
 			assertPeas.add(i, complementPeas.get(i));
@@ -538,10 +539,10 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return stmtList;
 	}
 
-	private Statement genAssertRedundancy(List<ReqPeas> assertPeas, final BoogieLocation bl) {
+	private Statement genAssertRedundancy(List<ReqPeas<CDD>> assertPeas, final BoogieLocation bl) {
 		ArrayList<Expression> assertionList = new ArrayList<>();
-		ReqPeas complementedPea = null;
-		for (ReqPeas reqPeas : assertPeas) {
+		ReqPeas<CDD> complementedPea = null;
+		for (ReqPeas<CDD> reqPeas : assertPeas) {
 			ArrayList<Expression> peaAccepts = new ArrayList<>();
 			if (reqPeas.isStrict()) {
 				if (reqPeas.isTotalised()) {
@@ -567,7 +568,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final PatternType<?> complementedPeaPattern = complementedPea.getPattern();
 		ArrayList<String> reqIds = new ArrayList<String>();
 		ArrayList<String> peaNames = new ArrayList<String>();
-		for (Entry<CounterTrace, PhaseEventAutomata> pea : complementedPea.getCounterTrace2Pea()) {
+		for (Entry<CounterTrace, PhaseEventAutomata<CDD>> pea : complementedPea.getCounterTrace2Pea()) {
 			peaNames.add(pea.getValue().getName());
 			reqIds.add(complementedPeaPattern.getId());
 		}

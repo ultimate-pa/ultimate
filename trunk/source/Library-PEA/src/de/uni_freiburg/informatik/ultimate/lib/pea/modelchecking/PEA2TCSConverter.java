@@ -138,19 +138,19 @@ public final class PEA2TCSConverter {
 	private CDD clockConstraintForCurrentTrans;
 	private final List<String> clocks;
 
-	private Transition currentTransition;
+	private Transition<CDD> currentTransition;
 	private Iterator<CDD> disjunctIterator;
 
 	private CDD initClockConstraint;
 	private Iterator<CDD> initDisjunctIterator;
 
 	private int initPhaseCounter;
-	private final Phase[] initPhases;
-	private final PhaseEventAutomata pea;
+	private final Phase<CDD>[] initPhases;
+	private final PhaseEventAutomata<CDD> pea;
 	private int phaseCounter;
-	private final Phase[] phases;
+	private final Phase<CDD>[] phases;
 	private final TCSWriter tcsWriter;
-	private Iterator<Transition> transitionIterator;
+	private Iterator<Transition<CDD>> transitionIterator;
 	private final Map<String, String> variables;
 	private boolean useBooleanDecision = false;
 	// len'>0
@@ -168,7 +168,7 @@ public final class PEA2TCSConverter {
 	 * @param pea
 	 *            The Phase Event Automaton to be transformed
 	 */
-	public PEA2TCSConverter(final TCSWriter tcsWriter, final PhaseEventAutomata pea) {
+	public PEA2TCSConverter(final TCSWriter tcsWriter, final PhaseEventAutomata<CDD> pea) {
 		super();
 
 		this.tcsWriter = tcsWriter;
@@ -289,7 +289,7 @@ public final class PEA2TCSConverter {
 	private boolean chooseNextTransition() {
 		while (transitionIterator == null || !transitionIterator.hasNext()) {
 			if (++phaseCounter < phases.length) {
-				final List<Transition> transitionsForPhase = phases[phaseCounter].getTransitions();
+				final List<Transition<CDD>> transitionsForPhase = phases[phaseCounter].getTransitions();
 				transitionIterator = transitionsForPhase.iterator();
 			} else {
 				return false;

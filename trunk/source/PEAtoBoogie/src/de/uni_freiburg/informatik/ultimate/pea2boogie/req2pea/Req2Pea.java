@@ -70,13 +70,13 @@ public class Req2Pea implements IReq2Pea {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final PeaResultUtil mResultUtil;
-	private final List<ReqPeas> mPattern2Peas;
+	private final List<ReqPeas<CDD>> mPattern2Peas;
 	private final IReqSymbolTable mSymbolTable;
 	private final boolean mHasErrors;
 	private final Durations mDurations;
 
-	public Req2Pea(final IUltimateServiceProvider services, final ILogger logger,
-			final List<DeclarationPattern> init, final List<PatternType<?>> reqs) {
+	public Req2Pea(final IUltimateServiceProvider services, final ILogger logger, final List<DeclarationPattern> init,
+			final List<PatternType<?>> reqs) {
 		mLogger = logger;
 		mServices = services;
 		mResultUtil = new PeaResultUtil(mLogger, mServices);
@@ -92,8 +92,8 @@ public class Req2Pea implements IReq2Pea {
 		reqs.stream().forEach(mDurations::addNonInitPattern);
 		mPattern2Peas = generatePeas(requirements, mDurations);
 
-		for (final ReqPeas reqpea : mPattern2Peas) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
+		for (final ReqPeas<CDD> reqpea : mPattern2Peas) {
+			for (final Entry<CounterTrace, PhaseEventAutomata<CDD>> pea : reqpea.getCounterTrace2Pea()) {
 				builder.addPea(reqpea.getPattern(), pea.getValue());
 			}
 		}
@@ -131,7 +131,7 @@ public class Req2Pea implements IReq2Pea {
 	}
 
 	@Override
-	public List<ReqPeas> getReqPeas() {
+	public List<ReqPeas<CDD>> getReqPeas() {
 		return Collections.unmodifiableList(mPattern2Peas);
 	}
 
@@ -140,14 +140,14 @@ public class Req2Pea implements IReq2Pea {
 		return mSymbolTable;
 	}
 
-	private List<ReqPeas> generatePeas(final List<PatternType<?>> patterns, final Durations durations) {
-		final Map<PatternType<?>, ReqPeas> req2automata = new LinkedHashMap<>();
+	private List<ReqPeas<CDD>> generatePeas(final List<PatternType<?>> patterns, final Durations durations) {
+		final Map<PatternType<?>, ReqPeas<CDD>> req2automata = new LinkedHashMap<>();
 		mLogger.info(String.format("Transforming %s requirements to PEAs", patterns.size()));
 
 		final Map<Class<?>, Integer> counter = new HashMap<>();
 
 		for (final PatternType<?> pat : patterns) {
-			final ReqPeas pea;
+			final ReqPeas<CDD> pea;
 			try {
 				if (ENABLE_DEBUG_LOGS) {
 					mLogger.info("Transforming " + pat.getId());
@@ -164,7 +164,7 @@ public class Req2Pea implements IReq2Pea {
 				mResultUtil.transformationError(pat, "A PEA is missing its initial phase");
 				continue;
 			}
-			final ReqPeas old = req2automata.put(pat, pea);
+			final ReqPeas<CDD> old = req2automata.put(pat, pea);
 			if (old != null) {
 				final String msg = String.format("Duplicate automata: %s and %s",
 						old.getCounterTrace2Pea().stream().map(a -> a.getValue().getName())

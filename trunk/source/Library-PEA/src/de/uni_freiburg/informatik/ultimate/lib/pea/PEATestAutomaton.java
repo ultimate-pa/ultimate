@@ -45,9 +45,9 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimpleSet;
  *
  * @author Johannes Faber
  */
-public class PEATestAutomaton extends PhaseEventAutomata {
+public class PEATestAutomaton extends PhaseEventAutomata<CDD> {
 
-	protected Phase[] finalPhases;
+	protected Phase<CDD>[] finalPhases;
 
 	/**
 	 * @param name
@@ -55,7 +55,8 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 	 * @param init
 	 * @param clocks
 	 */
-	public PEATestAutomaton(final String name, final Phase[] phases, final Phase[] init, final List<String> clocks) {
+	public PEATestAutomaton(final String name, final Phase<CDD>[] phases, final Phase<CDD>[] init,
+			final List<String> clocks) {
 		this(name, phases, init, clocks, new Phase[0]);
 	}
 
@@ -67,8 +68,8 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 	 * @param init
 	 * @param clocks
 	 */
-	public PEATestAutomaton(final String name, final Phase[] phases, final Phase[] init, final List<String> clocks,
-			final Phase[] finals) {
+	public PEATestAutomaton(final String name, final Phase<CDD>[] phases, final Phase<CDD>[] init,
+			final List<String> clocks, final Phase<CDD>[] finals) {
 		this(name, phases, init, clocks, null, null, finals);
 	}
 
@@ -79,7 +80,7 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 	 * @param phases
 	 * @param init
 	 */
-	public PEATestAutomaton(final String name, final Phase[] phases, final Phase[] init) {
+	public PEATestAutomaton(final String name, final Phase<CDD>[] phases, final Phase<CDD>[] init) {
 		super(name, phases, init);
 		finalPhases = new Phase[0];
 	}
@@ -96,13 +97,14 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 	 * @param finalPhases
 	 *            if finalPhases is null then a new Phase array is generated for the final phases
 	 */
-	public PEATestAutomaton(final String name, final Phase[] phases, final Phase[] init, final List<String> clocks,
-			final Map<String, String> variables, final List<String> declarations, final Phase[] finalPhases) {
+	public PEATestAutomaton(final String name, final Phase<CDD>[] phases, final Phase<CDD>[] init,
+			final List<String> clocks, final Map<String, String> variables, final List<String> declarations,
+			final Phase<CDD>[] finalPhases) {
 		super(name, phases, init, clocks, variables, declarations);
 		this.finalPhases = finalPhases != null ? finalPhases : new Phase[0];
 	}
 
-	public PEATestAutomaton(final PhaseEventAutomata automata) {
+	public PEATestAutomaton(final PhaseEventAutomata<CDD> automata) {
 		this(automata.mName, automata.mPhases, automata.mInit, automata.mClocks, automata.mVariables,
 				automata.mDeclarations, new Phase[0]);
 	}
@@ -113,24 +115,23 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 	 * automaton and the new final states are given by the product of final states of the test automaton and normal
 	 * states of the PEA.
 	 */
-	@Override
-	public PEATestAutomaton parallel(final PhaseEventAutomata b) {
-		final List<Phase> newInit = new ArrayList<>();
-		final List<Phase> newFinal = new ArrayList<>();
-		final TreeSet<Phase> oldFinal =
+	public PEATestAutomaton parallel(final PhaseEventAutomata<CDD> b) {
+		final List<Phase<CDD>> newInit = new ArrayList<>();
+		final List<Phase<CDD>> newFinal = new ArrayList<>();
+		final TreeSet<Phase<CDD>> oldFinal =
 				getFinalPhases() == null ? null : new TreeSet<>(Arrays.asList(getFinalPhases()));
-		TreeSet<Phase> bOldFinal = null;
+		TreeSet<Phase<CDD>> bOldFinal = null;
 
-		final TreeMap<String, Phase> newPhases = new TreeMap<>();
+		final TreeMap<String, Phase<CDD>> newPhases = new TreeMap<>();
 		final boolean bIsTestAutomaton = (b instanceof PEATestAutomaton);
 		if (bIsTestAutomaton) {
 			bOldFinal = new TreeSet<>(Arrays.asList(((PEATestAutomaton) b).getFinalPhases()));
 		}
 
 		class TodoEntry {
-			Phase p1, p2, p;
+			Phase<CDD> p1, p2, p;
 
-			TodoEntry(final Phase p1, final Phase p2, final Phase p) {
+			TodoEntry(final Phase<CDD> p1, final Phase<CDD> p2, final Phase<CDD> p) {
 				this.p1 = p1;
 				this.p2 = p2;
 				this.p = p;
@@ -144,7 +145,8 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 				final CDD sinv = getInit()[i].stateInv.and(b.getInit()[j].stateInv);
 				if (sinv != CDD.FALSE) {
 					final CDD cinv = getInit()[i].clockInv.and(b.getInit()[j].clockInv);
-					final Phase p = new Phase(getInit()[i].getName() + TIMES + b.getInit()[j].getName(), sinv, cinv);
+					final Phase<CDD> p =
+							new Phase(getInit()[i].getName() + PEAUtils.TIMES + b.getInit()[j].getName(), sinv, cinv);
 					if (bIsTestAutomaton && oldFinal.contains(getInit()[i]) && bOldFinal.contains(b.getInit()[j])) {
 						newFinal.add(p);
 					} else if (!bIsTestAutomaton && oldFinal != null && oldFinal.contains(getInit()[i])) {
@@ -159,12 +161,12 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 
 		while (!todo.isEmpty()) {
 			final TodoEntry entry = todo.remove(0);
-			final Iterator<Transition> i = entry.p1.transitions.iterator();
+			final Iterator<Transition<CDD>> i = entry.p1.transitions.iterator();
 			while (i.hasNext()) {
-				final Transition t1 = i.next();
-				final Iterator<Transition> j = entry.p2.transitions.iterator();
+				final Transition<CDD> t1 = i.next();
+				final Iterator<Transition<CDD>> j = entry.p2.transitions.iterator();
 				while (j.hasNext()) {
-					final Transition t2 = j.next();
+					final Transition<CDD> t2 = j.next();
 
 					final CDD guard = t1.getGuard().and(t2.getGuard());
 					if (guard == CDD.FALSE) {
@@ -184,11 +186,11 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 					stoppedClocks.addAll(t1.getDest().stoppedClocks);
 					stoppedClocks.addAll(t2.getDest().stoppedClocks);
 
-					final String newname = t1.getDest().getName() + TIMES + t2.getDest().getName();
-					Phase p = newPhases.get(newname);
+					final String newname = t1.getDest().getName() + PEAUtils.TIMES + t2.getDest().getName();
+					Phase<CDD> p = newPhases.get(newname);
 
 					if (p == null) {
-						p = new Phase(newname, sinv, cinv, stoppedClocks);
+						p = new Phase<CDD>(newname, sinv, cinv, stoppedClocks);
 						newPhases.put(newname, p);
 						todo.add(new TodoEntry(t1.getDest(), t2.getDest(), p));
 						if (bIsTestAutomaton && oldFinal != null && bOldFinal != null && oldFinal.contains(t1.getDest())
@@ -204,25 +206,25 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 			}
 		}
 
-		final Phase[] allPhases = newPhases.values().toArray(new Phase[newPhases.size()]);
-		final Phase[] initPhases = newInit.toArray(new Phase[newInit.size()]);
-		final Phase[] finalPhases = newFinal.toArray(new Phase[newFinal.size()]);
+		final Phase<CDD>[] allPhases = newPhases.values().toArray(new Phase[newPhases.size()]);
+		final Phase<CDD>[] initPhases = newInit.toArray(new Phase[newInit.size()]);
+		final Phase<CDD>[] finalPhases = newFinal.toArray(new Phase[newFinal.size()]);
 
-		final List<String> newClocks = mergeClockLists(b);
+		final List<String> newClocks = PEAUtils.mergeClockLists(this, b);
 
-		final Map<String, String> newVariables = mergeVariableLists(b);
+		final Map<String, String> newVariables = PEAUtils.mergeVariableLists(this, b);
 
-		final List<String> newDeclarations = mergeDeclarationLists(b);
+		final List<String> newDeclarations = PEAUtils.mergeDeclarationLists(this, b);
 
-		return new PEATestAutomaton(mName + TIMES + b.mName, allPhases, initPhases, newClocks, newVariables,
+		return new PEATestAutomaton(mName + PEAUtils.TIMES + b.mName, allPhases, initPhases, newClocks, newVariables,
 				newDeclarations, finalPhases);
 	}
 
-	public Phase[] getFinalPhases() {
+	public Phase<CDD>[] getFinalPhases() {
 		return finalPhases;
 	}
 
-	public void setFinalPhases(final Phase[] finalPhases) {
+	public void setFinalPhases(final Phase<CDD>[] finalPhases) {
 		this.finalPhases = finalPhases;
 	}
 
@@ -235,12 +237,12 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 	 */
 	public PEATestAutomaton removeUnreachableLocations() {
 		// building up map for more efficient access to incoming transitions
-		final Map<Phase, List<Transition>> incomingTrans = new HashMap<>();
-		for (final Phase phase : mPhases) {
-			incomingTrans.put(phase, new ArrayList<Transition>());
+		final Map<Phase<CDD>, List<Transition<CDD>>> incomingTrans = new HashMap<>();
+		for (final Phase<CDD> phase : mPhases) {
+			incomingTrans.put(phase, new ArrayList<Transition<CDD>>());
 		}
-		for (final Phase phase : mPhases) {
-			for (final Transition transition : phase.getTransitions()) {
+		for (final Phase<CDD> phase : mPhases) {
+			for (final Transition<CDD> transition : phase.getTransitions()) {
 				incomingTrans.get(transition.getDest()).add(transition);
 			}
 		}
@@ -269,15 +271,15 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 		}
 
 		// a new phase sinkPhase shall replace the unreachable phases
-		final List<Phase> newPhases = new ArrayList<>();
-		final ArrayList<Phase> newInit = new ArrayList<>();
-		final Phase sinkPhase = new Phase("sink");
+		final List<Phase<CDD>> newPhases = new ArrayList<>();
+		final ArrayList<Phase<CDD>> newInit = new ArrayList<>();
+		final Phase<CDD> sinkPhase = new Phase<CDD>("sink", CDD.TRUE, CDD.TRUE);
 		newPhases.add(sinkPhase);
 		sinkPhase.addTransition(sinkPhase, CDD.TRUE, new String[0]);
 
 		// check if one of the unreachable phases is an inital phase
 		boolean initUnreachable = false;
-		for (final Phase initPhase : mInit) {
+		for (final Phase<CDD> initPhase : mInit) {
 			if (reachablePhases.contains(initPhase)) {
 				newInit.add(initPhase);
 			} else {
@@ -289,16 +291,16 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 		}
 
 		// rebuild PEATestAutomaton
-		for (final Phase phase : mPhases) {
+		for (final Phase<CDD> phase : mPhases) {
 			if (reachablePhases.contains(phase)) {
 				newPhases.add(phase);
-				final List<Transition> removeList = new ArrayList<>();
-				for (final Transition trans : phase.transitions) {
+				final List<Transition<CDD>> removeList = new ArrayList<>();
+				for (final Transition<CDD> trans : phase.transitions) {
 					if (!reachableTrans.contains(trans)) {
 						removeList.add(trans);
 					}
 				}
-				for (final Transition trans : removeList) {
+				for (final Transition<CDD> trans : removeList) {
 					phase.addTransition(sinkPhase, trans.getGuard(), trans.getResets());
 					phase.getTransitions().remove(trans);
 				}

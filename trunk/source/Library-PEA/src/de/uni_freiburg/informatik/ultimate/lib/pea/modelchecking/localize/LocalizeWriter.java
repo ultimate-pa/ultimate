@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PEAUtils;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.ZDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.PEA2TCSConverter.TransitionConstraint;
@@ -581,8 +581,8 @@ public class LocalizeWriter extends TCSWriter {
 		}
 		// program counter to constant declaration
 		if (pcFlag.equals(PC.SINGLE)) {
-			final String pc1 = constraint.getSource().replaceAll(PhaseEventAutomata.TIMES, LocalizeString.SEPARATOR);
-			final String pc2 = constraint.getDest().replaceAll(PhaseEventAutomata.TIMES, LocalizeString.SEPARATOR);
+			final String pc1 = constraint.getSource().replaceAll(PEAUtils.TIMES, LocalizeString.SEPARATOR);
+			final String pc2 = constraint.getDest().replaceAll(PEAUtils.TIMES, LocalizeString.SEPARATOR);
 			writer.write("(" + pc1 + ", int), " + "(" + pc2 + ", int)");
 		}
 		writer.write("}\n");
@@ -948,9 +948,9 @@ public class LocalizeWriter extends TCSWriter {
 
 			pcVars = new HashSet<>();
 			int numberOfComponents = 0;
-			final Phase[] phases = converter.getPEA().getPhases();
+			final Phase<CDD>[] phases = converter.getPEA().getPhases();
 			for (int i = 0; i < phases.length; i++) {
-				final String[] pcNames = phases[i].getName().split(PhaseEventAutomata.TIMES);
+				final String[] pcNames = phases[i].getName().split(PEAUtils.TIMES);
 				if (numberOfComponents == 0) {
 					numberOfComponents = pcNames.length;
 				} else if (pcNames.length != numberOfComponents) {
@@ -1200,8 +1200,8 @@ public class LocalizeWriter extends TCSWriter {
 
 		CDD newCDD = constraint.getConstraint();
 		if (pcFlag.equals(PC.SINGLE)) {
-			final String pc1 = constraint.getSource().replaceAll(PhaseEventAutomata.TIMES, LocalizeString.SEPARATOR);
-			final String pc2 = constraint.getDest().replaceAll(PhaseEventAutomata.TIMES, LocalizeString.SEPARATOR);
+			final String pc1 = constraint.getSource().replaceAll(PEAUtils.TIMES, LocalizeString.SEPARATOR);
+			final String pc2 = constraint.getDest().replaceAll(PEAUtils.TIMES, LocalizeString.SEPARATOR);
 			if (pc1.contains(LocalizeString.NUMPREFIX)) {
 				throw new LocalizeException(LocalizeException.MALFORMED_NAME + constraint.getSource());
 			}
@@ -1214,8 +1214,8 @@ public class LocalizeWriter extends TCSWriter {
 
 		} else if (pcFlag.equals(PC.MULTIPLE)) {
 
-			final String[] sourcePLs = constraint.getSource().split(PhaseEventAutomata.TIMES);
-			final String[] targetPLs = constraint.getDest().split(PhaseEventAutomata.TIMES);
+			final String[] sourcePLs = constraint.getSource().split(PEAUtils.TIMES);
+			final String[] targetPLs = constraint.getDest().split(PEAUtils.TIMES);
 			if (sourcePLs.length != targetPLs.length) {
 				throw new LocalizeException(
 						LocalizeException.MALFORMED_LOCATION + constraint.getSource() + " or " + constraint.getDest());

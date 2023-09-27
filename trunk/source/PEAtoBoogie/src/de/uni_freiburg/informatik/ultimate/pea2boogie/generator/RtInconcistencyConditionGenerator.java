@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PEAUtils;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
@@ -133,10 +134,10 @@ public class RtInconcistencyConditionGenerator {
 	private final CddToSmt mCddToSmt;
 
 	private final ConstructionCache<Term, Term> mProjectionCache;
-	private final ConstructionCache<Phase, Term> mPhaseNdcCache;
-	private final ConstructionCache<Transition, Term> mNdcGuardTermCache;
-	private final ConstructionCache<Phase, Term> mNdcStateInvariantCache;
-	private final ConstructionCache<Transition, Term> mNdcClockInvariantCache;
+	private final ConstructionCache<Phase<CDD>, Term> mPhaseNdcCache;
+	private final ConstructionCache<Transition<CDD>, Term> mNdcGuardTermCache;
+	private final ConstructionCache<Phase<CDD>, Term> mNdcStateInvariantCache;
+	private final ConstructionCache<Transition<CDD>, Term> mNdcClockInvariantCache;
 
 	private int mQuantified;
 	private int mPlain;
@@ -153,7 +154,7 @@ public class RtInconcistencyConditionGenerator {
 	private final IEpsilonTransformer mEpsilonTransformer;
 
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
-			final PeaResultUtil peaResultUtil, final IReqSymbolTable symboltable, final List<ReqPeas> reqPeas,
+			final PeaResultUtil peaResultUtil, final IReqSymbolTable symboltable, final List<ReqPeas<CDD>> reqPeas,
 			final BoogieDeclarations boogieDeclarations, final Durations durations,
 			final boolean separateInvariantHandling) throws InvariantInfeasibleException {
 		mReqSymboltable = symboltable;
@@ -228,12 +229,13 @@ public class RtInconcistencyConditionGenerator {
 	/**
 	 * Return a subset of requirements that should be used for generating rt-inconsistency checks.
 	 */
-	public List<Entry<PatternType<?>, PhaseEventAutomata>> getRelevantRequirements(final List<ReqPeas> reqPeas) {
+	public List<Entry<PatternType<?>, PhaseEventAutomata<CDD>>>
+			getRelevantRequirements(final List<ReqPeas<CDD>> reqPeas) {
 		// we only consider automata that do not represent invariants or which have a disjunctive invariant
-		final List<Entry<PatternType<?>, PhaseEventAutomata>> rtr = new ArrayList<>();
-		for (final ReqPeas reqPea : reqPeas) {
+		final List<Entry<PatternType<?>, PhaseEventAutomata<CDD>>> rtr = new ArrayList<>();
+		for (final ReqPeas<CDD> reqPea : reqPeas) {
 			final PatternType<?> pattern = reqPea.getPattern();
-			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqPea.getCounterTrace2Pea()) {
+			for (final Entry<CounterTrace, PhaseEventAutomata<CDD>> pea : reqPea.getCounterTrace2Pea()) {
 				rtr.add(new Pair<>(pattern, pea.getValue()));
 			}
 		}
@@ -251,8 +253,8 @@ public class RtInconcistencyConditionGenerator {
 	 * @param entry
 	 * @return
 	 */
-	private boolean filterReqs(final PhaseEventAutomata pea) {
-		final Phase[] phases = pea.getPhases();
+	private boolean filterReqs(final PhaseEventAutomata<CDD> pea) {
+		final Phase<CDD>[] phases = pea.getPhases();
 		if (phases.length != 1) {
 			// this is not an invariant, filter it out
 			return true;
@@ -282,36 +284,36 @@ public class RtInconcistencyConditionGenerator {
 	 * Generates an expression that represents the non-deadlock condition (NDC) for a network of PEAs A, where
 	 *
 	 * <pre>
-	 *   A = A_1 || ··· || A_n and A_i = (P_i, V_i, C_i, E_i, s_i, I_i, P^0_i).
+	 *   A = A_1 || Â·Â·Â· || A_n and A_i = (P_i, V_i, C_i, E_i, s_i, I_i, P^0_i).
 	 * </pre>
 	 *
 	 * The NDC of A is then
 	 *
 	 * <pre>
 	 *
-	 *   ⋀ (p_1,...,p_n) ∈ P_1 x ... x P_n
-	 *   pc_1 = p_1 ⋀ ... ⋀ pc_n = p_n  =>  ∃  v' . NDC(A_1, p_1) ⋀ ... ⋀ NDC(A_n, p_n)
+	 *   â‹€ (p_1,...,p_n) âˆˆ P_1 x ... x P_n
+	 *   pc_1 = p_1 â‹€ ... â‹€ pc_n = p_n  =>  âˆƒ  v' . NDC(A_1, p_1) â‹€ ... â‹€ NDC(A_n, p_n)
 	 * </pre>
 	 *
 	 * The NDC(A_i, p_i) is the non-deadlock condition for PEA A_i and phase p_i:
 	 *
 	 * <pre>
-	 *   ⋁ (p,g,X,p') ∈ E_i
-	 *   g ⋀ s'(p') ⋀ strict(I(p'))[X/0]
+	 *   â‹� (p,g,X,p') âˆˆ E_i
+	 *   g â‹€ s'(p') â‹€ strict(I(p'))[X/0]
 	 * </pre>
 	 *
-	 * <code>strict</code> replaces in I(p') all occurrences of c ≤ t by c < t.
+	 * <code>strict</code> replaces in I(p') all occurrences of c â‰¤ t by c < t.
 	 *
 	 */
-	public Expression generateNonDeadlockCondition(final PhaseEventAutomata[] automata) {
+	public Expression generateNonDeadlockCondition(final PhaseEventAutomata<CDD>[] automata) {
 		if (PRINT_PEA_DOT) {
 			mLogger.info("### Printing DOT for Peas ###");
 			for (int i = 0; i < automata.length; ++i) {
-				final PhaseEventAutomata pea = automata[i];
+				final PhaseEventAutomata<CDD> pea = automata[i];
 				mLogger.info(pea.getName() + CoreUtil.getPlatformLineSeparator() + DotWriterNew.createDotString(pea));
 			}
 			if (automata.length < 4) {
-				final Optional<PhaseEventAutomata> prod = Arrays.stream(automata).reduce(PhaseEventAutomata::parallel);
+				final Optional<PhaseEventAutomata<CDD>> prod = Arrays.stream(automata).reduce(PEAUtils::parallel);
 				if (prod.isPresent()) {
 					mLogger.info(
 							"PRODUCT" + CoreUtil.getPlatformLineSeparator() + DotWriterNew.createDotString(prod.get()));
@@ -329,7 +331,7 @@ public class RtInconcistencyConditionGenerator {
 			final List<Term> outer = new ArrayList<>();
 			final List<Term> impliesLHS = new ArrayList<>();
 			for (int j = 0; j < phaseVector.length; j++) {
-				final PhaseEventAutomata automaton = automata[j];
+				final PhaseEventAutomata<CDD> automaton = automata[j];
 				final int phaseIndex = phaseVector[j];
 
 				// collect all pc_i = p_i equalities
@@ -339,14 +341,14 @@ public class RtInconcistencyConditionGenerator {
 				outer.add(mPhaseNdcCache.getOrConstruct(automaton.getPhases()[phaseIndex]));
 			}
 
-			// "compute" NDC(A_1, p_1) ⋀ ... ⋀ NDC(A_n, p_n)
+			// "compute" NDC(A_1, p_1) â‹€ ... â‹€ NDC(A_n, p_n)
 			final Term checkPrimedRhs = SmtUtils.and(mScript, outer);
 
-			// extension: add primed invariant, i.e., a preprocessed collection of ⋀NDC(A_i, p_i)
+			// extension: add primed invariant, i.e., a preprocessed collection of â‹€NDC(A_i, p_i)
 			// for single state PEAs.
 			final Term checkPrimedRhsAndPrimedInvariant = SmtUtils.and(mScript, checkPrimedRhs, mPrimedInvariant);
 
-			// compute ∃ v' . NDC(A_1, p_1) ⋀ ... ⋀ NDC(A_n, p_n), i.e., add quantifier and try to remove it
+			// compute âˆƒ v' . NDC(A_1, p_1) â‹€ ... â‹€ NDC(A_n, p_n), i.e., add quantifier and try to remove it
 			final Term checkRhsAndInvariant = mProjectionCache.getOrConstruct(checkPrimedRhsAndPrimedInvariant);
 			if (checkRhsAndInvariant instanceof QuantifiedFormula) {
 				mQuantified++;
@@ -357,7 +359,7 @@ public class RtInconcistencyConditionGenerator {
 				continue;
 			}
 
-			// "compute" pc_1 = p_1 ⋀ ... ⋀ pc_n = p_n
+			// "compute" pc_1 = p_1 â‹€ ... â‹€ pc_n = p_n
 			final Term rtInconsistencyCheckLhs = SmtUtils.and(mScript, impliesLHS);
 			if (PRINT_INDIVIDUAL_RT_INCONSISTENCY_CHECK) {
 				mLogger.info("%s => %s", rtInconsistencyCheckLhs, checkRhsAndInvariant);
@@ -417,7 +419,7 @@ public class RtInconcistencyConditionGenerator {
 		}
 	}
 
-	private Term constructNdcPhase(final Phase phase) {
+	private Term constructNdcPhase(final Phase<CDD> phase) {
 		final List<Term> inner = new ArrayList<>();
 		for (final Transition trans : phase.getTransitions()) {
 			final Phase dest = trans.getDest();
@@ -429,11 +431,11 @@ public class RtInconcistencyConditionGenerator {
 		return SmtUtils.or(mScript, inner);
 	}
 
-	private Term constructNdcGuardTerm(final Transition trans) {
+	private Term constructNdcGuardTerm(final Transition<CDD> trans) {
 		return transformAndLog(trans.getGuard(), mEpsilonTransformer::transformGuard, "guard");
 	}
 
-	private Term constructNdcClockInvariantTerm(final Transition trans) {
+	private Term constructNdcClockInvariantTerm(final Transition<CDD> trans) {
 		return transformAndLog(
 				new StrictInvariant().genStrictInv(trans.getDest().getClockInvariant(), trans.getResets()),
 				mEpsilonTransformer::transformClockInvariant, "clock invariant");
@@ -448,7 +450,7 @@ public class RtInconcistencyConditionGenerator {
 		return transTerm;
 	}
 
-	private Term constructNdcStateInvariant(final Phase phase) {
+	private Term constructNdcStateInvariant(final Phase<CDD> phase) {
 		return toNormalform(mCddToSmt.toSmt(phase.getStateInvariant().prime(mReqSymboltable.getConstVars())));
 	}
 
@@ -467,10 +469,10 @@ public class RtInconcistencyConditionGenerator {
 		return SmtUtils.simplify(mManagedScript, term, mServices, SimplificationTechnique.POLY_PAC);
 	}
 
-	private Term constructPrimedStateInvariant(final List<ReqPeas> reqPeas) throws InvariantInfeasibleException {
+	private Term constructPrimedStateInvariant(final List<ReqPeas<CDD>> reqPeas) throws InvariantInfeasibleException {
 		final Map<PatternType<?>, CDD> primedStateInvariants = new HashMap<>();
-		for (final ReqPeas reqpea : reqPeas) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
+		for (final ReqPeas<CDD> reqpea : reqPeas) {
+			for (final Entry<CounterTrace, PhaseEventAutomata<CDD>> pea : reqpea.getCounterTrace2Pea()) {
 				if (filterReqs(pea.getValue())) {
 					// this is not an invariant we want to consider
 					continue;

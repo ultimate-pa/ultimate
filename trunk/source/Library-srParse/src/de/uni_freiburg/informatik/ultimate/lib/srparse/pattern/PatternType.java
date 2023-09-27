@@ -276,11 +276,11 @@ public abstract class PatternType<T extends PatternType<?>> {
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
-	public static final class ReqPeas {
+	public static final class ReqPeas<T> {
 		private final PatternType<?> mReq;
-		private final List<Entry<CounterTrace, PhaseEventAutomata>> mPeas;
+		private final List<Entry<CounterTrace, PhaseEventAutomata<T>>> mPeas;
 
-		public ReqPeas(final PatternType<?> req, final List<Entry<CounterTrace, PhaseEventAutomata>> peas) {
+		public ReqPeas(final PatternType<?> req, final List<Entry<CounterTrace, PhaseEventAutomata<T>>> peas) {
 			mReq = Objects.requireNonNull(req);
 			mPeas = Collections.unmodifiableList(Objects.requireNonNull(peas));
 			if (mPeas.isEmpty()) {
@@ -292,13 +292,13 @@ public abstract class PatternType<T extends PatternType<?>> {
 			return mReq;
 		}
 
-		public List<Entry<CounterTrace, PhaseEventAutomata>> getCounterTrace2Pea() {
+		public List<Entry<CounterTrace, PhaseEventAutomata<T>>> getCounterTrace2Pea() {
 			return mPeas;
 		}
 
 		public boolean isStrict() {
-			for (Entry<CounterTrace, PhaseEventAutomata> entry : mPeas) {
-				PhaseEventAutomata automata = entry.getValue();
+			for (Entry<CounterTrace, PhaseEventAutomata<T>> entry : mPeas) {
+				PhaseEventAutomata<?> automata = entry.getValue();
 				if (automata.isStrict()) {
 					return true;
 				}
@@ -307,18 +307,19 @@ public abstract class PatternType<T extends PatternType<?>> {
 		}
 
 		public boolean isTotalised() {
-			for (Entry<CounterTrace, PhaseEventAutomata> entry : mPeas) {
-				PhaseEventAutomata automaton = entry.getValue();
-				if (!automaton.isTotalised()) {
-					return false;
+			for (Entry<CounterTrace, PhaseEventAutomata<T>> entry : mPeas) {
+				PhaseEventAutomata<?> automaton = entry.getValue();
+				String automataName = automato.getName();
+				if (automataName.endsWith("t")) {
+					return true;
 				}
 			}
 			return true;
 		}
 
 		public boolean isComplemented() {
-			for (Entry<CounterTrace, PhaseEventAutomata> entry : mPeas) {
-				PhaseEventAutomata automaton = entry.getValue();
+			for (Entry<CounterTrace, PhaseEventAutomata<T>> entry : mPeas) {
+				PhaseEventAutomata<?> automaton = entry.getValue();
 				if (!automaton.isComplemented()) {
 					return false;
 				}

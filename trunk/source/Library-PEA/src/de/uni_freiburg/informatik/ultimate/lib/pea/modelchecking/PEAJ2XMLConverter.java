@@ -131,8 +131,8 @@ public class PEAJ2XMLConverter {
 			}
 
 			writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-			        + "<peaNet xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
-			        + " xsi:noNamespaceSchemaLocation=\"../schemas/PEA.xsd\">\n");
+					+ "<peaNet xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
+					+ " xsi:noNamespaceSchemaLocation=\"../schemas/PEA.xsd\">\n");
 
 			writeTypeDeclarations(declarations, writer);
 			for (int i = 0; i < peas.length; i++) {
@@ -289,7 +289,7 @@ public class PEAJ2XMLConverter {
 
 		// Add additional variables to var list.
 		if (variables != null && !variables.isEmpty()
-		        || (additionalVariables != null && !additionalVariables[peaCounter].isEmpty())) {
+				|| (additionalVariables != null && !additionalVariables[peaCounter].isEmpty())) {
 			writer.write("<variables>\n");
 			if (additionalVariables != null && !additionalVariables[peaCounter].isEmpty()) {
 				final Iterator addVarIterator = additionalVariables[peaCounter].iterator();
@@ -305,7 +305,7 @@ public class PEAJ2XMLConverter {
 				while (variablesIterator.hasNext()) {
 					final String actVariable = variablesIterator.next();
 					writer.write(
-					        "<variable name=\"" + actVariable + "\" type=\"" + variables.get(actVariable) + "\"/>");
+							"<variable name=\"" + actVariable + "\" type=\"" + variables.get(actVariable) + "\"/>");
 				}
 			}
 			if (!rangeVariables.isEmpty()) {
@@ -352,8 +352,8 @@ public class PEAJ2XMLConverter {
 
 	}
 
-	private boolean peaHasTransitions(final PhaseEventAutomata pea) {
-		final Phase[] phases = pea.getPhases();
+	private boolean peaHasTransitions(final PhaseEventAutomata<CDD> pea) {
+		final Phase<CDD>[] phases = pea.getPhases();
 		for (int i = 0; i < phases.length; i++) {
 			if (phases[i].getTransitions().size() > 0) {
 				return true;
@@ -362,7 +362,7 @@ public class PEAJ2XMLConverter {
 		return false;
 	}
 
-	protected void createPhaseNode(final Phase phase, final boolean init) throws IOException {
+	protected void createPhaseNode(final Phase<CDD> phase, final boolean init) throws IOException {
 		writer.write("<phase name=\"" + phase.getName() + "\" >\n");
 
 		// if this phase is an initial phase, create the initial tag
@@ -380,7 +380,7 @@ public class PEAJ2XMLConverter {
 		writer.write("</phase>\n");
 	}
 
-	protected void createTransitionNode(final Transition trans) throws IOException {
+	protected void createTransitionNode(final Transition<CDD> trans) throws IOException {
 		final String source = trans.getSrc().getName();
 		final String dest = trans.getDest().getName();
 		logger.info("Creating transition from " + source + " to " + dest);

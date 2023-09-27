@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PEAUtils;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
@@ -166,53 +167,53 @@ public class Audio {
 						Collections.singleton("r.1"), false),
 				new CounterTrace.DCPhase(CDD.TRUE, CDD.TRUE, CounterTrace.BOUND_NONE, 0, Collections.emptySet(),
 						true) });
-		pea = abstractAutomaton(pea.parallel(create4DC(ct, "dcb")), ".*FINAL.*");
+		pea = abstractAutomaton(PEAUtils.parallel(pea, create4DC(ct, "dcb")), ".*FINAL.*");
 		ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 				new CounterTrace.DCPhase(sendStop.and(recvStop.negate()), CDD.TRUE, CounterTrace.BOUND_GREATER, 4 * Q,
 						Collections.singleton("r.stop"), false),
 				new CounterTrace.DCPhase(CDD.TRUE, CDD.TRUE, CounterTrace.BOUND_NONE, 0, Collections.emptySet(),
 						true) });
-		pea = abstractAutomaton(pea.parallel(create4DC(ct, "dcc")), ".*FINAL.*");
+		pea = abstractAutomaton(PEAUtils.parallel(pea, create4DC(ct, "dcc")), ".*FINAL.*");
 		ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 				new CounterTrace.DCPhase(sendZero.and(recvZero.negate()), CDD.TRUE, CounterTrace.BOUND_NONE, 0,
 						Collections.singleton("r.0"), true),
 				new CounterTrace.DCPhase(recvOne.or(recvStop), CDD.TRUE, CounterTrace.BOUND_NONE, 0,
 						Collections.emptySet(), true) });
-		pea = abstractAutomaton(pea.parallel(create4DC(ct, "dc1")), ".*FINAL.*");
+		pea = abstractAutomaton(PEAUtils.parallel(pea, create4DC(ct, "dc1")), ".*FINAL.*");
 		ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 				new CounterTrace.DCPhase(sendOne.and(recvOne.negate()), CDD.TRUE, CounterTrace.BOUND_NONE, 0,
 						Collections.singleton("r.1"), true),
 				new CounterTrace.DCPhase(recvZero.or(recvStop), CDD.TRUE, CounterTrace.BOUND_NONE, 0,
 						Collections.emptySet(), true) });
-		pea = abstractAutomaton(pea.parallel(create4DC(ct, "dc2")), ".*FINAL.*");
+		pea = abstractAutomaton(PEAUtils.parallel(pea, create4DC(ct, "dc2")), ".*FINAL.*");
 		ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 				new CounterTrace.DCPhase(sendStop.and(recvStop.negate()), CDD.TRUE, CounterTrace.BOUND_NONE, 0,
 						Collections.singleton("r.stop"), true),
 				new CounterTrace.DCPhase(recvZero.or(recvOne), CDD.TRUE, CounterTrace.BOUND_NONE, 0,
 						Collections.emptySet(), true) });
-		pea = abstractAutomaton(pea.parallel(create4DC(ct, "dc3")), ".*FINAL.*");
+		pea = abstractAutomaton(PEAUtils.parallel(pea, create4DC(ct, "dc3")), ".*FINAL.*");
 		ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 				new CounterTrace.DCPhase(sendZero.and(recvZero.negate()), CDD.TRUE, CounterTrace.BOUND_NONE, 0,
 						Collections.singleton("r.0"), false),
 				new CounterTrace.DCPhase(sendZero.or(sendOne).or(sendStop), CDD.TRUE, CounterTrace.BOUND_NONE, 0,
 						Collections.emptySet(), true) });
-		pea = abstractAutomaton(pea.parallel(create4DC(ct, "dc4")), ".*FINAL.*");
+		pea = abstractAutomaton(PEAUtils.parallel(pea, create4DC(ct, "dc4")), ".*FINAL.*");
 		ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 				new CounterTrace.DCPhase(sendOne.and(recvOne.negate()), CDD.TRUE, CounterTrace.BOUND_NONE, 0,
 						Collections.singleton("r.1"), false),
 				new CounterTrace.DCPhase(sendZero.or(sendOne).or(sendStop), CDD.TRUE, CounterTrace.BOUND_NONE, 0,
 						Collections.emptySet(), true) });
-		pea = abstractAutomaton(pea.parallel(create4DC(ct, "dc5")), ".*FINAL.*");
+		pea = abstractAutomaton(PEAUtils.parallel(pea, create4DC(ct, "dc5")), ".*FINAL.*");
 		ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 				new CounterTrace.DCPhase(sendStop.and(recvStop.negate()), CDD.TRUE, CounterTrace.BOUND_NONE, 0,
 						Collections.singleton("r.stop"), false),
 				new CounterTrace.DCPhase(sendZero.or(sendOne).or(sendStop), CDD.TRUE, CounterTrace.BOUND_NONE, 0,
 						Collections.emptySet(), true) });
-		pea = abstractAutomaton(pea.parallel(create4DC(ct, "dc6")), ".*FINAL.*");
+		pea = abstractAutomaton(PEAUtils.parallel(pea, create4DC(ct, "dc6")), ".*FINAL.*");
 		return pea;
 	}
 
-	PhaseEventAutomata abstractAutomaton(final PhaseEventAutomata pea, final String finalRegex) {
+	PhaseEventAutomata<CDD> abstractAutomaton(final PhaseEventAutomata<CDD> pea, final String finalRegex) {
 		final Phase[] init = pea.getInit();
 		final Phase[] newInit = new Phase[init.length];
 		int ctr = 0;
@@ -233,11 +234,11 @@ public class Audio {
 			todo.add(init[i]);
 		}
 		while (!todo.isEmpty()) {
-			final Phase oldPhase = todo.remove(0);
-			final Phase newPhase = newPhases.get(oldPhase);
+			final Phase<CDD> oldPhase = todo.remove(0);
+			final Phase<CDD> newPhase = newPhases.get(oldPhase);
 			CDD errorGuard = CDD.FALSE;
-			for (final Transition t : oldPhase.getTransitions()) {
-				final Phase dest = t.getDest();
+			for (final Transition<CDD> t : oldPhase.getTransitions()) {
+				final Phase<CDD> dest = t.getDest();
 				if (dest.getName().matches(finalRegex)) {
 					if (ABSTRACT) {
 						errorGuard = errorGuard.or(t.getGuard());
@@ -272,13 +273,13 @@ public class Audio {
 
 	void run() {
 		final long time0 = System.currentTimeMillis();
-		final PhaseEventAutomata sendrecv = createSender().parallel(createReceiver());
+		final PhaseEventAutomata sendrecv = PEAUtils.parallel(createSender(), createReceiver()); // createSender().parallel(createReceiver());
 		final long time1 = System.currentTimeMillis();
 		System.err.println("Sender/Receiver build: " + (time1 - time0) + " ms");
 		final PhaseEventAutomata tester = createDCTester();
 		final long time2 = System.currentTimeMillis();
 		System.err.println("Tester build: " + (time2 - time1) + " ms");
-		final PhaseEventAutomata product = tester.parallel(sendrecv);
+		final PhaseEventAutomata product = PEAUtils.parallel(tester, sendrecv);
 		final long time3 = System.currentTimeMillis();
 		System.err.println("Product build: " + (time3 - time2) + " ms");
 		final PhaseEventAutomata abstracted = abstractAutomaton(product, ".*FINAL.*");

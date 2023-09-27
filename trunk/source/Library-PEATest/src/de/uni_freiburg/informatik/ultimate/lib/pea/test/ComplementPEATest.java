@@ -37,10 +37,10 @@ public class ComplementPEATest {
 	public ComplementPEATest() {
 		mTestAutomata = new ArrayList<PhaseEventAutomata>();
 
-		PhaseEventAutomata ResponseDelayGlobally = createResponseDelayGloballyPea();
-		PhaseEventAutomata UniversalityGlobally = createUniversalityGloballyPea();
-		PhaseEventAutomata DurationBoundUGlobally = createDurationBoundUGlobally();
-		PhaseEventAutomata durationBoundUGloballyModified = createDurationBoundUGloballyModified();
+		PhaseEventAutomata<CDD> ResponseDelayGlobally = createResponseDelayGloballyPea();
+		PhaseEventAutomata<CDD> UniversalityGlobally = createUniversalityGloballyPea();
+		PhaseEventAutomata<CDD> DurationBoundUGlobally = createDurationBoundUGlobally();
+		PhaseEventAutomata<CDD> durationBoundUGloballyModified = createDurationBoundUGloballyModified();
 
 		mTestAutomata.add(ResponseDelayGlobally);
 		mTestAutomata.add(UniversalityGlobally);
@@ -208,13 +208,13 @@ public class ComplementPEATest {
 	 */
 	@Test
 	public void testComplementUniversalityGlobally() {
-		PhaseEventAutomata testPEA = mTestAutomata.get(1);
+		PhaseEventAutomata<CDD> testPEA = mTestAutomata.get(1);
 		PEAComplement complementPEA = new PEAComplement(testPEA);
-		PhaseEventAutomata complementAutomaton = complementPEA.getComplementPEA();
-		Phase[] phases = complementAutomaton.getPhases();
-		Phase sink = Arrays.asList(phases).stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
+		PhaseEventAutomata<CDD> complementAutomaton = complementPEA.getComplementPEA();
+		Phase<CDD>[] phases = complementAutomaton.getPhases();
+		Phase<CDD> sink = Arrays.asList(phases).stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
 		assertTrue(sink.getInitialTransition().isPresent());
-		InitialTransition sinkInitialTransition = sink.getInitialTransition().get();
+		InitialTransition<CDD> sinkInitialTransition = sink.getInitialTransition().get();
 		CDD guard = sinkInitialTransition.getGuard();
 		CDD expected = BooleanDecision.create("R").negate();
 		assertTrue(guard.equals(expected));

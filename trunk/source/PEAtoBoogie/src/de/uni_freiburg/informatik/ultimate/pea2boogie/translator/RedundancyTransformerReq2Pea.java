@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PEAComplement;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
@@ -23,7 +24,7 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 
 	private final ILogger mLogger;
 	private final List<DeclarationPattern> mInitPattern;
-	private final List<ReqPeas> mReqPeas;
+	private final List<ReqPeas<CDD>> mReqPeas;
 	private IReqSymbolTable mSymbolTable;
 	private boolean mHasErrors;
 	private final IUltimateServiceProvider mServices;
@@ -49,15 +50,15 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 			mDurations.addInitPattern(p);
 		}
 
-		final List<ReqPeas> peas = req2pea.getReqPeas();
-		for (ReqPeas reqPea : peas) {
+		final List<ReqPeas<CDD>> peas = req2pea.getReqPeas();
+		for (ReqPeas<CDD> reqPea : peas) {
 			final PatternType<?> pattern = reqPea.getPattern();
-			final List<Entry<CounterTrace, PhaseEventAutomata>> ct2pea = reqPea.getCounterTrace2Pea();
+			final List<Entry<CounterTrace, PhaseEventAutomata<CDD>>> ct2pea = reqPea.getCounterTrace2Pea();
 
-			final List<Entry<CounterTrace, PhaseEventAutomata>> totalCt2pea = new ArrayList<>();
-			final List<Entry<CounterTrace, PhaseEventAutomata>> complementCt2pea = new ArrayList<>();
+			final List<Entry<CounterTrace, PhaseEventAutomata<CDD>>> totalCt2pea = new ArrayList<>();
+			final List<Entry<CounterTrace, PhaseEventAutomata<CDD>>> complementCt2pea = new ArrayList<>();
 
-			for (Entry<CounterTrace, PhaseEventAutomata> pea : ct2pea) {
+			for (Entry<CounterTrace, PhaseEventAutomata<CDD>> pea : ct2pea) {
 				PhaseEventAutomata peaToComplement = pea.getValue();
 				PEAComplement complementPea = new PEAComplement(peaToComplement);
 				PhaseEventAutomata totalisedPea = complementPea.getTotalisedPEA();
@@ -76,7 +77,7 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 	}
 
 	@Override
-	public List<ReqPeas> getReqPeas() {
+	public List<ReqPeas<CDD>> getReqPeas() {
 		return mReqPeas;
 	}
 

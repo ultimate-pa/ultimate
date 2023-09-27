@@ -82,7 +82,7 @@ public class SimplifyPEAs {
 	 *            The events are removed directly from this automaton.
 	 *
 	 */
-	public void removeAllEvents(final PhaseEventAutomata automaton) {
+	public void removeAllEvents(final PhaseEventAutomata<CDD> automaton) {
 		removeEvents(automaton, null);
 	}
 
@@ -126,11 +126,11 @@ public class SimplifyPEAs {
 	 *            The events to be removed. If null then all events are removed.
 	 *
 	 */
-	public void removeEvents(final PhaseEventAutomata pea, final Set<String> events) {
-		final Phase[] phases = pea.getPhases();
+	public void removeEvents(final PhaseEventAutomata<CDD> pea, final Set<String> events) {
+		final Phase<CDD>[] phases = pea.getPhases();
 		for (int i = 0; i < phases.length; i++) {
-			final List<Transition> transitions = phases[i].getTransitions();
-			for (final Transition transition : transitions) {
+			final List<Transition<CDD>> transitions = phases[i].getTransitions();
+			for (final Transition<CDD> transition : transitions) {
 				final CDD guard = transition.getGuard();
 				transition.setGuard(removeEventDecisions(guard, events));
 			}
@@ -180,17 +180,17 @@ public class SimplifyPEAs {
 	 * @return new PEA with (possibly) newly identified final locations
 	 */
 	public PEATestAutomaton identifyImplicitFinalLocations(final PEATestAutomaton pea, final CDD assumption) {
-		final ArrayList<Phase> notVisited = new ArrayList<>(Arrays.asList(pea.getFinalPhases()));
-		final Set<Phase> allFinals = new HashSet<>(Arrays.asList(pea.getFinalPhases()));
+		final ArrayList<Phase<CDD>> notVisited = new ArrayList<>(Arrays.asList(pea.getFinalPhases()));
+		final Set<Phase<CDD>> allFinals = new HashSet<>(Arrays.asList(pea.getFinalPhases()));
 
 		while (!notVisited.isEmpty()) {
-			final Phase finalPhase = notVisited.remove(0);
+			final Phase<CDD> finalPhase = notVisited.remove(0);
 			allFinals.add(finalPhase);
-			for (final Phase phase : pea.getPhases()) {
+			for (final Phase<CDD> phase : pea.getPhases()) {
 				if (allFinals.contains(phase)) {
 					continue;
 				}
-				for (final Transition trans : phase.getTransitions()) {
+				for (final Transition<CDD> trans : phase.getTransitions()) {
 					if (allFinals.contains(trans.getDest())) {
 						if (trans.getGuard().assume(assumption) == CDD.TRUE
 								&& trans.getDest().getStateInvariant() == CDD.TRUE
@@ -214,18 +214,18 @@ public class SimplifyPEAs {
 	 *            with transitions that shall be merged.
 	 */
 	public void mergeTransitions(final PEATestAutomaton automaton) {
-		final Phase[] phases = automaton.getPhases();
-		final Phase[] init = automaton.getInit();
-		final Phase[] finalPhases = new Phase[automaton.getFinalPhases().length];
-		final HashSet<Phase> oldInit = new HashSet<>(Arrays.asList(automaton.getInit()));
-		final HashSet<Phase> oldFinals = new HashSet<>(Arrays.asList(automaton.getFinalPhases()));
+		final Phase<CDD>[] phases = automaton.getPhases();
+		final Phase<CDD>[] init = automaton.getInit();
+		final Phase<CDD>[] finalPhases = new Phase[automaton.getFinalPhases().length];
+		final HashSet<Phase<CDD>> oldInit = new HashSet<>(Arrays.asList(automaton.getInit()));
+		final HashSet<Phase<CDD>> oldFinals = new HashSet<>(Arrays.asList(automaton.getFinalPhases()));
 
-		final HashMap<Phase, Phase> newPhases = new HashMap<>();
+		final HashMap<Phase<CDD>, Phase<CDD>> newPhases = new HashMap<>();
 
 		/** Init newPhases-Map */
 		int initCounter = 0, finalCounter = 0;
 		for (int i = 0; i < phases.length; i++) {
-			newPhases.put(phases[i], new Phase(phases[i].getName(), phases[i].getStateInvariant(),
+			newPhases.put(phases[i], new Phase<CDD>(phases[i].getName(), phases[i].getStateInvariant(),
 					phases[i].getClockInvariant(), phases[i].getStoppedClocks()));
 			if (oldInit.contains(phases[i])) {
 				init[initCounter++] = newPhases.get(phases[i]);
@@ -238,7 +238,7 @@ public class SimplifyPEAs {
 
 		for (int i = 0; i < phases.length; i++) {
 			// System.out.println("in phase for" + phases[i]);
-			final List<Transition> transitions = phases[i].getTransitions();
+			final List<Transition<CDD>> transitions = phases[i].getTransitions();
 			final HashMap<Phase, ArrayList<Transition>> destinations = new HashMap<>();
 			final HashMap<Transition, ArrayList<Transition>> transitionsForMerging = new HashMap<>();
 
@@ -293,12 +293,12 @@ public class SimplifyPEAs {
 			// merge the transitions
 			if (!transitionsForMerging.isEmpty()) {
 
-				for (final Transition masterTransition : transitionsForMerging.keySet()) {
+				for (final Transition<CDD> masterTransition : transitionsForMerging.keySet()) {
 					CDD masterGuard = masterTransition.getGuard();
 					if (transitionsForMerging.get(masterTransition) != null) {
 						// System.out.println("Master guard: " + masterGuard);
 
-						for (final Transition subTransition : transitionsForMerging.get(masterTransition)) {
+						for (final Transition<CDD> subTransition : transitionsForMerging.get(masterTransition)) {
 							// System.out.println("Sub guard: " + subTransition.getGuard());
 							masterGuard = masterGuard.or(subTransition.getGuard());
 							// System.out.println("Baue guard: " + masterGuard);
@@ -311,7 +311,7 @@ public class SimplifyPEAs {
 				}
 
 			} else {
-				for (final Transition transition : transitions) {
+				for (final Transition<CDD> transition : transitions) {
 					phases[i].addTransition(newPhases.get(transition.getDest()), transition.getGuard(),
 							transition.getResets());
 				}
@@ -409,8 +409,8 @@ public class SimplifyPEAs {
 
 		// automaton.dump();
 
-		final Phase[] phases = automaton.getPhases();
-		final Phase badState = new Phase(badstatestring);
+		final Phase<CDD>[] phases = automaton.getPhases();
+		final Phase<CDD> badState = new Phase(badstatestring, CDD.TRUE, CDD.TRUE);
 		// Phase[] newFinalPhases = {badState};
 		final List<Phase> newInit = new ArrayList<>();
 		final ArrayList<Phase> newPhases = new ArrayList<>();
@@ -465,8 +465,8 @@ public class SimplifyPEAs {
 				continue;
 			}
 			final List transitions = phases[i].getTransitions();
-			for (final Iterator iter = transitions.iterator(); iter.hasNext();) {
-				final Transition trans = (Transition) iter.next();
+			for (final Iterator<Transition<CDD>> iter = transitions.iterator(); iter.hasNext();) {
+				final Transition<CDD> trans = (Transition<CDD>) iter.next();
 				final Phase newDest = oldnewPhases.get(trans.getDest());
 				if (newDest == badState) {
 					/*

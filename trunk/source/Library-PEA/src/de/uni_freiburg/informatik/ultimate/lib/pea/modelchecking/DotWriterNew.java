@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking;
 import java.util.Formatter;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
@@ -17,7 +18,7 @@ public class DotWriterNew {
 	/*
 	 * Create dot string for a given {@link PhaseEventAutomata}.
 	 */
-	public static String createDotString(final PhaseEventAutomata pea) {
+	public static String createDotString(final PhaseEventAutomata<CDD> pea) {
 		final StringBuilder stringBuilder = new StringBuilder();
 		final Formatter fmt = new Formatter(stringBuilder);
 
@@ -27,14 +28,14 @@ public class DotWriterNew {
 		fmt.format("node [fontname=\"arial\" shape=rectangle];%s", LINE_SEP);
 		fmt.format("edge [fontname=\"arial\"]%s", LINE_SEP);
 
-		for (final Phase phase : pea.getInit()) {
+		for (final Phase<CDD> phase : pea.getInit()) {
 			final String location = phase.getName();
 
 			fmt.format("_%s [style=invis];%s", location, LINE_SEP);
 			fmt.format("\t_%s -> %s;%s%s", location, location, LINE_SEP, LINE_SEP);
 		}
 
-		for (final Phase phase : pea.getPhases()) {
+		for (final Phase<CDD> phase : pea.getPhases()) {
 			final String location = phase.getName();
 			final String predicate = phase.getStateInvariant().toUppaalString();
 			final String clock = phase.getClockInvariant().toUppaalString();
@@ -45,7 +46,7 @@ public class DotWriterNew {
 
 			fmt.format("%s [label=%s];%s", location, label, LINE_SEP);
 
-			for (final Transition transition : phase.getTransitions()) {
+			for (final Transition<CDD> transition : phase.getTransitions()) {
 				final String src = transition.getSrc().getName();
 				final String dst = transition.getDest().getName();
 				final String guard = transition.getGuard().toUppaalString();

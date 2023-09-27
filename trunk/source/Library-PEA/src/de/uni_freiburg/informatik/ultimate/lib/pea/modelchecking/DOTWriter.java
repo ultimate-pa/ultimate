@@ -9,6 +9,7 @@ import java.io.Writer;
 import java.util.Iterator;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
@@ -49,9 +50,9 @@ public class DOTWriter extends TCSWriter {
 	 */
 	protected FileWriter writer;
 	protected boolean rename;
-	protected PhaseEventAutomata pea2write;
+	protected PhaseEventAutomata<CDD> pea2write;
 
-	public DOTWriter(final String fileName, final PhaseEventAutomata pea) {
+	public DOTWriter(final String fileName, final PhaseEventAutomata<CDD> pea) {
 		super(fileName);
 		pea2write = pea;
 	}
@@ -68,12 +69,12 @@ public class DOTWriter extends TCSWriter {
 	 * @param rename
 	 */
 
-	public DOTWriter(final String destfile, final boolean rename, final PhaseEventAutomata pea) {
+	public DOTWriter(final String destfile, final boolean rename, final PhaseEventAutomata<CDD> pea) {
 		this(destfile, pea);
 		this.rename = rename;
 	}
 
-	public void write(final String fileName, final PhaseEventAutomata pea) {
+	public void write(final String fileName, final PhaseEventAutomata<CDD> pea) {
 		try {
 			pea2write = pea;
 			writer = new FileWriter(fileName);
@@ -155,10 +156,10 @@ public class DOTWriter extends TCSWriter {
 	 * we need to delete(or change) it from the names of the states.
 	 */
 	protected void writeTransitions() throws IOException {
-		final Phase[] phases = pea2write.getPhases();
+		final Phase<CDD>[] phases = pea2write.getPhases();
 
 		for (int i = 0; i < phases.length; i++) {
-			final Phase currentPhase = phases[i];
+			final Phase<CDD> currentPhase = phases[i];
 			String location = currentPhase.getName();
 			location = location.replace("_", "");
 			String clock = currentPhase.getClockInvariant().toTexString();
@@ -170,10 +171,10 @@ public class DOTWriter extends TCSWriter {
 			writer.write(location + DOTString.DOT_NODEDEF_START + location + " \\\\ " + predicate + " \\\\ " + clock
 					+ DOTString.DOT_NODEDEF_END);
 
-			final List<Transition> transitions = currentPhase.getTransitions();
-			final Iterator it = transitions.iterator();
+			final List<Transition<CDD>> transitions = currentPhase.getTransitions();
+			final Iterator<Transition<CDD>> it = transitions.iterator();
 			while (it.hasNext()) {
-				final Transition t = (Transition) it.next();
+				final Transition<CDD> t = (Transition<CDD>) it.next();
 				String start = t.getSrc().getName();
 				start = start.replace("_", "");
 				String end = t.getDest().getName();

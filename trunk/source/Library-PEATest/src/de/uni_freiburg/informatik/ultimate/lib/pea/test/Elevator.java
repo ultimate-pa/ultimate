@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PEAUtils;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
@@ -36,7 +37,7 @@ public class Elevator {
 	static int minFloor = 0;
 	static int maxFloor = 2;
 
-	PhaseEventAutomata csppart, zpart, dcpart;
+	PhaseEventAutomata<CDD> csppart, zpart, dcpart;
 
 	public Elevator() {
 		int floor, rs;
@@ -58,7 +59,8 @@ public class Elevator {
 		elev.buildCSPPart();
 		elev.buildDCPart();
 
-		final PhaseEventAutomata all = elev.csppart.parallel(elev.zpart).parallel(elev.dcpart);
+		final PhaseEventAutomata<CDD> all = PEAUtils.parallel(PEAUtils.parallel(elev.csppart, elev.zpart), elev.dcpart);
+		// elev.csppart.parallel(elev.zpart).parallel(elev.dcpart);
 
 		final CDD outOfRange = RangeDecision.create("floor", RangeDecision.OP_LT, minFloor)
 				.or(RangeDecision.create("floor", RangeDecision.OP_GT, maxFloor));
@@ -293,7 +295,10 @@ public class Elevator {
 						new CounterTrace.DCPhase(close.and(floorInReqset), CounterTrace.BOUND_GREATEREQUAL, 2, stop),
 						new CounterTrace.DCPhase(CDD.TRUE) }));
 
-		dcpart = dc1.parallel(dc2).parallel(dc3).parallel(dc4).parallel(dc5).parallel(dc6);
+		dcpart = PEAUtils.parallel(
+				PEAUtils.parallel(PEAUtils.parallel(PEAUtils.parallel(PEAUtils.parallel(dc1, dc2), dc3), dc4), dc5),
+				dc6);
+		// dc1.parallel(dc2).parallel(dc3).parallel(dc4).parallel(dc5).parallel(dc6);
 	}
 
 }

@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PEATestAutomaton;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PEAUtils;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
@@ -174,9 +175,23 @@ public class GasBurner {
 		buildTimings();
 		buildReqLeak();
 		buildReq60();
-		all = dc1.parallel(dc2).parallel(dc3).parallel(dc4).parallel(dc5).parallel(dc6).parallel(dc7).parallel(dc8)
-				.parallel(statemachine).parallel(flamemachine).parallel(gasmachine).parallel(lenChecker)
-				.parallel(leakChecker);
+		all = PEAUtils.parallel(
+				PEAUtils.parallel(
+						PEAUtils.parallel(
+								PEAUtils.parallel(
+										PEAUtils.parallel(PEAUtils.parallel(PEAUtils.parallel(PEAUtils.parallel(
+												PEAUtils.parallel(PEAUtils.parallel(
+														PEAUtils.parallel(PEAUtils.parallel(dc1, dc2), dc3), dc4), dc5),
+												dc6), dc7), dc8), statemachine),
+										flamemachine),
+								gasmachine),
+						lenChecker),
+				leakChecker);
+		/*
+		 * all = dc1.parallel(dc2).parallel(dc3).parallel(dc4).parallel(dc5).parallel(dc6).parallel(dc7).parallel(dc8)
+		 * .parallel(statemachine).parallel(flamemachine).parallel(gasmachine).parallel(lenChecker)
+		 * .parallel(leakChecker);
+		 */
 	}
 
 	public static void main(final String[] param) {

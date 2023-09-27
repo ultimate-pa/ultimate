@@ -32,7 +32,7 @@ import java.util.Vector;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimpleSet;
 
-public class Phase implements Comparable<Phase> {
+public class Phase<T> implements Comparable<Phase<T>> {
 	int nr;
 
 	// SR 2010-07-09
@@ -40,17 +40,17 @@ public class Phase implements Comparable<Phase> {
 	public boolean isInit;
 	private final boolean isEntry;
 	private final boolean isExit;
-	private final Vector<Transition> incomming;
+	private final Vector<Transition<T>> incomming;
 	String name;
-	CDD stateInv;
-	CDD clockInv;
-	Set<String> stoppedClocks;
-	List<Transition> transitions;
+	T stateInv;
+	T clockInv;
+	final Set<String> stoppedClocks;
+	final List<Transition<T>> transitions;
 	public int ID;
 
 	private boolean mIsTerminal;
 	private boolean mIsStrict;
-	private Optional<InitialTransition> mInitialTransition;
+	private Optional<InitialTransition<T>> mInitialTransition;
 	// clock constraints that have been modified in the complementation procedure
 	// in the case of a phase with a strict clock constraints
 	private final List<RangeDecision> mModifiedConstraints;
@@ -60,7 +60,7 @@ public class Phase implements Comparable<Phase> {
 	 */
 	PhaseBits phaseBits;
 
-	public Phase(final String name, final CDD stateInv, final CDD clockInv, final Set<String> stoppedClocks) {
+	public Phase(final String name, final T stateInv, final T clockInv, final Set<String> stoppedClocks) {
 		this.name = name;
 		this.stateInv = stateInv;
 		this.clockInv = clockInv;
@@ -75,20 +75,20 @@ public class Phase implements Comparable<Phase> {
 
 		mIsTerminal = true;
 		mInitialTransition = Optional.empty();
-		mIsStrict = RangeDecision.isStrictLess(clockInv);
+		mIsStrict = isStrict(clockInv);
 		mModifiedConstraints = new ArrayList<RangeDecision>();
 	}
 
-	public Phase(final String name, final CDD stateInv, final CDD clockInv) {
+	// TODO: find nicer solution
+	private boolean isStrict(T clockInv) {
+		if (clockInv instanceof CDD) {
+			return RangeDecision.isStrictLess((CDD) clockInv);
+		}
+		throw new UnsupportedOperationException();
+	}
+
+	public Phase(final String name, final T stateInv, final T clockInv) {
 		this(name, stateInv, clockInv, new SimpleSet<String>(0));
-	}
-
-	public Phase(final String name, final CDD stateInv) {
-		this(name, stateInv, CDD.TRUE);
-	}
-
-	public Phase(final String name) {
-		this(name, CDD.TRUE, CDD.TRUE);
 	}
 
 	public boolean isInit() {
@@ -103,15 +103,15 @@ public class Phase implements Comparable<Phase> {
 		return phaseBits;
 	}
 
-	public CDD getStateInvariant() {
+	public T getStateInvariant() {
 		return stateInv;
 	}
 
-	public void setStateInvariant(final CDD inv) {
+	public void setStateInvariant(final T inv) {
 		stateInv = inv;
 	}
 
-	public CDD getClockInvariant() {
+	public T getClockInvariant() {
 		return clockInv;
 	}
 
@@ -123,14 +123,14 @@ public class Phase implements Comparable<Phase> {
 		return stoppedClocks.contains(clock);
 	}
 
-	public List<Transition> getTransitions() {
+	public List<Transition<T>> getTransitions() {
 		return transitions;
 	}
 
-	public Transition getOutgoingTransition(final Phase dest) {
-		Transition result = null;
+	public Transition<T> getOutgoingTransition(final Phase<T> dest) {
+		Transition<T> result = null;
 
-		for (final Transition transition : transitions) {
+		for (final Transition<T> transition : transitions) {
 			if (transition.getDest().equals(dest)) {
 				result = transition;
 				break;
@@ -141,23 +141,33 @@ public class Phase implements Comparable<Phase> {
 	}
 
 	/** @return the transition added or modified */
-	public Transition addTransition(final Phase dest, final CDD guard, final String[] resets) {
-		final Iterator<Transition> it = transitions.iterator();
+	public Transition<T> addTransition(final Phase<T> dest, final T guard, final String[] resets) {
+		final Iterator<Transition<T>> it = transitions.iterator();
 
 		while (it.hasNext()) {
-			final Transition t = it.next();
+			final Transition<T> t = it.next();
 
 			if ((t.getDest() == dest) && t.getResets().equals(resets)) {
-				t.setGuard(t.getGuard().or(guard));
+				// t.setGuard(t.getGuard().or(guard));
+				t.setGuard(computeOr(t.getGuard(), guard));
 
 				return t;
 			}
 		}
 
-		final Transition t = new Transition(this, guard, resets, dest);
+		final Transition<T> t = new Transition<T>(this, guard, resets, dest);
 		transitions.add(t);
 
 		return t;
+	}
+
+	// TODO: find nicer solution
+	@SuppressWarnings("unchecked")
+	private T computeOr(T a, T b) {
+		if (a instanceof CDD && b instanceof CDD) {
+			return (T) ((CDD) a).or((CDD) b);
+		}
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -189,7 +199,7 @@ public class Phase implements Comparable<Phase> {
 
 		System.err.println("    transitions {");
 
-		final Iterator<Transition> it = transitions.iterator();
+		final Iterator<Transition<T>> it = transitions.iterator();
 
 		while (it.hasNext()) {
 			System.err.println("       " + it.next());
@@ -202,10 +212,10 @@ public class Phase implements Comparable<Phase> {
 	public void dumpDot() {
 		System.out.println("  " + name + " [ label = \"" + stateInv + "\\n" + clockInv + "\" shape=ellipse ]");
 
-		final Iterator<Transition> it = transitions.iterator();
+		final Iterator<Transition<T>> it = transitions.iterator();
 
 		while (it.hasNext()) {
-			final Transition t = it.next();
+			final Transition<T> t = it.next();
 			System.out.println(
 					"  " + t.getSrc().name + " -> " + t.getDest().name + " [ label = \"" + t.getGuard() + "\" ]");
 		}
@@ -244,7 +254,7 @@ public class Phase implements Comparable<Phase> {
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
 	@Override
-	public int compareTo(final Phase p) {
+	public int compareTo(final Phase<T> p) {
 		return name.compareTo(p.name);
 	}
 
@@ -272,12 +282,12 @@ public class Phase implements Comparable<Phase> {
 		mIsTerminal = val;
 	}
 
-	public void setInitialTransition(InitialTransition initialTransition) {
+	public void setInitialTransition(InitialTransition<T> initialTransition) {
 		mInitialTransition = Optional.ofNullable(initialTransition);
 		isInit = true;
 	}
 
-	public Optional<InitialTransition> getInitialTransition() {
+	public Optional<InitialTransition<T>> getInitialTransition() {
 		return mInitialTransition;
 	}
 

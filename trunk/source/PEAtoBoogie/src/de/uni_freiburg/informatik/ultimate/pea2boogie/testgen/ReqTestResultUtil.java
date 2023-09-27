@@ -34,10 +34,10 @@ public class ReqTestResultUtil {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IReqSymbolTable mReqSymbolTable;
-	private final Map<PhaseEventAutomata, ReqEffectStore> mReqEffectStore;
+	private final Map<PhaseEventAutomata<CDD>, ReqEffectStore> mReqEffectStore;
 
 	public ReqTestResultUtil(final ILogger logger, final IUltimateServiceProvider services,
-			final IReqSymbolTable reqSymbolTable, final Map<PhaseEventAutomata, ReqEffectStore> effectStore) {
+			final IReqSymbolTable reqSymbolTable, final Map<PhaseEventAutomata<CDD>, ReqEffectStore> effectStore) {
 		mLogger = logger;
 		mServices = services;
 		mReqSymbolTable = reqSymbolTable;
@@ -102,8 +102,8 @@ public class ReqTestResultUtil {
 
 	public class TestRelationNode {
 
-		private final PhaseEventAutomata mReq;
-		private final Set<PhaseEventAutomata> mDetermined;
+		private final PhaseEventAutomata<CDD> mReq;
+		private final Set<PhaseEventAutomata<CDD>> mDetermined;
 		private final Set<String> mVarName;
 		private final Set<String> mInputs;
 		private final Set<String> mOutputs;
@@ -114,7 +114,7 @@ public class ReqTestResultUtil {
 		 * Describes a reqirement "req" determining variables "varName" for requirements "determined" and outputs "out"
 		 * using inputs "in"
 		 */
-		public TestRelationNode(final PhaseEventAutomata req, final Set<String> varName, final Set<String> inputs,
+		public TestRelationNode(final PhaseEventAutomata<CDD> req, final Set<String> varName, final Set<String> inputs,
 				final Set<String> outputs, final boolean boundResponse) {
 			mReq = req;
 			mVarName = varName;
@@ -125,7 +125,7 @@ public class ReqTestResultUtil {
 
 		}
 
-		public void addDeterminedReq(final PhaseEventAutomata d) {
+		public void addDeterminedReq(final PhaseEventAutomata<CDD> d) {
 			mDetermined.add(d);
 		}
 
@@ -133,11 +133,11 @@ public class ReqTestResultUtil {
 			return mOutputs;
 		}
 
-		public Set<PhaseEventAutomata> getDetermined() {
+		public Set<PhaseEventAutomata<CDD>> getDetermined() {
 			return mDetermined;
 		}
 
-		public PhaseEventAutomata getReq() {
+		public PhaseEventAutomata<CDD> getReq() {
 			return mReq;
 		}
 
@@ -171,11 +171,11 @@ public class ReqTestResultUtil {
 
 	}
 
-	private Map<PhaseEventAutomata, TestRelationNode> calcualteGraphStep(final Set<PhaseEventAutomata> peas,
+	private Map<PhaseEventAutomata<CDD>, TestRelationNode> calcualteGraphStep(final Set<PhaseEventAutomata<CDD>> peas,
 			final ProgramState<Expression> programState, final ProgramState<Expression> successorState) {
-		final Map<PhaseEventAutomata, TestRelationNode> edges = new HashMap<>();
+		final Map<PhaseEventAutomata<CDD>, TestRelationNode> edges = new HashMap<>();
 		// loop over all non-upper reqs, everything except the dependees is in the resultedge and pc information
-		for (final PhaseEventAutomata pea : peas) {
+		for (final PhaseEventAutomata<CDD> pea : peas) {
 			final Collection<Expression> pcs = getVariableValuation(mReqSymbolTable.getPcName(pea), programState);
 			// get current location index of the pea
 			final Expression[] pca = pcs.toArray(new Expression[pcs.size()]);
@@ -212,7 +212,7 @@ public class ReqTestResultUtil {
 									&& mReqEffectStore.get(pea).getEffectPhaseIndexes().isEmpty()));
 		}
 		// connect to requirements determining internal variables
-		for (final PhaseEventAutomata pea : peas) {
+		for (final PhaseEventAutomata<CDD> pea : peas) {
 			final Collection<Expression> pcs = getVariableValuation(mReqSymbolTable.getPcName(pea), programState);
 			// get current location index of the pea
 			final Expression[] pca = pcs.toArray(new Expression[pcs.size()]);
@@ -244,11 +244,11 @@ public class ReqTestResultUtil {
 	 * Calculates the set of requirements that determine the value of a given variable varName in the automaton
 	 * configuration given by the current program state.
 	 */
-	private Set<PhaseEventAutomata> calculateDeterminingReqs(final String varName,
+	private Set<PhaseEventAutomata<CDD>> calculateDeterminingReqs(final String varName,
 			final ProgramState<Expression> programState) {
 		// todo return accodring node of graph here (req1, v, req2) read "req1 enables req2 by setting v"
-		final Set<PhaseEventAutomata> determiners = new HashSet<>();
-		for (final Entry<PhaseEventAutomata, ReqEffectStore> entry : mReqEffectStore.entrySet()) {
+		final Set<PhaseEventAutomata<CDD>> determiners = new HashSet<>();
+		for (final Entry<PhaseEventAutomata<CDD>, ReqEffectStore> entry : mReqEffectStore.entrySet()) {
 			final ReqEffectStore reqEffectStore = entry.getValue();
 			if (!reqEffectStore.getEffectVars().contains(varName)) {
 				continue;
@@ -263,7 +263,7 @@ public class ReqTestResultUtil {
 	/*
 	 * True if the pea is in an effect phase (any location including the highest phase) in the given program state.
 	 */
-	private boolean isInEffectPhase(final PhaseEventAutomata pea, final ProgramState<Expression> programState) {
+	private boolean isInEffectPhase(final PhaseEventAutomata<CDD> pea, final ProgramState<Expression> programState) {
 		final ReqEffectStore store = mReqEffectStore.get(pea);
 		if (store == null) {
 			return false;
@@ -285,11 +285,11 @@ public class ReqTestResultUtil {
 	 * Calculates the set of requirements that will be able to determine the value of variable varName by a bound
 	 * response effect.
 	 */
-	private Set<PhaseEventAutomata> calculateEntryEffects(final String varName,
+	private Set<PhaseEventAutomata<CDD>> calculateEntryEffects(final String varName,
 			final ProgramState<Expression> programState) {
 		// todo return accodring node of graph here (req1, v, req2) read "req1 enables req2 by setting v"
-		final Set<PhaseEventAutomata> determiners = new HashSet<>();
-		for (final Entry<PhaseEventAutomata, ReqEffectStore> entry : mReqEffectStore.entrySet()) {
+		final Set<PhaseEventAutomata<CDD>> determiners = new HashSet<>();
+		for (final Entry<PhaseEventAutomata<CDD>, ReqEffectStore> entry : mReqEffectStore.entrySet()) {
 			final ReqEffectStore reqEffectStore = entry.getValue();
 			if (!reqEffectStore.getEffectVars().contains(varName)) {
 				continue;
@@ -327,7 +327,7 @@ public class ReqTestResultUtil {
 		return false;
 	}
 
-	private TestStep getTestStepGraph(final Map<PhaseEventAutomata, TestRelationNode> edges,
+	private TestStep getTestStepGraph(final Map<PhaseEventAutomata<CDD>, TestRelationNode> edges,
 			final ProgramState<Expression> programState, final ProgramState<Expression> successorState) {
 		final Collection<TestRelationNode> testRelations = edges.values();
 		// set of edges to be used: get outputs, add edges as long as there are pending internal vars
