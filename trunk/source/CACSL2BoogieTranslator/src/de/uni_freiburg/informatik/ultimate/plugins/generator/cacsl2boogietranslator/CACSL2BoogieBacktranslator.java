@@ -1372,10 +1372,6 @@ public class CACSL2BoogieBacktranslator
 		if (decls.getDeclarators().length == 1) {
 			final IdentifierExpression orgidexp = (IdentifierExpression) expression;
 			final TranslatedVariable origName = translateIdentifierExpression(orgidexp);
-			if (origName == null) {
-				reportUnfinishedBacktranslation("No BoogieVar found for " + BoogiePrettyPrinter.print(expression));
-				return null;
-			}
 			return new FakeExpression(decls, decls.getDeclarators()[0].getName().getRawSignature(),
 					origName.getCType());
 		}
@@ -1383,10 +1379,6 @@ public class CACSL2BoogieBacktranslator
 		// our backtranslation map to get the real name
 		final IdentifierExpression orgidexp = (IdentifierExpression) expression;
 		final TranslatedVariable origName = translateIdentifierExpression(orgidexp);
-		if (origName == null) {
-			reportUnfinishedBacktranslation("No BoogieVar found for " + BoogiePrettyPrinter.print(expression));
-			return null;
-		}
 		for (final IASTDeclarator decl : decls.getDeclarators()) {
 			if (origName.getName().indexOf(decl.getName().getRawSignature()) != -1) {
 				return new FakeExpression(decl.getName().getRawSignature());
