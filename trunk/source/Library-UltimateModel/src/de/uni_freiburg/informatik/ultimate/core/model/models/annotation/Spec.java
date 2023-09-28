@@ -197,19 +197,19 @@ public enum Spec {
 	 */
 	INCOMPLETE(Group.REQUIREMENT,
 			"complete",
-			"incomplete");
+			"incomplete"),
 	/**
 	 * Checks if two PEAs accept each others complement language.
 	 */
 	COMPLEMENT(Group.REQUIREMENT,
 			"complements of each other",
-			"not complements of each other");
+			"not complements of each other"),
 	/**
-		 * Checks for redundancy.
-		 */
-		REDUNDANCY(Group.REQUIREMENT,
-			"non-redundant",
-			"redundant");
+	* Checks for redundancy.
+	*/
+	REDUNDANCY(Group.REQUIREMENT,
+			"redundant",
+			"non-redundant");
 	// @formatter:on
 
 	/**
