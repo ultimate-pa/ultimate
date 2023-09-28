@@ -372,7 +372,7 @@ public class CHandler {
 	// Test Generation
 	private final boolean mTestGenerationErrorCoverage;
 	private final boolean mTestGenerationBranchCoverage;
-	private int countTestGoals = 0;
+	private int mTestGoalCount = 0;
 
 	/**
 	 * Constructor for CHandler in pre-run mode.
@@ -1143,7 +1143,16 @@ public class CHandler {
 		opPositive = mExprResultTransformer.switchToRValue(opPositive, loc, node);
 		ExpressionResult opNegative = (ExpressionResult) main.dispatch(node.getNegativeResultExpression());
 		opNegative = mExprResultTransformer.switchToRValue(opNegative, loc, node);
-		return mCExpressionTranslator.handleConditionalOperator(loc, opCondition, opPositive, opNegative, node);
+		if (mTestGenerationBranchCoverage) {
+			mCExpressionTranslator.setTestGoalCountAndFactory(mTestGoalCount, mLocationFactory);
+			final ExpressionResult result =
+					mCExpressionTranslator.handleConditionalOperator(loc, opCondition, opPositive, opNegative, node);
+			mTestGoalCount = mCExpressionTranslator.getTestGoalCount();
+			return result;
+		} else {
+			return mCExpressionTranslator.handleConditionalOperator(loc, opCondition, opPositive, opNegative, node);
+		}
+
 	}
 
 	public Result visit(final IDispatcher main, final IASTContinueStatement cs) {
@@ -1737,18 +1746,15 @@ public class CHandler {
 		// mLogger für statistik
 		final IfStatement ifStmt;
 		if (mTestGenerationBranchCoverage) {
-
-			final ArrayList<Statement> thenArray = new ArrayList();
-			final ArrayList<Statement> elseArray = new ArrayList();
+			final ArrayList<Statement> thenArray = new ArrayList<Statement>();
+			final ArrayList<Statement> elseArray = new ArrayList<Statement>();
 			final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
 
 			final ILocation loc1 = mLocationFactory.createCLocation(node);
 			final Statement assertFalseThen =
 					new AssertStatement(loc1, ExpressionFactory.createBooleanLiteral(loc1, false));
-			final TestGoalAnnotation tg1 = new TestGoalAnnotation(countTestGoals);
-			// assertFalseThen.getPayload().getAnnotations().put("TEST_GOAL_ANNOTATION",
-			// tg1);
-			countTestGoals += 1;
+			final TestGoalAnnotation tg1 = new TestGoalAnnotation(mTestGoalCount);
+			mTestGoalCount += 1;
 			thenArray.add(assertFalseThen);
 			thenArray.addAll(thenStmt);
 			tg1.annotate(assertFalseThen);
@@ -1758,10 +1764,8 @@ public class CHandler {
 			final Statement assertFalseElse =
 					new AssertStatement(loc2, ExpressionFactory.createBooleanLiteral(loc2, false));
 
-			final TestGoalAnnotation tg2 = new TestGoalAnnotation(countTestGoals);
-			countTestGoals += 1;
-			// assertFalseElse.getPayload().getAnnotations().put("TEST_GOAL_ANNOTATION",
-			// tg2);
+			final TestGoalAnnotation tg2 = new TestGoalAnnotation(mTestGoalCount);
+			mTestGoalCount += 1;
 			tg2.annotate(assertFalseElse);
 			chk.annotate(assertFalseElse);
 			elseArray.add(assertFalseElse);
@@ -2359,6 +2363,20 @@ public class CHandler {
 			if (child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement) {
 				ExpressionResult caseExpression = (ExpressionResult) main.dispatch(child);
 				if (locC != null) {
+					if (mTestGenerationBranchCoverage) {
+						final ArrayList<Statement> ifBlockWithTestGoal = new ArrayList<Statement>();
+						final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
+						final ILocation loc1 = mLocationFactory.createCLocation(node);
+						final Statement assertFalseThen =
+								new AssertStatement(loc1, ExpressionFactory.createBooleanLiteral(loc1, false));
+						final TestGoalAnnotation tg1 = new TestGoalAnnotation(mTestGoalCount);
+						mTestGoalCount += 1;
+						tg1.annotate(assertFalseThen);
+						chk.annotate(assertFalseThen);
+						ifBlockWithTestGoal.add(assertFalseThen);
+						ifBlockWithTestGoal.addAll(ifBlock);
+						ifBlock = ifBlockWithTestGoal;
+					}
 					final IfStatement ifStmt = new IfStatement(locC, switchAuxvar.getExp(),
 							ifBlock.toArray(new Statement[ifBlock.size()]), new Statement[0]);
 					for (final Overapprox overapprItem : caseExpression.getOverapprs()) {
@@ -2405,20 +2423,6 @@ public class CHandler {
 					resultBuilder.addOverapprox(res.getOverapprs());
 					for (final Statement s : res.getStatements()) {
 						if (s instanceof BreakStatement) {
-							if (mTestGenerationBranchCoverage) {
-								final ArrayList<Statement> ifBlockWithTestGoal = new ArrayList();
-								final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
-								final ILocation loc1 = mLocationFactory.createCLocation(node);
-								final Statement assertFalseThen =
-										new AssertStatement(loc1, ExpressionFactory.createBooleanLiteral(loc1, false));
-								final TestGoalAnnotation tg1 = new TestGoalAnnotation(countTestGoals);
-								countTestGoals += 1;
-								tg1.annotate(assertFalseThen);
-								chk.annotate(assertFalseThen);
-								ifBlockWithTestGoal.add(assertFalseThen);
-								ifBlockWithTestGoal.addAll(ifBlock);
-								ifBlock = ifBlockWithTestGoal;
-							}
 							ifBlock.add(new GotoStatement(locC, new String[] { breakLabelName }));
 						} else {
 							ifBlock.add(s);
@@ -2431,20 +2435,6 @@ public class CHandler {
 					resultBuilder.addDeclarations(Arrays.asList(b.getLocalVars()));
 					for (final Statement s : b.getBlock()) {
 						if (s instanceof BreakStatement) {
-							if (mTestGenerationBranchCoverage) {
-								final ArrayList<Statement> ifBlockWithTestGoal = new ArrayList();
-								final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
-								final ILocation loc1 = mLocationFactory.createCLocation(node);
-								final Statement assertFalseThen =
-										new AssertStatement(loc1, ExpressionFactory.createBooleanLiteral(loc1, false));
-								final TestGoalAnnotation tg1 = new TestGoalAnnotation(countTestGoals);
-								countTestGoals += 1;
-								tg1.annotate(assertFalseThen);
-								chk.annotate(assertFalseThen);
-								ifBlockWithTestGoal.add(assertFalseThen);
-								ifBlockWithTestGoal.addAll(ifBlock);
-								ifBlock = ifBlockWithTestGoal;
-							}
 							ifBlock.add(new GotoStatement(locC, new String[] { breakLabelName }));
 						} else {
 							ifBlock.add(s);
@@ -2455,6 +2445,20 @@ public class CHandler {
 		}
 		if (locC != null) {
 			assert cond != null;
+			if (mTestGenerationBranchCoverage) {
+				final ArrayList<Statement> ifBlockWithTestGoal = new ArrayList<Statement>();
+				final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
+				final ILocation loc1 = mLocationFactory.createCLocation(node);
+				final Statement assertFalseThen =
+						new AssertStatement(loc1, ExpressionFactory.createBooleanLiteral(loc1, false));
+				final TestGoalAnnotation tg1 = new TestGoalAnnotation(mTestGoalCount);
+				mTestGoalCount += 1;
+				tg1.annotate(assertFalseThen);
+				chk.annotate(assertFalseThen);
+				ifBlockWithTestGoal.add(assertFalseThen);
+				ifBlockWithTestGoal.addAll(ifBlock);
+				ifBlock = ifBlockWithTestGoal;
+			}
 			final IfStatement ifStmt = new IfStatement(locC, switchAuxvar.getExp(),
 					ifBlock.toArray(new Statement[ifBlock.size()]), new Statement[0]);
 			for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
@@ -3691,10 +3695,10 @@ public class CHandler {
 			final ILocation loc1 = mLocationFactory.createCLocation(node);
 			final Statement assertFalseThen =
 					new AssertStatement(loc1, ExpressionFactory.createBooleanLiteral(loc1, false));
-			final TestGoalAnnotation tg1 = new TestGoalAnnotation(countTestGoals);
+			final TestGoalAnnotation tg1 = new TestGoalAnnotation(mTestGoalCount);
 			// assertFalseThen.getPayload().getAnnotations().put("TEST_GOAL_ANNOTATION",
 			// tg1);
-			countTestGoals += 1;
+			mTestGoalCount += 1;
 			thenArray.add(assertFalseThen);
 			thenArray.addAll(thenStmt);
 			tg1.annotate(assertFalseThen);
@@ -3704,8 +3708,8 @@ public class CHandler {
 			final Statement assertFalseElse =
 					new AssertStatement(loc2, ExpressionFactory.createBooleanLiteral(loc2, false));
 
-			final TestGoalAnnotation tg2 = new TestGoalAnnotation(countTestGoals);
-			countTestGoals += 1;
+			final TestGoalAnnotation tg2 = new TestGoalAnnotation(mTestGoalCount);
+			mTestGoalCount += 1;
 			// assertFalseElse.getPayload().getAnnotations().put("TEST_GOAL_ANNOTATION",
 			// tg2);
 			tg2.annotate(assertFalseElse);

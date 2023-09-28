@@ -94,6 +94,8 @@ public class TestExporter {
 		for (final Term va : tv.values) {
 			if (va != null) {
 				final Element element = dom.createElement("input");
+				String inputValue = va.toStringDirect();
+				inputValue = inputValue.replaceAll("[\\(\\)\\s]", "");
 				element.appendChild(dom.createTextNode(va.toStringDirect()));
 				rootEle.appendChild(element);
 			}

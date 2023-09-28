@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -78,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -99,6 +101,10 @@ public class CExpressionTranslator {
 	private final ExpressionResultTransformer mExprResultTransformer;
 	private final TypeSizes mTypeSizes;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
+
+	private int mTestGoalCount;
+	private LocationFactory mLocationFactory;
+	private boolean mTestGenerationBranchCoverage = false;
 
 	public CExpressionTranslator(final TranslationSettings settings, final MemoryHandler memoryHandler,
 			final ExpressionTranslation expressionTranslation, final ExpressionResultTransformer exprResultTransformer,
@@ -795,7 +801,7 @@ public class CExpressionTranslator {
 			resultCType = opPositive.getLrValue().getCType();
 		}
 		return constructResultForConditionalOperator(loc, opCondition, opPositive, opNegative, resultCType,
-				secondArgIsVoid, thirdArgIsVoid);
+				secondArgIsVoid, thirdArgIsVoid, hook);
 	}
 
 	/**
@@ -803,7 +809,7 @@ public class CExpressionTranslator {
 	 */
 	private ExpressionResult constructResultForConditionalOperator(final ILocation loc,
 			final ExpressionResult opCondition, final ExpressionResult opPositive, final ExpressionResult opNegative,
-			final CType resultCType, final boolean secondArgIsVoid, final boolean thirdArgIsVoid) {
+			final CType resultCType, final boolean secondArgIsVoid, final boolean thirdArgIsVoid, final IASTNode hook) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
 		// TODO: a solution that checks if the void value is ever assigned would be nice, but unclear if necessary
@@ -849,9 +855,17 @@ public class CExpressionTranslator {
 			final List<Statement> elseStatements = new ArrayList<>();
 			assignAuxVar(loc, opPositive, resultBuilder, auxvar, ifStatements, secondArgIsVoid);
 			assignAuxVar(loc, opNegative, resultBuilder, auxvar, elseStatements, thirdArgIsVoid);
-			final Statement rtrStatement = new IfStatement(loc, opCondition.getLrValue().getValue(),
-					ifStatements.toArray(new Statement[ifStatements.size()]),
-					elseStatements.toArray(new Statement[elseStatements.size()]));
+			final Statement rtrStatement;
+			if (mTestGenerationBranchCoverage) {
+
+				rtrStatement = addTestGoalsToConditionalOperator(loc, opCondition, ifStatements, elseStatements,
+						secondArgIsVoid, thirdArgIsVoid, hook);
+			} else {
+				rtrStatement = new IfStatement(loc, opCondition.getLrValue().getValue(),
+						ifStatements.toArray(new Statement[ifStatements.size()]),
+						elseStatements.toArray(new Statement[elseStatements.size()]));
+			}
+
 			for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
 				overapprItem.annotate(rtrStatement);
 			}
@@ -1160,4 +1174,53 @@ public class CExpressionTranslator {
 
 	}
 
+	/*
+	 * caller ensures we are in a test generation setting
+	 *
+	 * testGoalCount needs to be added in CHandler separately
+	 */
+	private IfStatement addTestGoalsToConditionalOperator(final ILocation loc, final ExpressionResult opCondition,
+			final List<Statement> ifStatements, final List<Statement> elseStatements, final boolean secondArgIsVoid,
+			final boolean thirdArgIsVoid, final IASTNode node) {
+		final ArrayList<Statement> thenArray = new ArrayList<Statement>();
+		final ArrayList<Statement> elseArray = new ArrayList<Statement>();
+		final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
+		if (!secondArgIsVoid) {
+			final ILocation loc1 = mLocationFactory.createCLocation(node);
+			final Statement assertFalseThen =
+					new AssertStatement(loc1, ExpressionFactory.createBooleanLiteral(loc1, false));
+			final TestGoalAnnotation tg1 = new TestGoalAnnotation(mTestGoalCount);
+			mTestGoalCount += 1;
+			thenArray.add(assertFalseThen);
+
+			tg1.annotate(assertFalseThen);
+			chk.annotate(assertFalseThen);
+		}
+		thenArray.addAll(ifStatements);
+		if (!thirdArgIsVoid) {
+			final ILocation loc2 = mLocationFactory.createCLocation(node);
+			final Statement assertFalseElse =
+					new AssertStatement(loc2, ExpressionFactory.createBooleanLiteral(loc2, false));
+
+			final TestGoalAnnotation tg2 = new TestGoalAnnotation(mTestGoalCount);
+			mTestGoalCount += 1;
+			tg2.annotate(assertFalseElse);
+			chk.annotate(assertFalseElse);
+			elseArray.add(assertFalseElse);
+
+		}
+		elseArray.addAll(elseStatements);
+		return new IfStatement(loc, opCondition.getLrValue().getValue(),
+				thenArray.toArray(new Statement[thenArray.size()]), elseArray.toArray(new Statement[elseArray.size()]));
+	}
+
+	public int getTestGoalCount() {
+		return mTestGoalCount;
+	}
+
+	public void setTestGoalCountAndFactory(final int testGoalCount, final LocationFactory locationFactory) {
+		mTestGenerationBranchCoverage = true;
+		mLocationFactory = locationFactory;
+		mTestGoalCount = testGoalCount;
+	}
 }
