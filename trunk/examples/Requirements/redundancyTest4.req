@@ -1,0 +1,5 @@
+Input R is bool
+Input S is bool
+
+ID000: Globally, it is always the case that once "R" becomes satisfied, it holds for less than "5" time units
+ID001: Globally, it is always the case that once "R" becomes satisfied, it holds for less than "10" time units
