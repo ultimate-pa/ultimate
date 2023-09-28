@@ -131,7 +131,7 @@ public class RabinDifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetriN
 			result.append(",\n");
 			result.append("finitePlaces = {");
 			result.append(mFinitePlaces.toString());
-			result.append("}+\n);");
+			result.append("}\n);");
 			return result.toString();
 		}
 	}
