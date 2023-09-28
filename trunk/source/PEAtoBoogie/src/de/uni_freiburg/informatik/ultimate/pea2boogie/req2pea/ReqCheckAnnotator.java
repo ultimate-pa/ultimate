@@ -538,16 +538,17 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	}
 
 	private Statement genAssertRedundancy(List<ReqPeas> assertPeas, final BoogieLocation bl) {
-		ArrayList<Expression> peaAccepts = new ArrayList<>();
+		ArrayList<Expression> assertionList = new ArrayList<>();
 		ReqPeas complementedPea = null;
 		for (ReqPeas reqPeas : assertPeas) {
+			ArrayList<Expression> peaAccepts = new ArrayList<>();
 			if (reqPeas.isStrict()) {
 				if (reqPeas.isTotalised()) {
-					genStrictPeaExpressions(reqPeas, Collections.emptyList(), peaAccepts, bl);
+					genStrictPeaExpressions(reqPeas, new ArrayList<Expression>(), peaAccepts, bl);
 				}
 				if (reqPeas.isComplemented()) {
 					complementedPea = reqPeas;
-					genStrictPeaExpressions(reqPeas, peaAccepts, Collections.emptyList(), bl);
+					genStrictPeaExpressions(reqPeas, peaAccepts, new ArrayList<Expression>(), bl);
 				}
 			} else {
 				Expression pcInSinkExpression = genPcInSinkExpression(reqPeas, bl);
@@ -560,6 +561,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 					peaAccepts.add(pcInSinkExpression);
 				}
 			}
+			assertionList.add(ExpressionFactory.or(bl, peaAccepts));
 		}
 		final PatternType<?> complementedPeaPattern = complementedPea.getPattern();
 		ArrayList<String> reqIds = new ArrayList<String>();
@@ -568,7 +570,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			peaNames.add(pea.getValue().getName());
 			reqIds.add(complementedPeaPattern.getId());
 		}
-		final Expression assertion = ExpressionFactory.and(bl, peaAccepts);
+		final Expression assertion = ExpressionFactory.and(bl, assertionList);
 		final Expression assertionNegated =
 				ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, assertion);
 		// final ReqCheck check = createReqCheck(Spec.REDUNDANCY, (Entry<PatternType<?>, PhaseEventAutomata>[])
