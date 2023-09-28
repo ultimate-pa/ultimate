@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea.test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -53,10 +54,11 @@ public class ElevatorInf {
 		good.addTransition(bad, /* BooleanDecision.create("Min <= current") */
 				CDD.TRUE.and(BooleanDecision.create("current <= Max")).negate(), new String[0]);
 		bad.addTransition(bad, CDD.TRUE, new String[0]);
-		final PEATestAutomaton tester = new PEATestAutomaton("tester", new Phase[] { good, bad }, new Phase[] { good },
-				new ArrayList<String>(), new Phase[] { bad });
+		final PEATestAutomaton tester = new PEATestAutomaton("tester", Arrays.asList(new Phase[] { good, bad }),
+				Arrays.asList(new Phase[] { good }), new ArrayList<String>(), new Phase[] { bad });
 		PEATestAutomaton all = tester.parallel(pea);
-		all = all.parallel(new PhaseEventAutomata("inv", new Phase[] { invP }, new Phase[] { invP }));
+		all = all.parallel(new PhaseEventAutomata("inv", Arrays.asList(new Phase[] { invP }),
+				Arrays.asList(new Phase[] { invP })));
 		final SimplifyPEAs simplifier = new SimplifyPEAs();
 		simplifier.removeAllEvents(all);
 		all = simplifier.mergeFinalLocations(all, "FINAL");
@@ -111,7 +113,8 @@ public class ElevatorInf {
 				noresets);
 		zstate.addTransition(zstate, nstop.negate().and(nnewgoal).and(nstart).and(npassed).and(xicurrent).and(xigoal)
 				.and(xidir).and(BooleanDecision.create("current = goal")), noresets);
-		zpart = new PhaseEventAutomata("ZPart", new Phase[] { istate, zstate }, new Phase[] { istate });
+		zpart = new PhaseEventAutomata("ZPart", Arrays.asList(new Phase[] { istate, zstate }),
+				Arrays.asList(new Phase[] { istate }));
 	}
 
 	public void buildCSPPart() {
@@ -141,7 +144,7 @@ public class ElevatorInf {
 		ev = EventDecision.createNeg("newgoal").and(EventDecision.createNeg("start"))
 				.and(EventDecision.createNeg("passed")).and(EventDecision.create("stop"));
 		p[2].addTransition(p[0], ev, noresets);
-		csppart = new PhaseEventAutomata("CSPPart", p, new Phase[] { p[0] });
+		csppart = new PhaseEventAutomata("CSPPart", Arrays.asList(p), Arrays.asList(new Phase[] { p[0] }));
 	}
 
 	public void buildDCPart() {

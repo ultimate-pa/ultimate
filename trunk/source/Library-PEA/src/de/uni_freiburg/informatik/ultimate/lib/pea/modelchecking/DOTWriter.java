@@ -134,7 +134,7 @@ public class DOTWriter extends TCSWriter {
 	 */
 	protected void writeInitialTransitions() throws IOException {
 
-		final Phase[] init = pea2write.getInit();
+		final Phase[] init = pea2write.getInit().toArray(new Phase[pea2write.getInit().size()]);
 		for (int i = 0; i < init.length; i++) {
 			String initState = init[i].toString();
 			initState = initState.replace("_", "");
@@ -156,7 +156,7 @@ public class DOTWriter extends TCSWriter {
 	 * we need to delete(or change) it from the names of the states.
 	 */
 	protected void writeTransitions() throws IOException {
-		final Phase<CDD>[] phases = pea2write.getPhases();
+		final Phase<CDD>[] phases = pea2write.getPhases().toArray(new Phase[pea2write.getPhases().size()]);
 
 		for (int i = 0; i < phases.length; i++) {
 			final Phase<CDD> currentPhase = phases[i];

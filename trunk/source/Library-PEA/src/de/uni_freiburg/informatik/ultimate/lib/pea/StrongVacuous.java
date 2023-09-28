@@ -5,6 +5,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author OEA1LR
@@ -26,13 +27,13 @@ public class StrongVacuous {
 	}
 
 	public void getVacuousAssignments(final PhaseEventAutomata<CDD> pea) {
-		final Phase<CDD>[] init = pea.getInit();
-		final int numberOfLocations = pea.getPhases().length;
+		final List<Phase<CDD>> init = pea.getInit();
+		final int numberOfLocations = pea.getPhases().size();
 		if (numberOfLocations < 0) {
 			System.out.println("ERROR: The pea is empty");
 		}
 		if (numberOfLocations == 1) {
-			final CDD cdd = pea.getPhases()[0].getStateInvariant();
+			final CDD cdd = pea.getPhases().get(0).getStateInvariant();
 
 			final Iterator<?> vacuousMakerIterator = getPossibleVacuousMakerIterator();
 
@@ -47,12 +48,12 @@ public class StrongVacuous {
 			addToPossVacuousMaker(cdd);
 
 		} else {
-			final int numberOfInitStates = init.length;
+			final int numberOfInitStates = init.size();
 			// note that for patterns we need only up to 5 initial states
 			final HashSet<CDD> possiblyVacuousPerReq = new HashSet<>(numberOfInitStates);
 			CDD cdd = CDD.TRUE;
 			for (int i = 0; i < numberOfInitStates; i++) {
-				final Phase<CDD> initState = init[i];
+				final Phase<CDD> initState = init.get(i);
 				// States that have a clockinvariant !=0 have to be left when the clock is expired
 				// Thus such states cannot lead to a vacuous satisfaction
 				if (initState.getClockInvariant() == CDD.TRUE) {
@@ -67,7 +68,7 @@ public class StrongVacuous {
 	}
 
 	private void checkPossiblyVacuous(final PhaseEventAutomata<CDD> pea) {
-		final Phase[] phases = pea.getPhases();
+		final List<Phase<CDD>> phases = pea.getPhases();
 		final HashSet<HashSet<CDD>> vac = getPossiblyVacuous();
 
 		final Iterator<HashSet<CDD>> vacIt = vac.iterator();
@@ -76,9 +77,9 @@ public class StrongVacuous {
 			final Iterator<CDD> vacPerReq = vacuousPerReq.iterator();
 			boolean testGlobal = true;
 
-			for (int q = 0; q < phases.length && testGlobal; q++) {
+			for (int q = 0; q < phases.size() && testGlobal; q++) {
 				boolean testVacuous = false;
-				final Phase<CDD> a = phases[q];
+				final Phase<CDD> a = phases.get(q);
 				final CDD state = a.getStateInvariant();
 				while (vacPerReq.hasNext() && !testVacuous) {
 					final CDD formula = vacPerReq.next();

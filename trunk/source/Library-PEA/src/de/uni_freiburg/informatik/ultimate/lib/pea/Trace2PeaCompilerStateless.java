@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -721,9 +722,11 @@ public class Trace2PeaCompilerStateless {
 
 		PhaseEventAutomata pea;
 		if (mExitSync != null) {
-			pea = new PEATestAutomaton(mName, phases, mInit, peaClocks, finalPhases).removeUnreachableLocations();
+			pea = new PEATestAutomaton(mName, Arrays.asList(phases), Arrays.asList(mInit), peaClocks, finalPhases)
+					.removeUnreachableLocations();
 		} else {
-			pea = new PhaseEventAutomata(mName, phases, mInit, peaClocks, variables, events, null);
+			pea = new PhaseEventAutomata(mName, Arrays.asList(phases), Arrays.asList(mInit), peaClocks, variables,
+					events, null);
 		}
 
 		return pea;

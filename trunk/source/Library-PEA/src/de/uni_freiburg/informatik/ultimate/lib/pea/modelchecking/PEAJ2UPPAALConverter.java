@@ -79,7 +79,7 @@ public class PEAJ2UPPAALConverter {
 		this("");
 	}
 
-	public Document convert(final PhaseEventAutomata[] peas) {
+	public Document convert(final PhaseEventAutomata<CDD>[] peas) {
 		if (peas.length == 0) {
 			throw new RuntimeException("The array of peas is not allowed to be empty");
 		}
@@ -113,11 +113,11 @@ public class PEAJ2UPPAALConverter {
 		return document;
 	}
 
-	protected Element createPhaseEventAutomaton(final PhaseEventAutomata pea) {
-		if (pea.getPhases().length == 0) {
+	protected Element createPhaseEventAutomaton(final PhaseEventAutomata<CDD> pea) {
+		if (pea.getPhases().size() == 0) {
 			throw new RuntimeException("PEA with phase count = 0 is not allowed");
 		}
-		if (pea.getInit().length == 0) {
+		if (pea.getInit().size() == 0) {
 			throw new RuntimeException("PEA with initial phase count = 0 is not allowed");
 		}
 
@@ -131,7 +131,7 @@ public class PEAJ2UPPAALConverter {
 		peaNode.appendChild(nameNode);
 
 		final List<Element> allTransitionNodes = new ArrayList<>();
-		final Phase[] phases = pea.getPhases();
+		final Phase[] phases = pea.getPhases().toArray(new Phase[pea.getPhases().size()]);
 		final HashMap<String, Element> phaseNodes = new HashMap<>();
 		for (int i = 0; i < phases.length; i++) {
 			final Element actPhaseNode = createPhaseNode(phases[i]);
@@ -149,7 +149,7 @@ public class PEAJ2UPPAALConverter {
 			}
 		}
 
-		final Phase[] initialPhases = pea.getInit();
+		final Phase[] initialPhases = pea.getInit().toArray(new Phase[pea.getInit().size()]);
 		for (int i = 0; i < initialPhases.length; i++) {
 			final Element initNode = document.createElement("init");
 			initNode.setAttribute("ref", initialPhases[i].getName());

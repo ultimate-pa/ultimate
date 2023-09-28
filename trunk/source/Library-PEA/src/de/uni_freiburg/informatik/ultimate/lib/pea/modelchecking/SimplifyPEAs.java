@@ -127,9 +127,9 @@ public class SimplifyPEAs {
 	 *
 	 */
 	public void removeEvents(final PhaseEventAutomata<CDD> pea, final Set<String> events) {
-		final Phase<CDD>[] phases = pea.getPhases();
-		for (int i = 0; i < phases.length; i++) {
-			final List<Transition<CDD>> transitions = phases[i].getTransitions();
+		final List<Phase<CDD>> phases = pea.getPhases();
+		for (int i = 0; i < phases.size(); i++) {
+			final List<Transition<CDD>> transitions = phases.get(i).getTransitions();
 			for (final Transition<CDD> transition : transitions) {
 				final CDD guard = transition.getGuard();
 				transition.setGuard(removeEventDecisions(guard, events));
@@ -214,10 +214,10 @@ public class SimplifyPEAs {
 	 *            with transitions that shall be merged.
 	 */
 	public void mergeTransitions(final PEATestAutomaton automaton) {
-		final Phase<CDD>[] phases = automaton.getPhases();
-		final Phase<CDD>[] init = automaton.getInit();
+		final Phase<CDD>[] phases = automaton.getPhases().toArray(new Phase[automaton.getPhases().size()]);
+		final Phase<CDD>[] init = automaton.getInit().toArray(new Phase[automaton.getInit().size()]);
 		final Phase<CDD>[] finalPhases = new Phase[automaton.getFinalPhases().length];
-		final HashSet<Phase<CDD>> oldInit = new HashSet<>(Arrays.asList(automaton.getInit()));
+		final HashSet<Phase<CDD>> oldInit = new HashSet<>(automaton.getInit());
 		final HashSet<Phase<CDD>> oldFinals = new HashSet<>(Arrays.asList(automaton.getFinalPhases()));
 
 		final HashMap<Phase<CDD>, Phase<CDD>> newPhases = new HashMap<>();
@@ -409,14 +409,14 @@ public class SimplifyPEAs {
 
 		// automaton.dump();
 
-		final Phase<CDD>[] phases = automaton.getPhases();
+		final Phase<CDD>[] phases = automaton.getPhases().toArray(new Phase[automaton.getPhases().size()]);
 		final Phase<CDD> badState = new Phase(badstatestring, CDD.TRUE, CDD.TRUE);
 		// Phase[] newFinalPhases = {badState};
-		final List<Phase> newInit = new ArrayList<>();
-		final ArrayList<Phase> newPhases = new ArrayList<>();
-		final ArrayList<Phase> newFinalPhases = new ArrayList<>();
-		final Set<Phase> initPhases = new HashSet<>(Arrays.asList(automaton.getInit()));
-		final HashSet<Phase> finalPhases =
+		final List<Phase<CDD>> newInit = new ArrayList<>();
+		final ArrayList<Phase<CDD>> newPhases = new ArrayList<>();
+		final ArrayList<Phase<CDD>> newFinalPhases = new ArrayList<>();
+		final Set<Phase<CDD>> initPhases = new HashSet<>(automaton.getInit());
+		final HashSet<Phase<CDD>> finalPhases =
 				automaton.getFinalPhases() != null ? new HashSet<>(Arrays.asList(automaton.getFinalPhases())) : null;
 
 		// Maps the old phases to new phases.
@@ -493,10 +493,9 @@ public class SimplifyPEAs {
 			}
 		}
 
-		final PEATestAutomaton pta =
-				new PEATestAutomaton(automaton.getName(), newPhases.toArray(new Phase[newPhases.size()]),
-						newInit.toArray(new Phase[newInit.size()]), automaton.getClocks(), automaton.getVariables(),
-						automaton.getDeclarations(), newFinalPhases.toArray(new Phase[newFinalPhases.size()]));
+		final PEATestAutomaton pta = new PEATestAutomaton(automaton.getName(), newPhases, newInit,
+				automaton.getClocks(), automaton.getVariables(), automaton.getDeclarations(),
+				newFinalPhases.toArray(new Phase[newFinalPhases.size()]));
 
 		// pta.dump();
 

@@ -224,7 +224,8 @@ public class ARMCWriter extends TCSWriter {
 		writer.write("]).\n\n\n\n");
 
 		// Rename phases if necessary
-		final Phase[] phases = converter.getPEA().getPhases();
+		final Phase[] phases =
+				(Phase[]) converter.getPEA().getPhases().toArray(new Phase[converter.getPEA().getPhases().size()]);
 		final Set<Phase> finalPhases =
 				new HashSet<>(Arrays.asList(((PEATestAutomaton) converter.getPEA()).getFinalPhases()));
 		if (rename) {

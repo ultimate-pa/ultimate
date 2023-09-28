@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea.test;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
@@ -206,7 +207,7 @@ public class Elevator {
 			}
 		}
 
-		zpart = new PhaseEventAutomata("ZPart", phases, initPhases);
+		zpart = new PhaseEventAutomata("ZPart", Arrays.asList(phases), Arrays.asList(initPhases));
 	}
 
 	public void buildCSPPart() {
@@ -258,7 +259,7 @@ public class Elevator {
 				.and(EventDecision.create("openDoor"));
 		p[4].addTransition(p[0], ev, noresets);
 
-		csppart = new PhaseEventAutomata("CSPPart", p, new Phase[] { p[0] });
+		csppart = new PhaseEventAutomata("CSPPart", Arrays.asList(p), Arrays.asList(new Phase[] { p[0] }));
 	}
 
 	public void buildDCPart() {

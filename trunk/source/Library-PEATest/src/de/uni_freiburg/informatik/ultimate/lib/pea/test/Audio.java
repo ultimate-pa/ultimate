@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea.test;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -50,9 +51,9 @@ public class Audio {
 		final CDD clockIval4 = RangeDecision.create("sclk", RangeDecision.OP_GT, 5 * Ql).and(clockInv4);
 		final String[] noreset = new String[0];
 		final String[] reset = new String[] { "sclk" };
-		final Phase[] phases = new Phase[] { new Phase("1", low, CDD.TRUE), new Phase("2", high, clockInv),
-				new Phase("3", low, clockInv), new Phase("4", low, clockInv), new Phase("5", high, clockInv),
-				new Phase("6", low, clockInv4) };
+		final List<Phase<CDD>> phases = Arrays.asList(new Phase[] { new Phase("1", low, CDD.TRUE),
+				new Phase("2", high, clockInv), new Phase("3", low, clockInv), new Phase("4", low, clockInv),
+				new Phase("5", high, clockInv), new Phase("6", low, clockInv4) });
 
 		final CDD noev = sendOne.negate().and(sendZero.negate()).and(sendStop.negate());
 		final CDD onlyOne = sendOne.and(sendZero.negate()).and(sendStop.negate());
@@ -61,20 +62,20 @@ public class Audio {
 
 		/* add stuttering steps */
 		for (int i = 0; i < 6; i++) {
-			phases[i].addTransition(phases[i], noev, noreset);
+			phases.get(i).addTransition(phases.get(i), noev, noreset);
 		}
 
-		phases[0].addTransition(phases[3], onlyOne, reset);
-		phases[1].addTransition(phases[2], clockIval.and(noev), reset);
-		phases[2].addTransition(phases[1], clockIval.and(onlyZero), reset);
-		phases[2].addTransition(phases[3], clockIval.and(onlyOne), reset);
-		phases[2].addTransition(phases[5], clockIval.and(onlyStop), reset);
-		phases[3].addTransition(phases[4], clockIval.and(noev), reset);
-		phases[4].addTransition(phases[1], clockIval.and(onlyZero), reset);
-		phases[4].addTransition(phases[3], clockIval.and(onlyOne), reset);
-		phases[5].addTransition(phases[0], clockIval4.and(noev), noreset);
+		phases.get(0).addTransition(phases.get(3), onlyOne, reset);
+		phases.get(1).addTransition(phases.get(2), clockIval.and(noev), reset);
+		phases.get(2).addTransition(phases.get(1), clockIval.and(onlyZero), reset);
+		phases.get(2).addTransition(phases.get(3), clockIval.and(onlyOne), reset);
+		phases.get(2).addTransition(phases.get(5), clockIval.and(onlyStop), reset);
+		phases.get(3).addTransition(phases.get(4), clockIval.and(noev), reset);
+		phases.get(4).addTransition(phases.get(1), clockIval.and(onlyZero), reset);
+		phases.get(4).addTransition(phases.get(3), clockIval.and(onlyOne), reset);
+		phases.get(5).addTransition(phases.get(0), clockIval4.and(noev), noreset);
 
-		return new PhaseEventAutomata("Sender", phases, new Phase[] { phases[0] });
+		return new PhaseEventAutomata("Sender", phases, Arrays.asList(new Phase[] { phases.get(0) }));
 	}
 
 	PhaseEventAutomata createReceiver() {
@@ -86,9 +87,9 @@ public class Audio {
 		final CDD clkLow9 = RangeDecision.create("rclk", RangeDecision.OP_GT, 9 * Ql);
 		final String[] reset = new String[] { "rclk" };
 		final String[] noreset = new String[0];
-		final Phase[] phases = new Phase[] { new Phase("a", low, CDD.TRUE), new Phase("b", high, CDD.TRUE),
-				new Phase("c", low, clkHigh5), new Phase("d", low, clkHigh7), new Phase("e", high, CDD.TRUE),
-				new Phase("f", low, clkHigh9) };
+		final List<Phase<CDD>> phases = Arrays.asList(new Phase[] { new Phase("a", low, CDD.TRUE),
+				new Phase("b", high, CDD.TRUE), new Phase("c", low, clkHigh5), new Phase("d", low, clkHigh7),
+				new Phase("e", high, CDD.TRUE), new Phase("f", low, clkHigh9) });
 
 		final CDD noev = recvOne.negate().and(recvZero.negate()).and(recvStop.negate());
 		final CDD onlyOne = recvOne.and(recvZero.negate()).and(recvStop.negate());
@@ -97,28 +98,28 @@ public class Audio {
 
 		/* add stuttering steps */
 		for (int i = 0; i < 6; i++) {
-			phases[i].addTransition(phases[i], noev, noreset);
+			phases.get(i).addTransition(phases.get(i), noev, noreset);
 		}
 
-		phases[0].addTransition(phases[1], onlyOne, reset);
-		phases[1].addTransition(phases[2], noev, noreset);
-		phases[2].addTransition(phases[1], clkHigh5.and(onlyOne), reset);
-		phases[2].addTransition(phases[5], clkLow5.and(onlyZero), noreset);
-		phases[3].addTransition(phases[0], clkLow7.and(onlyStop), reset);
-		phases[3].addTransition(phases[1], clkLow5.and(clkHigh7).and(onlyOne), reset);
-		phases[3].addTransition(phases[4], clkHigh5.and(onlyZero), reset);
-		phases[4].addTransition(phases[3], noev, noreset);
-		phases[5].addTransition(phases[1], clkLow7.and(clkHigh9).and(onlyOne), reset);
-		phases[5].addTransition(phases[4], clkHigh7.and(onlyZero), reset);
-		phases[5].addTransition(phases[0], clkLow9.and(onlyStop), reset);
+		phases.get(0).addTransition(phases.get(1), onlyOne, reset);
+		phases.get(1).addTransition(phases.get(2), noev, noreset);
+		phases.get(2).addTransition(phases.get(1), clkHigh5.and(onlyOne), reset);
+		phases.get(2).addTransition(phases.get(5), clkLow5.and(onlyZero), noreset);
+		phases.get(3).addTransition(phases.get(0), clkLow7.and(onlyStop), reset);
+		phases.get(3).addTransition(phases.get(1), clkLow5.and(clkHigh7).and(onlyOne), reset);
+		phases.get(3).addTransition(phases.get(4), clkHigh5.and(onlyZero), reset);
+		phases.get(4).addTransition(phases.get(3), noev, noreset);
+		phases.get(5).addTransition(phases.get(1), clkLow7.and(clkHigh9).and(onlyOne), reset);
+		phases.get(5).addTransition(phases.get(4), clkHigh7.and(onlyZero), reset);
+		phases.get(5).addTransition(phases.get(0), clkLow9.and(onlyStop), reset);
 
-		return new PhaseEventAutomata("Receiver", phases, new Phase[] { phases[0] });
+		return new PhaseEventAutomata("Receiver", phases, Arrays.asList(new Phase[] { phases.get(0) }));
 	}
 
 	PhaseEventAutomata createTester() {
-		final Phase[] phases = new Phase[] { new Phase("idle", CDD.TRUE, CDD.TRUE),
+		final List<Phase<CDD>> phases = Arrays.asList(new Phase[] { new Phase("idle", CDD.TRUE, CDD.TRUE),
 				new Phase("exp0", CDD.TRUE, CDD.TRUE), new Phase("exp1", CDD.TRUE, CDD.TRUE),
-				new Phase("exps", CDD.TRUE, CDD.TRUE), new Phase("error", CDD.TRUE, CDD.TRUE) };
+				new Phase("exps", CDD.TRUE, CDD.TRUE), new Phase("error", CDD.TRUE, CDD.TRUE) });
 
 		final String[] noreset = new String[0];
 		final CDD sendrecv = sendOne.and(recvOne).or(sendZero.and(recvZero)).or(sendStop.and(recvStop));
@@ -128,23 +129,23 @@ public class Audio {
 
 		/* add stuttering steps */
 		for (int i = 0; i < 4; i++) {
-			phases[i].addTransition(phases[i], noev, noreset);
+			phases.get(i).addTransition(phases.get(i), noev, noreset);
 		}
 
-		phases[0].addTransition(phases[0], sendrecv, noreset);
-		phases[0].addTransition(phases[1], sendZero.and(norecv), noreset);
-		phases[0].addTransition(phases[2], sendOne.and(norecv), noreset);
-		phases[0].addTransition(phases[3], sendStop.and(norecv), noreset);
-		phases[0].addTransition(phases[4], norecv.negate().and(sendrecv.negate()), noreset);
-		phases[1].addTransition(phases[0], recvZero.and(nosend), noreset);
-		phases[1].addTransition(phases[4], noev.negate().and(recvZero.and(nosend).negate()), noreset);
-		phases[2].addTransition(phases[0], recvOne.and(nosend), noreset);
-		phases[2].addTransition(phases[4], noev.negate().and(recvOne.and(nosend).negate()), noreset);
-		phases[3].addTransition(phases[0], recvStop.and(nosend), noreset);
-		phases[3].addTransition(phases[4], noev.negate().and(recvStop.and(nosend).negate()), noreset);
-		phases[4].addTransition(phases[4], CDD.TRUE, noreset);
+		phases.get(0).addTransition(phases.get(0), sendrecv, noreset);
+		phases.get(0).addTransition(phases.get(1), sendZero.and(norecv), noreset);
+		phases.get(0).addTransition(phases.get(2), sendOne.and(norecv), noreset);
+		phases.get(0).addTransition(phases.get(3), sendStop.and(norecv), noreset);
+		phases.get(0).addTransition(phases.get(4), norecv.negate().and(sendrecv.negate()), noreset);
+		phases.get(1).addTransition(phases.get(0), recvZero.and(nosend), noreset);
+		phases.get(1).addTransition(phases.get(4), noev.negate().and(recvZero.and(nosend).negate()), noreset);
+		phases.get(2).addTransition(phases.get(0), recvOne.and(nosend), noreset);
+		phases.get(2).addTransition(phases.get(4), noev.negate().and(recvOne.and(nosend).negate()), noreset);
+		phases.get(3).addTransition(phases.get(0), recvStop.and(nosend), noreset);
+		phases.get(3).addTransition(phases.get(4), noev.negate().and(recvStop.and(nosend).negate()), noreset);
+		phases.get(4).addTransition(phases.get(4), CDD.TRUE, noreset);
 
-		return new PhaseEventAutomata("Tester", phases, new Phase[] { phases[0] });
+		return new PhaseEventAutomata("Tester", phases, Arrays.asList(new Phase[] { phases.get(0) }));
 	}
 
 	PhaseEventAutomata create4DC(final CounterTrace ct, final String name) {
@@ -214,7 +215,7 @@ public class Audio {
 	}
 
 	PhaseEventAutomata<CDD> abstractAutomaton(final PhaseEventAutomata<CDD> pea, final String finalRegex) {
-		final Phase[] init = pea.getInit();
+		final Phase[] init = pea.getInit().toArray(new Phase[pea.getInit().size()]);
 		final Phase[] newInit = new Phase[init.length];
 		int ctr = 0;
 		final HashMap<Phase, Phase> newPhases = new HashMap<>();
@@ -267,8 +268,8 @@ public class Audio {
 				newPhase.addTransition(error, errorGuard, new String[0]);
 			}
 		}
-		final Phase[] allPhases = newPhases.values().toArray(new Phase[0]);
-		return new PhaseEventAutomata(pea.getName(), allPhases, newInit);
+		final List<Phase<CDD>> allPhases = (List) newPhases.values();
+		return new PhaseEventAutomata(pea.getName(), allPhases, Arrays.asList(newInit));
 	}
 
 	void run() {

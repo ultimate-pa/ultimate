@@ -122,7 +122,7 @@ public class J2UPPAALConverter {
 	// Uppaal supports only one initial state; Thus, if a pea has more than one initial state,
 	// we introduce a new state "initialState"
 	private void addInitialStates(final PhaseEventAutomata<CDD> pea) throws IOException {
-		final Phase[] init = pea.getInit();
+		final Phase[] init = pea.getInit().toArray(new Phase[pea.getInit().size()]);
 
 		// the following case should never occur if the pea was properly built, but you can never be sure...
 		if (init.length <= 0) {
@@ -164,7 +164,7 @@ public class J2UPPAALConverter {
 	}
 
 	private void addInitialTransitions(final PhaseEventAutomata<CDD> pea) throws IOException {
-		final Phase[] init = pea.getInit();
+		final Phase[] init = pea.getInit().toArray(new Phase[pea.getInit().size()]);
 		final List<String> peaClocks = pea.getClocks();
 
 		// if the PEA has only one init state, then we do not need the further initialState, and thus no further
@@ -288,8 +288,8 @@ public class J2UPPAALConverter {
 		}
 	}
 
-	protected void createPEAString(final PhaseEventAutomata pea) throws IOException {
-		final Phase[] phases = pea.getPhases();
+	protected void createPEAString(final PhaseEventAutomata<CDD> pea) throws IOException {
+		final Phase[] phases = pea.getPhases().toArray(new Phase[pea.getPhases().size()]);
 
 		addPEAStates(phases);
 		addInitialStates(pea);
@@ -347,9 +347,9 @@ public class J2UPPAALConverter {
 		System.out.println("*****************************");
 		System.out.println("Writing Uppaal representation took " + (System.currentTimeMillis() - actTime) + "ms");
 		System.out.println("Computed " + --dnfCount + " disjunctive normalforms");
-		System.out.println("Added: " + pea.getInit().length + " further transitions to initial states");
+		System.out.println("Added: " + pea.getInit().size() + " further transitions to initial states");
 		System.out.println("Deleted: " + deletedSelfloops + " selfloops without clock reset");
-		System.out.println("The Timed Automaton has " + pea.getPhases().length + " phases");
+		System.out.println("The Timed Automaton has " + pea.getPhases().size() + " phases");
 		System.out.println("The Timed Automaton has " + transitionsInS + " transitions");
 		System.out.println("The PEA has " + transitionsInA + " transitions");
 		System.out.println("*****************************");

@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea.test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -57,7 +58,7 @@ public class GasBurner {
 		p[1].addTransition(p[2], CDD.TRUE, noresets);
 		p[2].addTransition(p[3], CDD.TRUE, noresets);
 		p[3].addTransition(p[0], heat.negate().or(flame.negate()), noresets);
-		statemachine = new PhaseEventAutomata("States", p, new Phase[] { p[0] });
+		statemachine = new PhaseEventAutomata("States", Arrays.asList(p), Arrays.asList(new Phase[] { p[0] }));
 
 		p = new Phase[] { new Phase("nflame", flame.negate(), CDD.TRUE), new Phase("flame", flame, CDD.TRUE) };
 		for (int i = 0; i < 2; i++) {
@@ -65,7 +66,7 @@ public class GasBurner {
 		}
 		p[0].addTransition(p[1], ignite, noresets);
 		p[1].addTransition(p[0], CDD.TRUE, noresets);
-		flamemachine = new PhaseEventAutomata("Flamer", p, new Phase[] { p[0] });
+		flamemachine = new PhaseEventAutomata("Flamer", Arrays.asList(p), Arrays.asList(new Phase[] { p[0] }));
 
 		p = new Phase[] { new Phase("ngas", gas.negate(), CDD.TRUE), new Phase("gas", gas, CDD.TRUE) };
 		for (int i = 0; i < 2; i++) {
@@ -73,7 +74,7 @@ public class GasBurner {
 		}
 		p[0].addTransition(p[1], ignite.or(burn), noresets);
 		p[1].addTransition(p[0], idle.or(purge), noresets);
-		gasmachine = new PhaseEventAutomata("Gaser", p, new Phase[] { p[0] });
+		gasmachine = new PhaseEventAutomata("Gaser", Arrays.asList(p), Arrays.asList(new Phase[] { p[0] }));
 	}
 
 	public void buildTimings() {
@@ -147,7 +148,8 @@ public class GasBurner {
 		p[4].addTransition(p[2], nosync.and(lteq), noresets);
 		p[3].addTransition(p[5], s2.and(s1.negate()), noresets);
 		p[4].addTransition(p[5], s2.and(s1.negate()).and(lteq.negate()), noresets);
-		leakChecker = new PEATestAutomaton("leakcheck", p, new Phase[] { p[0] }, clocks, new Phase[] { p[5] });
+		leakChecker = new PEATestAutomaton("leakcheck", Arrays.asList(p), Arrays.asList(new Phase[] { p[0] }), clocks,
+				new Phase[] { p[5] });
 	}
 
 	public void buildReq60() {
@@ -167,7 +169,8 @@ public class GasBurner {
 		p[1].addTransition(p[2], nosync.and(gteq), noresets);
 		p[1].addTransition(p[3], s2.and(s1.negate()).and(gteq), noresets);
 		p[2].addTransition(p[3], s2.and(s1.negate()), noresets);
-		lenChecker = new PEATestAutomaton("lencheck", p, new Phase[] { p[0] }, clocks, new Phase[] { p[3] });
+		lenChecker = new PEATestAutomaton("lencheck", Arrays.asList(p), Arrays.asList(new Phase[] { p[0] }), clocks,
+				new Phase[] { p[3] });
 	}
 
 	public void build() {

@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -243,10 +244,10 @@ public class PEAXML2JConverter {
 			logger.info("Building transition " + i + " successful");
 		}
 
-		final Phase[] phasesArray = phases.values().toArray(new Phase[phases.size()]);
-		final Phase[] initPhasesArray = initialPhases.values().toArray(new Phase[initialPhases.size()]);
+		final List<Phase<CDD>> phasesArray = (List) phases.values();
+		final List<Phase<CDD>> initPhasesArray = (List) initialPhases.values();
 		final String peaName = getNameAttribute(peaNode);
-		final PhaseEventAutomata pea = new PhaseEventAutomata(peaName, phasesArray, initPhasesArray, peaClocks,
+		final PhaseEventAutomata<CDD> pea = new PhaseEventAutomata(peaName, phasesArray, initPhasesArray, peaClocks,
 				variablesForPEA, eventsForPEA, null);
 		return pea;
 	}

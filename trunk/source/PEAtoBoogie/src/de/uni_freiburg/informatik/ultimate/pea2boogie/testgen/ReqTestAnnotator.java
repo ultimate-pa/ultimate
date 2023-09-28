@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.pea2boogie.testgen;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -148,7 +147,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 	private List<Expression> genTransitionEffectTracking(final PhaseEventAutomata<CDD> pea, final String currentVar,
 			final Integer sourceIndex) {
 		final List<Expression> disjuncts = new ArrayList<>();
-		final List<Phase<CDD>> phaseList = Arrays.asList(pea.getPhases());
+		final List<Phase<CDD>> phaseList = pea.getPhases();
 		for (final Transition<CDD> transition : phaseList.get(sourceIndex).getTransitions()) {
 			final Integer destIndex = phaseList.indexOf(transition.getDest());
 			if (mPea2EffectStore.get(pea).isEffectEdge(sourceIndex, destIndex)) {

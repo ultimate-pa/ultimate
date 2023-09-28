@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -648,7 +649,7 @@ public class Trace2PeaCompiler {
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase
 	 */
-	private PhaseEventAutomata buildAut() {
+	private PhaseEventAutomata<CDD> buildAut() {
 		final PhaseBits initHash = new PhaseBits(0, 0, 0);
 		Phase start = null;
 
@@ -787,9 +788,11 @@ public class Trace2PeaCompiler {
 
 		PhaseEventAutomata pea;
 		if (mExitSync != null) {
-			pea = new PEATestAutomaton(mName, phases, mInit, peaClocks, finalPhases).removeUnreachableLocations();
+			pea = new PEATestAutomaton(mName, Arrays.asList(phases), Arrays.asList(mInit), peaClocks, finalPhases)
+					.removeUnreachableLocations();
 		} else {
-			pea = new PhaseEventAutomata(mName, phases, mInit, peaClocks, variables, events, null);
+			pea = new PhaseEventAutomata(mName, Arrays.asList(phases), Arrays.asList(mInit), peaClocks, variables,
+					events, null);
 		}
 
 		return pea;

@@ -97,9 +97,9 @@ public class J2UPPAALWriterV4 {
 
 	// Uppaal supports only one initial state; Thus, if a pea has more than one initial state,
 	// we introduce a new state "initState" and an edge from this "initState" to all initial states of the PEA
-	private String initialStates(PhaseEventAutomata pea) {
+	private String initialStates(PhaseEventAutomata<CDD> pea) {
 		final StringBuffer buf = new StringBuffer();
-		final Phase[] init = pea.getInit();
+		final Phase[] init = pea.getInit().toArray(new Phase[pea.getInit().size()]);
 
 		// if the PEA has only one init state, then we do not need the further initialState
 		if (init.length < 2) {
@@ -131,7 +131,7 @@ public class J2UPPAALWriterV4 {
 
 	private String initialTransitions(PhaseEventAutomata<CDD> pea) {
 		final StringBuffer buf = new StringBuffer();
-		final Phase[] init = pea.getInit();
+		final Phase[] init = pea.getInit().toArray(new Phase[pea.getInit().size()]);
 
 		// if the PEA has only one init state, then we do not need the further initialState
 		if (init.length >= 2) {
@@ -163,8 +163,8 @@ public class J2UPPAALWriterV4 {
 
 	private String createPEAString(PhaseEventAutomata<CDD> pea) {
 		final StringBuffer buf = new StringBuffer();
-		final Phase<CDD>[] phases = pea.getPhases();
-		final int numberOfInitStates = pea.getInit().length;
+		final Phase<CDD>[] phases = pea.getPhases().toArray(new Phase[pea.getPhases().size()]);
+		final int numberOfInitStates = pea.getInit().size();
 		final Vector<Transition<CDD>> transitions = new Vector<Transition<CDD>>();
 
 		// if there are more than one initial state in the pea, we need a further initial state
@@ -265,7 +265,7 @@ public class J2UPPAALWriterV4 {
 		}
 		System.out.println("Writing Uppaal representation took " + (System.currentTimeMillis() - actTime) + "ms");
 		System.out.println("Computed " + (--dnfCount) + " disjunctive normalforms");
-		System.out.println("The transformed PEA has " + pea.getPhases().length + " phases");
+		System.out.println("The transformed PEA has " + pea.getPhases().size() + " phases");
 	}
 
 	public static void main(String[] param) {

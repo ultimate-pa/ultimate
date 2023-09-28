@@ -383,10 +383,10 @@ public class Req2BoogieTranslator {
 	 *            The location information to correspond the generated source to the property.
 	 * @return The if statement checking the p
 	 */
-	private List<Statement> genInvariantGuards(final PatternType<?> patternType, final PhaseEventAutomata automaton,
-			final String pcName, final BoogieLocation bl) {
-		final Phase[] phases = automaton.getPhases();
-		assert phases.length > 0;
+	private List<Statement> genInvariantGuards(final PatternType<?> patternType,
+			final PhaseEventAutomata<CDD> automaton, final String pcName, final BoogieLocation bl) {
+		final List<Phase<CDD>> phases = automaton.getPhases();
+		assert phases.size() > 0;
 		// TODO: Keep the if in this case; may be helpful for vacuity reason extraction
 		// if (phases.length == 1) {
 		// return Arrays.asList(genCheckPhaseInvariant(phases[0], bl));
@@ -394,11 +394,11 @@ public class Req2BoogieTranslator {
 
 		final List<Statement> statements = new ArrayList<>();
 		final Statement[] emptyElseBody = new Statement[0];
-		for (int i = 0; i < phases.length; i++) {
+		for (int i = 0; i < phases.size(); i++) {
 			final Expression ifCon = genComparePhaseCounter(i, pcName, bl);
 			final PeaLocationAnnotation peaLocAnnotation = new PeaLocationAnnotation(
-					Collections.singletonList(automaton), Collections.singletonList(phases[i]));
-			final Statement[] ifBody = genCheckPhaseInvariant(phases[i], bl, peaLocAnnotation);
+					Collections.singletonList(automaton), Collections.singletonList(phases.get(i)));
+			final Statement[] ifBody = genCheckPhaseInvariant(phases.get(i), bl, peaLocAnnotation);
 			if (ifBody == null) {
 				mLogger.warn("phase without clock or state invariant for " + patternType);
 				continue;
@@ -436,10 +436,10 @@ public class Req2BoogieTranslator {
 	/**
 	 * @return the index of the first phase that is the destination phase of the transition or -1
 	 */
-	private static int getPhaseIndex(final Transition<CDD> transition, final Phase<CDD>[] phases) {
+	private static int getPhaseIndex(final Transition<CDD> transition, final List<Phase<CDD>> phases) {
 		final String desPhaseName = transition.getDest().getName();
-		for (int i = 0; i < phases.length; i++) {
-			if (phases[i].getName().equals(desPhaseName)) {
+		for (int i = 0; i < phases.size(); i++) {
+			if (phases.get(i).getName().equals(desPhaseName)) {
 				return i;
 			}
 		}
@@ -503,13 +503,13 @@ public class Req2BoogieTranslator {
 	 */
 	private Statement generateTransition(final PhaseEventAutomata automaton, final String pcName,
 			final BoogieLocation bl) {
-		final Phase[] phases = automaton.getPhases();
-		final Statement[] statements = new Statement[phases.length];
+		final List<Phase<CDD>> phases = automaton.getPhases();
+		final Statement[] statements = new Statement[phases.size()];
 		final Statement[] emptyArray = new Statement[0];
-		for (int i = 0; i < phases.length; i++) {
+		for (int i = 0; i < phases.size(); i++) {
 			final Expression ifCon = genComparePhaseCounter(i, pcName, bl);
 			final Statement[] outerIfBodySmt =
-					new Statement[] { generateTransitionsFromPhase(automaton, pcName, phases[i], bl) };
+					new Statement[] { generateTransitionsFromPhase(automaton, pcName, phases.get(i), bl) };
 			statements[i] = new IfStatement(bl, ifCon, outerIfBodySmt, emptyArray);
 		}
 		return joinIfSmts(statements, bl);
@@ -588,14 +588,14 @@ public class Req2BoogieTranslator {
 	}
 
 	private Expression genPcExpr(final PhaseEventAutomata<CDD> aut, final BoogieLocation bl) {
-		final Phase<CDD>[] phases = aut.getPhases();
-		final Phase<CDD>[] initialPhases = aut.getInit();
+		final List<Phase<CDD>> phases = aut.getPhases();
+		final List<Phase<CDD>> initialPhases = aut.getInit();
 		// determine initial phases
-		for (int i = 0; i < phases.length; i++) {
+		for (int i = 0; i < phases.size(); i++) {
 
-			for (int j = 0; j < initialPhases.length; j++) {
-				if (phases[i].getName().equals(initialPhases[j].getName())) {
-					phases[i].setInit(true);
+			for (int j = 0; j < initialPhases.size(); j++) {
+				if (phases.get(i).getName().equals(initialPhases.get(j).getName())) {
+					phases.get(i).setInit(true);
 					break;
 				}
 			}
@@ -603,8 +603,8 @@ public class Req2BoogieTranslator {
 		final String pcName = mSymboltable.getPcName(aut);
 		// construct or over initial phases
 		Expression acc = null;
-		for (int i = 0; i < phases.length; i++) {
-			if (!phases[i].isInit) {
+		for (int i = 0; i < phases.size(); i++) {
+			if (!phases.get(i).isInit) {
 				continue;
 			}
 
@@ -613,8 +613,8 @@ public class Req2BoogieTranslator {
 					ExpressionFactory.newBinaryExpression(id.getLocation(), BinaryExpression.Operator.COMPEQ, id,
 							ExpressionFactory.createIntegerLiteral(id.getLocation(), Integer.toString(i)));
 			// add assume statement for guard of initial transition (if existent)
-			if (!phases[i].getInitialTransition().isEmpty()) {
-				CDD guard = phases[i].getInitialTransition().get().getGuard();
+			if (!phases.get(i).getInitialTransition().isEmpty()) {
+				CDD guard = phases.get(i).getInitialTransition().get().getGuard();
 				if (guard != CDD.TRUE) {
 					final Expression guardExpr = new CDDTranslator().toBoogie(guard, bl);
 					guardExpr.setType(BoogiePrimitiveType.TYPE_BOOL);

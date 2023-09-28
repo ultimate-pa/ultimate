@@ -90,10 +90,10 @@ public class PEA2ARMCConverter {
 	}
 
 	protected void createPhaseEventAutomaton(PhaseEventAutomata<CDD> pea) throws IOException {
-		if (pea.getPhases().length == 0) {
+		if (pea.getPhases().size() == 0) {
 			throw new RuntimeException("PEA with phase count = 0 is not allowed");
 		}
-		if (pea.getInit().length == 0) {
+		if (pea.getInit().size() == 0) {
 			throw new RuntimeException("PEA with initial phase count = 0 is not allowed");
 		}
 
@@ -132,39 +132,39 @@ public class PEA2ARMCConverter {
 		writer.write("]).\n\n\n\n");
 
 		// Rename phases if necessary
-		final Phase[] phases = pea.getPhases();
+		final List<Phase<CDD>> phases = pea.getPhases();
 		if (rename) {
-			int stateCounter = phases.length;
+			int stateCounter = phases.size();
 			// this.nameWriter.write("#!/usr/bin/perl -pi\n\n");
-			for (int i = 0; i < phases.length; i++) {
-				if (!phases[i].getName().equals(SimplifyPEAs.BADSTATESTRING)) {
+			for (int i = 0; i < phases.size(); i++) {
+				if (!phases.get(i).getName().equals(SimplifyPEAs.BADSTATESTRING)) {
 					// this.nameWriter.write(" s/"+PEA2TCSJ2XMLConverter.STATE_NAME
 					// + stateCounter+"/"+phases[i].getName()+"/g;\n");
-					phases[i].setName(PEA2TCSJ2XMLConverter.STATE_NAME + stateCounter);
+					phases.get(i).setName(PEA2TCSJ2XMLConverter.STATE_NAME + stateCounter);
 				} else {
-					phases[i].setName(PEA2ARMCConverter.BADSTATENAME_ARMC);
+					phases.get(i).setName(PEA2ARMCConverter.BADSTATENAME_ARMC);
 				}
 				stateCounter--;
 			}
 		} else {
-			for (int i = 0; i < phases.length; i++) {
-				if (!phases[i].getName().equals(SimplifyPEAs.BADSTATESTRING)) {
-					phases[i].setName("p" + phases[i].getName());
+			for (int i = 0; i < phases.size(); i++) {
+				if (!phases.get(i).getName().equals(SimplifyPEAs.BADSTATESTRING)) {
+					phases.get(i).setName("p" + phases.get(i).getName());
 				} else {
-					phases[i].setName(PEA2ARMCConverter.BADSTATENAME_ARMC);
+					phases.get(i).setName(PEA2ARMCConverter.BADSTATENAME_ARMC);
 				}
 			}
 		}
 
 		// Create edges to initial phases
-		final Phase[] init = pea.getInit();
-		for (int i = 0; i < init.length; i++) {
-			createInitEdge(init[i], variableBuffer.toString(), variablePrimedBuffer.toString());
+		final List<Phase<CDD>> init = pea.getInit();
+		for (int i = 0; i < init.size(); i++) {
+			createInitEdge(init.get(i), variableBuffer.toString(), variablePrimedBuffer.toString());
 		}
 
 		// Create transitions
-		for (int i = 0; i < phases.length; i++) {
-			final List transitions = phases[i].getTransitions();
+		for (int i = 0; i < phases.size(); i++) {
+			final List transitions = phases.get(i).getTransitions();
 			final Iterator transIter = transitions.iterator();
 			while (transIter.hasNext()) {
 				final Transition trans = (Transition) transIter.next();
@@ -383,12 +383,12 @@ public class PEA2ARMCConverter {
 	}
 
 	public void computeNumberOfDNFs(PhaseEventAutomata pea) {
-		final Phase[] phases = pea.getPhases();
+		final List<Phase<CDD>> phases = pea.getPhases();
 		numberOfDNFs = 0;
-		for (int i = 0; i < phases.length; i++) {
-			numberOfDNFs += phases[i].getTransitions().size() * 3;
+		for (int i = 0; i < phases.size(); i++) {
+			numberOfDNFs += phases.get(i).getTransitions().size() * 3;
 		}
-		numberOfDNFs += pea.getInit().length * 2;
+		numberOfDNFs += pea.getInit().size() * 2;
 	}
 
 	// public static void main(String[] args) {

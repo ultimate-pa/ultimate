@@ -14,7 +14,6 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimpleSet;
 
 public class PEAUtils {
 
-	@SuppressWarnings("unchecked")
 	public static <T> T simplifyGuard(T guard, Phase<T> phase) {
 		if (guard instanceof CDD) {
 			return (T) simplifyGuard((CDD) guard, (Phase<CDD>) phase);
@@ -83,17 +82,17 @@ public class PEAUtils {
 
 		final List<TodoEntry> todo = new LinkedList<>();
 
-		for (int i = 0; i < a.mInit.length; i++) {
-			for (int j = 0; j < b.mInit.length; j++) {
-				final CDD sinv = a.mInit[i].stateInv.and(b.mInit[j].stateInv);
+		for (int i = 0; i < a.mInit.size(); i++) {
+			for (int j = 0; j < b.mInit.size(); j++) {
+				final CDD sinv = a.mInit.get(i).stateInv.and(b.mInit.get(j).stateInv);
 				if (sinv != CDD.FALSE) {
-					final CDD cinv = a.mInit[i].clockInv.and(b.mInit[j].clockInv);
+					final CDD cinv = a.mInit.get(i).clockInv.and(b.mInit.get(j).clockInv);
 					final Phase<CDD> p =
-							new Phase<CDD>(a.mInit[i].getName() + TIMES + b.mInit[j].getName(), sinv, cinv);
+							new Phase<CDD>(a.mInit.get(i).getName() + TIMES + b.mInit.get(j).getName(), sinv, cinv);
 
 					newInit.add(p);
 					newPhases.put(p.getName(), p);
-					todo.add(new TodoEntry(a.mInit[i], b.mInit[j], p));
+					todo.add(new TodoEntry(a.mInit.get(i), b.mInit.get(j), p));
 				}
 			}
 		}
@@ -143,8 +142,8 @@ public class PEAUtils {
 			}
 		}
 
-		final Phase<CDD>[] allPhases = newPhases.values().toArray(new Phase[newPhases.size()]);
-		final Phase<CDD>[] initPhases = newInit.toArray(new Phase[newInit.size()]);
+		final List<Phase<CDD>> allPhases = (List<Phase<CDD>>) newPhases.values();
+		final List<Phase<CDD>> initPhases = newInit;
 
 		// add initial transition to Phases in initPhases
 		for (Phase<CDD> phase : initPhases) {

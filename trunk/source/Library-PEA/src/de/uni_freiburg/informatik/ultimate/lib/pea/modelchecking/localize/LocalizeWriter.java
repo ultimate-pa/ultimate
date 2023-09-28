@@ -948,7 +948,8 @@ public class LocalizeWriter extends TCSWriter {
 
 			pcVars = new HashSet<>();
 			int numberOfComponents = 0;
-			final Phase<CDD>[] phases = converter.getPEA().getPhases();
+			final Phase[] phases =
+					(Phase[]) converter.getPEA().getPhases().toArray(new Phase[converter.getPEA().getPhases().size()]);
 			for (int i = 0; i < phases.length; i++) {
 				final String[] pcNames = phases[i].getName().split(PEAUtils.TIMES);
 				if (numberOfComponents == 0) {

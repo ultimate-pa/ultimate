@@ -67,10 +67,8 @@ public class PEAComplement {
 			totalizeTransition(phase, sinkPhase, totalisedPhases, clockVarSet);
 		}
 
-		Phase<CDD>[] totalisedInitArray = totalisedInit.toArray(new Phase[totalisedInit.size()]);
 		PhaseEventAutomata totalisedPEA = new PhaseEventAutomata(addSuffixString(sourcePea.getName(), TOTAL_POSTFIX),
-				totalisedPhases.values().toArray(new Phase[totalisedPhases.size()]), sourcePea.mInit);
-		totalisedPEA.setInit(totalisedInitArray);
+				new ArrayList<Phase<CDD>>(totalisedPhases.values()), totalisedInit);
 		totalisedPEA.mVariables = new HashMap<String, String>(sourcePea.mVariables);
 
 		for (String s : sourcePea.mClocks) {
@@ -189,7 +187,7 @@ public class PEAComplement {
 	 */
 	private void computeInitialTransitionSink(PhaseEventAutomata<CDD> pea, Phase<CDD> sinkPhase) {
 		CDD initialTransitionSinkGuard = CDD.FALSE;
-		Phase<CDD>[] initialPhases = pea.getInit();
+		Phase<CDD>[] initialPhases = pea.getInit().toArray(new Phase[pea.getInit().size()]);
 		for (Phase<CDD> phase : initialPhases) {
 			assert phase.getInitialTransition().isPresent();
 			InitialTransition<CDD> initialTransition = phase.getInitialTransition().get();
@@ -235,10 +233,11 @@ public class PEAComplement {
 		return nonStrictClockInvariant;
 	}
 
-	private Map<String, Phase<CDD>> copyPhases(Phase<CDD>[] phases, String suffix) {
+	private Map<String, Phase<CDD>> copyPhases(List<Phase<CDD>> phases, String suffix) {
 		Map<String, Phase<CDD>> copy = new HashMap<String, Phase<CDD>>();
 		for (Phase<CDD> phase : phases) {
-			Phase<CDD> copiedPhase = new Phase(phase.name, phase.stateInv, addClockSuffixCDD(phase.clockInv, suffix));
+			Phase<CDD> copiedPhase =
+					new Phase<CDD>(phase.name, phase.stateInv, addClockSuffixCDD(phase.clockInv, suffix));
 			copiedPhase.setTerminal(phase.getTerminal());
 			copy.put(copiedPhase.name, copiedPhase);
 			if (phase.getInitialTransition().isPresent()) {

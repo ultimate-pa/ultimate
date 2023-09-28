@@ -160,7 +160,7 @@ public class Req2Pea implements IReq2Pea {
 				continue;
 			}
 
-			if (pea.getCounterTrace2Pea().stream().map(Entry::getValue).anyMatch(a -> a.getInit().length == 0)) {
+			if (pea.getCounterTrace2Pea().stream().map(Entry::getValue).anyMatch(a -> a.getInit().size() == 0)) {
 				mResultUtil.transformationError(pat, "A PEA is missing its initial phase");
 				continue;
 			}

@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PEAPhaseIndexMap;
 public class PhaseEventAutomata<T> implements Comparable<Object> {
 
 	String mName;
-	Phase<T>[] mPhases;
-	Phase<T>[] mInit;
+	List<Phase<T>> mPhases;
+	List<Phase<T>> mInit;
 	List<String> mClocks;
 
 	// A map of variables and its types to be used in this PEA.
@@ -50,16 +50,16 @@ public class PhaseEventAutomata<T> implements Comparable<Object> {
 	// Additional declarations needed when processing this PEA.
 	protected List<String> mDeclarations;
 
-	public PhaseEventAutomata(final String name, final Phase<T>[] phases, final Phase<T>[] init) {
+	public PhaseEventAutomata(final String name, final List<Phase<T>> phases, final List<Phase<T>> init) {
 		this(name, phases, init, new ArrayList<String>());
 	}
 
-	public PhaseEventAutomata(final String name, final Phase<T>[] phases, final Phase<T>[] init,
+	public PhaseEventAutomata(final String name, final List<Phase<T>> phases, final List<Phase<T>> init,
 			final List<String> clocks) {
 		this(name, phases, init, clocks, null, null);
 	}
 
-	public PhaseEventAutomata(final String name, final Phase<T>[] phases, final Phase<T>[] init,
+	public PhaseEventAutomata(final String name, final List<Phase<T>> phases, final List<Phase<T>> init,
 			final List<String> clocks, final Map<String, String> variables, final List<String> declarations) {
 		this(name, phases, init, clocks, variables, null, declarations);
 	}
@@ -72,7 +72,7 @@ public class PhaseEventAutomata<T> implements Comparable<Object> {
 	 * @param phases
 	 * @param variables
 	 */
-	public PhaseEventAutomata(final String name, final Phase<T>[] phases, final Phase<T>[] init,
+	public PhaseEventAutomata(final String name, final List<Phase<T>> phases, final List<Phase<T>> init,
 			final List<String> clocks, final Map<String, String> variables, final Set<String> events,
 			final List<String> declarations) {
 		if (clocks == null) {
@@ -104,13 +104,8 @@ public class PhaseEventAutomata<T> implements Comparable<Object> {
 	/**
 	 * @return Returns the init.
 	 */
-	public Phase<T>[] getInit() {
+	public List<Phase<T>> getInit() {
 		return mInit;
-	}
-
-	// Ami gefrickel
-	public void setInit(final Phase<T>[] init2) {
-		mInit = init2;
 	}
 
 	/**
@@ -123,7 +118,7 @@ public class PhaseEventAutomata<T> implements Comparable<Object> {
 	/**
 	 * @return Returns the phases.
 	 */
-	public Phase<T>[] getPhases() {
+	public List<Phase<T>> getPhases() {
 		return mPhases;
 	}
 
@@ -166,16 +161,16 @@ public class PhaseEventAutomata<T> implements Comparable<Object> {
 	}
 
 	public boolean isEmpty() {
-		return getPhases().length <= 0;
+		return getPhases().size() <= 0;
 	}
 
 	// Change by Ami
 	public int getNumberOfLocations() {
-		return getPhases().length;
+		return getPhases().size();
 	}
 
 	public Phase<T> getLocation(final int i) {
-		return getPhases()[i];
+		return getPhases().get(i);
 	}
 
 	public void rename() {
@@ -203,7 +198,7 @@ public class PhaseEventAutomata<T> implements Comparable<Object> {
 	// in einen neuen ArrayString gepackt werden
 	private static String[] splitForComponents(final String location) {
 		// Create a pattern to match breaks
-		final Pattern p = Pattern.compile("_X_");
+		final Pattern p = Pattern.compile(PEAUtils.TIMES);
 		// Split input with the pattern
 		final String[] result = p.split(location);
 		return result;
@@ -213,9 +208,9 @@ public class PhaseEventAutomata<T> implements Comparable<Object> {
 	// Bsp Guard (A or B) und Stateinvariante des Folgezustands ist (neg B) dann
 	// wird der Guard vereinfacht zu (A)
 	public void simplifyGuards() {
-		final Phase<T>[] phases = getPhases();
-		for (int i = 0; i < phases.length; i++) {
-			final Phase<T> phase = phases[i];
+		final List<Phase<T>> phases = getPhases();
+		for (int i = 0; i < phases.size(); i++) {
+			final Phase<T> phase = phases.get(i);
 			final List<Transition<T>> transitions = phase.getTransitions();
 			for (int j = 0; j < transitions.size(); j++) {
 				final Transition<T> trans = transitions.get(j);

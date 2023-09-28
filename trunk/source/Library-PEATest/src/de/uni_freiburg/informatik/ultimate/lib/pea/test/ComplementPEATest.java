@@ -48,7 +48,7 @@ public class ComplementPEATest {
 	}
 
 	// constructs a PEA corresponding to pattern UniversalityGlobally
-	public PhaseEventAutomata createUniversalityGloballyPea() {
+	public PhaseEventAutomata<CDD> createUniversalityGloballyPea() {
 		String vR = "R";
 		Map<String, String> variables = new HashMap<String, String>();
 		variables.put(vR, "boolean");
@@ -56,8 +56,8 @@ public class ComplementPEATest {
 		final Phase[] phases = new Phase[] { new Phase("0", r, CDD.TRUE) };
 		final String[] noreset = new String[0];
 		phases[0].addTransition(phases[0], CDD.TRUE, noreset);
-		return new PhaseEventAutomata("UniversalityGlobally", phases, new Phase[] { phases[0] },
-				Collections.emptyList(), variables, Collections.emptyList());
+		return new PhaseEventAutomata("UniversalityGlobally", Arrays.asList(phases),
+				Arrays.asList(new Phase[] { phases[0] }), Collections.emptyList(), variables, Collections.emptyList());
 	}
 
 	// constructs a PEA corresponding to pattern ResponseDelay Globally
@@ -94,8 +94,8 @@ public class ComplementPEATest {
 		phases[2].addTransition(phases[1], clkGuard, noreset);
 		phases[2].addTransition(phases[0], s, noreset);
 
-		return new PhaseEventAutomata("ResponseDelayGlobally", phases, new Phase[] { phases[0], phases[1] }, clocks,
-				variables, Collections.emptyList());
+		return new PhaseEventAutomata("ResponseDelayGlobally", Arrays.asList(phases),
+				Arrays.asList(new Phase[] { phases[0], phases[1] }), clocks, variables, Collections.emptyList());
 	}
 
 	/**
@@ -125,8 +125,8 @@ public class ComplementPEATest {
 		phases[0].addTransition(phases[1], CDD.TRUE, reset);
 		phases[1].addTransition(phases[0], CDD.TRUE, noreset);
 
-		return new PhaseEventAutomata("DurationBoundUGlobally", phases, new Phase[] { phases[0], phases[1] }, clocks,
-				variables, Collections.emptyList());
+		return new PhaseEventAutomata("DurationBoundUGlobally", Arrays.asList(phases),
+				Arrays.asList(new Phase[] { phases[0], phases[1] }), clocks, variables, Collections.emptyList());
 	}
 
 	public PhaseEventAutomata createDurationBoundUGloballyModified() {
@@ -155,8 +155,8 @@ public class ComplementPEATest {
 		clocks.add("c0");
 		clocks.add("c1");
 
-		return new PhaseEventAutomata("DurationBoundUGlobally", phases, new Phase[] { phases[0], phases[1] }, clocks,
-				variables, Collections.emptyList());
+		return new PhaseEventAutomata("DurationBoundUGlobally", Arrays.asList(phases),
+				Arrays.asList(new Phase[] { phases[0], phases[1] }), clocks, variables, Collections.emptyList());
 	}
 
 	public CDD constructMultiClockInvariant() {
@@ -187,11 +187,11 @@ public class ComplementPEATest {
 		PhaseEventAutomata testPEA = mTestAutomata.get(0);
 		PEAComplement complementPEA = new PEAComplement(testPEA);
 		PhaseEventAutomata complementAutomaton = complementPEA.getComplementPEA();
-		Phase[] originalPhases = testPEA.getPhases();
-		Phase[] phases = complementAutomaton.getPhases();
-		assertEquals(originalPhases.length, phases.length - 1);
+		List<Phase<CDD>> originalPhases = testPEA.getPhases();
+		List<Phase<CDD>> phases = complementAutomaton.getPhases();
+		assertEquals(originalPhases.size(), phases.size() - 1);
 		// does the complement automaton contain a sink?
-		Phase sink = Arrays.asList(phases).stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
+		Phase sink = phases.stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
 		assertTrue(sink.getName().equals("sink"));
 		// is it accepting?
 		assertTrue(sink.getTerminal());
@@ -211,8 +211,8 @@ public class ComplementPEATest {
 		PhaseEventAutomata<CDD> testPEA = mTestAutomata.get(1);
 		PEAComplement complementPEA = new PEAComplement(testPEA);
 		PhaseEventAutomata<CDD> complementAutomaton = complementPEA.getComplementPEA();
-		Phase<CDD>[] phases = complementAutomaton.getPhases();
-		Phase<CDD> sink = Arrays.asList(phases).stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
+		List<Phase<CDD>> phases = complementAutomaton.getPhases();
+		Phase<CDD> sink = phases.stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
 		assertTrue(sink.getInitialTransition().isPresent());
 		InitialTransition<CDD> sinkInitialTransition = sink.getInitialTransition().get();
 		CDD guard = sinkInitialTransition.getGuard();
@@ -230,13 +230,12 @@ public class ComplementPEATest {
 		PhaseEventAutomata testPEA = mTestAutomata.get(2);
 		PEAComplement complementPEA = new PEAComplement(testPEA);
 		PhaseEventAutomata complementAutomaton = complementPEA.getComplementPEA();
-		Phase[] phases = complementAutomaton.getPhases();
-		assertTrue(phases.length == testPEA.getPhases().length + 1);
-		Phase sink = Arrays.asList(phases).stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
+		List<Phase<CDD>> phases = complementAutomaton.getPhases();
+		assertTrue(phases.size() == testPEA.getPhases().size() + 1);
+		Phase sink = phases.stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
 		assertTrue(sink.getName().equals("sink"));
 		assertTrue(sink.getTerminal());
-		Phase phase1 =
-				Arrays.asList(phases).stream().filter(p -> p.getClockInvariant() != CDD.TRUE).findAny().orElse(null);
+		Phase phase1 = phases.stream().filter(p -> p.getClockInvariant() != CDD.TRUE).findAny().orElse(null);
 		CDD expectedClkInv = RangeDecision.create("c0" + PEAComplement.COMPLEMENT_POSTFIX, RangeDecision.OP_LTEQ, 5);
 		assertEquals(expectedClkInv, phase1.getClockInvariant());
 		List<Transition> phase1OutgoingTransitions = phase1.getTransitions();

@@ -146,7 +146,7 @@ public class J2UPPAALConverterDOM {
 		}
 		System.out.println("Writing Uppaal representation took " + (System.currentTimeMillis() - actTime) + "ms");
 		System.out.println("Computed " + (--dnfCount) + " disjunctive normalforms");
-		System.out.println("The transformed PEA has " + pea.getPhases().length + " phases");
+		System.out.println("The transformed PEA has " + pea.getPhases().size() + " phases");
 	}
 
 	// get an overview over all Clocks used in the timed transition system
@@ -164,7 +164,7 @@ public class J2UPPAALConverterDOM {
 	// Uppaal supports only one initial state; Thus, if a pea has more than one initial state,
 	// we introduce a new state "initialState"
 	private void addInitialRef(PhaseEventAutomata pea) throws IOException {
-		final Phase[] init = pea.getInit();
+		final Phase[] init = (Phase[]) pea.getInit().toArray(new Phase[pea.getInit().size()]);
 		// the following case should never occur if the pea was properly built, but you can never be sure...
 		if (init.length <= 0) {
 			System.out.println("ERROR: The pea has no init state");
@@ -187,9 +187,9 @@ public class J2UPPAALConverterDOM {
 	}
 
 	private void addLocations(PhaseEventAutomata<CDD> pea) throws IOException {
-		final Phase[] init = pea.getInit();
+		final Phase[] init = pea.getInit().toArray(new Phase[pea.getInit().size()]);
 		// add all l<CDD> ocations of the pea
-		final Phase<CDD>[] phases = pea.getPhases();
+		final Phase<CDD>[] phases = pea.getPhases().toArray(new Phase[pea.getPhases().size()]);
 		for (int i = 0; i < phases.length; i++) {
 			final Phase<CDD> phase = phases[i];
 			final Element location = new Element("location");
@@ -233,7 +233,7 @@ public class J2UPPAALConverterDOM {
 	// add the transitions of the pea
 	private void addPEATransitions(PhaseEventAutomata<CDD> pea) throws IOException {
 
-		final Phase<CDD>[] phases = pea.getPhases();
+		final Phase<CDD>[] phases = pea.getPhases().toArray(new Phase[pea.getPhases().size()]);
 		final Vector<Transition<CDD>> transitions = new Vector<Transition<CDD>>();
 
 		for (int i = 0; i < phases.length; i++) {
@@ -298,7 +298,7 @@ public class J2UPPAALConverterDOM {
 	}
 
 	private void addInitialTransitions(PhaseEventAutomata<CDD> pea) throws IOException {
-		final Phase<CDD>[] init = pea.getInit();
+		final Phase<CDD>[] init = pea.getInit().toArray(new Phase[pea.getInit().size()]);
 
 		// if the PEA has only one init state, then we do not need the further initialState, and thus no further
 		// transitions

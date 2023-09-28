@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.List;
 import java.util.Vector;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.TCSWriter;
@@ -54,13 +55,13 @@ public class VacuousAssignment extends TCSWriter {
 	public void getVacuousAssignments(final PhaseEventAutomata<CDD> pea) throws IOException {
 		System.out.println("*********************************************************");
 		System.out.println("Queries to check for a vacuous satisfaction for PEA " + pea.getName());
-		final Phase<CDD>[] init = pea.getInit();
-		final int numberOfLocations = pea.getPhases().length;
+		final List<Phase<CDD>> init = pea.getInit();
+		final int numberOfLocations = pea.getPhases().size();
 		if (numberOfLocations < 0) {
 			System.out.println("ERROR: The pea is empty");
 		}
 		if (numberOfLocations == 1) {
-			final CDD cdd = pea.getPhases()[0].getStateInvariant();
+			final CDD cdd = pea.getPhases().get(0).getStateInvariant();
 
 			final int length = getPossibleVacuousMakerLength();
 			for (int i = 0; i < length; i++) {
@@ -80,9 +81,9 @@ public class VacuousAssignment extends TCSWriter {
 			writer.flush();
 
 		} else {
-			final int numberOfInitStates = init.length;
+			final int numberOfInitStates = init.size();
 			for (int i = 0; i < numberOfInitStates; i++) {
-				final Phase<CDD> initState = init[i];
+				final Phase<CDD> initState = init.get(i);
 				// States that have a clockinvariant !=0 have to be left when the clock is expired
 				// Thus such states cannot lead to a vacuous satisfaction
 				if (initState.getClockInvariant() == CDD.TRUE) {
@@ -187,16 +188,16 @@ public class VacuousAssignment extends TCSWriter {
 	}
 
 	private void checkPossiblyVacuous(final PhaseEventAutomata<CDD> pea) {
-		final Phase<CDD>[] phases = pea.getPhases();
+		final List<Phase<CDD>> phases = pea.getPhases();
 		final Vector<CDD> vac = getPossiblyVacuous();
 
-		if (phases.length > 1) {
+		if (phases.size() > 1) {
 			for (int j = 0; j < vac.size(); j++) {
 				boolean testVacuous = true;
 				final CDD formula = vac.elementAt(j);
 
-				for (int q = 0; q < phases.length; q++) {
-					final Phase<CDD> a = phases[q];
+				for (int q = 0; q < phases.size(); q++) {
+					final Phase<CDD> a = phases.get(q);
 					final CDD state = a.getStateInvariant();
 					if (state.and(formula) == CDD.FALSE) {
 						testVacuous = false;

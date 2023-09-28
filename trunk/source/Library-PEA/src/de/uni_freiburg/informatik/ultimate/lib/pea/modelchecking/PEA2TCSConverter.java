@@ -174,15 +174,15 @@ public final class PEA2TCSConverter {
 		this.tcsWriter = tcsWriter;
 		this.tcsWriter.setConverter(this);
 		this.pea = pea;
-		phases = pea.getPhases();
-		initPhases = pea.getInit();
+		phases = pea.getPhases().toArray(new Phase[pea.getPhases().size()]);
+		initPhases = pea.getInit().toArray(new Phase[pea.getInit().size()]);
 		clocks = pea.getClocks();
 		variables = pea.getVariables();
 
-		if (pea.getPhases().length == 0) {
+		if (pea.getPhases().size() == 0) {
 			throw new RuntimeException("PEA with phase count = 0 is not allowed");
 		}
-		if (pea.getInit().length == 0) {
+		if (pea.getInit().size() == 0) {
 			throw new RuntimeException("PEA with initial phase count = 0 is not allowed");
 		}
 

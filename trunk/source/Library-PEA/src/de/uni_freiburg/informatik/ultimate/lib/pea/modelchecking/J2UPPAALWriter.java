@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking;
 
 import java.io.FileWriter;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -90,14 +91,14 @@ public class J2UPPAALWriter {
 
 	private String createPEAString(PhaseEventAutomata<CDD> pea) {
 		final StringBuffer buf = new StringBuffer();
-		final Phase[] phases = pea.getPhases();
-		final Vector<Transition> transitions = new Vector<Transition>();
-		for (int i = 0; i < phases.length; i++) {
-			buf.append(createPEAPhaseString(phases[i]));
-			transitions.addAll(phases[i].getTransitions());
+		final List<Phase<CDD>> phases = pea.getPhases();
+		final Vector<Transition<CDD>> transitions = new Vector<Transition<CDD>>();
+		for (int i = 0; i < phases.size(); i++) {
+			buf.append(createPEAPhaseString(phases.get(i)));
+			transitions.addAll(phases.get(i).getTransitions());
 		}
-		final Phase[] init = pea.getInit();
-		buf.append("<init ref = \"" + init[0].getName() + "\"/>");
+		final List<Phase<CDD>> init = pea.getInit();
+		buf.append("<init ref = \"" + init.get(0).getName() + "\"/>");
 		transCount = transitions.size();
 		final Iterator transIter = transitions.iterator();
 		while (transIter.hasNext()) {

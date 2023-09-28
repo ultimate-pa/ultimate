@@ -233,11 +233,11 @@ public class PEAJ2XMLConverter {
 		// }
 	}
 
-	protected void createPhaseEventAutomaton(final PhaseEventAutomata pea) throws IOException {
-		if (pea.getPhases().length == 0) {
+	protected void createPhaseEventAutomaton(final PhaseEventAutomata<CDD> pea) throws IOException {
+		if (pea.getPhases().size() == 0) {
 			throw new RuntimeException("PEA with phase count = 0 is not allowed");
 		}
-		if (pea.getInit().length == 0) {
+		if (pea.getInit().size() == 0) {
 			throw new RuntimeException("PEA with initial phase count = 0 is not allowed");
 		}
 
@@ -258,8 +258,8 @@ public class PEAJ2XMLConverter {
 
 		// Create phase nodes
 		writer.write("<phases>\n");
-		final Phase[] phases = pea.getPhases();
-		final Phase[] init = pea.getInit();
+		final Phase[] phases = pea.getPhases().toArray(new Phase[pea.getPhases().size()]);
+		final Phase[] init = pea.getInit().toArray(new Phase[pea.getInit().size()]);
 		final List<Phase> temp = new LinkedList<>(Arrays.asList(phases));
 		temp.removeAll(Arrays.asList(init));
 		final Phase[] notInitPhases = temp.toArray(new Phase[temp.size()]);
@@ -353,7 +353,7 @@ public class PEAJ2XMLConverter {
 	}
 
 	private boolean peaHasTransitions(final PhaseEventAutomata<CDD> pea) {
-		final Phase<CDD>[] phases = pea.getPhases();
+		final Phase<CDD>[] phases = pea.getPhases().toArray(new Phase[pea.getPhases().size()]);
 		for (int i = 0; i < phases.length; i++) {
 			if (phases[i].getTransitions().size() > 0) {
 				return true;

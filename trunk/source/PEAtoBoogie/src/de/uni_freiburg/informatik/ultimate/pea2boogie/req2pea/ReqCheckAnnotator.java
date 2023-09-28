@@ -288,7 +288,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		List<Entry<CounterTrace, PhaseEventAutomata<CDD>>> peaList = strictPea.getCounterTrace2Pea();
 		for (Entry<CounterTrace, PhaseEventAutomata<CDD>> entry : peaList) {
 			PhaseEventAutomata<CDD> pea = entry.getValue();
-			Phase[] phases = pea.getPhases();
+			Phase[] phases = pea.getPhases().toArray(new Phase[pea.getPhases().size()]);
 
 			for (int i = 0; i < phases.length; i++) {
 				Phase phase = phases[i];
@@ -472,9 +472,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	 *            A boogie location used for all statements.
 	 * @return The assertion for non-vacousness or null if the assertion would be false.
 	 */
-	private Statement genAssertNonVacuous(final PatternType<?> req, final PhaseEventAutomata aut,
+	private Statement genAssertNonVacuous(final PatternType<?> req, final PhaseEventAutomata<CDD> aut,
 			final BoogieLocation bl) {
-		final Phase[] phases = aut.getPhases();
+		final Phase[] phases = aut.getPhases().toArray(new Phase[aut.getPhases().size()]);
 
 		// compute the maximal phase number occurring in the automaton.
 		int maxBits = 0;

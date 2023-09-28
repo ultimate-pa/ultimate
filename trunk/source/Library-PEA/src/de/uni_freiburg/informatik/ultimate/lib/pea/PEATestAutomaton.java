@@ -55,7 +55,7 @@ public class PEATestAutomaton extends PhaseEventAutomata<CDD> {
 	 * @param init
 	 * @param clocks
 	 */
-	public PEATestAutomaton(final String name, final Phase<CDD>[] phases, final Phase<CDD>[] init,
+	public PEATestAutomaton(final String name, final List<Phase<CDD>> phases, final List<Phase<CDD>> init,
 			final List<String> clocks) {
 		this(name, phases, init, clocks, new Phase[0]);
 	}
@@ -68,7 +68,7 @@ public class PEATestAutomaton extends PhaseEventAutomata<CDD> {
 	 * @param init
 	 * @param clocks
 	 */
-	public PEATestAutomaton(final String name, final Phase<CDD>[] phases, final Phase<CDD>[] init,
+	public PEATestAutomaton(final String name, final List<Phase<CDD>> phases, final List<Phase<CDD>> init,
 			final List<String> clocks, final Phase<CDD>[] finals) {
 		this(name, phases, init, clocks, null, null, finals);
 	}
@@ -80,7 +80,7 @@ public class PEATestAutomaton extends PhaseEventAutomata<CDD> {
 	 * @param phases
 	 * @param init
 	 */
-	public PEATestAutomaton(final String name, final Phase<CDD>[] phases, final Phase<CDD>[] init) {
+	public PEATestAutomaton(final String name, final List<Phase<CDD>> phases, final List<Phase<CDD>> init) {
 		super(name, phases, init);
 		finalPhases = new Phase[0];
 	}
@@ -97,7 +97,7 @@ public class PEATestAutomaton extends PhaseEventAutomata<CDD> {
 	 * @param finalPhases
 	 *            if finalPhases is null then a new Phase array is generated for the final phases
 	 */
-	public PEATestAutomaton(final String name, final Phase<CDD>[] phases, final Phase<CDD>[] init,
+	public PEATestAutomaton(final String name, final List<Phase<CDD>> phases, final List<Phase<CDD>> init,
 			final List<String> clocks, final Map<String, String> variables, final List<String> declarations,
 			final Phase<CDD>[] finalPhases) {
 		super(name, phases, init, clocks, variables, declarations);
@@ -140,21 +140,22 @@ public class PEATestAutomaton extends PhaseEventAutomata<CDD> {
 
 		final List<TodoEntry> todo = new LinkedList<>();
 
-		for (int i = 0; i < getInit().length; i++) {
-			for (int j = 0; j < b.getInit().length; j++) {
-				final CDD sinv = getInit()[i].stateInv.and(b.getInit()[j].stateInv);
+		for (int i = 0; i < getInit().size(); i++) {
+			for (int j = 0; j < b.getInit().size(); j++) {
+				final CDD sinv = getInit().get(i).stateInv.and(b.getInit().get(j).stateInv);
 				if (sinv != CDD.FALSE) {
-					final CDD cinv = getInit()[i].clockInv.and(b.getInit()[j].clockInv);
-					final Phase<CDD> p =
-							new Phase(getInit()[i].getName() + PEAUtils.TIMES + b.getInit()[j].getName(), sinv, cinv);
-					if (bIsTestAutomaton && oldFinal.contains(getInit()[i]) && bOldFinal.contains(b.getInit()[j])) {
+					final CDD cinv = getInit().get(i).clockInv.and(b.getInit().get(j).clockInv);
+					final Phase<CDD> p = new Phase(
+							getInit().get(i).getName() + PEAUtils.TIMES + b.getInit().get(j).getName(), sinv, cinv);
+					if (bIsTestAutomaton && oldFinal.contains(getInit().get(i))
+							&& bOldFinal.contains(b.getInit().get(j))) {
 						newFinal.add(p);
-					} else if (!bIsTestAutomaton && oldFinal != null && oldFinal.contains(getInit()[i])) {
+					} else if (!bIsTestAutomaton && oldFinal != null && oldFinal.contains(getInit().get(i))) {
 						newFinal.add(p);
 					}
 					newInit.add(p);
 					newPhases.put(p.getName(), p);
-					todo.add(new TodoEntry(getInit()[i], b.getInit()[j], p));
+					todo.add(new TodoEntry(getInit().get(i), b.getInit().get(j), p));
 				}
 			}
 		}
@@ -206,8 +207,8 @@ public class PEATestAutomaton extends PhaseEventAutomata<CDD> {
 			}
 		}
 
-		final Phase<CDD>[] allPhases = newPhases.values().toArray(new Phase[newPhases.size()]);
-		final Phase<CDD>[] initPhases = newInit.toArray(new Phase[newInit.size()]);
+		final List<Phase<CDD>> allPhases = (List) newPhases.values();
+		final List<Phase<CDD>> initPhases = newInit;
 		final Phase<CDD>[] finalPhases = newFinal.toArray(new Phase[newFinal.size()]);
 
 		final List<String> newClocks = PEAUtils.mergeClockLists(this, b);
@@ -266,7 +267,7 @@ public class PEATestAutomaton extends PhaseEventAutomata<CDD> {
 		}
 
 		// check if there are unreachable phases
-		if (reachablePhases.size() == mPhases.length) {
+		if (reachablePhases.size() == mPhases.size()) {
 			return this;
 		}
 
@@ -310,7 +311,6 @@ public class PEATestAutomaton extends PhaseEventAutomata<CDD> {
 			}
 		}
 
-		return new PEATestAutomaton(mName, newPhases.toArray(new Phase[newPhases.size()]),
-				newInit.toArray(new Phase[newInit.size()]), mClocks, mVariables, mDeclarations, finalPhases);
+		return new PEATestAutomaton(mName, newPhases, newInit, mClocks, mVariables, mDeclarations, finalPhases);
 	}
 }

@@ -25,6 +25,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea.test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -64,7 +65,7 @@ public final class OurPea {
 		phases[1].addTransition(phases[1], CDD.TRUE, new String[0]);
 		final LinkedList<String> l = new LinkedList<>();
 		l.add(resets[0]);
-		pea = new PhaseEventAutomata("ourPEA", phases, phases.clone(), l);
+		pea = new PhaseEventAutomata("ourPEA", Arrays.asList(phases), Arrays.asList(phases.clone()), l);
 		try {
 			final PEAJ2XMLConverter conv = new PEAJ2XMLConverter();
 
