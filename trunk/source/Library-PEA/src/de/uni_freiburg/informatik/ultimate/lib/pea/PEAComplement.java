@@ -19,9 +19,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class PEAComplement {
 
+	public static String DIVIDER = "_";
 	public static String TOTAL_POSTFIX = "_total";
 	public static String COMPLEMENT_POSTFIX = "_complement";
-	public static String DIVIDER = "_";
 	public static String SINK_NAME = "sink";
 
 	final PhaseEventAutomata mPEAtoComplement;
@@ -88,9 +88,10 @@ public class PEAComplement {
 		for (Transition transition : phase.transitions) {
 			// add transition to new phase
 			Phase totalisedSuccessor = totalisedPhases.get(transition.getDest().name);
-			totalisedPhase.addTransition(totalisedSuccessor, addClockSuffixCDD(transition.getGuard(), TOTAL_POSTFIX),
+			Transition totalisedTransition = totalisedPhase.addTransition(totalisedSuccessor,
+					addClockSuffixCDD(transition.getGuard(), TOTAL_POSTFIX),
 					addClockSuffix(transition.getResets(), TOTAL_POSTFIX));
-			String[] reset = transition.getResets();
+			String[] reset = totalisedTransition.getResets();
 
 			CDD successorStateInv = totalisedSuccessor.stateInv;
 			CDD successorClockInv = totalisedSuccessor.clockInv;
@@ -159,9 +160,6 @@ public class PEAComplement {
 						addClockSuffixCDD(transition.getGuard(), COMPLEMENT_POSTFIX),
 						addClockSuffix(transition.getResets(), COMPLEMENT_POSTFIX));
 			}
-			// if (!complementPhase.getInitialTransition().isEmpty()) {
-			// complementPhase.setInitialTransition(complementPhase.getInitialTransition().get());
-			// }
 			phases.add(complementPhase);
 		}
 		ArrayList<Phase> complementedInit = new ArrayList<>();
@@ -256,8 +254,12 @@ public class PEAComplement {
 
 	public String addSuffixString(String varName, String suffix) {
 		String stringWithSuffix;
-		if (varName.contains(DIVIDER)) {
-			stringWithSuffix = varName.split(DIVIDER)[0];
+		if (varName.contains(COMPLEMENT_POSTFIX)) {
+			stringWithSuffix = varName.split(COMPLEMENT_POSTFIX)[0];
+			stringWithSuffix = stringWithSuffix + suffix;
+		}
+		if (varName.contains(TOTAL_POSTFIX)) {
+			stringWithSuffix = varName.split(TOTAL_POSTFIX)[0];
 			stringWithSuffix = stringWithSuffix + suffix;
 		} else {
 			stringWithSuffix = varName + suffix;
