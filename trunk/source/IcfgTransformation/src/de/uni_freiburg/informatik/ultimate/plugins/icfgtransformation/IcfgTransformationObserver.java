@@ -41,14 +41,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.BvToIntTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBacktranslator;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformerSequence;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LocalTransformer;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.BvToIntTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.MapEliminationTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.SifaSimplifierTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.HeapSepIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.CopyingTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.IdentityTransformer;
@@ -212,6 +213,8 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 					ConstraintsForBitwiseOperations.NONE);
 		case MAP_ELIMINATION_MONNIAUX:
 			return (IIcfg<OUTLOC>) applyMapEliminationMonniaux((IIcfg<IcfgLocation>) icfg, backtranslationTracker);
+		case SIFA_SIMPLIFICATION:
+			return applySifaSimplification(icfg, locFac, outlocClass, backtranslationTracker);
 		default:
 			throw new UnsupportedOperationException("Unknown transformation type: " + transformation);
 		}
@@ -402,6 +405,15 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final int numberOfCells = ups.getInt(IcfgTransformationPreferences.LABEL_MAPELIM_MONNIAUX_NUMBER_OF_CELLS);
 		return new MonniauxMapEliminator(mServices, mLogger, icfg, backtranslationTracker, numberOfCells).getResult();
+	}
+
+	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applySifaSimplification(
+			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
+			final IcfgTransformationBacktranslator backtranslationTracker) {
+		final SifaSimplifierTransformer transformer = new SifaSimplifierTransformer(mServices);
+		backtranslationTracker.addExpressionBacktranslation(transformer::backtranslate);
+		return new IcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass,
+				icfg.getIdentifier() + "TransformedIcfg", transformer).getResult();
 	}
 
 	private MapEliminationSettings getMapElimSettings() {
