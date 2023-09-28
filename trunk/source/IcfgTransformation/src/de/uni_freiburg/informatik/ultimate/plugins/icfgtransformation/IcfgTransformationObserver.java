@@ -410,7 +410,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applySifaSimplification(
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
 			final IcfgTransformationBacktranslator backtranslationTracker) {
-		final SifaSimplifierTransformer transformer = new SifaSimplifierTransformer(mServices);
+		final SifaSimplifierTransformer transformer = new SifaSimplifierTransformer(mServices, icfg.getCfgSmtToolkit());
 		backtranslationTracker.addExpressionBacktranslation(transformer::backtranslate);
 		return new IcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass,
 				icfg.getIdentifier() + "TransformedIcfg", transformer).getResult();
