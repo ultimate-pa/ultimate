@@ -59,7 +59,7 @@ public class TimedAutomata {
 			}
 		}
 		for (int i = 0; i < pea.mInit.size(); i++) {
-			mStates[pea.mInit.get(i).nr].props += " init";
+			mStates[pea.mInit.get(i).getDest().nr].props += " init";
 		}
 		for (int i = 0; i < pea.mPhases.size(); i++) {
 			final Iterator<Transition<CDD>> it = pea.mPhases.get(i).transitions.iterator();

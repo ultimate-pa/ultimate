@@ -613,8 +613,8 @@ public class Req2BoogieTranslator {
 					ExpressionFactory.newBinaryExpression(id.getLocation(), BinaryExpression.Operator.COMPEQ, id,
 							ExpressionFactory.createIntegerLiteral(id.getLocation(), Integer.toString(i)));
 			// add assume statement for guard of initial transition (if existent)
-			if (!phases.get(i).getInitialTransition().isEmpty()) {
-				CDD guard = phases.get(i).getInitialTransition().get().getGuard();
+			if (phases.get(i).getInitialTransition() != null) {
+				CDD guard = phases.get(i).getInitialTransition().getGuard();
 				if (guard != CDD.TRUE) {
 					final Expression guardExpr = new CDDTranslator().toBoogie(guard, bl);
 					guardExpr.setType(BoogiePrimitiveType.TYPE_BOOL);

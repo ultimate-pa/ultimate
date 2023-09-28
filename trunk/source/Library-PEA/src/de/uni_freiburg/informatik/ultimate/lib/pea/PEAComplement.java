@@ -51,24 +51,25 @@ public class PEAComplement {
 		totalisedPhases.put(sinkPhase.name, sinkPhase);
 
 		// prepare initial phases
-		ArrayList<Phase> totalisedInit = new ArrayList<>();
-		for (Phase p : sourcePea.getInit()) {
-			totalisedInit.add(totalisedPhases.get(p.name));
+		ArrayList<InitialTransition<CDD>> totalisedInit = new ArrayList<>();
+		for (Phase<CDD> p : sourcePea.getInit()) {
+			totalisedInit.add(new InitialTransition<CDD>(CDD.TRUE, totalisedPhases.get(p.name)));
 		}
 		if (sinkPhase.isInit) {
-			totalisedInit.add(sinkPhase);
+			totalisedInit.add(new InitialTransition<CDD>(CDD.TRUE, sinkPhase));
 		}
 
 		// needed for priming and unpriming
 		Set<String> clockVarSet = new HashSet<>();
 		clockVarSet.addAll(sourcePea.getClocks());
 
-		for (Phase phase : sourcePea.getPhases()) {
+		for (Phase<CDD> phase : sourcePea.getPhases()) {
 			totalizeTransition(phase, sinkPhase, totalisedPhases, clockVarSet);
 		}
 
-		PhaseEventAutomata totalisedPEA = new PhaseEventAutomata(addSuffixString(sourcePea.getName(), TOTAL_POSTFIX),
-				new ArrayList<Phase<CDD>>(totalisedPhases.values()), totalisedInit);
+		PhaseEventAutomata<CDD> totalisedPEA =
+				new PhaseEventAutomata<CDD>(addSuffixString(sourcePea.getName(), TOTAL_POSTFIX),
+						new ArrayList<Phase<CDD>>(totalisedPhases.values()), totalisedInit);
 		totalisedPEA.mVariables = new HashMap<String, String>(sourcePea.mVariables);
 
 		for (String s : sourcePea.mClocks) {
@@ -160,16 +161,13 @@ public class PEAComplement {
 			}
 			phases.add(complementPhase);
 		}
-		ArrayList<Phase> complementedInit = new ArrayList<>();
-		for (Phase p : sourcePea.getInit()) {
-			complementedInit.add(complementPhases.get(p.name));
+		ArrayList<InitialTransition<CDD>> complementedInit = new ArrayList<>();
+		for (Phase<CDD> p : sourcePea.getInit()) {
+			complementedInit.add(new InitialTransition<CDD>(CDD.TRUE, complementPhases.get(p.name)));
 		}
-		Phase[] complementInitArray = complementedInit.toArray(new Phase[complementedInit.size()]);
-		PhaseEventAutomata complementPEA =
-				new PhaseEventAutomata(addSuffixString(sourcePea.getName(), COMPLEMENT_POSTFIX),
-						phases.toArray(new Phase[phases.size()]), complementInitArray);
+		PhaseEventAutomata<CDD> complementPEA = new PhaseEventAutomata<CDD>(
+				addSuffixString(sourcePea.getName(), COMPLEMENT_POSTFIX), phases, complementedInit);
 
-		complementPEA.setInit(complementInitArray);
 		complementPEA.mVariables = sourcePea.mVariables;
 		complementPEA.mVariables = new HashMap<String, String>(sourcePea.mVariables);
 
@@ -187,16 +185,16 @@ public class PEAComplement {
 	 */
 	private void computeInitialTransitionSink(PhaseEventAutomata<CDD> pea, Phase<CDD> sinkPhase) {
 		CDD initialTransitionSinkGuard = CDD.FALSE;
-		Phase<CDD>[] initialPhases = pea.getInit().toArray(new Phase[pea.getInit().size()]);
+		List<Phase<CDD>> initialPhases = pea.getInit();
 		for (Phase<CDD> phase : initialPhases) {
-			assert phase.getInitialTransition().isPresent();
-			InitialTransition<CDD> initialTransition = phase.getInitialTransition().get();
+			assert phase.getInitialTransition() != null;
+			InitialTransition<CDD> initialTransition = phase.getInitialTransition();
 			CDD conjunction = phase.getStateInvariant().and(initialTransition.getGuard());
 			initialTransitionSinkGuard = initialTransitionSinkGuard.or(conjunction);
 		}
 		if (initialTransitionSinkGuard != CDD.TRUE) {
-			InitialTransition sinkInitialTransition =
-					new InitialTransition(initialTransitionSinkGuard.negate(), sinkPhase);
+			InitialTransition<CDD> sinkInitialTransition =
+					new InitialTransition<CDD>(initialTransitionSinkGuard.negate(), sinkPhase);
 			sinkPhase.setInitialTransition(sinkInitialTransition);
 		} else {
 			sinkPhase.setInit(false);
@@ -240,10 +238,10 @@ public class PEAComplement {
 					new Phase<CDD>(phase.name, phase.stateInv, addClockSuffixCDD(phase.clockInv, suffix));
 			copiedPhase.setTerminal(phase.getTerminal());
 			copy.put(copiedPhase.name, copiedPhase);
-			if (phase.getInitialTransition().isPresent()) {
-				InitialTransition initialTransition = phase.getInitialTransition().get();
-				InitialTransition newInitialTransition =
-						new InitialTransition(initialTransition.getGuard(), copiedPhase);
+			if (phase.getInitialTransition() != null) {
+				InitialTransition<CDD> initialTransition = phase.getInitialTransition();
+				InitialTransition<CDD> newInitialTransition =
+						new InitialTransition<CDD>(initialTransition.getGuard(), copiedPhase);
 				copiedPhase.setInitialTransition(newInitialTransition);
 			}
 			copiedPhase.setModifiedConstraints(phase.getModifiedConstraints());

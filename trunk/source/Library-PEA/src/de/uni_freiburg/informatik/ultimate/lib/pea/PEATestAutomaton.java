@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimpleSet;
 
@@ -81,7 +82,8 @@ public class PEATestAutomaton extends PhaseEventAutomata<CDD> {
 	 * @param init
 	 */
 	public PEATestAutomaton(final String name, final List<Phase<CDD>> phases, final List<Phase<CDD>> init) {
-		super(name, phases, init);
+		super(name, phases,
+				init.stream().map(x -> new InitialTransition<CDD>(CDD.TRUE, x)).collect(Collectors.toList()));
 		finalPhases = new Phase[0];
 	}
 
@@ -100,12 +102,14 @@ public class PEATestAutomaton extends PhaseEventAutomata<CDD> {
 	public PEATestAutomaton(final String name, final List<Phase<CDD>> phases, final List<Phase<CDD>> init,
 			final List<String> clocks, final Map<String, String> variables, final List<String> declarations,
 			final Phase<CDD>[] finalPhases) {
-		super(name, phases, init, clocks, variables, declarations);
+		super(name, phases,
+				init.stream().map(x -> new InitialTransition<CDD>(CDD.TRUE, x)).collect(Collectors.toList()), clocks,
+				variables, declarations);
 		this.finalPhases = finalPhases != null ? finalPhases : new Phase[0];
 	}
 
 	public PEATestAutomaton(final PhaseEventAutomata<CDD> automata) {
-		this(automata.mName, automata.mPhases, automata.mInit, automata.mClocks, automata.mVariables,
+		this(automata.mName, automata.mPhases, automata.getInit(), automata.mClocks, automata.mVariables,
 				automata.mDeclarations, new Phase[0]);
 	}
 
@@ -280,7 +284,7 @@ public class PEATestAutomaton extends PhaseEventAutomata<CDD> {
 
 		// check if one of the unreachable phases is an inital phase
 		boolean initUnreachable = false;
-		for (final Phase<CDD> initPhase : mInit) {
+		for (final Phase<CDD> initPhase : getInit()) {
 			if (reachablePhases.contains(initPhase)) {
 				newInit.add(initPhase);
 			} else {

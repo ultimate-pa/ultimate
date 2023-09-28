@@ -59,7 +59,7 @@ public abstract class PatternType<T extends PatternType<?>> {
 	private final SrParseScope<?> mScope;
 	private final String mId;
 
-	private ReqPeas mPEAs;
+	private ReqPeas<CDD> mPEAs;
 
 	public PatternType(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
@@ -120,12 +120,12 @@ public abstract class PatternType<T extends PatternType<?>> {
 		return mScope;
 	}
 
-	public ReqPeas transformToPea(final ILogger logger, final Durations durations) {
+	public ReqPeas<CDD> transformToPea(final ILogger logger, final Durations durations) {
 		if (mPEAs == null) {
 			final List<CounterTrace> cts = constructCounterTrace();
 			final String name = getId();
 
-			final List<Entry<CounterTrace, PhaseEventAutomata>> peas = new ArrayList<>(cts.size());
+			final List<Entry<CounterTrace, PhaseEventAutomata<CDD>>> peas = new ArrayList<>(cts.size());
 			int i = 0;
 			for (final CounterTrace ct : cts) {
 				final Trace2PeaCompilerStateless compiler =
@@ -133,7 +133,7 @@ public abstract class PatternType<T extends PatternType<?>> {
 				++i;
 				peas.add(new Pair<>(ct, compiler.getResult()));
 			}
-			mPEAs = new ReqPeas(this, peas);
+			mPEAs = new ReqPeas<CDD>(this, peas);
 		}
 		return mPEAs;
 	}
@@ -309,9 +309,8 @@ public abstract class PatternType<T extends PatternType<?>> {
 		public boolean isTotalised() {
 			for (Entry<CounterTrace, PhaseEventAutomata<T>> entry : mPeas) {
 				PhaseEventAutomata<?> automaton = entry.getValue();
-				String automataName = automato.getName();
-				if (automataName.endsWith("t")) {
-					return true;
+				if (!automaton.isTotalised()) {
+					return false;
 				}
 			}
 			return true;

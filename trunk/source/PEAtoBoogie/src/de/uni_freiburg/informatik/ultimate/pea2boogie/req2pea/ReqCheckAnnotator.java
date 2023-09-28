@@ -270,9 +270,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		List<Expression> pcInSinkExpressions = new ArrayList<>();
 		for (Entry<CounterTrace, PhaseEventAutomata<CDD>> entry : peaList) {
 			PhaseEventAutomata<CDD> pea = entry.getValue();
-			Phase[] phases = pea.getPhases();
-			for (int i = 0; i < phases.length; i++) {
-				Phase phase = phases[i];
+			List<Phase<CDD>> phases = pea.getPhases();
+			for (int i = 0; i < phases.size(); i++) {
+				Phase phase = phases.get(i);
 				if (phase.getName().equals(PEAComplement.SINK_NAME)) {
 					Expression expression = genComparePhaseCounter(i, mSymbolTable.getPcName(pea), bl);
 					pcInSinkExpressions.add(expression);

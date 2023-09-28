@@ -18,7 +18,7 @@ public class PEAUtils {
 		if (guard instanceof CDD) {
 			return (T) simplifyGuard((CDD) guard, (Phase<CDD>) phase);
 		}
-		// TODO: log warning that noting was simplified
+		// TODO: add simplification for SMT terms
 		return guard;
 	}
 
@@ -82,17 +82,17 @@ public class PEAUtils {
 
 		final List<TodoEntry> todo = new LinkedList<>();
 
-		for (int i = 0; i < a.mInit.size(); i++) {
-			for (int j = 0; j < b.mInit.size(); j++) {
-				final CDD sinv = a.mInit.get(i).stateInv.and(b.mInit.get(j).stateInv);
+		for (int i = 0; i < a.getInit().size(); i++) {
+			for (int j = 0; j < b.getInit().size(); j++) {
+				final CDD sinv = a.getInit().get(i).stateInv.and(b.getInit().get(j).stateInv);
 				if (sinv != CDD.FALSE) {
-					final CDD cinv = a.mInit.get(i).clockInv.and(b.mInit.get(j).clockInv);
-					final Phase<CDD> p =
-							new Phase<CDD>(a.mInit.get(i).getName() + TIMES + b.mInit.get(j).getName(), sinv, cinv);
+					final CDD cinv = a.getInit().get(i).clockInv.and(b.getInit().get(j).clockInv);
+					final Phase<CDD> p = new Phase<CDD>(
+							a.getInit().get(i).getName() + TIMES + b.getInit().get(j).getName(), sinv, cinv);
 
 					newInit.add(p);
 					newPhases.put(p.getName(), p);
-					todo.add(new TodoEntry(a.mInit.get(i), b.mInit.get(j), p));
+					todo.add(new TodoEntry(a.getInit().get(i), b.getInit().get(j), p));
 				}
 			}
 		}
@@ -142,12 +142,13 @@ public class PEAUtils {
 			}
 		}
 
-		final List<Phase<CDD>> allPhases = (List<Phase<CDD>>) newPhases.values();
-		final List<Phase<CDD>> initPhases = newInit;
+		final List<Phase<CDD>> allPhases = new ArrayList<>(newPhases.values());
+		final List<InitialTransition<CDD>> initTrans = new ArrayList<>();
 
 		// add initial transition to Phases in initPhases
-		for (Phase<CDD> phase : initPhases) {
-			InitialTransition<CDD> initialTransition = new InitialTransition(phase.clockInv, phase);
+		for (Phase<CDD> phase : newInit) {
+			InitialTransition<CDD> initialTransition = new InitialTransition<CDD>(phase.clockInv, phase);
+			initTrans.add(initialTransition);
 			phase.setInitialTransition(initialTransition);
 		}
 
@@ -157,7 +158,7 @@ public class PEAUtils {
 
 		final List<String> newDeclarations = mergeDeclarationLists(a, b);
 
-		return new PhaseEventAutomata<CDD>(a.mName + TIMES + b.mName, allPhases, initPhases, newClocks, newVariables,
+		return new PhaseEventAutomata<CDD>(a.mName + TIMES + b.mName, allPhases, initTrans, newClocks, newVariables,
 				newDeclarations);
 	}
 

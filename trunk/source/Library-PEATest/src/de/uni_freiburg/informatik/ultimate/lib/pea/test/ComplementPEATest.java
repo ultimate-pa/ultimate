@@ -32,10 +32,10 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 @RunWith(JUnit4.class)
 public class ComplementPEATest {
 
-	ArrayList<PhaseEventAutomata> mTestAutomata;
+	ArrayList<PhaseEventAutomata<CDD>> mTestAutomata;
 
 	public ComplementPEATest() {
-		mTestAutomata = new ArrayList<PhaseEventAutomata>();
+		mTestAutomata = new ArrayList<PhaseEventAutomata<CDD>>();
 
 		PhaseEventAutomata<CDD> ResponseDelayGlobally = createResponseDelayGloballyPea();
 		PhaseEventAutomata<CDD> UniversalityGlobally = createUniversalityGloballyPea();
@@ -53,15 +53,16 @@ public class ComplementPEATest {
 		Map<String, String> variables = new HashMap<String, String>();
 		variables.put(vR, "boolean");
 		CDD r = BooleanDecision.create(vR);
-		final Phase[] phases = new Phase[] { new Phase("0", r, CDD.TRUE) };
+		final Phase<CDD>[] phases = new Phase[] { new Phase<CDD>("0", r, CDD.TRUE) };
 		final String[] noreset = new String[0];
 		phases[0].addTransition(phases[0], CDD.TRUE, noreset);
-		return new PhaseEventAutomata("UniversalityGlobally", Arrays.asList(phases),
-				Arrays.asList(new Phase[] { phases[0] }), Collections.emptyList(), variables, Collections.emptyList());
+		return new PhaseEventAutomata<CDD>("UniversalityGlobally", Arrays.asList(phases),
+				Arrays.asList(new InitialTransition[] { new InitialTransition<CDD>(CDD.TRUE, phases[0]) }),
+				Collections.emptyList(), variables, Collections.emptyList());
 	}
 
 	// constructs a PEA corresponding to pattern ResponseDelay Globally
-	public PhaseEventAutomata createResponseDelayGloballyPea() {
+	public PhaseEventAutomata<CDD> createResponseDelayGloballyPea() {
 		Map<String, String> variables = new HashMap<String, String>();
 		CDD r = BooleanDecision.create("R");
 		variables.put("R", "boolean");
@@ -79,7 +80,7 @@ public class ComplementPEATest {
 		final String[] reset = new String[] { "clk" };
 		final String[] noreset = new String[0];
 
-		final Phase[] phases = new Phase[] { new Phase("0", locInv0, CDD.TRUE), new Phase("1", locInv1, clkInv),
+		final Phase<CDD>[] phases = new Phase[] { new Phase("0", locInv0, CDD.TRUE), new Phase("1", locInv1, clkInv),
 				new Phase("2", locInv2, clkInv) };
 
 		// loop transitions
@@ -94,8 +95,10 @@ public class ComplementPEATest {
 		phases[2].addTransition(phases[1], clkGuard, noreset);
 		phases[2].addTransition(phases[0], s, noreset);
 
-		return new PhaseEventAutomata("ResponseDelayGlobally", Arrays.asList(phases),
-				Arrays.asList(new Phase[] { phases[0], phases[1] }), clocks, variables, Collections.emptyList());
+		return new PhaseEventAutomata<CDD>("ResponseDelayGlobally", Arrays.asList(phases),
+				Arrays.asList(new InitialTransition[] { new InitialTransition<CDD>(CDD.TRUE, phases[0]),
+						new InitialTransition<CDD>(CDD.TRUE, phases[1]) }),
+				clocks, variables, Collections.emptyList());
 	}
 
 	/**
@@ -104,7 +107,7 @@ public class ComplementPEATest {
 	 * 
 	 * @return the PEA
 	 */
-	public PhaseEventAutomata createDurationBoundUGlobally() {
+	public PhaseEventAutomata<CDD> createDurationBoundUGlobally() {
 		Map<String, String> variables = new HashMap<String, String>();
 		CDD r = BooleanDecision.create("R");
 		variables.put("R", "boolean");
@@ -126,10 +129,12 @@ public class ComplementPEATest {
 		phases[1].addTransition(phases[0], CDD.TRUE, noreset);
 
 		return new PhaseEventAutomata("DurationBoundUGlobally", Arrays.asList(phases),
-				Arrays.asList(new Phase[] { phases[0], phases[1] }), clocks, variables, Collections.emptyList());
+				Arrays.asList(new InitialTransition[] { new InitialTransition<CDD>(CDD.TRUE, phases[0]),
+						new InitialTransition<CDD>(CDD.TRUE, phases[1]) }),
+				clocks, variables, Collections.emptyList());
 	}
 
-	public PhaseEventAutomata createDurationBoundUGloballyModified() {
+	public PhaseEventAutomata<CDD> createDurationBoundUGloballyModified() {
 		Map<String, String> variables = new HashMap<String, String>();
 		CDD r = BooleanDecision.create("R");
 		variables.put("R", "boolean");
@@ -155,8 +160,10 @@ public class ComplementPEATest {
 		clocks.add("c0");
 		clocks.add("c1");
 
-		return new PhaseEventAutomata("DurationBoundUGlobally", Arrays.asList(phases),
-				Arrays.asList(new Phase[] { phases[0], phases[1] }), clocks, variables, Collections.emptyList());
+		return new PhaseEventAutomata<CDD>("DurationBoundUGlobally", Arrays.asList(phases),
+				Arrays.asList(new InitialTransition[] { new InitialTransition<CDD>(CDD.TRUE, phases[0]),
+						new InitialTransition<CDD>(CDD.TRUE, phases[1]) }),
+				clocks, variables, Collections.emptyList());
 	}
 
 	public CDD constructMultiClockInvariant() {
@@ -184,20 +191,20 @@ public class ComplementPEATest {
 	 */
 	@Test
 	public void testComplementResponseDelayGlobally() {
-		PhaseEventAutomata testPEA = mTestAutomata.get(0);
+		PhaseEventAutomata<CDD> testPEA = mTestAutomata.get(0);
 		PEAComplement complementPEA = new PEAComplement(testPEA);
-		PhaseEventAutomata complementAutomaton = complementPEA.getComplementPEA();
+		PhaseEventAutomata<CDD> complementAutomaton = complementPEA.getComplementPEA();
 		List<Phase<CDD>> originalPhases = testPEA.getPhases();
 		List<Phase<CDD>> phases = complementAutomaton.getPhases();
 		assertEquals(originalPhases.size(), phases.size() - 1);
 		// does the complement automaton contain a sink?
-		Phase sink = phases.stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
+		Phase<CDD> sink = phases.stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
 		assertTrue(sink.getName().equals("sink"));
 		// is it accepting?
 		assertTrue(sink.getTerminal());
 		// it should not be initial
 		assertTrue(sink.isInit == false);
-		assertTrue(!sink.getInitialTransition().isPresent());
+		assertTrue(sink.getInitialTransition() == null);
 
 	}
 
@@ -212,9 +219,10 @@ public class ComplementPEATest {
 		PEAComplement complementPEA = new PEAComplement(testPEA);
 		PhaseEventAutomata<CDD> complementAutomaton = complementPEA.getComplementPEA();
 		List<Phase<CDD>> phases = complementAutomaton.getPhases();
-		Phase<CDD> sink = phases.stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
-		assertTrue(sink.getInitialTransition().isPresent());
-		InitialTransition<CDD> sinkInitialTransition = sink.getInitialTransition().get();
+		Phase<CDD> sink = phases.stream().filter(p -> p.getName().equals(PEAComplement.COMPLEMENT_POSTFIX)).findAny()
+				.orElse(null);
+		assertTrue(sink.getInitialTransition() != null);
+		InitialTransition<CDD> sinkInitialTransition = sink.getInitialTransition();
 		CDD guard = sinkInitialTransition.getGuard();
 		CDD expected = BooleanDecision.create("R").negate();
 		assertTrue(guard.equals(expected));
@@ -227,19 +235,19 @@ public class ComplementPEATest {
 	 */
 	@Test
 	public void testComplementDurationBoundUGlobally() {
-		PhaseEventAutomata testPEA = mTestAutomata.get(2);
+		PhaseEventAutomata<CDD> testPEA = mTestAutomata.get(2);
 		PEAComplement complementPEA = new PEAComplement(testPEA);
-		PhaseEventAutomata complementAutomaton = complementPEA.getComplementPEA();
+		PhaseEventAutomata<CDD> complementAutomaton = complementPEA.getComplementPEA();
 		List<Phase<CDD>> phases = complementAutomaton.getPhases();
 		assertTrue(phases.size() == testPEA.getPhases().size() + 1);
-		Phase sink = phases.stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
+		Phase<CDD> sink = phases.stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
 		assertTrue(sink.getName().equals("sink"));
 		assertTrue(sink.getTerminal());
-		Phase phase1 = phases.stream().filter(p -> p.getClockInvariant() != CDD.TRUE).findAny().orElse(null);
+		Phase<CDD> phase1 = phases.stream().filter(p -> p.getClockInvariant() != CDD.TRUE).findAny().orElse(null);
 		CDD expectedClkInv = RangeDecision.create("c0" + PEAComplement.COMPLEMENT_POSTFIX, RangeDecision.OP_LTEQ, 5);
 		assertEquals(expectedClkInv, phase1.getClockInvariant());
-		List<Transition> phase1OutgoingTransitions = phase1.getTransitions();
-		for (Transition transition : phase1OutgoingTransitions) {
+		List<Transition<CDD>> phase1OutgoingTransitions = phase1.getTransitions();
+		for (Transition<CDD> transition : phase1OutgoingTransitions) {
 			if (transition.getDest() != sink) {
 				CDD expectedGuard =
 						RangeDecision.create("c0" + PEAComplement.COMPLEMENT_POSTFIX, RangeDecision.OP_LT, 5);

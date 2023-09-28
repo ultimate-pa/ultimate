@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPatter
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaCddToSmt;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder.ErrorInfo;
@@ -74,6 +76,7 @@ public class Req2Pea implements IReq2Pea {
 	private final IReqSymbolTable mSymbolTable;
 	private final boolean mHasErrors;
 	private final Durations mDurations;
+	private final List<ReqPeas<CDD>> mCddPattern2Peas;
 
 	public Req2Pea(final IUltimateServiceProvider services, final ILogger logger, final List<DeclarationPattern> init,
 			final List<PatternType<?>> reqs) {
@@ -90,15 +93,31 @@ public class Req2Pea implements IReq2Pea {
 			mDurations.addInitPattern(pattern);
 		}
 		reqs.stream().forEach(mDurations::addNonInitPattern);
-		mPattern2Peas = generatePeas(requirements, mDurations);
+		mCddPattern2Peas = generatePeas(requirements, mDurations);
 
-		for (final ReqPeas<CDD> reqpea : mPattern2Peas) {
+		for (final ReqPeas<CDD> reqpea : mCddPattern2Peas) {
 			for (final Entry<CounterTrace, PhaseEventAutomata<CDD>> pea : reqpea.getCounterTrace2Pea()) {
 				builder.addPea(reqpea.getPattern(), pea.getValue());
 			}
 		}
-
 		mSymbolTable = builder.constructSymbolTable();
+
+		mPattern2Peas = new ArrayList<>();
+		PeaCddToSmt peaCddToSmt = new PeaCddToSmt(mLogger, mServices, mSymbolTable);
+		// TODO transform here!
+		// TODO --------- Term
+		for (ReqPeas<CDD> reqPeaCdd : mCddPattern2Peas) {
+			// TODO ------------------------------------------ Term
+			final List<Entry<CounterTrace, PhaseEventAutomata<CDD>>> patternPeasTerm = new ArrayList<>();
+			for (Entry<CounterTrace, PhaseEventAutomata<CDD>> entry : reqPeaCdd.getCounterTrace2Pea()) {
+				// TODO: to ------------- Term
+				final PhaseEventAutomata<CDD> tpea = peaCddToSmt.toTermPea(entry.getValue());
+				patternPeasTerm.add(new AbstractMap.SimpleEntry<>(entry.getKey(), tpea));
+			}
+			// : ------------------------- Term
+			mPattern2Peas.add(new ReqPeas<CDD>(reqPeaCdd.getPattern(), patternPeasTerm));
+		}
+
 		final Set<Entry<String, ErrorInfo>> errors = builder.getErrors();
 		for (final Entry<String, ErrorInfo> entry : errors) {
 			if (entry.getValue().getType() == ErrorType.SYNTAX_ERROR) {
@@ -147,29 +166,30 @@ public class Req2Pea implements IReq2Pea {
 		final Map<Class<?>, Integer> counter = new HashMap<>();
 
 		for (final PatternType<?> pat : patterns) {
-			final ReqPeas<CDD> pea;
+			final ReqPeas<CDD> cddPeas;
 			try {
 				if (ENABLE_DEBUG_LOGS) {
 					mLogger.info("Transforming " + pat.getId());
 				}
 				counter.compute(pat.getClass(), (a, b) -> b == null ? 1 : b + 1);
-				pea = pat.transformToPea(mLogger, durations);
+				cddPeas = pat.transformToPea(mLogger, durations);
 			} catch (final Exception ex) {
 				final String reason = ex.getMessage() == null ? ex.getClass().toString() : ex.getMessage();
 				mResultUtil.transformationError(pat, reason);
 				continue;
 			}
 
-			if (pea.getCounterTrace2Pea().stream().map(Entry::getValue).anyMatch(a -> a.getInit().size() == 0)) {
+			if (cddPeas.getCounterTrace2Pea().stream().map(Entry::getValue).anyMatch(a -> a.getInit().size() == 0)) {
 				mResultUtil.transformationError(pat, "A PEA is missing its initial phase");
 				continue;
 			}
-			final ReqPeas<CDD> old = req2automata.put(pat, pea);
+
+			final ReqPeas<CDD> old = req2automata.put(pat, cddPeas);
 			if (old != null) {
 				final String msg = String.format("Duplicate automata: %s and %s",
 						old.getCounterTrace2Pea().stream().map(a -> a.getValue().getName())
 								.collect(Collectors.joining(",")),
-						pea.getCounterTrace2Pea().stream().map(Entry::getValue).map(PhaseEventAutomata::getName)
+						cddPeas.getCounterTrace2Pea().stream().map(Entry::getValue).map(PhaseEventAutomata::getName)
 								.collect(Collectors.joining(",")));
 				mResultUtil.transformationError(pat, msg);
 			}

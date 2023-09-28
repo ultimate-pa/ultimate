@@ -26,7 +26,6 @@ package de.uni_freiburg.informatik.ultimate.lib.pea;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.Vector;
 
@@ -40,20 +39,20 @@ public class Phase<T> implements Comparable<Phase<T>> {
 	public boolean isInit;
 	private final boolean isEntry;
 	private final boolean isExit;
-	private final Vector<Transition<T>> incomming;
+	protected final Vector<Transition<T>> incomming;
 	String name;
 	T stateInv;
 	T clockInv;
 	final Set<String> stoppedClocks;
-	final List<Transition<T>> transitions;
+	protected final List<Transition<T>> transitions;
 	public int ID;
 
 	private boolean mIsTerminal;
-	private boolean mIsStrict;
-	private Optional<InitialTransition<T>> mInitialTransition;
+	protected boolean mIsStrict;
+	protected InitialTransition<T> mInitialTransition;
 	// clock constraints that have been modified in the complementation procedure
 	// in the case of a phase with a strict clock constraints
-	private final List<RangeDecision> mModifiedConstraints;
+	protected final List<RangeDecision> mModifiedConstraints;
 
 	/**
 	 * The phase bits used by the powerset construction. This is only set for automata built from CounterExample traces.
@@ -74,13 +73,13 @@ public class Phase<T> implements Comparable<Phase<T>> {
 		incomming = new Vector<>();
 
 		mIsTerminal = true;
-		mInitialTransition = Optional.empty();
+		mInitialTransition = null;
 		mIsStrict = isStrict(clockInv);
 		mModifiedConstraints = new ArrayList<RangeDecision>();
 	}
 
 	// TODO: find nicer solution
-	private boolean isStrict(T clockInv) {
+	protected boolean isStrict(T clockInv) {
 		if (clockInv instanceof CDD) {
 			return RangeDecision.isStrictLess((CDD) clockInv);
 		}
@@ -163,7 +162,7 @@ public class Phase<T> implements Comparable<Phase<T>> {
 
 	// TODO: find nicer solution
 	@SuppressWarnings("unchecked")
-	private T computeOr(T a, T b) {
+	protected T computeOr(T a, T b) {
 		if (a instanceof CDD && b instanceof CDD) {
 			return (T) ((CDD) a).or((CDD) b);
 		}
@@ -258,11 +257,11 @@ public class Phase<T> implements Comparable<Phase<T>> {
 		return name.compareTo(p.name);
 	}
 
-	public void addIncomming(final Transition trans) {
+	public void addIncomming(final Transition<T> trans) {
 		incomming.add(trans);
 	}
 
-	public void removeIncomming(final Transition trans) {
+	public void removeIncomming(final Transition<?> trans) {
 		incomming.remove(trans);
 	}
 
@@ -283,11 +282,11 @@ public class Phase<T> implements Comparable<Phase<T>> {
 	}
 
 	public void setInitialTransition(InitialTransition<T> initialTransition) {
-		mInitialTransition = Optional.ofNullable(initialTransition);
+		mInitialTransition = initialTransition;
 		isInit = true;
 	}
 
-	public Optional<InitialTransition<T>> getInitialTransition() {
+	public InitialTransition<T> getInitialTransition() {
 		return mInitialTransition;
 	}
 

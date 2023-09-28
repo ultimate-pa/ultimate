@@ -8,7 +8,9 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  net.sourceforge.czt,
  de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
- de.uni_freiburg.informatik.ultimate.lib.util
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.pea,
  de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking,
  de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.armc,
@@ -19,6 +21,6 @@ Export-Package: de.uni_freiburg.informatik.ultimate.lib.pea,
  de.uni_freiburg.informatik.ultimate.lib.pea.util,
  de.uni_freiburg.informatik.ultimate.lib.pea.util.z
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.pea
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.pea  
 Import-Package: org.apache.xerces.dom,
  org.apache.xerces.parsers

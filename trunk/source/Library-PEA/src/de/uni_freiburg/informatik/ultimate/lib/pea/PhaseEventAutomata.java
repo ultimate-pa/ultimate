@@ -36,9 +36,9 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PEAPhaseIndexMap;
 
 public class PhaseEventAutomata<T> implements Comparable<Object> {
 
-	String mName;
+	protected final String mName;
 	List<Phase<T>> mPhases;
-	List<Phase<T>> mInit;
+	protected final List<InitialTransition<T>> mInit;
 	List<String> mClocks;
 
 	// A map of variables and its types to be used in this PEA.
@@ -50,16 +50,16 @@ public class PhaseEventAutomata<T> implements Comparable<Object> {
 	// Additional declarations needed when processing this PEA.
 	protected List<String> mDeclarations;
 
-	public PhaseEventAutomata(final String name, final List<Phase<T>> phases, final List<Phase<T>> init) {
+	public PhaseEventAutomata(final String name, final List<Phase<T>> phases, final List<InitialTransition<T>> init) {
 		this(name, phases, init, new ArrayList<String>());
 	}
 
-	public PhaseEventAutomata(final String name, final List<Phase<T>> phases, final List<Phase<T>> init,
+	public PhaseEventAutomata(final String name, final List<Phase<T>> phases, final List<InitialTransition<T>> init,
 			final List<String> clocks) {
 		this(name, phases, init, clocks, null, null);
 	}
 
-	public PhaseEventAutomata(final String name, final List<Phase<T>> phases, final List<Phase<T>> init,
+	public PhaseEventAutomata(final String name, final List<Phase<T>> phases, final List<InitialTransition<T>> init,
 			final List<String> clocks, final Map<String, String> variables, final List<String> declarations) {
 		this(name, phases, init, clocks, variables, null, declarations);
 	}
@@ -72,7 +72,7 @@ public class PhaseEventAutomata<T> implements Comparable<Object> {
 	 * @param phases
 	 * @param variables
 	 */
-	public PhaseEventAutomata(final String name, final List<Phase<T>> phases, final List<Phase<T>> init,
+	public PhaseEventAutomata(final String name, final List<Phase<T>> phases, final List<InitialTransition<T>> init,
 			final List<String> clocks, final Map<String, String> variables, final Set<String> events,
 			final List<String> declarations) {
 		if (clocks == null) {
@@ -88,11 +88,9 @@ public class PhaseEventAutomata<T> implements Comparable<Object> {
 		mVariables = variables;
 
 		// add initial transition to Phases in initPhases
-		for (Phase phase : mInit) {
-			if (phase.getInitialTransition().isEmpty()) {
-				InitialTransition initialTransition = new InitialTransition(CDD.TRUE, phase);
-				phase.setInitialTransition(initialTransition);
-			}
+		// TODO: remove this, either store all edges in the phases (would be clear) or in the pea, but not both.
+		for (InitialTransition<T> initTrans : init) {
+			initTrans.getDest().setInitialTransition(initTrans);
 		}
 	}
 
@@ -105,7 +103,11 @@ public class PhaseEventAutomata<T> implements Comparable<Object> {
 	 * @return Returns the init.
 	 */
 	public List<Phase<T>> getInit() {
-		return mInit;
+		List<Phase<T>> initPhases = new ArrayList<>();
+		for (InitialTransition<T> t : mInit) {
+			initPhases.add(t.getDest());
+		}
+		return initPhases;
 	}
 
 	/**
@@ -157,7 +159,7 @@ public class PhaseEventAutomata<T> implements Comparable<Object> {
 
 	@Override
 	public int compareTo(final Object o) {
-		return mName.compareTo(((PhaseEventAutomata) o).mName);
+		return mName.compareTo(((PhaseEventAutomata<?>) o).mName);
 	}
 
 	public boolean isEmpty() {
@@ -178,7 +180,7 @@ public class PhaseEventAutomata<T> implements Comparable<Object> {
 		int counter = 0; // der ist nur aus technischen Gründen da: wenn wir zwei zustande st0Xst2 und st2Xst1 haben
 		// dann würden sonst beide auf st3 umbenannt - das wollen wir nicht, daher dieser counter dazu
 		for (int i = 0; i < locCounter; i++) {
-			final Phase location = getLocation(i);
+			final Phase<T> location = getLocation(i);
 			final String[] result = splitForComponents(location.getName());
 			int maxIndex = 0;
 			for (int j = 0; j < result.length; j++) {

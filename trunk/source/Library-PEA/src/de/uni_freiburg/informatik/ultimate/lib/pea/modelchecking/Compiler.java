@@ -106,7 +106,7 @@ public class Compiler {
 	private Trace2PeaCompiler traceCompiler = null;
 	private PEAJ2XMLConverter peaConverter = null;
 
-	private HashMap<Transition, PhaseSet> trans2phases[];
+	private HashMap<Transition<CDD>, PhaseSet>[] trans2phases;
 	private Set<String> syncEvents;
 
 	/**
@@ -137,7 +137,7 @@ public class Compiler {
 	/**
 	 * @return an array of transition to phaseset maps (if you call it after calling compile())
 	 */
-	public HashMap<Transition, PhaseSet>[] getTrans2Phases() {
+	public HashMap<Transition<CDD>, PhaseSet>[] getTrans2Phases() {
 		return trans2phases;
 	}
 
@@ -237,7 +237,8 @@ public class Compiler {
 			final MCTrace[] traces = traceConverter.convert((Element) mcFormNodes.item(i));
 			peas = new PEATestAutomaton[traces.length];
 			@SuppressWarnings("unchecked")
-			final HashMap<Transition, PhaseSet> t2p[] = (HashMap<Transition, PhaseSet>[]) new HashMap<?, ?>[traces.length];
+			final HashMap<Transition<CDD>, PhaseSet> t2p[] =
+					(HashMap<Transition<CDD>, PhaseSet>[]) new HashMap<?, ?>[traces.length];
 			trans2phases = t2p;
 			for (int j = 0; j < traces.length; j++) {
 				peas[j] = traceCompiler.compile(getFreshPEAName(), traces[j]);
@@ -405,7 +406,7 @@ public class Compiler {
 
 			} catch (final Exception e) {
 				System.err.println(
-				        "Compilation failed. Please consult " + "log file and error message for further details.");
+						"Compilation failed. Please consult " + "log file and error message for further details.");
 				e.printStackTrace();
 				return;
 			}
@@ -417,13 +418,13 @@ public class Compiler {
 	 */
 	private static void printUse() {
 		System.out.println("Usage: java Compiler [" + Compiler.TESTFORmFILE_ARG
-		        + " <File of test formula to compile>]\n" + "                     [" + Compiler.MCFORmFILE_ARG
-		        + " <File of compiled formula in model checkable form>]\n" + "                     [" + Compiler.PEA_ARG
-		        + " <Prefix for peas in peaNet files>]\n" + "                     [" + Compiler.PEANET_ARG
-		        + " <Prefix for peaNet files>]\n" + "                     [" + Compiler.PARALLEL_ARG
-		        + " <true, if parallel composition needs to be computed>]\n" + "                     ["
-		        + Compiler.LOG_CONFIG_FILE_ARG + " <Log configuration file>]\n" + "                     ["
-		        + Compiler.HELP_ARG + "]");
+				+ " <File of test formula to compile>]\n" + "                     [" + Compiler.MCFORmFILE_ARG
+				+ " <File of compiled formula in model checkable form>]\n" + "                     [" + Compiler.PEA_ARG
+				+ " <Prefix for peas in peaNet files>]\n" + "                     [" + Compiler.PEANET_ARG
+				+ " <Prefix for peaNet files>]\n" + "                     [" + Compiler.PARALLEL_ARG
+				+ " <true, if parallel composition needs to be computed>]\n" + "                     ["
+				+ Compiler.LOG_CONFIG_FILE_ARG + " <Log configuration file>]\n" + "                     ["
+				+ Compiler.HELP_ARG + "]");
 		System.out.println("Argument " + Compiler.TESTFORmFILE_ARG + " required");
 	}
 }
