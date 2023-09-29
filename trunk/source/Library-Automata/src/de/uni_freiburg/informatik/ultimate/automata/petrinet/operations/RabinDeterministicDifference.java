@@ -74,9 +74,13 @@ public class RabinDeterministicDifference<LETTER, PLACE>
 
 	private final void addOriginalPetriPlaces() {
 		for (final PLACE place : mPetriNet.getPlaces()) {
-			mDifferenceNet.addPlace(place, mPetriNet.getInitialPlaces().contains(place), mPetriNet.isAccepting(place));
 			if (mPetriNet.isFinite(place)) {
 				mDifferenceNet.addFinitePlace(place);
+				mDifferenceNet.addPlace(place, mPetriNet.getInitialPlaces().contains(place), false);
+			} else {
+				mDifferenceNet.addPlace(place, mPetriNet.getInitialPlaces().contains(place),
+						mPetriNet.isAccepting(place));
+
 			}
 		}
 	}
@@ -91,7 +95,6 @@ public class RabinDeterministicDifference<LETTER, PLACE>
 	}
 
 	private final void addTransitionsToIntersectionNet() throws AutomataLibraryException {
-		final Set<Transition<LETTER, PLACE>> pairedTransitions = new HashSet<>();
 		for (final Transition<LETTER, PLACE> petriTransition : mPetriNet.getTransitions()) {
 			for (final PLACE buchiPlace : mBuchiAutomaton.getStates()) {
 
@@ -115,17 +118,9 @@ public class RabinDeterministicDifference<LETTER, PLACE>
 				}
 
 				addNewTransition(petriTransition, buchiTransition, buchiPlace);
-				pairedTransitions.add(petriTransition);
 
 			}
 		}
-		// This method causes the automaton to "sleep" for cases it has no transitions for a letter,
-		// but we require it to be complete and deterministic
-		/*
-		 * for (final Transition<LETTER, PLACE> petriTransition : mPetriNet.getTransitions()) { if
-		 * (!pairedTransitions.contains(petriTransition)) { mDifferenceNet.addTransition(petriTransition.getSymbol(),
-		 * petriTransition.getPredecessors(), petriTransition.getSuccessors()); } }
-		 */
 	}
 
 	private final void addNewTransition(final Transition<LETTER, PLACE> petriTransition,
