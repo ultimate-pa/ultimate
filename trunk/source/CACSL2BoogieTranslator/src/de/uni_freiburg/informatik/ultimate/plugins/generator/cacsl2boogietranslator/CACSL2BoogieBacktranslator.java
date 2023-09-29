@@ -1384,8 +1384,10 @@ public class CACSL2BoogieBacktranslator
 				offset = access.getIndices()[0];
 			}
 		}
+		// TODO: Implement this for general expressions, requires probably CType
 		if (array != null && array instanceof IdentifierExpression
-				&& ((IdentifierExpression) array).getIdentifier().startsWith(SFO.MEMORY) && offset != null) {
+				&& ((IdentifierExpression) array).getIdentifier().startsWith(SFO.MEMORY) && offset != null
+				&& offset instanceof IdentifierExpression) {
 			return translateExpression(offset);
 		}
 		return null;
