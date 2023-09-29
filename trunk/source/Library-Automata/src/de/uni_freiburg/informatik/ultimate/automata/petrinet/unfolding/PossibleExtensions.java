@@ -307,7 +307,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	}
 
 	@Override
-	public boolean isEmpy() {
+	public boolean isEmpty() {
 		return mPe.isEmpty() && mFastpathCutoffEventList.isEmpty();
 	}
 

@@ -177,7 +177,7 @@ public abstract class PetriNetUnfolderBase<L, P, R> {
 		}
 		mPossibleExtensions.update(mUnfolding.getDummyRoot());
 
-		while (!mPossibleExtensions.isEmpy()) {
+		while (!mPossibleExtensions.isEmpty()) {
 			final Event<L, P> e = mPossibleExtensions.remove();
 
 			final boolean finished = computeUnfoldingHelper(e);

@@ -63,7 +63,7 @@ public interface IPossibleExtensions<LETTER, PLACE> {
 	/**
 	 * @return {@code true} iff there is no extension.
 	 */
-	boolean isEmpy();
+	boolean isEmpty();
 
 	int getUsefulExtensionCandidates();
 
