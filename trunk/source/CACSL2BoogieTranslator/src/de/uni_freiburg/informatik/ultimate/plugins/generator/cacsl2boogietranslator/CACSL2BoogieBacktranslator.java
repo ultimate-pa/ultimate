@@ -60,6 +60,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTWhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
@@ -1058,6 +1059,8 @@ public class CACSL2BoogieBacktranslator
 				return new FakeExpression(String.format("(%s & %d)", bv, (1L << end) - 1));
 			}
 			return new FakeExpression(String.format("((%s >> %d) & %d)", bv, start, (1L << (end - start)) - 1));
+		} else if (expression instanceof ArrayAccessExpression) {
+			return translateArrayAccessExpression((ArrayAccessExpression) expression, cType, hook);
 		}
 		reportUnfinishedBacktranslation(
 				String.format("Cannot backtranslate expression %s, type %s is not supported yet",
@@ -1340,6 +1343,52 @@ public class CACSL2BoogieBacktranslator
 					+ " could not be translated");
 
 		}
+	}
+
+	private IASTExpression translateArrayAccessExpression(final ArrayAccessExpression access, final CType ctype,
+			final IASTNode hook) {
+		final IASTExpression offset = tryToExtractOffset(access);
+		if (offset != null) {
+			return new FakeExpression(String.format("*%s", offset));
+		}
+		final IASTExpression array = translateExpression(access.getArray(), ctype, hook);
+		if (array == null) {
+			return null;
+		}
+		final IASTExpression[] indices = new IASTExpression[access.getIndices().length];
+		for (int i = 0; i < access.getIndices().length; i++) {
+			indices[i] = translateExpression(access.getIndices()[i], ctype, hook);
+			if (indices[i] == null) {
+				return null;
+			}
+		}
+		final StringBuilder sb = new StringBuilder();
+		sb.append(array);
+		for (final IASTExpression index : indices) {
+			sb.append('[').append(index).append(']');
+		}
+		return new FakeExpression(sb.toString());
+	}
+
+	private IASTExpression tryToExtractOffset(final ArrayAccessExpression access) {
+		Expression array = null;
+		Expression offset = null;
+		if (access.getIndices().length == 2) {
+			array = access.getArray();
+			offset = access.getIndices()[1];
+		}
+		if (access.getArray() instanceof ArrayAccessExpression && access.getIndices().length == 1) {
+			final ArrayAccessExpression subAccess = (ArrayAccessExpression) access.getArray();
+			if (subAccess.getIndices().length == 1) {
+				array = subAccess.getArray();
+				offset = access.getIndices()[0];
+			}
+		}
+		if (array != null && array instanceof IdentifierExpression
+				&& ((IdentifierExpression) array).getIdentifier().startsWith(SFO.MEMORY) && offset != null) {
+			return translateExpression(offset);
+		}
+		return null;
 	}
 
 	private static String naiveBitvecLiteralValueExtraction(final BitvecLiteral lit) {
