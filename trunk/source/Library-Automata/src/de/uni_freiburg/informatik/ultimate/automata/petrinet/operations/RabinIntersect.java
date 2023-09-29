@@ -162,7 +162,9 @@ public class RabinIntersect<LETTER, PLACE>
 			result.delete(result.lastIndexOf("}") + 1, result.length());
 			result.append(",\n");
 			result.append("finitePlaces = {");
-			result.append(mFinitePlaces.toString());
+			for (final PLACE finitePlace : mFinitePlaces) {
+				result.append('\"' + finitePlace.toString() + "\" ");
+			}
 			result.append("}+\n);");
 			return result.toString();
 		}
