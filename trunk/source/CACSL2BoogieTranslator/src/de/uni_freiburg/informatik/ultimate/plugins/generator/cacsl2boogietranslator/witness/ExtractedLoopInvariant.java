@@ -19,6 +19,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class ExtractedLoopInvariant extends ExtractedWitnessInvariant {
+	private static final boolean PRODUCE_LOOP_INVARIANTS = false;
+
 	public ExtractedLoopInvariant(final String invariant, final Collection<String> nodeLabel, final IASTNode match) {
 		super(invariant, nodeLabel, match);
 	}
@@ -36,7 +38,16 @@ public class ExtractedLoopInvariant extends ExtractedWitnessInvariant {
 							"The result contains multiple loops, unable to match the invariant.");
 				}
 				hasLoop = true;
-				statements.addAll(transformLoop(invariantExprResult, (WhileStatement) st, loc));
+				final WhileStatement loop = (WhileStatement) st;
+				if (PRODUCE_LOOP_INVARIANTS) {
+					statements.addAll(transformLoop(invariantExprResult, loop, loc));
+				} else {
+					final List<Statement> witnessStatements = new ArrayList<>(invariantExprResult.getStatements());
+					final Statement[] newBody =
+							DataStructureUtils.concat(loop.getBody(), witnessStatements.toArray(Statement[]::new));
+					statements.addAll(witnessStatements);
+					statements.add(new WhileStatement(loc, loop.getCondition(), loop.getInvariants(), newBody));
+				}
 			} else {
 				statements.add(st);
 			}
@@ -50,7 +61,6 @@ public class ExtractedLoopInvariant extends ExtractedWitnessInvariant {
 		return new ExpressionResultBuilder(invariantExprResult).addAllIncludingLrValue(expressionResult).build();
 	}
 
-	// TODO: Should we really transform the asserts to a LoopInvariantSpecification or just insert all statements?
 	private static List<Statement> transformLoop(final ExpressionResult witnessResult, final WhileStatement loop,
 			final ILocation loc) {
 		final List<Statement> result = new ArrayList<>();
