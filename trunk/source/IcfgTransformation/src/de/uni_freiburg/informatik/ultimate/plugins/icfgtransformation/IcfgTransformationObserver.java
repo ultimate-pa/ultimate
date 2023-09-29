@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.BvToIntTransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.FilteredIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBacktranslator;
@@ -78,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityanalysis.DefaultEqualityAnalysisProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.mapelimination.MapEliminationSettings;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.IntToBvBackTranslation;
@@ -412,8 +414,11 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IcfgTransformationBacktranslator backtranslationTracker) {
 		final SifaSimplifierTransformer transformer = new SifaSimplifierTransformer(mServices, icfg.getCfgSmtToolkit());
 		backtranslationTracker.addExpressionBacktranslation(transformer::backtranslate);
-		return new IcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass,
-				icfg.getIdentifier() + "TransformedIcfg", transformer).getResult();
+		final IIcfg<OUTLOC> simplifiedIcfg = new IcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker,
+				outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer).getResult();
+		return new FilteredIcfgTransformer<>(simplifiedIcfg, icfg.getIdentifier() + "_simplified", outlocClass,
+				createIcfgLocationFactory(), mLogger, backtranslationTracker,
+				x -> !SmtUtils.isFalseLiteral(x.getTransformula().getFormula())).getResult();
 	}
 
 	private MapEliminationSettings getMapElimSettings() {
@@ -439,11 +444,13 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		};
 	}
 
-	private static <INLOC extends IcfgLocation> ILocationFactory<INLOC, IcfgLocation> createIcfgLocationFactory() {
+	@SuppressWarnings("unchecked")
+	private static <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> ILocationFactory<INLOC, OUTLOC>
+			createIcfgLocationFactory() {
 		return (oldLocation, debugIdentifier, procedure) -> {
 			final IcfgLocation rtr = new IcfgLocation(debugIdentifier, procedure);
 			ModelUtils.copyAnnotations(oldLocation, rtr);
-			return rtr;
+			return (OUTLOC) rtr;
 		};
 	}
 
