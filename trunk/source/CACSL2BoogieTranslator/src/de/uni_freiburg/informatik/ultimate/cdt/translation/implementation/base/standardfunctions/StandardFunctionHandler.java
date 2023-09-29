@@ -887,11 +887,14 @@ public class StandardFunctionHandler {
 		return builder.build();
 	}
 
-	private List<Statement> makeAssignment(final ILocation loc, final LRValue lhs, final Expression rhs) {
+	private List<Statement> makeVarargAssignment(final ILocation loc, final LRValue lhs, final Expression rhs) {
 		if (lhs instanceof LocalLValue) {
 			return List.of(StatementFactory.constructSingleAssignmentStatement(loc, ((LocalLValue) lhs).getLhs(), rhs));
 		} else if (lhs instanceof HeapLValue) {
 			return mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, rhs, lhs.getCType(), false);
+		} else if (lhs instanceof RValue) {
+			final RValue rValue = (RValue) lhs;
+			return makeVarargAssignment(loc, new HeapLValue(rValue.getValue(), rValue.getCType(), null), rhs);
 		} else {
 			throw new UnsupportedOperationException("Unsupported type " + lhs.getClass().getSimpleName());
 		}
@@ -910,7 +913,7 @@ public class StandardFunctionHandler {
 		final String procedure = mProcedureManager.getCurrentProcedureID();
 		final IdentifierExpression rhs = new IdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), SFO.VARARGS,
 				new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procedure));
-		return builder.addStatements(makeAssignment(loc, arg0.getLrValue(), rhs)).build();
+		return builder.addStatements(makeVarargAssignment(loc, arg0.getLrValue(), rhs)).build();
 	}
 
 	private Result handleVaEnd(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -962,7 +965,7 @@ public class StandardFunctionHandler {
 				new CPointer(new CPrimitive(CPrimitives.CHAR)), AUXVAR.NONDET);
 		builder.addAuxVar(auxVarInfo);
 		builder.addDeclaration(auxVarInfo.getVarDec());
-		final List<Statement> writes = makeAssignment(loc, dst.getLrValue(), auxVarInfo.getExp());
+		final List<Statement> writes = makeVarargAssignment(loc, dst.getLrValue(), auxVarInfo.getExp());
 		writes.forEach(new Overapprox(name, loc)::annotate);
 		return builder.addStatements(writes).build();
 	}
