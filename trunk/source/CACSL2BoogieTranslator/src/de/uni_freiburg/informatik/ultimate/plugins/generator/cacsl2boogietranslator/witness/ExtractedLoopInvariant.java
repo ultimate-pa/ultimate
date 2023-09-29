@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -35,37 +36,47 @@ public class ExtractedLoopInvariant extends ExtractedWitnessInvariant {
 							"The result contains multiple loops, unable to match the invariant.");
 				}
 				hasLoop = true;
-				final WhileStatement whileOld = (WhileStatement) st;
-				statements.add(new WhileStatement(loc, whileOld.getCondition(), DataStructureUtils
-						.concat(whileOld.getInvariants(), extractLoopInvariants(invariantExprResult, loc)),
-						whileOld.getBody()));
+				statements.addAll(transformLoop(invariantExprResult, (WhileStatement) st, loc));
 			} else {
 				statements.add(st);
 			}
 		}
 		if (hasLoop) {
-			return new ExpressionResultBuilder(expressionResult).resetStatements(statements).build();
+			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(invariantExprResult)
+					.resetStatements(statements).build();
 		}
 		// We might identify sth. that is not a loop (e.g. goto) as a loop.
 		// We cannot annotate it with a a LoopInvariantSpecification, so we just insert an assert in that case.
 		return new ExpressionResultBuilder(invariantExprResult).addAllIncludingLrValue(expressionResult).build();
 	}
 
-	private static LoopInvariantSpecification[] extractLoopInvariants(final ExpressionResult result,
+	// TODO: Should we really transform the asserts to a LoopInvariantSpecification or just insert all statements?
+	private static List<Statement> transformLoop(final ExpressionResult witnessResult, final WhileStatement loop,
 			final ILocation loc) {
-		final List<LoopInvariantSpecification> specs = new ArrayList<>();
-		for (final Statement st : result.getStatements()) {
+		final List<Statement> result = new ArrayList<>();
+		final List<Statement> afterLoop = new ArrayList<>();
+		final List<LoopInvariantSpecification> newInvariants = new ArrayList<>(Arrays.asList(loop.getInvariants()));
+		boolean loopInvariantAdded = false;
+		for (final Statement st : witnessResult.getStatements()) {
 			if (st instanceof AssertStatement) {
 				final LoopInvariantSpecification spec =
 						new LoopInvariantSpecification(loc, false, ((AssertStatement) st).getFormula());
 				final Check check = new Check(Check.Spec.WITNESS_INVARIANT);
 				check.annotate(spec);
-				specs.add(spec);
+				newInvariants.add(spec);
+				loopInvariantAdded = true;
+			} else if (loopInvariantAdded) {
+				// TODO: Check if this is only a havoc?
+				afterLoop.add(st);
 			} else {
-				throw new AssertionError(st.getClass().getSimpleName() + " is not supported as annotation of a loop.");
+				result.add(st);
 			}
 		}
-		return specs.toArray(LoopInvariantSpecification[]::new);
+		final Statement[] newBody = DataStructureUtils.concat(loop.getBody(), result.toArray(Statement[]::new));
+		result.add(new WhileStatement(loc, loop.getCondition(),
+				newInvariants.toArray(LoopInvariantSpecification[]::new), newBody));
+		result.addAll(afterLoop);
+		return result;
 	}
 
 	@Override
