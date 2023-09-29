@@ -28,7 +28,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class SifaSimplifierTransformer implements ITransformulaTransformer {
 	// TODO: What is a reasonable timeout? And what to do if we exceed it?
 	private static final long SIFA_TIMEOUT = 5 * 1000;
-	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.POLY_PAC;
+	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
 
 	private final IUltimateServiceProvider mServices;
 	private Map<IcfgLocation, IPredicate> mSifaPredicates;
