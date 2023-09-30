@@ -65,6 +65,30 @@ public class MultiIndexArrayUpdate implements ITermProvider {
 				getMultiDimensionalNestedStore().removeOneIndex(i));
 	}
 
+	public boolean isNondeterministicUpdate() {
+		for (int i = 0; i < mMultiDimensionalNestedStore.getIndices().size(); i++) {
+			if (isNondeterministicUpdate(i)) {
+				continue;
+			} else {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * The theory of arrays allows us to encode a nondeterministic update at index k
+	 * as follows `a'= (store a k (select a' k))`. Note that this is only a
+	 * nondeterministic update if there are no other constraints for a' at position
+	 * k. This method detects nondeterministc updates that have exactly that form.
+	 */
+	public boolean isNondeterministicUpdate(final int i) {
+		final ArrayIndex index = mMultiDimensionalNestedStore.getIndices().get(i);
+		final Term value = mMultiDimensionalNestedStore.getValues().get(i);
+		final MultiDimensionalSelect mds = MultiDimensionalSelect.of(value);
+		return mds != null && mds.getArray() == getNewArray() && mds.getIndex().equals(index);
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
