@@ -26,11 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -55,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -290,24 +287,9 @@ public class SimultaneousUpdate {
 		final Term[] allConjuncts = SmtUtils.getConjuncts(eliminated);
 		final Term[] conjunctsWithOutVar = Arrays.stream(allConjuncts)
 				.filter(x -> Arrays.asList(x.getFreeVars()).contains(outVar)).toArray(Term[]::new);
-//		if (conjunctsWithOutVar.length > 1) {
-//			throw new AssertionError(String.format("Occurs in several conjuncts: %s namely %s", outVar, Arrays.toString(conjunctsWithOutVar)));
-//		}
 		final HashSet<ExtractionImpediments> updateImpediments = new HashSet<>();
 		for (final Term conjunct : conjunctsWithOutVar) {
 			if (conjunct instanceof QuantifiedFormula) {
-				final QuantifiedFormula quantifiedConjunct = (QuantifiedFormula) conjunct;
-				final TermVariable[] quantifiedVars = quantifiedConjunct.getVariables();
-				final Term[] innerConjuncts = SmtUtils.getConjuncts(quantifiedConjunct.getSubformula());
-				for (final Term innerConjunct : innerConjuncts) {
-					if (isArrayUpdate(outVar, mgdScript, Arrays.asList(quantifiedVars), innerConjunct)) {
-						final List<Term> constaints = new ArrayList<>(Arrays.asList(innerConjuncts));
-						constaints.remove(innerConjunct);
-						throw new AssertionError(String.format(
-								"Nondeterministic Array Update. Nondeterministic values: %s Update: %s Constraints: %s",
-								Arrays.asList(quantifiedVars), innerConjunct, constaints));
-					}
-				}
 				updateImpediments.add(ExtractionImpediments.QUANTIFIER);
 				continue;
 			} else if (conjunct instanceof ApplicationTerm) {
@@ -323,6 +305,12 @@ public class SimultaneousUpdate {
 					SolvedBinaryRelation sbr = ber.solveForSubject(mgdScript.getScript(), outVar);
 					if (sbr == null) {
 						if (SmtSortUtils.isArraySort(outVar.getSort())) {
+							final MultiIndexArrayUpdate miau = MultiIndexArrayUpdate.of(mgdScript.getScript(), appTerm);
+							if (miau != null && miau.isNondeterministicUpdate()) {
+								throw new AssertionError("Nondeterministic update for " + outVar + " of dimension "
+										+ miau.getMultiDimensionalNestedStore().getDimension() + ". Occurs in "
+										+ conjunctsWithOutVar.length + " conjuncts");
+							}
 							updateImpediments.add(ExtractionImpediments.NORHSARRAY);
 							continue;
 						}
@@ -353,61 +341,6 @@ public class SimultaneousUpdate {
 		}
 		return new Pair<>(null, updateImpediments);
 	}
-
-	/**
-	 * Return `true` iff the candidate Term is an array update such that each
-	 * candidateValue occurs exactly once as value and no candidateValue occurs in
-	 * any index and no candidateValue occurs in the term which represents the
-	 * updated array.
-	 */
-	private static boolean isArrayUpdate(final TermVariable newArray, final ManagedScript mgdScript,
-			final List<TermVariable> candidateValues, final Term candidate) throws AssertionError {
-		final MultiIndexArrayUpdate miau = MultiIndexArrayUpdate.of(mgdScript.getScript(), candidate);
-		if (miau != null) {
-			if (miau.getNewArray() == newArray) {
-				if (eachVarIsAssignedExactlyOnce(miau.getMultiDimensionalNestedStore(), candidateValues)) {
-					if (DataStructureUtils.haveEmptyIntersection(new HashSet<>(candidateValues),
-							new HashSet<>(Arrays.asList(miau.getMultiDimensionalNestedStore().getArray()))))
-						return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Return `true` iff each {@link TermVariabe} of vars is assigned (value of a
-	 * store) to exactly one position of the array and does not occur in any index.
-	 */
-	private static boolean eachVarIsAssignedExactlyOnce(final MultiDimensionalNestedStore mdns,
-			final List<TermVariable> tvs) {
-		for (final TermVariable tv : tvs) {
-			if (someIndexContainsVar(mdns, tv) || !exactlyOneValueIsVar(mdns, tv)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private static boolean exactlyOneValueIsVar(final MultiDimensionalNestedStore mdns, final TermVariable tv) {
-		int matches = 0;
-		for (final Term value : mdns.getValues()) {
-			if (value == tv) {
-				matches++;
-			}
-		}
-		return matches == 1;
-	}
-
-	private static boolean someIndexContainsVar(final MultiDimensionalNestedStore mdns, final TermVariable tv) {
-		for (final ArrayIndex idx : mdns.getIndices()) {
-			if (idx.getFreeVars().contains(tv)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 
 	/**
 	 * Returns the variables that occur on the right-hand side of updates. Except
