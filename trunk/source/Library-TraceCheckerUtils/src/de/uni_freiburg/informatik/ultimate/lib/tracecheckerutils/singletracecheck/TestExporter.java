@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -25,6 +27,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.DocumentType;
 import org.w3c.dom.Element;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class TestExporter {
@@ -90,13 +94,59 @@ public class TestExporter {
 		final Element rootEle = dom.createElement("testcase");
 
 		// create data elements and place them under root
-
+		String valueString = null;
 		for (final Term va : tv.values) {
 			if (va != null) {
+				switch (va.getSort().getName()) {
+				case SmtSortUtils.FLOATINGPOINT_SORT: {
+					assert va instanceof ApplicationTerm;
+					final ApplicationTerm cva = (ApplicationTerm) va;
+
+					String sign = cva.getParameters()[0].toStringDirect();
+					sign = sign.replaceAll("[^01]", "");
+
+					String exponent = cva.getParameters()[1].toStringDirect();
+					exponent = exponent.replaceAll("[^01]", "");
+
+					String significant = cva.getParameters()[2].toStringDirect();
+					significant = significant.replaceAll("[^01]", "");
+
+					final String floatAsBitString = sign + exponent + significant;
+					final int intBits = (int) Long.parseLong(floatAsBitString, 2);
+					final float myFloat = Float.intBitsToFloat(intBits);
+
+					valueString = myFloat + "";
+					break;
+				}
+				case SmtSortUtils.BITVECTOR_SORT: {
+					final Matcher m = Pattern.compile("\\(_\\sbv(\\d+)\\s\\d+\\)").matcher(va.toStringDirect());
+					valueString = m.group();
+					break;
+				}
+				case SmtSortUtils.INT_SORT: {
+					valueString = va.toStringDirect().replaceAll("[\\(\\)\\s]", "");
+					break;
+				}
+				case SmtSortUtils.REAL_SORT: {
+					valueString = va.toStringDirect().replaceAll("[\\(\\)\\s]", "");
+					break;
+				}
+				// case SmtSortUtils.BOOL_SORT: {
+				// if (SmtUtils.isTrueLiteral(va)) {
+				// valueString = "1";
+				// } else {
+				// valueString = "0";
+				// }
+				// break;
+				// }
+				default: {
+					throw new AssertionError("Unexpected Sort For Test Output");
+				}
+				}
+
 				final Element element = dom.createElement("input");
-				String inputValue = va.toStringDirect();
-				inputValue = inputValue.replaceAll("[\\(\\)\\s]", "");
-				element.appendChild(dom.createTextNode(va.toStringDirect()));
+
+				element.appendChild(dom.createTextNode(valueString));
 				rootEle.appendChild(element);
 			}
 		}
@@ -146,9 +196,20 @@ public class TestExporter {
 class TestVector {
 
 	final LinkedList<Term> values = new LinkedList<>();
+	final LinkedList<Term> valuesWithNegativeIndices = new LinkedList<>();
+	final LinkedList<Term> valuesWithPositiveIndices = new LinkedList<>();
+	int countNonDets = 0;
 
 	public void addValueAssignment(final Term value, final int position) {
-		addToLinkedList(values, position, value);
+		if (position < 0) {
+			throw new UnsupportedOperationException("Negative Position fo NonDet in SSA");
+			// addNegativPositionToLinkedList(valuesWithNegativeIndices, position, value);
+		} else {
+			countNonDets += 1;
+			addToLinkedList(values, position, value);
+			// addToLinkedList(valuesWithPositiveIndices, position, value);
+		}
+
 	}
 
 	private void addToLinkedList(final LinkedList<Term> testVector, final Integer index, final Term t) {
@@ -160,7 +221,17 @@ class TestVector {
 		testVector.add(index, t);
 	}
 
+	private void addNegativPositionToLinkedList(final LinkedList<Term> testVector, final Integer index, final Term t) {
+		assert index < 0;
+		testVector.add(t);
+	}
+
 	public boolean isEmpty() {
 		return values.isEmpty();
+	}
+
+	public void addValuesWithNegativeIndex() {
+		values.addAll(valuesWithNegativeIndices);
+		values.addAll(valuesWithPositiveIndices);
 	}
 }

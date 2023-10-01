@@ -128,6 +128,7 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 				reportUnproveableResult(errorLoc, pe, localResult.getUnprovabilityReasons());
 				break;
 			case TEST_GENERATION:
+
 				reportTestGenerationResult(errorLoc, localResult.getProgramExecution());
 				break;
 			default:
@@ -160,6 +161,11 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 	}
 
 	private void reportTestGenerationResult(final IcfgLocation errorLoc, final IProgramExecution<L, Term> pe) {
+		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
+		if (!upreasons.isEmpty()) {
+			reportUnproveableResult(errorLoc, pe, upreasons);
+			return;
+		}
 		final IResult cexResult = new TestGenerationResult(mPluginName);
 		mReportFunction.accept(errorLoc, cexResult);
 	}

@@ -426,6 +426,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		final boolean mTestGeneration = true;
 		if (mTestGeneration) {
 			final TestVector testV = extractTestVector(nsb, funGetValue, rpeb);
+			// testV.addValuesWithNegativeIndex();
+			System.out.println("Amount Of NonDets in TestCase: " + testV.countNonDets);
 			final boolean mExportTests = true;
 			if (mExportTests) {
 				final boolean mExportAllInOneFile = true;
@@ -468,7 +470,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 						if (indexedVar.toStringDirect().contains("nondet") && firstRepresentatives) {
 							assert indexedRepresentatives.entrySet().size() == 2;
 							// TODO Not sure if save, but by far the best solution
-							testV.addValueAssignment(valueT, index); // Only if nondetINT!!
+							testV.addValueAssignment(valueT, index); // Only if nondetINT!!}
 							firstRepresentatives = false;
 						}
 

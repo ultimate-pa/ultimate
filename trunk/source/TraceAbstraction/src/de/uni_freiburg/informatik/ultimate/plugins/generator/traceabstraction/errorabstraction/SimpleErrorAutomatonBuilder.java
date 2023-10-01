@@ -69,7 +69,7 @@ public class SimpleErrorAutomatonBuilder<L extends IIcfgTransition<?>> implement
 		mTruePredicate = predicateUnifier.getTruePredicate();
 		mResult = constructStraightLineAutomaton(services, csToolkit, predicateFactory, predicateUnifier,
 				predicateFactoryErrorAutomaton, NestedWordAutomataUtils.getVpAlphabet(abstraction), trace);
-		addCoveredTestGoalsToErrorAutomaton(trace, counterexample, abstraction);
+		addCoveredTestGoalsToErrorAutomaton(trace, counterexample, abstraction); // TODO double eroor locaiton?
 
 	}
 

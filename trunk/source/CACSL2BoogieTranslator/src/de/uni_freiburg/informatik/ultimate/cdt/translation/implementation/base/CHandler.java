@@ -1745,14 +1745,13 @@ public class CHandler {
 		// Annotation zur identifikation
 		// mLogger für statistik
 		final IfStatement ifStmt;
-		if (mTestGenerationBranchCoverage) {
+		if (mTestGenerationBranchCoverage && !loc.toString().contains("C: if (0) ; else __assert_fail")) {
 			final ArrayList<Statement> thenArray = new ArrayList<Statement>();
 			final ArrayList<Statement> elseArray = new ArrayList<Statement>();
 			final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
 
-			final ILocation loc1 = mLocationFactory.createCLocation(node);
 			final Statement assertFalseThen =
-					new AssertStatement(loc1, ExpressionFactory.createBooleanLiteral(loc1, false));
+					new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 			final TestGoalAnnotation tg1 = new TestGoalAnnotation(mTestGoalCount);
 			mTestGoalCount += 1;
 			thenArray.add(assertFalseThen);
@@ -1760,16 +1759,15 @@ public class CHandler {
 			tg1.annotate(assertFalseThen);
 			chk.annotate(assertFalseThen);
 
-			final ILocation loc2 = mLocationFactory.createCLocation(node);
 			final Statement assertFalseElse =
-					new AssertStatement(loc2, ExpressionFactory.createBooleanLiteral(loc2, false));
-
+					new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 			final TestGoalAnnotation tg2 = new TestGoalAnnotation(mTestGoalCount);
 			mTestGoalCount += 1;
 			tg2.annotate(assertFalseElse);
 			chk.annotate(assertFalseElse);
 			elseArray.add(assertFalseElse);
 			elseArray.addAll(elseStmt);
+
 			ifStmt = new IfStatement(loc, cond.getValue(), thenArray.toArray(new Statement[thenArray.size()]),
 					elseArray.toArray(new Statement[elseArray.size()]));
 

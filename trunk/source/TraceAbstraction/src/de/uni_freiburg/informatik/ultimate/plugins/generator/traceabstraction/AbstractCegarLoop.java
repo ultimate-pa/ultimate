@@ -551,7 +551,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 								if (sequence.get(i) instanceof ISLPredicate) {
 									if (node.getPayload().getAnnotations()
 											.containsKey(TestGoalAnnotation.class.getName())) {
-										mResultBuilder.addResult(node, Result.TEST_GENERATION, null, null, null);
+										mResultBuilder.addResult(node, Result.TEST_GENERATION, programExecution, null,
+												null);
 									}
 								}
 							}
@@ -755,10 +756,11 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		 * The user-specified limit for the amount of analysis attempts per path program was hit
 		 */
 		USER_LIMIT_PATH_PROGRAM(4),
+
 		/**
 		 * Test Generation Terminated
 		 */
-		TEST_GENERATION(0);
+		TEST_GENERATION(4);
 
 		private final int mHierarchy;
 

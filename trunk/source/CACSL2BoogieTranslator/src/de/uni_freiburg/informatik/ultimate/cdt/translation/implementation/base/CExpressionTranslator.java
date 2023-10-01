@@ -1185,10 +1185,9 @@ public class CExpressionTranslator {
 		final ArrayList<Statement> thenArray = new ArrayList<Statement>();
 		final ArrayList<Statement> elseArray = new ArrayList<Statement>();
 		final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
-		if (!secondArgIsVoid) {
-			final ILocation loc1 = mLocationFactory.createCLocation(node);
+		if (!secondArgIsVoid) { // TODO do we need a test goal either way?
 			final Statement assertFalseThen =
-					new AssertStatement(loc1, ExpressionFactory.createBooleanLiteral(loc1, false));
+					new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 			final TestGoalAnnotation tg1 = new TestGoalAnnotation(mTestGoalCount);
 			mTestGoalCount += 1;
 			thenArray.add(assertFalseThen);
@@ -1197,10 +1196,9 @@ public class CExpressionTranslator {
 			chk.annotate(assertFalseThen);
 		}
 		thenArray.addAll(ifStatements);
-		if (!thirdArgIsVoid) {
-			final ILocation loc2 = mLocationFactory.createCLocation(node);
+		if (!thirdArgIsVoid) { // TODO do we need a test goal either way?
 			final Statement assertFalseElse =
-					new AssertStatement(loc2, ExpressionFactory.createBooleanLiteral(loc2, false));
+					new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 
 			final TestGoalAnnotation tg2 = new TestGoalAnnotation(mTestGoalCount);
 			mTestGoalCount += 1;
