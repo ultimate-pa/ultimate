@@ -35,21 +35,19 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
- * Use Yaml file to decide correctness of SV-COMP benchmarks.
+ * TestResultDecider that uses SV-COMP YAML files to decide correctness of
+ * SV-COMP benchmarks whose property is unreach-call.prp
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class SvcompTerminationTestResultDecider extends TerminationAnalysisTestResultDecider {
+public class SvcompTestResultDeciderTermination extends TerminationAnalysisTestResultDecider {
 
 	/**
-	 *
-	 * @param ultimateRunDefinition
-	 *
 	 * @param unknownIsJUnitSuccess if true the TestResult UNKNOWN is a success for
 	 *                              JUnit, if false, the TestResult UNKNOWN is a
 	 *                              failure for JUnit.
 	 */
-	public SvcompTerminationTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
+	public SvcompTestResultDeciderTermination(final UltimateRunDefinition ultimateRunDefinition,
 			final boolean unknownIsJUnitSuccess) {
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
 	}

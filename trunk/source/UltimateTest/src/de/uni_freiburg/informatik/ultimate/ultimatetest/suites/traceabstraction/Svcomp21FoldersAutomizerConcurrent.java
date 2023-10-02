@@ -34,7 +34,7 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompTestResultDeciderUnreachCall;
 import de.uni_freiburg.informatik.ultimate.test.decider.ThreeTierTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder.ExpectedResultFinderStatus;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
@@ -85,7 +85,7 @@ public class Svcomp21FoldersAutomizerConcurrent extends AbstractTraceAbstraction
 
 	@Override
 	protected ThreeTierTestResultDecider<?> constructITestResultDecider(final UltimateRunDefinition urd) {
-		return new SvcompReachTestResultDecider(urd, false);
+		return new SvcompTestResultDeciderUnreachCall(urd, false);
 	}
 
 	/**

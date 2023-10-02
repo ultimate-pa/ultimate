@@ -35,29 +35,27 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
- * Use keywords in filename to decide correctness of SV-COMP memsafety benchmarks.
+ * TestResultDecider that uses SV-COMP YAML files to decide correctness of
+ * SV-COMP benchmarks whose property is termination.prp
  *
- * @author heizmann@informatik.uni-freiburg.de
- *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class SvcompMemsafetyTestResultDecider extends SafetyCheckTestResultDecider {
+public class SvcompTestResultDeciderUnreachCall extends SafetyCheckTestResultDecider {
 
 	/**
-	 *
-	 * @param ultimateRunDefinition
-	 *
-	 * @param unknownIsJUnitSuccess
-	 *            if true the TestResult UNKNOWN is a success for JUnit, if
-	 *            false, the TestResult UNKNOWN is a failure for JUnit.
+	 * @param unknownIsJUnitSuccess if true the TestResult UNKNOWN is a success for
+	 *                              JUnit, if false, the TestResult UNKNOWN is a
+	 *                              failure for JUnit.
 	 */
-	public SvcompMemsafetyTestResultDecider(final UltimateRunDefinition ultimateRunDefinition, final boolean unknownIsJUnitSuccess) {
+	public SvcompTestResultDeciderUnreachCall(final UltimateRunDefinition ultimateRunDefinition,
+			final boolean unknownIsJUnitSuccess) {
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
 	}
 
 	@Override
 	public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
 		final NestedMap2<String, String, SafetyCheckerOverallResult> map = TestUtil
-				.constructPropertyMapSvcompSafety(TestUtil.SVCOMP_PROP_VALIDMEMSAFETY);
+				.constructPropertyMapSvcompSafety(TestUtil.SVCOMP_PROP_UNREACHCALL);
 		return new YamlBasedExpectedResultFinder<SafetyCheckerOverallResult>(map);
 	}
 

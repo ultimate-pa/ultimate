@@ -35,22 +35,20 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
- * Use keywords in filename to decide correctness of SV-COMP overflow benchmarks.
+ * TestResultDecider that uses SV-COMP YAML files to decide correctness of
+ * SV-COMP benchmarks whose property is no-overflow.prp
  *
- * @author heizmann@informatik.uni-freiburg.de
- *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class SvcompOverflowTestResultDecider extends SafetyCheckTestResultDecider {
+public class SvcompTestResultDeciderNoOverflow extends SafetyCheckTestResultDecider {
 
 	/**
-	 *
-	 * @param ultimateRunDefinition
-	 *
-	 * @param unknownIsJUnitSuccess
-	 *            if true the TestResult UNKNOWN is a success for JUnit, if
-	 *            false, the TestResult UNKNOWN is a failure for JUnit.
+	 * @param unknownIsJUnitSuccess if true the TestResult UNKNOWN is a success for
+	 *                              JUnit, if false, the TestResult UNKNOWN is a
+	 *                              failure for JUnit.
 	 */
-	public SvcompOverflowTestResultDecider(final UltimateRunDefinition ultimateRunDefinition, final boolean unknownIsJUnitSuccess) {
+	public SvcompTestResultDeciderNoOverflow(final UltimateRunDefinition ultimateRunDefinition,
+			final boolean unknownIsJUnitSuccess) {
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
 	}
 

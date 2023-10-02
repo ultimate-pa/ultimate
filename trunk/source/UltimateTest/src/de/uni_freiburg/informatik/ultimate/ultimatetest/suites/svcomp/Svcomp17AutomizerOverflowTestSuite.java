@@ -31,7 +31,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.SvcompOverflowTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompTestResultDeciderNoOverflow;
 
 /**
  *
@@ -42,7 +42,7 @@ public class Svcomp17AutomizerOverflowTestSuite extends AbstractSvcompTestSuite 
 	
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
-		return new SvcompOverflowTestResultDecider(urd, false);
+		return new SvcompTestResultDeciderNoOverflow(urd, false);
 	}
 	
 	@Override
