@@ -1,0 +1,37 @@
+// Date:  30-09-2023
+// Author: pm251@venus.uni-freiburg.de
+
+// 
+RabinPetriNet totalDeterministicOneToken = (
+	alphabet = {a b c},
+	places = {p1 p2 p3},
+	transitions = { ({p1} a {p1}) ({p1} b {p2})	({p1} c {p2}) ({p2} a {p1}) ({p2} b {p2}) ({p2} c {p2}) ({p3} a {p3}) ({p3} b {p2}) ({p3} c {p1})},
+	initialMarking = {p3},
+	acceptingPlaces = {p1 p2 p3},
+	finitePlaces = {p1 p2 p3}
+);
+
+assert(rabinIsEmpty(totalDeterministicOneToken));
+
+
+RabinPetriNet FiniteAlwaysSameMarking = (
+	alphabet = {a b c},
+	places = {p1 p2},
+	transitions = { ({p1 p2} a {p1 p2}) ({p1} b {p1})	({p2} c {p2}) ({p1 p2} a {p1 p2}) ({p1 p2} b {p1 p2}) ({p1 p2} c {p1 p2}) ({p1 p2} a {p1 p2}) ({p1 p2} b {p1 p2}) ({p1 p2} c {p1 p2})},
+	initialMarking = {p1 p2},
+	acceptingPlaces = {p1},
+	finitePlaces = {p1 p2}
+);
+
+assert(rabinIsEmpty(FiniteAlwaysSameMarking));
+
+RabinPetriNet RabinBranchingToAccepting = (
+	alphabet = {a b c},
+	places = {start p1 p2 p3 p4 p5 p6},
+	transitions = { ({start} a {p1}) ({start} a {p2}) ({p1} a {p3}) ({p2} b {p4})	({p3} c {p5}) ({p3} a {p4}) ({p4} b {p6}) ({p4} c {p5}) ({p5} a {p1}) ({p6} b {p2}) },
+	initialMarking = {start},
+	acceptingPlaces = {p4},
+	finitePlaces = {p6 p2}
+);
+
+assert(rabinIsEmpty(RabinBranchingToAccepting));

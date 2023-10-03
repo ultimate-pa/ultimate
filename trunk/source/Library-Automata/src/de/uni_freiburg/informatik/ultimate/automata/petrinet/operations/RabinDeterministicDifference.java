@@ -151,6 +151,8 @@ public class RabinDeterministicDifference<LETTER, PLACE>
 	@Override
 	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory)
 			throws AutomataLibraryException {
-		return true; // TODO: implement a valid check
+		return mBuchiAutomaton.getStates().size() * mPetriNet.getTransitions().size() == mDifferenceNet.getTransitions()
+				.size() && mBuchiAutomaton.getStates().stream().noneMatch(x -> mPetriNet.getPlaces().contains(x));
+		// TODO: implement a valid check
 	}
 }
