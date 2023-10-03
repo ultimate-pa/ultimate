@@ -28,10 +28,10 @@ assert(rabinIsEmpty(FiniteAlwaysSameMarking));
 RabinPetriNet RabinBranchingToAccepting = (
 	alphabet = {a b c},
 	places = {start p1 p2 p3 p4 p5 p6},
-	transitions = { ({start} a {p1}) ({start} a {p2}) ({p1} a {p3}) ({p2} b {p4})	({p3} c {p5}) ({p3} a {p4}) ({p4} b {p6}) ({p4} c {p5}) ({p5} a {p1}) ({p6} b {p2}) },
+	transitions = { ({start} a {p1}) ({start} a {p2}) ({p1} a {p3}) ({p2} b {p4})	({p3} c {p5}) ({p3} a {p4}) ({p4} b {p6}) ({p4} c {p5}) ({p5} a {p1}) ({p6} b {p2}) ({p5} a {p6})},
 	initialMarking = {start},
-	acceptingPlaces = {p4},
-	finitePlaces = {p6 p2}
+	acceptingPlaces = {p5},
+	finitePlaces = {p1 p3}
 );
 
-assert(rabinIsEmpty(RabinBranchingToAccepting));
+assert(!rabinIsEmpty(RabinBranchingToAccepting));
