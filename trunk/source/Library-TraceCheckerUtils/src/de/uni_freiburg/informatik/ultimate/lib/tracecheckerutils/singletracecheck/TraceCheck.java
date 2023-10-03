@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
 /**
  * Check if a trace fulfills a specification. Provides an execution (that violates the specification) if the check was
@@ -470,8 +471,16 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 						if (indexedVar.toStringDirect().contains("nondet") && firstRepresentatives) {
 							assert indexedRepresentatives.entrySet().size() == 2;
 							// TODO Not sure if save, but by far the best solution
-							testV.addValueAssignment(valueT, index); // Only if nondetINT!!}
-							firstRepresentatives = false;
+
+							if (rpeb.mTrace.asList().get(index) instanceof StatementSequence) {
+								final StatementSequence stsq = (StatementSequence) rpeb.mTrace.asList().get(index);
+								final String type = testV.getNonDetTypeFromName(stsq.getPayload().toString());
+								testV.addValueAssignment(valueT, index, type); // Only if nondetINT!!}
+								firstRepresentatives = false;
+							} else {
+								throw new UnsupportedOperationException("Unexpected Statement");
+							}
+
 						}
 
 					}

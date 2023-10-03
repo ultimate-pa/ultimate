@@ -825,11 +825,47 @@ public class CExpressionTranslator {
 			resultBuilder.addAllExceptLrValue(opCondition, opPositive, opNegative);
 			if (resultCType.isVoidType()) {
 				// result type is void the value is not assigned
+				// TODO do we have to do sth here for test generation?
 			} else {
-				final Expression ite =
-						ExpressionFactory.constructIfThenElseExpression(loc, opCondition.getLrValue().getValue(),
-								opPositive.getLrValue().getValue(), opNegative.getLrValue().getValue());
-				resultBuilder.setLrValue(new RValue(ite, resultCType));
+				if (mTestGenerationBranchCoverage) {
+					// void reach_error() { ((void) sizeof ((0) ? 1 : 0), __extension__ ({ if (0) ; else __assert_fail
+					// ("0", "knuth.c", 7, __extension__ __PRETTY_FUNCTION__); })); }
+					final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
+
+					final Statement assertFalseThen = new AssertStatement(loc, opCondition.getLrValue().getValue());
+					final TestGoalAnnotation tg1 = new TestGoalAnnotation(mTestGoalCount);
+					mTestGoalCount += 1;
+
+					tg1.annotate(assertFalseThen);
+					chk.annotate(assertFalseThen);
+					resultBuilder.addStatement(assertFalseThen);
+					Expression negated = null;
+					if (opCondition.getLrValue().isBoogieBool()) {
+						// in Boogie already represented by bool, we only negate
+						negated = ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG,
+								opCondition.getLrValue().getValue());
+					} else {
+						throw new IllegalArgumentException("TODO other than BoogieBool");
+					}
+					final Statement assertFalseElse = new AssertStatement(loc, negated);
+
+					final TestGoalAnnotation tg2 = new TestGoalAnnotation(mTestGoalCount);
+					mTestGoalCount += 1;
+					tg2.annotate(assertFalseElse);
+					chk.annotate(assertFalseElse);
+					resultBuilder.addStatement(assertFalseElse);
+
+					final Expression ite =
+							ExpressionFactory.constructIfThenElseExpression(loc, opCondition.getLrValue().getValue(),
+									opPositive.getLrValue().getValue(), opNegative.getLrValue().getValue());
+					resultBuilder.setLrValue(new RValue(ite, resultCType));
+				} else {
+
+					final Expression ite =
+							ExpressionFactory.constructIfThenElseExpression(loc, opCondition.getLrValue().getValue(),
+									opPositive.getLrValue().getValue(), opNegative.getLrValue().getValue());
+					resultBuilder.setLrValue(new RValue(ite, resultCType));
+				}
 			}
 		} else {
 			// Second or third operand has side-effects, we have to translate to an

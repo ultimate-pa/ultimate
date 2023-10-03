@@ -1689,7 +1689,7 @@ public class CHandler {
 		final List<Overapprox> overappr = new ArrayList<>();
 		// final Map<VariableDeclaration, ILocation> emptyAuxVars = new
 		// LinkedHashMap<>();
-
+		// Hier schon test goal id erhöhen??
 		ExpressionResult condResult = (ExpressionResult) main.dispatch(node.getConditionExpression());
 		condResult = mExprResultTransformer.transformSwitchRexIntToBool(condResult, loc, node);
 		final RValue cond = (RValue) condResult.getLrValue();
@@ -1698,6 +1698,7 @@ public class CHandler {
 		overappr.addAll(condResult.getOverapprs());
 		final List<HavocStatement> havocs = CTranslationUtil.createHavocsForAuxVars(condResult.getAuxVars());
 
+		// hier recursion!!!s
 		final Result thenResult = main.dispatch(node.getThenClause());
 		final List<Statement> thenStmt = new ArrayList<>();
 		thenStmt.addAll(havocs);
@@ -1754,10 +1755,10 @@ public class CHandler {
 					new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 			final TestGoalAnnotation tg1 = new TestGoalAnnotation(mTestGoalCount);
 			mTestGoalCount += 1;
-			thenArray.add(assertFalseThen);
-			thenArray.addAll(thenStmt);
 			tg1.annotate(assertFalseThen);
 			chk.annotate(assertFalseThen);
+			thenArray.add(assertFalseThen);
+			thenArray.addAll(thenStmt);
 
 			final Statement assertFalseElse =
 					new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
@@ -3690,26 +3691,22 @@ public class CHandler {
 			final ArrayList<Statement> elseArray = new ArrayList<Statement>();
 			final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
 
-			final ILocation loc1 = mLocationFactory.createCLocation(node);
 			final Statement assertFalseThen =
-					new AssertStatement(loc1, ExpressionFactory.createBooleanLiteral(loc1, false));
+					new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 			final TestGoalAnnotation tg1 = new TestGoalAnnotation(mTestGoalCount);
-			// assertFalseThen.getPayload().getAnnotations().put("TEST_GOAL_ANNOTATION",
-			// tg1);
+
 			mTestGoalCount += 1;
-			thenArray.add(assertFalseThen);
-			thenArray.addAll(thenStmt);
 			tg1.annotate(assertFalseThen);
 			chk.annotate(assertFalseThen);
+			thenArray.add(assertFalseThen);
+			thenArray.addAll(thenStmt);
 
-			final ILocation loc2 = mLocationFactory.createCLocation(node);
 			final Statement assertFalseElse =
-					new AssertStatement(loc2, ExpressionFactory.createBooleanLiteral(loc2, false));
+					new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 
 			final TestGoalAnnotation tg2 = new TestGoalAnnotation(mTestGoalCount);
 			mTestGoalCount += 1;
-			// assertFalseElse.getPayload().getAnnotations().put("TEST_GOAL_ANNOTATION",
-			// tg2);
+
 			tg2.annotate(assertFalseElse);
 			chk.annotate(assertFalseElse);
 			elseArray.add(assertFalseElse);

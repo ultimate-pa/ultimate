@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletraceche
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -47,7 +48,7 @@ public class TestExporter {
 	 */
 	public void exportTests(final TestVector testV, final int i, final boolean allInOneFile) throws Exception {
 
-		final FileOutputStream output;
+		FileOutputStream output;
 		final String name = "testcase" + i;
 		final boolean noDirectories = false;
 		final boolean allInOneDirecotry = true;
@@ -69,10 +70,14 @@ public class TestExporter {
 				output = new FileOutputStream("testsuites/" + name + ".xml");
 			}
 		}
-		writeXml(createXML(testV), output); // TODO Setting
+		writeXml(createXML(testV.values), output);
+		if (testV.need64Bit) {
+			output = new FileOutputStream("test-suite/" + name + "64bit" + ".xml");
+			writeXml(createXML(testV.values64Bit), output);
+		}
 	}
 
-	public static TestExporter getInstance() {
+	public static final TestExporter getInstance() {
 		if (instance == null) {
 			instance = new TestExporter();
 		}
@@ -80,7 +85,7 @@ public class TestExporter {
 	}
 
 	// TODO split exportation and creation of the testvectors. Means
-	private Document createXML(final TestVector tv) throws ParserConfigurationException {
+	final Document createXML(final LinkedList<String> inputs) throws ParserConfigurationException {
 
 		// instance of a DocumentBuilderFactory
 		final DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -94,58 +99,10 @@ public class TestExporter {
 		final Element rootEle = dom.createElement("testcase");
 
 		// create data elements and place them under root
-		String valueString = null;
-		for (final Term va : tv.values) {
-			if (va != null) {
-				switch (va.getSort().getName()) {
-				case SmtSortUtils.FLOATINGPOINT_SORT: {
-					assert va instanceof ApplicationTerm;
-					final ApplicationTerm cva = (ApplicationTerm) va;
 
-					String sign = cva.getParameters()[0].toStringDirect();
-					sign = sign.replaceAll("[^01]", "");
-
-					String exponent = cva.getParameters()[1].toStringDirect();
-					exponent = exponent.replaceAll("[^01]", "");
-
-					String significant = cva.getParameters()[2].toStringDirect();
-					significant = significant.replaceAll("[^01]", "");
-
-					final String floatAsBitString = sign + exponent + significant;
-					final int intBits = (int) Long.parseLong(floatAsBitString, 2);
-					final float myFloat = Float.intBitsToFloat(intBits);
-
-					valueString = myFloat + "";
-					break;
-				}
-				case SmtSortUtils.BITVECTOR_SORT: {
-					final Matcher m = Pattern.compile("\\(_\\sbv(\\d+)\\s\\d+\\)").matcher(va.toStringDirect());
-					valueString = m.group();
-					break;
-				}
-				case SmtSortUtils.INT_SORT: {
-					valueString = va.toStringDirect().replaceAll("[\\(\\)\\s]", "");
-					break;
-				}
-				case SmtSortUtils.REAL_SORT: {
-					valueString = va.toStringDirect().replaceAll("[\\(\\)\\s]", "");
-					break;
-				}
-				// case SmtSortUtils.BOOL_SORT: {
-				// if (SmtUtils.isTrueLiteral(va)) {
-				// valueString = "1";
-				// } else {
-				// valueString = "0";
-				// }
-				// break;
-				// }
-				default: {
-					throw new AssertionError("Unexpected Sort For Test Output");
-				}
-				}
-
+		for (final String valueString : inputs) {
+			if (valueString != null) {
 				final Element element = dom.createElement("input");
-
 				element.appendChild(dom.createTextNode(valueString));
 				rootEle.appendChild(element);
 			}
@@ -153,6 +110,7 @@ public class TestExporter {
 
 		dom.appendChild(rootEle);
 		return dom;
+
 	}
 
 	// write doc to output stream
@@ -195,30 +153,247 @@ public class TestExporter {
 
 class TestVector {
 
-	final LinkedList<Term> values = new LinkedList<>();
-	final LinkedList<Term> valuesWithNegativeIndices = new LinkedList<>();
-	final LinkedList<Term> valuesWithPositiveIndices = new LinkedList<>();
+	final LinkedList<String> values = new LinkedList<>();
+	final LinkedList<String> values64Bit = new LinkedList<>();
+	final LinkedList<String> valuesWithNegativeIndices = new LinkedList<>();
+	final LinkedList<String> valuesWithPositiveIndices = new LinkedList<>();
 	int countNonDets = 0;
+	boolean need64Bit = false;
 
-	public void addValueAssignment(final Term value, final int position) {
+	public void addValueAssignment(final Term value, final int position, final String type) {
 		if (position < 0) {
 			throw new UnsupportedOperationException("Negative Position fo NonDet in SSA");
 			// addNegativPositionToLinkedList(valuesWithNegativeIndices, position, value);
 		} else {
 			countNonDets += 1;
-			addToLinkedList(values, position, value);
+			addToLinkedList(position, value, type);
+			addToLinkedList64Bit(position, value, type);
 			// addToLinkedList(valuesWithPositiveIndices, position, value);
 		}
 
 	}
 
-	private void addToLinkedList(final LinkedList<Term> testVector, final Integer index, final Term t) {
-		if (testVector.size() < index) {
-			for (int i = testVector.size(); i < index; i = i + 1) {
-				testVector.add(null);
+	private void addToLinkedList64Bit(final Integer index, final Term valueTerm, final String type) {
+		if (values64Bit.size() < index) {
+			for (int i = values64Bit.size(); i < index; i = i + 1) {
+				values64Bit.add(null);
 			}
 		}
-		testVector.add(index, t);
+		String valueInRange = null;
+		switch (valueTerm.getSort().getName()) {
+		case SmtSortUtils.FLOATINGPOINT_SORT: {
+			assert valueTerm instanceof ApplicationTerm;
+			final ApplicationTerm cva = (ApplicationTerm) valueTerm;
+			String sign = cva.getParameters()[0].toStringDirect();
+			sign = sign.replaceAll("[^01]", "");
+
+			String exponent = cva.getParameters()[1].toStringDirect();
+			exponent = exponent.replaceAll("[^01]", "");
+
+			String significant = cva.getParameters()[2].toStringDirect();
+			significant = significant.replaceAll("[^01]", "");
+
+			final String floatAsBitString = sign + exponent + significant;
+			final int intBits = (int) Long.parseLong(floatAsBitString, 2);
+			final float myFloat = Float.intBitsToFloat(intBits);
+
+			valueInRange = myFloat + "";
+			break;
+		}
+		case SmtSortUtils.BITVECTOR_SORT: {
+			final Matcher m = Pattern.compile("\\(_\\sbv(\\d+)\\s\\d+\\)").matcher(valueTerm.toStringDirect());
+			m.find();
+			valueInRange = m.group(1);
+			if (type.equals("int") || type.equals("long")) { // if signed
+
+				if (SmtSortUtils.getBitvectorLength(valueTerm.getSort()) <= 64) {
+					System.out.println("Warning Signed Bit-Vec: " + valueTerm);
+					final BigInteger value = new BigInteger(valueInRange);
+					if (value.compareTo(new BigInteger("9223372036854775807")) == 1) {
+						// wenn 2147483648 dann -2,147,483,648
+						final BigInteger newValue = new BigInteger("-9223372036854775808")
+								.add((value.subtract(new BigInteger("9223372036854775808"))));
+
+						valueInRange = String.valueOf(newValue);
+					}
+				}
+			}
+			break;
+		}
+		case SmtSortUtils.REAL_SORT:
+		case SmtSortUtils.INT_SORT: {
+			valueInRange = valueTerm.toStringDirect().replaceAll("[\\(\\)\\s]", "");
+
+			break;
+		}
+
+		default: {
+			throw new AssertionError("Unexpected Sort For Test Output");
+		}
+		}
+
+		values64Bit.add(index, valueInRange);
+	}
+
+	private void addToLinkedList(final Integer index, final Term valueTerm, final String type) {
+		if (values.size() < index) {
+			for (int i = values.size(); i < index; i = i + 1) {
+				values.add(null);
+			}
+		}
+
+		String valueInRange = null;
+		switch (valueTerm.getSort().getName()) {
+		case SmtSortUtils.FLOATINGPOINT_SORT: {
+			assert valueTerm instanceof ApplicationTerm;
+			final ApplicationTerm cva = (ApplicationTerm) valueTerm;
+			String sign = cva.getParameters()[0].toStringDirect();
+			sign = sign.replaceAll("[^01]", "");
+
+			String exponent = cva.getParameters()[1].toStringDirect();
+			exponent = exponent.replaceAll("[^01]", "");
+
+			String significant = cva.getParameters()[2].toStringDirect();
+			significant = significant.replaceAll("[^01]", "");
+
+			final String floatAsBitString = sign + exponent + significant;
+			final int intBits = (int) Long.parseLong(floatAsBitString, 2);
+			final float myFloat = Float.intBitsToFloat(intBits);
+
+			valueInRange = myFloat + "";
+			break;
+		}
+		case SmtSortUtils.BITVECTOR_SORT: {
+			final Matcher m = Pattern.compile("\\(_\\sbv(\\d+)\\s\\d+\\)").matcher(valueTerm.toStringDirect());
+			m.find();
+			valueInRange = m.group(1);
+			if (type.equals("int") || type.equals("long")) { // if signed
+
+				if (SmtSortUtils.getBitvectorLength(valueTerm.getSort()) <= 32) {
+					System.out.println("Warning Signed Bit-Vec: " + valueTerm);
+					final BigInteger value = new BigInteger(valueInRange);
+					if (value.compareTo(new BigInteger("2147483647")) == 1) {
+						// wenn 2147483648 dann -2,147,483,648
+						final BigInteger newValue =
+								new BigInteger("-2147483648").add((value.subtract(new BigInteger("2147483648"))));
+
+						valueInRange = String.valueOf(newValue);
+					}
+				} else {
+					need64Bit = true;
+					System.out.println("TestCase: Unexpected Bit-Vec Length: "
+							+ SmtSortUtils.getBitvectorLength(valueTerm.getSort()));
+				}
+			}
+			break;
+		}
+		case SmtSortUtils.REAL_SORT:
+		case SmtSortUtils.INT_SORT: {
+			valueInRange = valueTerm.toStringDirect().replaceAll("[\\(\\)\\s]", "");
+			final BigInteger value = new BigInteger(valueInRange);
+			if (type == "int" || type == "long") {
+				if (value.compareTo(new BigInteger("2147483647")) == 1) {
+					need64Bit = true;
+				} else if (value.compareTo(new BigInteger("-2147483648")) == -1) {
+					need64Bit = true;
+				}
+			} else {
+				if (value.compareTo(new BigInteger("4294967295")) == 1) {
+					need64Bit = true;
+				}
+			}
+
+			switch (type) {
+			case "short": {
+				// -32,768 to 32,767
+
+				if (value.compareTo(new BigInteger("32767")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("32768"));
+					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(new BigInteger("-32768")) == -1) {
+					final BigInteger newValue = value.mod(new BigInteger("32768"));
+					valueInRange = String.valueOf(newValue);
+				}
+				break;
+			}
+			case "ushort": {
+				// 0 to 65,535
+				if (value.compareTo(new BigInteger("65535")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("65536"));
+					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(BigInteger.ZERO) == -1) {
+					final BigInteger newValue = new BigInteger("65536").add(value);
+					valueInRange = String.valueOf(newValue);
+				}
+				break;
+			}
+			case "int": {
+				// same as long?
+			}
+			case "long": {
+				if (value.compareTo(new BigInteger("2147483647")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("2147483648"));
+					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(new BigInteger("-2147483648")) == -1) {
+					final BigInteger newValue = value.mod(new BigInteger("2147483648"));
+					valueInRange = String.valueOf(newValue);
+				}
+				break;
+			}
+			case "uint": {
+
+			}
+			case "ulong": {
+				if (value.compareTo(new BigInteger("4294967295")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("4294967296"));
+					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(BigInteger.ZERO) == -1) {
+					final BigInteger newValue = new BigInteger("4294967295").add(value);
+					valueInRange = String.valueOf(newValue);
+				}
+				break;
+			}
+			case "ulonglong": {
+
+				// Cant be out of range?
+				break;
+			}
+			case "char": {
+				if (value.compareTo(new BigInteger("127")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("128"));
+					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(new BigInteger("-128")) == -1) {
+					final BigInteger newValue = value.mod(new BigInteger("128"));
+					valueInRange = String.valueOf(newValue);
+				}
+				break;
+			}
+			case "uchar": {
+				if (value.compareTo(new BigInteger("255")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("256"));
+					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(BigInteger.ZERO) == -1) {
+					final BigInteger newValue = new BigInteger("256").add(value);
+					valueInRange = String.valueOf(newValue);
+				}
+				break;
+			}
+			default:
+				// TODO short, double etc. float nicht
+				System.out.println("TestCase: Unexpected Type Warning");
+			}
+			break;
+		}
+
+		default: {
+			throw new AssertionError("Unexpected Sort For Test Output");
+		}
+		}
+		if (!valueInRange.equals(valueTerm.toStringDirect().replaceAll("[\\(\\)\\s]", ""))) {
+			System.out.println("TestCase: Warning Changed Export Value to fit in bounds: " + type);
+		}
+		values.add(index, valueInRange);
+
 	}
 
 	private void addNegativPositionToLinkedList(final LinkedList<Term> testVector, final Integer index, final Term t) {
@@ -233,5 +408,14 @@ class TestVector {
 	public void addValuesWithNegativeIndex() {
 		values.addAll(valuesWithNegativeIndices);
 		values.addAll(valuesWithPositiveIndices);
+	}
+
+	public String getNonDetTypeFromName(final String payload) {
+		final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)").matcher(payload);
+		m.find();
+		System.out.println(m.group(1));
+
+		return m.group(1);
+
 	}
 }
