@@ -252,13 +252,14 @@ public class JordanLoopAcceleration {
 				final Term value = entry.getValue().getValues().get(i);
 				final Collection<ArrayStore> stores = ArrayStore.extractStores(value, true);
 				if (!stores.isEmpty()) {
-					throw new UnsupportedOperationException("Written value contains store");
+					throw new UnsupportedOperationException("Value contains some stores");
 				}
 
 				final List<MultiDimensionalSelect> selects = MultiDimensionalSelect.extractSelectDeep(value);
 				if (selects.size() > 1) {
 					// FIXME 20230606 Matthias: Occurs sedomly, do not support by now
-					throw new UnsupportedOperationException("Written value contains several selects");
+					throw new UnsupportedOperationException(
+							String.format("Written value contains %s selects: %s", selects.size(), selects));
 				}
 				if (selects.size() == 1) {
 					final MultiDimensionalSelect mds = selects.get(0);
