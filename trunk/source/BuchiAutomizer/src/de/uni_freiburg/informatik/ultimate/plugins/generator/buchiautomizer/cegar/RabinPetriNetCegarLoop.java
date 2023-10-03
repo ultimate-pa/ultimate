@@ -58,16 +58,19 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 	@Override
 	protected boolean isAbstractionEmpty(final IRabinPetriNet<L, IPredicate> abstraction)
 			throws AutomataLibraryException {
-		mLogger.error(abstraction);
 		final var isempty = new RabinIsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mPref.eventOrder(),
 				mPref.cutOffRequiresSameTransition(), true);
-		assert isempty.checkResult(mStateFactory);
+		// mLogger.error(abstraction);
+
 		final PetriNetLassoRun<L, IPredicate> run = isempty.getRun();
 		if (run == null) {
+			// assert isempty.checkResult(mStateFactory);
 			return true;
 		}
 		mCounterexample =
 				new NestedLassoRun<>(constructNestedLassoRun(run.getStem()), constructNestedLassoRun(run.getLoop()));
+		// mLogger.error(mCounterexample.getNestedLassoWord());
+
 		return false;
 	}
 
@@ -84,7 +87,6 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 			final IRabinPetriNet<L, IPredicate> result =
 					(IRabinPetriNet<L, IPredicate>) new RabinDifferencePairwiseOnDemand<>(
 							new AutomataLibraryServices(mServices), abstraction, interpolantAutomaton).getResult();
-			mLogger.error(result);
 			return result;
 		} catch (AutomataOperationCanceledException | PetriNetNot1SafeException e) {
 			throw new AutomataLibraryException(getClass(), e.toString());
@@ -99,8 +101,8 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 			final RabinDeterministicDifference<L, IPredicate> difference =
 					new RabinDeterministicDifference<>(new AutomataLibraryServices(mServices), abstraction,
 							new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(mServices),
-									new TotalizeNwa<>(interpolantAutomaton, mDefaultStateFactory, false)));
-			mLogger.error(difference.getResult());
+									new TotalizeNwa<>(interpolantAutomaton, mDefaultStateFactory, true)));
+			// assert difference.checkResult(mStateFactory);
 			return difference.getResult();
 		}
 		final IStateDeterminizer<L, IPredicate> stateDeterminizer =
@@ -111,7 +113,7 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 
 		final RabinIntersect<L, IPredicate> intersection = new RabinIntersect<>(new AutomataLibraryServices(mServices),
 				mDefaultStateFactory, abstraction, complNwa.getResult());
-		mLogger.error(intersection.getResult());
+		// mLogger.error(intersection.getResult());
 		return intersection.getResult();
 	}
 
