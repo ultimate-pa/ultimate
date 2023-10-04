@@ -22,20 +22,20 @@ CodeForBehavior ::=
 
 CodeStatement ::=
  	{ Assertion }
- 		formula : Expression
+		formula : Expression
  	| { CodeInvariant }
- 		formula : Expression
+		formula : Expression
  	| { GhostDeclaration }
- 		type : ACSLType
-	    identifier : String
-	    expr : Expression
+		type : ACSLType
+		identifier : String
+		expr : Expression
 	| { GlobalGhostDeclaration }
- 		type : ACSLType
-	    identifier : String
-	    expr : Expression
+		type : ACSLType
+		identifier : String
+		expr : Expression
 	| { GhostUpdate }
-	    identifier : String
-	    expr : Expression
+		identifier : String
+		expr : Expression
  	;
 
 /**
