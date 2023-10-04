@@ -128,7 +128,7 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 				reportUnproveableResult(errorLoc, pe, localResult.getUnprovabilityReasons());
 				break;
 			case TEST_GENERATION:
-
+				// reportCounterexampleResult(errorLoc, localResult.getProgramExecution());
 				reportTestGenerationResult(errorLoc, localResult.getProgramExecution());
 				break;
 			default:

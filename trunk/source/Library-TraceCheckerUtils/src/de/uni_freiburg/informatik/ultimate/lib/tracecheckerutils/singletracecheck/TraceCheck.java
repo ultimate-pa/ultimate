@@ -461,28 +461,35 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			final IProgramVar bv = entry.getKey();
 			final Map<Integer, Term> indexedRepresentatives = entry.getValue();
 			if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
-				boolean firstRepresentatives = true;
+				boolean evenRepresentative = true;
 				for (final var representative : indexedRepresentatives.entrySet()) {
+
 					final Integer index = representative.getKey();
 					final Term indexedVar = representative.getValue();
 					final Term valueT = funGetValue.apply(indexedVar);
 					if (indexedVar instanceof ApplicationTerm) {
 						assert ((ApplicationTerm) indexedVar).getParameters().length == 0;
-						if (indexedVar.toStringDirect().contains("nondet") && firstRepresentatives) {
-							assert indexedRepresentatives.entrySet().size() == 2;
-							// TODO Not sure if save, but by far the best solution
+						if (indexedVar.toStringDirect().contains("nondet")) {
+							if (evenRepresentative) {
+								if (index >= 0) {
 
-							if (rpeb.mTrace.asList().get(index) instanceof StatementSequence) {
-								final StatementSequence stsq = (StatementSequence) rpeb.mTrace.asList().get(index);
-								final String type = testV.getNonDetTypeFromName(stsq.getPayload().toString());
-								testV.addValueAssignment(valueT, index, type); // Only if nondetINT!!}
-								firstRepresentatives = false;
+									assert indexedRepresentatives.entrySet().size() == 2;
+									// TODO Not sure if save, but by far the best solution
+									if (rpeb.mTrace.asList().get(index) instanceof StatementSequence) {
+										final StatementSequence stsq =
+												(StatementSequence) rpeb.mTrace.asList().get(index);
+										if (stsq.getPayload().toString().contains("nondet")) {
+											final String type =
+													testV.getNonDetTypeFromName(stsq.getPayload().toString());
+											testV.addValueAssignment(valueT, index, type); // Only if nondetINT!!}
+										}
+									}
+								}
+								evenRepresentative = !evenRepresentative;
 							} else {
-								throw new UnsupportedOperationException("Unexpected Statement");
+								evenRepresentative = !evenRepresentative;
 							}
-
 						}
-
 					}
 					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
 

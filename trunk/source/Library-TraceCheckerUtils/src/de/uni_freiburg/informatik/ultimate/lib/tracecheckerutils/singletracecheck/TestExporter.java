@@ -287,11 +287,17 @@ class TestVector {
 			}
 			break;
 		}
-		case SmtSortUtils.REAL_SORT:
+		case SmtSortUtils.REAL_SORT: {
+			if (type.equals("float") || type.equals("double")) {
+				valueInRange = valueTerm.toStringDirect();
+				System.out.println("TestCase: Unexpected Test Input Type: " + type);
+				break;
+			}
+		}
 		case SmtSortUtils.INT_SORT: {
 			valueInRange = valueTerm.toStringDirect().replaceAll("[\\(\\)\\s]", "");
 			final BigInteger value = new BigInteger(valueInRange);
-			if (type == "int" || type == "long") {
+			if (type.equals("int") || type.equals("long")) {
 				if (value.compareTo(new BigInteger("2147483647")) == 1) {
 					need64Bit = true;
 				} else if (value.compareTo(new BigInteger("-2147483648")) == -1) {
@@ -411,6 +417,7 @@ class TestVector {
 	}
 
 	public String getNonDetTypeFromName(final String payload) {
+		System.out.println(payload);
 		final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)").matcher(payload);
 		m.find();
 		System.out.println(m.group(1));
