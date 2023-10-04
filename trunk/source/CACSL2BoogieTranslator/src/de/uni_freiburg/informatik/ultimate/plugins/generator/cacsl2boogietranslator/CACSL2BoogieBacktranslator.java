@@ -78,7 +78,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
@@ -153,6 +152,7 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	private static final String UNFINISHED_BACKTRANSLATION = "Unfinished Backtranslation";
+	private static final boolean ALLOW_ACSL_FEATURES = false;
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -1046,10 +1046,6 @@ public class CACSL2BoogieBacktranslator
 			return translateBitvecLiteral(cType, (BitvecLiteral) expression, hook);
 		} else if (expression instanceof FunctionApplication) {
 			return translateFunctionApplication(cType, (FunctionApplication) expression);
-		} else if (expression instanceof QuantifierExpression) {
-			// TODO: For now just overapproximate quantifiers by true
-			mLogger.warn("Quantifier found, overapproximating it with true: " + BoogiePrettyPrinter.print(expression));
-			return translateBooleanLiteral(new BooleanLiteral(null, true));
 		} else if (expression instanceof BitVectorAccessExpression) {
 			final BitVectorAccessExpression bva = (BitVectorAccessExpression) expression;
 			final IASTExpression bv = translateExpression(bva.getBitvec(), cType, hook);
@@ -1062,6 +1058,7 @@ public class CACSL2BoogieBacktranslator
 		} else if (expression instanceof ArrayAccessExpression) {
 			return translateArrayAccessExpression((ArrayAccessExpression) expression, cType, hook);
 		}
+		// TODO: Translate quantifiers if ALLOW_ACSL_FEATURES=true
 		reportUnfinishedBacktranslation(
 				String.format("Cannot backtranslate expression %s, type %s is not supported yet",
 						BoogiePrettyPrinter.print(expression), expression.getClass().getSimpleName()));
@@ -1082,6 +1079,9 @@ public class CACSL2BoogieBacktranslator
 			op = "!";
 			break;
 		case OLD:
+			if (!ALLOW_ACSL_FEATURES) {
+				return null;
+			}
 			op = "\\old";
 			break;
 		default:
@@ -1100,9 +1100,6 @@ public class CACSL2BoogieBacktranslator
 			final IASTNode hook) {
 		final IASTExpression lhs = translateExpression(expression.getLeft(), cType, hook);
 		final IASTExpression rhs = translateExpression(expression.getRight(), cType, hook);
-		if (lhs == null || rhs == null) {
-			return null;
-		}
 		final String result;
 		switch (expression.getOperator()) {
 		case ARITHDIV:
@@ -1143,12 +1140,22 @@ public class CACSL2BoogieBacktranslator
 		case COMPPO:
 			return null;
 		case LOGICAND:
+			// TODO: This is only an overapproximation, if the expression is in NNF, can we assume this?
+			if (lhs == null) {
+				return rhs;
+			}
+			if (rhs == null) {
+				return lhs;
+			}
 			result = String.format("(%s && %s)", lhs, rhs);
 			break;
 		case LOGICIFF:
 			result = String.format("(%s == %s)", lhs, rhs);
 			break;
 		case LOGICIMPLIES:
+			if (lhs == null) {
+				return rhs;
+			}
 			result = String.format("(!%s || %s)", lhs, rhs);
 			break;
 		case LOGICOR:
@@ -1156,6 +1163,9 @@ public class CACSL2BoogieBacktranslator
 			break;
 		default:
 			throw new AssertionError("Unknown operator " + expression.getOperator());
+		}
+		if (lhs == null || rhs == null) {
+			return null;
 		}
 		return new FakeExpression(result);
 	}
@@ -1347,6 +1357,18 @@ public class CACSL2BoogieBacktranslator
 
 	private IASTExpression translateArrayAccessExpression(final ArrayAccessExpression access, final CType ctype,
 			final IASTNode hook) {
+		if (access.getArray() instanceof IdentifierExpression) {
+			final String id = ((IdentifierExpression) access.getArray()).getIdentifier();
+			if (SFO.LENGTH.equals(id)) {
+				reportUnfinishedBacktranslation("Cannot backtranslate " + id);
+				return null;
+			}
+			if (SFO.VALID.equals(id)) {
+				if (!ALLOW_ACSL_FEATURES) {
+					return null;
+				}
+			}
+		}
 		final IASTExpression offset = tryToExtractOffset(access);
 		if (offset != null) {
 			return new FakeExpression(String.format("*%s", offset));
@@ -1459,6 +1481,7 @@ public class CACSL2BoogieBacktranslator
 	private TranslatedVariable translateBoogieIdentifier(final IdentifierExpression expr, final String boogieId) {
 		final TranslatedVariable result;
 		if (boogieId.equals(SFO.RES)) {
+			// TODO: Should we only do this for ACSL?
 			result = new TranslatedVariable("\\result", null, VariableType.RESULT);
 		} else if (mMapping.hasVar(boogieId, expr.getDeclarationInformation())) {
 			final Pair<String, CType> pair = mMapping.getVar(boogieId, expr.getDeclarationInformation());
@@ -1472,6 +1495,7 @@ public class CACSL2BoogieBacktranslator
 			// the best
 			result = new TranslatedVariable(getRealName(expr, boogieId), null, VariableType.AUX);
 		} else if (boogieId.equals(SFO.VALID)) {
+			// TODO: Is this still necessary here or do we handle this in translateArrayAccessExpression?
 			result = new TranslatedVariable("\\valid", null, VariableType.VALID);
 		} else if (boogieId.endsWith(SFO.POINTER_BASE)) {
 			// if its base or offset, try again with them stripped
@@ -1483,6 +1507,7 @@ public class CACSL2BoogieBacktranslator
 					boogieId.substring(0, boogieId.length() - SFO.POINTER_OFFSET.length() - 1));
 			result = new TranslatedVariable(offset.getName(), offset.getCType(), VariableType.POINTER_OFFSET);
 		} else {
+			// TODO: Return null here instead?
 			result = new TranslatedVariable(boogieId, null, VariableType.UNKNOWN);
 			reportUnfinishedBacktranslation("unknown boogie variable " + boogieId);
 		}
