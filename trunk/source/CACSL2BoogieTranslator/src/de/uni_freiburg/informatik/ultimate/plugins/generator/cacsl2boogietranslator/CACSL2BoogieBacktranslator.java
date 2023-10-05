@@ -964,7 +964,7 @@ public class CACSL2BoogieBacktranslator
 
 	private IASTExpression translateExpression(final Expression expression, final CType cType, final IASTNode hook) {
 		if (expression instanceof UnaryExpression) {
-			return handleUnaryExpression((UnaryExpression) expression, cType);
+			return translateUnaryExpression((UnaryExpression) expression, cType);
 		}
 
 		if (expression instanceof TemporaryPointerExpression) {
@@ -1065,7 +1065,8 @@ public class CACSL2BoogieBacktranslator
 		return null;
 	}
 
-	private IASTExpression handleUnaryExpression(final UnaryExpression expr, final CType cType) throws AssertionError {
+	private IASTExpression translateUnaryExpression(final UnaryExpression expr, final CType cType)
+			throws AssertionError {
 		final IASTExpression innerTrans = translateExpression(expr.getExpr());
 		if (innerTrans == null) {
 			return null;
@@ -1215,21 +1216,17 @@ public class CACSL2BoogieBacktranslator
 			return new FakeExpression(String.format("(%s << %s)", translatedArguments[0], translatedArguments[1]));
 		case "bvashr":
 			return new FakeExpression(String.format("(%s >> %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvslt":
 		case "bvult":
 			return new FakeExpression(String.format("(%s < %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvsle":
 		case "bvule":
 			return new FakeExpression(String.format("(%s <= %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvsgt":
 		case "bvugt":
 			return new FakeExpression(String.format("(%s > %s)", translatedArguments[0], translatedArguments[1]));
-		case "bvuge":
-			return new FakeExpression(String.format("(%s >= %s)", translatedArguments[0], translatedArguments[1]));
-		case "bvslt":
-			return new FakeExpression(String.format("(%s < %s)", translatedArguments[0], translatedArguments[1]));
-		case "bvsle":
-			return new FakeExpression(String.format("(%s <= %s)", translatedArguments[0], translatedArguments[1]));
-		case "bvsgt":
-			return new FakeExpression(String.format("(%s > %s)", translatedArguments[0], translatedArguments[1]));
 		case "bvsge":
+		case "bvuge":
 			return new FakeExpression(String.format("(%s >= %s)", translatedArguments[0], translatedArguments[1]));
 		case "bvneg":
 			return new FakeExpression(String.format("-(%s)", translatedArguments[0]));
@@ -1489,9 +1486,9 @@ public class CACSL2BoogieBacktranslator
 		BigInteger decimalValue = new BigInteger(value);
 
 		// this is only the isSigned case
-		final BigInteger maxRepresentablePositiveValuePlusOne = new BigInteger("2").pow(lit.getLength() - 1);
+		final BigInteger maxRepresentablePositiveValuePlusOne = BigInteger.TWO.pow(lit.getLength() - 1);
 		if (decimalValue.compareTo(maxRepresentablePositiveValuePlusOne) >= 0) {
-			final BigInteger numberOfValues = new BigInteger("2").pow(lit.getLength());
+			final BigInteger numberOfValues = BigInteger.TWO.pow(lit.getLength());
 			decimalValue = decimalValue.subtract(numberOfValues);
 		}
 		return String.valueOf(decimalValue);
