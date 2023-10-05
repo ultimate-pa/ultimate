@@ -1364,6 +1364,11 @@ public class CACSL2BoogieBacktranslator
 				if (!ALLOW_ACSL_FEATURES) {
 					return null;
 				}
+				final IASTExpression argument = translateExpression(access.getIndices()[0], ctype, hook);
+				if (argument == null) {
+					return null;
+				}
+				return new FakeExpression(String.format("\\valid(%s)", argument));
 			}
 		}
 		final IASTExpression deref = tryToExtractPointerDereference(access);
