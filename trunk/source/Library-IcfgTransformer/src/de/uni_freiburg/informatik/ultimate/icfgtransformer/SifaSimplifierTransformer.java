@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -29,6 +30,7 @@ public class SifaSimplifierTransformer implements ITransformulaTransformer {
 	// TODO: What is a reasonable timeout? And what to do if we exceed it?
 	private static final long SIFA_TIMEOUT = 10 * 1000;
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.POLY_PAC;
+	private static final String SKIP = "Skipping the transformation.";
 
 	private final IUltimateServiceProvider mServices;
 	private Map<IcfgLocation, IPredicate> mSifaPredicates;
@@ -42,12 +44,19 @@ public class SifaSimplifierTransformer implements ITransformulaTransformer {
 	@Override
 	public void preprocessIcfg(final IIcfg<?> icfg) {
 		final ILogger logger = mServices.getLoggingService().getLogger(getClass());
-		// TODO: Can we reduce this number of locations?
 		final Set<IcfgLocation> locations =
 				icfg.getProgramPoints().values().stream().flatMap(x -> x.values().stream()).collect(Collectors.toSet());
-		final SifaComponents sifa = new SifaBuilder(mServices, logger).construct((IIcfg<IcfgLocation>) icfg,
-				mServices.getProgressMonitorService().getChildTimer(SIFA_TIMEOUT), locations);
-		mSifaPredicates = sifa.getIcfgInterpreter().interpret();
+		try {
+			final SifaComponents sifa = new SifaBuilder(mServices, logger).construct((IIcfg<IcfgLocation>) icfg,
+					mServices.getProgressMonitorService().getChildTimer(SIFA_TIMEOUT), locations);
+			mSifaPredicates = sifa.getIcfgInterpreter().interpret();
+		} catch (final IllegalArgumentException e) {
+			logger.warn("SIFA: %s %s", e.getMessage(), SKIP);
+			mSifaPredicates = Map.of();
+		} catch (final ToolchainCanceledException e) {
+			logger.warn("Timeout in SIFA. " + SKIP);
+			mSifaPredicates = Map.of();
+		}
 	}
 
 	@Override

@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
@@ -85,6 +86,9 @@ public class SifaBuilder {
 
 	public SifaComponents construct(final IIcfg<IcfgLocation> icfg, final IProgressAwareTimer timer,
 			final Collection<IcfgLocation> locationsOfInterest) {
+		if (IcfgUtils.isConcurrent(icfg)) {
+			throw new IllegalArgumentException("Concurrent programs are not supported yet.");
+		}
 		final SifaStats stats = new SifaStats();
 		final SymbolicTools tools = constructTools(stats, icfg);
 		final IDomain domain = constructStatsDomain(stats, tools, timer);
