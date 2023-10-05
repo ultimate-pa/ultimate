@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability.AuxiliaryStatementContainer;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.FakeBoogieVar;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
@@ -126,10 +127,6 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 	@Override
 	public Set<String> getConstVars() {
 		return mConstVars;
-	}
-
-	public Set<String> getAuxVars() {
-		return mAuxVars;
 	}
 
 	@Override
@@ -365,6 +362,18 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 	@Override
 	public UnionFind<String> getVariableEquivalenceClasses() {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Set<String> getAuxVars() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public AuxiliaryStatementContainer getAuxStatementContainer() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.PEATransformerMode;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.Req2CauseTrackingPeaTransformer;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.Req2ModifySymbolTablePeaTransformer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.ReqTestResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
 
@@ -55,6 +56,10 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		if (mode == PEATransformerMode.REQ_CHECK) {
 			return generateReqCheckBoogie(patterns);
 		}
+		// For checks with additional parameters that must be passed for execution.
+		if (mode == PEATransformerMode.REQ_PARAM_CHECK) {
+			return generateReqParamCheckBoogie(patterns);
+		}
 		if (mode == PEATransformerMode.REQ_TEST) {
 			return generateReqTestBoogie(patterns);
 		}
@@ -64,6 +69,22 @@ public class PEAtoBoogieObserver extends BaseObserver {
 	private IElement generateReqCheckBoogie(final List<PatternType<?>> patterns) {
 		final Req2BoogieTranslator translator =
 				new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.emptyList());
+		final VerificationResultTransformer reporter =
+				new VerificationResultTransformer(mLogger, mServices, translator.getReqSymbolTable());
+		// register CEX transformer that removes program executions from CEX.
+		final UnaryOperator<IResult> resultTransformer = reporter::convertTraceAbstractionResult;
+		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
+		return translator.getUnit();
+	}
+
+	// For checks with additional parameters that must be passed for execution.
+	private IElement generateReqParamCheckBoogie(final List<PatternType<?>> patterns) {
+		final Req2ModifySymbolTablePeaTransformer transformer =
+				new Req2ModifySymbolTablePeaTransformer(mServices, mLogger);
+
+		final Req2BoogieTranslator translator =
+				new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.singletonList(transformer));
+
 		final VerificationResultTransformer reporter =
 				new VerificationResultTransformer(mLogger, mServices, translator.getReqSymbolTable());
 		// register CEX transformer that removes program executions from CEX.

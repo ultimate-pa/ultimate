@@ -22,5 +22,6 @@ Require-Bundle: com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.lib.automata
 Export-Package: de.uni_freiburg.informatik.ultimate.pea2boogie,
  de.uni_freiburg.informatik.ultimate.pea2boogie.results,
+ de.uni_freiburg.informatik.ultimate.pea2boogie.staterecoverability,
  de.uni_freiburg.informatik.ultimate.pea2boogie.testgen
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.pea2boogie
