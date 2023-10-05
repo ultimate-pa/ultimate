@@ -50,7 +50,7 @@ public class SifaSimplifierTransformer implements ITransformulaTransformer {
 			final SifaComponents sifa = new SifaBuilder(mServices, logger).construct((IIcfg<IcfgLocation>) icfg,
 					mServices.getProgressMonitorService().getChildTimer(SIFA_TIMEOUT), locations);
 			mSifaPredicates = sifa.getIcfgInterpreter().interpret();
-		} catch (final IllegalArgumentException e) {
+		} catch (final UnsupportedOperationException e) {
 			logger.warn("SIFA: %s %s", e.getMessage(), SKIP);
 			mSifaPredicates = Map.of();
 		} catch (final ToolchainCanceledException e) {

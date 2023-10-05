@@ -129,7 +129,7 @@ public class CallGraph {
 		final Optional<List<String>> topologicalOrdering = new TopologicalSorter<>(mCalls::getImage)
 				.topologicalOrdering(callClosure(initialProceduresOfInterest()));
 		if (!topologicalOrdering.isPresent()) {
-			throw new IllegalArgumentException("Recursive programs are not supported.");
+			throw new UnsupportedOperationException("Recursive programs are not supported.");
 		}
 		mTopsortRelevant = topologicalOrdering.get();
 	}

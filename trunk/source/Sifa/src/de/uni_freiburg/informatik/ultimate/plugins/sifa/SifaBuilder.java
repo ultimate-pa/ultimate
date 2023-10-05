@@ -87,7 +87,7 @@ public class SifaBuilder {
 	public SifaComponents construct(final IIcfg<IcfgLocation> icfg, final IProgressAwareTimer timer,
 			final Collection<IcfgLocation> locationsOfInterest) {
 		if (IcfgUtils.isConcurrent(icfg)) {
-			throw new IllegalArgumentException("Concurrent programs are not supported yet.");
+			throw new UnsupportedOperationException("Concurrent programs are not supported yet.");
 		}
 		final SifaStats stats = new SifaStats();
 		final SymbolicTools tools = constructTools(stats, icfg);
