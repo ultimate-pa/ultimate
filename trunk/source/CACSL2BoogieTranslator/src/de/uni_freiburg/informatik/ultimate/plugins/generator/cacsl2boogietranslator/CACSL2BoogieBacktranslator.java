@@ -1369,9 +1369,9 @@ public class CACSL2BoogieBacktranslator
 				}
 			}
 		}
-		final IASTExpression offset = tryToExtractOffset(access);
-		if (offset != null) {
-			return new FakeExpression(String.format("*%s", offset));
+		final IASTExpression deref = tryToExtractPointerDereference(access);
+		if (deref != null) {
+			return deref;
 		}
 		final IASTExpression array = translateExpression(access.getArray(), ctype, hook);
 		if (array == null) {
@@ -1392,27 +1392,96 @@ public class CACSL2BoogieBacktranslator
 		return new FakeExpression(sb.toString());
 	}
 
-	private IASTExpression tryToExtractOffset(final ArrayAccessExpression access) {
+	private IASTExpression tryToExtractPointerDereference(final ArrayAccessExpression access) {
 		Expression array = null;
+		Expression base = null;
 		Expression offset = null;
 		if (access.getIndices().length == 2) {
 			array = access.getArray();
+			base = access.getIndices()[0];
 			offset = access.getIndices()[1];
 		}
 		if (access.getArray() instanceof ArrayAccessExpression && access.getIndices().length == 1) {
 			final ArrayAccessExpression subAccess = (ArrayAccessExpression) access.getArray();
 			if (subAccess.getIndices().length == 1) {
 				array = subAccess.getArray();
+				base = subAccess.getIndices()[0];
 				offset = access.getIndices()[0];
 			}
 		}
-		// TODO: Implement this for general expressions, requires probably CType
-		if (array != null && array instanceof IdentifierExpression
-				&& ((IdentifierExpression) array).getIdentifier().startsWith(SFO.MEMORY) && offset != null
-				&& offset instanceof IdentifierExpression) {
-			return translateExpression(offset);
+		if (array == null || !(array instanceof IdentifierExpression)
+				|| !((IdentifierExpression) array).getIdentifier().startsWith(SFO.MEMORY)) {
+			return null;
 		}
-		return null;
+		final BigInteger factor = tryToGetAdditionalFactor(base, offset);
+		if (factor == null) {
+			return null;
+		}
+		final IASTExpression baseTranslated = translateExpression(base);
+		if (factor.signum() > 0) {
+			return new FakeExpression(String.format("*(%s + %s)", baseTranslated, factor));
+		}
+		assert factor.signum() == 0;
+		return new FakeExpression("*" + baseTranslated);
+	}
+
+	private BigInteger tryToGetAdditionalFactor(final Expression base, final Expression offset) {
+		if (areMatchingBaseAndOffset(base, offset)) {
+			return BigInteger.ZERO;
+		}
+		Expression factorCandidate = null;
+		if (offset instanceof BinaryExpression) {
+			final BinaryExpression.Operator op = ((BinaryExpression) offset).getOperator();
+			if (op != BinaryExpression.Operator.ARITHPLUS) {
+				return null;
+			}
+			final Expression left = ((BinaryExpression) offset).getLeft();
+			final Expression right = ((BinaryExpression) offset).getRight();
+			if (areMatchingBaseAndOffset(base, left)) {
+				factorCandidate = right;
+			} else if (areMatchingBaseAndOffset(base, right)) {
+				factorCandidate = left;
+			}
+		}
+		if (offset instanceof FunctionApplication) {
+			final FunctionApplication function = (FunctionApplication) offset;
+			final var reversed = SFO.reverseBoogieFunctionName(function.getIdentifier());
+			if (reversed == null || !"bvadd".equals(reversed.getFirst())) {
+				return null;
+			}
+			final Expression left = function.getArguments()[0];
+			final Expression right = function.getArguments()[1];
+			if (areMatchingBaseAndOffset(base, left)) {
+				factorCandidate = right;
+			} else if (areMatchingBaseAndOffset(base, right)) {
+				factorCandidate = left;
+			}
+		}
+		final BigInteger extracted = mTypeSizes.extractIntegerValue(factorCandidate, mTypeSizes.getSizeT());
+		if (extracted == null) {
+			return null;
+		}
+		final CType type = translateIdentifierExpression((IdentifierExpression) base).getCType();
+		if (!(type instanceof CPointer)) {
+			return null;
+		}
+		final CType pointsTo = ((CPointer) type).getPointsToType();
+		if (!(pointsTo instanceof CPrimitive)) {
+			return null;
+		}
+		final Integer size = mTypeSizes.getSize(((CPrimitive) pointsTo).getType());
+		return extracted.divide(BigInteger.valueOf(size));
+	}
+
+	private boolean areMatchingBaseAndOffset(final Expression base, final Expression offset) {
+		if (!(base instanceof IdentifierExpression) || !(offset instanceof IdentifierExpression)) {
+			return false;
+		}
+		final TranslatedVariable translatedBase = translateIdentifierExpression((IdentifierExpression) base);
+		final TranslatedVariable translatedOffset = translateIdentifierExpression((IdentifierExpression) offset);
+		return translatedBase.getVarType() == VariableType.POINTER_BASE
+				&& translatedOffset.getVarType() == VariableType.POINTER_OFFSET
+				&& translatedBase.getName().equals(translatedOffset.getName());
 	}
 
 	private static String naiveBitvecLiteralValueExtraction(final BitvecLiteral lit) {
@@ -1731,6 +1800,10 @@ public class CACSL2BoogieBacktranslator
 
 		public CType getCType() {
 			return mCType;
+		}
+
+		public VariableType getVarType() {
+			return mVarType;
 		}
 
 		@Override
