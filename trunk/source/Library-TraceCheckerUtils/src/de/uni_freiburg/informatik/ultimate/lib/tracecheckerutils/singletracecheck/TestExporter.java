@@ -222,8 +222,82 @@ class TestVector {
 		}
 		case SmtSortUtils.REAL_SORT:
 		case SmtSortUtils.INT_SORT: {
-			valueInRange = valueTerm.toStringDirect().replaceAll("[\\(\\)\\s]", "");
 
+			valueInRange = valueTerm.toStringDirect().replaceAll("[\\(\\)\\s]", "");
+			final BigInteger value = new BigInteger(valueInRange);
+
+			switch (type) {
+			case "short": {
+				// -32,768 to 32,767
+				if (value.compareTo(new BigInteger("32767")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("32768"));
+					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(new BigInteger("-32768")) == -1) {
+					final BigInteger newValue = value.mod(new BigInteger("32768"));
+					valueInRange = String.valueOf(newValue.negate());
+				}
+				break;
+			}
+			case "ushort": {
+				// 0 to 65,535
+				final BigInteger newValue = value.mod(new BigInteger("65536"));
+				valueInRange = String.valueOf(newValue);
+
+				break;
+			}
+			case "int": {
+				if (value.compareTo(new BigInteger("2147483647")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("2147483648"));
+					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(new BigInteger("-2147483648")) == -1) {
+					final BigInteger newValue = value.mod(new BigInteger("2147483648"));
+					valueInRange = String.valueOf(newValue.negate());
+				}
+				break;
+			}
+			case "long": {
+				if (value.compareTo(new BigInteger("9223372036854775807")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("9223372036854775808"));
+					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(new BigInteger("-9223372036854775808")) == -1) {
+					final BigInteger newValue = value.mod(new BigInteger("9223372036854775808"));
+					valueInRange = String.valueOf(newValue.negate());
+				}
+				break;
+			}
+			case "uint": {
+				final BigInteger newValue = value.mod(new BigInteger("4294967296"));
+				valueInRange = String.valueOf(newValue);
+				break;
+			}
+			case "ulong": {
+				final BigInteger newValue = value.mod(new BigInteger("18446744073709551616"));
+				valueInRange = String.valueOf(newValue);
+				break;
+			}
+			case "ulonglong": {
+				// Cant be out of range?
+				break;
+			}
+			case "char": {
+				if (value.compareTo(new BigInteger("127")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("128"));
+					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(new BigInteger("-128")) == -1) {
+					final BigInteger newValue = value.mod(new BigInteger("128"));
+					valueInRange = String.valueOf(newValue.negate());
+				}
+				break;
+			}
+			case "uchar": {
+				final BigInteger newValue = value.mod(new BigInteger("256"));
+				valueInRange = String.valueOf(newValue);
+				break;
+			}
+			default:
+				// TODO short, double etc. float nicht
+				System.out.println("TestCase: Unexpected Type Warning");
+			}
 			break;
 		}
 
@@ -233,6 +307,7 @@ class TestVector {
 		}
 
 		values64Bit.add(index, valueInRange);
+
 	}
 
 	private void addToLinkedList(final Integer index, final Term valueTerm, final String type) {
@@ -328,7 +403,8 @@ class TestVector {
 
 				break;
 			}
-			case "int": {
+			case "int":
+			case "long": {
 				if (value.compareTo(new BigInteger("2147483647")) == 1) {
 					final BigInteger newValue = value.mod(new BigInteger("2147483648"));
 					valueInRange = String.valueOf(newValue);
@@ -338,23 +414,9 @@ class TestVector {
 				}
 				break;
 			}
-			case "long": {
-				if (value.compareTo(new BigInteger("9223372036854775807")) == 1) {
-					final BigInteger newValue = value.mod(new BigInteger("9223372036854775808"));
-					valueInRange = String.valueOf(newValue);
-				} else if (value.compareTo(new BigInteger("-9223372036854775808")) == -1) {
-					final BigInteger newValue = value.mod(new BigInteger("9223372036854775808"));
-					valueInRange = String.valueOf(newValue.negate());
-				}
-				break;
-			}
-			case "uint": {
-				final BigInteger newValue = value.mod(new BigInteger("4294967296"));
-				valueInRange = String.valueOf(newValue);
-				break;
-			}
+			case "uint":
 			case "ulong": {
-				final BigInteger newValue = value.mod(new BigInteger("18446744073709551616"));
+				final BigInteger newValue = value.mod(new BigInteger("4294967296"));
 				valueInRange = String.valueOf(newValue);
 				break;
 			}
