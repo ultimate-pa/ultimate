@@ -312,55 +312,53 @@ class TestVector {
 			switch (type) {
 			case "short": {
 				// -32,768 to 32,767
-
 				if (value.compareTo(new BigInteger("32767")) == 1) {
 					final BigInteger newValue = value.mod(new BigInteger("32768"));
 					valueInRange = String.valueOf(newValue);
 				} else if (value.compareTo(new BigInteger("-32768")) == -1) {
 					final BigInteger newValue = value.mod(new BigInteger("32768"));
-					valueInRange = String.valueOf(newValue);
+					valueInRange = String.valueOf(newValue.negate());
 				}
 				break;
 			}
 			case "ushort": {
 				// 0 to 65,535
-				if (value.compareTo(new BigInteger("65535")) == 1) {
-					final BigInteger newValue = value.mod(new BigInteger("65536"));
-					valueInRange = String.valueOf(newValue);
-				} else if (value.compareTo(BigInteger.ZERO) == -1) {
-					final BigInteger newValue = new BigInteger("65536").add(value);
-					valueInRange = String.valueOf(newValue);
-				}
+				final BigInteger newValue = value.mod(new BigInteger("65536"));
+				valueInRange = String.valueOf(newValue);
+
 				break;
 			}
 			case "int": {
-				// same as long?
-			}
-			case "long": {
 				if (value.compareTo(new BigInteger("2147483647")) == 1) {
 					final BigInteger newValue = value.mod(new BigInteger("2147483648"));
 					valueInRange = String.valueOf(newValue);
 				} else if (value.compareTo(new BigInteger("-2147483648")) == -1) {
 					final BigInteger newValue = value.mod(new BigInteger("2147483648"));
+					valueInRange = String.valueOf(newValue.negate());
+				}
+				break;
+			}
+			case "long": {
+				if (value.compareTo(new BigInteger("9223372036854775807")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("9223372036854775808"));
 					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(new BigInteger("-9223372036854775808")) == -1) {
+					final BigInteger newValue = value.mod(new BigInteger("9223372036854775808"));
+					valueInRange = String.valueOf(newValue.negate());
 				}
 				break;
 			}
 			case "uint": {
-
+				final BigInteger newValue = value.mod(new BigInteger("4294967296"));
+				valueInRange = String.valueOf(newValue);
+				break;
 			}
 			case "ulong": {
-				if (value.compareTo(new BigInteger("4294967295")) == 1) {
-					final BigInteger newValue = value.mod(new BigInteger("4294967296"));
-					valueInRange = String.valueOf(newValue);
-				} else if (value.compareTo(BigInteger.ZERO) == -1) {
-					final BigInteger newValue = new BigInteger("4294967295").add(value);
-					valueInRange = String.valueOf(newValue);
-				}
+				final BigInteger newValue = value.mod(new BigInteger("18446744073709551616"));
+				valueInRange = String.valueOf(newValue);
 				break;
 			}
 			case "ulonglong": {
-
 				// Cant be out of range?
 				break;
 			}
@@ -370,18 +368,13 @@ class TestVector {
 					valueInRange = String.valueOf(newValue);
 				} else if (value.compareTo(new BigInteger("-128")) == -1) {
 					final BigInteger newValue = value.mod(new BigInteger("128"));
-					valueInRange = String.valueOf(newValue);
+					valueInRange = String.valueOf(newValue.negate());
 				}
 				break;
 			}
 			case "uchar": {
-				if (value.compareTo(new BigInteger("255")) == 1) {
-					final BigInteger newValue = value.mod(new BigInteger("256"));
-					valueInRange = String.valueOf(newValue);
-				} else if (value.compareTo(BigInteger.ZERO) == -1) {
-					final BigInteger newValue = new BigInteger("256").add(value);
-					valueInRange = String.valueOf(newValue);
-				}
+				final BigInteger newValue = value.mod(new BigInteger("256"));
+				valueInRange = String.valueOf(newValue);
 				break;
 			}
 			default:
