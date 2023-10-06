@@ -1052,9 +1052,7 @@ public class CACSL2BoogieBacktranslator
 			return translateArrayAccessExpression((ArrayAccessExpression) expression, cType, hook);
 		}
 		// TODO: Translate quantifiers if ALLOW_ACSL_FEATURES=true
-		reportUnfinishedBacktranslation(
-				String.format("Cannot backtranslate expression %s, type %s is not supported yet",
-						BoogiePrettyPrinter.print(expression), expression.getClass().getSimpleName()));
+		reportUnfinishedBacktranslation(expression);
 		return null;
 	}
 
@@ -1332,16 +1330,13 @@ public class CACSL2BoogieBacktranslator
 	private void checkLiteral(final CType cType, final Expression expr, final String value) {
 		if (value == null || "null".equals(value)) {
 			if (cType == null) {
-				reportUnfinishedBacktranslation(expr.getClass().getSimpleName() + " " + BoogiePrettyPrinter.print(expr)
-						+ " could not be translated");
+				reportUnfinishedBacktranslation(expr);
 			} else {
 				reportUnfinishedBacktranslation(expr.getClass().getSimpleName() + " " + BoogiePrettyPrinter.print(expr)
 						+ " could not be translated for associated CType " + cType);
 			}
 		} else if (value.contains("~fp~LONGDOUBLE")) {
-			reportUnfinishedBacktranslation(expr.getClass().getSimpleName() + " " + BoogiePrettyPrinter.print(expr)
-					+ " could not be translated");
-
+			reportUnfinishedBacktranslation(expr);
 		}
 	}
 
@@ -1350,7 +1345,7 @@ public class CACSL2BoogieBacktranslator
 		if (access.getArray() instanceof IdentifierExpression) {
 			final String id = ((IdentifierExpression) access.getArray()).getIdentifier();
 			if (SFO.LENGTH.equals(id)) {
-				reportUnfinishedBacktranslation("Cannot backtranslate " + id);
+				reportUnfinishedBacktranslation(access);
 				return null;
 			}
 			if (SFO.VALID.equals(id)) {
@@ -1359,6 +1354,7 @@ public class CACSL2BoogieBacktranslator
 				}
 				final IASTExpression argument = translateExpression(access.getIndices()[0], ctype, hook);
 				if (argument == null) {
+					reportUnfinishedBacktranslation(access);
 					return null;
 				}
 				return new FakeExpression(String.format("\\valid(%s)", argument));
@@ -1370,12 +1366,14 @@ public class CACSL2BoogieBacktranslator
 		}
 		final IASTExpression array = translateExpression(access.getArray(), ctype, hook);
 		if (array == null) {
+			reportUnfinishedBacktranslation(access);
 			return null;
 		}
 		final IASTExpression[] indices = new IASTExpression[access.getIndices().length];
 		for (int i = 0; i < access.getIndices().length; i++) {
 			indices[i] = translateExpression(access.getIndices()[i], ctype, hook);
 			if (indices[i] == null) {
+				reportUnfinishedBacktranslation(access);
 				return null;
 			}
 		}
@@ -1542,6 +1540,11 @@ public class CACSL2BoogieBacktranslator
 				+ " has a CASTSimpleDeclaration, but we were unable to determine the variable name from it: "
 				+ decls.getRawSignature());
 		return null;
+	}
+
+	private void reportUnfinishedBacktranslation(final Expression expr) {
+		reportUnfinishedBacktranslation(
+				expr.getClass().getSimpleName() + " " + BoogiePrettyPrinter.print(expr) + " could not be translated");
 	}
 
 	private void reportUnfinishedBacktranslation(final String message) {
