@@ -48,7 +48,9 @@ public enum Spec {
 	/**
 	 * An LTL property.
 	 */
-	LTL(Group.GENERIC),
+	LTL(Group.GENERIC,
+			"LTL property holds",
+			"LTL property may be violated"),
 
 	/*-------------------------------------------------------------------------------------------------------------
 	 * Program specification types.
