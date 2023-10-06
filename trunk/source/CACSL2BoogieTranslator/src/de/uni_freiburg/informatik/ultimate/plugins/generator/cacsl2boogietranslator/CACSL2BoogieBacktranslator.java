@@ -134,21 +134,13 @@ public class CACSL2BoogieBacktranslator
 	private enum VariableType {
 		RESULT,
 
-		OLD,
-
 		INVAR,
 
 		NORMAL,
 
-		AUX,
-
-		VALID,
-
 		POINTER_BASE,
 
-		POINTER_OFFSET,
-
-		UNKNOWN
+		POINTER_OFFSET
 	}
 
 	private static final String UNFINISHED_BACKTRANSLATION = "Unfinished Backtranslation";
@@ -1557,16 +1549,15 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	private TranslatedVariable translateBoogieIdentifier(final IdentifierExpression expr, final String boogieId) {
-		final TranslatedVariable result;
 		if (boogieId.equals(SFO.RES) && ALLOW_ACSL_FEATURES) {
-			result = new TranslatedVariable("\\result", null, VariableType.RESULT);
+			return new TranslatedVariable("\\result", null, VariableType.RESULT);
 		} else if (mMapping.hasVar(boogieId, expr.getDeclarationInformation())) {
 			final Pair<String, CType> pair = mMapping.getVar(boogieId, expr.getDeclarationInformation());
-			result = new TranslatedVariable(pair.getFirst(), pair.getSecond(), VariableType.NORMAL);
+			return new TranslatedVariable(pair.getFirst(), pair.getSecond(), VariableType.NORMAL);
 		} else if (mMapping.hasInVar(boogieId, expr.getDeclarationInformation()) && ALLOW_ACSL_FEATURES) {
 			// invars can only occur in expressions as part of synthetic expressions, and then they represent oldvars
 			final Pair<String, CType> pair = mMapping.getInVar(boogieId, expr.getDeclarationInformation());
-			result = new TranslatedVariable(pair.getFirst(), pair.getSecond(), VariableType.INVAR);
+			return new TranslatedVariable(pair.getFirst(), pair.getSecond(), VariableType.INVAR);
 		} else if (boogieId.endsWith(SFO.POINTER_BASE)) {
 			// if its base or offset, try again with them stripped
 			final TranslatedVariable base = translateBoogieIdentifier(expr,
@@ -1574,19 +1565,18 @@ public class CACSL2BoogieBacktranslator
 			if (base == null) {
 				return null;
 			}
-			result = new TranslatedVariable(base.getName(), base.getCType(), VariableType.POINTER_BASE);
+			return new TranslatedVariable(base.getName(), base.getCType(), VariableType.POINTER_BASE);
 		} else if (boogieId.endsWith(SFO.POINTER_OFFSET)) {
 			final TranslatedVariable offset = translateBoogieIdentifier(expr,
 					boogieId.substring(0, boogieId.length() - SFO.POINTER_OFFSET.length() - 1));
 			if (offset == null) {
 				return null;
 			}
-			result = new TranslatedVariable(offset.getName(), offset.getCType(), VariableType.POINTER_OFFSET);
+			return new TranslatedVariable(offset.getName(), offset.getCType(), VariableType.POINTER_OFFSET);
 		} else {
-			result = null;
 			reportUnfinishedBacktranslation("unknown boogie variable " + boogieId);
+			return null;
 		}
-		return result;
 	}
 
 	private static IRelevanceInformation mergeRelevaneInformation(final IRelevanceInformation... relInfos) {
@@ -1814,7 +1804,6 @@ public class CACSL2BoogieBacktranslator
 		@Override
 		public String toString() {
 			switch (mVarType) {
-			case OLD:
 			case INVAR:
 				return "\\old(" + mName + ")";
 			case NORMAL:
@@ -1823,12 +1812,6 @@ public class CACSL2BoogieBacktranslator
 				return mName;
 			case RESULT:
 				return "\\result";
-			case VALID:
-				return "\\valid";
-			case AUX:
-				return "aux-" + mName + "-aux";
-			case UNKNOWN:
-				return "unknown-" + mName + "-unknown";
 			default:
 				throw new UnsupportedOperationException("VariableType " + mVarType + " not yet implemented");
 			}
