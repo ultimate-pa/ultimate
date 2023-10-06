@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult
 import de.uni_freiburg.informatik.ultimate.core.lib.results.IResultWithCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -143,17 +143,17 @@ public class VerificationResultTransformer {
 			return result;
 		}
 
-		final Set<ISpec.Type> specs = reqCheck.getSpec();
+		final Set<Spec> specs = reqCheck.getSpec();
 		if (specs == null || specs.isEmpty()) {
 			throw new AssertionError("Result without specification: " + oldRes.getShortDescription());
 		}
 		if (specs.size() != 1) {
 			throw new UnsupportedOperationException("Multi-checks of " + specs + " are not yet supported");
 		}
-		final ISpec.Type spec = specs.iterator().next();
+		final Spec spec = specs.iterator().next();
 		dieIfUnsupported(spec);
 
-		if (spec == ISpec.Type.CONSISTENCY || spec == ISpec.Type.VACUOUS) {
+		if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS) {
 			// a counterexample for consistency and vacuity means that the requirements are consistent or
 			// non-vacuous
 			isPositive = !isPositive;
@@ -166,7 +166,7 @@ public class VerificationResultTransformer {
 			return new ReqCheckSuccessResult<>(element, plugin, translatorSequence);
 		}
 
-		if (spec == ISpec.Type.RTINCONSISTENT) {
+		if (spec == Spec.RTINCONSISTENT) {
 			@SuppressWarnings("unchecked")
 			final IcfgProgramExecution<? extends IAction> oldPe =
 					(IcfgProgramExecution<? extends IAction>) ((CounterExampleResult<?, ?, Term>) oldRes)
@@ -552,7 +552,7 @@ public class VerificationResultTransformer {
 		return lightResult;
 	}
 
-	private static void dieIfUnsupported(final ISpec.Type spec) {
+	private static void dieIfUnsupported(final Spec spec) {
 		switch (spec) {
 		case CONSISTENCY:
 		case VACUOUS:

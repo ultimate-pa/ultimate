@@ -77,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAn
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation.Race;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
 public final class DataRaceChecker {
@@ -219,7 +219,7 @@ public final class DataRaceChecker {
 
 	private void addAssert(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal,
 			final Expression expected, final Race[] races) {
-		final Check check = new Check(ISpec.Type.DATA_RACE);
+		final Check check = new Check(Spec.DATA_RACE);
 		final Expression formula =
 				ExpressionFactory.and(loc,
 						getRaceExpressions(loc, lrVal)

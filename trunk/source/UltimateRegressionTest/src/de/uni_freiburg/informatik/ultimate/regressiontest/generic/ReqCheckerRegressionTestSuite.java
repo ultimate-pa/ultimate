@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AssertionsEnabledResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
@@ -124,7 +124,7 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 					final ReqCheck check = ((ReqCheckFailResult<?>) result).getCheck();
 					final Set<String> ids = check.getReqIds();
 					assert check.getSpec().size() == 1;
-					final ISpec.Type spec = check.getSpec().iterator().next();
+					final Spec spec = check.getSpec().iterator().next();
 					switch (spec) {
 					case RTINCONSISTENT:
 						rtInconsistent.add(ids);

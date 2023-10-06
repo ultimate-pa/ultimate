@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.pea2boogie.results;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MessageProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec.Type.Group;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec.Group;
 
 /**
  * Message provider for {@link Group.REQUIREMENT} labeled specifications that are checked.

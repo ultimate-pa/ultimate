@@ -26,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
@@ -182,7 +182,7 @@ public class GenerateBoogieAst {
 
 		final Statement assertFalse = new AssertStatement(loc,
 				ExpressionFactory.createBooleanLiteral(loc, false));
-		final Check check = new Check(ISpec.Type.CHC_SATISFIABILITY);
+		final Check check = new Check(Spec.CHC_SATISFIABILITY);
 		check.annotate(assertFalse);
 
 		statements = new Statement[] { callToBottomProc, assertFalse };

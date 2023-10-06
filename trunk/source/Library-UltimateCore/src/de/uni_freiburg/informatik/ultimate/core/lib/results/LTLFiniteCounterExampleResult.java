@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 
@@ -47,7 +47,7 @@ public class LTLFiniteCounterExampleResult<ELEM extends IElement, TE extends IEl
 	}
 
 	private static <ELEM extends IElement> ELEM annotatePositionWithCheck(final ELEM position, final Check check) {
-		if (check == null || !check.getSpec().contains(ISpec.Type.LTL)) {
+		if (check == null || !check.getSpec().contains(Spec.LTL)) {
 			throw new IllegalArgumentException("You cannot use " + LTLFiniteCounterExampleResult.class.getSimpleName()
 					+ " for specs different from LTL");
 		}

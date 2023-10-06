@@ -38,7 +38,7 @@ import java.util.Objects;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IFailedAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithFiniteTrace;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
@@ -94,7 +94,7 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 		super(position, plugin, translatorSequence);
 		final Check check = Check.getAnnotation(position);
 		if (check == null) {
-			mCheckedSpecification = new Check(ISpec.Type.UNKNOWN);
+			mCheckedSpecification = new Check(Spec.UNKNOWN);
 		} else {
 			mCheckedSpecification = check;
 		}

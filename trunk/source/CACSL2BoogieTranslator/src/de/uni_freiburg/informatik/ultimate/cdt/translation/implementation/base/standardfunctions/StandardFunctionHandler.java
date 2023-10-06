@@ -120,7 +120,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.CheckMessa
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -991,7 +991,7 @@ public class StandardFunctionHandler {
 			final Expression biggerMinInt = mExpressionTranslation.constructBinaryComparisonExpression(loc,
 					IASTBinaryExpression.op_greaterThan, expr, resultType, minInt, resultType);
 			final AssertStatement biggerMinIntStmt = new AssertStatement(loc, biggerMinInt);
-			new Check(ISpec.Type.INTEGER_OVERFLOW).annotate(biggerMinIntStmt);
+			new Check(Spec.INTEGER_OVERFLOW).annotate(biggerMinIntStmt);
 			builder.addStatement(biggerMinIntStmt);
 		}
 		// Construct if x > 0 then x else -x as LrValue for abs(x)
@@ -1824,7 +1824,7 @@ public class StandardFunctionHandler {
 		}
 
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults);
-		return erb.addStatement(createAnnotatedAssertOrAssume(loc, name, mSettings.checkAssertions(), ISpec.Type.ASSERT,
+		return erb.addStatement(createAnnotatedAssertOrAssume(loc, name, mSettings.checkAssertions(), Spec.ASSERT,
 				ExpressionFactory.createBooleanLiteral(loc, false))).build();
 	}
 
@@ -1837,7 +1837,7 @@ public class StandardFunctionHandler {
 		final ExpressionResult result = mExprResultTransformer
 				.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[0]), loc, node);
 		return new ExpressionResultBuilder().addAllExceptLrValue(result).addStatement(createAnnotatedAssertOrAssume(loc,
-				name, mSettings.checkAssertions(), ISpec.Type.ASSERT, result.getLrValue().getValue())).build();
+				name, mSettings.checkAssertions(), Spec.ASSERT, result.getLrValue().getValue())).build();
 	}
 
 	/**
@@ -1873,7 +1873,7 @@ public class StandardFunctionHandler {
 						.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[0]), loc, node);
 				return new ExpressionResultBuilder().addAllExceptLrValue(result)
 						.addStatement(createAnnotatedAssertOrAssume(loc, name, mSettings.checkAssertions(),
-								ISpec.Type.ASSERT, result.getLrValue().getValue(), errorMsg))
+								Spec.ASSERT, result.getLrValue().getValue(), errorMsg))
 						.build();
 			} else {
 				/* WARNING: this case should be never reached since the msg should be always a string literal */
@@ -2464,7 +2464,7 @@ public class StandardFunctionHandler {
 			final ILocation loc, final String name) {
 		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
 		final Statement st = createAnnotatedAssertOrAssume(loc, name, mSettings.checkErrorFunction(),
-				ISpec.Type.ERROR_FUNCTION, falseLiteral);
+				Spec.ERROR_FUNCTION, falseLiteral);
 		return new ExpressionResult(Collections.singletonList(st), null);
 	}
 
@@ -2485,7 +2485,7 @@ public class StandardFunctionHandler {
 	 * @see {@link #createAnnotatedAssertOrAssume(ILocation, String, boolean, Spec, Expression, String)}
 	 */
 	private Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
-			final boolean checkProperty, final ISpec.Type spec, final Expression expr) {
+			final boolean checkProperty, final Spec spec, final Expression expr) {
 		return createAnnotatedAssertOrAssume(loc, functionName, checkProperty, spec, expr, null);
 	}
 
@@ -2512,7 +2512,7 @@ public class StandardFunctionHandler {
 	 * @return {@link Statement} annotated with a {@link Check} annotation.
 	 */
 	private Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
-			final boolean checkProperty, final ISpec.Type spec, final Expression expr, final String errorMsg) {
+			final boolean checkProperty, final Spec spec, final Expression expr, final String errorMsg) {
 		final boolean checkMemoryleakInMain = mSettings.checkMemoryLeakInMain()
 				&& mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired();
 		if (!checkProperty && !checkMemoryleakInMain) {
@@ -2537,12 +2537,12 @@ public class StandardFunctionHandler {
 			msgProvider.registerSpecificationErrorMessage(spec, errorMsg);
 
 			if (checkMemoryleakInMain) {
-				check = new Check(EnumSet.of(spec, ISpec.Type.MEMORY_LEAK), msgProvider);
+				check = new Check(EnumSet.of(spec, Spec.MEMORY_LEAK), msgProvider);
 			} else {
 				check = new Check(spec, msgProvider);
 			}
 		} else {
-			check = new Check(EnumSet.of(ISpec.Type.MEMORY_LEAK));
+			check = new Check(EnumSet.of(Spec.MEMORY_LEAK));
 		}
 		final Statement st = new AssertStatement(loc, new NamedAttribute[] { new NamedAttribute(loc, "reach",
 				new Expression[] { new StringLiteral(loc, check.toString()), new StringLiteral(loc, functionName) }) },

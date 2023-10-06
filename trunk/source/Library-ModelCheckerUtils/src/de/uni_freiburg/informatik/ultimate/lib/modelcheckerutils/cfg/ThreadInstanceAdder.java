@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
@@ -364,7 +364,7 @@ public class ThreadInstanceAdder {
 
 	static IcfgLocation constructErrorLocation(final int i, final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork) {
 		final IcfgLocation errorLocation;
-		final Check check = new Check(ISpec.Type.SUFFICIENT_THREAD_INSTANCES);
+		final Check check = new Check(Spec.SUFFICIENT_THREAD_INSTANCES);
 		final DebugIdentifier debugIdentifier = new ProcedureErrorWithCheckDebugIdentifier(fork.getPrecedingProcedure(),
 				i, ProcedureErrorType.INUSE_VIOLATION, check);
 		errorLocation = new IcfgLocation(debugIdentifier, fork.getPrecedingProcedure());

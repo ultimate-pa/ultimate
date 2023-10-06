@@ -78,7 +78,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -162,7 +162,7 @@ public class CExpressionTranslator {
 			switch (mSettings.getPointerSubtractionAndComparisonValidityCheckMode()) {
 			case ASSERTandASSUME:
 				final Statement assertStm = new AssertStatement(loc, baseEquality);
-				final Check chk = new Check(ISpec.Type.ILLEGAL_POINTER_ARITHMETIC);
+				final Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
 				chk.annotate(assertStm);
 				result.addStatement(assertStm);
 				expr = offsetRelation;
@@ -947,7 +947,7 @@ public class CExpressionTranslator {
 			additionalStatement = new AssumeStatement(loc, divisorNotZero);
 		} else if (checkMode == PointerCheckMode.ASSERTandASSUME) {
 			additionalStatement = new AssertStatement(loc, divisorNotZero);
-			final Check check = new Check(ISpec.Type.DIVISION_BY_ZERO);
+			final Check check = new Check(Spec.DIVISION_BY_ZERO);
 			check.annotate(additionalStatement);
 		} else {
 			throw new AssertionError("illegal");
@@ -1033,7 +1033,7 @@ public class CExpressionTranslator {
 			return;
 		}
 		final AssertStatement assertSt = new AssertStatement(loc, condition);
-		new Check(ISpec.Type.INTEGER_OVERFLOW).annotate(assertSt);
+		new Check(Spec.INTEGER_OVERFLOW).annotate(assertSt);
 		erb.addStatement(assertSt);
 	}
 
@@ -1065,7 +1065,7 @@ public class CExpressionTranslator {
 		switch (mSettings.getPointerSubtractionAndComparisonValidityCheckMode()) {
 		case ASSERTandASSUME:
 			final Statement assertStm = new AssertStatement(loc, baseEquality);
-			final Check chk = new Check(ISpec.Type.ILLEGAL_POINTER_ARITHMETIC);
+			final Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
 			chk.annotate(assertStm);
 			erb.addStatement(assertStm);
 			return erb;

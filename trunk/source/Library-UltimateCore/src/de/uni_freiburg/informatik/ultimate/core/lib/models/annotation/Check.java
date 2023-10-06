@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IMessageProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
@@ -62,29 +62,29 @@ public class Check extends ModernAnnotations {
 	private static final String KEY = Check.class.getName();
 
 	@Visualizable
-	private final Set<ISpec.Type> mSpec;
+	private final Set<Spec> mSpec;
 
 	private final IMessageProvider mMsgProvider;
 
-	public Check(final ISpec.Type spec) {
+	public Check(final Spec spec) {
 		this(EnumSet.of(spec));
 	}
 
-	public Check(final ISpec.Type spec, final IMessageProvider msgProvider) {
+	public Check(final Spec spec, final IMessageProvider msgProvider) {
 		this(EnumSet.of(spec), msgProvider);
 	}
 
-	public Check(final Set<ISpec.Type> newSpec) {
+	public Check(final Set<Spec> newSpec) {
 		this(newSpec, new CheckMessageProvider());
 	}
 
-	public Check(final Set<ISpec.Type> newSpec, final IMessageProvider msgProvider) {
+	public Check(final Set<Spec> newSpec, final IMessageProvider msgProvider) {
 		assert !newSpec.isEmpty();
 		mSpec = newSpec;
 		mMsgProvider = msgProvider;
 	}
 
-	public Set<ISpec.Type> getSpec() {
+	public Set<Spec> getSpec() {
 		return mSpec;
 	}
 
@@ -100,8 +100,8 @@ public class Check extends ModernAnnotations {
 		return getCompoundMessage(mMsgProvider::getNegativeMessage);
 	}
 
-	private String getCompoundMessage(final Function<ISpec.Type, String> msgProviderFunc) {
-		final Iterator<ISpec.Type> iter = mSpec.iterator();
+	private String getCompoundMessage(final Function<Spec, String> msgProviderFunc) {
+		final Iterator<Spec> iter = mSpec.iterator();
 		if (mSpec.size() == 1) {
 			return msgProviderFunc.apply(iter.next());
 		}
@@ -127,7 +127,7 @@ public class Check extends ModernAnnotations {
 		}
 		final Check otherCheck = (Check) other;
 
-		final EnumSet<ISpec.Type> newSpec = EnumSet.copyOf(mSpec);
+		final EnumSet<Spec> newSpec = EnumSet.copyOf(mSpec);
 		newSpec.addAll(otherCheck.getSpec());
 		// note: automatic merging looses all information about message providers and uses the default ones
 		return new Check(newSpec);
@@ -162,7 +162,7 @@ public class Check extends ModernAnnotations {
 
 	@Override
 	public String toString() {
-		return mSpec.stream().map(ISpec.Type::toString).collect(Collectors.joining(MSG_AND));
+		return mSpec.stream().map(Spec::toString).collect(Collectors.joining(MSG_AND));
 	}
 
 	@Override

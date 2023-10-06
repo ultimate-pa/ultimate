@@ -33,43 +33,43 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IMessageProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 
 /**
- * Generic message provider for {@link ISpec.Type} specifications that are checked.
+ * Generic message provider for {@link Spec} specifications that are checked.
  * 
  * @author Manuel Bentele
  */
 public abstract class MessageProvider implements IMessageProvider {
 
 	/**
-	 * Mapping of {@link Supplier}s returning customized positive messages for specified {@link ISpec.Type}s.
+	 * Mapping of {@link Supplier}s returning customized positive messages for specified {@link Spec}s.
 	 */
-	private final Map<ISpec.Type, Supplier<String>> mPosMsgProviderOverrideFuncs;
+	private final Map<Spec, Supplier<String>> mPosMsgProviderOverrideFuncs;
 
 	/**
-	 * Mapping of {@link Supplier}s returning customized negative messages for specified {@link ISpec.Type}s.
+	 * Mapping of {@link Supplier}s returning customized negative messages for specified {@link Spec}s.
 	 */
-	private final Map<ISpec.Type, Supplier<String>> mNegMsgProviderOverrideFuncs;
+	private final Map<Spec, Supplier<String>> mNegMsgProviderOverrideFuncs;
 
 	/**
 	 * Specification groups for which a specialized message provider delivers specification messages.
 	 */
-	private final Set<ISpec.Type.Group> mSpecGroups;
+	private final Set<Spec.Group> mSpecGroups;
 
 	/**
-	 * Creates a generic message provider for {@link ISpec.Type.Group} labeled specifications that are checked.
+	 * Creates a generic message provider for {@link Spec.Group} labeled specifications that are checked.
 	 */
-	public MessageProvider(final ISpec.Type.Group group) {
+	public MessageProvider(final Spec.Group group) {
 		this(EnumSet.of(group));
 	}
 
 	/**
-	 * Creates a generic message provider for {@link ISpec.Type.Group} labeled specifications that are checked.
+	 * Creates a generic message provider for {@link Spec.Group} labeled specifications that are checked.
 	 */
-	public MessageProvider(final Set<ISpec.Type.Group> groups) {
-		mPosMsgProviderOverrideFuncs = new HashMap<ISpec.Type, Supplier<String>>();
-		mNegMsgProviderOverrideFuncs = new HashMap<ISpec.Type, Supplier<String>>();
+	public MessageProvider(final Set<Spec.Group> groups) {
+		mPosMsgProviderOverrideFuncs = new HashMap<Spec, Supplier<String>>();
+		mNegMsgProviderOverrideFuncs = new HashMap<Spec, Supplier<String>>();
 		mSpecGroups = groups;
 	}
 
@@ -83,7 +83,7 @@ public abstract class MessageProvider implements IMessageProvider {
 	 *             exception is thrown if specification group of specification type does not match the groups supported
 	 *             by this message provider.
 	 */
-	private void checkSpecificationGroups(final ISpec.Type spec) throws IllegalArgumentException {
+	private void checkSpecificationGroups(final Spec spec) throws IllegalArgumentException {
 		if (!spec.isInGroups(mSpecGroups)) {
 			throw new IllegalArgumentException(String.format(
 					"Messages for specification type '%s' are not handled by this message provider for '%s'!", spec,
@@ -92,17 +92,17 @@ public abstract class MessageProvider implements IMessageProvider {
 	}
 
 	@Override
-	public void registerPositiveMessageOverride(final ISpec.Type spec, final Supplier<String> msgProviderFunc) {
+	public void registerPositiveMessageOverride(final Spec spec, final Supplier<String> msgProviderFunc) {
 		mPosMsgProviderOverrideFuncs.put(spec, msgProviderFunc);
 	}
 
 	@Override
-	public void registerNegativeMessageOverride(final ISpec.Type spec, final Supplier<String> msgProviderFunc) {
+	public void registerNegativeMessageOverride(final Spec spec, final Supplier<String> msgProviderFunc) {
 		mNegMsgProviderOverrideFuncs.put(spec, msgProviderFunc);
 	}
 
 	@Override
-	public String getPositiveMessage(final ISpec.Type spec) {
+	public String getPositiveMessage(final Spec spec) {
 		checkSpecificationGroups(spec);
 
 		final Supplier<String> posMsgProviderFunc = mPosMsgProviderOverrideFuncs.get(spec);
@@ -115,7 +115,7 @@ public abstract class MessageProvider implements IMessageProvider {
 	}
 
 	@Override
-	public String getNegativeMessage(final ISpec.Type spec) {
+	public String getNegativeMessage(final Spec spec) {
 		checkSpecificationGroups(spec);
 
 		final Supplier<String> negMsgProviderFunc = mNegMsgProviderOverrideFuncs.get(spec);

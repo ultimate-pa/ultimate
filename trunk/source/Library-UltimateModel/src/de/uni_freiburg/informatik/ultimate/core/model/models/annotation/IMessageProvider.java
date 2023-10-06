@@ -29,58 +29,58 @@ package de.uni_freiburg.informatik.ultimate.core.model.models.annotation;
 import java.util.function.Supplier;
 
 /**
- * Message provider interface returning messages for {@link ISpec.Type}s.
+ * Message provider interface returning messages for {@link Spec}s.
  * 
  * @author Manuel Bentele
  */
 public interface IMessageProvider {
 
 	/**
-	 * Returns a positive default message for a given {@link ISpec.Type}.
+	 * Returns a positive default message for a given {@link Spec}.
 	 * 
 	 * @param spec
 	 *            a specification that is checked.
 	 * 
 	 * @return positive default message for the given {@code spec}.
 	 */
-	default String getDefaultPositiveMessage(final ISpec.Type spec) {
+	default String getDefaultPositiveMessage(final Spec spec) {
 		return spec.getDefaultPositiveMessage();
 	}
 
 	/**
-	 * Returns a negative default message for a given {@link ISpec.Type}.
+	 * Returns a negative default message for a given {@link Spec}.
 	 * 
 	 * @param spec
 	 *            a specification that is checked.
 	 * 
 	 * @return negative default message for the given {@code spec}.
 	 */
-	default String getDefaultNegativeMessage(final ISpec.Type spec) {
+	default String getDefaultNegativeMessage(final Spec spec) {
 		return spec.getDefaultNegativeMessage();
 	}
 
 	/**
-	 * Register a custom positive message supplier for a given {@link ISpec.Type}.
+	 * Register a custom positive message supplier for a given {@link Spec}.
 	 * 
 	 * @param spec
 	 *            a specification that is checked and whose message is overwritten.
 	 * @param msgProviderFunc
 	 *            {@link Supplier} returning the customized positive message for {@code spec}.
 	 */
-	void registerPositiveMessageOverride(final ISpec.Type spec, final Supplier<String> msgProviderFunc);
+	void registerPositiveMessageOverride(final Spec spec, final Supplier<String> msgProviderFunc);
 
 	/**
-	 * Register a custom negative message supplier for a given {@link ISpec.Type} specification.
+	 * Register a custom negative message supplier for a given {@link Spec} specification.
 	 * 
 	 * @param spec
 	 *            a specification that is checked and whose message is overwritten.
 	 * @param msgProviderFunc
 	 *            {@link Supplier} returning the customized negative message for {@code spec}.
 	 */
-	void registerNegativeMessageOverride(final ISpec.Type spec, final Supplier<String> msgProviderFunc);
+	void registerNegativeMessageOverride(final Spec spec, final Supplier<String> msgProviderFunc);
 
 	/**
-	 * Returns a positive message for a given {@link ISpec.Type} specification.
+	 * Returns a positive message for a given {@link Spec} specification.
 	 * 
 	 * @param spec
 	 *            a specification that is checked.
@@ -88,14 +88,14 @@ public interface IMessageProvider {
 	 * @return positive message for the given {@code spec}.
 	 * 
 	 * @implNote This function considers messages after post-processing, i.e. custom message overwrites for specific
-	 *           {@link ISpec.Type}s through {@link #registerPositiveMessageOverride(ISpec.Type, Supplier)} are
-	 *           considered as well as positive default messages. Default messages can be obtained by
-	 *           {@link #getDefaultPositiveMessage(ISpec.Type)}.
+	 *           {@link Spec}s through {@link #registerPositiveMessageOverride(Spec, Supplier)} are considered as well
+	 *           as positive default messages. Default messages can be obtained by
+	 *           {@link #getDefaultPositiveMessage(Spec)}.
 	 */
-	String getPositiveMessage(final ISpec.Type spec);
+	String getPositiveMessage(final Spec spec);
 
 	/**
-	 * Returns a negative message for a given {@link ISpec.Type} specification.
+	 * Returns a negative message for a given {@link Spec} specification.
 	 * 
 	 * @param spec
 	 *            a specification that is checked.
@@ -103,9 +103,9 @@ public interface IMessageProvider {
 	 * @return negative message for the given {@code spec}.
 	 * 
 	 * @implNote This function considers messages after post-processing, i.e. custom message overwrites for specific
-	 *           {@link ISpec.Type}s through {@link #registerNegativeMessageOverride(ISpec.Type, Supplier)} are
-	 *           considered as well as negative default messages. Default messages can be obtained by
-	 *           {@link #getDefaultNegativeMessage(ISpec.Type)}.
+	 *           {@link Spec}s through {@link #registerNegativeMessageOverride(Spec, Supplier)} are considered as well
+	 *           as negative default messages. Default messages can be obtained by
+	 *           {@link #getDefaultNegativeMessage(Spec)}.
 	 */
-	String getNegativeMessage(final ISpec.Type spec);
+	String getNegativeMessage(final Spec spec);
 }

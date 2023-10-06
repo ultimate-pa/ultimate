@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
 import java.util.EnumSet;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec.Type.Group;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec.Group;
 
 /**
  * Message provider for {@link Group.PROGRAM} labeled specifications that are checked.
@@ -46,29 +46,29 @@ public class CheckMessageProvider extends MessageProvider {
 	}
 
 	/**
-	 * Overwrite message for error function specifications ({@link ISpec.Type.ERROR_FUNCTION}).
+	 * Overwrite message for error function specifications ({@link Spec.ERROR_FUNCTION}).
 	 * 
 	 * @param functionName
 	 *            name of the error function.
 	 */
 	public void registerSpecificationErrorFunctionName(final String functionName) {
 		if (functionName != null && !functionName.isEmpty()) {
-			registerPositiveMessageOverride(ISpec.Type.ERROR_FUNCTION,
+			registerPositiveMessageOverride(Spec.ERROR_FUNCTION,
 					() -> String.format("a call to %s is unreachable", functionName));
-			registerNegativeMessageOverride(ISpec.Type.ERROR_FUNCTION,
+			registerNegativeMessageOverride(Spec.ERROR_FUNCTION,
 					() -> String.format("a call to %s is reachable", functionName));
 		}
 	}
 
 	/**
-	 * Overwrite message for specification ({@link ISpec.Type}) with given error message.
+	 * Overwrite message for specification ({@link Spec}) with given error message.
 	 * 
 	 * @param spec
 	 *            specification type whose message should be overwritten.
 	 * @param errorMsg
 	 *            message describing the violation of the {@code spec}.
 	 */
-	public void registerSpecificationErrorMessage(final ISpec.Type spec, final String errorMsg) {
+	public void registerSpecificationErrorMessage(final Spec spec, final String errorMsg) {
 		if (errorMsg != null && !errorMsg.isEmpty()) {
 			registerNegativeMessageOverride(spec,
 					() -> String.format("%s: %s", getDefaultNegativeMessage(spec), errorMsg));
@@ -76,16 +76,16 @@ public class CheckMessageProvider extends MessageProvider {
 	}
 
 	/**
-	 * Overwrite message for assertion specifications ({@link ISpec.Type.ASSERT}) with named attributes.
+	 * Overwrite message for assertion specifications ({@link Spec.ASSERT}) with named attributes.
 	 * 
 	 * @param namedAttributes
 	 *            description of the named attributes.
 	 */
 	public void registerSpecificationAssertNamedAttributes(final String namedAttributes) {
 		if (namedAttributes != null && !namedAttributes.isEmpty()) {
-			registerPositiveMessageOverride(ISpec.Type.ASSERT,
+			registerPositiveMessageOverride(Spec.ASSERT,
 					() -> String.format("assertion with attributes \"%s\" always holds", namedAttributes));
-			registerNegativeMessageOverride(ISpec.Type.ASSERT,
+			registerNegativeMessageOverride(Spec.ASSERT,
 					() -> String.format("assertion with attributes \"%s\" can be violated", namedAttributes));
 		}
 	}

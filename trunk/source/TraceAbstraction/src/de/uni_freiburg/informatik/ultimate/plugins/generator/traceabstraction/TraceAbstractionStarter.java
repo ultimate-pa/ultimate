@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractRes
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -496,7 +496,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			}
 			final BoogieASTNode boogieASTNode = ((BoogieIcfgLocation) err).getBoogieASTNode();
 			final Check check = Check.getAnnotation(boogieASTNode);
-			if (check != null && check.getSpec().contains(ISpec.Type.WITNESS_INVARIANT)) {
+			if (check != null && check.getSpec().contains(Spec.WITNESS_INVARIANT)) {
 				numberOfCheckedInvariants++;
 			}
 		}
@@ -626,7 +626,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 	private static boolean isInsufficientThreadsLocation(final IcfgLocation loc) {
 		final Check check = Check.getAnnotation(loc);
-		return check != null && check.getSpec().contains(ISpec.Type.SUFFICIENT_THREAD_INSTANCES);
+		return check != null && check.getSpec().contains(Spec.SUFFICIENT_THREAD_INSTANCES);
 	}
 
 	public static final class AllErrorsAtOnceDebugIdentifier extends DebugIdentifier {

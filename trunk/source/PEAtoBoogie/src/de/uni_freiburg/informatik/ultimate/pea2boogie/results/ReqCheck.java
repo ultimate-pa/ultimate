@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IMessageProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -56,19 +56,19 @@ public class ReqCheck extends Check {
 
 	private final String[] mPeaNames;
 
-	public ReqCheck(final ISpec.Type type) {
+	public ReqCheck(final Spec type) {
 		this(EnumSet.of(type), 0, 0, new String[0], new String[0]);
 	}
 
-	public ReqCheck(final ISpec.Type type, final String[] reqIds, final String[] peaNames) {
+	public ReqCheck(final Spec type, final String[] reqIds, final String[] peaNames) {
 		this(EnumSet.of(type), reqIds, peaNames);
 	}
 
-	private ReqCheck(final EnumSet<ISpec.Type> types, final String[] reqIds, final String[] peaNames) {
+	private ReqCheck(final EnumSet<Spec> types, final String[] reqIds, final String[] peaNames) {
 		this(types, -1, -1, reqIds, peaNames);
 	}
 
-	private ReqCheck(final EnumSet<ISpec.Type> types, final int startline, final int endline, final String[] reqIds,
+	private ReqCheck(final EnumSet<Spec> types, final int startline, final int endline, final String[] reqIds,
 			final String[] peaNames) {
 		super(types, new ReqCheckMessageProvider());
 
@@ -88,11 +88,11 @@ public class ReqCheck extends Check {
 		return mEndline;
 	}
 
-	private void registerMessageOverrides(final EnumSet<ISpec.Type> types, final String[] reqIds,
+	private void registerMessageOverrides(final EnumSet<Spec> types, final String[] reqIds,
 			final String[] peaNames) {
 		final IMessageProvider mMsgProvider = getMessageProvider();
 
-		for (final ISpec.Type spec : types) {
+		for (final Spec spec : types) {
 			mMsgProvider.registerPositiveMessageOverride(spec, () -> String.format("%s %s",
 					getRequirementTexts(reqIds, peaNames), mMsgProvider.getDefaultPositiveMessage(spec)));
 			mMsgProvider.registerNegativeMessageOverride(spec, () -> String.format("%s %s",
@@ -130,7 +130,7 @@ public class ReqCheck extends Check {
 			return this;
 		}
 
-		final EnumSet<ISpec.Type> newSpec = EnumSet.copyOf(getSpec());
+		final EnumSet<Spec> newSpec = EnumSet.copyOf(getSpec());
 		newSpec.addAll(other.getSpec());
 		final int startline = Math.min(mStartline, other.mStartline);
 		final int endline = Math.max(mEndline, other.mEndline);

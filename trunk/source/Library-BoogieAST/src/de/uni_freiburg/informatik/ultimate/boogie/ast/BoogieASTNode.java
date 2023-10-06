@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.CheckMessa
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ISimpleAST;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 
 /**
  *
@@ -143,15 +143,15 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 				/* customize result message for assertion specifications with named attributes */
 				msgProvider.registerSpecificationAssertNamedAttributes(namedAttribStr);
 
-				return new Check(ISpec.Type.ASSERT, msgProvider);
+				return new Check(Spec.ASSERT, msgProvider);
 			}
-			return new Check(ISpec.Type.ASSERT);
+			return new Check(Spec.ASSERT);
 		} else if (node instanceof LoopInvariantSpecification) {
-			return new Check(ISpec.Type.INVARIANT);
+			return new Check(Spec.INVARIANT);
 		} else if (node instanceof CallStatement) {
-			return new Check(ISpec.Type.PRE_CONDITION);
+			return new Check(Spec.PRE_CONDITION);
 		} else if (node instanceof EnsuresSpecification) {
-			return new Check(ISpec.Type.POST_CONDITION);
+			return new Check(Spec.POST_CONDITION);
 		} else if (node == null) {
 			throw new IllegalArgumentException();
 		}

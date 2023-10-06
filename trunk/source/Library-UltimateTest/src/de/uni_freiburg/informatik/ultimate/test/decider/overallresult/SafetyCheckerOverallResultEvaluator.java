@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.ISpec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
@@ -109,12 +109,12 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 			final CounterExampleResult<?, ?, ?> cer = (CounterExampleResult<?, ?, ?>) result;
 
 			// TODO: This should change to take into account multiple specs
-			final Set<ISpec.Type> spec = cer.getCheckedSpecification().getSpec();
-			if (spec.contains(ISpec.Type.ARRAY_INDEX) || spec.contains(ISpec.Type.MEMORY_DEREFERENCE)) {
+			final Set<Spec> spec = cer.getCheckedSpecification().getSpec();
+			if (spec.contains(Spec.ARRAY_INDEX) || spec.contains(Spec.MEMORY_DEREFERENCE)) {
 				return SafetyCheckerOverallResult.UNSAFE_DEREF;
-			} else if (spec.contains(ISpec.Type.MEMORY_FREE)) {
+			} else if (spec.contains(Spec.MEMORY_FREE)) {
 				return SafetyCheckerOverallResult.UNSAFE_FREE;
-			} else if (spec.contains(ISpec.Type.MEMORY_LEAK)) {
+			} else if (spec.contains(Spec.MEMORY_LEAK)) {
 				return SafetyCheckerOverallResult.UNSAFE_MEMTRACK;
 			} else {
 				return SafetyCheckerOverallResult.UNSAFE;
