@@ -1481,7 +1481,8 @@ public class CACSL2BoogieBacktranslator
 		}
 		final TranslatedVariable translatedBase = translateIdentifierExpression((IdentifierExpression) base);
 		final TranslatedVariable translatedOffset = translateIdentifierExpression((IdentifierExpression) offset);
-		return translatedBase.getVarType() == VariableType.POINTER_BASE
+		return translatedBase != null && translatedOffset != null
+				&& translatedBase.getVarType() == VariableType.POINTER_BASE
 				&& translatedOffset.getVarType() == VariableType.POINTER_OFFSET
 				&& translatedBase.getName().equals(translatedOffset.getName());
 	}
@@ -1516,6 +1517,9 @@ public class CACSL2BoogieBacktranslator
 		if (decls.getDeclarators().length == 1) {
 			final IdentifierExpression orgidexp = (IdentifierExpression) expression;
 			final TranslatedVariable origName = translateIdentifierExpression(orgidexp);
+			if (origName == null) {
+				return null;
+			}
 			return new FakeExpression(decls, decls.getDeclarators()[0].getName().getRawSignature(),
 					origName.getCType());
 		}
@@ -1523,6 +1527,9 @@ public class CACSL2BoogieBacktranslator
 		// our backtranslation map to get the real name
 		final IdentifierExpression orgidexp = (IdentifierExpression) expression;
 		final TranslatedVariable origName = translateIdentifierExpression(orgidexp);
+		if (origName == null) {
+			return null;
+		}
 		for (final IASTDeclarator decl : decls.getDeclarators()) {
 			if (origName.getName().indexOf(decl.getName().getRawSignature()) != -1) {
 				return new FakeExpression(decl.getName().getRawSignature());
@@ -1551,49 +1558,35 @@ public class CACSL2BoogieBacktranslator
 
 	private TranslatedVariable translateBoogieIdentifier(final IdentifierExpression expr, final String boogieId) {
 		final TranslatedVariable result;
-		if (boogieId.equals(SFO.RES)) {
-			// TODO: Should we only do this for ACSL?
+		if (boogieId.equals(SFO.RES) && ALLOW_ACSL_FEATURES) {
 			result = new TranslatedVariable("\\result", null, VariableType.RESULT);
 		} else if (mMapping.hasVar(boogieId, expr.getDeclarationInformation())) {
 			final Pair<String, CType> pair = mMapping.getVar(boogieId, expr.getDeclarationInformation());
 			result = new TranslatedVariable(pair.getFirst(), pair.getSecond(), VariableType.NORMAL);
-		} else if (mMapping.hasInVar(boogieId, expr.getDeclarationInformation())) {
+		} else if (mMapping.hasInVar(boogieId, expr.getDeclarationInformation()) && ALLOW_ACSL_FEATURES) {
 			// invars can only occur in expressions as part of synthetic expressions, and then they represent oldvars
 			final Pair<String, CType> pair = mMapping.getInVar(boogieId, expr.getDeclarationInformation());
 			result = new TranslatedVariable(pair.getFirst(), pair.getSecond(), VariableType.INVAR);
-		} else if (mMapping.getTempVar2Obj().containsKey(boogieId)) {
-			// if the variable is an aux variable, we just use the C function for which it was introduced and hope for
-			// the best
-			result = new TranslatedVariable(getRealName(expr, boogieId), null, VariableType.AUX);
-		} else if (boogieId.equals(SFO.VALID)) {
-			// TODO: Is this still necessary here or do we handle this in translateArrayAccessExpression?
-			result = new TranslatedVariable("\\valid", null, VariableType.VALID);
 		} else if (boogieId.endsWith(SFO.POINTER_BASE)) {
 			// if its base or offset, try again with them stripped
 			final TranslatedVariable base = translateBoogieIdentifier(expr,
 					boogieId.substring(0, boogieId.length() - SFO.POINTER_BASE.length() - 1));
+			if (base == null) {
+				return null;
+			}
 			result = new TranslatedVariable(base.getName(), base.getCType(), VariableType.POINTER_BASE);
 		} else if (boogieId.endsWith(SFO.POINTER_OFFSET)) {
 			final TranslatedVariable offset = translateBoogieIdentifier(expr,
 					boogieId.substring(0, boogieId.length() - SFO.POINTER_OFFSET.length() - 1));
+			if (offset == null) {
+				return null;
+			}
 			result = new TranslatedVariable(offset.getName(), offset.getCType(), VariableType.POINTER_OFFSET);
 		} else {
-			// TODO: Return null here instead?
-			result = new TranslatedVariable(boogieId, null, VariableType.UNKNOWN);
+			result = null;
 			reportUnfinishedBacktranslation("unknown boogie variable " + boogieId);
 		}
 		return result;
-	}
-
-	private static String getRealName(final IdentifierExpression originalExpression, final String name) {
-		final ILocation loc = originalExpression.getLoc();
-		if (loc instanceof CLocation) {
-			final CLocation cloc = (CLocation) loc;
-			if (cloc.getNode() != null) {
-				return cloc.getNode().getRawSignature();
-			}
-		}
-		return name;
 	}
 
 	private static IRelevanceInformation mergeRelevaneInformation(final IRelevanceInformation... relInfos) {
