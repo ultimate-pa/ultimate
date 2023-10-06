@@ -76,9 +76,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.StringLiteralResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -947,7 +947,7 @@ public class CExpressionTranslator {
 			additionalStatement = new AssumeStatement(loc, divisorNotZero);
 		} else if (checkMode == PointerCheckMode.ASSERTandASSUME) {
 			additionalStatement = new AssertStatement(loc, divisorNotZero);
-			final Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
+			final Check check = new Check(Spec.DIVISION_BY_ZERO);
 			check.annotate(additionalStatement);
 		} else {
 			throw new AssertionError("illegal");

@@ -92,6 +92,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
@@ -213,9 +214,9 @@ public class ACSLHandler implements IACSLHandler {
 		if (node instanceof CodeAnnotStmt) {
 			final Check check;
 			if (mWitnessInvariantMode) {
-				check = new Check(Check.Spec.WITNESS_INVARIANT);
+				check = new Check(Spec.WITNESS_INVARIANT);
 			} else {
-				check = new Check(Check.Spec.ASSERT);
+				check = new Check(Spec.ASSERT);
 			}
 			final ILocation loc = mLocationFactory.createACSLLocation(node);
 
@@ -632,7 +633,7 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main, final Requires node) {
 		mSpecType = ACSLHandler.SPEC_TYPE.REQUIRES;
 		final Expression formula = ((ExpressionResult) main.dispatch(node.getFormula())).getLrValue().getValue();
-		final Check check = new Check(Check.Spec.PRE_CONDITION);
+		final Check check = new Check(Spec.PRE_CONDITION);
 		final ILocation reqLoc = mLocationFactory.createACSLLocation(node);
 		final RequiresSpecification req = new RequiresSpecification(reqLoc, false, formula);
 		check.annotate(req);
@@ -651,7 +652,7 @@ public class ACSLHandler implements IACSLHandler {
 		}
 		mSpecType = ACSLHandler.SPEC_TYPE.ENSURES;
 		final Expression formula = ((ExpressionResult) main.dispatch(e)).getLrValue().getValue();
-		final Check check = new Check(Check.Spec.POST_CONDITION);
+		final Check check = new Check(Spec.POST_CONDITION);
 		final ILocation ensLoc = mLocationFactory.createACSLLocation(node);
 		final EnsuresSpecification ens = new EnsuresSpecification(ensLoc, false, formula);
 		check.annotate(ens);
@@ -730,7 +731,7 @@ public class ACSLHandler implements IACSLHandler {
 		}
 
 		assert res != null && res.getLrValue().getValue() != null;
-		final Check check = new Check(Check.Spec.INVARIANT);
+		final Check check = new Check(Spec.INVARIANT);
 		final ILocation invLoc = mLocationFactory.createACSLLocation(node);
 		final LoopInvariantSpecification lis =
 				new LoopInvariantSpecification(invLoc, false, res.getLrValue().getValue());

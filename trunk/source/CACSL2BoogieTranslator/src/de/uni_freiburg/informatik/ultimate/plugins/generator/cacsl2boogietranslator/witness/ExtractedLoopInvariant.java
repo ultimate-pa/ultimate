@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class ExtractedLoopInvariant extends ExtractedWitnessInvariant {
@@ -71,7 +72,7 @@ public class ExtractedLoopInvariant extends ExtractedWitnessInvariant {
 			if (st instanceof AssertStatement) {
 				final LoopInvariantSpecification spec =
 						new LoopInvariantSpecification(loc, false, ((AssertStatement) st).getFormula());
-				final Check check = new Check(Check.Spec.WITNESS_INVARIANT);
+				final Check check = new Check(Spec.WITNESS_INVARIANT);
 				check.annotate(spec);
 				newInvariants.add(spec);
 				loopInvariantAdded = true;

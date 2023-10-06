@@ -35,6 +35,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IMessageProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -54,26 +56,28 @@ public class ReqCheck extends Check {
 
 	private final String[] mPeaNames;
 
-	public ReqCheck(final Check.Spec type) {
+	public ReqCheck(final Spec type) {
 		this(EnumSet.of(type), 0, 0, new String[0], new String[0]);
 	}
 
-	public ReqCheck(final Check.Spec type, final String[] reqIds, final String[] peaNames) {
+	public ReqCheck(final Spec type, final String[] reqIds, final String[] peaNames) {
 		this(EnumSet.of(type), reqIds, peaNames);
 	}
 
-	private ReqCheck(final EnumSet<Check.Spec> types, final String[] reqIds, final String[] peaNames) {
+	private ReqCheck(final EnumSet<Spec> types, final String[] reqIds, final String[] peaNames) {
 		this(types, -1, -1, reqIds, peaNames);
 	}
 
-	private ReqCheck(final EnumSet<Check.Spec> types, final int startline, final int endline, final String[] reqIds,
+	private ReqCheck(final EnumSet<Spec> types, final int startline, final int endline, final String[] reqIds,
 			final String[] peaNames) {
-		super(types, a -> ReqCheck.getCustomPositiveMessage(a, reqIds, peaNames),
-				a -> ReqCheck.getCustomNegativeMessage(a, reqIds, peaNames));
+		super(types, new ReqCheckMessageProvider());
+
 		mStartline = startline;
 		mEndline = endline;
 		mReqIds = reqIds;
 		mPeaNames = peaNames;
+
+		registerMessageOverrides(types, reqIds, peaNames);
 	}
 
 	public int getStartLine() {
@@ -84,12 +88,16 @@ public class ReqCheck extends Check {
 		return mEndline;
 	}
 
-	private static String getCustomPositiveMessage(final Spec spec, final String[] reqIds, final String[] peaNames) {
-		return getRequirementTexts(reqIds, peaNames) + " " + getDefaultPositiveMessage(spec);
-	}
+	private void registerMessageOverrides(final EnumSet<Spec> types, final String[] reqIds,
+			final String[] peaNames) {
+		final IMessageProvider mMsgProvider = getMessageProvider();
 
-	private static String getCustomNegativeMessage(final Spec spec, final String[] reqIds, final String[] peaNames) {
-		return getRequirementTexts(reqIds, peaNames) + " " + getDefaultNegativeMessage(spec);
+		for (final Spec spec : types) {
+			mMsgProvider.registerPositiveMessageOverride(spec, () -> String.format("%s %s",
+					getRequirementTexts(reqIds, peaNames), mMsgProvider.getDefaultPositiveMessage(spec)));
+			mMsgProvider.registerNegativeMessageOverride(spec, () -> String.format("%s %s",
+					getRequirementTexts(reqIds, peaNames), mMsgProvider.getDefaultNegativeMessage(spec)));
+		}
 	}
 
 	private static String getRequirementTexts(final String[] reqIds, final String[] peaNames) {
