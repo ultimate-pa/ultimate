@@ -89,6 +89,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -1455,16 +1456,26 @@ public class CACSL2BoogieBacktranslator
 		if (extracted == null) {
 			return null;
 		}
-		final CType type = translateIdentifierExpression((IdentifierExpression) base).getCType();
-		if (!(type instanceof CPointer)) {
+		final Integer size = getSizeOfValueType(translateIdentifierExpression((IdentifierExpression) base).getCType());
+		if (size == null) {
 			return null;
 		}
-		final CType pointsTo = ((CPointer) type).getPointsToType();
-		if (!(pointsTo instanceof CPrimitive)) {
-			return null;
-		}
-		final Integer size = mTypeSizes.getSize(((CPrimitive) pointsTo).getType());
 		return extracted.divide(BigInteger.valueOf(size));
+	}
+
+	private Integer getSizeOfValueType(final CType type) {
+		CType valueType = null;
+		if (type instanceof CPointer) {
+			valueType = ((CPointer) type).getPointsToType();
+		}
+		if (type instanceof CArray) {
+			valueType = ((CArray) type).getValueType();
+		}
+		// TODO: More cases?
+		if (valueType == null || !(valueType instanceof CPrimitive)) {
+			return null;
+		}
+		return mTypeSizes.getSize(((CPrimitive) valueType).getType());
 	}
 
 	private boolean areMatchingBaseAndOffset(final Expression base, final Expression offset) {
