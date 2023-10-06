@@ -831,8 +831,8 @@ public class CACSL2BoogieBacktranslator
 		return lastTarget;
 	}
 
-	private <TVL, SVL> void createCFGMultigraphEdge(final Multigraph<TVL, CACSLLocation> currentSource,
-			final ILocation loc, final Multigraph<TVL, CACSLLocation> lastTarget, final boolean isNegated) {
+	private <TVL> void createCFGMultigraphEdge(final Multigraph<TVL, CACSLLocation> currentSource, final ILocation loc,
+			final Multigraph<TVL, CACSLLocation> lastTarget, final boolean isNegated) {
 		final MultigraphEdge<TVL, CACSLLocation> edge;
 		if (loc instanceof CLocation) {
 			final CLocation cloc = (CLocation) loc;
