@@ -471,7 +471,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 						assert ((ApplicationTerm) indexedVar).getParameters().length == 0;
 						if (indexedVar.toStringDirect().contains("nondet")) {
 							if (evenRepresentative) {
-								if (index >= 0) {
+								if (index >= 0) { // TODO how can this be an issue?
 
 									assert indexedRepresentatives.entrySet().size() == 2;
 									// TODO Not sure if save, but by far the best solution
