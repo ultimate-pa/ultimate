@@ -152,7 +152,7 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	private static final String UNFINISHED_BACKTRANSLATION = "Unfinished Backtranslation";
-	private static final boolean ALLOW_ACSL_FEATURES = false;
+	private static final boolean ALLOW_ACSL_FEATURES = true;
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
