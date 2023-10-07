@@ -48,9 +48,8 @@ public class PetriNetUnfolderRabin<LETTER, PLACE> extends PetriNetUnfolderBuchi<
 	 * for simplicity we say a event is Finite if its transition would fire in a Finite place
 	 */
 	private boolean isFinite(final Event<LETTER, PLACE> e) {
-		return e.getTransition().getSuccessors().stream().anyMatch(((IRabinPetriNet<LETTER, PLACE>) mOperand)::isFinite)
-				&& e.getTransition().getPredecessors().stream()
-						.anyMatch(((IRabinPetriNet<LETTER, PLACE>) mOperand)::isFinite);
+		return e.getTransition().getSuccessors().stream()
+				.anyMatch(((IRabinPetriNet<LETTER, PLACE>) mOperand)::isFinite);
 	}
 
 	@Override
@@ -110,13 +109,13 @@ public class PetriNetUnfolderRabin<LETTER, PLACE> extends PetriNetUnfolderBuchi<
 
 		// In this map our reversed Tree is saved indirectly
 		final HashSet<Event<LETTER, PLACE>> seenEvents = new HashSet<>(Set.of(event));
-		final ArrayDeque<Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>>> cutoffQueue = new ArrayDeque<>();
-		cutoffQueue.push(new Pair<>(event, new ArrayList<>()));
-		while (!cutoffQueue.isEmpty()) {
+		final ArrayDeque<Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>>> cutoffStack = new ArrayDeque<>();
+		cutoffStack.push(new Pair<>(event, new ArrayList<>()));
+		while (!cutoffStack.isEmpty()) {
 			final List<Event<LETTER, PLACE>> currentWord =
-					cutoffQueue.peek().getSecond().stream().collect(Collectors.toList());
-			final List<Event<LETTER, PLACE>> reversesortedList = cutoffQueue.remove().getFirst().getLocalConfiguration()
-					.getSortedConfiguration(mUnfolding.getOrder());
+					cutoffStack.peekLast().getSecond().stream().collect(Collectors.toList());
+			final List<Event<LETTER, PLACE>> reversesortedList = cutoffStack.removeLast().getFirst()
+					.getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder());
 
 			Collections.reverse(reversesortedList);
 
@@ -147,7 +146,7 @@ public class PetriNetUnfolderRabin<LETTER, PLACE> extends PetriNetUnfolderBuchi<
 					if (seenEvents.add(cutoffEvent) && !isFinite(cutoffEvent)) {
 						final List<Event<LETTER, PLACE>> copyWord = currentWord.stream().collect(Collectors.toList());
 						copyWord.remove(copyWord.size() - 1);
-						cutoffQueue.offer(new Pair<>(cutoffEvent, Collections.unmodifiableList(copyWord)));
+						cutoffStack.offer(new Pair<>(cutoffEvent, Collections.unmodifiableList(copyWord)));
 					}
 				}
 

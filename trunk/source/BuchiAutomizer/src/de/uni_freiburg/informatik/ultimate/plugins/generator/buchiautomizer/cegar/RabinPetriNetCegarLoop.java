@@ -101,7 +101,7 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 			final RabinDeterministicDifference<L, IPredicate> difference =
 					new RabinDeterministicDifference<>(new AutomataLibraryServices(mServices), abstraction,
 							new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(mServices),
-									new TotalizeNwa<>(interpolantAutomaton, mDefaultStateFactory, true)));
+									new TotalizeNwa<>(interpolantAutomaton, mDefaultStateFactory, false)));
 			// assert difference.checkResult(mStateFactory);
 			return difference.getResult();
 		}
