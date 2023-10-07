@@ -185,25 +185,6 @@ class TestVector {
 		}
 		String valueInRange = null;
 		switch (valueTerm.getSort().getName()) {
-		case SmtSortUtils.FLOATINGPOINT_SORT: {
-			assert valueTerm instanceof ApplicationTerm;
-			final ApplicationTerm cva = (ApplicationTerm) valueTerm;
-			String sign = cva.getParameters()[0].toStringDirect();
-			sign = sign.replaceAll("[^01]", "");
-
-			String exponent = cva.getParameters()[1].toStringDirect();
-			exponent = exponent.replaceAll("[^01]", "");
-
-			String significant = cva.getParameters()[2].toStringDirect();
-			significant = significant.replaceAll("[^01]", "");
-
-			final String floatAsBitString = sign + exponent + significant;
-			final int intBits = (int) Long.parseLong(floatAsBitString, 2);
-			final float myFloat = Float.intBitsToFloat(intBits);
-
-			valueInRange = myFloat + "";
-			break;
-		}
 		case SmtSortUtils.BITVECTOR_SORT: {
 			final Matcher m = Pattern.compile("\\(_\\sbv(\\d+)\\s\\d+\\)").matcher(valueTerm.toStringDirect());
 			m.find();
@@ -324,7 +305,6 @@ class TestVector {
 				values.add(null);
 			}
 		}
-
 		String valueInRange = null;
 		switch (valueTerm.getSort().getName()) {
 		case SmtSortUtils.FLOATINGPOINT_SORT: {
@@ -424,7 +404,10 @@ class TestVector {
 					final BigInteger newValue = new BigInteger("-128").add((value.subtract(new BigInteger("128"))));
 					valueInRange = String.valueOf(newValue);
 				}
-				throw new AssertionError("Unexpected Sort For Output Type");
+			} else if (type.equals("bool")) {
+				final BigInteger value = new BigInteger(valueInRange);
+				final BigInteger newValue = value.mod(new BigInteger("2"));
+				valueInRange = String.valueOf(newValue);
 			}
 			break;
 		}
@@ -450,6 +433,11 @@ class TestVector {
 			}
 
 			switch (type) {
+			case "bool": {
+				final BigInteger newValue = value.mod(new BigInteger("2"));
+				valueInRange = String.valueOf(newValue);
+				break;
+			}
 			case "short": {
 				// -32,768 to 32,767
 				if (value.compareTo(new BigInteger("32767")) == 1) {

@@ -38,6 +38,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -94,6 +95,7 @@ public class TestCompMetaFilePrinter<TTE, TE> extends BaseWitnessGenerator<TTE, 
 			} else if (allInOneDirecotry) {
 				Files.createDirectories(Paths.get("test-suite"));
 				output = new FileOutputStream("test-suite/metadata.xml");
+				createAndWriteDummyTestCase("test-suite/testcaseDummy.xml");
 			} else {
 				final String outputDir = "testsuite_" + mTranslatedCFG.getFilename().substring(
 						mTranslatedCFG.getFilename().lastIndexOf("\\") + 1, mTranslatedCFG.getFilename().length() - 2);
@@ -103,9 +105,47 @@ public class TestCompMetaFilePrinter<TTE, TE> extends BaseWitnessGenerator<TTE, 
 				output = new FileOutputStream("tests/testsuite_" + outputDir + "/metadata.xml");
 			}
 			writeXml(createXML(), output);
+
 		} catch (final IOException | TransformerException | ParserConfigurationException e) {
 			throw e;
 		}
+	}
+
+	private void createAndWriteDummyTestCase(final String output)
+			throws ParserConfigurationException, TransformerConfigurationException, TransformerException {
+		// instance of a DocumentBuilderFactory
+		final DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+
+		// use factory to get an instance of document builder
+		final DocumentBuilder db = dbf.newDocumentBuilder();
+		// create instance of DOM
+		final Document doc = db.newDocument();
+
+		// create the root element
+		final Element rootEle = doc.createElement("testcase");
+
+		// create data elements and place them under root
+
+		final Element element = doc.createElement("input");
+		element.appendChild(doc.createTextNode("0"));
+		rootEle.appendChild(element);
+
+		doc.appendChild(rootEle);
+
+		final TransformerFactory transformerFactory = TransformerFactory.newInstance();
+		final Transformer transformer = transformerFactory.newTransformer();
+		// pretty print XML
+		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		final DOMImplementation domImpl = doc.getImplementation();
+		final DocumentType doctype =
+				domImpl.createDocumentType("testcase", "+//IDN sosy-lab.org//DTD test-format testcase 1.1//EN",
+						"https://sosy-lab.org/test-format/testcase-1.1.dtd");
+		transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, doctype.getPublicId());
+		transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, doctype.getSystemId());
+		final DOMSource source = new DOMSource(doc);
+		final StreamResult result = new StreamResult(output);
+
+		transformer.transform(source, result);
 	}
 
 	public Document createXML() throws ParserConfigurationException {
