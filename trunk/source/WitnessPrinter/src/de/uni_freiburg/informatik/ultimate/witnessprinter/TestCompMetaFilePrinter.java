@@ -126,9 +126,7 @@ public class TestCompMetaFilePrinter<TTE, TE> extends BaseWitnessGenerator<TTE, 
 
 		// create data elements and place them under root
 
-		final Element element = doc.createElement("input");
-		element.appendChild(doc.createTextNode("0"));
-		rootEle.appendChild(element);
+		rootEle.appendChild(doc.createTextNode("\n"));
 
 		doc.appendChild(rootEle);
 
