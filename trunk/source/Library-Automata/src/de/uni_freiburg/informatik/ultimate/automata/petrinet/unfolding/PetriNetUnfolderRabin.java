@@ -3,10 +3,10 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -104,52 +104,57 @@ public class PetriNetUnfolderRabin<LETTER, PLACE> extends PetriNetUnfolderBuchi<
 		 * cutoff-event(s). If, through this backtracking, we encounter the starting cutoff event again, we have found a
 		 * partial configuration that builds a lasso-word.
 		 */
+
+		// per reachable cutoffEvent its path in the unfolding will be looked at once
+		final HashSet<Event<LETTER, PLACE>> seenEvents = new HashSet<>(Set.of(event));
+		// In this map our reversed Tree is saved indirectly by referencing the parents in our DFS
+		final HashMap<Event<LETTER, PLACE>, Event<LETTER, PLACE>> treeMap = new HashMap<>();
 		// Using a stack for the backtrack search which behaves like a tree-search (one companion event might have
 		// multiple respective cutoff events, creating multiple branches of search).
-
-		// In this map our reversed Tree is saved indirectly
-		final HashSet<Event<LETTER, PLACE>> seenEvents = new HashSet<>(Set.of(event));
-		final ArrayDeque<Pair<Event<LETTER, PLACE>, List<Event<LETTER, PLACE>>>> cutoffStack = new ArrayDeque<>();
-		cutoffStack.push(new Pair<>(event, new ArrayList<>()));
+		final ArrayDeque<Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>>> cutoffStack = new ArrayDeque<>();
+		cutoffStack.push(new Pair<>(event, null));
 		while (!cutoffStack.isEmpty()) {
-			final List<Event<LETTER, PLACE>> currentWord =
-					cutoffStack.peekLast().getSecond().stream().collect(Collectors.toList());
-			final List<Event<LETTER, PLACE>> reversesortedList = cutoffStack.removeLast().getFirst()
-					.getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder());
+			treeMap.put(cutoffStack.peekLast().getFirst(), cutoffStack.peekLast().getSecond());
+			Event<LETTER, PLACE> previousEvent = cutoffStack.removeLast().getFirst();
 
+			final List<Event<LETTER, PLACE>> reversesortedList =
+					previousEvent.getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder());
 			Collections.reverse(reversesortedList);
+			// this is the cutoffEvent itself
+			reversesortedList.remove(0);
 
 			for (final Event<LETTER, PLACE> configurationEvent : reversesortedList) {
+				// we oppres finite traces, this ensures every time we see a cutoffEvent it is reached in a nonfinite
+				// context and closed loops will also be nonfinite
 				if (isFinite(configurationEvent)) {
 					break;
 				}
-
-				currentWord.add(configurationEvent);
+				treeMap.put(configurationEvent, previousEvent);
 				if (!configurationEvent.isCompanion()) {
-
+					previousEvent = configurationEvent;
 					continue;
 				}
 				for (final Event<LETTER, PLACE> cutoffEvent : configurationEvent.getCutoffEventsThisIsCompanionTo()) {
 					if (event.equals(cutoffEvent)) {
-						final List<Event<LETTER, PLACE>> configLoopEvents =
-								currentWord.stream().collect(Collectors.toList());
-						Collections.reverse(configLoopEvents);
-						configLoopEvents.remove(0);
+						final List<Event<LETTER, PLACE>> configLoopEvents = new ArrayList<>();
+						Event<LETTER, PLACE> loopEvent = configurationEvent;
+						// if we know that config Event can be enabled by event, we can trace our tree back to event to
+						// get a nonfinite loop
+						while (!loopEvent.equals(event)) {
+							loopEvent = treeMap.get(loopEvent);
+							configLoopEvents.add(loopEvent);
+						}
 						final List<Event<LETTER, PLACE>> configStemEvents =
 								event.getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder());
-
 						if (checkIfLassoConfigurationAccepted(configLoopEvents, configStemEvents)) {
 							return true;
 						}
 					}
-
 					if (seenEvents.add(cutoffEvent) && !isFinite(cutoffEvent)) {
-						final List<Event<LETTER, PLACE>> copyWord = currentWord.stream().collect(Collectors.toList());
-						copyWord.remove(copyWord.size() - 1);
-						cutoffStack.offer(new Pair<>(cutoffEvent, Collections.unmodifiableList(copyWord)));
+						cutoffStack.offer(new Pair<>(cutoffEvent, previousEvent));
 					}
 				}
-
+				previousEvent = configurationEvent;
 			}
 		}
 		return false;
