@@ -111,8 +111,8 @@ public class PetriNetUnfolderRabin<LETTER, PLACE> extends PetriNetUnfolderBuchi<
 						if (event.equals(cutoffEvent)) {
 							final List<Event<LETTER, PLACE>> configLoopEvents = new ArrayList<>();
 							Event<LETTER, PLACE> loopEvent = configurationEvent;
-							// if we know that config Event can be enabled by event, we can trace our tree back to event
-							// and get a nonfinite loop
+							// if we know that previousEvent can be enabled by event, we can trace our tree back to
+							// event and get a nonfinite loop
 							while (!loopEvent.equals(event)) {
 								loopEvent = treeMap.get(loopEvent);
 								configLoopEvents.add(loopEvent);
