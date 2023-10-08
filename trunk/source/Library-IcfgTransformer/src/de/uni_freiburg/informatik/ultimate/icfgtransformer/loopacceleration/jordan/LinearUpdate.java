@@ -179,7 +179,7 @@ public class LinearUpdate {
 				// Case where monomial is some term that does not contain a modified variable,
 				// we will consider this term as a readonly variable
 				final MultiDimensionalSelect mds = MultiDimensionalSelect.of(monomialAsTerm);
-				if (mds.getIndex().size() > 0) {
+				if (mds != null) {
 					// we have to report this array read because we might need the assumption that
 					// its index is different from indices that to which we write
 					arrayReadsWithFixedIndex.add(mds);
