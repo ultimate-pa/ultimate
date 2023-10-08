@@ -21,6 +21,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  *            letter type
  * @param <PLACE>
  *            place content type
+ * @param <FACTORY>
+ *            a {@link IBlackWhiteStateFactory} & {@link IPetriNet2FiniteAutomatonStateFactory} (is only used for
+ *            checkResult)
  */
 public final class RabinIsEmpty<LETTER, PLACE, FACTORY extends IBlackWhiteStateFactory<PLACE> & IPetriNet2FiniteAutomatonStateFactory<PLACE>>
 		extends UnaryNetOperation<LETTER, PLACE, FACTORY> {
@@ -54,6 +57,7 @@ public final class RabinIsEmpty<LETTER, PLACE, FACTORY extends IBlackWhiteStateF
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 * @throws PetriNetNot1SafeException
+	 *             if multiple markings in same place
 	 */
 	public RabinIsEmpty(final AutomataLibraryServices services, final IRabinPetriNet<LETTER, PLACE> operand,
 			final EventOrderEnum order, final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
