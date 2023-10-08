@@ -63,10 +63,7 @@ public class PetriNetUnfolderRabin<LETTER, PLACE> extends PetriNetUnfolderBuchi<
 		if (!event.isCutoffEvent() || isFinite(event)) {
 			return false;
 		}
-		/**
-		 * Special case of a lassoword appearing in a local configuration where its cutoff event has the
-		 * Unfolding-stem-event as companion event, and thus needs special handling.
-		 */
+
 		if (checkLocalConfigurationForLoop(event)) {
 			return true;
 		}
@@ -100,36 +97,35 @@ public class PetriNetUnfolderRabin<LETTER, PLACE> extends PetriNetUnfolderBuchi<
 			Collections.reverse(reversesortedList);
 			// this is the cutoffEvent itself
 			reversesortedList.remove(0);
-
 			for (final Event<LETTER, PLACE> configurationEvent : reversesortedList) {
-				// we oppres finite traces, this ensures every time we see a cutoffEvent it is reached in a nonfinite
+				// we oppress finite traces, this ensures every time we see a cutoffEvent it is reached in a nonfinite
 				// context and closed loops will also be nonfinite
 				if (isFinite(configurationEvent)) {
 					break;
 				}
 				treeMap.put(configurationEvent, previousEvent);
-				if (!configurationEvent.isCompanion()) {
-					previousEvent = configurationEvent;
-					continue;
-				}
-				for (final Event<LETTER, PLACE> cutoffEvent : configurationEvent.getCutoffEventsThisIsCompanionTo()) {
-					if (event.equals(cutoffEvent)) {
-						final List<Event<LETTER, PLACE>> configLoopEvents = new ArrayList<>();
-						Event<LETTER, PLACE> loopEvent = configurationEvent;
-						// if we know that config Event can be enabled by event, we can trace our tree back to event to
-						// get a nonfinite loop
-						while (!loopEvent.equals(event)) {
-							loopEvent = treeMap.get(loopEvent);
-							configLoopEvents.add(loopEvent);
+				if (configurationEvent.isCompanion()) {
+
+					for (final Event<LETTER, PLACE> cutoffEvent : configurationEvent
+							.getCutoffEventsThisIsCompanionTo()) {
+						if (event.equals(cutoffEvent)) {
+							final List<Event<LETTER, PLACE>> configLoopEvents = new ArrayList<>();
+							Event<LETTER, PLACE> loopEvent = configurationEvent;
+							// if we know that config Event can be enabled by event, we can trace our tree back to event
+							// and get a nonfinite loop
+							while (!loopEvent.equals(event)) {
+								loopEvent = treeMap.get(loopEvent);
+								configLoopEvents.add(loopEvent);
+							}
+							final List<Event<LETTER, PLACE>> configStemEvents =
+									event.getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder());
+							if (super.checkIfLassoConfigurationAccepted(configLoopEvents, configStemEvents)) {
+								return true;
+							}
 						}
-						final List<Event<LETTER, PLACE>> configStemEvents =
-								event.getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder());
-						if (super.checkIfLassoConfigurationAccepted(configLoopEvents, configStemEvents)) {
-							return true;
+						if (seenEvents.add(cutoffEvent) && !isFinite(cutoffEvent)) {
+							cutoffStack.offer(new Pair<>(cutoffEvent, previousEvent));
 						}
-					}
-					if (seenEvents.add(cutoffEvent) && !isFinite(cutoffEvent)) {
-						cutoffStack.offer(new Pair<>(cutoffEvent, previousEvent));
 					}
 				}
 				previousEvent = configurationEvent;
