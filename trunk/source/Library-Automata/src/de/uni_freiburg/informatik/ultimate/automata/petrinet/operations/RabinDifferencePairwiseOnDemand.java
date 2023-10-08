@@ -13,11 +13,37 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 
+/**
+ * pairwise difference on demand which keeps finite places /Rabin condition
+ *
+ * @author Philipp Müller (pm251@venus.uni-freiburg.de)
+ *
+ * @param <LETTER>
+ *            type of letters
+ * @param <PLACE>
+ *            type of places
+ * @param <CRSF>
+ *            a {@link IPetriNet2FiniteAutomatonStateFactory} & {@link INwaInclusionStateFactory}
+ */
 public class RabinDifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 		extends DifferencePairwiseOnDemand<LETTER, PLACE, CRSF> {
 
 	private final IRabinPetriNet<LETTER, PLACE> mWrappedResult;
 
+	/**
+	 * Constructs a difference Rabin-Petri-Net - deterministic automaton
+	 *
+	 * @param services
+	 *            services
+	 * @param minuendNet
+	 *            the minuend Rabin-Petri-Net
+	 * @param subtrahendDfa
+	 *            the deterministic automaton subtrahend
+	 * @throws AutomataOperationCanceledException
+	 *             exception thrown if a cancellation request would occur during execution
+	 * @throws PetriNetNot1SafeException
+	 *             exception thrown iff two or more markings would occupy one place
+	 */
 	public RabinDifferencePairwiseOnDemand(final AutomataLibraryServices services,
 			final IRabinPetriNet<LETTER, PLACE> minuendNet,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahendDfa)

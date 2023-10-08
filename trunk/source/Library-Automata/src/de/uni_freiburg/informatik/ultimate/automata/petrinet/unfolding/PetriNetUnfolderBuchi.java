@@ -75,14 +75,7 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE>
 		return null;
 	}
 
-	@Override
-	protected boolean addAndCheck(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
-		mUnfolding.addEvent(event);
-
-		if (!event.isCutoffEvent()) {
-			return false;
-		}
-
+	protected boolean checkLocalConfigurationForLoop(final Event<LETTER, PLACE> event) {
 		/**
 		 * Special case of a lassoword appearing in a local configuration where its cutoff event has the
 		 * Unfolding-stem-event as companion event, and thus needs special handling.
@@ -115,6 +108,20 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE>
 				return true;
 			}
 
+		}
+		return false;
+	}
+
+	@Override
+	protected boolean addAndCheck(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
+		mUnfolding.addEvent(event);
+
+		if (!event.isCutoffEvent()) {
+			return false;
+		}
+
+		if (checkLocalConfigurationForLoop(event)) {
+			return true;
 		}
 
 		/**

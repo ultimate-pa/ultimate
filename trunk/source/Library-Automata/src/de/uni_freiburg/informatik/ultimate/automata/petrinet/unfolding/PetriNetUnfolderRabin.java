@@ -36,6 +36,10 @@ public class PetriNetUnfolderRabin<LETTER, PLACE> extends PetriNetUnfolderBuchi<
 
 	}
 
+	/**
+	 * If we cannot assert that a run is nonfinite we have to use the new {@link Events2PetriNetLassoRunRabin} for
+	 * proper acceptance
+	 */
 	@Override
 	protected boolean checkIfLassoConfigurationAccepted(final List<Event<LETTER, PLACE>> configLoopPart,
 			final List<Event<LETTER, PLACE>> configStemPart) {
@@ -63,34 +67,8 @@ public class PetriNetUnfolderRabin<LETTER, PLACE> extends PetriNetUnfolderBuchi<
 		 * Special case of a lassoword appearing in a local configuration where its cutoff event has the
 		 * Unfolding-stem-event as companion event, and thus needs special handling.
 		 */
-		if (event.getCompanion().getTransition() == null) {
-			final List<Event<LETTER, PLACE>> configLoopEvents = new ArrayList<>();
-			configLoopEvents.addAll(event.getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder()));
-			if (checkIfLassoConfigurationAccepted(configLoopEvents, new ArrayList<>())) {
-				return true;
-			}
-		}
-
-		/**
-		 * Searches for lasso-words which are fully contained in a local configuration of the Unfolding.
-		 */
-		if (event.getLocalConfiguration().contains(event.getCompanion())) {
-			final List<Event<LETTER, PLACE>> configLoopEvents = new ArrayList<>();
-			final List<Event<LETTER, PLACE>> configStemEvents = new ArrayList<>();
-			for (final Event<LETTER, PLACE> configEvent : event.getLocalConfiguration()
-					.getSortedConfiguration(mUnfolding.getOrder())) {
-				if (configEvent != event.getCompanion()
-						&& configEvent.getLocalConfiguration().contains(event.getCompanion())) {
-					configLoopEvents.add(configEvent);
-				} else {
-					configStemEvents.add(configEvent);
-				}
-			}
-
-			if (checkIfLassoConfigurationAccepted(configLoopEvents, configStemEvents)) {
-				return true;
-			}
-
+		if (checkLocalConfigurationForLoop(event)) {
+			return true;
 		}
 
 		/**
@@ -146,7 +124,7 @@ public class PetriNetUnfolderRabin<LETTER, PLACE> extends PetriNetUnfolderBuchi<
 						}
 						final List<Event<LETTER, PLACE>> configStemEvents =
 								event.getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder());
-						if (checkIfLassoConfigurationAccepted(configLoopEvents, configStemEvents)) {
+						if (super.checkIfLassoConfigurationAccepted(configLoopEvents, configStemEvents)) {
 							return true;
 						}
 					}

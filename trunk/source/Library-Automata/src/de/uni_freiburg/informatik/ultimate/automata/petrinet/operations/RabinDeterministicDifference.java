@@ -153,6 +153,6 @@ public class RabinDeterministicDifference<LETTER, PLACE>
 			throws AutomataLibraryException {
 		return mBuchiAutomaton.getStates().size() * mPetriNet.getTransitions().size() == mDifferenceNet.getTransitions()
 				.size() && mBuchiAutomaton.getStates().stream().noneMatch(x -> mPetriNet.getPlaces().contains(x));
-		// TODO: implement a valid check
+		// TODO: implement a stricter check
 	}
 }
