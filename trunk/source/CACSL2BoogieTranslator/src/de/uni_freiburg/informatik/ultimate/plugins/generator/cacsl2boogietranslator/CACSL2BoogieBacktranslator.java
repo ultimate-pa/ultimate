@@ -1460,7 +1460,12 @@ public class CACSL2BoogieBacktranslator
 		if (size == null) {
 			return null;
 		}
-		return extracted.divide(BigInteger.valueOf(size));
+		final BigInteger[] divRemainder = extracted.divideAndRemainder(BigInteger.valueOf(size));
+		if (divRemainder[1].signum() != 0) {
+			// The extracted value is not divisible by the type size, so we cannot extract a dereference
+			return null;
+		}
+		return divRemainder[0];
 	}
 
 	private Integer getSizeOfValueType(final CType type) {
