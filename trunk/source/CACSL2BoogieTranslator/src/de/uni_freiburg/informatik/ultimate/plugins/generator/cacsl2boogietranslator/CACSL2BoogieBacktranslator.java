@@ -1452,6 +1452,7 @@ public class CACSL2BoogieBacktranslator
 				factorCandidate = left;
 			}
 		}
+		// TODO: This just works for the addition of constants, add more cases (like a!offset + 4 * x)
 		final BigInteger extracted = mTypeSizes.extractIntegerValue(factorCandidate, mTypeSizes.getSizeT());
 		if (extracted == null) {
 			return null;
