@@ -8,10 +8,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementFKV;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementNCSB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IRabinPetriNet;
@@ -105,11 +103,8 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 			// assert difference.checkResult(mStateFactory);
 			return difference.getResult();
 		}
-		final IStateDeterminizer<L, IPredicate> stateDeterminizer =
-				new PowersetDeterminizer<>(interpolantAutomaton, mUseDoubleDeckers, mDefaultStateFactory);
-		final BuchiComplementFKV<L, IPredicate> complNwa = new BuchiComplementFKV<>(
-				new AutomataLibraryServices(mServices), mDefaultStateFactory, interpolantAutomaton, stateDeterminizer);
-		mBenchmarkGenerator.reportHighestRank(complNwa.getHighestRank());
+		final BuchiComplementNCSB<L, IPredicate> complNwa = new BuchiComplementNCSB<>(
+				new AutomataLibraryServices(mServices), mStateFactory, interpolantAutomaton, true);
 
 		final RabinIntersect<L, IPredicate> intersection = new RabinIntersect<>(new AutomataLibraryServices(mServices),
 				mDefaultStateFactory, abstraction, complNwa.getResult());
