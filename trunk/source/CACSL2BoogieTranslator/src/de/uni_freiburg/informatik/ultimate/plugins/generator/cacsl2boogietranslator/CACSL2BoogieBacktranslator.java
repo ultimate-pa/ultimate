@@ -394,19 +394,6 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	/**
-	 * Create a new enum set that contains the given set and the new elements or return the set if no elements are
-	 * given.
-	 */
-	private static <T extends Enum<T>> EnumSet<T> add(final EnumSet<T> set, final T... elems) {
-		if (elems == null || elems.length == 0) {
-			return set;
-		}
-		final EnumSet<T> rtr = EnumSet.copyOf(set);
-		Collections.addAll(rtr, elems);
-		return rtr;
-	}
-
-	/**
 	 * If we encounter a {@link CASTFunctionCallExpression} during backtranslation, we have to consider various special
 	 * cases. Sometimes we need to ignore it, sometimes we compress multiple statements to one. This function handles
 	 * all these cases and returns the index the loop should increase and continue.
@@ -505,10 +492,14 @@ public class CACSL2BoogieBacktranslator
 			stepInfo = currentATE.getStepInfo();
 		} else if (currentTraceElement instanceof ForkStatement) {
 			// its a fork, keep it
-			stepInfo = add(currentATE.getStepInfo(), StepInfo.FORK, StepInfo.FUNC_CALL);
+			stepInfo = EnumSet.copyOf(currentATE.getStepInfo());
+			stepInfo.add(StepInfo.FORK);
+			stepInfo.add(StepInfo.FUNC_CALL);
 		} else if (currentTraceElement instanceof JoinStatement) {
 			// its a join, keep it
-			stepInfo = add(currentATE.getStepInfo(), StepInfo.JOIN, StepInfo.FUNC_CALL);
+			stepInfo = EnumSet.copyOf(currentATE.getStepInfo());
+			stepInfo.add(StepInfo.JOIN);
+			stepInfo.add(StepInfo.FUNC_CALL);
 		} else {
 			// if this anything else we just throw it away
 			return index;
