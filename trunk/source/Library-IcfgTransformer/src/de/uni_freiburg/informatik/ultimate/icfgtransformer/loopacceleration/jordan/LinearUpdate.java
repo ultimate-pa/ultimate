@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Quad;
 
 /**
  *
@@ -88,20 +87,14 @@ public class LinearUpdate {
 
 		final List<MultiDimensionalSelect> arrayReadsWithFixedIndex = new ArrayList<>();
 		for (final Entry<IProgramVar, Term> update : su.getDeterministicAssignment().entrySet()) {
-			final Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String> quad = extractLinearUpdate(
+			final UpdateExpression ue = extractLinearUpdate(
 					mgdScript, termVariablesOfModified, update.getValue());
-			if (quad.getFirst() == null) {
-				assert quad.getSecond() == null;
-				assert quad.getThird() == null;
-				assert quad.getFourth() != null;
-				return new Pair<>(null, quad.getFourth());
+			if (ue.getmErrorMessage() != null) {
+				return new Pair<>(null, ue.getmErrorMessage());
 			} else {
-				assert quad.getSecond() != null;
-				assert quad.getThird() != null;
-				assert quad.getFourth() == null;
-				updateMap.put(update.getKey().getTermVariable(), quad.getFirst());
-				readonlyVariables.addAll(quad.getSecond());
-				arrayReadsWithFixedIndex.addAll(quad.getThird());
+				updateMap.put(update.getKey().getTermVariable(), ue.getmAffineTerm());
+				readonlyVariables.addAll(ue.getmReadonlyVariables());
+				arrayReadsWithFixedIndex.addAll(ue.getmArrayReads());
 			}
 		}
 		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : su.getDeterministicArrayWrites()
@@ -127,18 +120,12 @@ public class LinearUpdate {
 				// index is moving
 				continue;
 			}
-			final Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String> quad = extractLinearUpdate(
+			final UpdateExpression quad = extractLinearUpdate(
 					mgdScript, termVariablesOfModified, update.getValue().getValues().get(0));
-			if (quad.getFirst() == null) {
-				assert quad.getSecond() == null;
-				assert quad.getThird() == null;
-				assert quad.getFourth() != null;
-				return new Pair<>(null, quad.getFourth());
+			if (quad.getmErrorMessage() == null) {
+				return new Pair<>(null, quad.getmErrorMessage());
 			} else {
-				assert quad.getSecond() != null;
-				assert quad.getThird() != null;
-				assert quad.getFourth() == null;
-				final List<MultiDimensionalSelect> arrayReadsWithFixedIndex1 = quad.getThird();
+				final List<MultiDimensionalSelect> arrayReadsWithFixedIndex1 = quad.getmArrayReads();
 				for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : su.getDeterministicArrayWrites()
 						.entrySet()) {
 					for (final MultiDimensionalSelect mds : arrayReadsWithFixedIndex1) {
@@ -156,7 +143,7 @@ public class LinearUpdate {
 		return new Pair<>(new LinearUpdate(updateMap, readonlyVariables), null);
 	}
 
-	private static Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String> extractLinearUpdate(
+	private static UpdateExpression extractLinearUpdate(
 			final ManagedScript mgdScript, final Set<TermVariable> termVariablesOfModified, final Term term) {
 		final IPolynomialTerm polyRhs = (IPolynomialTerm) new PolynomialTermTransformer(mgdScript.getScript())
 				.transform(term);
@@ -191,8 +178,7 @@ public class LinearUpdate {
 					if (!innerArrayWrites.isEmpty()) {
 						final String errorMessage = String.format("Yet unsupported inner array read. Monomial %s",
 								monomialAsTerm);
-						return new Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String>(null, null, null,
-								errorMessage);
+						return new UpdateExpression(null, null, null, errorMessage);
 					}
 				}
 				readonlyVariables.add(monomialAsTerm);
@@ -206,8 +192,7 @@ public class LinearUpdate {
 					// nonlinear update that our loop acceleration cannot handle
 					final String errorMessage = String.format("Nonlinear update. Monomial %s, Updated variable %s",
 							monomialAsTerm, someOccuringModifiedTermVariable);
-					return new Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String>(null, null, null,
-							errorMessage);
+					return new UpdateExpression(null, null, null, errorMessage);
 				}
 				final MultiDimensionalSelect mds = MultiDimensionalSelect.of(monomialAsTerm);
 				if (mds != null) {
@@ -216,19 +201,17 @@ public class LinearUpdate {
 					final String errorMessage = String.format(
 							"Non-array update contains array read whose index is moving. Array read %s, modified variable %s",
 							mds, freeVarsOfIndex);
-					return new Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String>(null, null, null,
-							errorMessage);
+					return new UpdateExpression(null, null, null, errorMessage);
 				} else {
 					final String errorMessage = String.format(
 							"Monomial contains modified variable. Monomial %s, Variable %s", monomialAsTerm,
 							someOccuringModifiedTermVariable);
-					return new Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String>(null, null, null,
-							errorMessage);
+					return new UpdateExpression(null, null, null, errorMessage);
 				}
 			}
 		}
 		final AffineTerm affineTerm = new AffineTerm(polyRhs.getSort(), polyRhs.getConstant(), variables2coeffcient);
-		return new Quad<>(affineTerm, readonlyVariables, arrayReadsWithFixedIndex, null);
+		return new UpdateExpression(affineTerm, readonlyVariables, arrayReadsWithFixedIndex, null);
 	}
 
 	private static TermVariable containsTermVariableOfModified(final Set<TermVariable> termVariablesOfModified,
@@ -269,4 +252,32 @@ public class LinearUpdate {
 		}
 		return result;
 	}
+
+	private static class UpdateExpression {
+		private final AffineTerm mAffineTerm;
+		private final Set<Term> mReadonlyVariables;
+		private final List<MultiDimensionalSelect> mArrayReads;
+		private final String mErrorMessage;
+		public UpdateExpression(AffineTerm mAffineTerm, Set<Term> mReadonlyVariables,
+				List<MultiDimensionalSelect> mArrayReads, String mErrorMessage) {
+			super();
+			this.mAffineTerm = mAffineTerm;
+			this.mReadonlyVariables = mReadonlyVariables;
+			this.mArrayReads = mArrayReads;
+			this.mErrorMessage = mErrorMessage;
+		}
+		public AffineTerm getmAffineTerm() {
+			return mAffineTerm;
+		}
+		public Set<Term> getmReadonlyVariables() {
+			return mReadonlyVariables;
+		}
+		public List<MultiDimensionalSelect> getmArrayReads() {
+			return mArrayReads;
+		}
+		public String getmErrorMessage() {
+			return mErrorMessage;
+		}
+	}
+
 }
