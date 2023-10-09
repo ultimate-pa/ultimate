@@ -5,11 +5,15 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementNCSB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IRabinPetriNet;
@@ -58,8 +62,6 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 			throws AutomataLibraryException {
 		final var isempty = new RabinIsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mPref.eventOrder(),
 				mPref.cutOffRequiresSameTransition(), true);
-		// mLogger.error(abstraction);
-
 		final PetriNetLassoRun<L, IPredicate> run = isempty.getRun();
 		if (run == null) {
 			// assert isempty.checkResult(mStateFactory);
@@ -68,7 +70,6 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 		mCounterexample =
 				new NestedLassoRun<>(constructNestedLassoRun(run.getStem()), constructNestedLassoRun(run.getLoop()));
 		// mLogger.error(mCounterexample.getNestedLassoWord());
-
 		return false;
 	}
 
@@ -91,10 +92,17 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 		}
 	}
 
+	/**
+	 * There are three cases each usually having a more complex difference. We use a direct difference for the
+	 * deterministic subtrahend, in the other case we use a intersection with the complemented subtrahend. Until now
+	 * almost all subtrahends are limit deterministic, so we use a optimized NCSB complement for them. The rest is
+	 * handled with a general inversion.
+	 */
 	@Override
 	protected IRabinPetriNet<L, IPredicate> refineBuchi(final IRabinPetriNet<L, IPredicate> abstraction,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton,
 			final BuchiInterpolantAutomatonConstructionStyle constructionStyle) throws AutomataLibraryException {
+
 		if (constructionStyle.isAlwaysDeterministic()) {
 			final RabinDeterministicDifference<L, IPredicate> difference =
 					new RabinDeterministicDifference<>(new AutomataLibraryServices(mServices), abstraction,
@@ -103,19 +111,29 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 			// assert difference.checkResult(mStateFactory);
 			return difference.getResult();
 		}
-		final BuchiComplementNCSB<L, IPredicate> complNwa = new BuchiComplementNCSB<>(
-				new AutomataLibraryServices(mServices), mStateFactory, interpolantAutomaton, true);
-
+		final INestedWordAutomaton<L, IPredicate> complNwa;
+		if (constructionStyle.isAlwaysSemiDeterministic()) {
+			complNwa = new BuchiComplementNCSB<>(new AutomataLibraryServices(mServices), mStateFactory,
+					interpolantAutomaton, true).getResult();
+		} else {
+			final IStateDeterminizer<L, IPredicate> stateDeterminizer =
+					new PowersetDeterminizer<>(interpolantAutomaton, mUseDoubleDeckers, mDefaultStateFactory);
+			final BuchiComplementFKV<L, IPredicate> fkvComplNwa =
+					new BuchiComplementFKV<>(new AutomataLibraryServices(mServices), mDefaultStateFactory,
+							interpolantAutomaton, stateDeterminizer);
+			mBenchmarkGenerator.reportHighestRank(fkvComplNwa.getHighestRank());
+			complNwa = fkvComplNwa.getResult();
+		}
 		final RabinIntersect<L, IPredicate> intersection = new RabinIntersect<>(new AutomataLibraryServices(mServices),
-				mDefaultStateFactory, abstraction, complNwa.getResult());
+				mDefaultStateFactory, abstraction, complNwa);
 		// mLogger.error(intersection.getResult());
 		return intersection.getResult();
 	}
 
+	// TODO: implement a reduction method for Rabin-Petri-Nets
 	@Override
 	protected IRabinPetriNet<L, IPredicate> reduceAbstractionSize(final IRabinPetriNet<L, IPredicate> abstraction,
 			final Minimization automataMinimization) throws AutomataOperationCanceledException {
 		return abstraction;
 	}
-
 }
