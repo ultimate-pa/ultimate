@@ -33,10 +33,12 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementFKV;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementNCSB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
@@ -115,14 +117,21 @@ public class BuchiPetriNetCegarLoop<L extends IIcfgTransition<?>>
 	protected IPetriNet<L, IPredicate> refineBuchi(final IPetriNet<L, IPredicate> abstraction,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton,
 			final BuchiInterpolantAutomatonConstructionStyle constructionStyle) throws AutomataLibraryException {
-		final IStateDeterminizer<L, IPredicate> stateDeterminizer =
-				new PowersetDeterminizer<>(interpolantAutomaton, mUseDoubleDeckers, mDefaultStateFactory);
-		final BuchiComplementFKV<L, IPredicate> complNwa = new BuchiComplementFKV<>(
-				new AutomataLibraryServices(mServices), mDefaultStateFactory, interpolantAutomaton, stateDeterminizer);
-		mBenchmarkGenerator.reportHighestRank(complNwa.getHighestRank());
-
+		final INestedWordAutomaton<L, IPredicate> complNwa;
+		if (constructionStyle.isAlwaysSemiDeterministic()) {
+			complNwa = new BuchiComplementNCSB<>(new AutomataLibraryServices(mServices), mDefaultStateFactory,
+					interpolantAutomaton, true).getResult();
+		} else {
+			final IStateDeterminizer<L, IPredicate> stateDeterminizer =
+					new PowersetDeterminizer<>(interpolantAutomaton, mUseDoubleDeckers, mDefaultStateFactory);
+			final BuchiComplementFKV<L, IPredicate> fkvComplNwa =
+					new BuchiComplementFKV<>(new AutomataLibraryServices(mServices), mDefaultStateFactory,
+							interpolantAutomaton, stateDeterminizer);
+			mBenchmarkGenerator.reportHighestRank(fkvComplNwa.getHighestRank());
+			complNwa = fkvComplNwa.getResult();
+		}
 		final BuchiIntersect<L, IPredicate> intersection = new BuchiIntersect<>(new AutomataLibraryServices(mServices),
-				mDefaultStateFactory, abstraction, complNwa.getResult());
+				mDefaultStateFactory, abstraction, complNwa);
 		return intersection.getResult();
 	}
 
