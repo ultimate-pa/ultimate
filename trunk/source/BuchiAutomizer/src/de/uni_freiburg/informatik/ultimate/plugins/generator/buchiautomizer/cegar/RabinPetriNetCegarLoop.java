@@ -113,7 +113,7 @@ public class RabinPetriNetCegarLoop<L extends IIcfgTransition<?>>
 		}
 		final INestedWordAutomaton<L, IPredicate> complNwa;
 		if (constructionStyle.isAlwaysSemiDeterministic()) {
-			complNwa = new BuchiComplementNCSB<>(new AutomataLibraryServices(mServices), mStateFactory,
+			complNwa = new BuchiComplementNCSB<>(new AutomataLibraryServices(mServices), mDefaultStateFactory,
 					interpolantAutomaton, true).getResult();
 		} else {
 			final IStateDeterminizer<L, IPredicate> stateDeterminizer =
