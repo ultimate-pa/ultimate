@@ -30,10 +30,10 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -137,52 +137,45 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE>
 		 */
 		// Using a stack for the backtrack search which behaves like a tree-search (one companion event might have
 		// multiple respective cutoff events, creating multiple branches of search).
-
-		// per reachable cutoffEvent its path in the unfolding will be looked at once
-		final HashSet<Event<LETTER, PLACE>> seenEvents = new HashSet<>(Set.of(event));
-		// In this map our reversed Tree is saved indirectly by referencing the parents in our DFS
-		final HashMap<Event<LETTER, PLACE>, Event<LETTER, PLACE>> treeMap = new HashMap<>();
-		// Using a stack for the backtrack search which behaves like a tree-search (one companion event might have
-		// multiple respective cutoff events, creating multiple branches of search).
-		final ArrayDeque<Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>>> cutoffStack = new ArrayDeque<>();
-		cutoffStack.push(new Pair<>(event, null));
-		while (!cutoffStack.isEmpty()) {
-			treeMap.put(cutoffStack.peekLast().getFirst(), cutoffStack.peekLast().getSecond());
-			Event<LETTER, PLACE> previousEvent = cutoffStack.removeLast().getFirst();
-
+		final ArrayDeque<Pair<List<List<Event<LETTER, PLACE>>>, Event<LETTER, PLACE>>> wordBeingBuilt =
+				new ArrayDeque<>();
+		wordBeingBuilt.add(new Pair<>(new ArrayList<>(), event));
+		final Set<Event<LETTER, PLACE>> seenEvents = new HashSet<>();
+		while (!wordBeingBuilt.isEmpty()) {
+			final Pair<List<List<Event<LETTER, PLACE>>>, Event<LETTER, PLACE>> nextPair = wordBeingBuilt.pop();
 			final List<Event<LETTER, PLACE>> reversesortedList =
-					previousEvent.getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder());
+					nextPair.getSecond().getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder());
 			Collections.reverse(reversesortedList);
-			// this is the cutoffEvent itself
-			reversesortedList.remove(0);
-			for (final Event<LETTER, PLACE> configurationEvent : reversesortedList) {
+			final List<Event<LETTER, PLACE>> newList = new ArrayList<>();
+			for (final Event<LETTER, PLACE> event2 : reversesortedList) {
+				if (!event2.isCompanion()) {
+					// adding events we pass through, because they will build the lasso-word.
+					newList.add(0, event2);
+					continue;
+				}
+				nextPair.getFirst().add(newList);
+				if (event2.getCutoffEventsThisIsCompanionTo().contains(event)) {
+					Collections.reverse(nextPair.getFirst());
+					final List<Event<LETTER, PLACE>> configLoopEvents =
+							nextPair.getFirst().stream().flatMap(List::stream).collect(Collectors.toList());
+					final List<Event<LETTER, PLACE>> configStemEvents =
+							event.getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder());
 
-				treeMap.put(configurationEvent, previousEvent);
-				if (configurationEvent.isCompanion()) {
-
-					for (final Event<LETTER, PLACE> cutoffEvent : configurationEvent
-							.getCutoffEventsThisIsCompanionTo()) {
-						if (event.equals(cutoffEvent)) {
-							final List<Event<LETTER, PLACE>> configLoopEvents = new ArrayList<>();
-							Event<LETTER, PLACE> loopEvent = configurationEvent;
-							// if we know that previousEvent can be enabled by event, we can trace our tree back to
-							// event and get a loop
-							while (!loopEvent.equals(event)) {
-								loopEvent = treeMap.get(loopEvent);
-								configLoopEvents.add(loopEvent);
-							}
-							final List<Event<LETTER, PLACE>> configStemEvents =
-									event.getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder());
-							if (checkIfLassoConfigurationAccepted(configLoopEvents, configStemEvents)) {
-								return true;
-							}
-						}
-						if (seenEvents.add(cutoffEvent)) {
-							cutoffStack.offer(new Pair<>(cutoffEvent, previousEvent));
-						}
+					if (checkIfLassoConfigurationAccepted(configLoopEvents, configStemEvents)) {
+						return true;
 					}
 				}
-				previousEvent = configurationEvent;
+				// New backtrack-tree-path found through another companion event. We don't add event2 to the
+				// list of events because it is not part of the word.
+				for (final Event<LETTER, PLACE> cutoffEvent : event2.getCutoffEventsThisIsCompanionTo()) {
+					if (!seenEvents.add(cutoffEvent)) {
+						// to avoid looping
+						continue;
+					}
+					wordBeingBuilt.add(new Pair<>(new ArrayList<>(nextPair.getFirst()), cutoffEvent));
+				}
+				break;
+
 			}
 		}
 		return false;
