@@ -3,35 +3,26 @@
     
 	<option name="--force-no-wrapper" />
   <option name="-tc">../../../trunk/examples/toolchains/BuchiAutomizerBplInline.xml</option>
-<!--
-  <rundefinition name="Buchi Automaton (no LBE)">
-    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-noLbe.epf</option>
+
+	<rundefinition name="Buchi Automaton">
+		<option name="-s">../../../trunk/examples/default/automizer/svcomp-Termination-32bit-Automizer_Default.epf</option>
+		<option name="--buchiautomizer.automaton.type.for.concurrent.programs">BUCHI_AUTOMATON</option>
 	</rundefinition>
--->
-  <rundefinition name="Buchi Automaton (semantic LBE)">
-    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-semanticLbe.epf</option>
+
+	<rundefinition name="Buchi PN">
+		<option name="-s">../../../trunk/examples/default/automizer/svcomp-Termination-32bit-Automizer_Default.epf</option>
+		<option name="--buchiautomizer.automaton.type.for.concurrent.programs">BUCHI_PETRI_NET</option>
 	</rundefinition>
-<!--	
-	<rundefinition name="Buchi Automaton (syntactic LBE)">
-    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-syntacticLbe.epf</option>
+
+	<rundefinition name="Rabin PN">
+		<option name="-s">../../../trunk/examples/default/automizer/svcomp-Termination-32bit-Automizer_Default.epf</option>
+		<option name="--buchiautomizer.automaton.type.for.concurrent.programs">RABIN_PETRI_NET</option>
 	</rundefinition>
-  
-  <rundefinition name="Buchi PN (no LBE)">
-    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-buchi-pn-noLbe.epf</option>
-	</rundefinition>
--->
-  <rundefinition name="Buchi PN (semantic LBE)">
-    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-buchi-pn-semanticLbe.epf</option>
-	</rundefinition>
-<!--	
-	<rundefinition name="Buchi PN (syntactic LBE)">
-    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-buchi-pn-syntacticLbe.epf</option>
-	</rundefinition>
--->
+
 	<tasks name="Ultimate Repo">
 		<includesfile>../../../trunk/examples/concurrency-termination-bpl.set</includesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/termination.prp</propertyfile>
 	</tasks>
-  
-  <resultfiles></resultfiles>
+
+	<resultfiles></resultfiles>
 </benchmark>
