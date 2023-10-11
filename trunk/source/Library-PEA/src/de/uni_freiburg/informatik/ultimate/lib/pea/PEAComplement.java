@@ -293,6 +293,12 @@ public class PEAComplement {
 					String clockVarWithSuffix = addSuffixString(decision.getVar(), suffix);
 					CDD rangeDecisionWithSuffix = RangeDecision.create(clockVarWithSuffix, op, value);
 					conjunctionWithSuffix = conjunctionWithSuffix.and(rangeDecisionWithSuffix);
+				} else if (pair.getFirst() instanceof BoogieBooleanExpressionDecision) {
+					BoogieBooleanExpressionDecision decision = (BoogieBooleanExpressionDecision) pair.getFirst();
+					CDD booleanDecision = BoogieBooleanExpressionDecision.create(decision.getExpression());
+					if (pair.getSecond()[0] == 1) { // when the index of the true child is 1, the decision is negated
+						booleanDecision = booleanDecision.negate();
+					}
 				} else { // boolean decision
 					Decision<BooleanDecision> decision = (Decision<BooleanDecision>) pair.getFirst();
 					CDD booleanDecision = BooleanDecision.create(pair.getFirst().getVar());
