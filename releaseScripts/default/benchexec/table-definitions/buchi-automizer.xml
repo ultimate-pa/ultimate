@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<!DOCTYPE table PUBLIC "+//IDN sosy-lab.org//DTD BenchExec table 1.10//EN" "https://www.sosy-lab.org/benchexec/table-1.10.dtd">
+<table>
+  <!-- default columns -->
+  <column title="status"/>
+  <column title="cputime" displayTitle="CPU Time"/>
+  <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+  <!-- Buchi-Automizer-specific columns -->
+  <column title="iterations" displayTitle="Iterations">BüchiAutomizer plugin needed.*and\s*(\d+)\s*iterations</column>
+  <column title="trivialModules" displayTitle="Trivial modules">\((\d+)\s*trivial</column>
+  <column title="detModules" displayTitle="Deterministic modules">,\s*(\d+)\s*deterministic</column>
+  <column title="nondetModules" displayTitle="Nondeterministic modules">,\s*(\d+)\s*nondeterministic\)</column>
+</table>
