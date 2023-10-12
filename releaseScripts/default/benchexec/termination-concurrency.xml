@@ -5,12 +5,12 @@
   <option name="-tc">../../../trunk/examples/toolchains/BuchiAutomizerCInline.xml</option>
 
 	<rundefinition name="Buchi Automaton">
-		<option name="-s">../../../trunk/examples/default/automizer/svcomp-Termination-32bit-Automizer_Default.epf</option>
+		<option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Termination-32bit-Automizer_Default.epf</option>
 		<option name="--buchiautomizer.automaton.type.for.concurrent.programs">BUCHI_AUTOMATON</option>
 	</rundefinition>
 
 	<rundefinition name="Rabin PN">
-		<option name="-s">../../../trunk/examples/default/automizer/svcomp-Termination-32bit-Automizer_Default.epf</option>
+		<option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Termination-32bit-Automizer_Default.epf</option>
 		<option name="--buchiautomizer.automaton.type.for.concurrent.programs">RABIN_PETRI_NET</option>
 	</rundefinition>
 
