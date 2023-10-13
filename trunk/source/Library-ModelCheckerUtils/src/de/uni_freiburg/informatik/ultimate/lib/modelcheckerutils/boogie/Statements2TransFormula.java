@@ -204,15 +204,14 @@ public class Statements2TransFormula {
 		}
 
 		if (infeasibility == null) {
-			final Term falseTerm = mScript.term("false");
-			if (formula == falseTerm) {
+			if (SmtUtils.isFalseLiteral(formula)) {
 				infeasibility = Infeasibility.INFEASIBLE;
-			} else if (simplicationTechnique.decidesFeasibility()) {
+			} else if (simplicationTechnique.detectsUnsatisfiability()) {
 				infeasibility = Infeasibility.UNPROVEABLE;
 			} else {
 				final LBool isSat = Util.checkSat(mScript, formula);
 				if (isSat == LBool.UNSAT) {
-					formula = falseTerm;
+					formula = mScript.term("false");
 					infeasibility = Infeasibility.INFEASIBLE;
 				} else {
 					infeasibility = Infeasibility.UNPROVEABLE;

@@ -160,14 +160,17 @@ public final class SmtUtils {
 
 		NONE(false);
 
-		private final boolean mDecidesFeasibility;
+		private final boolean mDetectsUnsatisfiability;
 
 		SimplificationTechnique(final boolean decidesFeasibility) {
-			mDecidesFeasibility = decidesFeasibility;
+			mDetectsUnsatisfiability = decidesFeasibility;
 		}
 
-		public boolean decidesFeasibility() {
-			return mDecidesFeasibility;
+		/**
+		 * @return true iff this unsatisfiable formulas are simplified to `false`
+		 */
+		public boolean detectsUnsatisfiability() {
+			return mDetectsUnsatisfiability;
 		}
 	}
 
