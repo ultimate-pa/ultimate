@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -303,6 +304,32 @@ public class ArrayIndex implements List<Term> {
 			result.add(index.appendEntriesAtBeginning(newIndexEntries));
 		}
 		return result;
+	}
+
+	/**
+	 * Construct conjunction that says that both {@link ArrayIndex} are equivalent
+	 * at all positions.
+	 */
+	public static Term constructIndexEquality(final Script script, final ArrayIndex index1, final ArrayIndex index2) {
+		assert index1.size() == index2.size();
+		final ArrayList<Term> conjuncts = new ArrayList<>(index1.size());
+		for (int i = 0; i < index1.size(); i++) {
+			conjuncts.add(SmtUtils.binaryEquality(script, index1.get(i), index2.get(i)));
+		}
+		return SmtUtils.and(script, conjuncts);
+	}
+
+	/**
+	 * Construct disjunction that says that both {@link ArrayIndex} are different at
+	 * at least one positions.
+	 */
+	public static Term constructIndexNotEquals(final Script script, final ArrayIndex index1, final ArrayIndex index2) {
+		assert index1.size() == index2.size();
+		final ArrayList<Term> disjuncts = new ArrayList<>(index1.size());
+		for (int i = 0; i < index1.size(); i++) {
+			disjuncts.add(SmtUtils.distinct(script, index1.get(i), index2.get(i)));
+		}
+		return SmtUtils.or(script, disjuncts);
 	}
 
 

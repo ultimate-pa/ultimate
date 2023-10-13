@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
@@ -121,6 +122,73 @@ public abstract class ExpressionTranslation {
 			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
 		}
 		return handleBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, auxVarInfoBuilder);
+	}
+
+	public final ExpressionResult handleBitshiftExpression(final ILocation loc, final int nodeOperator,
+			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
+		// TODO: Should we really throw an exception here or just report undefined behavior somehow?
+		final BigInteger shiftValue = mTypeSizes.extractIntegerValue(exp2, type2);
+		if (shiftValue != null) {
+			if (shiftValue.signum() < 0) {
+				throw new UnsupportedOperationException("Shift by negative value is not allowed (6.5.7.2)");
+			}
+			final BigInteger bitNumber = BigInteger.valueOf(8 * mTypeSizes.getSize(type1.getType()));
+			if (shiftValue.compareTo(bitNumber) >= 0) {
+				throw new UnsupportedOperationException(
+						"Shift by too large value " + shiftValue + " is not allowed (6.5.7.2)");
+			}
+		}
+		final ExpressionResult result =
+				handleBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, auxVarInfoBuilder);
+		if (!mSettings.checkSignedIntegerBounds() || !type1.isIntegerType() || mTypeSizes.isUnsigned(type1)) {
+			return result;
+		}
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		// TODO: Is this really a overflow or some other undefined behavior?
+		CExpressionTranslator.addOverflowAssertion(loc,
+				constructTypeCheckForShift(loc, exp1, type1, type2, exp2, nodeOperator), builder);
+		builder.addAllIncludingLrValue(result);
+		if (nodeOperator == IASTBinaryExpression.op_shiftLeft
+				|| nodeOperator == IASTBinaryExpression.op_shiftLeftAssign) {
+			final Pair<Expression, Expression> checks =
+					constructOverflowCheckForLeftShift(loc, type1, exp1, exp2, result);
+			CExpressionTranslator.addOverflowAssertion(loc, checks.getFirst(), builder);
+			CExpressionTranslator.addOverflowAssertion(loc, checks.getSecond(), builder);
+		}
+		return builder.build();
+	}
+
+	protected abstract Pair<Expression, Expression> constructOverflowCheckForLeftShift(final ILocation loc,
+			final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand,
+			final ExpressionResult exprResult);
+
+	// TODO 20221121 Matthias: If types of LHS and RHS differ, we have to extend/reduce the RHS
+	private Expression constructTypeCheckForShift(final ILocation loc, final Expression left,
+			final CPrimitive resultType, final CPrimitive rhsType, final Expression right, final int operator) {
+		Expression rhsNonNegative;
+		{
+			final Expression zero = constructLiteralForIntegerType(loc, rhsType, BigInteger.ZERO);
+			rhsNonNegative = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, zero, rhsType,
+					right, rhsType);
+		}
+		Expression rhsSmallerBitWidth;
+		{
+			final BigInteger bitwidthOfLhsAsBigInt = BigInteger.valueOf(8 * mTypeSizes.getSize(resultType.getType()));
+			final Expression bitwidthOfLhsAsExpr = constructLiteralForIntegerType(loc, rhsType, bitwidthOfLhsAsBigInt);
+			rhsSmallerBitWidth = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan, right,
+					resultType, bitwidthOfLhsAsExpr, resultType);
+		}
+		if (operator == IASTBinaryExpression.op_shiftRight || operator == IASTBinaryExpression.op_shiftRightAssign) {
+			return ExpressionFactory.and(loc, List.of(rhsNonNegative, rhsSmallerBitWidth));
+		}
+		Expression lhsNonNegative;
+		{
+			final Expression zero = constructLiteralForIntegerType(loc, resultType, BigInteger.ZERO);
+			lhsNonNegative = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, zero,
+					resultType, left, resultType);
+		}
+		return ExpressionFactory.and(loc, List.of(lhsNonNegative, rhsNonNegative, rhsSmallerBitWidth));
 	}
 
 	public final Expression constructUnaryExpression(final ILocation loc, final int nodeOperator, final Expression exp,
@@ -470,32 +538,6 @@ public abstract class ExpressionTranslation {
 			attributes = new Attribute[] { attribute1, attribute2 };
 		}
 		return attributes;
-	}
-
-	// TODO 20221121 Matthias: If types of LHS and RHS differ, we have to extend/reduce the RHS
-	protected Expression constructOverflowCheckForLeftShift(final ILocation loc, final Expression left,
-			final CPrimitive resultType, final CPrimitive rhsTypeForLeftshift, final Expression right) {
-		Expression lhsNonNegative;
-		{
-			final Expression zero = constructLiteralForIntegerType(loc, resultType, BigInteger.ZERO);
-			lhsNonNegative = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, zero,
-					resultType, left, resultType);
-		}
-		Expression rhsNonNegative;
-		{
-			final Expression zero = constructLiteralForIntegerType(loc, rhsTypeForLeftshift, BigInteger.ZERO);
-			rhsNonNegative = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, zero,
-					rhsTypeForLeftshift, right, rhsTypeForLeftshift);
-		}
-		Expression rhsSmallerBitWidth;
-		{
-			final BigInteger bitwidthOfLhsAsBigInt = BigInteger.valueOf(8 * mTypeSizes.getSize(resultType.getType()));
-			final Expression bitwidthOfLhsAsExpr =
-					constructLiteralForIntegerType(loc, rhsTypeForLeftshift, bitwidthOfLhsAsBigInt);
-			rhsSmallerBitWidth = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan, right,
-					resultType, bitwidthOfLhsAsExpr, resultType);
-		}
-		return ExpressionFactory.and(loc, List.of(lhsNonNegative, rhsNonNegative, rhsSmallerBitWidth));
 	}
 
 	public abstract Expression transformBitvectorToFloat(ILocation loc, Expression bitvector, CPrimitives floatType);

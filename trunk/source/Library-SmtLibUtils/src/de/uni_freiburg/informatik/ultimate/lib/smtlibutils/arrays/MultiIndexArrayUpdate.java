@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
@@ -35,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class MultiIndexArrayUpdate {
+public class MultiIndexArrayUpdate implements ITermProvider {
 	private final RelationSymbol mRelationSymbol;
 	private final Term mNewArray;
 	private final MultiDimensionalNestedStore mMultiDimensionalNestedStore;
@@ -57,6 +58,35 @@ public class MultiIndexArrayUpdate {
 
 	public MultiDimensionalNestedStore getMultiDimensionalNestedStore() {
 		return mMultiDimensionalNestedStore;
+	}
+
+	public MultiIndexArrayUpdate removeOneIndex(final int i) {
+		return new MultiIndexArrayUpdate(getRelationSymbol(), getNewArray(),
+				getMultiDimensionalNestedStore().removeOneIndex(i));
+	}
+
+	public boolean isNondeterministicUpdate() {
+		for (int i = 0; i < mMultiDimensionalNestedStore.getIndices().size(); i++) {
+			if (isNondeterministicUpdate(i)) {
+				continue;
+			} else {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * The theory of arrays allows us to encode a nondeterministic update at index k
+	 * as follows `a'= (store a k (select a' k))`. Note that this is only a
+	 * nondeterministic update if there are no other constraints for a' at position
+	 * k. This method detects nondeterministc updates that have exactly that form.
+	 */
+	public boolean isNondeterministicUpdate(final int i) {
+		final ArrayIndex index = mMultiDimensionalNestedStore.getIndices().get(i);
+		final Term value = mMultiDimensionalNestedStore.getValues().get(i);
+		final MultiDimensionalSelect mds = MultiDimensionalSelect.of(value);
+		return mds != null && mds.getArray() == getNewArray() && mds.getIndex().equals(index);
 	}
 
 	@Override
@@ -102,8 +132,8 @@ public class MultiIndexArrayUpdate {
 		if (!SmtSortUtils.isArraySort(ber.getLhs().getSort())) {
 			return null;
 		}
-		final MultiDimensionalNestedStore mdnsLhs = MultiDimensionalNestedStore.convert(script, ber.getLhs());
-		final MultiDimensionalNestedStore mdnsRhs = MultiDimensionalNestedStore.convert(script, ber.getRhs());
+		final MultiDimensionalNestedStore mdnsLhs = MultiDimensionalNestedStore.of(ber.getLhs());
+		final MultiDimensionalNestedStore mdnsRhs = MultiDimensionalNestedStore.of(ber.getRhs());
 		if (mdnsRhs != null && mdnsLhs == null) {
 			return new MultiIndexArrayUpdate(ber.getRelationSymbol(), ber.getLhs(), mdnsRhs);
 		} else if (mdnsLhs != null && mdnsRhs == null) {
@@ -118,6 +148,9 @@ public class MultiIndexArrayUpdate {
 		return String.format("(%s %s %s)", mRelationSymbol, mNewArray, mMultiDimensionalNestedStore);
 	}
 
-
+	@Override
+	public Term toTerm(final Script script) {
+		return mRelationSymbol.constructTerm(script, mNewArray, mMultiDimensionalNestedStore.toTerm(script));
+	}
 
 }

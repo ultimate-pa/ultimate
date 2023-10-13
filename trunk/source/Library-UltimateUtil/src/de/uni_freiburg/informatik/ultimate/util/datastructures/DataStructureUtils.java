@@ -192,10 +192,25 @@ public class DataStructureUtils {
 	}
 
 	/**
-	 * @return Both sets are disjunct
+	 * @return Both sets are disjoint
 	 */
 	public static <T> boolean haveEmptyIntersection(final Set<T> set1, final Set<T> set2) {
 		return !haveNonEmptyIntersection(set1, set2);
+	}
+
+	/**
+	 * Returns true, if the given collection and set have at least one common
+	 * element.
+	 */
+	public static <T> boolean haveNonEmptyIntersection(final Collection<T> collection, final Set<T> set) {
+		return collection.stream().anyMatch(set::contains);
+	}
+
+	/**
+	 * @return The collection and the set are disjoint
+	 */
+	public static <T> boolean haveEmptyIntersection(final Collection<T> collection, final Set<T> set) {
+		return !haveNonEmptyIntersection(collection, set);
 	}
 
 	public static <E> String prettyPrint(final Set<E> set) {
@@ -449,5 +464,28 @@ public class DataStructureUtils {
 		} else {
 			return Collections.unmodifiableSet(set);
 		}
+	}
+
+
+	/**
+	 * Construct a new {@link ArrayList} that is a almost a copy of the input list
+	 * but where one given index is missing.
+	 *
+	 */
+	public static <E> List<E> copyAllButOne(final List<E> list, final int indexToBeRemoved) {
+		if (indexToBeRemoved < 0 || indexToBeRemoved >= list.size()) {
+			throw new IllegalArgumentException("Index where we remove must be inside array");
+		}
+		final List<E> result = new ArrayList<>(list.size() -1);
+		int i = 0;
+		for (final E elem : list) {
+			if (i != indexToBeRemoved) {
+				result.add(elem);
+			}
+			i++;
+		}
+		assert i == list.size();
+		assert result.size() == list.size() - 1;
+		return result;
 	}
 }

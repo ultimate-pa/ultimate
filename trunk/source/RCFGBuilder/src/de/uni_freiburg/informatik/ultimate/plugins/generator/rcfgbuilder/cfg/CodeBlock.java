@@ -59,9 +59,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
  * mTransitionFormula stores a TransitionFormula that describes the effect of this InternalEdge. (TODO: Add this
  * information later, as additional annotation)
  *
- * mOccurenceInCounterexamples is used to store in a CEGAR based verification process how often this CodeBlock occurred
- * in a counterexample. (TODO: Store this information somewhere in the model checker)
- *
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
@@ -84,8 +81,6 @@ public abstract class CodeBlock extends IcfgEdge implements IActionWithBranchEnc
 	private String mSucceedingProcedure;
 
 	protected RCFGEdgeAnnotation mAnnotation;
-
-	private int mOccurenceInCounterexamples = 0;
 
 	CodeBlock(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final ILogger logger) {
@@ -133,15 +128,6 @@ public abstract class CodeBlock extends IcfgEdge implements IActionWithBranchEnc
 	public void setTransitionFormula(final UnmodifiableTransFormula transFormula) {
 		mTransitionFormula = transFormula;
 		mTransitionFormulaWithBranchEncoders = transFormula;
-	}
-
-	@Visualizable
-	public int getOccurenceInCounterexamples() {
-		return mOccurenceInCounterexamples;
-	}
-
-	public void reportOccurenceInCounterexample() {
-		mOccurenceInCounterexamples++;
 	}
 
 	public int getSerialNumber() {

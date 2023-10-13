@@ -99,6 +99,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
@@ -242,9 +243,9 @@ public class ACSLHandler implements IACSLHandler {
 				resultBuilder.addStatements(havocs);
 				final Check check;
 				if (mWitnessInvariantMode) {
-					check = new Check(Check.Spec.WITNESS_INVARIANT);
+					check = new Check(Spec.WITNESS_INVARIANT);
 				} else {
-					check = new Check(Check.Spec.ASSERT);
+					check = new Check(Spec.ASSERT);
 				}
 				check.annotate(assertStmt);
 			}
@@ -376,17 +377,21 @@ public class ACSLHandler implements IACSLHandler {
 		case ARITHPLUS:
 			return IASTBinaryExpression.op_plus;
 		case BITAND:
-			break;
+			return IASTBinaryExpression.op_binaryAnd;
 		case BITIFF:
 			break;
 		case BITIMPLIES:
 			break;
 		case BITOR:
-			break;
+			return IASTBinaryExpression.op_binaryOr;
+		case BITSHIFTLEFT:
+			return IASTBinaryExpression.op_shiftLeft;
+		case BITSHIFTRIGHT:
+			return IASTBinaryExpression.op_shiftRight;
 		case BITVECCONCAT:
 			break;
 		case BITXOR:
-			break;
+			return IASTBinaryExpression.op_binaryXor;
 		case COMPEQ:
 			return IASTBinaryExpression.op_equals;
 		case COMPGEQ:
@@ -518,10 +523,18 @@ public class ACSLHandler implements IACSLHandler {
 			return resultBuilder.build();
 		}
 		case BITAND:
-		case BITIFF:
-		case BITIMPLIES:
 		case BITOR:
 		case BITXOR:
+			return mCExpressionTranslator.handleBitwiseArithmeticOperation(loc,
+					getCASTBinaryExprOperator(node.getOperator()), dispatchSwitch(main, node.getLeft(), loc),
+					dispatchSwitch(main, node.getRight(), loc));
+		case BITSHIFTLEFT:
+		case BITSHIFTRIGHT:
+			return mCExpressionTranslator.handleBitshiftOperation(loc, getCASTBinaryExprOperator(node.getOperator()),
+					dispatchSwitch(main, node.getLeft(), loc), dispatchSwitch(main, node.getRight(), loc));
+
+		case BITIFF:
+		case BITIMPLIES:
 
 		case BITVECCONCAT:
 		case COMPPO:
@@ -550,9 +563,12 @@ public class ACSLHandler implements IACSLHandler {
 			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus, res);
 		case PLUS:
 			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus, res);
-		case POINTER:
-		case ADDROF:
 		case LOGICCOMPLEMENT:
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_tilde, res);
+		case POINTER:
+			// TODO: We don't have the hook available here, does null always work here?
+			return mCHandler.handleIndirectionOperator(res, loc, null);
+		case ADDROF:
 		default:
 			final String msg = "Unknown or unsupported unary operation: " + node.getOperator();
 			throw new UnsupportedSyntaxException(loc, msg);
@@ -591,12 +607,12 @@ public class ACSLHandler implements IACSLHandler {
 		final String cId = mSymboltable.getCIdForBoogieId(id);
 		final SymbolTableValue stv = mSymboltable.findCSymbol(main.getAcslHook(), cId);
 		final CType cType;
-			if (stv != null) {
-				cType = stv.getCType();
-			} else {
-				throw new UnsupportedOperationException(
-						"not yet implemented: " + "unable to determine CType for variable " + id);
-			}
+		if (stv != null) {
+			cType = stv.getCType();
+		} else {
+			throw new UnsupportedOperationException(
+					"not yet implemented: " + "unable to determine CType for variable " + id);
+		}
 
 		// FIXME: dereferencing does not work for ACSL yet, because we cannot pass
 		// the necessary auxiliary statements on.
@@ -675,7 +691,7 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main, final Requires node) {
 		mSpecType = ACSLHandler.SPEC_TYPE.REQUIRES;
 		final Expression formula = ((ExpressionResult) main.dispatch(node.getFormula())).getLrValue().getValue();
-		final Check check = new Check(Check.Spec.PRE_CONDITION);
+		final Check check = new Check(Spec.PRE_CONDITION);
 		final ILocation reqLoc = mLocationFactory.createACSLLocation(node);
 		final RequiresSpecification req = new RequiresSpecification(reqLoc, false, formula);
 		check.annotate(req);
@@ -694,7 +710,7 @@ public class ACSLHandler implements IACSLHandler {
 		}
 		mSpecType = ACSLHandler.SPEC_TYPE.ENSURES;
 		final Expression formula = ((ExpressionResult) main.dispatch(e)).getLrValue().getValue();
-		final Check check = new Check(Check.Spec.POST_CONDITION);
+		final Check check = new Check(Spec.POST_CONDITION);
 		final ILocation ensLoc = mLocationFactory.createACSLLocation(node);
 		final EnsuresSpecification ens = new EnsuresSpecification(ensLoc, false, formula);
 		check.annotate(ens);
@@ -773,7 +789,7 @@ public class ACSLHandler implements IACSLHandler {
 		}
 
 		assert res != null && res.getLrValue().getValue() != null;
-		final Check check = new Check(Check.Spec.INVARIANT);
+		final Check check = new Check(Spec.INVARIANT);
 		final ILocation invLoc = mLocationFactory.createACSLLocation(node);
 		final LoopInvariantSpecification lis =
 				new LoopInvariantSpecification(invLoc, false, res.getLrValue().getValue());

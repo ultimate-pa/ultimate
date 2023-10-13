@@ -615,6 +615,7 @@ public class QuantifierPusher extends TermTransformer {
 			if (useOldEliminationForDivAndMod) {
 				elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
 			}
+			elimtechniques.add(new DualJunctionAvt(mgdScript, services, true));
 			elimtechniques.add(new DualJunctionSaa(mgdScript, services, true));
 			break;
 		case ALL_LOCAL:
@@ -638,6 +639,7 @@ public class QuantifierPusher extends TermTransformer {
 			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
 			elimtechniques.add(new DualJunctionTir(mgdScript, services, false));
+			elimtechniques.add(new DualJunctionAvt(mgdScript, services, false));
 			break;
 		default:
 			throw new AssertionError("unknown value " + pqeTechniques);

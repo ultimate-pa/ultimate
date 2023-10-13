@@ -34,45 +34,12 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ArrayQuantifierEliminationUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class MultiDimensionalSelectOverStoreEliminationUtils {
-
-	public static Term replace(final ManagedScript mgdScript, final ArrayIndexEqualityManager aiem, final Term term,
-			final MultiDimensionalSelectOverStore mdsos) {
-		final Map<Term, Term> substitutionMapping;
-		final ArrayIndex selectIndex = mdsos.getSelect().getIndex();
-		final ArrayIndex storeIndex = mdsos.getStore().getIndex();
-		// final ThreeValuedEquivalenceRelation<Term> tver = ArrayIndexEqualityUtils.analyzeIndexEqualities(mScript, selectIndex, storeIndex, quantifier, xjunctsOuter);
-		final EqualityStatus indexEquality = aiem.checkIndexEquality(selectIndex, storeIndex);
-		Term result;
-		switch (indexEquality) {
-		case EQUAL:
-			substitutionMapping = Collections.singletonMap(mdsos.toTerm(), mdsos.constructEqualsReplacement());
-			result = Substitution.apply(mgdScript, substitutionMapping, term);
-			break;
-		case NOT_EQUAL:
-			substitutionMapping = Collections.singletonMap(mdsos.toTerm(),
-					mdsos.constructNotEqualsReplacement(mgdScript.getScript()));
-			result = Substitution.apply(mgdScript, substitutionMapping, term);
-			break;
-		case UNKNOWN:
-			substitutionMapping = Collections.singletonMap(mdsos.toTerm(), ArrayQuantifierEliminationUtils
-					.transformMultiDimensionalSelectOverStoreToIte(mdsos, mgdScript, aiem));
-			final Term resultWithIte = Substitution.apply(mgdScript, substitutionMapping, term);
-			result = new IteRemover(mgdScript).transform(resultWithIte);
-			break;
-		default:
-			throw new AssertionError();
-		}
-		return result;
-	}
-
-
 
 	public static Term replace(final ManagedScript mgdScript, final ArrayIndexEqualityManager aiem, final Term term,
 			final MultiDimensionalSelectOverNestedStore mdsos) {

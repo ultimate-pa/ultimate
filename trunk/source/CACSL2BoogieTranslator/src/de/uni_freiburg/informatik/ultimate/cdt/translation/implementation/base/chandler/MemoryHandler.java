@@ -129,9 +129,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
@@ -324,7 +324,6 @@ public class MemoryHandler {
 
 		final ArrayList<Declaration> decl = new ArrayList<>();
 
-		decl.add(constructNullPointerConstant());
 		decl.add(constructValidArrayDeclaration());
 		decl.add(constuctLengthArrayDeclaration());
 
@@ -1176,14 +1175,6 @@ public class MemoryHandler {
 		final VarList vlV =
 				new VarList(ignoreLoc, new String[] { MemoryModelDeclarations.ULTIMATE_VALID.getName() }, validType);
 		return new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { vlV });
-	}
-
-	private VariableDeclaration constructNullPointerConstant() {
-		// NULL Pointer
-		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		final VariableDeclaration result = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] {
-				new VarList(ignoreLoc, new String[] { SFO.NULL }, mTypeHandler.constructPointerType(ignoreLoc)) });
-		return result;
 	}
 
 	/**

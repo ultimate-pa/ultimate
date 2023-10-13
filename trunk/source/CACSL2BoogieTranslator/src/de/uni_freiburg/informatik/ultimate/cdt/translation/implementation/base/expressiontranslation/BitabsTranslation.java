@@ -248,8 +248,8 @@ public class BitabsTranslation {
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, leftWrapped);
 		final Expression greaterRight =
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar, rightWrapped);
-		final Expression sum = applyWraparoundIfNecessary(loc,
-				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right), type);
+		final Expression sum =
+				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, leftWrapped, rightWrapped);
 		final Expression leqSum = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, sum);
 
 		final List<Expression> assumptions;
@@ -351,8 +351,8 @@ public class BitabsTranslation {
 		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, type);
 		final Expression rightWrapped = applyWraparoundIfNecessary(loc, right, type);
 
-		final Expression sum = applyWraparoundIfNecessary(loc,
-				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, left, right), type);
+		final Expression sum =
+				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, leftWrapped, rightWrapped);
 		final Expression leqSum = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, auxvar, sum);
 
 		List<Expression> assumptions;
@@ -445,8 +445,10 @@ public class BitabsTranslation {
 		}
 		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, typeLeft);
 		if (rightValue != null) {
+			final Expression shiftFactorExpr = mTypeSizes.constructLiteralForIntegerType(loc, typeRight,
+					BigInteger.TWO.pow(rightValue.intValueExact()));
 			final Expression value =
-					constructShiftWithLiteralOptimization(loc, leftWrapped, typeRight, rightValue, shiftOperator);
+					ExpressionFactory.newBinaryExpression(loc, shiftOperator, leftWrapped, shiftFactorExpr);
 			return new ExpressionResult(new RValue(value, typeLeft));
 		}
 		final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
@@ -461,19 +463,6 @@ public class BitabsTranslation {
 				applyWraparoundIfNecessary(loc, auxVar.getExp(), typeLeft), leftWrapped);
 		return buildExpressionResult(loc, functionName, typeLeft, auxVar,
 				List.of(new Pair<>(leftOrRightEqualsZero, left)), List.of(compLeft));
-	}
-
-	private Expression constructShiftWithLiteralOptimization(final ILocation loc, final Expression left,
-			final CPrimitive typeRight, final BigInteger integerLiteralValue, final Operator operator) {
-		final int exponent;
-		try {
-			exponent = integerLiteralValue.intValueExact();
-		} catch (final ArithmeticException ae) {
-			throw new UnsupportedOperationException("RHS of shift is larger than C standard allows " + ae);
-		}
-		final Expression shiftFactorExpr =
-				mTypeSizes.constructLiteralForIntegerType(loc, typeRight, BigInteger.TWO.pow(exponent));
-		return ExpressionFactory.newBinaryExpression(loc, operator, left, shiftFactorExpr);
 	}
 
 	private Expression applyWraparoundIfNecessary(final ILocation loc, final Expression expr, final CPrimitive type) {

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transition
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -39,8 +40,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiIndexArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
@@ -52,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -177,12 +182,12 @@ public class SimultaneousUpdate {
 						if (renamed instanceof TermVariable) {
 							deterministicAssignment.put(pv, renamed);
 						} else {
-							final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore
-									.convert(mgdScript.getScript(), renamed);
+							final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.of(renamed);
 							if (mdns.getIndices().size() > 1) {
 								throw new UnsupportedOperationException(String.format(
-										"NestedStore not yet supported. Array: %s, Indices: %s, Values: %s",
-										mdns.getArray(), mdns.getIndices(), mdns.getValues()));
+										"NestedStore of length %s not yet supported. Array: %s, Indices: %s, Values: %s",
+										mdns.getIndices().size(), mdns.getArray(), mdns.getIndices(),
+										mdns.getValues()));
 							}
 							if (!pv.getTermVariable().equals(mdns.getArray())) {
 								throw new UnsupportedOperationException("Only self-update supported");
@@ -284,12 +289,18 @@ public class SimultaneousUpdate {
 		// Note: A more expensive quantifier elimination would increase the chance to
 		// find a result slightly(?) but may be costly.
 		final Term eliminated = PartialQuantifierElimination.eliminateLight(services, mgdScript, quantified);
-		final Term[] conjuncts = SmtUtils.getConjuncts(eliminated);
+		final Term[] allConjuncts = SmtUtils.getConjuncts(eliminated);
+		final Term[] conjunctsWithOutVar = Arrays.stream(allConjuncts)
+				.filter(x -> Arrays.asList(x.getFreeVars()).contains(outVar)).toArray(Term[]::new);
+		return extractUpdateRhs(outVar, tf, mgdScript, conjunctsWithOutVar);
+	}
+
+	public static Pair<Term, Set<ExtractionImpediments>> extractUpdateRhs(final TermVariable outVar,
+			final TransFormula tf, final ManagedScript mgdScript, final Term[] conjunctsWithOutVar)
+			throws AssertionError {
 		final HashSet<ExtractionImpediments> updateImpediments = new HashSet<>();
-		for (final Term conjunct : conjuncts) {
-			if (!Arrays.asList(conjunct.getFreeVars()).contains(outVar)) {
-				continue;
-			}
+		for (int i = 0; i < conjunctsWithOutVar.length; i++) {
+			final Term conjunct = conjunctsWithOutVar[i];
 			if (conjunct instanceof QuantifiedFormula) {
 				updateImpediments.add(ExtractionImpediments.QUANTIFIER);
 				continue;
@@ -306,9 +317,17 @@ public class SimultaneousUpdate {
 					SolvedBinaryRelation sbr = ber.solveForSubject(mgdScript.getScript(), outVar);
 					if (sbr == null) {
 						if (SmtSortUtils.isArraySort(outVar.getSort())) {
-							updateImpediments.add(ExtractionImpediments.NORHSARRAY);
-							continue;
+							final List<ArrayIndex> nondetUpdate = checkForNondeterministicArrayUpdate(outVar, mgdScript,
+									conjunctsWithOutVar, i);
+							if (nondetUpdate != null) {
+								throw new AssertionError("Nondet array update at " + nondetUpdate.size()
+								+ " positions with " + (conjunctsWithOutVar.length - 1) + " constraints");
+							} else {
+								updateImpediments.add(ExtractionImpediments.NORHSARRAY);
+								continue;
+							}
 						}
+						// not array sort
 						final PolynomialRelation polyRel = PolynomialRelation.of(mgdScript.getScript(), appTerm);
 						assert polyRel != null : "Must succeed for equality";
 						sbr = polyRel.solveForSubject(mgdScript.getScript(), outVar);
@@ -337,6 +356,52 @@ public class SimultaneousUpdate {
 		return new Pair<>(null, updateImpediments);
 	}
 
+	public static List<ArrayIndex> checkForNondeterministicArrayUpdate(final TermVariable outVar,
+			final ManagedScript mgdScript, final Term[] conjunctsWithOutVar, final int k) throws AssertionError {
+		assert (SmtSortUtils.isArraySort(outVar.getSort()));
+		final MultiIndexArrayUpdate miau = MultiIndexArrayUpdate.of(mgdScript.getScript(), conjunctsWithOutVar[k]);
+		if (miau == null) {
+			return null;
+		}
+		if (miau.getNewArray() != outVar) {
+			throw new AssertionError("Wrong array");
+		}
+		if (!miau.isNondeterministicUpdate()) {
+			int detUpdates = 0;
+			int nondetUpdates = 0;
+			for (int i = 0; i < miau.getMultiDimensionalNestedStore().getIndices().size(); i++) {
+				if (miau.isNondeterministicUpdate(i)) {
+					nondetUpdates++;
+				} else {
+					detUpdates++;
+				}
+			}
+			if (nondetUpdates > 0) {
+				final MultiDimensionalNestedStore mdns = miau.getMultiDimensionalNestedStore();
+				throw new AssertionError(String.format(
+						"Partially nondeterministic update: %s deterministic updates %s nondeterministic updates. Array: %s, Indices: %s, Values: %s",
+						detUpdates, nondetUpdates, mdns.getArray(), mdns.getIndices(), mdns.getValues()));
+			}
+			return null;
+		}
+		final List<ArrayIndex> indicesOfUpdates = miau.getMultiDimensionalNestedStore().getIndices();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final ArrayIndex ai : indicesOfUpdates) {
+			final MultiDimensionalSelect mds = new MultiDimensionalSelect(outVar, ai);
+			final TermVariable cellRep = mgdScript.constructFreshTermVariable("tmpCellReplacement", mds.getSort());
+			substitutionMapping.put(mds.toTerm(mgdScript.getScript()), cellRep);
+		}
+		final List<Term> otherConjuncts = DataStructureUtils.copyAllButOne(Arrays.asList(conjunctsWithOutVar), k);
+		for (final Term conjunct : otherConjuncts) {
+			final Term subst = Substitution.apply(mgdScript, substitutionMapping, conjunct);
+			final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(subst.getFreeVars()));
+			freeVars.removeAll(substitutionMapping.values());
+			if (!freeVars.isEmpty()) {
+				throw new AssertionError("Complex constraint for nondet update " + subst);
+			}
+		}
+		return indicesOfUpdates;
+	}
 
 	/**
 	 * Returns the variables that occur on the right-hand side of updates. Except

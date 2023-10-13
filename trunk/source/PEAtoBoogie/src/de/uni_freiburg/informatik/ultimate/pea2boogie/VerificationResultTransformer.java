@@ -42,13 +42,13 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.IResultWithCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;

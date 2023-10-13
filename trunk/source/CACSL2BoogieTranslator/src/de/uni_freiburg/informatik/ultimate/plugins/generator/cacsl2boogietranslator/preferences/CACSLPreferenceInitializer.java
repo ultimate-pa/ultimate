@@ -53,7 +53,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final String MAINPROC_DEFAULT = "main";
 	public static final String LABEL_CHECK_ASSERTIONS = "Check assertions from assert.h";
 	private static final String DESC_CHECK_ASSERTIONS =
-			"Check if the assertions from assert.h (currently supported: assert, __assert_fail, __assert_func) never fail.";
+			"Check if the assertions from assert.h (currently supported: assert, static_assert, _Static_assert, "
+					+ "__assert_fail, __assert_func) never fail.";
 	public static final String LABEL_CHECK_POINTER_VALIDITY = "Pointer base address is valid at dereference";
 	public static final String LABEL_CHECK_POINTER_ALLOC = "Pointer to allocated memory at dereference";
 	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";

@@ -1123,9 +1123,7 @@ public class CHandler {
 		}
 		if (isNewScopeRequired(parent)) {
 			updateStmtsAndDeclsAtScopeEnd(resultBuilder, node);
-			if (ADD_HAVOCS_AT_SCOPE_END) {
-				resultBuilder.addStatements(getHavocsAtScopeEnd(mLocationFactory.createCLocation(node), node));
-			}
+			addHavocsAtScopeEnd(mLocationFactory.createCLocation(node), node, resultBuilder);
 			endScope();
 		}
 		return resultBuilder.build();
@@ -2794,16 +2792,22 @@ public class CHandler {
 		}
 	}
 
-	private List<Statement> getHavocsAtScopeEnd(final ILocation loc, final IASTStatement hook) {
-		final List<Statement> havocs = new ArrayList<>();
+	private void addHavocsAtScopeEnd(final ILocation loc, final IASTStatement hook,
+			final ExpressionResultBuilder builder) {
+		if (!ADD_HAVOCS_AT_SCOPE_END) {
+			return;
+		}
+		final List<VariableLHS> vars = new ArrayList<>();
 		for (final SymbolTableValue stv : mSymbolTable.getInnermostCScopeValues(hook)) {
 			if (!stv.isBoogieGlobalVar() && stv.getBoogieDecl() != null) {
 				final VariableLHS lhs = new VariableLHS(loc, stv.getAstType().getBoogieType(), stv.getBoogieName(),
 						stv.getDeclarationInformation());
-				havocs.add(new HavocStatement(loc, new VariableLHS[] { lhs }));
+				vars.add(lhs);
 			}
 		}
-		return havocs;
+		if (!vars.isEmpty()) {
+			builder.addStatement(new HavocStatement(loc, vars.toArray(VariableLHS[]::new)));
+		}
 	}
 
 	/**
@@ -3444,7 +3448,7 @@ public class CHandler {
 	 * Handle the indirection operator according to Section 6.5.3.2 of C11. (The indirection operator is the star for
 	 * pointer dereference.)
 	 */
-	private Result handleIndirectionOperator(final ExpressionResult expr, final ILocation loc, final IASTNode hook) {
+	public Result handleIndirectionOperator(final ExpressionResult expr, final ILocation loc, final IASTNode hook) {
 		final ExpressionResult rop = mExprResultTransformer.makeRepresentationReadyForConversion(expr, loc,
 				new CPointer(new CPrimitive(CPrimitives.VOID)), hook);
 		final RValue rValue = (RValue) rop.getLrValue();
@@ -3487,7 +3491,6 @@ public class CHandler {
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
-		final List<Statement> afterLoopStatements = new ArrayList<>();
 		Result iterator = null;
 		if (node instanceof IASTForStatement) {
 			final IASTForStatement forStmt = (IASTForStatement) node;
@@ -3499,10 +3502,6 @@ public class CHandler {
 				if (initializer instanceof ExpressionResult) {
 					final ExpressionResult rExp = (ExpressionResult) initializer;
 					resultBuilder.addAllExceptLrValue(rExp);
-					// Havoc all variables that are declared in the initializer statement after the loop
-					if (ADD_HAVOCS_AT_SCOPE_END) {
-						afterLoopStatements.addAll(getHavocsAtScopeEnd(loc, cInitStmt));
-					}
 				} else if (initializer instanceof SkipResult) {
 					// this is an empty statement in the C Code. We will skip it
 				} else {
@@ -3650,7 +3649,12 @@ public class CHandler {
 				new WhileStatement(ignoreLocation, ExpressionFactory.createBooleanLiteral(ignoreLocation, true), spec,
 						bodyBlock.toArray(new Statement[bodyBlock.size()]));
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
-		resultBuilder.addStatement(whileStmt).addStatements(afterLoopStatements);
+		resultBuilder.addStatement(whileStmt);
+
+		if (node instanceof IASTForStatement) {
+			// Havoc all variables that are declared in the loop (including the initializer) afterwards
+			addHavocsAtScopeEnd(loc, node, resultBuilder);
+		}
 
 		assert resultBuilder.getLrValue() == null : "there is an lrvalue although there should be none";
 		assert resultBuilder.getAuxVars().isEmpty() : "auxvars were added although they should have been havoced";

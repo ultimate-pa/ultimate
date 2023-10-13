@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -1298,36 +1299,35 @@ public final class TransFormulaUtils {
 
 	private static Triple<Term, List<TermVariable>, List<Term>> decoupleArrayValues(final Term term,
 			final ManagedScript mgdScript) {
-		final Collection<ArrayStore> arrayStores = ArrayStore.extractStores(term, true);
+		Collection<ArrayStore> arrayStores = ArrayStore.extractStores(term, false);
 		if (arrayStores.isEmpty()) {
 			return new Triple<>(term, Collections.emptyList(), Collections.emptyList());
 		}
+		Term resultTerm = term;
 		final List<TermVariable> resultVariables = new ArrayList<>();
 		final List<Term> resultEqualities = new ArrayList<>();
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final ArrayStore arrayStore : arrayStores) {
-			final Triple<Term, List<TermVariable>, List<Term>> arrTriple =
-					decoupleArrayValues(arrayStore.getArray(), mgdScript);
-			final Triple<Term, List<TermVariable>, List<Term>> idxTriple =
-					decoupleArrayValues(arrayStore.getIndex(), mgdScript);
-			final Triple<Term, List<TermVariable>, List<Term>> valueTriple =
-					decoupleArrayValues(arrayStore.getValue(), mgdScript);
-			resultVariables.addAll(arrTriple.getSecond());
-			resultVariables.addAll(idxTriple.getSecond());
-			resultVariables.addAll(valueTriple.getSecond());
-			resultEqualities.addAll(arrTriple.getThird());
-			resultEqualities.addAll(idxTriple.getThird());
-			resultEqualities.addAll(valueTriple.getThird());
-			final TermVariable newAuxVar =
-					mgdScript.constructFreshTermVariable("ArrVal", valueTriple.getFirst().getSort());
+		while (!arrayStores.isEmpty()) {
+			// In each iteration we apply the decoupling from the first store to the result
+			// term and to all other ArrayStore. The other ArrayStores will be the list for
+			// the next iteration.
+			final Iterator<ArrayStore> it = arrayStores.iterator();
+			final ArrayStore currentStore = it.next();
+			final TermVariable newAuxVar = mgdScript.constructFreshTermVariable("ArrVal",
+					currentStore.getValue().getSort());
 			resultVariables.add(newAuxVar);
-			final Term equalitiy = SmtUtils.binaryEquality(mgdScript.getScript(), newAuxVar, valueTriple.getFirst());
+			final Term equalitiy = SmtUtils.binaryEquality(mgdScript.getScript(), newAuxVar, currentStore.getValue());
 			resultEqualities.add(equalitiy);
-			final Term resultStore =
-					mgdScript.getScript().term("store", arrTriple.getFirst(), idxTriple.getFirst(), newAuxVar);
-			substitutionMapping.put(arrayStore.getTerm(), resultStore);
+			final Term resultStore = SmtUtils.store(mgdScript.getScript(), currentStore.getArray(),
+					currentStore.getIndex(), newAuxVar);
+			final Map<Term, Term> substitutionMapping = Collections.singletonMap(currentStore.getTerm(), resultStore);
+
+			resultTerm = Substitution.apply(mgdScript, substitutionMapping, resultTerm);
+			arrayStores = new ArrayList<>();
+			while (it.hasNext()) {
+				final ArrayStore store = it.next();
+				arrayStores.add(store.applySubstitution(mgdScript, substitutionMapping));
+			}
 		}
-		final Term resultTerm = Substitution.apply(mgdScript, substitutionMapping, term);
 		return new Triple<>(resultTerm, resultVariables, resultEqualities);
 	}
 

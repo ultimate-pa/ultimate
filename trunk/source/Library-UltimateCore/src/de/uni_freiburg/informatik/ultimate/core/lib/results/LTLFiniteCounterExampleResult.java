@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 

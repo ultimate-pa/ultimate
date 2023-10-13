@@ -511,7 +511,7 @@ public final class TestUtil {
 	public static final String SVCOMP_PROP_VALIDMEMCLEANUP = "valid-memcleanup.prp";
 	public static final String SVCOMP_PROP_VALIDMEMSAFETY = "valid-memsafety.prp";
 	public static final String SVCOMP_VALIDMEMSAFETY_SUBPROP_VALIDFREE = "valid-free";
-	public static final String SVCOMP_VALIDMEMSAFETY_SUBPROP_VALIDDEREF = "valid-dref";
+	public static final String SVCOMP_VALIDMEMSAFETY_SUBPROP_VALIDDEREF = "valid-deref";
 	public static final String SVCOMP_VALIDMEMSAFETY_SUBPROP_VALIDMEMTRACK = "valid-memtrack";
 
 	public static NestedMap2<String, String, SafetyCheckerOverallResult>

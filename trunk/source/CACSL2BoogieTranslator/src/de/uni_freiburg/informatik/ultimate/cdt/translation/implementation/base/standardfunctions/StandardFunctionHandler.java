@@ -36,7 +36,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -117,10 +116,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.CheckMessageProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -611,10 +611,15 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.USHORT)));
 
 		/** from assert.h */
+		/** C standard library functions (from assert.h) to define the 'assert' macro */
 		fill(map, "__assert_fail", this::handleAssertFail);
 		fill(map, "__assert_func", this::handleAssertFail);
 		// TODO: This should not occur in the preprocessed file, but we handle it for now
 		fill(map, "assert", this::handleAssert);
+		/** C11 static assertion (C language keyword, deprecated in C23) */
+		fill(map, "_Static_assert", this::handleStaticAssert);
+		/** C23 static assertion (C language keyword) */
+		fill(map, "static_assert", this::handleStaticAssert);
 
 		/** from fenv.h */
 		fill(map, "fegetround", this::handleBuiltinFegetround);
@@ -887,11 +892,14 @@ public class StandardFunctionHandler {
 		return builder.build();
 	}
 
-	private List<Statement> makeAssignment(final ILocation loc, final LRValue lhs, final Expression rhs) {
+	private List<Statement> makeVarargAssignment(final ILocation loc, final LRValue lhs, final Expression rhs) {
 		if (lhs instanceof LocalLValue) {
 			return List.of(StatementFactory.constructSingleAssignmentStatement(loc, ((LocalLValue) lhs).getLhs(), rhs));
 		} else if (lhs instanceof HeapLValue) {
 			return mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, rhs, lhs.getCType(), false);
+		} else if (lhs instanceof RValue) {
+			final RValue rValue = (RValue) lhs;
+			return makeVarargAssignment(loc, new HeapLValue(rValue.getValue(), rValue.getCType(), null), rhs);
 		} else {
 			throw new UnsupportedOperationException("Unsupported type " + lhs.getClass().getSimpleName());
 		}
@@ -910,7 +918,7 @@ public class StandardFunctionHandler {
 		final String procedure = mProcedureManager.getCurrentProcedureID();
 		final IdentifierExpression rhs = new IdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), SFO.VARARGS,
 				new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procedure));
-		return builder.addStatements(makeAssignment(loc, arg0.getLrValue(), rhs)).build();
+		return builder.addStatements(makeVarargAssignment(loc, arg0.getLrValue(), rhs)).build();
 	}
 
 	private Result handleVaEnd(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -962,7 +970,7 @@ public class StandardFunctionHandler {
 				new CPointer(new CPrimitive(CPrimitives.CHAR)), AUXVAR.NONDET);
 		builder.addAuxVar(auxVarInfo);
 		builder.addDeclaration(auxVarInfo.getVarDec());
-		final List<Statement> writes = makeAssignment(loc, dst.getLrValue(), auxVarInfo.getExp());
+		final List<Statement> writes = makeVarargAssignment(loc, dst.getLrValue(), auxVarInfo.getExp());
 		writes.forEach(new Overapprox(name, loc)::annotate);
 		return builder.addStatements(writes).build();
 	}
@@ -1816,7 +1824,7 @@ public class StandardFunctionHandler {
 		}
 
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults);
-		return erb.addStatement(createReachabilityAssert(loc, name, mSettings.checkAssertions(), Spec.ASSERT,
+		return erb.addStatement(createAnnotatedAssertOrAssume(loc, name, mSettings.checkAssertions(), Spec.ASSERT,
 				ExpressionFactory.createBooleanLiteral(loc, false))).build();
 	}
 
@@ -1828,8 +1836,56 @@ public class StandardFunctionHandler {
 
 		final ExpressionResult result = mExprResultTransformer
 				.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[0]), loc, node);
-		return new ExpressionResultBuilder().addAllExceptLrValue(result).addStatement(createReachabilityAssert(loc,
+		return new ExpressionResultBuilder().addAllExceptLrValue(result).addStatement(createAnnotatedAssertOrAssume(loc,
 				name, mSettings.checkAssertions(), Spec.ASSERT, result.getLrValue().getValue())).build();
+	}
+
+	/**
+	 * Handle C11 or C23 static assertions with or without an explicit message.
+	 * 
+	 * @param main
+	 *            the current dispatcher
+	 * @param node
+	 *            the static assert expression
+	 * @param loc
+	 *            the location of the static assert
+	 * @param name
+	 *            the name of the method
+	 * 
+	 * @return {@link ExpressionResult} representing the static assertion
+	 */
+	private Result handleStaticAssert(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+
+		final IASTInitializerClause[] arguments = node.getArguments();
+		final int numAssertArgs = arguments.length;
+
+		/* check if signature of assertion is of form 'static_assert(expr)' or 'static_assert(expr, msg)' */
+		if (numAssertArgs == 2) {
+			/* static C11 or C23 assertion with two arguments (expr and msg) */
+			checkArguments(loc, 2, name, arguments);
+
+			if (isStringLiteral(arguments[1])) {
+				/* extract string literal value for custom error message */
+				final String errorMsg = String.valueOf(((IASTLiteralExpression) arguments[1]).getValue());
+
+				final ExpressionResult result = mExprResultTransformer
+						.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[0]), loc, node);
+				return new ExpressionResultBuilder().addAllExceptLrValue(result)
+						.addStatement(createAnnotatedAssertOrAssume(loc, name, mSettings.checkAssertions(),
+								Spec.ASSERT, result.getLrValue().getValue(), errorMsg))
+						.build();
+			} else {
+				/* WARNING: this case should be never reached since the msg should be always a string literal */
+				throw new IncorrectSyntaxException(loc, "Message parameter of static assert is not a string literal");
+			}
+		} else {
+			/* static C11 or C23 assertion with one argument (expr) */
+			checkArguments(loc, 1, name, arguments);
+
+			/* handle as regular assertion */
+			return handleAssert(main, node, loc, name);
+		}
 	}
 
 	private Result handleBuiltinFegetround(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -2407,18 +2463,56 @@ public class StandardFunctionHandler {
 	private Result handleErrorFunction(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
-		final Statement st =
-				createReachabilityAssert(loc, name, mSettings.checkErrorFunction(), Spec.ERROR_FUNCTION, falseLiteral);
+		final Statement st = createAnnotatedAssertOrAssume(loc, name, mSettings.checkErrorFunction(),
+				Spec.ERROR_FUNCTION, falseLiteral);
 		return new ExpressionResult(Collections.singletonList(st), null);
 	}
 
 	/**
-	 * Create "assert expr" or "assume expr" for usage in reachability specifications, depending on the settings. If
-	 * checkProperty is true (i.e. the check is enabled), an "assert expr" will be generated, otherwise an "assume expr"
-	 * will be generated.
+	 * Create an assertion or assumption statement annotated with a {@link Check} annotation.
+	 * 
+	 * @param loc
+	 *            location of the assertion or assumption node.
+	 * @param functionName
+	 *            name of the function for the assertion statement and {@link Check} annotation.
+	 * @param checkProperty
+	 *            enables creation of an assertion to check {@code expr}, otherwise an assumption is made.
+	 * @param spec
+	 *            type of {@link Check} for assertion or assumption statement annotation.
+	 * @param expr
+	 *            expression for assertion or assumption statement.
+	 * 
+	 * @see {@link #createAnnotatedAssertOrAssume(ILocation, String, boolean, Spec, Expression, String)}
 	 */
-	private Statement createReachabilityAssert(final ILocation loc, final String functionName,
+	private Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
 			final boolean checkProperty, final Spec spec, final Expression expr) {
+		return createAnnotatedAssertOrAssume(loc, functionName, checkProperty, spec, expr, null);
+	}
+
+	/**
+	 * Create an assertion or assumption statement annotated with a {@link Check} annotation.
+	 * 
+	 * Create an {@code assert expr} or {@code assume expr} depending on the settings. If {@code checkProperty} is
+	 * {@code true} (i.e. the check is enabled), an {@code assert expr} will be generated, otherwise an
+	 * {@code assume expr} will be generated.
+	 * 
+	 * @param loc
+	 *            location of the assertion or assumption node.
+	 * @param functionName
+	 *            name of the function for the assertion statement and {@link Check} annotation.
+	 * @param checkProperty
+	 *            enables creation of an assertion to check {@code expr}, otherwise an assumption is made.
+	 * @param spec
+	 *            type of {@link Check} for assertion or assumption statement annotation.
+	 * @param expr
+	 *            expression for assertion or assumption statement.
+	 * @param errorMsg
+	 *            error message for a negative check result of an assertion.
+	 * 
+	 * @return {@link Statement} annotated with a {@link Check} annotation.
+	 */
+	private Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
+			final boolean checkProperty, final Spec spec, final Expression expr, final String errorMsg) {
 		final boolean checkMemoryleakInMain = mSettings.checkMemoryLeakInMain()
 				&& mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired();
 		if (!checkProperty && !checkMemoryleakInMain) {
@@ -2435,16 +2529,17 @@ public class StandardFunctionHandler {
 		// https://github.com/sosy-lab/sv-benchmarks/pull/1001
 		final Check check;
 		if (checkProperty) {
-			final Function<Spec, String> funPosMessage =
-					s -> s == Spec.ERROR_FUNCTION ? "call to " + functionName + " is unreachable"
-							: Check.getDefaultPositiveMessage(s);
-			final Function<Spec, String> funNegMessage =
-					s -> s == Spec.ERROR_FUNCTION ? "a call to " + functionName + " is reachable"
-							: Check.getDefaultNegativeMessage(s);
+			final CheckMessageProvider msgProvider = new CheckMessageProvider();
+
+			/* customize result message for error function specifications with function name */
+			msgProvider.registerSpecificationErrorFunctionName(functionName);
+			/* customize result message for specifications with error messages */
+			msgProvider.registerSpecificationErrorMessage(spec, errorMsg);
+
 			if (checkMemoryleakInMain) {
-				check = new Check(EnumSet.of(spec, Spec.MEMORY_LEAK), funPosMessage, funNegMessage);
+				check = new Check(EnumSet.of(spec, Spec.MEMORY_LEAK), msgProvider);
 			} else {
-				check = new Check(spec, funPosMessage, funNegMessage);
+				check = new Check(spec, msgProvider);
 			}
 		} else {
 			check = new Check(EnumSet.of(Spec.MEMORY_LEAK));

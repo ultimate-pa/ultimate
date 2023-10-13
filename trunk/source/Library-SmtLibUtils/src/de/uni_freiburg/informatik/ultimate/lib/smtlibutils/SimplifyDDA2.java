@@ -27,12 +27,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -59,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
  * @author Xinyu Jiang
@@ -75,11 +78,11 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private static final boolean APPLY_CONSTANT_FOLDING = false;
 	private static final boolean DEBUG_CHECK_RESULT = false;
 	private static final boolean USE_ECHO_COMMANDS = false;
-	// private static final boolean PREPROCESS_WITH_POLY_PAC_SIMPLIFICATION = false;
+	private static final boolean PREPROCESS_WITH_POLY_PAC_SIMPLIFICATION = true;
 	private static final boolean DESCEND_INTO_QUANTIFIED_FORMULAS = true;
 	private static final boolean OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT = true;
 	private static final boolean SIMPLIFY_REPEATEDLY = true;
-	private static final CheckedNodes CHECKED_NODES = CheckedNodes.ALL_NODES;
+	private static final CheckedNodes CHECKED_NODES = CheckedNodes.ONLY_LEAVES;
 
 	private enum CheckedNodes {
 		ONLY_LEAVES, ALL_NODES, ONLY_LEAVES_AND_QUANTIFIED_NODES
@@ -93,14 +96,13 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private int mNonRelaxingNodes = 0;
 	private long mCheckSatTime = 0;
 	private final long mStartTime = System.nanoTime();
-	private final ScopedHashMap<TermVariable, TermVariable> mRenamingMap;
-	private boolean mPreviousWasQuantified = false;
+	private final ArrayDeque<Map<TermVariable, Term>> mRenamingMaps;
 
 	private SimplifyDDA2(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		super();
 		mServices = services;
 		mMgdScript = mgdScript;
-		mRenamingMap = new ScopedHashMap<>();
+		mRenamingMaps = new ArrayDeque<>();
 	}
 
 	@Override
@@ -208,26 +210,45 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		return null;
 	}
 
-	private Term preprocessQuantifiedFormula(final QuantifiedFormula term) {
-		mPreviousWasQuantified = true;
-		final QuantifiedFormula termAsQuantifiedFormula = term;
-		mRenamingMap.beginScope();
+	private QuantifiedFormula preprocessQuantifiedFormula(final QuantifiedFormula term) {
 		mMgdScript.lock(this);
-		final ArrayList<TermVariable> substitutedTermVariables = new ArrayList<>();
-		for (final TermVariable quantifiedVariable : termAsQuantifiedFormula.getVariables()) {
-			final TermVariable freshVariable = mMgdScript.constructFreshCopy(quantifiedVariable);
-			mRenamingMap.put(quantifiedVariable, freshVariable);
-			substitutedTermVariables.add(freshVariable);
-			mMgdScript.declareFun(this, freshVariable.getName(), new Sort[0], freshVariable.getSort());
-		}
+		Map<TermVariable, Term> substitutionMapping = constructFreshConstantSymbols(mMgdScript,
+				Arrays.asList(term.getVariables()));
+		mRenamingMaps.push(substitutionMapping);
 		mMgdScript.unlock(this);
+		final Term substitutedSubformula = Substitution.apply(mMgdScript, substitutionMapping, term.getSubformula());
+		return (QuantifiedFormula) mMgdScript.getScript().quantifier(term.getQuantifier(), term.getVariables(),
+				substitutedSubformula);
+	}
 
-		final Term substitutedSubformula =
-				Substitution.apply(mMgdScript, mRenamingMap, termAsQuantifiedFormula.getSubformula());
-		final QuantifiedFormula substitutedQuantifiedFormula =
-				(QuantifiedFormula) SmtUtils.quantifier(mMgdScript.getScript(), termAsQuantifiedFormula.getQuantifier(),
-						substitutedTermVariables, substitutedSubformula);
-		return substitutedQuantifiedFormula;
+	/**
+	 * Given a collection of {@link TermVariable}s, construct a fresh constant
+	 * symbol for each {@link TermVariable} and return a map that maps each
+	 * {@link TermVariable} to its fresh constant symbol.
+	 */
+	private static Map<TermVariable, Term> constructFreshConstantSymbols(ManagedScript mgdScript,
+			Collection<TermVariable> tvs) {
+		Map<TermVariable, Term> result = new HashMap<>();
+		for (TermVariable tv : tvs) {
+			Term constantSymbol = constructFreshConstantSymbol(mgdScript, tv);
+			result.put(tv, constantSymbol);
+		}
+		return result;
+	}
+
+	/**
+	 * Construct a constant symbol (reminder constant symbol is a 0-ary
+	 * {@link ApplicationTerm}). The constant symbol should be fresh (i.e.,
+	 * different from all constant symbols that have been declared already.
+	 * Unfortunately, we do not have a reliable mechanism for getting fresh constant
+	 * symbols. As a workaround we let the {@link ManagedScript} construct a fresh
+	 * copy of the {@link TermVariable} and hope that its identifier was not used
+	 * before.
+	 */
+	private static Term constructFreshConstantSymbol(ManagedScript mgdScript, TermVariable tv) {
+		final TermVariable freshVariable = mgdScript.constructFreshCopy(tv);
+		mgdScript.getScript().declareFun(freshVariable.getName(), new Sort[0], freshVariable.getSort());
+		return mgdScript.getScript().term(freshVariable.getName());
 	}
 
 	private static boolean checkRedundancyForNode(final Term term) {
@@ -239,8 +260,19 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 
 	@Override
 	protected DescendResult convert(final Term context, final Term term) {
+		Term preprocessedTerm = term;
 		// The following is copy&pase of an optimization for the PolyPacSimplification.
 		// Maybe we wont to have that optimization too, maybe its useless.
+		if (PREPROCESS_WITH_POLY_PAC_SIMPLIFICATION && APPLY_CONSTANT_FOLDING) {
+			throw new AssertionError("PolyPac Simplementation Already Implements Constant Folding");
+		}
+		if (PREPROCESS_WITH_POLY_PAC_SIMPLIFICATION) {
+			final Term polyPacTerm = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript, context, term);
+			if (polyPacTerm != term) {
+				preprocessedTerm = polyPacTerm;
+			}
+		}
+
 		if (APPLY_CONSTANT_FOLDING) {
 			final Map<Term, Term> substitutionMapping = new HashMap<>();
 			for (final Term conjunct : SmtUtils.getConjuncts(context)) {
@@ -258,11 +290,16 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			if (!substitutionMapping.isEmpty()) {
 				final Term renamed = Substitution.apply(mMgdScript, substitutionMapping, term);
 				if (renamed != term) {
-					return new TermContextTransformationEngine.FinalResultForAscend(renamed);
+					preprocessedTerm = renamed;
 				}
 			}
 		}
 
+		return convertForPreprocessedInputTerms(context, preprocessedTerm);
+
+	}
+
+	private DescendResult convertForPreprocessedInputTerms(final Term context, final Term term) {
 		// 20230629 Matthias: The TermWalker does a depth-first traversal through the
 		// formula. It calls this method on each node while descending from the root to the
 		// leaves.
@@ -389,13 +426,26 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final SimplifyDDA2 simplifyDDA2 = new SimplifyDDA2(services, mgdScript);
 		// do initial push
 		mgdScript.getScript().push(1);
-		mgdScript.getScript().assertTerm(context);
+		final Set<TermVariable> freeVariables = new HashSet<>();
+		freeVariables.addAll(Arrays.asList(context.getFreeVars()));
+		freeVariables.addAll(Arrays.asList(term.getFreeVars()));
+		final Map<TermVariable, Term> substitutionMapping = constructFreshConstantSymbols(mgdScript, freeVariables);
+		final Term closedContext = Substitution.apply(mgdScript, substitutionMapping, context);
+		final Term closedTerm = Substitution.apply(mgdScript, substitutionMapping, term);
+		mgdScript.getScript().assertTerm(closedContext);
 		try {
-			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(term);
+			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(closedTerm);
 			final Comparator<Term> siblingOrder = null;
 			// TODO Matthias 20230810: Some example for an order in the next line.
 			// final Comparator<Term> siblingOrder = new TreeSizeComperator(CommuhashUtils.HASH_BASED_COMPERATOR);
-			result = TermContextTransformationEngine.transform(simplifyDDA2, siblingOrder, context, nnf);
+			final Term intermediateResult = TermContextTransformationEngine.transform(simplifyDDA2, siblingOrder,
+					closedContext, nnf);
+			if (substitutionMapping.isEmpty()) {
+				result = intermediateResult;
+			} else {
+				Map<Term, TermVariable> reversedSubstitutionMapping = reverseMap(substitutionMapping);
+				result = Substitution.apply(mgdScript, reversedSubstitutionMapping, intermediateResult);
+			}
 			final ILogger logger = services.getLoggingService().getLogger(SimplifyDDA2.class);
 			if (logger.isInfoEnabled()) {
 				logger.info(simplifyDDA2.generateExitMessage());
@@ -440,14 +490,9 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	@Override
 	protected Term constructResultForQuantifiedFormula(final Term context,
 			final QuantifiedFormula originalQuantifiedFormula, final Term resultSubformula) {
-		final HashMap<TermVariable, TermVariable> swapped = new HashMap<>();
-		final ArrayList<TermVariable> revertedTermVariables = new ArrayList<>();
-		for (final Map.Entry<TermVariable, TermVariable> entry : mRenamingMap.currentScopeEntries()) {
-			swapped.put(entry.getValue(), entry.getKey());
-			revertedTermVariables.add(entry.getKey());
-		}
-		final Term revertedSubformula = Substitution.apply(mMgdScript, swapped, resultSubformula);
-		mRenamingMap.endScope();
+		Map<TermVariable, Term> orginalTvsToFreshConstants = mRenamingMaps.pop();
+		final Map<Term, TermVariable> reverseMap = reverseMap(orginalTvsToFreshConstants);
+		final Term subformulaWithOriginalVariables = Substitution.apply(mMgdScript, reverseMap, resultSubformula);
 		if (USE_ECHO_COMMANDS) {
 			mMgdScript.lock(this);
 			mMgdScript.echo(this, new QuotedObject("pop in constructResultForQuantifiedFormula"));
@@ -457,7 +502,15 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		mAssertionStackHeight--;
 		assert mAssertionStackHeight >= 0;
 		return SmtUtils.quantifier(mMgdScript.getScript(), originalQuantifiedFormula.getQuantifier(),
-				revertedTermVariables, revertedSubformula);
+				orginalTvsToFreshConstants.keySet(), subformulaWithOriginalVariables);
+	}
+
+	private static <A, B> Map<B, A> reverseMap(Map<A, B> map) {
+		final Map<B, A> reverseMap = new HashMap<>();
+		for (final Map.Entry<A, B> entry : map.entrySet()) {
+			reverseMap.put(entry.getValue(), entry.getKey());
+		}
+		return reverseMap;
 	}
 
 	@Override

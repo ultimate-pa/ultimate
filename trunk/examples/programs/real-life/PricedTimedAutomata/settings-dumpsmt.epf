@@ -143,7 +143,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ long\ double=16
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/signedness\ of\ char=SIGNED
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ double=8
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ for\ the\ main\ procedure\ if\ all\ allocated\ memory\ was\ freed=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Use\ bitvectors\ instead\ of\ ints=false

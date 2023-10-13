@@ -445,38 +445,5 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-	@Test
-	public void avt01() {
-		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(SmtSortUtils::getIntSort, "k"),
-				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
-		};
-		final String formulaAsString = "(exists ((x Int)) (= a2 (store a1 k x)))";
-		final String expectedResult = null;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
-	public void avt02() {
-		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(SmtSortUtils::getIntSort, "k"),
-				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
-		};
-		final String formulaAsString = "(forall ((x Int)) (distinct a2 (store a1 k (+ x 1))))";
-		final String expectedResult = "(forall ((x Int)) (not (= (store a1 k (+ x 1)) a2)))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
-	public void avt03() {
-		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(SmtSortUtils::getIntSort, "k"),
-				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "a1", "a2"),
-		};
-		final String formulaAsString = "(exists ((x Int) (y Int)) (= a2 (store (store a1 k (store (select a1 k) 23 x)) k (store (select (store a1 k (store (select a1 k) 23 x)) k) 42 y))))";
-		final String expectedResult = null;
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
 	//@formatter:on
 }

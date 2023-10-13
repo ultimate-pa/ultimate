@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.DeclarableFunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -53,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
@@ -134,6 +134,12 @@ public class QuantifierEliminationTest {
 	public static Sort getArrayIntIntIntSort(final Script script) {
 		return SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script),
 				SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script), SmtSortUtils.getIntSort(script)));
+	}
+
+	public static Sort getArrayIntIntIntIntSort(final Script script) {
+		return SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script), SmtSortUtils.getArraySort(script,
+				SmtSortUtils.getIntSort(script),
+				SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script), SmtSortUtils.getIntSort(script))));
 	}
 
 	@BeforeClass
@@ -274,13 +280,16 @@ public class QuantifierEliminationTest {
 			final String expectedResultAsString, final boolean expectQuantifierFreeResult,
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
 			final QuantifierEliminationTestCsvWriter csvWriter) {
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
-		Term letFree = new FormulaUnLet().transform(formulaAsTerm);
-		letFree = new CommuhashNormalForm(services, mgdScript.getScript()).transform(letFree);
-		letFree = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(letFree);
+		final Term preprocessedInput;
+		{
+			final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
+			final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
+			final Term unf = UnfTransformer.apply(mgdScript.getScript(), letFree);
+			preprocessedInput = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(unf);
+		}
 		final String testId = ReflectionUtil.getCallerMethodName(4);
-		csvWriter.reportEliminationBegin(letFree, testId);
-		final Term result = PartialQuantifierElimination.eliminate(services, mgdScript, letFree,
+		csvWriter.reportEliminationBegin(preprocessedInput, testId);
+		final Term result = PartialQuantifierElimination.eliminate(services, mgdScript, preprocessedInput,
 				SimplificationTechnique.SIMPLIFY_DDA);
 		logger.info("Result: " + result);
 		if (!Arrays.asList(result.getFreeVars()).isEmpty()) {
@@ -348,7 +357,7 @@ public class QuantifierEliminationTest {
 		final String formulaAsString =
 				"(store |v_#memory_int_BEFORE_CALL_2| nonMain_~dst~0.base (store (store (select |v_#memory_int_BEFORE_CALL_2| nonMain_~dst~0.base) (+ |v_#Ultimate.C_memcpy_#t~loopctr6_8| |#Ultimate.C_memcpy_dest.offset|) v_prenex_1) (+ |v_#Ultimate.C_memcpy_#t~loopctr6_9| |#Ultimate.C_memcpy_dest.offset|) |#Ultimate.C_memcpy_#t~mem7|))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.convert(mScript, formulaAsTerm);
+		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.of(formulaAsTerm);
 		Assert.assertTrue(mdns.getDimension() == 2);
 	}
 
