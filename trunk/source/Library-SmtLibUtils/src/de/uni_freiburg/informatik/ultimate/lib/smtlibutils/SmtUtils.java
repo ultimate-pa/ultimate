@@ -158,6 +158,12 @@ public final class SmtUtils {
 
 		POLY_PAC(false),
 
+		/**
+		 * Simplification that uses the (non-standard) simplify command which is
+		 * implemented by some SMT solvers.
+		 */
+		NATIVE(false),
+
 		NONE(false);
 
 		private final boolean mDetectsUnsatisfiability;
@@ -207,6 +213,7 @@ public final class SmtUtils {
 		if (!SmtUtils.isTrueLiteral(context) && simplificationTechnique != SimplificationTechnique.POLY_PAC
 				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA
 				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA2
+				&& simplificationTechnique != SimplificationTechnique.NATIVE
 				&& simplificationTechnique != SimplificationTechnique.NONE) {
 			throw new UnsupportedOperationException(
 					simplificationTechnique + " does not support simplification with respect to context");
@@ -231,6 +238,12 @@ public final class SmtUtils {
 				return formula;
 			case POLY_PAC:
 				simplified = PolyPacSimplificationTermWalker.simplify(services, script, context, formula);
+				break;
+			case NATIVE:
+				script.getScript().push(1);
+				script.getScript().assertTerm(context);
+				simplified = script.getScript().simplify(formula);
+				script.getScript().pop(1);
 				break;
 			default:
 				throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + simplificationTechnique);
