@@ -57,6 +57,8 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 //import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SimplificationTest;
@@ -275,14 +277,15 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 * {@link ApplicationTerm}). The constant symbol should be fresh (i.e.,
 	 * different from all constant symbols that have been declared already.
 	 * Unfortunately, we do not have a reliable mechanism for getting fresh constant
-	 * symbols. As a workaround we let the {@link ManagedScript} construct a fresh
-	 * copy of the {@link TermVariable} and hope that its identifier was not used
-	 * before.
+	 * symbols. As a workaround we add a prefix to the variable name and hope that
+	 * this name did not yet occur. If the name did already occur the {@link Script}
+	 * will throw and {@link SMTLIBException}. We expect that this will never happen
+	 * in practice and hence do not handle this exception.
 	 */
 	private static Term constructFreshConstantSymbol(final ManagedScript mgdScript, final TermVariable tv) {
-		final TermVariable freshVariable = mgdScript.constructFreshCopy(tv);
-		mgdScript.getScript().declareFun(freshVariable.getName(), new Sort[0], freshVariable.getSort());
-		return mgdScript.getScript().term(freshVariable.getName());
+		final String name = tv.getName() + "_SimplifyDDA_" + tv.hashCode();
+		mgdScript.getScript().declareFun(name, new Sort[0], tv.getSort());
+		return mgdScript.getScript().term(name);
 	}
 
 	/**
