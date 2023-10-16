@@ -447,8 +447,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 				result = Substitution.apply(mgdScript, reversedSubstitutionMapping, intermediateResult);
 			}
 			final ILogger logger = services.getLoggingService().getLogger(SimplifyDDA2.class);
-			if (logger.isInfoEnabled()) {
-				logger.info(simplifyDDA2.generateExitMessage());
+			if (logger.isDebugEnabled()) {
+				logger.debug(simplifyDDA2.generateExitMessage());
 			}
 			final int stackHeight = simplifyDDA2.getAssertionStackHeight();
 			if (stackHeight != 0) {
