@@ -1136,9 +1136,6 @@ public class CACSL2BoogieBacktranslator
 			result = String.format("(%s == %s)", lhs, rhs);
 			break;
 		case LOGICIMPLIES:
-			if (lhs == null) {
-				return rhs;
-			}
 			result = String.format("(!%s || %s)", lhs, rhs);
 			break;
 		case LOGICOR:
