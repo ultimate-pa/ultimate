@@ -56,7 +56,7 @@ public class PEAComplement {
 			totalisedInit.add(new InitialTransition<CDD>(CDD.TRUE, totalisedPhases.get(p.name)));
 		}
 		if (sinkPhase.isInit) {
-			totalisedInit.add(new InitialTransition<CDD>(CDD.TRUE, sinkPhase));
+			totalisedInit.add(new InitialTransition<CDD>(sinkPhase.mInitialTransition.getGuard(), sinkPhase));
 		}
 
 		// needed for priming and unpriming
@@ -163,7 +163,8 @@ public class PEAComplement {
 		}
 		ArrayList<InitialTransition<CDD>> complementedInit = new ArrayList<>();
 		for (Phase<CDD> p : sourcePea.getInit()) {
-			complementedInit.add(new InitialTransition<CDD>(CDD.TRUE, complementPhases.get(p.name)));
+			complementedInit
+					.add(new InitialTransition<CDD>(p.mInitialTransition.getGuard(), complementPhases.get(p.name)));
 		}
 		PhaseEventAutomata<CDD> complementPEA = new PhaseEventAutomata<CDD>(
 				addSuffixString(sourcePea.getName(), COMPLEMENT_POSTFIX), phases, complementedInit);
