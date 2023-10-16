@@ -56,7 +56,7 @@ public class PEAComplement {
 			totalisedInit.add(totalisedPhases.get(p.name));
 		}
 		if (sinkPhase.isInit) {
-			totalisedInit.add(sinkPhase);
+			totalisedInit.add(new InitialTransition(sinkPhase.mInitialTransition.getGuard(), sinkPhase));
 		}
 
 		// needed for priming and unpriming
@@ -162,9 +162,10 @@ public class PEAComplement {
 			}
 			phases.add(complementPhase);
 		}
-		ArrayList<Phase> complementedInit = new ArrayList<>();
+		ArrayList<InitialTransition> complementedInit = new ArrayList<>();
 		for (Phase p : sourcePea.getInit()) {
-			complementedInit.add(complementPhases.get(p.name));
+			complementedInit
+					.add(new InitialTransition(p.mInitialTransition.getGuard(), complementPhases.get(p.name)));
 		}
 		Phase[] complementInitArray = complementedInit.toArray(new Phase[complementedInit.size()]);
 		PhaseEventAutomata complementPEA =

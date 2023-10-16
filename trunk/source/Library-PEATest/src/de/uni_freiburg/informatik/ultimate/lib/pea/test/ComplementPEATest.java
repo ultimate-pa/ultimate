@@ -191,8 +191,9 @@ public class ComplementPEATest {
 		Phase[] phases = complementAutomaton.getPhases();
 		assertEquals(originalPhases.length, phases.length - 1);
 		// does the complement automaton contain a sink?
-		Phase sink = Arrays.asList(phases).stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
-		assertTrue(sink.getName().equals("sink"));
+		Phase sink =
+				phases.stream().filter(p -> p.getName().equals(PEAComplement.SINK_NAME)).findAny().orElse(null);
+		assertTrue(sink.getName().equals(PEAComplement.SINK_NAME));
 		// is it accepting?
 		assertTrue(sink.getTerminal());
 		// it should not be initial
@@ -211,10 +212,11 @@ public class ComplementPEATest {
 		PhaseEventAutomata testPEA = mTestAutomata.get(1);
 		PEAComplement complementPEA = new PEAComplement(testPEA);
 		PhaseEventAutomata complementAutomaton = complementPEA.getComplementPEA();
-		Phase[] phases = complementAutomaton.getPhases();
-		Phase sink = Arrays.asList(phases).stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
-		assertTrue(sink.getInitialTransition().isPresent());
-		InitialTransition sinkInitialTransition = sink.getInitialTransition().get();
+		List<Phase> phases = complementAutomaton.getPhases();
+		Phase sink =
+				phases.stream().filter(p -> p.getName().equals(PEAComplement.SINK_NAME)).findAny().orElse(null);
+		assertTrue(sink.getInitialTransition() != null);
+		InitialTransition sinkInitialTransition = sink.getInitialTransition();
 		CDD guard = sinkInitialTransition.getGuard();
 		CDD expected = BooleanDecision.create("R").negate();
 		assertTrue(guard.equals(expected));
