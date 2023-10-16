@@ -199,7 +199,7 @@ public final class SmtUtils {
 		return simplify(mgdScript, formula, mgdScript.getScript().term("true"), services, simplificationTechnique);
 	}
 
-	public static Term simplify(final ManagedScript mgdScript, final Term formula, final Term context,
+	public static Term simplify(ManagedScript mgdScript, final Term formula, final Term context,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
 		if (simplificationTechnique == SimplificationTechnique.NONE) {
 			return formula;
@@ -219,93 +219,96 @@ public final class SmtUtils {
 					simplificationTechnique + " does not support simplification with respect to context");
 		}
 		final long startTime = System.nanoTime();
-		final UndoableWrapperScript undoableScript = new UndoableWrapperScript(mgdScript.getScript());
-		final ManagedScript script = new ManagedScript(services, undoableScript);
-		try {
-			final Term simplified;
-			switch (simplificationTechnique) {
-			case SIMPLIFY_DDA:
-				simplified = new SimplifyDDAWithTimeout(script.getScript(), true, services, context)
+		final Term simplified;
+		switch (simplificationTechnique) {
+		case SIMPLIFY_DDA:
+			final UndoableWrapperScript undoableScript = new UndoableWrapperScript(mgdScript.getScript());
+			mgdScript = new ManagedScript(services, undoableScript);
+			final Term tmp;
+			try {
+				tmp = new SimplifyDDAWithTimeout(mgdScript.getScript(), true, services, context)
 						.getSimplifiedTerm(formula);
-				break;
-			case SIMPLIFY_DDA2:
-				simplified = SimplifyDDA2.simplify(services, script, context, formula);
-				break;
-			case SIMPLIFY_QUICK:
-				simplified = new SimplifyQuick(script.getScript(), services).getSimplifiedTerm(formula);
-				break;
-			case NONE:
-				return formula;
-			case POLY_PAC:
-				simplified = PolyPacSimplificationTermWalker.simplify(services, script, context, formula);
-				break;
-			case NATIVE:
-				script.getScript().push(1);
-				script.getScript().assertTerm(context);
-				simplified = script.getScript().simplify(formula);
-				script.getScript().pop(1);
-				break;
-			default:
-				throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + simplificationTechnique);
-			}
-			if (logger.isDebugEnabled()) {
-				logger.debug(new DebugMessage("DAG size before simplification {0}, DAG size after simplification {1}",
-						new DagSizePrinter(formula), new DagSizePrinter(simplified)));
-			}
-			final long endTime = System.nanoTime();
-			final long overallTimeMs = (endTime - startTime) / 1_000_000;
-			// write warning if simplification takes more than 5 seconds
-			if (overallTimeMs >= 5000) {
-				final StringBuilder sb = new StringBuilder();
-				sb.append("Spent ").append(CoreUtil.humanReadableTime(overallTimeMs, TimeUnit.MILLISECONDS, 2))
-						.append(" on a formula simplification");
-				if (formula.equals(simplified)) {
-					sb.append(" that was a NOOP. DAG size: ");
-					sb.append(new DagSizePrinter(formula));
-				} else {
-					sb.append(". DAG size of input: ");
-					sb.append(new DagSizePrinter(formula));
-					sb.append(" DAG size of output: ");
-					sb.append(new DagSizePrinter(simplified));
+			} catch (final ToolchainCanceledException t) {
+				// we try to preserve the script if a timeout occurred
+				final int dirtyLevels = undoableScript.restore();
+				if (dirtyLevels > 0) {
+					logger.warn("Removed " + dirtyLevels + " from assertion stack");
 				}
-				sb.append(" (called from ").append(ReflectionUtil.getCallerSignatureFiltered(Set.of(SmtUtils.class)))
-						.append(")");
-				logger.warn(sb);
-				// Matthias 2023-08-01: The following is a hack for writing simplification
-				// benchmarks to a file. We write only if the simplification took at least 5s
-				// (see if above) and if the context is equivalent to true.
-				final boolean writeSimplificationBenchmarksToFile = false;
-				if (writeSimplificationBenchmarksToFile && SmtUtils.isTrueLiteral(context)) {
-					try (FileWriter fw = new FileWriter("SimplificationBenchmark_" + overallTimeMs);
-							BufferedWriter bw = new BufferedWriter(fw);
-							PrintWriter out = new PrintWriter(bw)) {
-						out.println(SmtTestGenerationUtils.generateStringForTestfile(formula));
-						out.close();
-						bw.close();
-						fw.close();
-					} catch (final IOException e) {
-						throw new AssertionError(e);
-					}
-				}
+				throw t;
 			}
-			// TODO: DD 2019-11-19: This call is a dirty hack! SimplifyDDAWithTimeout leaves an empty stack frame open,
-			// but I do not want to try and debug how it is happening.
+			// TODO: DD 2019-11-19: This call is a dirty hack! SimplifyDDAWithTimeout leaves
+			// an empty stack frame open, but I do not want to try and debug how it is
+			// happening.
 			undoableScript.restore();
-			if (simplified != formula) {
-				// TODO: Matthias 2019-11-19 SimplifyDDA can produce nested
-				// conjunctions or disjunctions. Use UnfTransformer to get
-				// rid of these.
-				return new UnfTransformer(script.getScript()).transform(simplified);
+			if (tmp != formula) {
+				// TODO: Matthias 2019-11-19 SimplifyDDA can produce nested conjunctions or
+				// disjunctions. Use UnfTransformer to get rid of these.
+				simplified = new UnfTransformer(mgdScript.getScript()).transform(tmp);
+			} else {
+				simplified = tmp;
 			}
-			return simplified;
-		} catch (final ToolchainCanceledException t) {
-			// we try to preserve the script if a timeout occurred
-			final int dirtyLevels = undoableScript.restore();
-			if (dirtyLevels > 0) {
-				logger.warn("Removed " + dirtyLevels + " from assertion stack");
-			}
-			throw t;
+			break;
+		case SIMPLIFY_DDA2:
+			simplified = SimplifyDDA2.simplify(services, mgdScript, context, formula);
+			break;
+		case SIMPLIFY_QUICK:
+			simplified = new SimplifyQuick(mgdScript.getScript(), services).getSimplifiedTerm(formula);
+			break;
+		case NONE:
+			return formula;
+		case POLY_PAC:
+			simplified = PolyPacSimplificationTermWalker.simplify(services, mgdScript, context, formula);
+			break;
+		case NATIVE:
+			mgdScript.getScript().push(1);
+			mgdScript.getScript().assertTerm(context);
+			simplified = mgdScript.getScript().simplify(formula);
+			mgdScript.getScript().pop(1);
+			break;
+		default:
+			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + simplificationTechnique);
 		}
+		if (logger.isDebugEnabled()) {
+			logger.debug(new DebugMessage("DAG size before simplification {0}, DAG size after simplification {1}",
+					new DagSizePrinter(formula), new DagSizePrinter(simplified)));
+		}
+		final long endTime = System.nanoTime();
+		final long overallTimeMs = (endTime - startTime) / 1_000_000;
+		// write warning if simplification takes more than 5 seconds
+		if (overallTimeMs >= 5000) {
+			final StringBuilder sb = new StringBuilder();
+			sb.append("Spent ").append(CoreUtil.humanReadableTime(overallTimeMs, TimeUnit.MILLISECONDS, 2))
+					.append(" on a formula simplification");
+			if (formula.equals(simplified)) {
+				sb.append(" that was a NOOP. DAG size: ");
+				sb.append(new DagSizePrinter(formula));
+			} else {
+				sb.append(". DAG size of input: ");
+				sb.append(new DagSizePrinter(formula));
+				sb.append(" DAG size of output: ");
+				sb.append(new DagSizePrinter(simplified));
+			}
+			sb.append(" (called from ").append(ReflectionUtil.getCallerSignatureFiltered(Set.of(SmtUtils.class)))
+					.append(")");
+			logger.warn(sb);
+			// Matthias 2023-08-01: The following is a hack for writing simplification
+			// benchmarks to a file. We write only if the simplification took at least 5s
+			// (see if above) and if the context is equivalent to true.
+			final boolean writeSimplificationBenchmarksToFile = false;
+			if (writeSimplificationBenchmarksToFile && SmtUtils.isTrueLiteral(context)) {
+				try (FileWriter fw = new FileWriter("SimplificationBenchmark_" + overallTimeMs);
+						BufferedWriter bw = new BufferedWriter(fw);
+						PrintWriter out = new PrintWriter(bw)) {
+					out.println(SmtTestGenerationUtils.generateStringForTestfile(formula));
+					out.close();
+					bw.close();
+					fw.close();
+				} catch (final IOException e) {
+					throw new AssertionError(e);
+				}
+			}
+		}
+		return simplified;
 	}
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript mgdScript, final Term formula,
