@@ -246,10 +246,10 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	/**
 	 * Constructs a fresh constant symbol for each bound quantified variable.
 	 */
-	private QuantifiedFormula preprocessQuantifiedFormula(final QuantifiedFormula term) {
+	private QuantifiedFormula preprocessQuantifiedFormula(final QuantifiedFormula term, final Term context) {
 		mMgdScript.lock(this);
 		final Map<TermVariable, Term> substitutionMapping = constructFreshConstantSymbols(mMgdScript,
-				Arrays.asList(term.getVariables()));
+				Arrays.asList(term.getVariables()), term, context);
 		mRenamingMaps.push(substitutionMapping);
 		mMgdScript.unlock(this);
 		final Term substitutedSubformula = Substitution.apply(mMgdScript, substitutionMapping, term.getSubformula());
@@ -263,10 +263,10 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 * {@link TermVariable} to its fresh constant symbol.
 	 */
 	private static Map<TermVariable, Term> constructFreshConstantSymbols(final ManagedScript mgdScript,
-			final Collection<TermVariable> tvs) {
+			final Collection<TermVariable> tvs, final Term term, final Term context) {
 		final Map<TermVariable, Term> result = new HashMap<>();
 		for (final TermVariable tv : tvs) {
-			final Term constantSymbol = constructFreshConstantSymbol(mgdScript, tv);
+			final Term constantSymbol = constructFreshConstantSymbol(mgdScript, tv, term, context);
 			result.put(tv, constantSymbol);
 		}
 		return result;
@@ -277,13 +277,15 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 * {@link ApplicationTerm}). The constant symbol should be fresh (i.e.,
 	 * different from all constant symbols that have been declared already.
 	 * Unfortunately, we do not have a reliable mechanism for getting fresh constant
-	 * symbols. As a workaround we add a prefix to the variable name and hope that
+	 * symbols. As a workaround we add a suffix to the variable name and hope that
 	 * this name did not yet occur. If the name did already occur the {@link Script}
 	 * will throw and {@link SMTLIBException}. We expect that this will never happen
 	 * in practice and hence do not handle this exception.
 	 */
-	private static Term constructFreshConstantSymbol(final ManagedScript mgdScript, final TermVariable tv) {
-		final String name = tv.getName() + "_SimplifyDDA_" + tv.hashCode();
+	private static Term constructFreshConstantSymbol(final ManagedScript mgdScript, final TermVariable tv,
+			final Term term, final Term context) {
+		final String name = tv.getName() + "_SimplifyDDA_" + tv.hashCode() + "_" + term.hashCode() + "_"
+				+ context.hashCode();
 		mgdScript.getScript().declareFun(name, new Sort[0], tv.getSort());
 		return mgdScript.getScript().term(name);
 	}
@@ -366,7 +368,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		} else if (descend) {
 			if (term instanceof QuantifiedFormula) {
 				return new TermContextTransformationEngine.IntermediateResultForDescend(
-						preprocessQuantifiedFormula((QuantifiedFormula) term));
+						preprocessQuantifiedFormula((QuantifiedFormula) term, context));
 			} else {
 				return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 			}
@@ -427,7 +429,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final Set<TermVariable> freeVariables = new HashSet<>();
 		freeVariables.addAll(Arrays.asList(context.getFreeVars()));
 		freeVariables.addAll(Arrays.asList(term.getFreeVars()));
-		final Map<TermVariable, Term> substitutionMapping = constructFreshConstantSymbols(mgdScript, freeVariables);
+		final Map<TermVariable, Term> substitutionMapping = constructFreshConstantSymbols(mgdScript, freeVariables,
+				term, context);
 		final Term closedContext = Substitution.apply(mgdScript, substitutionMapping, context);
 		final Term closedTerm = Substitution.apply(mgdScript, substitutionMapping, term);
 		mgdScript.getScript().assertTerm(closedContext);
@@ -457,6 +460,10 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			final String taskDescription = String.format("simplifying a %s term", termCdc);
 			tce.addRunningTaskInfo(new RunningTaskInfo(SimplifyDDA2.class, taskDescription));
 			throw tce;
+		} finally {
+			if (mgdScript.isLocked()) {
+				throw new AssertionError("ManagedScript is still locked");
+			}
 		}
 		return result;
 	}
