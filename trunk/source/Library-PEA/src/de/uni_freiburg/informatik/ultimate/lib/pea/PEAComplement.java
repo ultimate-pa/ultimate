@@ -300,6 +300,7 @@ public class PEAComplement {
 					if (pair.getSecond()[0] == 1) { // when the index of the true child is 1, the decision is negated
 						booleanDecision = booleanDecision.negate();
 					}
+					conjunctionWithSuffix = conjunctionWithSuffix.and(booleanDecision);
 				} else { // boolean decision
 					Decision<BooleanDecision> decision = (Decision<BooleanDecision>) pair.getFirst();
 					CDD booleanDecision = BooleanDecision.create(pair.getFirst().getVar());
