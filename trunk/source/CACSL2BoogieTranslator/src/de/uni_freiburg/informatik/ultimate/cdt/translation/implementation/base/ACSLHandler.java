@@ -223,85 +223,95 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main, final CodeAnnot node) {
 		if (node instanceof CodeAnnotStmt) {
 			final ILocation loc = mLocationFactory.createACSLLocation(node);
-			final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 			final CodeStatement codeStmt = ((CodeAnnotStmt) node).getCodeStmt();
 			if (codeStmt instanceof Assertion) {
-				ExpressionResult formula =
-						(ExpressionResult) main.dispatch(((Assertion) codeStmt).getFormula(), main.getAcslHook());
-
-				formula = mExprResultTransformer.transformSwitchRexIntToBool(formula, loc, main.getAcslHook());
-
-				resultBuilder.addAllExceptLrValue(formula);
-
-				final AssertStatement assertStmt = new AssertStatement(loc, formula.getLrValue().getValue());
-				// TODO: Handle havoc statements
-				for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
-					overapprItem.annotate(assertStmt);
-				}
-				resultBuilder.addStatement(assertStmt);
-				final List<HavocStatement> havocs = CTranslationUtil.createHavocsForAuxVars(formula.getAuxVars());
-				resultBuilder.addStatements(havocs);
-				final Check check;
-				if (mWitnessInvariantMode) {
-					check = new Check(Spec.WITNESS_INVARIANT);
-				} else {
-					check = new Check(Spec.ASSERT);
-				}
-				check.annotate(assertStmt);
+				return handleAssert(main, loc, (Assertion) codeStmt);
 			}
 			if (codeStmt instanceof GhostUpdate) {
-				final GhostUpdate update = (GhostUpdate) codeStmt;
-				final ExpressionResult exprResult =
-						(ExpressionResult) main.dispatch(update.getExpr(), main.getAcslHook());
-				resultBuilder.addAllExceptLrValue(exprResult);
-				final SymbolTableValue stv = mSymboltable.findCSymbol(main.getAcslHook(), update.getIdentifier());
-				if (stv == null) {
-					throw new IncorrectSyntaxException(loc,
-							"Undeclared variable in ACSL expression: " + update.getIdentifier());
-				}
-				if (!stv.getBoogieName().startsWith(SFO.GHOST)) {
-					throw new IncorrectSyntaxException(loc,
-							"C variable " + update.getIdentifier() + " cannot be assigned in ghost statement.");
-				}
-				final VariableLHS lhs = new VariableLHS(loc, mTypeHandler.getBoogieTypeForCType(stv.getCType()),
-						stv.getBoogieName(), stv.getDeclarationInformation());
-				resultBuilder.addStatement(StatementFactory.constructSingleAssignmentStatement(loc, lhs,
-						exprResult.getLrValue().getValue()));
+				return handleGhostUpdate(main, loc, (GhostUpdate) codeStmt);
 			}
 			if (codeStmt instanceof GhostDeclaration) {
-				final GhostDeclaration decl = (GhostDeclaration) codeStmt;
-				final String boogieName = SFO.GHOST + decl.getIdentifier();
-				final CPrimitive cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
-				final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
-				final Declaration boogieDecl = new VariableDeclaration(loc, new Attribute[0],
-						new VarList[] { new VarList(loc, new String[] { boogieName }, astType) });
-				final CDeclaration cDecl = new CDeclaration(cType, decl.getIdentifier());
-				final IASTFunctionDefinition scope = CdtASTUtils.findScope(main.getAcslHook());
-				DeclarationInformation declInfo;
-				if (scope == null) {
-					declInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-				} else {
-					declInfo =
-							new DeclarationInformation(StorageClass.LOCAL, scope.getDeclarator().getName().toString());
-				}
-				mSymboltable.storeCSymbol(main.getAcslHook(), decl.getIdentifier(), new SymbolTableValue(boogieName,
-						boogieDecl, astType, cDecl, declInfo, main.getAcslHook(), false));
-				final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression expr = decl.getExpr();
-				if (expr != null) {
-					final ExpressionResult exprResult = (ExpressionResult) main.dispatch(expr, main.getAcslHook());
-					resultBuilder.addAllExceptLrValue(exprResult);
-					final VariableLHS lhs =
-							new VariableLHS(loc, mTypeHandler.getBoogieTypeForCType(cType), boogieName, declInfo);
-					resultBuilder.addStatement(StatementFactory.constructSingleAssignmentStatement(loc, lhs,
-							exprResult.getLrValue().getValue()));
-				}
+				return handleGhostDeclaration(main, loc, (GhostDeclaration) codeStmt);
 			}
-			return resultBuilder.build();
 		}
 		// TODO : other cases
 		final String msg = "ACSLHandler: Not yet implemented: " + node.toString();
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		throw new UnsupportedSyntaxException(loc, msg);
+	}
+
+	private Result handleAssert(final IDispatcher main, final ILocation loc, final Assertion assertion) {
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		ExpressionResult formula = (ExpressionResult) main.dispatch(assertion.getFormula(), main.getAcslHook());
+
+		formula = mExprResultTransformer.transformSwitchRexIntToBool(formula, loc, main.getAcslHook());
+
+		resultBuilder.addAllExceptLrValue(formula);
+
+		final AssertStatement assertStmt = new AssertStatement(loc, formula.getLrValue().getValue());
+		// TODO: Handle havoc statements
+		for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
+			overapprItem.annotate(assertStmt);
+		}
+		resultBuilder.addStatement(assertStmt);
+		final List<HavocStatement> havocs = CTranslationUtil.createHavocsForAuxVars(formula.getAuxVars());
+		resultBuilder.addStatements(havocs);
+		final Check check;
+		if (mWitnessInvariantMode) {
+			check = new Check(Spec.WITNESS_INVARIANT);
+		} else {
+			check = new Check(Spec.ASSERT);
+		}
+		check.annotate(assertStmt);
+		return resultBuilder.build();
+	}
+
+	private Result handleGhostUpdate(final IDispatcher main, final ILocation loc, final GhostUpdate update) {
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		final ExpressionResult exprResult = (ExpressionResult) main.dispatch(update.getExpr(), main.getAcslHook());
+		resultBuilder.addAllExceptLrValue(exprResult);
+		final SymbolTableValue stv = mSymboltable.findCSymbol(main.getAcslHook(), update.getIdentifier());
+		if (stv == null) {
+			throw new IncorrectSyntaxException(loc,
+					"Undeclared variable in ACSL expression: " + update.getIdentifier());
+		}
+		if (!stv.getBoogieName().startsWith(SFO.GHOST)) {
+			throw new IncorrectSyntaxException(loc,
+					"C variable " + update.getIdentifier() + " cannot be assigned in ghost statement.");
+		}
+		final VariableLHS lhs = new VariableLHS(loc, mTypeHandler.getBoogieTypeForCType(stv.getCType()),
+				stv.getBoogieName(), stv.getDeclarationInformation());
+		resultBuilder.addStatement(
+				StatementFactory.constructSingleAssignmentStatement(loc, lhs, exprResult.getLrValue().getValue()));
+		return resultBuilder.build();
+	}
+
+	private Result handleGhostDeclaration(final IDispatcher main, final ILocation loc, final GhostDeclaration decl) {
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		final String boogieName = SFO.GHOST + decl.getIdentifier();
+		final CPrimitive cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
+		final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
+		final Declaration boogieDecl = new VariableDeclaration(loc, new Attribute[0],
+				new VarList[] { new VarList(loc, new String[] { boogieName }, astType) });
+		final CDeclaration cDecl = new CDeclaration(cType, decl.getIdentifier());
+		final IASTFunctionDefinition scope = CdtASTUtils.findScope(main.getAcslHook());
+		DeclarationInformation declInfo;
+		if (scope == null) {
+			declInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+		} else {
+			declInfo = new DeclarationInformation(StorageClass.LOCAL, scope.getDeclarator().getName().toString());
+		}
+		mSymboltable.storeCSymbol(main.getAcslHook(), decl.getIdentifier(),
+				new SymbolTableValue(boogieName, boogieDecl, astType, cDecl, declInfo, main.getAcslHook(), false));
+		if (decl.getExpr() != null) {
+			final ExpressionResult exprResult = (ExpressionResult) main.dispatch(decl.getExpr(), main.getAcslHook());
+			resultBuilder.addAllExceptLrValue(exprResult);
+			final VariableLHS lhs =
+					new VariableLHS(loc, mTypeHandler.getBoogieTypeForCType(cType), boogieName, declInfo);
+			resultBuilder.addStatement(
+					StatementFactory.constructSingleAssignmentStatement(loc, lhs, exprResult.getLrValue().getValue()));
+		}
+		return resultBuilder.build();
 	}
 
 	/**
