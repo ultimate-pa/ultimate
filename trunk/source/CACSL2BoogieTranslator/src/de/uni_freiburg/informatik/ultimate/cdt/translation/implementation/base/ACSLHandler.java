@@ -221,8 +221,8 @@ public class ACSLHandler implements IACSLHandler {
 
 	@Override
 	public Result visit(final IDispatcher main, final CodeAnnot node) {
+		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		if (node instanceof CodeAnnotStmt) {
-			final ILocation loc = mLocationFactory.createACSLLocation(node);
 			final CodeStatement codeStmt = ((CodeAnnotStmt) node).getCodeStmt();
 			if (codeStmt instanceof Assertion) {
 				return handleAssert(main, loc, (Assertion) codeStmt);
@@ -234,10 +234,7 @@ public class ACSLHandler implements IACSLHandler {
 				return handleGhostDeclaration(main, loc, (GhostDeclaration) codeStmt);
 			}
 		}
-		// TODO : other cases
-		final String msg = "ACSLHandler: Not yet implemented: " + node.toString();
-		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		throw new UnsupportedSyntaxException(loc, msg);
+		throw new UnsupportedSyntaxException(loc, "ACSLHandler: Not yet implemented: " + node.toString());
 	}
 
 	private Result handleAssert(final IDispatcher main, final ILocation loc, final Assertion assertion) {
