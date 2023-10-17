@@ -1407,7 +1407,16 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	private BigInteger tryToGetAdditionalFactor(final Expression base, final Expression offset) {
-		if (areMatchingBaseAndOffset(base, offset)) {
+		boolean isOld;
+		if (isPointerBase(base)) {
+			isOld = false;
+		} else if (isOldPointerBase(base)) {
+			isOld = true;
+		} else {
+			return null;
+		}
+		final String name = getPointerName(base, isOld);
+		if (isPointerOffsetFor(offset, name, isOld)) {
 			return BigInteger.ZERO;
 		}
 		Expression factorCandidate = null;
@@ -1418,9 +1427,9 @@ public class CACSL2BoogieBacktranslator
 			}
 			final Expression left = ((BinaryExpression) offset).getLeft();
 			final Expression right = ((BinaryExpression) offset).getRight();
-			if (areMatchingBaseAndOffset(base, left)) {
+			if (isPointerOffsetFor(left, name, isOld)) {
 				factorCandidate = right;
-			} else if (areMatchingBaseAndOffset(base, right)) {
+			} else if (isPointerOffsetFor(right, name, isOld)) {
 				factorCandidate = left;
 			}
 		}
@@ -1432,9 +1441,9 @@ public class CACSL2BoogieBacktranslator
 			}
 			final Expression left = function.getArguments()[0];
 			final Expression right = function.getArguments()[1];
-			if (areMatchingBaseAndOffset(base, left)) {
+			if (isPointerOffsetFor(left, name, isOld)) {
 				factorCandidate = right;
-			} else if (areMatchingBaseAndOffset(base, right)) {
+			} else if (isPointerOffsetFor(right, name, isOld)) {
 				factorCandidate = left;
 			}
 		}
@@ -1443,7 +1452,13 @@ public class CACSL2BoogieBacktranslator
 		if (extracted == null) {
 			return null;
 		}
-		final Integer size = getSizeOfValueType(translateIdentifierExpression((IdentifierExpression) base).getCType());
+		IdentifierExpression baseVar;
+		if (isOld) {
+			baseVar = (IdentifierExpression) ((UnaryExpression) base).getExpr();
+		} else {
+			baseVar = (IdentifierExpression) base;
+		}
+		final Integer size = getSizeOfValueType(translateIdentifierExpression(baseVar).getCType());
 		if (size == null) {
 			return null;
 		}
@@ -1468,18 +1483,6 @@ public class CACSL2BoogieBacktranslator
 			return null;
 		}
 		return mTypeSizes.getSize(((CPrimitive) valueType).getType());
-	}
-
-	private boolean areMatchingBaseAndOffset(final Expression base, final Expression offset) {
-		if (!(base instanceof IdentifierExpression) || !(offset instanceof IdentifierExpression)) {
-			return false;
-		}
-		final TranslatedVariable translatedBase = translateIdentifierExpression((IdentifierExpression) base);
-		final TranslatedVariable translatedOffset = translateIdentifierExpression((IdentifierExpression) offset);
-		return translatedBase != null && translatedOffset != null
-				&& translatedBase.getVarType() == VariableType.POINTER_BASE
-				&& translatedOffset.getVarType() == VariableType.POINTER_OFFSET
-				&& translatedBase.getName().equals(translatedOffset.getName());
 	}
 
 	private static String naiveBitvecLiteralValueExtraction(final BitvecLiteral lit) {
