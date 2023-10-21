@@ -2176,6 +2176,24 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	/**
+	 * Revealed bug that lead to unsound loop acceleration results. The
+	 * variable `i` occurs quantified and free. The `i` in the critical
+	 * constraint was not quantified while descending into the subformula
+	 * with the quantified `i`.
+	 */
+	@Test
+	public void avdiivka() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"),
+			new FunDecl(SmtSortUtils::getIntSort, "i"),
+		};
+		final String formulaAsString = "(and (= i 1048) (exists ((i Int)) (and (exists ((v_i_16 Int)) (and (<= v_i_16 0) (forall ((v_idx_1 Int)) (or (< i (+ v_idx_1 1)) (< v_idx_1 v_i_16) (= (select a v_idx_1) 42))))) (<= 1000000 i))))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
 
 	//@formatter:on
 }
