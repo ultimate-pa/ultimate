@@ -592,8 +592,8 @@ public class PolynomialRelationTest {
 	private void notSolvableForX(final String solverCommand, final String inputAsString, final FunDecl... funDecls) {
 		final Script script = createSolver(solverCommand);
 		script.setLogic(Logics.ALL);
-		for (final FunDecl varDecl : funDecls) {
-			varDecl.declareFuns(script);
+		for (final FunDecl funDecl : funDecls) {
+			funDecl.declareFuns(script);
 		}
 		mScript = script;
 		final Term subject = TermParseUtils.parseTerm(mScript, "x");
@@ -606,8 +606,8 @@ public class PolynomialRelationTest {
 	private void testSolveForX(final String solverCommand, final String inputAsString, final FunDecl... funDecls) {
 		final Script script = createSolver(solverCommand);
 		script.setLogic(Logics.ALL);
-		for (final FunDecl varDecl : funDecls) {
-			varDecl.declareFuns(script);
+		for (final FunDecl funDecl : funDecls) {
+			funDecl.declareFuns(script);
 		}
 		mScript = script;
 		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
@@ -621,8 +621,8 @@ public class PolynomialRelationTest {
 			final String expectedResultAsString, final FunDecl... funDecls) {
 		final Script script = createSolver(solverCommand);
 		script.setLogic(Logics.ALL);
-		for (final FunDecl varDecl : funDecls) {
-			varDecl.declareFuns(script);
+		for (final FunDecl funDecl : funDecls) {
+			funDecl.declareFuns(script);
 		}
 		mScript = script;
 		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
@@ -639,8 +639,8 @@ public class PolynomialRelationTest {
 			final FunDecl... funDecls) {
 		final Script script = createSolver(solverCommand);
 		script.setLogic(Logics.ALL);
-		for (final FunDecl varDecl : funDecls) {
-			varDecl.declareFuns(script);
+		for (final FunDecl funDecl : funDecls) {
+			funDecl.declareFuns(script);
 		}
 		mScript = script;
 		final Term inputAsTerm = TermParseUtils.parseTerm(script, inputAsString);

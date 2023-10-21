@@ -353,11 +353,11 @@ public class PolynomialRelationTestModBasedSimplification {
 	}
 
 	private void testSimplification(final String solverCommand, final String inputAsString,
-			final String expectedResultAsString, final FunDecl... varDecls) {
+			final String expectedResultAsString, final FunDecl... funDecls) {
 		final Script script = createSolver(solverCommand);
 		script.setLogic(Logics.ALL);
-		for (final FunDecl varDecl : varDecls) {
-			varDecl.declareFuns(script);
+		for (final FunDecl funDecl : funDecls) {
+			funDecl.declareFuns(script);
 		}
 		mScript = script;
 		final Term inputAsTerm = TermParseUtils.parseTerm(script, inputAsString);
