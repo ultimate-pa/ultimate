@@ -268,18 +268,6 @@ public class QuantifierEliminationTest {
 		for (final FunDecl funDecl : funDecls) {
 			funDecl.declareFuns(mgdScript.getScript());
 		}
-		runQuantifierEliminationTest(eliminationInputAsString, expectedResultAsString, expectQuantifierFreeResult,
-				services, logger, mgdScript, csvWriter);
-	}
-
-	/**
-	 * @deprecated use instead method with argument "FunDecl[] funDecls"
-	 */
-	@Deprecated
-	private static void runQuantifierEliminationTest(final String eliminationInputAsString,
-			final String expectedResultAsString, final boolean expectQuantifierFreeResult,
-			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
-			final QuantifierEliminationTestCsvWriter csvWriter) {
 		final Term preprocessedInput;
 		{
 			final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
@@ -287,40 +275,61 @@ public class QuantifierEliminationTest {
 			final Term unf = UnfTransformer.apply(mgdScript.getScript(), letFree);
 			preprocessedInput = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(unf);
 		}
-		final String testId = ReflectionUtil.getCallerMethodName(4);
+		final Term expectedResultAsTerm;
+		if (expectedResultAsString == null) {
+			expectedResultAsTerm = null;
+		} else {
+			expectedResultAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), expectedResultAsString);
+		}
+		final String testId = ReflectionUtil.getCallerMethodName(3);
+		runQuantifierEliminationTest(preprocessedInput, expectedResultAsTerm, expectQuantifierFreeResult, testId,
+				services, logger, mgdScript, csvWriter);
+	}
+
+	/**
+	 * @deprecated use instead method with argument "FunDecl[] funDecls"
+	 */
+	@Deprecated
+	private static void runQuantifierEliminationTest(final Term preprocessedInput,
+			final Term expectedResult, final boolean expectQuantifierFreeResult, final String testId,
+			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
+			final QuantifierEliminationTestCsvWriter csvWriter) {
+
 		csvWriter.reportEliminationBegin(preprocessedInput, testId);
 		final Term result = PartialQuantifierElimination.eliminate(services, mgdScript, preprocessedInput,
 				SimplificationTechnique.SIMPLIFY_DDA);
-		logger.info("Result: " + result);
+		logger.info("Elimination output: " + result);
 		if (!Arrays.asList(result.getFreeVars()).isEmpty()) {
-			throw new AssertionError("Result contains free vars: " + Arrays.toString(result.getFreeVars()));
+			throw new AssertionError(
+					"Elimination output contains free vars, but elimination input did not had free vars: "
+							+ Arrays.toString(result.getFreeVars()));
 		}
 		if (CHECK_SIMPLIFICATION_POSSIBILITY) {
 			final ExtendedSimplificationResult esr =
 					SmtUtils.simplifyWithStatistics(mgdScript, result, services, SimplificationTechnique.SIMPLIFY_DDA);
-			logger.info("Simplified result: " + esr.getSimplifiedTerm());
+			logger.info("Simplified elimination output: " + esr.getSimplifiedTerm());
 			logger.info(esr.buildSizeReductionMessage());
 			if (esr.getReductionOfTreeSize() > 0) {
-				throw new AssertionError("Reduction " + esr.getReductionOfTreeSize());
+				throw new AssertionError(String.format(
+						"Elimination output is not simplified (enough) the size could be reduced by %s percent.",
+						esr.getReductionOfTreeSize()));
 			}
 		}
 		final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
 		if (expectQuantifierFreeResult) {
-			Assert.assertTrue("Result is not quantifier-free ", resultIsQuantifierFree);
+			Assert.assertTrue("Elimination output is not quantifier-free ", resultIsQuantifierFree);
 		} else {
-			Assert.assertTrue("Result is quantifier-free ", !resultIsQuantifierFree);
+			Assert.assertTrue("Elimination output is quantifier-free ", !resultIsQuantifierFree);
 		}
-		if (expectedResultAsString != null) {
-			checkLogicalEquivalence(mgdScript.getScript(), result, expectedResultAsString);
+		if (expectedResult != null) {
+			checkLogicalEquivalence(mgdScript.getScript(), result, expectedResult);
 		}
 		csvWriter.reportEliminationSuccess(result, testId, (StatisticsScript) mgdScript.getScript());
 	}
 
-	private static void checkLogicalEquivalence(final Script script, final Term result,
-			final String expectedResultAsString) {
-		final Term expectedResultAsTerm = TermParseUtils.parseTerm(script, expectedResultAsString);
+	private static void checkLogicalEquivalence(final Script script, final Term result, final Term expectedResult) {
 		script.echo(new QuotedObject("Start correctness check for quantifier elimination."));
-		final LBool lbool = SmtUtils.checkEquivalence(result, expectedResultAsTerm, script);
+		final LBool lbool = SmtUtils.checkEquivalence(result, expectedResult, script);
 		script.echo(new QuotedObject("Finished correctness check for quantifier elimination. Result: " + lbool));
 		final String errorMessage;
 		switch (lbool) {
