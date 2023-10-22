@@ -314,7 +314,8 @@ public class QuantifierEliminationTest {
 		final Term result = PartialQuantifierElimination.eliminate(services, mgdScript, preprocessedInput,
 				SimplificationTechnique.SIMPLIFY_DDA);
 		logger.info("Elimination output: " + result);
-		if (!Arrays.asList(result.getFreeVars()).isEmpty()) {
+		if (Arrays.asList(preprocessedInput.getFreeVars()).isEmpty()
+				&& !Arrays.asList(result.getFreeVars()).isEmpty()) {
 			throw new AssertionError(
 					"Elimination output contains free vars, but elimination input did not had free vars: "
 							+ Arrays.toString(result.getFreeVars()));
