@@ -392,4 +392,46 @@ public class QuantifierEliminationTest {
 		Assert.assertTrue(mdns.getDimension() == 2);
 	}
 
+	/**
+	 * Revealed bug that lead to unsound loop acceleration results. The
+	 * variable `i` occurs quantified and free. The `i` in the critical
+	 * constraint was not quantified while descending into the subformula
+	 * with the quantified `i`.
+	 */
+	@Test
+	public void avdiivkaOriginal() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"),
+		};
+		final String formulaAsString = "(exists ((i Int)) (and (exists ((v_i_16 Int)) (and (<= v_i_16 0) (forall ((v_idx_1 Int)) (or (< i (+ v_idx_1 1)) (< v_idx_1 v_i_16) (= (select a v_idx_1) 42))))) (<= 1000000 i)))";
+		final Term formulaAsTerm = prepareTestInput(funDecls, formulaAsString, mServices, mMgdScript);
+		final Script script = mMgdScript.getScript();
+		// (= i 1048)
+		final Term eq = SmtUtils.equality(script, script.variable("i", SmtSortUtils.getIntSort(mMgdScript)),
+				SmtUtils.constructIntegerValue(script, SmtSortUtils.getIntSort(mMgdScript), BigInteger.valueOf(1048)));
+		final Term eliminationInput = SmtUtils.and(script, formulaAsTerm, eq);
+		// No elimination possible
+		final Term expectedResult = eliminationInput;
+		final String testId = ReflectionUtil.getCallerMethodName(2);
+		QuantifierEliminationTest.runQuantifierEliminationTest(eliminationInput, expectedResult, false, testId ,mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void avdiivkaSimplified() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a", "b"),
+		};
+		final String formulaAsString = "(exists ((i Int)) (and (<= i 2023) (forall ((k Int)) (or (<= i k) (= (select a k) 42)))))";
+		final Term formulaAsTerm = prepareTestInput(funDecls, formulaAsString, mServices, mMgdScript);
+		final Script script = mMgdScript.getScript();
+		// (= i 1048)
+		final Term eq = SmtUtils.equality(script, script.variable("i", SmtSortUtils.getIntSort(mMgdScript)),
+				SmtUtils.constructIntegerValue(script, SmtSortUtils.getIntSort(mMgdScript), BigInteger.valueOf(1048)));
+		final Term eliminationInput = SmtUtils.and(script, formulaAsTerm, eq);
+		// No elimination possible
+		final Term expectedResult = eliminationInput;
+		final String testId = ReflectionUtil.getCallerMethodName(2);
+		QuantifierEliminationTest.runQuantifierEliminationTest(eliminationInput, expectedResult, false, testId ,mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 }
