@@ -88,6 +88,12 @@ public class QuantifierEliminationTest {
 	private static final LogLevel LOG_LEVEL_SOLVER = LogLevel.INFO;
 	private static final String SOLVER_COMMAND =
 			String.format("z3 SMTLIB2_COMPLIANT=true -t:%s -memory:2024 -smt2 -in", TEST_TIMEOUT_MILLISECONDS);
+	/**
+	 * If set to true we run the test not only for the given formula but also for
+	 * its negation. This allows us to test existential quantification and universal
+	 * quantification within a single test.
+	 */
+	private static final boolean CHECK_ALSO_NEGATED_INPUTS = false;
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
@@ -284,6 +290,19 @@ public class QuantifierEliminationTest {
 		final String testId = ReflectionUtil.getCallerMethodName(3);
 		runQuantifierEliminationTest(preprocessedInput, expectedResultAsTerm, expectQuantifierFreeResult, testId,
 				services, logger, mgdScript, csvWriter);
+		if (CHECK_ALSO_NEGATED_INPUTS) {
+			final Term negatedInput = NnfTransformer.apply(services, mgdScript, QuantifierHandling.KEEP,
+					SmtUtils.not(mgdScript.getScript(), preprocessedInput));
+			final Term negatedExpectedResult;
+			if (expectedResultAsString == null) {
+				negatedExpectedResult = null;
+			} else {
+				negatedExpectedResult = NnfTransformer.apply(services, mgdScript, QuantifierHandling.KEEP,
+						SmtUtils.not(mgdScript.getScript(), expectedResultAsTerm));
+			}
+			runQuantifierEliminationTest(negatedInput, negatedExpectedResult, expectQuantifierFreeResult,
+					testId + "_negated", services, logger, mgdScript, csvWriter);
+		}
 	}
 
 	private static void runQuantifierEliminationTest(final Term preprocessedInput,
