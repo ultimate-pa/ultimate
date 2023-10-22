@@ -337,7 +337,7 @@ public class NnfTransformer {
 		return newTerms;
 	}
 
-	public static Term convertIte(final Script script, final Term condTerm, final Term ifTerm, final Term elseTerm) {
+	private static Term convertIte(final Script script, final Term condTerm, final Term ifTerm, final Term elseTerm) {
 		final Term condImpliesIf = SmtUtils.or(script, SmtUtils.not(script, condTerm), ifTerm);
 		final Term notCondImpliesElse = SmtUtils.or(script, condTerm, elseTerm);
 		final Term result = SmtUtils.and(script, condImpliesIf, notCondImpliesElse);
@@ -351,7 +351,7 @@ public class NnfTransformer {
 	 * <li>its functionName is <b>distinct</b> and its parameters have Sort Bool.
 	 * </ul>
 	 */
-	public static boolean isXor(final ApplicationTerm appTerm, final String functionName) {
+	private static boolean isXor(final ApplicationTerm appTerm, final String functionName) {
 		return functionName.equals("xor") || functionName.equals("distinct") && SmtUtils.firstParamIsBool(appTerm);
 	}
 
@@ -438,4 +438,8 @@ public class NnfTransformer {
 		}
 	}
 
+	public static Term apply(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final QuantifierHandling quantifierHandling, final Term term) {
+		return new NnfTransformer(mgdScript, services, quantifierHandling).transform(term);
+	}
 }
