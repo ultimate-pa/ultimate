@@ -912,6 +912,32 @@ public final class SmtUtils {
 	}
 
 	/**
+	 * This method tries to declare and construct a fresh constant symbol for a
+	 * {@link TermVariable}. We are unable to find out which constants were already
+	 * declared hence we append the hash code of the variable to the identifier of
+	 * the constant symbol and hope that this has not yet been declared.
+	 */
+	public static Map<TermVariable, Term> termVariables2PseudofreshConstants(final Script script,
+			final Collection<TermVariable> termVariables, final boolean declareConstants) {
+		final Map<TermVariable, Term> mapping = new HashMap<>();
+		for (final TermVariable tv : termVariables) {
+			final Term constant = termVariable2PseudofreshConstant(script, tv, declareConstants);
+			mapping.put(tv, constant);
+		}
+		return mapping;
+	}
+
+	private static Term termVariable2PseudofreshConstant(final Script script, final TermVariable tv,
+			final boolean declareConstant) {
+		final String name = removeSmtQuoteCharacters(tv.getName()) + "_fresh_" + tv.hashCode();
+		if (declareConstant) {
+			final Sort resultSort = tv.getSort();
+			script.declareFun(name, new Sort[0], resultSort);
+		}
+		return script.term(name);
+	}
+
+	/**
 	 * Returns true, iff the term contains an application of the given functionName
 	 */
 	public static boolean containsFunctionApplication(final Term term, final String functionName) {
