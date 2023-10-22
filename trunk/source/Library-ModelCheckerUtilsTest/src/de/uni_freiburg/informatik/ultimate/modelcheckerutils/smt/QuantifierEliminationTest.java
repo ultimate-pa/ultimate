@@ -286,10 +286,6 @@ public class QuantifierEliminationTest {
 				services, logger, mgdScript, csvWriter);
 	}
 
-	/**
-	 * @deprecated use instead method with argument "FunDecl[] funDecls"
-	 */
-	@Deprecated
 	private static void runQuantifierEliminationTest(final Term preprocessedInput,
 			final Term expectedResult, final boolean expectQuantifierFreeResult, final String testId,
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
