@@ -271,16 +271,7 @@ public class QuantifierEliminationTest {
 			final String expectedResultAsString, final boolean expectQuantifierFreeResult,
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
 			final QuantifierEliminationTestCsvWriter csvWriter) {
-		for (final FunDecl funDecl : funDecls) {
-			funDecl.declareFuns(mgdScript.getScript());
-		}
-		final Term preprocessedInput;
-		{
-			final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
-			final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
-			final Term unf = UnfTransformer.apply(mgdScript.getScript(), letFree);
-			preprocessedInput = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(unf);
-		}
+		final Term preprocessedInput = prepareTestInput(funDecls, eliminationInputAsString, services, mgdScript);
 		final Term expectedResultAsTerm;
 		if (expectedResultAsString == null) {
 			expectedResultAsTerm = null;
@@ -303,6 +294,21 @@ public class QuantifierEliminationTest {
 			runQuantifierEliminationTest(negatedInput, negatedExpectedResult, expectQuantifierFreeResult,
 					testId + "_negated", services, logger, mgdScript, csvWriter);
 		}
+	}
+
+	private static Term prepareTestInput(final FunDecl[] funDecls, final String eliminationInputAsString,
+			final IUltimateServiceProvider services, final ManagedScript mgdScript) {
+		for (final FunDecl funDecl : funDecls) {
+			funDecl.declareFuns(mgdScript.getScript());
+		}
+		final Term preprocessedInput;
+		{
+			final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
+			final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
+			final Term unf = UnfTransformer.apply(mgdScript.getScript(), letFree);
+			preprocessedInput = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(unf);
+		}
+		return preprocessedInput;
 	}
 
 	private static void runQuantifierEliminationTest(final Term preprocessedInput,
