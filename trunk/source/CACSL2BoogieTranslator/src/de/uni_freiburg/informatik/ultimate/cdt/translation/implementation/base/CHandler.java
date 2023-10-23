@@ -3346,7 +3346,7 @@ public class CHandler {
 	private void handleGhostDeclaration(final IDispatcher main, final ExpressionResultBuilder resultBuilder,
 			final IASTNode hook, final GlobalGhostDeclaration decl) {
 		final ILocation loc = mLocationFactory.createCLocation(hook);
-		final SymbolTableValue oldSymbol = mSymbolTable.findCSymbol(main.getAcslHook(), decl.getIdentifier());
+		final SymbolTableValue oldSymbol = mSymbolTable.findCSymbol(hook, decl.getIdentifier());
 		if (oldSymbol != null) {
 			throw new UnsupportedSyntaxException(loc,
 					String.format("The ghost variable %s shadows another variable.", decl.getIdentifier()));
