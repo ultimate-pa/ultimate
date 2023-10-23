@@ -287,6 +287,11 @@ public class ACSLHandler implements IACSLHandler {
 	}
 
 	private Result handleGhostDeclaration(final IDispatcher main, final ILocation loc, final GhostDeclaration decl) {
+		final SymbolTableValue oldSymbol = mSymboltable.findCSymbol(main.getAcslHook(), decl.getIdentifier());
+		if (oldSymbol != null) {
+			throw new UnsupportedSyntaxException(loc,
+					String.format("The ghost variable %s shadows another variable.", decl.getIdentifier()));
+		}
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final String boogieName = SFO.GHOST + decl.getIdentifier();
 		final CPrimitive cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());

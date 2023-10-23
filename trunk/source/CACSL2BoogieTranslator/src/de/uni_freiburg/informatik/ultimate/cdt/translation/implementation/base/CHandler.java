@@ -3252,9 +3252,15 @@ public class CHandler {
 					final CodeStatement codeStmt = ((CodeAnnotStmt) globAcsl).getCodeStmt();
 					if (codeStmt instanceof GlobalGhostDeclaration) {
 						final GlobalGhostDeclaration decl = (GlobalGhostDeclaration) codeStmt;
+						final ILocation loc = mLocationFactory.createCLocation(next);
+						final SymbolTableValue oldSymbol =
+								mSymbolTable.findCSymbol(main.getAcslHook(), decl.getIdentifier());
+						if (oldSymbol != null) {
+							throw new UnsupportedSyntaxException(loc, String
+									.format("The ghost variable %s shadows another variable.", decl.getIdentifier()));
+						}
 						final String boogieName = SFO.GHOST + decl.getIdentifier();
 						final CPrimitive cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
-						final ILocation loc = mLocationFactory.createCLocation(next);
 						final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
 						final VariableDeclaration boogieDecl = new VariableDeclaration(loc, new Attribute[0],
 								new VarList[] { new VarList(loc, new String[] { boogieName }, astType) });
