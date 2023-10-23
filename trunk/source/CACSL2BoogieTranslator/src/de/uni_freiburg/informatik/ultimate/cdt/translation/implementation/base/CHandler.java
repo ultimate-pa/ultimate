@@ -3361,9 +3361,8 @@ public class CHandler {
 		mSymbolTable.storeCSymbol(hook, decl.getIdentifier(),
 				new SymbolTableValue(boogieName, boogieDecl, astType, cDecl, declInfo, hook, false));
 		resultBuilder.addDeclaration(boogieDecl);
-		final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression expr = decl.getExpr();
-		if (expr != null) {
-			final ExpressionResult exprResult = (ExpressionResult) main.dispatch(expr, hook);
+		if (decl.getExpr() != null) {
+			final ExpressionResult exprResult = (ExpressionResult) main.dispatch(decl.getExpr(), hook);
 			final ExpressionResult converted = mExprResultTransformer
 					.makeRepresentationReadyForConversionAndRexBoolToInt(exprResult, loc, cType, hook);
 			resultBuilder.addAllExceptLrValue(converted);
