@@ -3251,36 +3251,7 @@ public class CHandler {
 				if (globAcsl instanceof CodeAnnotStmt) {
 					final CodeStatement codeStmt = ((CodeAnnotStmt) globAcsl).getCodeStmt();
 					if (codeStmt instanceof GlobalGhostDeclaration) {
-						final GlobalGhostDeclaration decl = (GlobalGhostDeclaration) codeStmt;
-						final ILocation loc = mLocationFactory.createCLocation(next);
-						final SymbolTableValue oldSymbol =
-								mSymbolTable.findCSymbol(main.getAcslHook(), decl.getIdentifier());
-						if (oldSymbol != null) {
-							throw new UnsupportedSyntaxException(loc, String
-									.format("The ghost variable %s shadows another variable.", decl.getIdentifier()));
-						}
-						final String boogieName = SFO.GHOST + decl.getIdentifier();
-						final CPrimitive cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
-						final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
-						final VariableDeclaration boogieDecl = new VariableDeclaration(loc, new Attribute[0],
-								new VarList[] { new VarList(loc, new String[] { boogieName }, astType) });
-						final CDeclaration cDecl = new CDeclaration(cType, decl.getIdentifier());
-						final DeclarationInformation declInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-						mSymbolTable.storeCSymbol(next, decl.getIdentifier(),
-								new SymbolTableValue(boogieName, boogieDecl, astType, cDecl, declInfo, next, false));
-						resultBuilder.addDeclaration(boogieDecl);
-						final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression expr = decl.getExpr();
-						if (expr != null) {
-							final ExpressionResult exprResult = (ExpressionResult) main.dispatch(expr, next);
-							final ExpressionResult converted = mExprResultTransformer
-									.makeRepresentationReadyForConversionAndRexBoolToInt(exprResult, loc, cType, next);
-							resultBuilder.addAllExceptLrValue(converted);
-							final VariableLHS lhs = new VariableLHS(loc, mTypeHandler.getBoogieTypeForCType(cType),
-									boogieName, declInfo);
-							final AssignmentStatement assignment = StatementFactory
-									.constructSingleAssignmentStatement(loc, lhs, converted.getLrValue().getValue());
-							mStaticObjectsHandler.addStatementsForUltimateInit(List.of(assignment));
-						}
+						handleGhostDeclaration(main, resultBuilder, next, (GlobalGhostDeclaration) codeStmt);
 					}
 				}
 			}
@@ -3369,6 +3340,38 @@ public class CHandler {
 				mReporter.unsupportedSyntax(loc, msg);
 			}
 
+		}
+	}
+
+	private void handleGhostDeclaration(final IDispatcher main, final ExpressionResultBuilder resultBuilder,
+			final IASTNode hook, final GlobalGhostDeclaration decl) {
+		final ILocation loc = mLocationFactory.createCLocation(hook);
+		final SymbolTableValue oldSymbol = mSymbolTable.findCSymbol(main.getAcslHook(), decl.getIdentifier());
+		if (oldSymbol != null) {
+			throw new UnsupportedSyntaxException(loc,
+					String.format("The ghost variable %s shadows another variable.", decl.getIdentifier()));
+		}
+		final String boogieName = SFO.GHOST + decl.getIdentifier();
+		final CPrimitive cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
+		final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
+		final VariableDeclaration boogieDecl = new VariableDeclaration(loc, new Attribute[0],
+				new VarList[] { new VarList(loc, new String[] { boogieName }, astType) });
+		final CDeclaration cDecl = new CDeclaration(cType, decl.getIdentifier());
+		final DeclarationInformation declInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+		mSymbolTable.storeCSymbol(hook, decl.getIdentifier(),
+				new SymbolTableValue(boogieName, boogieDecl, astType, cDecl, declInfo, hook, false));
+		resultBuilder.addDeclaration(boogieDecl);
+		final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression expr = decl.getExpr();
+		if (expr != null) {
+			final ExpressionResult exprResult = (ExpressionResult) main.dispatch(expr, hook);
+			final ExpressionResult converted = mExprResultTransformer
+					.makeRepresentationReadyForConversionAndRexBoolToInt(exprResult, loc, cType, hook);
+			resultBuilder.addAllExceptLrValue(converted);
+			final VariableLHS lhs =
+					new VariableLHS(loc, mTypeHandler.getBoogieTypeForCType(cType), boogieName, declInfo);
+			final AssignmentStatement assignment =
+					StatementFactory.constructSingleAssignmentStatement(loc, lhs, converted.getLrValue().getValue());
+			mStaticObjectsHandler.addStatementsForUltimateInit(List.of(assignment));
 		}
 	}
 
