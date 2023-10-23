@@ -221,6 +221,8 @@ public final class SFO {
 
 	public static final String VARARGS = "#varArgs";
 
+	public static final String GHOST = "#ghost~";
+
 	/**
 	 * Specifies purpose of an auxiliary temporary variable.
 	 */

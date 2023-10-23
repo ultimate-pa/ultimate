@@ -1121,7 +1121,8 @@ beg_code_annotation::=
 | SLICE 
 | FOR 
 | ASSERT 
-| INVARIANT 
+| INVARIANT
+| GHOST
 ;
 
 code_annotation::=    
@@ -1140,6 +1141,18 @@ code_annotation::=
 | INVARIANT:i lexpr:expr SEMICOLON:s 
   {: 
   	 RESULT = setNodeLocationFromSymbols(new CodeAnnotStmt(setNodeLocationFromSymbols(new CodeInvariant(expr), i$, expr$)), i$, s$);
+	 parser.setAcslNode(RESULT); :}
+| GHOST:g IDENTIFIER:i EQUAL lexpr:expr SEMICOLON:s 
+  {: 
+  	 RESULT = setNodeLocationFromSymbols(new CodeAnnotStmt(setNodeLocationFromSymbols(new GhostUpdate(i, expr), i$, expr$)), g$, s$);
+	 parser.setAcslNode(RESULT); :}
+| GHOST:g type_spec:t IDENTIFIER:i SEMICOLON:s 
+  {: 
+  	 RESULT = setNodeLocationFromSymbols(new CodeAnnotStmt(setNodeLocationFromSymbols(new GhostDeclaration(new ACSLType(t), i, null), t$, i$)), g$, s$);
+	 parser.setAcslNode(RESULT); :}
+| GHOST:g type_spec:t IDENTIFIER:i EQUAL lexpr:expr SEMICOLON:s 
+  {: 
+  	 RESULT = setNodeLocationFromSymbols(new CodeAnnotStmt(setNodeLocationFromSymbols(new GhostDeclaration(new ACSLType(t), i, expr), t$, expr$)), g$, s$);
 	 parser.setAcslNode(RESULT); :}
 ;
 
@@ -1166,6 +1179,12 @@ decl::=
  {: parser.setAcslNode(model); :} 
 | logic_def:ldef
  {: parser.setAcslNode(ldef); :}
+| GHOST:g type_spec:t IDENTIFIER:i SEMICOLON:s 
+  {: 
+	 parser.setAcslNode(setNodeLocationFromSymbols(new CodeAnnotStmt(setNodeLocationFromSymbols(new GlobalGhostDeclaration(new ACSLType(t), i, null), t$, i$)), g$, s$)); :}
+| GHOST:g type_spec:t IDENTIFIER:i EQUAL lexpr:expr SEMICOLON:s 
+  {: 
+	 parser.setAcslNode(setNodeLocationFromSymbols(new CodeAnnotStmt(setNodeLocationFromSymbols(new GlobalGhostDeclaration(new ACSLType(t), i, expr), t$, expr$)), g$, s$)); :}
 ;
 
 type_annot::=
@@ -1432,7 +1451,8 @@ is_acsl_decl_or_code_annot::=
 | PREDICATE  
 | SLICE     
 | TYPE      
-| MODEL     
+| MODEL
+| GHOST
 ;
 
 is_acsl_other::=
