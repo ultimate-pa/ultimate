@@ -264,9 +264,6 @@ public class ACSLHandler implements IACSLHandler {
 	}
 
 	private Result handleGhostUpdate(final IDispatcher main, final ILocation loc, final GhostUpdate update) {
-		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		final ExpressionResult exprResult = (ExpressionResult) main.dispatch(update.getExpr(), main.getAcslHook());
-		resultBuilder.addAllExceptLrValue(exprResult);
 		final SymbolTableValue stv = mSymboltable.findCSymbol(main.getAcslHook(), update.getIdentifier());
 		if (stv == null) {
 			throw new IncorrectSyntaxException(loc,
@@ -276,10 +273,16 @@ public class ACSLHandler implements IACSLHandler {
 			throw new IncorrectSyntaxException(loc,
 					"C variable " + update.getIdentifier() + " cannot be assigned in ghost statement.");
 		}
-		final VariableLHS lhs = new VariableLHS(loc, mTypeHandler.getBoogieTypeForCType(stv.getCType()),
-				stv.getBoogieName(), stv.getDeclarationInformation());
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		final ExpressionResult exprResult = (ExpressionResult) main.dispatch(update.getExpr(), main.getAcslHook());
+		final CType cType = stv.getCType();
+		final ExpressionResult converted = mExprResultTransformer
+				.makeRepresentationReadyForConversionAndRexBoolToInt(exprResult, loc, cType, main.getAcslHook());
+		resultBuilder.addAllExceptLrValue(converted);
+		final VariableLHS lhs = new VariableLHS(loc, mTypeHandler.getBoogieTypeForCType(cType), stv.getBoogieName(),
+				stv.getDeclarationInformation());
 		resultBuilder.addStatement(
-				StatementFactory.constructSingleAssignmentStatement(loc, lhs, exprResult.getLrValue().getValue()));
+				StatementFactory.constructSingleAssignmentStatement(loc, lhs, converted.getLrValue().getValue()));
 		return resultBuilder.build();
 	}
 
@@ -302,11 +305,13 @@ public class ACSLHandler implements IACSLHandler {
 				new SymbolTableValue(boogieName, boogieDecl, astType, cDecl, declInfo, main.getAcslHook(), false));
 		if (decl.getExpr() != null) {
 			final ExpressionResult exprResult = (ExpressionResult) main.dispatch(decl.getExpr(), main.getAcslHook());
-			resultBuilder.addAllExceptLrValue(exprResult);
+			final ExpressionResult converted = mExprResultTransformer
+					.makeRepresentationReadyForConversionAndRexBoolToInt(exprResult, loc, cType, main.getAcslHook());
+			resultBuilder.addAllExceptLrValue(converted);
 			final VariableLHS lhs =
 					new VariableLHS(loc, mTypeHandler.getBoogieTypeForCType(cType), boogieName, declInfo);
 			resultBuilder.addStatement(
-					StatementFactory.constructSingleAssignmentStatement(loc, lhs, exprResult.getLrValue().getValue()));
+					StatementFactory.constructSingleAssignmentStatement(loc, lhs, converted.getLrValue().getValue()));
 		}
 		return resultBuilder.build();
 	}

@@ -3266,11 +3266,13 @@ public class CHandler {
 						final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression expr = decl.getExpr();
 						if (expr != null) {
 							final ExpressionResult exprResult = (ExpressionResult) main.dispatch(expr, next);
-							resultBuilder.addAllExceptLrValue(exprResult);
+							final ExpressionResult converted = mExprResultTransformer
+									.makeRepresentationReadyForConversionAndRexBoolToInt(exprResult, loc, cType, next);
+							resultBuilder.addAllExceptLrValue(converted);
 							final VariableLHS lhs = new VariableLHS(loc, mTypeHandler.getBoogieTypeForCType(cType),
 									boogieName, declInfo);
 							final AssignmentStatement assignment = StatementFactory
-									.constructSingleAssignmentStatement(loc, lhs, exprResult.getLrValue().getValue());
+									.constructSingleAssignmentStatement(loc, lhs, converted.getLrValue().getValue());
 							mStaticObjectsHandler.addStatementsForUltimateInit(List.of(assignment));
 						}
 					}
