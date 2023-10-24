@@ -37,6 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Polynomia
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -84,7 +86,6 @@ public class LinearUpdate {
 		}
 		final Set<Term> readonlyVariables = new HashSet<>();
 		final Map<TermVariable, AffineTerm> updateMap = new HashMap<>();
-
 		final List<MultiDimensionalSelect> arrayReadsWithFixedIndex = new ArrayList<>();
 		for (final Entry<IProgramVar, Term> update : su.getDeterministicAssignment().entrySet()) {
 			final UpdateExpression ue = extractLinearUpdate(
@@ -92,13 +93,66 @@ public class LinearUpdate {
 			if (ue.getmErrorMessage() != null) {
 				return new Pair<>(null, ue.getmErrorMessage());
 			} else {
+				for (final MultiDimensionalSelect ar : ue.getmArrayReads()) {
+					if (isMoving(ar.getIndex(), termVariablesOfModified)) {
+						final String errorMessage = String.format(
+								"Non-array update contains array read whose index is moving. Array read %s, modified variable %s",
+								ar, ar.getIndex().getFreeVars());
+						throw new AssertionError(errorMessage);
+					}
+				}
 				updateMap.put(update.getKey().getTermVariable(), ue.getmAffineTerm());
 				readonlyVariables.addAll(ue.getmReadonlyVariables());
 				arrayReadsWithFixedIndex.addAll(ue.getmArrayReads());
 			}
 		}
+		final List<String> problems = new ArrayList<>();
 		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : su.getDeterministicArrayWrites()
 				.entrySet()) {
+			final MultiDimensionalNestedStore mdns = entry.getValue();
+			for (int i = 0; i < mdns.getIndices().size(); i++) {
+				final boolean indexIsMoving = isMoving(mdns.getIndices().get(i), termVariablesOfModified);
+				if (isNondeterministicUpdate(i, mdns, entry.getKey().getTermVariable())) {
+					if (indexIsMoving) {
+						problems.add(String.format("Nondeterministic update of %s at moving index %s", mdns.getArray(), mdns.getIndices().get(i)));
+					} else {
+						problems.add(String.format("Nondeterministic update of %s at fixed index %s", mdns.getArray(), mdns.getIndices().get(i)));
+					}
+				} else {
+					//deterministic update
+					final UpdateExpression ue = extractLinearUpdate(mgdScript, termVariablesOfModified,
+							mdns.getValues().get(i));
+					if (ue.getmErrorMessage() != null) {
+						throw new AssertionError(ue.getmErrorMessage());
+					}
+					final StringBuilder sb = new StringBuilder();
+					sb.append("Deterministic update of ");
+					sb.append(mdns.getArray());
+					sb.append(" at ");
+					sb.append(indexIsMoving ? "moving" : "fixed");
+					sb.append(" index ");
+					sb.append(mdns.getIndices().get(i));
+					sb.append(" with");
+					if (ue.getmAffineTerm().getVariable2Coefficient().isEmpty()) {
+						sb.append(" fixed linear value ");
+					} else {
+						sb.append(" moving linear value ");
+					}
+					sb.append(ue.getmAffineTerm());
+					sb.append(". ");
+					for (final MultiDimensionalSelect ar : ue.getmArrayReads()) {
+						sb.append(" Update contains array read at ");
+						final boolean readIndexIsMoving = isMoving(ar.getIndex(), termVariablesOfModified);
+						sb.append(readIndexIsMoving ? "moving" : "fixed");
+						sb.append(" index ");
+						sb.append(ar.getIndex());
+						sb.append(". ");
+					}
+					problems.add(sb.toString());
+				}
+			}
+
+
 			for (final MultiDimensionalSelect mds : arrayReadsWithFixedIndex) {
 				if (mds.getArray().equals(entry.getKey().getTermVariable())) {
 					final String errorMessage = String.format(
@@ -107,6 +161,9 @@ public class LinearUpdate {
 					return new Pair<>(null, errorMessage);
 				}
 			}
+		}
+		if (!problems.isEmpty()) {
+			throw new AssertionError(problems);
 		}
 		for (final Entry<IProgramVar, MultiDimensionalNestedStore> update : su.getDeterministicArrayWrites()
 				.entrySet()) {
@@ -139,8 +196,20 @@ public class LinearUpdate {
 					}
 				}
 			}
+			final String errorMessage = String.format("Fixed index update on array %s at index %s with value %s.",
+					update.getValue().getArray(), update.getValue().getIndices().get(0),
+					update.getValue().getValues().get(0));
+			return new Pair<>(null, errorMessage);
+
 		}
 		return new Pair<>(new LinearUpdate(updateMap, readonlyVariables), null);
+	}
+
+	private static boolean isNondeterministicUpdate(final int i, final MultiDimensionalNestedStore mdns, final TermVariable array) {
+		final ArrayIndex index = mdns.getIndices().get(i);
+		final Term value = mdns.getValues().get(i);
+		final MultiDimensionalSelect mds = MultiDimensionalSelect.of(value);
+		return mds != null && mds.getArray() == array && mds.getIndex().equals(index);
 	}
 
 	private static UpdateExpression extractLinearUpdate(
@@ -224,6 +293,10 @@ public class LinearUpdate {
 		return null;
 	}
 
+	private static boolean isMoving(final ArrayIndex ai, final Set<TermVariable> termVariablesOfModified) {
+		return DataStructureUtils.haveNonEmptyIntersection(ai.getFreeVars(), termVariablesOfModified);
+	}
+
 	public List<LinearUpdate> partition() {
 		final UnionFind<Term> uf = new UnionFind<>();
 		for (final Entry<TermVariable, AffineTerm> entry : mUpdateMap.entrySet()) {
@@ -258,8 +331,8 @@ public class LinearUpdate {
 		private final Set<Term> mReadonlyVariables;
 		private final List<MultiDimensionalSelect> mArrayReads;
 		private final String mErrorMessage;
-		public UpdateExpression(AffineTerm mAffineTerm, Set<Term> mReadonlyVariables,
-				List<MultiDimensionalSelect> mArrayReads, String mErrorMessage) {
+		public UpdateExpression(final AffineTerm mAffineTerm, final Set<Term> mReadonlyVariables,
+				final List<MultiDimensionalSelect> mArrayReads, final String mErrorMessage) {
 			super();
 			this.mAffineTerm = mAffineTerm;
 			this.mReadonlyVariables = mReadonlyVariables;
