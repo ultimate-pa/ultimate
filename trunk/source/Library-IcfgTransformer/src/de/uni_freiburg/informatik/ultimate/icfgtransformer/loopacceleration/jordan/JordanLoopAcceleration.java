@@ -311,7 +311,7 @@ public class JordanLoopAcceleration {
 				throw new AssertionError(String.format("Contradiction: %s is readonly and modified", pv));
 			}
 		}
-		final NestedMap2<IProgramVar, ArrayIndex, Term> array2Index2values = applySubstitutionToIndexAndValue(mgdScript,
+		final Map<IProgramVar, MultiDimensionalNestedStore> array2Index2values = applySubstitutionToIndexAndValue(mgdScript,
 				substitutionMapping, su.getDeterministicArrayWrites());
 		final ClosedFormOfUpdate res = new ClosedFormOfUpdate(closedFormForProgramVar, array2Index2values);
 		checkIndices(mgdScript, array2Index2values, it);
@@ -319,9 +319,12 @@ public class JordanLoopAcceleration {
 	}
 
 	private static void checkIndices(final ManagedScript mgdScript,
-			final NestedMap2<IProgramVar, ArrayIndex, Term> array2Index2values, final TermVariable it) {
-		for (final Triple<IProgramVar, ArrayIndex, Term> triple : array2Index2values.entrySet()) {
-			checkIndex(mgdScript, triple.getSecond(), it);
+			final Map<IProgramVar, MultiDimensionalNestedStore> array2Index2values, final TermVariable it) {
+		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : array2Index2values.entrySet()) {
+			final MultiDimensionalNestedStore mdns = entry.getValue();
+			for (int i = 0; i < mdns.getIndices().size(); i++) {
+				checkIndex(mgdScript, mdns.getIndices().get(i), it);
+			}
 		}
 	}
 
@@ -341,31 +344,23 @@ public class JordanLoopAcceleration {
 			for (final Entry<Monomial, Rational> entry : poly.getMonomial2Coefficient().entrySet()) {
 				final Occurrence occ = entry.getKey().isExclusiveVariable(it);
 				if (occ == Occurrence.NON_EXCLUSIVE_OR_SUBTERM) {
-					throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Probably not monotone: " + entry.getKey());
+					throw new UnsupportedOperationException(
+							UNSUPPORTED_PREFIX + " Probably not monotone: " + entry.getKey());
 				} else if (occ == Occurrence.AS_EXCLUSIVE_VARIABlE) {
 					strictlyMonotone = true;
 				}
 			}
-
 		}
 		return strictlyMonotone;
 	}
 
 
-	private static NestedMap2<IProgramVar, ArrayIndex, Term> applySubstitutionToIndexAndValue(
+	private static Map<IProgramVar, MultiDimensionalNestedStore> applySubstitutionToIndexAndValue(
 			final ManagedScript mgdScript, final Map<? extends Term, ? extends Term> substitutionMapping,
 			final Map<IProgramVar, MultiDimensionalNestedStore> map) {
-		final NestedMap2<IProgramVar, ArrayIndex, Term> result = new NestedMap2<>();
+		final Map<IProgramVar, MultiDimensionalNestedStore> result = new HashMap<>();
 		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : map.entrySet()) {
-			if (entry.getValue().getIndices().size() != 1) {
-				throw new AssertionError("Nested stores!");
-			}
-			final List<Term> newIndexEntries = entry.getValue().getIndices().get(0).stream()
-					.map(x -> Substitution.apply(mgdScript, substitutionMapping, x)).collect(Collectors.toList());
-			final ArrayIndex newArrayIndex = new ArrayIndex(newIndexEntries);
-			final Term newValue = Substitution.apply(mgdScript, substitutionMapping,
-					entry.getValue().getValues().get(0));
-			result.put(entry.getKey(), newArrayIndex, newValue);
+			result.put(entry.getKey(), entry.getValue().applySubstitution(mgdScript, substitutionMapping));
 		}
 		return result;
 	}
@@ -648,18 +643,14 @@ public class JordanLoopAcceleration {
 		// a' = (store a k v)
 		// ∀idx. ∀it. (0 <= it < itFin ∧ idx=closedForm_k(it)) ==> a'[idx]=closedForm_v(it)
 		//          ∧ (not ∃it. (0 <= it < itFin ∧ idx=closedForm_k(it))) ==> a'[idx]=a[idx]
-		for (final IProgramVar array : closedFormIt.getArrayUpdates().keySet()) {
-			final Set<Entry<ArrayIndex, Term>> entries = closedFormIt.getArrayUpdates().get(array).entrySet();
-			if (entries.size() > 1) {
+		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : closedFormIt.getArrayUpdates().entrySet()) {
+			final IProgramVar array = entry.getKey();
+			final MultiDimensionalNestedStore mdns = entry.getValue();
+			if (mdns.getIndices().size() > 1) {
 				throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Several updates per array");
 			}
-			final ArrayIndex index;
-			final Term value;
-			{
-				final Entry<ArrayIndex, Term> entry = entries.iterator().next();
-				index = entry.getKey();
-				value = entry.getValue();
-			}
+			final ArrayIndex index = mdns.getIndices().get(0);
+			final Term value = mdns.getValues().get(0);
 			final List<TermVariable> idx = constructIdxTermVariables(mgdScript, index.size());
 			final Term inRangeIndexEquality;
 			{
@@ -1146,18 +1137,18 @@ public class JordanLoopAcceleration {
 
 	public static class ClosedFormOfUpdate {
 		final Map<IProgramVar, Term> mScalarUpdates;
-		final NestedMap2<IProgramVar, ArrayIndex, Term> mArrayUpdates;
+		final Map<IProgramVar, MultiDimensionalNestedStore> mArrayUpdates;
 
 		public ClosedFormOfUpdate(final Map<IProgramVar, Term> scalarUpdates,
-				final NestedMap2<IProgramVar, ArrayIndex, Term> arrayUpdates) {
+				final Map<IProgramVar, MultiDimensionalNestedStore> array2Index2values) {
 			super();
 			mScalarUpdates = scalarUpdates;
-			mArrayUpdates = arrayUpdates;
+			mArrayUpdates = array2Index2values;
 		}
 		public Map<IProgramVar, Term> getScalarUpdates() {
 			return mScalarUpdates;
 		}
-		public NestedMap2<IProgramVar, ArrayIndex, Term> getArrayUpdates() {
+		public Map<IProgramVar, MultiDimensionalNestedStore> getArrayUpdates() {
 			return mArrayUpdates;
 		}
 	}
