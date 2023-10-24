@@ -156,15 +156,18 @@ public class JordanLoopAcceleration {
 			}
 			for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : su.getDeterministicArrayWrites()
 					.entrySet()) {
-				if (entry.getValue().getIndices().size() != 1) {
-					throw new AssertionError("Nested stores!");
-				}
-				if (!DataStructureUtils.haveEmptyIntersection(
-						new HashSet<>(Arrays.asList(entry.getValue().getValues().get(0).getFreeVars())), tvOfHavoced)) {
-					throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Havoced var is read!");
+				for (int i = 0; i < entry.getValue().getIndices().size(); i++) {
+					if (!DataStructureUtils.haveEmptyIntersection(
+							new HashSet<>(entry.getValue().getIndices().get(i).getFreeVars()), tvOfHavoced)) {
+						throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Havoced var is read!");
+					}
+
+					if (!DataStructureUtils.haveEmptyIntersection(
+							new HashSet<>(Arrays.asList(entry.getValue().getValues().get(i).getFreeVars())), tvOfHavoced)) {
+						throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Havoced var is read!");
+					}
 				}
 			}
-
 		}
 
 		final Pair<LinearUpdate, String> pair = LinearUpdate.fromSimultaneousUpdate(mgdScript, su);
