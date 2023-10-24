@@ -126,7 +126,7 @@ public class LoopAccelerationUtils {
 			// In order to implement this check, we determine if res(x,x') ∧
 			// ¬havoced(R)(x,x') is satisfiable.
 			final UnmodifiableTransFormula guardedHavoc = TransFormulaUtils.computeGuardedHavoc(loopTransFormula,
-					mgdScript, services, true);
+					mgdScript, services, false);
 			final UnmodifiableTransFormula negated;
 			if (isAlsoReflexive) {
 				final UnmodifiableTransFormula reflexiveClosure = TransFormulaBuilder.getTrivialTransFormula(mgdScript);
