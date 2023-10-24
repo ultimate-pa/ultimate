@@ -29,9 +29,13 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -203,6 +207,20 @@ public class MultiDimensionalNestedStore implements ITermProvider {
 		final List<ArrayIndex> newIndices = DataStructureUtils.copyAllButOne(mIndices, i);
 		final List<Term> newValues = DataStructureUtils.copyAllButOne(mValues, i);
 		return new MultiDimensionalNestedStore(mArray, newIndices, newValues);
+	}
+
+	/**
+	 * Construct new {@link MultiDimensionalNestedStore} by applying a substitution
+	 * to the array, all indices, and all values.
+	 */
+	public MultiDimensionalNestedStore applySubstitution(final ManagedScript mgdScript,
+			final Map<? extends Term, ? extends Term> substitutionMapping) {
+		final Term newArray = Substitution.apply(mgdScript, substitutionMapping, mArray);
+		final List<ArrayIndex> newIndices = mIndices.stream()
+				.map(x -> x.applySubstitution(mgdScript, substitutionMapping)).collect(Collectors.toList());
+		final List<Term> newValues = mValues.stream().map(x -> Substitution.apply(mgdScript, substitutionMapping, x))
+				.collect(Collectors.toList());
+		return new MultiDimensionalNestedStore(newArray, newIndices, newValues);
 	}
 
 	@Override

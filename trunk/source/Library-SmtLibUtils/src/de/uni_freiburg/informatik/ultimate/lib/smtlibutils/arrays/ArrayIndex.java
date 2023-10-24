@@ -287,7 +287,8 @@ public class ArrayIndex implements List<Term> {
 	 * Construct new array index in which the substitution defined by the given
 	 * mapping was applied to all indices.
 	 */
-	public ArrayIndex applySubstitution(final ManagedScript mgdScript, final Map<Term, Term> substitutionMapping) {
+	public ArrayIndex applySubstitution(final ManagedScript mgdScript,
+			final Map<? extends Term, ? extends Term> substitutionMapping) {
 		final ArrayIndex translatedIndex = new ArrayIndex(this.stream()
 				.map(x -> Substitution.apply(mgdScript, substitutionMapping, x)).collect(Collectors.toList()));
 		return translatedIndex;
