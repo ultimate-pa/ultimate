@@ -68,12 +68,10 @@ public class MultiIndexArrayUpdate implements ITermProvider {
 	public boolean isNondeterministicUpdate() {
 		for (int i = 0; i < mMultiDimensionalNestedStore.getIndices().size(); i++) {
 			if (isNondeterministicUpdate(i)) {
-				continue;
-			} else {
-				return false;
+				return true;
 			}
 		}
-		return true;
+		return false;
 	}
 
 	/**

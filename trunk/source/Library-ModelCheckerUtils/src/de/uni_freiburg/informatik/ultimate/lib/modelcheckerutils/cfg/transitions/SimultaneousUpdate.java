@@ -360,7 +360,7 @@ public class SimultaneousUpdate {
 		if (miau.getNewArray() != outVar) {
 			throw new AssertionError("Wrong array");
 		}
-		if (!miau.isNondeterministicUpdate()) {
+		if (miau.isNondeterministicUpdate()) {
 			int detUpdates = 0;
 			int nondetUpdates = 0;
 			for (int i = 0; i < miau.getMultiDimensionalNestedStore().getIndices().size(); i++) {
