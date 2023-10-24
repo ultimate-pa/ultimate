@@ -501,7 +501,7 @@ public class JordanLoopAcceleration {
 				mgdScript, true, PqeTechniques.ALL, SimplificationTechnique.NONE, nnf);
 		// TODO 20220724 Matthias: Simplification after quantifier elimination is typically superfluous.
 		final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
-				mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
+				mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA2);
 
 		UnmodifiableTransFormula loopAccelerationFormula;
 		if (quantifyItFinExplicitly) {
@@ -513,7 +513,7 @@ public class JordanLoopAcceleration {
 			Term quantified = SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS,
 					Collections.singleton(itFin), simplified);
 			quantified = PartialQuantifierElimination.eliminateCompat(services,
-					mgdScript, true, PqeTechniques.ALL, SimplificationTechnique.SIMPLIFY_DDA, quantified);
+					mgdScript, true, PqeTechniques.ALL, SimplificationTechnique.SIMPLIFY_DDA2, quantified);
 			tfb.setFormula(quantified);
 			loopAccelerationFormula = tfb.finishConstruction(mgdScript);
 		} else {
@@ -676,7 +676,7 @@ public class JordanLoopAcceleration {
 				final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, Collections.singleton(it),
 						impl1);
 				conjunct1 = PartialQuantifierElimination.eliminate(services, mgdScript, quantified,
-						SimplificationTechnique.SIMPLIFY_DDA);
+						SimplificationTechnique.SIMPLIFY_DDA2);
 			}
 			final Term conjunct2;
 			{
@@ -689,7 +689,7 @@ public class JordanLoopAcceleration {
 				final Term quantified = SmtUtils.implies(script,
 						SmtUtils.not(mgdScript.getScript(), existsInRangeEquality), valueConstancy);
 				conjunct2 = PartialQuantifierElimination.eliminate(services, mgdScript, quantified,
-						SimplificationTechnique.SIMPLIFY_DDA);
+						SimplificationTechnique.SIMPLIFY_DDA2);
 			}
 			final Term conjunction = SmtUtils.and(script, conjunct1, conjunct2);
 			// No need to apply quantifier elimination to conjunction, each conjunct
@@ -1043,7 +1043,7 @@ public class JordanLoopAcceleration {
 		final Term loopAccelerationFormulaWithoutQuantifiers = PartialQuantifierElimination.eliminateCompat(services,
 				mgdScript, true, PqeTechniques.ALL, SimplificationTechnique.NONE, nnf);
 		final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
-				mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
+				mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA2);
 
 		// Check correctness of quantifier elimination.
 		assert checkCorrectnessOfQuantifierElimination(logger, script, loopAccelerationTerm, simplified);
