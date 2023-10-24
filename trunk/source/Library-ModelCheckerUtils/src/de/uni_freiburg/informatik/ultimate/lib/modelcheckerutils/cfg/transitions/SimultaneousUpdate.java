@@ -183,14 +183,8 @@ public class SimultaneousUpdate {
 							deterministicAssignment.put(pv, renamed);
 						} else {
 							final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.of(renamed);
-							if (mdns.getIndices().size() > 1) {
-								throw new UnsupportedOperationException(String.format(
-										"NestedStore of length %s not yet supported. Array: %s, Indices: %s, Values: %s",
-										mdns.getIndices().size(), mdns.getArray(), mdns.getIndices(),
-										mdns.getValues()));
-							}
 							if (!pv.getTermVariable().equals(mdns.getArray())) {
-								throw new UnsupportedOperationException("Only self-update supported");
+								throw new UnsupportedOperationException("Yet, we support only self-updates.");
 							}
 							deterministicArrayWrites.put(pv, mdns);
 						}
