@@ -130,10 +130,10 @@ public class LoopAccelerationUtils {
 			final UnmodifiableTransFormula negated;
 			if (isAlsoReflexive) {
 				final UnmodifiableTransFormula reflexiveClosure = TransFormulaBuilder.getTrivialTransFormula(mgdScript);
-				final UnmodifiableTransFormula guardedHavocOrReflexiveClosure =
-						TransFormulaUtils.parallelComposition(logger, services, mgdScript, null, false,
-								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, false, guardedHavoc,
-								reflexiveClosure);
+				final UnmodifiableTransFormula guardedHavocOrReflexiveClosure = TransFormulaUtils.parallelComposition(
+						logger, services, mgdScript, null, false,
+						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, false, guardedHavoc,
+						reflexiveClosure);
 				negated = TransFormulaUtils.negate(guardedHavocOrReflexiveClosure, mgdScript, services);
 			} else {
 				negated = TransFormulaUtils.negate(guardedHavoc, mgdScript, services);
