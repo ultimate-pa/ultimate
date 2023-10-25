@@ -360,17 +360,15 @@ public class SimultaneousUpdate {
 		if (miau.getNewArray() != outVar) {
 			throw new AssertionError("Wrong array");
 		}
+		final Map<Integer, ArrayIndex> nondetUpdates = new HashMap<>();
 		if (miau.isNondeterministicUpdate()) {
 			int detUpdates = 0;
-			int nondetUpdates = 0;
 			for (int i = 0; i < miau.getMultiDimensionalNestedStore().getIndices().size(); i++) {
 				if (miau.isNondeterministicUpdate(i)) {
-					nondetUpdates++;
-				} else {
-					detUpdates++;
-				}
+					nondetUpdates.put(i, miau.getMultiDimensionalNestedStore().getIndices().get(i));
+				} 
 			}
-			if (nondetUpdates > 0) {
+			if (!nondetUpdates.isEmpty()) {
 				final MultiDimensionalNestedStore mdns = miau.getMultiDimensionalNestedStore();
 				throw new AssertionError(String.format(
 						"Partially nondeterministic update: %s deterministic updates %s nondeterministic updates. Array: %s, Indices: %s, Values: %s",
