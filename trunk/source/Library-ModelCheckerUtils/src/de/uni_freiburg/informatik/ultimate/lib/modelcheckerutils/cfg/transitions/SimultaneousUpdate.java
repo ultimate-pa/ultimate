@@ -366,7 +366,7 @@ public class SimultaneousUpdate {
 			for (int i = 0; i < miau.getMultiDimensionalNestedStore().getIndices().size(); i++) {
 				if (miau.isNondeterministicUpdate(i)) {
 					nondetUpdates.put(i, miau.getMultiDimensionalNestedStore().getIndices().get(i));
-				} 
+				}
 			}
 			if (!nondetUpdates.isEmpty()) {
 				final MultiDimensionalNestedStore mdns = miau.getMultiDimensionalNestedStore();
