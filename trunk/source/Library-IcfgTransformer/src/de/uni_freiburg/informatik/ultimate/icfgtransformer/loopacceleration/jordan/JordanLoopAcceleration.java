@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.LoopAccelerationUtils;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanDecomposition.JordanDecompositionStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate.NondetArrayWriteConstraints;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate.SimultaneousUpdateException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -252,6 +253,9 @@ public class JordanLoopAcceleration {
 						throw new UnsupportedOperationException("ArrayIndex contains some array variable");
 					}
 				}
+				if (su.getNondetArrayWriteConstraints().get(entry.getKey()).isNondeterministicArrayUpdate(i)) {
+					continue;
+				}
 				final Term value = entry.getValue().getValues().get(i);
 				final Collection<ArrayStore> stores = ArrayStore.extractStores(value, true);
 				if (!stores.isEmpty()) {
@@ -311,10 +315,10 @@ public class JordanLoopAcceleration {
 				throw new AssertionError(String.format("Contradiction: %s is readonly and modified", pv));
 			}
 		}
-		final Map<IProgramVar, MultiDimensionalNestedStore> array2Index2values = applySubstitutionToIndexAndValue(mgdScript,
+		final Map<IProgramVar, MultiDimensionalNestedStore> arrayWrites = applySubstitutionToIndexAndValue(mgdScript,
 				substitutionMapping, su.getDeterministicArrayWrites());
-		final ClosedFormOfUpdate res = new ClosedFormOfUpdate(closedFormForProgramVar, array2Index2values);
-		checkIndices(mgdScript, array2Index2values, it);
+		final ClosedFormOfUpdate res = new ClosedFormOfUpdate(closedFormForProgramVar, arrayWrites, su.getNondetArrayWriteConstraints());
+		checkIndices(mgdScript, arrayWrites, it);
 		return res;
 	}
 
@@ -650,7 +654,6 @@ public class JordanLoopAcceleration {
 				throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Several updates per array");
 			}
 			final ArrayIndex index = mdns.getIndices().get(0);
-			final Term value = mdns.getValues().get(0);
 			final List<TermVariable> idx = constructIdxTermVariables(mgdScript, index.size());
 			final Term inRangeIndexEquality;
 			{
@@ -660,10 +663,22 @@ public class JordanLoopAcceleration {
 			}
 			final List<Term> constraints = new ArrayList<>();
 			{
-				final Term valueUpdate = SmtUtils.equality(script,
-						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx)).toTerm(script),
-						value);
-				final Term impl1 = SmtUtils.implies(script, inRangeIndexEquality, valueUpdate);
+				final Term valueConstraint;
+				final Term arrayCell = new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array),
+						new ArrayIndex(idx)).toTerm(script);
+				if (!closedFormIt.getNondetArrayWriteConstraints().get(array).isNondeterministicArrayUpdate(0)) {
+					// deterministic update: we give the array cell a new value
+					final Term value = mdns.getValues().get(0);
+					final Term valueUpdate = SmtUtils.equality(script, arrayCell, value);
+					valueConstraint = valueUpdate;
+				} else {
+					// nondeterministic update: we add some constraints for the value of the cell.
+					// If there are no constraints, we use `true` and the `inRangeConstraint`
+					// (below) will also become true
+					valueConstraint = closedFormIt.getNondetArrayWriteConstraints().get(array)
+							.constructConstraints(script, 0, arrayCell);
+				}
+				final Term impl1 = SmtUtils.implies(script, inRangeIndexEquality, valueConstraint);
 				final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, Collections.singleton(it),
 						impl1);
 				final Term inRangeConstraint = PartialQuantifierElimination.eliminate(services, mgdScript, quantified,
@@ -672,15 +687,16 @@ public class JordanLoopAcceleration {
 			}
 			{
 				final Term valueConstancy = SmtUtils.equality(script,
-						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx)).toTerm(script),
+						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx))
+								.toTerm(script),
 						new MultiDimensionalSelect(loopTransFormula.getInVars().get(array), new ArrayIndex(idx))
 								.toTerm(script));
 				final Term existsInRangeEquality = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS,
 						Collections.singleton(it), inRangeIndexEquality);
 				final Term quantified = SmtUtils.implies(script,
 						SmtUtils.not(mgdScript.getScript(), existsInRangeEquality), valueConstancy);
-				final Term outsideRangeConstraint = PartialQuantifierElimination.eliminate(services, mgdScript, quantified,
-						SimplificationTechnique.SIMPLIFY_DDA2);
+				final Term outsideRangeConstraint = PartialQuantifierElimination.eliminate(services, mgdScript,
+						quantified, SimplificationTechnique.SIMPLIFY_DDA2);
 				constraints.add(outsideRangeConstraint);
 			}
 			final Term conjunction = SmtUtils.and(script, constraints);
@@ -1137,14 +1153,17 @@ public class JordanLoopAcceleration {
 	}
 
 	public static class ClosedFormOfUpdate {
-		final Map<IProgramVar, Term> mScalarUpdates;
-		final Map<IProgramVar, MultiDimensionalNestedStore> mArrayUpdates;
+		private final Map<IProgramVar, Term> mScalarUpdates;
+		private final Map<IProgramVar, MultiDimensionalNestedStore> mArrayUpdates;
+		private final Map<IProgramVar, NondetArrayWriteConstraints> mNondetArrayWriteConstraints;
 
 		public ClosedFormOfUpdate(final Map<IProgramVar, Term> scalarUpdates,
-				final Map<IProgramVar, MultiDimensionalNestedStore> array2Index2values) {
+				final Map<IProgramVar, MultiDimensionalNestedStore> arrayUpdates,
+				final Map<IProgramVar, NondetArrayWriteConstraints> nondetArrayWriteConstraints) {
 			super();
 			mScalarUpdates = scalarUpdates;
-			mArrayUpdates = array2Index2values;
+			mArrayUpdates = arrayUpdates;
+			mNondetArrayWriteConstraints = nondetArrayWriteConstraints;
 		}
 		public Map<IProgramVar, Term> getScalarUpdates() {
 			return mScalarUpdates;
@@ -1152,6 +1171,10 @@ public class JordanLoopAcceleration {
 		public Map<IProgramVar, MultiDimensionalNestedStore> getArrayUpdates() {
 			return mArrayUpdates;
 		}
+		public Map<IProgramVar, NondetArrayWriteConstraints> getNondetArrayWriteConstraints() {
+			return mNondetArrayWriteConstraints;
+		}
+
 	}
 
 	public static class JordanLoopAccelerationResult {

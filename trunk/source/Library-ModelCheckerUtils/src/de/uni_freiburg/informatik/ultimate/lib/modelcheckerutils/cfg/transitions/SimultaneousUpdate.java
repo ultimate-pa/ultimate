@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -59,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Represents a simultaneous variable update that consists of two parts 1.
@@ -110,15 +112,18 @@ public class SimultaneousUpdate {
 
 	private final Map<IProgramVar, Term> mDeterministicAssignment;
 	private final Map<IProgramVar, MultiDimensionalNestedStore> mDeterministicArrayWrites;
+	private final Map<IProgramVar, NondetArrayWriteConstraints> mNondetArrayWriteConstraints;
 	private final Set<IProgramVar> mHavocedVars;
 	private final Set<IProgramVar> mReadonlyVars;
 
 	public SimultaneousUpdate(final Map<IProgramVar, Term> deterministicAssignment,
 			final Map<IProgramVar, MultiDimensionalNestedStore> deterministicArrayWrites,
+			final Map<IProgramVar, NondetArrayWriteConstraints> nondetArrayWriteConstraints,
 			final Set<IProgramVar> havocedVars, final Set<IProgramVar> readonlyVars) {
 		super();
 		mDeterministicAssignment = deterministicAssignment;
 		mDeterministicArrayWrites = deterministicArrayWrites;
+		mNondetArrayWriteConstraints = nondetArrayWriteConstraints;
 		mHavocedVars = havocedVars;
 		mReadonlyVars = readonlyVars;
 	}
@@ -155,6 +160,7 @@ public class SimultaneousUpdate {
 		}
 		final Map<IProgramVar, Term> deterministicAssignment = new HashMap<>();
 		final Map<IProgramVar, MultiDimensionalNestedStore> deterministicArrayWrites = new HashMap<>();
+		final Map<IProgramVar, NondetArrayWriteConstraints> nondetArrayWriteConstraints = new HashMap<>();
 		for (final IProgramVar pv : assignmentCandidates) {
 
 			final Set<Term> pvContainingConjuncts = pv2conjuncts.getImage(pv);
@@ -169,13 +175,13 @@ public class SimultaneousUpdate {
 				} else {
 					// extract
 					final TermVariable outVar = tf.getOutVars().get(pv);
-					final Pair<Term, Set<ExtractionImpediments>> rhs = extractUpdateRhs(services, outVar, tf,
-							inVarsReverseMapping.keySet(), mgdScript);
-					assert rhs.getFirst() == null ^ rhs.getSecond() == null;
-					if (rhs.getSecond() != null) {
+					final Triple<Term, NondetArrayWriteConstraints, Set<ExtractionImpediments>> rhs = extractUpdateRhs(
+							services, outVar, tf, inVarsReverseMapping.keySet(), mgdScript);
+					assert rhs.getFirst() == null ^ rhs.getThird() == null;
+					if (rhs.getThird() != null) {
 						throw new SimultaneousUpdateException(String.format(
 								" Reasons: %s. Size: %s. Cannot find an inVar-based term that is equivalent to %s's outVar %s in TransFormula %s.",
-								rhs.getSecond(), new DAGSize().treesize(tf.getFormula()), pv, outVar, tf));
+								rhs.getThird(), new DAGSize().treesize(tf.getFormula()), pv, outVar, tf));
 					}
 					final Term renamed = rhs.getFirst();
 					if (SmtSortUtils.isArraySort(pv.getSort())) {
@@ -187,6 +193,7 @@ public class SimultaneousUpdate {
 								throw new UnsupportedOperationException("Yet, we support only self-updates.");
 							}
 							deterministicArrayWrites.put(pv, mdns);
+							nondetArrayWriteConstraints.put(pv, rhs.getSecond());
 						}
 					} else {
 						deterministicAssignment.put(pv, renamed);
@@ -201,8 +208,8 @@ public class SimultaneousUpdate {
 				readonlyVariables.add(pv);
 			}
 		}
-		return new SimultaneousUpdate(deterministicAssignment, deterministicArrayWrites, havocedVars,
-				readonlyVariables);
+		return new SimultaneousUpdate(deterministicAssignment, deterministicArrayWrites, nondetArrayWriteConstraints,
+				havocedVars, readonlyVariables);
 	}
 
 	private static boolean isReadInSomeAssignment(final IProgramVar pv,
@@ -270,9 +277,9 @@ public class SimultaneousUpdate {
 	 * TODO: If we see ExtractionImpediments.QUANTIFIER often, we need a different
 	 * solution. Otherwise: Refactor and extract methods.
 	 */
-	private static Pair<Term, Set<ExtractionImpediments>> extractUpdateRhs(final IUltimateServiceProvider services,
-			final TermVariable outVar, final TransFormula tf, final Set<TermVariable> inVarSet,
-			final ManagedScript mgdScript) {
+	private static Triple<Term, NondetArrayWriteConstraints, Set<ExtractionImpediments>> extractUpdateRhs(
+			final IUltimateServiceProvider services, final TermVariable outVar, final TransFormula tf,
+			final Set<TermVariable> inVarSet, final ManagedScript mgdScript) {
 		// First, project the formula to the outVar and all inVars. E.g., because a
 		// suitable equality may be hidden behind a long chain of equalities.
 		final Set<TermVariable> nonInvars = Arrays.asList(tf.getFormula().getFreeVars()).stream()
@@ -288,9 +295,9 @@ public class SimultaneousUpdate {
 		return extractUpdateRhs(outVar, tf, mgdScript, conjunctsWithOutVar);
 	}
 
-	public static Pair<Term, Set<ExtractionImpediments>> extractUpdateRhs(final TermVariable outVar,
-			final TransFormula tf, final ManagedScript mgdScript, final Term[] conjunctsWithOutVar)
-			throws AssertionError {
+	public static Triple<Term, NondetArrayWriteConstraints, Set<ExtractionImpediments>> extractUpdateRhs(
+			final TermVariable outVar, final TransFormula tf, final ManagedScript mgdScript,
+			final Term[] conjunctsWithOutVar) {
 		final HashSet<ExtractionImpediments> updateImpediments = new HashSet<>();
 		for (int i = 0; i < conjunctsWithOutVar.length; i++) {
 			final Term conjunct = conjunctsWithOutVar[i];
@@ -310,7 +317,7 @@ public class SimultaneousUpdate {
 					SolvedBinaryRelation sbr = ber.solveForSubject(mgdScript.getScript(), outVar);
 					if (sbr == null) {
 						if (SmtSortUtils.isArraySort(outVar.getSort())) {
-							final Pair<MultiDimensionalNestedStore, HashRelation<Integer, SolvedBinaryRelation>> nondetUpdate = checkForNondeterministicArrayUpdate(
+							final Pair<MultiDimensionalNestedStore, NondetArrayWriteConstraints> nondetUpdate = checkForNondeterministicArrayUpdate(
 									outVar, mgdScript, conjunctsWithOutVar, i);
 							if (nondetUpdate == null) {
 								updateImpediments.add(ExtractionImpediments.NORHSARRAY);
@@ -324,10 +331,7 @@ public class SimultaneousUpdate {
 									.get(outVar);
 							final Term renamed = Substitution.apply(mgdScript,
 									Collections.singletonMap(outVar, defaultVar), withoutInvars);
-							if (!nondetUpdate.getSecond().isEmpty()) {
-								throw new AssertionError("Nondet updates with constraints " + nondetUpdate.getSecond());
-							}
-							return new Pair<>(renamed, null);
+							return new Triple<>(renamed, nondetUpdate.getSecond(), null);
 						}
 						// not array sort
 						final PolynomialRelation polyRel = PolynomialRelation.of(mgdScript.getScript(), appTerm);
@@ -340,7 +344,7 @@ public class SimultaneousUpdate {
 					}
 					final Term renamed = TransFormulaUtils.renameInvarsToDefaultVars(tf, mgdScript,
 							sbr.getRightHandSide());
-					return new Pair<>(renamed, null);
+					return new Triple<>(renamed, null, null);
 				case "<=":
 				case "<":
 				case ">=":
@@ -355,10 +359,10 @@ public class SimultaneousUpdate {
 				throw new UnsupportedOperationException("Unsupported term " + conjunct.getClass().getSimpleName());
 			}
 		}
-		return new Pair<>(null, updateImpediments);
+		return new Triple<>(null, null, updateImpediments);
 	}
 
-	public static Pair<MultiDimensionalNestedStore, HashRelation<Integer, SolvedBinaryRelation>> checkForNondeterministicArrayUpdate(
+	public static Pair<MultiDimensionalNestedStore, NondetArrayWriteConstraints> checkForNondeterministicArrayUpdate(
 			final TermVariable outVar, final ManagedScript mgdScript, final Term[] conjunctsWithOutVar, final int k)
 			throws AssertionError {
 		assert (SmtSortUtils.isArraySort(outVar.getSort()));
@@ -370,6 +374,7 @@ public class SimultaneousUpdate {
 			throw new AssertionError("Wrong array");
 		}
 		final Map<Integer, Term> nondetUpdates = new HashMap<>();
+		final Map<Integer, List<SolvedBinaryRelation>> nondetUpdateConstraints = new HashMap<>();
 		if (miau.isNondeterministicUpdate()) {
 			for (int i = 0; i < miau.getMultiDimensionalNestedStore().getIndices().size(); i++) {
 				final ArrayIndex index = miau.getMultiDimensionalNestedStore().getIndices().get(i);
@@ -382,6 +387,7 @@ public class SimultaneousUpdate {
 					// Since this is a nondet update, the value is a multi dimensional select whose
 					// array is the outVar
 					nondetUpdates.put(i, value);
+					nondetUpdateConstraints.computeIfAbsent(i, ArrayList::new);
 				} else {
 					if (Arrays.asList(value.getFreeVars()).contains(outVar)) {
 						throw new AssertionError(
@@ -392,14 +398,13 @@ public class SimultaneousUpdate {
 			}
 		}
 		final List<Term> otherConjuncts = DataStructureUtils.copyAllButOne(Arrays.asList(conjunctsWithOutVar), k);
-		final HashRelation<Integer, SolvedBinaryRelation> nondetUpdateConstraints = new HashRelation<>();
 		for (final Term conjunct : otherConjuncts) {
 			final Pair<Integer, SolvedBinaryRelation> constraint = findConstraint(mgdScript, nondetUpdates, conjunct);
 			if (constraint == null) {
 				throw new AssertionError(
 						String.format("Conjunct %s is not a constraint for a nondeterministic update", conjunct));
 			} else {
-				nondetUpdateConstraints.addPair(constraint.getKey(), constraint.getValue());
+				nondetUpdateConstraints.get(constraint.getKey()).add(constraint.getValue());
 			}
 		}
 //		final int detUpdates = miau.getMultiDimensionalNestedStore().getIndices().size() - nondetUpdates.size();
@@ -410,8 +415,8 @@ public class SimultaneousUpdate {
 //					detUpdates, nondetUpdates.size(), mdns.getArray(), nondetUpdateConstraints.entrySet().stream().map(x -> x.getKey() + "[" +
 //							(x.getValue().stream().map(y -> (" " + y.getRelationSymbol() + y.getRightHandSide())).collect(Collectors.joining( "," )) + "]")).collect(Collectors.joining( "," ))));
 //		}
-		return new Pair<MultiDimensionalNestedStore, HashRelation<Integer, SolvedBinaryRelation>>(
-				miau.getMultiDimensionalNestedStore(), nondetUpdateConstraints);
+		return new Pair<MultiDimensionalNestedStore, NondetArrayWriteConstraints>(miau.getMultiDimensionalNestedStore(),
+				new NondetArrayWriteConstraints(nondetUpdateConstraints));
 	}
 
 	public static Pair<Integer, SolvedBinaryRelation> findConstraint(final ManagedScript mgdScript,
@@ -453,6 +458,10 @@ public class SimultaneousUpdate {
 		return mDeterministicArrayWrites;
 	}
 
+	public Map<IProgramVar, NondetArrayWriteConstraints> getNondetArrayWriteConstraints() {
+		return mNondetArrayWriteConstraints;
+	}
+
 	/**
 	 * Returns the variables to which a nondeterministic value is assigned.
 	 */
@@ -466,6 +475,32 @@ public class SimultaneousUpdate {
 	 */
 	public Set<IProgramVar> getReadonlyVars() {
 		return mReadonlyVars;
+	}
+
+	public static class NondetArrayWriteConstraints {
+		final Map<Integer, List<SolvedBinaryRelation>> mConstraints;
+
+		public NondetArrayWriteConstraints(final Map<Integer, List<SolvedBinaryRelation>> constraints) {
+			super();
+			mConstraints = constraints;
+		}
+
+		public boolean isNondeterministicArrayUpdate(final int i) {
+			return mConstraints.containsKey(i);
+		}
+
+		public Term constructConstraints(final Script script, final int i, final Term selectExpression) {
+			if (!mConstraints.containsKey(i)) {
+				throw new AssertionError("There is no nondeterministic update a position " + i);
+			}
+			final List<Term> conjuncts = new ArrayList<>();
+			final List<SolvedBinaryRelation> sbrs = mConstraints.get(i);
+			for (final SolvedBinaryRelation sbr : sbrs) {
+				conjuncts.add(sbr.getRelationSymbol().constructTerm(script, selectExpression, sbr.getRightHandSide()));
+
+			}
+			return SmtUtils.and(script, conjuncts);
+		}
 	}
 
 	/**

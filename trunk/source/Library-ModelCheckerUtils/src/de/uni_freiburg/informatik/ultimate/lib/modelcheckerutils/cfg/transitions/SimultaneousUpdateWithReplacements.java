@@ -72,7 +72,7 @@ public class SimultaneousUpdateWithReplacements extends SimultaneousUpdate {
 			final Set<IProgramVar> havocedVars, final Set<IProgramVar> readonlyVars,
 			final NestedMap2<IProgramVar, ArrayIndex, Term> array2Index2value,
 			final Map<TermVariable, Term> idxRepAssignments) {
-		super(deterministicAssignment, deterministicArrayWrites, havocedVars, readonlyVars);
+		super(deterministicAssignment, deterministicArrayWrites, null, havocedVars, readonlyVars);
 		mIdxRepAssignments = idxRepAssignments;
 	}
 
