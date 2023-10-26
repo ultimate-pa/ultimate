@@ -658,7 +658,7 @@ public class JordanLoopAcceleration {
 				final Term iterationRange = constructIterationRange(script, BigInteger.ZERO, it, BigInteger.ONE, itFin);
 				inRangeIndexEquality = SmtUtils.and(script, iterationRange, eq1);
 			}
-			final Term conjunct1;
+			final List<Term> constraints = new ArrayList<>();
 			{
 				final Term valueUpdate = SmtUtils.equality(script,
 						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx)).toTerm(script),
@@ -666,10 +666,10 @@ public class JordanLoopAcceleration {
 				final Term impl1 = SmtUtils.implies(script, inRangeIndexEquality, valueUpdate);
 				final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, Collections.singleton(it),
 						impl1);
-				conjunct1 = PartialQuantifierElimination.eliminate(services, mgdScript, quantified,
+				final Term inRangeConstraint = PartialQuantifierElimination.eliminate(services, mgdScript, quantified,
 						SimplificationTechnique.SIMPLIFY_DDA2);
+				constraints.add(inRangeConstraint);
 			}
-			final Term conjunct2;
 			{
 				final Term valueConstancy = SmtUtils.equality(script,
 						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx)).toTerm(script),
@@ -679,10 +679,11 @@ public class JordanLoopAcceleration {
 						Collections.singleton(it), inRangeIndexEquality);
 				final Term quantified = SmtUtils.implies(script,
 						SmtUtils.not(mgdScript.getScript(), existsInRangeEquality), valueConstancy);
-				conjunct2 = PartialQuantifierElimination.eliminate(services, mgdScript, quantified,
+				final Term outsideRangeConstraint = PartialQuantifierElimination.eliminate(services, mgdScript, quantified,
 						SimplificationTechnique.SIMPLIFY_DDA2);
+				constraints.add(outsideRangeConstraint);
 			}
-			final Term conjunction = SmtUtils.and(script, conjunct1, conjunct2);
+			final Term conjunction = SmtUtils.and(script, constraints);
 			// No need to apply quantifier elimination to conjunction, each conjunct
 			// addresses a different range hence no conjunct can simplify the other.
 			final Term all2 = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, idx, conjunction);
