@@ -333,5 +333,20 @@ public class ArrayIndex implements List<Term> {
 		return SmtUtils.or(script, disjuncts);
 	}
 
+	/**
+	 * Construct a new {@link ArrayIndex} that is the pairwise difference of this
+	 * {@link ArrayIndex} and some other {@link ArrayIndex}. This operation makes
+	 * only sense for sorts that are supported by {@link SmtUtils#minus}, e.g.,
+	 * numeric sort and bitvector sort.
+	 */
+	public ArrayIndex minus(final Script script, final ArrayIndex subtrahend) {
+		final Term[] resultArray = new Term[size()];
+		for (int i=0; i<size(); i++) {
+			resultArray[i] = SmtUtils.minus(script, this.get(i), subtrahend.get(i));
+		}
+		return new ArrayIndex(resultArray);
+
+	}
+
 
 }
