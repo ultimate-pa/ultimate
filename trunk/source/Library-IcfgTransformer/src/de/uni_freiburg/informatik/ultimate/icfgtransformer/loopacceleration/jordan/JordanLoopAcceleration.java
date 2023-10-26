@@ -642,6 +642,32 @@ public class JordanLoopAcceleration {
 			final ManagedScript mgdScript, final UnmodifiableTransFormula loopTransFormula, final TermVariable itFin,
 			final TermVariable it, final ClosedFormOfUpdate closedFormIt) {
 		final Script script = mgdScript.getScript();
+
+		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : closedFormIt.getArrayUpdates().entrySet()) {
+			final IProgramVar array = entry.getKey();
+			final MultiDimensionalNestedStore mdns = entry.getValue();
+			if (mdns.getIndices().size() > 1) {
+				final StringBuilder sb = new StringBuilder();
+				int indexPairs = 0;
+				int movingInLockstep = 0;
+				final List<ArrayIndex> indices = mdns.getIndices();
+				for (int i = 0; i < indices.size(); i++) {
+					for (int j = i + 1; j < indices.size(); j++) {
+						indexPairs++;
+						final ArrayIndex diff = indices.get(i).minus(script, indices.get(j));
+						sb.append(diff);
+						sb.append(" ");
+						if (diff.getFreeVars().isEmpty()) {
+							movingInLockstep++;
+						}
+					}
+				}
+				throw new UnsupportedOperationException(
+						String.format("%s updates on array %s. %s indexPairs, %s moving in lockstep. Differences: %s",
+								indices.size(), array, indexPairs, movingInLockstep, sb.toString()));
+			}
+		}
+
 		final List<Term> arrayUpdateConstraints = new ArrayList<>();
 		// a[k] := v
 		// a' = (store a k v)
