@@ -440,8 +440,8 @@ public class CHandler {
 				mExprResultTransformer, mVariablesOnHeap);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
 				mExprResultTransformer, mMemoryHandler, mLocationFactory);
-		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mProcedureManager,
-				mTypeHandler, mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
+		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mTypeHandler,
+				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
 
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
 				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
@@ -535,8 +535,8 @@ public class CHandler {
 				mExprResultTransformer, mVariablesOnHeap);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
 				mExprResultTransformer, mMemoryHandler, mLocationFactory);
-		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, procedureManager,
-				mTypeHandler, mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
+		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mTypeHandler,
+				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
 
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
 				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
@@ -645,7 +645,7 @@ public class CHandler {
 		mDeclarations.addAll(mTypeSizeComputer.getConstants());
 		mDeclarations.addAll(mTypeSizeComputer.getAxioms());
 		mDeclarations.addAll(mMemoryHandler.declareMemoryModelInfrastructure(this, loc, mDataRaceChecker));
-		mDeclarations.addAll(mInitHandler.declareInitializationInfrastructure(main, loc));
+		mDeclarations.addAll(mInitHandler.declareInitializationInfrastructure());
 		if (mDataRaceChecker != null) {
 			mDeclarations.addAll(mDataRaceChecker.declareRaceCheckingInfrastructure(loc));
 		}
@@ -707,7 +707,7 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final CASTDesignatedInitializer node) {
-		return mInitHandler.handleDesignatedInitializer(main, mLocationFactory, mMemoryHandler, mStructHandler, node);
+		return mInitHandler.handleDesignatedInitializer(main, mLocationFactory, node);
 	}
 
 	public Result visit(final IDispatcher main, final IASTArraySubscriptExpression node) {

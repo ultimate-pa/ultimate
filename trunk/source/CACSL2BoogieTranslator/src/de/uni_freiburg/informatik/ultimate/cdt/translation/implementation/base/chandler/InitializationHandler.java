@@ -165,10 +165,10 @@ public class InitializationHandler {
 	private final boolean mUseConstantArrays;
 
 	public InitializationHandler(final TranslationSettings settings, final MemoryHandler memoryHandler,
-			final ExpressionTranslation expressionTranslation, final ProcedureManager procedureManager,
-			final ITypeHandler typeHandler, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final TypeSizes typeSizes,
-			final CHandler chandler, final ExpressionResultTransformer exprResultTransformer) {
+			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
+			final AuxVarInfoBuilder auxVarInfoBuilder, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
+			final TypeSizes typeSizes, final CHandler chandler,
+			final ExpressionResultTransformer exprResultTransformer) {
 		mMemoryHandler = memoryHandler;
 		mExpressionTranslation = expressionTranslation;
 		mTypeHandler = typeHandler;
@@ -315,13 +315,12 @@ public class InitializationHandler {
 		final CType targetCType = targetCTypeRaw.getUnderlyingType();
 
 		if (initInfoIfAny == null) {
-			if (!onHeap || !usingOnHeapInitializationViaConstArray) {
-				// there is no initializer -- apply default initialization
-				return makeDefaultOrNondetInitialization(loc, lhsIfAny, targetCType, onHeap, false, hook);
-			} else {
+			if (onHeap && usingOnHeapInitializationViaConstArray) {
 				// no initializer we already did initialization via a constant array
 				return new ExpressionResultBuilder().build();
 			}
+			// there is no initializer -- apply default initialization
+			return makeDefaultOrNondetInitialization(loc, lhsIfAny, targetCType, onHeap, false, hook);
 		}
 
 		if (initInfoIfAny.isMakeNondeterministicInitialization()) {
@@ -346,7 +345,7 @@ public class InitializationHandler {
 		}
 	}
 
-	protected ExpressionResult makeNondetInitAndAddOverapprFromInitInfo(final ILocation loc,
+	private ExpressionResult makeNondetInitAndAddOverapprFromInitInfo(final ILocation loc,
 			final InitializerInfo initInfo, final boolean onHeap, final LRValue lhsIfAny, final CType targetCType,
 			final IASTNode hook) {
 		assert initInfo != null;
@@ -572,8 +571,7 @@ public class InitializationHandler {
 				 * initialize the array cell, if the value type is an aggregate type, this means, we have to initialize
 				 * the "subcells"
 				 */
-				arrayCellLhs =
-						constructAddressForArrayAtIndex(loc, (HeapLValue) arrayLhsToInitialize, arrayIndex);
+				arrayCellLhs = constructAddressForArrayAtIndex(loc, (HeapLValue) arrayLhsToInitialize, arrayIndex);
 			} else {
 				/*
 				 * this expression result contains a value that holds the contents for the array cell at the current
@@ -777,8 +775,7 @@ public class InitializationHandler {
 			 */
 			if (useConstArrayInitializationForOffHeapArrays((CArray) cType, null, hook)
 					&& !(CTranslationUtil.getValueTypeOfNestedArray((CArray) cType) instanceof CStructOrUnion)) {
-				return makeSophisticatedOffHeapDefaultInitializationForArray(loc, (CArray) cType, lhsToInitIfAny,
-						nondet);
+				return makeSophisticatedOffHeapDefaultInitializationForArray(loc, (CArray) cType, lhsToInitIfAny);
 			}
 
 			return makeNaiveOffHeapDefaultOrNondetInitForArray(loc, (CArray) cType, lhsToInitIfAny, nondet, hook);
@@ -856,7 +853,7 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult makeSophisticatedOffHeapDefaultInitializationForArray(final ILocation loc,
-			final CArray cArrayType, final LocalLValue lhsToInit, final boolean nondet) {
+			final CArray cArrayType, final LocalLValue lhsToInit) {
 		assert mUseConstantArrays;
 
 		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
@@ -934,7 +931,7 @@ public class InitializationHandler {
 		}
 	}
 
-	public List<Declaration> declareInitializationInfrastructure(final IDispatcher main, final ILocation loc) {
+	public List<Declaration> declareInitializationInfrastructure() {
 		// declarations are stored in FunctionDeclarations, their creation is triggered by the below method call
 		mRequiredInitializationFeatures.constructAndRegisterDeclarations();
 		return Collections.emptyList();
@@ -1011,8 +1008,8 @@ public class InitializationHandler {
 	 * @param initializerIfAny
 	 * @return true iff sophisticated initialization should be applied
 	 */
-	private boolean useConstArrayInitializationForOffHeapArrays(// final InitializerInfo initInfoIfAny,
-			final CArray cType, final InitializerInfo initInfo, final IASTNode hook) {
+	private boolean useConstArrayInitializationForOffHeapArrays(final CArray cType, final InitializerInfo initInfo,
+			final IASTNode hook) {
 		if (!mUseConstantArrays) {
 			// make sure that const arrays are only used when the corresponding setting is switched on
 			return false;
@@ -1080,8 +1077,8 @@ public class InitializationHandler {
 
 		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
 		final Expression pointerOffset = MemoryHandler.getPointerOffset(arrayBaseAddress.getAddress(), loc);
-		final Expression cellOffset = mMemoryHandler.multiplyWithSizeOfAnotherType(loc, cArrayType.getValueType(),
-				flatCellNumber, sizeT);
+		final Expression cellOffset =
+				mMemoryHandler.multiplyWithSizeOfAnotherType(loc, cArrayType.getValueType(), flatCellNumber, sizeT);
 		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
 				pointerOffset, sizeT, cellOffset, sizeT);
 		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
@@ -1259,10 +1256,6 @@ public class InitializationHandler {
 			final List<InitializerResult> initializerResults, final CType targetCType, final IASTNode hook) {
 		assert targetCType instanceof CArray || targetCType instanceof CStructOrUnion;
 
-		final Map<Integer, InitializerInfo> indexInitInfos = new HashMap<>();
-
-		Deque<InitializerResult> rest = new ArrayDeque<>(initializerResults);
-
 		final int bound;
 		CType cellType = null;
 		if (targetCType instanceof CArray) {
@@ -1279,6 +1272,8 @@ public class InitializationHandler {
 		 * The currentCellIndex stands for the "current object" from the standard text. Designators may modify that
 		 * index otherwise it just counts up.
 		 */
+		final Map<Integer, InitializerInfo> indexInitInfos = new HashMap<>();
+		Deque<InitializerResult> rest = new ArrayDeque<>(initializerResults);
 		int currentCellIndex = -1;
 		while (!rest.isEmpty() && (currentCellIndex < bound - 1 || rest.peekFirst().hasRootDesignator())) {
 			if (rest.peekFirst().hasRootDesignator()) {
@@ -1351,8 +1346,6 @@ public class InitializationHandler {
 	 */
 	public InitializerInfo constructInitInfoFromCStringLiteral(final ILocation loc, final CStringLiteral stringLiteral,
 			final CType cType, final IASTNode hook) {
-		final List<InitializerInfo> list = new ArrayList<>();
-
 		/*
 		 * It seems that the business regarding different types of string literals (e.g. wide string literals) is all
 		 * dealt with through CStringLiteral. In that case, it is ok, to use just char here.
@@ -1465,9 +1458,8 @@ public class InitializationHandler {
 			 * "~COL~" stands for "colon", if there is a nicer naming that still avoids name clashes, that naming should
 			 * be used.
 			 */
-			final String sanitizedTypeName = boogieArrayType.toString().replaceAll(":", "~COL~")
-					.replaceAll(", ", "~COM~").replaceAll("\\{ ", "~LC~").replaceAll(" \\}", "~RC~")
-					.replaceAll("\\]", "~RB~").replaceAll("\\[", "~LB~");
+			final String sanitizedTypeName = boogieArrayType.toString().replace(":", "~COL~").replace(", ", "~COM~")
+					.replace("\\{ ", "~LC~").replace(" \\}", "~RC~").replace("\\]", "~RB~").replace("\\[", "~LB~");
 			return SFO.AUXILIARY_FUNCTION_PREFIX + "const~array~" + sanitizedTypeName;
 		}
 
@@ -1546,10 +1538,6 @@ public class InitializationHandler {
 			return mExpressionResult;
 		}
 
-		public Collection<Integer> getIndicesWithInitInfo() {
-			return mElementInitInfos.keySet();
-		}
-
 		public boolean hasInitInfoForIndex(final Integer index) {
 			return mElementInitInfos.containsKey(index);
 		}
@@ -1626,7 +1614,6 @@ public class InitializationHandler {
 	 * @return the translation result.
 	 */
 	public Result handleDesignatedInitializer(final IDispatcher main, final LocationFactory locationFactory,
-			final MemoryHandler memoryHandler, final StructHandler structHandler,
 			final CASTDesignatedInitializer node) {
 		final ILocation loc = locationFactory.createCLocation(node);
 		if (node.getDesignators().length == 1 && (node.getDesignators()[0] instanceof CASTFieldDesignator)) {
