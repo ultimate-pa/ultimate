@@ -258,7 +258,7 @@ public class InitializationHandler {
 		 */
 
 		final boolean usingOnHeapInitializationViaConstArray =
-				onHeap && useConstantArrayForOnHeapDefaultInit(targetCTypeRaw, initializerInfo, hook);
+				onHeap && useConstArrayInitialization(targetCTypeRaw, initializerInfo, hook);
 		if (usingOnHeapInitializationViaConstArray) {
 			// in the "sophisticated" case: make a default initialization of all array cells first
 			final ExpressionResult defaultInit =
@@ -288,7 +288,7 @@ public class InitializationHandler {
 				LRValueFactory.constructHeapLValue(mTypeHandler, auxVarRValue.getValue(), auxVarType, null);
 
 		final InitializerInfo initInfo = constructInitInfoFromCStringLiteral(loc, stringLiteral, auxVarType, hook);
-		final boolean usingOnHeapInitViaConstArray = useConstantArrayForOnHeapDefaultInit(auxVarType, initInfo, hook);
+		final boolean usingOnHeapInitViaConstArray = useConstArrayInitialization(auxVarType, initInfo, hook);
 		return initCArray(loc, hlv, auxVarType, initInfo, true, usingOnHeapInitViaConstArray, true, hook);
 	}
 
@@ -527,8 +527,8 @@ public class InitializationHandler {
 		 * note that the off-heap case is decided locally for each array inside the variable's type while the on-heap
 		 * case this is decided once per variable (passed via field usingConstOnHeapArrayInitialization)
 		 */
-		final boolean useConstOffHeapArrayInitialization = !onHeap && outermostInNestedArray
-				&& useConstArrayInitializationForOffHeapArrays(cArrayType, initInfo, hook);
+		final boolean useConstOffHeapArrayInitialization =
+				!onHeap && outermostInNestedArray && useConstArrayInitialization(cArrayType, initInfo, hook);
 		if (useConstOffHeapArrayInitialization) {
 			// in the "sophisticated" off heap case: make a default initialization of all array cells first
 			final ExpressionResult defaultInit =
@@ -773,7 +773,7 @@ public class InitializationHandler {
 			 * In the off-heap case, sophisticated initialization for arrays (e.g. with constant arrays) is only
 			 * applicable if the value type is simple, i.e., not a struct or union type.
 			 */
-			if (useConstArrayInitializationForOffHeapArrays((CArray) cType, null, hook)
+			if (useConstArrayInitialization(cType, null, hook)
 					&& !(CTranslationUtil.getValueTypeOfNestedArray((CArray) cType) instanceof CStructOrUnion)) {
 				return makeSophisticatedOffHeapDefaultInitializationForArray(loc, (CArray) cType, lhsToInitIfAny);
 			}
@@ -1008,7 +1008,7 @@ public class InitializationHandler {
 	 * @param initializerIfAny
 	 * @return true iff sophisticated initialization should be applied
 	 */
-	private boolean useConstArrayInitializationForOffHeapArrays(final CArray cType, final InitializerInfo initInfo,
+	private boolean useConstArrayInitialization(final CType cType, final InitializerInfo initInfo,
 			final IASTNode hook) {
 		if (!mUseConstantArrays) {
 			// make sure that const arrays are only used when the corresponding setting is switched on
@@ -1021,36 +1021,6 @@ public class InitializationHandler {
 		}
 
 		final float numberOfInitializerValues = initInfo == null ? 0f : initInfo.getNumberOfValues();
-		final float ratio = numberOfInitializerValues / numberOfCells;
-		if (ratio > MAXIMAL_EXPLICIT_TO_OVERALL_RATIO_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * For the given type. Determine if we want to make a sophisticated or a naive initialization. See also
-	 * {@link determineIfSophisticatedArrayInit}.
-	 *
-	 * @param targetCType
-	 * @param initializerInfo
-	 * @param hook
-	 * @return
-	 */
-	private boolean useConstantArrayForOnHeapDefaultInit(final CType cType, final InitializerInfo initInfo,
-			final IASTNode hook) {
-		if (!mUseConstantArrays) {
-			// make sure that const arrays are only used when the corresponding setting is switched on
-			return false;
-		}
-
-		final float numberOfCells = CTranslationUtil.countNumberOfPrimitiveElementInType(cType, mTypeSizes, hook);
-		if (numberOfCells < MINIMAL_NUMBER_CELLS_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
-			return false;
-		}
-
-		final float numberOfInitializerValues = initInfo == null ? 0 : initInfo.getNumberOfValues();
 		final float ratio = numberOfInitializerValues / numberOfCells;
 		if (ratio > MAXIMAL_EXPLICIT_TO_OVERALL_RATIO_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
 			return false;
