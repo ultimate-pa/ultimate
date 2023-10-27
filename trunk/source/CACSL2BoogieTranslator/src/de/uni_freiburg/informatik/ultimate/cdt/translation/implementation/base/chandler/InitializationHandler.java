@@ -30,6 +30,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
@@ -1015,7 +1016,7 @@ public class InitializationHandler {
 			return false;
 		}
 
-		final float numberOfCells = CTranslationUtil.countNumberOfPrimitiveElementInType(cType, mTypeSizes, hook);
+		final float numberOfCells = countNumberOfPrimitiveElementInType(cType, hook);
 		if (numberOfCells < MINIMAL_NUMBER_CELLS_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
 			return false;
 		}
@@ -1027,6 +1028,28 @@ public class InitializationHandler {
 		}
 
 		return true;
+	}
+
+	private long countNumberOfPrimitiveElementInType(final CType cTypeRaw, final IASTNode hook) {
+		final CType cType = cTypeRaw.getUnderlyingType();
+		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
+			return 1;
+		}
+		if (cType instanceof CStructOrUnion) {
+			if (CStructOrUnion.isUnion(cType)) {
+				return 1;
+			}
+			return Arrays.stream(((CStructOrUnion) cType).getFieldTypes())
+					.mapToLong(t -> countNumberOfPrimitiveElementInType(t, hook)).sum();
+		}
+		if (cType instanceof CArray) {
+			final CArray cArray = (CArray) cType;
+			final long innerCount = countNumberOfPrimitiveElementInType(cArray.getValueType(), hook);
+			final BigInteger boundBig = mTypeSizes.extractIntegerValue(cArray.getBound());
+			final long bound = boundBig.longValueExact();
+			return innerCount * bound;
+		}
+		throw new AssertionError("Cannot count the primitive elements in type " + cType.getClass().getSimpleName());
 	}
 
 	public HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final HeapLValue arrayBaseAddress,
