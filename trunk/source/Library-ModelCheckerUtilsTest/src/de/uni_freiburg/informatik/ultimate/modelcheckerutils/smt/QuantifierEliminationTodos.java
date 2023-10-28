@@ -445,5 +445,20 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	/**
+	 * TODO 2023-10-28 Matthias: Alternating quantifiers can apparently be easily eliminated. But I don't know an
+	 * elimination rule yet.
+	 */
+	@Test
+	public void chioggiaBeet01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "a"),
+		};
+
+		final String formulaAsString = "(exists ((i Int)) (and (<= 1 i) (forall ((j Int)) (or (< j 0) (< i (+ j 1)) (= (select (select a 3) (* j 4)) 10)))))";
+		final String expectedResultAsString = "(= (select (select a 3) 0) 10)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	//@formatter:on
 }
