@@ -1452,7 +1452,7 @@ public class InitializationHandler {
 			 * be used.
 			 */
 			final String sanitizedTypeName = boogieArrayType.toString().replace(":", "~COL~").replace(", ", "~COM~")
-					.replace("\\{ ", "~LC~").replace(" \\}", "~RC~").replace("\\]", "~RB~").replace("\\[", "~LB~");
+					.replace("{ ", "~LC~").replace(" }", "~RC~").replace("]", "~RB~").replace("[", "~LB~");
 			return SFO.AUXILIARY_FUNCTION_PREFIX + "const~array~" + sanitizedTypeName;
 		}
 
