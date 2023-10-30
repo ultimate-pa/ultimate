@@ -27,10 +27,9 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
-
-import com.amihaiemil.eoyaml.Yaml;
-import com.amihaiemil.eoyaml.YamlNode;
 
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
@@ -97,9 +96,13 @@ public class Location implements IYamlProvider {
 	}
 
 	@Override
-	public YamlNode toYaml() {
-		return Yaml.createYamlMappingBuilder().add("file_name", mFileName).add("file_hash", mFileHash)
-				.add("line", Integer.toString(mLine)).add("column", Integer.toString(mColumn))
-				.add("function", mFunction).build();
+	public Map<String, Object> toMap() {
+		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
+		result.put("file_name", mFileName);
+		result.put("file_hash", mFileHash);
+		result.put("line", mLine);
+		result.put("column", mColumn);
+		result.put("function", mFunction);
+		return result;
 	}
 }
