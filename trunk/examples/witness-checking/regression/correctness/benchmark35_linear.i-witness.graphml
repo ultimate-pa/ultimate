@@ -26,13 +26,13 @@
 <key id="assumption" attr.name="assumption" for="edge"/>
 <key id="tokens" attr.name="tokens" for="edge"/>
 <key id="originfile" attr.name="originfile" for="edge">
-<default>C:\ultimate\trunk\examples\witnesses\regression\benchmark35_linear.i</default>
+<default>C:\ultimate\trunk\examples\witness-checking\regression\correctness\benchmark35_linear.i</default>
 </key>
 <key id="sourcecode" attr.name="sourcecode" for="edge"/>
 <graph edgedefault="directed">
-<data key="programfile">C:\ultimate\trunk\examples\witnesses\regression\benchmark35_linear.i</data>
+<data key="programfile">C:\ultimate\trunk\examples\witness-checking\regression\correctness\benchmark35_linear.i</data>
 <data key="sourcecodelang">C</data>
-<data key="creationtime">2023-08-02T13:32:30Z</data>
+<data key="creationtime">2023-10-31T12:36:33Z</data>
 <data key="witness-type">correctness_witness</data>
 <node id="N0">
 <data key="entry">true</data>
@@ -42,7 +42,7 @@
 <node id="N3"/>
 <node id="N4"/>
 <node id="N5">
-<data key="invariant">0 &lt; x + 1</data>
+<data key="invariant">(0 &lt; (x + 1))</data>
 </node>
 <node id="N6"/>
 <node id="N7"/>

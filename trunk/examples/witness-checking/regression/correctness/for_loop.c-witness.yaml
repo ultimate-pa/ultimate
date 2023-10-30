@@ -1,27 +1,26 @@
--
-  entry_type: loop_invariant
+- entry_type: loop_invariant
   metadata:
-    format_version: 0.1
-    uuid: "c66ec3a4-1f93-4adc-ae70-052a37624f3d"
-    creation_time: "2023-08-03T13:15:06+02:00"
+    format_version: '0.1'
+    uuid: 6c08e77f-e2f0-4ccd-86f0-e4c645e34000
+    creation_time: '2023-10-31T13:36:50+01:00'
     producer:
-      name: ULTIMATE
-      version: 0.2.3
+      name: UNUSED
+      version: 0.2.3-dev-b094d93-m
     task:
       input_files:
-        - "C:\Users\Frank\Desktop\for_loop.c"
+      - C:\ultimate\trunk\examples\witness-checking\regression\correctness\for_loop.c
       input_file_hashes:
-        "C:\Users\Frank\Desktop\for_loop.c": hash
-      specification: spec
-      data_model: 32bit
+        C:\ultimate\trunk\examples\witness-checking\regression\correctness\for_loop.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
       language: C
   location:
-    file_name: "C:\Users\Frank\Desktop\for_loop.c"
-    file_hash: hash
+    file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\for_loop.c
+    file_hash: UNUSED
     line: 3
     column: 0
     function: main
   loop_invariant:
-    string: "(((((5 < x && x <= 6) && 4 <= i) || (3 == x && 3 == i)) || (2 == i && x == 1)) || (i == 1 && x == 0)) || (i == 0 && x == 0)"
+    string: ((((((x == 0) && (i == 0)) || ((x == 3) && (i == 3))) || ((x == 0) && (i == 1))) || ((i == 2) && (x == 1))) || ((x == 6) && (4 <= i)))
     type: assertion
     format: C

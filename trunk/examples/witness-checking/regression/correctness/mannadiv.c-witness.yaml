@@ -1,27 +1,26 @@
--
-  entry_type: loop_invariant
+- entry_type: loop_invariant
   metadata:
-    format_version: 0.1
-    uuid: "6c612d78-ee5a-4ac9-9b7a-ff4544a94f86"
-    creation_time: "2023-08-02T17:02:33+02:00"
+    format_version: '0.1'
+    uuid: d7fc171f-8bac-4301-9c34-f037c57ffe2c
+    creation_time: 2023-10-31T13:37+01:00
     producer:
       name: UNUSED
-      version: UNUSED
+      version: 0.2.3-dev-b094d93-m
     task:
       input_files:
-        - "C:\ultimate\trunk\examples\witness-checking\regression\correctness\mannadiv.c"
+      - C:\ultimate\trunk\examples\witness-checking\regression\correctness\mannadiv.c
       input_file_hashes:
-        "C:\ultimate\trunk\examples\witness-checking\regression\correctness\mannadiv.c": UNUSED
+        C:\ultimate\trunk\examples\witness-checking\regression\correctness\mannadiv.c: UNUSED
       specification: UNUSED
       data_model: UNUSED
       language: C
   location:
-    file_name: "C:\ultimate\trunk\examples\witness-checking\regression\correctness\mannadiv.c"
+    file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\mannadiv.c
     file_hash: UNUSED
     line: 35
     column: 0
     function: main
   loop_invariant:
-    string: "(y3 <= x1 && 0 <= x1) && x2 * y1 + y3 + y2 == x1"
+    string: ((((((x2 <= 2147483647) && (y3 <= x1)) && (0 <= x1)) && !((x2 == 0))) && ((((x2 * y1) + y3) + y2) == x1)) && (0 <= (x2 + 2147483648)))
     type: assertion
     format: C

@@ -26,13 +26,13 @@
 <key id="assumption" attr.name="assumption" for="edge"/>
 <key id="tokens" attr.name="tokens" for="edge"/>
 <key id="originfile" attr.name="originfile" for="edge">
-<default>C:\ultimate\trunk\examples\witnesses\regression\psyco_security.c</default>
+<default>C:\ultimate\trunk\examples\witness-checking\regression\correctness\psyco_security.c</default>
 </key>
 <key id="sourcecode" attr.name="sourcecode" for="edge"/>
 <graph edgedefault="directed">
-<data key="programfile">C:\ultimate\trunk\examples\witnesses\regression\psyco_security.c</data>
+<data key="programfile">C:\ultimate\trunk\examples\witness-checking\regression\correctness\psyco_security.c</data>
 <data key="sourcecodelang">C</data>
-<data key="creationtime">2023-08-02T13:36:11Z</data>
+<data key="creationtime">2023-10-31T12:37:23Z</data>
 <data key="witness-type">correctness_witness</data>
 <node id="N0">
 <data key="entry">true</data>
@@ -46,10 +46,10 @@
 <node id="N7"/>
 <node id="N8"/>
 <node id="N9">
-<data key="invariant">(4 &lt;= q &amp;&amp; 3 == this_state) || (!(2 == this_state) &amp;&amp; q == 0)</data>
+<data key="invariant">(((4 &lt;= q) &amp;&amp; (3 == this_state)) || (!((2 == this_state)) &amp;&amp; (q == 0)))</data>
 </node>
 <node id="N10">
-<data key="invariant">(((2 == this_state &amp;&amp; q == 3) || (4 &lt;= q &amp;&amp; 3 == this_state)) || (q == 2 &amp;&amp; 0 == this_state)) || q == 0</data>
+<data key="invariant">(((((2 == this_state) &amp;&amp; (q == 3)) || ((4 &lt;= q) &amp;&amp; (3 == this_state))) || ((q == 2) &amp;&amp; (0 == this_state))) || (q == 0))</data>
 </node>
 <node id="N11"/>
 <node id="N12"/>

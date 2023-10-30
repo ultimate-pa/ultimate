@@ -1,27 +1,26 @@
--
-  entry_type: loop_invariant
+- entry_type: loop_invariant
   metadata:
-    format_version: 0.1
-    uuid: "eb748424-818e-47b4-ad79-ac40b33692a9"
-    creation_time: "2023-09-29T17:40:13+02:00"
+    format_version: '0.1'
+    uuid: 387c809a-fb1f-4639-a3d1-3f367156f8f5
+    creation_time: '2023-10-31T13:37:11+01:00'
     producer:
       name: UNUSED
-      version: "0.2.3-dev-353d8b1-m"
+      version: 0.2.3-dev-b094d93-m
     task:
       input_files:
-        - "pointer.c"
+      - C:\ultimate\trunk\examples\witness-checking\regression\correctness\pointer.c
       input_file_hashes:
-        "pointer.c": UNUSED
+        C:\ultimate\trunk\examples\witness-checking\regression\correctness\pointer.c: UNUSED
       specification: UNUSED
       data_model: UNUSED
       language: C
   location:
-    file_name: "C:\Users\Frank\Desktop\pointer.c"
+    file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\pointer.c
     file_hash: UNUSED
     line: 4
     column: 0
     function: main
   loop_invariant:
-    string: "((*p == 2) || (*p == 1))"
+    string: ((*p == 2) || (*p == 1))
     type: assertion
     format: C

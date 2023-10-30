@@ -1,27 +1,26 @@
--
-  entry_type: loop_invariant
+- entry_type: loop_invariant
   metadata:
-    format_version: 0.1
-    uuid: "0faa6c08-6c2c-4bed-902f-cb8ab2acf87c"
-    creation_time: "2023-08-02T17:02:21+02:00"
+    format_version: '0.1'
+    uuid: 3652d797-8dd3-41a5-8841-297637398857
+    creation_time: '2023-10-31T13:36:56+01:00'
     producer:
       name: UNUSED
-      version: UNUSED
+      version: 0.2.3-dev-b094d93-m
     task:
       input_files:
-        - "C:\ultimate\trunk\examples\witness-checking\regression\correctness\jain_6-1.c"
+      - C:\ultimate\trunk\examples\witness-checking\regression\correctness\jain_6-1.c
       input_file_hashes:
-        "C:\ultimate\trunk\examples\witness-checking\regression\correctness\jain_6-1.c": UNUSED
+        C:\ultimate\trunk\examples\witness-checking\regression\correctness\jain_6-1.c: UNUSED
       specification: UNUSED
       data_model: UNUSED
       language: C
   location:
-    file_name: "C:\ultimate\trunk\examples\witness-checking\regression\correctness\jain_6-1.c"
+    file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\jain_6-1.c
     file_hash: UNUSED
     line: 28
     column: 0
     function: main
   loop_invariant:
-    string: "(z % 8 == 0 && x % 2 == 0) && y * 3 % 4 == 0"
+    string: ((((z % 8) == 0) && ((x % 2) == 0)) && (((y * 3) % 4) == 0))
     type: assertion
     format: C
