@@ -75,7 +75,7 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 			}
 			mReqPeas.add(new ReqPeas(pattern, totalCt2pea));
 			mReqPeas.add(new ReqPeas(pattern, complementCt2pea));
-			// mSymbolTable = builder.constructSymbolTable();
+
 		}
 		mSymbolTable = builder.constructSymbolTable();
 	}
