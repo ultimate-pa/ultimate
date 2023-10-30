@@ -27,11 +27,9 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.amihaiemil.eoyaml.Yaml;
-import com.amihaiemil.eoyaml.YamlNode;
 
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
@@ -52,22 +50,14 @@ public class Task implements IYamlProvider {
 		mLanguage = language;
 	}
 
-	private static YamlNode fromList(final List<String> list) {
-		final var builder = Yaml.createMutableYamlSequenceBuilder();
-		list.forEach(builder::add);
-		return builder.build();
-	}
-
-	private static YamlNode fromMap(final Map<String, String> map) {
-		final var builder = Yaml.createMutableYamlMappingBuilder();
-		map.forEach(builder::add);
-		return builder.build();
-	}
-
 	@Override
-	public YamlNode toYaml() {
-		return Yaml.createYamlMappingBuilder().add("input_files", fromList(mInputFiles))
-				.add("input_file_hashes", fromMap(mInputFileHashes)).add("specification", mSpecification)
-				.add("data_model", mDataModel).add("language", mLanguage).build();
+	public Map<String, Object> toMap() {
+		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
+		result.put("input_files", mInputFiles);
+		result.put("input_file_hashes", mInputFileHashes);
+		result.put("specification", mSpecification);
+		result.put("data_model", mDataModel);
+		result.put("language", mLanguage);
+		return result;
 	}
 }

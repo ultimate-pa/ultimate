@@ -27,13 +27,13 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-import com.amihaiemil.eoyaml.YamlNode;
+import java.util.Map;
 
 /**
- * Interface to transform to eo-yaml, i.e. provide a {@link YamlNode}.
+ * Interface to transform data to a map for translation to yaml.
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public interface IYamlProvider {
-	YamlNode toYaml();
+	Map<String, Object> toMap();
 }
