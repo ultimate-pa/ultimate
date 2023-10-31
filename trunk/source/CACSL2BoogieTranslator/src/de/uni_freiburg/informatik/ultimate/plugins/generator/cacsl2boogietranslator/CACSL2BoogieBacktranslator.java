@@ -1794,10 +1794,6 @@ public class CACSL2BoogieBacktranslator
 			return mCType;
 		}
 
-		public VariableType getVarType() {
-			return mVarType;
-		}
-
 		@Override
 		public void accept(final GeneratedBoogieAstVisitor visitor) {
 			// nothing to accept here
