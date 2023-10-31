@@ -4,7 +4,7 @@
 ## Include the makeSettings shared functions 
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
-. "$DIR/makeSettings.sh"
+. "$DIR/../makeSettings.sh"
 
 SVCOMP_GITLAB_ROOT="/storage/repos/svcomp-archives-2023"
 SVCOMP_GITLAB_DIR="$SVCOMP_GITLAB_ROOT/2023"
@@ -62,6 +62,7 @@ prepare_svcomp_repo_shallow() {
 }
 
 copy_zips() {
+  spushd ..
   echo "Copying .zip files for version $VERSION to SVCOMP GitLab repo in $1"
   for z in "${EXPECTED_FILES[@]}"; do
       if [ ! -f "$z" ]; then
@@ -81,6 +82,7 @@ copy_zips() {
     echo "Copying $z to ${1}/${f}"
     cp "$z" "${1}/${f}"
   done
+  spopd
   return 0
 }
 
