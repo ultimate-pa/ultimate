@@ -318,6 +318,7 @@ public final class UltimateRunDefinitionGenerator {
 			for (final File source : inputFileToArchitecture.keySet()) {
 				if (witness.getPath().startsWith(source.getPath())) {
 					sourceAndWitnesses.add(new File[] { source, witness });
+					break;
 				}
 			}
 		}
