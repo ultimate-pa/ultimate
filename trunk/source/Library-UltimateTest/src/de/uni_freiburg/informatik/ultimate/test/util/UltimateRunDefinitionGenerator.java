@@ -304,44 +304,77 @@ public final class UltimateRunDefinitionGenerator {
 				witnessFolder, timeout, 0, -1);
 	}
 
-	public static Collection<UltimateRunDefinition> getRunDefinitionsFromSvcompYaml(final SvcompFolderSubset sfs,
-			final Pair<String, String> settingsPair[], final String toolchain, final long timeout) {
+	public static Collection<UltimateRunDefinition> getRunDefinitionsFromSvcompYamlWithWitnesses(
+			final SvcompFolderSubset sfs, final Pair<String, String> settingsPair[], final String toolchain,
+			final long timeout) {
 		final List<UltimateRunDefinition> result = new ArrayList<>();
 		final File toolchainFile = getFileFromToolchainDir(toolchain);
 
-		final Collection<File> selectedYamlFiles = TestUtil.getFilesRegex(getFileFromTrunkDir(sfs.getDirectory()),
-				new String[] { ".*\\.yml" });
-		final Map<File, SvcompArchitecture> inputFileToArchitecture = getInputFilesFromYamlFiles(selectedYamlFiles,
-				sfs.getProperty(), sfs.getExpectedResult());
-		final Collection<File> inputFiles = TestUtil.limitFiles(inputFileToArchitecture.keySet(), sfs.getOffset(),
-				sfs.getLimit());
-
-		for (final File input : inputFiles) {
-			for (final Pair<String, String> settingPair : settingsPair) {
-				final String setting;
-				switch (inputFileToArchitecture.get(input)) {
-				case ILP32:
-					setting = settingPair.getFirst();
-					break;
-				case LP64:
-					setting = settingPair.getSecond();
-					break;
-				default:
-					throw new AssertionError();
+		final File dir = getFileFromTrunkDir(sfs.getDirectory());
+		final Map<File, SvcompArchitecture> inputFileToArchitecture =
+				getInputFilesFromYamlFiles(TestUtil.getFiles(dir, ".yml"), sfs.getProperty(), sfs.getExpectedResult());
+		final List<File[]> sourceAndWitnesses = new ArrayList<>();
+		for (final File witness : TestUtil.getFiles(dir, ".graphml", ".yaml")) {
+			for (final File source : inputFileToArchitecture.keySet()) {
+				if (witness.getPath().startsWith(source.getPath())) {
+					sourceAndWitnesses.add(new File[] { source, witness });
 				}
-				final File settingsFile = getFileFromSettingsDir(setting);
+			}
+		}
+		final Collection<File[]> inputFiles = TestUtil.limitFiles(sourceAndWitnesses, sfs.getOffset(), sfs.getLimit());
+
+		for (final File[] input : inputFiles) {
+			for (final Pair<String, String> settingPair : settingsPair) {
+				final File settingsFile = selectSetting(settingPair, inputFileToArchitecture.get(input[0]));
 				result.add(new UltimateRunDefinition(input, settingsFile, toolchainFile, timeout));
 			}
 		}
 		return result;
 	}
 
-	private static Map<File, SvcompArchitecture> getInputFilesFromYamlFiles(final Collection<File> selectedYamlFiles, final String property,
-			final Boolean expectedResult) {
+	public static Collection<UltimateRunDefinition> getRunDefinitionsFromSvcompYaml(final SvcompFolderSubset sfs,
+			final Pair<String, String> settingsPair[], final String toolchain, final long timeout) {
+		final List<UltimateRunDefinition> result = new ArrayList<>();
+		final File toolchainFile = getFileFromToolchainDir(toolchain);
+
+		final Collection<File> selectedYamlFiles =
+				TestUtil.getFilesRegex(getFileFromTrunkDir(sfs.getDirectory()), new String[] { ".*\\.yml" });
+		final Map<File, SvcompArchitecture> inputFileToArchitecture =
+				getInputFilesFromYamlFiles(selectedYamlFiles, sfs.getProperty(), sfs.getExpectedResult());
+		final Collection<File> inputFiles =
+				TestUtil.limitFiles(inputFileToArchitecture.keySet(), sfs.getOffset(), sfs.getLimit());
+
+		for (final File input : inputFiles) {
+			for (final Pair<String, String> settingPair : settingsPair) {
+				final File settingsFile = selectSetting(settingPair, inputFileToArchitecture.get(input));
+				result.add(new UltimateRunDefinition(input, settingsFile, toolchainFile, timeout));
+			}
+		}
+		return result;
+	}
+
+	private static File selectSetting(final Pair<String, String> settingPair, final SvcompArchitecture architecture) {
+		final String setting;
+		switch (architecture) {
+		case ILP32:
+			setting = settingPair.getFirst();
+			break;
+		case LP64:
+			setting = settingPair.getSecond();
+			break;
+		default:
+			throw new AssertionError();
+		}
+		return getFileFromSettingsDir(setting);
+	}
+
+	private static Map<File, SvcompArchitecture> getInputFilesFromYamlFiles(final Collection<File> selectedYamlFiles,
+			final String property, final Boolean expectedResult) {
 		final Map<File, SvcompArchitecture> result = new HashMap<>();
 		for (final File yamlFile : selectedYamlFiles) {
 			try {
-				final Pair<File, SvcompArchitecture> inputFile = getInputFileFromYamlFile(yamlFile, property, expectedResult);
+				final Pair<File, SvcompArchitecture> inputFile =
+						getInputFileFromYamlFile(yamlFile, property, expectedResult);
 				if (inputFile != null) {
 					result.put(inputFile.getFirst(), inputFile.getSecond());
 				}
@@ -352,8 +385,8 @@ public final class UltimateRunDefinitionGenerator {
 		return result;
 	}
 
-	private static Pair<File, SvcompArchitecture> getInputFileFromYamlFile(final File yamlFile, final String propertyFile,
-			final Boolean expectedResult) throws IOException {
+	private static Pair<File, SvcompArchitecture> getInputFileFromYamlFile(final File yamlFile,
+			final String propertyFile, final Boolean expectedResult) throws IOException {
 		final YamlInput yamlInput = Yaml.createYamlInput(yamlFile);
 		final YamlMapping rootMapping = yamlInput.readYamlMapping();
 		if (hasProperty(rootMapping, propertyFile, expectedResult)) {

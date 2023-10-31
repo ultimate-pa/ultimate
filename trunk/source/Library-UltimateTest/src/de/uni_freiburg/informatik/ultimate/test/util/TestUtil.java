@@ -74,7 +74,7 @@ public final class TestUtil {
 	/**
 	 * Select (n - offset) files from a collection of files in a pseudo-random and deterministic way.
 	 */
-	public static Collection<File> limitFiles(final Collection<File> files, final int offset, final int n) {
+	public static <F> Collection<F> limitFiles(final Collection<F> files, final int offset, final int n) {
 		if (files == null || n == 0) {
 			return Collections.emptyList();
 		} else if (files.isEmpty() || n < 0) {
@@ -84,7 +84,7 @@ public final class TestUtil {
 		} else if (offset == 0 && n >= files.size()) {
 			return files;
 		} else {
-			final List<File> shuffle = new ArrayList<>(files);
+			final List<F> shuffle = new ArrayList<>(files);
 			Collections.shuffle(shuffle, new Random(PSEUDO_RANDOM_FILE_SELECTION_SEED));
 			int nPlusOffset;
 			if ((long) offset + (long) n > Integer.MAX_VALUE) {
