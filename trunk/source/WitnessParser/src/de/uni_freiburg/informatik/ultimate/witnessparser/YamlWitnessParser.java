@@ -62,9 +62,13 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class YamlWitnessParser {
+	// Maximal size for witnesses to be parsed
+	// The default is just 3MB, but this is not sufficient for us.
+	private static final int MAXIMAL_SIZE = 30 * 1024 * 1024;
+
 	public static Witness parseWitness(final File yamlInput) throws IOException {
 		final LoaderOptions loaderOptions = new LoaderOptions();
-		loaderOptions.setCodePointLimit(30 * 1024 * 1024);
+		loaderOptions.setCodePointLimit(MAXIMAL_SIZE);
 		final List<Map<String, Object>> res =
 				new Yaml(new SafeConstructor(loaderOptions)).load(new FileInputStream(yamlInput));
 		return new Witness(res.stream().map(YamlWitnessParser::parseWitnessEntry).collect(Collectors.toList()));
