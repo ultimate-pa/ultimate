@@ -1578,12 +1578,8 @@ public class CACSL2BoogieBacktranslator
 			}
 			return new TranslatedVariable(base.getName(), base.getCType(), VariableType.POINTER_BASE);
 		} else if (boogieId.endsWith(SFO.POINTER_OFFSET)) {
-			final TranslatedVariable offset = translateBoogieIdentifier(expr,
-					boogieId.substring(0, boogieId.length() - SFO.POINTER_OFFSET.length() - 1));
-			if (offset == null) {
-				return null;
-			}
-			return new TranslatedVariable(offset.getName(), offset.getCType(), VariableType.POINTER_OFFSET);
+			// TODO: Do not backtranslate offsets, might lead to wrong invariants
+			return null;
 		} else {
 			reportUnfinishedBacktranslation("unknown boogie variable " + boogieId);
 			return null;
