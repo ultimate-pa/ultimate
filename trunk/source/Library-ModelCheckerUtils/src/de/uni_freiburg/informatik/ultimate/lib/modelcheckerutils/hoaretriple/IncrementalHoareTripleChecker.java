@@ -609,9 +609,9 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		mHierConstants.beginScope();
 		mAssertedPostcond = p;
 
-		// rename assignedVars to primed vars
+		// rename the variables that are assigned by the return to primed vars
 		final Set<IProgramVar> assignedVars =
-				((IReturnAction) mAssertedAction).getAssignmentOfReturn().getAssignedVars();
+				((IReturnAction) mAssertedAction).getAssignmentOfReturn().getOutVars().keySet();
 		Term renamedFormula = renameVarsToPrimedConstants(assignedVars, p.getFormula(), mManagedScript, this);
 
 		final String callee = mAssertedAction.getPrecedingProcedure();
