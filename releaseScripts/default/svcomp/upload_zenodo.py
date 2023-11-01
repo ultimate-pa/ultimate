@@ -12,6 +12,7 @@ from typing import Union
 import requests
 from pprint import pformat, pprint
 from requests import HTTPError
+from requests import JSONDecodeError
 from zenodo_client import Creator, Metadata, Zenodo
 from zenodo_client.api import Data, Paths
 import pystow
@@ -33,7 +34,6 @@ def token_string_or_file(arg):
 ACCESS_TOKEN = None
 logging.basicConfig(format="%(message)s", stream=sys.stdout)
 logger = logging.getLogger(__package__)
-logger.setLevel(logging.DEBUG)
 
 
 def parse_args():
@@ -62,6 +62,7 @@ def parse_args():
         "ZENODO_PERSONAL_API_TOKEN", token_string_or_file(args.token)
     )
     os.environ["ZENODO_SANDBOX_API_TOKEN"] = ACCESS_TOKEN
+    logger.setLevel(logging.INFO)
     return args
 
 
@@ -87,7 +88,10 @@ def ensure(self: Zenodo, key: str, data: Data, paths: Paths) -> requests.Respons
     deposition_id = pystow.get_config(self.module, key)
     if deposition_id is not None:
         logger.info("Mapped local key %s to deposition %s", key, deposition_id)
-        return update(self, deposition_id=deposition_id, data=data, paths=paths)
+        res = update(self, deposition_id=deposition_id, data=data, paths=paths)
+        if res:
+            pystow.write_config(self.module, key, str(res.json()["id"]))
+        return res
 
     res = create(self, data=data, paths=paths)
     # Write the ID to the key in the local configuration
@@ -101,53 +105,83 @@ def update(
 ) -> requests.Response:
     """Create a new version of the given record with the given files."""
 
-    current = requests.get(
-        f"{self.depositions_base}/{deposition_id}",
-        params={"access_token": self.access_token},
-    )
-    current.raise_for_status()
-    current_data = current.json()
-    current_version = current_data["metadata"]["version"]
-    logger.info(
-        f"Zenodo's version is {current_version}, local version is {data.version}"
-    )
-    if current_data["metadata"]["version"] == data.version:
-        logger.info("No update necessary")
+    def get_current(id):
+        current = requests.get(
+            f"{self.depositions_base}/{id}",
+            params={"access_token": self.access_token},
+        )
+        current.raise_for_status()
+        return current
+
+    current = retry_request(lambda: get_current(deposition_id), "Get Current")
+    if not current:
+        logger.fatal(f"Could not get deposition {deposition_id}, giving up")
         return None
 
-    # Prepare a new version based on the old version
-    # see: https://developers.zenodo.org/#new-version)
-    new_metadata = to_metadata_json(data)
-    newversion_res = requests.post(
-        f"{self.depositions_base}/{deposition_id}/actions/newversion",
-        params={"access_token": self.access_token},
-        json=new_metadata,
-    )
-    newversion_res.raise_for_status()
-    new_deposition_data = newversion_res.json()
-    logger.debug(f"newversion POST response: {pformat(new_deposition_data)}")
+    current_data = current.json()
+    logger.debug(f"get_current({deposition_id}) GET response: {pformat(current_data)}")
 
-    new_deposition_url = new_deposition_data["links"]["latest_draft"]
-    new_deposition_id = new_deposition_data["record_id"]
+    if current_data["conceptrecid"] != deposition_id:
+        logger.warning(
+            f"The main deposition for this record is {current_data['conceptrecid']}"
+        )
+        # return update(self, current_data["conceptrecid"], data, paths)
+
+    current_version = current_data["metadata"]["version"]
+    logger.info(
+        f"Zenodo's version for {deposition_id} is {current_version}, local version is {data.version}. Zenodo's 'latest' is at {current_data['links']['latest_html']}"
+    )
+    if current_version == data.version:
+        logger.info("No update necessary")
+        return current
+
+    new_metadata = to_metadata_json(data)
+
+    def create_new_version():
+        # Prepare a new version based on the old version
+        # see: https://developers.zenodo.org/#new-version)
+        newversion_res = requests.post(
+            f"{self.depositions_base}/{deposition_id}/actions/newversion",
+            params={"access_token": self.access_token},
+            json=new_metadata,
+        )
+        newversion_res.raise_for_status()
+        return newversion_res
+
+    newversion_res = retry_request(create_new_version, "Create new version")
+    if not newversion_res:
+        logger.fatal(
+            f"Failed to create new version for deposition {deposition_id}, giving up"
+        )
+        return None
+
+    newversion_data = newversion_res.json()
+    logger.debug(f"create_new_version() POST response: {pformat(newversion_data)}")
+    new_deposition_url = newversion_data["links"]["latest_draft"]
+    new_deposition_id = newversion_data["record_id"]
     new_metadata["metadata"]["publication_date"] = datetime.datetime.today().strftime(
         "%Y-%m-%d"
     )
 
-    # Update the deposition for the new version
-    # see: https://developers.zenodo.org/#update
-    update_res = requests.put(
-        new_deposition_url,
-        json=new_metadata,
-        params={"access_token": self.access_token},
-    )
-    update_res.raise_for_status()
-    logger.debug(f"new_deposition_url PUT response: {pformat(update_res.json())}")
+    def populate_new_version():
+        # Update the deposition for the new version
+        # see: https://developers.zenodo.org/#update
+        update_res = requests.put(
+            new_deposition_url,
+            json=new_metadata,
+            params={"access_token": self.access_token},
+        )
+        update_res.raise_for_status()
+        return update_res
+
+    update_res = retry_request(populate_new_version, "Populate new version")
+    logger.debug(f"populate_new_version PUT response: {pformat(update_res.json())}")
 
     # Upload new files. If no files have changed, there will be no update
-    self._upload_files(bucket=newversion_res["links"]["bucket"], paths=paths)
+    self._upload_files(bucket=newversion_data["links"]["bucket"], paths=paths)
 
     # Send the publish command
-    return self.publish(new_deposition_id)
+    return retry_request(lambda: self.publish(new_deposition_id), "Publishing")
 
 
 def to_metadata_json(data: Data) -> str:
@@ -160,6 +194,52 @@ def to_metadata_json(data: Data) -> str:
             },
         }
     return data
+
+
+def log_request_error(fun, desc: str):
+    try:
+        return fun()
+    except HTTPError as http_ex:
+        code = http_ex.response.status_code
+        if code == 504:
+            logger.warning(f"{desc}: Failed with 504")
+        else:
+            logger.fatal(f"{desc}: Failed with HTTP {code}: {http_ex}")
+            try:
+                as_json = http_ex.response.json()
+                logger.fatal(f"{desc}: {pformat(as_json)}")
+            except JSONDecodeError:
+                logger.fatal(
+                    f"{desc}: No valid JSON in {code} response: {http_ex.response.text}"
+                )
+        return http_ex.response
+
+
+def retry_request(fun, desc: str, max_retries=3, init_sleep=5):
+    response = None
+    sleep = 0
+    retries = 0
+    while response is None and retries < max_retries:
+        if retries > 0:
+            logger.warning(
+                f"{desc}: Retrying up to {max_retries-retries} more times, using {sleep}s back-off"
+            )
+        if sleep > 0:
+            time.sleep(sleep)
+        response = log_request_error(fun, desc)
+        if response.status_code >= 500:
+            sleep = init_sleep if sleep == 0 else sleep * 2
+            retries = retries + 1
+            response = None
+        elif response.ok:
+            break
+
+    if response and response.ok and retries > 0:
+        logger.warning(
+            f"{desc}: Successful after {retries} retries with {response.status_code}"
+        )
+    logger.debug(response.status_code)
+    return response
 
 
 def create(self: Zenodo, data: Data, paths: Paths) -> requests.Response:
@@ -189,28 +269,9 @@ def create(self: Zenodo, data: Data, paths: Paths) -> requests.Response:
     self._upload_files(bucket=bucket, paths=paths)
 
     deposition_id = res_deposition_json["id"]
-    logger.info("publishing files to deposition %s", deposition_id)
+    logger.info("Publishing files to deposition %s", deposition_id)
 
-    res_publish = None
-    sleep = 0
-    retries = 0
-    max_retries = 3
-    while res_publish is None and retries < max_retries:
-        if sleep > 0:
-            time.sleep(sleep)
-        try:
-            res_publish = self.publish(deposition_id)
-        except HTTPError as http_ex:
-            code = http_ex.response.status_code
-            if code == 504:
-                logger.warning(f"Failed to publish due to 504")
-            else:
-                logger.fatal(f"Received HTTP {code}: {http_ex}")
-            sleep = 5 if sleep == 0 else sleep * 2
-            logger.warning(
-                f"Retrying up to {max_retries-retries} more times, using {sleep}s back-off"
-            )
-            retries = retries + 1
+    res_publish = retry_request(lambda: self.publish(deposition_id), "Publishing")
 
     if res_publish:
         return res_publish
@@ -255,6 +316,51 @@ def get_available_licenses():
         pprint(res_json)
 
 
+def upload_tools(args, tools):
+    # it is enough to use Automizer's version
+    output = subprocess.run(
+        ["../UAutomizer-linux/Ultimate.py", "--ultversion"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    m = re.search("This is Ultimate (\d+.\d+.\d+-\w+-\w+(-m)?)", output.stdout)
+    if not m:
+        logger.fatal(
+            f"Could not determine version from Ultimate output: {output.stdout}"
+        )
+        sys.exit(1)
+    version = m.groups(1)[0]
+    logger.info(f"Found Ultimate version '{version}'")
+    logger.info("--")
+    for tool, path in tools.items():
+        if not os.path.exists(path):
+            logger.warning(f"File {path} for {tool} does not exist, skipping")
+            continue
+
+        new_path = f"u{tool.lower()}.zip"
+        os.rename(path, new_path)
+
+        paths = [
+            new_path,
+        ]
+        data = create_metadata(toolname=tool, version=version)
+        result = log_request_error(
+            lambda: upload(tool, data, paths, sandbox=args.sandbox), "Upload"
+        )
+        if result and result.ok:
+            data = result.json()
+            if "doi" in data:
+                doi = data["doi"]
+                url = data["links"]["html"]
+                logger.info(
+                    f"Success: DOI for {tool} with version {version} is {doi} at {url}"
+                )
+            logger.debug(pformat(data))
+        os.rename(new_path, path)
+        logger.info("--")
+
+
 def create_metadata(toolname: str, version: str) -> Metadata:
     return Metadata(
         title=f"Ultimate {toolname} SV-COMP 2024",
@@ -288,53 +394,12 @@ def create_metadata(toolname: str, version: str) -> Metadata:
     )
 
 
-def upload_tools(args):
-    tools = {
-        "Automizer": "../UltimateAutomizer-linux.zip",
-        "Kojak": "../UltimateKojak-linux.zip",
-        # "Taipan": "../UltimateTaipan-linux.zip",
-        # "GemCutter": "../UltimateGemCutter-linux.zip",
-    }
-
-    # it is enough to use Automizer's version
-    output = subprocess.run(
-        ["../UAutomizer-linux/Ultimate.py", "--ultversion"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    m = re.search("This is Ultimate (\d+.\d+.\d+-\w+-\w+(-m)?)", output.stdout)
-    if not m:
-        logger.fatal(
-            f"Could not determine version from Ultimate output: {output.stdout}"
-        )
-        sys.exit(1)
-    version = m.groups(1)[0]
-    logger.info(f"Found Ultimate version '{version}'")
-
-    for tool, path in tools.items():
-        if not os.path.exists(path):
-            logger.warning(f"File {path} for {tool} does not exist, skipping")
-            continue
-
-        new_path = f"u{tool.lower()}.zip"
-        os.rename(path, new_path)
-
-        paths = [
-            new_path,
-        ]
-        data = create_metadata(toolname=tool, version=version)
-        try:
-            result = upload(tool, data, paths, sandbox=args.sandbox)
-            if result:
-                logger.info(pformat(result.json()))
-        except HTTPError as ex:
-            logger.fatal(f"Upload failed with HTTP {ex.response.status_code}: {ex}")
-            if ex.response.status_code >= 400:
-                logger.fatal(pformat(ex.response.json()))
-        os.rename(new_path, path)
-
-
 # get_available_licenses()
 args = parse_args()
-upload_tools(args)
+tools = {
+    "Automizer": "../UltimateAutomizer-linux.zip",
+    "Kojak": "../UltimateKojak-linux.zip",
+    "Taipan": "../UltimateTaipan-linux.zip",
+    "GemCutter": "../UltimateGemCutter-linux.zip",
+}
+upload_tools(args, tools)
