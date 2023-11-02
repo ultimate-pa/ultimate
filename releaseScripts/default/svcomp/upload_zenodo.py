@@ -51,13 +51,14 @@ def parse_args():
     )
     parser.add_argument(
         "--sandbox",
-        dest="sandbox",
+        action=argparse.BooleanOptionalAction,
         default=True,
         type=bool,
-        help="Should we use Zenodo's sandbox instead of the real Zenodo? Default: True",
+        help="Should we use Zenodo's sandbox instead of the real Zenodo? Default: Yes",
     )
     args = parser.parse_args()
 
+    global ACCESS_TOKEN
     ACCESS_TOKEN = os.environ.get(
         "ZENODO_PERSONAL_API_TOKEN", token_string_or_file(args.token)
     )
