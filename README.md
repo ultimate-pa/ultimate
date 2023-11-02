@@ -141,6 +141,6 @@ To cite:
 }
 ```
 
-* *Stratified Commutativity in Verification Algorithms for Concurrent Programs*. Farzan, Klumpp and Podelski, POPL 2023 (to appear)
+* *Stratified Commutativity in Verification Algorithms for Concurrent Programs*. Farzan, Klumpp and Podelski, POPL 2023, https://doi.org/10.1145/3571242
 * *Sound Sequentialization for Concurrent Program Verification*. Farzan, Klumpp and Podelski, PLDI 2022, https://doi.org/10.1145/3519939.3523727
 * *Ultimate GemCutter and the Axes of Generalization - (Competition Contribution)*. Klumpp, Dietsch, Heizmann, Schüssele, Ebbinghaus, Farzan and Podelski, TACAS (SV-COMP) 2022, https://doi.org/10.1007/978-3-030-99527-0_35
