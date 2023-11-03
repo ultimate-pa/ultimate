@@ -31,10 +31,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness.IMapSerializable;
+
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
-public class Task implements IYamlProvider {
+public class Task implements IMapSerializable {
 	private final List<String> mInputFiles;
 	private final Map<String, String> mInputFileHashes;
 	private final String mSpecification;

@@ -30,10 +30,12 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness.IMapSerializable;
+
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
-public class Producer implements IYamlProvider {
+public class Producer implements IMapSerializable {
 	private final String mName;
 	private final String mVersion;
 	private final String mConfiguration;

@@ -33,10 +33,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness.IMapSerializable;
+
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
-public class Metadata implements IYamlProvider {
+public class Metadata implements IMapSerializable {
 
 	private final FormatVersion mFormatVersion;
 	private final UUID mUuid;
