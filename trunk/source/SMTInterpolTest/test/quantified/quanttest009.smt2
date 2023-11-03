@@ -8,6 +8,5 @@
 (assert (forall ((x U)) (= x (f x))))
 (assert (not (= a (f a))))
 (check-sat)
-(get-proof)
 (exit)
 

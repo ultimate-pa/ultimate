@@ -38,7 +38,7 @@ import java.util.Stack;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiToGeneralizedBuchi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
@@ -66,10 +66,9 @@ public class GetLassoRunFromLassoWord<LETTER, STATE>
 	private final NestedWord<LETTER> mStem;
 	private final NestedWord<LETTER> mLoop;
 
-	@SuppressWarnings("unchecked")
 	public GetLassoRunFromLassoWord(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand, final NestedLassoWord<LETTER> lassoWord)
-			throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
+			final NestedLassoWord<LETTER> lassoWord) throws AutomataOperationCanceledException {
 		super(services, operand.getVpAlphabet());
 		mStateFactory = operand.getStateFactory();
 		mDownStates.add(operand.getEmptyStackState());
@@ -86,7 +85,7 @@ public class GetLassoRunFromLassoWord<LETTER, STATE>
 			// e.printStackTrace();
 			// }
 		} else {
-			mOperand = new BuchiToGeneralizedBuchi<LETTER, STATE>(operand);
+			mOperand = new BuchiToGeneralizedBuchi<>(operand);
 			// try {
 			// BuchiAccepts<LETTER, STATE> checker = new BuchiAccepts<>(services, operand, lassoWord);
 			// System.err.println("Accepts: " + checker.getResult());

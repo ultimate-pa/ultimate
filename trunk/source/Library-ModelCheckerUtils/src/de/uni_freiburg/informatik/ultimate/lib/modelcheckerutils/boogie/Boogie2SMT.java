@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUti
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -89,13 +90,13 @@ public class Boogie2SMT {
 
 		final List<Term> axiomList = declareAxioms(boogieDeclarations, script, mExpression2Term,
 				mBoogie2SmtSymbolTable);
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(SmtUtils.and(script, axiomList), script,
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(SmtUtils.and(script, axiomList), mScript,
 				mBoogie2SmtSymbolTable);
 		assert tvp.getVars().isEmpty() : "axioms must not have variables";
 		if (!(script instanceof HistoryRecordingScript)) {
 			throw new AssertionError("need HistoryRecordingScript");
 		}
-		mSmtFunctionsAndAxioms = new SmtFunctionsAndAxioms(tvp.getClosedFormula(), tvp.getProcedures(), mScript);
+		mSmtFunctionsAndAxioms = new SmtFunctionsAndAxioms(tvp.getClosedFormula(), tvp.getFuns(), mScript);
 
 		mStatements2TransFormula = new Statements2TransFormula(this, mServices, mExpression2Term,
 				simplePartialSkolemization);
@@ -172,7 +173,7 @@ public class Boogie2SMT {
 
 	public static final class ConstOnlyIdentifierTranslator implements IIdentifierTranslator {
 
-		private final Set<BoogieConst> mNonTheoryConsts = new HashSet<>();
+		private final Set<ProgramConst> mNonTheoryConsts = new HashSet<>();
 		private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 
 		public ConstOnlyIdentifierTranslator(final Boogie2SmtSymbolTable boogie2SmtSymbolTable) {
@@ -185,14 +186,14 @@ public class Boogie2SMT {
 			if (declInfo.getStorageClass() != StorageClass.GLOBAL) {
 				throw new AssertionError();
 			}
-			final BoogieConst bc = mBoogie2SmtSymbolTable.getBoogieConst(id);
-			if (!bc.belongsToSmtTheory()) {
-				mNonTheoryConsts.add(bc);
+			final ProgramConst pc = mBoogie2SmtSymbolTable.getBoogieConst(id);
+			if (!pc.belongsToSmtTheory()) {
+				mNonTheoryConsts.add(pc);
 			}
-			return bc.getDefaultConstant();
+			return pc.getDefaultConstant();
 		}
 
-		public Set<BoogieConst> getNonTheoryConsts() {
+		public Set<ProgramConst> getNonTheoryConsts() {
 			return mNonTheoryConsts;
 		}
 

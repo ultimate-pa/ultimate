@@ -37,6 +37,10 @@ public class TestStep {
 	public Map<IdentifierExpression, Collection<Expression>> getOutputAssignment() {
 		return Collections.unmodifiableMap(mOutputAssignment);
 	}
+	
+	public Map<IdentifierExpression, Collection<Expression>> getWaitForAssignment() {
+		return Collections.unmodifiableMap(mWaitForAssignment);
+	}
 
 	public Collection<Expression> getWaitTime() {
 		return Collections.unmodifiableCollection(mWaitTime);
@@ -50,6 +54,7 @@ public class TestStep {
 		final Set<String> result = new HashSet<>();
 		mInputAssignment.keySet().forEach(e -> result.add(e.getIdentifier()));
 		mOutputAssignment.keySet().forEach(e -> result.add(e.getIdentifier()));
+		mWaitForAssignment.keySet().forEach(e -> result.add(e.getIdentifier()));
 
 		return result;
 	}

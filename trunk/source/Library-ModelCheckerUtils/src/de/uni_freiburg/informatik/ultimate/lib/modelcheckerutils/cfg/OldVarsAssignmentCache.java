@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
@@ -47,26 +47,26 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Matthias Heizmann
  */
 public class OldVarsAssignmentCache {
-	
-	
+
+
 	protected final ManagedScript mMgdScript;
-	
+
 	private final ModifiableGlobalsTable mModifiableGlobalsTable;
-	
+
 	private final Map<String, UnmodifiableTransFormula> mProc2OldVarsAssignment;
 	private final Map<String, UnmodifiableTransFormula> mProc2GlobalVarsAssignment;
-	
-	
+
+
 	public OldVarsAssignmentCache(final ManagedScript mgdScript, final ModifiableGlobalsTable modifiableGlobalsTable) {
 		mMgdScript = mgdScript;
 		mModifiableGlobalsTable = modifiableGlobalsTable;
 		mProc2OldVarsAssignment = new HashMap<>();
 		mProc2GlobalVarsAssignment = new HashMap<>();
 	}
-	
-	
+
+
 	/**
-	 * Returns a TransFormula that represents an assignment 
+	 * Returns a TransFormula that represents an assignment
 	 * gOld_1,...,gOld_n :=g_1,...,g_n
 	 * where g_1,...,g_n are the global variables that can be modified by
 	 * procedure proc and gOld_1,...,gOld_n are the corresponding oldvars.
@@ -79,10 +79,10 @@ public class OldVarsAssignmentCache {
 		}
 		return mProc2OldVarsAssignment.get(proc);
 	}
-	
-	
+
+
 	/**
-	 * Returns a TransFormula that represents an assignment 
+	 * Returns a TransFormula that represents an assignment
 	 * g_1,...,g_n :=gOld_1,...,gOld_n
 	 * where g_1,...,g_n are the global variables that can be modified by
 	 * procedure proc and gOld_1,...,gOld_n are the corresponding oldvars.
@@ -95,8 +95,8 @@ public class OldVarsAssignmentCache {
 		}
 		return mProc2GlobalVarsAssignment.get(proc);
 	}
-	
-	
+
+
 
 	private UnmodifiableTransFormula constructOldVarsAssignment(final String proc) {
 		Set<IProgramNonOldVar> vars = mModifiableGlobalsTable.getModifiedBoogieVars(proc);
@@ -109,7 +109,7 @@ public class OldVarsAssignmentCache {
 		for (final IProgramNonOldVar modifiableGlobal : vars) {
 			final IProgramOldVar oldVarOfModifiable = modifiableGlobal.getOldVar();
 			final Sort sort = modifiableGlobal.getDefaultConstant().getSort();
-			
+
 			final String nameIn = modifiableGlobal + "_In";
 			final TermVariable tvIn = mMgdScript.getScript().variable(nameIn, sort);
 			final String nameOut = "old(" + modifiableGlobal + ")" + "_Out";
@@ -117,7 +117,7 @@ public class OldVarsAssignmentCache {
 			tfb.addInVar(modifiableGlobal, tvIn);
 			tfb.addOutVar(modifiableGlobal, tvIn);
 			tfb.addOutVar(oldVarOfModifiable, tvOut);
-			final Term assignment = mMgdScript.getScript().term("=", tvOut, tvIn);
+			final Term assignment = SmtUtils.binaryEquality(mMgdScript.getScript(), tvOut, tvIn);
 			glob2oldFormula = SmtUtils.and(mMgdScript.getScript(), glob2oldFormula, assignment);
 		}
 		tfb.setFormula(glob2oldFormula);
@@ -126,7 +126,7 @@ public class OldVarsAssignmentCache {
 	}
 
 
-	
+
 	private UnmodifiableTransFormula constructGlobalVarsAssignment(final String proc) {
 		Set<IProgramNonOldVar> vars = mModifiableGlobalsTable.getModifiedBoogieVars(proc);
 		if (vars == null) {
@@ -146,14 +146,14 @@ public class OldVarsAssignmentCache {
 				tfb.addInVar(oldVarOfModifiable, tvIn);
 				tfb.addOutVar(oldVarOfModifiable, tvIn);
 				tfb.addOutVar(modifiableGlobal, tvOut);
-				final Term assignment = mMgdScript.getScript().term("=", tvOut, tvIn);
+				final Term assignment = SmtUtils.binaryEquality(mMgdScript.getScript(), tvOut, tvIn);
 				old2globFormula = SmtUtils.and(mMgdScript.getScript(), old2globFormula, assignment);
-			}			
+			}
 		}
 		tfb.setFormula(old2globFormula);
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
 		return tfb.finishConstruction(mMgdScript);
 	}
-	
+
 
 }

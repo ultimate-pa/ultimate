@@ -1,0 +1,148 @@
+def scmVars
+@Library('jenkins-shared-lib') _
+
+// TODO
+// * Generate badge for test failure and add it to the readme.md
+//   https://github.com/jenkinsci/embeddable-build-status-plugin#embeddable-build-status-plugin is already installed
+//   Either generate Sonar badges as well (can I access Sonar API from pipeline? Probably...), or make Sonar project public
+// * https://github.com/jenkinsci/git-forensics-plugin and https://github.com/jenkinsci/forensics-api-plugin allow the discovery of reference builds
+//   publishCoverage adapters: [jacocoAdapter(mergeToOneReport: true, path: '')], globalThresholds: [[thresholdTarget: 'Aggregated Report']], sourceFileResolver: sourceFiles('NEVER_STORE')
+//   https://www.jenkins.io/blog/2019/07/21/Jenkins-code-coverage-diff-for-pull-request/
+// * TODO: It might be necessary to change the maven build to use cobertura instead of jacoco to support delta for test cases
+// * Exclude certain classes from coverage (i.e., UltimateTest, java.bdd, ...)
+// * Access test results for dependent nightly release and mattermost messages https://stackoverflow.com/questions/39920437/how-to-access-junit-test-counts-in-jenkins-pipeline-project
+
+pipeline {
+  agent { label 'linux && java' }
+  triggers {
+    cron('@midnight')
+  }
+  options {
+    skipDefaultCheckout()
+    timeout(time: 10, unit: 'HOURS')
+    timestamps()
+  }
+  environment {
+    PATH = "${env.WORKSPACE}/releaseScripts/default/adds:${env.PATH}"
+  }
+  stages {
+    stage('Checkout') {
+      steps {
+        script {
+          scmVars = checkout scm
+          echo "Building for ${currentBuild.changeSets.size()} changes"
+        }
+        sh 'git clean -f -x -d'
+      }
+    }
+    stage('Check environment') {
+      when {
+        anyOf {
+          expression { return !currentBuild.changeSets.isEmpty() }
+          triggeredBy cause: 'UserIdCause'
+        }
+      }
+      steps {
+        sh(label: 'check solvers', script: 'releaseScripts/default/check_solvers.sh')
+      }
+    }
+    // stage('Collect repository statistics') {
+    //   //TODO: Runs really long, perhaps it should be a separate job or
+    //   when {
+    //     allOf {
+    //       //branch 'dev'
+    //       expression { return !currentBuild.changeSets.isEmpty() }
+    //     }
+    //   }
+    //   steps {
+    //     catchError(buildResult: null, catchInterruptions: false) {
+    //       mineRepository()
+    //     }
+    //   }
+    // }
+    stage('Collect reference build') {
+      when {
+        anyOf {
+          expression { return !currentBuild.changeSets.isEmpty() }
+          triggeredBy cause: 'UserIdCause'
+        }
+      }
+      steps {
+        catchError(buildResult: null, catchInterruptions: false) {
+          discoverGitReferenceBuild(latestBuildIfNotFound: true, targetBranch: 'dev')
+        }
+      }
+    }
+    stage('Build and run nightly tests') {
+      when {
+        anyOf {
+          expression { return !currentBuild.changeSets.isEmpty() }
+          triggeredBy cause: 'UserIdCause'
+        }
+      }
+      steps {
+          withMaven(mavenOpts: '-Xmx4g -Xss4m -ea', options: [artifactsPublisher(disabled: true), junitPublisher(healthScaleFactor: 1.0, keepLongStdio: true, skipPublishingChecks: false)]) {
+            sh 'cd trunk/source/BA_MavenParentUltimate && mvn -T 1C clean install -Pcoverage -Dmaven.test.failure.ignore=true -DexcludedGroups=de.uni_freiburg.informatik.ultimate.test.junitextension.categories.NoRegression'
+          }
+      }
+    }
+    // stage('Report'){
+    //   steps {
+    //     junit keepLongStdio: true, testResults: 'prototype/test_results.xml'
+    //     cobertura coberturaReportFile: 'prototype/cov-cobertura.xml'
+    //     catchError(buildResult: 'SUCCESS', catchInterruptions: false) {
+    //       //do not let coverage result errors fail the build
+    //       publishCoverage adapters: [coberturaAdapter('prototype/cov-cobertura.xml')], calculateDiffForChangeRequests: true, sourceFileResolver: sourceFiles('NEVER_STORE')
+    //     }
+    //   }
+    // }
+    stage('Run Sonar') {
+      when {
+        allOf {
+          expression { return currentBuild.result == 'SUCCESS' || currentBuild.result == 'UNSTABLE' }
+          branch 'dev'
+          anyOf {
+            expression { return !currentBuild.changeSets.isEmpty() }
+            triggeredBy cause: 'UserIdCause'
+          }
+        }
+      }
+      steps {
+        withCredentials([string(credentialsId: 'SonarTokenJenkinsPipeline', variable: 'SONAR_TOKEN')]) {
+          withMaven(mavenOpts: '-Xmx4g -Xss4m', options: [jacocoPublisher()], publisherStrategy: 'EXPLICIT') {
+            sh 'cd trunk/source/BA_MavenParentUltimate && mvn sonar:sonar -Pcoverage -Dsonar.host.url=https://sonar.sopranium.de -Dsonar.login=$SONAR_TOKEN'
+          }
+        }
+      }
+    }
+    stage('Deploy nightly build') {
+      when {
+        allOf {
+          branch 'dev'
+          expression { return !currentBuild.changeSets.isEmpty() }
+          expression { return currentBuild.result == 'SUCCESS' || currentBuild.result == 'UNSTABLE' }
+        }
+      }
+      steps {
+        withMaven(mavenOpts: '-Xmx4g -Xss4m', publisherStrategy: 'EXPLICIT') {
+            sh 'cd releaseScripts/default && ./makeFresh.sh'
+        }
+        sshagent(credentials: ['jenkins-deploy']) {
+          sh(label: 'deploy nightly to struebli', script: 'releaseScripts/default/deploy_nightly_to_struebli.sh')
+        }
+      }
+    }
+  }
+  post {
+    unsuccessful {
+      script { string mmMessage = mattermost.create_mattermost_message(scmVars) }
+      emailext(body: '$DEFAULT_CONTENT', mimeType: 'text/plain', recipientProviders: [culprits(), developers(), requestor()], replyTo: 'dietsch@informatik.uni-freiburg.de', subject: '$DEFAULT_SUBJECT')
+      mattermostSend(color: "${env.mm_color}", message: "${mmMessage}", text: '', channel: '#ultimate', icon: 'https://jenkins.sopranium.de/static/0e41ff2a/images/jenkins-header-logo-v2.svg')
+    }
+    fixed {
+      script { string mmMessage = mattermost.create_mattermost_message(scmVars) }
+      emailext(body: '$DEFAULT_CONTENT', mimeType: 'text/plain', recipientProviders: [culprits(), developers(), requestor()], replyTo: 'dietsch@informatik.uni-freiburg.de', subject: '$DEFAULT_SUBJECT')
+      mattermostSend(color: "${env.mm_color}", message: "${mmMessage}", text: '', channel: '#ultimate', icon: 'https://jenkins.sopranium.de/static/0e41ff2a/images/jenkins-header-logo-v2.svg')
+    }
+  }
+}

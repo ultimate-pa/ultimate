@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm.Equivalence;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -96,6 +97,22 @@ public interface IPolynomialTerm {
 
 	Sort getSort();
 
+	/**
+	 * @return A new {@link IPolynomialTerm} that is the multiplication of this
+	 *         {@link IPolynomialTerm} with a {@link Rational literal}
+	 */
+	default IPolynomialTerm mul(final Rational rat) {
+		// TODO 20220730 Matthias: Do refactor that implements more methods in
+		// subclasses (instead of static methods).
+		if (this instanceof AffineTerm) {
+			return AffineTerm.mul(this, rat);
+		} else if (this instanceof PolynomialTerm) {
+			return PolynomialTerm.mul(this, rat);
+		} else {
+			throw new UnsupportedOperationException("Unsupported kind of polynomial");
+		}
+	}
+
 
 	/**
 	 * @return Divide this {@link IPolynomialTerm} by divisor. Return the result
@@ -105,5 +122,35 @@ public interface IPolynomialTerm {
 	 *         exists.
 	 */
 	IPolynomialTerm divInvertible(Rational divisor);
+
+	/**
+	 * @return
+	 *         <ul>
+	 *         <li>{@link Equivalence#EQUALS} if (= this otherTerm) is valid for all
+	 *         variable assignments
+	 *         <li>{@link Equivalence#DISTINCT} if (not (= this otherTerm)) is valid
+	 *         for all variable assignments
+	 *         <li>{@link Equivalence#INCOMPARABLE} otherwise. </ ul>
+	 *
+	 */
+	Equivalence compare(IPolynomialTerm otherTerm);
+
+	/**
+	 * @return A new {@link IPolynomialTerm} that is differs from this only in an
+	 *         offset that was added.
+	 */
+	IPolynomialTerm add(final Rational offset);
+
+	/**
+	 * Compute the GCD of all coefficients (but do not include the constant in the
+	 * computation). E.g., this method returns 2 for the polynomial 4*x+6*y+5. We
+	 * use the semantics of {@link Rational#gcd}. If there are no coefficients, we
+	 * return the {@link Rational} zero.
+	 */
+	Rational computeGcdOfCoefficients();
+
+	IPolynomialTerm div(final Script script, final IPolynomialTerm... divisors);
+
+	IPolynomialTerm mod(final Script script, final IPolynomialTerm divisor);
 
 }

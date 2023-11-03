@@ -32,7 +32,6 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -61,6 +60,15 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 public class CommuhashNormalForm {
 
 	private static final boolean DEBUG_LOG_SIZES = false;
+	/**
+	 * Use an SMT solver to check equivalence of input and output. Note that this
+	 * check can be questionable. We typically transform to
+	 * {@link CommuhashNormalForm} after receiving a formula from an external
+	 * source, e.g., Craig interpolants of an SMT solver. At this time there might
+	 * temporarily other formulas on the solver's assertion stack and hamper the
+	 * meaningfulness of this check test.
+	 */
+	private static final boolean DEBUG_CHECK_CORRECTNESS = false;
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
 
@@ -82,7 +90,7 @@ public class CommuhashNormalForm {
 					new DebugMessage("DAG size before CommuhashNormalForm {0}, DAG size after CommuhashNormalForm {1}",
 							new DagSizePrinter(term), new DagSizePrinter(result)));
 		}
-		assert (Util.checkSat(mScript,
+		assert (!DEBUG_CHECK_CORRECTNESS || Util.checkSat(mScript,
 				mScript.term("distinct", term, result)) != LBool.SAT) : "CommuhashNormalForm transformation unsound";
 		return result;
 	}
@@ -96,32 +104,13 @@ public class CommuhashNormalForm {
 				final Sort resultSort =
 						appTerm.getFunction().isReturnOverload() ? appTerm.getFunction().getReturnSort() : null;
 				final Term simplified = constructlocallySimplifiedTermWithSortedParams(funcname,
-						SmtUtils.toBigIntegerArray(appTerm.getSort().getIndices()), resultSort, newArgs);
+						null, resultSort, newArgs);
 				setResult(simplified);
 			} else {
 				super.convertApplicationTerm(appTerm, newArgs);
 			}
 		}
 
-		@Override
-		protected void convert(final Term term) {
-			final Term result = tryToTransformToPositiveNormalForm(term);
-			if (result == null) {
-				// descent, input is no AffineRelation
-				super.convert(term);
-			} else {
-				setResult(result);
-			}
-		}
-
-		private Term tryToTransformToPositiveNormalForm(final Term simplified) {
-			final PolynomialRelation polyRel = PolynomialRelation.convert(mScript, simplified);
-			if (polyRel == null) {
-				return null;
-			}
-			final Term pnf = polyRel.positiveNormalForm(mScript);
-			return pnf;
-		}
 
 		/**
 		 * @param resultSort
@@ -131,7 +120,7 @@ public class CommuhashNormalForm {
 		private Term constructlocallySimplifiedTermWithSortedParams(final String funcname, final BigInteger[] indices,
 				final Sort resultSort, final Term[] params) {
 			final Term[] sortedParams = CommuhashUtils.sortByHashCode(params);
-			final Term simplified = SmtUtils.termWithLocalSimplification(mScript, funcname,
+			final Term simplified = SmtUtils.unfTerm(mScript, funcname,
 					SmtUtils.toStringArray(indices), resultSort, sortedParams);
 			return simplified;
 		}

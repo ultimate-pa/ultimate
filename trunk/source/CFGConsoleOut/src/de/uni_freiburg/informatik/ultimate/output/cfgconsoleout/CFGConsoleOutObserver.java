@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 
 public class CFGConsoleOutObserver extends BaseObserver {
@@ -93,7 +93,7 @@ public class CFGConsoleOutObserver extends BaseObserver {
 		final IEmptyStackStateFactory<IPredicate> stateFac = new PredicateFactoryRefinement(mServices, toolkit.getManagedScript(),
 				predicateFactory, false, Collections.emptySet());
 
-		final INestedWordAutomaton<IIcfgTransition<?>, IPredicate> nwa = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(
+		final INestedWordAutomaton<IIcfgTransition<?>, IPredicate> nwa = Cfg2Automaton.constructAutomatonWithSPredicates(
 				mServices, icfg, stateFac, IcfgUtils.getErrorLocations(icfg), true, predicateFactory);
 		return nwa;
 	}

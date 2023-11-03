@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
@@ -70,8 +71,9 @@ class ApplyDestructiveEqualityReasoning {
 					mEprTheory.addAtomToDPLLEngine(sl.getAtom());
 				} else if (sl.getAtom() instanceof NamedAtom) {
 					// do nothing/just add it to the result
-				} else
+				} else {
 					assert false : "case not forseen..";
+				}
 				mResult.add(sl);
 			}
 			currentClause = mResult;
@@ -96,8 +98,9 @@ class ApplyDestructiveEqualityReasoning {
 
 	private Literal findDisequality(final HashSet<Literal> literals) {
 		for (final Literal l : literals) {
-			if (l.getSign() != 1 && l.getAtom() instanceof EprQuantifiedEqualityAtom)
+			if (l.getSign() != 1 && l.getAtom() instanceof EprQuantifiedEqualityAtom) {
 				return l;
+			}
 		}
 		return null;
 	}
@@ -140,7 +143,7 @@ class ApplyDestructiveEqualityReasoning {
 					// TODO use good hash
 					final EprQuantifiedEqualityAtom eea =
 							new EprQuantifiedEqualityAtom(
-									mEprTheory.getTheory().term("=", newTT.terms),
+									(ApplicationTerm) mEprTheory.getTheory().term("=", newTT.terms),
 									0,
 									li.getAtom().getAssertionStackLevel(),
 									mEprTheory.getEqualityEprPredicate(newTT.terms[0].getSort()),

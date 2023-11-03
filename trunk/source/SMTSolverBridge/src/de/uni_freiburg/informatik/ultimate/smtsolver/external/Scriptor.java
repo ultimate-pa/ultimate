@@ -218,7 +218,8 @@ public class Scriptor extends NoopScript {
 
 	@Override
 	public Term simplify(final Term term) throws SMTLIBException {
-		throw new UnsupportedOperationException();
+		mExecutor.input("(simplify " + term + ")");
+		return mExecutor.parseTerm();
 	}
 
 	@Override
@@ -236,7 +237,8 @@ public class Scriptor extends NoopScript {
 
 	@Override
 	public Model getModel() throws SMTLIBException, UnsupportedOperationException {
-		throw new UnsupportedOperationException();
+		mExecutor.input("(get-model)");
+		return mExecutor.parseGetModelResult();
 	}
 
 	/** This method is used in the output parser, to support (get-info :status) **/

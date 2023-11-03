@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.EqualityProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol.ProofMode;
 
 /**
  * Tests the addition of a term congruent to another term and the building of the congruence graph.
@@ -69,7 +70,7 @@ public class CongruentAddTest {
 		mLogger = new DefaultLogger();
 		mLogger.setLoglevel(LogProxy.LOGLEVEL_DEBUG);
 		mDPLL = new DPLLEngine(mLogger, () -> false);
-		mClausifier = new Clausifier(mTheory, mDPLL, 0);
+		mClausifier = new Clausifier(mTheory, mDPLL, ProofMode.NONE);
 		mClausifier.setLogic(Logics.QF_UF);
 		mClosure = mClausifier.getCClosure();
 		createterms();

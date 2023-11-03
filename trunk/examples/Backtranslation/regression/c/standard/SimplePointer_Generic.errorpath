@@ -1,0 +1,11 @@
+[L4]              int a;
+[L5]              int *p1;
+[L7]              p1 = &a
+[L8]              a = 5
+[L10]  EXPR       \read(a)
+[L10]             a--
+[L12]  EXPR       \read(*p1)
+       VAL        [\read(*p1)=4, a={2:0}, p1={2:0}]
+[L12]  COND TRUE  *p1 == 4
+[L18]             __VERIFIER_error()
+       VAL        [a={2:0}, p1={2:0}]

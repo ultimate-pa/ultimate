@@ -29,11 +29,11 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EqualityInformation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -91,7 +91,7 @@ public class ArrayIndexEqualityUtils {
 			final int quantifier, final Term preprocessedInput, final List<MultiDimensionalSelect> selectTerms,
 			final List<MultiDimensionalNestedStore> stores) {
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation = new ThreeValuedEquivalenceRelation<>();
-		final Term[] context = QuantifierUtils.getXjunctsInner(quantifier, preprocessedInput);
+		final Term[] context = QuantifierUtils.getDualFiniteJuncts(quantifier, preprocessedInput);
 		boolean inconsistencyDetected = false;
 		for (final MultiDimensionalSelect selectTerm : selectTerms) {
 			for (final Term entry : selectTerm.getIndex()) {

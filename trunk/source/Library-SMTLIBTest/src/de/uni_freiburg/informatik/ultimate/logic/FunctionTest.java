@@ -86,6 +86,6 @@ public class FunctionTest {
 		final FunctionSymbol eq = theory.getFunction("=", new Sort[] { selcarnilmone.getSort(), sortReal });
 		final Term t = theory.term(eq, selcarnilmone, Rational.valueOf(10, -15).toTerm(sortReal));
 		Assert.assertSame(theory.getBooleanSort(), t.getSort());
-		Assert.assertEquals("(= (select (car (as nil Heap)) (- 1)) (/ (- 2) 3))", t.toString());
+		Assert.assertEquals("(= (select (car (as nil Heap)) (- 1)) (/ (- 2.0) 3.0))", t.toString());
 	}
 }

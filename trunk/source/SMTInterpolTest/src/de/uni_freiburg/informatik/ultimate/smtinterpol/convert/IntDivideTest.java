@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ClauseDeletionHook;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofNode;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol.ProofMode;
 
 /**
  * Test Class for integer divide operators.
@@ -50,7 +51,7 @@ public final class IntDivideTest {
 	public IntDivideTest() {
 		mTheory = new Theory(Logics.QF_UFLIRA);
 		final DPLLEngine dpllEngine = new DPLLEngine(new DefaultLogger(), () -> false);
-		mClausifier = new Clausifier(mTheory, dpllEngine, 0) {
+		mClausifier = new Clausifier(mTheory, dpllEngine, ProofMode.NONE) {
 			@Override
 			public void addClause(final Literal[] lits, final ClauseDeletionHook hook, final ProofNode pn) {
 				mClauses.add(lits);

@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -65,17 +65,17 @@ public class SymbolicMemory {
 
 	/**
 	 * Construct a new Symbolic Memory.
-	 * 
+	 *
 	 * @param script
 	 *            A {@link ManagedScript} instance that can be used to perform
 	 *            SMT operations.
-	 * 
+	 *
 	 * @param services
 	 *            an {@link IUltimateServiceProvider}
-	 * 
+	 *
 	 * @param logger
 	 *            A {@link ILogger} instance that is used for debug logging.
-	 * 
+	 *
 	 * @param tf
 	 *            A {@link TransFormula} for which the memory is built.
 	 * @param oldSymbolTable
@@ -97,19 +97,19 @@ public class SymbolicMemory {
 		 * initialize the symbolic memory.
 		 */
 		for (final Entry<IProgramVar, TermVariable> entry : mInVars.entrySet()) {
-			mMemoryMapping.put(entry.getKey(), (TermVariable) entry.getValue());
+			mMemoryMapping.put(entry.getKey(), entry.getValue());
 		}
 
 		for (final Entry<IProgramVar, TermVariable> entry : mOutVars.entrySet()) {
 			if (!mMemoryMapping.containsKey(entry.getKey())) {
-				mMemoryMapping.put(entry.getKey(), (TermVariable) entry.getValue());
+				mMemoryMapping.put(entry.getKey(), entry.getValue());
 			}
 		}
 	}
 
 	/**
 	 * Update the memory with changed values.
-	 * 
+	 *
 	 * @param value
 	 *            A mapping of {@link IProgramVar} to their new changed value.
 	 */
@@ -136,15 +136,14 @@ public class SymbolicMemory {
 				substitution.putAll(termUnravel(appTerm));
 			}
 
-			final Substitution sub = new Substitution(mScript, substitution);
-			final Term t2 = sub.transform(t);
+			final Term t2 = Substitution.apply(mScript, substitution, t);
 			mMemoryMapping.replace(entry.getKey(), t2);
 		}
 	}
 
 	/**
 	 * Update the given transformula with entries of the symbolic memory.
-	 * 
+	 *
 	 * @param tf
 	 *            {@link TransFormula}
 	 * @return a symbolic memory compatible {@link TransFormula}
@@ -162,9 +161,8 @@ public class SymbolicMemory {
 
 		substitution.putAll(termUnravel(appTerm, tf.getInVars()));
 
-		final Substitution sub = new Substitution(mScript, substitution);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(mInVars, mOutVars, true, null, true, null, true);
-		final Term term = sub.transform(tf.getFormula());
+		final Term term = Substitution.apply(mScript, substitution, tf.getFormula());
 
 		tfb.setFormula(SmtUtils.simplify(mScript, term, mServices, SimplificationTechnique.SIMPLIFY_DDA));
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
@@ -176,7 +174,7 @@ public class SymbolicMemory {
 	/**
 	 * Unravel a given term and substitute subterms with values from the
 	 * symbolic memory.
-	 * 
+	 *
 	 * @param appTerm
 	 * @return
 	 */
@@ -206,7 +204,7 @@ public class SymbolicMemory {
 	/**
 	 * Unravel a given term and substitute subterms with values from the
 	 * symbolic memory.
-	 * 
+	 *
 	 * @param appTerm
 	 * @param progVars
 	 * @return
@@ -247,10 +245,10 @@ public class SymbolicMemory {
 
 	/**
 	 * get the value of a specific variable in the memory.
-	 * 
+	 *
 	 * @param var
 	 *            A {@link TermVariable} for which the memory value is wanted.
-	 * 
+	 *
 	 * @return The memory value of the {@link TermVariable}.
 	 */
 	public Term getValue(final IProgramVar var) {
@@ -259,7 +257,7 @@ public class SymbolicMemory {
 
 	/**
 	 * Get the whole symbolic memory.
-	 * 
+	 *
 	 * @return The whole symbolic memory
 	 */
 	public Map<IProgramVar, Term> getMemory() {

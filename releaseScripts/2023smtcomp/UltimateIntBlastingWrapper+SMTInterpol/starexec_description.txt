@@ -1,0 +1,10 @@
+UltimateIntBlastingWrapperPlusSMTInterpol
+
+Wrapper tool that that translates bitvectors to intergers and applies SMTInterpol.
+
+Max Barth, Matthias Heizmann [University of Freiburg, Germany]
+
+UltimateIntBlastingWrapper is part of Ultimate
+http://ultimate.informatik.uniMINUSfreiburg.de/
+to which many people contributed.
+

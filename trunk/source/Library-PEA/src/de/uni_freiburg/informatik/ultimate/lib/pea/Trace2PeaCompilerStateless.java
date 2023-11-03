@@ -659,7 +659,7 @@ public class Trace2PeaCompilerStateless {
 			mInit = new Phase[initSize];
 			for (int i = 0; i < initSize; i++) {
 				final Transition trans = initTrans.get(i);
-				if ("st".equals(trans.getDest().getName())) {
+				if (trans.getDest().getName().endsWith("st"))  {
 					/*
 					 * If the first phase is not a true phase we need a special state to enter the garbage state "st"
 					 * only if the predicate of the first phase does not hold.

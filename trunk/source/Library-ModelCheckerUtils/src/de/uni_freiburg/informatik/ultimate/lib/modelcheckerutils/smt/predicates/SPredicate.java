@@ -31,6 +31,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -44,8 +45,8 @@ public class SPredicate extends BasicPredicate implements ISLPredicate {
 	protected final IcfgLocation mProgramPoint;
 
 	protected SPredicate(final IcfgLocation programPoint, final int serialNumber, final String[] procedures,
-			final Term term, final Set<IProgramVar> vars, final Term closedFormula) {
-		super(serialNumber, procedures, term, vars, closedFormula);
+			final Term term, final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final Term closedFormula) {
+		super(serialNumber, procedures, term, vars, funs, closedFormula);
 		mProgramPoint = programPoint;
 	}
 

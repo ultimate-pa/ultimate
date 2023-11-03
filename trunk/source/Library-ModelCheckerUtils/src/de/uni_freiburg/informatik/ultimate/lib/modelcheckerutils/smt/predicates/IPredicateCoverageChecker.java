@@ -40,12 +40,14 @@ public interface IPredicateCoverageChecker {
 	Validity isCovered(IPredicate lhs, IPredicate rhs);
 
 	/**
-	 * Returns all known predicates that are covered by the predicate pred (i.e. all predicates that imply pred).
+	 * Returns all known predicates that are covered by the predicate pred (i.e. all
+	 * predicates that imply pred, which includes also pred itself).
 	 */
 	Set<IPredicate> getCoveredPredicates(IPredicate pred);
 
 	/**
-	 * Returns all known predicates that cover the predicate pred (i.e. all predicates that are implied by pred).
+	 * Returns all known predicates that cover the predicate pred (i.e. all
+	 * predicates that are implied by pred, which includes also pred itself).
 	 */
 	Set<IPredicate> getCoveringPredicates(IPredicate pred);
 
@@ -55,7 +57,7 @@ public interface IPredicateCoverageChecker {
 	 * of states that is strictly greater (resp. smaller) than the set of states that is represented by p2. (E.g, "true"
 	 * is strictly greater than "false").
 	 */
-	IPartialComparator<IPredicate> getPartialComperator();
+	IPartialComparator<IPredicate> getPartialComparator();
 
 	/**
 	 * @return A relation between predicates where an element (A,B) of the relation means that A implies B and which can

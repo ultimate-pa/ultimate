@@ -31,6 +31,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -239,13 +240,13 @@ public class ExpressionResultTransformer {
 	public ExpressionResult switchToRValue(final ExpressionResult expr, final ILocation loc, final IASTNode hook) {
 		final LRValue lrVal = expr.getLrValue();
 
-		final ExpressionResult result;
 		if (lrVal == null) {
 			return expr;
-		} else if (lrVal instanceof RValue) {
-			final ExpressionResult replaced = replaceCFunctionByCPointer(expr);
-			return replaceEnumByInt(replaced);
-		} else if (lrVal instanceof LocalLValue) {
+		}
+		if (lrVal instanceof RValue) {
+			return replaceEnumByInt(replaceCFunctionByCPointer(expr));
+		}
+		if (lrVal instanceof LocalLValue) {
 			final CType underlyingType = lrVal.getCType().getUnderlyingType();
 			mCHandler.moveArrayAndStructIdsOnHeap(loc, underlyingType, lrVal.getValue(), expr.getAuxVars(), hook);
 
@@ -264,8 +265,9 @@ public class ExpressionResultTransformer {
 			if (mDataRaceChecker != null) {
 				mDataRaceChecker.checkOnRead(erb, loc, lrVal);
 			}
-			result = erb.build();
-		} else if (lrVal instanceof HeapLValue) {
+			return erb.build();
+		}
+		if (lrVal instanceof HeapLValue) {
 			final HeapLValue hlv = (HeapLValue) lrVal;
 			CType underlyingType = expr.getLrValue().getCType().getUnderlyingType();
 			if (underlyingType instanceof CEnum) {
@@ -275,11 +277,11 @@ public class ExpressionResultTransformer {
 			final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(expr);
 			final RValue newValue;
 			if (underlyingType instanceof CPrimitive) {
-				final ExpressionResult rex = mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType, hook);
+				final ExpressionResult rex = mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType);
 				newValue = (RValue) rex.getLrValue();
 				erb.addAllExceptLrValue(rex);
 			} else if (underlyingType instanceof CPointer) {
-				final ExpressionResult rex = mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType, hook);
+				final ExpressionResult rex = mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType);
 				newValue = (RValue) rex.getLrValue();
 				erb.addAllExceptLrValue(rex);
 			} else if (underlyingType instanceof CArray) {
@@ -303,11 +305,9 @@ public class ExpressionResultTransformer {
 			if (mDataRaceChecker != null) {
 				mDataRaceChecker.checkOnRead(erb, loc, lrVal);
 			}
-			result = erb.setLrValue(newValue).build();
-		} else {
-			throw new AssertionError("an LRValue that is not null, and no LocalLValue, RValue or HeapLValue???");
+			return erb.setLrValue(newValue).build();
 		}
-		return result;
+		throw new AssertionError("an LRValue that is not null, and no LocalLValue, RValue or HeapLValue???");
 	}
 
 	/**
@@ -360,21 +360,21 @@ public class ExpressionResultTransformer {
 			final LRValue fieldLRVal;
 			if (underlyingType instanceof CPrimitive) {
 				final ExpressionResult fieldRead = (ExpressionResult) mStructHandler.readFieldInTheStructAtAddress(loc,
-						i, structOnHeapAddress, structType, hook);
+						i, structOnHeapAddress, structType);
 				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.getStatements());
 				newDecl.addAll(fieldRead.getDeclarations());
 				newAuxVars.addAll(fieldRead.getAuxVars());
 			} else if (underlyingType instanceof CPointer) {
 				final ExpressionResult fieldRead = (ExpressionResult) mStructHandler.readFieldInTheStructAtAddress(loc,
-						i, structOnHeapAddress, structType, hook);
+						i, structOnHeapAddress, structType);
 				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.getStatements());
 				newDecl.addAll(fieldRead.getDeclarations());
 				newAuxVars.addAll(fieldRead.getAuxVars());
 			} else if (underlyingType instanceof CArray) {
 				final Expression arrayPointer =
-						mStructHandler.computeStructFieldAddress(loc, i, structOnHeapAddress, structType, hook);
+						mStructHandler.computeStructFieldAddress(loc, i, structOnHeapAddress, structType);
 				final ExpressionResult xres1 = readArrayFromHeap(old, loc, arrayPointer, (CArray) underlyingType, hook);
 				final ExpressionResult xres = xres1;
 
@@ -386,15 +386,14 @@ public class ExpressionResultTransformer {
 			} else if (underlyingType instanceof CEnum) {
 				// like CPrimitive..
 				final ExpressionResult fieldRead = (ExpressionResult) mStructHandler.readFieldInTheStructAtAddress(loc,
-						i, structOnHeapAddress, structType, hook);
+						i, structOnHeapAddress, structType);
 				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.getStatements());
 				newDecl.addAll(fieldRead.getDeclarations());
 				newAuxVars.addAll(fieldRead.getAuxVars());
 			} else if (underlyingType instanceof CStructOrUnion) {
 
-				final Offset innerStructOffset =
-						mTypeSizeAndOffsetComputer.constructOffsetForField(loc, structType, i, hook);
+				final Offset innerStructOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, structType, i);
 				if (innerStructOffset.isBitfieldOffset()) {
 					throw new UnsupportedOperationException("Bitfield read struct from heap");
 				}
@@ -457,20 +456,20 @@ public class ExpressionResultTransformer {
 					"we need to generalize this to nested and/or variable length arrays");
 		}
 
-		final BigInteger boundBigInteger = mTypeSizes.extractIntegerValue(arrayType.getBound(), hook);
+		final BigInteger boundBigInteger = mTypeSizes.extractIntegerValue(arrayType.getBound());
 		if (boundBigInteger == null) {
 			throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
 		}
 		final int bound = boundBigInteger.intValue();
 		final AuxVarInfo newArrayAuxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, arrayType, SFO.AUXVAR.ARRAYCOPY);
-		final LRValue resultValue = new RValueForArrays(newArrayAuxvar.getExp(), arrayType);
+		final LRValue resultValue = new RValue(newArrayAuxvar.getExp(), arrayType);
 		ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addDeclaration(newArrayAuxvar.getVarDec());
 		builder.addAuxVar(newArrayAuxvar);
 
 		final Expression newStartAddressBase = MemoryHandler.getPointerBaseAddress(address, loc);
 		final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(address, loc);
-		final Expression valueTypeSize = mMemoryHandler.calculateSizeOf(loc, arrayValueType, hook);
+		final Expression valueTypeSize = mMemoryHandler.calculateSizeOf(loc, arrayValueType);
 
 		Expression arrayEntryAddressOffset = newStartAddressOffset;
 
@@ -482,7 +481,7 @@ public class ExpressionResultTransformer {
 			if (arrayValueType instanceof CStructOrUnion) {
 				readRex = readStructFromHeap(old, loc, readAddress, (CStructOrUnion) arrayValueType, hook);
 			} else {
-				readRex = mMemoryHandler.getReadCall(readAddress, arrayType.getValueType(), hook);
+				readRex = mMemoryHandler.getReadCall(readAddress, arrayType.getValueType());
 			}
 			builder.addAllExceptLrValue(readRex);
 			builder.setOrResetLrValue(readRex.getLrValue());
@@ -514,15 +513,14 @@ public class ExpressionResultTransformer {
 	 * Other types are not supported. If the expression was obtained by a conversion from bool to int, we try to get rid
 	 * of the former conversion instead of applying a new one.
 	 */
-	private static RValue toBoolean(final ILocation loc, final RValue rVal,
-			final ExpressionTranslation expressionTranslation) {
+	private RValue toBoolean(final ILocation loc, final RValue rVal) {
 		assert !rVal.isBoogieBool();
 		final CType underlyingType = CEnum.replaceEnumWithInt(rVal.getCType().getUnderlyingType());
-		final Expression zero = expressionTranslation.constructZero(loc, underlyingType);
+		final Expression zero = mExprTrans.constructZero(loc, underlyingType);
 
 		final Expression resultEx;
 		if (underlyingType instanceof CPrimitive) {
-			resultEx = expressionTranslation.constructBinaryEqualityExpression(loc, IASTBinaryExpression.op_notequals,
+			resultEx = mExprTrans.constructBinaryEqualityExpression(loc, IASTBinaryExpression.op_notequals,
 					rVal.getValue(), rVal.getCType(), zero, underlyingType);
 		} else if (underlyingType instanceof CPointer) {
 			resultEx = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, rVal.getValue(),
@@ -544,8 +542,17 @@ public class ExpressionResultTransformer {
 		if (old.getLrValue().isBoogieBool()) {
 			return old;
 		}
-		return new ExpressionResultBuilder(old).setOrResetLrValue(toBoolean(loc, (RValue) old.getLrValue(), mExprTrans))
-				.build();
+		return new ExpressionResultBuilder(old).setOrResetLrValue(toBoolean(loc, (RValue) old.getLrValue())).build();
+	}
+
+	private RValue toInteger(final ILocation loc, final RValue rVal) {
+		assert rVal.isBoogieBool();
+		final Expression one =
+				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ONE);
+		final Expression zero =
+				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
+		return new RValue(ExpressionFactory.constructIfThenElseExpression(loc, rVal.getValue(), one, zero),
+				rVal.getCType(), false);
 	}
 
 	/**
@@ -553,11 +560,11 @@ public class ExpressionResultTransformer {
 	 *
 	 */
 	public ExpressionResult rexBoolToInt(final ExpressionResult old, final ILocation loc) {
-		if (old.getLrValue() == null) {
+		if (old.getLrValue() == null || !old.getLrValue().isBoogieBool()) {
 			/*
 			 * This ExpressionResult does not have a value (for example it may be the translation of a call to a void
-			 * function). Void values like this are allowed for example in something like <code>0 ? foo() : 0</code>
-			 * where foo is void. Do nothing here.
+			 * function) or its value is not a bool. Void values like this are allowed for example in something like
+			 * <code>0 ? foo() : 0</code> where foo is void. Do nothing here.
 			 */
 			return old;
 		}
@@ -565,11 +572,7 @@ public class ExpressionResultTransformer {
 		if (!(old.getLrValue() instanceof RValue)) {
 			throw new UnsupportedOperationException("only RValue can switch");
 		}
-		if (old.getLrValue().isBoogieBool()) {
-			return new ExpressionResultBuilder(old)
-					.setOrResetLrValue(RValue.boolToInt(loc, (RValue) old.getLrValue(), mTypeSizes)).build();
-		}
-		return old;
+		return new ExpressionResultBuilder(old).setOrResetLrValue(toInteger(loc, (RValue) old.getLrValue())).build();
 	}
 
 	public ExpressionResult makeRepresentationReadyForConversionAndRexBoolToInt(final ExpressionResult expr,
@@ -603,7 +606,7 @@ public class ExpressionResultTransformer {
 	private static ExpressionResult replaceEnumByInt(final ExpressionResult old) {
 		if (old.getLrValue() instanceof RValue) {
 			final RValue oldRValue = (RValue) old.getLrValue();
-			if (oldRValue.getCType() instanceof CEnum) {
+			if (oldRValue.getCType().getUnderlyingType() instanceof CEnum) {
 				final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 				return new ExpressionResultBuilder(old).setOrResetLrValue(new RValue(oldRValue.getValue(), intType,
 						oldRValue.isBoogieBool(), oldRValue.isIntFromPointer())).build();
@@ -879,122 +882,95 @@ public class ExpressionResultTransformer {
 	 * @return A Pair of new {@link ExpressionResult}s, first for left and second for right.
 	 */
 	public Pair<ExpressionResult, ExpressionResult> usualArithmeticConversions(final ILocation loc,
-			ExpressionResult leftRex, ExpressionResult rightRex) {
-		final CPrimitive leftPrimitive =
-				(CPrimitive) CEnum.replaceEnumWithInt(leftRex.getLrValue().getCType().getUnderlyingType());
-		final CPrimitive rightPrimitive =
-				(CPrimitive) CEnum.replaceEnumWithInt(leftRex.getLrValue().getCType().getUnderlyingType());
-		if (leftPrimitive.isIntegerType()) {
-			leftRex = doIntegerPromotion(loc, leftRex);
-		}
-		if (rightPrimitive.isIntegerType()) {
-			rightRex = doIntegerPromotion(loc, rightRex);
-		}
+			final ExpressionResult leftRex, final ExpressionResult rightRex) {
+		final ExpressionResult leftPromoted = promoteToIntegerIfNecessary(loc, leftRex);
+		final ExpressionResult rightPromoted = promoteToIntegerIfNecessary(loc, rightRex);
 
 		final CPrimitive resultType = determineResultOfUsualArithmeticConversions(
-				(CPrimitive) leftRex.getLrValue().getCType().getUnderlyingType(),
-				(CPrimitive) rightRex.getLrValue().getCType().getUnderlyingType());
+				(CPrimitive) leftPromoted.getLrValue().getCType().getUnderlyingType(),
+				(CPrimitive) rightPromoted.getLrValue().getCType().getUnderlyingType());
 
-		leftRex = convertIfNecessary(loc, leftRex, resultType);
-		rightRex = convertIfNecessary(loc, rightRex, resultType);
+		final ExpressionResult resultLeft = convertIfNecessary(loc, leftPromoted, resultType);
+		final ExpressionResult resultRight = convertIfNecessary(loc, rightPromoted, resultType);
 
-		if (!leftRex.getLrValue().getCType().getUnderlyingType().equals(resultType)) {
+		if (!resultLeft.getLrValue().getCType().getUnderlyingType().equals(resultType)) {
 			throw new AssertionError("conversion failed");
 		}
-		if (!rightRex.getLrValue().getCType().getUnderlyingType().equals(resultType)) {
+		if (!resultRight.getLrValue().getCType().getUnderlyingType().equals(resultType)) {
 			throw new AssertionError("conversion failed");
 		}
-		return new Pair<>(leftRex, rightRex);
+		return new Pair<>(resultLeft, resultRight);
 	}
 
 	private CPrimitive determineResultOfUsualArithmeticConversions(final CPrimitive leftPrimitive,
 			final CPrimitive rightPrimitive) {
 		if (leftPrimitive.getGeneralType() == CPrimitiveCategory.FLOATTYPE
 				|| rightPrimitive.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
-			if (leftPrimitive.getType() == CPrimitives.COMPLEX_LONGDOUBLE
-					|| rightPrimitive.getType() == CPrimitives.COMPLEX_LONGDOUBLE) {
+			if (leftPrimitive.isComplexType() || rightPrimitive.isComplexType()) {
 				throw new UnsupportedOperationException("complex types not yet supported");
-			} else if (leftPrimitive.getType() == CPrimitives.COMPLEX_DOUBLE
-					|| rightPrimitive.getType() == CPrimitives.COMPLEX_DOUBLE) {
-				throw new UnsupportedOperationException("complex types not yet supported");
-			} else if (leftPrimitive.getType() == CPrimitives.COMPLEX_FLOAT
-					|| rightPrimitive.getType() == CPrimitives.COMPLEX_FLOAT) {
-				throw new UnsupportedOperationException("complex types not yet supported");
-			} else if (leftPrimitive.getType() == CPrimitives.LONGDOUBLE
+			}
+			if (leftPrimitive.getType() == CPrimitives.LONGDOUBLE
 					|| rightPrimitive.getType() == CPrimitives.LONGDOUBLE) {
 				return new CPrimitive(CPrimitives.LONGDOUBLE);
-			} else if (leftPrimitive.getType() == CPrimitives.DOUBLE
-					|| rightPrimitive.getType() == CPrimitives.DOUBLE) {
-				return new CPrimitive(CPrimitives.DOUBLE);
-			} else if (leftPrimitive.getType() == CPrimitives.FLOAT || rightPrimitive.getType() == CPrimitives.FLOAT) {
-				return new CPrimitive(CPrimitives.FLOAT);
-			} else {
-				throw new AssertionError("unknown FLOATTYPE " + leftPrimitive + ", " + rightPrimitive);
 			}
-		} else if (leftPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE
-				&& rightPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE) {
-			return determineResultOfUsualArithmeticConversions_Integer(leftPrimitive, rightPrimitive);
-		} else {
-			throw new AssertionError(
-					"unsupported combination of CPrimitives: " + leftPrimitive + " and " + rightPrimitive);
+			if (leftPrimitive.getType() == CPrimitives.DOUBLE || rightPrimitive.getType() == CPrimitives.DOUBLE) {
+				return new CPrimitive(CPrimitives.DOUBLE);
+			}
+			if (leftPrimitive.getType() == CPrimitives.FLOAT || rightPrimitive.getType() == CPrimitives.FLOAT) {
+				return new CPrimitive(CPrimitives.FLOAT);
+			}
+			throw new AssertionError("unknown FLOATTYPE " + leftPrimitive + ", " + rightPrimitive);
 		}
+		if (leftPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE
+				&& rightPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE) {
+			return determineResultOfUsualArithmeticConversionsForInteger(leftPrimitive, rightPrimitive);
+		}
+		throw new AssertionError("unsupported combination of CPrimitives: " + leftPrimitive + " and " + rightPrimitive);
 	}
 
 	/**
-	 * Perform the integer promotions a specified in C11 6.3.1.1.2 on the operand.
+	 * Perform the integer promotions a specified in C11 6.3.1.1.2 on the operand. If no integer promotion has to be
+	 * performed (because we don't have a smaller integer type), the operand is returned.
 	 */
-	public final ExpressionResult doIntegerPromotion(final ILocation loc, final ExpressionResult operand) {
+	public final ExpressionResult promoteToIntegerIfNecessary(final ILocation loc, final ExpressionResult operand) {
 		final CType ctype = CEnum.replaceEnumWithInt(operand.getLrValue().getCType().getUnderlyingType());
-		if (!(ctype instanceof CPrimitive)) {
-			throw new IllegalArgumentException("integer promotions not applicable to " + ctype);
-		}
-		final CPrimitive cPrimitive = (CPrimitive) ctype;
-		if (integerPromotionNeeded(cPrimitive)) {
-			final CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
-			return mExprTrans.convertIntToInt(loc, operand, promotedType);
+		if (ctype instanceof CPrimitive) {
+			final CPrimitive cPrimitive = (CPrimitive) ctype;
+			if (integerPromotionNeeded(cPrimitive)) {
+				final CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
+				return mExprTrans.convertIntToInt(loc, operand, promotedType);
+			}
 		}
 		return operand;
 	}
 
-	public CPrimitive determineResultOfUsualArithmeticConversions_Integer(final CPrimitive typeLeft,
-			final CPrimitive typeRight) {
-
-		if (typeLeft.equals(typeRight)) {
-			return typeLeft;
-		} else if (mTypeSizes.isUnsigned(typeLeft) && mTypeSizes.isUnsigned(typeRight)
-				|| !mTypeSizes.isUnsigned(typeLeft) && !mTypeSizes.isUnsigned(typeRight)) {
-			final Integer sizeLeft = mTypeSizes.getSize(typeLeft.getType());
-			final Integer sizeRight = mTypeSizes.getSize(typeRight.getType());
-
-			if (sizeLeft.compareTo(sizeRight) >= 0) {
-				return typeLeft;
-			}
-			return typeRight;
-		} else {
-			CPrimitive unsignedType;
-			CPrimitive signedType;
-
-			if (mTypeSizes.isUnsigned(typeLeft)) {
-				unsignedType = typeLeft;
-				signedType = typeRight;
-			} else {
-				unsignedType = typeRight;
-				signedType = typeLeft;
-			}
-
-			if (mTypeSizes.getSize(unsignedType.getType()).compareTo(mTypeSizes.getSize(signedType.getType())) >= 0) {
-				return unsignedType;
-			}
-			return signedType;
-		}
+	private static boolean integerPromotionNeeded(final CPrimitive cPrimitive) {
+		return List.of(CPrimitives.CHAR, CPrimitives.SCHAR, CPrimitives.UCHAR, CPrimitives.SHORT, CPrimitives.USHORT)
+				.contains(cPrimitive.getType());
 	}
 
-	private static boolean integerPromotionNeeded(final CPrimitive cPrimitive) {
-		return cPrimitive.getType().equals(CPrimitive.CPrimitives.CHAR)
-				|| cPrimitive.getType().equals(CPrimitive.CPrimitives.SCHAR)
-				|| cPrimitive.getType().equals(CPrimitive.CPrimitives.SHORT)
-				|| cPrimitive.getType().equals(CPrimitive.CPrimitives.UCHAR)
-				|| cPrimitive.getType().equals(CPrimitive.CPrimitives.USHORT);
+	private CPrimitive determineResultOfUsualArithmeticConversionsForInteger(final CPrimitive typeLeft,
+			final CPrimitive typeRight) {
+		if (typeLeft.equals(typeRight)) {
+			return typeLeft;
+		}
+		if (mTypeSizes.isUnsigned(typeLeft) == mTypeSizes.isUnsigned(typeRight)) {
+			return getMaximalType(typeLeft, typeRight);
+		}
+		CPrimitive unsignedType;
+		CPrimitive signedType;
+		if (mTypeSizes.isUnsigned(typeLeft)) {
+			unsignedType = typeLeft;
+			signedType = typeRight;
+		} else {
+			unsignedType = typeRight;
+			signedType = typeLeft;
+		}
+		return getMaximalType(unsignedType, signedType);
+	}
+
+	private CPrimitive getMaximalType(final CPrimitive type1, final CPrimitive type2) {
+		return mTypeSizes.getSize(type1.getType()) >= mTypeSizes.getSize(type2.getType()) ? type1 : type2;
 	}
 
 	private CPrimitive determineResultOfIntegerPromotion(final CPrimitive cPrimitive) {

@@ -409,7 +409,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 	}
 
 	private static <LETTER> void aggregate(final Collection<LETTER> newResponsibleStmts,
-			final Map<IcfgLocation, Set<LETTER>> finalLoc2responsibleStmts, final ArrayList<IPredicate> stateSequence) {
+			final Map<IcfgLocation, Set<LETTER>> finalLoc2responsibleStmts, final List<IPredicate> stateSequence) {
 		final IcfgLocation finalLoc = ((ISLPredicate) stateSequence.get(stateSequence.size() - 1)).getProgramPoint();
 		Set<LETTER> responsibleStmts = finalLoc2responsibleStmts.get(finalLoc);
 		if (responsibleStmts == null) {

@@ -31,6 +31,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Edge in a recursive control flow graph that represents a fork call. Opposed to a Summary this represents only
@@ -89,5 +91,9 @@ public class ForkThreadCurrent extends CodeBlock implements IIcfgForkTransitionT
 		return mForkStatement.getProcedureName();
 	}
 
-
+	@Override
+	public void setTransitionFormula(final UnmodifiableTransFormula transFormula) {
+		assert TransFormulaUtils.hasInternalNormalForm(transFormula) : "Expected TF in internal normal form";
+		super.setTransitionFormula(transFormula);
+	}
 }

@@ -38,11 +38,13 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -55,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class DefaultIcfgSymbolTable implements IIcfgSymbolTable {
 
 	protected final Map<TermVariable, IProgramVar> mTermVariable2ProgramVar = new HashMap<>();
-	protected final Map<ApplicationTerm, IProgramConst> mAppTerm2ProgramConst = new HashMap<>();
+	protected final Map<FunctionSymbol, IProgramFunction> mFunSym2ProgramFunction = new HashMap<>();
 
 	protected final Set<IProgramNonOldVar> mGlobals = new HashSet<>();
 	protected final Set<IProgramConst> mConstants = new HashSet<>();
@@ -93,8 +95,8 @@ public class DefaultIcfgSymbolTable implements IIcfgSymbolTable {
 	}
 
 	@Override
-	public IProgramConst getProgramConst(final ApplicationTerm smtConstant) {
-		return mAppTerm2ProgramConst.get(smtConstant);
+	public IProgramFunction getProgramFun(final FunctionSymbol funSym) {
+		return mFunSym2ProgramFunction.get(funSym);
 	}
 
 	@Override
@@ -116,6 +118,10 @@ public class DefaultIcfgSymbolTable implements IIcfgSymbolTable {
 		return Collections.unmodifiableSet(mLocals.getImage(proc));
 	}
 
+	public void addFun(final IProgramFunction fun) {
+		mFunSym2ProgramFunction.put(fun.getFunctionSymbol(), fun);
+	}
+
 	public void add(final IProgramVarOrConst varOrConst) {
 		if (mConstructionFinished) {
 			throw new IllegalStateException("Construction finished, unable to add new variables or constants.");
@@ -124,7 +130,7 @@ public class DefaultIcfgSymbolTable implements IIcfgSymbolTable {
 		if (varOrConst instanceof IProgramConst) {
 			final IProgramConst pc = (IProgramConst) varOrConst;
 			mConstants.add(pc);
-			mAppTerm2ProgramConst.put(pc.getDefaultConstant(), pc);
+			mFunSym2ProgramFunction.put(pc.getDefaultConstant().getFunction(), pc);
 		} else if (varOrConst instanceof IProgramVar) {
 			final IProgramVar var = (IProgramVar) varOrConst;
 			mTermVariable2ProgramVar.put(var.getTermVariable(), var);

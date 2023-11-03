@@ -252,7 +252,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 										tempNodeData.bStates.add(ATransition.getSucc());
 										tempNodeData.hash = ATransition.getSucc().hashCode();
 										final ArrayList<STATE> newStateSequence =
-												(ArrayList<STATE>) preNode.word.getStateSequence().clone();
+												new ArrayList<>(preNode.word.getStateSequence());
 										newStateSequence.add(ATransition.getSucc());
 										tempNodeData.word = new NestedRun<>(
 												preNode.word.getWord()
@@ -329,7 +329,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 											}
 										}
 										final ArrayList<STATE> newStateSequence =
-												(ArrayList<STATE>) preNode.word.getStateSequence().clone();
+												new ArrayList<>(preNode.word.getStateSequence());
 										newStateSequence.add(tempNodeData.correspondingAState);
 										tempNodeData.word = new NestedRun<>(preNode.word.getWord()
 												.concatenate(new NestedWord<>(tran.getLetter(), -2)), newStateSequence);

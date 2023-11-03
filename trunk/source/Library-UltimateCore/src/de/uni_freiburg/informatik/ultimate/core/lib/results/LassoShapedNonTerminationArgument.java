@@ -29,17 +29,18 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
- * Abstract superclass for Nontermination Arguments where the trace has the 
+ * Abstract superclass for Nontermination Arguments where the trace has the
  * form of a lasso.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <P>
  *            program position class
  */
-public abstract class LassoShapedNonTerminationArgument<P extends IElement, E> extends NonTerminationArgumentResult<P, E> {
-	
+public class LassoShapedNonTerminationArgument<P extends IElement, E> extends NonTerminationArgumentResult<P, E> {
+
 	private final IProgramExecution<P, E> mStemExecution;
 	private final IProgramExecution<P, E> mLoopExecution;
 
@@ -58,7 +59,27 @@ public abstract class LassoShapedNonTerminationArgument<P extends IElement, E> e
 		return mLoopExecution;
 	}
 
-	
-	
+
+	@Override
+	public String getShortDescription() {
+		return "Nontermination argument in form of an infinite program execution.";
+	}
+
+	@Override
+	public String getLongDescription() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Nontermination argument in form of an infinite program execution.");
+		sb.append(CoreUtil.getPlatformLineSeparator());
+		sb.append("Stem:");
+		sb.append(CoreUtil.getPlatformLineSeparator());
+		sb.append(mTranslatorSequence.translateProgramExecution(mStemExecution));
+		sb.append("Loop:");
+		sb.append(CoreUtil.getPlatformLineSeparator());
+		sb.append(mTranslatorSequence.translateProgramExecution(mLoopExecution));
+		sb.append("End of lasso representation.");
+		return sb.toString();
+	}
+
+
 
 }

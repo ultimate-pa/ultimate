@@ -26,11 +26,13 @@ import org.junit.runners.JUnit4;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol.ProofMode;
 
 /**
  * Test Class for Pair Hash.
@@ -48,7 +50,7 @@ public final class PairHashTest {
 	public PairHashTest() {
 		mTheory = new Theory(Logics.QF_UF);
 		final DPLLEngine dpllEngine = new DPLLEngine(new DefaultLogger(), () -> false);
-		final Clausifier clausifier = new Clausifier(mTheory, dpllEngine, 0);
+		final Clausifier clausifier = new Clausifier(mTheory, dpllEngine, ProofMode.NONE);
 		mCClosure = new CClosure(clausifier);
 		createtermss();
 		dpllEngine.getLogger().setLoglevel(LogProxy.LOGLEVEL_DEBUG);
@@ -60,7 +62,9 @@ public final class PairHashTest {
 		mTerms = new CCTerm[NUMTERMS];
 		for (int i = 0; i < NUMTERMS; i++) {
 			final FunctionSymbol sym = mTheory.declareFunction("x" + i, new Sort[0], sort);
-			mTerms[i] = mCClosure.createAnonTerm(mTheory.term(sym));
+			final Term term = mTheory.term(sym);
+			mTerms[i] = mCClosure.createAnonTerm(term);
+			mCClosure.addTerm(mTerms[i], term);
 		}
 	}
 

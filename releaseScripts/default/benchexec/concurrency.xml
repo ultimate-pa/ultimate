@@ -1,21 +1,27 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="600" hardtimelimit="620" cpuCores="2">
-	<option name="--force-no-wrapper" />
+  <resultfiles></resultfiles>
 
-	<!-- === No Partial Order Reduction === -->
-	<!-- ================================== -->
+  <option name="--force-no-wrapper" />
 
-	<!--rundefinition name="Automizer FA">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf</option>
-	</rundefinition-->
+  <!-- === No Partial Order Reduction === -->
+  <!-- ================================== -->
 
-	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.None">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-None-NoLbe.epf</option>
-	</rundefinition-->
+  <!--rundefinition name="Automizer-FA">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf</option>
+  </rundefinition-->
 
-	<!--rundefinition name="Automizer PN">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf</option>
-	</rundefinition-->
+  <!--rundefinition name="Automizer FA.CANONICAL">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-CANONICAL.epf</option>
+  </rundefinition-->
+
+  <!--rundefinition name="Automizer-PN">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.None">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/None.epf</option>
+  </rundefinition-->
 
 	<rundefinition name="Automizer PN+OG:Iterative">
 		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe-OGIterative.epf</option>
@@ -34,195 +40,557 @@
 	</rundefinition>
 
 
-	<!-- === Cassez/Ziegler-style: single-shot up-front reduction, then normal verification === -->
-	<!-- ====================================================================================== -->
+  <!-- === Cassez/Ziegler-style: single-shot up-front reduction, then normal verification === -->
+  <!-- ====================================================================================== -->
 
-	<!--rundefinition name="Automizer FA.Delay">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-Delay.epf</option>
-	</rundefinition-->
+  <!--rundefinition name="Automizer FA.Delay">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-Delay.epf</option>
+  </rundefinition-->
 
-	<!--rundefinition name="Automizer FA.NewStates">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-NewStates.epf</option>
-	</rundefinition-->
+  <!--rundefinition name="Automizer FA.NewStates">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-NewStates.epf</option>
+  </rundefinition-->
 
-	<!--rundefinition name="Automizer FA.SemanticLBE">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-SemanticLbe.epf</option>
-	</rundefinition-->
+  <!--rundefinition name="Automizer FA.SemanticLBE">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-SemanticLbe.epf</option>
+  </rundefinition-->
 
-	<!--rundefinition name="Automizer PN.SemanticLBE">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-SemanticLbe.epf</option>
-	</rundefinition-->
-
-
-	<!-- === Sleep Set Reduction (prune only, non-minimal) integrated in TAR === -->
-	<!-- ======================================================================= -->
-
-	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe.epf</option>
-	</rundefinition-->
-
-	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep.OrderLockstep">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe-Lockstep.epf</option>
-	</rundefinition-->
-
-	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep.OrderRandom42">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe-Random42.epf</option>
-	</rundefinition>
-
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep.OrderRandom521">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe-Random521.epf</option>
-	</rundefinition>
-
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep.OrderRandom7777">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-NoLbe-Random7777.epf</option>
-	</rundefinition-->
+  <!--rundefinition name="Automizer PN.SemanticLBE">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-SemanticLbe.epf</option>
+  </rundefinition-->
 
 
-	<!-- === Sleep Set Reduction (with unrolling, minimal) integrated in TAR === -->
-	<!-- ======================================================================= -->
+  <!-- === Sleep Set Reduction (prune only, non-minimal) integrated in TAR === -->
+  <!-- ======================================================================= -->
 
-	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
-	</rundefinition>
+  <!--rundefinition name="GemCutter.DelaySleep">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/DelaySleep.epf</option>
+  </rundefinition-->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep.Symm">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-Symm.epf</option>
-	</rundefinition>
+  <!--rundefinition name="GemCutter.DelaySleep.OrderLockstep">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/DelaySleep.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+  </rundefinition-->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep.OrderLockstep">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-Lockstep.epf</option>
-	</rundefinition>
+  <!--rundefinition name="GemCutter.DelaySleep.OrderRandom42">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/DelaySleep.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="&#45;-traceabstraction.random.seed.used.by.por.dfs.order">42</option>
+  </rundefinition-->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep.OrderRandom42">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-Random42.epf</option>
-	</rundefinition>
+  <!--rundefinition name="GemCutter.DelaySleep.OrderRandom521">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/DelaySleep.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="&#45;-traceabstraction.random.seed.used.by.por.dfs.order">521</option>
+  </rundefinition-->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep.OrderRandom521">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-Random521.epf</option>
-	</rundefinition>
-
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleep.OrderRandom7777">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-Random7777.epf</option>
-	</rundefinition>
-
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepUncond">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepUncond-NoLbe.epf</option>
-	</rundefinition-->
-
-
-	<!-- === Persistent Set Reduction integrated in TAR === -->
-	<!-- ================================================== -->
-
-	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.Persistent">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-Persistent-NoLbe.epf</option>
-	</rundefinition-->
+  <!--rundefinition name="GemCutter.DelaySleep.OrderRandom7777">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/DelaySleep.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="&#45;-traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
+  </rundefinition-->
 
 
-	<!-- === Sleep Set Reduction (prune only, non-minimal) and Persistent Set Reduction integrated in TAR === -->
-	<!-- ==================================================================================================== -->
+  <!-- === Sleep Set Reduction (with unrolling, minimal) integrated in TAR === -->
+  <!-- ======================================================================= -->
 
-	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleepPersistent">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleepPersistent-NoLbe.epf</option>
-	</rundefinition-->
+  <rundefinition name="GemCutter.NewStatesSleep">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
+  </rundefinition>
 
-	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleepPersistentFixedOrder">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleepPersistentFixedOrder-NoLbe.epf</option>
-	</rundefinition-->
+  <!--rundefinition name="GemCutter.NewStatesSleep.Symm">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep-Symm.epf</option>
+  </rundefinition-->
 
+  <!--rundefinition name="GemCutter.NewStatesSleepUncond">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep-Uncond.epf</option>
+  </rundefinition-->
 
-	<!-- === Sleep Set Reduction (with unrolling, minimal) and Persistent Set Reduction integrated in TAR === -->
-	<!-- ==================================================================================================== -->
+  <!--rundefinition name="GemCutter.NewStatesSleep.OrderLockstep">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+  </rundefinition-->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistent">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistent-NoLbe.epf</option>
-	</rundefinition>
+  <!--rundefinition name="GemCutter.NewStatesSleep.OrderLoopLockstep">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+  </rundefinition-->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistent.OrderLockstep">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistent-NoLbe-Lockstep.epf</option>
-	</rundefinition>
+  <!--rundefinition name="GemCutter.NewStatesSleep.OrderRandom42">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="&#45;-traceabstraction.random.seed.used.by.por.dfs.order">42</option>
+  </rundefinition-->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistent.OrderLoopLockstep">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistent-NoLbe-LoopLockstep.epf</option>
-	</rundefinition>
+  <!--rundefinition name="GemCutter.NewStatesSleep.OrderRandom521">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="&#45;-traceabstraction.random.seed.used.by.por.dfs.order">521</option>
+  </rundefinition-->
 
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe.epf</option>
-	</rundefinition>
-
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderLockstep">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-Lockstep.epf</option>
-	</rundefinition>
-
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderLoopLockstep">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-LoopLockstep.epf</option>
-	</rundefinition>
-
-	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderRandom42">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-Random42.epf</option>
-	</rundefinition>
-
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderRandom521">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-Random521.epf</option>
-	</rundefinition>
-
-	<rundefinition name="Automizer PARTIAL_ORDER_FA.NewStatesSleepPersistentFixedOrder.OrderRandom7777">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleepPersistentFixedOrder-NoLbe-Random7777.epf</option>
-	</rundefinition-->
+  <!--rundefinition name="GemCutter.NewStatesSleep.OrderRandom7777">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="&#45;-traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
+  </rundefinition-->
 
 
-	<!-- === Sleep Set Reduction (prune only, non-minimal) integrated in TAR, with one-shot upfront Lipton Reduction === -->
-	<!-- =============================================================================================================== -->
+  <!-- === Persistent Set Reduction integrated in TAR === -->
+  <!-- ================================================== -->
 
-	<!--rundefinition name="Automizer PARTIAL_ORDER_FA.DelaySleep.SemanticLbe">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-DelaySleep-SemanticLbe.epf</option>
-	</rundefinition-->
+  <!--rundefinition name="GemCutter.Persistent">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/Persistent.epf</option>
+  </rundefinition-->
 
-	<!-- =============================================================================================================== -->
 
-	<tasks name="SVCOMP ConcurrencySafety-Main">
-		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
-		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
-		<!--excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile-->
-		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-	</tasks>
+  <!-- === Sleep Set Reduction (prune only, non-minimal) and Persistent Set Reduction integrated in TAR === -->
+  <!-- ==================================================================================================== -->
 
-	<tasks name="SVCOMP NoDataRace">
-		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
-		<option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
-		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
-		<includesfile>../../../trunk/examples/svcomp/NoDataRace-Main.set</includesfile>
-		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
-	</tasks>
+  <!--rundefinition name="GemCutter.DelaySleepPersistent">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/DelaySleepPersistent.epf</option>
+  </rundefinition-->
 
-	<!--tasks name="Ultimate Repo: pthreads">
-		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
-		<includesfile>../../../trunk/examples/bench-pthreads.set</includesfile>
-		<excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile>
-		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-	</tasks>
+  <!--rundefinition name="GemCutter.DelaySleepPersistentFixedOrder">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/DelaySleepPersistentFixedOrder.epf</option>
+  </rundefinition-->
 
-	<tasks name="Ultimate Repo: Boogie">
-		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
-		<includesfile>../../../trunk/examples/bench-concurrent-boogie.set</includesfile>
-		<excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile>
-		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-	</tasks>
 
-	<tasks name="Ultimate Repo: MCR">
-		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
-		<includesfile>../../../trunk/examples/bench-mcr-synth.set</includesfile>
-		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-	</tasks-->
+  <!-- === Sleep Set Reduction (with unrolling, minimal) and Persistent Set Reduction integrated in TAR === -->
+  <!-- ==================================================================================================== -->
 
-	<!--tasks name="Weaver Benchmarks">
-		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
-		<includesfile>../../../trunk/examples/concurrent/bpl/weaver-benchmarks/WeaverBenchmarks.set</includesfile>
-		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-	</tasks-->
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistent">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistent.epf</option>
+  </rundefinition-->
 
-	<!--tasks name="POPL2022 Benchmarks">
-		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
-		<includesfile>../../../trunk/examples/bench-popl2022.set</includesfile>
-		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-	</tasks-->
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistent.OrderLockstep">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistent.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistent.OrderLoopLockstep">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistent.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+  </rundefinition-->
+
+  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_THREAD_INSTANCE</option>
+  </rundefinition>
+
+  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.Badger">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_THREAD_INSTANCE</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+  </rundefinition>
+
+  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.PerError">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+  </rundefinition>
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.OrderLockstep">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.OrderLoopLockstep">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.OrderRandom42">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="&#45;-traceabstraction.random.seed.used.by.por.dfs.order">42</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.OrderRandom521">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="&#45;-traceabstraction.random.seed.used.by.por.dfs.order">521</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.OrderRandom7777">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="&#45;-traceabstraction.random.seed.used.by.por.dfs.order">7777</option>
+  </rundefinition-->
+
+
+  <!-- === Sleep Set Reduction (prune only, non-minimal) integrated in TAR, with one-shot upfront Lipton Reduction === -->
+  <!-- =============================================================================================================== -->
+
+  <!--rundefinition name="GemCutter.DelaySleep.SemanticLbe">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/DelaySleep-SemanticLbe.epf</option>
+  </rundefinition-->
+
+
+  <!-- === Minimal Sleep Set Reduction in TAR with Variable-Based Abstraction === -->
+  <!-- ========================================================================== -->
+
+  <rundefinition name="GemCutter.NewStatesSleep.VarAbsGlobalSyntactic">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep-VarAbsGlobalSyntactic.epf</option>
+  </rundefinition>
+
+  <!--rundefinition name="GemCutter.NewStatesSleep.VarAbsGlobalSyntactic.OrderLoopLockstep">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep-VarAbsGlobalSyntactic.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.NewStatesSleep.VarAbsGlobalSmt.OrderLoopLockstep">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep-VarAbsGlobalSyntactic.epf</option>
+    <option name="&#45;-traceabstraction.independence.relation.used.for.por.in.concurrent.analysis">SEMANTIC</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+  </rundefinition-->
+
+
+  <!-- === Combined Sleep Map Reduction with Concrete Commutativity and Lightweight Variable-Based Abstraction === -->
+  <!-- =========================================================================================================== -->
+
+  <rundefinition name="GemCutter.SleepMap.ConcreteSmt_VarAbsGlobalSyntactic">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+  </rundefinition>
+
+  <!--rundefinition name="GemCutter.SleepMapPersistentFixedOrder.ConcreteSmt_VarAbsGlobalSyntactic">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMapPersistentFixedOrder-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.WithAssertions">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="-ea" />
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.OrderLoopLockstep">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+  </rundefinition-->
+
+
+  <!-- === Combined Reduction with Probabilistic Switching === -->
+  <!-- ======================================================= -->
+
+  <!--rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.flip10-PURE-seed0">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="&#45;-traceabstraction.coinflip.probability.value">10</option>
+    <option name="&#45;-traceabstraction.coinflip.random.seed">0</option>
+    <option name="&#45;-traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition-->
+
+  <!--rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.flip90-PURE-seed0">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="&#45;-traceabstraction.coinflip.probability.value">90</option>
+    <option name="&#45;-traceabstraction.coinflip.random.seed">0</option>
+    <option name="&#45;-traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition-->
+
+  <!--rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.flip10-FALLBACK-seed0">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="&#45;-traceabstraction.coinflip.probability.value">10</option>
+    <option name="&#45;-traceabstraction.coinflip.random.seed">0</option>
+    <option name="&#45;-traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition-->
+
+  <!--rundefinition name="SleepMap.ConcreteSmt_VarAbsGlobalSyntactic.flip90-FALLBACK-seed0">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="&#45;-traceabstraction.coinflip.probability.value">90</option>
+    <option name="&#45;-traceabstraction.coinflip.random.seed">0</option>
+    <option name="&#45;-traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition-->
+  
+  <rundefinition name="GemCutter.SleepMap.Incremental5_Seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">0</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+    <option name="--traceabstraction.coinflip.probability.increment">5</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Incremental10_Seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">0</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+    <option name="--traceabstraction.coinflip.probability.increment">10</option>
+  </rundefinition>
+  
+  <rundefinition name="GemCutter.SleepMap.Incremental5_Seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">0</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+    <option name="--traceabstraction.coinflip.probability.increment">5</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Incremental10_Seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">0</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+    <option name="--traceabstraction.coinflip.probability.increment">10</option>
+  </rundefinition>
+
+  <rundefinition name="GemCutter.SleepMap.Flip05_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">5</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip10_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">10</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip15_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">15</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip85_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">85</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip90_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">90</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip95_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">95</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+
+  <rundefinition name="GemCutter.SleepMap.Flip05_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">5</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip10_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">10</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip15_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">15</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip85_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">85</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip90_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">90</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="GemCutter.SleepMap.Flip95_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">95</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+
+
+  <!-- === Experiments with Varying SMT Solvers and Timeouts for Independence === -->
+  <!-- ========================================================================== -->
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.Z3_300ms">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="&#45;-traceabstraction.smt.solver.used.for.commutativity.in.por">Z3</option>
+    <option name="&#45;-traceabstraction.smt.solver.timeout.for.commutativity.in.por.in.ms.">300</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.Z3_1000ms">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="&#45;-traceabstraction.smt.solver.used.for.commutativity.in.por">Z3</option>
+    <option name="&#45;-traceabstraction.smt.solver.timeout.for.commutativity.in.por.in.ms.">1000</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.SmtInterpol_1000ms">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="&#45;-traceabstraction.smt.solver.used.for.commutativity.in.por">SMTINTERPOL</option>
+    <option name="&#45;-traceabstraction.smt.solver.timeout.for.commutativity.in.por.in.ms.">1000</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGlobalSmt.Z3_300ms">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-varabs-global.epf</option>
+    <option name="&#45;-traceabstraction.smt.solver.used.for.commutativity.in.por">Z3</option>
+    <option name="&#45;-traceabstraction.smt.solver.timeout.for.commutativity.in.por.in.ms.">300</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGlobalSmt.Z3_1000ms">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-varabs-global.epf</option>
+    <option name="&#45;-traceabstraction.smt.solver.used.for.commutativity.in.por">Z3</option>
+    <option name="&#45;-traceabstraction.smt.solver.timeout.for.commutativity.in.por.in.ms.">1000</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGlobalSmt.Z3_6000ms">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-varabs-global.epf</option>
+    <option name="&#45;-traceabstraction.smt.solver.timeout.for.commutativity.in.por.in.ms.">6000</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGlobalSmt.SmtInterpol_1000ms">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-varabs-global.epf</option>
+    <option name="&#45;-traceabstraction.smt.solver.used.for.commutativity.in.por">SMTINTERPOL</option>
+    <option name="&#45;-traceabstraction.smt.solver.timeout.for.commutativity.in.por.in.ms.">1000</option>
+  </rundefinition-->
+
+
+  <!-- === Sleep Set + Persistent Sets with Abstractions === -->
+  <!-- ===================================================== -->
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.ConcreteSyntactic">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-ConcreteSyntactic.epf</option>
+  </rundefinition-->
+
+  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+  </rundefinition>
+
+  <rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic.Badger">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+  </rundefinition>
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.VarAbsGlobalSyntactic.WithAssertions">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-VarAbsGlobalSyntactic.epf</option>
+    <option name="-ea" />
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.LooperAbs">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
+    <option name="&#45;-traceabstraction.abstraction.used.for.commutativity.in.por">LOOPER</option>
+  </rundefinition-->
+
+
+  <!-- === Comparison of specific variable abstraction (with CANONICAL interpolant automata) === -->
+  <!-- ========================================================================================= -->
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistentFixedOrder.CANONICAL">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-CANONICAL.epf</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsGLOBAL.CANONICAL">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-VarAbsGlobalSmt-CANONICAL.epf</option>
+  </rundefinition-->
+
+  <!--rundefinition name="GemCutter.NewStatesSleepPersistent-VarAbsSPECIFIC.CANONICAL">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder-VarAbsSpecificSmt-CANONICAL.epf</option>
+  </rundefinition-->
+
+  <!-- =============================================================================================================== -->
+  <!-- ==================================================== TASKS ==================================================== -->
+  <!-- =============================================================================================================== -->
+
+  <tasks name="POPL2023">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+    <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+
+    <include>../../../trunk/examples/concurrent/bpl/POPL2023/*.bpl</include>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-ConcurrencySafety-Main">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+    <excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-NoDataRace">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+    <option name="&#45;-cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
+    <option name="&#45;-cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+
+    <includesfile>../../../trunk/examples/svcomp/NoDataRace-Main.set</includesfile>
+    <excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-Concurrency-SafeDeref">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+    <option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+    <option name="--cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference">ASSERTandASSUME</option>
+    <option name="--cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference">ASSERTandASSUME</option>
+    <option name="--cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap">ASSERTandASSUME</option>
+    <option name="--cacsl2boogietranslator.check.if.freed.pointer.was.valid">true</option>
+    <option name="--cacsl2boogietranslator.adapt.memory.model.on.pointer.casts.if.necessary">true</option>
+
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+    <excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-Concurrency-NoOverflow">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+    <option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+    <option name="--cacsl2boogietranslator.check.absence.of.signed.integer.overflows">true</option>
+
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+    <excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/no-overflow.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-Concurrency-NoDataRace">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+    <option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+    <option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
+
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+    <excludesfile>../../../trunk/examples/bench-unbounded-threads.set</excludesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
+  </tasks>
+
+  <tasks name="Ultimate Repo: pthreads">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+    <includesfile>../../../trunk/examples/bench-pthreads.set</includesfile>
+    <excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="Ultimate Repo: Boogie">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+
+    <includesfile>../../../trunk/examples/bench-concurrent-boogie.set</includesfile>
+    <excludesfile>../../../trunk/examples/bench-unbounded-threads-safe.set</excludesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="Ultimate Repo: MCR">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+
+    <includesfile>../../../trunk/examples/bench-mcr-synth.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="Weaver Benchmarks: Boogie">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+    <includesfile>../../../trunk/examples/concurrent/bpl/weaver-benchmarks/WeaverBenchmarks.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="PLDI2022-Benchmarks">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+
+    <include>../../../trunk/examples/concurrent/bpl/PLDI2022/*.yml</include>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
 </benchmark>

@@ -65,7 +65,7 @@ public class AllSpecificationsHoldResult extends AbstractResult {
 		final String longDescription;
 		if (numberOfErrorLocations <= 0) {
 			longDescription = "We were not able to verify any"
-					+ " specifiation because the program does not contain any specification.";
+					+ " specification because the program does not contain any specification.";
 		} else {
 			longDescription = Integer.toString(numberOfErrorLocations) + " specifications checked. All of them hold";
 		}

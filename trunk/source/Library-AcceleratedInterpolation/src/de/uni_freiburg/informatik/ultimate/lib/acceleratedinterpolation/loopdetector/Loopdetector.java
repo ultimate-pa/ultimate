@@ -64,13 +64,20 @@ public class Loopdetector<LOC extends IcfgLocation, LETTER extends IIcfgTransiti
 	private final Map<LOC, Set<List<UnmodifiableTransFormula>>> mNestedLoopsAsTf;
 	private final Map<LOC, LETTER> mLoopExitTransitions;
 	private final Map<LOC, Pair<Integer, Integer>> mLoopSize;
-	private final Integer mDelay;
+	private final int mDelay;
 	private final Map<LOC, LOC> mNestingRelation;
 
 	private final CycleFinder<LOC> mCycleFinder;
 
 	/**
-	 * construct to find loops in a given trace.
+	 * Construct to find loops in a given trace, using a delay of 1 (see {@link #Loopdetector(List, ILogger, Integer)}.
+	 */
+	public Loopdetector(final List<LETTER> trace, final ILogger logger) {
+		this(trace, logger, 1);
+	}
+
+	/**
+	 * Construct to find loops in a given trace.
 	 *
 	 * @param trace
 	 * @param logger
@@ -78,7 +85,7 @@ public class Loopdetector<LOC extends IcfgLocation, LETTER extends IIcfgTransiti
 	 *            How many iterations of a loop are needed until we decide to accelerate it. The lower the earlier the
 	 *            loop gets accelerated.
 	 */
-	public Loopdetector(final List<LETTER> trace, final ILogger logger, final Integer delay) {
+	public Loopdetector(final List<LETTER> trace, final ILogger logger, final int delay) {
 		mLogger = logger;
 		mTrace = new ArrayList<>(trace);
 		mCycleFinder = new CycleFinder<>();
@@ -243,8 +250,8 @@ public class Loopdetector<LOC extends IcfgLocation, LETTER extends IIcfgTransiti
 				}
 			}
 			final Pair<Integer, Integer> overallLoopSize = mLoopSize.get(loop.getKey());
-			final Integer trueLoopSize = overallLoopSize.getSecond() - overallLoopSize.getFirst();
-			final Integer delayCheck = smallestLoopSize * mDelay;
+			final int trueLoopSize = overallLoopSize.getSecond() - overallLoopSize.getFirst();
+			final int delayCheck = smallestLoopSize * mDelay;
 			if (delayCheck > trueLoopSize) {
 				mLoops.remove(loop.getKey());
 				mLoopSize.remove(loop.getKey());
@@ -321,55 +328,52 @@ public class Loopdetector<LOC extends IcfgLocation, LETTER extends IIcfgTransiti
 
 					if (loopHead == loopHeadOther) {
 						continue;
-					} else {
-						for (int j = 0; j < othercycleEntryPoints.size() - 1; j++) {
-							final int otherIntervalFirst = othercycleEntryPoints.get(j);
-							final int otherIntervalLast = othercycleEntryPoints.get(j + 1);
+					}
+					for (int j = 0; j < othercycleEntryPoints.size() - 1; j++) {
+						final int otherIntervalFirst = othercycleEntryPoints.get(j);
+						final int otherIntervalLast = othercycleEntryPoints.get(j + 1);
 
-							/*
-							 * we cannot look at only the first and last location, they have to be inbetween in each.
-							 */
-							if ((currentIntervalFirst < otherIntervalFirst
-									&& currentIntervalLast > otherIntervalLast)) {
-								nestedCycles.add(loopHeadOther);
-								mNestingRelation.put(loopHead, loopHeadOther);
-								continue;
-							}
-							if ((otherIntervalFirst >= currentIntervalFirst && otherIntervalLast >= currentIntervalLast)
-									|| (otherIntervalFirst <= currentIntervalFirst
-											&& otherIntervalLast <= currentIntervalLast)) {
-								continue;
-							} else {
-								if (!invalidNesting.containsKey(loopHead)) {
-									final Set<LOC> invalidNestedHeads = new HashSet<>();
-									invalidNestedHeads.add(loopHeadOther);
-									invalidNesting.put(loopHead, invalidNestedHeads);
-								} else {
-									final Set<LOC> otherInvalids = new HashSet<>(invalidNesting.get(loopHead));
-									otherInvalids.add(loopHeadOther);
-									invalidNesting.put(loopHead, otherInvalids);
-								}
-								break;
-							}
-						}
 						/*
-						 * But also the whole interval
+						 * we cannot look at only the first and last location, they have to be inbetween in each.
 						 */
-						final int firstOccurence = cycle.getValue().get(0);
-						final int lastOccurence = cycle.getValue().get(cycle.getValue().size() - 1);
+						if (currentIntervalFirst < otherIntervalFirst && currentIntervalLast > otherIntervalLast) {
+							nestedCycles.add(loopHeadOther);
+							mNestingRelation.put(loopHead, loopHeadOther);
+							continue;
+						}
+						if (otherIntervalFirst >= currentIntervalFirst && otherIntervalLast >= currentIntervalLast
+								|| otherIntervalFirst <= currentIntervalFirst
+										&& otherIntervalLast <= currentIntervalLast) {
+							continue;
+						}
+						if (!invalidNesting.containsKey(loopHead)) {
+							final Set<LOC> invalidNestedHeads = new HashSet<>();
+							invalidNestedHeads.add(loopHeadOther);
+							invalidNesting.put(loopHead, invalidNestedHeads);
+						} else {
+							final Set<LOC> otherInvalids = new HashSet<>(invalidNesting.get(loopHead));
+							otherInvalids.add(loopHeadOther);
+							invalidNesting.put(loopHead, otherInvalids);
+						}
+						break;
+					}
+					/*
+					 * But also the whole interval
+					 */
+					final int firstOccurence = cycle.getValue().get(0);
+					final int lastOccurence = cycle.getValue().get(cycle.getValue().size() - 1);
 
-						final int firstOccurenceOther = otherCycle.getValue().get(0);
-						final int lastOccurenceOther = otherCycle.getValue().get(otherCycle.getValue().size() - 1);
-						if (!(firstOccurence < firstOccurenceOther && lastOccurenceOther < lastOccurence)) {
-							if (!invalidNesting.containsKey(loopHead)) {
-								final Set<LOC> invalidNestedHeads = new HashSet<>();
-								invalidNestedHeads.add(loopHeadOther);
-								invalidNesting.put(loopHead, invalidNestedHeads);
-							} else {
-								final Set<LOC> otherInvalids = new HashSet<>(invalidNesting.get(loopHead));
-								otherInvalids.add(loopHeadOther);
-								invalidNesting.put(loopHead, otherInvalids);
-							}
+					final int firstOccurenceOther = otherCycle.getValue().get(0);
+					final int lastOccurenceOther = otherCycle.getValue().get(otherCycle.getValue().size() - 1);
+					if (firstOccurence >= firstOccurenceOther || lastOccurenceOther >= lastOccurence) {
+						if (!invalidNesting.containsKey(loopHead)) {
+							final Set<LOC> invalidNestedHeads = new HashSet<>();
+							invalidNestedHeads.add(loopHeadOther);
+							invalidNesting.put(loopHead, invalidNestedHeads);
+						} else {
+							final Set<LOC> otherInvalids = new HashSet<>(invalidNesting.get(loopHead));
+							otherInvalids.add(loopHeadOther);
+							invalidNesting.put(loopHead, otherInvalids);
 						}
 					}
 				}

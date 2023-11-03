@@ -62,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 
 	private final NestedLassoRun<LETTER, IPredicate> mCounterexample;
-	private final BinaryStatePredicateManager mBspm;
 	private final PredicateFactory mPredicateFactory;
 	private final PredicateUnifier mPredicateUnifier;
 	private final CfgSmtToolkit mCsToolkit;
@@ -74,9 +73,11 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
+	private final IPredicate mRankEqAndSi;
+	private final IPredicate mHondaPredicate;
 
 	public LoopCannibalizer(final NestedLassoRun<LETTER, IPredicate> counterexample,
-			final Set<IPredicate> loopInterpolants, final BinaryStatePredicateManager bspm,
+			final Set<IPredicate> loopInterpolants, final IPredicate rankEqAndSi, final IPredicate hondaPredicate,
 			final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final InterpolationTechnique interpolation, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique,
@@ -87,7 +88,8 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mCounterexample = counterexample;
-		mBspm = bspm;
+		mRankEqAndSi = rankEqAndSi;
+		mHondaPredicate = hondaPredicate;
 		mPredicateFactory = (PredicateFactory) predicateUnifier.getPredicateFactory();
 		mPredicateUnifier = predicateUnifier;
 		mCsToolkit = csToolkit;
@@ -122,10 +124,10 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 				i = correspondingReturn;
 			} else {
 				if (checkForNewPredicates(i)) {
-					final NestedWord<LETTER> before = mLoop.getSubWord(0, i);
+					final NestedWord<LETTER> before = mLoop.getSubWord(0, i + 1);
 					final NestedWord<LETTER> after = mLoop.getSubWord(i + 1, mLoop.length() - 1);
 					final NestedWord<LETTER> shifted = after.concatenate(before);
-					final InterpolatingTraceCheck traceCheck = getTraceCheck(shifted, interpolation);
+					final InterpolatingTraceCheck<?> traceCheck = getTraceCheck(shifted, interpolation);
 					final LBool loopCheck = traceCheck.isCorrect();
 					if (loopCheck == LBool.UNSAT) {
 						IPredicate[] loopInterpolants;
@@ -142,13 +144,13 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 		}
 	}
 
-	private InterpolatingTraceCheck getTraceCheck(final NestedWord<? extends IIcfgTransition<?>> shifted,
-			final InterpolationTechnique interpolation) {
-		InterpolatingTraceCheck traceCheck;
+	private InterpolatingTraceCheck<? extends IIcfgTransition<?>> getTraceCheck(
+			final NestedWord<? extends IIcfgTransition<?>> shifted, final InterpolationTechnique interpolation) {
+		InterpolatingTraceCheck<? extends IIcfgTransition<?>> traceCheck;
 		switch (interpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-			traceCheck = new InterpolatingTraceCheckCraig(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
+			traceCheck = new InterpolatingTraceCheckCraig<>(mRankEqAndSi, mHondaPredicate,
 					new TreeMap<Integer, IPredicate>(), shifted, null, mServices, mCsToolkit, mPredicateFactory,
 					mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false, interpolation, true,
 					mXnfConversionTechnique, mSimplificationTechnique);
@@ -157,11 +159,10 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
-			traceCheck = new TraceCheckSpWp(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
-					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateFactory, mPredicateUnifier,
-					interpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique,
-					null, false);
+			traceCheck = new TraceCheckSpWp<>(mRankEqAndSi, mHondaPredicate, new TreeMap<Integer, IPredicate>(),
+					shifted, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
+					mServices, false, mPredicateFactory, mPredicateUnifier, interpolation,
+					mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, null, false);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
@@ -190,7 +191,7 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private boolean codeBlockContainsVarOfHondaPredicate(final LETTER cb) {
-		final Set<IProgramVar> hondaVars = mBspm.getHondaPredicate().getVars();
+		final Set<IProgramVar> hondaVars = mHondaPredicate.getVars();
 		final Set<IProgramVar> inVars = cb.getTransformula().getInVars().keySet();
 		if (!Collections.disjoint(hondaVars, inVars)) {
 			return true;

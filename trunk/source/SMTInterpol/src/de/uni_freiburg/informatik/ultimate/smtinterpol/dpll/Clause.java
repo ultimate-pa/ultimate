@@ -22,13 +22,15 @@ import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofLiteral;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofNode;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofRules;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode;
 
 /**
- * This class represents a clause.  It basically consists of an array
- * of literals.  There is also some additional informations like activity,
- * literal watchers, proof information and stacklevel for push/pop mechanism.
+ * This class represents a clause. It basically consists of an array of
+ * literals. There is also some additional informations like activity, literal
+ * watchers, proof information and stacklevel for push/pop mechanism.
  *
  * @author Jochen Hoenicke
  *
@@ -37,21 +39,20 @@ public class Clause extends SimpleListable<Clause> {
 	Literal[] mLiterals;
 
 	/**
-	 * The next watched clause on the watcher list.
-	 * Each clause has two watchers.  The first watching lit 0, the next lit1.
-	 * Their watchers form a linked list.  For memory efficiency reasons there
-	 * is no real data structure for watchers, but a clause and a bit is used
-	 * to represent a watcher.
+	 * The next watched clause on the watcher list. Each clause has two watchers.
+	 * The first watching lit 0, the next lit1. Their watchers form a linked list.
+	 * For memory efficiency reasons there is no real data structure for watchers,
+	 * but a clause and a bit is used to represent a watcher.
 	 */
-	Clause  mNextFirstWatch, mNextSecondWatch;
+	Clause mNextFirstWatch, mNextSecondWatch;
 	/**
-	 * A bitset telling if the next watcher for nextFirstWatch/nextSecondWatch
-	 * is the first or second watcher in that clause.  Bit0 is 1, iff  the
-	 * next watcher on the first list, which watches nextFirstWatch, is the
-	 * second watcher of that clause.  Likewise Bit1 is 1, iff the next watcher
-	 * on the second list is the second watcher of the clause nextSecondWatch.
+	 * A bitset telling if the next watcher for nextFirstWatch/nextSecondWatch is
+	 * the first or second watcher in that clause. Bit0 is 1, iff the next watcher
+	 * on the first list, which watches nextFirstWatch, is the second watcher of
+	 * that clause. Likewise Bit1 is 1, iff the next watcher on the second list is
+	 * the second watcher of the clause nextSecondWatch.
 	 */
-	int     mNextIsSecond;
+	int mNextIsSecond;
 
 	/**
 	 * A WatchList is a list of watchers. Each clause with more than one literal has
@@ -81,10 +82,10 @@ public class Clause extends SimpleListable<Clause> {
 	 */
 	final static class WatchList {
 		Clause mHead;
-		int    mHeadIndex;
+		int mHeadIndex;
 		Clause mTail;
-		int    mTailIndex;
-		int    mSize;
+		int mTailIndex;
+		int mSize;
 
 		public WatchList() {
 			mHead = mTail = null;
@@ -182,8 +183,8 @@ public class Clause extends SimpleListable<Clause> {
 	}
 
 	/**
-	 * The activity of a clause. Infinity for clauses that are not inferred. If
-	 * the activity drops below some point the clause is removed.
+	 * The activity of a clause. Infinity for clauses that are not inferred. If the
+	 * activity drops below some point the clause is removed.
 	 */
 	double mActivity;
 	/**
@@ -260,13 +261,14 @@ public class Clause extends SimpleListable<Clause> {
 	}
 
 	public boolean doCleanup(final DPLLEngine engine) {
-		return mCleanupHook == null
-		        ? true : mCleanupHook.clauseDeleted(this, engine);
+		return mCleanupHook == null ? true : mCleanupHook.clauseDeleted(this, engine);
 	}
 
 	/**
 	 * Returns true, if the clause contains the literal with the same polarity.
-	 * @param lit the literal it should contain.
+	 * 
+	 * @param lit
+	 *            the literal it should contain.
 	 * @return true, if the clause contains the literal with the same polarity.
 	 */
 	public boolean contains(final Literal lit) {
@@ -283,12 +285,29 @@ public class Clause extends SimpleListable<Clause> {
 			return theory.mFalse;
 		}
 		if (mLiterals.length == 1) {
-			return mLiterals[0].getSMTFormula(theory, true);
+			return mLiterals[0].getSMTFormula(theory);
 		}
 		final Term[] args = new Term[mLiterals.length];
 		for (int i = 0; i < mLiterals.length; ++i) {
-			args[i] = mLiterals[i].getSMTFormula(theory, true);
+			args[i] = mLiterals[i].getSMTFormula(theory);
 		}
 		return theory.term("or", args);
+	}
+
+	public Term[] toTermArray(final Theory theory) {
+		final Term[] literals = new Term[mLiterals.length];
+		for (int i = 0; i < mLiterals.length; ++i) {
+			literals[i] = mLiterals[i].getSMTFormula(theory);
+		}
+		return literals;
+	}
+
+	public ProofLiteral[] toProofLiterals(ProofRules proofRules) {
+		final ProofLiteral[] proofLits = new ProofLiteral[mLiterals.length];
+		for (int i = 0; i < proofLits.length; i++) {
+			final Literal lit = mLiterals[i];
+			proofLits[i] = new ProofLiteral(lit.getAtom().getSMTFormula(proofRules.getTheory()), lit == lit.getAtom());
+		}
+		return proofLits;
 	}
 }

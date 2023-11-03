@@ -28,18 +28,18 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Junction;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.SparseMapBuilder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -63,6 +64,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            type of the variables
  */
 public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implements IPolynomialTerm {
+
+	public enum Equivalence { EQUALS, DISTINCT, INCOMPARABLE };
 
 	/**
 	 * Map from abstract variables to coeffcients. Coefficient zero is forbidden.
@@ -99,11 +102,33 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		Objects.requireNonNull(variables2coeffcient);
 		mSort = s;
 		mConstant = constant;
+		assert !SmtSortUtils.isBitvecSort(s) || !constant.isNegative() : "Negative constant in BitVec term";
+		assert !SmtSortUtils.isBitvecSort(s) || isTrueForAllCoefficients(variables2coeffcient,
+				x -> !x.isNegative()) : "Negative coefficient in BitVec term " + variables2coeffcient;
+		assert !SmtSortUtils.isBitvecSort(s) || constant.isIntegral() : "Non-integral constant in BitVec term";
+		assert !SmtSortUtils.isBitvecSort(s) || isTrueForAllCoefficients(variables2coeffcient,
+				x -> x.isIntegral()) : "Non-integral coefficient in BitVec term " + variables2coeffcient;
+		assert !SmtSortUtils.isIntSort(s) || constant.isIntegral() : "Non-integral constant in Int term";
+		assert !SmtSortUtils.isIntSort(s) || isTrueForAllCoefficients(variables2coeffcient,
+				x -> x.isIntegral()) : "Non-integral coefficient in Int term " + variables2coeffcient;
 		mAbstractVariable2Coefficient = variables2coeffcient;
 	}
 
-	protected abstract IPolynomialTerm constructNew(final Sort sort, final Rational constant,
+	private static boolean isTrueForAllCoefficients(final Map<?, Rational> variable2coeffcient, final Predicate<Rational> p) {
+		return variable2coeffcient.entrySet().stream().allMatch(x -> p.test(x.getValue()));
+	}
+
+	protected abstract AbstractGeneralizedAffineTerm<?> constructNew(final Sort sort, final Rational constant,
 			final Map<AVAR, Rational> variables2coeffcient);
+
+	/**
+	 * Construct a new {@link AffineTerm} in which term is the only variable. This
+	 * is usually a bad idea and useful only in rare cases. Hence, this method is
+	 * private.
+	 */
+	private static AffineTerm constructNewSingleVariableTerm(final Term term) {
+		return new AffineTerm(term.getSort(), Rational.ZERO, Collections.singletonMap(term, Rational.ONE));
+	}
 
 	protected abstract AVAR constructAbstractVar(Term term);
 
@@ -343,7 +368,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final AbstractGeneralizedAffineTerm other = (AbstractGeneralizedAffineTerm) obj;
+		final AbstractGeneralizedAffineTerm<?> other = (AbstractGeneralizedAffineTerm<?>) obj;
 		if (mConstant == null) {
 			if (other.mConstant != null) {
 				return false;
@@ -390,40 +415,195 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 
 	public abstract AbstractGeneralizedAffineTerm<?> removeAndNegate(Monomial monomialOfSubject);
 
-	public IPolynomialTerm div(final Script script, final BigInteger divisor, final Set<TermVariable> bannedForDivCapture) {
+	private ApplicationTerm isDivision(final String funcname) {
+		if (!mConstant.equals(Rational.ZERO)) {
+			return null;
+		}
+		if (mAbstractVariable2Coefficient.size() != 1) {
+			return null;
+		}
+		final Entry<AVAR, Rational> entry = mAbstractVariable2Coefficient.entrySet().iterator().next();
+		if (!entry.getValue().equals(Rational.ONE)) {
+			return null;
+		}
+		final AVAR avar = entry.getKey();
+		final Term singleVar;
+		if (avar instanceof Monomial) {
+			final Monomial monominal = (Monomial) avar;
+			singleVar = monominal.getSingleVariable();
+		} else if (avar instanceof Term) {
+			singleVar = (Term) avar;
+		} else {
+			throw new AssertionError();
+		}
+		if (!(singleVar instanceof ApplicationTerm)) {
+			return null;
+		}
+		final ApplicationTerm appTerm = (ApplicationTerm) singleVar;
+		if (!appTerm.getFunction().getApplicationString().equals(funcname)) {
+			return null;
+		}
+		return appTerm;
+	}
+
+	@Override
+	public IPolynomialTerm div(final Script script, final IPolynomialTerm... divisors) {
+		AbstractGeneralizedAffineTerm<?> current = this;
+		for (final IPolynomialTerm divisor : divisors) {
+			if (divisor.isConstant()) {
+				if (SmtSortUtils.isIntSort(mSort)) {
+					current = current.divInt(script, divisor.getConstant().numerator(), Collections.emptySet());
+				} else if (SmtSortUtils.isBitvecSort(mSort)) {
+					throw new UnsupportedOperationException(
+							"Cannot apply div (meant for integers) to term whose sort is bitvector.");
+				} else if (SmtSortUtils.isRealSort(mSort)) {
+					current = current.divReal(script, divisor.getConstant());
+				} else {
+					throw new UnsupportedOperationException();
+				}
+			} else {
+				final String funcname = getDivisionFuncname(getSort());
+				// TODO: extract gcd from divisor and divide by gcd separately
+				current = constructDivResultForNonSimplifiableCase(script, funcname, current, divisor.toTerm(script));
+			}
+		}
+		return current;
+	}
+
+	public static String getDivisionFuncname(final Sort sort) {
+		final String funcname;
+		if (SmtSortUtils.isIntSort(sort)) {
+			funcname = "div";
+		} else if (SmtSortUtils.isBitvecSort(sort)) {
+			throw new UnsupportedOperationException();
+		} else if (SmtSortUtils.isRealSort(sort)) {
+			funcname = "/";
+		} else {
+			throw new UnsupportedOperationException();
+		}
+		return funcname;
+	}
+
+	/**
+	 * If divisor is zero (for Int and for Real, not for bitvector) or not a
+	 * literal, we cannot simplify besides flattening and return an
+	 * {@link AffineTerm} whose only variable is the divisibility result.
+	 *
+	 */
+	private static AffineTerm constructDivResultForNonSimplifiableCase(final Script script, final String funcname,
+			final IPolynomialTerm divident, final Term divisor) {
+		return constructNewSingleVariableTerm(
+				SmtUtils.flattenIntoFirstArgument(script, funcname, divident.toTerm(script), divisor));
+	}
+
+	public AbstractGeneralizedAffineTerm<?> divInt(final Script script, final BigInteger divisor,
+			final Set<TermVariable> bannedForDivCapture) {
 		if (!SmtSortUtils.isIntSort(getSort())) {
 			throw new AssertionError("only for int");
 		}
-		final Map<AVAR, Rational> variables2coeffcient = new HashMap<>();
-		final List<Term> summandsOfDiv = new ArrayList<>();
+		if (divisor.equals(BigInteger.ZERO)) {
+			// A non-initial zero cannot be simplified (semantics of division by zero
+			// similar to uninterpreted function see
+			// http://smtlib.cs.uiowa.edu/theories-Ints.shtml). This means especially that
+			// an initial zero does not make the result zero, because 0 is not equivalent to
+			// (div 0 0).
+			return constructDivResultForNonSimplifiableCase(script, "div", this,
+					SmtUtils.constructIntegerValue(script, getSort(), divisor));
+		}
+		// Idea: Pull all summand whose coefficient is a multiple of the divisor out of
+		// the `div`.
+		final Map<AVAR, Rational> divisible = new HashMap<>();
+		final Map<AVAR, Rational> nonDivisible = new HashMap<>();
+		final Rational divisorAsRational = toRational(divisor);
 		for (final Entry<AVAR, Rational> entry : getAbstractVariable2Coefficient().entrySet()) {
-			final Rational divisorAsRational = toRational(divisor);
 			final Rational quotient = entry.getValue().div(divisorAsRational);
 			if (quotient.isIntegral()) {
 				final Rational euclideanQuotient = euclideanDivision(entry.getValue(), divisor);
-				variables2coeffcient.put(entry.getKey(), euclideanQuotient);
+				divisible.put(entry.getKey(), euclideanQuotient);
 			} else {
 				if (getFreeVars(entry.getKey()).stream().anyMatch(bannedForDivCapture::contains)) {
 					return null;
 				}
-				summandsOfDiv.add(SmtUtils.mul(script, entry.getValue(), abstractVariableToTerm(script, entry.getKey())));
+				nonDivisible.put(entry.getKey(), entry.getValue());
 			}
 		}
+		// The constant of the result. Will be zero if we cannot pull the input's
+		// constant out of the `div`.
 		final Rational constant;
-		if (summandsOfDiv.isEmpty()) {
+		if (nonDivisible.isEmpty()) {
+			// since all coefficients could be divided without remainder, it is sound to
+			// divide the constant even if it is not divisible without remainder
 			constant = euclideanDivision(getConstant(), divisor);
 		} else {
-			constant = Rational.ZERO;
-			if (!getConstant().equals(Rational.ZERO)) {
-				summandsOfDiv.add(getConstant().toTerm(getSort()));
+			// The constant that stays inside the `div`. Will be zero if we can pull the
+			// input's constant out of the `div`.
+			final Rational constantOfDivArgument;
+			if (getConstant().div(Rational.valueOf(divisor, BigInteger.ONE)).isIntegral()) {
+				// constant can be divided without remainder
+				constant = euclideanDivision(getConstant(), divisor);
+				constantOfDivArgument = Rational.ZERO;
+			} else {
+				// constant cannot be divided without remainder, we have to add the constant to
+				// the sum (to which we apply the div operator)
+				constant = Rational.ZERO;
+				constantOfDivArgument = getConstant();
 			}
-			final Term sum = SmtUtils.sum(script, getSort(), summandsOfDiv.toArray(new Term[summandsOfDiv.size()]));
-
-			final Term div = SmtUtils.div(script, sum, SmtUtils.constructIntegerValue(script, getSort(), divisor));
-			final AVAR avar = constructAbstractVar(div);
-			variables2coeffcient.put(avar, Rational.ONE);
+			final Pair<Rational, Term> coeffAndDiv = divIntHelper(script, nonDivisible, constantOfDivArgument,
+					divisorAsRational);
+			// Add `div` term to resulting polynomial. Take care of the special case that
+			// the resulting polynomial already has a variable that is coincides with the
+			// div Term.
+			final AVAR avar = constructAbstractVar(coeffAndDiv.getSecond());
+			final Rational oldCoeffcient = divisible.get(avar);
+			if (oldCoeffcient == null) {
+				divisible.put(avar, coeffAndDiv.getFirst());
+			} else {
+				final Rational newCoefficient = oldCoeffcient.add(coeffAndDiv.getFirst());
+				if (newCoefficient.equals(Rational.ZERO)) {
+					divisible.remove(avar);
+				} else {
+					divisible.put(avar, newCoefficient);
+				}
+			}
 		}
-		return constructNew(getSort(), constant, variables2coeffcient);
+		return constructNew(getSort(), constant, divisible);
+	}
+
+	/**
+	 * Construct polynomial and apply `div` with two simplifications.
+	 * <li>Divide polynomial and divisor by the GCD of all coefficients, the
+	 * constant, and the divisor.
+	 * <li>Make the divisor positive. If it was negative the `div` term's
+	 * coefficient will be `-1`.
+	 *
+	 * @param coefficientToVar Map whose coefficients are NOT divisible by the
+	 *                         divisor.
+	 * @param constant         Number that is not divisible by the divisor.
+	 */
+	private Pair<Rational, Term> divIntHelper(final Script script, final Map<AVAR, Rational> coefficientToVar,
+			final Rational constant, final Rational divisor) {
+		AbstractGeneralizedAffineTerm<?> divArgument = constructNew(getSort(), constant, coefficientToVar);
+		final Rational gcd = divArgument.computeGcdOfCoefficientsAndConstant().gcd(divisor).abs();
+		if (!gcd.equals(Rational.ONE)) {
+			divArgument = divArgument.divInvertible(gcd);
+		}
+		final Term divArgumentAsTerm = divArgument.toTerm(script);
+		final Rational newDivisor = divisor.div(gcd).abs();
+		assert newDivisor.isIntegral();
+		final Term resultDivTerm = SmtUtils.divIntFlatten(script, divArgumentAsTerm, newDivisor.numerator());
+		final Rational resultCoefficient = divisor.isNegative() ? Rational.MONE : Rational.ONE;
+		return new Pair<>(resultCoefficient, resultDivTerm);
+	}
+
+
+	public AbstractGeneralizedAffineTerm<?> divReal(final Script script, final Rational divisor) {
+		if (!SmtSortUtils.isRealSort(getSort())) {
+			throw new AssertionError("only for Real");
+		}
+		if (divisor.equals(Rational.ZERO)) {
+			return constructDivResultForNonSimplifiableCase(script, "/", this, divisor.toTerm(getSort()));
+		}
+		return (AbstractGeneralizedAffineTerm<?>) this.mul(divisor.inverse());
 	}
 
 	protected Rational euclideanDivision(final Rational divident, final BigInteger divisor) {
@@ -437,25 +617,153 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		return Rational.valueOf(bi, BigInteger.ONE);
 	}
 
-	public IPolynomialTerm add(final Rational offset) {
-		final Rational newConstant;
-		if (SmtSortUtils.isRealSort(getSort())) {
-			newConstant = getConstant().add(offset);
-		} else if (SmtSortUtils.isIntSort(getSort())) {
-			newConstant = getConstant().add(offset);
-		} else if (SmtSortUtils.isBitvecSort(getSort())) {
-			newConstant = PolynomialTermUtils.bringValueInRange(getConstant().add(offset), getSort());
+	@Override
+	public abstract AbstractGeneralizedAffineTerm<?> divInvertible(Rational r);
+
+	@Override
+	public IPolynomialTerm mod(final Script script, final IPolynomialTerm divisor) {
+		if (divisor.isConstant()) {
+			return mod(script, divisor.getConstant().numerator());
 		} else {
-			throw new AssertionError("unsupported Sort " + getSort());
+			return constructNewSingleVariableTerm(script.term("mod", this.toTerm(script), divisor.toTerm(script)));
 		}
-		return constructNew(getSort(), newConstant, getAbstractVariable2Coefficient());
+	}
+
+	public IPolynomialTerm mod(final Script script, final BigInteger divisor) {
+		if (divisor.equals(BigInteger.ZERO)) {
+			final Term resultAsTerm = script.term("mod", this.toTerm(script),
+					SmtUtils.constructIntegerValue(script, getSort(), divisor));
+			return constructNewSingleVariableTerm(resultAsTerm);
+		}
+		final Map<AVAR, Rational> preprocessedMap = modPreprocessMap(script, divisor.abs());
+		final Rational preprocessedConstant = SmtUtils
+				.toRational(ArithmeticUtils.euclideanMod(SmtUtils.toInt(getConstant()), divisor.abs()));
+		final AbstractGeneralizedAffineTerm<?> intermediateResult = constructNew(getSort(), preprocessedConstant,
+				preprocessedMap);
+		if (preprocessedMap.isEmpty()) {
+			// Result is a constant. Effect of the modulo was already taken into account
+			return intermediateResult;
+		}
+		final Pair<Rational, Rational> minmax = intermediateResult.computeMinMax();
+		if (minmax != null && !minmax.getFirst().isNegative()
+				&& minmax.getSecond().compareTo(Rational.valueOf(divisor, BigInteger.ONE)) < 0) {
+			// outer modulo is useless, we are in range [0 ... divisor) anyway.
+			return intermediateResult;
+		}
+		final Rational gcd = computeGcdOfValues(preprocessedMap).gcd(preprocessedConstant)
+				.gcd(Rational.valueOf(divisor, BigInteger.ONE));
+		assert !gcd.isNegative() && !gcd.equals(Rational.ZERO);
+		if (gcd.equals(Rational.ONE)) {
+			// No further simplification possible. Return AffineTerm whose single variable
+			// is
+			// the modulo term.
+			final Term intermediateResultAsTerm = script.term("mod", intermediateResult.toTerm(script),
+					SmtUtils.constructIntegerValue(script, getSort(), divisor.abs()));
+			return constructNewSingleVariableTerm(intermediateResultAsTerm);
+		} else {
+			// GCD is > 1. We pull out the GCD (divide coeff+const and divisor by GCD,
+			// multiply result by GCD).
+			final AbstractGeneralizedAffineTerm<?> quotientPoly = intermediateResult
+					.divInvertible(gcd);
+			final BigInteger quotientDivisor = divisor.abs().divide(gcd.numerator());
+			// Call method recursively because the new divisor might enable further
+			// simplifications in the polynomial
+			final IPolynomialTerm recResult = quotientPoly.mod(script, quotientDivisor);
+			return recResult.mul(gcd);
+		}
+	}
+
+	/**
+	 * Apply two transformations the variable map of an affine term.
+	 * <li>If the variable has the form `(mod t k)` and k is divisible by `divisor`
+	 * we replace the variable by `t`
+	 * <li>We apply modulo to all coefficients.
+	 */
+	private Map<AVAR, Rational> modPreprocessMap(final Script script, final BigInteger divisor) {
+		assert divisor.compareTo(BigInteger.ZERO) > 0 : "Divisor must be positive";
+		final SparseMapBuilder<AVAR, Rational> smb = new SparseMapBuilder<>();
+		for (final Entry<AVAR, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
+			final Rational newCoefficient = SmtUtils
+					.toRational(ArithmeticUtils.euclideanMod(SmtUtils.toInt(entry.getValue()), divisor));
+			if (newCoefficient.equals(Rational.ZERO)) {
+				continue;
+			}
+			final AVAR newAvar = constructAbstractVarForModulo(script, entry.getKey(), divisor);
+			// Changing a variable may require a merge of two map entries via addition of
+			// the coefficients
+			if (smb.containsKey(newAvar)) {
+				final Rational oldEntry = smb.get(newAvar);
+				final Rational sumTmp = oldEntry.add(entry.getValue());
+				// An addition of coefficients requires that we apply the modulo operation
+				// again.
+				final Rational sum = SmtUtils.toRational(ArithmeticUtils.euclideanMod(SmtUtils.toInt(sumTmp), divisor));
+				if (sum.equals(Rational.ZERO)) {
+					smb.remove(newAvar);
+				} else {
+					smb.put(newAvar, sum);
+				}
+			} else {
+				smb.put(newAvar, newCoefficient);
+			}
+		}
+		return smb.getBuiltMap();
+	}
+
+	/**
+	 * Prepare abstract variable for an application of `mod`. In case the abstract
+	 * variable is itself a `mod` term and its divisor is divisible by the divisor
+	 * of our `mod` application, we can omit the inner `mod`. <br>
+	 * E.g., `(mod (mod x 32) 4)` is (mod x 4).
+	 */
+	private AVAR constructAbstractVarForModulo(final Script script, final AVAR abstractVar, final BigInteger divisor) {
+		final ApplicationTerm appTerm = SmtUtils.getFunctionApplication(abstractVariableToTerm(script, abstractVar),
+				"mod");
+		if (appTerm == null) {
+			return abstractVar;
+		}
+		assert appTerm.getParameters().length == 2;
+		final Term innerDivisorTerm = appTerm.getParameters()[1];
+		final Rational innerDivisorRational = SmtUtils.tryToConvertToLiteral(innerDivisorTerm);
+		if (innerDivisorRational == null) {
+			return abstractVar;
+		}
+		if (innerDivisorRational.div(Rational.valueOf(divisor, BigInteger.ONE)).isIntegral()) {
+			// inner divisor is divisible by outer divisor
+			final Term divident = appTerm.getParameters()[0];
+			return constructAbstractVar(divident);
+		} else {
+			return abstractVar;
+		}
+	}
+
+	@Override
+	public abstract AbstractGeneralizedAffineTerm<AVAR> add(final Rational offset);
+
+	@Override
+	public Equivalence compare(final IPolynomialTerm otherTerm) {
+		final Equivalence result;
+		if (otherTerm instanceof AbstractGeneralizedAffineTerm) {
+			final AbstractGeneralizedAffineTerm<?> otherPoly = (AbstractGeneralizedAffineTerm<?>) otherTerm;
+			if (this.getAbstractVariable2Coefficient().equals(otherPoly.getAbstractVariable2Coefficient())) {
+				if (this.getConstant().equals(otherPoly.getConstant())) {
+					result = Equivalence.EQUALS;
+				} else {
+					result = Equivalence.DISTINCT;
+				}
+			} else {
+				result = Equivalence.INCOMPARABLE;
+			}
+		} else {
+			result = Equivalence.INCOMPARABLE;
+		}
+		return result;
 	}
 
 
 	public enum ComparisonResult {
 		INCONSISTENT, IMPLIES, EXPLIES, EQUIVALENT;
 
-		public ComparisonResult switchDiection() {
+		public ComparisonResult switchDirection() {
 			final ComparisonResult result;
 			switch (this) {
 			case EQUIVALENT:
@@ -477,20 +785,35 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		}
 	}
 
-
 	public static ComparisonResult compareRepresentation(final PolynomialRelation lhs, final PolynomialRelation rhs) {
+		if (!lhs.getPolynomialTerm().getSort().equals(rhs.getPolynomialTerm().getSort())) {
+			throw new AssertionError("Cannot compare polynomials of different sorts");
+		}
 		final AbstractGeneralizedAffineTerm<?> lhsTerm = lhs.getPolynomialTerm();
 		final AbstractGeneralizedAffineTerm<?> rhsTerm = rhs.getPolynomialTerm();
 		if (!lhsTerm.getAbstractVariable2Coefficient().equals(rhsTerm.getAbstractVariable2Coefficient())) {
 			throw new AssertionError("incomparable");
 		}
-		final RelationSymbol lhsRelationSymbol = lhs.getRelationSymbol();
-		final RelationSymbol rhsRelationSymbol = rhs.getRelationSymbol();
-		final Rational lhsConstant = lhs.getPolynomialTerm().getConstant();
-		final Rational rhsConstant = rhs.getPolynomialTerm().getConstant();
+		final RelationSymbol lhsRelationSymbol;
+		final RelationSymbol rhsRelationSymbol;
+		final Rational lhsConstant;
+		final Rational rhsConstant;
+		if (SmtSortUtils.isIntSort(lhs.getPolynomialTerm().getSort())) {
+			lhsRelationSymbol = lhs.getRelationSymbol().getCorrespondingNonStrictRelationSymbol();
+			rhsRelationSymbol = rhs.getRelationSymbol().getCorrespondingNonStrictRelationSymbol();
+			lhsConstant = lhs.getPolynomialTerm().getConstant()
+					.add(lhs.getRelationSymbol().getOffsetForStrictToNonstrictTransformation());
+			rhsConstant = rhs.getPolynomialTerm().getConstant()
+					.add(rhs.getRelationSymbol().getOffsetForStrictToNonstrictTransformation());
+		} else {
+			lhsRelationSymbol = lhs.getRelationSymbol();
+			rhsRelationSymbol = rhs.getRelationSymbol();
+			lhsConstant = lhs.getPolynomialTerm().getConstant();
+			rhsConstant = rhs.getPolynomialTerm().getConstant();
+		}
 		final ComparisonResult result = compare(lhsRelationSymbol, rhsRelationSymbol, lhsConstant, rhsConstant);
-		assert doubleCheck(lhsRelationSymbol, rhsRelationSymbol, lhsConstant, rhsConstant,
-				result) : "double check failed";
+		assert doubleCheck(lhsRelationSymbol, rhsRelationSymbol, lhsConstant, rhsConstant, result)
+				: "double check failed";
 		return result;
 	}
 
@@ -500,12 +823,15 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		if (result == null) {
 			return (otherDirection == null);
 		} else {
-			return result.switchDiection().equals(otherDirection);
+			return result.switchDirection().equals(otherDirection);
 		}
 	}
 
 	/**
-	 * Compare the relations lc lrel 0 and rc rrel 0
+	 * Compare the relations lc lrel 0 and rc rrel 0.
+	 *
+	 * Consider lc and rc as rationals, so that e.g., c > 0 and c >=1 are not
+	 * considered equivalent.
 	 */
 	private static ComparisonResult compare(final RelationSymbol lhsRelationSymbol,
 			final RelationSymbol rhsRelationSymbol, final Rational lhsConstant, final Rational rhsConstant)
@@ -931,6 +1257,95 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 			throw new AssertionError("unknown value: " + rRel);
 		}
 		return result;
+	}
+
+
+	public static boolean areRepresentationsFusible(final Junction junction, final PolynomialRelation lhs,
+			final PolynomialRelation rhs) {
+		if (!lhs.getPolynomialTerm().getSort().equals(rhs.getPolynomialTerm().getSort())) {
+			throw new AssertionError("Cannot compare polynomials of different sorts");
+		}
+		final AbstractGeneralizedAffineTerm<?> lhsTerm = lhs.getPolynomialTerm();
+		final AbstractGeneralizedAffineTerm<?> rhsTerm = rhs.getPolynomialTerm();
+		if (!lhsTerm.getAbstractVariable2Coefficient().equals(rhsTerm.getAbstractVariable2Coefficient())) {
+			throw new AssertionError("incomparable");
+		}
+		if (!lhs.getRelationSymbol().isConvexInequality() && !rhs.getRelationSymbol().isConvexInequality()) {
+			return false;
+		}
+		final RelationSymbol lhsRelationSymbol;
+		final RelationSymbol rhsRelationSymbol;
+		final Rational lhsConstant;
+		final Rational rhsConstant;
+		if (SmtSortUtils.isIntSort(lhs.getPolynomialTerm().getSort())) {
+			lhsRelationSymbol = lhs.getRelationSymbol().getCorrespondingNonStrictRelationSymbol();
+			rhsRelationSymbol = rhs.getRelationSymbol().getCorrespondingNonStrictRelationSymbol();
+			lhsConstant = lhs.getPolynomialTerm().getConstant()
+					.add(lhs.getRelationSymbol().getOffsetForStrictToNonstrictTransformation());
+			rhsConstant = rhs.getPolynomialTerm().getConstant()
+					.add(rhs.getRelationSymbol().getOffsetForStrictToNonstrictTransformation());
+		} else {
+			lhsRelationSymbol = lhs.getRelationSymbol();
+			rhsRelationSymbol = rhs.getRelationSymbol();
+			lhsConstant = lhs.getPolynomialTerm().getConstant();
+			rhsConstant = rhs.getPolynomialTerm().getConstant();
+		}
+		return areRepresentationsFusibleHelper(junction, lhsRelationSymbol, rhsRelationSymbol, lhsConstant,
+				rhsConstant);
+	}
+
+	/**
+	 */
+	private static boolean areRepresentationsFusibleHelper(final Junction junction,
+			final RelationSymbol lhsRelationSymbol, final RelationSymbol rhsRelationSymbol, final Rational lhsConstant,
+			final Rational rhsConstant) {
+		if (!lhsRelationSymbol.isConvexInequality() || !rhsRelationSymbol.isConvexInequality()) {
+			return false;
+		}
+		switch (junction) {
+		case AND:
+			if (lhsRelationSymbol.equals(RelationSymbol.LEQ) && rhsRelationSymbol.equals(RelationSymbol.GEQ)
+					|| lhsRelationSymbol.equals(RelationSymbol.GEQ) && rhsRelationSymbol.equals(RelationSymbol.LEQ)) {
+				if (rhsConstant.equals(lhsConstant)) {
+					return true;
+				}
+			}
+			return false;
+		case OR:
+			if (lhsRelationSymbol.equals(RelationSymbol.LESS) && rhsRelationSymbol.equals(RelationSymbol.GREATER)
+					|| lhsRelationSymbol.equals(RelationSymbol.GREATER)
+							&& rhsRelationSymbol.equals(RelationSymbol.LESS)) {
+				if (rhsConstant.equals(lhsConstant)) {
+					return true;
+				}
+			}
+			return false;
+		default:
+			throw new AssertionError();
+
+		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Rational computeGcdOfCoefficients() {
+		final Map<?, Rational> map = mAbstractVariable2Coefficient;
+		return computeGcdOfValues(map);
+	}
+
+
+	public Rational computeGcdOfCoefficientsAndConstant() {
+		return computeGcdOfCoefficients().gcd(getConstant());
+	}
+
+	private static Rational computeGcdOfValues(final Map<?, Rational> map) {
+		Rational gcd = Rational.ZERO;
+		for (final Entry<?, Rational> entry : map.entrySet()) {
+			gcd = gcd.gcd(entry.getValue());
+		}
+		return gcd;
 	}
 
 	@Override

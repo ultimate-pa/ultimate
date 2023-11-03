@@ -18,7 +18,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
-import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -28,7 +27,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class CCEquality extends DPLLAtom {
-	public final static Annotation[] QUOTED_CC = new Annotation[] { new Annotation(":quotedCC", null) };
 	private final CCTerm mLhs, mRhs;
 	CCEquality mDiseqReason;
 	private LAEquality mLasd;
@@ -85,9 +83,8 @@ public class CCEquality extends DPLLAtom {
 	}
 
 	@Override
-	public Term getSMTFormula(final Theory smtTheory, final boolean quoted) {
-		final Term res = smtTheory.term("=", mLhs.getFlatTerm(), mRhs.getFlatTerm());
-		return quoted ? smtTheory.annotatedTerm(QUOTED_CC, res) : res;
+	public Term getSMTFormula(final Theory smtTheory) {
+		return smtTheory.term("=", mLhs.getFlatTerm(), mRhs.getFlatTerm());
 	}
 
 	@Override

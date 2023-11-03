@@ -41,11 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTermTransformer;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -66,11 +61,11 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 	private final Map<Term, Term> mAlphaDefaultConstant = new HashMap<>();
 	private TermVariable mNVar;
 	private Term mFinalTerm;
-	private Map<IProgramVar, Term> mValues = new HashMap<>();
+	private final Map<IProgramVar, Term> mValues = new HashMap<>();
 
 	public AlphaSolver(final ILogger logger, final UnmodifiableTransFormula loopTransFormula, final ManagedScript script,
 			final Map<Integer, Map<Term, Term>> matrix, final Map<Integer, Map<Term, Term>> lgs,
-			final IUltimateServiceProvider service, int loopCounter) {
+			final IUltimateServiceProvider service, final int loopCounter) {
 		mMgScript = script;
 		mScript = mMgScript.getScript();
 
@@ -106,18 +101,17 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 	}
 
 	private Term solveTerm(final Term term, final IProgramVar pVar) {
-		final Substitution sub = new Substitution(mMgScript, mAlphaDefaultConstant);
-		final Term transformedTerm = sub.transform(term);
+		final Term transformedTerm = Substitution.apply(mMgScript, mAlphaDefaultConstant, term);
 		mScript.push(1);
 		final LBool result = checkSat(mScript, transformedTerm);
 		Term finalTerm = null;
-		
+
 		try {
 			if (result == LBool.SAT) {
 				final Collection<Term> terms = mAlphaDefaultConstant.values();
 				final Map<Term, Term> termvar2value = SmtUtils.getValues(mScript, terms);
 				final Term zero = mScript.decimal("0.0");
-				
+
 				// v and v*n
 				final List<Term> multiplication = new ArrayList<>();
 				for (final IProgramVar pV : mProgramVar) {
@@ -164,7 +158,7 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 		}
 		return finalTerm;
 	}
-	
+
 	public Map<IProgramVar, Term> getValues(){
 		return mValues;
 	}
@@ -197,7 +191,7 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 		return script.term(name);
 	}
 
-	private void initAlphas(int loopCounter) {
+	private void initAlphas(final int loopCounter) {
 		mAlphaMap = new HashMap<>();
 		mNVar = mScript.variable("n", mScript.sort("Int"));
 		for (final IProgramVar var : mProgramVar) {

@@ -59,12 +59,12 @@ public class AffineSubtermNormalizer extends TermTransformer {
 			return;
 		}
 		if (isBinaryNumericRelation(term)) {
-			final PolynomialRelation polyRel = PolynomialRelation.convert(mScript, term);
+			final PolynomialRelation polyRel = PolynomialRelation.of(mScript, term);
 			if (polyRel == null) {
 				setResult(term);
 				return;
 			}
-			final Term pnf = polyRel.positiveNormalForm(mScript);
+			final Term pnf = polyRel.toTerm(mScript);
 			setResult(pnf);
 			return;
 		}

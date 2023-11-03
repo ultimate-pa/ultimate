@@ -46,11 +46,11 @@ public class MultiDimensionalSelectOverNestedStore {
 	private final Term mTerm;
 
 	public MultiDimensionalSelectOverNestedStore(final Script script, final Term term) {
-		final MultiDimensionalSelect select = new MultiDimensionalSelect(term);
+		final MultiDimensionalSelect select = MultiDimensionalSelect.of(term);
 		if (!select.getIndex().isEmpty()) {
 			final Term innerArray = select.getArray();
 			if (innerArray instanceof ApplicationTerm) {
-				final MultiDimensionalNestedStore store = MultiDimensionalNestedStore.convert(script, innerArray);
+				final MultiDimensionalNestedStore store = MultiDimensionalNestedStore.of(innerArray);
 				if (store != null && store.getIndices().get(0).size() == select.getIndex().size()) {
 					mSelect = select;
 					mNestedStore = store;
@@ -91,9 +91,8 @@ public class MultiDimensionalSelectOverNestedStore {
 	 * if the index of the select and the index of each store are distinct.
 	 */
 	public Term constructNotEqualsReplacement(final Script script) {
-		final MultiDimensionalSelect mds = new MultiDimensionalSelect(getNestedStore().getArray(), getSelect().getIndex(),
-				script);
-		return mds.getSelectTerm();
+		final MultiDimensionalSelect mds = new MultiDimensionalSelect(getNestedStore().getArray(), getSelect().getIndex());
+		return mds.toTerm(script);
 	}
 
 

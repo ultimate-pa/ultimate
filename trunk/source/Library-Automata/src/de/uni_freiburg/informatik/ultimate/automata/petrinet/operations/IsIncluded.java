@@ -36,17 +36,14 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomat
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Compare the languages of a given {@link IPetriNet} and a given
- * {@link INestedWordAutomaton} wrt inclusion.
- * Supports both directions via two different constructors.
+ * Compare the languages of a given {@link IPetriNet} and a given {@link INestedWordAutomaton} wrt inclusion. Supports
+ * both directions via two different constructors.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class IsIncluded<LETTER, STATE>
-		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class IsIncluded<LETTER, STATE> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final IPetriNet<LETTER, STATE> mPetriNet;
 	private final INestedWordAutomaton<LETTER, STATE> mAutomaton;
-	private final IPetriNetAndAutomataInclusionStateFactory<STATE> mStateFactory;
 	private final boolean mResult;
 	private final Word<LETTER> mCounterexample;
 
@@ -55,17 +52,17 @@ public class IsIncluded<LETTER, STATE>
 	 */
 	public IsIncluded(final AutomataLibraryServices services,
 			final IPetriNetAndAutomataInclusionStateFactory<STATE> stateFactory,
-			final IPetriNet<LETTER, STATE> petriNet, final INestedWordAutomaton<LETTER, STATE> automaton) throws AutomataLibraryException {
+			final IPetriNet<LETTER, STATE> petriNet, final INestedWordAutomaton<LETTER, STATE> automaton)
+			throws AutomataLibraryException {
 		super(services);
 		mPetriNet = petriNet;
 		mAutomaton = automaton;
-		mStateFactory = stateFactory;
 		printStartMessage();
-		final INestedWordAutomaton<LETTER, STATE> petriNetAsAutomaton = (new PetriNet2FiniteAutomaton<LETTER, STATE>(
-				mServices, stateFactory, mPetriNet)).getResult();
+		final INestedWordAutomaton<LETTER, STATE> petriNetAsAutomaton =
+				new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mPetriNet).getResult();
 		final de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded<LETTER, STATE> isIncluded =
-				new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded<LETTER, STATE>(
-				mServices, stateFactory, petriNetAsAutomaton, mAutomaton);
+				new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded<>(mServices,
+						stateFactory, petriNetAsAutomaton, mAutomaton);
 		mResult = isIncluded.getResult();
 		if (!mResult) {
 			mCounterexample = isIncluded.getCounterexample().getWord();
@@ -80,17 +77,17 @@ public class IsIncluded<LETTER, STATE>
 	 */
 	public IsIncluded(final AutomataLibraryServices services,
 			final IPetriNetAndAutomataInclusionStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> automaton, final IPetriNet<LETTER, STATE> petriNet) throws AutomataLibraryException {
+			final INestedWordAutomaton<LETTER, STATE> automaton, final IPetriNet<LETTER, STATE> petriNet)
+			throws AutomataLibraryException {
 		super(services);
 		mPetriNet = petriNet;
 		mAutomaton = automaton;
-		mStateFactory = stateFactory;
 		printStartMessage();
-		final INestedWordAutomaton<LETTER, STATE> petriNetAsAutomaton = (new PetriNet2FiniteAutomaton<LETTER, STATE>(
-				mServices, stateFactory, mPetriNet)).getResult();
+		final INestedWordAutomaton<LETTER, STATE> petriNetAsAutomaton =
+				new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mPetriNet).getResult();
 		final de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded<LETTER, STATE> isIncluded =
-				new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded<LETTER, STATE>(
-				mServices, stateFactory, mAutomaton, petriNetAsAutomaton);
+				new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded<>(mServices,
+						stateFactory, mAutomaton, petriNetAsAutomaton);
 		mResult = isIncluded.getResult();
 		if (!mResult) {
 			mCounterexample = isIncluded.getCounterexample().getWord();
@@ -115,8 +112,7 @@ public class IsIncluded<LETTER, STATE>
 	}
 
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.warn("Not yet implemented: result check for " + this.getClass().getSimpleName());
 		return true;
 	}

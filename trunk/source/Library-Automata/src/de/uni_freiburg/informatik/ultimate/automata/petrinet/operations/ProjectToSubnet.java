@@ -33,15 +33,13 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Constructs a copy of an {@link IPetriNet} in which some flow and some places
- * are removed.
+ * Constructs a copy of an {@link IPetriNet} in which some flow and some places are removed.
  *
  * @author heizmann@informatik.uni-freiburg.de
  *
@@ -53,11 +51,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class ProjectToSubnet<LETTER, PLACE> {
 
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
-	private final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> mInput2Projected;
-
+	private final Map<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> mInput2Projected;
 
 	public ProjectToSubnet(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> flowToRemove, final Set<PLACE> placesToRemove) {
+			final HashRelation<Transition<LETTER, PLACE>, PLACE> flowToRemove, final Set<PLACE> placesToRemove) {
 		mResult = new BoundedPetriNet<>(services, operand.getAlphabet(), false);
 		mInput2Projected = new HashMap<>();
 		for (final PLACE p : operand.getPlaces()) {
@@ -65,11 +62,11 @@ public class ProjectToSubnet<LETTER, PLACE> {
 				mResult.addPlace(p, operand.getInitialPlaces().contains(p), operand.isAccepting(p));
 			}
 		}
-		for (final ITransition<LETTER, PLACE> t : operand.getTransitions()) {
-			final HashSet<PLACE> preds = new HashSet<>(operand.getPredecessors(t));
+		for (final Transition<LETTER, PLACE> t : operand.getTransitions()) {
+			final HashSet<PLACE> preds = new HashSet<>(t.getPredecessors());
 			preds.removeAll(flowToRemove.getImage(t));
 			preds.removeAll(placesToRemove);
-			final HashSet<PLACE> succs = new HashSet<>(operand.getSuccessors(t));
+			final HashSet<PLACE> succs = new HashSet<>(t.getSuccessors());
 			succs.removeAll(flowToRemove.getImage(t));
 			succs.removeAll(placesToRemove);
 			final Transition<LETTER, PLACE> newTransition =
@@ -78,13 +75,11 @@ public class ProjectToSubnet<LETTER, PLACE> {
 		}
 	}
 
-
 	public BoundedPetriNet<LETTER, PLACE> getResult() {
 		return mResult;
 	}
 
-
-	public Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> getTransitionMapping() {
+	public Map<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> getTransitionMapping() {
 		return mInput2Projected;
 	}
 }

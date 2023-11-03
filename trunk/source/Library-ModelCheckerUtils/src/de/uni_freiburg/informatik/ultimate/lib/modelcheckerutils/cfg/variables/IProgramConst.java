@@ -27,11 +27,22 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 
-public interface IProgramConst extends IProgramVarOrConst {
+public interface IProgramConst extends IProgramVarOrConst, IProgramFunction  {
 
 	String getIdentifier();
 
+	/*
+	 * TODO 20211228 Matthias: Cannot see a "default". Rename to getSmtConstant?
+	 */
 	ApplicationTerm getDefaultConstant();
+
+	@Override
+	default FunctionSymbol getFunctionSymbol() {
+		return getDefaultConstant().getFunction();
+	}
+
+
 
 }

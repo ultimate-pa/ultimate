@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
+import java.util.Arrays;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -118,7 +119,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	private static boolean isPolynomialFunctionSymbol(final String funName) {
 		return (funName.equals("+") || funName.equals("-") || funName.equals("*") || funName.equals("/")
 				|| funName.equals("bvadd") || funName.equals("bvsub") || funName.equals("bvmul")
-				|| funName.equals("div"));
+				|| funName.equals("div") || funName.equals("mod"));
 	}
 
 	@Override
@@ -175,12 +176,17 @@ public class PolynomialTermTransformer extends TermTransformer {
 				return subtract(polynomialArgs);
 			}
 
-		case "/":
-			return divide(polynomialArgs);
-
 		case "div":
-			return div(polynomialArgs);
-
+		case "/":
+			if (polynomialArgs.length == 0) {
+				throw new AssertionError("Division needs at least one argument");
+			}
+			return polynomialArgs[0].div(mScript, Arrays.copyOfRange(polynomialArgs, 1, polynomialArgs.length));
+		case "mod":
+			if (polynomialArgs.length > 2) {
+				throw new AssertionError("Modulo needs exactly two arguments");
+			}
+			return polynomialArgs[0].mod(mScript, polynomialArgs[1]);
 		default:
 			throw new UnsupportedOperationException("unsupported symbol " + funName);
 		}
@@ -287,47 +293,6 @@ public class PolynomialTermTransformer extends TermTransformer {
 		return add(argumentsForSum);
 	}
 
-	/**
-	 * Given {@link PolynomialTerm}s <code>t1,t2,...,tn</code> construct an
-	 * {@link PolynomialTerm} that represents the quotient
-	 * <code>t1/t2/.../tn</code>, i.e., the {@link PolynomialTerm} that is
-	 * equivalent to <code>t1*((1/t2)*...*(1/tn))</code>. Note that the function "/"
-	 * is only defined for the sort of reals. For integer division we have the
-	 * function "div" which is currently partially supported by our polynomial
-	 * terms. If this is not possible, treat the whole division term as a variable
-	 * and return it, wrapped in an AffineTerm.
-	 */
-	private IPolynomialTerm divide(final IPolynomialTerm[] polynomialArgs) {
-		assert SmtSortUtils.isRealSort(polynomialArgs[0].getSort());
-
-		// Only Term at position 0 may be not affine.
-		if (polynomialArgs[0].isAffine()) {
-			return AffineTerm.divide(polynomialArgs, mScript);
-		} else {
-			return PolynomialTerm.divide(polynomialArgs, mScript);
-		}
-	}
-
-	/**
-	 * Given {@link PolynomialTerm}s <code>t1,t2,...,tn</code> construct an
-	 * {@link PolynomialTerm} that represents the quotient
-	 * <code>t1 div t2 div ... div tn</code>, Note that the function "div" does
-	 * currently only work if all coefficients and the constant of t1 is divisible
-	 * by t2...tn. Also only t1 may have variables, t2...tn must be constants. For
-	 * the "usual" division we have the function "divide". If this is not possible,
-	 * treat the whole division term as a variable and return it, wrapped in an
-	 * AffineTerm.
-	 */
-	private IPolynomialTerm div(final IPolynomialTerm[] polynomialArgs) {
-		assert SmtSortUtils.isIntSort(polynomialArgs[0].getSort());
-
-		// Only Term at position 0 may be not affine.
-		if (polynomialArgs[0].isAffine()) {
-			return AffineTerm.div(polynomialArgs, mScript);
-		} else {
-			return PolynomialTerm.div(polynomialArgs, mScript);
-		}
-	}
 
 	/**
 	 * Convert an array of {@link Term}s into an an array of {@link PolynomialTerm}s
@@ -347,5 +312,23 @@ public class PolynomialTermTransformer extends TermTransformer {
 			}
 		}
 		return polynomialTerms;
+	}
+
+	/**
+	 * Convert SMT {@link Term} into an {@link IPolynomialTerm}. We return null if
+	 * we the {@link Term} cannot be converted into an {@link IPolynomialTerm},
+	 * e.g., because its sort is Bool.
+	 */
+	public static IPolynomialTerm convert(final Script script, final Term term) {
+		final IPolynomialTerm result;
+		if (!hasSupportedSort(term)) {
+			result = null;
+		} else {
+			result = (IPolynomialTerm) new PolynomialTermTransformer(script).transform(term);
+			if (result.isErrorTerm()) {
+				throw new UnsupportedOperationException("Unknown conversion problem: " + term);
+			}
+		}
+		return result;
 	}
 }

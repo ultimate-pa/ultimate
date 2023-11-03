@@ -142,7 +142,7 @@ public class EqualityInformation {
 				// not even binary equality relation that contains givenTerm
 				continue;
 			}
-			final PolynomialRelation polyRel = PolynomialRelation.convert(script, context[i]);
+			final PolynomialRelation polyRel = PolynomialRelation.of(script, context[i]);
 			if (polyRel == null) {
 				continue;
 			}
@@ -196,7 +196,7 @@ public class EqualityInformation {
 		final Set<Term> equivalentTerms = new HashSet<>();
 		final Set<Term> disjointTerms = new HashSet<>();
 		for (int i = 0; i < context.length; i++) {
-			final PolynomialRelation polyRel = PolynomialRelation.convert(script, context[i]);
+			final PolynomialRelation polyRel = PolynomialRelation.of(script, context[i]);
 			if (polyRel == null) {
 				continue;
 			}

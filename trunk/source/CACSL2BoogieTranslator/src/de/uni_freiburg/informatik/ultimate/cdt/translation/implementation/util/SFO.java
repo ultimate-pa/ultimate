@@ -34,8 +34,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -154,10 +152,6 @@ public final class SFO {
 	 */
 	public static final String SIZEOF_POINTER_ID = SFO.SIZEOF + SFO.POINTER;
 	/**
-	 * Identifier of the null pointer.
-	 */
-	public static final String NULL = "#NULL";
-	/**
 	 * Identifier for function pointers.
 	 */
 	public static final String FUNCTION_ADDRESS = "#funAddr~";
@@ -224,6 +218,10 @@ public final class SFO {
 	public static final String STORE_SUBARRAY_AT_ADDRESS = "storeAtPointerBaseAddress~";
 
 	public static final String SELECT_SUBARRAY_AT_ADDRESS = "selectAtPointerBaseAddress~";
+
+	public static final String VARARGS = "#varArgs";
+
+	public static final String GHOST = "#ghost~";
 
 	/**
 	 * Specifies purpose of an auxiliary temporary variable.
@@ -379,6 +377,8 @@ public final class SFO {
 
 		RACE_DETECT("detect~race"),
 
+		VARARGS_POINTER("varargs"),
+
 		;
 
 		private final String mId;
@@ -408,26 +408,22 @@ public final class SFO {
 	/**
 	 * Build the name of a Boogie function for a given SMT-LIB function name and a C type. Since SMT-LIB allows
 	 * overloading of functions but Boogie does not, we have to construct unique identifiers. We do this by appending
-	 * the C type. By convention we use an additional prefix for each such function. This should avoid that we have name
-	 * clashes with functions that occur in the C program.
+	 * the size of the C type (in bits). By convention we use an additional prefix for each such function. This should
+	 * avoid that we have name clashes with functions that occur in the C program.
 	 *
 	 * @param smtFunctionName
 	 *            The name of the conversion symbol.
-	 * @param type
-	 *            The type of the conversion.
+	 * @param bitSize
+	 *            The bit size of the type of the conversion.
 	 * @return an identifier for a Boogie function that represents some SMT function symbol used for converting or
 	 *         creating constants.
 	 */
-	public static String getBoogieFunctionName(final String smtFunctionName, final CPrimitive type) {
-		return getBoogieFunctionName(smtFunctionName, type.toString());
-	}
-
-	private static String getBoogieFunctionName(final String smtFunctionName, final String suffix) {
+	public static String getBoogieFunctionName(final String smtFunctionName, final Integer bitSize) {
 		final String escapedSmtFunctionName = smtFunctionName.replace("+", "Plus").replace("-", "Minus");
-		return SFO.AUXILIARY_FUNCTION_PREFIX + escapedSmtFunctionName + SFO.AUXILIARY_FUNCTION_PREFIX + suffix;
+		return SFO.AUXILIARY_FUNCTION_PREFIX + escapedSmtFunctionName + SFO.AUXILIARY_FUNCTION_PREFIX + bitSize;
 	}
 
-	public static Pair<String, CPrimitives> reverseBoogieFunctionName(final String functionName) {
+	public static Pair<String, Integer> reverseBoogieFunctionName(final String functionName) {
 		if (functionName == null) {
 			return null;
 		}
@@ -436,8 +432,14 @@ public final class SFO {
 			return null;
 		}
 		final String smtFunctionName = splitted[1];
-		final CPrimitives prim = Enum.valueOf(CPrimitives.class, splitted[2]);
-		return new Pair<>(smtFunctionName, prim);
+		Integer bitSize = null;
+		try {
+			bitSize = Integer.parseInt(splitted[2]);
+		} catch (final NumberFormatException e) {
+			// Function name does not match
+			return null;
+		}
+		return new Pair<>(smtFunctionName, bitSize);
 	}
 
 }

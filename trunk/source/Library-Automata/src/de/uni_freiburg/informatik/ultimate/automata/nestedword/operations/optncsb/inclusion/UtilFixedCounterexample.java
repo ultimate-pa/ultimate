@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
@@ -55,94 +54,93 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 
 /**
  * This is only used to fix the counterexample in the experiments
- * **/
+ **/
 
 public class UtilFixedCounterexample<LETTER extends IIcfgTransition<?>, STATE> {
-	
+
 	private final String PATH = "counterexamples";
 	private final String SEPARATOR = "----";
-	
+
 	private final Map<String, LETTER> mMap = new HashMap<>();
-	
+
 	public UtilFixedCounterexample() {
 	}
-	
+
 	public NestedLassoWord<LETTER> getNestedLassoWord(
-			INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton, String name, int iteration) 
-		 throws AutomataOperationCanceledException {
-		File dir = new File(PATH);
-		if(!dir.exists()) return null;
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton, final String name,
+			final int iteration) {
+		final File dir = new File(PATH);
+		if (!dir.exists()) {
+			return null;
+		}
 		final String fileName = PATH + "/" + name + iteration;
-		File file = new File(fileName);
-		if(!file.exists()) return null;
+		final File file = new File(fileName);
+		if (!file.exists()) {
+			return null;
+		}
 		mMap.clear();
 		BufferedReader reader = null;
-        try {
-        	reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-        }catch(FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        if(! hasOnlyInternalLetters(automaton)) {
-        	return null;
-        }
-        // initialize letters
-        addLettersToStringMap(mMap, automaton.getVpAlphabet().getInternalAlphabet());
-        // first stem
-        boolean isStem = true;
-        boolean isOk = true;
-        String line = null;
-        NestedWord<LETTER> stem = new NestedWord<>();
-        NestedWord<LETTER> loop = new NestedWord<>();
-        try {
-			while((line = reader.readLine()) != null) {
-				if(line.startsWith(SEPARATOR)) {
+		try {
+			reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+		} catch (final FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		if (!hasOnlyInternalLetters(automaton)) {
+			return null;
+		}
+		// initialize letters
+		addLettersToStringMap(mMap, automaton.getVpAlphabet().getInternalAlphabet());
+		// first stem
+		boolean isStem = true;
+		boolean isOk = true;
+		String line = null;
+		NestedWord<LETTER> stem = new NestedWord<>();
+		NestedWord<LETTER> loop = new NestedWord<>();
+		try {
+			while ((line = reader.readLine()) != null) {
+				if (line.startsWith(SEPARATOR)) {
 					isStem = false;
 					continue;
 				}
-				LETTER letter = mMap.get(line);
-				if(letter == null) {
+				final LETTER letter = mMap.get(line);
+				if (letter == null) {
 					isOk = false;
 					break;
 				}
-				NestedWord<LETTER> suffix = new NestedWord<>(letter, NestedWord.INTERNAL_POSITION);
-				if(isStem) {
+				final NestedWord<LETTER> suffix = new NestedWord<>(letter, NestedWord.INTERNAL_POSITION);
+				if (isStem) {
 					stem = stem.concatenate(suffix);
-				}else {
+				} else {
 					loop = loop.concatenate(suffix);
 				}
 			}
-			if(reader != null) reader.close();
-		} catch (IOException e) {
+			if (reader != null) {
+				reader.close();
+			}
+		} catch (final IOException e) {
 			e.printStackTrace();
 		}
-        
-        NestedLassoWord<LETTER> word = null;
-        if(isOk) {
-        	word = new NestedLassoWord<>(stem, loop);
-        }
+
+		NestedLassoWord<LETTER> word = null;
+		if (isOk) {
+			word = new NestedLassoWord<>(stem, loop);
+		}
 		return word;
 	}
-	
-	
-	public NestedLassoRun<LETTER, STATE> getNestedLassoRun(
-			AutomataLibraryServices services,
-			INestedWordAutomaton<LETTER, STATE> automaton, String name, int iteration) throws AutomataOperationCanceledException {
-        NestedLassoWord<LETTER> word = getNestedLassoWord(automaton, name, iteration);
-        if(word == null) return null;
-        GetLassoRunFromLassoWord<LETTER, STATE> getter = new GetLassoRunFromLassoWord<>(services, automaton, word);
-        NestedLassoRun<LETTER, STATE> run = getter.getNestedLassoRun();
-        
-//        if(run == null) {
-//        	assert false : "Wrong automaton for the difference";
-//        }
-        return run;
+
+	public NestedLassoRun<LETTER, STATE> getNestedLassoRun(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton, final String name,
+			final int iteration) throws AutomataOperationCanceledException {
+		final NestedLassoWord<LETTER> word = getNestedLassoWord(automaton, name, iteration);
+		if (word == null) {
+			return null;
+		}
+		return new GetLassoRunFromLassoWord<>(services, automaton, word).getNestedLassoRun();
 	}
-	
-	
-	private final void addLettersToStringMap(Map<String, LETTER> map,
-			final Set<LETTER> letters) {
-		for (LETTER letter : letters) {
-			String letterStr = getLetterString(letter);
+
+	private final void addLettersToStringMap(final Map<String, LETTER> map, final Set<LETTER> letters) {
+		for (final LETTER letter : letters) {
+			final String letterStr = getLetterString(letter);
 			if (map.containsKey(letterStr)) {
 				assert false : "Letters with the same string: " + letter;
 			} else {
@@ -150,65 +148,72 @@ public class UtilFixedCounterexample<LETTER extends IIcfgTransition<?>, STATE> {
 			}
 		}
 	}
-	
-	public final void writeNestedLassoRun(INestedWordAutomaton<LETTER, STATE> automaton, NestedLassoRun<LETTER, STATE> lassoRun, String name, int iteration) {
-		//we donot store words with call and return alphabets
-		if(!hasOnlyInternalLetters(automaton)) {
-			return ;
+
+	public final void writeNestedLassoRun(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton,
+			final NestedLassoRun<LETTER, STATE> lassoRun, final String name, final int iteration) {
+		// we donot store words with call and return alphabets
+		if (!hasOnlyInternalLetters(automaton)) {
+			return;
 		}
-		File dir = new File(PATH);
-		if(!dir.exists()) return ;
+		final File dir = new File(PATH);
+		if (!dir.exists()) {
+			return;
+		}
 		final String fileName = PATH + "/" + name + iteration;
-        File file = new File(fileName);
-        writeWordToFile(lassoRun.getNestedLassoWord(), file);
+		final File file = new File(fileName);
+		writeWordToFile(lassoRun.getNestedLassoWord(), file);
 	}
-	
-	private final void writeWordToFile(NestedLassoWord<LETTER> word, File file) {
+
+	private final void writeWordToFile(final NestedLassoWord<LETTER> word, final File file) {
 		PrintStream out = null;
 		try {
 			out = new PrintStream(file);
 			writeLettersToFile(out, word.getStem().asList());
 			out.println(SEPARATOR);
 			writeLettersToFile(out, word.getLoop().asList());
-			if(out != null) out.close();
-		} catch (FileNotFoundException e) {
+			if (out != null) {
+				out.close();
+			}
+		} catch (final FileNotFoundException e) {
 			e.printStackTrace();
 		}
 	}
-	
-	private final void writeLettersToFile(PrintStream out, List<LETTER> word) {
-		for (LETTER letter : word) {
+
+	private final void writeLettersToFile(final PrintStream out, final List<LETTER> word) {
+		for (final LETTER letter : word) {
 			out.println(getLetterString(letter)); // one line one letter
 		}
 	}
-	
-	private final boolean hasOnlyInternalLetters(INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton) {
-        if(automaton.getVpAlphabet().getCallAlphabet().isEmpty()
-        && automaton.getVpAlphabet().getReturnAlphabet().isEmpty()) {
-        	return true;
-        }
-        return false;
+
+	private final boolean
+			hasOnlyInternalLetters(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton) {
+		if (automaton.getVpAlphabet().getCallAlphabet().isEmpty()
+				&& automaton.getVpAlphabet().getReturnAlphabet().isEmpty()) {
+			return true;
+		}
+		return false;
 	}
-	
-	private final String getLetterString(LETTER letter) {
-		String letterStr = letter.getSource() + "," + letter.toString() + letter.getTarget();
+
+	private final String getLetterString(final LETTER letter) {
+		final String letterStr = letter.getSource() + "," + letter.toString() + letter.getTarget();
 		return letterStr;
 	}
-	
-	public void checkAcceptance(
-			AutomataLibraryServices services, INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton, String name, int iteration) 
-		 throws AutomataLibraryException {
-		NestedLassoWord<LETTER> word = this.getNestedLassoWord(automaton, name, iteration);
-		if(word == null) {
+
+	public void checkAcceptance(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton, final String name,
+			final int iteration) throws AutomataLibraryException {
+		final NestedLassoWord<LETTER> word = this.getNestedLassoWord(automaton, name, iteration);
+		if (word == null) {
 			System.err.println("Empty word");
 			System.exit(-1);
 		}
-		if(automaton instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
-			IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> gba = (IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE>)automaton;
-			GeneralizedBuchiAccepts<LETTER, STATE> accepts = new GeneralizedBuchiAccepts<>(services, gba, word);
+		if (automaton instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
+			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> gba =
+					(IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE>) automaton;
+			final GeneralizedBuchiAccepts<LETTER, STATE> accepts = new GeneralizedBuchiAccepts<>(services, gba, word);
 			System.err.println("Accepts: " + accepts.getResult());
-		}else {
-			BuchiAccepts<LETTER, STATE> accepts = new BuchiAccepts<>(services, automaton, word);
+		} else {
+			final BuchiAccepts<LETTER, STATE> accepts = new BuchiAccepts<>(services, automaton, word);
 			System.err.println("Accepts: " + accepts.getResult());
 		}
 	}

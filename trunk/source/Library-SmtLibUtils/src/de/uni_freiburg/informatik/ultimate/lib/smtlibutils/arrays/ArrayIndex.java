@@ -27,14 +27,20 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -53,8 +59,12 @@ public class ArrayIndex implements List<Term> {
 		mIndexEntries = Collections.emptyList();
 	}
 
-	public ArrayIndex(final List<Term> indexEntries) {
-		mIndexEntries = indexEntries;
+	public ArrayIndex(final Term... indexEntries) {
+		mIndexEntries = Arrays.asList(indexEntries);
+	}
+
+	public ArrayIndex(final List<? extends Term> indexEntries) {
+		mIndexEntries = (List<Term>) indexEntries;
 	}
 
 	@Override
@@ -274,6 +284,17 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	/**
+	 * Construct new array index in which the substitution defined by the given
+	 * mapping was applied to all indices.
+	 */
+	public ArrayIndex applySubstitution(final ManagedScript mgdScript,
+			final Map<? extends Term, ? extends Term> substitutionMapping) {
+		final ArrayIndex translatedIndex = new ArrayIndex(this.stream()
+				.map(x -> Substitution.apply(mgdScript, substitutionMapping, x)).collect(Collectors.toList()));
+		return translatedIndex;
+	}
+
+	/**
 	 * Appends to each {@link ArrayIndex} in list indices the newIndexEntries. Does
 	 * not modify existing objects but return new objects.
 	 */
@@ -285,5 +306,47 @@ public class ArrayIndex implements List<Term> {
 		}
 		return result;
 	}
+
+	/**
+	 * Construct conjunction that says that both {@link ArrayIndex} are equivalent
+	 * at all positions.
+	 */
+	public static Term constructIndexEquality(final Script script, final ArrayIndex index1, final ArrayIndex index2) {
+		assert index1.size() == index2.size();
+		final ArrayList<Term> conjuncts = new ArrayList<>(index1.size());
+		for (int i = 0; i < index1.size(); i++) {
+			conjuncts.add(SmtUtils.binaryEquality(script, index1.get(i), index2.get(i)));
+		}
+		return SmtUtils.and(script, conjuncts);
+	}
+
+	/**
+	 * Construct disjunction that says that both {@link ArrayIndex} are different at
+	 * at least one positions.
+	 */
+	public static Term constructIndexNotEquals(final Script script, final ArrayIndex index1, final ArrayIndex index2) {
+		assert index1.size() == index2.size();
+		final ArrayList<Term> disjuncts = new ArrayList<>(index1.size());
+		for (int i = 0; i < index1.size(); i++) {
+			disjuncts.add(SmtUtils.distinct(script, index1.get(i), index2.get(i)));
+		}
+		return SmtUtils.or(script, disjuncts);
+	}
+
+	/**
+	 * Construct a new {@link ArrayIndex} that is the pairwise difference of this
+	 * {@link ArrayIndex} and some other {@link ArrayIndex}. This operation makes
+	 * only sense for sorts that are supported by {@link SmtUtils#minus}, e.g.,
+	 * numeric sort and bitvector sort.
+	 */
+	public ArrayIndex minus(final Script script, final ArrayIndex subtrahend) {
+		final Term[] resultArray = new Term[size()];
+		for (int i=0; i<size(); i++) {
+			resultArray[i] = SmtUtils.minus(script, this.get(i), subtrahend.get(i));
+		}
+		return new ArrayIndex(resultArray);
+
+	}
+
 
 }

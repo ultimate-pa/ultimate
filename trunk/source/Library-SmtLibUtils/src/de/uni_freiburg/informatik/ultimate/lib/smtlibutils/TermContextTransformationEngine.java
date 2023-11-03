@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,18 +48,40 @@ public class TermContextTransformationEngine<C> {
 
 	private static final boolean DEBUG_CHECK_INTERMEDIATE_RESULT = false;
 	private static final boolean DEBUG_NONTERMINATION = false;
+	/**
+	 * Optimization for ApplicationTerm: While determining the position of the last
+	 * change, we omit positions where the result is the neutral element. Rationale:
+	 * the neutral element will not strengthen the critical constraint and hence
+	 * cannot justify another repetition.
+	 */
+	private static final boolean SMART_REPETITIONS = true;
 
+	/**
+	 * Order in which we iterate over parameters of {@link ApplicationTerm}s.
+	 */
+	private final Comparator<Term> mSiblingOrder;
 	private final TermWalker<C> mTermWalker;
 	private final ArrayDeque<Task> mStack;
 
-	private TermContextTransformationEngine(final TermWalker<C> termWalker) {
+
+	/**
+	 * @param siblingOrder Order in which we iterate over parameters of
+	 *                     {@link ApplicationTerm}s.
+	 */
+	private TermContextTransformationEngine(final TermWalker<C> termWalker, final Comparator<Term> siblingOrder) {
 		super();
+		mSiblingOrder = siblingOrder;
 		mTermWalker = termWalker;
 		mStack = new ArrayDeque<>();
 	}
 
-	public static <C> Term transform(final TermWalker<C> termWalker, final C initialContext, final Term term) {
-		return new TermContextTransformationEngine<>(termWalker).transform(initialContext, term);
+	/**
+	 * @param siblingOrder Order in which we iterate over parameters of
+	 *                     {@link ApplicationTerm}s.
+	 */
+	public static <C> Term transform(final TermWalker<C> termWalker, final Comparator<Term> siblingOrder,
+			final C initialContext, final Term term) {
+		return new TermContextTransformationEngine<>(termWalker, siblingOrder).transform(initialContext, term);
 	}
 
 	private Term transform(final C context, final Term term) {
@@ -131,7 +154,8 @@ public class TermContextTransformationEngine<C> {
 		int mNext;
 		final ApplicationTerm mOriginal;
 		final Term[] mResult;
-		boolean mChangeInThisIteration = false;
+		// We use the value -1 to indicate that there was not yet an update.
+		int mPositionOfLastChange = -1;
 		int mRepetitions;
 
 		public ApplicationTermTask(final C context, final ApplicationTerm original) {
@@ -139,15 +163,17 @@ public class TermContextTransformationEngine<C> {
 			mNext = 0;
 			mOriginal = original;
 			mResult = Arrays.copyOf(original.getParameters(), original.getParameters().length);
+			if (mSiblingOrder != null) {
+				Arrays.sort(mResult, mSiblingOrder);
+			}
 			mRepetitions = 0;
 		}
 
 		@Override
 		Task doStep() {
-			if (mNext == mOriginal.getParameters().length && mChangeInThisIteration
+			if (mNext == mOriginal.getParameters().length && mPositionOfLastChange != -1
 					&& mTermWalker.applyRepeatedlyUntilNoChange()) {
 				mNext = 0;
-				mChangeInThisIteration = false;
 				mRepetitions++;
 			} else {
 				if (DEBUG_NONTERMINATION && mRepetitions > 0) {
@@ -156,11 +182,25 @@ public class TermContextTransformationEngine<C> {
 				}
 			}
 			final Task result;
-			if (mNext == mOriginal.getParameters().length) {
+			if (mNext == mOriginal.getParameters().length || mPositionOfLastChange == mNext) {
 				final Term res = mTermWalker.constructResultForApplicationTerm(super.mContext, mOriginal, mResult);
 				final Task old = mStack.pop();
 				assert old == this;
 				result = new AscendResultTask(super.mContext, res);
+			} else if (isAbsorbingElementConDis(mOriginal.getFunction(),
+					mResult[Math.floorMod(mNext - 1, mResult.length)])) {
+				// If the result of the last iteration was the absorbing
+				// element, we can already construct the result which
+				// will be the absorbing element as result for this node.
+				final Term res = mTermWalker.constructResultForApplicationTerm(super.mContext, mOriginal, mResult);
+				assert SmtUtils.isAbsorbingElement(mOriginal.getFunction().getName(), res);
+				final Task old = mStack.pop();
+				assert old == this;
+				result = new AscendResultTask(super.mContext, res);
+			} else if (isNeutralElementConDis(mOriginal.getFunction(), mResult[mNext])) {
+				// If the current param is the neutral element we will omit this param.
+				// Rationale: if we compose the result it will not have an effect anyway.
+				result = constructTaskForDescendResult(super.mContext, new FinalResultForAscend(mResult[mNext]));
 			} else {
 				final ArrayList<Term> otherParams = new ArrayList<>(Arrays.asList(mResult));
 				otherParams.remove(mNext);
@@ -178,8 +218,9 @@ public class TermContextTransformationEngine<C> {
 		@Override
 		void integrateResult(final Term result) {
 			assert (mNext < mOriginal.getParameters().length);
-			if (!mResult[mNext].equals(result)) {
-				mChangeInThisIteration = true;
+			if (!mResult[mNext].equals(result)
+					&& (!SMART_REPETITIONS || !isNeutralElementConDis(mOriginal.getFunction(), result))) {
+				mPositionOfLastChange = mNext;
 			}
 			mResult[mNext] = result;
 			mNext++;
@@ -266,21 +307,41 @@ public class TermContextTransformationEngine<C> {
 		return result;
 	}
 
+	/**
+	 * Returns true iff fun is conjunction or disjunction and term is the absorbing
+	 * element of this operation.
+	 */
+	private static boolean isAbsorbingElementConDis(final FunctionSymbol fun, final Term term) {
+		return (fun.getName().equals("and") || fun.getName().equals("or"))
+				&& SmtUtils.isAbsorbingElement(fun.getName(), term);
+	}
+
+	/**
+	 * Returns true iff fun is conjunction or disjunction and term is the neutral
+	 * element of this operation.
+	 */
+	private static boolean isNeutralElementConDis(final FunctionSymbol fun, final Term term) {
+		return (fun.getName().equals("and") || fun.getName().equals("or"))
+				&& SmtUtils.isNeutralElement(fun.getName(), term);
+	}
+
+
+
 	public abstract static class TermWalker<C> {
 
-		abstract C constructContextForApplicationTerm(C context, FunctionSymbol symb, List<Term> allParams,
+		protected abstract C constructContextForApplicationTerm(C context, FunctionSymbol symb, List<Term> allParams,
 				int selectedParam);
 
-		abstract boolean applyRepeatedlyUntilNoChange();
+		protected abstract boolean applyRepeatedlyUntilNoChange();
 
-		abstract C constructContextForQuantifiedFormula(C context, int quant, List<TermVariable> vars);
+		protected abstract C constructContextForQuantifiedFormula(C context, int quant, List<TermVariable> vars);
 
-		abstract DescendResult convert(final C context, final Term term);
+		protected abstract DescendResult convert(final C context, final Term term);
 
-		abstract Term constructResultForApplicationTerm(C context, ApplicationTerm originalApplicationTerm,
+		protected abstract Term constructResultForApplicationTerm(C context, ApplicationTerm originalApplicationTerm,
 				Term[] result);
 
-		abstract Term constructResultForQuantifiedFormula(C context, QuantifiedFormula originalQuantifiedFormula,
+		protected abstract Term constructResultForQuantifiedFormula(C context, QuantifiedFormula originalQuantifiedFormula,
 				Term resultSubformula);
 
 		/**
@@ -288,7 +349,7 @@ public class TermContextTransformationEngine<C> {
 		 * {@link DEBUG_CHECK_INTERMEDIATE_RESULT} is set.
 		 *
 		 */
-		abstract void checkIntermediateResult(C context, Term input, Term output);
+		protected abstract void checkIntermediateResult(C context, Term input, Term output);
 	}
 
 	public interface DescendResult {

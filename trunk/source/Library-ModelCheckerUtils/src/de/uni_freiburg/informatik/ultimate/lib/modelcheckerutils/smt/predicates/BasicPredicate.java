@@ -30,6 +30,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
@@ -44,14 +45,16 @@ public class BasicPredicate extends ModernAnnotations implements IPredicate {
 	protected Term mFormula;
 	protected final Term mClosedFormula;
 	protected final Set<IProgramVar> mVars;
+	protected final Set<IProgramFunction> mFunctions;
 	protected final int mSerialNumber;
 
 	public BasicPredicate(final int serialNumber, final String[] procedures, final Term term,
-			final Set<IProgramVar> vars, final Term closedFormula) {
+			final Set<IProgramVar> vars, final Set<IProgramFunction> functions, final Term closedFormula) {
 		mFormula = term;
 		mClosedFormula = closedFormula;
 		mProcedures = procedures;
 		mVars = vars;
+		mFunctions = functions;
 		mSerialNumber = serialNumber;
 	}
 
@@ -79,6 +82,11 @@ public class BasicPredicate extends ModernAnnotations implements IPredicate {
 	@Visualizable
 	public Set<IProgramVar> getVars() {
 		return mVars;
+	}
+
+	@Override
+	public Set<IProgramFunction> getFuns() {
+		return mFunctions;
 	}
 
 	@Override

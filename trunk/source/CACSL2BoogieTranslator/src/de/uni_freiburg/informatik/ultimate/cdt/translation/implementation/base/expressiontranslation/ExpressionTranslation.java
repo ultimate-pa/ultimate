@@ -32,7 +32,6 @@ import java.math.BigInteger;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -41,11 +40,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
@@ -64,14 +61,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3.FloatingPointLiteral;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public abstract class ExpressionTranslation {
-
-	public static final int STRING_OVERAPPROXIMATION_THRESHOLD = 8;
 
 	protected final FunctionDeclarations mFunctionDeclarations;
 	protected final TypeSizes mTypeSizes;
@@ -117,15 +113,82 @@ public abstract class ExpressionTranslation {
 		return constructBinaryComparisonIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
 	}
 
-	public final Expression constructBinaryBitwiseExpression(final ILocation loc, final int nodeOperator,
+	public final ExpressionResult handleBinaryBitwiseExpression(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2,
-			final IASTNode hook) {
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
 		// TODO: Check that types coincide
 		if (type1.getGeneralType() == CPrimitiveCategory.FLOATTYPE
 				|| type2.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
 			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
 		}
-		return constructBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, hook);
+		return handleBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, auxVarInfoBuilder);
+	}
+
+	public final ExpressionResult handleBitshiftExpression(final ILocation loc, final int nodeOperator,
+			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
+		// TODO: Should we really throw an exception here or just report undefined behavior somehow?
+		final BigInteger shiftValue = mTypeSizes.extractIntegerValue(exp2, type2);
+		if (shiftValue != null) {
+			if (shiftValue.signum() < 0) {
+				throw new UnsupportedOperationException("Shift by negative value is not allowed (6.5.7.2)");
+			}
+			final BigInteger bitNumber = BigInteger.valueOf(8 * mTypeSizes.getSize(type1.getType()));
+			if (shiftValue.compareTo(bitNumber) >= 0) {
+				throw new UnsupportedOperationException(
+						"Shift by too large value " + shiftValue + " is not allowed (6.5.7.2)");
+			}
+		}
+		final ExpressionResult result =
+				handleBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, auxVarInfoBuilder);
+		if (!mSettings.checkSignedIntegerBounds() || !type1.isIntegerType() || mTypeSizes.isUnsigned(type1)) {
+			return result;
+		}
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		// TODO: Is this really a overflow or some other undefined behavior?
+		CExpressionTranslator.addOverflowAssertion(loc,
+				constructTypeCheckForShift(loc, exp1, type1, type2, exp2, nodeOperator), builder);
+		builder.addAllIncludingLrValue(result);
+		if (nodeOperator == IASTBinaryExpression.op_shiftLeft
+				|| nodeOperator == IASTBinaryExpression.op_shiftLeftAssign) {
+			final Pair<Expression, Expression> checks =
+					constructOverflowCheckForLeftShift(loc, type1, exp1, exp2, result);
+			CExpressionTranslator.addOverflowAssertion(loc, checks.getFirst(), builder);
+			CExpressionTranslator.addOverflowAssertion(loc, checks.getSecond(), builder);
+		}
+		return builder.build();
+	}
+
+	protected abstract Pair<Expression, Expression> constructOverflowCheckForLeftShift(final ILocation loc,
+			final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand,
+			final ExpressionResult exprResult);
+
+	// TODO 20221121 Matthias: If types of LHS and RHS differ, we have to extend/reduce the RHS
+	private Expression constructTypeCheckForShift(final ILocation loc, final Expression left,
+			final CPrimitive resultType, final CPrimitive rhsType, final Expression right, final int operator) {
+		Expression rhsNonNegative;
+		{
+			final Expression zero = constructLiteralForIntegerType(loc, rhsType, BigInteger.ZERO);
+			rhsNonNegative = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, zero, rhsType,
+					right, rhsType);
+		}
+		Expression rhsSmallerBitWidth;
+		{
+			final BigInteger bitwidthOfLhsAsBigInt = BigInteger.valueOf(8 * mTypeSizes.getSize(resultType.getType()));
+			final Expression bitwidthOfLhsAsExpr = constructLiteralForIntegerType(loc, rhsType, bitwidthOfLhsAsBigInt);
+			rhsSmallerBitWidth = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan, right,
+					resultType, bitwidthOfLhsAsExpr, resultType);
+		}
+		if (operator == IASTBinaryExpression.op_shiftRight || operator == IASTBinaryExpression.op_shiftRightAssign) {
+			return ExpressionFactory.and(loc, List.of(rhsNonNegative, rhsSmallerBitWidth));
+		}
+		Expression lhsNonNegative;
+		{
+			final Expression zero = constructLiteralForIntegerType(loc, resultType, BigInteger.ZERO);
+			lhsNonNegative = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, zero,
+					resultType, left, resultType);
+		}
+		return ExpressionFactory.and(loc, List.of(lhsNonNegative, rhsNonNegative, rhsSmallerBitWidth));
 	}
 
 	public final Expression constructUnaryExpression(final ILocation loc, final int nodeOperator, final Expression exp,
@@ -159,10 +222,10 @@ public abstract class ExpressionTranslation {
 	public abstract Expression constructBinaryComparisonIntegerExpression(ILocation loc, int nodeOperator,
 			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 
-	public abstract Expression constructBinaryBitwiseIntegerExpression(ILocation loc, int nodeOperator, Expression exp1,
-			CPrimitive type1, Expression exp2, CPrimitive type2, IASTNode hook);
+	protected abstract ExpressionResult handleBinaryBitwiseIntegerExpression(ILocation loc, int nodeOperator,
+			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2, AuxVarInfoBuilder auxVarInfoBuilder);
 
-	public abstract Expression constructUnaryIntegerExpression(ILocation loc, int nodeOperator, Expression exp,
+	protected abstract Expression constructUnaryIntegerExpression(ILocation loc, int nodeOperator, Expression exp,
 			CPrimitive type);
 
 	public abstract Expression constructArithmeticIntegerExpression(ILocation loc, int nodeOperator, Expression exp1,
@@ -171,10 +234,10 @@ public abstract class ExpressionTranslation {
 	public abstract Expression constructBinaryComparisonFloatingPointExpression(ILocation loc, int nodeOperator,
 			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 
-	public abstract Expression constructUnaryFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp,
+	protected abstract Expression constructUnaryFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp,
 			CPrimitive type);
 
-	public abstract Expression constructArithmeticFloatingPointExpression(ILocation loc, int nodeOperator,
+	protected abstract Expression constructArithmeticFloatingPointExpression(ILocation loc, int nodeOperator,
 			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 
 	public final Expression constructBinaryEqualityExpression(final ILocation loc, final int nodeOperator,
@@ -185,10 +248,10 @@ public abstract class ExpressionTranslation {
 		return constructBinaryEqualityExpressionInteger(loc, nodeOperator, exp1, type1, exp2, type2);
 	}
 
-	public abstract Expression constructBinaryEqualityExpressionFloating(ILocation loc, int nodeOperator,
+	protected abstract Expression constructBinaryEqualityExpressionFloating(ILocation loc, int nodeOperator,
 			Expression exp1, CType type1, Expression exp2, CType type2);
 
-	public abstract Expression constructBinaryEqualityExpressionInteger(ILocation loc, int nodeOperator,
+	protected abstract Expression constructBinaryEqualityExpressionInteger(ILocation loc, int nodeOperator,
 			Expression exp1, CType type1, Expression exp2, CType type2);
 
 	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
@@ -199,6 +262,8 @@ public abstract class ExpressionTranslation {
 				constructLiteralForFloatingType(loc, fpl.getCPrimitive(), fpl.getDecimalRepresenation());
 		return new RValue(expr, fpl.getCPrimitive());
 	}
+
+	public abstract Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value);
 
 	public abstract Expression constructLiteralForFloatingType(ILocation loc, CPrimitive type, BigDecimal value);
 
@@ -211,7 +276,7 @@ public abstract class ExpressionTranslation {
 	 *
 	 * @return
 	 */
-	public abstract ExpressionResult convertIntToInt_NonBool(ILocation loc, ExpressionResult operand,
+	protected abstract ExpressionResult convertIntToIntNonBool(ILocation loc, ExpressionResult operand,
 			CPrimitive resultType);
 
 	public final ExpressionResult convertIntToInt(final ILocation loc, final ExpressionResult rexp,
@@ -219,7 +284,7 @@ public abstract class ExpressionTranslation {
 		if (newType.getType() == CPrimitives.BOOL) {
 			return convertToBool(loc, rexp);
 		}
-		return convertIntToInt_NonBool(loc, rexp, newType);
+		return convertIntToIntNonBool(loc, rexp, newType);
 	}
 
 	/**
@@ -233,64 +298,6 @@ public abstract class ExpressionTranslation {
 		return mPointerIntegerConversion.convertPointerToInt(loc, rexp, newType);
 	}
 
-	protected String declareConversionFunctionOverApprox(final ILocation loc, final CPrimitive oldType,
-			final CPrimitive newType) {
-		final String functionName = "convert" + oldType.toString() + "To" + newType.toString();
-		final String prefixedFunctionName = "~" + functionName;
-		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
-					new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-			final Attribute[] attributes = new Attribute[] { attribute };
-			final ASTType resultASTType = mTypeHandler.cType2AstType(loc, newType);
-			final ASTType paramASTType = mTypeHandler.cType2AstType(loc, oldType);
-			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
-		}
-		return prefixedFunctionName;
-	}
-
-	abstract protected String declareConversionFunction(ILocation loc, CPrimitive oldType, CPrimitive newType);
-
-	protected String declareBinaryFloatComparisonOverApprox(final ILocation loc, final CPrimitive type) {
-		final String functionName = "someBinary" + type.toString() + "ComparisonOperation";
-		final String prefixedFunctionName = "~" + functionName;
-		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
-					new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-			final Attribute[] attributes = new Attribute[] { attribute };
-			final ASTType paramAstType = mTypeHandler.cType2AstType(loc, type);
-			final ASTType resultAstType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL);
-			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultAstType, paramAstType,
-					paramAstType);
-		}
-		return prefixedFunctionName;
-	}
-
-	private String declareBinaryArithmeticFloatOperation(final ILocation loc, final CPrimitive type) {
-		final String functionName = "someBinaryArithmetic" + type.toString() + "operation";
-		final String prefixedFunctionName = "~" + functionName;
-		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
-					new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-			final Attribute[] attributes = new Attribute[] { attribute };
-			final ASTType astType = mTypeHandler.cType2AstType(loc, type);
-			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType, astType);
-		}
-		return prefixedFunctionName;
-	}
-
-	private String declareUnaryFloatOperation(final ILocation loc, final CPrimitive type) {
-		final String functionName = "someUnary" + type.toString() + "operation";
-		final String prefixedFunctionName = "~" + functionName;
-		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
-					new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-			final Attribute[] attributes = new Attribute[] { attribute };
-			final ASTType astType = mTypeHandler.cType2AstType(loc, type);
-			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType);
-		}
-		return prefixedFunctionName;
-	}
-
 	public final ExpressionResult convertIntToPointer(final ILocation loc, final ExpressionResult rexp,
 			final CPointer newType) {
 		return mPointerIntegerConversion.convertIntToPointer(loc, rexp, newType);
@@ -301,7 +308,7 @@ public abstract class ExpressionTranslation {
 		if (newType.getType() == CPrimitives.BOOL) {
 			return convertToBool(loc, rexp);
 		}
-		return convertFloatToInt_NonBool(loc, rexp, newType);
+		return convertFloatToIntNonBool(loc, rexp, newType);
 	}
 
 	public abstract ExpressionResult convertFloatToFloat(final ILocation loc, final ExpressionResult rexp,
@@ -310,7 +317,7 @@ public abstract class ExpressionTranslation {
 	public abstract ExpressionResult convertIntToFloat(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType);
 
-	public abstract ExpressionResult convertFloatToInt_NonBool(ILocation loc, ExpressionResult rexp,
+	protected abstract ExpressionResult convertFloatToIntNonBool(ILocation loc, ExpressionResult rexp,
 			CPrimitive newType);
 
 	public abstract void declareFloatingPointConstructors(final ILocation loc, final CPrimitive type);
@@ -343,9 +350,6 @@ public abstract class ExpressionTranslation {
 		final RValue rValue = new RValue(resultExpression, new CPrimitive(CPrimitives.BOOL), false, false);
 		return new ExpressionResultBuilder().addAllExceptLrValue(expr).setLrValue(rValue).build();
 	}
-
-	public abstract void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype,
-			List<Statement> stmt);
 
 	public abstract void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype,
 			ExpressionResultBuilder expressionResultBuilder);
@@ -398,7 +402,7 @@ public abstract class ExpressionTranslation {
 	 * the bits. low-1, low-2, ..., 0. If inputWidth and remainingWith are different the result is always positive.
 	 */
 	public abstract Expression eraseBits(final ILocation loc, final Expression value, final CPrimitive cType,
-			final int remainingWith, final IASTNode hook);
+			final int remainingWith);
 
 	public abstract Expression concatBits(ILocation loc, List<Expression> dataChunks, int size);
 
@@ -441,7 +445,7 @@ public abstract class ExpressionTranslation {
 	public abstract void declareFloatConstant(final ILocation loc, final String smtFunctionName, final CPrimitive type);
 
 	public abstract void declareBinaryBitvectorFunctionsForAllIntegerDatatypes(final ILocation loc,
-			final String[] bitvectorFunctions);
+			final BvOp[] importantBvOps);
 
 	public Expression constructOverapproximationFloatLiteral(final ILocation loc, final String val,
 			final CPrimitive type) {
@@ -450,7 +454,7 @@ public abstract class ExpressionTranslation {
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
 					new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
-			final Attribute[] attributes = new Attribute[] { attribute };
+			final Attribute[] attributes = { attribute };
 			final ASTType astType = mTypeHandler.cType2AstType(loc, type);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType);
 		}
@@ -519,22 +523,19 @@ public abstract class ExpressionTranslation {
 			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
 					new Expression[] { ExpressionFactory.createStringLiteral(loc, smtlibFunctionName) });
 			attributes = new Attribute[] { attribute };
+		} else if (indices == null) {
+			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
+					new Expression[] { ExpressionFactory.createStringLiteral(loc, smtlibFunctionName) });
+			attributes = new Attribute[] { attribute };
 		} else {
-			if (indices == null) {
-				final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
-						new Expression[] { ExpressionFactory.createStringLiteral(loc, smtlibFunctionName) });
-				attributes = new Attribute[] { attribute };
-			} else {
-				final Expression[] literalIndices = new IntegerLiteral[indices.length];
-				for (int i = 0; i < indices.length; ++i) {
-					literalIndices[i] = ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[i]));
-				}
-				final Attribute attribute1 = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
-						new Expression[] { ExpressionFactory.createStringLiteral(loc, smtlibFunctionName) });
-				final Attribute attribute2 =
-						new NamedAttribute(loc, FunctionDeclarations.INDEX_IDENTIFIER, literalIndices);
-				attributes = new Attribute[] { attribute1, attribute2 };
+			final Expression[] literalIndices = new IntegerLiteral[indices.length];
+			for (int i = 0; i < indices.length; ++i) {
+				literalIndices[i] = ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[i]));
 			}
+			final Attribute attribute1 = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
+					new Expression[] { ExpressionFactory.createStringLiteral(loc, smtlibFunctionName) });
+			final Attribute attribute2 = new NamedAttribute(loc, FunctionDeclarations.INDEX_IDENTIFIER, literalIndices);
+			attributes = new Attribute[] { attribute1, attribute2 };
 		}
 		return attributes;
 	}
@@ -548,4 +549,11 @@ public abstract class ExpressionTranslation {
 	public abstract ExpressionResult constructBuiltinFesetround(final ILocation loc, final RValue arg,
 			AuxVarInfoBuilder auxVarInfoBuilder);
 
+	public abstract Expression applyWraparound(ILocation loc, CPrimitive cPrimitive, Expression operand);
+
+	public abstract Pair<Expression, Expression> constructOverflowCheckForArithmeticExpression(ILocation loc,
+			int operation, CPrimitive resultType, Expression lhsOperand, Expression rhsOperand);
+
+	public abstract Pair<Expression, Expression> constructOverflowCheckForUnaryExpression(ILocation loc, int operation,
+			CPrimitive resultType, Expression operand);
 }

@@ -30,10 +30,8 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
@@ -185,6 +183,7 @@ public class NestedMap2<K1, K2, V> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
+		@SuppressWarnings("rawtypes")
 		final NestedMap2 other = (NestedMap2) obj;
 		if (mK1ToK2ToV == null) {
 			if (other.mK1ToK2ToV != null) {

@@ -502,18 +502,18 @@ public class QuadraticMatrixTest {
 	public void testJordanMatrix() {
 		// Identity matrix.
 		QuadraticMatrix E = QuadraticMatrix.constructIdentityMatrix(5);
-		QuadraticMatrix J_E = E.constructJordanTransformation().getJnf();
+		QuadraticMatrix J_E = E.constructJordanDecomposition().getJnf();
 		checkMatrixEquality(E,J_E);
 		
 		// Zero matrix.
 		QuadraticMatrix Zero = QuadraticMatrix.constructZeroMatrix(6);
-		QuadraticMatrix J_Zero = Zero.constructJordanTransformation().getJnf();
+		QuadraticMatrix J_Zero = Zero.constructJordanDecomposition().getJnf();
 		checkMatrixEquality(Zero,J_Zero);
 		
 		// Nontrivial matrix 1.
 		int[][] M1_entries = {{-1,0,3}, {-1,0,2}, {0,0,1}};
 		QuadraticMatrix M1 = intToBigInteger(M1_entries);
-		QuadraticMatrix J1 = M1.constructJordanTransformation().getJnf();
+		QuadraticMatrix J1 = M1.constructJordanDecomposition().getJnf();
 		int[][] res1_entries = {{-1,0,0},{0,0,0},{0,0,1}};
 		QuadraticMatrix Res1 = intToBigInteger(res1_entries);
 		checkMatrixEquality(Res1,J1);
@@ -521,7 +521,7 @@ public class QuadraticMatrixTest {
 		// Nontrivial matrix 2.
 		int[][] M2_entries = {{1,0,1}, {0,1,0}, {0,1,1}};
 		QuadraticMatrix M2 = intToBigInteger(M2_entries);
-		QuadraticMatrix J2 = M2.constructJordanTransformation().getJnf();
+		QuadraticMatrix J2 = M2.constructJordanDecomposition().getJnf();
 		int[][] res2_entries = {{1,1,0},{0,1,1},{0,0,1}};
 		QuadraticMatrix Res2 = intToBigInteger(res2_entries);
 		checkMatrixEquality(Res2,J2);
@@ -529,7 +529,7 @@ public class QuadraticMatrixTest {
 		// Nontrivial matrix 3.
 		int[][] M3_entries = {{-1,0,1,3}, {0,1,0,2}, {0,1,-1,1},{0,0,0,1}};
 		QuadraticMatrix M3 = intToBigInteger(M3_entries);
-		QuadraticMatrix J3 = M3.constructJordanTransformation().getJnf();
+		QuadraticMatrix J3 = M3.constructJordanDecomposition().getJnf();
 		int[][] res3_entries = {{-1,1,0,0},{0,-1,0,0},{0,0,1,1},{0,0,0,1}};
 		QuadraticMatrix Res3 = intToBigInteger(res3_entries);
 		checkMatrixEquality(Res3,J3);
@@ -584,7 +584,7 @@ public class QuadraticMatrixTest {
 	public void testModalMatrix() {
 		// identity matrix.
 		QuadraticMatrix E = QuadraticMatrix.constructIdentityMatrix(5);
-		QuadraticMatrix JE = E.constructJordanTransformation().getJnf();
+		QuadraticMatrix JE = E.constructJordanDecomposition().getJnf();
 		RationalMatrix PE = QuadraticMatrix.computeModalMatrix(E, JE);
 		RationalMatrix PE_inverse = RationalMatrix.computeInverse(PE);
 		checkMatrixEquality(E, JE);
@@ -596,7 +596,7 @@ public class QuadraticMatrixTest {
 		// nontrivial matrix.
 		int[][] M1_entries = {{1,0,1},{0,1,0},{0,1,1}};
 		QuadraticMatrix M1 = intToBigInteger(M1_entries);
-		QuadraticMatrix J1 = M1.constructJordanTransformation().getJnf();
+		QuadraticMatrix J1 = M1.constructJordanDecomposition().getJnf();
 		RationalMatrix P1 = QuadraticMatrix.computeModalMatrix(M1, J1);
 		RationalMatrix P1_inverse = RationalMatrix.computeInverse(P1);
 		QuadraticMatrix Right11 = QuadraticMatrix.multiplication(P1.getIntMatrix(), J1);
@@ -613,7 +613,7 @@ public class QuadraticMatrixTest {
 		// nontrivial matrix.
 		int[][] M2_entries = {{1,1,1},{0,1,1},{0,0,1}};
 		QuadraticMatrix M2 = intToBigInteger(M2_entries);
-		QuadraticMatrix J2 = M2.constructJordanTransformation().getJnf();
+		QuadraticMatrix J2 = M2.constructJordanDecomposition().getJnf();
 		RationalMatrix P2 = QuadraticMatrix.computeModalMatrix(M2, J2);
 		RationalMatrix P2_inverse = RationalMatrix.computeInverse(P2);
 		QuadraticMatrix Right21 = QuadraticMatrix.multiplication(P2.getIntMatrix(), J2);
@@ -629,7 +629,7 @@ public class QuadraticMatrixTest {
 		// nontrivial matrix.
 		int[][] M3_entries = {{-1,0,3}, {-1,0,2}, {0,0,1}};
 		QuadraticMatrix M3 = intToBigInteger(M3_entries);
-		QuadraticMatrix J3 = M3.constructJordanTransformation().getJnf();
+		QuadraticMatrix J3 = M3.constructJordanDecomposition().getJnf();
 		RationalMatrix P3 = QuadraticMatrix.computeModalMatrix(M3, J3);
 		RationalMatrix P3_inverse = RationalMatrix.computeInverse(P3);
 		QuadraticMatrix Right31 = QuadraticMatrix.multiplication(P3.getIntMatrix(), J3);
@@ -645,7 +645,7 @@ public class QuadraticMatrixTest {
 		// nontrivial matrix.
 		int[][] M4_entries = {{0,1,-1,2},{1,0,0,-1},{0,0,1,2},{0,0,0,1}};
 		QuadraticMatrix M4 = intToBigInteger(M4_entries);
-		QuadraticMatrix J4 = M4.constructJordanTransformation().getJnf();
+		QuadraticMatrix J4 = M4.constructJordanDecomposition().getJnf();
 		RationalMatrix P4 = QuadraticMatrix.computeModalMatrix(M4, J4);
 		RationalMatrix P4_inverse = RationalMatrix.computeInverse(P4);
 		QuadraticMatrix Right41 = QuadraticMatrix.multiplication(P4.getIntMatrix(), J4);
@@ -661,7 +661,7 @@ public class QuadraticMatrixTest {
 		// nontrivial matrix.
 		int[][] M5_entries = {{1,1,-1,3},{0,1,0,0},{0,1,-1,3},{0,0,0,1}};
 		QuadraticMatrix M5 = intToBigInteger(M5_entries);
-		QuadraticMatrix J5 = M5.constructJordanTransformation().getJnf();
+		QuadraticMatrix J5 = M5.constructJordanDecomposition().getJnf();
 		RationalMatrix P5 = QuadraticMatrix.computeModalMatrix(M5, J5);
 		RationalMatrix P5_inverse = RationalMatrix.computeInverse(P5);
 		QuadraticMatrix Right51 = QuadraticMatrix.multiplication(P5.getIntMatrix(), J5);
@@ -677,7 +677,7 @@ public class QuadraticMatrixTest {
 		// abfuck matrix
 		int[][] matrix6Entries = {{-1,0,-1,1,1,3,0},{0,1,0,0,0,0,0},{2,1,2,-1,-1,-6,0},{-2,0,-1,2,1,3,0},{0,0,0,0,1,0,0},{0,0,0,0,0,1,0},{-1,-1,0,1,2,4,1}};
 		QuadraticMatrix matrix6 = intToBigInteger(matrix6Entries);
-		QuadraticMatrix jordan6 = matrix6.constructJordanTransformation().getJnf();
+		QuadraticMatrix jordan6 = matrix6.constructJordanDecomposition().getJnf();
 		RationalMatrix modal6 = QuadraticMatrix.computeModalMatrix(matrix6, jordan6);
 		RationalMatrix modal6Inverse = RationalMatrix.computeInverse(modal6);
 		QuadraticMatrix Right61 = QuadraticMatrix.multiplication(modal6.getIntMatrix(), jordan6);

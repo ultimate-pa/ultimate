@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="600" hardtimelimit="620" cpuCores="2">
+  <resultfiles></resultfiles>
+
+  <option name="--force-no-wrapper" />
+  <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_Badger_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Badger_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Badger_Consolidated_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.interpolants.consolidation">true</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_Badger_Consolidated_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.interpolants.consolidation">true</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Badger_Consolidated_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.interpolants.consolidation">true</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Badger_Cannibalize_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CANNIBALIZE</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_Badger_Cannibalize_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CANNIBALIZE</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Badger_Cannibalize_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CANNIBALIZE</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Badger_Conservative_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CONSERVATIVE</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_Badger_Conservative_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CONSERVATIVE</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Badger_Conservative_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CONSERVATIVE</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Camel_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_Camel_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Camel_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Camel_Cannibalize_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CANNIBALIZE</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_Camel_Cannibalize_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CANNIBALIZE</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Camel_Cannibalize_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CANNIBALIZE</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Camel_Conservative_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CONSERVATIVE</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_Camel_Conservative_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CONSERVATIVE</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Camel_Conservative_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CONSERVATIVE</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Taipan_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">TAIPAN</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_Taipan_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">TAIPAN</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Taipan_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">TAIPAN</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Penguin_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">PENGUIN</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_Penguin_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">PENGUIN</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Penguin_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">PENGUIN</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Penguin_Cannibalize_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">PENGUIN</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CANNIBALIZE</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_Penguin_Cannibalize_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">PENGUIN</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CANNIBALIZE</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Penguin_Cannibalize_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">PENGUIN</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CANNIBALIZE</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Penguin_Conservative_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">PENGUIN</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CONSERVATIVE</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_Penguin_Conservative_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">PENGUIN</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CONSERVATIVE</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Penguin_Conservative_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">PENGUIN</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CONSERVATIVE</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_CamelBpOnly_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_CamelBpOnly_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_CamelBpOnly_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL_BP_ONLY</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Lizard_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">LIZARD</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_Lizard_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">LIZARD</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Lizard_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">LIZARD</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Mammoth_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_Mammoth_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Mammoth_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Mammoth_Cannibalize_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CANNIBALIZE</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_Mammoth_Cannibalize_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CANNIBALIZE</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Mammoth_Cannibalize_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CANNIBALIZE</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Mammoth_Conservative_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CONSERVATIVE</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_Mammoth_Conservative_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CONSERVATIVE</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Mammoth_Conservative_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">MAMMOTH</option>
+    <option name="--traceabstraction.interpolant.automaton.enhancement">PREDICATE_ABSTRACTION_CONSERVATIVE</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_SmtInterpol_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_SmtInterpol_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_SmtInterpol_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">SMTINTERPOL</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Dachshund_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">DACHSHUND</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_Dachshund_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">DACHSHUND</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Dachshund_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">DACHSHUND</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Sifa_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/GemCutter_Default-noMmResRef-NoLbe-SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">SIFA_TAIPAN</option>
+  </rundefinition>
+  <rundefinition name="LightAbstract_LoopLockstep_Sifa_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">SIFA_TAIPAN</option>
+  </rundefinition>
+  <rundefinition name="HeavyConcrete_LoopLockstep_Sifa_NoDead">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-POR-NewStatesSleep-NoLbe.epf</option>
+    <option name="--traceabstraction.trace.refinement.strategy">SIFA_TAIPAN</option>
+  </rundefinition>
+
+  <tasks name="POPL2023">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+
+    <include>../../../trunk/examples/concurrent/bpl/POPL2023/*.bpl</include>
+    <excludesfile>../../../trunk/examples/concurrent/bpl/POPL2023/exclude.set</excludesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+</benchmark>

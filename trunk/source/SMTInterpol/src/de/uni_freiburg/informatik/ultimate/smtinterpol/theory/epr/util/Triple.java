@@ -78,6 +78,7 @@ public class Triple<E1, E2, E3> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
+		@SuppressWarnings("rawtypes")
 		final Triple other = (Triple) obj;
 		if (mFirstElement == null) {
 			if (other.mFirstElement != null) {

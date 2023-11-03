@@ -74,7 +74,7 @@ public class CnfTransformer extends XnfTransformer {
 
 		@Override
 		public String outerJunctionName() {
-			return "conjuction";
+			return "conjunction";
 		}
 
 		@Override

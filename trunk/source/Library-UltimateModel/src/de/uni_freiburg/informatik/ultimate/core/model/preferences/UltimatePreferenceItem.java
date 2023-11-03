@@ -48,52 +48,70 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 	private final PreferenceType mType;
 	private final T[] mChoices;
 	private final IUltimatePreferenceItemValidator<T> mPreferenceValidator;
-	private final String mToolTip;
+	private final String mDescription;
+	private final boolean mIsExperimental;
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type) {
-		this(label, defaultValue, type, null, false, null, null);
+		this(label, defaultValue, type, null, null);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
 			final T[] choices, final IUltimatePreferenceItemValidator<T> preferenceValidator) {
-		this(label, defaultValue, type, null, false, choices, preferenceValidator);
+		this(label, defaultValue, type, null, choices, preferenceValidator);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
 			final T[] choices) {
-		this(label, defaultValue, type, null, false, choices, null);
+		this(label, defaultValue, type, null, choices, null);
 	}
 
-	public UltimatePreferenceItem(final String label, final T defaultValue, final String desc,
+	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
 			final PreferenceType type, final T[] choices) {
-		this(label, defaultValue, type, desc, false, choices, null);
+		this(label, defaultValue, type, description, choices, null);
+	}
+
+	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
+			final boolean isExperimental, final PreferenceType type, final T[] choices) {
+		this(label, defaultValue, type, description, isExperimental, choices, null);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
 			final IUltimatePreferenceItemValidator<T> preferenceValidator) {
-		this(label, defaultValue, type, null, false, null, preferenceValidator);
+		this(label, defaultValue, type, null, null, preferenceValidator);
 	}
 
-	public UltimatePreferenceItem(final String label, final T defaultValue, final String tooltip,
+	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
 			final PreferenceType type) {
-		this(label, defaultValue, type, tooltip, false, null, null);
+		this(label, defaultValue, type, description, null, null);
 	}
 
-	public UltimatePreferenceItem(final String label, final T defaultValue, final String tooltip,
+	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
+			final boolean isExperimental, final PreferenceType type) {
+		this(label, defaultValue, type, description, isExperimental, null, null);
+	}
+
+	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
 			final PreferenceType type, final IUltimatePreferenceItemValidator<T> preferenceValidator) {
-		this(label, defaultValue, type, tooltip, false, null, preferenceValidator);
+		this(label, defaultValue, type, description, null, preferenceValidator);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
-			final String tooltip, final boolean useCustomPreferencePage, final T[] choices,
+			final String description, final T[] choices,
+			final IUltimatePreferenceItemValidator<T> preferenceValidator) {
+		this(label, defaultValue, type, description, description == null || description.isEmpty(), choices,
+				preferenceValidator);
+	}
+
+	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
+			final String description, final boolean isExperimental, final T[] choices,
 			final IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		mLabel = label;
 		mDefaultValue = defaultValue;
 		mType = type;
 		mChoices = choices;
-		mUseCustomPreferencePage = useCustomPreferencePage;
 		mPreferenceValidator = preferenceValidator;
-		mToolTip = tooltip;
+		mDescription = description;
+		mIsExperimental = isExperimental;
 
 		if (mType == PreferenceType.Radio || mType == PreferenceType.Combo) {
 			if (mChoices == null) {
@@ -130,8 +148,8 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		return rtr;
 	}
 
-	public String getToolTip() {
-		return mToolTip;
+	public String getDescription() {
+		return mDescription;
 	}
 
 	@Override
@@ -148,6 +166,10 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		final List<UltimatePreferenceItem<?>> returnList = new ArrayList<>();
 		returnList.add(this);
 		return returnList;
+	}
+
+	public boolean isExperimental() {
+		return mIsExperimental;
 	}
 
 	public interface IUltimatePreferenceItemValidator<T> {

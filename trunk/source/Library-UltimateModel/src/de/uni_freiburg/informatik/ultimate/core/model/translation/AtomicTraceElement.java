@@ -99,19 +99,23 @@ public class AtomicTraceElement<TE> {
 
 	private final Integer mThreadId;
 	private final Integer mForkedThreadId;
+	private final Integer mJoinedThreadId;
 
 	private AtomicTraceElement(final TE element, final TE step, final EnumSet<AtomicTraceElement.StepInfo> info,
 			final IToString<TE> toStringProvider, final IRelevanceInformation relInfo, final String precedingProcedure,
-			final String succeedingProcedure, final Integer threadId, final Integer forkedThreadId) {
+			final String succeedingProcedure, final Integer threadId, final Integer forkedThreadId,
+			final Integer joinedThreadId) {
 		assert element != null;
 		assert step != null;
 		assert info != null;
 		assert toStringProvider != null;
 		assert !(info.size() > 1 && info.contains(StepInfo.NONE)) : "You cannot combine NONE with other values: "
 				+ element;
-		assert info.size() > 0;
+		assert !info.isEmpty();
 		assert !info.contains(StepInfo.FORK)
 				|| forkedThreadId != null : "If this step is a fork, you must have a forked thread id: " + element;
+		assert !info.contains(StepInfo.JOIN)
+				|| joinedThreadId != null : "If this step is a join, you must have a joined thread id: " + element;
 		assert hasAnyStepInfo(info, StepInfo.PROC_CALL, StepInfo.PROC_RETURN) || threadId != null
 				|| Objects.equals(precedingProcedure, succeedingProcedure) : "You must have same procedures"
 						+ " except when you have threads or when this is a call or a return: " + element;
@@ -124,6 +128,7 @@ public class AtomicTraceElement<TE> {
 		mRelevanceInformation = relInfo;
 		mThreadId = threadId;
 		mForkedThreadId = forkedThreadId;
+		mJoinedThreadId = joinedThreadId;
 	}
 
 	/**
@@ -180,11 +185,15 @@ public class AtomicTraceElement<TE> {
 	}
 
 	public boolean isMainThread() {
-		return mThreadId.intValue() == -1;
+		return mThreadId.intValue() == 0;
 	}
 
 	public int getForkedThreadId() {
 		return mForkedThreadId.intValue();
+	}
+
+	public int getJoinedThreadId() {
+		return mJoinedThreadId.intValue();
 	}
 
 	public IRelevanceInformation getRelevanceInformation() {
@@ -239,6 +248,7 @@ public class AtomicTraceElement<TE> {
 
 		private EnumSet<AtomicTraceElement.StepInfo> mStepInfo;
 		private Integer mForkedThreadId;
+		private Integer mJoinedThreadId;
 
 		/**
 		 * Create an empty {@link AtomicTraceElementBuilder}
@@ -258,6 +268,7 @@ public class AtomicTraceElement<TE> {
 			mThreadId = old.mThreadId;
 			mRelevanceInformation = old.mRelevanceInformation;
 			mForkedThreadId = old.mForkedThreadId;
+			mJoinedThreadId = old.mJoinedThreadId;
 		}
 
 		/**
@@ -283,6 +294,9 @@ public class AtomicTraceElement<TE> {
 			if (old.hasStepInfo(StepInfo.FORK)) {
 				rtr.setForkedThreadId(old.getForkedThreadId());
 			}
+			if (old.hasStepInfo(StepInfo.JOIN)) {
+				rtr.setJoinedThreadId(old.getJoinedThreadId());
+			}
 			return rtr;
 		}
 
@@ -301,12 +315,15 @@ public class AtomicTraceElement<TE> {
 			if (old.hasStepInfo(StepInfo.FORK)) {
 				rtr.setForkedThreadId(old.getForkedThreadId());
 			}
+			if (old.hasStepInfo(StepInfo.JOIN)) {
+				rtr.setJoinedThreadId(old.getJoinedThreadId());
+			}
 			return rtr;
 		}
 
 		public AtomicTraceElement<TE> build() {
 			return new AtomicTraceElement<>(mElement, mStep, mStepInfo, mToStringFunc, mRelevanceInformation,
-					mPrecedingProcedure, mSucceedingProcedure, mThreadId, mForkedThreadId);
+					mPrecedingProcedure, mSucceedingProcedure, mThreadId, mForkedThreadId, mJoinedThreadId);
 		}
 
 		public AtomicTraceElementBuilder<TE> setElement(final TE element) {
@@ -397,5 +414,9 @@ public class AtomicTraceElement<TE> {
 			return this;
 		}
 
+		public AtomicTraceElementBuilder<TE> setJoinedThreadId(final int threadId) {
+			mJoinedThreadId = threadId;
+			return this;
+		}
 	}
 }

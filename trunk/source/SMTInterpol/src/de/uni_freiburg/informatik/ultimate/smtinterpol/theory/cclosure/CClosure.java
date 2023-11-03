@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -48,9 +49,8 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.EQAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ArrayQueue;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedArrayList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
@@ -324,10 +324,10 @@ public class CClosure implements ITheory {
 				final CCTerm appArg = app.getArg();
 				/* E-Matching: activate reverse trigger */
 				final int parentpos = app.getFunc().mParentPosition;
-				final CCParentInfo argInfo = appArg.mCCPars.getInfo(parentpos);
+				final CCParentInfo argInfo = appArg.getRepresentative().mCCPars.getInfo(parentpos);
 				if (argInfo != null) {
 					for (final ReverseTrigger trigger : argInfo.mReverseTriggers) {
-						trigger.activate(term);
+						trigger.activate(term, true);
 					}
 				}
 				partialApp = app.getFunc();
@@ -337,7 +337,7 @@ public class CClosure implements ITheory {
 				final CCParentInfo funcInfo = partialApp.mCCPars.getInfo(0);
 				if (funcInfo != null) {
 					for (final ReverseTrigger trigger : funcInfo.mReverseTriggers) {
-						trigger.activate(term);
+						trigger.activate(term, true);
 					}
 				}
 			}
@@ -438,15 +438,16 @@ public class CClosure implements ITheory {
 		final CCTerm funcTerm = getFuncTerm(sym);
 		final int parentPosition = funcTerm.mParentPosition + argPos;
 		final CCParentInfo info = arg.getRepresentative().mCCPars.getInfo(parentPosition);
-
 		List<CCTerm> funcApps = new ArrayList<>();
-		for (final Parent parent : info.mCCParents) {
-			if (!parent.isMarked()) {
-				funcApps.add(parent.getData());
+		if (info != null) {
+			for (final Parent parent : info.mCCParents) {
+				if (!parent.isMarked()) {
+					funcApps.add(parent.getData());
+				}
 			}
-		}
-		for (int i = argPos + 1; i < sym.getParameterSorts().length; i++) {
-			funcApps = getApplications(funcApps);
+			for (int i = argPos + 1; i < sym.getParameterSorts().length; i++) {
+				funcApps = getApplications(funcApps);
+			}
 		}
 		return funcApps;
 	}
@@ -764,12 +765,19 @@ public class CClosure implements ITheory {
 		}
 	}
 
-	public CCEquality createCCEquality(final int stackLevel, final CCTerm t1, final CCTerm t2) {
+	public CCEquality createCCEquality(final int stackLevel, CCTerm t1, CCTerm t2) {
 		assert (t1 != t2);
 		CCEquality eq = null;
 		assert t1.invariant();
 		assert t2.invariant();
 
+		// to make cc equalities different from la equalities, ensure that t2 is not a
+		// constant.
+		if (t2.getFlatTerm().getSort().isNumericSort() && (t2.getFlatTerm() instanceof ConstantTerm)) {
+			final CCTerm tmp = t2;
+			t2 = t1;
+			t1 = tmp;
+		}
 		eq = new CCEquality(stackLevel, t1, t2);
 		insertEqualityEntry(t1, t2, eq.getEntry());
 		getEngine().addAtom(eq);
@@ -1130,8 +1138,13 @@ public class CClosure implements ITheory {
 	}
 
 	@Override
-	public Clause backtrackComplete() {
+	public void backtrackStart() {
 		mPendingLits.clear();
+		mPendingCongruences.clear();
+	}
+
+	@Override
+	public Clause backtrackComplete() {
 		/*
 		 * If a literal was propagated when it was created it may not be on the right decision level. After backtracking
 		 * we may need to propagate these literals again, if they are still implied by the CC graph. Here we go through
@@ -1179,7 +1192,6 @@ public class CClosure implements ITheory {
 		/*
 		 * Recheck congruences and propagate them.
 		 */
-		mPendingCongruences.clear();
 		final ArrayQueue<SymmetricPair<CCAppTerm>> newRecheckOnBacktrackCongs = new ArrayQueue<>();
 		for (final SymmetricPair<CCAppTerm> cong : mRecheckOnBacktrackCongs) {
 			final CCAppTerm lhs = cong.getFirst();
@@ -1230,7 +1242,7 @@ public class CClosure implements ITheory {
 	private Clause buildCongruence() {
 		SymmetricPair<CCAppTerm> cong;
 		while ((cong = mPendingCongruences.poll()) != null) {
-			getLogger().debug(new DebugMessage("PC {0}", cong));
+			getLogger().debug("PC %s", cong);
 			final CCAppTerm lhs = cong.getFirst();
 			final CCAppTerm rhs = cong.getSecond();
 			assert lhs.mArg.mRepStar == rhs.mArg.mRepStar
@@ -1369,10 +1381,11 @@ public class CClosure implements ITheory {
 								{ "Closure", mCcTime }, { "SetRep", mSetRepTime } } } } };
 	}
 
-	public void fillInModel(final Model model, final Theory t, final SharedTermEvaluator ste, final ArrayTheory array) {
+	public void fillInModel(final Model model, final Theory t, final SharedTermEvaluator ste,
+			final ArrayTheory arrayTheory, final DataTypeTheory datatypeTheory) {
 		final CCTerm trueNode = mClausifier.getCCTerm(t.mTrue);
 		final CCTerm falseNode = mClausifier.getCCTerm(t.mFalse);
-		new ModelBuilder(this, mAllTerms, model, t, ste, array, trueNode, falseNode);
+		new ModelBuilder(this, mAllTerms, model, t, ste, arrayTheory, datatypeTheory, trueNode, falseNode);
 	}
 
 	void addInvertEdgeTime(final long time) {

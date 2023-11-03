@@ -4,12 +4,12 @@
   	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.2.2</version>
+		<version>0.2.3</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
   <groupId>org.apache.commons</groupId>
   <artifactId>org.apache.commons.lang</artifactId>
-  <version>3.3.2</version>
+  <version>3.12.0</version>
   <packaging>eclipse-plugin</packaging>
 </project>

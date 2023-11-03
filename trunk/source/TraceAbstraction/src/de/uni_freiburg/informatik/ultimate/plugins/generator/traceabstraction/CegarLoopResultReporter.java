@@ -32,9 +32,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DataRaceFoundResult;
@@ -45,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UserSpecifiedLimitReachedResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
@@ -112,7 +111,7 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 			case USER_LIMIT_PATH_PROGRAM:
 			case USER_LIMIT_TIME:
 			case USER_LIMIT_TRACEHISTOGRAM:
-				reportLimitResult(errorLoc, localResult.getResult(), localResult.getRunningTaskStackProvider());
+				reportLimitResult(errorLoc, localResult);
 				break;
 			case UNKNOWN:
 				final IProgramExecution<L, Term> pe = localResult.getProgramExecution();
@@ -168,9 +167,8 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 		mReportFunction.accept(errorLoc, cexResult);
 	}
 
-	private void reportLimitResult(final IcfgLocation errorLoc, final Result result,
-			final IRunningTaskStackProvider rtsp) {
-		final IResult res = constructLimitResult(mServices, result, rtsp, errorLoc);
+	private void reportLimitResult(final IcfgLocation errorLoc, final CegarLoopLocalResult<L> result) {
+		final IResult res = constructLimitResult(mServices, result, errorLoc);
 		mReportFunction.accept(errorLoc, res);
 	}
 
@@ -182,8 +180,8 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 		mReportFunction.accept(errorLoc, res);
 	}
 
-	private IResult constructLimitResult(final IUltimateServiceProvider services, final Result result,
-			final IRunningTaskStackProvider rtsp, final IcfgLocation errorIpp) {
+	private IResult constructLimitResult(final IUltimateServiceProvider services, final CegarLoopLocalResult<L> result,
+			final IcfgLocation errorIpp) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Unable to prove that ");
 		sb.append(Check.getAnnotation(errorIpp).getPositiveMessage());
@@ -191,17 +189,19 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 			final ILocation origin = ((BoogieIcfgLocation) errorIpp).getBoogieASTNode().getLocation();
 			sb.append(" (line ").append(origin.getStartLine()).append(").");
 		}
-		if (rtsp != null) {
-			sb.append(" Cancelled ").append(rtsp.printRunningTaskMessage());
+
+		if (result.getRunningTaskStackProvider() != null) {
+			sb.append(" Cancelled ").append(result.getRunningTaskStackProvider().printRunningTaskMessage());
 		}
 
+		final Result resultCategory = result.getResult();
 		final IResult res;
-		if (result == Result.TIMEOUT) {
+		if (resultCategory == Result.TIMEOUT) {
 			res = new TimeoutResultAtElement<>(errorIpp, mPluginName, services.getBacktranslationService(),
 					sb.toString());
 		} else {
-			res = new UserSpecifiedLimitReachedResultAtElement<IElement>(result.toString(), errorIpp, mPluginName,
-					services.getBacktranslationService(), sb.toString());
+			res = new UserSpecifiedLimitReachedResultAtElement<IElement>(resultCategory.toString(), errorIpp,
+					mPluginName, services.getBacktranslationService(), result.getProgramExecution(), sb.toString());
 		}
 		return res;
 	}

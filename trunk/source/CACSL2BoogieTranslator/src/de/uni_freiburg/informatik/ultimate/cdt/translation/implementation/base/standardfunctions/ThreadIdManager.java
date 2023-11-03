@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FindBindingReferences;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -237,7 +237,7 @@ public class ThreadIdManager {
 					argThreadIdPointer.getLrValue().getCType(), false, null);
 		}
 		erb.addStatements(
-				mMemoryHandler.getWriteCall(loc, heapLValue, threadId, mMemoryHandler.getThreadIdType(), false, hook));
+				mMemoryHandler.getWriteCall(loc, heapLValue, threadId, mMemoryHandler.getThreadIdType(), false));
 	}
 
 	private Integer getUnambiguousThreadIdCounter(final IASTInitializerClause argument) {

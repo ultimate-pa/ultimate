@@ -101,6 +101,15 @@ public class ManagedScript {
 		return mLockOwner != null;
 	}
 
+	/**
+	 * Throw an AssertionError if this {@link ManagedScript} is currently locked.
+	 */
+	public void assertScriptNotLocked() throws AssertionError {
+		if (isLocked()) {
+			throw new AssertionError("Script currently locked by " + String.valueOf(mLockOwner));
+		}
+	}
+
 	public boolean requestLockRelease() {
 		if (mLockOwner == null) {
 			throw new IllegalStateException("ManagedScript not locked");
@@ -319,7 +328,7 @@ public class ManagedScript {
 		public TermVariable constructFreshCopy(final TermVariable tv) {
 			String basename = mTv2Basename.get(tv);
 			if (basename == null) {
-				mLogger.warn("TermVariabe " + tv
+				mLogger.warn("TermVariable " + tv
 						+ " not constructed by VariableManager. Cannot ensure absence of name clashes.");
 				basename = SmtUtils.removeSmtQuoteCharacters(tv.getName());
 			}

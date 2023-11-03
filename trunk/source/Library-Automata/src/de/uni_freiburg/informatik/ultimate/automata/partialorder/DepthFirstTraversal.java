@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.DfsBookkeeping;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -52,9 +53,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            The type of states in the traversed automaton
  */
 public class DepthFirstTraversal<L, S> {
+	private static final String ABORT_MSG = "visitor aborted traversal";
+
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
+	private final S mStartState;
 	private final IDfsOrder<L, S> mOrder;
 	private final IDfsVisitor<L, S> mVisitor;
 
@@ -74,26 +78,60 @@ public class DepthFirstTraversal<L, S> {
 	 *            The order in which transitions for each state should be explored
 	 * @param visitor
 	 *            A visitor to traverse the automaton
+	 * @param startingState
+	 *            A state from which the traversal starts.
 	 * @throws AutomataOperationCanceledException
 	 *             in case of timeout or cancellation
 	 */
 	public DepthFirstTraversal(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
-			final IDfsVisitor<L, S> visitor) throws AutomataOperationCanceledException {
+			final IDfsVisitor<L, S> visitor, final S startingState) throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "DFS supports only finite automata";
 
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(DepthFirstTraversal.class);
 		mOperand = operand;
+		mStartState = startingState;
 		mOrder = order;
 		mVisitor = visitor;
 
 		traverse();
 	}
 
+	/**
+	 * Performs a depth-first traversal starting from the operand's initial state. This method is called purely for its
+	 * side-effects.
+	 *
+	 * @param services
+	 *            automata services used for logging and timeout management
+	 * @param operand
+	 *            The automaton to be traversed
+	 * @param order
+	 *            The order in which transitions for each state should be explored
+	 * @param visitor
+	 *            A visitor to traverse the automaton
+	 * @throws AutomataOperationCanceledException
+	 *             in case of timeout or cancellation
+	 */
+	public static <L, S> void traverse(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
+			final IDfsVisitor<L, S> visitor) throws AutomataOperationCanceledException {
+		final var initial =
+				DataStructureUtils.getOnly(operand.getInitialStates(), "There must only be one initial state");
+		if (initial.isPresent()) {
+			new DepthFirstTraversal<>(services, operand, order, visitor, initial.get());
+		} else {
+			final var logger = services.getLoggingService().getLogger(DepthFirstTraversal.class);
+			logger.warn("Depth first traversal did not find any initial state. Returning directly.");
+		}
+	}
+
 	private void traverse() throws AutomataOperationCanceledException {
-		final S initial = DataStructureUtils.getOneAndOnly(mOperand.getInitialStates(), "initial state");
-		visitState(initial);
+		final boolean abortImmediately = visitState(mStartState);
+		if (abortImmediately) {
+			mLogger.debug(ABORT_MSG);
+			return;
+		}
 
 		while (!mWorklist.isEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
@@ -106,7 +144,7 @@ public class DepthFirstTraversal<L, S> {
 			// Backtrack states still on the stack whose exploration has finished.
 			final boolean abort = backtrackUntil(currentState);
 			if (abort) {
-				mLogger.debug("visitor aborted search");
+				mLogger.debug(ABORT_MSG);
 				return;
 			}
 
@@ -116,7 +154,7 @@ public class DepthFirstTraversal<L, S> {
 					currentTransition.getLetter());
 			final boolean prune = mVisitor.discoverTransition(currentState, currentTransition.getLetter(), nextState);
 			if (mVisitor.isFinished()) {
-				mLogger.debug("visitor aborted search");
+				mLogger.debug(ABORT_MSG);
 				return;
 			}
 
@@ -126,7 +164,7 @@ public class DepthFirstTraversal<L, S> {
 			} else if (!mDfs.isVisited(nextState)) {
 				final boolean abortNow = visitState(nextState);
 				if (abortNow) {
-					mLogger.debug("visitor aborted search");
+					mLogger.debug(ABORT_MSG);
 					return;
 				}
 			} else if ((stackIndex = mDfs.stackIndexOf(nextState)) != -1) {
@@ -138,14 +176,14 @@ public class DepthFirstTraversal<L, S> {
 			}
 		}
 
-		final boolean abort = backtrackUntil(initial);
+		final boolean abort = backtrackUntil(mStartState);
 		if (abort) {
-			mLogger.debug("visitor aborted search");
+			mLogger.debug(ABORT_MSG);
 			return;
 		}
 
 		backtrack();
-		mLogger.debug("search completed");
+		mLogger.debug("traversal completed");
 	}
 
 	private boolean backtrackUntil(final S state) {
@@ -175,12 +213,12 @@ public class DepthFirstTraversal<L, S> {
 		debugIndent("visiting state %s", state);
 
 		final boolean pruneSuccessors;
-		if (mOperand.isInitial(state)) {
-			debugIndent("-> state is initial");
-			assert !mDfs.hasStarted() : "initial state should be first visited state";
+		if (mStartState.equals(state)) {
+			debugIndent("-> state is start state");
+			assert !mDfs.hasStarted() : "start state should be first visited state";
 			pruneSuccessors = mVisitor.addStartState(state);
 		} else {
-			assert mDfs.hasStarted() : "first visited state should be initial state";
+			assert mDfs.hasStarted() : "first visited state should be start state";
 			pruneSuccessors = mVisitor.discoverState(state);
 		}
 		if (mVisitor.isFinished()) {

@@ -119,9 +119,9 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 								ConversionContext.Divide(1, 0, ""), Aggregate.Ignore, Aggregate.Sum),
 						new ColumnDefinition("LassoNonterminationAnalysisUnknown", "gnta unknown",
 								ConversionContext.Divide(1, 0, ""), Aggregate.Ignore, Aggregate.Sum),
-						new ColumnDefinition(BuchiCegarLoopBenchmark.s_MinimizationsOfDetermnisticAutomatomata,
+						new ColumnDefinition(BuchiCegarLoopBenchmark.MINIMIZATION_OF_DETERMINISTIC_AUTOMATA,
 								"mnmz det", ConversionContext.Divide(1, 0, ""), Aggregate.Ignore, Aggregate.Sum),
-						new ColumnDefinition(BuchiCegarLoopBenchmark.s_MinimizationsOfNondetermnisticAutomatomata,
+						new ColumnDefinition(BuchiCegarLoopBenchmark.MINIMIZATION_OF_NONDETERMINISTIC_AUTOMATA,
 								"mnmz nondet", ConversionContext.Divide(1, 0, ""), Aggregate.Ignore, Aggregate.Sum), };
 
 		return new ITestSummary[] { new TraceAbstractionTestSummary(this.getClass()),

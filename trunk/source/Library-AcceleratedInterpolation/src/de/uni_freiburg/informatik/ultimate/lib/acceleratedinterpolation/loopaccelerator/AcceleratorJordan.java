@@ -33,11 +33,13 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jord
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAcceleration.JordanLoopAccelerationResult;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanLoopAcceleration.JordanLoopAccelerationResult.AccelerationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 
 /**
+ * A loop accelerator used in accelerated inteprolation using the {@link JordanLoopAcceleration} method of acceleration.
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class represents the loop accelerator needed for
  *         {@link AcceleratedInterpolation}
@@ -47,13 +49,27 @@ public class AcceleratorJordan implements IAccelerator {
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
 	private boolean mFoundAcceleration;
+	private final boolean mIsOverapprox;
 
+	/**
+	 * Construct a new loop accelerator using {@link JordanLoopAcceleration}.
+	 *
+	 * @param logger
+	 *            A {@link ILogger}
+	 * @param managedScript
+	 *            A {@link ManagedScript}
+	 * @param services
+	 *            {@link IUltimateServiceProvider}
+	 * @param symbolTable
+	 *            {@link IIcfgSymbolTable}
+	 */
 	public AcceleratorJordan(final ILogger logger, final ManagedScript managedScript,
 			final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mScript = managedScript;
 		mServices = services;
 		mFoundAcceleration = false;
+		mIsOverapprox = false;
 	}
 
 	/**
@@ -92,5 +108,10 @@ public class AcceleratorJordan implements IAccelerator {
 	@Override
 	public boolean accelerationFinishedCorrectly() {
 		return mFoundAcceleration;
+	}
+
+	@Override
+	public boolean isOverapprox() {
+		return mIsOverapprox;
 	}
 }

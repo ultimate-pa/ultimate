@@ -89,11 +89,12 @@ public final class Automaton2Net<LETTER, STATE>
 	}
 
 	@Override
-	public boolean checkResult(final IPetriNetAndAutomataInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IPetriNetAndAutomataInclusionStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of constructor" + mNet.getClass().getSimpleName());
 		}
-		final boolean correct = new IsEquivalent<LETTER, STATE>(mServices, stateFactory, mNet, mOperand).getResult();
+		final boolean correct = new IsEquivalent<>(mServices, stateFactory, mNet, mOperand).getResult();
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of constructor " + mNet.getClass().getSimpleName());
 		}

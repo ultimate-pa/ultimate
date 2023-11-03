@@ -75,7 +75,7 @@ public class DnfTransformer extends XnfTransformer {
 
 		@Override
 		public String innerJunctionName() {
-			return "conjuction";
+			return "conjunction";
 		}
 
 		@Override

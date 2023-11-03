@@ -39,7 +39,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.lib.chc.ChcPreMetaInfoProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
@@ -55,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class GenerateGotoBoogieAst {
 
-//	private static final String INPARAMSUFFIX = "_inprm";
+	// private static final String INPARAMSUFFIX = "_inprm";
 
 	private final Unit mResult;
 
@@ -72,8 +74,7 @@ public class GenerateGotoBoogieAst {
 
 	private final Set<HcPredicateSymbol> mPredicatesThatHaveANonTailCall;
 
-	public GenerateGotoBoogieAst(final ChcPreMetaInfoProvider preAnalysis,
-			final GenerateBoogieAstHelper helper,
+	public GenerateGotoBoogieAst(final ChcPreMetaInfoProvider preAnalysis, final GenerateBoogieAstHelper helper,
 			final String gotoVarName) {
 		mHelper = helper;
 		mHcSymbolTable = helper.getSymbolTable();
@@ -100,11 +101,11 @@ public class GenerateGotoBoogieAst {
 	 * Generates a Boogie program, that has tail-recursion eliminated in favor of goto statements.
 	 *
 	 * <ul>
-	 *  <li> Contains two procedures, the main entry point and a "goto-procedure" that simulates all the procedures
-	 *   corresponding to a predicate from the standard approach. It has one label per CHC predicate symbol.
-	 *  <li> the goto-procedure takes as arguments all the possible arguments of the other procedures, and one extra
-	 *   argument that controls which of the procedures would have been called
-	 *  <li> the goto-procedure starts with a switch over the extra parameter in order to jump to the right label
+	 * <li>Contains two procedures, the main entry point and a "goto-procedure" that simulates all the procedures
+	 * corresponding to a predicate from the standard approach. It has one label per CHC predicate symbol.
+	 * <li>the goto-procedure takes as arguments all the possible arguments of the other procedures, and one extra
+	 * argument that controls which of the procedures would have been called
+	 * <li>the goto-procedure starts with a switch over the extra parameter in order to jump to the right label
 	 * </ul>
 	 *
 	 *
@@ -112,7 +113,7 @@ public class GenerateGotoBoogieAst {
 	 * @return
 	 */
 	private Unit generateBoogieAstWithGotos() {
-//			final HashRelation<HcPredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses) {
+		// final HashRelation<HcPredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses) {
 
 		final ILocation loc = mHelper.getLoc();
 
@@ -122,18 +123,19 @@ public class GenerateGotoBoogieAst {
 		final List<Statement> labeledBlocks = new ArrayList<>();
 
 		// label corresponding the "False" procedure block
-//		final Label falseLabel = new Label(loc, "False");
+		// final Label falseLabel = new Label(loc, "False");
 
 		// goto var
-//		final IdentifierExpression gotoVarExp = ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT,
-//				mGotoVarName, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, mGotoProcName));
+		// final IdentifierExpression gotoVarExp = ExpressionFactory.constructIdentifierExpression(loc,
+		// BoogieType.TYPE_INT,
+		// mGotoVarName, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, mGotoProcName));
 
 		final Map<HcPredicateSymbol, Label> predSymbolToLabel = new LinkedHashMap<>();
 		final Map<Label, Integer> predLabelToNumber = new LinkedHashMap<>();
 		{
 			Integer predsymCounter = 0;
 			// generate the labels
-//			for (final HcPredicateSymbol predSym : mChcInfo.getHornClausesSorted().getDomain()) {
+			// for (final HcPredicateSymbol predSym : mChcInfo.getHornClausesSorted().getDomain()) {
 			for (final HcPredicateSymbol predSym : mChcInfo.getAllReachablePredSymbols()) {
 				final Label label = new Label(loc, mHelper.predSymToMethodName(predSym));
 				final Integer number = predsymCounter++;
@@ -141,9 +143,6 @@ public class GenerateGotoBoogieAst {
 				predLabelToNumber.put(label, number);
 			}
 		}
-
-
-
 
 		final Deque<HcPredicateSymbol> headPredQueue = new ArrayDeque<>();
 		final Set<HcPredicateSymbol> addedToQueueBefore = new HashSet<>();
@@ -157,17 +156,10 @@ public class GenerateGotoBoogieAst {
 			// breadth-first (pollFirst) or depth-first (pop) should not matter here
 			final HcPredicateSymbol headPredSymbol = headPredQueue.pop();
 
-			final Set<HornClause> hornClausesForHeadPred =
-					mChcInfo.getHornClausesSorted().getImage(headPredSymbol);
+			final Set<HornClause> hornClausesForHeadPred = mChcInfo.getHornClausesSorted().getImage(headPredSymbol);
 
-			final List<Statement> nondetSwitch = generateNondetSwitchForPred(loc,
-					predSymbolToLabel,
-					predLabelToNumber,
-					hornClausesForHeadPred,
-					headPredQueue,
-					addedToQueueBefore,
-					allBodyPredVariables);
-
+			final List<Statement> nondetSwitch = generateNondetSwitchForPred(loc, predSymbolToLabel, predLabelToNumber,
+					hornClausesForHeadPred, headPredQueue, addedToQueueBefore, allBodyPredVariables);
 
 			assert hornClausesForHeadPred.isEmpty() || !nondetSwitch.stream().anyMatch(Objects::isNull);
 			labeledBlocks.add(predSymbolToLabel.get(headPredSymbol));
@@ -176,13 +168,13 @@ public class GenerateGotoBoogieAst {
 				labeledBlocks.add(new AssumeStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false)));
 				labeledBlocks.add(new ReturnStatement(loc));
 			} else {
-//				assert nondetSwitch != null && nondetSwitch.get(nondetSwitch.size() - 1) instanceof GotoStatement;
+				// assert nondetSwitch != null && nondetSwitch.get(nondetSwitch.size() - 1) instanceof GotoStatement;
 				labeledBlocks.addAll(nondetSwitch);
 			}
 		}
 
-		declarations.add(constructGotoProc(loc, labeledBlocks, predSymbolToLabel, predLabelToNumber,
-				allBodyPredVariables));
+		declarations
+				.add(constructGotoProc(loc, labeledBlocks, predSymbolToLabel, predLabelToNumber, allBodyPredVariables));
 
 		// add the main entry point
 		declarations.add(constructMainEntryPointProcedure(loc,
@@ -190,15 +182,12 @@ public class GenerateGotoBoogieAst {
 
 		declarations.addAll(mHelper.getAuxDeclarations());
 
-		return new Unit(loc,
-				declarations.toArray(new Declaration[declarations.size()]));
+		return new Unit(loc, declarations.toArray(new Declaration[declarations.size()]));
 	}
 
-
-
 	/**
-	 * Put together the final goto-procedure, after the goto blocks have been computed.
-	 * Adds the switch in front and builds the Boogie procedure.
+	 * Put together the final goto-procedure, after the goto blocks have been computed. Adds the switch in front and
+	 * builds the Boogie procedure.
 	 *
 	 * @param loc
 	 * @param labeledBlocks
@@ -226,15 +215,11 @@ public class GenerateGotoBoogieAst {
 				final Label predSymLabel = en.getValue();
 				final Integer predSymNumber = predLabelToNumber.get(predSymLabel);
 
-
 				final List<Statement> branchBody = new ArrayList<>();
-
 
 				{
 					final List<LeftHandSide> lhss = new ArrayList<>();
 					final List<Expression> rhss = new ArrayList<>();
-
-
 
 					for (final HcHeadVar headVar : mHcSymbolTable.getHcHeadVarsForPredSym(predSym, false)) {
 						lhss.add(constructLhsForHeadVar(headVar));
@@ -243,12 +228,11 @@ public class GenerateGotoBoogieAst {
 
 					if (lhss.size() > 0) {
 						final Statement assignment = StatementFactory.constructAssignmentStatement(loc,
-								lhss.toArray(new LeftHandSide[lhss.size()]),
-								rhss.toArray(new Expression[rhss.size()]));
+								lhss.toArray(new LeftHandSide[lhss.size()]), rhss.toArray(new Expression[rhss.size()]));
 						branchBody.add(assignment);
 					}
 
-					branchBody.add(new GotoStatement(loc, new String[]{ en.getValue().getName() }));
+					branchBody.add(new GotoStatement(loc, new String[] { en.getValue().getName() }));
 				}
 
 				final Expression condition = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
@@ -256,11 +240,10 @@ public class GenerateGotoBoogieAst {
 				predSwitch = mHelper.addIteBranch(loc, predSwitch, branchBody, condition);
 			}
 
-
 			// gotoSwitch := gotoSwitch_in
 			final Statement gotoSwitchAssign = StatementFactory.constructAssignmentStatement(loc,
-					new LeftHandSide[] { ExpressionFactory.constructVariableLHS(loc, BoogieType.TYPE_INT, getGotoVarName(),
-							new DeclarationInformation(StorageClass.LOCAL, getGotoProcName())) },
+					new LeftHandSide[] { ExpressionFactory.constructVariableLHS(loc, BoogieType.TYPE_INT,
+							getGotoVarName(), new DeclarationInformation(StorageClass.LOCAL, getGotoProcName())) },
 					new Expression[] { ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT,
 							getGotoVarInParamName(),
 							new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, getGotoProcName())) });
@@ -270,12 +253,10 @@ public class GenerateGotoBoogieAst {
 			gotoProcBody.addAll(labeledBlocks);
 		}
 
-
 		// the args of the goto proc are all head vars and all body vars of all occurring predicates
 		final VariableDeclaration localVarDec;
 		{
 			final List<VarList> gotoProgLocaLVarLists = new ArrayList<>();
-
 
 			// goto switch
 			gotoProgLocaLVarLists.add(new VarList(loc, new String[] { getGotoVarName() },
@@ -284,34 +265,27 @@ public class GenerateGotoBoogieAst {
 			// head vars
 			final List<VarList> headPrdVarLists = new ArrayList<>();
 			predSymbolToLabel.keySet()
-			.forEach(ps -> mHcSymbolTable.getHcHeadVarsForPredSym(ps, false)
-					.forEach(hcv -> headPrdVarLists.add(new VarList(loc, new String[] { hcv.getGloballyUniqueId() },
-							mHelper.getCorrespondingAstType(loc, hcv.getSort())))));
+					.forEach(ps -> mHcSymbolTable.getHcHeadVarsForPredSym(ps, false).forEach(
+							hcv -> headPrdVarLists.add(new VarList(loc, new String[] { hcv.getGloballyUniqueId() },
+									mHelper.getCorrespondingAstType(loc, hcv.getSort())))));
 			gotoProgLocaLVarLists.addAll(headPrdVarLists);
 
 			// body vars
-			allBodyPredVariables.forEach(hcv -> gotoProgLocaLVarLists.add(
-					new VarList(loc, new String[] { hcv.getGloballyUniqueId() },
-							mHelper.getCorrespondingAstType(loc, hcv.getSort()))));
+			allBodyPredVariables.forEach(hcv -> gotoProgLocaLVarLists.add(new VarList(loc,
+					new String[] { hcv.getGloballyUniqueId() }, mHelper.getCorrespondingAstType(loc, hcv.getSort()))));
 
 			localVarDec = new VariableDeclaration(loc, new Attribute[0],
 					gotoProgLocaLVarLists.toArray(new VarList[gotoProgLocaLVarLists.size()]));
 		}
 
-		final Procedure gotoProc = new Procedure(loc, new Attribute[0],
-				getGotoProcName(), new String[0],
-				generateGotoProcInParams(),
-				new VarList[0],
-				new Specification[0],
-				new Body(loc,
-						new VariableDeclaration[] { localVarDec },
-						gotoProcBody.toArray(new Statement[gotoProcBody.size()])));
+		final Procedure gotoProc =
+				new Procedure(loc, new Attribute[0], getGotoProcName(), new String[0], generateGotoProcInParams(),
+						new VarList[0], new Specification[0], new Body(loc, new VariableDeclaration[] { localVarDec },
+								gotoProcBody.toArray(new Statement[gotoProcBody.size()])));
 		return gotoProc;
 	}
 
-
-
-//	private VarList[] generateInParams(final List<VarList> headPrdVarLists) {
+	// private VarList[] generateInParams(final List<VarList> headPrdVarLists) {
 	private VarList[] generateGotoProcInParams() {
 		final ILocation loc = mHelper.getLoc();
 		final List<VarList> resultList = new ArrayList<>();
@@ -320,20 +294,20 @@ public class GenerateGotoBoogieAst {
 		resultList.add(new VarList(loc, new String[] { getGotoVarInParamName() },
 				new PrimitiveType(loc, BoogieType.TYPE_INT, "int")));
 
-//		for (final HcHeadVar headVar : mChcInfo.getAllHeadHcVarsAsList()) {
-//			final String id = headVar.getGloballyUniqueId() + INPARAMSUFFIX;
-//		for (final String id : constructGotoProcArgIds()) {
-//		for (final Triple<Integer, Sort, String> triple : mIndexToSortToGotoProcArgId.entrySet()) {
+		// for (final HcHeadVar headVar : mChcInfo.getAllHeadHcVarsAsList()) {
+		// final String id = headVar.getGloballyUniqueId() + INPARAMSUFFIX;
+		// for (final String id : constructGotoProcArgIds()) {
+		// for (final Triple<Integer, Sort, String> triple : mIndexToSortToGotoProcArgId.entrySet()) {
 		for (final Triple<Integer, Sort, String> triple : mIndexToSortToGotoProcArgIdList) {
 			resultList.add(new VarList(loc, new String[] { triple.getThird() },
 					mHelper.getCorrespondingAstType(loc, triple.getSecond())));
 		}
 
-//		for (final VarList hpvl : headPrdVarLists) {
-//			assert hpvl.getIdentifiers().length == 1;
-//			final String id = hpvl.getIdentifiers()[0] + INPARAMSUFFIX;
-//			resultList.add(new VarList(hpvl.getLoc(), new String[] { id }, hpvl.getType()));
-//		}
+		// for (final VarList hpvl : headPrdVarLists) {
+		// assert hpvl.getIdentifiers().length == 1;
+		// final String id = hpvl.getIdentifiers()[0] + INPARAMSUFFIX;
+		// resultList.add(new VarList(hpvl.getLoc(), new String[] { id }, hpvl.getType()));
+		// }
 		return resultList.toArray(new VarList[resultList.size()]);
 	}
 
@@ -342,35 +316,34 @@ public class GenerateGotoBoogieAst {
 	}
 
 	private Expression getGotoVarExp() {
-		return ExpressionFactory.constructIdentifierExpression(mHelper.getLoc(), BoogieType.TYPE_INT,
-				getGotoVarName(), new DeclarationInformation(StorageClass.LOCAL, getGotoProcName()));
-	}
-
-	private VariableLHS constructLhsForHeadVar(final HcHeadVar inParam) {
-		return ExpressionFactory.constructVariableLHS(mHelper.getLoc(),
-				mHelper.getType(inParam.getSort()),
-				inParam.getGloballyUniqueId(),
+		return ExpressionFactory.constructIdentifierExpression(mHelper.getLoc(), BoogieType.TYPE_INT, getGotoVarName(),
 				new DeclarationInformation(StorageClass.LOCAL, getGotoProcName()));
 	}
 
-
+	private VariableLHS constructLhsForHeadVar(final HcHeadVar inParam) {
+		return ExpressionFactory.constructVariableLHS(mHelper.getLoc(), mHelper.getType(inParam.getSort()),
+				inParam.getGloballyUniqueId(), new DeclarationInformation(StorageClass.LOCAL, getGotoProcName()));
+	}
 
 	/**
 	 *
 	 * @param loc
-	 * @param predSymbolToLabel null if non-goto mode
+	 * @param predSymbolToLabel
+	 *            null if non-goto mode
 	 * @param predLabelToNumber
 	 * @param hornClausesForHeadPred
-	 * @param headPredQueue (updated)
-	 * @param addedToQueueBefore (updated)
-	 * @param allBodyPredVariables (updated)
+	 * @param headPredQueue
+	 *            (updated)
+	 * @param addedToQueueBefore
+	 *            (updated)
+	 * @param allBodyPredVariables
+	 *            (updated)
 	 * @return
 	 */
 	private List<Statement> generateNondetSwitchForPred(final ILocation loc,
 			final Map<HcPredicateSymbol, Label> predSymbolToLabel, final Map<Label, Integer> predLabelToNumber,
-			final Set<HornClause> hornClausesForHeadPred,
-			final Deque<HcPredicateSymbol> headPredQueue, final Set<HcPredicateSymbol> addedToQueueBefore,
-			final Set<HcVar> allBodyPredVariables) {
+			final Set<HornClause> hornClausesForHeadPred, final Deque<HcPredicateSymbol> headPredQueue,
+			final Set<HcPredicateSymbol> addedToQueueBefore, final Set<HcVar> allBodyPredVariables) {
 		assert (predSymbolToLabel == null) == (predLabelToNumber == null);
 		/*
 		 * create the procedure body according to all Horn clauses with headPredSymbol as their head
@@ -386,8 +359,7 @@ public class GenerateGotoBoogieAst {
 			allBodyPredVariables.addAll(hornClause.getBodyVariables());
 
 			final List<Statement> branchBody = new ArrayList<>();
-			final Statement assume =
-					new AssumeStatement(loc, mHelper.translate(hornClause.getConstraintFormula()));
+			final Statement assume = new AssumeStatement(loc, mHelper.translate(hornClause.getConstraintFormula()));
 			branchBody.add(assume);
 
 			for (int i = 0; i < hornClause.getNoBodyPredicates(); i++) {
@@ -399,21 +371,15 @@ public class GenerateGotoBoogieAst {
 					addedToQueueBefore.add(bodyPredSym);
 				}
 
-
 				final IntegerLiteral targetLabelNumber = ExpressionFactory.createIntegerLiteral(loc,
-									predLabelToNumber.get(predSymbolToLabel.get(bodyPredSym)).toString());
+						predLabelToNumber.get(predSymbolToLabel.get(bodyPredSym)).toString());
 				final List<Expression> translatedArgs =
 						bodyPredArgs.stream().map(t -> mHelper.translate(t)).collect(Collectors.toList());
 
 				if (i == hornClause.getNoBodyPredicates() - 1) {
 					// tail call is done as a goto
-					constructGotoReplacingTailCall(loc, branchBody,
-							predSymbolToLabel.get(bodyPredSym),
-							hornClause,
-							bodyPredSym,
-							targetLabelNumber,
-							translatedArgs
-							);
+					constructGotoReplacingTailCall(loc, branchBody, predSymbolToLabel.get(bodyPredSym), hornClause,
+							bodyPredSym, targetLabelNumber, translatedArgs);
 				} else {
 					// we have to rearrange the call arguments
 
@@ -424,26 +390,25 @@ public class GenerateGotoBoogieAst {
 
 					int bodyVarIndex = 0;
 
-//					for (final HcHeadVar headVar : mChcInfo.getAllHeadHcVarsAsList()) {
+					// for (final HcHeadVar headVar : mChcInfo.getAllHeadHcVarsAsList()) {
 					for (final Triple<Integer, Sort, String> tr : mIndexToSortToGotoProcArgIdList) {
 
-//						final Term currentBodyPredArg = bodyPredArgs.get(bodyVarIndex);
+						// final Term currentBodyPredArg = bodyPredArgs.get(bodyVarIndex);
 
-//						if (currentBodyPredArg.getSort().equals(headVar.getSort())) {
-						if (bodyVarIndex < bodyPredArgs.size() &&
-								bodyPredArgs.get(bodyVarIndex).getSort().equals(tr.getSecond())) {
-//							splatArgs.add(mHelper.translate(currentBodyPredArg));
+						// if (currentBodyPredArg.getSort().equals(headVar.getSort())) {
+						if (bodyVarIndex < bodyPredArgs.size()
+								&& bodyPredArgs.get(bodyVarIndex).getSort().equals(tr.getSecond())) {
+							// splatArgs.add(mHelper.translate(currentBodyPredArg));
 							splatArgs.add(translatedArgs.get(bodyVarIndex));
 							bodyVarIndex++;
 						} else {
-//							splatArgs.add(getDummyArgForSort(headVar.getSort()));
+							// splatArgs.add(getDummyArgForSort(headVar.getSort()));
 							splatArgs.add(getDummyArgForSort(tr.getSecond()));
 						}
 					}
 
-					final CallStatement call = new CallStatement(loc, false, new VariableLHS[0],
-							getGotoProcName(),
-//							mHelper.predSymToMethodName(bodyPredSym),
+					final CallStatement call = new CallStatement(loc, false, new VariableLHS[0], getGotoProcName(),
+							// mHelper.predSymToMethodName(bodyPredSym),
 							splatArgs.toArray(new Expression[bodyPredArgs.size()]));
 					branchBody.add(call);
 				}
@@ -454,12 +419,10 @@ public class GenerateGotoBoogieAst {
 			}
 
 			nondetSwitch = mHelper.addIteBranch(loc, nondetSwitch, branchBody,
-				ExpressionFactory.constructBooleanWildCardExpression(loc));
+					ExpressionFactory.constructBooleanWildCardExpression(loc));
 		}
 		return nondetSwitch;
 	}
-
-
 
 	private Expression getDummyArgForSort(final Sort sort) {
 		if ("Bool".equals(sort.getName())) {
@@ -487,11 +450,12 @@ public class GenerateGotoBoogieAst {
 		}
 
 		Statement[] statements;
-		final Statement callToGotoProc = new CallStatement(loc, false, new VariableLHS[0],
-				getGotoProcName(), gotoProcCallArgs);
+		final Statement callToGotoProc =
+				new CallStatement(loc, false, new VariableLHS[0], getGotoProcName(), gotoProcCallArgs);
 
-		final Statement assertFalse = new AssertStatement(loc,
-				ExpressionFactory.createBooleanLiteral(loc, false));
+		final Statement assertFalse = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
+		final Check check = new Check(Spec.CHC_SATISFIABILITY);
+		check.annotate(assertFalse);
 
 		statements = new Statement[] { callToGotoProc, assertFalse };
 
@@ -501,30 +465,30 @@ public class GenerateGotoBoogieAst {
 				new VarList[0], new VarList[0], new Specification[0], body);
 	}
 
-
 	/**
-	 *  (not including the goto var)
+	 * (not including the goto var)
+	 *
 	 * @return
 	 */
 	private void constructGotoProcArgIds() {
-//		final Set<String> result = new LinkedHashSet<>();
+		// final Set<String> result = new LinkedHashSet<>();
 		for (final HcHeadVar hv : mChcInfo.getAllHeadHcVarsAsList()) {
-//			final String argId = getArgumentVarId(hv.getIndex(), hv.getSort());
+			// final String argId = getArgumentVarId(hv.getIndex(), hv.getSort());
 			final boolean isNew = constructArgumentVarId(hv.getIndex(), hv.getSort());
 			if (isNew) {
-				mIndexToSortToGotoProcArgIdList.add(
-						new Triple<>(hv.getIndex(), hv.getSort(), getArgumentVarId(hv.getIndex(), hv.getSort())));
+				mIndexToSortToGotoProcArgIdList
+						.add(new Triple<>(hv.getIndex(), hv.getSort(), getArgumentVarId(hv.getIndex(), hv.getSort())));
 			}
-//			result.add(argId);
+			// result.add(argId);
 		}
-//		return new ArrayList<>(result);
+		// return new ArrayList<>(result);
 	}
 
 	Expression getArgumentVarExp(final int index, final Sort sort) {
 		return ExpressionFactory.constructIdentifierExpression(mHelper.getLoc(), mHelper.getType(sort),
-				getArgumentVarId(index, sort), new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, getGotoProcName()));
+				getArgumentVarId(index, sort),
+				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, getGotoProcName()));
 	}
-
 
 	/**
 	 *
@@ -543,10 +507,10 @@ public class GenerateGotoBoogieAst {
 	private String getArgumentVarId(final int index, final Sort sort) {
 		final String result = mIndexToSortToGotoProcArgId.get(index, sort);
 		assert result != null;
-//		if (result == null) {
-//			constructArgumentVarId(index, sort);
-//			result = mIndexToSortToGotoProcArgId.get(index, sort);
-//		}
+		// if (result == null) {
+		// constructArgumentVarId(index, sort);
+		// result = mIndexToSortToGotoProcArgId.get(index, sort);
+		// }
 		return result;
 	}
 
@@ -571,24 +535,24 @@ public class GenerateGotoBoogieAst {
 	/**
 	 *
 	 * @param loc
-	 * @param branchBody (updated)
+	 * @param branchBody
+	 *            (updated)
 	 * @param labelForBodyPredSym
 	 * @param hornClause
 	 * @param bodyPredSym
 	 * @param integerLiteral
-	 * @param translatedArguments (contains goto switch var)
+	 * @param translatedArguments
+	 *            (contains goto switch var)
 	 */
 	private void constructGotoReplacingTailCall(final ILocation loc, final List<Statement> branchBody,
-			final Label labelForBodyPredSym, final HornClause hornClause,
-			final HcPredicateSymbol bodyPredSym,
-			final IntegerLiteral predicateLabelNumberToJumpTo,
-			final List<Expression> translatedArguments) {
+			final Label labelForBodyPredSym, final HornClause hornClause, final HcPredicateSymbol bodyPredSym,
+			final IntegerLiteral predicateLabelNumberToJumpTo, final List<Expression> translatedArguments) {
 
 		// EDIT: makes no sense -- we are using a direct goto, the switch will not be reached from here..
-//		final Statement gotoVarAssignment = StatementFactory.constructAssignmentStatement(loc,
-//				new VariableLHS[] { getGotoVarLhs() },
-//				new Expression[] { predicateLabelNumberToJumpTo });
-//		branchBody.add(gotoVarAssignment);
+		// final Statement gotoVarAssignment = StatementFactory.constructAssignmentStatement(loc,
+		// new VariableLHS[] { getGotoVarLhs() },
+		// new Expression[] { predicateLabelNumberToJumpTo });
+		// branchBody.add(gotoVarAssignment);
 
 		if (translatedArguments.size() > 0) {
 			// assignment of head vars (analogous to what a call would have done implicitly)

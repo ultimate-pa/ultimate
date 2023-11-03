@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BuchiAutomizer plug-in.
- * 
+ *
  * The ULTIMATE BuchiAutomizer plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BuchiAutomizer plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BuchiAutomizer plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiAutomizer plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -32,9 +32,9 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -42,10 +42,10 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderProvider<String> {
 
-	private final TreeMap<Integer, Integer> mModuleSizeTrivial = new TreeMap<Integer, Integer>();
-	private final TreeMap<Integer, Integer> mModuleSizeDeterministic = new TreeMap<Integer, Integer>();
-	private final TreeMap<Integer, Integer> mModuleSizeNondeterministic = new TreeMap<Integer, Integer>();
-	private final TreeMap<Integer, String> mRankingFunction = new TreeMap<Integer, String>();
+	private final TreeMap<Integer, Integer> mModuleSizeTrivial = new TreeMap<>();
+	private final TreeMap<Integer, Integer> mModuleSizeDeterministic = new TreeMap<>();
+	private final TreeMap<Integer, Integer> mModuleSizeNondeterministic = new TreeMap<>();
+	private final TreeMap<Integer, String> mRankingFunction = new TreeMap<>();
 	/**
 	 * Is there a remainder module? A remainder module contains remaining traces if decomposition into modules failed.
 	 * Null if yet unknown.
@@ -59,37 +59,38 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		mBacktranslationService = service;
 	}
 
-	void reportTrivialModule(final Integer iteration, final Integer size) {
+	public void reportTrivialModule(final Integer iteration, final Integer size) {
 		mModuleSizeTrivial.put(iteration, size);
 	}
 
-	void reportDeterminsticModule(final Integer iteration, final Integer size) {
+	public void reportDeterministicModule(final Integer iteration, final Integer size) {
 		mModuleSizeDeterministic.put(iteration, size);
 	}
 
-	void reportNonDeterminsticModule(final Integer iteration, final Integer size) {
+	public void reportNonDeterministicModule(final Integer iteration, final Integer size) {
 		mModuleSizeNondeterministic.put(iteration, size);
 	}
 
-	void reportRankingFunction(final Integer iteration, final TerminationArgumentResult<IIcfgElement, Term> tar) {
-		mRankingFunction.put(iteration, prettyPrintRankingFunction(tar));
+	public void reportRankingFunction(final Integer iteration, final RankingFunction rankingFunction,
+			final Script script) {
+		mRankingFunction.put(iteration, prettyPrintRankingFunction(rankingFunction, script));
 	}
 
-	void reportRemainderModule(final int numberLocations, final boolean nonterminationKnown) {
+	public void reportRemainderModule(final int numberLocations, final boolean nonterminationKnown) {
 		assert mHasRemainderModule == null : "remainder module already reported";
 		mHasRemainderModule = true;
 		mRemainderModuleLocations = numberLocations;
 		mRemainderModuleNonterminationKnown = nonterminationKnown;
 	}
 
-	void reportNoRemainderModule() {
+	public void reportNoRemainderModule() {
 		assert mHasRemainderModule == null : "remainder module already reported";
 		mHasRemainderModule = false;
 	}
 
-	private String prettyPrintRankingFunction(final TerminationArgumentResult<IIcfgElement, Term> tar) {
-		return tar.getRankingFunctionDescription() + " ranking function " + ResultUtil
-				.translateExpressionToString(mBacktranslationService, Term.class, tar.getRankingFunction());
+	private String prettyPrintRankingFunction(final RankingFunction rankingFunction, final Script script) {
+		return rankingFunction.getName() + " ranking function " + ResultUtil
+				.translateExpressionToString(mBacktranslationService, Term.class, rankingFunction.asLexTerm(script));
 	}
 
 	@Override
@@ -97,18 +98,16 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		if (mHasRemainderModule == null) {
 			return "Decomposition not yet finished";
 		}
-		final int modules = mModuleSizeTrivial.size() + mModuleSizeDeterministic.size()
-				+ mModuleSizeNondeterministic.size();
+		final int modules =
+				mModuleSizeTrivial.size() + mModuleSizeDeterministic.size() + mModuleSizeNondeterministic.size();
 		if (modules == 0) {
-			if (mHasRemainderModule) {
-				if (mRemainderModuleNonterminationKnown) {
-					return "Trivial decomposition into one nonterminating module.";
-				} else {
-					return "Trivial decomposition into one module whose termination is unknown.";
-				}
-			} else {
+			if (!mHasRemainderModule) {
 				return "Trivial decomposition. There is no loop in your program.";
 			}
+			if (mRemainderModuleNonterminationKnown) {
+				return "Trivial decomposition into one nonterminating module.";
+			}
+			return "Trivial decomposition into one module whose termination is unknown.";
 		}
 		int maxNumberOfStatesOfModuleWithTrivialRankingFunction = 0;
 		final StringBuilder sb = new StringBuilder();
@@ -167,7 +166,7 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 	@Override
 	public ICsvProvider<String> createCsvProvider() {
 
-		final ArrayList<String> header = new ArrayList<String>();
+		final ArrayList<String> header = new ArrayList<>();
 		header.add("Modules");
 		header.add("Trivial modules");
 		header.add("Deterministic modules");
@@ -183,10 +182,10 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		header.add("Avg Locs nondeterministic modules");
 		header.add("Max Locs nondeterministic modules");
 
-		final int modules = mModuleSizeTrivial.size() + mModuleSizeDeterministic.size()
-				+ mModuleSizeNondeterministic.size();
+		final int modules =
+				mModuleSizeTrivial.size() + mModuleSizeDeterministic.size() + mModuleSizeNondeterministic.size();
 
-		final ArrayList<String> row = new ArrayList<String>();
+		final ArrayList<String> row = new ArrayList<>();
 		row.add(String.valueOf(modules));
 		if (modules == 0) {
 			row.add(null);

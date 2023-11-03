@@ -37,30 +37,37 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerCache;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -125,7 +132,7 @@ public final class TraceAbstractionUtils {
 				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
 			}
 		}
-		Term renamedFormula = new Substitution(mgdScript, substitutionMapping).transform(ps.getFormula());
+		Term renamedFormula = Substitution.apply(mgdScript, substitutionMapping, ps.getFormula());
 		renamedFormula = SmtUtils.simplify(mgdScript, renamedFormula, services, simplificationTechnique);
 		final IPredicate result = predicateFactory.newPredicate(renamedFormula);
 		return result;
@@ -145,8 +152,7 @@ public final class TraceAbstractionUtils {
 				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
 			}
 		}
-		final Term result =
-				new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(ps.getFormula());
+		final Term result = Substitution.apply(mgdScript, substitutionMapping, ps.getFormula());
 		return result;
 	}
 
@@ -162,6 +168,7 @@ public final class TraceAbstractionUtils {
 		case LoopsAndPotentialCycles:
 			hoareAnnotationLocs.addAll(IcfgUtils.getPotentialCycleProgramPoints(root));
 			hoareAnnotationLocs.addAll(root.getLoopLocations());
+			hoareAnnotationLocs.addAll(IcfgUtils.getCallerAndCalleePoints(root));
 			break;
 		default:
 			throw new AssertionError("unknown value " + hoareAnnotationPositions);
@@ -170,40 +177,84 @@ public final class TraceAbstractionUtils {
 	}
 
 	/**
-	 * For each oldVar in vars that is not modifiable by procedure proc: substitute the oldVar by the corresponding
-	 * globalVar in term and remove the oldvar from vars.
-	 *
-	 * @param modifiableGlobals
-	 * @param script
+	 * For each oldVar in vars that is not modifiable by procedure proc: substitute
+	 * the oldVar by the corresponding globalVar in term and remove the oldvar from
+	 * vars.
 	 */
 	public static Term substituteOldVarsOfNonModifiableGlobals(final String proc, final Set<IProgramVar> vars,
-			final Term term, final ModifiableGlobalsTable modifiableGlobals, final Script script) {
+			final Term term, final ModifiableGlobalsTable modifiableGlobals, final ManagedScript mgdScript) {
 		final Set<IProgramNonOldVar> modifiableGlobalsOfProc = modifiableGlobals.getModifiedBoogieVars(proc);
 		final List<IProgramVar> replacedOldVars = new ArrayList<>();
-
-		final ArrayList<TermVariable> replacees = new ArrayList<>();
-		final ArrayList<Term> replacers = new ArrayList<>();
-
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramVar bv : vars) {
 			if (bv instanceof IProgramOldVar) {
 				final IProgramNonOldVar pnov = ((IProgramOldVar) bv).getNonOldVar();
 				if (!modifiableGlobalsOfProc.contains(pnov)) {
-					replacees.add(bv.getTermVariable());
-					replacers.add(((IProgramOldVar) bv).getNonOldVar().getTermVariable());
+					substitutionMapping.put(bv.getTermVariable(),
+							((IProgramOldVar) bv).getNonOldVar().getTermVariable());
 					replacedOldVars.add(bv);
 				}
 			}
 		}
-
-		final TermVariable[] substVars = replacees.toArray(new TermVariable[replacees.size()]);
-		final Term[] substValues = replacers.toArray(new Term[replacers.size()]);
-		Term result = script.let(substVars, substValues, term);
-		result = new FormulaUnLet().unlet(result);
-
+		final Term result = Substitution.apply(mgdScript, substitutionMapping, term);
 		for (final IProgramVar bv : replacedOldVars) {
 			vars.remove(bv);
 			vars.add(((IProgramOldVar) bv).getNonOldVar());
 		}
 		return result;
+	}
+
+	public static <L> String prettyPrintTracePredicates(final NestedWord<L> nestedWord,
+			final TracePredicates tracePredicates) {
+		if (!nestedWord.getPendingReturns().isEmpty()) {
+			throw new UnsupportedOperationException();
+		}
+		final StringBuilder sb = new StringBuilder();
+		int callStackDepth = 0;
+		for (int i = 0; i < nestedWord.length(); i++) {
+			sb.append("{ ");
+			sb.append(tracePredicates.getPredicate(i).getFormula());
+			sb.append(" }");
+			sb.append(System.lineSeparator());
+			if (nestedWord.isCallPosition(i)) {
+				callStackDepth++;
+			}
+			sb.append("\t".repeat(callStackDepth));
+			sb.append(nestedWord.getSymbol(i));
+			sb.append(System.lineSeparator());
+			if (nestedWord.isReturnPosition(i)) {
+				callStackDepth--;
+			}
+			sb.append("\t".repeat(callStackDepth));
+			// this is the postcondition for i==nestedWord.length()-1
+		}
+		sb.append("{ ");
+		sb.append(tracePredicates.getPostcondition().getFormula());
+		sb.append(" }");
+		sb.append(System.lineSeparator());
+		return sb.toString();
+	}
+
+	public static <L> HoareTripleCheckerCache
+			extractHoareTriplesfromAutomaton(final NestedWordAutomaton<L, IPredicate> infeasibilityProof) {
+		final HoareTripleCheckerCache htcc = new HoareTripleCheckerCache();
+		if (infeasibilityProof == null) {
+			return htcc;
+		}
+		for (final IPredicate state : infeasibilityProof.getStates()) {
+			for (final OutgoingInternalTransition<L, IPredicate> succ : infeasibilityProof.internalSuccessors(state)) {
+				htcc.putInternal(state, (IInternalAction) succ.getLetter(), succ.getSucc(), Validity.VALID);
+			}
+
+			for (final OutgoingCallTransition<L, IPredicate> succ : infeasibilityProof.callSuccessors(state)) {
+				htcc.putCall(state, (ICallAction) succ.getLetter(), succ.getSucc(), Validity.VALID);
+			}
+
+			for (final OutgoingReturnTransition<L, IPredicate> succ : infeasibilityProof.returnSuccessors(state)) {
+				htcc.putReturn(state, succ.getHierPred(), (IReturnAction) succ.getLetter(), succ.getSucc(),
+						Validity.VALID);
+			}
+		}
+		return htcc;
 	}
 }

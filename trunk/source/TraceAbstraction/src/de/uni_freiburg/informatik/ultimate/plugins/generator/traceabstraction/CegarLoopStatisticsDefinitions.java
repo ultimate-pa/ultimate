@@ -57,8 +57,6 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	InitialAbstractionConstructionTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
-	PartialOrderReductionTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
-
 	HoareTripleCheckerStatistics(StatisticsType.STATISTICS_AGGREGATOR_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
 
 	PredicateUnifierStatistics(StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),

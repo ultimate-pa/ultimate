@@ -2,7 +2,7 @@
 <feature
       id="BA_FeatureUltimateCommon"
       label="BA_FeatureUltimateCommon"
-      version="0.2.2"
+      version="0.2.3"
       os="linux,win32,macosx"
       arch="x86_64">
 
@@ -498,6 +498,27 @@
 
    <plugin
          id="de.uni_freiburg.informatik.ultimate.lib.smtlibutils"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.lib.preferencejson"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.plugins.generator.modsetannotator"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.plugins.chcsolver"
          download-size="0"
          install-size="0"
          version="0.0.0"

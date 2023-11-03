@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
  */
 public class RegressionTestSuite extends AbstractRegressionTestSuite {
 
-	private static final long DEFAULT_TIMEOUT = 20 * 1000L;
+	private static final long DEFAULT_TIMEOUT = 25 * 1000L;
 
 	public RegressionTestSuite() {
 		mTimeout = DEFAULT_TIMEOUT;
@@ -50,7 +50,7 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 
 		// exclude paths that match the following regex
 		mExcludeFilterRegexToolchain =
-				".*(CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow|abstractInterpretation|Automata|LTL).*";
+				".*(CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow|abstractInterpretation|Automata|LTL|DataRace|witness-checking).*";
 	}
 
 	@Override

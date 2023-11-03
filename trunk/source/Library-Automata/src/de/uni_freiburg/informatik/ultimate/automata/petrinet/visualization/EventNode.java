@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
@@ -56,7 +56,7 @@ public final class EventNode<LETTER, PLACE> extends PetriNetVisualizationNode {
 	@SuppressWarnings("fb-contrib:PRMC_POSSIBLY_REDUNDANT_METHOD_CALLS")
 	public EventNode(final Event<LETTER, PLACE> event) {
 		super(generateNodeLabel(event));
-		final ITransition<LETTER, PLACE> transition = event.getTransition();
+		final Transition<LETTER, PLACE> transition = event.getTransition();
 		final DefaultAnnotations annot = new DefaultAnnotations();
 		annot.put("SerialNumber", event.getSerialNumber());
 		annot.put("Ancestors", event.getAncestors());
@@ -75,7 +75,7 @@ public final class EventNode<LETTER, PLACE> extends PetriNetVisualizationNode {
 	}
 
 	private static <LETTER, PLACE> String generateNodeLabel(final Event<LETTER, PLACE> event) {
-		// 20200214 Matthias: In the past we returned here 
+		// 20200214 Matthias: In the past we returned here
 		// event.getTransition().getSymbol().toString()
 		return "e" + event.getSerialNumber() + ":" + event.getTransition().getSymbol().toString();
 	}

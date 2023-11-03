@@ -61,9 +61,10 @@ public final class ProductLocationNameGenerator {
 	 */
 	protected static DebugIdentifier generateStateName(final BoogieIcfgLocation loc, final String nwaName) {
 		if (nwaName == null) {
-			return new BuchiProgramDebugIdentifier(loc, NONWA);
+			return new BuchiProgramDebugIdentifier(loc.getDebugIdentifier(), NONWA);
+		} else {
+			return new BuchiProgramDebugIdentifier(loc.getDebugIdentifier(), nwaName);
 		}
-		return new BuchiProgramDebugIdentifier(loc, nwaName);
 	}
 
 	protected DebugIdentifier generateHelperStateName(final DebugIdentifier location) {
@@ -83,51 +84,49 @@ public final class ProductLocationNameGenerator {
 
 	private static final class BuchiProgramDebugIdentifier extends DebugIdentifier {
 
-		private final int mIcfgHashcode;
-		private final DebugIdentifier mIcfgIdentifier;
-		private final String mNwaLocation;
+		private final DebugIdentifier mIcfgDebugIdentifier;
+		private final String mNwaState;
 
-		public BuchiProgramDebugIdentifier(final BoogieIcfgLocation loc, final String nwaLocation) {
-			mIcfgIdentifier = Objects.requireNonNull(loc).getDebugIdentifier();
-			mIcfgHashcode = loc.hashCode();
-			mNwaLocation = Objects.requireNonNull(nwaLocation);
+		public BuchiProgramDebugIdentifier(final DebugIdentifier icfgDebugIdentifier, final String nwaState) {
+			mIcfgDebugIdentifier = Objects.requireNonNull(icfgDebugIdentifier);
+			mNwaState = Objects.requireNonNull(nwaState);
 		}
 
 		@Override
 		public String toString() {
-			return mIcfgIdentifier.toString() + "_" + mNwaLocation;
+			return mIcfgDebugIdentifier.toString() + "_" + mNwaState;
 		}
 
 		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + mIcfgHashcode;
-			result = prime * result + mNwaLocation.hashCode();
+			result = prime * result + ((mIcfgDebugIdentifier == null) ? 0 : mIcfgDebugIdentifier.hashCode());
+			result = prime * result + ((mNwaState == null) ? 0 : mNwaState.hashCode());
 			return result;
 		}
 
 		@Override
 		public boolean equals(final Object obj) {
-			if (this == obj) {
+			if (this == obj)
 				return true;
-			}
-			if (obj == null) {
+			if (obj == null)
 				return false;
-			}
-			if (getClass() != obj.getClass()) {
+			if (getClass() != obj.getClass())
 				return false;
-			}
 			final BuchiProgramDebugIdentifier other = (BuchiProgramDebugIdentifier) obj;
-			if (mIcfgHashcode != other.mIcfgHashcode) {
+			if (mIcfgDebugIdentifier == null) {
+				if (other.mIcfgDebugIdentifier != null)
+					return false;
+			} else if (!mIcfgDebugIdentifier.equals(other.mIcfgDebugIdentifier))
 				return false;
-			}
-			if (!mNwaLocation.equals(other.mNwaLocation)) {
+			if (mNwaState == null) {
+				if (other.mNwaState != null)
+					return false;
+			} else if (!mNwaState.equals(other.mNwaState))
 				return false;
-			}
 			return true;
 		}
-
 	}
 
 	private static final class BuchiProgramHelperStateDebugIdentifier extends DuplicatedDebugIdentifier {

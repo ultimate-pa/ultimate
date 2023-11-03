@@ -82,7 +82,7 @@ public class ProductBacktranslator extends
 				continue;
 			}
 			newTrace.add(mappedEdge);
-			addProgramState(i, newValues, programExecution.getProgramState(i));
+			addProgramState(newTrace.size() - 1, newValues, programExecution.getProgramState(i));
 			if (oldBranchEncoders != null) {
 				newBranchEncoders.add(oldBranchEncoders[i]);
 			}
@@ -98,7 +98,10 @@ public class ProductBacktranslator extends
 
 	private static void addProgramState(final Integer i, final Map<Integer, ProgramState<Term>> newValues,
 			final ProgramState<Term> programState) {
-		newValues.put(i, programState);
+		final ProgramState<Term> oldProgramState = newValues.put(i, programState);
+		if ((oldProgramState != null)) {
+			throw new AssertionError("Must not overwrite existing state.");
+		}
 	}
 
 	@Override

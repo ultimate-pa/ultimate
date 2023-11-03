@@ -67,8 +67,8 @@ public class NNF extends TransitionPreprocessor {
 	@Override
 	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf)
 			throws TermException {
-		final Term dnf = SmtUtils.toNnf(mServices, script, tf.getFormula());
-		tf.setFormula(dnf);
+		final Term nnf = SmtUtils.toNnf(mServices, script, tf.getFormula());
+		tf.setFormula(nnf);
 		return tf;
 	}
 }

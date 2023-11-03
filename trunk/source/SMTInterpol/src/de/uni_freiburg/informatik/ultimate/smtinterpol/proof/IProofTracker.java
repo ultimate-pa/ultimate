@@ -18,8 +18,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.proof;
 
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -87,21 +85,6 @@ public interface IProofTracker {
 	public Term congruence(Term a, Term[] b);
 
 	/**
-	 * Create a proof that input term x implies {@code (or b[0] ... b[n]} from a proof for {@code (= x a)} where
-	 * {@code a = (or a[0],...,a[n])}, and an array of b each annotated with a proof that {@code (=> a[i] b[i])} (or
-	 * {@code (= a[i] b[i])}).
-	 *
-	 * @param a
-	 *            the term a=(or a[0] ... a[n]) with a proof {@code (= x a)}
-	 * @param b
-	 *            an array of terms b[i] annotated with proofs {@code (=> a[i] b[i])} (or {@code (= a[i] b[i])})
-	 * @return the term {@code (or b[0] ... b[n]} annotated with a proof
-	 *         {@code (=> (or a[0] ... a[n]) (or b[0] ... b[n])} or {@code (=> (or a[0] ... a[n]) (or b[0] ... b[n])} if
-	 *         the proofs for the b[i] contain no implication proof.
-	 */
-	public Term orMonotony(Term a, Term[] b);
-
-	/**
 	 * Lift a rewrite over an exists, i.e. convert a proof for {@code (= f g)} into a proof for
 	 * {@code (= (exists varlist f) (exists varlist g))}
 	 *
@@ -111,7 +94,7 @@ public interface IProofTracker {
 	 *            the formula g with its rewrite proof for {@code (= f g)}.
 	 * @return the new existential quantifier annotated with a proof for {@code (= old (exists varlist g))}.
 	 */
-	public Term exists(QuantifiedFormula old, Term newBody);
+	public Term quantCong(QuantifiedFormula old, Term newBody);
 
 	/**
 	 * Lift rewrites over a match, i.e. convert a proof for {@code (= fi gi)} into a
@@ -155,30 +138,7 @@ public interface IProofTracker {
 	 */
 	public Term intern(Term orig, Term res);
 
-	/**
-	 * Rewrites a forall quantifier into is normal form, a negated exists quantifier. The normal form is given as
-	 * parameter and this function doesn't check it.
-	 *
-	 * @param old
-	 *            the forall quantifier.
-	 * @param negNewBody
-	 *            the rewritten quantifer.
-	 * @return negNewBody annotated with its proof.
-	 */
-	public Term forall(QuantifiedFormula old, Term negNewBody);
-
 	//// ==== Tracking of clausification ====
-
-	/**
-	 * Apply disjunction flattening.
-	 *
-	 * @param orig
-	 *            The term to flatten.
-	 * @param flattenedOrs
-	 *            The sub terms of orig (ApplicationTerms with function "or") that were flattened.
-	 * @return the rewrite proof to flatten the orig term.
-	 */
-	public Term flatten(Term orig, Set<Term> flattenedOrs);
 
 	/**
 	 * Prepend a disjunction simplification step. This removes double entries and {@code false} from the disjunction.
@@ -190,29 +150,16 @@ public interface IProofTracker {
 	public Term orSimpClause(Term rewrite);
 
 	/**
-	 * Create aux axiom input (tautologies). The term axiom is introduced as Tautology. This doesn't check if the axiom
-	 * is correct.
+	 * Create tautology clause. The term axiom is introduced as Tautology. This
+	 * doesn't check if the axiom is correct.
 	 *
 	 * @param axiom
 	 *            The axiom.
-	 * @param auxRule
-	 *            The rule for the axiom, one of {@link ProofConstants}.AUX_*.
+	 * @param tautRule
+	 *            The rule for the axiom, one of {@link ProofConstants}.TAUT_*.
 	 * @return Proof node of the auxiliary tautology.
 	 */
-	public Term auxAxiom(Term axiom, Annotation auxRule);
-
-	/**
-	 * Track a structural splitting step. Rewrites formula into subterm.
-	 *
-	 * @param formula
-	 *            The formula being split annotated with its proof.
-	 * @param subterm
-	 *            The subformula, which is the result of the split.
-	 * @param splitKind
-	 *            The kind of split, see {@see ProofConstants}.SPLIT_*.
-	 * @return The subterm annotated with its proof.
-	 */
-	public Term split(Term formula, Term subterm, Annotation splitKind);
+	public Term tautology(Term axiom, Annotation tautRule);
 
 	/**
 	 * Introduce a universal quantifier.
@@ -235,20 +182,51 @@ public interface IProofTracker {
 	public Term asserted(Term formula);
 
 	/**
-	 * Create a proof of g from the proof of f and the rewrite proof of {@code (= f g)} (or {@code (=> f g)}) for g.
+	 * Create a proof of g from the proof of f and the rewrite proof of
+	 * {@code (= f g)} (or {@code (=> f g)}) for g.
 	 *
 	 * @param asserted
 	 *            the asserted formula f annotated with its proof.
 	 * @param rewrite
-	 *            the simplified formula g annotated with a proof of {@code (= f g)} (or {@code (=> f g)}).
+	 *            the simplified formula g annotated with a proof of {@code (= f g)}
+	 *            (or {@code (=> f g)}).
 	 * @return the resulting simpFormula annotated with the complete proof
 	 */
 	public Term modusPonens(Term asserted, Term rewrite);
 
 	/**
+	 * Create a simple resolution proof from a unit clause and a tautology clause
+	 * that uses the negated unit.
+	 *
+	 * @param asserted
+	 *            the asserted formula {@code u} annotated with its proof.
+	 * @param conclusion
+	 *            the conclusion that we want to derive from the asserted formula.
+	 * @param tautRule
+	 *            the rule to apply, one of {@link ProofConstants}.TAUT_*
+	 *            annotations.
+	 * @return the resulting (or u1 .. un) annotated with its proof
+	 */
+	public Term resolveBinaryTautology(Term asserted, Term conclusion, Annotation tautRule);
+
+	/**
+	 * Create a proof of {~lhs, rhs} from a rewrite proof {@code (= lhs rhs)} for
+	 * rhs.
+	 *
+	 * @param lhs
+	 *            the rewritten literal.
+	 * @param rewrite
+	 *            the simplified formula rhs annotated with a proof of
+	 *            {@code (= lhs rhs)}.
+	 * @return the clause proving {~lhs, rhs}
+	 */
+	public Term rewriteToClause(Term lhs, Term rewrite);
+
+	/**
 	 * Creates the clause proof of t. This is usually the annotation of t.
 	 *
-	 * @param t the proved term annotated with its proof.
+	 * @param t
+	 *            the proved term annotated with its proof.
 	 * @return the proof.
 	 */
 	public Term getClauseProof(Term t);

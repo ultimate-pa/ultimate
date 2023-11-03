@@ -212,7 +212,7 @@ do
 	Z3CRASH1=`echo "$Ultimate_OUTPUT" | grep "libz3-gmp.so"`
 	Z3CRASH2=`echo "$Ultimate_OUTPUT" | grep "double free or corruption"`
 	#echo "$Ultimate_OUTPUT"
-	RESULT_SAFE=`echo "$Ultimate_OUTPUT" | grep "RESULT: Ultimate proved your program to be correct!\|We were not able to verify any specifiation because the program does not contain any specification."`
+	RESULT_SAFE=`echo "$Ultimate_OUTPUT" | grep "RESULT: Ultimate proved your program to be correct!\|We were not able to verify any specifiation because the program does not contain any specification.\|We were not able to verify any specification because the program does not contain any specification."`
 	RESULT_UNSAFE=`echo "$Ultimate_OUTPUT" | grep "RESULT: Ultimate proved your program to be incorrect!"`
 	RESULT_SYNTAX=`echo "$Ultimate_OUTPUT" | egrep "RESULT:\ Ultimate\ could\ not\ prove\ your\ program:\ Incorrect\ Syntax|RESULT:\ Ultimate\ could\ not\ prove\ your\ program:\ Type\ Error"`
 	UNSUPPORTED_SYNTAX=`echo "$Ultimate_OUTPUT" | grep "RESULT: Ultimate could not prove your program: Unsupported Syntax"`

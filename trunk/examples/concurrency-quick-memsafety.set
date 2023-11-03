@@ -1,0 +1,12 @@
+svcomp/goblint-regression/13-privatized_27-multiple-protecting2_true.yml
+svcomp/ldv-races/race-4_2-thread_local_vars.yml
+svcomp/pthread-atomic/qrcu-2.yml
+svcomp/pthread-atomic/read_write_lock-1b.yml
+svcomp/pthread-ext/14_spin2003.yml
+svcomp/pthread-ext/18_read_write_lock.yml
+svcomp/pthread-lit/qw2004_variant.yml
+svcomp/pthread-wmm/mix028_power.oepc_pso.oepc_rmo.oepc.yml
+svcomp/pthread-wmm/mix043.oepc.yml
+svcomp/weaver/bench-exp3x3-opt.wvr.yml
+svcomp/weaver/bench-exp3x3.wvr.yml
+

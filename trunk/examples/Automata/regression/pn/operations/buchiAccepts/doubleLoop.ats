@@ -1,0 +1,21 @@
+// Author: schuessf@informatik.uni-freiburg.de
+// Date: 2023-03-28
+
+PetriNet net = (
+  alphabet = {a b c},
+  places = {p0 p1 p2 p3},
+  transitions = {
+    ({p0 p1} a {p2 p3}) 
+    ({p2} b {p2}) 
+    ({p3} c {p3}) 
+  },
+  initialMarking = {p0 p1},
+  acceptingPlaces = {p2}
+);
+
+// All words that start with "a" and have infinite "b" should be accepted
+assert(buchiAccepts(net, [a, b]));
+assert(buchiAccepts(net, [a, b c b]));
+assert(buchiAccepts(net, [a, c c b]));
+assert(!buchiAccepts(net, [b, b]));
+assert(!buchiAccepts(net, [a, c]));

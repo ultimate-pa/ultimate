@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="600" hardtimelimit="620" cpuCores="2">
+	<option name="--force-no-wrapper" />
+	<option name="--traceabstraction.trace.refinement.strategy">BADGER</option>
+	<option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+  <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+
+	<resultfiles></resultfiles>
+
+
+  <rundefinition name="LightAbstract_LoopLockstep_Badger_NoDead">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep-VarAbsGlobalSyntactic.epf</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_05_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">5</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_10_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">10</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_15_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">15</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_20_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">20</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_80_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">80</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_85_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">85</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_90_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">90</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_95_seed0_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">95</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_05_seed13_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">5</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_10_seed13_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">10</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_15_seed13_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">15</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_20_seed13_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">20</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_80_seed13_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">80</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_85_seed13_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">85</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_90_seed13_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">90</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_95_seed13_PURE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">95</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">PURE</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_05_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">5</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_10_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">10</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_15_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">15</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_20_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">20</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_80_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">80</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_85_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">80</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_90_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">90</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_95_seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">95</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_05_seed13_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">5</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_10_seed13_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">10</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_15_seed13_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">15</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_20_seed13_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">20</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_80_seed13_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">80</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_85_seed13_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">85</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_90_seed13_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">90</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_95_seed13_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">95</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+  </rundefinition>
+
+  <rundefinition name="HeavyConcrete_LoopLockstep_Badger_NoDead">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_Incremental5_Seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">0</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+    <option name="--traceabstraction.coinflip.probability.increment">5</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_Incremental10_Seed0_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">0</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+    <option name="--traceabstraction.coinflip.probability.increment">10</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_Incremental5_Seed13_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">0</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+    <option name="--traceabstraction.coinflip.probability.increment">5</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_Incremental10_Seed13_FALLBACK">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">0</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">FALLBACK</option>
+    <option name="--traceabstraction.coinflip.probability.increment">10</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_Incremental5_Seed0_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">0</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+    <option name="--traceabstraction.coinflip.probability.increment">5</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_Incremental10_Seed0_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">0</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+    <option name="--traceabstraction.coinflip.probability.increment">10</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_Incremental5_Seed13_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">0</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+    <option name="--traceabstraction.coinflip.probability.increment">5</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_Incremental10_Seed13_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">0</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+    <option name="--traceabstraction.coinflip.probability.increment">10</option>
+  </rundefinition>
+  
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_05_seed0_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">5</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_10_seed0_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">10</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_15_seed0_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">15</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_20_seed0_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">20</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_80_seed0_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">80</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_85_seed0_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">80</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_90_seed0_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">90</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_95_seed0_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">95</option>
+    <option name="--traceabstraction.coinflip.random.seed">0</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+  </rundefinition>
+
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_05_seed13_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">5</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_10_seed13_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">10</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_15_seed13_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">15</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_20_seed13_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">20</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_80_seed13_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">80</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_85_seed13_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">85</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_90_seed13_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">90</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+  </rundefinition>
+  <rundefinition name="Combination_LoopLockstep_Badger_NoDead_95_seed13_COARSE">
+    <option name="-s">../../../trunk/examples/settings/gemcutter/SleepMap-ConcreteSmt-VarAbsGlobalSyntactic.epf</option>
+    <option name="--traceabstraction.coinflip.probability.value">95</option>
+    <option name="--traceabstraction.coinflip.random.seed">13</option>
+    <option name="--traceabstraction.coinflip.budget.determination.mode">COARSE</option>
+  </rundefinition>
+
+	<!-- =============================================================================================================== -->
+
+	<tasks name="SVCOMP-Concurrency-Unreach">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+		<includesfile>../../../trunk/examples/concurrency-quick-reach.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+	</tasks>
+
+	<tasks name="SVCOMP-Concurrency-SafeDeref">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+		<option name="--cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference">ASSERTandASSUME</option>
+		<option name="--cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference">ASSERTandASSUME</option>
+		<option name="--cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap">ASSERTandASSUME</option>
+		<option name="--cacsl2boogietranslator.check.if.freed.pointer.was.valid">true</option>
+		<option name="--cacsl2boogietranslator.adapt.memory.model.on.pointer.casts.if.necessary">true</option>
+
+		<includesfile>../../../trunk/examples/concurrency-quick-memsafety.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
+	</tasks>
+
+	<tasks name="SVCOMP-Concurrency-NoDataRace">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+		<option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
+
+		<includesfile>../../../trunk/examples/concurrency-quick-nodatarace.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
+	</tasks>
+	
+	<tasks name="POPL2023">
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+
+    <include>../../../trunk/examples/concurrent/bpl/POPL2023/*.bpl</include>
+    <excludesfile>../../../trunk/examples/concurrent/bpl/POPL2023/exclude.set</excludesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+</benchmark>

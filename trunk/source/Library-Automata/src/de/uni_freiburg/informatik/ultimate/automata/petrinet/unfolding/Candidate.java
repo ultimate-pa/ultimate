@@ -29,11 +29,11 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -42,10 +42,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * Represents an incomplete Event. A <i>Candidate</i> consists of
  * <ul>
  * <li>the transition which belongs to the event</li>
- * <li>a list of {@link Condition}s that represents predecessor places of the
- * transition that have already been instantiated by (these) condition</li>
- * <li>a list of {@link Place}s that represent predecessor places of the
- * transition that have not yet been instantiated.</li>
+ * <li>a list of {@link Condition}s that represents predecessor places of the transition that have already been
+ * instantiated by (these) condition</li>
+ * <li>a list of {@link Place}s that represent predecessor places of the transition that have not yet been
+ * instantiated.</li>
  * </ul>
  *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
@@ -55,12 +55,10 @@ public class Candidate<LETTER, PLACE> {
 
 	private final ISuccessorTransitionProvider<LETTER, PLACE> mSuccTransProvider;
 
-	
 	private final LinkedList<Condition<LETTER, PLACE>> mInstantiated;
 	private final LinkedList<PLACE> mNotInstantiated;
 	private final Map<PLACE, Set<Condition<LETTER, PLACE>>> mPossibleInstantiationsMap;
-	private final LinkedList<Condition<LETTER, PLACE>>  mInstantiatedButNotInitially;
-
+	private final LinkedList<Condition<LETTER, PLACE>> mInstantiatedButNotInitially;
 
 	public Candidate(final ISuccessorTransitionProvider<LETTER, PLACE> succTransProvider,
 			final Collection<Condition<LETTER, PLACE>> conditionsForImmediateInstantiation,
@@ -68,7 +66,7 @@ public class Candidate<LETTER, PLACE> {
 		mSuccTransProvider = succTransProvider;
 		mInstantiated = new LinkedList<>();
 		mNotInstantiated = new LinkedList<>(mSuccTransProvider.getPredecessorPlaces());
-		mInstantiatedButNotInitially =  new LinkedList<>();
+		mInstantiatedButNotInitially = new LinkedList<>();
 		// instantiate the places with the given conditions
 		for (final Condition<LETTER, PLACE> condition : conditionsForImmediateInstantiation) {
 			final boolean wasContained = mNotInstantiated.remove(condition.getPlace());
@@ -76,21 +74,19 @@ public class Candidate<LETTER, PLACE> {
 				mInstantiated.add(condition);
 			}
 		}
-		mPossibleInstantiationsMap = new HashMap<>();
-		for (final PLACE p: mNotInstantiated) {
-			mPossibleInstantiationsMap.put(p, place2coRelatedConditions.getImage(p));
-		}
+		mPossibleInstantiationsMap =
+				mNotInstantiated.stream().collect(Collectors.toMap(x -> x, place2coRelatedConditions::getImage));
 	}
 
-	public Candidate(ISuccessorTransitionProvider<LETTER, PLACE> succTransProvider, LinkedList<PLACE> notInstantiated,
-			LinkedList<Condition<LETTER, PLACE>> instantiated, Map<PLACE, Set<Condition<LETTER, PLACE>>> possibleInstantiationsMap) {
+	public Candidate(final ISuccessorTransitionProvider<LETTER, PLACE> succTransProvider,
+			final LinkedList<PLACE> notInstantiated, final LinkedList<Condition<LETTER, PLACE>> instantiated,
+			final Map<PLACE, Set<Condition<LETTER, PLACE>>> possibleInstantiationsMap) {
 		mSuccTransProvider = succTransProvider;
 		mInstantiated = instantiated;
 		mNotInstantiated = notInstantiated;
 		mPossibleInstantiationsMap = possibleInstantiationsMap;
 		mInstantiatedButNotInitially = null;
 	}
-
 
 	public ISuccessorTransitionProvider<LETTER, PLACE> getTransition() {
 		return mSuccTransProvider;
@@ -101,28 +97,29 @@ public class Candidate<LETTER, PLACE> {
 	}
 
 	public PLACE getNextUninstantiatedPlace() {
-		return mNotInstantiated.get(mNotInstantiated.size() - 1);
+		return mNotInstantiated.getLast();
 	}
-	
-	public Map<PLACE, Set<Condition<LETTER, PLACE>>> getPossibleInstantiationsMap(){
+
+	public Map<PLACE, Set<Condition<LETTER, PLACE>>> getPossibleInstantiationsMap() {
 		return mPossibleInstantiationsMap;
 	}
-	public LinkedList<PLACE> getNotInstantiated() {
+
+	public List<PLACE> getNotInstantiated() {
 		return mNotInstantiated;
 	}
-	public  Set<Condition<LETTER, PLACE>> getPossibleInstantiations(PLACE p){
-		assert !mPossibleInstantiationsMap.get(p).equals(null): "p must be contained in the map";
+
+	public Set<Condition<LETTER, PLACE>> getPossibleInstantiations(final PLACE p) {
+		assert mPossibleInstantiationsMap.get(p) != null : "p must be contained in the map";
 		return mPossibleInstantiationsMap.get(p);
 	}
 
 	public void instantiateNext(final Condition<LETTER, PLACE> condition) {
 		if (!getNextUninstantiatedPlace().equals(condition.getPlace())) {
 			throw new IllegalStateException();
-		} else {
-			mInstantiatedButNotInitially.add(condition);
-			mInstantiated.add(condition);
-			mNotInstantiated.remove(mNotInstantiated.size() - 1);
 		}
+		mInstantiatedButNotInitially.add(condition);
+		mInstantiated.add(condition);
+		mNotInstantiated.remove(mNotInstantiated.size() - 1);
 	}
 
 	public void undoOneInstantiation() {
@@ -130,6 +127,7 @@ public class Candidate<LETTER, PLACE> {
 		mInstantiatedButNotInitially.remove(mInstantiatedButNotInitially.size() - 1);
 		mNotInstantiated.add(last.getPlace());
 	}
+
 	public List<Condition<LETTER, PLACE>> getInstantiatedButNotInitially() {
 		return mInstantiatedButNotInitially;
 	}

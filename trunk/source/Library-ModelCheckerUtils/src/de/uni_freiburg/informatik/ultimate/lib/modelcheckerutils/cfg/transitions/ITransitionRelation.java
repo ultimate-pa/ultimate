@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transition
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -60,13 +61,24 @@ public interface ITransitionRelation {
 	}
 
 	/**
-	 * If this method returns true, the outVar of bv may have any value even if the value of the inVar is restricted. If
-	 * the methods returns false there are constraints on the outVar or syntactic check was not able to find out that
-	 * there are no constraints.
+	 * If this method returns true, there are no restrictions on `pv`'s outVar. This
+	 * means that after executing an {@link IAction} labeled with this
+	 * {@link ITransitionRelation}, the variable `pv` may have any value.
+	 * Nonetheless, there may be constraints on the inVar, which may prevent the
+	 * execution of the {@link IAction} for some values of `pv`.
+	 *
 	 */
-	boolean isHavocedOut(IProgramVar bv);
+	boolean isHavocedOut(IProgramVar pv);
 
-	boolean isHavocedIn(IProgramVar bv);
+	/**
+	 * If this method returns true, there are no restrictions on `pv`'s inVar. This
+	 * means that the executability of an {@link IAction} labeled with this
+	 * {@link ITransitionRelation}, does not depend on the value of `pv`.
+	 * Nonetheless, there may be constraints on the outVar. E.g., if `x` does not
+	 * occur in `t`, the assignment `x := t` leads to an {ITransitionRelation} in
+	 * which `x` is havoced-in.
+	 */
+	boolean isHavocedIn(IProgramVar pv);
 
 	Set<TermVariable> getAuxVars();
 

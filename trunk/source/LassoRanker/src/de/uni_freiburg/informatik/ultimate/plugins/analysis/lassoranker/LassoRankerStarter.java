@@ -87,7 +87,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -96,7 +95,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -239,9 +237,11 @@ public class LassoRankerStarter {
 			try {
 				final TerminationArgument arg = laT.tryTemplate(template, terminationSettings);
 				if (arg != null) {
+					// TODO: Check the termination argument here. This needs methods from bspm that do not exist
+					// anymore.
 					// try {
-					assert isTerminationArgumentCorrect(arg, stemTF, loopTf) : "Incorrect termination argument from"
-							+ template.getClass().getSimpleName();
+					// assert isTerminationArgumentCorrect(arg, stemTF, loopTf) : "Incorrect termination argument from"
+					// + template.getClass().getSimpleName();
 					// } catch (NoClassDefFoundError e) {
 					// s_Logger.warn("Could not check validity of " +
 					// "termination argument because of " +
@@ -371,37 +371,38 @@ public class LassoRankerStarter {
 		return templates.toArray(new RankingTemplate[templates.size()]);
 	}
 
-	private boolean isTerminationArgumentCorrect(final TerminationArgument arg, final UnmodifiableTransFormula stemTF,
-			final UnmodifiableTransFormula loopTf) {
-
-		final BinaryStatePredicateManager bspm =
-				new BinaryStatePredicateManager(mRankVarConstructor.getCsToolkitWithRankVariables(), mPredicateFactory,
-						mRankVarConstructor.getUnseededVariable(), mRankVarConstructor.getOldRankVariables(), mServices,
-						mSimplificationTechnique, mXnfConversionTechnique);
-		final Set<IProgramNonOldVar> modifiableGlobals =
-				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(mHonda.getProcedure());
-		bspm.computePredicates(false, arg, false, stemTF, loopTf, modifiableGlobals);
-
-		// check supporting invariants
-		boolean siCorrect = true;
-		for (final SupportingInvariant si : bspm.getTerminationArgument().getSupportingInvariants()) {
-			final IPredicate siPred = bspm.supportingInvariant2Predicate(si);
-			siCorrect &= bspm.checkSupportingInvariant(siPred, mStem, mLoop, mCsToolkit.getModifiableGlobalsTable());
-		}
-
-		// check array index supporting invariants
-		for (final Term aisi : bspm.getTerminationArgument().getArrayIndexSupportingInvariants()) {
-			final IPredicate siPred = bspm.term2Predicate(aisi);
-			siCorrect &= bspm.checkSupportingInvariant(siPred, mStem, mLoop, mCsToolkit.getModifiableGlobalsTable());
-		}
-
-		// check ranking function
-		final boolean rfCorrect = bspm.checkRankDecrease(mLoop, mCsToolkit.getModifiableGlobalsTable());
-		if (siCorrect && rfCorrect) {
-			mLogger.info("Termination argument has been successfully verified.");
-		}
-		return siCorrect && rfCorrect;
-	}
+	// private boolean isTerminationArgumentCorrect(final TerminationArgument arg, final UnmodifiableTransFormula
+	// stemTF,
+	// final UnmodifiableTransFormula loopTf) {
+	//
+	// final BinaryStatePredicateManager bspm =
+	// new BinaryStatePredicateManager(mRankVarConstructor.getCsToolkitWithRankVariables(), mPredicateFactory,
+	// mRankVarConstructor.getUnseededVariable(), mRankVarConstructor.getOldRankVariables(), mServices,
+	// mSimplificationTechnique);
+	// final Set<IProgramNonOldVar> modifiableGlobals =
+	// mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(mHonda.getProcedure());
+	// bspm.computePredicates(false, arg, false, stemTF, loopTf, modifiableGlobals);
+	//
+	// // check supporting invariants
+	// boolean siCorrect = true;
+	// for (final SupportingInvariant si : bspm.getTerminationArgument().getSupportingInvariants()) {
+	// final IPredicate siPred = bspm.supportingInvariant2Predicate(si);
+	// siCorrect &= bspm.checkSupportingInvariant(siPred, mStem, mLoop);
+	// }
+	//
+	// // check array index supporting invariants
+	// for (final Term aisi : bspm.getTerminationArgument().getArrayIndexSupportingInvariants()) {
+	// final IPredicate siPred = bspm.term2Predicate(aisi);
+	// siCorrect &= bspm.checkSupportingInvariant(siPred, mStem, mLoop);
+	// }
+	//
+	// // check ranking function
+	// final boolean rfCorrect = bspm.checkRankDecrease(mLoop);
+	// if (siCorrect && rfCorrect) {
+	// mLogger.info("Termination argument has been successfully verified.");
+	// }
+	// return siCorrect && rfCorrect;
+	// }
 
 	/**
 	 * @return the current translator sequence for building results

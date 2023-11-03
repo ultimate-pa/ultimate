@@ -36,19 +36,20 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpgStrategyModule;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpTcStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpgStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.ITraceCheckStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class BasicRefinementStrategy<L extends IIcfgTransition<?>> implements IRefinementStrategy<L> {
+public class BasicRefinementStrategy<L extends IIcfgTransition<?>> implements ITARefinementStrategy<L> {
 
 	private static final int DEFAULT_INTERPOLANT_THRESHOLD = 2;
 
@@ -62,7 +63,7 @@ public class BasicRefinementStrategy<L extends IIcfgTransition<?>> implements IR
 
 	private final IPredicateUnifier mDefaultPredicateUnifier;
 
-	public BasicRefinementStrategy(final StrategyModuleFactory<L> factory,
+	public BasicRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final ITraceCheckStrategyModule<L, ?>[] traceChecks, final IIpgStrategyModule<?, L>[] interpolantGenerators,
 			final IIpAbStrategyModule<L> interpolantAutomatonBuilder,
 			final RefinementStrategyExceptionBlacklist blacklist) {
@@ -75,13 +76,13 @@ public class BasicRefinementStrategy<L extends IIcfgTransition<?>> implements IR
 		mDefaultPredicateUnifier = factory.getDefaultPredicateUnifier();
 	}
 
-	public BasicRefinementStrategy(final StrategyModuleFactory<L> factory, final StrategyModules<L> modules,
-			final RefinementStrategyExceptionBlacklist blacklist) {
+	public BasicRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
+			final StrategyModules<L> modules, final RefinementStrategyExceptionBlacklist blacklist) {
 		this(factory, modules.mTraceChecks, modules.mInterpolantGenerators, modules.mInterpolantAutomatonBuilder,
 				blacklist);
 	}
 
-	public BasicRefinementStrategy(final StrategyModuleFactory<L> factory,
+	public BasicRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final IIpTcStrategyModule<?, L>[] traceChecks, final IIpAbStrategyModule<L> interpolantAutomatonBuilder,
 			final RefinementStrategyExceptionBlacklist blacklist) {
 		this(factory, traceChecks, traceChecks, interpolantAutomatonBuilder, blacklist);
@@ -141,6 +142,12 @@ public class BasicRefinementStrategy<L extends IIcfgTransition<?>> implements IR
 	@Override
 	public IPredicateUnifier getPredicateUnifier(final IRefinementEngine<L, ?> engine) {
 		return mDefaultPredicateUnifier;
+	}
+
+	@Override
+	public List<QualifiedTracePredicates> mergeInterpolants(final List<QualifiedTracePredicates> perfectIpps,
+			final List<QualifiedTracePredicates> imperfectIpps) {
+		return DataStructureUtils.concat(perfectIpps, imperfectIpps);
 	}
 
 	/**

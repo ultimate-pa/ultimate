@@ -294,4 +294,17 @@ public class QuantUtil {
 		return false;
 	}
 
+	/**
+	 * Check if a term is a lambda.
+	 * 
+	 * @param term
+	 *            the term to check.
+	 */
+	public static boolean isLambda(final Term term) {
+		if (term instanceof ApplicationTerm) {
+			FunctionSymbol fsym = ((ApplicationTerm) term).getFunction();
+			return fsym.isIntern() && fsym.getName().startsWith("@0");
+		}
+		return false;
+	}
 }

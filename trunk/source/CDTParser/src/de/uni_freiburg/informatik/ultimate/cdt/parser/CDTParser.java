@@ -30,19 +30,26 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.parser;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.dom.IPDOMManager;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.index.IIndex;
+import org.eclipse.cdt.core.language.settings.providers.ILanguageSettingsProvider;
+import org.eclipse.cdt.core.language.settings.providers.ILanguageSettingsProvidersKeeper;
+import org.eclipse.cdt.core.language.settings.providers.LanguageSettingsManager;
 import org.eclipse.cdt.core.model.CModelException;
 import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.model.ICContainer;
@@ -52,9 +59,20 @@ import org.eclipse.cdt.core.model.IPathEntry;
 import org.eclipse.cdt.core.model.ISourceEntry;
 import org.eclipse.cdt.core.model.ISourceRoot;
 import org.eclipse.cdt.core.model.ITranslationUnit;
+import org.eclipse.cdt.core.parser.util.ASTPrinter;
 import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
+import org.eclipse.cdt.core.settings.model.ICLanguageSettingEntry;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
+import org.eclipse.cdt.core.settings.model.ICProjectDescriptionManager;
+import org.eclipse.cdt.core.settings.model.ICSettingEntry;
+import org.eclipse.cdt.core.settings.model.extension.CConfigurationData;
+import org.eclipse.cdt.core.settings.model.util.LanguageSettingEntriesSerializer;
 import org.eclipse.cdt.internal.core.pdom.indexer.IndexerPreferences;
+import org.eclipse.cdt.managedbuilder.core.IConfiguration;
+import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
+import org.eclipse.cdt.managedbuilder.internal.core.Configuration;
+import org.eclipse.cdt.managedbuilder.internal.core.ManagedBuildInfo;
+import org.eclipse.cdt.managedbuilder.internal.core.ManagedProject;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -84,7 +102,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.UltimateCdtExternalSettingsProvider.ToolchainDependency;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.LoggerOutputStream;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -152,12 +172,14 @@ public class CDTParser implements ISource {
 
 	@Override
 	public IElement parseAST(final File[] files) throws Exception {
-		final Collection<IASTTranslationUnit> tuCollection = performCDTProjectOperations(files);
+		final Collection<IASTTranslationUnit> tuCollection = computeASTsFromFilesViaCdt(files);
 
 		final MultiparseSymbolTable mps =
 				new MultiparseSymbolTable(mLogger, mCdtPProjectHierachyFlag, files.length == 1);
 		for (final IASTTranslationUnit tu : tuCollection) {
-			mLogger.info("Scanning " + normalizeCDTFilename(tu.getFilePath()));
+			mLogger.info("Scanning " + normalizeCdtFilename(tu.getFilePath()));
+			dumpAST(tu, ASTPrinter::print, "all AST nodes");
+			dumpAST(tu, ASTPrinter::printProblems, "problem AST nodes");
 			tu.accept(mps);
 		}
 
@@ -172,6 +194,29 @@ public class CDTParser implements ISource {
 	}
 
 	/**
+	 * Dumps the AST of a specified translation unit and report AST problem nodes.
+	 * 
+	 * @param tu Translation unit of a parsed input file.
+	 * @param printFunc Operation that prints each {@link IASTNode} to a {@link PrintStream}.
+	 * @param desc Description of printing operation.
+	 */
+	public void dumpAST(final IASTTranslationUnit tu, final BiConsumer<IASTNode, PrintStream> printFunc, final String desc) {
+
+		if (mLogger.isDebugEnabled()) {
+			final String fileName = normalizeCdtFilename(tu.getFilePath());
+			final OutputStream printOutput = new LoggerOutputStream(mLogger::debug);
+			final PrintStream printStream = new PrintStream(printOutput);
+
+			mLogger.debug("======== BEGIN dump AST [" + desc + "] of translation unit for " + fileName);
+			printFunc.accept(tu, printStream);
+			printStream.flush();
+			mLogger.debug("======== END dump AST [" + desc + "] of translation unit for " + fileName);
+
+			printStream.close();
+		}
+	}
+
+	/**
 	 * Normalizes a CDT project file name to the part just after the source folder (/src/<...>)
 	 *
 	 * @param prefix
@@ -180,7 +225,7 @@ public class CDTParser implements ISource {
 	 *            the CDT file name
 	 * @return the normalized file name
 	 */
-	public static String normalizeCDTFilename(final String prefix, final String in) {
+	public static String normalizeCdtFilename(final String prefix, final String in) {
 		// Let's just assume that this string (FLAG-.../src/) is unique in the path...
 		final String lookingFor = prefix + File.separator + "src" + File.separator;
 		final int posInInput = in.indexOf(lookingFor);
@@ -192,8 +237,8 @@ public class CDTParser implements ISource {
 		return in.substring(posInInput + lookingFor.length());
 	}
 
-	private String normalizeCDTFilename(final String filename) {
-		return normalizeCDTFilename(mCdtPProjectHierachyFlag, filename);
+	private String normalizeCdtFilename(final String filename) {
+		return normalizeCdtFilename(mCdtPProjectHierachyFlag, filename);
 	}
 
 	private ASTDecorator decorateTranslationUnits(final MultiparseSymbolTable mst,
@@ -215,9 +260,9 @@ public class CDTParser implements ISource {
 		return decorator;
 	}
 
-	private ICProject createCDTProjectFromFiles(final File[] files) throws CoreException, FileNotFoundException {
-		mProject = createProject();
-		mLogger.info("Created temporary CDT project at " + getFullPath(mProject));
+	private ICProject createCompleteCdtProject(final File[] files) throws CoreException {
+		// first, create a temporary cdt project
+		mProject = createConfiguredEmptyCdtProject();
 
 		final ISourceEntry sourceEntry = CoreModel.newSourceEntry(mProject.getFullPath());
 
@@ -230,8 +275,6 @@ public class CDTParser implements ISource {
 
 		final ICProject cProject = CoreModel.getDefault().create(mProject);
 		cProject.setRawPathEntries(new IPathEntry[] { sourceEntry }, NULL_MONITOR);
-
-		attachExternalSettingsProvider(mProject);
 
 		// TODO: this adds includes and makes them resolvable, but seems like the wrong way
 		final String includes =
@@ -250,12 +293,50 @@ public class CDTParser implements ISource {
 		// TODO: The indexer is empty and I dont know why -- reindexing does not help
 		// CCorePlugin.getIndexManager().reindex(cProject);
 
-		final CoreModel model = CoreModel.getDefault();
-		final ICProject icdtProject = model.create(mProject);
-		return icdtProject;
+		if (mLogger.isDebugEnabled()) {
+			// if you want to provide other compiler settings, you might want to experiment with different providers
+			// during createCDTProjectFromFiles(...), e.g., org.eclipse.cdt.managedbuilder.core.GCCBuiltinSpecsDetector,
+			// and then copy the values (or automate the process somehow, or even add a mode that relies on an existing
+			// GCC)
+			printLanguageSettingsEntries(cProject);
+		}
+		return cProject;
 	}
 
-	public List<IASTTranslationUnit> getProjectTranslationUnits(final ICProject cproject) throws CoreException {
+	/**
+	 * Print all currently available {@link ICLanguageSettingEntry}s to debug certain language settings, e.g., those
+	 * generated by org.eclipse.cdt.managedbuilder.core.GCCBuiltinSpecsDetector
+	 */
+	private void printLanguageSettingsEntries(final ICProject cProject) throws CModelException {
+		final ICProjectDescriptionManager manager = CoreModel.getDefault().getProjectDescriptionManager();
+		final ICProjectDescription projDesc = manager.getProjectDescription(mProject);
+		final ICConfigurationDescription conf = projDesc.getActiveConfiguration();
+
+		mLogger.info("Printing language settings [<language>][<kind>][<flags>] <name>=<value>");
+
+		for (final ISourceRoot i : cProject.getAllSourceRoots()) {
+			final IResource resource = i.getUnderlyingResource();
+			if (resource == null) {
+				mLogger.warn("%s has no underlying resource", i.getElementName());
+				continue;
+			}
+			mLogger.info("%s:", i.getElementName());
+			final List<String> langs = LanguageSettingsManager.getLanguages(resource, conf);
+			for (final String lang : langs) {
+				final List<ICLanguageSettingEntry> entries = LanguageSettingsManager.getSettingEntriesByKind(conf,
+						i.getUnderlyingResource(), lang, ICSettingEntry.ALL);
+				for (final ICLanguageSettingEntry entry : entries) {
+
+					mLogger.info("[%s][%s][%s] %s=%s", lang,
+							LanguageSettingEntriesSerializer.kindToString(entry.getKind()),
+							LanguageSettingEntriesSerializer.composeFlagsString(entry.getFlags()), entry.getName(),
+							entry.getValue());
+				}
+			}
+		}
+	}
+
+	public List<IASTTranslationUnit> getTranslationUnitsFromCdtProject(final ICProject cproject) throws CoreException {
 		final List<IASTTranslationUnit> tuList = new ArrayList<>();
 		// get source folders
 		try {
@@ -266,7 +347,7 @@ public class CDTParser implements ISource {
 				for (final ICElement element : sourceRoot.getChildren()) {
 					// if it is a container (i.e., a source folder)
 					if (element.getElementType() == ICElement.C_CCONTAINER) {
-						recursiveContainerTraversal(index, (ICContainer) element, tuList);
+						extractTranslationUnitsFromContainerTree(index, (ICContainer) element, tuList);
 					} else {
 						final ITranslationUnit tu = (ITranslationUnit) element;
 						final IASTTranslationUnit ast = tu.getAST(index, ITranslationUnit.AST_SKIP_INDEXED_HEADERS);
@@ -275,18 +356,16 @@ public class CDTParser implements ISource {
 				}
 			}
 			new IndexReadlockReleaser(index).store(mServices.getStorage());
-		} catch (final CModelException e) {
-			e.printStackTrace();
-		} catch (final InterruptedException e) {
+		} catch (final CModelException | InterruptedException e) {
 			e.printStackTrace();
 		}
 		return tuList;
 	}
 
-	private static void recursiveContainerTraversal(final IIndex index, final ICContainer container,
+	private static void extractTranslationUnitsFromContainerTree(final IIndex index, final ICContainer container,
 			final List<IASTTranslationUnit> tuList) throws CoreException {
 		for (final ICContainer inContainer : container.getCContainers()) {
-			recursiveContainerTraversal(index, inContainer, tuList);
+			extractTranslationUnitsFromContainerTree(index, inContainer, tuList);
 		}
 
 		for (final ITranslationUnit tu : container.getTranslationUnits()) {
@@ -299,10 +378,9 @@ public class CDTParser implements ISource {
 	 * project from the given files and CDT returns a list of translation units for that project. These only need to be
 	 * decorated and can then be passed to the CACSL2BoogieTranslation.
 	 */
-	private Collection<IASTTranslationUnit> performCDTProjectOperations(final File[] files)
-			throws FileNotFoundException, CoreException {
-		final ICProject icdtProject = createCDTProjectFromFiles(files);
-		final List<IASTTranslationUnit> listTu = getProjectTranslationUnits(icdtProject);
+	private Collection<IASTTranslationUnit> computeASTsFromFilesViaCdt(final File[] files) throws CoreException {
+		final ICProject icdtProject = createCompleteCdtProject(files);
+		final List<IASTTranslationUnit> listTu = getTranslationUnitsFromCdtProject(icdtProject);
 		mLogger.info("Found " + listTu.size() + " translation units.");
 		return listTu;
 	}
@@ -373,7 +451,7 @@ public class CDTParser implements ISource {
 		return loc.toOSString();
 	}
 
-	private IProject createProject() throws CoreException {
+	private IProject createConfiguredEmptyCdtProject() throws CoreException {
 		// It would be nicer to have the project in a tmp directory, but this seems not to be trivially
 		// possible with the current CDT parsing.
 		final String projectName = mCdtPProjectHierachyFlag;
@@ -384,10 +462,10 @@ public class CDTParser implements ISource {
 		final IWorkspaceRoot root = workspace.getRoot();
 
 		IProject project = root.getProject(projectName);
-		IndexerPreferences.set(project, IndexerPreferences.KEY_INDEX_ALL_FILES, IPDOMManager.ID_FAST_INDEXER);
 
 		final IProjectDescription prjDescription = workspace.newProjectDescription(projectName);
 		prjDescription.setLocation(root.getLocation().append(projectNamespace + File.separator + projectName));
+		IndexerPreferences.set(project, IndexerPreferences.KEY_INDEX_ALL_FILES, IPDOMManager.ID_FAST_INDEXER);
 
 		final IContentType contentType = org.eclipse.core.runtime.Platform.getContentTypeManager()
 				.getContentType(CCorePlugin.CONTENT_TYPE_CSOURCE);
@@ -397,30 +475,66 @@ public class CDTParser implements ISource {
 			throw new IllegalStateException("Could not add .i to C extensions.", e);
 		}
 
-		project = cdtCorePlugin.createCDTProject(prjDescription, project, NULL_MONITOR);
-		project.open(NULL_MONITOR);
-		return project;
-	}
+		// add cnature to project
+		project = cdtCorePlugin.createCProject(prjDescription, project, NULL_MONITOR, projectName);
 
-	private void attachExternalSettingsProvider(final IProject project) throws CoreException {
-		final ICProjectDescription projDesc = CoreModel.getDefault().getProjectDescription(project);
-		final ICConfigurationDescription conf = projDesc.getActiveConfiguration();
+		// get managed build toolchain and create managed build project
+		final org.eclipse.cdt.managedbuilder.core.IToolChain toolChain =
+				ManagedBuildManager.getExtensionToolChain("cdt.managedbuild.toolchain.gnu.base");
+		// arcane incantations based on
+		// org.eclipse.cdt.managedbuilder.ui.wizards.NewMakeProjFromExisting.performFinish()
+		final ICProjectDescriptionManager pdMgr = CoreModel.getDefault().getProjectDescriptionManager();
+		final ICProjectDescription projDesc = pdMgr.getProjectDescription(project);
+		final ManagedBuildInfo info = ManagedBuildManager.createBuildInfo(project);
+		final ManagedProject mgdProj = new ManagedProject(projDesc);
+		info.setManagedProject(mgdProj);
+
+		final IConfiguration config = new Configuration(mgdProj, toolChain,
+				ManagedBuildManager.calculateChildId(toolChain.getId(), null), "ultimate_cdt_config");
+		final CConfigurationData data = config.getConfigurationData();
+		projDesc.createConfiguration(ManagedBuildManager.CFG_DATA_PROVIDER_ID, data);
+		pdMgr.setProjectDescription(project, projDesc);
+
+		final ICProjectDescriptionManager manager = CoreModel.getDefault().getProjectDescriptionManager();
+		final ICProjectDescription projDesc1 = manager.getProjectDescription(project);
+		final ICConfigurationDescription conf = projDesc1.getActiveConfiguration();
 
 		// annotate necessary params for external settings provider
 		ToolchainDependency.annotate(project, mServices, mLogger);
-		/*
-		 * Specify the external setting provider ID. The ID is the ID specified in plugin.xml prefixed with the class
-		 * package name.
-		 */
+
+		// Specify the external setting provider ID. The ID is the ID specified in plugin.xml prefixed with the class
+		// package name.
 		conf.setExternalSettingsProviderIds(
 				new String[] { "de.uni_freiburg.informatik.ultimate.cdt.parser.ultimateSettingsProviderId" });
 
-		CoreModel.getDefault().setProjectDescription(project, projDesc);
+		// add our language settings provider that sets the actual compiler environment
+		final ILanguageSettingsProvidersKeeper confAsLangProvider = (ILanguageSettingsProvidersKeeper) conf;
+		final List<String> providerIds =
+				new ArrayList<>(Arrays.asList(confAsLangProvider.getDefaultLanguageSettingsProvidersIds()));
+		providerIds.add("de.uni_freiburg.informatik.ultimate.cdt.parser.GccStaticLanguageSettingsProvider");
+
+		final String[] providerIdsArray = providerIds.toArray(new String[providerIds.size()]);
+		confAsLangProvider.setDefaultLanguageSettingsProvidersIds(providerIdsArray);
+
+		final List<ILanguageSettingsProvider> wsProviders = LanguageSettingsManager.getWorkspaceProviders();
+		final ILanguageSettingsProvider providerGCCStaticSettings = wsProviders.stream()
+				.filter(a -> "de.uni_freiburg.informatik.ultimate.cdt.parser.GccStaticLanguageSettingsProvider"
+						.equals(a.getId()))
+				.findFirst().orElseThrow();
+		final List<ILanguageSettingsProvider> providers =
+				new ArrayList<>(confAsLangProvider.getLanguageSettingProviders());
+		providers.add(providerGCCStaticSettings);
+		confAsLangProvider.setLanguageSettingProviders(providers);
+		manager.setProjectDescription(project, projDesc1);
 		waitForProjectRefreshToFinish();
+
+		// make project ready
+		project.open(NULL_MONITOR);
+		mLogger.info("Created temporary CDT project at %s", getFullPath(mProject));
+		return project;
 	}
 
-	public static IFile addLinkToFolder(final IFolder sourceFolder, final File file)
-			throws CoreException, FileNotFoundException {
+	public static IFile addLinkToFolder(final IFolder sourceFolder, final File file) throws CoreException {
 		final Path filePath = new Path(file.getName());
 		if (filePath.segmentCount() > 1) {
 			throw new IllegalArgumentException("File has to be a single file");
@@ -434,10 +548,8 @@ public class CDTParser implements ISource {
 	private static void waitForProjectRefreshToFinish() {
 		try {
 			// CDT opens the Project with BACKGROUND_REFRESH enabled which
-			// causes the
-			// refresh manager to refresh the project 200ms later. This Job
-			// interferes
-			// with the resource change handler firing see: bug 271264
+			// causes the refresh manager to refresh the project 200ms later. This Job
+			// interferes with the resource change handler firing see: bug 271264
 			Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_REFRESH, NULL_MONITOR);
 		} catch (final Exception e) {
 			// Ignore

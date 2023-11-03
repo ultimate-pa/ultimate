@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJuncti
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
@@ -51,9 +52,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Analyze for a given term and a given (wanted) array in which kinds of
- * subterms the array occurs. Objects of this class deliver the subterms
- * for our array elimination {@link DualJunctionSaa}.
+ * Analyze for a given term and a given (wanted) array in which kinds of subterms the array occurs. Objects of this
+ * class deliver the subterms for our array elimination {@link DualJunctionSaa}.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -65,7 +65,6 @@ public class ArrayOccurrenceAnalysis {
 	private final Term mWantedArray;
 	private final int mDimensionUpperLimit;
 
-
 	private final List<MultiDimensionalSelectOverNestedStore> mArraySelectOverStores = new ArrayList<>();
 	private final List<MultiDimensionalNestedStore> mNestedArrayStores = new ArrayList<>();
 	private final List<MultiDimensionalSelect> mArraySelects = new ArrayList<>();
@@ -75,7 +74,6 @@ public class ArrayOccurrenceAnalysis {
 	private final List<Term> mIsValueOfStore = new ArrayList<>();
 
 	public ArrayOccurrenceAnalysis(final Script script, final Term analyzedTerm, final Term wantedArray) {
-		super();
 		mAnalyzedTerm = analyzedTerm;
 		mWantedArray = wantedArray;
 		mDimensionUpperLimit = Integer.MAX_VALUE;
@@ -84,7 +82,6 @@ public class ArrayOccurrenceAnalysis {
 
 	public ArrayOccurrenceAnalysis(final Script script, final Term analyzedTerm, final Term wantedArray,
 			final int dimensionUpperLimit) {
-		super();
 		mAnalyzedTerm = analyzedTerm;
 		mWantedArray = wantedArray;
 		mDimensionUpperLimit = dimensionUpperLimit;
@@ -114,16 +111,16 @@ public class ArrayOccurrenceAnalysis {
 	}
 
 	/**
-	 * @return from the analyzed term all binary equality subterms such that the
-	 *         wanted array is a subterm of one side of the equality.
+	 * @return from the analyzed term all binary equality subterms such that the wanted array is a subterm of one side
+	 *         of the equality.
 	 */
 	public List<BinaryEqualityRelation> getArrayEqualities() {
 		return mArrayEqualities;
 	}
 
 	/**
-	 * @return from the analyzed term all binary disequality subterms such that the
-	 *         wanted array is a subterm of one side of the disequality.
+	 * @return from the analyzed term all binary disequality subterms such that the wanted array is a subterm of one
+	 *         side of the disequality.
 	 */
 	public List<BinaryEqualityRelation> getArrayDisequalities() {
 		return mArrayDisequalities;
@@ -143,14 +140,14 @@ public class ArrayOccurrenceAnalysis {
 	}
 
 	/**
-	 * Returns subterms that our algorithm needs for elimination of anti-DER terms.
-	 * These are the subterms where the wanted array occurs on one side (i.e.,
-	 * it is not sufficient that it is just a subterm on one side).
+	 * Returns subterms that our algorithm needs for elimination of anti-DER terms. These are the subterms where the
+	 * wanted array occurs on one side (i.e., it is not sufficient that it is just a subterm on one side).
 	 */
 	public List<BinaryEqualityRelation> getDerRelations(final int quantifier) {
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			return getArrayEqualities().stream().filter(x -> isRhsOrLhs(mWantedArray, x)).collect(Collectors.toList());
-		} else if (quantifier == QuantifiedFormula.FORALL) {
+		}
+		if (quantifier == QuantifiedFormula.FORALL) {
 			return getArrayDisequalities().stream().filter(x -> isRhsOrLhs(mWantedArray, x))
 					.collect(Collectors.toList());
 		} else {
@@ -159,14 +156,14 @@ public class ArrayOccurrenceAnalysis {
 	}
 
 	/**
-	 * Returns subterms that our algorithm needs for elimination of anti-DER terms.
-	 * These are the subterms where the wanted array is a subterm of one side (i.e.,
-	 * is not necessarily the element on one side).
+	 * Returns subterms that our algorithm needs for elimination of anti-DER terms. These are the subterms where the
+	 * wanted array is a subterm of one side (i.e., is not necessarily the element on one side).
 	 */
 	public List<BinaryEqualityRelation> getAntiDerRelations(final int quantifier) {
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			return getArrayDisequalities();
-		} else if (quantifier == QuantifiedFormula.FORALL) {
+		}
+		if (quantifier == QuantifiedFormula.FORALL) {
 			return getArrayEqualities();
 		} else {
 			throw new AssertionError("unknown quantifier");
@@ -188,11 +185,10 @@ public class ArrayOccurrenceAnalysis {
 		final TreeSet<Integer> dims = computeSelectAndStoreDimensions();
 		if (dims.size() <= 1) {
 			return this;
-		} else {
-			final int dimensionUpperLimit = dims.first();
-			assert dimensionUpperLimit >= 1;
-			return new ArrayOccurrenceAnalysis(script, mAnalyzedTerm, mWantedArray, dimensionUpperLimit);
 		}
+		final int dimensionUpperLimit = dims.first();
+		assert dimensionUpperLimit >= 1;
+		return new ArrayOccurrenceAnalysis(script, mAnalyzedTerm, mWantedArray, dimensionUpperLimit);
 	}
 
 	/**
@@ -244,14 +240,13 @@ public class ArrayOccurrenceAnalysis {
 				if (fun.equals("=")) {
 					if (term.getParameters().length != 2) {
 						throw new UnsupportedOperationException("expecting equality with two parameters");
-					} else {
-						if (SmtSortUtils.isArraySort(term.getParameters()[0].getSort())
-								&& isSubtermOfSome(mWantedArray, term.getParameters()[0], term.getParameters()[1])) {
-							mArrayEqualities.add(constructBinaryEqualityRelation(term));
-						}
-						walker.enqueueWalker(new MyWalker(term.getParameters()[0]));
-						walker.enqueueWalker(new MyWalker(term.getParameters()[1]));
 					}
+					if (SmtSortUtils.isArraySort(term.getParameters()[0].getSort())
+							&& isSubtermOfSome(mWantedArray, term.getParameters()[0], term.getParameters()[1])) {
+						mArrayEqualities.add(constructBinaryEqualityRelation(term));
+					}
+					walker.enqueueWalker(new MyWalker(term.getParameters()[0]));
+					walker.enqueueWalker(new MyWalker(term.getParameters()[1]));
 				} else if (fun.equals("distinct")) {
 					throw new UnsupportedOperationException("UNF requires negated equality");
 				} else if (fun.equals("not")) {
@@ -265,15 +260,14 @@ public class ArrayOccurrenceAnalysis {
 						if (negatedAppTerm.getFunction().getName().equals("=")) {
 							if (negatedAppTerm.getParameters().length != 2) {
 								throw new UnsupportedOperationException("expecting equality with two parameters");
-							} else {
-								if (SmtSortUtils.isArraySort(negatedAppTerm.getParameters()[0].getSort())
-										&& isSubtermOfSome(mWantedArray, negatedAppTerm.getParameters()[0],
-												negatedAppTerm.getParameters()[1])) {
-									mArrayDisequalities.add(constructBinaryEqualityRelation(term));
-								}
-								walker.enqueueWalker(new MyWalker(negatedAppTerm.getParameters()[0]));
-								walker.enqueueWalker(new MyWalker(negatedAppTerm.getParameters()[1]));
 							}
+							if (SmtSortUtils.isArraySort(negatedAppTerm.getParameters()[0].getSort())
+									&& isSubtermOfSome(mWantedArray, negatedAppTerm.getParameters()[0],
+											negatedAppTerm.getParameters()[1])) {
+								mArrayDisequalities.add(constructBinaryEqualityRelation(term));
+							}
+							walker.enqueueWalker(new MyWalker(negatedAppTerm.getParameters()[0]));
+							walker.enqueueWalker(new MyWalker(negatedAppTerm.getParameters()[1]));
 						} else {
 							walker.enqueueWalker(new MyWalker(negatedAtom));
 						}
@@ -281,9 +275,10 @@ public class ArrayOccurrenceAnalysis {
 						walker.enqueueWalker(new MyWalker(negatedAtom));
 					}
 				} else if (fun.equals("store")) {
-					MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(mScript, term);
+					MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.of(term);
 					if (nas != null) {
-						final Set<Term> swwaiv = SubTermFinder.find(term, x -> isStoreWhereWantedArrayIsValue(x, mWantedArray), false);
+						final Set<Term> swwaiv =
+								SubTermFinder.find(term, x -> isStoreWhereWantedArrayIsValue(x, mWantedArray), false);
 						mIsValueOfStore.addAll(swwaiv);
 					}
 					if (nas != null && nas.getArray().equals(mWantedArray)) {
@@ -297,8 +292,8 @@ public class ArrayOccurrenceAnalysis {
 							if (THROW_ERROR_BEFORE_DOWNGRADE) {
 								throw new AssertionError("downgrade");
 							}
-							nas = new MultiDimensionalNestedStore(MultiDimensionalStore
-									.convert(nas.getInnermost().getStoreTerm(), mDimensionUpperLimit));
+							nas = new MultiDimensionalNestedStore(
+									nas.getInnermost().getOutermost(mScript, mDimensionUpperLimit));
 							assert nas.getArray() == mWantedArray;
 						}
 						assert nas.getArray() == mWantedArray;
@@ -350,12 +345,15 @@ public class ArrayOccurrenceAnalysis {
 							}
 						}
 					} else {
-						final MultiDimensionalSelect as = MultiDimensionalSelect.convert(term);
+						final MultiDimensionalSelect as = MultiDimensionalSelect.of(term);
 						// If this select is above our dimension limit we ignore this select and descend
 						// to all children
-						if (as != null && as.getArray().equals(mWantedArray)
+						if (as.getIndex().size() > 0 && as.getArray().equals(mWantedArray)
 								&& as.getDimension() <= mDimensionUpperLimit) {
 							mArraySelects.add(as);
+							for (final Term indexEntry : as.getIndex()) {
+								walker.enqueueWalker(new MyWalker(indexEntry));
+							}
 						} else {
 							for (final Term t : term.getParameters()) {
 								walker.enqueueWalker(new MyWalker(t));
@@ -377,9 +375,8 @@ public class ArrayOccurrenceAnalysis {
 				final BinaryEqualityRelation ber = BinaryEqualityRelation.convert(term);
 				if (ber == null) {
 					throw new AssertionError("Cannot convert relation");
-				} else {
-					return ber;
 				}
+				return ber;
 			}
 
 			@Override
@@ -401,6 +398,12 @@ public class ArrayOccurrenceAnalysis {
 			public void walk(final NonRecursive walker, final MatchTerm term) {
 				throw new UnsupportedOperationException("not yet implemented: MatchTerm");
 			}
+
+			@Override
+			public void walk(final NonRecursive walker, final LambdaTerm term) {
+				throw new UnsupportedOperationException();
+			}
+
 		}
 
 	}
@@ -413,24 +416,24 @@ public class ArrayOccurrenceAnalysis {
 	}
 
 	public static Set<ArrayIndex> extractSelectIndices(final List<MultiDimensionalSelect> arraySelects) {
-		return arraySelects.stream().map(x -> x.getIndex()).collect(Collectors.toSet());
+		return arraySelects.stream().map(MultiDimensionalSelect::getIndex).collect(Collectors.toSet());
 	}
 
 	public static Set<ArrayIndex> extractStoreIndices(final List<MultiDimensionalStore> mds) {
-		return mds.stream().map(x -> x.getIndex()).collect(Collectors.toSet());
+		return mds.stream().map(MultiDimensionalStore::getIndex).collect(Collectors.toSet());
 	}
 
 	public static Set<ArrayIndex> extractNestedStoreIndices(final List<MultiDimensionalNestedStore> arraySelects) {
-		return arraySelects.stream().map(x -> x.getIndices()).flatMap(List::stream).collect(Collectors.toSet());
+		return arraySelects.stream().map(MultiDimensionalNestedStore::getIndices).flatMap(List::stream)
+				.collect(Collectors.toSet());
 	}
 
 	public static boolean isStoreWhereWantedArrayIsValue(final Term term, final Term wantedArray) {
-		final ArrayStore as = ArrayStore.convert(term);
+		final ArrayStore as = ArrayStore.of(term);
 		if (as == null) {
 			return false;
-		} else {
-			return as.getValue().equals(wantedArray);
 		}
+		return as.getValue().equals(wantedArray);
 	}
 
 }

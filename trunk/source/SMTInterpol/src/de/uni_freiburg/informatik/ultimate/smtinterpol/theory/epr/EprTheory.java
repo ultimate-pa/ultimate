@@ -360,11 +360,16 @@ public class EprTheory implements ITheory {
 	}
 
 	@Override
-	public Clause backtrackComplete() {
+	public void backtrackStart() {
 		for (final Literal lit : mLiteralsWaitingToBePropagated) {
 			mGroundLiteralsToPropagateToReason.remove(lit);
 		}
 		mLiteralsWaitingToBePropagated.clear();
+		mLogger.debug("EPRDEBUG: backtrackStart");
+	}
+
+	@Override
+	public Clause backtrackComplete() {
 		mLogger.debug("EPRDEBUG: backtrackComplete");
 		return null;
 	}

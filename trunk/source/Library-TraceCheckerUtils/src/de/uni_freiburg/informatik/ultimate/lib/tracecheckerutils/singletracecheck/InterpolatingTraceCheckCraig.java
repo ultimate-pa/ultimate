@@ -335,12 +335,12 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 		for (final Integer nonPendingCall : nonPendingCallPositions) {
 			// compute subtrace from to call to corresponding return
 			final int returnPosition = mTrace.getReturnPosition(nonPendingCall);
-			final NestedWord<L> subtrace = mTrace.getSubWord(nonPendingCall + 1, returnPosition);
+			final NestedWord<L> subtrace = mTrace.getSubWord(nonPendingCall + 1, returnPosition + 1);
 
 			final IIcfgCallTransition<?> call = (IIcfgCallTransition<?>) mTrace.getSymbol(nonPendingCall);
 			final String calledMethod = call.getSucceedingProcedure();
 			final TermVarsProc oldVarsEquality = TraceCheckUtils.getOldVarsEquality(calledMethod,
-					mCsToolkit.getModifiableGlobalsTable(), mCfgManagedScript.getScript());
+					mCsToolkit.getModifiableGlobalsTable(), mCfgManagedScript);
 
 			final IPredicate precondition = mPredicateUnifier.getOrConstructPredicate(oldVarsEquality.getFormula());
 

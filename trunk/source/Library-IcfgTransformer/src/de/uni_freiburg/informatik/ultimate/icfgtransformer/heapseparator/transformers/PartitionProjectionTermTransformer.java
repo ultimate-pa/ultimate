@@ -45,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.SubArra
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayCellAccess;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.EdgeInfo;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreLocationBlock;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreLocationBlock;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SubtreePosition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -267,7 +267,7 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 				/*
 				 *  as soon as we see a select, we consume it fully as a ArrayCellAccess (MultiDimensionalSelect)
 				 */
-				final ArrayCellAccess aca = new ArrayCellAccess(new MultiDimensionalSelect(term));
+				final ArrayCellAccess aca = new ArrayCellAccess(MultiDimensionalSelect.of(term));
 
 				enqueueWalker(new BuildArrayCellAccessTerm(aca, mMgdScript.getScript()));
 
@@ -526,7 +526,7 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 
 			final Term array = transformer.getConverted();
 
-			final Term mdsTerm = new MultiDimensionalSelect(array, index, mScript).getSelectTerm();
+			final Term mdsTerm = new MultiDimensionalSelect(array, index).toTerm(mScript);
 			transformer.setResult(mdsTerm);
 		}
 

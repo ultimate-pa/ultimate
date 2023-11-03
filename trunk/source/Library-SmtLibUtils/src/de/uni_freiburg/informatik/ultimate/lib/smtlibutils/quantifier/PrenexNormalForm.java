@@ -79,15 +79,14 @@ public class PrenexNormalForm extends TermTransformer {
 		super.convert(term);
 	}
 
-
-
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
-		if (NonCoreBooleanSubTermTransformer.isCoreBooleanNonAtom(appTerm)) {
+		if (!NonCoreBooleanSubTermTransformer.isCoreBooleanNonAtom(appTerm)) {
+			super.convertApplicationTerm(appTerm, newArgs);
+			return;
+		} else {
 			final String fun = appTerm.getFunction().getName();
-			if (fun.equals("=")) {
-				throw new UnsupportedOperationException("not yet implemented, we need term in nnf");
-			} else if (fun.equals("not")) {
+			if (fun.equals("not")) {
 				final Term result = pullQuantifiersNot(newArgs);
 				setResult(result);
 			} else if (fun.equals("and")) {
@@ -96,26 +95,25 @@ public class PrenexNormalForm extends TermTransformer {
 			} else if (fun.equals("or")) {
 				final Term result = pullQuantifiers(appTerm, newArgs);
 				setResult(result);
-			} else if (fun.equals("=>")) {
-				throw new UnsupportedOperationException("not yet implemented, we need term in nnf");
-			} else if (fun.equals("xor")) {
-				throw new UnsupportedOperationException("not yet implemented, we need term in nnf");
-			} else if (fun.equals("distinct")) {
-				throw new UnsupportedOperationException("not yet implemented, we need term in nnf");
-			} else if (fun.equals("ite")) {
-				throw new UnsupportedOperationException("not yet implemented, we need term in nnf");
+			} else if (fun.equals("=") || fun.equals("=>") || fun.equals("xor") || fun.equals("distinct")
+					|| fun.equals("ite")) {
+				// We can handle this case as long as we don't have to pull quantifiers
+				if (Arrays.stream(newArgs).anyMatch(x -> (x instanceof QuantifiedFormula))) {
+					throw new UnsupportedOperationException("not yet implemented, we need subterm in NNF");
+				} else {
+					super.convertApplicationTerm(appTerm, newArgs);
+					return;
+				}
 			} else {
 				throw new AssertionError("unknown core boolean term");
 			}
-		} else {
-			super.convertApplicationTerm(appTerm, newArgs);
 		}
 	}
 
 	private Term pullQuantifiersNot(final Term[] newArgs) {
 		assert newArgs.length == 1 : "no not";
 		final Term notArg = newArgs[0];
-		final QuantifierSequence quantifierSequence = new QuantifierSequence(mScript, notArg);
+		final QuantifierSequence quantifierSequence = new QuantifierSequence(mMgdScript, notArg);
 		final Term inner = quantifierSequence.getInnerTerm();
 		final List<QuantifierSequence.QuantifiedVariables> qVarSeq = quantifierSequence.getQuantifierBlocks();
 		Term result = SmtUtils.not(mScript, inner);
@@ -133,7 +131,7 @@ public class PrenexNormalForm extends TermTransformer {
 		final HashSet<TermVariable> freeVariables = new HashSet<>();
 		for (int i=0; i<newArgs.length; i++) {
 			freeVariables.addAll(Arrays.asList(newArgs[i].getFreeVars()));
-			quantifierSequences[i] = new QuantifierSequence(mScript, newArgs[i]);
+			quantifierSequences[i] = new QuantifierSequence(mMgdScript, newArgs[i]);
 		}
 		final Term result = QuantifierSequence.mergeQuantifierSequences(mMgdScript,
 				appTerm.getFunction().getName(), quantifierSequences,

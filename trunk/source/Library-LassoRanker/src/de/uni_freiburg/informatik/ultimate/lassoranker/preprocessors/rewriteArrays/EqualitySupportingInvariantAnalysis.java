@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
@@ -74,7 +74,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
  */
 public class EqualitySupportingInvariantAnalysis {
 	private final Set<Doubleton<Term>> mAllDoubletons;
-	private final Script mScript;
+	private final ManagedScript mScript;
 	private final IIcfgSymbolTable mSymbolTable;
 
 	private final Set<Doubleton<Term>> mDistinctDoubletons = new HashSet<>();
@@ -100,18 +100,19 @@ public class EqualitySupportingInvariantAnalysis {
 	 *            set of all global program variables that are modifiable at the program point between stem and loop.
 	 */
 	public EqualitySupportingInvariantAnalysis(final Set<Doubleton<Term>> doubletons,
-			final IIcfgSymbolTable symbolTable, final Script script, final UnmodifiableTransFormula originalStem,
-			final UnmodifiableTransFormula originalLoop, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda) {
+			final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript,
+			final UnmodifiableTransFormula originalStem, final UnmodifiableTransFormula originalLoop,
+			final Set<IProgramNonOldVar> modifiableGlobalsAtHonda) {
 		super();
 		mSymbolTable = symbolTable;
-		mScript = script;
+		mScript = mgdScript;
 		mOriginalStem = originalStem;
 		mOriginalLoop = originalLoop;
 		mModifiableGlobalsAtStart = Collections.emptySet();
 		mModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
 		mAllDoubletons = doubletons;
 
-		mScript.echo(new QuotedObject("starting equality analysis for array indices of a lasso"));
+		mScript.getScript().echo(new QuotedObject("starting equality analysis for array indices of a lasso"));
 		for (final Doubleton<Term> doubleton : mAllDoubletons) {
 			final boolean equalityIsInvariant = isInVariant(doubleton, true);
 			if (equalityIsInvariant) {
@@ -125,7 +126,7 @@ public class EqualitySupportingInvariantAnalysis {
 				}
 			}
 		}
-		mScript.echo(new QuotedObject("finished equality analysis for array indices of a lasso"));
+		mScript.getScript().echo(new QuotedObject("finished equality analysis for array indices of a lasso"));
 	}
 
 	private void addDistinctDoubleton(final Doubleton<Term> doubleton) {
@@ -143,20 +144,20 @@ public class EqualitySupportingInvariantAnalysis {
 	private boolean isInVariant(final Doubleton<Term> definingDoubleton, final boolean checkEquals) {
 		final Term invariantCandidateTerm;
 		if (checkEquals) {
-			invariantCandidateTerm = EqualityAnalysisResult.equalTerm(mScript, definingDoubleton);
+			invariantCandidateTerm = EqualityAnalysisResult.equalTerm(mScript.getScript(), definingDoubleton);
 		} else {
-			invariantCandidateTerm = EqualityAnalysisResult.notEqualTerm(mScript, definingDoubleton);
+			invariantCandidateTerm = EqualityAnalysisResult.notEqualTerm(mScript.getScript(), definingDoubleton);
 		}
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(invariantCandidateTerm, mScript, mSymbolTable);
-		final IPredicate invariantCandidate =
-				new BasicPredicate(0, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(), tvp.getClosedFormula());
+		final IPredicate invariantCandidate = new BasicPredicate(0, tvp.getProcedures(), tvp.getFormula(),
+				tvp.getVars(), tvp.getFuns(), tvp.getClosedFormula());
 		final Set<IProgramVar> emptyVarSet = Collections.emptySet();
-		final IPredicate truePredicate =
-				new BasicPredicate(0, new String[0], mScript.term("true"), emptyVarSet, mScript.term("true"));
-		final LBool impliedByStem = PredicateUtils.isInductiveHelper(mScript, truePredicate, invariantCandidate,
-				mOriginalStem, mModifiableGlobalsAtStart, mModifiableGlobalsAtHonda);
+		final IPredicate truePredicate = new BasicPredicate(0, new String[0], mScript.getScript().term("true"),
+				emptyVarSet, Collections.emptySet(), mScript.getScript().term("true"));
+		final LBool impliedByStem = PredicateUtils.isInductiveHelper(mScript.getScript(), truePredicate,
+				invariantCandidate, mOriginalStem, mModifiableGlobalsAtStart, mModifiableGlobalsAtHonda);
 		if (impliedByStem == LBool.UNSAT) {
-			final LBool invariantOfLoop = PredicateUtils.isInductiveHelper(mScript, invariantCandidate,
+			final LBool invariantOfLoop = PredicateUtils.isInductiveHelper(mScript.getScript(), invariantCandidate,
 					invariantCandidate, mOriginalLoop, mModifiableGlobalsAtHonda, mModifiableGlobalsAtHonda);
 			return invariantOfLoop == LBool.UNSAT;
 		}

@@ -31,9 +31,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
@@ -164,7 +161,7 @@ public class ProgramVarUtils {
 				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
 			}
 		}
-		final Term result = (new Substitution(mgdScript, substitutionMapping)).transform(term);
+		final Term result = Substitution.apply(mgdScript, substitutionMapping, term);
 		return result;
 	}
 
@@ -178,7 +175,7 @@ public class ProgramVarUtils {
 				substitutionMapping.put(pv.getTermVariable(), nonoldVar.getTermVariable());
 			}
 		}
-		final Term result = (new Substitution(mgdScript, substitutionMapping)).transform(term);
+		final Term result = Substitution.apply(mgdScript, substitutionMapping, term);
 		return result;
 	}
 
@@ -200,13 +197,13 @@ public class ProgramVarUtils {
 	}
 
 	/**
-	 * Construct global {@link BoogieNonOldVar} together with corresponding {@link BoogieOldVar} and return the
-	 * {@link BoogieNonOldVar}
+	 * Construct global {@link ProgramNonOldVar} together with corresponding {@link ProgramOldVar} and return the
+	 * {@link ProgramNonOldVar}
 	 */
-	public static BoogieNonOldVar constructGlobalProgramVarPair(final String identifier, final Sort sort,
+	public static ProgramNonOldVar constructGlobalProgramVarPair(final String identifier, final Sort sort,
 			final ManagedScript mgdScript, final Object lockOwner) {
 		final String procedure = null;
-		BoogieOldVar oldVar;
+		ProgramOldVar oldVar;
 		{
 			final boolean isOldVar = true;
 			final String name = ProgramVarUtils.buildBoogieVarName(identifier, procedure, true, isOldVar);
@@ -216,9 +213,9 @@ public class ProgramVarUtils {
 			final ApplicationTerm primedConstant =
 					ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, name);
 
-			oldVar = new BoogieOldVar(identifier, null, termVariable, defaultConstant, primedConstant);
+			oldVar = new ProgramOldVar(identifier, termVariable, defaultConstant, primedConstant);
 		}
-		BoogieNonOldVar nonOldVar;
+		ProgramNonOldVar nonOldVar;
 		{
 			final boolean isOldVar = false;
 			final String name = ProgramVarUtils.buildBoogieVarName(identifier, procedure, true, isOldVar);
@@ -228,7 +225,7 @@ public class ProgramVarUtils {
 			final ApplicationTerm primedConstant =
 					ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, name);
 
-			nonOldVar = new BoogieNonOldVar(identifier, null, termVariable, defaultConstant, primedConstant, oldVar);
+			nonOldVar = new ProgramNonOldVar(identifier, termVariable, defaultConstant, primedConstant, oldVar);
 		}
 		oldVar.setNonOldVar(nonOldVar);
 		return nonOldVar;
@@ -246,7 +243,7 @@ public class ProgramVarUtils {
 				ProgramVarUtils.constructDefaultConstant(mgdScript, lockOwner, sort, name);
 		final ApplicationTerm primedConstant =
 				ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, name);
-		return new LocalBoogieVar(identifier, procedure, null, termVariable, defaultConstant, primedConstant);
+		return new LocalProgramVar(identifier, procedure, termVariable, defaultConstant, primedConstant);
 	}
 
 	/**

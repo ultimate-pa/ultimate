@@ -73,7 +73,7 @@ public class HornClauseHead {
 
 	/***
 	 * Add literal to the cobody.
-	 * 
+	 *
 	 * @param literal
 	 */
 	public void addPredicateToBody(final ApplicationTerm literal) {
@@ -82,7 +82,7 @@ public class HornClauseHead {
 
 	/***
 	 * Convert the body to a HornClause.
-	 * 
+	 *
 	 * @param solverScript
 	 * @param symbolTable
 	 * @return
@@ -141,13 +141,13 @@ public class HornClauseHead {
 				final TermVariable pTv = (TermVariable) mHead.getParameters()[i];
 				final Sort sort = pTv.getSort();
 
-				final HcHeadVar headVar = symbolTable.getOrConstructHeadVar(headPredSymbolName, i, sort);
+				final HcHeadVar headVar = symbolTable.getOrConstructHeadVar(headPredSymbolName, i, sort, pTv);
 
 				subs.put(pTv, headVar.getTermVariable());
 			}
 
 			// note: it does not seem to matter much, which script we pass here
-			mHead = (ApplicationTerm) new Substitution(solverScript, subs).transform(mHead);
+			mHead = (ApplicationTerm) Substitution.apply(solverScript, subs, mHead);
 
 		}
 		// normalize (co)body variables
@@ -158,7 +158,8 @@ public class HornClauseHead {
 				continue;
 			}
 
-			final HcBodyVar bodyVar = symbolTable.getOrConstructBodyVar(headPredSymbolName, counter++, tv.getSort());
+			final HcBodyVar bodyVar =
+					symbolTable.getOrConstructBodyVar(headPredSymbolName, counter++, tv.getSort(), tv);
 
 			subs.put(tv, bodyVar.getTermVariable());
 			bodyVars.add(bodyVar);
@@ -170,7 +171,7 @@ public class HornClauseHead {
 
 	/***
 	 * Set the head literal of the body.
-	 * 
+	 *
 	 * @param literal
 	 * @return
 	 */
@@ -188,7 +189,7 @@ public class HornClauseHead {
 
 	/***
 	 * Add the transition formula to the cobody (can be called several times).
-	 * 
+	 *
 	 * @param formula
 	 */
 	public void addTransitionFormula(final Term formula) {
@@ -202,7 +203,7 @@ public class HornClauseHead {
 
 	/***
 	 * Get the transition formula.
-	 * 
+	 *
 	 * @param script
 	 * @return
 	 */

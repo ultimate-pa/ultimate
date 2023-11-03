@@ -41,8 +41,8 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		final List<Term> constraints = new ArrayList<>();
 		ArrayDomainState<STATE> tmpState = state;
 		final Script script = mToolkit.getScript();
-		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectShallow(term, true)) {
-			final Term selectTerm = select.getSelectTerm();
+		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectShallow(term)) {
+			final Term selectTerm = select.toTerm(script);
 			Term currentTerm = select.getArray();
 			for (final Term index : select.getIndex()) {
 				final Pair<ArrayDomainState<STATE>, Segmentation> segmentationPair =
@@ -79,7 +79,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		}
 		final STATE newSubState = mToolkit.handleAssumptionBySubdomain(tmpState.getSubState().addVariables(auxVars),
 				SmtUtils.and(script, constraints));
-		final Term newTerm = new Substitution(mToolkit.getManagedScript(), substitution).transform(term);
+		final Term newTerm = Substitution.apply(mToolkit.getManagedScript(), substitution, term);
 		return new Pair<>(tmpState.updateState(newSubState), newTerm);
 	}
 
@@ -172,7 +172,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			return mToolkit.createBottomState();
 		}
 		// Handle array-reads
-		final List<MultiDimensionalSelect> selects = MultiDimensionalSelect.extractSelectShallow(assumption, true);
+		final List<MultiDimensionalSelect> selects = MultiDimensionalSelect.extractSelectShallow(assumption);
 		if (selects.isEmpty()) {
 			final STATE newSubState = mToolkit.handleAssumptionBySubdomain(state.getSubState(), assumption);
 			return state.updateState(newSubState);
@@ -185,7 +185,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			if (!(arrayExpr instanceof IdentifierExpression)) {
 				continue;
 			}
-			final Term selectTerm = select.getSelectTerm();
+			final Term selectTerm = select.toTerm(script);
 			final Pair<ArrayDomainState<STATE>, Term> oldValueResult = processTerm(newState, selectTerm);
 			final Term oldValue = oldValueResult.getSecond();
 			final IProgramVar auxVar = mToolkit.createAuxVar(selectTerm.getSort());
@@ -205,7 +205,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		if (substitution.isEmpty()) {
 			constraints.add(assumption);
 		} else {
-			constraints.add(new Substitution(mToolkit.getManagedScript(), substitution).transform(assumption));
+			constraints.add(Substitution.apply(mToolkit.getManagedScript(), substitution, assumption));
 		}
 		final STATE newSubState =
 				mToolkit.handleAssumptionBySubdomain(newState.getSubState(), SmtUtils.and(script, constraints));

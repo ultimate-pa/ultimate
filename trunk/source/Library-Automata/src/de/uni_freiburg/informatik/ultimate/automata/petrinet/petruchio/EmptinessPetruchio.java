@@ -58,7 +58,8 @@ import petruchio.interfaces.petrinet.Transition;
  * @param <PLACE>
  *            Type of place labeling
  */
-public final class EmptinessPetruchio<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
+public final class EmptinessPetruchio<LETTER, PLACE>
+		extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
 	private final PetruchioWrapper<LETTER, PLACE> mPetruchio;
 
 	private final BoundedPetriNet<LETTER, PLACE> mBoundedNet;
@@ -103,8 +104,8 @@ public final class EmptinessPetruchio<LETTER, PLACE> extends UnaryNetOperation<L
 
 		// construct single invariant p_1 + ... + p_n where p_i \in places
 		/*
-		 * TODO Christian 2017-02-06: Sonar rightly complains that this variable is never actually used.
-		 *      It was used further below once because there is a commented occurrence of it.
+		 * TODO Christian 2017-02-06: Sonar rightly complains that this variable is never actually used. It was used
+		 * further below once because there is a commented occurrence of it.
 		 */
 		final Collection<Map<Place, Integer>> invariants = new ArrayList<>(1);
 		final Collection<Place> places = mPetruchio.getNet().getPlaces();
@@ -117,8 +118,7 @@ public final class EmptinessPetruchio<LETTER, PLACE> extends UnaryNetOperation<L
 		// construct the following target:
 		// at least one of { {p_j} | p_j \in P accepting } is coverable
 		final Collection<Map<Place, Integer>> targets = new ArrayList<>();
-		for (final PLACE pAcceptingBounded : mBoundedNet
-				.getAcceptingPlaces()) {
+		for (final PLACE pAcceptingBounded : mBoundedNet.getAcceptingPlaces()) {
 			// construct single target pAccepting >= 1
 			final Place pAcceptingPetruchio = mPetruchio.getpBounded2pPetruchio().get(pAcceptingBounded);
 			final Map<Place, Integer> placeWithOneToken = new IdentityHashMap<>();
@@ -133,7 +133,7 @@ public final class EmptinessPetruchio<LETTER, PLACE> extends UnaryNetOperation<L
 			mLogger.warn(targets);
 		}
 		final SimpleList<Transition> tracePetruchio = Backward.checkCoverability(mPetruchio.getNet(), targets);
-		//, invariants);
+		// , invariants);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("done");
 		}
@@ -156,7 +156,8 @@ public final class EmptinessPetruchio<LETTER, PLACE> extends UnaryNetOperation<L
 		}
 		for (final Transition tPetruchio : tracePetruchio) {
 			final LETTER symbol = mPetruchio.gettPetruchio2tBounded().get(tPetruchio).getSymbol();
-			final NestedRun<LETTER, PLACE> oneStepSubrun = new NestedRun<>(null, symbol, NestedWord.INTERNAL_POSITION, null);
+			final NestedRun<LETTER, PLACE> oneStepSubrun =
+					new NestedRun<>(null, symbol, NestedWord.INTERNAL_POSITION, null);
 			result = result.concatenate(oneStepSubrun);
 		}
 		return result;
@@ -185,7 +186,7 @@ public final class EmptinessPetruchio<LETTER, PLACE> extends UnaryNetOperation<L
 					(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mBoundedNet)).getResult())).getNestedRun();
 			correct = automataRun == null;
 		} else {
-			correct = new Accepts(mServices, mBoundedNet, mAcceptedRun.getWord()).getResult();
+			correct = new Accepts<>(mServices, mBoundedNet, mAcceptedRun.getWord()).getResult();
 		}
 
 		if (mLogger.isInfoEnabled()) {

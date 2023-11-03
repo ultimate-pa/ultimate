@@ -33,6 +33,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 public class JoinThreadCurrent extends CodeBlock implements IIcfgJoinTransitionThreadCurrent<IcfgLocation> {
 
@@ -55,7 +57,6 @@ public class JoinThreadCurrent extends CodeBlock implements IIcfgJoinTransitionT
 		return mJoinStatement;
 	}
 
-
 	@Override
 	public String getPrettyPrintedStatements() {
 		return mPrettyPrintedStatements;
@@ -75,6 +76,9 @@ public class JoinThreadCurrent extends CodeBlock implements IIcfgJoinTransitionT
 		mJoinSmtArguments = joinSmtArguments;
 	}
 
-
-
+	@Override
+	public void setTransitionFormula(final UnmodifiableTransFormula transFormula) {
+		assert TransFormulaUtils.hasInternalNormalForm(transFormula) : "Expected TF in internal normal form";
+		super.setTransitionFormula(transFormula);
+	}
 }

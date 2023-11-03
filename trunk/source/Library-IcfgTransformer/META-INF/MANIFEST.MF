@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-IcfgTransformer
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.icfgtransformer
-Bundle-Version: 0.2.2
+Bundle-Version: 0.2.3
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
@@ -21,6 +21,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.icfgtransformer,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.mohr,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr,
+ de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasrs,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.woelfing,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.mapelim.monniaux,

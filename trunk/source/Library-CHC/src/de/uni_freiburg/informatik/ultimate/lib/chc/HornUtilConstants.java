@@ -59,11 +59,11 @@ public final class HornUtilConstants {
 	}
 
 	public static String computeNameForHcVar(final String prefix, final HcPredicateSymbol predSym, final int index,
-			final String sortStringRaw) {
+			final String identifier) {
 
 		final String name = HornUtilConstants.sanitzePredName(predSym.getName());
-		final String sortString = sortStringRaw.replaceAll(" ", "_").replaceAll("[()]", "");
-		return String.format("%s_%s_%d_%s", prefix, name, index, sortString);
+		final String identifierString = identifier.replaceAll(" ", "_").replaceAll("[()]", "");
+		return String.format("%s_%s_%s_%d", prefix, name, identifierString, index);
 	}
 
 	/**
@@ -78,23 +78,14 @@ public final class HornUtilConstants {
 		assert !headPredSymProcNameRaw.contains(".AT") : "naming might clash";
 		assert !headPredSymProcNameRaw.contains(".HSH") : "naming might clash";
 		assert !headPredSymProcNameRaw.contains(".DSH") : "naming might clash";
-		final String headPredSymProcName = headPredSymProcNameRaw
-				.replaceAll("@", ".AT")
-				.replaceAll("#", ".HSH")
-				.replaceAll("-", ".DSH")
-				.replaceAll("\\$", ".DLR")
-				.replaceAll(":", ".CLN");
-		return headPredSymProcName;
+		return headPredSymProcNameRaw.replaceAll("@", ".AT").replaceAll("#", ".HSH").replaceAll("-", ".DSH")
+				.replaceAll("\\$", ".DLR").replaceAll(":", ".CLN");
 	}
 
 	public static String sanitzeSortNameForBoogie(final Sort sort) {
 		assert !sort.toString().contains(".OP") : "naming might clash";
 		assert !sort.toString().contains(".CP") : "naming might clash";
-		final String res = sort.toString()
-				.replaceAll("\\(", ".OP")
-				.replaceAll("\\)", ".CP")
-				.replaceAll(" ", "_");
-		return res;
+		return sort.toString().replaceAll("\\(", ".OP").replaceAll("\\)", ".CP").replaceAll(" ", "_");
 	}
 
 }

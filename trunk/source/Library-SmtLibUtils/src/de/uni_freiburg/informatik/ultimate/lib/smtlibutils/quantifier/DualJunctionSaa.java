@@ -32,9 +32,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Context;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain.ElimStorePlainException;
@@ -148,22 +146,30 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 
 	private EliminationResult tryToEliminateOne2(final EliminationTask inputEt) {
 		final Term pnf = new PrenexNormalForm(mMgdScript).transform(inputEt.getTerm());
-		final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
-		final Term term = qs.getInnerTerm();
-		final EliminationTask et = inputEt.update(term);
+		final QuantifierSequence qs = new QuantifierSequence(mMgdScript, pnf);
+		final EliminationTask et = inputEt.update(qs.getInnerTerm());
 		final EliminationResult res = tryToEliminateOne3(et);
 		if (res == null) {
 			return null;
 		} else {
-			final QuantifierSequence qsForResult = new QuantifierSequence(mScript, res.getEliminationTask().getTerm(),
-					qs.getQuantifierBlocks());
-			final Term resultTerm = qsForResult.toTerm();
-			return new EliminationResult(res.getEliminationTask().update(resultTerm), res.getNewEliminatees());
+			if (qs.getQuantifierBlocks().isEmpty()) {
+				return res;
+			} else {
+				// The new quantifiers have to be innermost.
+				// See {@link QuantifierEliminationRegressionTest#suse01}
+				// TODO 20220607 Matthias: Difficult decision: Should we do an elimination of
+				// inner quantifiers here? See #innerAlternatingFirst
+				final EliminationTask etWithNewEliminatees = res.integrateNewEliminatees();
+				final QuantifierSequence qsForResult = new QuantifierSequence(mMgdScript,
+						etWithNewEliminatees.toTerm(mMgdScript.getScript()), qs.getQuantifierBlocks());
+				final Term resultTerm = qsForResult.toTerm();
+				return new EliminationResult(etWithNewEliminatees.update(resultTerm), Collections.emptySet());
+			}
 		}
 	}
 
 	private EliminationResult tryToEliminateOne3(final EliminationTask inputEt) {
-		final EliminationTaskPlain res = tryToEliminate(inputEt.getQuantifier(), inputEt.getTerm(),
+		final EliminationTask res = tryToEliminate(inputEt.getQuantifier(), inputEt.getTerm(),
 				inputEt.getContext(), inputEt.getEliminatees().iterator().next());
 		if (res == null) {
 			return null;
@@ -175,11 +181,11 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 		}
 	}
 
-	private EliminationTaskPlain tryToEliminate(final int quantifier, final Term term, final Context context,
+	private EliminationTask tryToEliminate(final int quantifier, final Term term, final Context context,
 			final TermVariable eliminatee) {
-		final EliminationTaskPlain inputEtp = new EliminationTaskPlain(quantifier, Collections.singleton(eliminatee),
-				term, context.getCriticalConstraint());
-		EliminationTaskPlain res1;
+		final EliminationTask inputEtp = new EliminationTask(quantifier, Collections.singleton(eliminatee),
+				term, context);
+		EliminationTask res1;
 		try {
 			res1 = ElimStorePlain.applyComplexEliminationRules(mServices, mLogger, mMgdScript, inputEtp);
 		} catch (final SMTLIBException e) {

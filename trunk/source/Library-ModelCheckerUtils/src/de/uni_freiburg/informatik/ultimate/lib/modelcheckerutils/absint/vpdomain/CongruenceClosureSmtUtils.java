@@ -31,10 +31,10 @@ public class CongruenceClosureSmtUtils {
 		}
 
 		final List<Term> elementEqualities = pa.getSupportingElementEqualities().entrySet().stream()
-				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
+				.map(en -> SmtUtils.binaryEquality(script, en.getKey().getTerm(), en.getValue().getTerm()))
 				.collect(Collectors.toList());
 		final List<Term> elementDisequalities = pa.getElementDisequalities().getSetOfPairs().stream()
-				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
+				.map(pair -> SmtUtils.distinct(script, pair.getKey().getTerm(), pair.getValue().getTerm()))
 				.collect(Collectors.toList());
 
 		final List<Term> result = new ArrayList<>(elementEqualities.size() + elementDisequalities.size());
@@ -97,7 +97,8 @@ public class CongruenceClosureSmtUtils {
 				&& l1.getSort().getRealSort() == l2.getSort().getRealSort() ;
 		for (final Entry<Term, Term> en :
 				CrossProducts.binarySelectiveCrossProduct(literalTerms, false, pairSelector)) {
-			nonTheoryLiteralDisequalities.add(script.term("not", script.term("=", en.getKey(), en.getValue())));
+					nonTheoryLiteralDisequalities
+							.add(script.term("not", SmtUtils.binaryEquality(script, en.getKey(), en.getValue())));
 		}
 		return nonTheoryLiteralDisequalities;
 	}

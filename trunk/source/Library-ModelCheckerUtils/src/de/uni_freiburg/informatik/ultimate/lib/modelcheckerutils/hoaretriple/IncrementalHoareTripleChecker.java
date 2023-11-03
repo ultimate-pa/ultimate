@@ -38,7 +38,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.OldVarsAssignmentCache;
@@ -49,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.GlobalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -282,7 +282,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public void releaseLock() {
 		clearAssertionStack();
-		assert !mManagedScript.isLocked();
+		assert !mManagedScript.isLocked() : "script should not be locked";
 	}
 
 	private LBool assertPrecondition(final IPredicate p) {
@@ -502,7 +502,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		}
 		final Collection<Term> conjunction = new ArrayList<>();
 		for (final IProgramVar bv : vars) {
-			if (bv instanceof GlobalBoogieVar) {
+			if (bv instanceof GlobalProgramVar) {
 				IProgramNonOldVar bnov;
 				if (bv instanceof IProgramOldVar) {
 					bnov = ((IProgramOldVar) bv).getNonOldVar();
@@ -609,9 +609,9 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		mHierConstants.beginScope();
 		mAssertedPostcond = p;
 
-		// rename assignedVars to primed vars
+		// rename the variables that are assigned by the return to primed vars
 		final Set<IProgramVar> assignedVars =
-				((IReturnAction) mAssertedAction).getAssignmentOfReturn().getAssignedVars();
+				((IReturnAction) mAssertedAction).getAssignmentOfReturn().getOutVars().keySet();
 		Term renamedFormula = renameVarsToPrimedConstants(assignedVars, p.getFormula(), mManagedScript, this);
 
 		final String callee = mAssertedAction.getPrecedingProcedure();
@@ -730,7 +730,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		final Set<Term> selectTerms =
 				SubTermFinder.find(tf.getFormula(), x -> isSuitableArrayReadTerm(x, inAndOutVars), false);
 		for (final Term selectTerm : selectTerms) {
-			final Term selectTermAllOut = new Substitution(mManagedScript, toXVarsMap.apply(tf)).transform(selectTerm);
+			final Term selectTermAllOut = Substitution.apply(mManagedScript, toXVarsMap.apply(tf), selectTerm);
 			final Term selectTermWithDefaultVars = xVarToDefaultVar.apply(selectTermAllOut);
 			// version of the select term as is was asserted
 			final Term selectTermClosed = UnmodifiableTransFormula.computeClosedFormula(selectTermAllOut,

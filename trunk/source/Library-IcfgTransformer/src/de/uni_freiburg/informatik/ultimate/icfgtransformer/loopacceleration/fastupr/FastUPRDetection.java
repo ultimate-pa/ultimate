@@ -80,6 +80,14 @@ public class FastUPRDetection<INLOC extends IcfgLocation> {
 		return result;
 	}
 
+	public Map<INLOC, Deque<IcfgEdge>> getLoopEdgePathsWithLoopHead() {
+		final Map<INLOC, Deque<IcfgEdge>> result = new HashMap<>();
+		for (final INLOC loopHead : mLoopHeads) {
+			result.put(loopHead, getPathEdges(loopHead));
+		}
+		return result;
+	}
+
 	List<Deque<INLOC>> getLoopPaths() {
 		final List<Deque<INLOC>> loopPaths = new ArrayList<>();
 		for (final INLOC loopHead : mLoopHeads) {
@@ -129,8 +137,8 @@ public class FastUPRDetection<INLOC extends IcfgLocation> {
 		while (!currentPath.isEmpty()) {
 			if (currentPath.getLast().getOutgoingEdges().size() > currentPathIndices.getLast()) {
 
-				final INLOC target = (INLOC) currentPath.getLast().getOutgoingEdges().get(currentPathIndices.getLast())
-						.getTarget();
+				final INLOC target =
+						(INLOC) currentPath.getLast().getOutgoingEdges().get(currentPathIndices.getLast()).getTarget();
 
 				final int index = currentPathIndices.removeLast();
 
@@ -179,7 +187,8 @@ public class FastUPRDetection<INLOC extends IcfgLocation> {
 		return new ArrayDeque<>();
 	}
 
-	private static Deque<IcfgEdge> calculatePathEdges(IcfgEdge lastEdge, Map<IcfgEdge, IcfgEdge> parentMap) {
+	private static Deque<IcfgEdge> calculatePathEdges(final IcfgEdge lastEdge,
+			final Map<IcfgEdge, IcfgEdge> parentMap) {
 		final Deque<IcfgEdge> result = new ArrayDeque<>();
 		final HashSet<IcfgEdge> added = new HashSet<>();
 		IcfgEdge current = lastEdge;

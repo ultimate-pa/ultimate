@@ -46,31 +46,35 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Class of tests checking the correctness of various functions needed for computation of rational vector addition
- * systems.
+ * Class of tests checking the functionality of various operations needed for the computation of rational vector
+ * addition systems with resets (Qvasr).
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  *
  */
 public class QvasrAbstractorTest {
 
-	private IUltimateServiceProvider mServices;
 	private Script mScript;
 	private ManagedScript mMgdScript;
-	private ILogger mLogger;
 	private Sort mRealSort;
 
+	/**
+	 * Testsuite setup.
+	 */
 	@Before
 	public void setUp() {
-		mServices = UltimateMocks.createUltimateServiceProviderMock();
-		mLogger = mServices.getLoggingService().getLogger("lol");
+		final IUltimateServiceProvider mServices = UltimateMocks.createUltimateServiceProviderMock();
 		mScript = UltimateMocks.createZ3Script();
 		mMgdScript = new ManagedScript(mServices, mScript);
+		final ILogger mLogger = mServices.getLoggingService().getLogger("log");
 		mScript.setLogic(Logics.ALL);
 		mRealSort = SmtSortUtils.getRealSort(mMgdScript);
 		mLogger.info("Before");
 	}
 
+	/**
+	 * Test expand Multiplication.
+	 */
 	@Test
 	public void testExpandRealMultiplication() {
 		final Term zero = mScript.decimal("0");
@@ -180,6 +184,9 @@ public class QvasrAbstractorTest {
 				IsEqual.equalTo(threeTimesDivXYP1PDivYXYResult.toStringDirect()));
 	}
 
+	/**
+	 * Test the simplification of divisions.
+	 */
 	@Test
 	public void testSimplifyRealDivision() {
 		final Term zero = mScript.decimal("0");
@@ -240,8 +247,12 @@ public class QvasrAbstractorTest {
 		final Term yPXP1OveryPXP1OverZP2Simplified =
 				QvasrAbstractor.simplifyRealDivision(mMgdScript, xPyPOne, yPXP1OverZP2);
 		MatcherAssert.assertThat(yPXP1OveryPXP1OverZP2Simplified, IsEqual.equalTo(zP2));
+
 	}
 
+	/**
+	 * Test the simplification of multiplications.
+	 */
 	@Test
 	public void testSimplifyRealMultiplication() {
 		final Term zero = mScript.decimal("0");
@@ -295,6 +306,9 @@ public class QvasrAbstractorTest {
 		MatcherAssert.assertThat(yTimesXOverY, IsEqual.equalTo(x));
 	}
 
+	/**
+	 * Test simplification of differences.
+	 */
 	@Test
 	public void testSimplifyRealSubstraction() {
 		final Term zero = mScript.decimal("0");
@@ -360,6 +374,9 @@ public class QvasrAbstractorTest {
 		MatcherAssert.assertThat(xPYOverZMinxPThreeOverY, IsEqual.equalTo(xPYOverZMinxPThreeOverYResult));
 	}
 
+	/**
+	 * Test the simplification of divisions.
+	 */
 	@Test
 	public void testReduceRealDivision() {
 		final TermVariable x = mScript.variable("x", mRealSort);

@@ -1,5 +1,5 @@
 (set-option :print-success false)
-(set-option :produce-proofs true)
+(set-option :produce-interpolants true)
 (set-option :interpolant-check-mode true)
 (set-option :verbosity 3)
 (set-logic QF_UF)

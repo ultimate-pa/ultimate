@@ -46,9 +46,9 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator.EvalResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.OctagonRelation;
@@ -780,8 +780,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 	private static Term getTermVar(final IProgramVarOrConst var) {
 		if (var instanceof IProgramVar) {
 			return ((IProgramVar) var).getTermVariable();
-		} else if (var instanceof BoogieConst) {
-			return ((BoogieConst) var).getDefaultConstant();
+		} else if (var instanceof ProgramConst) {
+			return ((ProgramConst) var).getDefaultConstant();
 		}
 		return null;
 	}
@@ -1166,7 +1166,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 			return EvalResult.FALSE;
 		}
 		final OctagonRelation octRel;
-		final PolynomialRelation polyRel = PolynomialRelation.convert(script, term);
+		final PolynomialRelation polyRel = PolynomialRelation.of(script, term);
 		if (polyRel == null || !polyRel.isAffine()) {
 			//term is not an affine relation
 			return EvalResult.UNKNOWN; // alternatively apply SMT solver

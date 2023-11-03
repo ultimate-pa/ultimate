@@ -1,0 +1,344 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.4//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.4.dtd">
+<benchmark tool="ultimateautomizer" timelimit="90s" hardtimelimit="90s" memlimit="8GB" cpuCores="2">
+  <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  <option name="--force-no-wrapper"/>
+  <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+  <option name="--traceabstraction.trace.refinement.strategy">FIXED_PREFERENCES</option>
+  <option name="--traceabstraction.compute.interpolants.along.a.counterexample">Craig_NestedInterpolation</option>
+  <option name="--traceabstraction.smt.solver">Internal_SMTInterpol</option>
+  <option name="--traceabstraction.compute.trace.for.counterexample.result">false</option>
+  <rundefinition name="Vanilla">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">false</option>
+  </rundefinition>
+  <rundefinition name="MUSes Default">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes FIRST">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=FIRST</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes SMALLEST 5s">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SMALLEST</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes SMALLEST 1s">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=1000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SMALLEST</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes BIGGEST">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=BIGGEST</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes LOWLEXORDER">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=LOWLEXORDER</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes HIGHLEXORDER">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=HIGHLEXORDER</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes SHALLOWEST">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SHALLOWEST</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes DEEPEST">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=DEEPEST</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes NARROWEST">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=NARROWEST</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes WIDEST">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=WIDEST</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes WIDESTAMONGSMALL 2">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=WIDESTAMONGSMALL</option>
+    <option name="--traceabstraction.additional.smt.options">tolerance=0.2</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes WIDESTAMONGSMALL 4">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=WIDESTAMONGSMALL</option>
+    <option name="--traceabstraction.additional.smt.options">tolerance=0.4</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes WIDESTAMONGSMALL 6">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=WIDESTAMONGSMALL</option>
+    <option name="--traceabstraction.additional.smt.options">tolerance=0.6</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes WIDESTAMONGSMALL 8">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=WIDESTAMONGSMALL</option>
+    <option name="--traceabstraction.additional.smt.options">tolerance=0.8</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes WIDESTAMONGSMALL 10">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=WIDESTAMONGSMALL</option>
+    <option name="--traceabstraction.additional.smt.options">tolerance=1.0</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes SMALLESTAMONGWIDE 1">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SMALLESTAMONGWIDE</option>
+    <option name="--traceabstraction.additional.smt.options">tolerance=0.1</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes SMALLESTAMONGWIDE 2">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SMALLESTAMONGWIDE</option>
+    <option name="--traceabstraction.additional.smt.options">tolerance=0.2</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes SMALLESTAMONGWIDE 3">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SMALLESTAMONGWIDE</option>
+    <option name="--traceabstraction.additional.smt.options">tolerance=0.3</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes SMALLESTAMONGWIDE 4">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SMALLESTAMONGWIDE</option>
+    <option name="--traceabstraction.additional.smt.options">tolerance=0.4</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes SMALLESTAMONGWIDE 5">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SMALLESTAMONGWIDE</option>
+    <option name="--traceabstraction.additional.smt.options">tolerance=0.5</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+  </rundefinition>
+</benchmark>

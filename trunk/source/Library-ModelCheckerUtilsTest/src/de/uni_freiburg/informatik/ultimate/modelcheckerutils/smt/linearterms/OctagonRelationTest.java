@@ -83,29 +83,51 @@ public class OctagonRelationTest {
 	}
 
 	@Test
-	public void testOneVar() {
-		Assert.assertEquals("(+x) - (-x) <= 14", octRelAsString("(<= x 7)"));
-		Assert.assertEquals("(-x) - (+x) < 14", octRelAsString("(< (- x) 7)"));
-		Assert.assertEquals("(+x) - (-x) >= -14", octRelAsString("(>= x (- 7))"));
-		Assert.assertEquals("(+x) - (-x) > 14", octRelAsString("(> x 7)"));
-		Assert.assertEquals("(+x) - (-x) <= 14/3", octRelAsString("(<= (* 3 x) 7)"));
+	public void testOneVarInt() {
+		Assert.assertEquals("(+a) - (-a) <= 14", octRelAsString("(<= a 7)"));
+		Assert.assertEquals("(-a) - (+a) < 14", octRelAsString("(< (- a) 7)"));
+		Assert.assertEquals("(+a) - (-a) >= -14", octRelAsString("(>= a (- 7))"));
+		Assert.assertEquals("(+a) - (-a) > 14", octRelAsString("(> a 7)"));
+		Assert.assertEquals("(+a) - (-a) <= 4", octRelAsString("(<= (* 3 a) 7)"));
 
-		Assert.assertEquals("(-a) - (+a) = 5", octRelAsString("(= (- 5) (* a 2))"));
+		Assert.assertEquals("(-a) - (+a) = 6", octRelAsString("(= (- 6) (* a 2))"));
 	}
 
 	@Test
-	public void testTwoVar() {
-		Assert.assertEquals("(+x) - (+y) <= 2", octRelAsString("(<= (- x y) 2)"));
+	public void testOneVarReal() {
+		Assert.assertEquals("(+x) - (-x) <= 14", octRelAsString("(<= x 7.0)"));
+		Assert.assertEquals("(-x) - (+x) < 14", octRelAsString("(< (- x) 7.0)"));
+		Assert.assertEquals("(+x) - (-x) >= -14", octRelAsString("(>= x (- 7.0))"));
+		Assert.assertEquals("(+x) - (-x) > 14", octRelAsString("(> x 7.0)"));
+		Assert.assertEquals("(+x) - (-x) <= 14/3", octRelAsString("(<= (* 3 x) 7.0)"));
+
+		Assert.assertEquals("(-x) - (+x) = 5", octRelAsString("(= (- 5.0) (* x 2))"));
+	}
+
+	@Test
+	public void testTwoVarInt() {
+		Assert.assertEquals("(+a) - (+b) <= 2", octRelAsString("(<= (- a b) 2)"));
+		Assert.assertEquals("(-a) - (+b) < -3", octRelAsString("(< 3 (+ a b))"));
+		Assert.assertEquals("(+a) - (-b) = 4", octRelAsString("(= (+ (* 3 a) (* 3 b)) 12)"));
+		Assert.assertEquals("(-a) - (-b) distinct 4", octRelAsString("(distinct (+ (* a (- 3)) (* 3 b)) 12)"));
+
+		Assert.assertEquals("(+a) - (+b) > 4", octRelAsString("(> (+ a (* (- 3) b)) (- 12 (* a 2)))"));
+	}
+
+	@Test
+	public void testTwoVarReal() {
+		Assert.assertEquals("(+x) - (+y) <= 2", octRelAsString("(<= (- x y) 2.0)"));
 		Assert.assertEquals("(-x) - (+y) < -3", octRelAsString("(< 3.0 (+ x y))"));
-		Assert.assertEquals("(+x) - (-y) = 4", octRelAsString("(= (+ (* 3 x) (* 3 y)) 12)"));
-		Assert.assertEquals("(-x) - (-y) distinct 4", octRelAsString("(distinct (+ (* x (- 3)) (* 3 y)) 12)"));
+		Assert.assertEquals("(+x) - (-y) = 4", octRelAsString("(= (+ (* 3 x) (* 3 y)) 12.0)"));
+		Assert.assertEquals("(-x) - (-y) distinct 4", octRelAsString("(distinct (+ (* x (- 3)) (* 3 y)) 12.0)"));
 
 		Assert.assertEquals("(+x) - (+y) > 4", octRelAsString("(> (+ x (* (- 3.0) y)) (- 12.0 (* x 2.0)))"));
 	}
 
 	@Test
 	public void testNoCommonCoefficient() {
-		Assert.assertNull(octRelAsString("(<= (+ (* 3 x) (* 4 y)) 5)"));
+		Assert.assertNull(octRelAsString("(<= (+ (* 3 a) (* 4 b)) 5)"));
+		Assert.assertNull(octRelAsString("(= (- 5) (* a 2))"));
 	}
 
 	@Test
@@ -117,19 +139,32 @@ public class OctagonRelationTest {
 	}
 
 	/**
-	 * 2018-12-25 Matthias: Shows that {@link AffineRelation} does not support
-	 * comparison of Int and Real. Support for such comparisons is required by
-	 * SMT-LIB but some solvers will not support it and it might get removed form
-	 * the standard.
+	 * 2018-12-25 Matthias: Shows that {@link AffineRelation} does not support comparison of Int and Real. Support for
+	 * such comparisons is required by SMT-LIB but some solvers will not support it and it might get removed form the
+	 * standard.
 	 */
-	public void bugsInAffineRelation() {
-		// TODO fix? Z3 allows comparison "Int = Real"
+	public void comparisonMixed() {
 		Assert.assertEquals("(+x) - (+a) = 0", octRelAsString("(= x a)"));
 	}
 
+	public void testOneVarMixed() {
+		Assert.assertEquals("(+x) - (-x) <= 14", octRelAsString("(<= x 7)"));
+		Assert.assertEquals("(-x) - (+x) < 14", octRelAsString("(< (- x) 7)"));
+		Assert.assertEquals("(+x) - (-x) >= -14", octRelAsString("(>= x (- 7))"));
+		Assert.assertEquals("(+x) - (-x) > 14", octRelAsString("(> x 7)"));
+		Assert.assertEquals("(+x) - (-x) <= 14/3", octRelAsString("(<= (* 3 x) 7)"));
+	}
+
+	public void testTwoVarMixed() {
+		Assert.assertEquals("(+x) - (+y) <= 2", octRelAsString("(<= (- x y) 2)"));
+		Assert.assertEquals("(-x) - (+y) < -3", octRelAsString("(< 3 (+ x y))"));
+		Assert.assertEquals("(+x) - (-y) = 4", octRelAsString("(= (+ (* 3 x) (* 3 y)) 12)"));
+		Assert.assertEquals("(-x) - (-y) distinct 4", octRelAsString("(distinct (+ (* x (- 3)) (* 3 y)) 12)"));
+	}
+
 	private String octRelAsString(final String termAsString) {
-		final PolynomialRelation polyRel = PolynomialRelation.convert(mScript,
-				TermParseUtils.parseTerm(mScript, termAsString));
+		final PolynomialRelation polyRel =
+				PolynomialRelation.of(mScript, TermParseUtils.parseTerm(mScript, termAsString));
 		if (polyRel == null) {
 			throw new IllegalArgumentException("Invalid test case. Term was not affine.");
 		}

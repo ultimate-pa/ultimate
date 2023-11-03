@@ -30,15 +30,15 @@ public class PrintTerm {
 	/* This class iterates the term in a non-recursive way.  To achieve this
 	 * it uses a todo stack, which contains terms and/or strings.
 	 */
-	private final ArrayDeque<Object> mTodo = new ArrayDeque<Object>();
+	protected final ArrayDeque<Object> mTodo = new ArrayDeque<>();
 	/**
 	 * Convert a term into an appendable.
 	 * @param appender The appendable.
 	 * @param term     The term.
 	 */
-	public void append(Appendable appender, Term term) {
+	public void append(final Appendable appender, final Term term) {
 		try {
-			mTodo.push(term);
+			mTodo.add(term);
 			run(appender);
 		} catch (final IOException ex) {
 			throw new RuntimeException("Appender throws IOException", ex);
@@ -50,27 +50,29 @@ public class PrintTerm {
 	 * @param appender The appendable.
 	 * @param sort     The sort.
 	 */
-	public void append(Appendable appender, Sort sort) {
+	public void append(final Appendable appender, final Sort sort) {
 		try {
-			mTodo.push(sort);
+			mTodo.add(sort);
 			run(appender);
 		} catch (final IOException ex) {
 			throw new RuntimeException("Appender throws IOException", ex);
 		}
 	}
+
 	/**
 	 * Append an s-expression.  The s-expression might contain terms.
 	 * @param appender The appendable.
 	 * @param sexpr    The s-expression.
 	 */
-	public void append(Appendable appender, Object[] sexpr) {
+	public void append(final Appendable appender, final Object[] sexpr) {
 		try {
-			mTodo.push(sexpr);
+			mTodo.add(sexpr);
 			run(appender);
 		} catch (final IOException ex) {
 			throw new RuntimeException("Appender throws IOException", ex);
 		}
 	}
+
 	/**
 	 * Ensure the identifier is SMTLIB 2 compliant.  If a symbol that is not
 	 * allowed due to the SMTLIB 2 standard is encountered, the whole identifier
@@ -78,7 +80,7 @@ public class PrintTerm {
 	 * @param id An unquoted identifier.
 	 * @return SMTLIB 2 compliant identifier.
 	 */
-	public static String quoteIdentifier(String id) {
+	public static String quoteIdentifier(final String id) {
 		assert id.indexOf('|')  < 0 && id.indexOf('\\') < 0;
 		for (int idx = 0; idx < id.length(); idx++) {
 			final char c = id.charAt(idx);
@@ -99,21 +101,44 @@ public class PrintTerm {
 	 * @return quoted identifier if value is String, otherwise value
 	 * (the input) is returned.
 	 */
-	public static Object quoteObjectIfString(Object value) {
+	public static Object quoteObjectIfString(final Object value) {
 		if (value instanceof String) {
-			return quoteIdentifier((String) value);
+			final String valueAsString = String.valueOf(value);
+			if (valueAsString.charAt(0) == '|' && valueAsString.charAt(valueAsString.length() - 1) == '|') {
+				return value;
+			} else {
+				return quoteIdentifier(valueAsString);
+			}
 		} else {
 			return value;
 		}
 	}
 
-	private void run(Appendable appender) throws IOException {
+	/**
+	 * Walk over a term and add its components to the todo queue.
+	 *
+	 * @param term the term.
+	 */
+	protected void walkTerm(final Term term) {
+		term.toStringHelper(mTodo);
+	}
+
+	/**
+	 * Walk over a sort and add its components to the todo queue.
+	 *
+	 * @param sort the sort.
+	 */
+	protected void walkSort(final Sort sort) {
+		sort.toStringHelper(mTodo);
+	}
+
+	private void run(final Appendable appender) throws IOException {
 		while (!mTodo.isEmpty()) {
 			final Object next = mTodo.removeLast();
 			if (next instanceof Term) {
-				((Term)next).toStringHelper(mTodo);
+				walkTerm((Term) next);
 			} else if (next instanceof Sort) {
-				((Sort)next).toStringHelper(mTodo);
+				walkSort((Sort) next);
 			} else if (next instanceof Object[]) {
 				final Object[] arr = (Object[]) next;
 				mTodo.addLast(")");

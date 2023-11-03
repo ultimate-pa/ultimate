@@ -26,11 +26,14 @@ import java.util.Collection;
 import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.LitInfo;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.Occurrence;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitesimalNumber;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
 /**
@@ -229,17 +232,6 @@ public class CCInterpolator {
 	}
 
 	/**
-	 * For a CC lemma, get the single subpath.
-	 *
-	 * @return the single proof path in the annotation.
-	 */
-	private Term[] getPath(final InterpolatorClauseTermInfo clauseInfo) {
-		final Object[] annotations = (Object[]) clauseInfo.getLemmaAnnotation();
-		assert annotations.length == 3 && annotations[1].equals(":subpath");
-		return (Term[]) annotations[2];
-	}
-
-	/**
 	 * Compute the interpolants for a congruence lemma.
 	 *
 	 * @param left
@@ -254,6 +246,7 @@ public class CCInterpolator {
 		final Term[] rightParams = right.getParameters();
 		final LitInfo[] paramInfos = new LitInfo[leftParams.length];
 		assert left.getFunction() == right.getFunction() && leftParams.length == rightParams.length;
+
 		for (int i = 0; i < leftParams.length; i++) {
 			if (leftParams[i] == rightParams[i]) {
 				paramInfos[i] = null;
@@ -264,20 +257,32 @@ public class CCInterpolator {
 
 		for (int part = 0; part < mNumInterpolants; part++) {
 			if (mDiseqOccurrences.isBorShared(part)) {
-				// collect A-local literals
 				final ArrayDeque<Term> terms = new ArrayDeque<>(leftParams.length);
 				for (int paramNr = 0; paramNr < leftParams.length; paramNr++) {
+					// Collect A-local literals.
 					if (paramInfos[paramNr] != null && paramInfos[paramNr].isALocal(part)) {
 						terms.add(mTheory.term("=", leftParams[paramNr], rightParams[paramNr]));
+					} else if (paramInfos[paramNr] != null && paramInfos[paramNr].isMixed(part)) {
+						// Collect A-local parts in mixed parameter equalities.
+						final TermVariable mixedVar = paramInfos[paramNr].getMixedVar();
+						final Term sideA = paramInfos[paramNr].getLhsOccur().isALocal(part) ? leftParams[paramNr]
+								: rightParams[paramNr];
+						terms.add(mTheory.term("=", mixedVar, sideA));
 					}
 				}
 				interpolants[part] = mTheory.and(terms.toArray(new Term[terms.size()]));
 			} else if (mDiseqOccurrences.isALocal(part)) {
-				// collect negated B-local literals
 				final ArrayDeque<Term> terms = new ArrayDeque<>(leftParams.length);
 				for (int paramNr = 0; paramNr < leftParams.length; paramNr++) {
+					// Collect negated B-local literals.
 					if (paramInfos[paramNr] != null && paramInfos[paramNr].isBLocal(part)) {
 						terms.add(mTheory.not(mTheory.term("=", leftParams[paramNr], rightParams[paramNr])));
+					} else if (paramInfos[paramNr] != null && paramInfos[paramNr].isMixed(part)) {
+						// Collect B-local parts in mixed parameter equalities.
+						final TermVariable mixedVar = paramInfos[paramNr].getMixedVar();
+						final Term sideB = paramInfos[paramNr].getLhsOccur().isBLocal(part) ? leftParams[paramNr]
+								: rightParams[paramNr];
+						terms.add(mTheory.not(mTheory.term("=", mixedVar, sideB)));
 					}
 				}
 				interpolants[part] = mTheory.or(terms.toArray(new Term[terms.size()]));
@@ -285,6 +290,7 @@ public class CCInterpolator {
 				// the congruence is mixed.  In this case f must be shared and we need to find boundary
 				// terms for every parameter.
 				final Term[] boundaryTerms = new Term[leftParams.length];
+				final boolean isLeftAlocal = mInterpolator.getOccurrence(left).isALocal(part);
 				for (int paramNr = 0; paramNr < leftParams.length; paramNr++) {
 					if (paramInfos[paramNr] == null) {
 						// term occurs left and right, so this is obviously shared
@@ -292,13 +298,15 @@ public class CCInterpolator {
 					} else if (paramInfos[paramNr].isMixed(part)) {
 						// mixed case: take mixed var
 						boundaryTerms[paramNr] = paramInfos[paramNr].getMixedVar();
-					} else if (mInterpolator.getOccurrence(leftParams[paramNr]).isAB(part)) {
-						// the left term is shared, use it
-						boundaryTerms[paramNr] = leftParams[paramNr];
+					} else if (paramInfos[paramNr].isAorShared(part)) {
+						// the argument of the B-local side of the congruence is shared
+						boundaryTerms[paramNr] = isLeftAlocal ? rightParams[paramNr] : leftParams[paramNr];
+						assert mInterpolator.getOccurrence(boundaryTerms[paramNr]).isAB(part);
 					} else {
-						// if it is not the left, the right must be shared, as the literal is not mixed.
-						assert mInterpolator.getOccurrence(rightParams[paramNr]).isAB(part);
-						boundaryTerms[paramNr] = rightParams[paramNr];
+						// the argument of the A-local side of the congruence is shared, as the argument equality is not
+						// mixed
+						boundaryTerms[paramNr] = isLeftAlocal ? leftParams[paramNr] : rightParams[paramNr];
+						assert mInterpolator.getOccurrence(boundaryTerms[paramNr]).isAB(part);
 					}
 				}
 				final Term sharedTerm = mTheory.term(left.getFunction(), boundaryTerms);
@@ -391,10 +399,133 @@ public class CCInterpolator {
 		return interpolants;
 	}
 
-	public Term[] computeInterpolants(final Term proofTerm) {
+	public Term[] interpolateInstantiation(final InterpolatorClauseInfo proofTermInfo) {
+		assert proofTermInfo.getLemmaType().equals(":inst");
+
+		final Term[] interpolants = new Term[mNumInterpolants];
+
+		// The literals in the instantiation lemma.
+		final Term[] lits = proofTermInfo.getLiterals();
+
+		// Get occurrence of quantified literal.
+		final Term quantLit = mInterpolator.getAtom(lits[0]);
+		final Occurrence quantLitInfo = mInterpolator.getAtomOccurenceInfo(quantLit);
+
+		for (int part = 0; part < mNumInterpolants; part++) {
+			final ArrayDeque<Term> terms = new ArrayDeque<>(lits.length);
+			if (quantLitInfo.isALocal(part)) {
+				// Instance is in A.
+				for (int i = 0; i < lits.length; i++) {
+					final Term atom = mInterpolator.getAtom(lits[i]);
+					final LitInfo litInfo = mInterpolator.getAtomOccurenceInfo(atom);
+					// Collect all B-local or shared literals. (We do not explicitly negate them, as
+					// literals in the lemma are already the negation of literals in the conflict.)
+					if (litInfo.isBLocal(part)) {
+						terms.add(lits[i]);
+					} else if (litInfo.isMixed(part)) {
+						final TermVariable mixedVar = litInfo.getMixedVar();
+						InterpolatorAtomInfo atomInfo = mInterpolator.getAtomTermInfo(atom);
+						if (atomInfo.isCCEquality()) {
+							// Collect B-part from splitting mixed literal.
+							final Term sideB = litInfo.getLhsOccur().isBLocal(part)
+									? ((ApplicationTerm) atom).getParameters()[0]
+									: ((ApplicationTerm) atom).getParameters()[1];
+	
+							if (mInterpolator.isNegatedTerm(lits[i])) {
+								terms.add(mTheory.not(mTheory.term(SMTLIBConstants.EQUALS, mixedVar, sideB)));
+							} else {
+								terms.add(mTheory.term(Interpolator.EQ, mixedVar, sideB));
+							}
+						} else if (atomInfo.isLAEquality() || atomInfo.isBoundConstraint()) {
+							final InterpolatorAffineTerm aPart = litInfo.getAPart(part);
+							final InterpolatorAffineTerm bPart = new InterpolatorAffineTerm();
+							bPart.add(Rational.ONE, atomInfo.getAffineTerm());
+							bPart.add(Rational.MONE, aPart);
+							if (atomInfo.isLAEquality()) {
+								final Term sideB = bPart.toSMTLib(mTheory, atomInfo.isInt());
+								if (mInterpolator.isNegatedTerm(lits[i])) {
+									terms.add(mTheory.not(mTheory.term(SMTLIBConstants.EQUALS, mixedVar, sideB)));
+								} else {
+									terms.add(mTheory.term(Interpolator.EQ, mixedVar, sideB));
+								}
+							} else {
+								bPart.add(Rational.ONE, mixedVar);
+								final InfinitesimalNumber epsilon =
+										atomInfo.isInt() ? InfinitesimalNumber.ONE : InfinitesimalNumber.EPSILON;
+								if (mInterpolator.isNegatedTerm(lits[i])) {
+									bPart.mul(Rational.MONE);
+									bPart.add(epsilon);
+								}
+								terms.add(LAInterpolator.createLATerm(bPart, epsilon.negate(), bPart.toLeq0(mInterpolator.mTheory)));
+							}
+						} else {
+							throw new AssertionError();
+						}
+					}
+				}
+				if (terms.isEmpty()) {
+					interpolants[part] = mTheory.mFalse;
+				} else {
+					interpolants[part] = mTheory.or(terms.toArray(new Term[terms.size()]));
+				}
+			} else {
+				// Instance is in B.
+				for (int i = 0; i < lits.length; i++) {
+					final Term atom = mInterpolator.getAtom(lits[i]);
+					final LitInfo litInfo = mInterpolator.getAtomOccurenceInfo(atom);
+					// Collect all A-local literals. (We need to explicitly negate them,
+					// as we need the conflict literal.)
+					if (litInfo.isALocal(part)) {
+						terms.add(mTheory.not(lits[i]));
+					} else if (litInfo.isMixed(part)) {
+						// Collect A-part from splitting mixed literal.
+						final TermVariable mixedVar = litInfo.getMixedVar();
+						InterpolatorAtomInfo atomInfo = mInterpolator.getAtomTermInfo(atom);
+						if (atomInfo.isCCEquality()) {
+							final Term sideA = litInfo.getLhsOccur().isALocal(part)
+									? ((ApplicationTerm) atom).getParameters()[0]
+									: ((ApplicationTerm) atom).getParameters()[1];
+							if (mInterpolator.isNegatedTerm(lits[i])) {
+								terms.add(mTheory.term(SMTLIBConstants.EQUALS, mixedVar, sideA));
+							} else {
+								terms.add(mTheory.term(Interpolator.EQ, mixedVar, sideA));
+							}
+						} else if (atomInfo.isLAEquality() || atomInfo.isBoundConstraint()) {
+							final InterpolatorAffineTerm aPart = new InterpolatorAffineTerm(litInfo.getAPart(part));
+							if (atomInfo.isLAEquality()) {
+								final Term sideA = aPart.toSMTLib(mTheory, atomInfo.isInt());
+								if (mInterpolator.isNegatedTerm(lits[i])) {
+									terms.add(mTheory.term(SMTLIBConstants.EQUALS, mixedVar, sideA));
+								} else {
+									terms.add(mTheory.term(Interpolator.EQ, mixedVar, sideA));
+								}
+							} else {
+								aPart.add(Rational.MONE, mixedVar);
+								final InfinitesimalNumber epsilon =
+										atomInfo.isInt() ? InfinitesimalNumber.ONE : InfinitesimalNumber.EPSILON;
+								if (!mInterpolator.isNegatedTerm(lits[i])) {
+									aPart.mul(Rational.MONE);
+								}
+								terms.add(LAInterpolator.createLATerm(aPart, epsilon.negate(), aPart.toLeq0(mInterpolator.mTheory)));
+							}
+						} else {
+							throw new AssertionError();
+						}
+					}
+				}
+				if (terms.isEmpty()) {
+					interpolants[part] = mTheory.mTrue;
+				} else {
+					interpolants[part] = mTheory.and(terms.toArray(new Term[terms.size()]));
+				}
+			}
+		}
+		return interpolants;
+	}
+
+	public Term[] computeInterpolants(final InterpolatorClauseInfo proofTermInfo) {
 		// Collect the literal infos for all equalities in the clause.
 		mEqualityOccurrences = new HashMap<>();
-		final InterpolatorClauseTermInfo proofTermInfo = mInterpolator.getClauseTermInfo(proofTerm);
 		for (final Term literal : proofTermInfo.getLiterals()) {
 			final Term atom = mInterpolator.getAtom(literal);
 			if (atom != literal) {
@@ -410,8 +541,8 @@ public class CCInterpolator {
 			}
 		}
 
-		mPath = getPath(proofTermInfo);
-		if (mPath.length == 2) {
+		mPath = (Term[]) proofTermInfo.getLemmaAnnotation();
+		if (proofTermInfo.getLemmaType() == ":cong") {
 			return interpolateCongruence((ApplicationTerm) mPath[0], (ApplicationTerm) mPath[1]);
 		} else {
 			return interpolateTransitivity();

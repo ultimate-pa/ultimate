@@ -1,0 +1,33 @@
+// Author: schuessf@informatik.uni-freiburg.de
+// Date: 2023-05-10
+
+PetriNet net = (
+  alphabet = {a b c},
+  places = {p1 p2 p3 p4 p5},
+  transitions = {
+    ({p1} a {p2 p3})
+    ({p2} b {p4})
+    ({p3} c {p5})
+		({p4} b {p4})
+		({p5} c {p5})
+  },
+  initialMarking = {p1},
+  acceptingPlaces = {p4 p5}
+);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {a b c},
+	returnAlphabet = {},
+	states = {q1 q2 q3},
+	initialStates = {q1},
+	finalStates = {q3},
+	callTransitions = {},
+	internalTransitions = {
+		(q1 a q2) (q2 b q3) (q3 b q2)
+	},
+	returnTransitions = {}
+);
+
+assert(buchiAccepts(buchiIntersect(net, nwa), [a, b b]));
+//assert(buchiAccepts(buchiIntersect(net, nwa), [a, b c]));

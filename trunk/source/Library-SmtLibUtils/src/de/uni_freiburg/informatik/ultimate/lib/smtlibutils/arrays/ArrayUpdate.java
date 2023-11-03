@@ -34,7 +34,6 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -54,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class ArrayUpdate {
 	private final TermVariable mNewArray;
 	private final MultiDimensionalStore mMultiDimensionalStore;
+	private final Term mStoreAsTerm;
 	private final Term mArrayUpdateTerm;
 	private final boolean mIsNegatedEquality;
 
@@ -63,11 +63,9 @@ public class ArrayUpdate {
 	 */
 	public ArrayUpdate(final Term term, final boolean isNegated,
 			final boolean enforceThatOldArrayIsTermVariable) throws ArrayUpdateException {
-		BinaryEqualityRelation ber = null;
-		try {
-			ber = new BinaryEqualityRelation(term);
-		} catch (final NoRelationOfThisKindException e) {
-			throw new ArrayUpdateException(e.getMessage());
+		final BinaryEqualityRelation ber = BinaryEqualityRelation.convert(term);
+		if (ber == null) {
+			throw new ArrayUpdateException("not a binary equality relation");
 		}
 		if (isNegated && ber.getRelationSymbol() != RelationSymbol.DISTINCT) {
 			throw new ArrayUpdateException("no negated array update");
@@ -101,7 +99,7 @@ public class ArrayUpdate {
 		assert allegedStoreTerm.getParameters().length == 3;
 		assert mNewArray.getSort() == allegedStoreTerm.getSort();
 
-		mMultiDimensionalStore = MultiDimensionalStore.convert(allegedStoreTerm);
+		mMultiDimensionalStore = MultiDimensionalStore.of(allegedStoreTerm);
 		if (mMultiDimensionalStore.getIndex().size() == 0) {
 			throw new ArrayUpdateException("no multidimensional array");
 		}
@@ -113,6 +111,7 @@ public class ArrayUpdate {
 			throw new ArrayUpdateException("old array is no term variable");
 
 		}
+		mStoreAsTerm = allegedStoreTerm;
 	}
 
 	/**
@@ -180,6 +179,10 @@ public class ArrayUpdate {
 		return mIsNegatedEquality;
 	}
 
+	public Term getStoreAsTerm() {
+		return mStoreAsTerm;
+	}
+
 	@Override
 	public String toString() {
 		return mArrayUpdateTerm.toString();
@@ -225,7 +228,7 @@ public class ArrayUpdate {
 				} else {
 					mArrayUpdates.add(au);
 					mStore2TermVariable.put(
-							au.getMultiDimensionalStore().getStoreTerm(),
+							au.getStoreAsTerm(),
 							au.getNewArray());
 				}
 			}
@@ -242,6 +245,7 @@ public class ArrayUpdate {
 		public List<Term> getRemainingTerms() {
 			return remainingTerms;
 		}
+
 	}
 
 

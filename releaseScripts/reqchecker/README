@@ -1,3 +1,0 @@
-This folder contains some "glue" scripts that are used between Hanfor and ReqChecker. 
-
-Our final goal is to eliminate all of them and provide a seamless integration between these two tools. 

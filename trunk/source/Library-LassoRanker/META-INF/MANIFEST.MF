@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Library-LassoRanker
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.lassoranker
 Bundle-Version: 0.9.5
-Bundle-Activator: de.uni_freiburg.informatik.ultimate.analysis.lassoranker.Activator
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.lassoranker.Activator
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.core,
@@ -12,7 +12,10 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.smtinterpol;resolution:=optional,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
- de.uni_freiburg.informatik.ultimate.lib.icfgtransformer
+ de.uni_freiburg.informatik.ultimate.lib.icfgtransformer,
+ de.uni_freiburg.informatik.ultimate.lib.automata,
+ de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils,
+ org.apache.commons.lang
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Export-Package: de.uni_freiburg.informatik.ultimate.lassoranker,
  de.uni_freiburg.informatik.ultimate.lassoranker.exceptions,
@@ -23,5 +26,4 @@ Export-Package: de.uni_freiburg.informatik.ultimate.lassoranker,
  de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions,
  de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates,
  de.uni_freiburg.informatik.ultimate.lassoranker.variables
-Import-Package: org.apache.commons.lang3
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.lassoranker

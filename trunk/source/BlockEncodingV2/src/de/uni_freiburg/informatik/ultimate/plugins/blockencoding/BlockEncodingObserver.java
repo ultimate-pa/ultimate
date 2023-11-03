@@ -95,7 +95,7 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 					new IcfgEdgeBuilder(toolkit, mServices, mSimplificationTechnique, mXnfConversionTechnique);
 			final BasicIcfg<IcfgLocation> copiedIcfg =
 					new IcfgDuplicator(mLogger, mServices, toolkit.getManagedScript(), mBacktranslator)
-							.copy(originalIcfg);
+							.copy(originalIcfg, true);
 			mResult = new BlockEncoder(mLogger, mServices, mBacktranslator, edgeBuilder, copiedIcfg).getResult();
 			return false;
 		}

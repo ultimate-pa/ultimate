@@ -64,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters
 public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>> implements IAbstractDomain<EqState, ACTION> {
 
 	private final EqPostOperator<ACTION> mPost;
-	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;
 
 	private final ManagedScript mManagedScript;
@@ -96,7 +95,6 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>> implements I
 			final Set<String> mixArrayFunctions) {
 		mLogger = logger;
 		mManagedScript = csToolkit.getManagedScript();
-		mMerge = new VPMergeOperator();
 		mSymboltable = csToolkit.getSymbolTable();
 		mCsToolkit = csToolkit;
 		mServices = services;
@@ -129,20 +127,12 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>> implements I
 
 	@Override
 	public IAbstractStateBinaryOperator<EqState> getWideningOperator() {
-		return mMerge;
+		return EqState::widen;
 	}
 
 	@Override
 	public IAbstractPostOperator<EqState, ACTION> getPostOperator() {
 		return mPost;
-	}
-
-	private final class VPMergeOperator implements IAbstractStateBinaryOperator<EqState> {
-		@Override
-		public EqState apply(final EqState first, final EqState second) {
-			// return mEqStateFactory.getTopState();
-			return first.union(second);
-		}
 	}
 
 	public ManagedScript getManagedScript() {

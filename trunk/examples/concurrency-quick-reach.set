@@ -1,0 +1,11 @@
+svcomp/goblint-regression/04-mutex_10*.yml
+svcomp/goblint-regression/13-privatized_68*.yml
+svcomp/goblint-regression/28-race_reach_94*.yml
+svcomp/ldv-races/race-3_2-container_of-global.yml
+svcomp/pthread-wmm/safe002_power.opt_pso.oepc_pso.opt_rmo.opt.yml
+svcomp/pthread-wmm/safe013_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml
+svcomp/pthread-wmm/safe025_pso.oepc_pso.opt_tso.oepc_tso.opt.yml
+svcomp/weaver/parallel-ticket-3.wvr.yml
+svcomp/weaver/popl20-bad-commit-1.wvr-bad.yml
+svcomp/weaver/popl20-more-array-sum-alt.wvr.yml
+

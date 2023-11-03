@@ -78,7 +78,7 @@ public class ApplyConstructiveEqualityReasoning {
 							mEprTheory.getTheory().createFreshTermVariable("CER", tv.getSort());
 
 					// create the equality (= tv freshTv) and add its negated literal to the new clause
-					final ApplicationTerm newEquality = mEprTheory.getTheory().term("=", tv, freshTv);
+					final ApplicationTerm newEquality = (ApplicationTerm) mEprTheory.getTheory().term("=", tv, freshTv);
 
 					//TODO hash
 					newLiterals.add(
@@ -107,7 +107,7 @@ public class ApplyConstructiveEqualityReasoning {
 			/*
 			 * construct the new literal and add it to the resulting clause/literal set
 			 */
-			final ApplicationTerm newTerm = mEprTheory.getTheory().term(atomFormula.getFunction(), newParameters);
+			final ApplicationTerm newTerm = (ApplicationTerm) mEprTheory.getTheory().term(atomFormula.getFunction(), newParameters);
 			final EprAtom newAtom = mEprTheory.getEprAtom(newTerm,
 					0,
 					mEprTheory.getClausifier().getStackLevel(),

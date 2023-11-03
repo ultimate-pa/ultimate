@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -38,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class NestedArrayStore {
+public class NestedArrayStore implements ITermProvider {
 	private final Term mArray;
 	private final List<Term> mIndices;
 	private final List<Term> mValues;
@@ -61,6 +62,7 @@ public class NestedArrayStore {
 		return mValues;
 	}
 
+	@Override
 	public Term toTerm(final Script script) {
 		Term array = mArray;
 		for (int i = 0; i < mIndices.size(); i++) {
@@ -85,7 +87,7 @@ public class NestedArrayStore {
 		final LinkedList<Term> indices = new LinkedList<>();
 		final LinkedList<Term> values = new LinkedList<>();
 		Term currentArray = term;
-		ArrayStore currentStore = ArrayStore.convert(term);
+		ArrayStore currentStore = ArrayStore.of(term);
 		if (currentStore == null) {
 			return null;
 		}
@@ -93,7 +95,7 @@ public class NestedArrayStore {
 			indices.addFirst(currentStore.getIndex());
 			values.addFirst(currentStore.getValue());
 			currentArray = currentStore.getArray();
-			currentStore = ArrayStore.convert(currentArray);
+			currentStore = ArrayStore.of(currentArray);
 		}
 		return new NestedArrayStore(currentArray, indices, values);
 	}

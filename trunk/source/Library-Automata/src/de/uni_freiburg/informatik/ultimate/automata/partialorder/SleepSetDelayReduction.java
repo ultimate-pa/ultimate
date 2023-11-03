@@ -41,6 +41,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
@@ -216,8 +219,9 @@ public class SleepSetDelayReduction<L, S, R> {
 
 				final S succState = currentTransition.getSucc();
 				// TODO factor out sleep set successor computation
-				final ImmutableSet<L> succSleepSet = Stream.concat(currentSleepSet.stream(), explored.stream())
-						.filter(l -> mIndependenceRelation.contains(currentRedState, currentLetter, l))
+				final ImmutableSet<L> succSleepSet = Stream
+						.concat(currentSleepSet.stream(), explored.stream()).filter(l -> mIndependenceRelation
+								.isIndependent(currentRedState, currentLetter, l) == Dependence.INDEPENDENT)
 						.collect(ImmutableSet.collector());
 				final R successor = getReductionState(succState, succSleepSet);
 

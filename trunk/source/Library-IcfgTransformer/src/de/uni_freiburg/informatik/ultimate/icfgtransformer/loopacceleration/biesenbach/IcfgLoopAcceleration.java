@@ -31,9 +31,9 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -58,7 +58,7 @@ public class IcfgLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends Icf
 	final Class<OUTLOC> mOutLocationClass;
 	final ILocationFactory<INLOC, OUTLOC> mFunLocFac;
 	final String mNewIcfgIdentifier;
-	final IBacktranslationTracker mBacktranslationTracker;
+	final IcfgTransformationBacktranslator mBacktranslationTracker;
 	final IUltimateServiceProvider mServices;
 	final LoopAccelerationOptions mOption;
 
@@ -106,7 +106,7 @@ public class IcfgLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends Icf
 	 */
 	public IcfgLoopAcceleration(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final Class<OUTLOC> outLocationClass, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final String newIcfgIdentifier, final IBacktranslationTracker backtranslationTracker,
+			final String newIcfgIdentifier, final IcfgTransformationBacktranslator backtranslationTracker,
 			final IUltimateServiceProvider services, final LoopAccelerationOptions option) {
 
 		// Setup

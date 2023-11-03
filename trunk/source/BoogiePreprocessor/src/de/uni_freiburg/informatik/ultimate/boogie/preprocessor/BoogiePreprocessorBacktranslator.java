@@ -267,6 +267,9 @@ public class BoogiePreprocessorBacktranslator
 		if (ate.hasStepInfo(StepInfo.FORK)) {
 			builder.setForkedThreadId(ate.getForkedThreadId());
 		}
+		if (ate.hasStepInfo(StepInfo.JOIN)) {
+			builder.setJoinedThreadId(ate.getJoinedThreadId());
+		}
 		builder.setToStringFunc(BoogiePrettyPrinter.getBoogieToStringProvider());
 		builder.setElement(elem);
 		builder.setStep(step);

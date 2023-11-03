@@ -41,8 +41,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -94,7 +94,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -131,18 +130,18 @@ public class PathProgramDumper {
 	private final ILogger mLogger;
 
 	private final ConstructionCache.IValueConstruction<IcfgLocation, String> mLoc2LabelVC =
-			new ConstructionCache.IValueConstruction<IcfgLocation, String>() {
+			new ConstructionCache.IValueConstruction<>() {
 
-		private int mCounter = 0;
+				private int mCounter = 0;
 
-		@Override
-		public String constructValue(final IcfgLocation key) {
-			final String result = "loc" + String.valueOf(mCounter);
-			mCounter++;
-			return result;
-		}
+				@Override
+				public String constructValue(final IcfgLocation key) {
+					final String result = "loc" + String.valueOf(mCounter);
+					mCounter++;
+					return result;
+				}
 
-	};
+			};
 	private final ConstructionCache<IcfgLocation, String> mLoc2LabelId = new ConstructionCache<>(mLoc2LabelVC);
 	private final PathProgram mPathProgram;
 	private final IIcfg<?> mOriginalIcfg;
@@ -154,7 +153,7 @@ public class PathProgramDumper {
 	}
 
 	public PathProgramDumper(final IIcfg<?> icfg, final IUltimateServiceProvider services,
-			final NestedRun<? extends IAction, IPredicate> run, final String filename, final InputMode inputMode) {
+			final IRun<? extends IAction, ?> run, final String filename, final InputMode inputMode) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mOriginalIcfg = icfg;
@@ -283,13 +282,11 @@ public class PathProgramDumper {
 		Specification[] newSpecifications;
 		if (impl.getSpecification() == null) {
 			newSpecifications = null;
+		} else if (FILTER_VARIABLES_OF_BOOGIE_INPUT) {
+			newSpecifications =
+					filterModifiesSpecifications(impl.getSpecification(), extractIdentifiers(varsAndNewSt.getThird()));
 		} else {
-			if (FILTER_VARIABLES_OF_BOOGIE_INPUT) {
-				newSpecifications = filterModifiesSpecifications(impl.getSpecification(),
-						extractIdentifiers(varsAndNewSt.getThird()));
-			} else {
-				newSpecifications = impl.getSpecification();
-			}
+			newSpecifications = impl.getSpecification();
 		}
 		final Procedure newProc = new Procedure(constructNewLocation(), impl.getAttributes(), impl.getIdentifier(),
 				impl.getTypeParams(), impl.getInParams(), impl.getOutParams(), newSpecifications, newBody);
@@ -310,11 +307,11 @@ public class PathProgramDumper {
 		final VariableDeclaration[] localVarDeclarations = constructDeclarations(localVars);
 		final Body newBody = new Body(constructNewLocation(), localVarDeclarations,
 				newStatements.toArray(new Statement[newStatements.size()]));
-		final Attribute[] attributes = new Attribute[0];
+		final Attribute[] attributes = {};
 		final String identifier = entryLoc.getProcedure();
-		final String[] typeParams = new String[0];
-		final VarList[] inParams = new VarList[0];
-		final VarList[] outParams = new VarList[0];
+		final String[] typeParams = {};
+		final VarList[] inParams = {};
+		final VarList[] outParams = {};
 		ModifiesSpecification modifiesSpecification;
 		{
 			final VariableLHS[] identifiers = new VariableLHS[varsAndNewSt.getThird().size()];
@@ -325,7 +322,7 @@ public class PathProgramDumper {
 			}
 			modifiesSpecification = new ModifiesSpecification(constructNewLocation(), false, identifiers);
 		}
-		final Specification[] specification = new Specification[] { modifiesSpecification };
+		final Specification[] specification = { modifiesSpecification };
 		final Procedure newProc = new Procedure(constructNewLocation(), attributes, identifier, typeParams, inParams,
 				outParams, specification, newBody);
 		return new Pair<>(newProc, varsAndNewSt.getThird());
@@ -337,8 +334,8 @@ public class PathProgramDumper {
 		for (final IProgramVar pv : localVars) {
 			// assert (pv instanceof ILocalProgramVar) : "not a local var";
 			final IdentifierExpression id = translateVar(pv);
-			final Attribute[] attributes = new Attribute[0];
-			final String[] identifiers = new String[] { id.getIdentifier() };
+			final Attribute[] attributes = {};
+			final String[] identifiers = { id.getIdentifier() };
 			final ASTType astType;
 			if (mInputMode == InputMode.BOOGIE) {
 				// FIXME: do not only support int.
@@ -358,7 +355,7 @@ public class PathProgramDumper {
 			}
 
 			final VarList varList = new VarList(constructNewLocation(), identifiers, astType);
-			final VarList[] variables = new VarList[] { varList };
+			final VarList[] variables = { varList };
 			result[offset] = new VariableDeclaration(constructNewLocation(), attributes, variables);
 			offset++;
 		}
@@ -374,7 +371,7 @@ public class PathProgramDumper {
 	}
 
 	private IdentifierExpression translateVar(final IProgramVar pv) {
-		final IdentifierExpression result = ((IdentifierExpression) mTerm2Expression.translate(pv.getTermVariable()));
+		final IdentifierExpression result = (IdentifierExpression) mTerm2Expression.translate(pv.getTermVariable());
 		if (result == null) {
 			throw new AssertionError("unable to translateI " + pv);
 		}
@@ -448,7 +445,7 @@ public class PathProgramDumper {
 	}
 
 	private static String[] filter(final String[] identifiers, final Set<String> vars) {
-		final Predicate<? super String> pred = (x -> vars.contains(x));
+		final Predicate<? super String> pred = x -> vars.contains(x);
 		return Arrays.stream(identifiers).filter(pred).toArray(size -> new String[size]);
 	}
 
@@ -550,7 +547,7 @@ public class PathProgramDumper {
 	}
 
 	private Quad<List<Statement>, Set<IProgramVar>, Set<IProgramVar>, IcfgLocation>
-	constructTransitionStatements(IcfgEdge edge) {
+			constructTransitionStatements(IcfgEdge edge) {
 		final String proc = edge.getPrecedingProcedure();
 		final List<Statement> statements = new ArrayList<>();
 		final Set<IProgramVar> localVars = new HashSet<>();
@@ -598,32 +595,32 @@ public class PathProgramDumper {
 				}
 				addVars(correspondingReturn.getTransformula().getOutVars().keySet(), localVars, globalVars);
 				return correspondingReturn.getTarget();
-			} else if (edge.getLabel() instanceof Return) {
+			}
+			if (edge.getLabel() instanceof Return) {
 				throw new AssertionError("we should have stopped at procedure exit");
 				// addVars(action.getTransformula().getInVars().keySet(),
 				// localVars, globalVars);
 				// statements.add(new ReturnStatement(constructNewLocation()));
 				// return ((Return) action).getTarget();
-			} else if (edge.getLabel() instanceof StatementSequence) {
+			}
+			if (edge.getLabel() instanceof StatementSequence) {
 				addVars(action.getTransformula().getInVars().keySet(), localVars, globalVars);
 				addVars(action.getTransformula().getOutVars().keySet(), localVars, globalVars);
 				final StatementSequence stseq = (StatementSequence) edge.getLabel();
-				for (final Statement st : stseq.getStatements()) {
-					statements.add(st);
-				}
+				statements.addAll(stseq.getStatements());
 				return edge.getTarget();
-			} else if (edge.getLabel() instanceof Summary) {
-				addVars(action.getTransformula().getInVars().keySet(), localVars, globalVars);
-				addVars(action.getTransformula().getOutVars().keySet(), localVars, globalVars);
-				final Summary summary = (Summary) edge.getLabel();
-				if (summary.calledProcedureHasImplementation()) {
-					throw new AssertionError("edges like this should have been omitted");
-				}
-				statements.add(summary.getCallStatement());
-				return edge.getTarget();
-			} else {
+			}
+			if (!(edge.getLabel() instanceof Summary)) {
 				throw new UnsupportedOperationException("unsupported edge " + action.getClass().getSimpleName());
 			}
+			addVars(action.getTransformula().getInVars().keySet(), localVars, globalVars);
+			addVars(action.getTransformula().getOutVars().keySet(), localVars, globalVars);
+			final Summary summary = (Summary) edge.getLabel();
+			if (summary.calledProcedureHasImplementation()) {
+				throw new AssertionError("edges like this should have been omitted");
+			}
+			statements.add(summary.getCallStatement());
+			return edge.getTarget();
 		}
 		addVars(action.getTransformula().getInVars().keySet(), localVars, globalVars);
 		addVars(action.getTransformula().getOutVars().keySet(), localVars, globalVars);
@@ -636,7 +633,7 @@ public class PathProgramDumper {
 
 		final SimultaneousUpdate su;
 		try {
-			su = SimultaneousUpdate.fromTransFormula(action.getTransformula(), mgdScript);
+			su = SimultaneousUpdate.fromTransFormula(mServices, action.getTransformula(), mgdScript);
 		} catch (final SimultaneousUpdateException e) {
 			throw new IllegalArgumentException(e.getMessage());
 		}
@@ -648,7 +645,7 @@ public class PathProgramDumper {
 			for (final Entry<IProgramVar, Term> entry : su.getDeterministicAssignment().entrySet()) {
 				lhs[offset] = new VariableLHS(constructNewLocation(),
 						((IdentifierExpression) mTerm2Expression.translate(entry.getKey().getTermVariable()))
-						.getIdentifier());
+								.getIdentifier());
 				rhs[offset] = mTerm2Expression.translate(entry.getValue());
 				offset++;
 			}
@@ -683,12 +680,10 @@ public class PathProgramDumper {
 		if (!eachFreeVarIsInvar) {
 			throw new IllegalArgumentException("term contains non-Invar");
 		}
-		final Map<TermVariable, TermVariable> substitutionMapping = TransFormulaUtils
-				.constructInvarsToDefaultvarsMap(guardTf);
-		return new Substitution(mgdScript, substitutionMapping).transform(guardTf.getFormula());
+		final Map<TermVariable, TermVariable> substitutionMapping =
+				TransFormulaUtils.constructInvarsToDefaultvarsMap(guardTf);
+		return Substitution.apply(mgdScript, substitutionMapping, guardTf.getFormula());
 	}
-
-
 
 	private IIcfgReturnTransition<?, ?> getCorrespondingReturn(final IAction action, final Program program) {
 		IIcfgReturnTransition<?, ?> correspondingReturn = null;
@@ -710,11 +705,10 @@ public class PathProgramDumper {
 		for (final IcfgEdge returnEdge : exitLoc.getOutgoingEdges()) {
 			final IIcfgReturnTransition<?, ?> ret = (IIcfgReturnTransition<?, ?>) returnEdge;
 			if (ret.getCorrespondingCall().equals(action)) {
-				if (correspondingReturn == null) {
-					correspondingReturn = ret;
-				} else {
+				if (correspondingReturn != null) {
 					throw new AssertionError("several corresponding returns");
 				}
+				correspondingReturn = ret;
 			}
 		}
 		if (correspondingReturn == null) {
@@ -729,7 +723,7 @@ public class PathProgramDumper {
 	private static void addVars(final Set<IProgramVar> vars, final Set<IProgramVar> localVars,
 			final Set<IProgramVar> globalVars) {
 		for (final IProgramVar var : vars) {
-			if ((var instanceof IProgramOldVar) || (var instanceof IProgramNonOldVar)) {
+			if (var instanceof IProgramOldVar || var instanceof IProgramNonOldVar) {
 				globalVars.add(var);
 			} else if (var instanceof ILocalProgramVar) {
 				localVars.add(var);
@@ -750,7 +744,7 @@ public class PathProgramDumper {
 		return new DefaultLocation();
 	}
 
-	private static Set<? extends IcfgEdge> extractTransitionsFromRun(final NestedWord<? extends IAction> word) {
+	private static Set<? extends IcfgEdge> extractTransitionsFromRun(final Word<? extends IAction> word) {
 		final Set<IcfgEdge> result = new HashSet<>();
 		for (final IAction letter : word) {
 			final IcfgEdge edge = (IcfgEdge) letter;

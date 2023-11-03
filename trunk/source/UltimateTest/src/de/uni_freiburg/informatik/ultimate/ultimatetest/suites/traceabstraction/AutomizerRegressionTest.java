@@ -64,7 +64,8 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 	};
 	
 	private static final String[] mSettings_TreeInterpolation = {
-//		"automizer/TreeInterpolants.epf",
+		"automizer/NestedInterpolants.epf",
+		"automizer/TreeInterpolants.epf",
 	};
 
 	

@@ -75,7 +75,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -345,21 +344,21 @@ public final class TraceCheckUtils {
 	 * according to ModifiableGlobalVariableManager modGlobVarManager.
 	 */
 	public static TermVarsProc getOldVarsEquality(final String proc,
-			final ModifiableGlobalsTable modifiableGlobalsTable, final Script script) {
+			final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript mgdScript) {
 		final Set<IProgramVar> vars = new HashSet<>();
-		Term term = script.term("true");
+		Term term = mgdScript.getScript().term("true");
 		for (final IProgramVar bv : modifiableGlobalsTable.getModifiedBoogieVars(proc)) {
 			vars.add(bv);
 			final IProgramVar bvOld = ((IProgramNonOldVar) bv).getOldVar();
 			vars.add(bvOld);
 			final TermVariable tv = bv.getTermVariable();
 			final TermVariable tvOld = bvOld.getTermVariable();
-			final Term equality = script.term("=", tv, tvOld);
-			term = SmtUtils.and(script, term, equality);
+			final Term equality = SmtUtils.binaryEquality(mgdScript.getScript(), tv, tvOld);
+			term = SmtUtils.and(mgdScript.getScript(), term, equality);
 		}
 		final String[] procs = new String[0];
-		final TermVarsProc result =
-				new TermVarsProc(term, vars, procs, PredicateUtils.computeClosedFormula(term, vars, script));
+		final TermVarsProc result = new TermVarsProc(term, vars, Collections.emptySet(), procs,
+				PredicateUtils.computeClosedFormula(term, vars, mgdScript));
 		return result;
 	}
 

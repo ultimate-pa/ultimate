@@ -1,0 +1,94 @@
+{
+  "results": [
+    {
+      "startLNr":24,
+      "startCol":-1,
+      "endLNr":27,
+      "endCol":-1,
+      "logLvl":"error",
+      "shortDesc":"array index can be out of bounds",
+      "type":"counter",
+      "longDesc":"array index can be out of bounds\nWe found a FailurePath: \n[L21]             unsigned char pos = getInitialPosition();\n[L22]             int arr[256];\n[L23]  COND TRUE  1\n[L24]  EXPR       arr[pos]\n[L24]             arr[pos] = getNextValue()\n[L25]             arr[pos + 1]\n       VAL        [pos=255]\n"
+    },
+    {
+      "endCol": -1,
+      "endLNr": -1,
+      "logLvl": "warning",
+      "longDesc": "unknown boogie variable #StackHeapBarrier",
+      "shortDesc": "Unfinished Backtranslation",
+      "startCol": -1,
+      "startLNr": -1,
+      "type": "warning"
+    },
+    {
+      "endCol": -1,
+      "endLNr": 9,
+      "logLvl": "warning",
+      "longDesc": "unknown boogie variable #StackHeapBarrier",
+      "shortDesc": "Unfinished Backtranslation",
+      "startCol": -1,
+      "startLNr": 7,
+      "type": "warning"
+    },
+    {
+      "endCol": -1,
+      "endLNr": 28,
+      "logLvl": "info",
+      "longDesc": "For all program executions holds that free always succeeds at this location",
+      "shortDesc": "free always succeeds",
+      "startCol": -1,
+      "startLNr": 28,
+      "type": "positive"
+    },
+    {
+      "endCol": -1,
+      "endLNr": 28,
+      "logLvl": "info",
+      "longDesc": "For all program executions holds that free always succeeds at this location",
+      "shortDesc": "free always succeeds",
+      "startCol": -1,
+      "startLNr": 28,
+      "type": "positive"
+    },
+    {
+      "endCol": -1,
+      "endLNr": 28,
+      "logLvl": "info",
+      "longDesc": "For all program executions holds that free always succeeds at this location",
+      "shortDesc": "free always succeeds",
+      "startCol": -1,
+      "startLNr": 28,
+      "type": "positive"
+    },
+    {
+      "endCol": -1,
+      "endLNr": -1,
+      "logLvl": "info",
+      "longDesc": "3 specifications checked. All of them hold",
+      "shortDesc": "All specifications hold",
+      "startCol": -1,
+      "startLNr": -1,
+      "type": "invariant"
+    },
+    {
+      "endCol": -1,
+      "endLNr": 30,
+      "logLvl": "info",
+      "longDesc": "Derived loop invariant: ((unknown-#StackHeapBarrier-unknown + 1 <= p && p == 0) && x <= 0) || ((unknown-#StackHeapBarrier-unknown + 1 <= p && p == 0) && \\valid[p] == 1)",
+      "shortDesc": "Loop Invariant",
+      "startCol": -1,
+      "startLNr": 25,
+      "type": "invariant"
+    },
+    {
+      "endCol": -1,
+      "endLNr": 32,
+      "logLvl": "info",
+      "longDesc": "Derived contract for procedure main: 1",
+      "shortDesc": "Procedure Contract for main",
+      "startCol": -1,
+      "startLNr": 22,
+      "type": "invariant"
+    }
+  ]
+}

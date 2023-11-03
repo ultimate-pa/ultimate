@@ -97,6 +97,7 @@ RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
    "not"            { return symbol(ReqSymbols.NOT); }
    "occur"          { return symbol(ReqSymbols.OCCUR); }
    "once"           { return symbol(ReqSymbols.ONCE); }
+   "persistently"   { return symbol(ReqSymbols.PERSISTENTLY); }
    "preceded"       { return symbol(ReqSymbols.PRECEDED); }
    "previously"     { return symbol(ReqSymbols.PREVIOUSLY); }
    "satisfied"      { return symbol(ReqSymbols.SATISFIED); }

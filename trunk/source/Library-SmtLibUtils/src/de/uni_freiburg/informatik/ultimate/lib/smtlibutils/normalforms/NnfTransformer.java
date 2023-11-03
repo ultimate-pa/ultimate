@@ -38,12 +38,12 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtLibUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -105,11 +105,6 @@ public class NnfTransformer {
 
 	public NnfTransformer(final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final QuantifierHandling quantifierHandling) {
-		this(mgdScript, services, quantifierHandling, a -> false);
-	}
-
-	public NnfTransformer(final ManagedScript mgdScript, final IUltimateServiceProvider services,
-			final QuantifierHandling quantifierHandling, final boolean omitSoundnessCheck) {
 		this(mgdScript, services, quantifierHandling, a -> false);
 	}
 
@@ -280,7 +275,7 @@ public class NnfTransformer {
 						substitutionMapping.put(oldTv, freshTv);
 						variables.add(freshTv);
 					}
-					final Term newBody = new Substitution(mScript, substitutionMapping).transform(qf.getSubformula());
+					final Term newBody = Substitution.apply(mMgdScript, substitutionMapping, qf.getSubformula());
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
@@ -312,7 +307,7 @@ public class NnfTransformer {
 
 		@Override
 		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
-			final Term simplified = SmtUtils.termWithLocalSimplification(mScript, appTerm.getFunction(), newArgs);
+			final Term simplified = SmtUtils.unfTerm(mScript, appTerm.getFunction(), newArgs);
 			setResult(simplified);
 		}
 
@@ -342,7 +337,7 @@ public class NnfTransformer {
 		return newTerms;
 	}
 
-	public static Term convertIte(final Script script, final Term condTerm, final Term ifTerm, final Term elseTerm) {
+	private static Term convertIte(final Script script, final Term condTerm, final Term ifTerm, final Term elseTerm) {
 		final Term condImpliesIf = SmtUtils.or(script, SmtUtils.not(script, condTerm), ifTerm);
 		final Term notCondImpliesElse = SmtUtils.or(script, condTerm, elseTerm);
 		final Term result = SmtUtils.and(script, condImpliesIf, notCondImpliesElse);
@@ -356,7 +351,7 @@ public class NnfTransformer {
 	 * <li>its functionName is <b>distinct</b> and its parameters have Sort Bool.
 	 * </ul>
 	 */
-	public static boolean isXor(final ApplicationTerm appTerm, final String functionName) {
+	private static boolean isXor(final ApplicationTerm appTerm, final String functionName) {
 		return functionName.equals("xor") || functionName.equals("distinct") && SmtUtils.firstParamIsBool(appTerm);
 	}
 
@@ -443,4 +438,8 @@ public class NnfTransformer {
 		}
 	}
 
+	public static Term apply(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final QuantifierHandling quantifierHandling, final Term term) {
+		return new NnfTransformer(mgdScript, services, quantifierHandling).transform(term);
+	}
 }

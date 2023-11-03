@@ -116,7 +116,7 @@ public class CongruencePath {
 	}
 
 	private CCAnnotation createAnnotation(final SymmetricPair<CCTerm> diseq) {
-		return new CCAnnotation(diseq, mAllPaths, CCAnnotation.RuleKind.CC);
+		return new CCAnnotation(diseq, mAllPaths, CCAnnotation.RuleKind.CONG);
 	}
 
 	private int computeDepth(CCTerm t) {
@@ -373,8 +373,7 @@ public class CongruencePath {
 		}
 		final Clause c = new Clause(negLits);
 		if (produceProofs) {
-			final SymmetricPair<CCTerm> diseq = propagatedEq == null ? null
-					: new SymmetricPair<>(propagatedEq.getLhs(), propagatedEq.getRhs());
+			final SymmetricPair<CCTerm> diseq = lemma.getMainEquality();
 			c.setProof(new LeafNode(LeafNode.THEORY_DT, new CCAnnotation(diseq, mAllPaths, lemma)));
 		}
 		return c;

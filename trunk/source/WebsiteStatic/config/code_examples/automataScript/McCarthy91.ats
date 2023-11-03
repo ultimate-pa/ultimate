@@ -1,0 +1,139 @@
+// heizmann@informatik.uni-freiburg.de 2010
+// Running example of POPL2010 Heizmann,Hoenicke,Podelski Nested Interpolants
+
+
+// The control automaton accepts all words that are labelings of path from the
+// initial location to the error location that respect the call-return behaviour
+// of the program.
+NestedWordAutomaton ControlAutomaton = (
+    callAlphabet = {callM},
+    internalAlphabet = {Xleq100 Xg100 RES2Xminus10 XM2Xplus11 XM2RESM RES2RESM Xleq101andRESneq91 },
+    returnAlphabet = {returnM},
+    states = {l0 l1 l2 l3 l4 l5 l6 l7 lerr},
+    initialStates = {l0},
+	finalStates = {lerr},
+	callTransitions = {
+		(l3 callM l0)
+		(l5 callM l0)
+	},
+	internalTransitions = { 
+		(l0 Xleq100 l2) 
+		(l0 Xg100 l1)
+		(l1 RES2Xminus10 l7)
+		(l2 XM2Xplus11 l3)
+		(l4 XM2RESM l5)
+		(l6 RES2RESM l7)
+		(l7 Xleq101andRESneq91 lerr)
+	},
+	returnTransitions = {
+		(l7 l3 returnM l4)
+		(l7 l5 returnM l6)
+	}
+);
+// e.g., the nested word pi4 is accepted
+NestedWord pi4 = [Xleq100 XM2Xplus11 callM< Xg100 RES2Xminus10 >returnM XM2RESM callM< Xg100 RES2Xminus10 >returnM RES2RESM Xleq101andRESneq91];
+assert(accepts(ControlAutomaton, pi4));
+// but e.g., the following nested word is rejected
+assert(!accepts(ControlAutomaton, [Xg100 RES2Xminus10 >returnM RES2RESM Xleq101andRESneq91]));
+// Note that we use tagged symbols, (e.g., callM< or >returnM) to denote call 
+// and return positions in a nested word.
+
+// Next, our verification algorithm constructs the following automaton which accepts
+// the nested word pi4 and other words that are infeasible.
+assert(accepts(A4, pi4));
+NestedWordAutomaton A4 = (
+    callAlphabet = {callM},
+	internalAlphabet = {Xleq100 Xg100 RES2Xminus10 XM2Xplus11 XM2RESM RES2RESM Xleq101andRESneq91 },
+	returnAlphabet = {returnM},
+	states = {q0 q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 q11 q12 q13},
+	initialStates = {q0},
+	finalStates = {q13},
+	callTransitions = {
+		(q2 callM q3)
+		(q7 callM q8)
+	},
+	internalTransitions = { 
+		(q0 Xleq100 q1)
+		(q1 XM2Xplus11 q2)
+		(q3 Xleq100 q1)
+		(q3 Xg100 q4)
+		(q4 RES2Xminus10 q5)
+		(q6 XM2RESM q7)
+		(q8 Xleq100 q1)
+		(q8 Xg100 q9)
+		(q9 RES2Xminus10 q10)
+		(q11 RES2RESM q12)
+		(q12 Xleq101andRESneq91 q13)
+	},
+	returnTransitions = {
+		(q5 q2 returnM q6)
+		(q10 q7 returnM q11)
+		(q12 q7 returnM q11)
+		(q12 q2 returnM q6)
+	}
+);
+
+// Next, our verifcation algorithm computes the language difference of the
+// ControlAutomaton and A4.
+// This can be done by complementing A4 and taking the intersection of this
+// complement and A4.
+NestedWordAutomaton A4complement = complement(A4);
+NestedWordAutomaton AControlMinusA4 = intersect(ControlAutomaton,A4complement);
+// The result of a computation might be huge.
+print(numberOfStates(A4complement));
+// Furthermore not each state of the complement might be used in the complement
+// construction. In our automata libraray we can directly compute the difference.
+AControlMinusA4 = difference(ControlAutomaton, A4);
+
+// AControlMinusA4 is not empty
+assert(!isEmpty(AControlMinusA4));
+// e.g. the word pi3 is accepted
+NestedWord pi3 = [Xleq100 XM2Xplus11 callM< Xg100 RES2Xminus10 Xleq101andRESneq91];
+assert(accepts(AControlMinusA4,pi3));
+
+// Next, our verification algorithm constructs the following automaton which
+// accepts the nested word pi3 and other words that are infeasible.
+assert(accepts(A3, pi3));
+NestedWordAutomaton A3 = (
+    callAlphabet = {callM},
+    internalAlphabet = {Xleq100 Xg100 RES2Xminus10 XM2Xplus11 XM2RESM RES2RESM Xleq101andRESneq91 },
+    returnAlphabet = {returnM},
+	states = {q0 q1 q2 q3},
+	initialStates = {q0},
+	finalStates = {q3},
+	callTransitions = {
+		(q0 callM q0)
+	},
+	internalTransitions = { 
+		(q0 Xleq100 q0)
+		(q0 Xg100 q0)
+		(q0 RES2Xminus10 q0)
+		(q0 XM2Xplus11 q0)
+		(q0 XM2RESM q0)
+		(q0 RES2RESM q0)
+		(q0 Xleq101andRESneq91 q0)
+		(q0 Xg100 q1)
+		(q1 RES2Xminus10 q2)
+		(q2 Xleq101andRESneq91 q3)
+	},
+	returnTransitions = {
+		(q0 q0 returnM q0)
+	}
+);
+
+// Next, we subtract from AControlMinusA4 the language of A3.
+NestedWordAutomaton AControlMinusA4MinusA3 = difference(AControlMinusA4, A3);
+// The result does not accept any nested word
+assert(isEmpty(AControlMinusA4MinusA3));
+
+// We took the set of all labelings of path from initial location to the error 
+// location of a program (represented by automaton ControlAutomaton).
+// We removed from this language sequences of statements that are infeasible
+// (automata A3 and A4).
+// Hence the program is correct.
+
+
+
+
+
+

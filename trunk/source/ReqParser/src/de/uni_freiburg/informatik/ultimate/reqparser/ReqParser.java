@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParserResult;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
@@ -148,7 +148,7 @@ public class ReqParser implements ISource {
 	}
 
 	private void logPatternSize(final List<PatternType<?>> patterns, final String suffix) {
-		final long patternWithId = patterns.stream().filter(a -> !(a instanceof InitializationPattern)).count();
+		final long patternWithId = patterns.stream().filter(a -> !(a instanceof DeclarationPattern)).count();
 		if (suffix == null) {
 			mLogger.info(String.format("%s requirements (%s non-initialization)", patterns.size(), patternWithId));
 		} else {
@@ -159,14 +159,14 @@ public class ReqParser implements ISource {
 
 	private List<PatternType<?>> unify(final List<PatternType<?>> patterns) {
 		final List<PatternType<?>> rtr = new ArrayList<>();
-		final List<InitializationPattern> init = patterns.stream().filter(InitializationPattern.class::isInstance)
-				.map(InitializationPattern.class::cast).collect(Collectors.toList());
-		final UnionFind<InitializationPattern> uf = createUnionFind(init);
+		final List<DeclarationPattern> init = patterns.stream().filter(DeclarationPattern.class::isInstance)
+				.map(DeclarationPattern.class::cast).collect(Collectors.toList());
+		final UnionFind<DeclarationPattern> uf = createUnionFind(init);
 		checkTypeConflicts(uf.getAllRepresentatives());
 		rtr.addAll(merge(uf));
 
 		final List<PatternType<?>> reqs = patterns.stream()
-				.filter(a -> a != null && !(a instanceof InitializationPattern)).collect(Collectors.toList());
+				.filter(a -> a != null && !(a instanceof DeclarationPattern)).collect(Collectors.toList());
 		if (reqs.isEmpty()) {
 			return rtr;
 		}
@@ -176,10 +176,10 @@ public class ReqParser implements ISource {
 		return rtr;
 	}
 
-	private void checkTypeConflicts(final Collection<InitializationPattern> inits) {
-		final Map<String, InitializationPattern> seen = new HashMap<>();
-		for (final InitializationPattern init : inits) {
-			final InitializationPattern otherInit = seen.put(init.getId(), init);
+	private void checkTypeConflicts(final Collection<DeclarationPattern> inits) {
+		final Map<String, DeclarationPattern> seen = new HashMap<>();
+		for (final DeclarationPattern init : inits) {
+			final DeclarationPattern otherInit = seen.put(init.getId(), init);
 			if (otherInit == null) {
 				continue;
 			}

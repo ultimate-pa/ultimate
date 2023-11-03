@@ -1,0 +1,16 @@
+(set-option :produce-proofs true)
+(set-option :proof-check-mode true)
+(set-logic QF_UFDT)
+(declare-sort U 0)
+(declare-datatypes ( (List 0) (Nat 0) ) (
+ ( (nil) (cons (car Nat) (cdr List) ))
+ ( (zero) (succ (pred Nat)) )
+))
+(declare-const x0 Nat)
+(declare-const x1 Nat)
+
+(assert (not (= zero x0)))
+(assert (not ((_ is succ) x1)))
+(assert (= x0 x1))
+(check-sat)
+(get-proof)

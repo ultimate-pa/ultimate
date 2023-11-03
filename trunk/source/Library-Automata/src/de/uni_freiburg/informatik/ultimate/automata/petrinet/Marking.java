@@ -36,6 +36,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -43,12 +45,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
- * @param <LETTER>
- *            symbols type
+ *
  * @param <PLACE>
  *            place content type
  */
-public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
+public class Marking<PLACE> implements Iterable<PLACE>, Serializable {
 	private static final long serialVersionUID = -357669345268897194L;
 
 	private final ImmutableSet<PLACE> mPlaces;
@@ -126,7 +127,7 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		final Marking<LETTER, PLACE> other = (Marking<LETTER, PLACE>) obj;
+		final Marking<PLACE> other = (Marking<PLACE>) obj;
 		if (mPlaces == null) {
 			if (other.mPlaces != null) {
 				return false;
@@ -147,9 +148,8 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 *            The transition.
 	 * @return true, if the marking enables the specified transition.
 	 */
-	public boolean isTransitionEnabled(final ITransition<LETTER, PLACE> transition,
-			final IPetriNet<LETTER, PLACE> net) {
-		return mPlaces.containsAll(net.getPredecessors(transition));
+	public <LETTER> boolean isTransitionEnabled(final Transition<LETTER, PLACE> transition) {
+		return mPlaces.containsAll(transition.getPredecessors());
 	}
 
 	/**
@@ -158,20 +158,20 @@ public class Marking<LETTER, PLACE> implements Iterable<PLACE>, Serializable {
 	 * @return The marking to which the occurrence of the specified transition leads.
 	 * @throws PetriNetNot1SafeException
 	 */
-	public Marking<LETTER, PLACE> fireTransition(final ITransition<LETTER, PLACE> transition,
-			final IPetriNet<LETTER, PLACE> net) throws PetriNetNot1SafeException {
-		final Set<PLACE> predecessors = net.getPredecessors(transition);
-		final Set<PLACE> successors = net.getSuccessors(transition);
-		final Object[] places =
-				Stream.concat(mPlaces.stream().filter(x -> !predecessors.contains(x)), successors.stream()).distinct()
-						.toArray();
+	public <LETTER> Marking<PLACE> fireTransition(final Transition<LETTER, PLACE> transition)
+			throws PetriNetNot1SafeException {
+		final Set<PLACE> predecessors = transition.getPredecessors();
+		final Set<PLACE> successors = transition.getSuccessors();
+		final Stream<PLACE> places =
+				Stream.concat(mPlaces.stream().filter(x -> !predecessors.contains(x)), successors.stream());
 
 		final Set<PLACE> resultSet;
 		try {
-			// Using Set#of should be more memory-efficient than HashSet, and avoiding HashSet copies should be faster.
-			resultSet = (Set<PLACE>) Set.of(places);
+			// Using DataStructureUtils is more memory-efficient than HashSet,
+			// and avoiding HashSet copies should be faster.
+			resultSet = DataStructureUtils.asSet(places);
 		} catch (final IllegalArgumentException e) {
-			// thrown if the "places" array contains duplicate elements
+			// thrown if the "places" stream contains duplicate elements
 			// see https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Set.html#unmodifiable
 			final List<PLACE> unsafePlaces = mPlaces.stream().filter(x -> !predecessors.contains(x))
 					.filter(successors::contains).collect(Collectors.toList());

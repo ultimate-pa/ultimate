@@ -32,6 +32,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -44,12 +45,12 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ITheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ArraySortInterpretation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SMTInterpolConstants;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAnnotation.RuleKind;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedLinkedHashSet;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedArrayList;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedLinkedHashSet;
 
 /**
  * Array theory solver based on weak equivalence classes. The underlying data structure is explained in our paper
@@ -785,10 +786,12 @@ public class ArrayTheory implements ITheory {
 			logger.info("Array: #Arrays: %d, #BuildWeakEQ: %d, #ModEdges: %d, " + "#addStores: %d, #merges: %d",
 					mArrays.size(), mNumBuildWeakEQ, mNumModuloEdges, mNumAddStores, mNumMerges);
 			logger.info("Insts: ReadOverWeakEQ: %d, WeakeqExt: %d", mNumInstsSelect, mNumInstsEq);
-			logger.info("Time: BuildWeakEq: %.3f ms, BuildWeakEqi: %.3f ms", mTimeBuildWeakEq / 1e6,
-					mTimeBuildWeakEqi / 1e6);
-			logger.info("Time: Propagation %.3f ms, Explanations: %.3f ms", mTimePropagation / 1e6,
-					mTimeExplanations / 1e6);
+			logger.info("Time: BuildWeakEq: %d.%03d ms, BuildWeakEqi: %d.%03d ms",
+					mTimeBuildWeakEq / 1000000, mTimeBuildWeakEq / 1000 % 1000,
+					mTimeBuildWeakEqi / 1000000, mTimeBuildWeakEqi / 1000 % 1000);
+			logger.info("Time: Propagation %d.%03d ms, Explanations: %d.%03d ms",
+					mTimePropagation / 1000000, mTimePropagation / 1000 % 1000,
+					mTimeExplanations / 1000000, mTimeExplanations / 1000 % 1000);
 		}
 
 	}
@@ -829,8 +832,12 @@ public class ArrayTheory implements ITheory {
 	}
 
 	@Override
-	public Clause backtrackComplete() {
+	public void backtrackStart() {
 		mPropClauses.clear();
+	}
+
+	@Override
+	public Clause backtrackComplete() {
 		return null;
 	}
 
@@ -872,114 +879,91 @@ public class ArrayTheory implements ITheory {
 										{ "Explanations", mTimeExplanations } } } } };
 	}
 
-	public void fillInModel(final ModelBuilder builder, final Model model, final Theory t,
-			final SharedTermEvaluator ste) {
-		final Map<Sort, List<ArrayNode>> arraysBySort = new HashMap<>();
-		for (final ArrayNode node : mCongRoots.values()) {
-			final Sort arraySort = node.mTerm.getFlatTerm().getSort();
-			List<ArrayNode> list = arraysBySort.get(arraySort);
-			if (list == null) {
-				list = new ArrayList<>();
-				arraysBySort.put(arraySort, list);
-			}
-			list.add(node);
+	public void fillInModel(final ModelBuilder builder, final List<CCTerm> ccArrayTerms) {
+		final Sort arraySort = ccArrayTerms.get(0).getFlatTerm().getSort();
+		assert arraySort.isArraySort();
+		final Sort valueSort = arraySort.getArguments()[1];
+		final Model model = builder.getModel();
+		final Theory t = builder.getTheory();
+		final ArraySortInterpretation arraySortInterpretation = (ArraySortInterpretation) model
+				.provideSortInterpretation(arraySort);
+		final List<ArrayNode> arraysTerms = new ArrayList<>(ccArrayTerms.size());
+		for (final CCTerm ccterm : ccArrayTerms) {
+			arraysTerms.add(mCongRoots.get(ccterm));
 		}
-		final ArrayDeque<Sort> todoSorts = new ArrayDeque<>(arraysBySort.keySet());
-		while (!todoSorts.isEmpty()) {
-			final Sort arraySort = todoSorts.getFirst();
-			assert arraySort.isArraySort();
-			final Sort indexSort = arraySort.getArguments()[0];
-			final Sort valueSort = arraySort.getArguments()[1];
-			if (indexSort.isArraySort() && arraysBySort.containsKey(indexSort)) {
-				// do indexSort first
-				todoSorts.addFirst(indexSort);
+		final ArrayDeque<ArrayNode> todoQueue = new ArrayDeque<>(arraysTerms);
+		while (!todoQueue.isEmpty()) {
+			final ArrayNode node = todoQueue.removeFirst();
+			if (builder.getModelValue(node.mTerm) != null) {
+				// we already did that term
 				continue;
 			}
-			if (valueSort.isArraySort() && arraysBySort.containsKey(valueSort)) {
-				// do valueSort first
-				todoSorts.addFirst(valueSort);
-				continue;
-			}
-			todoSorts.removeFirst();
-			if (!arraysBySort.containsKey(arraySort)) {
-				// already did this sort.
-				continue;
-			}
-			final ArraySortInterpretation arraySortInterpretation =
-					(ArraySortInterpretation) model.provideSortInterpretation(arraySort);
-			final List<ArrayNode> arraysOfSort = arraysBySort.remove(arraySort);
-			final ArrayDeque<ArrayNode> todoQueue = new ArrayDeque<>(arraysOfSort);
-			while (!todoQueue.isEmpty()) {
-				final ArrayNode node = todoQueue.removeFirst();
-				if (builder.getModelValue(node.mTerm) != null) {
-					// we already did that term
-					continue;
-				}
-				final ArrayNode parent = node.mPrimaryEdge;
-				if (parent == null) {
-					// Note that constant arrays are the representatives, so either this is a constant array or
-					// it's not weakly equivalent to one.
-					if (node.mConstTerm != null) {
-						final Term value = builder.getModelValue(getValueFromConst(node.mConstTerm).getRepresentative());
-						if (value == null) {
-							// the const is probably an array that we build later.
-							assert getValueFromConst(node.mConstTerm).getFlatTerm().getSort().isArraySort();
-							todoQueue.addLast(node);
-							continue;
-						}
-						final FunctionSymbol constFunc = t.getFunctionWithResult("const", null, arraySort, valueSort);
-						final Term nodeValue = t.term(constFunc, value);
-						builder.setModelValue(node.mTerm, nodeValue);
-					} else {
-						// this is not a weakly related to a constant array.  Use some fresh array.
-						Term nodeValue = model.extendFresh(arraySort);
-						// change all indices to the right select value
-						for (final Entry<CCTerm, CCAppTerm> indexValuePairs : node.mSelects.entrySet()) {
-							final CCTerm index = indexValuePairs.getKey();
-							final CCTerm value = indexValuePairs.getValue().getRepresentative();
-							nodeValue = t.term("store",
-									nodeValue, builder.getModelValue(index), builder.getModelValue(value));
-						}
-						// we also need to change the indices we store in the same weak-equivalence class, so that
-						// they don't accidentally match the default value.
-						for (final ArrayNode other : arraysOfSort) {
-							if (other.getWeakRepresentative() != node
-									|| other == node
-									|| other.mSelects.isEmpty()
-									|| other.mSecondaryEdge != null) {
-								continue;
-							}
-							assert other.mSelects.size() == 1;
-							final CCTerm index = other.mSelects.keySet().iterator().next();
-							final CCTerm value = other.mSelects.get(index).getRepresentative();
-							if (!node.mSelects.containsKey(index)) {
-								// we have another array in the weak-equivalence class that may by accident store the
-								// default value. To make sure it doesn't equal node, we change the node value at
-								// this index to a fresh value
-								final Term freshValue = model.extendFresh(valueSort);
-								nodeValue = t.term("store", nodeValue, builder.getModelValue(index), freshValue);
-							}
-						}
-						nodeValue = arraySortInterpretation.normalizeStoreTerm(nodeValue);
-						builder.setModelValue(node.mTerm, nodeValue);
-					}
-				} else {
-					final Term parentTerm = builder.getModelValue(parent.mTerm);
-					if (parentTerm == null) {
-						// parent wasn't visited yet; it must be visited first
-						// enqueue the node again and its parent.
-						todoQueue.addFirst(node);
-						todoQueue.addFirst(parent);
+			final ArrayNode parent = node.mPrimaryEdge;
+			if (parent == null) {
+				// Note that constant arrays are the representatives, so either this is a
+				// constant array or
+				// it's not weakly equivalent to one.
+				if (node.mConstTerm != null) {
+					final Term value = builder.getModelValue(getValueFromConst(node.mConstTerm).getRepresentative());
+					if (value == null) {
+						// the const is probably an array that we build later.
+						assert getValueFromConst(node.mConstTerm).getFlatTerm().getSort().isArraySort();
+						todoQueue.addLast(node);
 						continue;
 					}
-					final CCTerm ccIndex = getIndexFromStore(node.mPrimaryStore).getRepresentative();
-					final CCTerm ccValue = node.mSelects.get(ccIndex);
-					final Term index = builder.getModelValue(ccIndex);
-					final Term value = ccValue == null ? model.extendFresh(valueSort) : builder.getModelValue(ccValue);
-					Term nodeValue = t.term("store", parentTerm, index, value);
+					final FunctionSymbol constFunc = t.getFunctionWithResult(SMTLIBConstants.CONST, null, arraySort,
+							valueSort);
+					final Term nodeValue = t.term(constFunc, value);
+					builder.setModelValue(node.mTerm, nodeValue);
+				} else {
+					// this is not a weakly related to a constant array. Use some fresh array.
+					Term nodeValue = model.extendFresh(arraySort);
+					// change all indices to the right select value
+					for (final Entry<CCTerm, CCAppTerm> indexValuePairs : node.mSelects.entrySet()) {
+						final CCTerm index = indexValuePairs.getKey();
+						final CCTerm value = indexValuePairs.getValue().getRepresentative();
+						nodeValue = t.term("store", nodeValue, builder.getModelValue(index),
+								builder.getModelValue(value));
+					}
+					// we also need to change the indices we store in the same weak-equivalence
+					// class, so that
+					// they don't accidentally match the default value.
+					for (final ArrayNode other : arraysTerms) {
+						if (other.getWeakRepresentative() != node || other == node || other.mSelects.isEmpty()
+								|| other.mSecondaryEdge != null) {
+							continue;
+						}
+						assert other.mSelects.size() == 1;
+						final CCTerm index = other.mSelects.keySet().iterator().next();
+						if (!node.mSelects.containsKey(index)) {
+							// we have another array in the weak-equivalence class that may by accident
+							// store the
+							// default value. To make sure it doesn't equal node, we change the node value
+							// at
+							// this index to a fresh value
+							final Term freshValue = model.extendFresh(valueSort);
+							nodeValue = t.term("store", nodeValue, builder.getModelValue(index), freshValue);
+						}
+					}
 					nodeValue = arraySortInterpretation.normalizeStoreTerm(nodeValue);
 					builder.setModelValue(node.mTerm, nodeValue);
 				}
+			} else {
+				final Term parentTerm = builder.getModelValue(parent.mTerm);
+				if (parentTerm == null) {
+					// parent wasn't visited yet; it must be visited first
+					// enqueue the node again and its parent.
+					todoQueue.addFirst(node);
+					todoQueue.addFirst(parent);
+					continue;
+				}
+				final CCTerm ccIndex = getIndexFromStore(node.mPrimaryStore).getRepresentative();
+				final CCTerm ccValue = node.mSelects.get(ccIndex);
+				final Term index = builder.getModelValue(ccIndex);
+				final Term value = ccValue == null ? model.extendFresh(valueSort) : builder.getModelValue(ccValue);
+				Term nodeValue = t.term("store", parentTerm, index, value);
+				nodeValue = arraySortInterpretation.normalizeStoreTerm(nodeValue);
+				builder.setModelValue(node.mTerm, nodeValue);
 			}
 		}
 	}
@@ -1000,44 +984,111 @@ public class ArrayTheory implements ITheory {
 		mDiffs.add(diff);
 	}
 
-	static CCTerm getArrayFromSelect(final CCAppTerm select) {
-		return ((CCAppTerm) select.getFunc()).getArg();
+	public static boolean isStoreTerm(final CCTerm term) {
+		final CCBaseTerm base = getBaseTerm(term);
+		if (base.isFunctionSymbol()) {
+			return base.getFunctionSymbol().getName().equals(SMTLIBConstants.STORE);
+		}
+		return false;
 	}
 
-	static CCTerm getIndexFromSelect(final CCAppTerm select) {
+	public static boolean isSelectTerm(final CCTerm term) {
+		final CCBaseTerm base = getBaseTerm(term);
+		if (base.isFunctionSymbol()) {
+			return base.getFunctionSymbol().getName().equals(SMTLIBConstants.SELECT);
+		}
+		return false;
+	}
+
+	public static boolean isConstTerm(final CCTerm term) {
+		final CCBaseTerm base = getBaseTerm(term);
+		if (base.isFunctionSymbol()) {
+			return base.getFunctionSymbol().getName().equals(SMTLIBConstants.CONST);
+		}
+		return false;
+	}
+
+	public static boolean isDiffTerm(final CCTerm term) {
+		final CCBaseTerm base = getBaseTerm(term);
+		if (base.isFunctionSymbol()) {
+			return base.getFunctionSymbol().getName().equals(SMTInterpolConstants.DIFF);
+		}
+		return false;
+	}
+
+	public static CCTerm getArrayFromSelect(final CCAppTerm select) {
+		assert isSelectTerm(select);
+		return getSecondToLastArgument(select);
+	}
+
+	public static CCTerm getIndexFromSelect(final CCAppTerm select) {
+		assert isSelectTerm(select);
 		return select.getArg();
 	}
 
-	static CCTerm getArrayFromStore(final CCAppTerm store) {
-		return ((CCAppTerm) ((CCAppTerm) store.getFunc()).getFunc()).getArg();
+	public static CCTerm getArrayFromStore(final CCAppTerm store) {
+		assert isStoreTerm(store);
+		return getThirdToLastArgument(store);
 	}
 
-	static CCTerm getIndexFromStore(final CCAppTerm store) {
-		return ((CCAppTerm) store.getFunc()).getArg();
+	public static CCTerm getIndexFromStore(final CCAppTerm store) {
+		assert isStoreTerm(store);
+		return getSecondToLastArgument(store);
 	}
 
-	static CCTerm getValueFromStore(final CCAppTerm store) {
+	public static CCTerm getValueFromStore(final CCAppTerm store) {
+		assert isStoreTerm(store);
 		return store.getArg();
 	}
 
-	static CCTerm getValueFromConst(final CCAppTerm term) {
-		return term.getArg();
+	public static CCTerm getValueFromConst(final CCAppTerm constArr) {
+		assert isConstTerm(constArr);
+		return constArr.getArg();
 	}
 
-	static CCTerm getLeftFromDiff(final CCAppTerm diff) {
-		return getIndexFromStore(diff);
+	public static CCTerm getLeftFromDiff(final CCAppTerm diff) {
+		assert isDiffTerm(diff);
+		return getSecondToLastArgument(diff);
 	}
 
-	static CCTerm getRightFromDiff(final CCAppTerm diff) {
+	public static CCTerm getRightFromDiff(final CCAppTerm diff) {
+		assert isDiffTerm(diff);
 		return diff.getArg();
 	}
 
-	static Sort getArraySortFromSelect(final CCAppTerm select) {
-		return ((CCBaseTerm) ((CCAppTerm) select.getFunc()).getFunc()).getFunctionSymbol().getParameterSorts()[0];
+	public static Sort getArraySortFromSelect(final CCAppTerm select) {
+		assert isSelectTerm(select);
+		return getBaseTerm(select).getFunctionSymbol().getParameterSorts()[0];
 	}
 
-	static Sort getArraySortFromStore(final CCAppTerm store) {
-		return getArraySortFromSelect((CCAppTerm) store.getFunc());
+	public static Sort getArraySortFromStore(final CCAppTerm store) {
+		assert isStoreTerm(store);
+		return getBaseTerm(store).getFunctionSymbol().getParameterSorts()[0];
+	}
+
+	private static CCBaseTerm getBaseTerm(final CCTerm term) {
+		if (term instanceof CCBaseTerm) {
+			return (CCBaseTerm) term;
+		} else {
+			CCTerm func = term;
+			while (func instanceof CCAppTerm) {
+				func = ((CCAppTerm) func).getFunc();
+			}
+			assert func instanceof CCBaseTerm;
+			return (CCBaseTerm) func;
+		}
+	}
+
+	private static CCTerm getSecondToLastArgument(final CCTerm term) {
+		assert term instanceof CCAppTerm;
+		final CCTerm func = ((CCAppTerm) term).getFunc();
+		assert func instanceof CCAppTerm;
+		return ((CCAppTerm) func).getArg();
+	}
+
+	private static CCTerm getThirdToLastArgument(final CCTerm term) {
+		assert term instanceof CCAppTerm;
+		return getSecondToLastArgument(((CCAppTerm) term).getFunc());
 	}
 
 	CCAppTerm findConst(final CCTerm value) {
@@ -1440,16 +1491,18 @@ public class ArrayTheory implements ITheory {
 		return mClausifier;
 	}
 
-	boolean isStore(final CCTerm term) {
-		return mStores.contains(term);
-	}
-
-	boolean isConst(final CCTerm term) {
-		return mConsts.contains(term);
-	}
-
 	public void cleanCaches() {
 		mCongRoots = null;
 		mPropClauses.clear();
+	}
+
+	public CCTerm getWeakRep(final CCTerm array) {
+		assert array != null && array.getFlatTerm().getSort().isArraySort();
+		if (mCongRoots == null) {
+			buildWeakEq();
+		}
+		final ArrayNode weakRep = mCongRoots.get(array.getRepresentative()).getWeakRepresentative();
+		assert weakRep != null;
+		return weakRep.mTerm;
 	}
 }

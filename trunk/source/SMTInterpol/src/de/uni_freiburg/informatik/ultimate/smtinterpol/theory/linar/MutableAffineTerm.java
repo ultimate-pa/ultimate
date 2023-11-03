@@ -188,11 +188,10 @@ public class MutableAffineTerm {
 
 	/**
 	 * Convert the affine term to a term in our core theory.
-	 *
 	 * @param useAuxVars
 	 *            use auxiliary variables for non-variable terms (unimplemented).
 	 */
-	public Term toSMTLib(final Theory t, final boolean isInt, final boolean quoted) {
+	public Term toSMTLib(final Theory t, final boolean isInt) {
 		final Sort numSort = isInt ? t.getSort("Int") : t.getSort("Real");
 		assert (numSort != null);
 		final Sort[] binfunc = new Sort[] { numSort, numSort };
@@ -220,9 +219,7 @@ public class MutableAffineTerm {
 				final FunctionSymbol toReal = t.getFunction("to_real", intSort);
 				convme = t.term(toReal, convme);
 			}
-			if (me.getValue().equals(Rational.MONE)) {
-				convme = t.term(negate, convme);
-			} else if (!me.getValue().equals(Rational.ONE)) {
+			if (!me.getValue().equals(Rational.ONE)) {
 				final Term convfac = me.getValue().toTerm(numSort);
 				convme = t.term(times, convfac, convme);
 			}
@@ -253,7 +250,7 @@ public class MutableAffineTerm {
 	 *            Theory used in conversion.
 	 * @return The SMTLib term representing the formula <code>this <= 0</code>.
 	 */
-	public Term toSMTLibLeq0(final Theory smtTheory, final boolean quoted) {
+	public Term toSMTLibLeq0(final Theory smtTheory) {
 		assert mConstant.mEps >= 0;
 		if (isConstant()) {
 			return mConstant.compareTo(InfinitesimalNumber.ZERO) <= 0 ? smtTheory.mTrue : smtTheory.mFalse;
@@ -262,7 +259,6 @@ public class MutableAffineTerm {
 		final Sort sort = smtTheory.getSort(isInt ? "Int" : "Real");
 		final String comp = mConstant.mEps == 0 ? "<=" : "<";
 		final Term zero = Rational.ZERO.toTerm(sort);
-		final Term res = smtTheory.term(comp, toSMTLib(smtTheory, isInt, quoted), zero);
-		return quoted ? smtTheory.annotatedTerm(LAEquality.QUOTED_LA, res) : res;
+		return smtTheory.term(comp, toSMTLib(smtTheory, isInt), zero);
 	}
 }

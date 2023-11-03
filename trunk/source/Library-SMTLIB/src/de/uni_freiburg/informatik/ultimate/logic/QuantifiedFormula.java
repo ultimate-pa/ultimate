@@ -46,7 +46,7 @@ public class QuantifiedFormula extends Term {
 	private final TermVariable[] mVariables;
 	private final Term mSubFormula;
 
-	QuantifiedFormula(int quant, TermVariable[] vars, Term f, int hash) {
+	QuantifiedFormula(final int quant, final TermVariable[] vars, final Term f, final int hash) {
 		super(hash);
 		mQuantifier = quant;
 		mVariables = vars;
@@ -81,19 +81,14 @@ public class QuantifiedFormula extends Term {
 		return mSubFormula.getSort();
 	}
 
-	@Override
-	public int hashCode() {
-		return hashQuantifier(mQuantifier, mVariables, mSubFormula);
-	}
-
 	public static final int hashQuantifier(
-			int quant, TermVariable[] vars, Term f) {
+			final int quant, final TermVariable[] vars, final Term f) {
 		return //Arrays.hashCode(vars) ^ f.hashCode() ^ quant;
 			HashUtils.hashJenkins(f.hashCode() ^ quant, (Object[]) vars);
 	}
 
 	@Override
-	public void toStringHelper(ArrayDeque<Object> mTodo) {
+	public void toStringHelper(final ArrayDeque<Object> mTodo) {
 		// Add subterm to stack.
 		mTodo.addLast(")");
 		mTodo.addLast(getSubformula());

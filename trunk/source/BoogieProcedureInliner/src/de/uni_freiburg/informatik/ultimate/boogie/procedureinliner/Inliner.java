@@ -116,9 +116,8 @@ public class Inliner implements IUnmanagedObserver {
 				cte.logErrorAndCancelToolchain(mServices, Activator.PLUGIN_ID);
 			}
 			return false;
-		} else {
-			return true;
 		}
+		return true;
 	}
 
 	private void inline() throws CancelToolchainException {
@@ -127,7 +126,9 @@ public class Inliner implements IUnmanagedObserver {
 		final GlobalScopeManager globalMgr = new GlobalScopeManager(mNonProcedureDeclarations);
 		final InlinerStatistic inlinerStat = new InlinerStatistic(mCallGraph);
 		for (final CallGraphNode proc : proceduresToBeProcessed()) {
-			if (proc.hasInlineFlags()) { // implies that the procedure is implemented
+			if (proc.hasInlineFlags()) {
+				assert proc.isImplemented() : "Cannot inline procedure that is not implemented";
+
 				final InlineVersionTransformer transformer =
 						new InlineVersionTransformer(mServices, globalMgr, inlinerStat);
 				mNewProceduresWithBody.put(proc.getId(), transformer.inlineCallsInside(proc));
@@ -214,7 +215,8 @@ public class Inliner implements IUnmanagedObserver {
 			final Procedure oldProcWithSpec = proc.getProcedureWithSpecification();
 			final Procedure oldProcWithBody = proc.getProcedureWithBody();
 			final Procedure newProcWithBody = mNewProceduresWithBody.get(proc.getId());
-			if (newProcWithBody == null) { // the procedure had nothing to inline, nothing changed
+			if (newProcWithBody == null) {
+				// the procedure had nothing to inline, nothing changed
 				newDeclarations.add(oldProcWithSpec);
 				if (proc.isImplemented() && !proc.isCombined()) {
 					newDeclarations.add(oldProcWithBody);

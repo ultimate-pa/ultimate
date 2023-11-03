@@ -36,6 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 
 /**
  * Totalize TreeAutomaton operation
@@ -75,7 +77,8 @@ public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 	 * @param tree
 	 */
 	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> Totalize(
-			final AutomataLibraryServices services, final SF factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
+			final AutomataLibraryServices services, final SF factory, final ITreeAutomatonBU<LETTER, STATE> tree)
+			throws AutomataOperationCanceledException {
 		super(services);
 		mTreeAutomaton = new Determinize<>(services, factory, tree).getResult();
 		mStateFactory = factory;
@@ -99,7 +102,7 @@ public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 	 */
 	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> Totalize(
 			final AutomataLibraryServices services, final SF factory, final ITreeAutomatonBU<LETTER, STATE> tree,
-			final Collection<LETTER> alphabet) {
+			final Collection<LETTER> alphabet) throws AutomataOperationCanceledException {
 		super(services);
 		mTreeAutomaton = new Determinize<>(services, factory, tree).getResult();
 		mStateFactory = factory;
@@ -150,7 +153,7 @@ public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 	 *
 	 * @return
 	 */
-	private TreeAutomatonBU<LETTER, STATE> computeTotalize() {
+	private TreeAutomatonBU<LETTER, STATE> computeTotalize() throws AutomataOperationCanceledException {
 		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
 
 		res.extendAlphabet(mTreeAutomaton.getAlphabet());
@@ -163,6 +166,10 @@ public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 		}
 		for (final List<STATE> src : mTreeAutomaton.getSourceCombinations()) {
 			for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getSuccessors(src)) {
+				if (!mServices.getProgressAwareTimer().continueProcessing()) {
+					throw new AutomataOperationCanceledException(getRunningTaskInfo());
+				}
+
 				res.addRule(rule);
 				for (final List<STATE> srcSt : combinations(rule.getArity())) {
 					final Iterable<STATE> st = mTreeAutomaton.getSuccessors(srcSt, rule.getLetter());
@@ -204,5 +211,10 @@ public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
+	}
+
+	private RunningTaskInfo getRunningTaskInfo() {
+		return new RunningTaskInfo(this.getClass(),
+				"totalizing tree automaton with " + mTreeAutomaton.sizeInformation());
 	}
 }

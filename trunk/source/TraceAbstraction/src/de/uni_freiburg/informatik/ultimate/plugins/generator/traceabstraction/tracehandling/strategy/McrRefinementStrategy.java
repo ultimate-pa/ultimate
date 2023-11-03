@@ -31,12 +31,11 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpgStrategyModule;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpgStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.ITraceCheckStrategyModule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleMcr;
 
 /**
@@ -44,15 +43,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  */
 public class McrRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
-	public McrRefinementStrategy(final StrategyModuleFactory<L> factory,
-			final RefinementStrategyExceptionBlacklist exceptionBlacklist,
-			final StrategyFactory<L> strategyFactory) {
+	public McrRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
+			final RefinementStrategyExceptionBlacklist exceptionBlacklist, final StrategyFactory<L> strategyFactory) {
 		super(factory, createModules(factory, strategyFactory), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static final <L extends IIcfgTransition<?>> StrategyModules<L>
-			createModules(final StrategyModuleFactory<L> factory, final StrategyFactory<L> strategyFactory) {
+	private static final <L extends IIcfgTransition<?>> StrategyModules<L> createModules(
+			final StrategyFactory<L>.StrategyModuleFactory factory, final StrategyFactory<L> strategyFactory) {
 		final StrategyModuleMcr<L> mcrModule = factory.createStrategyModuleMcr(strategyFactory);
 		final ITraceCheckStrategyModule<L, ?>[] traceChecks = new ITraceCheckStrategyModule[] { mcrModule };
 		final IIpgStrategyModule<?, L>[] interpolantGenerators = new IIpgStrategyModule[] { mcrModule };

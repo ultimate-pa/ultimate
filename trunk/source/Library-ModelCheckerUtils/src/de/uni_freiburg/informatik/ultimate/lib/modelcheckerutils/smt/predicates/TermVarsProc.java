@@ -26,34 +26,35 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class TermVarsProc {
 	private final Term mTerm;
 	private final Set<IProgramVar> mVars;
+	private final Set<IProgramFunction> mFuns;
 	private final String[] mProcedures;
 	private final Term mClosedTerm;
 
-	public TermVarsProc(final Term term, final Set<IProgramVar> vars, final String[] procedures,
-			final Term closedTerm) {
+	public TermVarsProc(final Term term, final Set<IProgramVar> vars, final Set<IProgramFunction> funs,
+			final String[] procedures, final Term closedTerm) {
 		mTerm = term;
 		mVars = vars;
+		mFuns = funs;
 		mProcedures = procedures;
 		mClosedTerm = closedTerm;
 	}
@@ -74,21 +75,28 @@ public class TermVarsProc {
 		return mVars;
 	}
 
-	/**
-	 * Given a term in which every free variable is the TermVariable of a BoogieVar. Compute the BoogieVars of the free
-	 * variables and the procedures of these BoogieVariables.
-	 */
-	public static TermVarsProc computeTermVarsProc(final Term term, final Script script,
-			final IIcfgSymbolTable symbolTable) {
-		return computeTermVarsProc(term, script, symbolTable::getProgramVar);
+	public Set<IProgramFunction> getFuns() {
+		return mFuns;
 	}
 
 	/**
-	 * Given a term in which every free variable is the TermVariable of a BoogieVar. Compute the BoogieVars of the free
-	 * variables and the procedures of these BoogieVariables.
+	 * Given a term in which every free variable is the TermVariable of a BoogieVar.
+	 * Compute the BoogieVars of the free variables and the procedures of these
+	 * BoogieVariables.
 	 */
-	public static TermVarsProc computeTermVarsProc(final Term term, final Script script,
-			final Function<TermVariable, IProgramVar> funTermVar2ProgVar) {
+	public static TermVarsProc computeTermVarsProc(final Term term, final ManagedScript mgdScript,
+			final IIcfgSymbolTable symbolTable) {
+		return computeTermVarsProc(term, mgdScript, symbolTable::getProgramVar, symbolTable::getProgramFun);
+	}
+
+	/**
+	 * Given a term in which every free variable is the TermVariable of a BoogieVar.
+	 * Compute the BoogieVars of the free variables and the procedures of these
+	 * BoogieVariables.
+	 */
+	public static TermVarsProc computeTermVarsProc(final Term term, final ManagedScript mgdScript,
+			final Function<TermVariable, IProgramVar> funTermVar2ProgVar,
+			final Function<FunctionSymbol, IProgramFunction> funcSymb2ProgFunc) {
 		final HashSet<IProgramVar> vars = new HashSet<>();
 		final Set<String> procs = new HashSet<>();
 		for (final TermVariable tv : term.getFreeVars()) {
@@ -101,56 +109,33 @@ public class TermVarsProc {
 				procs.add(bv.getProcedure());
 			}
 		}
-		final Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, script);
-		return new TermVarsProc(term, vars, procs.toArray(new String[procs.size()]), closedTerm);
-	}
-
-	/**
-	 * Given a term in which every free variable is the TermVariable of a BoogieVar. Compute the BoogieVars of the free
-	 * variables and the procedures of these BoogieVariables. If replaceNonModifiableOldVars is true, modifiableGlobals
-	 * must be non-null and we check we replace the oldVars of all non-modifiable Globals by their corresponding
-	 * non-oldVars.
-	 *
-	 * 2015-05-27 Matthias: At the moment, I don't know if we need this method. Don't use it unless you know what you
-	 * do.
-	 */
-	@Deprecated
-	private static TermVarsProc computeTermVarsProc(Term term, final Boogie2SMT boogie2smt,
-			final boolean replaceNonModifiableOldVars, final Set<IProgramVar> modifiableGlobals) {
-		final HashSet<IProgramVar> vars = new HashSet<>();
-		final List<IProgramOldVar> oldVarsThatHaveToBeReplaced = new ArrayList<>();
-		final Set<String> procs = new HashSet<>();
-		for (final TermVariable tv : term.getFreeVars()) {
-			IProgramVar bv = boogie2smt.getBoogie2SmtSymbolTable().getProgramVar(tv);
-			if (bv == null) {
-				throw new AssertionError("No corresponding IProgramVar for " + tv);
-			}
-			if (replaceNonModifiableOldVars) {
-				if (bv instanceof IProgramOldVar) {
-					final IProgramNonOldVar nonOld = ((IProgramOldVar) bv).getNonOldVar();
-					if (modifiableGlobals.contains(nonOld)) {
-						// do nothing - is modifiable
-					} else {
-						oldVarsThatHaveToBeReplaced.add((IProgramOldVar) bv);
-						bv = nonOld;
-					}
+		final Predicate<Term> isNonTheoryApplicationTerm = (x -> ((x instanceof ApplicationTerm)
+				&& !((ApplicationTerm) x).getFunction().isIntern()));
+		final Set<ApplicationTerm> nonTheoryAppTerms = findNonTheoryApplicationTerms(term);
+		Set<IProgramFunction> programFunctions;
+		if (nonTheoryAppTerms.isEmpty()) {
+			programFunctions = Collections.emptySet();
+		} else {
+			final Set<IProgramFunction> tmp = new HashSet<>();
+			for (final ApplicationTerm nonTheoryAppTerm : nonTheoryAppTerms) {
+				final IProgramFunction progFunc = funcSymb2ProgFunc.apply(nonTheoryAppTerm.getFunction());
+				if (progFunc == null) {
+					throw new AssertionError("No corresponding IProgramFunction for " + nonTheoryAppTerm.getFunction());
 				}
+				tmp.add(progFunc);
 			}
-			vars.add(bv);
-			if (bv.getProcedure() != null) {
-				procs.add(bv.getProcedure());
-			}
+			programFunctions = DataStructureUtils.getUnmodifiable(tmp);
 		}
-		if (!oldVarsThatHaveToBeReplaced.isEmpty()) {
-			final Map<Term, Term> substitutionMapping = new HashMap<>();
-			for (final IProgramOldVar oldVar : oldVarsThatHaveToBeReplaced) {
-				final IProgramNonOldVar nonOld = oldVar.getNonOldVar();
-				substitutionMapping.put(oldVar.getTermVariable(), nonOld.getTermVariable());
-			}
-			term = new Substitution(boogie2smt.getScript(), substitutionMapping).transform(term);
-		}
-		final Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, boogie2smt.getScript());
-		return new TermVarsProc(term, vars, procs.toArray(new String[procs.size()]), closedTerm);
+
+		final Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, mgdScript);
+		return new TermVarsProc(term, vars, programFunctions, procs.toArray(new String[procs.size()]), closedTerm);
 	}
 
+	public static Set<ApplicationTerm> findNonTheoryApplicationTerms(final Term term) {
+		final Predicate<Term> isNonTheoryApplicationTerm = (x -> ((x instanceof ApplicationTerm)
+				&& !((ApplicationTerm) x).getFunction().isIntern()));
+		final Set tmp = SubTermFinder.find(term, isNonTheoryApplicationTerm, false);
+		final Set<ApplicationTerm> nonTheoryAppTerms = tmp;
+		return nonTheoryAppTerms;
+	}
 }

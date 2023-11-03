@@ -40,11 +40,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
@@ -53,24 +53,18 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Removes dead transitions in a Petri Net preserving its language. A transition
- * t is dead iff there is no firing sequence containing t and ending in an
- * accepting marking. In other words: Dead transitions do not contribute to the
- * accepted language. Unreachable transitions are a subset of the dead
- * transitions.
+ * Removes dead transitions in a Petri Net preserving its language. A transition t is dead iff there is no firing
+ * sequence containing t and ending in an accepting marking. In other words: Dead transitions do not contribute to the
+ * accepted language. Unreachable transitions are a subset of the dead transitions.
  * <p>
- * This operation assumes that unreachable transitions were already removed.
- * Call {@link RemoveUnreachable} before {@link RemoveDead} or some dead (but
- * not necessarily unreachable) transitions might not be removed.
+ * This operation assumes that unreachable transitions were already removed. Call {@link RemoveUnreachable} before
+ * {@link RemoveDead} or some dead (but not necessarily unreachable) transitions might not be removed.
  * <p>
- * This operation also removes some places that do not contribute to the
- * accepted language.
+ * This operation also removes some places that do not contribute to the accepted language.
  * <p>
- * TODO 20200126 Matthias: Does not detect dead transitions that have some vital
- * successor places like the transition ({pb pc} sync {p3}) in the
- * DivergeAndSync.ats example. Solution: Enable
- * COMPUTE_VITAL_TRANSITIONS_IN_UNFOLDING which (bug or feature?) removes also
- * unreachable transitions.
+ * TODO 20200126 Matthias: Does not detect dead transitions that have some vital successor places like the transition
+ * ({pb pc} sync {p3}) in the DivergeAndSync.ats example. Solution: Enable COMPUTE_VITAL_TRANSITIONS_IN_UNFOLDING which
+ * (bug or feature?) removes also unreachable transitions.
  *
  * @author schaetzc@tf.uni-freiburg.de
  * @author heizmann@informatik.uni-freiburg.de
@@ -80,24 +74,21 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <PLACE>
  *            Type of places in Petri net
  * @param <CRSF>
- *            Type of factory needed to check the result of this operation in
- *            {@link #checkResult(CRSF)}
+ *            Type of factory needed to check the result of this operation in {@link #checkResult(CRSF)}
  */
-public class RemoveDead<LETTER, PLACE, CRSF extends
-		IStateFactory<PLACE> & IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
+public class RemoveDead<LETTER, PLACE, CRSF extends IStateFactory<PLACE> & IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 		extends UnaryNetOperation<LETTER, PLACE, CRSF> {
 
 	private static final boolean DEBUG_COMPUTE_REMOVED_TRANSITIONS = false;
 	/**
-	 * If set to false we use an outdated algorithm that does not always remove
-	 * all dead transitions. TODO Matthias 20200204: If someone does further
-	 * modification in this class he or she should remove the old algorithm.
+	 * If set to false we use an outdated algorithm that does not always remove all dead transitions. TODO Matthias
+	 * 20200204: If someone does further modification in this class he or she should remove the old algorithm.
 	 */
 	private static final boolean COMPUTE_VITAL_TRANSITIONS_VIA_UNFOLDING = true;
 	private final IPetriNet<LETTER, PLACE> mOperand;
 	private BranchingProcess<LETTER, PLACE> mFinPre;
 	private Collection<Condition<LETTER, PLACE>> mAcceptingConditions;
-	private final Set<ITransition<LETTER, PLACE>> mVitalTransitions;
+	private final Set<Transition<LETTER, PLACE>> mVitalTransitions;
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 
 	public RemoveDead(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand)
@@ -113,7 +104,7 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 		if (finPre != null) {
 			mFinPre = finPre;
 		} else {
-			mFinPre = new FinitePrefix<LETTER, PLACE>(services, operand).getResult();
+			mFinPre = new FinitePrefix<>(services, operand).getResult();
 		}
 		printStartMessage();
 		if (COMPUTE_VITAL_TRANSITIONS_VIA_UNFOLDING) {
@@ -122,32 +113,30 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 			mVitalTransitions = vitalTransitions();
 		}
 		if (DEBUG_COMPUTE_REMOVED_TRANSITIONS) {
-			final Set<ITransition<LETTER, PLACE>> removedTransitions = operand.getTransitions().stream()
+			final Set<Transition<LETTER, PLACE>> removedTransitions = operand.getTransitions().stream()
 					.filter(x -> !mVitalTransitions.contains(x)).collect(Collectors.toSet());
 			if (!removedTransitions.isEmpty()) {
 				mLogger.info("Removed transitions: " + removedTransitions);
 			}
 		}
-		mResult = CopySubnet.copy(services, mOperand, mVitalTransitions, mOperand.getAlphabet(), keepUselessSuccessorPlaces);
+		mResult = CopySubnet.copy(services, mOperand, mVitalTransitions, mOperand.getAlphabet(),
+				keepUselessSuccessorPlaces);
 		printExitMessage();
 	}
 
-	private Set<ITransition<LETTER, PLACE>> vitalTransitions()
+	private Set<Transition<LETTER, PLACE>> vitalTransitions()
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		final Set<ITransition<LETTER, PLACE>> vitalTransitions = transitivePredecessors(mOperand.getAcceptingPlaces());
+		final Set<Transition<LETTER, PLACE>> vitalTransitions = transitivePredecessors(mOperand.getAcceptingPlaces());
 
 		if (vitalTransitions.size() == mOperand.getTransitions().size()) {
 			mLogger.debug("Skipping co-relation queries. All transitions lead to accepting places.");
 		} else {
 			ensureFinPreExists();
 			mAcceptingConditions = acceptingConditions();
-			mFinPre.getEvents().stream()
-				.filter(event -> event != mFinPre.getDummyRoot())
-				// optimization to reduce number of co-relation queries
-				.filter(event -> !vitalTransitions.contains(event.getTransition()))
-				.filter(event -> !timeout())
-				.filter(this::coRelatedToAnyAccCond)
-				.map(Event::getTransition).forEach(vitalTransitions::add);
+			mFinPre.getEvents().stream().filter(event -> event != mFinPre.getDummyRoot())
+					// optimization to reduce number of co-relation queries
+					.filter(event -> !vitalTransitions.contains(event.getTransition())).filter(event -> !timeout())
+					.filter(this::coRelatedToAnyAccCond).map(Event::getTransition).forEach(vitalTransitions::add);
 			if (timeout()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
@@ -167,20 +156,19 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 	}
 
 	private boolean coRelatedToAnyAccCond(final Event<LETTER, PLACE> event) {
-		return mAcceptingConditions.stream().anyMatch(condition -> mFinPre.getCoRelation()
-				.isInCoRelation(condition, event));
+		return mAcceptingConditions.stream()
+				.anyMatch(condition -> mFinPre.getCoRelation().isInCoRelation(condition, event));
 	}
 
-	private Set<ITransition<LETTER, PLACE>> transitivePredecessors(final Collection<PLACE> places) {
-		final Set<ITransition<LETTER, PLACE>> transitivePredecessors = new HashSet<>();
+	private Set<Transition<LETTER, PLACE>> transitivePredecessors(final Collection<PLACE> places) {
+		final Set<Transition<LETTER, PLACE>> transitivePredecessors = new HashSet<>();
 		final Set<PLACE> visited = new HashSet<>();
 		final Queue<PLACE> work = new LinkedList<>(places);
 		while (!work.isEmpty()) {
 			final PLACE place = work.poll();
-			for (final ITransition<LETTER, PLACE> predTransition : mOperand.getPredecessors(place)) {
+			for (final Transition<LETTER, PLACE> predTransition : mOperand.getPredecessors(place)) {
 				transitivePredecessors.add(predTransition);
-				mOperand.getPredecessors(predTransition).stream()
-					.filter(visited::add).forEach(work::add);
+				predTransition.getPredecessors().stream().filter(visited::add).forEach(work::add);
 			}
 		}
 		return transitivePredecessors;
@@ -188,8 +176,7 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 
 	private Collection<Condition<LETTER, PLACE>> acceptingConditions() {
 		assert mFinPre != null : "Finite prefix not computed yet.";
-		return mOperand.getAcceptingPlaces().stream()
-				.map(mFinPre::place2cond).flatMap(Collection::stream)
+		return mOperand.getAcceptingPlaces().stream().map(mFinPre::place2cond).flatMap(Collection::stream)
 				.collect(Collectors.toList());
 	}
 
@@ -215,7 +202,6 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 		return correct;
 	}
 
-
 	@Override
 	public String exitMessage() {
 		return "Finished " + this.getClass().getSimpleName() + ", result has " + mResult.sizeInformation();
@@ -225,26 +211,18 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();
 
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_REMOVED_PLACES , mOperand.getPlaces().size() - mResult.getPlaces().size());
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_REMOVED_TRANSITIONS, mOperand.getTransitions().size() - mResult.getTransitions().size());
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_REMOVED_FLOW, mOperand.flowSize() - mResult.flowSize());
+		statistics.addKeyValuePair(StatisticsType.PETRI_REMOVED_PLACES,
+				mOperand.getPlaces().size() - mResult.getPlaces().size());
+		statistics.addKeyValuePair(StatisticsType.PETRI_REMOVED_TRANSITIONS,
+				mOperand.getTransitions().size() - mResult.getTransitions().size());
+		statistics.addKeyValuePair(StatisticsType.PETRI_REMOVED_FLOW, mOperand.flowSize() - mResult.flowSize());
 
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_ALPHABET, mResult.getAlphabet().size());
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_PLACES , mResult.getPlaces().size());
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_TRANSITIONS, mResult.getTransitions().size());
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_FLOW, mResult.flowSize());
+		statistics.addKeyValuePair(StatisticsType.PETRI_ALPHABET, mResult.getAlphabet().size());
+		statistics.addKeyValuePair(StatisticsType.PETRI_PLACES, mResult.getPlaces().size());
+		statistics.addKeyValuePair(StatisticsType.PETRI_TRANSITIONS, mResult.getTransitions().size());
+		statistics.addKeyValuePair(StatisticsType.PETRI_FLOW, mResult.flowSize());
 
 		return statistics;
 	}
 
 }
-
-
-

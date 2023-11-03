@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -273,7 +272,7 @@ public class ReplacementVarFactory {
 				throw new AssertionError("unknown kind of variable");
 			}
 		}
-		final Set<ApplicationTerm> constants = new ConstantFinder().findConstants(definition, true);
+		final Set<ApplicationTerm> constants = SmtUtils.extractConstants(definition, true);
 		if (!constants.isEmpty()) {
 			constOrVarKinds.add(IProgramConst.class);
 		}

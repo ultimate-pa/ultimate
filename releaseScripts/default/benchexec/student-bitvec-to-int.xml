@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.4//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.4.dtd">
+<benchmark tool="ultimateautomizer" timelimit="90s" hardtimelimit="90s" memlimit="8GB" cpuCores="2">
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+    <option name="--force-no-wrapper" />
+    <option name="--core.log.level.for.class">de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher=WARN</option>
+
+    <tasks name="reach-svcomp">
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-BitVectors.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-Loops.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-ControlFlow.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-ECA.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-Floats.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-Heap.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-ProductLines.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-Recursive.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-Sequentialized.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-XCSP.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-Combinations.set</includesfile>
+    </tasks>
+
+    <rundefinition name="Default-Integer">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+        <option name="-s">../../../trunk/examples/settings/automizer/BvToInt/svcomp-Reach-64bit-Automizer_Default.epf</option>
+    </rundefinition>
+
+    <rundefinition name="Default-BV">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+        <option name="-s">../../../trunk/examples/settings/automizer/BvToInt/svcomp-Reach-64bit-Automizer_Bitvector.epf</option>
+    </rundefinition>
+
+    <rundefinition name="BvToInt-Bitwise">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInlineTransformed.xml</option>
+        <option name="-s">../../../trunk/examples/settings/automizer/BvToInt/svcomp-Reach-64bit-Automizer_BvToInt_BITWISE.epf</option>
+    </rundefinition>
+    <rundefinition name="BvToInt-Lazy">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInlineTransformed.xml</option>
+        <option name="-s">../../../trunk/examples/settings/automizer/BvToInt/svcomp-Reach-64bit-Automizer_BvToInt_LAZY.epf</option>
+    </rundefinition>
+    <rundefinition name="BvToInt-None">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInlineTransformed.xml</option>
+        <option name="-s">../../../trunk/examples/settings/automizer/BvToInt/svcomp-Reach-64bit-Automizer_BvToInt_NONE.epf</option>
+    </rundefinition>
+    <rundefinition name="BvToInt-Sum">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInlineTransformed.xml</option>
+        <option name="-s">../../../trunk/examples/settings/automizer/BvToInt/svcomp-Reach-64bit-Automizer_BvToInt_SUM.epf</option>
+    </rundefinition>
+
+</benchmark>

@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -226,8 +226,7 @@ public class PredicateTrie<T extends IPredicate> {
 	 * check if model fulfills predicate
 	 */
 	protected boolean fulfillsPredicate(final T predicate, final Map<Term, Term> witness) {
-		final SubstitutionWithLocalSimplification subst = new SubstitutionWithLocalSimplification(mMgdScript, witness);
-		final Term result = subst.transform(predicate.getClosedFormula());
+		final Term result = Substitution.apply(mMgdScript, witness, predicate.getClosedFormula());
 
 		if (mTruePredicate.getFormula().equals(result)) {
 			return true;
@@ -291,7 +290,7 @@ public class PredicateTrie<T extends IPredicate> {
 	// -- functions for restructure --
 
 	protected Map<Term, Term> getWitness(final Term term) {
-		final TermVarsProc termVarsProc = TermVarsProc.computeTermVarsProc(term, mMgdScript.getScript(), mSymbolTable);
+		final TermVarsProc termVarsProc = TermVarsProc.computeTermVarsProc(term, mMgdScript, mSymbolTable);
 		if (mMgdScript.isLocked()) {
 			mMgdScript.requestLockRelease();
 		}

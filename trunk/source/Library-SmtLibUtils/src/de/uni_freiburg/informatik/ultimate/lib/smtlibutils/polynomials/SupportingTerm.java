@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 import java.util.Objects;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermWrapper;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Leonard Fichtner (leonard.fichtner@web.de)
  */
-public class SupportingTerm implements ITermProvider {
+public class SupportingTerm implements ITermWrapper {
 
 	private final Term mTerm;
 	private final IntricateOperation mIntricateOperation;
@@ -74,7 +74,7 @@ public class SupportingTerm implements ITermProvider {
 	}
 
 	@Override
-	public Term asTerm() {
+	public Term getTerm() {
 		return mTerm;
 	}
 

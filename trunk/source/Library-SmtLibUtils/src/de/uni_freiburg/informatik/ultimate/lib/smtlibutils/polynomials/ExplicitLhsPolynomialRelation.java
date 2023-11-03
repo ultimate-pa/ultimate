@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.IBinaryRelation;
@@ -46,6 +46,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Relati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.XnfTir;
 import de.uni_freiburg.informatik.ultimate.logic.INonSolverScript;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -70,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProviderOnDemand {
+public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProvider {
 
 	private static final boolean THROW_EXCEPTION_IF_NOT_SOLVABLE = false;
 
@@ -140,9 +142,14 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 
 		return new ExplicitLhsPolynomialRelation(polyRel.getRelationSymbol(), coeffOfSubject, monomialOfSubject,
 				polyRel.getPolynomialTerm().removeAndNegate(monomialOfSubject));
-
 	}
 
+	/**
+	 * @deprecated We do not have an application for this method yet. I was
+	 *             developed at a time where we wrongly assumed that the following
+	 *             transformation is sound `∃x. lo<=2x /\ 2x<=hi` ~~~> `lo<=hi`
+	 */
+	@Deprecated
 	public ExplicitLhsPolynomialRelation mul(final Rational factor, final Script script, final boolean tight) {
 		if (factor.equals(Rational.ZERO)) {
 			throw new AssertionError("mul by zero not supported");
@@ -178,16 +185,58 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		}
 		final ExplicitLhsPolynomialRelation result =
 				new ExplicitLhsPolynomialRelation(resultRelationSymbol, newLhsCoefficient, mLhsMonomial, newRhs);
-		assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(asTerm(script), result.asTerm(script),
+		assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(toTerm(script), result.toTerm(script),
 				script) != LBool.SAT : "mul unsound";
 		return result;
 	}
 
+	/**
+	 * Divide both sides of the relation by a {@link Rational} such the resulting
+	 * relation is logically equivalent, has the same monomials (i.e., each `div`
+	 * term can be resolved), and there is an inverse operation (multiplication)
+	 * that yields the original relation. <br>
+	 * This method has a special behavior for inequalities that have Int sort. It is
+	 * applicable even if the constant of the polynomial is not divisible by this
+	 * method's divisor, because we do a transformation that is based on the
+	 * following equalities for positive k.
+	 * <li> `k*x <= t` iff `x <= t div k`
+	 * <li> `k*x < t` iff `x < ((t-1) div k) +1`
+	 * <li> `k*x => t` iff `x => ((t-1) div k) +1`
+	 * <li> `k*x => t` iff `x => t div k`
+	 *
+	 */
 	public ExplicitLhsPolynomialRelation divInvertible(final Rational divisor) {
 		if (divisor.equals(Rational.ZERO)) {
 			throw new AssertionError("div by zero");
 		}
-		final IPolynomialTerm newRhs = mRhs.divInvertible(divisor);
+		final RelationSymbol resultRelationSymbol =
+				determineResultRelationSymbol(mLhsMonomial.getSort(), mRelationSymbol, divisor);
+		final IPolynomialTerm newRhs;
+		if (resultRelationSymbol.isConvexInequality() && SmtSortUtils.isIntSort(mRhs.getSort())) {
+			final IPolynomialTerm rhsWithoutConst = mRhs.add(mRhs.getConstant().negate());
+			assert rhsWithoutConst.getConstant().equals(Rational.ZERO);
+			final IPolynomialTerm newRhsWithoutConst = rhsWithoutConst.divInvertible(divisor);
+			if (newRhsWithoutConst == null) {
+				return null;
+			}
+			final Rational constWithRightSign;
+			if (divisor.isNegative()) {
+				constWithRightSign = mRhs.getConstant().negate();
+			} else {
+				constWithRightSign = mRhs.getConstant();
+			}
+			final Rational newConst;
+			if (resultRelationSymbol.equals(RelationSymbol.LEQ) || resultRelationSymbol.equals(RelationSymbol.GREATER)) {
+				newConst = constWithRightSign.div(divisor.abs()).floor();
+			} else if (resultRelationSymbol.equals(RelationSymbol.LESS) || resultRelationSymbol.equals(RelationSymbol.GEQ) ) {
+				newConst = constWithRightSign.add(Rational.MONE).div(divisor.abs()).floor().add(Rational.ONE);
+			} else {
+				throw new AssertionError("Unexpected relation symbol: " + resultRelationSymbol);
+			}
+			newRhs = newRhsWithoutConst.add(newConst);
+		} else {
+			newRhs = mRhs.divInvertible(divisor);
+		}
 		if (newRhs == null) {
 			return null;
 		}
@@ -196,8 +245,6 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		if (newLhsCoefficient == null) {
 			return null;
 		}
-		final RelationSymbol resultRelationSymbol =
-				determineResultRelationSymbol(mLhsMonomial.getSort(), mRelationSymbol, divisor);
 		return new ExplicitLhsPolynomialRelation(resultRelationSymbol, newLhsCoefficient, mLhsMonomial, newRhs);
 	}
 
@@ -209,7 +256,7 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 	}
 
 	public static boolean swapOfRelationSymbolRequired(final Rational divisor, final Sort sort) {
-		return divisor.isNegative() || (SmtSortUtils.isBitvecSort(sort) && SmtUtils.isBvMinusOne(divisor, sort));
+		return divisor.isNegative() || (SmtSortUtils.isBitvecSort(sort) && SmtUtils.isBvMinusOneButNotOne(divisor, sort));
 	}
 
 	public Pair<ExplicitLhsPolynomialRelation, Term> divideByIntegerCoefficient(final Script script,
@@ -261,6 +308,10 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		return new Pair<>(resultElpr, divisibilityConstraint);
 	}
 
+	/**
+	 * @deprecated Only called by the old {@link XnfTir} class.
+	 */
+	@Deprecated
 	public SolvedBinaryRelation divideByIntegerCoefficientForInequalities(final Script script,
 			final Set<TermVariable> bannedForDivCapture) {
 		switch (mRelationSymbol) {
@@ -575,6 +626,104 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		return new Case(null, suppTerms, xnf);
 	}
 
+	public ExplicitLhsPolynomialRelation changeStrictness(final TransformInequality strictnessTrans) {
+		if (!SmtSortUtils.isIntSort(mRhs.getSort())) {
+			throw new UnsupportedOperationException("Change of strictness only for ints.");
+		}
+		if (strictnessTrans == TransformInequality.NO_TRANFORMATION) {
+			return this;
+		}
+		switch (mRelationSymbol) {
+		case EQ:
+		case DISTINCT:
+			throw new UnsupportedOperationException("Only applicable to integer inequalities");
+		case BVSGE:
+		case BVSGT:
+		case BVSLE:
+		case BVSLT:
+		case BVUGE:
+		case BVUGT:
+		case BVULE:
+		case BVULT:
+			throw new UnsupportedOperationException("Only applicable to integer inequalities");
+		case GEQ:
+			if (strictnessTrans == TransformInequality.NONSTRICT2STRICT) {
+				return new ExplicitLhsPolynomialRelation(RelationSymbol.GREATER, mLhsCoefficient, mLhsMonomial,
+						mRhs.add(Rational.MONE));
+			} else {
+				throw new UnsupportedOperationException("Not strict");
+			}
+		case GREATER:
+			if (strictnessTrans == TransformInequality.STRICT2NONSTRICT) {
+				return new ExplicitLhsPolynomialRelation(RelationSymbol.GEQ, mLhsCoefficient, mLhsMonomial,
+						mRhs.add(Rational.ONE));
+			} else {
+				throw new UnsupportedOperationException("Is strict");
+			}
+		case LEQ:
+			if (strictnessTrans == TransformInequality.NONSTRICT2STRICT) {
+				return new ExplicitLhsPolynomialRelation(RelationSymbol.LESS, mLhsCoefficient, mLhsMonomial,
+						mRhs.add(Rational.ONE));
+			} else {
+				throw new UnsupportedOperationException("Not strict");
+			}
+		case LESS:
+			if (strictnessTrans == TransformInequality.STRICT2NONSTRICT) {
+				return new ExplicitLhsPolynomialRelation(RelationSymbol.LEQ, mLhsCoefficient, mLhsMonomial,
+						mRhs.add(Rational.MONE));
+			} else {
+				throw new UnsupportedOperationException("Is strict");
+			}
+		default:
+			throw new AssertionError("Unknown relation symbol " + mRelationSymbol);
+		}
+	}
+
+	/**
+	 * We call a {@link ExplicitLhsPolynomialRelation} tight if
+	 * <li>the sort is Real and the lhs coefficient is 1.0 or if
+	 * <li>the sort is Int and the lhs coefficient is positive and there is no
+	 * equivalent {@link ExplicitLhsPolynomialRelation} that has a smaller lhs
+	 * coefficient but the same monomials (i.e., it is not allowed to obtain the
+	 * smaller lhs coefficient by a division that introduces a div term on the rhs).
+	 * TODO 20230219 Matthias: Revise this documentation. Since the
+	 * {@link PolynomialRelation} divides by the GCD the work that is done here can
+	 * be explained more precisely.
+	 */
+	public ExplicitLhsPolynomialRelation makeTight() {
+		Rational divisor;
+		if (SmtSortUtils.isRealSort(mRhs.getSort())) {
+			divisor = mLhsCoefficient;
+		} else if (SmtSortUtils.isBitvecSort(mRhs.getSort())) {
+			if (!mLhsCoefficient.equals(Rational.ONE)
+					&& !SmtUtils.isBvMinusOneButNotOne(mLhsCoefficient, mRhs.getSort())) {
+				throw new AssertionError("Expect that bitvector relations can only have coefficient 1 and -1.");
+			}
+			divisor = mLhsCoefficient;
+		} else if (SmtSortUtils.isIntSort(mRhs.getSort())) {
+			final Rational gcd = mLhsCoefficient.gcd(mRhs.computeGcdOfCoefficients()).abs();
+			assert !gcd.isNegative();
+			if (!gcd.equals(Rational.ONE)) {
+				throw new AssertionError("The PolynomialRelation should have divided by the GCD!");
+			}
+			if (mLhsCoefficient.isNegative()) {
+				divisor = gcd.negate();
+			} else {
+				divisor = gcd;
+			}
+		} else {
+			throw new UnsupportedOperationException("Unsupported sort: " + mRhs.getSort());
+		}
+		if (divisor.equals(Rational.ONE)) {
+			return this;
+		}
+		final ExplicitLhsPolynomialRelation res = divInvertible(divisor);
+		if (res == null) {
+			throw new AssertionError("Invertible division must not fail for " + divisor);
+		}
+		return res;
+	}
+
 	private static boolean isEqOrDistinct(final RelationSymbol relSym) {
 		return (relSym.equals(RelationSymbol.EQ)) || (relSym.equals(RelationSymbol.DISTINCT));
 	}
@@ -585,7 +734,7 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 	}
 
 	@Override
-	public Term asTerm(final Script script) {
+	public Term toTerm(final Script script) {
 		final Term lhs = SmtUtils.mul(script, mLhsCoefficient, mLhsMonomial.toTerm(script));
 		return mRelationSymbol.constructTerm(script, lhs, mRhs.toTerm(script));
 	}

@@ -26,16 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.mapelimination;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IReplacementVarOrConst;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.ReplacementConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
@@ -47,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -79,7 +77,7 @@ public final class MapEliminatorUtils {
 				substitution.put(var, transformula.getOutVars().get(programVar));
 			}
 		}
-		return new Substitution(managedScript, substitution).transform(term);
+		return Substitution.apply(managedScript, substitution, term);
 	}
 
 	/**
@@ -124,7 +122,7 @@ public final class MapEliminatorUtils {
 	 * Given an ArrayIndex of definitions, adds the needed in- and out-vars to the transformula and returns the index
 	 * with in-vars.
 	 *
-	 * @param term
+	 * @param index
 	 *            An array-index with global variables
 	 * @param transformula
 	 *            A TransFormula
@@ -136,18 +134,15 @@ public final class MapEliminatorUtils {
 	 */
 	public static ArrayIndex getInVarIndex(final ArrayIndex index, final ModifiableTransFormula transformula,
 			final ManagedScript managedScript, final IIcfgSymbolTable symbolTable) {
-		final List<Term> list = new ArrayList<>();
-		for (final Term t : index) {
-			list.add(getInVarTerm(t, transformula, managedScript, symbolTable));
-		}
-		return new ArrayIndex(list);
+		return new ArrayIndex(index.stream().map(t -> getInVarTerm(t, transformula, managedScript, symbolTable))
+				.collect(Collectors.toList()));
 	}
 
 	/**
 	 * Given an ArrayIndex of definitions, adds the needed in- and out-vars to the transformula and returns the index
 	 * with out-vars.
 	 *
-	 * @param term
+	 * @param index
 	 *            An array-index with global variables
 	 * @param transformula
 	 *            A TransFormula
@@ -159,11 +154,8 @@ public final class MapEliminatorUtils {
 	 */
 	public static ArrayIndex getOutVarIndex(final ArrayIndex index, final ModifiableTransFormula transformula,
 			final ManagedScript managedScript, final IIcfgSymbolTable symbolTable) {
-		final List<Term> list = new ArrayList<>();
-		for (final Term t : index) {
-			list.add(getOutVarTerm(t, transformula, managedScript, symbolTable));
-		}
-		return new ArrayIndex(list);
+		return new ArrayIndex(index.stream().map(t -> getOutVarTerm(t, transformula, managedScript, symbolTable))
+				.collect(Collectors.toList()));
 	}
 
 	private static TermVariable getFreshTermVar(final Term term, final ManagedScript managedScript) {
@@ -173,7 +165,7 @@ public final class MapEliminatorUtils {
 	private static String niceTermString(final Term term) {
 		if (SmtUtils.isFunctionApplication(term, "select")) {
 			final StringBuilder stringBuilder = new StringBuilder();
-			final MultiDimensionalSelect select = new MultiDimensionalSelect(term);
+			final MultiDimensionalSelect select = MultiDimensionalSelect.of(term);
 			stringBuilder.append("array_").append(niceTermString(select.getArray())).append('[');
 			final ArrayIndex index = select.getIndex();
 			for (int i = 0; i < index.size(); i++) {
@@ -206,33 +198,24 @@ public final class MapEliminatorUtils {
 			final ManagedScript managedScript, final ReplacementVarFactory replacementVarFactory,
 			final IIcfgSymbolTable symbolTable) {
 		final IReplacementVarOrConst varOrConst = replacementVarFactory.getOrConstuctReplacementVar(term, false);
-		if (varOrConst instanceof ReplacementConst) {
-			throw new UnsupportedOperationException("not yet implemented");
-		} else if (varOrConst instanceof IReplacementVar) {
-			final IReplacementVar var = (IReplacementVar) varOrConst;
-			boolean containsAssignedVar = false;
-			for (final TermVariable tv : term.getFreeVars()) {
-				final IProgramVar progVar = symbolTable.getProgramVar(tv);
-				if (transformula.getInVars().get(progVar) != transformula.getOutVars().get(progVar)) {
-					containsAssignedVar = true;
-					break;
-				}
+		if (!(varOrConst instanceof IReplacementVar)) {
+			throw new UnsupportedOperationException("Unsupported type " + varOrConst.getClass());
+		}
+		final IReplacementVar var = (IReplacementVar) varOrConst;
+		final TermVariable termVar = getFreshTermVar(term, managedScript);
+		final Map<IProgramVar, TermVariable> inVars = transformula.getInVars();
+		final Map<IProgramVar, TermVariable> outVars = transformula.getOutVars();
+		if (!inVars.containsKey(var)) {
+			transformula.addInVar(var, termVar);
+		}
+		if (!outVars.containsKey(var)) {
+			// If the term contains an assigned var, different in- and out-vars are created, otherwise the same
+			if (Arrays.stream(term.getFreeVars()).map(symbolTable::getProgramVar)
+					.anyMatch(x -> inVars.get(x) != outVars.get(x))) {
+				transformula.addOutVar(var, getFreshTermVar(term, managedScript));
+			} else {
+				transformula.addOutVar(var, termVar);
 			}
-			final TermVariable termVar = getFreshTermVar(term, managedScript);
-			if (!transformula.getInVars().containsKey(var)) {
-				transformula.addInVar(var, termVar);
-			}
-			if (!transformula.getOutVars().containsKey(var)) {
-				// If the term contains an assigned var, different in- and out-vars are created, otherwise the
-				// same
-				if (containsAssignedVar) {
-					transformula.addOutVar(var, getFreshTermVar(term, managedScript));
-				} else {
-					transformula.addOutVar(var, termVar);
-				}
-			}
-		} else {
-			throw new AssertionError("illegal type " + varOrConst.getClass());
 		}
 	}
 
@@ -243,7 +226,7 @@ public final class MapEliminatorUtils {
 	 * {@code auxVars}.
 	 */
 	public static Term getReplacementVar(final Term term, final ModifiableTransFormula transformula,
-			final Script script, final ReplacementVarFactory replacementVarFactory,
+			final ManagedScript script, final ReplacementVarFactory replacementVarFactory,
 			final Collection<TermVariable> auxVars) {
 		if (!ModifiableTransFormulaUtils.allVariablesAreInVars(term, transformula)
 				&& !ModifiableTransFormulaUtils.allVariablesAreOutVars(term, transformula)) {
@@ -252,19 +235,16 @@ public final class MapEliminatorUtils {
 		final Term definition =
 				ModifiableTransFormulaUtils.translateTermVariablesToDefinitions(script, transformula, term);
 		final IReplacementVarOrConst varOrConst = replacementVarFactory.getOrConstuctReplacementVar(definition, false);
-		if (varOrConst instanceof ReplacementConst) {
-			throw new UnsupportedOperationException("not yet implemented");
-		} else if (varOrConst instanceof IReplacementVar) {
-			final IReplacementVar var = (IReplacementVar) varOrConst;
-			assert transformula.getInVars().containsKey(var) && transformula.getOutVars().containsKey(var) : var
-					+ " was not added to the transformula!";
-			if (ModifiableTransFormulaUtils.allVariablesAreInVars(term, transformula)) {
-				return transformula.getInVars().get(var);
-			}
-			return transformula.getOutVars().get(var);
-		} else {
-			throw new AssertionError("illegal type " + varOrConst.getClass());
+		if (!(varOrConst instanceof IReplacementVar)) {
+			throw new UnsupportedOperationException("Unsupported type " + varOrConst.getClass());
 		}
+		final IReplacementVar var = (IReplacementVar) varOrConst;
+		final TermVariable inVar = transformula.getInVars().get(var);
+		final TermVariable outVar = transformula.getOutVars().get(var);
+		if (inVar == null || outVar == null) {
+			throw new AssertionError(var + " was not added to the transformula!");
+		}
+		return ModifiableTransFormulaUtils.allVariablesAreInVars(term, transformula) ? inVar : outVar;
 	}
 
 	/**

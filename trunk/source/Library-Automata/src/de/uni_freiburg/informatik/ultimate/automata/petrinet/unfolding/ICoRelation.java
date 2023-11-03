@@ -90,7 +90,6 @@ public interface ICoRelation<LETTER, PLACE> {
 	 */
 	long getQueryCounterNo();
 
-
 	/**
 	 * All initial Conditions in a branching process are in co relation. Hence, all pairs of Conditions from
 	 * <code>initialConditions</code> are added.
@@ -110,17 +109,15 @@ public interface ICoRelation<LETTER, PLACE> {
 	 */
 	boolean isCoset(Collection<Condition<LETTER, PLACE>> coSet, Condition<LETTER, PLACE> cond);
 
-
 	/**
 	 * Warning:
 	 * <ul>
 	 * <li>This is not a getter. The set is computed each time anew.
-	 * <li>The result is NOT backed by the {@link BranchingProcess}. After an update
-	 * of the {@link BranchingProcess} the set that you obtained might be outdated.
+	 * <li>The result is NOT backed by the {@link BranchingProcess}. After an update of the {@link BranchingProcess} the
+	 * set that you obtained might be outdated.
 	 * </ul>
 	 *
-	 * @return Set of all {@link Condition}s that are in co-relation to the
-	 *         {@link Condition} cond.
+	 * @return Set of all {@link Condition}s that are in co-relation to the {@link Condition} cond.
 	 */
 	Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(Condition<LETTER, PLACE> cond);
 
@@ -128,22 +125,24 @@ public interface ICoRelation<LETTER, PLACE> {
 	 * Warning:
 	 * <ul>
 	 * <li>This is not a getter. The set is computed each time anew.
-	 * <li>The result is NOT backed by the {@link BranchingProcess}. After an update
-	 * of the {@link BranchingProcess} the set that you obtained might be outdated.
+	 * <li>The result is NOT backed by the {@link BranchingProcess}. After an update of the {@link BranchingProcess} the
+	 * set that you obtained might be outdated.
 	 * </ul>
 	 *
-	 * @return Set of all {@link Condition}s that are in co-relation to the
-	 *         {@link Condition} cond and whose {@link Condition#getPlace()}
-	 *         is p.
+	 * @return Set of all {@link Condition}s that are in co-relation to the {@link Condition} cond and whose
+	 *         {@link Condition#getPlace()} is p.
 	 */
 	Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(Condition<LETTER, PLACE> cond, PLACE p);
 
-
 	/**
-	 * Compute <pre>max {numberOfCoRelated(c)|c ∈ C}</pre> where C is the set
-	 * of all conditions and numberOfCoRelated is the function that assigns
-	 * to a condition c the number of all conditions that are in co-relation
-	 * to c.
+	 * Compute
+	 * 
+	 * <pre>
+	 * max {numberOfCoRelated(c)|c ∈ C}
+	 * </pre>
+	 * 
+	 * where C is the set of all conditions and numberOfCoRelated is the function that assigns to a condition c the
+	 * number of all conditions that are in co-relation to c.
 	 */
 	int computeMaximalDegree();
 
@@ -153,8 +152,8 @@ public interface ICoRelation<LETTER, PLACE> {
 
 	Set<Event<LETTER, PLACE>> computeCoRelatatedEvents(Condition<LETTER, PLACE> c);
 
-	default TreeHashRelation<Integer, Condition<LETTER, PLACE>> computeHistogramOfDegree(
-			final Iterable<Condition<LETTER, PLACE>> conditions) {
+	default TreeHashRelation<Integer, Condition<LETTER, PLACE>>
+			computeHistogramOfDegree(final Iterable<Condition<LETTER, PLACE>> conditions) {
 		final TreeHashRelation<Integer, Condition<LETTER, PLACE>> result = new TreeHashRelation<>();
 		for (final Condition<LETTER, PLACE> c : conditions) {
 			result.addPair(computeCoRelatatedConditions(c).size(), c);

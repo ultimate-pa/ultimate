@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.EqNode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -55,6 +56,7 @@ public class EqPredicate implements IPredicate {
 	private final EqDisjunctiveConstraint<EqNode> mConstraint;
 	private final String[] mProcedures;
 	private final ImmutableSet<IProgramVar> mVars;
+	private final ImmutableSet<IProgramFunction> mFuns;
 	private final Term mClosedFormula;
 	private final Term mFormula;
 	private EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
@@ -69,8 +71,8 @@ public class EqPredicate implements IPredicate {
 		mProcedures = procedures;
 
 		final Term constraintFormula = constraint.getTerm(mgdScript.getScript());
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(constraintFormula, mgdScript.getScript(),
-				symbolTable);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(constraintFormula, mgdScript,	symbolTable);
+		mFuns = ImmutableSet.copyOf(tvp.getFuns());
 
 //		final Term literalDisequalities = getLiteralDisequalities(constraint, mgdScript);
 //		final Term literalDisequalities = eqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();
@@ -83,19 +85,21 @@ public class EqPredicate implements IPredicate {
 
 
 
-	public EqPredicate(final Term formula, final ImmutableSet<IProgramVar> vars, final String[] procedures,
-			final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript,
-			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqConstraintFactory<EqNode> eqConstraintFactory) {
+	public EqPredicate(final Term formula, final ImmutableSet<IProgramVar> vars,
+			final ImmutableSet<IProgramFunction> funs, final String[] procedures, final IIcfgSymbolTable symbolTable,
+			final ManagedScript mgdScript, final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
+			final EqConstraintFactory<EqNode> eqConstraintFactory) {
 		mConstraint = null;
 		assert vars.stream().allMatch(Objects::nonNull);
 		mVars = vars;
+		mFuns = funs;
 		mProcedures = procedures;
 
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 
 
 		final Term acc = formula;
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mgdScript.getScript(), symbolTable);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mgdScript, symbolTable);
 
 //		final Term literalDisequalities = getLiteralDisequalities(constraint, mgdScript);
 
@@ -139,6 +143,11 @@ public class EqPredicate implements IPredicate {
 	@Override
 	public ImmutableSet<IProgramVar> getVars() {
 		return mVars;
+	}
+
+	@Override
+	public ImmutableSet<IProgramFunction> getFuns() {
+		return mFuns;
 	}
 
 	public EqDisjunctiveConstraint<EqNode> getEqConstraint() {

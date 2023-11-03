@@ -55,7 +55,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>(LABEL_SHOWALLANNOTATIONS, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_EMIT_BACKTRANSLATION_WARNINGS, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_EMIT_BACKTRANSLATION_WARNINGS, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_USE_SIMPLIFIER, false, PreferenceType.Boolean)
 
 		};

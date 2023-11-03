@@ -30,6 +30,7 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
@@ -49,6 +50,8 @@ public final class IcfgJoinThreadCurrentTransition extends AbstractIcfgTransitio
 		super(source, target, payload, id);
 		mTransFormula = Objects.requireNonNull(transFormula, "A transformula is missing");
 		mJoinSmtArguments = Objects.requireNonNull(joinSmtArguments, "A JoinSmtArguments is missing");
+
+		assert TransFormulaUtils.hasInternalNormalForm(mTransFormula) : "Expected TF in internal normal form";
 	}
 
 	@Override

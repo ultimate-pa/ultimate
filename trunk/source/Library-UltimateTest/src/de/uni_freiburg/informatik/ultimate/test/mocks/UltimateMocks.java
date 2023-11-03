@@ -28,10 +28,15 @@ package de.uni_freiburg.informatik.ultimate.test.mocks;
 
 import java.io.IOException;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.TimeoutHandler;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtInterpolLogProxyWrapper;
 
 /**
  *
@@ -65,13 +70,27 @@ public class UltimateMocks {
 		return createSolver("cvc4 --incremental --print-success --lang smt --tlimit-per=12000", defaultLogLevel);
 	}
 
+	/**
+	 * If the solverCommand is of the form `INTERNAL_SMTINTERPOL:n` where n is the
+	 * decimal representation of a long value. We utilize the internal SMTINterpol
+	 * with a timeout of n milliseconds.
+	 */
 	public static Script createSolver(final String solverCommand, final LogLevel defaultLogLevel) {
 		final IUltimateServiceProvider services = createUltimateServiceProviderMock(defaultLogLevel);
-		try {
-			return new Scriptor(solverCommand, services.getLoggingService().getLogger(UltimateMocks.class), services,
-					"SMT solver", null);
-		} catch (final IOException e) {
-			throw new RuntimeException(e);
+		final ILogger logger = services.getLoggingService().getLogger(UltimateMocks.class);
+		if (solverCommand.startsWith("INTERNAL_SMTINTERPOL:")) {
+			final String timeoutMillisAsString = solverCommand.substring(21);
+			final long timeoutMillisAsLong = Long.parseLong(timeoutMillisAsString);
+			final LogProxy loggerWrapper = new SmtInterpolLogProxyWrapper(logger);
+			final TimeoutHandler timeoutHandler = new TimeoutHandler(null);
+			timeoutHandler.setTimeout(timeoutMillisAsLong);
+			return new SMTInterpol(loggerWrapper, timeoutHandler);
+		} else {
+			try {
+				return new Scriptor(solverCommand, logger, services, "SMT solver", null);
+			} catch (final IOException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 }

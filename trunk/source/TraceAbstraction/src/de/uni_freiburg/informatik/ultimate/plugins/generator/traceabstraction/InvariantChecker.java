@@ -40,7 +40,6 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MergedLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult;
@@ -53,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResul
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.ProcedureExit;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -60,6 +60,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -67,7 +70,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -204,7 +210,7 @@ public class InvariantChecker {
 				throw new AssertionError(
 						"program point " + programPoint + " is error location but does not have a Check");
 			}
-			if (check.getSpec().equals(Collections.singleton(Check.Spec.POST_CONDITION))) {
+			if (check.getSpec().equals(Collections.singleton(Spec.POST_CONDITION))) {
 				result = new ProcedureExit(location, programPoint.getProcedure());
 			} else {
 				result = new CheckPoint(location, Check.getAnnotation(programPoint));
@@ -324,20 +330,14 @@ public class InvariantChecker {
 		final ArrayDeque<IcfgEdge> worklistBackward = new ArrayDeque<>();
 		final Set<IcfgEdge> seenBackward = new HashSet<>();
 		final Set<IcfgLocation> startLocs = new HashSet<>();
-		worklistBackward.addAll(backwardStartLoc.getIncomingEdges());
-		seenBackward.addAll(backwardStartLoc.getIncomingEdges());
+		addIncomingEdgesToWorklistIfNotYetSeen(backwardStartLoc, worklistBackward, seenBackward);
 		while (!worklistBackward.isEmpty()) {
 			final IcfgEdge edge = worklistBackward.removeFirst();
 			final IcfgLocation loc = edge.getSource();
 			if (icfg.getInitialNodes().contains(loc) || icfg.getLoopLocations().contains(loc)) {
 				startLocs.add(loc);
 			} else {
-				for (final IcfgEdge pred : loc.getIncomingEdges()) {
-					if (!seenBackward.contains(pred)) {
-						seenBackward.add(pred);
-						worklistBackward.add(pred);
-					}
-				}
+				addIncomingEdgesToWorklistIfNotYetSeen(loc, worklistBackward, seenBackward);
 			}
 		}
 		for (final IcfgLocation startLoc : startLocs) {
@@ -358,6 +358,28 @@ public class InvariantChecker {
 			tpsds.add(tpsd);
 		}
 		return tpsds;
+	}
+
+	public void addIncomingEdgesToWorklistIfNotYetSeen(final IcfgLocation loc,
+			final ArrayDeque<IcfgEdge> worklistBackward, final Set<IcfgEdge> seenBackward) {
+		for (final IcfgEdge pred : loc.getIncomingEdges()) {
+			addToWorklistIfNotYetSeen(pred, worklistBackward, seenBackward);
+		}
+	}
+
+	public void addToWorklistIfNotYetSeen(final IcfgEdge edge, final ArrayDeque<IcfgEdge> worklistBackward,
+			final Set<IcfgEdge> seenBackward) {
+		if (edge instanceof IIcfgInternalTransition) {
+			if (!seenBackward.contains(edge)) {
+				seenBackward.add(edge);
+				worklistBackward.add(edge);
+			}
+		} else if ((edge instanceof IIcfgCallTransition) || (edge instanceof IIcfgReturnTransition)) {
+			// omit this edge, do nothing
+		} else {
+			throw new UnsupportedOperationException(
+					"Unsupported kind of edge " + edge.getClass().getSimpleName());
+		}
 	}
 
 	/**
@@ -443,12 +465,19 @@ public class InvariantChecker {
 		final IncrementalHoareTripleChecker htc = new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), true);
 		final PredicateFactory pf = new PredicateFactory(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(),
 				mIcfg.getCfgSmtToolkit().getSymbolTable());
-		final IPredicate truePredicate =
-				pf.newPredicate(mIcfg.getCfgSmtToolkit().getManagedScript().getScript().term("true"));
-		final IPredicate falsePredicate =
+		
+		final IPredicate precondition;
+		if (mIcfg.getProcedureEntryNodes().get(startLoc.getProcedure()).equals(startLoc)) {
+			TermVarsProc tvp = TraceCheckUtils.getOldVarsEquality(startLoc.getProcedure(),
+					mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable(), mIcfg.getCfgSmtToolkit().getManagedScript());
+			precondition = pf.newPredicate(tvp.getFormula());
+		} else {
+			precondition = pf.newPredicate(mIcfg.getCfgSmtToolkit().getManagedScript().getScript().term("true"));
+		}
+		final IPredicate postcondition =
 				pf.newPredicate(mIcfg.getCfgSmtToolkit().getManagedScript().getScript().term("false"));
-		final Validity validity = htc.checkInternal(truePredicate,
-				new BasicInternalAction(startLoc.getProcedure(), errorLoc.getProcedure(), tf), falsePredicate);
+		final Validity validity = htc.checkInternal(precondition,
+				new BasicInternalAction(startLoc.getProcedure(), errorLoc.getProcedure(), tf), postcondition);
 		final EdgeCheckResult ecr;
 		switch (validity) {
 		case INVALID:

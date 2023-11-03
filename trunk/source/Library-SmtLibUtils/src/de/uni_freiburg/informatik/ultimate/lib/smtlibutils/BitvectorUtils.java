@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -36,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 
 /**
  * Provides auxiliary methods for SMT bitvectors.
@@ -146,10 +147,10 @@ public final class BitvectorUtils {
 		return true;
 	}
 
-	public static Term termWithLocalSimplification(final Script script, final String funcname,
+	public static Term unfTerm(final Script script, final String funcname,
 			final BigInteger[] indices, final Term... params) {
 		final Term result;
-		final SupportedBitvectorOperations bvop = SupportedBitvectorOperations.valueOf(funcname);
+		final BvOp bvop = BvOp.valueOf(funcname);
 		switch (bvop) {
 		case zero_extend:
 			result = new Zero_extend().simplifiedResult(script, funcname, indices, params);
@@ -164,12 +165,10 @@ public final class BitvectorUtils {
 			result = new Concat().simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvadd:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvadd(x, y))
-					.simplifiedResult(script, funcname, indices, params);
+			result = SmtUtils.sum(script, funcname, params);
 			break;
 		case bvsub:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvsub(x, y))
-					.simplifiedResult(script, funcname, indices, params);
+			result = SmtUtils.minus(script, params);
 			break;
 		case bvudiv:
 			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvudiv(x, y))
@@ -192,8 +191,7 @@ public final class BitvectorUtils {
 					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvmul:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvmul(x, y))
-					.simplifiedResult(script, funcname, indices, params);
+			result = SmtUtils.mul(script, funcname, params);
 			break;
 		case bvand:
 			result = new Bvand().simplifiedResult(script, funcname, indices, params);
@@ -256,7 +254,6 @@ public final class BitvectorUtils {
 			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvsge(x, y))
 					.simplifiedResult(script, funcname, indices, params);
 			break;
-
 		default:
 			if (BitvectorUtils.allTermsAreBitvectorConstants(params)) {
 				throw new AssertionError("wasted optimization " + funcname);
@@ -271,10 +268,15 @@ public final class BitvectorUtils {
 
 		public final Term simplifiedResult(final Script script, final String funcname, final BigInteger[] indices,
 				final Term... params) {
-			assert getFunctionName().equals(funcname) : "wrong function name";
-			assert getNumberOfIndices() == 0 && indices == null
-					|| getNumberOfIndices() == indices.length : "wrong number of indices";
-			assert getNumberOfParams() == params.length : "wrong number of params";
+			if (!getFunctionName().equals(funcname)) {
+				throw new AssertionError("Wrong function name: " + funcname);
+			}
+			assert (getNumberOfIndices() == 0 && indices == null
+					|| getNumberOfIndices() == indices.length) : "Wrong number of indices:" + Arrays.toString(indices);
+			if (getNumberOfParams() != params.length) {
+				throw new AssertionError(String.format("%s: params expected %s, params provided %s", funcname,
+						getNumberOfParams(), params.length));
+			}
 			final BitvectorConstant[] bvs = new BitvectorConstant[params.length];
 			boolean allConstant = true;
 			for (int i = 0; i < params.length; i++) {
@@ -293,10 +295,18 @@ public final class BitvectorUtils {
 		}
 
 		private final Term notSimplified(final Script script, final BigInteger[] indices, final Term[] params) {
-			return SmtUtils.oldAPITerm(script, getFunctionName(), indices, null, params);
+			final Term[] newParams;
+			if (isCommutative()) {
+				newParams = CommuhashUtils.sortByHashCode(params);
+			} else {
+				newParams = params;
+			}
+			return SmtUtils.oldAPITerm(script, getFunctionName(), indices, null, newParams);
 		}
 
 		public abstract String getFunctionName();
+
+		public abstract boolean isCommutative();
 
 		public abstract int getNumberOfIndices();
 
@@ -310,6 +320,11 @@ public final class BitvectorUtils {
 		@Override
 		public String getFunctionName() {
 			return "concat";
+		}
+
+		@Override
+		public boolean isCommutative() {
+			return false;
 		}
 
 		@Override
@@ -336,6 +351,11 @@ public final class BitvectorUtils {
 		@Override
 		public String getFunctionName() {
 			return "extract";
+		}
+
+		@Override
+		public boolean isCommutative() {
+			return false;
 		}
 
 		@Override
@@ -366,6 +386,11 @@ public final class BitvectorUtils {
 		}
 
 		@Override
+		public boolean isCommutative() {
+			return false;
+		}
+
+		@Override
 		public int getNumberOfIndices() {
 			return 1;
 		}
@@ -389,6 +414,11 @@ public final class BitvectorUtils {
 		@Override
 		public String getFunctionName() {
 			return "zero_extend";
+		}
+
+		@Override
+		public boolean isCommutative() {
+			return false;
 		}
 
 		@Override
@@ -442,6 +472,46 @@ public final class BitvectorUtils {
 		}
 
 		@Override
+		public boolean isCommutative() {
+			final BvOp bvop = BvOp.valueOf(getFunctionName());
+			switch (bvop) {
+			case bvadd:
+			case bvand:
+			case bvmul:
+			case bvor:
+			case bvxor:
+				return true;
+			case bvashr:
+			case bvlshr:
+			case bvsdiv:
+			case bvshl:
+			case bvsmod:
+			case bvsrem:
+			case bvurem:
+			case bvsub:
+			case bvudiv:
+				return false;
+			case bvneg:
+			case bvnot:
+			case bvsge:
+			case bvsgt:
+			case bvsle:
+			case bvslt:
+			case bvuge:
+			case bvugt:
+			case bvule:
+			case bvult:
+			case concat:
+			case extract:
+			case sign_extend:
+			case zero_extend:
+				throw new AssertionError("Not a regular bitvector operator with bitvector result: " + bvop);
+			default:
+				throw new UnsupportedOperationException("Unknown bitvector operator: " + bvop);
+			}
+		}
+
+		@Override
 		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices,
 				final BitvectorConstant[] bvs) {
 			if (bvs.length != getNumberOfParams()) {
@@ -469,6 +539,11 @@ public final class BitvectorUtils {
 		}
 
 		@Override
+		public boolean isCommutative() {
+			return false;
+		}
+
+		@Override
 		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices,
 				final BitvectorConstant[] bvs) {
 			return script.term(String.valueOf(mFunction.apply(bvs[0]).apply(bvs[1])));
@@ -479,6 +554,11 @@ public final class BitvectorUtils {
 		@Override
 		public String getFunctionName() {
 			return "bvnot";
+		}
+
+		@Override
+		public boolean isCommutative() {
+			return false;
 		}
 
 		@Override
@@ -503,6 +583,11 @@ public final class BitvectorUtils {
 		@Override
 		public String getFunctionName() {
 			return "bvneg";
+		}
+
+		@Override
+		public boolean isCommutative() {
+			return false;
 		}
 
 		@Override

@@ -30,7 +30,6 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
 import java.util.HashMap;
-import java.util.Set;
 import java.util.TreeSet;
 
 /**
@@ -54,7 +53,7 @@ public class HashTreeRelation<D, R> extends AbstractRelation<D, R, TreeSet<R>, H
 	}
 
 	@Override
-	public Set<R> getImage(final D domainElem) {
+	public TreeSet<R> getImage(final D domainElem) {
 		return mMap.get(domainElem);
 	}
 }

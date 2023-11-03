@@ -33,7 +33,7 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompTestResultDeciderUnreachCall;
 import de.uni_freiburg.informatik.ultimate.test.decider.ThreeTierTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
@@ -48,7 +48,7 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 
 	/** Limit the number of files per directory. */
 	private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
-//	private static final int FILES_PER_DIR_LIMIT = 2;
+//	private static final int FILES_PER_DIR_LIMIT = 10;
 	private static final int FILE_OFFSET = 0;
 
 	private static final String STANDARD_DOT_C_PATTERN = ".*\\.c";
@@ -82,16 +82,33 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 			new DirectoryFileEndingsPair("examples/svcomp/verifythis/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 			new DirectoryFileEndingsPair("examples/svcomp/nla-digbench/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 			new DirectoryFileEndingsPair("examples/svcomp/nla-digbench-scaling/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+
+			/*** Programs were we saw bugs ***/
+			new DirectoryFileEndingsPair("examples/svcomp/bitvector/parity.c", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+			new DirectoryFileEndingsPair("examples/svcomp/bitvector/soft_float_4-2a.c.cil.c", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+			new DirectoryFileEndingsPair("examples/svcomp/loop-invariants/bin-suffix-5.c", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 	};
+
+	private static final String[] mUltimateRepository = {
+			"examples/programs/bitvector",
+			"examples/programs/regression",
+			"examples/programs/quantifier/regression",
+			"examples/programs/recursive/regression",
+//			"examples/programs/toy",
+		};
 
 
 	private static final String[] mSettingsNoTransformation = {
-			"default/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
-			"default/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf",
+			"automizer/BvToInt/svcomp-Reach-32bit-Automizer_Default.epf",
+			"automizer/BvToInt/svcomp-Reach-32bit-Automizer_Bitvector.epf",
 	};
 
 	private static final String[] mSettingsTransformation = {
-			"automizer/BvToIntTranslation.epf",
+			"automizer/BvToInt/svcomp-Reach-32bit-Automizer_BvToInt_SUM.epf",
+			"automizer/BvToInt/svcomp-Reach-32bit-Automizer_BvToInt_BITWISE.epf",
+			"automizer/BvToInt/svcomp-Reach-32bit-Automizer_BvToInt_LAZY.epf",
+			"automizer/BvToInt/svcomp-Reach-32bit-Automizer_BvToInt_NONE.epf",
+			"automizer/BvToInt/svcomp-Reach-32bit-Automizer_BvToIntCongruence_NONE.epf",
 	};
 
 	/**
@@ -104,22 +121,31 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 
 	@Override
 	protected ThreeTierTestResultDecider<?> constructITestResultDecider(final UltimateRunDefinition urd) {
-		return new SvcompReachTestResultDecider(urd, true);
+		return new SvcompTestResultDeciderUnreachCall(urd, true);
+//		return new SafetyCheckTestResultDecider(urd, true);
 	}
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_32BIT) {
-				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
-						new String[] { dfep.getDirectory() }, dfep.getFileEndings(), mSettingsNoTransformation, "AutomizerCInline.xml",
-						getTimeout(), dfep.getOffset(), dfep.getLimit()));
+			addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
+					new String[] { dfep.getDirectory() }, dfep.getFileEndings(), mSettingsNoTransformation,
+					"AutomizerCInline.xml", getTimeout(), dfep.getOffset(), dfep.getLimit()));
 		}
 		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_32BIT) {
 			addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
-					new String[] { dfep.getDirectory() }, dfep.getFileEndings(), mSettingsTransformation, "AutomizerCInlineTransformed.xml",
-					getTimeout(), dfep.getOffset(), dfep.getLimit()));
-	}
+					new String[] { dfep.getDirectory() }, dfep.getFileEndings(), mSettingsTransformation,
+					"AutomizerCInlineTransformed.xml", getTimeout(), dfep.getOffset(), dfep.getLimit()));
+		}
+		for (final String setting : mSettingsNoTransformation) {
+			addTestCase("AutomizerCInline.xml", setting, mUltimateRepository,
+					new String[] {".c", ".i"});
+		}
 
+		for (final String setting : mSettingsTransformation) {
+			addTestCase("AutomizerCInlineTransformed.xml", setting, mUltimateRepository,
+					new String[] {".c", ".i"});
+		}
 		return super.createTestCases();
 	}
 

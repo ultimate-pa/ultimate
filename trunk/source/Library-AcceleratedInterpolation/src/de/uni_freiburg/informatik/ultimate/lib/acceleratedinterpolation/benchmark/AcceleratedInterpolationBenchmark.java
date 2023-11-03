@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchma
 import java.util.Collection;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
@@ -39,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWi
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 /**
+ * Benchmark for evaluating the performance of the {@link AcceleratedInterpolation} paradigm.
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -62,30 +64,31 @@ public final class AcceleratedInterpolationBenchmark extends StatisticsGenerator
 	public Object getValue(final String key) {
 		final AcceleratedInterpolationStatisticsDefinitions keyEnum =
 				Enum.valueOf(AcceleratedInterpolationStatisticsDefinitions.class, key);
+		final String errorMsg = "clock still running: ";
 		switch (keyEnum) {
 		case ACCELINTERPOL_CORE:
 			try {
 				return getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError("clock still running: " + key);
+				throw new AssertionError(errorMsg + key);
 			}
 		case ACCELINTERPOL_OVERALL:
 			try {
 				return getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError("clock still running: " + key);
+				throw new AssertionError(errorMsg + key);
 			}
 		case ACCELINTERPOL_LOOPDETECTOR:
 			try {
 				return getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError("clock still running: " + key);
+				throw new AssertionError(errorMsg + key);
 			}
 		case ACCELINTERPOL_LOOPACCELERATOR:
 			try {
 				return getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError("clock still running: " + key);
+				throw new AssertionError(errorMsg + key);
 			}
 		default:
 			throw new AssertionError("unknown data: " + keyEnum);

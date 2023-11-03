@@ -19,34 +19,129 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.DataType;
+import de.uni_freiburg.informatik.ultimate.logic.DataType.Constructor;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.NumericSortInterpretation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ComputeSCC;
 
 public class ModelBuilder {
 
+	Model mModel;
+	SharedTermEvaluator mEvaluator;
 	Map<CCTerm, Term> mModelValues = new HashMap<>();
+	Theory mTheory;
 
 	public ModelBuilder(final CClosure closure, final List<CCTerm> terms, final Model model,
 			final Theory t, final SharedTermEvaluator ste,
-			final ArrayTheory array, final CCTerm trueNode, final CCTerm falseNode) {
-		fillInTermValues(terms, model, t, ste, trueNode, falseNode);
-		if (array != null) {
-			array.fillInModel(this, model, t, ste);
+			final ArrayTheory arrayTheory, final DataTypeTheory datatypeTheory, final CCTerm trueNode,
+			final CCTerm falseNode) {
+		mModel = model;
+		mEvaluator = ste;
+		mTheory = t;
+
+		// create a map from sorts to representatives of that sort.
+		final LinkedHashMap<Sort, List<CCTerm>> repsBySort = new LinkedHashMap<>();
+		for (final CCTerm term : terms) {
+			if (term.getRepresentative() == term && term.getFlatTerm() != null) {
+				final Sort sort = term.getFlatTerm().getSort();
+				List<CCTerm> reps = repsBySort.get(sort);
+				if (reps == null) {
+					reps = new ArrayList<>();
+					repsBySort.put(sort, reps);
+				}
+				reps.add(term);
+			}
+		}
+
+		// We need a topological ordering on the sorts.
+		final ComputeSCC.ComputeSuccessor<Sort> dependencies = (final Sort sort) ->  {
+			if (sort.isArraySort()) {
+				return Arrays.asList(sort.getArguments()).iterator();
+			} else if (sort.getSortSymbol().isDatatype()) {
+				final Sort[] datatypeParameters = sort.getArguments();
+				final Constructor[] constrs = ((DataType) sort.getSortSymbol()).getConstructors();
+				return new Iterator<Sort>() {
+					int mConstructorIdx = 0;
+					int mSortIdx = 0;
+					// datatypes always depend on Bool for tester
+					Sort[] mSorts = new Sort[] { t.getBooleanSort() };
+
+					@Override
+					public boolean hasNext() {
+						while (mSortIdx >= mSorts.length) {
+							if (mConstructorIdx == constrs.length) {
+								return false;
+							}
+							mSorts = constrs[mConstructorIdx++].getArgumentSorts();
+							mSortIdx = 0;
+						}
+						return true;
+					}
+
+					@Override
+					public Sort next() {
+						while (mSortIdx >= mSorts.length) {
+							mSorts = constrs[mConstructorIdx++].getArgumentSorts();
+							mSortIdx = 0;
+						}
+						final Sort dependentSort = mSorts[mSortIdx++];
+						return datatypeParameters == null ? dependentSort : dependentSort.mapSort(datatypeParameters);
+					}
+				};
+			} else {
+				return Collections.emptyListIterator();
+			}
+		};
+		final List<List<Sort>> sortSCCs = new ComputeSCC<>(dependencies).getSCCs(repsBySort.keySet().iterator());
+
+		for (final List<Sort> scc : sortSCCs) {
+			if (scc.get(0).getSortSymbol().isDatatype()) {
+				datatypeTheory.fillInModel(this, scc, repsBySort);
+			} else {
+				assert scc.size() == 1;
+				final Sort sort = scc.get(0);
+				if (repsBySort.containsKey(sort)) {
+					if (sort.isArraySort()) {
+						arrayTheory.fillInModel(this, repsBySort.get(sort));
+					} else {
+						fillInTermValues(repsBySort.get(sort), trueNode, falseNode);
+					}
+				}
+			}
 		}
 		fillInFunctions(terms, model, t);
+	}
+
+	public Model getModel() {
+		return mModel;
+	}
+
+	public Theory getTheory() {
+		return mTheory;
+	}
+
+	public SharedTermEvaluator getEvaluator() {
+		return mEvaluator;
 	}
 
 	public Term getModelValue(final CCTerm term) {
@@ -56,11 +151,11 @@ public class ModelBuilder {
 	public void setModelValue(final CCTerm term, final Term value) {
 		assert term == term.getRepresentative();
 		final Term old = mModelValues.put(term, value);
+		mModel.provideSortInterpretation(value.getSort()).register(value);
 		assert old == null || old == value;
 	}
 
-	public void fillInTermValues(final List<CCTerm> terms, final Model model, final Theory t, final SharedTermEvaluator ste, final CCTerm trueNode,
-			final CCTerm falseNode) {
+	public void fillInTermValues(final List<CCTerm> terms, final CCTerm trueNode, final CCTerm falseNode) {
 		final Set<CCTerm> delayed = new HashSet<>();
 		for (final CCTerm ccterm : terms) {
 			if (ccterm == ccterm.mRepStar && !ccterm.isFunc()) {
@@ -70,27 +165,25 @@ public class ModelBuilder {
 				if (sort.isNumericSort()) {
 					Rational v;
 					if (ccterm.getSharedTerm() != null) {
-						v = ste.evaluate(ccterm.getSharedTerm().getFlatTerm(), t);
+						v = mEvaluator.evaluate(ccterm.getSharedTerm().getFlatTerm(), mTheory);
 						if (smtterm.getSort().getName().equals("Int") && !v.isIntegral()) {
 							throw new AssertionError("Int term has non-integral value");
 						}
-						value = model.getNumericSortInterpretation().extend(v, smtterm.getSort());
+						value = v.toTerm(sort);
 					} else {
 						delayed.add(ccterm);
 						continue;
 					}
 				} else if (ccterm == trueNode.mRepStar) {
 					value = sort.getTheory().mTrue;
-				} else if (smtterm.getSort() == t.getBooleanSort()) {
+				} else if (sort.isInternal() && sort.getName().equals(SMTLIBConstants.BOOL)) {
 					// By convention, we convert to == TRUE.  Hence, if a value
 					// is not equal to TRUE but Boolean, we have to adjust the
 					// model and set it to false.
 					value = sort.getTheory().mFalse;
-				} else if (smtterm.getSort().isArraySort()) {
-					// filled in later by ArrayTheory
-					continue;
 				} else {
-					value = model.extendFresh(smtterm.getSort());
+					assert !sort.isArraySort() && !sort.getSortSymbol().isDatatype();
+					value = mModel.extendFresh(sort);
 				}
 				setModelValue(ccterm, value);
 			}
@@ -98,7 +191,7 @@ public class ModelBuilder {
 		// Handle all delayed elements
 		// note that extendFresh must be called after all values in the model have been extended to the numeric sort.
 		for (final CCTerm ccterm : delayed) {
-			final Term value = model.extendFresh(ccterm.getFlatTerm().getSort());
+			final Term value = mModel.extendFresh(ccterm.getFlatTerm().getSort());
 			setModelValue(ccterm, value);
 		}
 	}
@@ -135,6 +228,20 @@ public class ModelBuilder {
 		return name == "/" || name == "div" || name == "mod";
 	}
 
+	private boolean isUndefinedFor(FunctionSymbol fs, ArrayDeque<Term> args) {
+		if (fs.isSelector()) {
+			final DataType datatype = (DataType) fs.getParameterSorts()[0].getSortSymbol();
+			final ApplicationTerm arg = (ApplicationTerm) args.getFirst();
+			final Constructor c = datatype.getConstructor(arg.getFunction().getName());
+			// A selector is undefined if the argument's constructor doesn't match
+			return !Arrays.asList(c.getSelectors()).contains(fs.getName());
+		} else if (isDivision(fs)) {
+			// A division by zero is undefined
+			return NumericSortInterpretation.toRational(args.getLast()) == Rational.ZERO;
+		}
+		return false;
+	}
+
 	private void addApp(final Model model, final CCAppTerm app, final Term value, final Theory t) {
 		final ArrayDeque<Term> args = new ArrayDeque<>();
 		CCTerm walk = app;
@@ -148,10 +255,10 @@ public class ModelBuilder {
 		final CCBaseTerm base = (CCBaseTerm) walk;
 		if (base.isFunctionSymbol()) {
 			final FunctionSymbol fs = base.getFunctionSymbol();
-			if (!fs.isIntern() ||
-					(isDivision(fs) && NumericSortInterpretation.toRational(args.getLast()) == Rational.ZERO)) {
+			if (!fs.isIntern() || isUndefinedFor(fs, args)) {
 				model.map(fs, args.toArray(new Term[args.size()]), value);
 			}
 		}
 	}
+
 }

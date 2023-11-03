@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2020 Jonas Werner (wernerj@informatik.uni-freiburg.de)
+ * Copyright (C) 2020 University of Freiburg
+ *
+ * This file is part of the ULTIMATE accelerated interpolation library .
+ *
+ * The ULTIMATE framework is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE framework is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE accelerated interpolation library . If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE PDR library , or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE accelerated interpolation library grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation;
 
 import java.util.ArrayList;
@@ -21,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -31,6 +59,14 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * Transforms a given counterexample to a meta trace by replacing loops with their transitive closure.
+ *
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            Type of transition.
+ */
 public class MetaTraceTransformer<L extends IIcfgTransition<?>> {
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
@@ -41,6 +77,12 @@ public class MetaTraceTransformer<L extends IIcfgTransition<?>> {
 	private final CfgSmtToolkit mToolkit;
 	private final Map<IIcfgCallTransition<?>, IPredicate> mCallPred;
 
+	/**
+	 * Determine how to construct the meta-trace.
+	 *
+	 * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
+	 *
+	 */
 	public enum MetaTraceApplicationMethod {
 		ONLY_AT_FIRST_LOOP_ENTRY, ON_EACH_LOOP_ENTRY, INVARIANT
 	}
@@ -49,11 +91,19 @@ public class MetaTraceTransformer<L extends IIcfgTransition<?>> {
 	 * Transforms given meta trace interpolants to inductive trace interpolants
 	 *
 	 * @param logger
+	 *            A {@link ILogger}
 	 * @param script
+	 *            A {@link ManagedScript}
 	 * @param counterexample
+	 *            A possible counterexample trace.
 	 * @param predUnifier
+	 *            A {@link PredicateUnifier}
 	 * @param services
+	 *            {@link IUltimateServiceProvider}
 	 * @param predTransformer
+	 *            A {@link PredicateTransformer}
+	 * @param toolkit
+	 *            A {@link CfgSmtToolkit}
 	 */
 	public MetaTraceTransformer(final ILogger logger, final ManagedScript script, final List<L> counterexample,
 			final IPredicateUnifier predUnifier, final IUltimateServiceProvider services,
@@ -72,10 +122,14 @@ public class MetaTraceTransformer<L extends IIcfgTransition<?>> {
 	 * Given meta trace interpolants yield inductive interpolants for an error trace
 	 *
 	 * @param preds
+	 *            A set of {@link IPredicate}
 	 * @param accelerations
+	 *            Accelerations for loops in the trace.
 	 * @param loopSizes
+	 *            The sizes of each loop, eg, where in the trace do they begin and where end.
 	 * @param metaTraceApplicationMethod
-	 * @return
+	 *            Which {@link MetaTraceApplicationMethod} is used.
+	 * @return Inductive interpolants as {@link IPredicate}
 	 */
 	public IPredicate[] getInductiveLoopInterpolants(final IPredicate[] preds,
 			final Map<IcfgLocation, List<UnmodifiableTransFormula>> accelerations,
@@ -101,8 +155,8 @@ public class MetaTraceTransformer<L extends IIcfgTransition<?>> {
 				 * corresponding loop acceleration
 				 */
 				Term loopAccelerationsForEntryLocationDisjunction;
+				final int loopSkip = 3;
 				if (loopAccelerations.size() > 1) {
-					// mtam = MetaTraceApplicationMethod.INVARIANT;
 					int currentPredCounter = cnt;
 					int currentIterationCounter = 0;
 					while (currentPredCounter < maxLoopPredicates + cnt) {
@@ -113,7 +167,7 @@ public class MetaTraceTransformer<L extends IIcfgTransition<?>> {
 								loopEntryInterpolantMetaTrace, loopAccelerationForCorrespondingLoop);
 						loopAccelerationsForEntryLocation.add(postInterpolantLoopacceleration);
 						currentIterationCounter++;
-						currentPredCounter = currentPredCounter + 3;
+						currentPredCounter = currentPredCounter + loopSkip;
 					}
 					loopAccelerationsForEntryLocationDisjunction =
 							SmtUtils.and(mScript.getScript(), loopAccelerationsForEntryLocation);

@@ -13,7 +13,7 @@
 (assert (not p1))
 (assert (not p2))
 (assert r)
-;(@tautology (! (or (not (! (or p1 p2) :p2uoted)) p1 p2) :or+))
+;(@tautology (! (or (not (and (not (xor (or p1 p2) r)) (not (xor r (or p1 p2))))) (not (xor r (or p1 p2)))) :and-)
 
 (check-sat)
 (set-option :print-terms-cse false)
@@ -27,7 +27,7 @@
 (assert (not p2))
 (assert (not p3))
 (assert r)
-; (@tautology (! (or (not (! (or p1 p2 p3) :quoted)) p1 p2 p3) :or+))
+; (@tautology (! (or (not (or p1 p2 p3)) p1 p2 p3) :or-))
 
 (check-sat)
 (set-option :print-terms-cse false)
@@ -40,7 +40,7 @@
 (assert p2)
 (assert (not p3))
 (assert r)
-; (@tautology (! (or (not (! (or (or (not p1) (not p2)) p3) :quoted)) (or (not p1) (not p2)) p3) :or+))
+; (@tautology (! (or (not (or (or (not p1) (not p2)) p3)) (or (not p1) (not p2)) p3) :or-))
 (check-sat)
 (set-option :print-terms-cse false)
 (get-proof)

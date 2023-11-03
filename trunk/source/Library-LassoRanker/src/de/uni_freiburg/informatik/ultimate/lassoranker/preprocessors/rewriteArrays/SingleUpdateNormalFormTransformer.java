@@ -2,27 +2,27 @@
  * Copyright (C) 2014-2015 Jan Leike (leike@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE LassoRanker Library.
- * 
+ *
  * The ULTIMATE LassoRanker Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE LassoRanker Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE LassoRanker Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays;
@@ -35,11 +35,11 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayUpdate;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayUpdate.ArrayUpdateExtractor;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -55,17 +55,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.MultiElementCount
  *
  */
 public class SingleUpdateNormalFormTransformer {
-	
+
 	static final String s_AuxArray = "auxArray";
-	
+
 	private final List<ArrayUpdate> mArrayUpdates;
 	private List<Term> mRemainderTerms;
 	private Map<Term, Term> mStore2TermVariable;
 	private final Script mScript;
 	private final FreshAuxVarGenerator mFreshAuxVarGenerator;
-	
-	public SingleUpdateNormalFormTransformer(final Term input, Script script,
-			FreshAuxVarGenerator freshAuxVarGenerator) {
+
+	public SingleUpdateNormalFormTransformer(final Term input, final Script script,
+			final FreshAuxVarGenerator freshAuxVarGenerator) {
 		mScript = script;
 		mFreshAuxVarGenerator = freshAuxVarGenerator;
 		mArrayUpdates = new ArrayList<ArrayUpdate>();
@@ -74,7 +74,7 @@ public class SingleUpdateNormalFormTransformer {
 		mRemainderTerms = aue.getRemainingTerms();
 		mArrayUpdates.addAll(aue.getArrayUpdates());
 		mStore2TermVariable = aue.getStore2TermVariable();
-		
+
 		while(true) {
 			if (!mStore2TermVariable.isEmpty()) {
 				processNewArrayUpdates();
@@ -91,37 +91,37 @@ public class SingleUpdateNormalFormTransformer {
 		}
 		assert mStore2TermVariable.isEmpty();
 	}
-	
+
 	/**
 	 * Construct auxiliary variable a_aux for store term.
 	 * Add array update a_aux = mdStore to mArrayUpdates
 	 * set mStore2TermVariable to (mdStore, a_aux);
 	 */
 	private void processNewStore(
-			MultiDimensionalStore mdStore) {
+			final MultiDimensionalStore mdStore) {
 		final Term oldArray = mdStore.getArray();
 		TermVariable auxArray;
-		auxArray = mFreshAuxVarGenerator.constructFreshCopy(oldArray); 
+		auxArray = mFreshAuxVarGenerator.constructFreshCopy(oldArray);
 		assert mStore2TermVariable.isEmpty();
-		mStore2TermVariable = 
-				Collections.singletonMap((Term) mdStore.getStoreTerm(), (Term) auxArray);
+		mStore2TermVariable =
+				Collections.singletonMap(mdStore.toTerm(mScript), (Term) auxArray);
 		{
-			final Term newUpdate = mScript.term("=", auxArray, mdStore.getStoreTerm());
+			final Term newUpdate = mScript.term("=", auxArray, mdStore.toTerm(mScript));
 			final ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, newUpdate);
 			assert aue.getArrayUpdates().size() == 1;
 			mArrayUpdates.add(aue.getArrayUpdates().get(0));
 		}
 	}
-	
+
 	/**
-	 * Return some store term that is either in 
+	 * Return some store term that is either in
 	 * <li> the index of one of the arrayUpdates
 	 * <li> the value of one of the arrayUpdates
 	 * <li> one of the remainderTerms
 	 * Return null of no such store term exists.
 	 */
 	private MultiDimensionalStore extractStore(
-			List<ArrayUpdate> arrayUpdates, List<Term> remainderTerms) {
+			final List<ArrayUpdate> arrayUpdates, final List<Term> remainderTerms) {
 		for (final ArrayUpdate au : arrayUpdates) {
 			for (final Term entry : au.getIndex()) {
 				final List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresDeep(entry);
@@ -142,17 +142,16 @@ public class SingleUpdateNormalFormTransformer {
 		}
 		return null;
 	}
-	
+
 	private void processNewArrayUpdates() {
-		final Substitution subst = new Substitution(mScript, mStore2TermVariable);
 		for (final ArrayUpdate au : mArrayUpdates) {
 			for (final Term entry : au.getIndex()) {
-				final Term newEntry = subst.transform(entry);
+				final Term newEntry = PureSubstitution.apply(mScript, mStore2TermVariable, entry);
 				if (newEntry != entry) {
 					throw new AssertionError("not yet implemented");
 				}
 			}
-			final Term newValue =  subst.transform(au.getValue());
+			final Term newValue =  PureSubstitution.apply(mScript, mStore2TermVariable, au.getValue());
 			if (newValue != au.getValue()) {
 				throw new AssertionError("not yet implemented");
 			}
@@ -160,7 +159,7 @@ public class SingleUpdateNormalFormTransformer {
 		final ArrayList<Term> newRemainderTerms = new ArrayList<Term>();
 		final Map<Term, Term> newStore2TermVariable = new HashMap<Term, Term>();
 		for (final Term term : mRemainderTerms) {
-			final Term newTerm = subst.transform(term);
+			final Term newTerm = PureSubstitution.apply(mScript, mStore2TermVariable, term);
 			final ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, newTerm);
 			assert aue.getArrayUpdates().size() == 0 || aue.getArrayUpdates().size() == 1;
 			if (aue.getArrayUpdates().isEmpty()) {
@@ -172,14 +171,14 @@ public class SingleUpdateNormalFormTransformer {
 		}
 		mRemainderTerms = newRemainderTerms;
 		mStore2TermVariable = newStore2TermVariable;
-		
+
 	}
-	
-	private MultiDimensionalStore getNonUpdateStore(Term term) {
+
+	private MultiDimensionalStore getNonUpdateStore(final Term term) {
 		final Term[] conjuncts = SmtUtils.getConjuncts(term);
 		final ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, conjuncts);
 		Term remainder = SmtUtils.and(mScript, aue.getRemainingTerms().toArray(new Term[0]));
-		remainder = (new Substitution(mScript, aue.getStore2TermVariable())).transform(remainder);
+		remainder = (PureSubstitution.apply(mScript, aue.getStore2TermVariable(), remainder));
 		final List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresDeep(remainder);
 		if (mdStores.isEmpty()) {
 			return null;
@@ -187,12 +186,12 @@ public class SingleUpdateNormalFormTransformer {
 			return mdStores.get(0);
 		}
 	}
-	
+
 //	private Term addUpdate(MultiDimensionalStore arraryStore, Term term) {
 //		Term oldArray = arraryStore.getArray();
 //		TermVariable auxArray;
 //		auxArray = constructAuxiliaryVariable(oldArray);
-//		Map<Term, Term> substitutionMapping = 
+//		Map<Term, Term> substitutionMapping =
 //				Collections.singletonMap((Term) arraryStore.getStoreTerm(), (Term) auxArray);
 //		Term newTerm = (new SafeSubstitution(mScript, substitutionMapping)).transform(term);
 //		return SmtUtils.and(mScript, newTerm, mScript.term("=", auxArray, arraryStore.getStoreTerm()));
@@ -205,22 +204,22 @@ public class SingleUpdateNormalFormTransformer {
 	public Term getRemainderTerm() {
 		return SmtUtils.and(mScript, mRemainderTerms.toArray(new Term[mRemainderTerms.size()]));
 	}
-	
+
 	public Set<TermVariable> getAuxVars() {
 		return mFreshAuxVarGenerator.getAuxVars();
 	}
-	
+
 	public static class FreshAuxVarGenerator {
 		private final Map<TermVariable, Term> mFreshCopyToOriginal = new HashMap<TermVariable, Term>();
 		private final MultiElementCounter<Term> mFreshCopyCounter = new MultiElementCounter<>();
 		private final ReplacementVarFactory mReplacementVarFactory;
-		
-		public FreshAuxVarGenerator(ReplacementVarFactory replacementVarFactory) {
+
+		public FreshAuxVarGenerator(final ReplacementVarFactory replacementVarFactory) {
 			super();
 			mReplacementVarFactory = replacementVarFactory;
 		}
 
-		TermVariable constructFreshCopy(Term term) {
+		TermVariable constructFreshCopy(final Term term) {
 			Term original = mFreshCopyToOriginal.get(term);
 			if (original == null) {
 				// no original Term known use term itself as original
@@ -231,9 +230,9 @@ public class SingleUpdateNormalFormTransformer {
 			final TermVariable freshCopy = mReplacementVarFactory.getOrConstructAuxVar(nameOfFreshCopy, term.getSort());
 			mFreshCopyToOriginal.put(freshCopy, original);
 			return freshCopy;
-			
+
 		}
-		
+
 		public Set<TermVariable> getAuxVars() {
 			return mFreshCopyToOriginal.keySet();
 		}

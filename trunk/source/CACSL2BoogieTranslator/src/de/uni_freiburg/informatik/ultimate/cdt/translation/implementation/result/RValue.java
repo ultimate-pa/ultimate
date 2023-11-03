@@ -26,20 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
-import java.math.BigInteger;
-
-import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class RValue extends LRValue {
 
@@ -82,9 +75,6 @@ public class RValue extends LRValue {
 	}
 
 	public void checkType(final CType type) {
-		if (type instanceof CArray) {
-			throw new IllegalArgumentException("RValues cannot have array type");
-		}
 		if (type instanceof CFunction) {
 			throw new IllegalArgumentException("RValues cannot have function type");
 		}
@@ -95,18 +85,11 @@ public class RValue extends LRValue {
 		}
 	}
 
-	static RValue boolToInt(final ILocation loc, final RValue rVal, final TypeSizes typeSizes) {
-		assert rVal.isBoogieBool();
-		final Expression one =
-				typeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ONE);
-		final Expression zero =
-				typeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
-		return new RValue(ExpressionFactory.constructIfThenElseExpression(loc, rVal.getValue(), one, zero),
-				rVal.getCType(), false);
-	}
-
-	static boolean areBoogieAndCTypeCompatible(final CType cType, final IBoogieType bType) {
+	private static boolean areBoogieAndCTypeCompatible(final CType cType, final IBoogieType bType) {
 		if (cType instanceof CPointer) {
+			if (bType instanceof BoogieArrayType) {
+				return true;
+			}
 			if (!(bType instanceof BoogieStructType)) {
 				return false;
 			}

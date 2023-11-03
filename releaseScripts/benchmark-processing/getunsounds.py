@@ -87,7 +87,7 @@ def process_url_file(url_file, target_dir):
             download_xml(target_dir, line)
 
     for file in os.listdir(target_dir):
-        if not file.endswith(".xml"):
+        if not file.endswith(".xml") and not file.endswith("urls"):
             absolute_path = os.path.join(target_dir, file)
             print("Extracting {}".format(absolute_path))
             extract_xml(absolute_path)

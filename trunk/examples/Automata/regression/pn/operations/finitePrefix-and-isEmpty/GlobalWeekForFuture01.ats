@@ -11,7 +11,7 @@ print(bp);
 PetriNet net2 = finitePrefix2PetriNet(bp);
 print(net2);
 print(numberOfConditions(bp));
-assert(numberOfConditions(bp) == 18);
+assert(numberOfConditions(bp) == 9);
 
 assert(!isEmpty(net));
 

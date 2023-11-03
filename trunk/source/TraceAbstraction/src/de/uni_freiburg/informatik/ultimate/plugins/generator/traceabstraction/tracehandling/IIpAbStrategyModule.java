@@ -37,30 +37,30 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
- * @param <LETTER>
+ * @param <L>
  */
-public interface IIpAbStrategyModule<LETTER> {
+public interface IIpAbStrategyModule<L> {
 
-	IpAbStrategyModuleResult<LETTER> buildInterpolantAutomaton(List<QualifiedTracePredicates> perfectIpps,
+	IpAbStrategyModuleResult<L> buildInterpolantAutomaton(List<QualifiedTracePredicates> perfectIpps,
 			List<QualifiedTracePredicates> imperfectIpps) throws AutomataOperationCanceledException;
 
 	/**
 	 * 
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
-	 * @param <LETTER>
+	 * @param <L>
 	 */
-	public static final class IpAbStrategyModuleResult<LETTER> {
-		private final NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
+	public static final class IpAbStrategyModuleResult<L> {
+		private final NestedWordAutomaton<L, IPredicate> mAutomaton;
 		private final List<QualifiedTracePredicates> mUsedTracePredicates;
 
-		public IpAbStrategyModuleResult(final NestedWordAutomaton<LETTER, IPredicate> automaton,
+		public IpAbStrategyModuleResult(final NestedWordAutomaton<L, IPredicate> automaton,
 				final List<QualifiedTracePredicates> predicates) {
 			mAutomaton = automaton;
 			mUsedTracePredicates = predicates;
 		}
 
-		public NestedWordAutomaton<LETTER, IPredicate> getAutomaton() {
+		public NestedWordAutomaton<L, IPredicate> getAutomaton() {
 			return mAutomaton;
 		}
 

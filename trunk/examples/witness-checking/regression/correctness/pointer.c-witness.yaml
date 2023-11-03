@@ -1,0 +1,27 @@
+-
+  entry_type: loop_invariant
+  metadata:
+    format_version: 0.1
+    uuid: "eb748424-818e-47b4-ad79-ac40b33692a9"
+    creation_time: "2023-09-29T17:40:13+02:00"
+    producer:
+      name: UNUSED
+      version: "0.2.3-dev-353d8b1-m"
+    task:
+      input_files:
+        - "pointer.c"
+      input_file_hashes:
+        "pointer.c": UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  location:
+    file_name: "C:\Users\Frank\Desktop\pointer.c"
+    file_hash: UNUSED
+    line: 4
+    column: 0
+    function: main
+  loop_invariant:
+    string: "((*p == 2) || (*p == 1))"
+    type: assertion
+    format: C

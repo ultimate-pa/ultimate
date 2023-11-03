@@ -189,7 +189,7 @@ public class CellVariableBuilder {
 	 * index is an inVar.
 	 */
 	private boolean isInVarCell(final TermVariable arrayInstance, final List<Term> index) {
-		if (ModifiableTransFormulaUtils.isInvar(arrayInstance, mTransFormula)) {
+		if (ModifiableTransFormulaUtils.isInVar(arrayInstance, mTransFormula)) {
 			return ModifiableTransFormulaUtils.allVariablesAreInVars(index, mTransFormula);
 		} else {
 			return false;
@@ -197,7 +197,7 @@ public class CellVariableBuilder {
 	}
 
 	private boolean isOutVarCell(final TermVariable arrayInstance, final List<Term> index) {
-		if (ModifiableTransFormulaUtils.isOutvar(arrayInstance, mTransFormula)) {
+		if (ModifiableTransFormulaUtils.isOutVar(arrayInstance, mTransFormula)) {
 			return ModifiableTransFormulaUtils.allVariablesAreOutVars(index, mTransFormula);
 		} else {
 			return false;

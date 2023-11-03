@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE IcfgTransformer library.
- * 
+ *
  * The ULTIMATE IcfgTransformer library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE IcfgTransformer library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE IcfgTransformer library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 /**
  * Abstract superclass for preprocessors that replace TermVariables. Note that we have already removed constants 0-ary
  * functions, hence we only have to remove TermVariables
- * 
+ *
  * @author Matthias Heizmann
  *
  */
@@ -220,8 +220,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 			throws TermException {
 		generateRepAndAuxVars(tf);
 		final ModifiableTransFormula newTf = new ModifiableTransFormula(tf);
-		final Term newFormula =
-				new SubstitutionWithLocalSimplification(script, mSubstitutionMapping).transform(tf.getFormula());
+		final Term newFormula = Substitution.apply(script, mSubstitutionMapping, tf.getFormula());
 		newTf.setFormula(newFormula);
 		return newTf;
 	}

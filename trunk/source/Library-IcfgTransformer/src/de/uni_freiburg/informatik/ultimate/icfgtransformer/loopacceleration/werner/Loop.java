@@ -163,8 +163,7 @@ public class Loop {
 		setInVars(newInVars);
 		setOutVars(newOutVars);
 
-		final Substitution sub = new Substitution(mScript, subMapping);
-		return sub.transform(t);
+		return Substitution.apply(mScript, subMapping, t);
 	}
 
 	/**

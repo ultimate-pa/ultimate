@@ -1,5 +1,5 @@
 //#Safe
-//#LTLProperty: AP(init == 0) U((AP(init == 1) U []AP(init == 2)) || [] AP(init == 1))
+//#LTLProperty: AP(init == 0) U((AP(init == 1) U []AP(init == 3)) || [] AP(init == 1))
 
 
 var error, init :int;                                         //boolean values

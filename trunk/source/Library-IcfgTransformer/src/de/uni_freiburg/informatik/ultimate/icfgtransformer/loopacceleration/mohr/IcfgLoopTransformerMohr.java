@@ -41,9 +41,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBacktranslator;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.IdentityTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
@@ -87,7 +87,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 
 	public IcfgLoopTransformerMohr(final ILogger logger, final IUltimateServiceProvider services,
 			final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass,
+			final IcfgTransformationBacktranslator backtranslationTracker, final Class<OUTLOC> outLocationClass,
 			final String newIcfgIdentifier) {
 
 		// Notes:
@@ -239,10 +239,14 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			// DD: Note that the issue with the "IllegalArgumentException: cannot bring into simultaneous update form
 			// xxx outvar occurs in several conjuncts" still persists. I have to check with Matthias if we can fix this.
 			// Until then, you can just ignore these errors.
+			//
+			// 20220909 Matthias: I think the commit that introduced this
+			// line fixed the problem. There are however (and always will
+			// be) formulas that we cannot convert into a SimultaneousUpdate.
 
 			final SimultaneousUpdate su;
 			try {
-				su = SimultaneousUpdate.fromTransFormula(path, mManagedScript);
+				su = SimultaneousUpdate.fromTransFormula(mServices, path, mManagedScript);
 			} catch (final SimultaneousUpdateException e) {
 				throw new IllegalArgumentException(e.getMessage());
 			}

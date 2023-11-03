@@ -28,50 +28,103 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Context;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-
 /**
- * Represents a task for quantifier elimination without quantifier alternation.
- * I.e., there in only a single kind of quantifier.
- * This class is very similar to ({@link QuantifiedFormula} but we want to have
- * this class to make its purpose more explicit
+ * Auxiliary class that we use in our quantifier elimination. Objects of this
+ * class define which quantified variables we will try to eliminate in the next
+ * of the elimination algorithm. (We call quantified variables that we try to
+ * eliminate <em> eliminatees </em>.) Note that this class can be see as
+ * {@link QuantifiedFormula} that additionally has a {@link Context}. Our
+ * quantifier elimination algorithms consider a formula as a tree and traverse
+ * that tree. If such an algorithm processes a node in the tree, the
+ * {@link Context} provides information about ancestors, siblings of ancestors,
+ * and descendants of siblings of ancestors.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class EliminationTask extends EliminationTaskSimple {
+public class EliminationTask {
+	private static final boolean DEBUG_USE_TO_STRING_DIRECT = false;
+
+	private final int mQuantifier;
+	private final LinkedHashSet<TermVariable> mEliminatees;
+	private final Term mTerm;
 	private final Context mContext;
 
 	public EliminationTask(final int quantifier, final Set<TermVariable> eliminatees, final Term term,
 			final Context context) {
-		super(quantifier, eliminatees, term, context.getBoundByAncestors());
+		assert (quantifier == QuantifiedFormula.EXISTS || quantifier == QuantifiedFormula.FORALL);
+		mQuantifier = quantifier;
+		mEliminatees = QuantifierUtils.projectToFreeVars(eliminatees, term);
+		mTerm = term;
 		mContext = context;
 	}
 
 	public EliminationTask(final QuantifiedFormula quantifiedFormula, final Context context) {
-		super(quantifiedFormula, context.getBoundByAncestors());
+		mQuantifier = quantifiedFormula.getQuantifier();
+		mEliminatees = QuantifierUtils.projectToFreeVars(Arrays.asList(quantifiedFormula.getVariables()),
+				quantifiedFormula.getSubformula());
+		mTerm = quantifiedFormula.getSubformula();
 		mContext = context;
+	}
+
+	public int getQuantifier() {
+		return mQuantifier;
+	}
+
+	public Set<TermVariable> getEliminatees() {
+		return Collections.unmodifiableSet(mEliminatees);
+	}
+
+	/**
+	 * @return The term in which we are going to eliminate quantifiers. Note that
+	 *         this NOT the term that this {@link EliminationTask} represents.
+	 */
+	public Term getTerm() {
+		return mTerm;
+	}
+
+	/**
+	 * @return The term represented by this {@link EliminationTask}. I.e., the
+	 *         {@link QuantifiedFormula} whose variable are the eliminatees and
+	 *         whose subformula is the formula in which we want to try to eliminate
+	 *         the quantified variables.
+	 */
+	public Term toTerm(final Script script) {
+		if (mEliminatees.isEmpty()) {
+			return mTerm;
+		} else {
+			return script.quantifier(mQuantifier, mEliminatees.toArray(new TermVariable[mEliminatees.size()]), mTerm);
+		}
 	}
 
 	public Context getContext() {
 		return mContext;
 	}
 
-	@Override
-	public EliminationTask integrateNewEliminatees(final Set<TermVariable> additionalEliminatees) {
+	/**
+	 * @return An {@link EliminationTask} with additional eliminatees. Ignore all
+	 *         additional eliminatees that do not occur in the subformula.
+	 */
+	public EliminationTask integrateNewEliminatees(final Collection<TermVariable> additionalEliminatees) {
 		final Set<TermVariable> additionalOccuringEliminatees = QuantifierUtils.projectToFreeVars(additionalEliminatees,
 				getTerm());
 		final Set<TermVariable> resultEliminatees = new HashSet<TermVariable>(getEliminatees());
@@ -83,19 +136,17 @@ public class EliminationTask extends EliminationTaskSimple {
 		}
 	}
 
-	@Override
 	public EliminationTask update(final Set<TermVariable> newEliminatees, final Term term) {
 		return new EliminationTask(getQuantifier(), newEliminatees, term, mContext);
 	}
 
-	@Override
 	public EliminationTask update(final Term term) {
 		return new EliminationTask(getQuantifier(), getEliminatees(), term, mContext);
 	}
 
 	public Pair<Term, EliminationTask> makeTight(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript) {
-		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(getQuantifier(), getTerm());
+		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJuncts(getQuantifier(), getTerm());
 		final List<Term> dualJunctsWithEliminatee = new ArrayList<>();
 		final List<Term> dualJunctsWithoutEliminatee = new ArrayList<>();
 		for (final Term dualJunct : dualJuncts) {
@@ -119,6 +170,25 @@ public class EliminationTask extends EliminationTaskSimple {
 			return new Pair<>(dualJunctionWithoutEliminatee,
 					new EliminationTask(getQuantifier(), getEliminatees(), dualJunctionWithEliminatee, newContext));
 		}
+	}
+
+	@Override
+	public String toString() {
+		final String quantifier = (getQuantifier() == QuantifiedFormula.EXISTS ? "∃" : "∀");
+		final String vars = getEliminatees().toString();
+		final String term = (DEBUG_USE_TO_STRING_DIRECT ? getTerm().toStringDirect() : getTerm().toString());
+		return quantifier + " " + vars + ". " + term;
+	}
+
+	/**
+	 * Check if the terms of two {@link EliminationTasks} can be disjoint. Return
+	 * sat if disjoint, unsat if equivalent.
+	 */
+	public static LBool areDistinct(final Script script, final EliminationTask et1, final EliminationTask et2) {
+		final Term espTerm = et1.toTerm(script);
+		final Term sosTerm = et2.toTerm(script);
+		final LBool sat = Util.checkSat(script, script.term("distinct", espTerm, sosTerm));
+		return sat;
 	}
 
 }

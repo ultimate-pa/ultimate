@@ -30,11 +30,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
@@ -50,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  */
 public final class IsEmpty<LETTER, STATE>
 		extends UnaryNetOperation<LETTER, STATE, IPetriNet2FiniteAutomatonStateFactory<STATE>> {
-	private final IPetriNet<LETTER, STATE> mOperand;
+	private final IPetriNetTransitionProvider<LETTER, STATE> mOperand;
 	private final boolean mResult;
 
 	/**
@@ -64,7 +63,7 @@ public final class IsEmpty<LETTER, STATE>
 	 *             if operation was canceled
 	 * @throws PetriNetNot1SafeException
 	 */
-	public IsEmpty(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, STATE> operand)
+	public IsEmpty(final AutomataLibraryServices services, final IPetriNetTransitionProvider<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
@@ -82,7 +81,7 @@ public final class IsEmpty<LETTER, STATE>
 	}
 
 	@Override
-	protected IPetriNet<LETTER, STATE> getOperand() {
+	protected IPetriNetTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 

@@ -1,4 +1,4 @@
-(set-info :expect-errors 3)
+(set-info :expect-errors 2)
 (set-option :produce-interpolants true)
 (set-logic ALIA)
 (declare-fun v0 () Bool)

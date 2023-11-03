@@ -48,8 +48,8 @@ public class FrontEndOptions {
 			/* Frontend is not active */
 			mOut = null;
 		}
-		mPrintTermsCSE = (BooleanOption) options.getOption(SMTInterpolOptions.PRINT_TERMS_CSE);
-		mContinueOnError = (BooleanOption) options.getOption(SMTInterpolOptions.CONTINUE_ON_ERROR);
+		mPrintTermsCSE = (BooleanOption) options.getOption(SMTInterpolConstants.PRINT_TERMS_CSE);
+		mContinueOnError = (BooleanOption) options.getOption(SMTInterpolConstants.CONTINUE_ON_ERROR);
 	}
 
 	FrontEndOptions(final OptionMap options, final boolean active) {
@@ -68,8 +68,8 @@ public class FrontEndOptions {
 							"Front End not active.  Option change will not have an effect!", options.getLogProxy()));
 			mOut = null;
 		}
-		options.addOption(SMTInterpolOptions.PRINT_TERMS_CSE, mPrintTermsCSE);
-		options.addOption(SMTInterpolOptions.CONTINUE_ON_ERROR, mContinueOnError);
+		options.addOption(SMTInterpolConstants.PRINT_TERMS_CSE, mPrintTermsCSE);
+		options.addOption(SMTInterpolConstants.CONTINUE_ON_ERROR, mContinueOnError);
 	}
 
 	public final boolean isFrontEndActive() {

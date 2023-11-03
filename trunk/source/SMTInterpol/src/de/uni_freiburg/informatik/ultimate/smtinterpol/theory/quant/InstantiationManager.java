@@ -266,7 +266,7 @@ public class InstantiationManager {
 	 * Compute clause instances found by E-matching. This method does not build instances of quant clauses containing
 	 * ground literals that are currently set to true, or instances producing new terms (i.e., without equivalent known
 	 * terms).
-	 * 
+	 *
 	 * @return the computed InstClauses, except the ones resulting in trivially true clauses.
 	 */
 	public Set<InstClause> computeEMatchingInstances() {
@@ -349,7 +349,7 @@ public class InstantiationManager {
 	 * In the final check, check if all interesting substitutions of all clauses lead to satisfied instances. As soon as
 	 * an instance is found that is not yet satisfied, stop. The newly created literals will be decided by the ground
 	 * theories next and may lead to new conflicts.
-	 * 
+	 *
 	 * @return a singleton set containing the new instance, if one was found; null else.
 	 */
 	public Set<InstClause> instantiateSomeNotSat() {
@@ -368,7 +368,7 @@ public class InstantiationManager {
 						final int numUndef = instClause.countAndSetUndefLits();
 						assert numUndef == -1 || numUndef == 0;
 						if (numUndef == 0) {
-							mQuantTheory.getLogger().warn(
+							mQuantTheory.getLogger().info(
 									"Conflict on existing clause instance hasn't been detected in checkpoint(): ",
 									instClause);
 							return Collections.singleton(instClause);
@@ -501,7 +501,7 @@ public class InstantiationManager {
 	/**
 	 * From the given terms, compute all substitutions from the given age, i.e., that contain at least one term from the
 	 * given age, and only terms from the given or an earlier age.
-	 * 
+	 *
 	 * @param sortedSubstitutionTerms
 	 *            an array of lists of substitution terms sorted by age (an array entry corresponds to a variable
 	 *            position)
@@ -545,7 +545,7 @@ public class InstantiationManager {
 
 	/**
 	 * Get the term age for a given term.
-	 * 
+	 *
 	 * @param t
 	 *            a term.
 	 * @return the age of the CCTerm if the term has a CCTerm, 0 else.
@@ -557,7 +557,7 @@ public class InstantiationManager {
 
 	/**
 	 * Get the maximum term age for the given terms.
-	 * 
+	 *
 	 * @param terms
 	 *            a list of terms.
 	 * @return the maximum age of the given terms.
@@ -669,7 +669,7 @@ public class InstantiationManager {
 
 	/**
 	 * Combine two InstanceValue keeping only the values defined relevant for the checkpoint.
-	 * 
+	 *
 	 * @param first
 	 *            the first InstanceValue
 	 * @param second
@@ -684,7 +684,7 @@ public class InstantiationManager {
 	 * Combine two InstantiationInfo for the checkpoint. The values are combined as usual in checkpoint, and the
 	 * (partial) substitutions are combined by preferring the term of the first substitution if both have a term for a
 	 * variable (in this case, they must have the same representative).
-	 * 
+	 *
 	 * @param first
 	 *            the first InstantiationInfo
 	 * @param second
@@ -827,7 +827,7 @@ public class InstantiationManager {
 	 * Evaluate a literal that partially uses E-Matching. That is, it contains arithmetic only on top level and there
 	 * are variables that do not appear under an uninterpreted function. E.g. for f(x)=y or f(x)+y<=0, E-Matching only
 	 * uses the pattern f(x), but the literal can be evaluated for any substitution of y.
-	 * 
+	 *
 	 * @param lit
 	 *            the quantified literal to evaluate.
 	 * @param subs
@@ -1358,7 +1358,7 @@ public class InstantiationManager {
 	 *            the substitution info containing the known ground terms for the quantified terms in the literal.
 	 * @return the InstanceValue of the substituted literal.
 	 */
-	private InstanceValue evaluateCCEqualityKnownShared(final QuantEquality qEq, Map<Term, CCTerm> equivalentCCTerms) {
+	private InstanceValue evaluateCCEqualityKnownShared(final QuantEquality qEq, final Map<Term, CCTerm> equivalentCCTerms) {
 		final CCTerm leftCC, rightCC;
 		if (qEq.getLhs().getFreeVars().length == 0) {
 			leftCC = mClausifier.getCCTerm(qEq.getLhs());

@@ -52,8 +52,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -550,11 +550,17 @@ public class NestedSsaBuilder<L extends IAction> {
 		}
 
 		public void versionAssignedVars(final int currentPos) {
+			// TODO Matthias 2023-11-01. If this is a call/return of a recursive procedure
+			// we may give too many variables a new version, since getAssignedVars() returns
+			// also the variables of the old scope.
 			for (final IProgramVar bv : mTF.getAssignedVars()) {
-				final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getOutVars().get(bv));
 				final Term versioneered = setCurrentVarVersion(bv, currentPos);
 				mConstants2BoogieVar.put(versioneered, bv);
-				mSubstitutionMapping.put(tv, versioneered);
+				final TermVariable originalTv = mTF.getOutVars().get(bv);
+				if (originalTv != null) {
+					final TermVariable tv = transferToCurrentScriptIfNecessary(originalTv);
+					mSubstitutionMapping.put(tv, versioneered);
+				}
 			}
 		}
 
@@ -596,8 +602,7 @@ public class NestedSsaBuilder<L extends IAction> {
 		}
 
 		public Term getVersioneeredTerm() {
-			final Substitution subst = new Substitution(mTcScript, mSubstitutionMapping);
-			final Term result = subst.transform(mFormula);
+			final Term result = PureSubstitution.apply(mTcScript, mSubstitutionMapping, mFormula);
 			assert result.getFreeVars().length == 0 : "free vars in versioneered term: "
 					+ Arrays.stream(result.getFreeVars()).map(a -> a.toString()).collect(Collectors.joining(","));
 			return result;

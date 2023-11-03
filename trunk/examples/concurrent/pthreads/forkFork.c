@@ -43,6 +43,7 @@ int main() {
     // Result is correctly passed
     int ret = *x;
     //@ assert ret == 10;
+    printf("%u\n",ret);
 
     // Side-effect is captured
     // assert par == 10; // commented out, as (surprisingly) this takes a lot longer

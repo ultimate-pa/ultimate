@@ -29,15 +29,15 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jor
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.QuadraticMatrix.JordanTransformationResult.JordanTransformationStatus;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanDecomposition.JordanDecompositionStatus;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
- * Class for quadratic integer matrices. Goal: compute Jordan normal form for
- * matrices with eigenvalues only -1,0,1.
+ * Class for quadratic integer matrices. Goal: compute Jordan normal form for matrices with eigenvalues only -1,0,1.
  *
  * @author Miriam Herzig
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -45,15 +45,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public class QuadraticMatrix {
 	/**
-	 * mDimension is an integer representing the number of rows/columns of the
-	 * matrix.
+	 * mDimension is an integer representing the number of rows/columns of the matrix.
 	 */
 	private final int mDimension;
 	/**
-	 * mEntries is an integer array of arrays representing the entries of the
-	 * matrix.
+	 * mEntries is an integer array of arrays representing the entries of the matrix.
 	 */
-	private final BigInteger[][] mEntries;;
+	private final BigInteger[][] mEntries;
 
 	public QuadraticMatrix(final BigInteger[][] matrixEntries) {
 		// Check if given array of arrays is quadratic.
@@ -69,7 +67,8 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * @param n dimension
+	 * @param n
+	 *            dimension
 	 * @return identity matrix of dimension n
 	 */
 	public static QuadraticMatrix constructIdentityMatrix(final int n) {
@@ -88,7 +87,8 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * @param n dimension
+	 * @param n
+	 *            dimension
 	 * @return zero matrix of dimension n
 	 */
 	public static QuadraticMatrix constructZeroMatrix(final int n) {
@@ -103,8 +103,7 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * Copies the matrix M. Used to make sure to not change the matrix when applying
-	 * functions.
+	 * Copies the matrix M. Used to make sure to not change the matrix when applying functions.
 	 *
 	 * @param matrix
 	 * @return copy of matrix
@@ -122,11 +121,12 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * Usual matrix addition for quadratic matrices if the matrices are of the same
-	 * dimension.
+	 * Usual matrix addition for quadratic matrices if the matrices are of the same dimension.
 	 *
-	 * @param matrix1 quadratic matrix
-	 * @param matrix2 quadratic matrix
+	 * @param matrix1
+	 *            quadratic matrix
+	 * @param matrix2
+	 *            quadratic matrix
 	 * @return new quadratic matrix sumMatrix = matrix1 + matrix 2
 	 */
 	public static QuadraticMatrix addition(final QuadraticMatrix matrix1, final QuadraticMatrix matrix2) {
@@ -167,11 +167,12 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * Usual matrix multiplication for quadratic matrices if the matrices are of the
-	 * same dimension.
+	 * Usual matrix multiplication for quadratic matrices if the matrices are of the same dimension.
 	 *
-	 * @param matrix1 quadratic matrix
-	 * @param matrix2 quadratic matrix
+	 * @param matrix1
+	 *            quadratic matrix
+	 * @param matrix2
+	 *            quadratic matrix
 	 * @return new quadratic matrix productMatrix = matrix1 * matrix 2
 	 */
 	public static QuadraticMatrix multiplication(final QuadraticMatrix matrix1, final QuadraticMatrix matrix2) {
@@ -185,8 +186,8 @@ public class QuadraticMatrix {
 		for (int i = 0; i < n; i++) {
 			for (int k = 0; k < n; k++) {
 				for (int j = 0; j < n; j++) {
-					productMatrix.mEntries[i][k] = (productMatrix.mEntries[i][k])
-							.add(matrix1.mEntries[i][j].multiply(matrix2.mEntries[j][k]));
+					productMatrix.mEntries[i][k] =
+							(productMatrix.mEntries[i][k]).add(matrix1.mEntries[i][j].multiply(matrix2.mEntries[j][k]));
 				}
 			}
 		}
@@ -194,7 +195,8 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * @param matrix quadratic matrix
+	 * @param matrix
+	 *            quadratic matrix
 	 * @param s
 	 * @return new quadratic matrix powerMatrix = matrix^s
 	 */
@@ -214,8 +216,7 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * Recursice computation of the determinant of a quadratic matrix M using
-	 * Laplace expansion.
+	 * Recursice computation of the determinant of a quadratic matrix M using Laplace expansion.
 	 */
 	public BigInteger computeDet() {
 		final int n = mDimension;
@@ -261,9 +262,8 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * Computes the inverse of a quadratic matrix where inverse is a RationalMatrix
-	 * consisting of a quadratic integer matrix and a main denominator for all
-	 * entries.
+	 * Computes the inverse of a quadratic matrix where inverse is a RationalMatrix consisting of a quadratic integer
+	 * matrix and a main denominator for all entries.
 	 *
 	 * @param matrix
 	 * @return inverse of matrix
@@ -309,8 +309,7 @@ public class QuadraticMatrix {
 	/**
 	 * Checks if -1,0,1 are eigenvalues of the quadratic matrix.
 	 *
-	 * @return boolean array of size 3 where the i-th entry is true iff i-1 is an
-	 *         eigenvalue of the matrix.
+	 * @return boolean array of size 3 where the i-th entry is true iff i-1 is an eigenvalue of the matrix.
 	 */
 	public boolean[] computeSmallEigenvalues() {
 		final boolean[] eigenvalues = new boolean[3];
@@ -333,8 +332,10 @@ public class QuadraticMatrix {
 	/**
 	 * Swaps the rows i and j of the quadratic matrix. Warning: Changes the matrix!
 	 *
-	 * @param i row index
-	 * @param j row index
+	 * @param i
+	 *            row index
+	 * @param j
+	 *            row index
 	 */
 	public void swapRows(final int i, final int j) {
 		final int n = mDimension;
@@ -347,8 +348,8 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * Applies Gaussian elimination to a quadratic matrix. Uses multiplication
-	 * instead of division to keep values integral.
+	 * Applies Gaussian elimination to a quadratic matrix. Uses multiplication instead of division to keep values
+	 * integral.
 	 *
 	 * @param matrix
 	 * @return quadratic matrix in row echelon form as upper triangle matrix.
@@ -382,8 +383,8 @@ public class QuadraticMatrix {
 					f2 = f2.divide(gcd);
 					nMatrix.mEntries[i][k] = BigInteger.valueOf(0);
 					for (int j = k + 1; j < n; j++) {
-						nMatrix.mEntries[i][j] = (f2.multiply(nMatrix.mEntries[i][j]))
-								.subtract(f1.multiply(nMatrix.mEntries[h][j]));
+						nMatrix.mEntries[i][j] =
+								(f2.multiply(nMatrix.mEntries[i][j])).subtract(f1.multiply(nMatrix.mEntries[h][j]));
 					}
 				}
 				h = h + 1;
@@ -410,11 +411,11 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * Computes a solution of the LES as a Rational array. When having choices, take
-	 * s-th choice 1, other choices 0. Warning: Only works if M is in row echelon
-	 * form, an upper triangle matrix and has a row 0,...,0,1.
+	 * Computes a solution of the LES as a Rational array. When having choices, take s-th choice 1, other choices 0.
+	 * Warning: Only works if M is in row echelon form, an upper triangle matrix and has a row 0,...,0,1.
 	 *
-	 * @param matrix that represents an LES Ax = b
+	 * @param matrix
+	 *            that represents an LES Ax = b
 	 * @param s
 	 * @return solution of the LES as an array of Rationals.
 	 */
@@ -449,8 +450,8 @@ public class QuadraticMatrix {
 			expected = j - 1;
 			p[j] = Rational.valueOf(N.mEntries[i][n - 1], BigInteger.valueOf(1));
 			for (int k = j + 1; k < n - 1; k++) {
-				final Rational tmp = Rational.valueOf((N.mEntries[i][k].negate()).multiply(p[k].numerator()),
-						p[k].denominator());
+				final Rational tmp =
+						Rational.valueOf((N.mEntries[i][k].negate()).multiply(p[k].numerator()), p[k].denominator());
 				p[j] = p[j].add(tmp);
 				p[j] = Rational.valueOf(p[j].numerator(), p[j].denominator());
 			}
@@ -467,8 +468,8 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * Computes the rank of a quadratic matrix computing the row echelon form first
-	 * using Gaussian elimination and then counting the number of zero rows.
+	 * Computes the rank of a quadratic matrix computing the row echelon form first using Gaussian elimination and then
+	 * counting the number of zero rows.
 	 */
 	public int computeRank() {
 		final QuadraticMatrix matrixCopy = copyMatrix(this);
@@ -489,48 +490,49 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * Computes the geometric multiplicity of an eigenvalue lambda with regard to a
-	 * quadratic matrix M, the dimension of ker(matrix-lambda*E) where E is the
-	 * identity matrix. To compute the dimension of the kernel the dimension formula
-	 * is used. The geometric multiplicity corresponds to the number of Jordan
-	 * blocks for lambda. This method also works for integral eigenvalues not equal
-	 * to -1,0 or 1.
+	 * Computes the geometric multiplicity of an eigenvalue lambda with regard to a quadratic matrix M, the dimension of
+	 * ker(matrix-lambda*E) where E is the identity matrix. To compute the dimension of the kernel the dimension formula
+	 * is used. The geometric multiplicity corresponds to the number of Jordan blocks for lambda. This method also works
+	 * for integral eigenvalues not equal to -1,0 or 1.
 	 *
-	 * @param lambda an eigenvalue
+	 * @param lambda
+	 *            an eigenvalue
 	 * @return geometric multiplicity of lambda
 	 */
 	public int computeGeometricMultiplicity(final int lambda) {
 		final int n = mDimension;
 		final QuadraticMatrix identity = constructIdentityMatrix(n);
-		final QuadraticMatrix eigenvalueMatrix = addition(this,
-				scalarMultiplication(BigInteger.valueOf(-lambda), identity));
+		final QuadraticMatrix eigenvalueMatrix =
+				addition(this, scalarMultiplication(BigInteger.valueOf(-lambda), identity));
 		return n - eigenvalueMatrix.computeRank();
 	}
 
 	/**
-	 * Computes the number of Jordan blocks for eigenvalue lambda of size s with
-	 * regard to a quadratic matrix. This method also works for integral eigenvalues
-	 * not equal to -1,0 or 1.
+	 * Computes the number of Jordan blocks for eigenvalue lambda of size s with regard to a quadratic matrix. This
+	 * method also works for integral eigenvalues not equal to -1,0 or 1.
 	 *
-	 * @param lambda eigenvalue
+	 * @param lambda
+	 *            eigenvalue
 	 * @param s
 	 */
 	public int computeNumberOfBlocks(final int lambda, final int s) {
 		final int n = mDimension;
 		final QuadraticMatrix identity = constructIdentityMatrix(n);
-		final QuadraticMatrix eigenvalueMatrix = addition(this,
-				scalarMultiplication(BigInteger.valueOf(-lambda), identity));
+		final QuadraticMatrix eigenvalueMatrix =
+				addition(this, scalarMultiplication(BigInteger.valueOf(-lambda), identity));
 		return (2 * (power(eigenvalueMatrix, s)).computeGeometricMultiplicity(0))
 				- ((power(eigenvalueMatrix, s + 1)).computeGeometricMultiplicity(0))
 				- ((power(eigenvalueMatrix, s - 1)).computeGeometricMultiplicity(0));
 	}
 
 	/**
-	 * Creates a Jordan block of size s with eigenvalue lambda. This method also
-	 * works for integral eigenvalues not equal to -1,0 or 1.
+	 * Creates a Jordan block of size s with eigenvalue lambda. This method also works for integral eigenvalues not
+	 * equal to -1,0 or 1.
 	 *
-	 * @param lambda eigenvalue
-	 * @param s      size of block
+	 * @param lambda
+	 *            eigenvalue
+	 * @param s
+	 *            size of block
 	 */
 	public static QuadraticMatrix createJordanBlock(final int lambda, final int s) {
 		final QuadraticMatrix block = constructZeroMatrix(s);
@@ -544,8 +546,8 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * Adds jordan block to quadratic jordan matrix beginning at row start. This
-	 * method also works for integral eigenvalues not equal to -1,0 or 1.
+	 * Adds jordan block to quadratic jordan matrix beginning at row start. This method also works for integral
+	 * eigenvalues not equal to -1,0 or 1.
 	 */
 	public void addJordanBlock(final QuadraticMatrix block, final int start) {
 		if (mDimension < block.mDimension + start) {
@@ -560,8 +562,7 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * Computes triples (ev, bs, occ) meaning that there are occ blocks of size bs
-	 * for eigenvalue ev.
+	 * Computes triples (ev, bs, occ) meaning that there are occ blocks of size bs for eigenvalue ev.
 	 */
 	private NestedMap2<Integer, Integer, Integer> computeJordanBlockSizes() {
 		final NestedMap2<Integer, Integer, Integer> jordanBlockSizes = new NestedMap2<Integer, Integer, Integer>();
@@ -589,16 +590,20 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * Computes the jordan matrix of a given quadratic matrix given jordanBlockSizes
-	 * which contains triples (eigenvalue, blocksize, occurrence). This method also
-	 * works for integral eigenvalues not equal to -1,0 or 1, only need to change
-	 * eigenvalues array.
+	 * Computes the jordan matrix of a given quadratic matrix given jordanBlockSizes which contains triples (eigenvalue,
+	 * blocksize, occurrence). This method also works for integral eigenvalues not equal to -1,0 or 1, only need to
+	 * change eigenvalues array.
+	 * @param linearUpdate
 	 */
-	public JordanTransformationResult constructJordanTransformation() {
+	public JordanDecomposition constructJordanDecomposition() {
 		final int n = mDimension;
+		if (n >= 11) {
+			throw new UnsupportedOperationException(
+					"Vector space has " + n + " dimensions. Computation of eigenvalues may not terminate.");
+		}
 		final QuadraticMatrix jordanMatrix = constructZeroMatrix(n);
 		final NestedMap2<Integer, Integer, Integer> jordanBlockSizes = computeJordanBlockSizes();
-		JordanTransformationStatus status;
+		JordanDecompositionStatus status;
 		int current = 0;
 		for (int e = -1; e <= 1; e++) {
 			if (jordanBlockSizes.get(e) != null) {
@@ -613,18 +618,18 @@ public class QuadraticMatrix {
 				}
 			}
 		}
-		JordanTransformationResult jtr;
+		final JordanDecomposition decomp;
 		if (current != n) {
-			status = JordanTransformationStatus.UNSUPPORTED_EIGENVALUES;
-			jtr = new JordanTransformationResult(status, null, null, null, null);
+			status = JordanDecompositionStatus.UNSUPPORTED_EIGENVALUES;
+			decomp = new JordanDecomposition(status, null, null, null, null);
 		} else {
-			status = JordanTransformationStatus.SUCCESS;
+			status = JordanDecompositionStatus.SUCCESS;
 			final RationalMatrix modal = computeModalMatrix(this, jordanMatrix);
 			final RationalMatrix inverseModal = RationalMatrix.computeInverse(modal);
 			assert checkCorrectnessofJordanDecomposition(this, modal, jordanMatrix, inverseModal);
-			jtr = new JordanTransformationResult(status, jordanMatrix, modal, inverseModal, jordanBlockSizes);
+			decomp = new JordanDecomposition(status, jordanMatrix, modal, inverseModal, jordanBlockSizes);
 		}
-		return jtr;
+		return decomp;
 	}
 
 	/**
@@ -648,8 +653,7 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * Usual matrix vector multiplication where matrix entries are BigInteger,
-	 * vector is Rational.
+	 * Usual matrix vector multiplication where matrix entries are BigInteger, vector is Rational.
 	 */
 	public static Rational[] matrixVectorMultiplication(final QuadraticMatrix matrix, final Rational[] vector) {
 		if (matrix.mDimension != vector.length) {
@@ -668,15 +672,12 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * Computes the modal matrix for a given matrix and its jordan matrix. For each
-	 * block it computes a generalized eigenvector first and then its jordan chain.
-	 * The generalized eigenvectors are computed using linear equation systems
-	 * ((matrix - lambda*identity)^s)*p = 0 and checking that ((matrix -
-	 * lambda*identity)^s-1)*p != 0. Linear independence of two generalized
-	 * eigenvectors for the same block size is guaranteed by adding the other
-	 * generalized eigenvectors to the linear equation system (scalar product 0
-	 * implies linear independence). This method also works for integral eigenvalues
-	 * not equal to -1,0 or 1.
+	 * Computes the modal matrix for a given matrix and its jordan matrix. For each block it computes a generalized
+	 * eigenvector first and then its jordan chain. The generalized eigenvectors are computed using linear equation
+	 * systems ((matrix - lambda*identity)^s)*p = 0 and checking that ((matrix - lambda*identity)^s-1)*p != 0. Linear
+	 * independence of two generalized eigenvectors for the same block size is guaranteed by adding the other
+	 * generalized eigenvectors to the linear equation system (scalar product 0 implies linear independence). This
+	 * method also works for integral eigenvalues not equal to -1,0 or 1.
 	 *
 	 * @param matrix
 	 * @param jordanMatrix
@@ -696,8 +697,8 @@ public class QuadraticMatrix {
 		}
 		for (int lambda = 1; lambda >= -1; lambda--) {
 			if (matrix.computeSmallEigenvalues()[lambda + 1]) {
-				final QuadraticMatrix eigenvalueMatrix = addition(matrix,
-						scalarMultiplication(BigInteger.valueOf(-lambda), constructIdentityMatrix(n)));
+				final QuadraticMatrix eigenvalueMatrix =
+						addition(matrix, scalarMultiplication(BigInteger.valueOf(-lambda), constructIdentityMatrix(n)));
 				int blockSize = n;
 				while (matrix.computeNumberOfBlocks(lambda, blockSize) == 0) {
 					blockSize = blockSize - 1;
@@ -777,15 +778,15 @@ public class QuadraticMatrix {
 	}
 
 	/**
-	 * Check if Jordan decomposition was computed correctly, check matrix =
-	 * modalMatrix * jordanMatrix * inverseModalMatrix.
+	 * Check if Jordan decomposition was computed correctly, check matrix = modalMatrix * jordanMatrix *
+	 * inverseModalMatrix.
 	 */
 	public static boolean checkCorrectnessofJordanDecomposition(final QuadraticMatrix matrix,
 			final RationalMatrix modalMatrix, final QuadraticMatrix jordanMatrix,
 			final RationalMatrix inverseModalMatrix) {
-		final QuadraticMatrix decomposition = QuadraticMatrix.multiplication(
-				QuadraticMatrix.multiplication(modalMatrix.getIntMatrix(), jordanMatrix),
-				inverseModalMatrix.getIntMatrix());
+		final QuadraticMatrix decomposition =
+				QuadraticMatrix.multiplication(QuadraticMatrix.multiplication(modalMatrix.getIntMatrix(), jordanMatrix),
+						inverseModalMatrix.getIntMatrix());
 		if (matrix.getDimension() != decomposition.getDimension()) {
 			throw new AssertionError("Mistake in Jordan decomposition!");
 		}
@@ -812,75 +813,8 @@ public class QuadraticMatrix {
 		mEntries[i][j] = value;
 	}
 
-	static class JordanTransformationResult {
-		enum JordanTransformationStatus {
-			SUCCESS,
-			/**
-			 * We support the transformation to JNF only if each eigenvalue is either -1,0
-			 * or 1.
-			 */
-			UNSUPPORTED_EIGENVALUES
-		};
-
-		private final JordanTransformationStatus mStatus;
-		private final QuadraticMatrix mJnf;
-		private final RationalMatrix mModal;
-		private final RationalMatrix mInverseModal;
-		/**
-		 * Contains triple (ev, bs, occ) if there are exactly occ Jordan blocks of size
-		 * bs for eigenvalue ev.
-		 */
-		private final NestedMap2<Integer, Integer, Integer> mJordanBlockSizes;
-
-		public JordanTransformationResult(final JordanTransformationStatus status, final QuadraticMatrix jnf,
-				final RationalMatrix modal, final RationalMatrix inverseModal,
-				final NestedMap2<Integer, Integer, Integer> jordanBlockSizes) {
-			super();
-			assert (status == JordanTransformationStatus.SUCCESS) ^ (jnf == null) : "provide JNF iff success";
-			assert (jnf == null) == (jordanBlockSizes == null) : "all or nothing";
-			if (jordanBlockSizes != null) {
-				assert jordanBlockSizes.keySet().stream()
-						.allMatch(x -> x == -1 || x == 0 || x == 1) : "only supported eigenvalues as keys";
-			}
-			mStatus = status;
-			mJnf = jnf;
-			mModal = modal;
-			mInverseModal = inverseModal;
-			mJordanBlockSizes = jordanBlockSizes;
-		}
-
-		public JordanTransformationStatus getStatus() {
-			return mStatus;
-		}
-
-		public QuadraticMatrix getJnf() {
-			return mJnf;
-		}
-
-		public RationalMatrix getModal() {
-			return mModal;
-		}
-
-		public RationalMatrix getInverseModal() {
-			return mInverseModal;
-		}
-
-		public NestedMap2<Integer, Integer, Integer> getJordanBlockSizes() {
-			return mJordanBlockSizes;
-		}
-
-		/**
-		 * Auxiliary method for filling the JordanBlockSizes.
-		 */
-		static void reportJordanBlock(final NestedMap2<Integer, Integer, Integer> jordanBlockSizes,
-				final int eigenvalue, final int blockSize) {
-			Integer occurence = jordanBlockSizes.get(eigenvalue, blockSize);
-			if (occurence == null) {
-				occurence = 1;
-			} else {
-				occurence++;
-			}
-			jordanBlockSizes.put(eigenvalue, blockSize, occurence);
-		}
+	@Override
+	public String toString() {
+		return Arrays.deepToString(mEntries);
 	}
 }

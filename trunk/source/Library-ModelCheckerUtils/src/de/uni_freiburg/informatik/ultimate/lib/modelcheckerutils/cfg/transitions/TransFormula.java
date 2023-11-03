@@ -39,25 +39,91 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Represents the transition of a program or a transition system as an SMT formula. The formula denotes a binary
- * relation of this-state/next-state pairs, where we consider a state as a variable assignment. The variables that
- * describe the "this-state"s are given as a BoogieVar, stored as the keySet of the Map mInVars. mInVars maps to each of
- * these variables a corresponding TermVariable in the formula. The variables that describe the "next-state"s are given
- * as a set of strings, stored as the keySet of the Map mOutVars. mInVars maps to each of these variables a
- * corresponding TermVariable in the formula. All TermVariables that occur in the formula are stored in the Set mVars.
- * The names of all variables that are assigned/updated by this transition are stored in mAssignedVars (this information
- * is obtained from mInVars and mOutVars). If a variable does not occur in the this-state, but in the next-state it may
- * have any value (think of a Havoc Statement).
- * <p>
- * A TransFormula represents the set of transitions denoted by the formula φ over primed and unprimed variables where φ
- * is obtained by
+ * Represents the transition of a program or a transition system as an SMT formula.
+ *
+ * The formula denotes a binary relation of this-state/next-state pairs, where we consider a state as a variable
+ * assignment. Note that the this-state and the next-state may refer to different contexts, and thus range over
+ * different sets of variables. For instance, in a {@code TransFormula} describing a procedure call, the this-state
+ * ranges over the local variables of the caller procedure and the global variables, whereas the next-state ranges over
+ * the local variables of the callee procedure and the global variables.
+ *
  * <ul>
- * <li>first replacing for each x ∈ dom(invar) the TermVariable invar(x) in mFormula by x
- * <li>then replacing for each x ∈ dom(outvar) the TermVariable onvar(x) in mFormula by x'
- * <li>finally, adding the conjunct x=x' for each x∈(dom(invar)⋂dom(outvar) such that invar(x)=outvar(x)
+ * <li>The variables that describe the "this-state"s are given as {@link IProgramVar} stored as the keySet of the Map
+ * {@code mInVars}. {@code mInVars} maps each of these variables to a corresponding {@link TermVariable} in the
+ * formula.</li>
+ * <li>The variables that describe the "next-state"s are given as {@link IProgramVar} stored as the keySet of the Map
+ * {@code mOutVars}. {@code mOutVars} maps each of these variables to a corresponding {@link TermVariable} in the
+ * formula.</li>
  * </ul>
  *
- * @author heizmann@informatik.uni-freiburg.de
+ * The transition may update the value of variables that exist both in the this-state context and in the next-state
+ * context, unless they
+ * <ul>
+ * <li>do appear neither in {@code mInVars} nor in {@code mOutVars},</li>
+ * <li>or, they appear both in {@code mInVars} and in {@code mOutVars}, with the same {@code TermVariable}.
+ * </ul>
+ * The names of all variables that can be updated by this transition are stored in {@code mAssignedVars} (this
+ * information is obtained from {@code mInVars} and {@code mOutVars}).
+ *
+ * <blockquote>
+ * <p>
+ * <b>Example:</b> Think of a statement {@code x:=x+y}. This statement can be represented as a {@code TransFormula} with
+ * the SMT formula {@code x2 = x1 + y1}, a map {@code mInVars = { x -> x1, y -> y1 }} for the this-state , and a map
+ * {@code mOutVars = { x -> x2, y -> y1 }} for the next-state.
+ * </p>
+ * </blockquote>
+ *
+ * <blockquote>
+ * <p>
+ * <b>Example:</b> Think of a statement {@code assume x > y}. This statement can be represented as a
+ * {@code TransFormula} with the SMT formula {@code x1 > y1}, a map {@code mInVars = { x -> x1, y -> y1 }} and a map
+ * {@code mOutVars = { x -> x1, y -> y1 }}.
+ * </p>
+ * </blockquote>
+ *
+ *
+ * <blockquote>
+ * <p>
+ * <b>Example:</b> Think of a statement {@code havoc x}. This statement can be represented as a {@code TransFormula}
+ * with SMT formula {@code true} and either
+ * <ul>
+ * <li>{@code mInVars} an empty map, and {@code mOutVars} mapping {@code x} to some {@link TermVariable};</li>
+ * <li>OR, {@code mInVars} mapping {@code x} to some {@link TermVariable}, and {@code mOutVars} an empty map;</li>
+ * <li>OR, {@code mInVars} and {@code mOutVars} mapping {@code x} to two different {@link TermVariable}s.
+ * </ul>
+ * </p>
+ * </blockquote>
+ *
+ * Additionally to {@code mInVars} and {@code mOutVars}, a {@code TransFormula} may contain auxiliary
+ * {@link TermVariable}s, stored in the set {@code mAuxVars}. Such auxiliary variables can be useful to establish more
+ * complex relationships between the in- and out-variables. You can think of them as implicitly existentially
+ * quantified.
+ *
+ * <blockquote>
+ * <p>
+ * <b>Example:</b> Think of a {@code TransFormula} with SMT formula {@code x2 = z ∧ y2 = z}, where {@code z} is an
+ * auxiliary variable, {@code mInVars} is empty, and {@code mOutVars = { x -> x2, y -> y2 }}. This describes a
+ * transition that updates the values of both {@code x} and {@code y} to some nondeterministically chosen values, but
+ * with the constraint that both of them have the <em>same</em> value.
+ * </p>
+ * </blockquote>
+ *
+ *
+ * Formally, a TransFormula represents the set of transitions denoted by the formula φ over primed and unprimed
+ * variables where φ is obtained by
+ * <ul>
+ * <li>first replacing for each {@code x ∈ dom(mInVars)} the TermVariable {@code mInVars(x)} in {@code mFormula} by
+ * {@code x},</li>
+ * <li>then replacing for each {@code x ∈ dom(mOutVars)} the TermVariable {@code mOutVars(x)} in {@code mFormula} by
+ * {@code x'},</li>
+ * <li>then existentially quantifying all auxiliary variables,</li>
+ * <li>then adding the conjunct {@code x=x'} for each {@code x ∈ dom(mInVars) ⋂ dom(mOutVars)} such that
+ * {@code mInVars(x)=mOutVars(x)},</li>
+ * <li>and finally, adding the conjunct {@code x=x'} for each
+ * {@code x ∈ (dom(this-state) ⋂ dom(next-state))\(dom(mInVars) ∪ dom(mOutVars))}.</li>
+ * </ul>
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public abstract class TransFormula implements ITransitionRelation {
 
@@ -74,9 +140,6 @@ public abstract class TransFormula implements ITransitionRelation {
 		mAuxVars = auxVars;
 		mNonTheoryConsts = nonTheoryConsts;
 	}
-
-	@Override
-	public abstract Set<IProgramVar> getAssignedVars();
 
 	public abstract Term getFormula();
 

@@ -412,19 +412,18 @@ public class NewPreRunner extends ASTVisitor {
 		final CDeclaration cDec = stv.getCDecl();
 		final IASTNode cursor = mSymTab.tableFindCursor(hook, rslvId, stv);
 		final String boogieName = mNameHandler.getUniqueIdentifier(cursor, cDec.getName(), mSymTab.getCScopeId(cursor),
-				true, cDec.getType());
+				true, cDec.getType(), stv.getDeclarationInformation());
 		mSymTab.updateCSymbolFromCursor(cursor, rslvId, stv, stv.createOnHeap(boogieName));
 	}
 
 	private void storeAsSymbol(final IASTNode node, final CType cType, final String cName) {
 		final CDeclaration cDec = new CDeclaration(cType, cName);
-		final String boogieName = mNameHandler.getUniqueIdentifier(node, cDec.getName(), mSymTab.getCScopeId(node),
-				false, cDec.getType());
-
 		final DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+		final String boogieName = mNameHandler.getUniqueIdentifier(node, cDec.getName(), mSymTab.getCScopeId(node),
+				false, cDec.getType(), dummyDeclInfo);
 
 		// this is only to have a minimal symbolTableEntry (containing boogieID) for translation of the initializer
 		mSymTab.storeCSymbol(node, cDec.getName(),
-				new SymbolTableValue(boogieName, null, cDec, dummyDeclInfo, node, false));
+				new SymbolTableValue(boogieName, null, null, cDec, dummyDeclInfo, node, false));
 	}
 }

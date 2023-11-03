@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.test
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.test
-Bundle-Version: 0.2.2
+Bundle-Version: 0.2.3
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Export-Package: de.uni_freiburg.informatik.ultimate.test,
  de.uni_freiburg.informatik.ultimate.test.benchexec,
@@ -21,9 +21,12 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.util,
  org.junit,
+ de.uni_freiburg.informatik.ultimate.lib.chc,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
- javax.activation
+ de.uni_freiburg.informatik.ultimate.smtinterpol,
+ javax.activation,
+ eo-yaml
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,

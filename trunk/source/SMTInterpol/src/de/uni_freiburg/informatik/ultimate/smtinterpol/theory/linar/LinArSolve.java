@@ -25,6 +25,7 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -54,8 +55,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.model.NumericSortInterpre
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCEquality;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedArrayList;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
@@ -104,8 +104,8 @@ public class LinArSolve implements ITheory {
 	 * must be null.
 	 */
 	final ArrayList<BitSet> mDependentRows;
-	/** The list of all non-basic integer variables. */
-	final ArrayList<LinVar> mIntVars;
+	/** All non-basic integer variables. */
+	final Set<LinVar> mIntVars;
 	/** The literals that will be propagated. */
 	final Queue<Literal> mProplist;
 	/** The basic variables hashed by their linear combinations. */
@@ -161,7 +161,7 @@ public class LinArSolve implements ITheory {
 		mLinvars = new ScopedArrayList<>();
 		mTableaux = new ArrayList<>();
 		mDependentRows = new ArrayList<>();
-		mIntVars = new ArrayList<>();
+		mIntVars = new LinkedHashSet<>();
 		mDirty = new BitSet();
 		mProplist = new ArrayDeque<>();
 		mSuggestions = new ArrayDeque<>();
@@ -225,9 +225,7 @@ public class LinArSolve implements ITheory {
 	 * @return Newly created variable
 	 */
 	public LinVar addVar(final Term name, final boolean isint, final int level) {
-		if (mClausifier.getLogger().isDebugEnabled()) {
-			mClausifier.getLogger().debug("Creating var " + name);
-		}
+		mClausifier.getLogger().debug("Creating var %s", name);
 		final LinVar var = new LinVar(name, isint, level, mLinvars.size());
 		mLinvars.add(var);
 		mDependentRows.add(new BitSet());
@@ -503,10 +501,13 @@ public class LinArSolve implements ITheory {
 	}
 
 	@Override
-	public Clause backtrackComplete() {
+	public void backtrackStart() {
 		mProplist.clear();
 		mSuggestions.clear();
+	}
 
+	@Override
+	public Clause backtrackComplete() {
 		Clause conflict = checkPendingConflict();
 		if (conflict != null) {
 			return conflict;
@@ -642,7 +643,7 @@ public class LinArSolve implements ITheory {
 		assert mOob.isEmpty();
 		final Map<ExactInfinitesimalNumber, List<LASharedTerm>> cong = getSharedCongruences();
 		assert checkClean();
-		mClausifier.getLogger().debug(new DebugMessage("cong: {0}", cong));
+		mClausifier.getLogger().debug("cong: %s", cong);
 		for (final LinVar v : mLinvars) {
 			final LAEquality ea = v.getDiseq(v.getValue().getRealValue());
 			if (ea == null) {
@@ -661,9 +662,7 @@ public class LinArSolve implements ITheory {
 			if (lit != null) {
 				assert lit.getAtom().getDecideStatus() == null;
 				mSuggestions.add(lit);
-				mClausifier.getLogger().debug(new DebugMessage(
-					"Using {0} to ensure disequality {1}", lit,
-					ea.negate()));
+				mClausifier.getLogger().debug("Using %s to ensure disequality %s", lit, ea.negate());
 			}
 		}
 		if (mSuggestions.isEmpty() && mProplist.isEmpty()) {
@@ -1220,7 +1219,7 @@ public class LinArSolve implements ITheory {
 			logger.info("Composite::createLit: " + mCompositeCreateLit);
 			logger.info("Number of cuts: " + mNumCuts);
 			logger.info("Time for cut-generation: " + mCutGenTime / 1000000);
-			logger.info("Count/Time for getUpperBound: %d / %.3f", mCountGetUpperBound, mTimeGetUpperBound / 1e9);
+			logger.info("Count/Time for getUpperBound: %d / %d.%03d", mCountGetUpperBound, mTimeGetUpperBound / 1000000000, mTimeGetUpperBound / 1000000 % 1000);
 			logger.info("Number of branchings: " + mNumBranches);
 		}
 	}
@@ -1864,8 +1863,7 @@ public class LinArSolve implements ITheory {
 			if (lcongclass.size() <= 1) {
 				continue;
 			}
-			mClausifier.getLogger().debug(new DebugMessage("propagating MBTC: {0}",
-					lcongclass));
+			mClausifier.getLogger().debug("propagating MBTC: %s", lcongclass);
 			final Iterator<LASharedTerm> it = lcongclass.iterator();
 			final LASharedTerm shared1 = it.next();
 			LASharedTerm shared1OtherSort = null;
@@ -1901,13 +1899,10 @@ public class LinArSolve implements ITheory {
 					} else if (cceq.getDecideStatus() == null) {
 						mProplist.add(cceq);
 					} else {
-						mClausifier.getLogger().debug(
-								new DebugMessage("already set: {0}",
-										cceq.getAtom().getDecideStatus()));
+						mClausifier.getLogger().debug("already set: %s", cceq.getAtom().getDecideStatus());
 					}
 				} else {
-					mClausifier.getLogger().debug(new DebugMessage(
-							"MBTC: Suggesting literal {0}",cceq));
+					mClausifier.getLogger().debug("MBTC: Suggesting literal %s", cceq);
 					mSuggestions.add(cceq.getLASharedData());
 				}
 			}
@@ -2143,10 +2138,11 @@ public class LinArSolve implements ITheory {
 				final Term term = var.getTerm();
 				final FunctionSymbol fsym = getsValueFromLA(term);
 				if (fsym != null) {
-					final Rational val = realValue(var);
+					final Term value = realValue(var).toTerm(term.getSort());
 					final NumericSortInterpretation si =
 							(NumericSortInterpretation) model.provideSortInterpretation(term.getSort());
-					model.map(fsym, si.extend(val, term.getSort()));
+					si.register(value);
+					model.map(fsym, value);
 				}
 			}
 		}

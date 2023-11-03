@@ -254,14 +254,14 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	private final Deque<Integer> mEdgeIndexStack = new ArrayDeque<>();
 
 	/**
-	 * Counts for each procedure, how much calls to this procedure where inlined (!) during the process.
+	 * Counts for each procedure, how much calls to this procedure were inlined (!) during the process.
 	 * {@code call forall} statements count too. Non-inlined calls don't count!<br>
 	 * The parameters and local variables of a Procedure are mapped, iff call counter > 0.
 	 * <p>
 	 * <b>Note:</b> This has nothing to do with the "single calls only" setting
-	 * ({@link de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem #IGNORE_MULTIPLE_CALLED}.
-	 * This counter is used to avoid re-mapping of already mapped variable ids, whereas the setting is applied using a
-	 * separate counter on the call graph.
+	 * ({@link de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem
+	 * #IGNORE_MULTIPLE_CALLED}. This counter is used to avoid re-mapping of already mapped variable ids, whereas the
+	 * setting is applied using a separate counter on the call graph.
 	 */
 	private final Map<String, Integer> mCallCounter = new HashMap<>();
 
@@ -335,7 +335,8 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	public Procedure inlineCallsInside(final CallGraphNode entryNode) throws CancelToolchainException {
 		if (mEntryProcId != null) {
 			throw new IllegalStateException("Instance was already used to inline an procedure: " + mEntryProcId);
-		} else if (!entryNode.isImplemented()) {
+		}
+		if (!entryNode.isImplemented()) {
 			return null;
 		}
 		mEntryProcId = entryNode.getId();
@@ -812,11 +813,12 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			final AtomicStatement atomicStat = (AtomicStatement) stat;
 			final Statement[] newBody = flattenStatementsArray(atomicStat.getBody());
 			newStat = new AtomicStatement(atomicStat.getLocation(), newBody);
-		}  else if (stat instanceof ForkStatement) {
+		} else if (stat instanceof ForkStatement) {
 			getAndUpdateEdgeIndex();
 		}
 		if (newStat == null) {
-			newStat = processStatement(stat); // also adds backtranslation
+			// also adds backtranslation
+			newStat = processStatement(stat);
 		} else {
 			ModelUtils.copyAnnotations(stat, newStat);
 			addBacktranslation(newStat, stat);
@@ -928,6 +930,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			}
 		}
 
+		final List<Statement> localHavocs = new ArrayList<>();
 		if (calleeNode.isImplemented()) {
 			proc = calleeNode.getProcedureWithBody();
 			final Body body = proc.getBody();
@@ -946,6 +949,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				final Statement havocLocalVars = processStatement(new HavocStatement(callLocation, localVarLHSArray));
 				addBacktranslation(havocLocalVars, null);
 				inlinedBody.add(havocLocalVars);
+				localHavocs.add(havocLocalVars);
 			}
 
 			// inline body
@@ -993,6 +997,9 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			final Statement assignStat = processStatement(new AssignmentStatement(callLocation, inVarLHSs, inVarRHSs));
 			addBacktranslation(assignStat, null);
 			writeToInParams.add(assignStat);
+			final Statement havocInParams = processStatement(new HavocStatement(callLocation, inVarLHSs));
+			addBacktranslation(havocInParams, null);
+			localHavocs.add(havocInParams);
 		}
 
 		// --------- assign out-parameters to target variables from call statement ---------
@@ -1048,6 +1055,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		inlineBlock.addAll(assertEnsures);
 		inlineBlock.addAll(assumeEnsures);
 		inlineBlock.addAll(writeFromOutParams);
+		inlineBlock.addAll(localHavocs);
 		inlineBlock.add(getAssumeCallMarker(ATTR_PREFIX_END_INLINE + procId, callLocation, call, true));
 		return inlineBlock;
 	}
@@ -1116,7 +1124,8 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		if (lhs instanceof VariableLHS) {
 			final VariableLHS varLhs = (VariableLHS) lhs;
 			final DeclarationInformation declInfo = varLhs.getDeclarationInformation();
-			final VarMapValue mapping = mVarMap.get(new VarMapKey(varLhs.getIdentifier(), declInfo, inOldExprOfProc()));
+			final VarMapValue mapping = mVarMap
+					.get(new VarMapKey(varLhs.getIdentifier(), declInfo, isGobalInOldExprOfProc(declInfo)));
 			final String newId = mapping.getVarId();
 			final DeclarationInformation newDeclInfo = mapping.getDeclInfo();
 			newLhs = new VariableLHS(varLhs.getLocation(), varLhs.getType(), newId, newDeclInfo);
@@ -1193,7 +1202,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			final IdentifierExpression idExpr = (IdentifierExpression) expr;
 			final String id = idExpr.getIdentifier();
 			final DeclarationInformation declInfo = idExpr.getDeclarationInformation();
-			final String inOldExprOfProc = inOldExprOfProc();
+			final String inOldExprOfProc = isGobalInOldExprOfProc(declInfo);
 			if (inOldExprOfProc != null) {
 				mapVariableInInlinedOldExpr(idExpr); // includes check to avoid mapping of already mapped values
 				updateInlinedOldVarStack(idExpr);
@@ -1297,7 +1306,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		boolean changed = false;
 		for (int i = 0; i < ids.length; ++i) {
 			final String id = ids[i];
-			final String newId = mVarMap.get(new VarMapKey(id, declInfo, inOldExprOfProc())).getVarId();
+			final String newId = mVarMap.get(new VarMapKey(id, declInfo, isGobalInOldExprOfProc(declInfo))).getVarId();
 			if (!newId.equals(id)) {
 				changed = true;
 			}
@@ -1322,11 +1331,13 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	/**
 	 * Creates the last argument for the constructor of VarMapKey.
 	 *
-	 * @return Current procedure identifier, if processing takes place inside an inlined old() expression, {@code null}
-	 *         otherwise.
+	 * @param declInfo {@link DeclarationInformation} of the identifier
+	 *
+	 * @return Current procedure identifier, if processing takes place inside an
+	 *         inlined old() expression, {@code null} otherwise.
 	 */
-	private String inOldExprOfProc() {
-		if (inInlinedOldExpr()) {
+	private String isGobalInOldExprOfProc(final DeclarationInformation declInfo) {
+		if (declInfo.getStorageClass() == StorageClass.GLOBAL && inInlinedOldExpr()) {
 			return currentProcId();
 		}
 		return null;

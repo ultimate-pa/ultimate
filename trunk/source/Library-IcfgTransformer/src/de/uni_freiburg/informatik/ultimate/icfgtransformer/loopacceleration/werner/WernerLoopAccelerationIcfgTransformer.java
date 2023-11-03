@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBacktranslator;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.CopyingTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
@@ -96,7 +97,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	private Set<INLOC> mLoopHeads;
 	private final Set<Loop> mAcceleratedLoops;
 
-	private final IBacktranslationTracker mBackTranslationTracker;
+	private final IcfgTransformationBacktranslator mBackTranslationTracker;
 
 	/**
 	 * How to deal with arrays, either throw an exception or skip the loop entirely
@@ -132,9 +133,10 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	 *            maximum number of backbones
 	 */
 	public WernerLoopAccelerationIcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
-			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
-			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
-			final IUltimateServiceProvider services, final DealingWithArraysTypes options, final int backboneLimit) {
+			final ILocationFactory<INLOC, OUTLOC> funLocFac,
+			final IcfgTransformationBacktranslator backtranslationTracker, final Class<OUTLOC> outLocationClass,
+			final String newIcfgIdentifier, final IUltimateServiceProvider services,
+			final DealingWithArraysTypes options, final int backboneLimit) {
 
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
 		mBackTranslationTracker = backtranslationTracker;
@@ -160,7 +162,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	}
 
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass,
+			final IcfgTransformationBacktranslator backtranslationTracker, final Class<OUTLOC> outLocationClass,
 			final String newIcfgIdentifier) {
 
 		for (final Entry<IcfgLocation, Loop> entry : mLoopBodies.entrySet()) {
@@ -301,7 +303,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	private void calculateSymbolicMemory(final Backbone backbone, final Loop loop) {
 		final SimultaneousUpdate update;
 		try {
-			update = SimultaneousUpdate.fromTransFormula(backbone.getFormula(), mScript);
+			update = SimultaneousUpdate.fromTransFormula(mServices, backbone.getFormula(), mScript);
 		} catch (final SimultaneousUpdateException e) {
 			throw new IllegalArgumentException(e.getMessage());
 		}
@@ -461,7 +463,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 						for (final UnmodifiableTransFormula exitTransition : loop.getExitConditions()) {
 							final IcfgEdge newTransition = lst.createNewInternalTransition(newSource, loopExit,
 									exitTransition, mOverApproximation.get(newSource));
-							mBackTranslationTracker.rememberRelation(oldTransition, newTransition);
+							mBackTranslationTracker.mapEdges(newTransition, oldTransition);
 						}
 
 					} else {

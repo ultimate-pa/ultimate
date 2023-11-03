@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -77,7 +78,8 @@ public class CondisDepthCodeGenerator extends CondisTermTransducer<CondisDepthCo
 	}
 
 	@Override
-	protected CondisDepthCode transduceConjunction(final List<CondisDepthCode> transducedArguments) {
+	protected CondisDepthCode transduceConjunction(final ApplicationTerm originalTerm,
+			final List<CondisDepthCode> transducedArguments) {
 		List<Integer> tmp = new ArrayList<>();
 		for (final CondisDepthCode input : transducedArguments) {
 			if (input.getAdk() == Adk.ATOM || input.getAdk() == Adk.DISJUNCTION) {
@@ -93,7 +95,8 @@ public class CondisDepthCodeGenerator extends CondisTermTransducer<CondisDepthCo
 	}
 
 	@Override
-	protected CondisDepthCode transduceDisjunction(final List<CondisDepthCode> transducedArguments) {
+	protected CondisDepthCode transduceDisjunction(final ApplicationTerm originalTerm,
+			final List<CondisDepthCode> transducedArguments) {
 		List<Integer> tmp = new ArrayList<>();
 		for (final CondisDepthCode input : transducedArguments) {
 			if (input.getAdk() == Adk.ATOM || input.getAdk() == Adk.CONJUNCTION) {

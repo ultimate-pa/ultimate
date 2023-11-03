@@ -72,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
@@ -123,7 +123,7 @@ public class Req2BoogieTranslator {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
 		List<PatternType<?>> requirements =
-				patterns.stream().filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
+				patterns.stream().filter(a -> !(a instanceof DeclarationPattern)).collect(Collectors.toList());
 
 		// check for duplicate IDs
 		final List<Entry<String, Integer>> duplicates = requirements.stream().map(PatternType::getId)
@@ -142,8 +142,8 @@ public class Req2BoogieTranslator {
 			return;
 		}
 
-		List<InitializationPattern> init = patterns.stream().filter(a -> a instanceof InitializationPattern)
-				.map(a -> (InitializationPattern) a).collect(Collectors.toList());
+		List<DeclarationPattern> init = patterns.stream().filter(a -> a instanceof DeclarationPattern)
+				.map(a -> (DeclarationPattern) a).collect(Collectors.toList());
 
 		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_GUESS_IN_OUT)) {
 			final ReqInOutGuesser riog = new ReqInOutGuesser(logger, mServices, init, requirements);
@@ -176,7 +176,7 @@ public class Req2BoogieTranslator {
 	}
 
 	private IReq2Pea createReq2Pea(final List<IReq2PeaTransformer> req2peaTransformers,
-			final List<InitializationPattern> init, final List<PatternType<?>> requirements) {
+			final List<DeclarationPattern> init, final List<PatternType<?>> requirements) {
 		IReq2Pea req2pea = new Req2Pea(mServices, mLogger, init, requirements);
 		for (final IReq2PeaTransformer transformer : req2peaTransformers) {
 			if (req2pea.hasErrors()) {
@@ -189,7 +189,7 @@ public class Req2BoogieTranslator {
 	}
 
 	private static void annotateContainedPatternSet(final Unit unit, final List<ReqPeas> reqPeas,
-			final List<InitializationPattern> init) {
+			final List<DeclarationPattern> init) {
 		final List<PatternType<?>> patternList = new ArrayList<>(init);
 		reqPeas.stream().map(ReqPeas::getPattern).forEachOrdered(patternList::add);
 		new PatternContainer(patternList).annotate(unit);
@@ -649,7 +649,7 @@ public class Req2BoogieTranslator {
 		return stmts;
 	}
 
-	private Statement[] generateProcedureBody(final BoogieLocation bl, final List<InitializationPattern> init) {
+	private Statement[] generateProcedureBody(final BoogieLocation bl, final List<DeclarationPattern> init) {
 		final List<Statement> statements = new ArrayList<>();
 		statements.addAll(genInitialPhasesStmts(bl));
 		statements.addAll(genClockInitStmts());
@@ -687,7 +687,7 @@ public class Req2BoogieTranslator {
 		return Collections.unmodifiableList(mReqPeas);
 	}
 
-	private Declaration generateProcedure(final List<InitializationPattern> init) {
+	private Declaration generateProcedure(final List<DeclarationPattern> init) {
 		final BoogieLocation bl = mUnitLocation;
 		final VariableDeclaration[] localVars = new VariableDeclaration[0];
 		final Body body = new Body(bl, localVars, generateProcedureBody(bl, init));

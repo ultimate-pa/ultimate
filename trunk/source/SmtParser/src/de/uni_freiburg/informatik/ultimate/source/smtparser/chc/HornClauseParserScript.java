@@ -51,10 +51,10 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HornClauseAST;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.CnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
@@ -311,7 +311,7 @@ public class HornClauseParserScript extends HistoryRecordingScript implements IN
 
 		final Term unl = new FormulaUnLet(UnletType.SMTLIB).unlet(nrmlized);
 
-		final Term nnf = new NnfTransformer(mManagedScript, mServices, QuantifierHandling.KEEP, true).transform(unl);
+		final Term nnf = new NnfTransformer(mManagedScript, mServices, QuantifierHandling.KEEP).transform(unl);
 
 		final Term qnfTerm = new PrenexNormalForm(mManagedScript).transform(nnf);
 		final SkolemNormalForm snf = new SkolemNormalForm(mManagedScript, qnfTerm);
@@ -340,12 +340,12 @@ public class HornClauseParserScript extends HistoryRecordingScript implements IN
 			assert !subsInverse.containsValue(freshTv);
 			subsInverse.put(freshTv, c);
 		}
-		final Term bodyWithConstraintsReplaced = new Substitution(this, subs).transform(snfBody);
+		final Term bodyWithConstraintsReplaced = PureSubstitution.apply(this, subs, snfBody);
 
 		final Term cnfWConstraintsReplaced = new CnfTransformer(mManagedScript, mServices)
 				.transform(bodyWithConstraintsReplaced);
 
-		final Term cnf = new Substitution(this, subsInverse).transform(cnfWConstraintsReplaced);
+		final Term cnf = PureSubstitution.apply(this, subsInverse, cnfWConstraintsReplaced);
 
 		Term normalizedTerm;
 		if (snfTerm instanceof QuantifiedFormula) {
@@ -415,7 +415,7 @@ public class HornClauseParserScript extends HistoryRecordingScript implements IN
 			result = super.term(funcname, indices, returnSort, params);
 		} else {
 			mSimplificationStack.push(new Triple<>(funcname, indicesList, paramsList));
-			result = SmtUtils.termWithLocalSimplification(this, funcname, indices, returnSort, params);
+			result = SmtUtils.unfTerm(this, funcname, indices, returnSort, params);
 			mSimplificationStack.pop();
 		}
 		return result;

@@ -31,34 +31,48 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qvasr.QvasrLoopSummarization;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 
 /**
+ * A loop accelerator used in accelerated inteprolation using the {@link QvasrLoopSummarization} method of acceleration.
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class represents the loop accelerator needed for
- *         {@link AcceleratedInterpolation} using the qvasr summarization scheme.
+ *         {@link AcceleratedInterpolation}
  */
-
 public class AcceleratorQvasr implements IAccelerator {
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
+	private final IPredicateUnifier mPredUnifier;
 	private boolean mFoundAcceleration;
+	private boolean mIsOverapprox;
 
 	/**
-	 * Loop Accelerator using the Qvasr acceleration scheme.
+	 * Construct a new loop accelerator using {@link QvasrLoopSummarization}.
 	 *
 	 * @param logger
+	 *            A {@link ILogger}
 	 * @param managedScript
+	 *            A {@link ManagedScript}
+	 * @param services
+	 *            {@link IUltimateServiceProvider}
+	 * @param symbolTable
+	 *            {@link IIcfgSymbolTable}
+	 * @param predUnifier
+	 *            A {@link IPredicateUnifier}
 	 */
 	public AcceleratorQvasr(final ILogger logger, final ManagedScript managedScript,
-			final IUltimateServiceProvider services) {
+			final IUltimateServiceProvider services, final IPredicateUnifier predUnifier) {
 		mLogger = logger;
 		mScript = managedScript;
 		mServices = services;
+		mPredUnifier = predUnifier;
 		mFoundAcceleration = false;
+		mIsOverapprox = false;
 	}
 
 	/**
@@ -73,9 +87,10 @@ public class AcceleratorQvasr implements IAccelerator {
 	public UnmodifiableTransFormula accelerateLoop(final UnmodifiableTransFormula loop, final IcfgLocation loopHead) {
 		try {
 			mLogger.debug("Accelerating Loop using Qvasr Summarization");
-			final QvasrLoopSummarization qvasr = new QvasrLoopSummarization(mLogger, mServices, mScript);
+			final QvasrLoopSummarization qvasr = new QvasrLoopSummarization(mLogger, mServices, mScript, mPredUnifier);
 			final UnmodifiableTransFormula loopSummary = qvasr.getQvasrAcceleration(loop);
 			mFoundAcceleration = true;
+			mIsOverapprox = qvasr.isOverapprox();
 			return loopSummary;
 		} catch (final UnsupportedOperationException ue) {
 			mFoundAcceleration = false;
@@ -87,5 +102,10 @@ public class AcceleratorQvasr implements IAccelerator {
 	@Override
 	public boolean accelerationFinishedCorrectly() {
 		return mFoundAcceleration;
+	}
+
+	@Override
+	public boolean isOverapprox() {
+		return mIsOverapprox;
 	}
 }

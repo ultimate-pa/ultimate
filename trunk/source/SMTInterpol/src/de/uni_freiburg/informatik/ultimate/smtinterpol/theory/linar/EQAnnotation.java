@@ -20,10 +20,9 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofRules;
 
 /**
  * Annotations for Nelson-Oppen equality translating lemmas.
@@ -39,16 +38,17 @@ public final class EQAnnotation implements IAnnotation {
 	 */
 	public static final EQAnnotation EQ = new EQAnnotation();
 
-	private final Annotation[] mAnnots = new Annotation[] {
-		new Annotation(":EQ", null)
-	};
+	private static final Annotation[] mAnnots = new Annotation[] { new Annotation(":EQ", null) };
 
 	private EQAnnotation() {
 	}
 
+	public static Annotation[] getAnnotation() {
+		return mAnnots;
+	}
+
 	@Override
-	public Term toTerm(final Clause cls, final Theory theory) {
-		final Term base = cls.toTerm(theory);
-		return theory.term(ProofConstants.FN_LEMMA, theory.annotatedTerm(mAnnots, base));
+	public Term toTerm(final Clause cls, final ProofRules proofRules) {
+		return proofRules.oracle(cls.toProofLiterals(proofRules), getAnnotation());
 	}
 }

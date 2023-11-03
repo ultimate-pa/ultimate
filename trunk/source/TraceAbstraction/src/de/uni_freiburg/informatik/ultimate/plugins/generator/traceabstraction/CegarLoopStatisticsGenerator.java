@@ -140,7 +140,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		case BasicInterpolantAutomatonTime:
 		case InitialAbstractionConstructionTime:
 		case DumpTime:
-		case PartialOrderReductionTime:
 			try {
 				return getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
@@ -197,7 +196,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),
 				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString(),
 				CegarLoopStatisticsDefinitions.DumpTime.toString(),
-				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString(),
-				CegarLoopStatisticsDefinitions.PartialOrderReductionTime.toString(), };
+				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString(), };
 	}
 }

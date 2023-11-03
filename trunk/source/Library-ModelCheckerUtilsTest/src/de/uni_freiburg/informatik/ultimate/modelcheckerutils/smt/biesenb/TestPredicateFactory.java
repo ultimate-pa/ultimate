@@ -33,10 +33,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -50,21 +51,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 
 public class TestPredicateFactory {
 
-	private ManagedScript mMgdScript;
-	private Script mScript;
-	
+	private final ManagedScript mMgdScript;
+	private final Script mScript;
+
 	public TestPredicateFactory(final ManagedScript mgdScript) {
 		mMgdScript = mgdScript;
 		mScript = mMgdScript.getScript();
 	}
-	
+
 	public TestPredicate pred(final String op, final IProgramVar var, final int value) {
 		return new TestPredicate(mScript.term(op, var.getTermVariable(), mScript.numeral(String.valueOf(value))),
-				Collections.singleton(var), mScript);
+				Collections.singleton(var), Collections.emptySet(), mMgdScript);
 	}
 
 	public TestPredicate neg(final TestPredicate pred) {
-		return new TestPredicate(mScript.term("not", pred.getFormula()), pred.getVars(), mScript);
+		return new TestPredicate(mScript.term("not", pred.getFormula()), pred.getVars(), pred.getFuns(), mMgdScript);
 	}
 
 	public TestPredicate and(final TestPredicate... preds) {
@@ -74,9 +75,11 @@ public class TestPredicateFactory {
 		final List<Term> operands = Arrays.stream(preds).map(a -> a.getFormula()).collect(Collectors.toList());
 		final Set<IProgramVar> vars = Arrays.stream(preds).map(a -> a.getVars()).reduce(new HashSet<>(),
 				(a, b) -> DataStructureUtils.union(a, b));
-		return new TestPredicate(SmtUtils.and(mScript, operands), vars, mScript);
+		final Set<IProgramFunction> funs = Arrays.stream(preds).map(a -> a.getFuns()).reduce(new HashSet<>(),
+				(a, b) -> DataStructureUtils.union(a, b));
+		return new TestPredicate(SmtUtils.and(mScript, operands), vars, funs, mMgdScript);
 	}
-	
+
 	public TestPredicate or(final TestPredicate... preds) {
 		if (preds == null || preds.length < 2) {
 			throw new IllegalArgumentException();
@@ -84,11 +87,13 @@ public class TestPredicateFactory {
 		final List<Term> operands = Arrays.stream(preds).map(a -> a.getFormula()).collect(Collectors.toList());
 		final Set<IProgramVar> vars = Arrays.stream(preds).map(a -> a.getVars()).reduce(new HashSet<>(),
 				(a, b) -> DataStructureUtils.union(a, b));
-		return new TestPredicate(SmtUtils.or(mScript, operands), vars, mScript);
+		final Set<IProgramFunction> funs = Arrays.stream(preds).map(a -> a.getFuns()).reduce(new HashSet<>(),
+				(a, b) -> DataStructureUtils.union(a, b));
+		return new TestPredicate(SmtUtils.or(mScript, operands), vars, funs, mMgdScript);
 	}
 
 	public IProgramNonOldVar constructProgramVar(final String identifier) {
-		BoogieOldVar oldVar;
+		ProgramOldVar oldVar;
 		final Object lock = new Object();
 		final Sort sort = SmtSortUtils.getIntSort(mScript);
 		{
@@ -101,9 +106,9 @@ public class TestPredicateFactory {
 			final ApplicationTerm primedConstant =
 					ProgramVarUtils.constructPrimedConstant(mMgdScript, lock, sort, name);
 			mMgdScript.unlock(lock);
-			oldVar = new BoogieOldVar(identifier, null, termVariable, defaultConstant, primedConstant);
+			oldVar = new ProgramOldVar(identifier, termVariable, defaultConstant, primedConstant);
 		}
-		BoogieNonOldVar nonOldVar;
+		ProgramNonOldVar nonOldVar;
 		{
 			final boolean isOldVar = false;
 			final String name = ProgramVarUtils.buildBoogieVarName(identifier, null, true, isOldVar);
@@ -114,7 +119,7 @@ public class TestPredicateFactory {
 			final ApplicationTerm primedConstant =
 					ProgramVarUtils.constructPrimedConstant(mMgdScript, lock, sort, name);
 			mMgdScript.unlock(lock);
-			nonOldVar = new BoogieNonOldVar(identifier, null, termVariable, defaultConstant, primedConstant, oldVar);
+			nonOldVar = new ProgramNonOldVar(identifier, termVariable, defaultConstant, primedConstant, oldVar);
 		}
 		oldVar.setNonOldVar(nonOldVar);
 		return nonOldVar;

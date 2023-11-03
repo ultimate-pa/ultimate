@@ -379,7 +379,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				final Term t_honda = generateConstraint(loop, polyhedron, vars_honda, vars_end_plus_gevs, false);
 
 				// A_loop * (y, lambda * y) <= 0
-				final Term[] conjuction = new Term[mSettings.getNumberOfGevs() + 1];
+				final Term[] conjunction = new Term[mSettings.getNumberOfGevs() + 1];
 				for (int i = 0; i < mSettings.getNumberOfGevs(); ++i) {
 					final Term[] inner_disjunction = new Term[lambda_guesses.size()];
 					for (int j = 0; j < lambda_guesses.size(); ++j) {
@@ -394,10 +394,10 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 						}
 						inner_disjunction[j] = SmtUtils.and(mScript, t_gev, fix_lambda);
 					}
-					conjuction[i] = SmtUtils.or(mScript, inner_disjunction);
+					conjunction[i] = SmtUtils.or(mScript, inner_disjunction);
 				}
-				conjuction[mSettings.getNumberOfGevs()] = t_honda;
-				disjunction.add(SmtUtils.and(mScript, conjuction));
+				conjunction[mSettings.getNumberOfGevs()] = t_honda;
+				disjunction.add(SmtUtils.and(mScript, conjunction));
 			}
 			t2 = SmtUtils.or(mScript, disjunction.toArray(new Term[disjunction.size()]));
 		}

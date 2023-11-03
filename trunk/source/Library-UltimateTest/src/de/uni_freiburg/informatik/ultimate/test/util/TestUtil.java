@@ -74,7 +74,7 @@ public final class TestUtil {
 	/**
 	 * Select (n - offset) files from a collection of files in a pseudo-random and deterministic way.
 	 */
-	public static Collection<File> limitFiles(final Collection<File> files, final int offset, final int n) {
+	public static <F> Collection<F> limitFiles(final Collection<F> files, final int offset, final int n) {
 		if (files == null || n == 0) {
 			return Collections.emptyList();
 		} else if (files.isEmpty() || n < 0) {
@@ -84,7 +84,7 @@ public final class TestUtil {
 		} else if (offset == 0 && n >= files.size()) {
 			return files;
 		} else {
-			final List<File> shuffle = new ArrayList<>(files);
+			final List<F> shuffle = new ArrayList<>(files);
 			Collections.shuffle(shuffle, new Random(PSEUDO_RANDOM_FILE_SELECTION_SEED));
 			int nPlusOffset;
 			if ((long) offset + (long) n > Integer.MAX_VALUE) {
@@ -511,7 +511,7 @@ public final class TestUtil {
 	public static final String SVCOMP_PROP_VALIDMEMCLEANUP = "valid-memcleanup.prp";
 	public static final String SVCOMP_PROP_VALIDMEMSAFETY = "valid-memsafety.prp";
 	public static final String SVCOMP_VALIDMEMSAFETY_SUBPROP_VALIDFREE = "valid-free";
-	public static final String SVCOMP_VALIDMEMSAFETY_SUBPROP_VALIDDEREF = "valid-dref";
+	public static final String SVCOMP_VALIDMEMSAFETY_SUBPROP_VALIDDEREF = "valid-deref";
 	public static final String SVCOMP_VALIDMEMSAFETY_SUBPROP_VALIDMEMTRACK = "valid-memtrack";
 
 	public static NestedMap2<String, String, SafetyCheckerOverallResult>
@@ -611,17 +611,11 @@ public final class TestUtil {
 		final Map<String, SafetyCheckerOverallResult> map = new HashMap<>();
 		map.put("#Safe", SafetyCheckerOverallResult.SAFE);
 		map.put("#Unsafe", SafetyCheckerOverallResult.UNSAFE);
+		map.put("#Unknown", SafetyCheckerOverallResult.UNKNOWN);
 		map.put("#SyntaxError", SafetyCheckerOverallResult.SYNTAX_ERROR);
 		// we use the following two keywords for concurrent programs
 		map.put("#cSafe", SafetyCheckerOverallResult.SAFE);
 		map.put("#cUnsafe", SafetyCheckerOverallResult.UNSAFE);
-		return map;
-	}
-
-	public static Map<String, SafetyCheckerOverallResult> constructFirstlineKeywordMapUnknownSafetyChecker() {
-		final Map<String, SafetyCheckerOverallResult> map = new HashMap<>();
-		map.putAll(constructFirstlineKeywordMap_SafetyChecker());
-		map.put("#Unknown", SafetyCheckerOverallResult.UNKNOWN);
 		return map;
 	}
 

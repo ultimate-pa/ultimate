@@ -35,10 +35,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IReplacementVarOrConst;
@@ -62,131 +63,54 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Matthias Heizmann
  */
 public class ModifiableTransFormulaUtils {
-
 	public static boolean allVariablesAreInVars(final List<Term> terms, final ModifiableTransFormula tf) {
-		for (final Term term : terms) {
-			if (!allVariablesAreInVars(term, tf)) {
-				return false;
-			}
-		}
-		return true;
+		return terms.stream().allMatch(x -> allVariablesAreInVars(x, tf));
 	}
 
 	public static boolean allVariablesAreOutVars(final List<Term> terms, final ModifiableTransFormula tf) {
-		for (final Term term : terms) {
-			if (!allVariablesAreOutVars(term, tf)) {
-				return false;
-			}
-		}
-		return true;
+		return terms.stream().allMatch(x -> allVariablesAreOutVars(x, tf));
 	}
 
 	public static boolean allVariablesAreVisible(final List<Term> terms, final ModifiableTransFormula tf) {
-		for (final Term term : terms) {
-			if (!allVariablesAreVisible(term, tf)) {
-				return false;
-			}
-		}
-		return true;
+		return terms.stream().allMatch(x -> allVariablesAreVisible(x, tf));
 	}
 
 	public static boolean allVariablesAreInVars(final Term term, final ModifiableTransFormula tf) {
-		for (final TermVariable tv : term.getFreeVars()) {
-			if (!isInvar(tv, tf)) {
-				return false;
-			}
-		}
-		return true;
+		return Arrays.stream(term.getFreeVars()).allMatch(x -> isInVar(x, tf));
 	}
 
 	public static boolean allVariablesAreOutVars(final Term term, final ModifiableTransFormula tf) {
-		for (final TermVariable tv : term.getFreeVars()) {
-			if (!isOutvar(tv, tf)) {
-				return false;
-			}
-		}
-		return true;
+		return Arrays.stream(term.getFreeVars()).allMatch(x -> isOutVar(x, tf));
 	}
 
 	public static boolean allVariablesAreVisible(final Term term, final ModifiableTransFormula tf) {
-		for (final TermVariable tv : term.getFreeVars()) {
-			if (isVisible(tv, tf)) {
-				// do nothing
-			} else {
-				return false;
-			}
-		}
-		return true;
+		return Arrays.stream(term.getFreeVars()).allMatch(x -> isVisible(x, tf));
 	}
 
 	private static boolean isVisible(final TermVariable tv, final ModifiableTransFormula tf) {
-		return tf.getOutVarsReverseMapping().keySet().contains(tv)
-				|| tf.getInVarsReverseMapping().keySet().contains(tv);
+		return isInVar(tv, tf) || isOutVar(tv, tf);
 	}
 
-	public static boolean isInvar(final TermVariable tv, final ModifiableTransFormula tf) {
+	public static boolean isInVar(final TermVariable tv, final ModifiableTransFormula tf) {
 		return tf.getInVarsReverseMapping().keySet().contains(tv);
 	}
 
-	public static boolean isOutvar(final TermVariable tv, final ModifiableTransFormula tf) {
+	public static boolean isOutVar(final TermVariable tv, final ModifiableTransFormula tf) {
 		return tf.getOutVarsReverseMapping().keySet().contains(tv);
-	}
-
-	public static boolean isVar(final TermVariable tv, final ModifiableTransFormula tf) {
-		return tf.getOutVarsReverseMapping().keySet().contains(tv);
-	}
-
-	/**
-	 * Replace in term all {@link TermVariable} that are the <i>default {@link TermVariable}s</i> of a given
-	 * {@link IProgramVar} by the default constant for this {@link IProgramVar}.
-	 *
-	 * @param rvf
-	 *            {@link ReplacementVarFactory} that maps {@link IProgramVar}s to the corresponding {@link IProgramVar}
-	 * @param symbTab
-	 *            {@link Boogie2SmtSymbolTable} that maps {@link TermVariable} to {@link IProgramVar}s (for the
-	 *            {@link TermVariable}s that are default {@link TermVariable}s of {@link IProgramVar}s.
-	 * @param tf
-	 *            {@link ModifiableTransFormula} whose mapping from {@link IProgramVar}s to inVars is used.
-	 */
-	public static Term renameToDefaultConstants(final Script script, final IIcfgSymbolTable symbTab,
-			final ModifiableTransFormula tf, final Term term) {
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final TermVariable tv : term.getFreeVars()) {
-			final IProgramVar bv = symbTab.getProgramVar(tv);
-			if (bv == null) {
-				throw new IllegalArgumentException("term contains unknown variable");
-			}
-			substitutionMapping.put(tv, bv.getDefaultConstant());
-		}
-		final Term result = (new Substitution(script, substitutionMapping)).transform(term);
-		return result;
-	}
-
-	public static Term renameToPrimedConstants(final Script script, final IIcfgSymbolTable symbTab,
-			final ModifiableTransFormula tf, final Term term) {
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final TermVariable tv : term.getFreeVars()) {
-			final IProgramVar bv = symbTab.getProgramVar(tv);
-			if (bv == null) {
-				throw new IllegalArgumentException("term contains unknown variable");
-			}
-			substitutionMapping.put(tv, bv.getPrimedConstant());
-		}
-		final Term result = (new Substitution(script, substitutionMapping)).transform(term);
-		return result;
 	}
 
 	public static LBool implies(final IUltimateServiceProvider services, final ILogger logger,
-			final ModifiableTransFormula antecedent, final ModifiableTransFormula consequent, final Script script,
-			final IIcfgSymbolTable symbTab) {
-		final Term antecentTerm = renameToConstants(services, logger, script, symbTab, antecedent);
-		final Term consequentTerm = renameToConstants(services, logger, script, symbTab, consequent);
-		script.push(1);
-		script.assertTerm(antecentTerm);
-		script.assertTerm(SmtUtils.not(script, consequentTerm));
-		script.assertTerm(getAdditionalEqualities(Arrays.asList(antecedent, consequent), symbTab, script));
-		final LBool result = script.checkSat();
-		script.pop(1);
+			final ModifiableTransFormula antecedent, final ModifiableTransFormula consequent,
+			final ManagedScript mgdScript, final IIcfgSymbolTable symbTab) {
+		final Term antecentTerm = renameToConstants(services, logger, mgdScript, symbTab, antecedent);
+		final Term consequentTerm = renameToConstants(services, logger, mgdScript, symbTab, consequent);
+		mgdScript.getScript().push(1);
+		mgdScript.getScript().assertTerm(antecentTerm);
+		mgdScript.getScript().assertTerm(SmtUtils.not(mgdScript.getScript(), consequentTerm));
+		mgdScript.getScript().assertTerm(
+				getAdditionalEqualities(Arrays.asList(antecedent, consequent), symbTab, mgdScript.getScript()));
+		final LBool result = mgdScript.getScript().checkSat();
+		mgdScript.getScript().pop(1);
 		return result;
 	}
 
@@ -213,8 +137,8 @@ public class ModifiableTransFormulaUtils {
 		for (final TermVariable var : vars) {
 			final IProgramVar boogieVar = symbTab.getProgramVar(var);
 			if (!programVars.contains(boogieVar)) {
-				final Term equality = SmtUtils.binaryEquality(script, boogieVar.getDefaultConstant(),
-						boogieVar.getPrimedConstant());
+				final Term equality =
+						SmtUtils.binaryEquality(script, boogieVar.getDefaultConstant(), boogieVar.getPrimedConstant());
 				result.add(equality);
 			}
 		}
@@ -222,44 +146,56 @@ public class ModifiableTransFormulaUtils {
 	}
 
 	/**
-	 * Rename all to inVars/outVars by default/primed constants (including the definitions of {@link IReplacementVarOrConst}s.
-	 * Quantify auxVars existentially.
+	 * Rename all to inVars/outVars by default/primed constants (including the definitions of
+	 * {@link IReplacementVarOrConst}s. Quantify auxVars existentially.
 	 *
 	 * @param services
 	 * @param logger
 	 */
 	private static Term renameToConstants(final IUltimateServiceProvider services, final ILogger logger,
-			final Script script, final IIcfgSymbolTable symbTab, final ModifiableTransFormula tf) {
+			final ManagedScript mgdScript, final IIcfgSymbolTable symbTab, final ModifiableTransFormula tf) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
 			if (entry.getKey() instanceof IReplacementVarOrConst) {
 				final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
-				final Term renamedDefinition = renameToDefaultConstants(script, symbTab, tf, definition);
-				substitutionMapping.put(entry.getValue(), renamedDefinition);
+				substitutionMapping.put(entry.getValue(),
+						renameVars(mgdScript, symbTab, definition, IProgramVar::getDefaultConstant));
 			} else {
-				final IProgramVar bv = entry.getKey();
-				substitutionMapping.put(entry.getValue(), bv.getDefaultConstant());
+				substitutionMapping.put(entry.getValue(), entry.getKey().getDefaultConstant());
 			}
 		}
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 			if (entry.getKey() instanceof IReplacementVarOrConst) {
 				final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
-				final Term renamedDefinition = renameToPrimedConstants(script, symbTab, tf, definition);
-				substitutionMapping.put(entry.getValue(), renamedDefinition);
+				substitutionMapping.put(entry.getValue(),
+						renameVars(mgdScript, symbTab, definition, IProgramVar::getPrimedConstant));
 			} else {
-				final IProgramVar bv = entry.getKey();
-				substitutionMapping.put(entry.getValue(), bv.getPrimedConstant());
+				substitutionMapping.put(entry.getValue(), entry.getKey().getPrimedConstant());
 			}
 		}
-		Term result = (new Substitution(script, substitutionMapping)).transform(tf.getFormula());
-		result = SmtUtils.and(script, result, constructEqualitiesForCoinciding(script, tf));
+		Term result = Substitution.apply(mgdScript, substitutionMapping, tf.getFormula());
+		result = SmtUtils.and(mgdScript.getScript(), result,
+				constructEqualitiesForCoinciding(mgdScript.getScript(), tf));
 		if (!tf.getAuxVars().isEmpty()) {
 			logger.warn(tf.getAuxVars().size() + " quantified variables");
 			final TermVariable[] auxVarsArray = tf.getAuxVars().toArray(new TermVariable[tf.getAuxVars().size()]);
-			result = script.quantifier(QuantifiedFormula.EXISTS, auxVarsArray, result);
+			result = mgdScript.getScript().quantifier(QuantifiedFormula.EXISTS, auxVarsArray, result);
 		}
 		assert (Arrays.asList(result.getFreeVars()).isEmpty()) : "there must not be a TermVariable left";
 		return result;
+	}
+
+	private static Term renameVars(final ManagedScript mgdScript, final IIcfgSymbolTable symbTab, final Term term,
+			final Function<IProgramVar, Term> termProvider) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final TermVariable tv : term.getFreeVars()) {
+			final IProgramVar bv = symbTab.getProgramVar(tv);
+			if (bv == null) {
+				throw new IllegalArgumentException("term contains unknown variable");
+			}
+			substitutionMapping.put(tv, termProvider.apply(bv));
+		}
+		return Substitution.apply(mgdScript, substitutionMapping, term);
 	}
 
 	/**
@@ -281,9 +217,9 @@ public class ModifiableTransFormulaUtils {
 	 * is substituted by the definition of the RankVar. Throws an IllegalArgumentException if there occurs term contains
 	 * a TermVariable that does not have a RankVar (e.g., an auxiliary variable).
 	 */
-	public static Term translateTermVariablesToDefinitions(final Script script, final ModifiableTransFormula tf,
+	public static Term translateTermVariablesToDefinitions(final ManagedScript script, final ModifiableTransFormula tf,
 			final Term term) {
-		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final TermVariable tv : term.getFreeVars()) {
 			final Term definition = getDefinition(tf, tv);
 			if (definition == null) {
@@ -291,28 +227,25 @@ public class ModifiableTransFormulaUtils {
 			}
 			substitutionMapping.put(tv, definition);
 		}
-		return (new Substitution(script, substitutionMapping)).transform(term);
+		return Substitution.apply(script, substitutionMapping, term);
 	}
 
-	public static List<Term> translateTermVariablesToDefinitions(final Script script, final ModifiableTransFormula tf,
-			final List<Term> terms) {
-		final List<Term> result = new ArrayList<Term>();
-		for (final Term term : terms) {
-			result.add(translateTermVariablesToDefinitions(script, tf, term));
-		}
-		return result;
+	public static List<Term> translateTermVariablesToDefinitions(final ManagedScript script,
+			final ModifiableTransFormula tf, final List<Term> terms) {
+		return terms.stream().map(term -> translateTermVariablesToDefinitions(script, tf, term))
+				.collect(Collectors.toList());
 	}
 
-	public static Term translateTermVariablesToInVars(final Script script, final ModifiableTransFormula tf,
-			final Term term, final IIcfgSymbolTable symbolTable, final ReplacementVarFactory repVarFac) {
-		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+	public static Term translateTermVariablesToInVars(final ManagedScript script, final ModifiableTransFormula tf,
+			final Term term, final IIcfgSymbolTable symbolTable) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final TermVariable tv : term.getFreeVars()) {
 			final IProgramVar bv = symbolTable.getProgramVar(tv);
 			final Term inVar = tf.getInVars().get(bv);
 			assert inVar != null : "no inVar for " + bv;
 			substitutionMapping.put(tv, inVar);
 		}
-		return (new Substitution(script, substitutionMapping)).transform(term);
+		return Substitution.apply(script, substitutionMapping, term);
 	}
 
 	public static boolean inVarAndOutVarCoincide(final IProgramVar rv, final ModifiableTransFormula rf) {
@@ -320,7 +253,7 @@ public class ModifiableTransFormulaUtils {
 	}
 
 	private static Term constructEqualitiesForCoinciding(final Script script, final ModifiableTransFormula tf) {
-		final ArrayList<Term> conjuncts = new ArrayList<Term>();
+		final ArrayList<Term> conjuncts = new ArrayList<>();
 		for (final IProgramVar rv : tf.getInVars().keySet()) {
 			if (!(rv instanceof IReplacementVarOrConst)) {
 				if (inVarAndOutVarCoincide(rv, tf)) {
@@ -333,13 +266,22 @@ public class ModifiableTransFormulaUtils {
 	}
 
 	/**
-	 * Construct a TransFormulaLR from a TransFormula, adding and translating all existing in- and outVars in the
-	 * process.
+	 * Construct a modifiable copy of the input.
+	 */
+	public static ModifiableTransFormula buildTransFormula(final TransFormula inputTf, final ManagedScript mgdScript) {
+		return buildTransFormulaHelper(inputTf, null, mgdScript);
+	}
+
+	/**
+	 * Construct a modifiable copy of the input. Additionally add a {@link ReplacementVar} for all non-theory constants.
 	 *
-	 * @param inputTf
-	 *            the TransFormula
 	 */
 	public static ModifiableTransFormula buildTransFormula(final TransFormula inputTf,
+			final ReplacementVarFactory replacementVarFactory, final ManagedScript mgdScript) {
+		return buildTransFormulaHelper(inputTf, replacementVarFactory, mgdScript);
+	}
+
+	private static ModifiableTransFormula buildTransFormulaHelper(final TransFormula inputTf,
 			final ReplacementVarFactory replacementVarFactory, final ManagedScript mgdScript) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 
@@ -351,16 +293,21 @@ public class ModifiableTransFormulaUtils {
 			substitutionMapping.put(auxVar, newAuxVar);
 		}
 		final ModifiableTransFormula newTf = new ModifiableTransFormula((Term) null);
-		// Add constant variables as in- and outVars
-		for (final IProgramConst progConst : inputTf.getNonTheoryConsts()) {
-			final ApplicationTerm constVar = progConst.getDefaultConstant();
-			final IReplacementVar repVar = (IReplacementVar) replacementVarFactory.getOrConstuctReplacementVar(constVar, true);
-			newTf.addInVar(repVar, repVar.getTermVariable());
-			newTf.addOutVar(repVar, repVar.getTermVariable());
-			substitutionMapping.put(constVar, repVar.getTermVariable());
+		if (replacementVarFactory != null) {
+			// Add constant variables as in- and outVars
+			for (final IProgramConst progConst : inputTf.getNonTheoryConsts()) {
+				final ApplicationTerm constVar = progConst.getDefaultConstant();
+				final IReplacementVar repVar =
+						(IReplacementVar) replacementVarFactory.getOrConstuctReplacementVar(constVar, true);
+				newTf.addInVar(repVar, repVar.getTermVariable());
+				newTf.addOutVar(repVar, repVar.getTermVariable());
+				substitutionMapping.put(constVar, repVar.getTermVariable());
+			}
+		} else {
+			newTf.addNonTheoryConsts(inputTf.getNonTheoryConsts());
 		}
 
-		final Term formula = (new Substitution(mgdScript, substitutionMapping).transform(inputTf.getFormula()));
+		final Term formula = Substitution.apply(mgdScript, substitutionMapping, inputTf.getFormula());
 		newTf.setFormula(formula);
 
 		// Add existing in- and outVars

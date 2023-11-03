@@ -39,13 +39,13 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexEqualityManager;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain.ElimStorePlainException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -78,6 +78,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * universal quantification) of the form k'=k that have to be merged to the
  * operand term of the quantifier elimination.
  *
+ * TODO 20220210 Matthias: Take also care of cases like
+ * {@link QuantifierEliminationTodos#selfUpdateAraucariaSimplified}
+ * Idea: Introduce auxiliary variable for subterm, use subterm of dimension
+ * lower than arr to avoid nontermination.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -101,7 +106,7 @@ public class DerPreprocessor extends TermTransformer {
 		boolean existsEqualityThatIsNotOnTopLevel = false;
 		BinaryEqualityRelation someTopLevelEquality = null;
 		DerCase derCase = null;
-		final Set<Term> topLevelDualJuncts = Arrays.stream(QuantifierUtils.getXjunctsInner(quantifier, input))
+		final Set<Term> topLevelDualJuncts = Arrays.stream(QuantifierUtils.getDualFiniteJuncts(quantifier, input))
 				.collect(Collectors.toSet());
 		for (final BinaryEqualityRelation ber : classification.getImage(DerCase.CLASSICAL_DER)) {
 			if (topLevelDualJuncts.contains(ber.toTerm(mgdScript.getScript()))) {
@@ -149,8 +154,7 @@ public class DerPreprocessor extends TermTransformer {
 					eliminatee, quantifier, airc, aiem);
 			mIntroducedDerPossibility = false;
 		}
-		final Term inputReplacement = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping)
-				.transform(input);
+		final Term inputReplacement = Substitution.apply(mgdScript, substitutionMapping, input);
 		final Term allAuxVarDefs = airc.constructDefinitions(mgdScript.getScript(), quantifier);
 		mNewAuxVars = new ArrayList<>(airc.getConstructedAuxVars());
 		mResult = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), quantifier, inputReplacement,
@@ -163,8 +167,7 @@ public class DerPreprocessor extends TermTransformer {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final BinaryEqualityRelation selfUpdate : selfupdates) {
 			final Term otherSide = getOtherSide(selfUpdate, eliminatee);
-			final MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(mgdScript.getScript(),
-					otherSide);
+			final MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.of(otherSide);
 			final Term selfUpdateReplacement = constructReplacementForStoreCase(nas, mgdScript, eliminatee, quantifier,
 					airc, aiem);
 			substitutionMapping.put(selfUpdate.toTerm(mgdScript.getScript()), selfUpdateReplacement);
@@ -179,13 +182,12 @@ public class DerPreprocessor extends TermTransformer {
 		Term result;
 		switch (derCase) {
 		case EQ_SELECT:
-			final MultiDimensionalSelect as = MultiDimensionalSelect.convert(otherSide);
+			final MultiDimensionalSelect as = MultiDimensionalSelect.of(otherSide);
 			result = constructReplacementForSelectCase(as.getArray(), as.getIndex(), mgdScript, eliminatee, quantifier,
 					airc);
 			break;
 		case EQ_STORE:
-			final MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(mgdScript.getScript(),
-					otherSide);
+			final MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.of(otherSide);
 			result = constructReplacementForStoreCase(nas, mgdScript, eliminatee, quantifier, airc, aiem);
 			break;
 		case SELF_UPDATE:
@@ -222,7 +224,7 @@ public class DerPreprocessor extends TermTransformer {
 		if (!Arrays.asList(otherSide.getFreeVars()).contains(eliminatee)) {
 			return DerCase.CLASSICAL_DER;
 		}
-		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.convert(script, otherSide);
+		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.of(otherSide);
 		if (mdns != null) {
 			if (mdns.getArray() == eliminatee) {
 				return DerCase.SELF_UPDATE;
@@ -234,8 +236,8 @@ public class DerPreprocessor extends TermTransformer {
 				}
 			}
 		}
-		final MultiDimensionalSelect arraySelect = MultiDimensionalSelect.convert(otherSide);
-		if (arraySelect != null) {
+		final MultiDimensionalSelect arraySelect = MultiDimensionalSelect.of(otherSide);
+		if (arraySelect.getIndex().size() > 0) {
 			return DerCase.EQ_SELECT;
 		}
 		throw new UnsupportedOperationException("DerPreprocessor supports only store and select, but not " + otherSide);
@@ -293,7 +295,7 @@ public class DerPreprocessor extends TermTransformer {
 						"We have to descend beyond store chains. Introduce auxiliary variables only for arrays of lower dimension to avoid non-termination.");
 			}
 			result = QuantifierUtils.applyDerOperator(mgdScript.getScript(), quantifier,
-					new MultiDimensionalNestedStore(mgdScript.getScript(), nas.getArray(), newIndices, newValues)
+					new MultiDimensionalNestedStore(nas.getArray(), newIndices, newValues)
 							.toTerm(mgdScript.getScript()),
 					eliminatee);
 		}
@@ -328,7 +330,7 @@ public class DerPreprocessor extends TermTransformer {
 		if (newIndex == arrayIndex) {
 			throw new AssertionError("no need to replace index");
 		}
-		final MultiDimensionalSelect mds = new MultiDimensionalSelect(array, newIndex, mgdScript.getScript());
+		final MultiDimensionalSelect mds = new MultiDimensionalSelect(array, newIndex);
 		final Term result = QuantifierUtils.applyDerOperator(mgdScript.getScript(), quantifier, eliminatee,
 				mds.toTerm(mgdScript.getScript()));
 		return result;
@@ -347,7 +349,7 @@ public class DerPreprocessor extends TermTransformer {
 	private static Term constructDisjointIndexImplication(final ArrayIndex innermostIndex,
 			final LinkedList<ArrayIndex> indices, final Term innermostValue, final Term arr, final Script script,
 			final int quantifier, final ArrayIndexEqualityManager aiem) {
-		final Term select = new MultiDimensionalSelect(arr, innermostIndex, script).toTerm(script);
+		final Term select = new MultiDimensionalSelect(arr, innermostIndex).toTerm(script);
 		final ArrayList<Term> correspondingFiniteJuncts = new ArrayList(
 				indices.stream().map(x -> aiem.constructDerRelation(script, quantifier, innermostIndex, x))
 						.collect(Collectors.toList()));

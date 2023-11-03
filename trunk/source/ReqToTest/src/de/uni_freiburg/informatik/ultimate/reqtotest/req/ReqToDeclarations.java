@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.reqtotest.req;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 
 public class ReqToDeclarations {
@@ -18,8 +18,8 @@ public class ReqToDeclarations {
 
 	public Req2TestReqSymbolTable initPatternToSymbolTable(final List<PatternType<?>> patternList) {
 		for (final PatternType<?> pattern : patternList) {
-			if (pattern instanceof InitializationPattern) {
-				mReqSymbolExpressionTable.extractVariablesFromInit((InitializationPattern) pattern);
+			if (pattern instanceof DeclarationPattern) {
+				mReqSymbolExpressionTable.extractVariablesFromInit((DeclarationPattern) pattern);
 			}
 		}
 		return mReqSymbolExpressionTable;

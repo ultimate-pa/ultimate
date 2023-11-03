@@ -78,7 +78,7 @@ public class SubstitutionHelper {
 	 * (2) Build the disjunction.<br>
 	 * (3) Remove duplicates and false literals.<br>
 	 * (4) Build the actual literals.
-	 * 
+	 *
 	 * @return the result of the substitution and simplification.
 	 */
 	public SubstitutionResult substituteInClause() {
@@ -95,7 +95,7 @@ public class SubstitutionHelper {
 
 		// Ground literals remain unchanged.
 		for (final Literal gLit : mGroundLits) {
-			final Term groundLitTerm = gLit.getSMTFormula(theory, true);
+			final Term groundLitTerm = gLit.getSMTFormula(theory);
 			substitutedLitTerms.add(groundLitTerm);
 			provedLitTerms.add(mTracker.reflexivity(groundLitTerm));
 			resultingGroundLits.add(gLit);
@@ -105,22 +105,18 @@ public class SubstitutionHelper {
 		for (final QuantLiteral qLit : mQuantLits) {
 			if (Collections.disjoint(Arrays.asList(qLit.getTerm().getFreeVars()), mSigma.keySet())) {
 				// Nothing to substitute.
-				substitutedLitTerms.add(qLit.getSMTFormula(theory, true));
-				provedLitTerms.add(mTracker.reflexivity(qLit.getSMTFormula(theory, true)));
+				substitutedLitTerms.add(qLit.getSMTFormula(theory));
+				provedLitTerms.add(mTracker.reflexivity(qLit.getSMTFormula(theory)));
 				resultingQuantLits.add(qLit);
 			} else { // Build the new literals. Separate ground and quantified literals.
 
 				// Substitute variables.
 				final FormulaUnLet unletter = new FormulaUnLet();
 				unletter.addSubstitutions(mSigma);
-				final Term substituted = unletter.transform(qLit.getTerm()); // TODO Maybe we should substitute the
-																				// annotation as well (for aux-lits)
+				final Term substituted = unletter.transform(qLit.getSMTFormula(theory));
 				substitutedLitTerms.add(substituted);
 
-				// Simplify the resulting term.
-				assert substituted instanceof ApplicationTerm;
-
-				Term simplified = normalizeAndSimplifyLitTerm((ApplicationTerm) substituted);
+				Term simplified = normalizeAndSimplifyLitTerm(substituted);
 
 				if (mTracker.getProvedTerm(simplified) == theory.mTrue) { // Clause is trivially true.
 					return buildTrueResult();
@@ -170,7 +166,7 @@ public class SubstitutionHelper {
 					newAtom = eq.getLiteral(mSource);
 				}
 				// As in clausifier
-				final Term atomIntern = mTracker.intern(atomApp, newAtom.getSMTFormula(theory, true));
+				final Term atomIntern = mTracker.intern(atomApp, newAtom.getSMTFormula(theory));
 				if (isPos) {
 					simplified = mTracker.transitivity(simplified, atomIntern);
 				} else {
@@ -222,12 +218,14 @@ public class SubstitutionHelper {
 	 *
 	 * @return the simplified term and its rewrite proof.
 	 */
-	private Term normalizeAndSimplifyLitTerm(final ApplicationTerm litTerm) {
+	private Term normalizeAndSimplifyLitTerm(final Term litTerm) {
 		final Theory theory = mQuantTheory.getTheory();
 
-		final ApplicationTerm atomTerm =
-				litTerm.getFunction().getName() == "not" ? (ApplicationTerm) litTerm.getParameters()[0] : litTerm;
-
+		final boolean isNegated = litTerm instanceof ApplicationTerm
+				&& ((ApplicationTerm) litTerm).getFunction().getName() == "not";
+		final ApplicationTerm atomTerm = (ApplicationTerm) (isNegated ? ((ApplicationTerm) litTerm).getParameters()[0]
+				: litTerm);
+		final Term atomRewrite = mTracker.reflexivity(atomTerm);
 		assert atomTerm.getFunction().getName() == "<=" || atomTerm.getFunction().getName() == "=";
 		final TermCompiler compiler = mClausifier.getTermCompiler();
 
@@ -240,33 +238,30 @@ public class SubstitutionHelper {
 		assert atomTerm.getFunction().getName() == "=";
 		final Term lhs = atomTerm.getParameters()[0];
 		final Term rhs = atomTerm.getParameters()[1];
-		if (QuantUtil.isAuxApplication(lhs)) {
-			return mTracker.reflexivity(litTerm);
-		}
-
-		// Normalize lhs and rhs separately
 		Term normalizedAtom;
-		final Term normalizedLhs = compiler.transform(lhs);
-		final Term normalizedRhs = compiler.transform(rhs);
-		normalizedAtom =
-				mTracker.congruence(mTracker.reflexivity(atomTerm), new Term[] { normalizedLhs, normalizedRhs });
+		if (QuantUtil.isAuxApplication(lhs)) {
+			final Term[] params = ((ApplicationTerm) lhs).getParameters();
+			final Term[] normalizedParams = new Term[params.length];
+			for (int i = 0; i < normalizedParams.length; i++) {
+				normalizedParams[i] = compiler.transform(params[i]);
+			}
+			final Term normalizedAux = mTracker.congruence(mTracker.reflexivity(lhs), normalizedParams);
+			normalizedAtom = mTracker.congruence(atomRewrite, new Term[] { normalizedAux, mTracker.reflexivity(rhs) });
+		} else {
+			// Normalize lhs and rhs separately
+			final Term normalizedLhs = compiler.transform(lhs);
+			final Term normalizedRhs = compiler.transform(rhs);
+			normalizedAtom = mTracker.congruence(atomRewrite, new Term[] { normalizedLhs, normalizedRhs });
 
-		// Simplify equality literals similar to EqualityProxy. (TermCompiler already takes care of <= literals).
-		Term simplifiedAtom = mTracker.getProvedTerm(normalizedAtom);
-		assert simplifiedAtom instanceof ApplicationTerm;
-		final ApplicationTerm appTerm = (ApplicationTerm) simplifiedAtom;
-		if (appTerm.getFunction().getName() == "=") {
-			final Term trivialEq = Clausifier.checkAndGetTrivialEquality(appTerm.getParameters()[0],
-					appTerm.getParameters()[1], theory);
+			// Simplify equality literals similar to EqualityProxy.
+			final Term trivialEq = Clausifier.checkAndGetTrivialEquality(mTracker.getProvedTerm(normalizedLhs),
+					mTracker.getProvedTerm(normalizedRhs), theory);
 			if (trivialEq != null) {
-				simplifiedAtom = trivialEq;
+				normalizedAtom = mTracker.transitivity(normalizedAtom,
+						mTracker.intern(mTracker.getProvedTerm(normalizedAtom), trivialEq));
 			}
 		}
-		if (simplifiedAtom != mTracker.getProvedTerm(normalizedAtom)) {
-			normalizedAtom = mTracker.transitivity(normalizedAtom,
-					mTracker.intern(mTracker.getProvedTerm(normalizedAtom), simplifiedAtom));
-		}
-		if (atomTerm != litTerm) {
+		if (isNegated) {
 			return mClausifier.getSimplifier()
 					.convertNot(mTracker.congruence(mTracker.reflexivity(litTerm), new Term[] { normalizedAtom }));
 		}
@@ -289,7 +284,7 @@ public class SubstitutionHelper {
 
 		/**
 		 * Build a new SubstitutionResult.
-		 * 
+		 *
 		 * @param substituted
 		 *            the substituted term.
 		 * @param simplified

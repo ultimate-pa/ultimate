@@ -30,29 +30,33 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DerScout.DerApplicability;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHashRelation;
 
 /**
- * TODO 2020025 Matthias: Revise and add documentation.
- * Because of the SMT-COMP deadline, I committed this without documentation or code review.
+ * @deprecated Superseded by {@link XnfScout}. We keep this class only for
+ *             comparisons during debugging.
+ *
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
+@Deprecated
 public class DerScout extends CondisTermTransducer<DerApplicability> {
 
 	public enum Adk { ATOM, DISJUNCTION, CONJUNCTION;
@@ -94,7 +98,7 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 		final BigInteger withoutVar;
 		if (Arrays.asList(term.getFreeVars()).contains(mEliminatee)) {
 			withoutVar = BigInteger.ZERO;
-			final PolynomialRelation polyRel = PolynomialRelation.convert(mScript, term);
+			final PolynomialRelation polyRel = PolynomialRelation.of(mScript, term);
 			if (polyRel == null) {
 				withoutDer = BigInteger.ONE;
 			} else {
@@ -117,7 +121,8 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 	}
 
 	@Override
-	protected DerApplicability transduceConjunction(final List<DerApplicability> transducedArguments) {
+	protected DerApplicability transduceConjunction(final ApplicationTerm originalTerm,
+			final List<DerApplicability> transducedArguments) {
 		final Adk subTermConnective = Adk.DISJUNCTION;
 		final Adk ownConnective = Adk.CONJUNCTION;
 		final DerApplicability result;
@@ -132,7 +137,8 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 	}
 
 	@Override
-	protected DerApplicability transduceDisjunction(final List<DerApplicability> transducedArguments) {
+	protected DerApplicability transduceDisjunction(final ApplicationTerm originalTerm,
+			final List<DerApplicability> transducedArguments) {
 		final Adk subTermConnective = Adk.CONJUNCTION;
 		final Adk ownConnective = Adk.DISJUNCTION;
 		final DerApplicability result;
@@ -234,6 +240,39 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 			return mAdk.toString() + mCases + "/" + mWitoutDerCases + "/" + mWithoutVarCases;
 		}
 
+	}
+
+	/**
+	 * Heuristic for selecting an eliminatee that preferably can be eliminated and
+	 * that can be eliminated with a preferably small blowup of the formula's size.
+	 */
+	public static TermVariable selectBestEliminatee(final Script script, final int quantifier,
+			final List<TermVariable> eliminatees, final List<Term> currentDualFiniteParams) {
+		if (eliminatees.size() == 1) {
+			return eliminatees.iterator().next();
+		}
+		final Map<TermVariable, BigInteger> score =
+				computeDerApplicabilityScore(script, quantifier, eliminatees, currentDualFiniteParams);
+		// final Map<TermVariable, Long> inhabitedParamTreesizes = computeTreesizeOfInhabitedParams(eliminatees,
+		// currentDualFiniteParams);
+		final TreeHashRelation<BigInteger, TermVariable> tr = new TreeHashRelation<>();
+		tr.reverseAddAll(score);
+		final Entry<BigInteger, HashSet<TermVariable>> best = tr.entrySet().iterator().next();
+		return best.getValue().iterator().next();
+	}
+
+	private static Map<TermVariable, BigInteger> computeDerApplicabilityScore(final Script script, final int quantifier,
+			final List<TermVariable> eliminatees, final List<Term> currentDualFiniteParams) {
+		final Term correspondingFiniteJunction =
+				QuantifierUtils.applyDualFiniteConnective(script, quantifier, currentDualFiniteParams);
+		final Map<TermVariable, BigInteger> result = new HashMap<>();
+		for (final TermVariable eliminatee : eliminatees) {
+			final DerApplicability da =
+					new DerScout(eliminatee, script, quantifier).transduce(correspondingFiniteJunction);
+			final BigInteger score = da.getWithoutDerCases().subtract(da.getWithoutVarCases());
+			result.put(eliminatee, score);
+		}
+		return result;
 	}
 
 

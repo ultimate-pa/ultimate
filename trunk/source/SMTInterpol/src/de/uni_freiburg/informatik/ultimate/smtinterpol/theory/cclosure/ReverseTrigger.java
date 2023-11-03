@@ -22,24 +22,45 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleListable;
 
 /**
+ * A reverse trigger listens on the E-graph for a function application on a
+ * CCTerm as n-th argument. It gets activated if a function application is
+ * detected whose n-th argument equals the CCTerm. This can happen either,
+ * because the function application was just created (by quantifiers or other
+ * means), or because the n-th argument of the function application was merged
+ * with the equivalence class of the CCTerm that this trigger is expecting.
+ *
+ * The trigger gets installed on the argument CC term and the congruence closure
+ * calls this trigger. A trigger can be either called from createCCTerm or from
+ * merge. In both cases the trigger shouldn't do much (e.g. it should never
+ * create new terms), but just enqueue work for later.
+ *
  * @author Tanja Schindler, Jochen Hoenicke
  */
 public abstract class ReverseTrigger extends SimpleListable<ReverseTrigger> {
 	/**
 	 * Get the argument on which the reverse trigger is installed.
-	 * 
+	 *
 	 * @return the argument term.
 	 */
 	public abstract CCTerm getArgument();
 
 	/**
 	 * Get the position in the function application where the argument should be.
-	 * 
+	 *
 	 * @return the position (0 for first argument).
 	 */
 	public abstract int getArgPosition();
 
 	public abstract FunctionSymbol getFunctionSymbol();
 
-	public abstract void activate(final CCAppTerm appTerm);
+	/**
+	 * Called by CClosure when a function is found whose argument is equal to the
+	 * argument term.
+	 *
+	 * @param appTerm the found function application
+	 * @param isFresh true, if the function was just created, false, if we were
+	 *                activated due to an equality between trigger's argument term
+	 *                and function argument.
+	 */
+	public abstract void activate(final CCAppTerm appTerm, final boolean isFresh);
 }

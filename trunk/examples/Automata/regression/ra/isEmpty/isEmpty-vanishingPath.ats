@@ -1,0 +1,21 @@
+RabinAutomaton vanishingPathAutomaton = (
+	alphabet = {a},
+	states = {s1 s8 s2 s3 s4 s5 s6 s7 s10 s14 s19 s23 s29 s17 s20 s22 s27 s13 s18 s12 s25 s28 s15 s30 s16 s21 s9 s26 s11 s24},
+	initialStates = {s1},
+	acceptingStates = {s8},
+	finiteStates = {s2 s3 s4 s5 s6 s7},
+	transitions = { (s1 a s2) (s1 a s2) (s2 a s2) (s2 a s3) (s3 a s4) (s4 a s5) (s5 a s6) (s6 a s5) (s6 a s7) (s7 a s8) (s8 a s8) }
+);
+
+RabinAutomaton remainingSelfLoopAutomaton = (
+	alphabet = {a},
+	states = {s1 s2 s3 s4 s5},
+	initialStates = {s1},
+	acceptingStates = {s5},
+	finiteStates = {s4},
+	transitions = { (s1 a s2) (s2 a s4) (s4 a s5) (s5 a s3) (s5 a s5) (s3 a s1) }
+);
+
+
+assert(!isEmpty(vanishingPathAutomaton));
+assert(!isEmpty(remainingSelfLoopAutomaton));

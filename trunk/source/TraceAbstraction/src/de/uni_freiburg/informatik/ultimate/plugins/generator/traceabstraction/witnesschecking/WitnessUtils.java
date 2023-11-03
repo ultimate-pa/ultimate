@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.w
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
@@ -56,14 +55,13 @@ public class WitnessUtils {
 
 	public static <LETTER extends IIcfgTransition<?>> IDoubleDeckerAutomaton<LETTER, IPredicate>
 			constructIcfgAndWitnessProduct(final IUltimateServiceProvider services,
-					final IAutomaton<LETTER, IPredicate> abstraction,
+					final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
 					final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 					final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 					final PredicateFactoryRefinement stateFactoryForRefinement, final ILogger logger,
 					final Property property) throws AutomataOperationCanceledException {
-		final WitnessProductAutomaton<LETTER> wpa = new WitnessProductAutomaton<>(services,
-				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) abstraction, witnessAutomaton, csToolkit,
-				predicateFactory, stateFactoryForRefinement);
+		final WitnessProductAutomaton<LETTER> wpa = new WitnessProductAutomaton<>(services, abstraction,
+				witnessAutomaton, csToolkit, predicateFactory, stateFactoryForRefinement);
 
 		final LineCoverageCalculator<LETTER> origCoverage = new LineCoverageCalculator<>(services, abstraction);
 		final IDoubleDeckerAutomaton<LETTER, IPredicate> newAbstraction;

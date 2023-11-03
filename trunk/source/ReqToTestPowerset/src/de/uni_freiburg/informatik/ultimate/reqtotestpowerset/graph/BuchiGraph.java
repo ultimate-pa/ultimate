@@ -7,9 +7,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternUT;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariantPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseDelayPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariancePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -31,7 +31,7 @@ public class BuchiGraph {
 	public List<GuardGraph> patternListToBuechi(final List<PatternType<?>> patternList) {
 		final List<GuardGraph> gs = new ArrayList<>();
 		for (final PatternType<?> pattern : patternList) {
-			if (!(pattern instanceof InitializationPattern)) {
+			if (!(pattern instanceof DeclarationPattern)) {
 				final GuardGraph aut = patternToAutomaton(pattern);
 				if (aut != null) {
 					gs.add(aut);
@@ -46,11 +46,11 @@ public class BuchiGraph {
 	 */
 
 	public GuardGraph patternToAutomaton(final PatternType<?> pattern) {
-		if (pattern instanceof InvariantPattern) {
+		if (pattern instanceof InvariancePattern) {
 			return makeInvariantPatternAutomaton(pattern);
 		} else if (pattern instanceof UniversalityPattern) {
 			return makeUniversalityPatternAutomaton(pattern);
-		} else if (pattern instanceof BndResponsePatternUT) {
+		} else if (pattern instanceof ResponseDelayPattern) {
 			return makeBndResponsePatternUTAutomaton(pattern);
 		} else {
 			throw new RuntimeException("Pattern type -" + pattern.toString() + "- not supported!");

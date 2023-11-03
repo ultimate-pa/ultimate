@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
@@ -78,13 +79,12 @@ public class SubTermFinder extends NonRecursive {
 		return mResult;
 	}
 
-
 	/**
 	 *
-	 * @param predicate     subterms for which this predicate evaluates to true are
-	 *                      returned
-	 * @param onlyOutermost if set to true we do not descend to subterms of a term
-	 *                      that has been found
+	 * @param predicate
+	 *            subterms for which this predicate evaluates to true are returned
+	 * @param onlyOutermost
+	 *            if set to true we do not descend to subterms of a term that has been found
 	 * @return subterms of the given term for which the predicate evaluates to true
 	 */
 	public static Set<Term> find(final Term term, final Predicate<Term> predicate, final boolean onlyOutermost) {
@@ -165,5 +165,11 @@ public class SubTermFinder extends NonRecursive {
 		public void walk(final NonRecursive walker, final MatchTerm term) {
 			throw new UnsupportedOperationException("not yet implemented: MatchTerm");
 		}
+
+		@Override
+		public void walk(final NonRecursive walker, final LambdaTerm term) {
+			throw new UnsupportedOperationException();
+		}
+
 	}
 }

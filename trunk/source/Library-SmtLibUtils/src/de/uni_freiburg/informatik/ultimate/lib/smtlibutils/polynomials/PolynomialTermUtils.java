@@ -27,19 +27,15 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
@@ -66,262 +62,21 @@ public class PolynomialTermUtils {
 	 *            bitvector sort
 	 * @return bv % 2^sort.getIndices[0]
 	 */
-	public static Rational bringValueInRange(final Rational bv, final Sort sort) {
+	public static Rational bringBitvectorValueInRange(final Rational bv, final Sort sort) {
 		assert SmtSortUtils.isBitvecSort(sort);
-		assert sort.getIndices().length == 1;
-		assert bv.isIntegral();
-		final int bitsize = Integer.valueOf(sort.getIndices()[0]);
+		final int bitsize = SmtSortUtils.getBitvectorLength(sort);
 		final BigInteger bvBigInt = bv.numerator();
 		final BigInteger numberOfValues = BigInteger.valueOf(2).pow(bitsize);
 		final BigInteger resultBigInt = ArithmeticUtils.euclideanMod(bvBigInt, numberOfValues);
 		return Rational.valueOf(resultBigInt, BigInteger.ONE);
 	}
 
-	/**
-	 * Simplifies the given division as far as possible without changing the meaning
-	 * of the term (i.e. divides as much of the division as possible, pulls out the
-	 * latter constant (!= 0) divisors as coefficient if real-sort). Afterwards
-	 * everything will be wrapped up in an AffineTerm as one variable.
-	 */
-	public static IPolynomialTerm simplifyImpossibleDivision(final String functionSymbol,
-			final IPolynomialTerm[] polynomialArgs, final Script script) {
-		final Term simplifiedVariable;
-		final Rational coefficient;
-		if (functionSymbol.equals("/")) {
-			coefficient = constructCoefficient(polynomialArgs);
-			simplifiedVariable = constructFutureVariableReal(polynomialArgs, script);
-		} else if (functionSymbol.equals("div")) {
-			coefficient = Rational.ONE;
-			simplifiedVariable = constructFutureVariableInt(polynomialArgs, script);
+	public static Rational bringValueInRange(final Rational rat, final Sort sort) {
+		if (SmtSortUtils.isBitvecSort(sort)) {
+			return bringBitvectorValueInRange(rat, sort);
 		} else {
-			throw new UnsupportedOperationException("Given type of division unknown.");
+			return rat;
 		}
-		final AffineTerm wrappedVariable = AffineTerm.constructVariable(simplifiedVariable);
-		return AffineTerm.mul(wrappedVariable, coefficient);
-	}
-
-	/**
-	 * Return 1/(latter divisors which are constant and not 0). If there are no such
-	 * divisors, return 1.
-	 */
-	private static Rational constructCoefficient(final IPolynomialTerm[] polynomialArgs) {
-		Rational coeff = Rational.ONE;
-		for (int i = polynomialArgs.length - 1; i >= 0; i--) {
-			if (polynomialArgs[i].isConstant() && !polynomialArgs[i].getConstant().equals(Rational.ZERO)) {
-				coeff = coeff.mul(polynomialArgs[i].getConstant());
-			} else {
-				break;
-			}
-		}
-		return coeff.inverse();
-	}
-
-	/**
-	 * Return an Array which represents the variable-part (everything but the
-	 * coefficient, see "calculateCoefficient") of the given division, the arguments
-	 * already in "pure" Term form (e.g. not a PolynomialTerm).
-	 */
-	private static Term constructFutureVariableReal(final IPolynomialTerm[] polynomialArgs, final Script script) {
-		final IPolynomialTerm numerator = constructNumeratorReal(polynomialArgs, script);
-		final int endOfVariableIncluded = calculateEndOfVariable(polynomialArgs);
-		final int beginOfVariableIncluded = calculateBeginOfVariable(polynomialArgs);
-		// Tell the method to include one more Element at the beginning, because that's
-		// where we will insert the
-		// new numerator.
-		final Term[] variable = subArrayToTermSimplifyIntermediate(polynomialArgs, beginOfVariableIncluded - 1,
-				endOfVariableIncluded, script);
-		variable[0] = numerator.toTerm(script);
-		return script.term("/", variable);
-	}
-
-	/**
-	 * Returns the index at which a 0 or a variable occurs for the last time.
-	 */
-	private static int calculateEndOfVariable(final IPolynomialTerm[] polynomialArgs) {
-		int endOfVariableIncluded = polynomialArgs.length - 1;
-		boolean endOfVariableFound = false;
-		for (; !endOfVariableFound; endOfVariableIncluded--) {
-			endOfVariableFound = !polynomialArgs[endOfVariableIncluded].isConstant()
-					|| polynomialArgs[endOfVariableIncluded].getConstant().equals(Rational.ZERO);
-		}
-		endOfVariableIncluded++;
-		return endOfVariableIncluded;
-	}
-
-	/**
-	 * Returns the index at which a 0 or a variable occurs for the first time
-	 * (except for index 0).
-	 */
-	private static int calculateBeginOfVariable(final IPolynomialTerm[] polynomialArgs) {
-		int beginOfVariableIncluded = 1;
-		boolean beginOfVariableFound = false;
-		for (; !beginOfVariableFound; beginOfVariableIncluded++) {
-			beginOfVariableFound = !polynomialArgs[beginOfVariableIncluded].isConstant()
-					|| polynomialArgs[beginOfVariableIncluded].getConstant().equals(Rational.ZERO);
-
-		}
-		beginOfVariableIncluded--;
-		return beginOfVariableIncluded;
-	}
-
-	/**
-	 * Does what the name suggests, except it does not simplify the very first 1.
-	 */
-	private static Term[] subArrayToTermSimplifyIntermediate(final IPolynomialTerm[] polynomialArgs,
-			final int beginOfVariableIncluded, final int endOfSubArrayIncl, final Script script) {
-		final ArrayList<Term> subList = new ArrayList<>();
-		IPolynomialTerm simplifiedTerm = null;
-		for (int i = beginOfVariableIncluded; i <= endOfSubArrayIncl; i++) {
-			if (!polynomialArgs[i].isConstant() || polynomialArgs[i].getConstant().equals(Rational.ZERO)) {
-				if (simplifiedTerm == null) {
-					// don't add
-				} else {
-					subList.add(simplifiedTerm.toTerm(script));
-					simplifiedTerm = null;
-				}
-				subList.add(polynomialArgs[i].toTerm(script));
-			} else {
-				if (polynomialArgs[i].isConstant() && polynomialArgs[i].getConstant().equals(Rational.ONE)) {
-					// skip it, except it is the very first 1
-					if (i == beginOfVariableIncluded) {
-						subList.add(polynomialArgs[i].toTerm(script));
-					}
-				} else {
-					if (simplifiedTerm == null) {
-						simplifiedTerm = polynomialArgs[i];
-					} else {
-						simplifiedTerm = AffineTerm.mul(simplifiedTerm, polynomialArgs[i].getConstant());
-					}
-				}
-			}
-		}
-		final Term[] subArray = new Term[subList.size()];
-		subList.toArray(subArray);
-		return subArray;
-	}
-
-	private static IPolynomialTerm constructNumeratorReal(final IPolynomialTerm[] divArray, final Script script) {
-		final ArrayList<IPolynomialTerm> denominatorConstants = new ArrayList<>();
-		boolean continueDivision = true;
-		for (int i = 1; continueDivision && i < divArray.length; i++) {
-			continueDivision = divArray[i].isConstant() && !divArray[i].isZero();
-			if (continueDivision) {
-				denominatorConstants.add(divArray[i]);
-			}
-		}
-		if (denominatorConstants.isEmpty()) {
-			return divArray[0];
-		} else {
-			return divideIPolynomialTermByConstants(divArray[0], denominatorConstants, script);
-		}
-	}
-
-	private static IPolynomialTerm divideIPolynomialTermByConstants(final IPolynomialTerm numerator,
-			final ArrayList<IPolynomialTerm> denomConstants, final Script script) {
-		final IPolynomialTerm[] allConstants = new IPolynomialTerm[denomConstants.size() + 1];
-		allConstants[0] = numerator;
-		final Iterator<IPolynomialTerm> iter = denomConstants.iterator();
-		for (int i = 1; iter.hasNext(); i++) {
-			allConstants[i] = iter.next();
-		}
-		if (numerator.isAffine()) {
-			return AffineTerm.divide(allConstants, script);
-		} else {
-			return PolynomialTerm.divide(allConstants, script);
-		}
-	}
-
-	private static Term constructFutureVariableInt(final IPolynomialTerm[] polynomialArgs, final Script script) {
-		final BiFunction<IPolynomialTerm[], Script, IPolynomialTerm> divider;
-		if (polynomialArgs[0].isAffine()) {
-			divider = AffineTerm::divide;
-		} else {
-			divider = PolynomialTerm::divide;
-		}
-		IPolynomialTerm newNumerator = polynomialArgs[0];
-		final IPolynomialTerm[] binaryDivision = new IPolynomialTerm[2];
-		binaryDivision[0] = polynomialArgs[0];
-		int endOfSimplificationExcluded = 1;
-		boolean stillSimplifiable = true;
-		for (; stillSimplifiable
-				&& endOfSimplificationExcluded < polynomialArgs.length; endOfSimplificationExcluded++) {
-			if (polynomialArgs[endOfSimplificationExcluded].isConstant()
-					&& !polynomialArgs[endOfSimplificationExcluded].isZero()) {
-				binaryDivision[1] = polynomialArgs[endOfSimplificationExcluded];
-				// Use the real Division here, because the int Division would return a single
-				// Variable, if the quotient
-				// would've been not integral, therefore we could not (properly) check for
-				// integrality afterwards.
-				newNumerator = divider.apply(binaryDivision, script);
-				if (newNumerator.isIntegral()) {
-					binaryDivision[0] = newNumerator;
-				} else {
-					newNumerator = binaryDivision[0];
-					stillSimplifiable = false;
-					endOfSimplificationExcluded--;
-				}
-			} else {
-				stillSimplifiable = false;
-				endOfSimplificationExcluded--;
-			}
-		}
-		// Tell the method to include one more Element at the beginning, because that's
-		// where we will insert the
-		// new numerator.
-		final Term[] variable = subArrayToTermSkipOnes(polynomialArgs, endOfSimplificationExcluded - 1,
-				polynomialArgs.length - 1, script);
-		variable[0] = newNumerator.toTerm(script);
-		return script.term("div", variable);
-	}
-
-	/**
-	 * Does what the name suggests, except it does not simplify the very first 1.
-	 */
-	private static Term[] subArrayToTermSkipOnes(final IPolynomialTerm[] polynomialArgs,
-			final int beginOfVariableIncluded, final int endOfSubArrayIncl, final Script script) {
-		final ArrayList<Term> subList = new ArrayList<>();
-		for (int i = beginOfVariableIncluded; i <= endOfSubArrayIncl; i++) {
-			if (polynomialArgs[i].isConstant() && polynomialArgs[i].getConstant().equals(Rational.ONE)) {
-				// skip it, except it is the very first 1
-				if (i == beginOfVariableIncluded) {
-					subList.add(polynomialArgs[i].toTerm(script));
-				}
-			} else {
-				subList.add(polynomialArgs[i].toTerm(script));
-			}
-		}
-		final Term[] subArray = new Term[subList.size()];
-		subList.toArray(subArray);
-		return subArray;
-	}
-
-	/**
-	 * Generalized method for applying Modulo to the coefficients and the constant
-	 * of {@link AffineTerm}s and {@link PolynomialTerm}s. The type parameter T
-	 * refers either to {@link AffineTerm} or {@link PolynomialTerm}. The type
-	 * parameter MNL is a {@link Term} for {@link AffineTerm}s and a
-	 * {@link Monomial} for {@link PolynomialTerm}s.
-	 *
-	 * @param term2map
-	 *            {@link Function} that returns for a given T the Map<MNL,Rational>
-	 *            map.
-	 * @param constructor
-	 *            Methods that constructs the term of type T.
-	 */
-	public static <T extends AbstractGeneralizedAffineTerm<MNL>, MNL> T applyModuloToAllCoefficients(
-			final T agAffineTerm, final BigInteger divident, final GeneralizedConstructor<MNL, T> constructor) {
-		assert SmtSortUtils.isIntSort(agAffineTerm.getSort());
-		final SparseMapBuilder<MNL, Rational> mapBuilder = new SparseMapBuilder<>();
-		Rational newCoeff;
-		for (final Entry<MNL, Rational> entry : agAffineTerm.getAbstractVariable2Coefficient().entrySet()) {
-			newCoeff = SmtUtils.toRational(ArithmeticUtils.euclideanMod(SmtUtils.toInt(entry.getValue()), divident));
-			if (newCoeff != Rational.ZERO) {
-				mapBuilder.put(entry.getKey(), newCoeff);
-			}
-		}
-		final Rational constant = SmtUtils
-				.toRational(ArithmeticUtils.euclideanMod(SmtUtils.toInt(agAffineTerm.getConstant()), divident));
-		return constructor.apply(agAffineTerm.getSort(), constant, mapBuilder.getBuiltMap());
 	}
 
 	/**
@@ -374,7 +129,7 @@ public class PolynomialTermUtils {
 			final GeneralizedConstructor<MNL, T> constructor, final IPolynomialTerm... summands) {
 		final Sort sort = summands[0].getSort();
 		final Map<MNL, Rational> variable2Coefficient = new HashMap<>();
-		Rational constant = Rational.ZERO;
+		Rational newConstant = Rational.ZERO;
 		for (final IPolynomialTerm term : summands) {
 			for (final Map.Entry<MNL, Rational> summand : term2map.apply(term).entrySet()) {
 				// assert summand.getKey().getSort() == mSort : "Sort mismatch: " +
@@ -383,12 +138,7 @@ public class PolynomialTermUtils {
 				if (coeff == null) {
 					variable2Coefficient.put(summand.getKey(), summand.getValue());
 				} else {
-					final Rational newCoeff;
-					if (SmtSortUtils.isBitvecSort(sort)) {
-						newCoeff = bringValueInRange(coeff.add(summand.getValue()), sort);
-					} else {
-						newCoeff = coeff.add(summand.getValue());
-					}
+					final Rational newCoeff = bringValueInRange(coeff.add(summand.getValue()), sort);
 					if (newCoeff.equals(Rational.ZERO)) {
 						variable2Coefficient.remove(summand.getKey());
 					} else {
@@ -396,13 +146,9 @@ public class PolynomialTermUtils {
 					}
 				}
 			}
-			if (SmtSortUtils.isBitvecSort(sort)) {
-				constant = bringValueInRange(constant.add(term.getConstant()), sort);
-			} else {
-				constant = constant.add(term.getConstant());
-			}
+			newConstant = bringValueInRange(newConstant.add(term.getConstant()), sort);
 		}
-		return constructor.apply(sort, constant, variable2Coefficient);
+		return constructor.apply(sort, newConstant, variable2Coefficient);
 	}
 
 	/**
@@ -418,8 +164,7 @@ public class PolynomialTermUtils {
 	 * @param constructor
 	 *            Methods that constructs the term of type T.
 	 */
-	static <T extends IPolynomialTerm, MNL> T constructMul(
-			final Function<IPolynomialTerm, Map<MNL, Rational>> term2map,
+	static <T extends IPolynomialTerm, MNL> T constructMul(final Function<IPolynomialTerm, Map<MNL, Rational>> term2map,
 			final GeneralizedConstructor<MNL, T> constructor, final IPolynomialTerm term, final Rational multiplier) {
 		final Sort sort;
 		final Rational constant;
@@ -435,14 +180,11 @@ public class PolynomialTermUtils {
 		} else {
 			variable2Coefficient = new HashMap<>();
 			sort = term.getSort();
-			if (SmtSortUtils.isBitvecSort(sort)) {
-				constant = PolynomialTermUtils.bringValueInRange(term.getConstant().mul(multiplier), sort);
-			} else {
-				assert sort.isNumericSort();
-				constant = term.getConstant().mul(multiplier);
-			}
+			constant = PolynomialTermUtils.bringValueInRange(term.getConstant().mul(multiplier), sort);
 			for (final Map.Entry<MNL, Rational> summand : term2map.apply(term).entrySet()) {
-				variable2Coefficient.put(summand.getKey(), summand.getValue().mul(multiplier));
+				final Rational newCoefficient = PolynomialTermUtils
+						.bringValueInRange(summand.getValue().mul(multiplier), sort);
+				variable2Coefficient.put(summand.getKey(), newCoefficient);
 			}
 		}
 		return constructor.apply(sort, constant, variable2Coefficient);
@@ -483,11 +225,11 @@ public class PolynomialTermUtils {
 					result = null;
 				}
 			} else if (SmtSortUtils.isBitvecSort(sort)) {
-				if (divisor.equals(Rational.ONE) || SmtUtils.isBvMinusOne(divisor, sort)) {
+				if (divisor.equals(Rational.ONE) || SmtUtils.isBvMinusOneButNotOne(divisor, sort)) {
 					// We use multiplication instead of division
 					// because we know that in this special case divisor is
 					// always its own multiplicative inverse.
-					result = PolynomialTermUtils.bringValueInRange(divident.mul(divisor), sort);
+					result = PolynomialTermUtils.bringBitvectorValueInRange(divident.mul(divisor), sort);
 				} else {
 					result = null;
 				}

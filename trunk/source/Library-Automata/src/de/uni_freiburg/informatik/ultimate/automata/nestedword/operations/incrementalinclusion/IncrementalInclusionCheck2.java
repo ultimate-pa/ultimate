@@ -285,7 +285,7 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 					for (final OutgoingInternalTransition<LETTER, STATE> ATransition : local_mA
 							.internalSuccessors(state, alp)) {
 						final ArrayList<STATE> newStateSequence =
-								(ArrayList<STATE>) currentNodeSet.word.getStateSequence().clone();
+								new ArrayList<>(currentNodeSet.word.getStateSequence());
 						newStateSequence.add(ATransition.getSucc());
 						tempBNodeData = new NodeData<>(new NestedRun<>(currentNodeSet.word.getWord()
 								.concatenate(new NestedWord<>(ATransition.getLetter(), -2)), newStateSequence));

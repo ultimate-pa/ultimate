@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode.Antecedent;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.TerminationRequest;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.CuckooHashSet;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedArrayList;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
@@ -447,7 +447,9 @@ public class DPLLEngine {
 		mDPLLStack.add(literal);
 		atom.mDecideLevel = mCurrentDecideLevel;
 		atom.mDecideStatus = literal;
-		atom.mLastStatus = atom.mDecideStatus;
+		if (!atom.preferredStatusIsLocked()) {
+			atom.mLastStatus = atom.mDecideStatus;
+		}
 		mAtoms.remove(atom);
 		assert !Config.EXPENSIVE_ASSERTS || checkDecideLevel();
 		mPendingWatcherList.moveAll(literal.negate().mWatchers);
@@ -820,6 +822,7 @@ public class DPLLEngine {
 	 */
 	private boolean explain(Clause conflict) {
 		while (conflict != null) {
+			startBacktrack();
 			conflict = explainConflict(conflict);
 			learnClause(conflict);
 			if (mUnsatClause != null) {
@@ -919,6 +922,12 @@ public class DPLLEngine {
 		}
 		assert found : "Unit literal not in explanation";
 		return found;
+	}
+
+	private void startBacktrack() {
+		for (final ITheory t : mTheories) {
+			t.backtrackStart();
+		}
 	}
 
 	private Clause finalizeBacktrack() {
@@ -1094,7 +1103,9 @@ public class DPLLEngine {
 					final Double nscore = scores.get(atom.negate());
 					final double Pscore = pscore == null ? 0 : pscore;
 					final double Nscore = nscore == null ? 0 : nscore;
-					atom.setPreferredStatus(Pscore > Nscore ? atom : atom.negate());
+					if (!atom.preferredStatusIsLocked()) {
+						atom.setPreferredStatus(Pscore > Nscore ? atom : atom.negate());
+					}
 				}
 			}
 			long lastTime;
@@ -1203,6 +1214,7 @@ public class DPLLEngine {
 					mClsScale *= Double.MIN_NORMAL;
 				}
 				if (--nextRestart == 0) {
+					startBacktrack();
 					final DPLLAtom next = mAtoms.peek();
 					int restartpos = -1;
 					for (int i = mNumSolvedAtoms + mBaseLevel; i < mDPLLStack.size(); ++i) {
@@ -1681,6 +1693,7 @@ public class DPLLEngine {
 	}
 
 	public void flipDecisions() {
+		startBacktrack();
 		while (mDPLLStack.size() > mBaseLevel + mNumSolvedAtoms) {
 			final Literal lit = mDPLLStack.remove(mDPLLStack.size() - 1);
 			backtrackLiteral(lit);
@@ -1693,6 +1706,7 @@ public class DPLLEngine {
 	}
 
 	public void flipNamedLiteral(final String name) throws SMTLIBException {
+		startBacktrack();
 		while (mDPLLStack.size() > mBaseLevel + mNumSolvedAtoms) {
 			final Literal lit = mDPLLStack.remove(mDPLLStack.size() - 1);
 			backtrackLiteral(lit);
@@ -1727,7 +1741,7 @@ public class DPLLEngine {
 		int i = -1;
 		for (final Literal lit : mDPLLStack) {
 			if (!(lit.getAtom() instanceof NamedAtom)) {
-				res[++i] = lit.getSMTFormula(smtTheory, true);
+				res[++i] = lit.getSMTFormula(smtTheory);
 			}
 		}
 		return res;
@@ -1802,6 +1816,7 @@ public class DPLLEngine {
 		if (mCurrentDecideLevel == 0) {
 			return;
 		}
+		startBacktrack();
 		mAssumptionLiterals.clear();
 		mLogger.debug("Clearing Assumptions (Baselevel is %d)", mBaseLevel);
 		while (mCurrentDecideLevel > 0) {
@@ -1857,6 +1872,7 @@ public class DPLLEngine {
 			mBaseLevel = mCurrentDecideLevel;
 			if (conflict != null) {
 				mLogger.debug("Conflict when setting literal");
+				startBacktrack();
 				mUnsatClause = explainConflict(conflict);
 				checkValidUnsatClause();
 				finalizeBacktrack();
@@ -1874,5 +1890,19 @@ public class DPLLEngine {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Randomly mess with the activity of Atoms, such that the Engine does not prefer atoms that have been active/inactive
+	 * so far.
+	 */
+	public void messWithActivityOfAtoms(final Random rnd) {
+		mAtoms.clear();
+		for (final DPLLAtom atom : mAtomList) {
+			atom.mActivity = atom.mActivity + rnd.nextDouble() * mAtomScale;
+			if (atom.mDecideStatus == null) {
+				mAtoms.add(atom);
+			}
+		}
 	}
 }

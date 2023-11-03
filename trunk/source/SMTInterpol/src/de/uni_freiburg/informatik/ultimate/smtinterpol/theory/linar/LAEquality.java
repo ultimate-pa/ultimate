@@ -20,7 +20,6 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar;
 
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -31,7 +30,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCEqualit
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class LAEquality extends DPLLAtom {
-	public final static Annotation[] QUOTED_LA = new Annotation[] { new Annotation(":quotedLA", null) };
 	private final LinVar mVar;
 	private final Rational mBound;
 	private final ArrayList<CCEquality> mDependentEqualities;
@@ -62,7 +60,7 @@ public class LAEquality extends DPLLAtom {
 	}
 
 	@Override
-	public Term getSMTFormula(final Theory smtTheory, final boolean quoted) {
+	public Term getSMTFormula(final Theory smtTheory) {
 		final MutableAffineTerm at = new MutableAffineTerm();
 		at.add(Rational.ONE, mVar);
 		at.add(mBound.negate());
@@ -70,8 +68,7 @@ public class LAEquality extends DPLLAtom {
 		final Sort s = smtTheory.getSort(isInt ? "Int" : "Real");
 		final Sort[] binfunc = { s, s };
 		final FunctionSymbol comp = smtTheory.getFunction("=", binfunc);
-		final Term res = smtTheory.term(comp, at.toSMTLib(smtTheory, isInt, quoted), Rational.ZERO.toTerm(s));
-		return quoted ? smtTheory.annotatedTerm(QUOTED_LA, res) : res;
+		return smtTheory.term(comp, at.toSMTLib(smtTheory, isInt), Rational.ZERO.toTerm(s));
 	}
 
 	public void addDependentAtom(final CCEquality eq) {

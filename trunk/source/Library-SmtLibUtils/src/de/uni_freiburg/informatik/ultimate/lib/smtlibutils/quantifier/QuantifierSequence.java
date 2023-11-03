@@ -40,7 +40,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -60,23 +59,23 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  */
 public class QuantifierSequence {
-	private final Script mScript;
+	private final ManagedScript mMgdScript;
 	private final List<QuantifiedVariables> mQuantifierBlocks;
 	private Term mInnerTerm;
 
 
 
-	public QuantifierSequence(final Script script, final Term innerTerm, final List<QuantifiedVariables> quantifierBlocks) {
+	public QuantifierSequence(final ManagedScript mgdScript, final Term innerTerm, final List<QuantifiedVariables> quantifierBlocks) {
 		super();
-		mScript = script;
+		mMgdScript = mgdScript;
 		mInnerTerm = innerTerm;
 		mQuantifierBlocks = quantifierBlocks;
 	}
 
 
-	public QuantifierSequence(final Script script,
+	public QuantifierSequence(final ManagedScript mgdScript,
 			final Term input) {
-		mScript = script;
+		mMgdScript = mgdScript;
 		mQuantifierBlocks = new ArrayList<>();
 		Term innerTerm = input;
 		while(innerTerm instanceof QuantifiedFormula) {
@@ -126,7 +125,7 @@ public class QuantifierSequence {
 	}
 
 	public Term toTerm() {
-		return prependQuantifierSequence(mScript, mQuantifierBlocks, mInnerTerm);
+		return prependQuantifierSequence(mMgdScript.getScript(), mQuantifierBlocks, mInnerTerm);
 	}
 
 	/**
@@ -151,7 +150,7 @@ public class QuantifierSequence {
 
 			}
 		}
-		mInnerTerm = (new Substitution(mScript, substitutionMapping)).transform(mInnerTerm);
+		mInnerTerm = Substitution.apply(mMgdScript, substitutionMapping, mInnerTerm);
 	}
 
 	public static Term mergeQuantifierSequences(final ManagedScript mgdScript,

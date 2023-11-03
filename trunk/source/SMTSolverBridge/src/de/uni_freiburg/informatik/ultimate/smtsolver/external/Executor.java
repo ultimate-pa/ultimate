@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Matthias Heizmann
  */
-class Executor {
+public class Executor {
 
 	private MonitoredProcess mProcess;
 	private Lexer mLexer;
@@ -77,6 +77,9 @@ class Executor {
 	private final IUltimateServiceProvider mServices;
 	private final String mName;
 	private final String mFullPathOfDumpedFile;
+	private final String mSetupCommand;
+	private final String mExitCommand;
+	private final long mTimeout;
 
 	private static final String EOF_ERROR_MSG = "Received EOF on stdin.";
 
@@ -99,29 +102,43 @@ class Executor {
 	Executor(final String solverCommand, final Script script, final ILogger logger,
 			final IUltimateServiceProvider services, final String solverName, final String fullPathOfDumpedFile)
 			throws IOException {
+		this(solverCommand, script, logger, services, solverName, fullPathOfDumpedFile,
+				"(set-option :print-success true)", "(exit)", -1L);
+	}
+
+	public Executor(final String solverCommand, final Script script, final ILogger logger,
+			final IUltimateServiceProvider services, final String solverName, final String fullPathOfDumpedFile,
+			final String setupCommand, final String exitCommand, final long timeout) throws IOException {
 		mServices = services;
 		mSolverCmd = solverCommand;
 		mScript = script;
 		mLogger = logger;
 		mName = solverName;
 		mFullPathOfDumpedFile = fullPathOfDumpedFile;
+		mSetupCommand = setupCommand;
+		mExitCommand = exitCommand;
+		mTimeout = timeout;
 		mParser = new Parser();
 		mParser.setScript(mScript);
 		createProcess();
 	}
 
 	private void createProcess() throws IOException {
-		mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices);
+		mProcess = MonitoredProcess.exec(mSolverCmd, mExitCommand, mServices);
 		if (mProcess == null) {
 			final String errorMsg = getLogStringPrefix() + " Could not create process, terminating... ";
 			mLogger.fatal(errorMsg);
 			throw new IllegalStateException(errorMsg);
 		}
 
-		mProcess.setTerminationAfterTimeout(1000);
-
 		final OutputStream stdin = mProcess.getOutputStream();
 		final InputStream stdout = mProcess.getInputStream();
+
+		if (mTimeout > 0) {
+			mProcess.setCountdownToTermination(mTimeout);
+		} else {
+			mProcess.setTerminationAfterTimeout(1000);
+		}
 
 		mStdErr = mProcess.getErrorStream();
 
@@ -140,8 +157,10 @@ class Executor {
 
 		mWriter = new BufferedWriter(new OutputStreamWriter(underlying));
 
-		input("(set-option :print-success true)");
-		parseSuccess();
+		if (mSetupCommand != null) {
+			input(mSetupCommand);
+			parseSuccess();
+		}
 	}
 
 	public void input(final String in) {
@@ -281,6 +300,10 @@ class Executor {
 
 	public Object[] parseGetInfoResult() {
 		return (Object[]) parse(LexerSymbols.GETINFO).value;
+	}
+
+	public ModelDescription parseGetModelResult() {
+		return (ModelDescription) parse(LexerSymbols.GETMODEL).value;
 	}
 
 	public Object parseGetOptionResult() {

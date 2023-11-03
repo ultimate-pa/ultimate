@@ -41,8 +41,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ExplicitValueDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IntervalDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.OctagonDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.AlwaysFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.LogSizeWrapperFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.NeverFluid;
@@ -69,11 +71,9 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_ABSTRACT_DOMAIN = "Abstract Domain";
 	private static final String DEFAULT_ABSTRACT_DOMAIN = CompoundDomain.class.getSimpleName();
-	private static final String[] VALUES_ABSTRACT_DOMAIN = {
-		ExplicitValueDomain.class.getSimpleName(),
-		IntervalDomain.class.getSimpleName(),
-		CompoundDomain.class.getSimpleName(),
-	};
+	private static final String[] VALUES_ABSTRACT_DOMAIN = { ExplicitValueDomain.class.getSimpleName(),
+			IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(), EqDomain.class.getSimpleName(),
+			CompoundDomain.class.getSimpleName() };
 
 	public static final String LABEL_LOOP_SUMMARIZER = "Loop Summarizer";
 	private static final String DEFAULT_LOOP_SUMMARIZER = FixpointLoopSummarizer.class.getSimpleName();
@@ -119,6 +119,14 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	// settings specific to IntervalDomain
 	public static final String LABEL_INTERVALDOM_MAX_PARALLEL_STATES = "Max. Parallel Intervals";
 	private static final int DEFAULT_INTERVALDOM_MAX_PARALLEL_STATES = 2;
+
+	// settings specific to OctagonDomain
+	public static final String LABEL_OCTAGONDOM_MAX_PARALLEL_STATES = "Max. Parallel Octagon";
+	private static final int DEFAULT_OCTAGONDOM_MAX_PARALLEL_STATES = 2;
+
+	// settings specific to EqDomain
+	public static final String LABEL_EQDOM_MAX_PARALLEL_STATES = "Max. Parallel Equality";
+	private static final int DEFAULT_EQDOM_MAX_PARALLEL_STATES = 2;
 
 	// settings specific to CompoundDomain
 	public static final String LABEL_COMPOUNDDOM_SUBDOM = "CompoundDomain Intern Domains";
@@ -189,6 +197,16 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 		containerIntervalDom.addItem(integer(LABEL_INTERVALDOM_MAX_PARALLEL_STATES,
 				DEFAULT_INTERVALDOM_MAX_PARALLEL_STATES, 1, Integer.MAX_VALUE));
 
+		final UltimatePreferenceItemContainer containerOctagonDom =
+				new UltimatePreferenceItemContainer(OctagonDomain.class.getSimpleName());
+		containerOctagonDom.addItem(integer(LABEL_OCTAGONDOM_MAX_PARALLEL_STATES,
+				DEFAULT_OCTAGONDOM_MAX_PARALLEL_STATES, 1, Integer.MAX_VALUE));
+
+		final UltimatePreferenceItemContainer containerEqDom =
+				new UltimatePreferenceItemContainer(EqDomain.class.getSimpleName());
+		containerEqDom.addItem(
+				integer(LABEL_EQDOM_MAX_PARALLEL_STATES, DEFAULT_EQDOM_MAX_PARALLEL_STATES, 1, Integer.MAX_VALUE));
+
 		final UltimatePreferenceItemContainer containerCompoundDom =
 				new UltimatePreferenceItemContainer(CompoundDomain.class.getSimpleName());
 		containerCompoundDom.addItem(string(LABEL_COMPOUNDDOM_SUBDOM, TOOLTIP_COMPOUNDDOM_SUBDOM,
@@ -207,20 +225,16 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 				TOOLTIP_SIZELIMITFLUID_MAX_DISJUNCTS, DEFAULT_SIZELIMITFLUID_MAX_DISJUNCTS));
 
 		return new BaseUltimatePreferenceItem[] {
-			combo(LABEL_ABSTRACT_DOMAIN, DEFAULT_ABSTRACT_DOMAIN, VALUES_ABSTRACT_DOMAIN),
-			combo(LABEL_LOOP_SUMMARIZER, DEFAULT_LOOP_SUMMARIZER, VALUES_LOOP_SUMMARIZER),
-			combo(LABEL_CALL_SUMMARIZER, DEFAULT_CALL_SUMMARIZER, VALUES_CALL_SUMMARIZER),
-			combo(LABEL_FLUID, TOOLTIP_FLUID, DEFAULT_FLUID, VALUES_FLUID),
-			//
-			combo(LABEL_SIMPLIFICATION, DEFAULT_SIMPLIFICATION, VALUES_SIMPLIFICATION),
-			combo(LABEL_XNF_CONVERSION, DEFAULT_XNF_CONVERSION, VALUES_XNF_CONVERSION),
-			//
-			containerExplValDom,
-			containerIntervalDom,
-			containerCompoundDom,
-			containerLogFluid,
-			containerSizeLimitFluid,
-		};
+				combo(LABEL_ABSTRACT_DOMAIN, DEFAULT_ABSTRACT_DOMAIN, VALUES_ABSTRACT_DOMAIN),
+				combo(LABEL_LOOP_SUMMARIZER, DEFAULT_LOOP_SUMMARIZER, VALUES_LOOP_SUMMARIZER),
+				combo(LABEL_CALL_SUMMARIZER, DEFAULT_CALL_SUMMARIZER, VALUES_CALL_SUMMARIZER),
+				combo(LABEL_FLUID, TOOLTIP_FLUID, DEFAULT_FLUID, VALUES_FLUID),
+				//
+				combo(LABEL_SIMPLIFICATION, DEFAULT_SIMPLIFICATION, VALUES_SIMPLIFICATION),
+				combo(LABEL_XNF_CONVERSION, DEFAULT_XNF_CONVERSION, VALUES_XNF_CONVERSION),
+				//
+				containerExplValDom, containerIntervalDom, containerOctagonDom, containerEqDom, containerCompoundDom,
+				containerLogFluid, containerSizeLimitFluid };
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {
@@ -231,10 +245,9 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 		return new UltimatePreferenceItem<>(label, defaultValue, PreferenceType.Combo, values);
 	}
 
-	private static <T> UltimatePreferenceItem<T> combo(final String label, final String tooltip,
-			final T defaultValue, final T[] values) {
-		return new UltimatePreferenceItem<>(
-				label, defaultValue, PreferenceType.Combo, tooltip, false, values, null);
+	private static <T> UltimatePreferenceItem<T> combo(final String label, final String description, final T defaultValue,
+			final T[] values) {
+		return new UltimatePreferenceItem<>(label, defaultValue, description, PreferenceType.Combo, values);
 	}
 
 	private static UltimatePreferenceItem<Integer> integer(final String label, final int defaultValue) {

@@ -247,7 +247,7 @@ public class EprClauseFactory {
 		final TermTuple tt = atom.getArgumentsAsTermTuple();
 		final TermTuple ttSub = tt.applySubstitution(sub);
 		final FunctionSymbol fs = ((ApplicationTerm) atom.getSMTFormula(mEprTheory.getTheory())).getFunction();
-		final ApplicationTerm subTerm = mEprTheory.getTheory().term(fs, ttSub.terms);
+		final ApplicationTerm subTerm = (ApplicationTerm) mEprTheory.getTheory().term(fs, ttSub.terms);
 		//TODO hash
 		final EprAtom subAtom = mEprTheory.getEprAtom(subTerm, 0, mEprTheory.getClausifier().getStackLevel(),
 				atom.getSourceAnnotation());

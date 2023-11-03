@@ -5,6 +5,21 @@ import matplotlib.colors as plt_colors
 import re
 import random
 
+# The script uses stdin if it is started without arguments.
+# To exit stdin use "ctrl + d".
+
+# Example input json string:
+'''
+{
+  "signal": [
+    {"name": "A", "wave": "l..h..x."}
+  ],
+  "head": {
+    "text": "figure title"
+  }
+}
+'''
+
 # Supported colors: https://matplotlib.org/3.1.0/gallery/color/named_colors.html
 COLORS = [i for i in plt_colors.TABLEAU_COLORS.keys()]
 
@@ -81,7 +96,7 @@ def main():
     plotSignal(signal, y_offset)
 
   # Set figure title.
-  ax.set_title(request['head']['text'])
+  # ax.set_title(request['head']['text'])
 
   # Set figure hight dependent on num signals.
   margins_y = fig.subplotpars.top - fig.subplotpars.bottom

@@ -18,16 +18,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
-import java.util.Map.Entry;
-
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.model.FunctionValue.Index;
 
 public class ModelFormatter {
 	private final String mLineSep;
@@ -35,7 +34,6 @@ public class ModelFormatter {
 	private int mIndent;
 
 	private final Theory mTheory;
-	private final Model mModel;
 
 	private void newline() {
 		mString.append(mLineSep);
@@ -44,12 +42,11 @@ public class ModelFormatter {
 		}
 	}
 
-	public ModelFormatter(final Theory t, final Model model) {
+	public ModelFormatter(final Theory t) {
 		mLineSep = System.getProperty("line.separator");
 		mString = new StringBuilder("(");// NOPMD
 		mIndent = 0;
 		mTheory = t;
-		mModel = model;
 	}
 
 	public void appendComment(final String comment) {
@@ -69,56 +66,47 @@ public class ModelFormatter {
 		}
 	}
 
-	public void appendValue(final FunctionSymbol f, final FunctionValue value, final Theory t) {
+	public void appendValue(final FunctionSymbol f, final TermVariable[] vars, final Term definition) {
 		mIndent += Config.INDENTATION;
 		newline();
 		final Sort[] paramSorts = f.getParameterSorts();
-		final TermVariable[] vars = new TermVariable[paramSorts.length];
-		for (int i = 0; i < vars.length; ++i) {
-			vars[i] = t.createTermVariable("@p" + i, paramSorts[i]);
-		}
 		mString.append("(define-fun ").append(PrintTerm.quoteIdentifier(f.getName())).append(" (");
 		for (int i = 0; i < vars.length; ++i) {
 			mString.append('(').append(vars[i]).append(' ').append(paramSorts[i]).append(')');
 		}
 		mString.append(") ").append(f.getReturnSort());
 		mIndent += Config.INDENTATION;
-		appendFunctionValue(value, vars, f.getReturnSort());
+		appendFunctionValue(definition);
 		mString.append(')');
 		mIndent -= Config.INDENTATION;
 		mIndent -= Config.INDENTATION;
 	}
 
-	private void appendFunctionValue(final FunctionValue value, final TermVariable[] vars, final Sort resultSort) {
-		if (vars.length == 0) {
+	private void appendFunctionValue(Term definition) {
+		int closing = 0;
+		while (definition instanceof ApplicationTerm
+				&& ((ApplicationTerm) definition).getFunction().getName().equals(SMTLIBConstants.ITE)) {
+			final Term[] iteArgs = ((ApplicationTerm) definition).getParameters();
 			newline();
-			mString.append(value.getDefault().toStringDirect());
-		} else {
-			final Term defaultVal = value.getDefault();
-			int closing = 0;
-			for (final Entry<Index, Term> me : value.values().entrySet()) {
-				if (me.getValue() != defaultVal) {
-					newline();
-					mString.append("(ite ").append(mModel.generateCondition(me.getKey(), vars).toStringDirect())
-							.append(' ')
-							.append(me.getValue().toStringDirect());
-					// We have to close one parenthesis;
-					++closing;
-				}
-			}
-			// Default value
+			mString.append("(ite ").append(iteArgs[0].toStringDirect()).append(' ').append(iteArgs[1].toStringDirect());
+			definition = iteArgs[2];
+			closing++;
+		}
+		if (closing > 0) {
 			mIndent += Config.INDENTATION;
 			newline();
-			mString.append(defaultVal.toStringDirect());
+			mString.append(definition.toStringDirect());
 			for (int i = 0; i < closing; ++i) {
 				mString.append(')');
 			}
 			mIndent -= Config.INDENTATION;
+		} else {
+			newline();
+			mString.append(definition.toStringDirect());
 		}
 	}
 
 	public String finish() {
 		return mString.append(')').toString();
 	}
-
 }

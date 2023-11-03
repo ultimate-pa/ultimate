@@ -20,36 +20,36 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.proof;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
 
 /**
- * Class used to annotate the input formulas such that interpolation is able to discover the origin of a clause.
+ * Class used to annotate the input formulas such that interpolation is able to
+ * discover the origin of a clause.
  *
  * @author Juergen Christ
  */
 public class SourceAnnotation implements IAnnotation {
 	public static final SourceAnnotation EMPTY_SOURCE_ANNOT = new SourceAnnotation("", null);
 	private final String mAnnot;
-	private final Term mSource;
+	private final Term mProof;
 	private final boolean mFromQuantTheory;
 
-	public SourceAnnotation(final String annot, final Term source) {
+	public SourceAnnotation(final String annot, final Term proof) {
 		mAnnot = annot;
-		mSource = source;
+		mProof = proof;
 		mFromQuantTheory = false;
 	}
 
 	public SourceAnnotation(final SourceAnnotation orig, final boolean fromQuantTheory) {
 		mAnnot = orig.mAnnot;
-		mSource = orig.mSource;
+		mProof = orig.mProof;
 		mFromQuantTheory = fromQuantTheory;
 	}
 
-	public SourceAnnotation(final SourceAnnotation orig, final Term newSource) {
+	public SourceAnnotation(final SourceAnnotation orig, final Term newProof) {
 		mAnnot = orig.mAnnot;
-		mSource = newSource;
+		mProof = newProof;
 		mFromQuantTheory = orig.mFromQuantTheory;
 	}
 
@@ -58,7 +58,7 @@ public class SourceAnnotation implements IAnnotation {
 	}
 
 	public Term getSource() {
-		return mSource;
+		return mProof;
 	}
 
 	public boolean isFromQuantTheory() {
@@ -71,12 +71,20 @@ public class SourceAnnotation implements IAnnotation {
 	}
 
 	@Override
-	public Term toTerm(final Clause cls, final Theory theory) {
-		final Term res = cls.toTerm(theory);
-		// For partial proofs, make an asserted sub proof.
-		final Term subproof = mSource != null ? mSource : theory.term(ProofConstants.FN_ASSERTED, res);
-		return theory.term(ProofConstants.FN_CLAUSE, subproof, theory
-				.annotatedTerm(
-					new Annotation[] { new Annotation(":input", mAnnot.isEmpty() ? null : mAnnot) }, res));
+	public Term toTerm(final Clause cls, final ProofRules proofRules) {
+		final ProofLiteral[] proofLits = cls.toProofLiterals(proofRules);
+		if (mProof == null) {
+			// For partial proofs, make an oracle sub proof.
+			final Annotation[] annots = new Annotation[] {
+					new Annotation(ProofConstants.ANNOTKEY_INPUTCLAUSE, mAnnot.isEmpty() ? null : mAnnot) };
+			return proofRules.oracle(proofLits, annots);
+		} else {
+			// Return the proof term annotated with input formula and proof literals
+			final Annotation[] annots = new Annotation[] {
+					new Annotation(ProofConstants.ANNOTKEY_PROVES,
+							ProofRules.convertProofLiteralsToAnnotation(proofLits)),
+					new Annotation(ProofConstants.ANNOTKEY_INPUTCLAUSE, mAnnot.isEmpty() ? null : mAnnot) };
+			return mProof.getTheory().annotatedTerm(annots, mProof);
+		}
 	}
 }

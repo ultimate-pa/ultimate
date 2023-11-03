@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -37,9 +38,10 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTree;
@@ -48,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -87,24 +88,24 @@ public class PredicateTreeTest {
 		final PredicateTree<TestPredicate> ptree = new PredicateTree<>(mMgdScript);
 		mMgdScript.lock(this);
 		final Set<IProgramVar> vars = new HashSet<>();
-		final BoogieNonOldVar a = constructProgramVar("a");
-		final BoogieNonOldVar b = constructProgramVar("b");
+		final ProgramNonOldVar a = constructProgramVar("a");
+		final ProgramNonOldVar b = constructProgramVar("b");
 		vars.add(a);
 		vars.add(b);
-		final TestPredicate pred1 =
-				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")), vars, mScript);
-		final TestPredicate pred2 =
-				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")), vars, mScript);
-		final TestPredicate pred3 =
-				new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("2")), vars, mScript);
-		final TestPredicate pred4 =
-				new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("0")), vars, mScript);
-		final TestPredicate pred5 =
-				new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("1")), vars, mScript);
-		final TestPredicate pred6 =
-				new TestPredicate(mScript.term("=", b.getTermVariable(), mScript.numeral("0")), vars, mScript);
-		final TestPredicate pred7 =
-				new TestPredicate(SmtUtils.and(mScript, pred1.getFormula(), pred6.getFormula()), vars, mScript);
+		final TestPredicate pred1 = new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")),
+				vars, Collections.emptySet(), mMgdScript);
+		final TestPredicate pred2 = new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("1")),
+				vars, Collections.emptySet(), mMgdScript);
+		final TestPredicate pred3 = new TestPredicate(mScript.term("=", a.getTermVariable(), mScript.numeral("2")),
+				vars, Collections.emptySet(), mMgdScript);
+		final TestPredicate pred4 = new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("0")),
+				vars, Collections.emptySet(), mMgdScript);
+		final TestPredicate pred5 = new TestPredicate(mScript.term(">", a.getTermVariable(), mScript.numeral("1")),
+				vars, Collections.emptySet(), mMgdScript);
+		final TestPredicate pred6 = new TestPredicate(mScript.term("=", b.getTermVariable(), mScript.numeral("0")),
+				vars, Collections.emptySet(), mMgdScript);
+		final TestPredicate pred7 = new TestPredicate(SmtUtils.and(mScript, pred1.getFormula(), pred6.getFormula()),
+				vars, Collections.emptySet(), mMgdScript);
 		mMgdScript.unlock(this);
 
 		Assert.assertTrue(pred1 != pred2);
@@ -161,8 +162,8 @@ public class PredicateTreeTest {
 		mScript.exit();
 	}
 
-	private BoogieNonOldVar constructProgramVar(final String identifier) {
-		BoogieOldVar oldVar;
+	private ProgramNonOldVar constructProgramVar(final String identifier) {
+		ProgramOldVar oldVar;
 		final Sort sort = SmtSortUtils.getIntSort(mMgdScript);
 		{
 			final boolean isOldVar = true;
@@ -173,9 +174,9 @@ public class PredicateTreeTest {
 			final ApplicationTerm primedConstant =
 					ProgramVarUtils.constructPrimedConstant(mMgdScript, this, sort, name);
 
-			oldVar = new BoogieOldVar(identifier, null, termVariable, defaultConstant, primedConstant);
+			oldVar = new ProgramOldVar(identifier, termVariable, defaultConstant, primedConstant);
 		}
-		BoogieNonOldVar nonOldVar;
+		ProgramNonOldVar nonOldVar;
 		{
 			final boolean isOldVar = false;
 			final String name = ProgramVarUtils.buildBoogieVarName(identifier, null, true, isOldVar);
@@ -185,7 +186,7 @@ public class PredicateTreeTest {
 			final ApplicationTerm primedConstant =
 					ProgramVarUtils.constructPrimedConstant(mMgdScript, this, sort, name);
 
-			nonOldVar = new BoogieNonOldVar(identifier, null, termVariable, defaultConstant, primedConstant, oldVar);
+			nonOldVar = new ProgramNonOldVar(identifier, termVariable, defaultConstant, primedConstant, oldVar);
 		}
 		oldVar.setNonOldVar(nonOldVar);
 		return nonOldVar;
@@ -194,13 +195,15 @@ public class PredicateTreeTest {
 	private static final class TestPredicate implements IPredicate {
 
 		private final Set<IProgramVar> mVars;
+		private final Set<IProgramFunction> mFuns;
 		private final Term mClosedFormula;
 		private final Term mFormula;
 
-		public TestPredicate(final Term formula, final Set<IProgramVar> vars, final Script script) {
+		public TestPredicate(final Term formula, final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final ManagedScript mgdScript) {
 			mVars = vars;
+			mFuns = funs;
 			mFormula = formula;
-			mClosedFormula = PredicateUtils.computeClosedFormula(formula, vars, script);
+			mClosedFormula = PredicateUtils.computeClosedFormula(formula, vars, mgdScript);
 		}
 
 		@Override
@@ -211,6 +214,11 @@ public class PredicateTreeTest {
 		@Override
 		public Set<IProgramVar> getVars() {
 			return mVars;
+		}
+
+		@Override
+		public Set<IProgramFunction> getFuns() {
+			return mFuns;
 		}
 
 		@Override
@@ -227,6 +235,7 @@ public class PredicateTreeTest {
 		public String toString() {
 			return getFormula().toStringDirect();
 		}
+
 
 	}
 }

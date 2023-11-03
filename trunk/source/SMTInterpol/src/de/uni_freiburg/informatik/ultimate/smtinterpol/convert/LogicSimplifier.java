@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IProofTracker;
@@ -45,8 +46,9 @@ public class LogicSimplifier {
 	}
 
 	/**
-	 * Optimize nots.  Transforms (not true) to false, (not false) to true, and
+	 * Optimize nots. Transforms (not true) to false, (not false) to true, and
 	 * remove double negation.
+	 *
 	 * @param arg Term to negate.
 	 * @return Term equivalent to the negation of the input.
 	 */
@@ -63,19 +65,14 @@ public class LogicSimplifier {
 			final Term rewrite = mTracker.buildRewrite(notTerm, theory.mFalse, ProofConstants.RW_NOT_SIMP);
 			return mTracker.transitivity(input, rewrite);
 		}
-		if ((arg instanceof ApplicationTerm)
-			&& ((ApplicationTerm) arg).getFunction().getName().equals("not")) {
-			final Term res = ((ApplicationTerm) arg).getParameters()[0];
-			final Term rewrite = mTracker.buildRewrite(notTerm, res, ProofConstants.RW_NOT_SIMP);
-			return mTracker.transitivity(input, rewrite);
-		}
 		return input;
 	}
 
 	/**
-	 * Optimize ors.  If true is found in the disjuncts, it is returned.
-	 * Otherwise, we remove false, or disjuncts that occur more than once.  The
-	 * result might still be an n-ary or.
+	 * Optimize ors. If true is found in the disjuncts, it is returned. Otherwise,
+	 * we remove false, or disjuncts that occur more than once. The result might
+	 * still be an n-ary or.
+	 *
 	 * @param args The disjuncts.
 	 * @return Term equivalent to the disjunction of the disjuncts.
 	 */
@@ -83,7 +80,7 @@ public class LogicSimplifier {
 		final ApplicationTerm orTerm = (ApplicationTerm) mTracker.getProvedTerm(input);
 		assert orTerm.getFunction().getName() == "or";
 		final Term[] args = orTerm.getParameters();
-		final LinkedHashSet<Term> ctx = new LinkedHashSet<Term>();
+		final LinkedHashSet<Term> ctx = new LinkedHashSet<>();
 		final Theory theory = args[0].getTheory();
 		final Term trueTerm = theory.mTrue;
 		final Term falseTerm = theory.mFalse;
@@ -227,7 +224,7 @@ public class LogicSimplifier {
 			}
 			// rewrite and repeat with new equality
 			// this terminates, because the sort gets simpler
-			final ApplicationTerm newEqTerm = theory.term("=", newArgs);
+			final ApplicationTerm newEqTerm = (ApplicationTerm) theory.term("=", newArgs);
 			final Term result = mTracker.buildRewrite(eqTerm, newEqTerm, ProofConstants.RW_STORE_REWRITE);
 			input = mTracker.transitivity(input, result);
 			eqTerm = newEqTerm;
@@ -277,7 +274,7 @@ public class LogicSimplifier {
 		assert eqTerm.getFunction().getName() == "=";
 		final Theory theory = input.getTheory();
 		Term[] args = eqTerm.getParameters();
-		final LinkedHashSet<Term> eqArgList = new LinkedHashSet<Term>();
+		final LinkedHashSet<Term> eqArgList = new LinkedHashSet<>();
 		if (args[0].getSort().isNumericSort()) {
 			Rational lastConst = null;
 			for (final Term t : args) {
@@ -359,7 +356,7 @@ public class LogicSimplifier {
 		// Simplify first
 		if (eqArgList.size() != args.length) {
 			final Term[] newArgs = eqArgList.toArray(new Term[eqArgList.size()]);
-			final ApplicationTerm rhs = theory.term("=", newArgs);
+			final ApplicationTerm rhs = (ApplicationTerm) theory.term("=", newArgs);
 			input = mTracker.transitivity(input,
 					mTracker.buildRewrite(eqTerm, rhs, ProofConstants.RW_EQ_SIMP));
 			eqTerm = rhs;
@@ -423,7 +420,7 @@ public class LogicSimplifier {
 				return convertXor(xorTerm);
 			}
 		}
-		LinkedHashSet<Term> tmp = new LinkedHashSet<Term>();
+		LinkedHashSet<Term> tmp = new LinkedHashSet<>();
 		for (final Term t : args) {
 			if (!tmp.add(t)) {
 				// We had (distinct a b a)
@@ -486,24 +483,14 @@ public class LogicSimplifier {
 	}
 
 	public Term convertAnd(final Term input) {
-		final ApplicationTerm andTerm = (ApplicationTerm) mTracker.getProvedTerm(input);
-		assert andTerm.getFunction().getName() == "and";
-		final Theory theory = input.getTheory();
-		final Term[] args = andTerm.getParameters();
-		final Term[] negArgs = new Term[args.length];
-		for (int i = 0; i < args.length; i++) {
-			negArgs[i] = theory.term("not", args[i]);
-		}
-		final Term notOrTerm = theory.term("not", theory.term("or", negArgs));
-		final Term andRewrite = mTracker.buildRewrite(andTerm, notOrTerm, ProofConstants.RW_AND_TO_OR);
-		return convertNotOrNot(mTracker.transitivity(input, andRewrite));
+		return input;
 	}
 
 	public Term convertXor(final Term input) {
-		ApplicationTerm xorTerm = (ApplicationTerm) mTracker.getProvedTerm(input);
-		final Term[] args = xorTerm.getParameters();
+		Term xorTerm = mTracker.getProvedTerm(input);
+		assert ((ApplicationTerm) xorTerm).getFunction().getName() == "xor";
+		final Term[] args = ((ApplicationTerm) xorTerm).getParameters();
 		final Theory theory = input.getTheory();
-		assert xorTerm.getFunction().getName() == "xor";
 		assert args.length == 2;
 		// First check if one of the arguments is true or false and do simplification
 		if (args[0] == theory.mFalse) {
@@ -523,19 +510,18 @@ public class LogicSimplifier {
 		final Term[] newArgs = args.clone();
 		int countNot = 0;
 		for (int i = 0; i < args.length; i++) {
-			if (args[i] instanceof ApplicationTerm) {
-				final ApplicationTerm at = (ApplicationTerm) args[i];
-				if (at.getFunction() == theory.mNot) {
-					newArgs[i] = at.getParameters()[0];
-					countNot++;
-				}
+			Term arg = args[i];
+			while (isNegation(arg)) {
+				arg = ((ApplicationTerm) arg).getParameters()[0];
+				countNot++;
 			}
+			newArgs[i] = arg;
 		}
 		Term rewrite = input;
 		if (countNot > 0) {
 			// The new xor term is the term where all not applications are removed and the whole xor term need
 			// to be negated if there were an odd number of nots removed.
-			final ApplicationTerm newXorTerm = theory.term(xorTerm.getFunction(), newArgs);
+			final Term newXorTerm = theory.term(SMTLIBConstants.XOR, newArgs);
 			final Term newTerm = countNot % 2 == 1 ? theory.term("not", newXorTerm) : newXorTerm;
 			// no need to simplify not, since not(xor(..)) cannot be simplified.
 			rewrite = mTracker.transitivity(input, mTracker.buildRewrite(xorTerm, newTerm, ProofConstants.RW_XOR_NOT));
@@ -554,18 +540,6 @@ public class LogicSimplifier {
 	}
 
 	public Term convertImplies(final Term input) {
-		final ApplicationTerm impliesTerm = (ApplicationTerm) mTracker.getProvedTerm(input);
-		final Theory theory = input.getTheory();
-		assert impliesTerm.getFunction().getName() == "=>";
-		final Term[] args = impliesTerm.getParameters();
-		final Term[] newArgs = new Term[args.length];
-		// We move the conclusion in front (see Simplify tech report)
-		newArgs[0] = args[args.length - 1];
-		for (int i = 1; i < newArgs.length; i++) {
-			newArgs[i] = theory.term("not", args[i - 1]);
-		}
-		final Term rhs = theory.term("or", newArgs);
-		final Term impliesRewrite = mTracker.buildRewrite(impliesTerm, rhs, ProofConstants.RW_IMP_TO_OR);
-		return convertOrNot(mTracker.transitivity(input, impliesRewrite));
+		return input;
 	}
 }

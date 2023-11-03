@@ -39,6 +39,7 @@ import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
@@ -79,7 +80,7 @@ public class NameHandler implements INameHandler {
 
 	@Override
 	public String getUniqueIdentifier(final IASTNode scope, String cId, final int compCnt, final boolean isOnHeap,
-			final CType cType) {
+			final CType cType, final DeclarationInformation decInfo) {
 		if (cId.isEmpty()) {
 			cId = getGloballyUniqueIdentifier("unnamed");
 		}
@@ -93,7 +94,7 @@ public class NameHandler implements INameHandler {
 			while (curr != null && !(curr.getParent() instanceof IASTTranslationUnit)) {
 				if (curr instanceof IASTCompositeTypeSpecifier) {
 					boogieId = cId;
-					mBacktranslator.putVar(boogieId, cId, cType);
+					mBacktranslator.putVar(boogieId, cId, cType, decInfo);
 					return boogieId;
 				}
 				curr = curr.getParent();
@@ -114,7 +115,7 @@ public class NameHandler implements INameHandler {
 		} else {
 			boogieId = "~" + onHeapStr + cId;
 		}
-		mBacktranslator.putVar(boogieId, cId, cType);
+		mBacktranslator.putVar(boogieId, cId, cType, decInfo);
 		return boogieId;
 	}
 
@@ -136,12 +137,12 @@ public class NameHandler implements INameHandler {
 	}
 
 	@Override
-	public String getInParamIdentifier(final String cId, final CType cType) {
+	public String getInParamIdentifier(final String cId, final CType cType, final DeclarationInformation decInfo) {
 		// (alex:) in case of several unnamed parameters we need uniqueness
 		// (still a little bit overkill, to make it precise we would need to
 		// check whether the current method has more than one unnamed parameter)
 		final String boogieId = SFO.IN_PARAM + cId + (cId.isEmpty() ? mTmpUID++ : "");
-		mBacktranslator.putInVar(boogieId, cId, cType);
+		mBacktranslator.putInVar(boogieId, cId, cType, decInfo);
 		return boogieId;
 	}
 

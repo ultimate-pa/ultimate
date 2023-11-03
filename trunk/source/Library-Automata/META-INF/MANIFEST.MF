@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-Automata
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.automata
-Bundle-Version: 0.2.2
+Bundle-Version: 0.2.3
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
@@ -251,6 +251,10 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
    de.uni_freiburg.informatik.ultimate.automata,
    de.uni_freiburg.informatik.ultimate.core.model.models",
  de.uni_freiburg.informatik.ultimate.automata.partialorder,
+ de.uni_freiburg.informatik.ultimate.automata.partialorder.independence,
+ de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.abstraction,
+ de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction,
+ de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors,
  de.uni_freiburg.informatik.ultimate.automata.petrinet;
   uses:="de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures,
    de.uni_freiburg.informatik.ultimate.util.datastructures.relation,
@@ -284,6 +288,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
    de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding,
    de.uni_freiburg.informatik.ultimate.core.model.models,
    de.uni_freiburg.informatik.ultimate.automata",
+ de.uni_freiburg.informatik.ultimate.automata.rabin,
  de.uni_freiburg.informatik.ultimate.automata.statefactory;
   uses:="de.uni_freiburg.informatik.ultimate.automata.petrinet,
    de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization,

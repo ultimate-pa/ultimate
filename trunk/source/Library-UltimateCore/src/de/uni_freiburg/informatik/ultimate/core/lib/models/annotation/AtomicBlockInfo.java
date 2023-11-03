@@ -81,7 +81,7 @@ public final class AtomicBlockInfo extends ModernAnnotations {
 	 */
 	public static boolean isStartOfAtomicBlock(final IElement element) {
 		final AtomicBlockInfo annotation =
-				ModelUtils.getAnnotation(element, AtomicBlockInfo.class.getName(), x -> (AtomicBlockInfo) x);
+				ModelUtils.getAnnotation(element, AtomicBlockInfo.class.getName(), AtomicBlockInfo.class::cast);
 		if (annotation != null) {
 			return annotation.mBeginAtomic;
 		}
@@ -99,7 +99,7 @@ public final class AtomicBlockInfo extends ModernAnnotations {
 	 */
 	public static boolean isEndOfAtomicBlock(final IElement element) {
 		final AtomicBlockInfo annotation =
-				ModelUtils.getAnnotation(element, AtomicBlockInfo.class.getName(), x -> (AtomicBlockInfo) x);
+				ModelUtils.getAnnotation(element, AtomicBlockInfo.class.getName(), AtomicBlockInfo.class::cast);
 		if (annotation != null) {
 			return annotation.mEndAtomic;
 		}

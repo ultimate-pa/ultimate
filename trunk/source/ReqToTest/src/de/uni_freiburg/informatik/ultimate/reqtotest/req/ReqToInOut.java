@@ -7,13 +7,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndInvariancePattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternTT;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternTU;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternUT;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InstAbsPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariantPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvarianceBoundL2Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseBoundL12Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseBoundL1Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseDelayPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.AbsencePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariancePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -46,7 +46,7 @@ public class ReqToInOut {
 
 	public void requirementToInOut(final List<PatternType<?>> patternList) {
 		for (final PatternType<?> pattern : patternList) {
-			if (!(pattern instanceof InitializationPattern)) {
+			if (!(pattern instanceof DeclarationPattern)) {
 				addRequirement(pattern);
 			}
 		}
@@ -74,19 +74,19 @@ public class ReqToInOut {
 	 */
 
 	public void addRequirement(final PatternType<?> pattern) {
-		if (pattern instanceof InvariantPattern) {
+		if (pattern instanceof InvariancePattern) {
 			addInvariantPattern(pattern);
-		} else if (pattern instanceof BndResponsePatternUT) {
+		} else if (pattern instanceof ResponseDelayPattern) {
 			addBndResponsePatternUTPattern(pattern);
-		} else if (pattern instanceof BndInvariancePattern) {
+		} else if (pattern instanceof InvarianceBoundL2Pattern) {
 			addBndInvariance(pattern);
-		} else if (pattern instanceof BndResponsePatternTT) {
+		} else if (pattern instanceof ResponseBoundL12Pattern) {
 			addBndResponsePatternTTPattern(pattern);
 		} else if (pattern instanceof UniversalityPattern) {
 			addUniversalityPattern(pattern);
-		} else if (pattern instanceof InstAbsPattern) {
+		} else if (pattern instanceof AbsencePattern) {
 			addInstAbsPattern(pattern);
-		} else if (pattern instanceof BndResponsePatternTU) {
+		} else if (pattern instanceof ResponseBoundL1Pattern) {
 			addBndResponsePatternTUPattern(pattern);
 		} else {
 			throw new RuntimeException("Pattern type is not supported at:" + pattern.toString());

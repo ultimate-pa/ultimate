@@ -6,26 +6,10 @@
 var i,r,n,j : int;
 var a : [int]int;
 
-// procedure main() 
-// modifies a, i, r, n;
-// {
-// 	i := 0;
-// // 	n := 3;
-// 	while (i < n) {
-// 		a[i] := 0;
-// 		i := i + 1;
-// 	}
-// 	assume(0 <= r && r < n);
-// 	assert(a[r] == 0);
-// }
-
-
 procedure main() 
-modifies a, i, r, n, j;
+modifies a, i, r, n;
 {
 	i := 0;
-	assume j == i;
-// 	n := 3;
 	while (i < n) {
 		a[i] := 0;
 		i := i + 1;
@@ -33,4 +17,3 @@ modifies a, i, r, n, j;
 	assume(0 <= r && r < n);
 	assert(a[r] == 0);
 }
-

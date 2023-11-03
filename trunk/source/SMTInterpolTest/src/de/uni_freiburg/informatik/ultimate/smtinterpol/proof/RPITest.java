@@ -47,7 +47,7 @@ public class RPITest {
 		}
 
 		@Override
-		public Term getSMTFormula(final Theory smtTheory, final boolean quoted) {
+		public Term getSMTFormula(final Theory smtTheory) {
 			throw new InternalError("Bug in testcase");
 		}
 

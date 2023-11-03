@@ -144,7 +144,7 @@ public class PredicateFactoryForInterpolantAutomata
 	}
 
 	@Override
-	public IPredicate getContentOnPetriNet2FiniteAutomaton(final Marking<?, IPredicate> marking) {
+	public IPredicate getContentOnPetriNet2FiniteAutomaton(final Marking<IPredicate> marking) {
 		/*
 		 * TODO Christian 2017-02-15 This method was not implemented although it was used by class CegarLoopJulian in
 		 * method acceptsPetriViaFA().

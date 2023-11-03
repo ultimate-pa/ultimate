@@ -49,10 +49,25 @@ public class CommuhashUtils {
 		// do not instantiate
 	}
 
+	/**
+	 * Dangerous! A function may be commutative in some theory but it is not in
+	 * e.g., QF_UF
+	 */
+	public static final String[] COMMUTATIVE_OPERATORS = new String[] { "and", "or", "=", "distinct", "+", "*", "bvadd",
+			"bvmul", "bvand", "bvor", "bvxor" };
+
 	public final static Comparator<Term> HASH_BASED_COMPERATOR = new Comparator<Term>() {
 		@Override
 		public int compare(final Term arg0, final Term arg1) {
-			return Integer.compare(arg0.hashCode(), arg1.hashCode());
+			if (arg0 == arg1) {
+				return 0;
+			} else {
+				if (arg0.hashCode() == arg1.hashCode()) {
+					return arg0.toString().compareTo(arg1.toString());
+				} else {
+					return Integer.compare(arg0.hashCode(), arg1.hashCode());
+				}
+			}
 		}
 	};
 
@@ -71,6 +86,11 @@ public class CommuhashUtils {
 		case "distinct":
 		case "+":
 		case "*":
+		case "bvadd":
+		case "bvmul":
+		case "bvand":
+		case "bvor":
+		case "bvxor":
 			return true;
 		default:
 			return false;

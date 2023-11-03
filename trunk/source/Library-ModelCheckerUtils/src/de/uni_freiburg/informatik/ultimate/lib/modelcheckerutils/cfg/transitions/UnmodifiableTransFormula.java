@@ -36,14 +36,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -77,7 +72,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	}
 
 	/**
-	 * This constructor is package-private use {@link TransFormulaBuilder} to construct TransFormulas.
+	 * This constructor is package-private. Use {@link TransFormulaBuilder} to construct TransFormulas.
 	 *
 	 * @param nonTheoryConsts
 	 */
@@ -87,53 +82,23 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 			final Infeasibility infeasibility, final ManagedScript script) {
 		super(inVars, outVars, auxVars, nonTheoryConsts);
 		assert UltimateNormalFormUtils.respectsUltimateNormalForm(formula) : "Term not in UltimateNormalForm";
+
 		mFormula = formula;
 		mBranchEncoders = branchEncoders;
 		mInfeasibility = infeasibility;
 		mClosedFormula =
 				computeClosedFormula(formula, super.getInVars(), super.getOutVars(), super.getAuxVars(), script);
+		mAssignedVars = TransFormulaUtils.computeAssignedVars(inVars, outVars);
+
 		assert SmtUtils.neitherKeyNorValueIsNull(inVars) : "null in inVars";
 		assert SmtUtils.neitherKeyNorValueIsNull(outVars) : "null in outVars";
 		assert !branchEncoders.isEmpty() || mClosedFormula.getFreeVars().length == 0 : String
 				.format("free variables %s", Arrays.asList(mClosedFormula.getFreeVars()));
-		// mVars = new
-		// HashSet<TermVariable>(Arrays.asList(mFormula.getFreeVars()));
 		assert allSubsetInOutAuxBranch() : "unexpected vars in TransFormula";
-		assert inAuxSubsetAll(false) : "superfluous vars in TransFormula";
-		// assert super.getOutVars().keySet().containsAll(super.getInVars().keySet()) :
-		// " strange inVar";
-
-		mAssignedVars = TransFormulaUtils.computeAssignedVars(inVars, outVars);
-		// TODO: The following line is a workaround, in the future the set of
-		// constants will be part of the input and we use findConstants only
-		// in the assertion
+		assert eachAuxVarOccursInFormula() == null : "Superfluous aux var: " + eachAuxVarOccursInFormula();
+		assert termVariablesHaveUniqueProgramVar() : "Same TermVariable used for different program variables";
 		assert doConstantConsistencyCheck() : "consts inconsistent";
-		// assert isSupersetOfOccurringConstants(mConstants, mFormula) :
-		// "forgotten constant";
-
-		// if (!eachInVarOccursAsOutVar()) {
-		// System.out.println("Fixietest failed");
-		// }
-	}
-
-	private boolean doConstantConsistencyCheck() {
-		boolean consistent = true;
-		final Set<ApplicationTerm> constantsInFormula = new ConstantFinder().findConstants(mFormula, false);
-		final Set<ApplicationTerm> nonTheoryConstantTerms = new HashSet<>();
-		for (final IProgramConst programConsts : getNonTheoryConsts()) {
-			consistent &= !programConsts.getDefaultConstant().getFunction().isIntern();
-			assert consistent : "is theory symbol";
-			nonTheoryConstantTerms.add(programConsts.getDefaultConstant());
-			consistent &= constantsInFormula.contains(programConsts.getDefaultConstant());
-			assert consistent : "not in formula";
-		}
-		for (final ApplicationTerm constInFomula : constantsInFormula) {
-			if (!constInFomula.getFunction().isIntern()) {
-				consistent &= nonTheoryConstantTerms.contains(constInFomula);
-				assert consistent : "not in const set: " + constInFomula;
-			}
-		}
-		return consistent;
+		assert disjointVarSets() : "non-disjoint vars in TransFormula";
 	}
 
 	/**
@@ -153,7 +118,6 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 			final Map<IProgramVar, TermVariable> outVars, final Set<TermVariable> auxVars, final ManagedScript script) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : inVars.entrySet()) {
-			final IProgramVar inVar = entry.getKey();
 			final TermVariable inTermVar = entry.getValue();
 			assert !substitutionMapping.containsKey(inTermVar);
 			substitutionMapping.put(inTermVar, getConstantForInVar(entry.getKey()));
@@ -162,7 +126,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 			final IProgramVar outVar = entry.getKey();
 			final TermVariable outTermVar = entry.getValue();
 			if (inVars.get(outVar) == outTermVar) {
-				// is assigned var
+				// is handled above
 				continue;
 			}
 			substitutionMapping.put(outTermVar, getConstantForOutVar(entry.getKey(), inVars, outVars));
@@ -171,8 +135,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 			final Term auxVarConst = ProgramVarUtils.constructConstantForAuxVar(script, auxVarTv);
 			substitutionMapping.put(auxVarTv, auxVarConst);
 		}
-		final Term closedTerm = new Substitution(script, substitutionMapping).transform(formula);
-		return closedTerm;
+		return Substitution.apply(script, substitutionMapping, formula);
 	}
 
 	/**
@@ -199,109 +162,82 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		return pv.getPrimedConstant();
 	}
 
-	private static boolean allVarsContainsFreeVars(final Set<TermVariable> allVars, final Term term,
-			final ILogger logger) {
-		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(term.getFreeVars()));
-		boolean result = true;
-		for (final TermVariable tv : freeVars) {
-			if (!allVars.contains(tv)) {
-				logger.error("not in allVars: " + tv);
-				result = false;
-			}
-		}
-		return result;
-	}
-
-	private static boolean freeVarsContainsAllVars(final Set<TermVariable> allVars, final Term term,
-			final ILogger logger) {
-		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(term.getFreeVars()));
-		boolean result = true;
-		for (final TermVariable tv : allVars) {
-			if (!freeVars.contains(tv)) {
-				logger.error("not in allVars: " + tv);
-				result = false;
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Returns true iff all constants (ApplicationTerm with zero parameters) that occur in term are contained in the set
-	 * setOfConstants.
-	 */
-	private static boolean isSupersetOfOccurringConstants(final Set<ApplicationTerm> setOfConstants, final Term term) {
-		final Set<ApplicationTerm> constantsInTerm = new ConstantFinder().findConstants(term, false);
-		return setOfConstants.containsAll(constantsInTerm);
-	}
-
-	private static boolean freeVarsSubsetInOutAuxBranch(final Term term, final Map<IProgramVar, TermVariable> inVars,
-			final Map<IProgramVar, TermVariable> outVars, final Set<TermVariable> aux,
-			final Set<TermVariable> branchEncoders, final ILogger logger) {
-		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(term.getFreeVars()));
-		boolean result = true;
-		for (final TermVariable tv : freeVars) {
-			if (inVars.containsValue(tv)) {
-				continue;
-			}
-			if (outVars.containsValue(tv)) {
-				continue;
-			}
-			if (aux.contains(tv)) {
-				continue;
-			}
-			if (branchEncoders.contains(tv)) {
-				continue;
-			}
-			logger.error("neither in out aux: " + tv);
-			result = false;
-		}
-		return result;
-	}
-
 	/**
 	 * Returns true if each Term variable in mVars occurs as inVar, outVar, auxVar, or branchEncoder
 	 */
 	private boolean allSubsetInOutAuxBranch() {
 		boolean result = true;
-		final HashSet<TermVariable> allVars = new HashSet<>(Arrays.asList(mFormula.getFreeVars()));
-		for (final TermVariable tv : allVars) {
-			result &= super.getInVars().values().contains(tv) || super.getOutVars().values().contains(tv)
-					|| super.getAuxVars().contains(tv) || mBranchEncoders.contains(tv);
+		for (final TermVariable tv : mFormula.getFreeVars()) {
+			result &= mInVars.values().contains(tv) || mOutVars.values().contains(tv) || mAuxVars.contains(tv)
+					|| mBranchEncoders.contains(tv);
 			assert result : "unexpected variable in formula";
 		}
-		for (final TermVariable tv : super.getAuxVars()) {
-			result &= allVars.contains(tv);
-			assert result : "unnecessary many vars in TransFormula";
+		return result;
+	}
+
+	private boolean disjointVarSets() {
+		boolean result = true;
+		for (final TermVariable tv : super.getInVars().values()) {
+			result &= !super.getAuxVars().contains(tv);
+			assert result : "in var is also aux var: " + tv;
+		}
+		for (final TermVariable tv : super.getOutVars().values()) {
+			result &= !super.getAuxVars().contains(tv);
+			assert result : "out var is also aux var: " + tv;
 		}
 		return result;
 	}
 
 	/**
-	 * Returns true each auxVar is in allVars and each inVar occurs in allVars.
+	 * Returns null if each auxVar is a free variable of the formula. Returns a counterexample otherwise.
 	 */
-	private boolean inAuxSubsetAll(final boolean allowSuperflousInVars) {
-		boolean result = true;
+	private TermVariable eachAuxVarOccursInFormula() {
 		final HashSet<TermVariable> allVars = new HashSet<>(Arrays.asList(mFormula.getFreeVars()));
-		if (!allowSuperflousInVars) {
-			for (final IProgramVar bv : super.getInVars().keySet()) {
-				result &= allVars.contains(super.getInVars().get(bv));
-				assert result : "superfluous inVar";
+		for (final TermVariable tv : super.getAuxVars()) {
+			if (!allVars.contains(tv)) {
+				return tv;
 			}
 		}
-		for (final TermVariable tv : super.getAuxVars()) {
-			result &= allVars.contains(tv);
-			assert result : "superfluous auxVar";
-		}
-		return result;
+		return null;
 	}
 
-	private boolean eachInVarOccursAsOutVar() {
-		for (final IProgramVar bv : super.getInVars().keySet()) {
-			if (!super.getOutVars().containsKey(bv)) {
+	private boolean termVariablesHaveUniqueProgramVar() {
+		final Map<TermVariable, IProgramVar> progVars = new HashMap<>();
+		for (final Map.Entry<IProgramVar, TermVariable> entry : mInVars.entrySet()) {
+			final IProgramVar existing = progVars.get(entry.getValue());
+			if (existing != null && existing != entry.getKey()) {
 				return false;
 			}
+			progVars.put(entry.getValue(), entry.getKey());
+		}
+		for (final Map.Entry<IProgramVar, TermVariable> entry : mOutVars.entrySet()) {
+			final IProgramVar existing = progVars.get(entry.getValue());
+			if (existing != null && existing != entry.getKey()) {
+				return false;
+			}
+			progVars.put(entry.getValue(), entry.getKey());
 		}
 		return true;
+	}
+
+	private boolean doConstantConsistencyCheck() {
+		boolean consistent = true;
+		final Set<ApplicationTerm> constantsInFormula = SmtUtils.extractConstants(mFormula, false);
+		final Set<ApplicationTerm> nonTheoryConstantTerms = new HashSet<>();
+		for (final IProgramConst programConsts : getNonTheoryConsts()) {
+			consistent &= !programConsts.getDefaultConstant().getFunction().isIntern();
+			assert consistent : "is theory symbol";
+			nonTheoryConstantTerms.add(programConsts.getDefaultConstant());
+			consistent &= constantsInFormula.contains(programConsts.getDefaultConstant());
+			assert consistent : "not in formula";
+		}
+		for (final ApplicationTerm constInFomula : constantsInFormula) {
+			if (!constInFomula.getFunction().isIntern()) {
+				consistent &= nonTheoryConstantTerms.contains(constInFomula);
+				assert consistent : "not in const set: " + constInFomula;
+			}
+		}
+		return consistent;
 	}
 
 	@Override
@@ -342,11 +278,4 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	public Infeasibility isInfeasible() {
 		return mInfeasibility;
 	}
-
-	private static void reportTimeoutResult(final IUltimateServiceProvider services) {
-		final String timeOutMessage = "Timeout during computation of TransFormula";
-		final TimeoutResult timeOutRes = new TimeoutResult(ModelCheckerUtils.PLUGIN_ID, timeOutMessage);
-		services.getResultService().reportResult(ModelCheckerUtils.PLUGIN_ID, timeOutRes);
-	}
-
 }

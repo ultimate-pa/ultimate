@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
@@ -45,7 +46,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 	private static final char BLANK = ' ';
 
 	private NestedWord<LETTER> mNestedWord;
-	private ArrayList<STATE> mStateSequence;
+	private List<STATE> mStateSequence;
 
 	/**
 	 * Constructor with a nested word and a sequence of states.
@@ -55,7 +56,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 	 * @param stateSequence
 	 *            sequence of states
 	 */
-	public NestedRun(final NestedWord<LETTER> nestedWord, final ArrayList<STATE> stateSequence) {
+	public NestedRun(final NestedWord<LETTER> nestedWord, final List<STATE> stateSequence) {
 		if (nestedWord.length() + 1 == stateSequence.size()) {
 			mNestedWord = nestedWord;
 			mStateSequence = stateSequence;
@@ -114,7 +115,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 	}
 
 	@Override
-	public ArrayList<STATE> getStateSequence() {
+	public List<STATE> getStateSequence() {
 		return mStateSequence;
 	}
 
@@ -189,6 +190,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 			}
 			return new NestedRun<>(concatNestedWord, concatStateSeq);
 		}
+
 		throw new IllegalArgumentException("Can only concatenate two runs where the last element of the first run's "
 				+ "statement sequence is the same state as the last element of the second run's statement sequence.");
 	}
@@ -262,5 +264,10 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 			}
 		}
 		return true;
+	}
+
+	public NestedRun<LETTER, STATE> getSubRun(final int from, final int to) {
+		return new NestedRun<>(mNestedWord.getSubWord(from, to),
+				new ArrayList<>(mStateSequence.subList(from, to + 1)));
 	}
 }

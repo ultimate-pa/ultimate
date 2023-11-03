@@ -192,6 +192,10 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		mTcSmtManager = managedScriptTc;
 		mCsToolkit = csToolkit;
 		mBoogie2SmtSymbolTable = csToolkit.getSymbolTable();
+		if (trace.length() == 0) {
+			throw new IllegalArgumentException(
+					"Only non-empty traces supported. For empty traces we are unable to determine the procedure in which precondition and postcondition are evaluated (needed to check whether a global var and the corresponding oldvar are equivalent)");
+		}
 		mTrace = trace;
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
@@ -415,11 +419,28 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			funGetValue = this::getValue;
 		}
 
-		for (final IProgramVar bv : nsb.getIndexedVarRepresentative().keySet()) {
+		for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
+			final IProgramVar bv = entry.getKey();
+			final Map<Integer, Term> indexedRepresentatives = entry.getValue();
 			if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
-				for (final Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
-					final Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
-					final Term valueT = funGetValue.apply(indexedVar);
+				for (final var representative : indexedRepresentatives.entrySet()) {
+					final Integer index = representative.getKey();
+					final Term indexedVar = representative.getValue();
+					final Term valueT;
+					try {
+						valueT = funGetValue.apply(indexedVar);
+					} catch (final UnsupportedOperationException uoe) {
+						// TODO 2023-10-26 Matthias: This is a workaround that makes sure that we don't
+						// crash while using SMTInterpol on quantified formulas. See {@link
+						// IcfgProgramExecutionBuilder#varValAtPos}. If SMTInterpol
+						// is able to produce values for the sorts `Int` and `Bool` this catch block
+						// should be removed.
+						if (uoe.getMessage().equals("Modelproduction for quantifier theory not implemented.")) {
+							continue;
+						} else {
+							throw uoe;
+						}
+					}
 					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
 				}
 			}

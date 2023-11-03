@@ -67,7 +67,7 @@ public class InterpolationTest {
 		mScript.setOption(":produce-interpolants", true);
 		mScript.setOption(":interpolant-check-mode", true);
 		mScript.setOption(":proof-transformation", "LU");
-		mScript.setOption(":array-interpolation", true);
+		// mScript.setOption(":array-interpolation", true);
 		mScript.setLogic("QF_AUFLIRA");
 	}
 

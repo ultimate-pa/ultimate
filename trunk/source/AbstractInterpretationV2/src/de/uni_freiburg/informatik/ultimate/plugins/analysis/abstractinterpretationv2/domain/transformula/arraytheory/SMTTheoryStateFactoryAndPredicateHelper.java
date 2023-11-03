@@ -123,8 +123,7 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 					.collect(Collectors.toSet());
 			mMgdScript.lock(this);
 			mMgdScript.push(this, 1);
-			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(resTerm, mMgdScript.getScript(),
-					mCsToolkit.getSymbolTable());
+			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(resTerm, mMgdScript, mCsToolkit.getSymbolTable());
 			mMgdScript.assertTerm(this, tvp.getClosedFormula());
 //					PredicateUtils.computeClosedFormula(resTerm, vars, mMgdScript.getScript()));
 			final LBool checkSatResult = mMgdScript.checkSat(this);
@@ -242,8 +241,7 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
 		mMgdScript.assertTerm(this, arrayTheoryState.getPredicate().getClosedFormula());
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(literalTerm, mMgdScript.getScript(),
-				mCsToolkit.getSymbolTable());
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(literalTerm, mMgdScript, mCsToolkit.getSymbolTable());
 		mMgdScript.assertTerm(this, SmtUtils.not(mMgdScript.getScript(), tvp.getClosedFormula()));
 		final LBool checkSatResult = mMgdScript.checkSat(this);
 		mMgdScript.pop(this, 1);

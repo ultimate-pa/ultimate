@@ -64,6 +64,20 @@ public interface IPersistentSetChoice<L, S> {
 		};
 	}
 
+	/**
+	 * Whether or not this instance guarantees that it is compatible with the given preference order.
+	 *
+	 * A choice of persistent sets is compatible with a preference order, if for every state, the persistent set is
+	 * downwards-closed wrt. the order. I.e., if a letter <code>a</code> is in the set, and <code>b &lt; a</code> up to
+	 * the order for the state, then the letter <code>b</code> must also be in the set.
+	 *
+	 * It is always sound to return <code>false</code> here, but in the case that the instance does guarantee
+	 * compatibility, it might hurt the performance of combined sleep set and persistent set reduction.
+	 *
+	 * @param order
+	 *            The order for which compatibility is tested
+	 * @return <code>true</code> if the instance guarantees compatibility, <code>false</code> if it does not.
+	 */
 	default boolean ensuresCompatibility(final IDfsOrder<L, S> order) {
 		return false;
 	}

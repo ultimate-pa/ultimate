@@ -460,28 +460,17 @@ public final class ISOIEC9899TC3 {
 	}
 
 	public static Expression constructLiteralForCIntegerLiteral(final ILocation loc, final boolean bitvectorTranslation,
-			final TypeSizes typeSizeConstants, final CPrimitive cType, BigInteger value) {
+			final TypeSizes typeSizeConstants, final CPrimitive cType, final BigInteger value) {
 		final Expression resultLiteral;
 		if (bitvectorTranslation) {
 			final int bitlength = 8 * typeSizeConstants.getSize(cType.getType());
-			if (value.signum() == -1) {
-				final long maxValue = (long) Math.pow(2, bitlength);
-				value = value.add(BigInteger.valueOf(maxValue));
-			}
-			final BigInteger valueInRange = constructBitvectorInRange(value, bitlength);
-			resultLiteral = ExpressionFactory.createBitvecLiteral(loc, valueInRange.toString(), bitlength);
+			resultLiteral = ExpressionFactory.createBitvecLiteral(loc, value, bitlength);
 		} else {
 			resultLiteral = ExpressionFactory.createIntegerLiteral(loc, value.toString());
 		}
 		return resultLiteral;
 	}
 
-	/**
-	 * @return the result of value % 2^bitlength
-	 */
-	public static BigInteger constructBitvectorInRange(final BigInteger value, final int bitlength) {
-		return value.mod(new BigInteger("2").pow(bitlength));
-	}
 
 	private static class IntegerConstant {
 
@@ -538,8 +527,11 @@ public final class ISOIEC9899TC3 {
 	}
 
 	/**
-	 * Get the types that a given integer type can have. Returns the types in the correct order according to 6.4.4.1.5
-	 * of the C11 standard.
+	 * Get the types that a given integer type can have. Returns the types in the
+	 * correct order according to 6.4.4.1.5 of the C11 standard. <br />
+	 * Note that we must not have __int128 from GNU C here since literals of that
+	 * size are not allowed.
+	 * https://gcc.gnu.org/onlinedocs/gcc/_005f_005fint128.html
 	 */
 	private static CPrimitives[] getPossibleTypes(final IntegerConstant ic) {
 		if (ic.hasUnsignedSuffix()) {

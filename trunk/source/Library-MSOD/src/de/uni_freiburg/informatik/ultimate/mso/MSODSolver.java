@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLasso
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTermTransformer;
@@ -222,7 +221,7 @@ public final class MSODSolver {
 
 		// Get free variables and constants.
 		final List<Term> freeVariables = new ArrayList<>(Arrays.asList(term.getFreeVars()));
-		freeVariables.addAll((new ConstantFinder()).findConstants(term, true));
+		freeVariables.addAll((SmtUtils.extractConstants(term, true)));
 
 		// Project automaton onto free variables.
 		final Set<MSODAlphabetSymbol> alphabet = MSODUtils.createAlphabet(freeVariables);
@@ -349,7 +348,8 @@ public final class MSODSolver {
 
 		final Term[] terms = term.getParameters();
 		final Term lessEqual = SmtUtils.leq(mScript, terms[0], terms[1]);
-		final Term greaterEqual = SmtUtils.not(mScript, SmtUtils.less(mScript, terms[0], terms[1]));
+		// This term should not be simplified, therefore we use mScript.term("not", ...) instead of SmtUtils.not
+		final Term greaterEqual = mScript.term("not", SmtUtils.less(mScript, terms[0], terms[1]));
 		final Term equal = SmtUtils.and(mScript, lessEqual, greaterEqual);
 
 		mLogger.error("equal: " + equal);
@@ -391,8 +391,7 @@ public final class MSODSolver {
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processLessOrLessEqual(final ApplicationTerm term)
 			throws AutomataLibraryException {
 
-		final PolynomialRelation polyRel =
-				PolynomialRelation.convert(mScript, term, TransformInequality.NONSTRICT2STRICT);
+		final PolynomialRelation polyRel = PolynomialRelation.of(mScript, term, TransformInequality.NONSTRICT2STRICT);
 		final AffineTerm affineTerm = (AffineTerm) polyRel.getPolynomialTerm();
 		final Map<Term, Rational> variables = affineTerm.getVariable2Coefficient();
 		final Rational constant = affineTerm.getConstant().negate();

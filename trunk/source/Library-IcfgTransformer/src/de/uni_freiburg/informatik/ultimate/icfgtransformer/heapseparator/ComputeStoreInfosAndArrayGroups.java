@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
@@ -197,7 +198,8 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 					// we have something that is not a simple havoc (perhaps an assignment) of var
 					return false;
 				}
-			} else if (currentEdge.getTransformula().getOutVars().containsKey(var)) {
+			}
+			if (currentEdge.getTransformula().getOutVars().containsKey(var)) {
 				// edge might put constraints on var
 				return false;
 			}
@@ -355,9 +357,9 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 				final Term rhsArrayTerm = SmtUtils.getBasicArrayTerm(aeas.getRhsArray());
 
 				final TermVariable lhsArrayTv =
-						(lhsArrayTerm instanceof TermVariable) ? (TermVariable) lhsArrayTerm : null;
+						lhsArrayTerm instanceof TermVariable ? (TermVariable) lhsArrayTerm : null;
 				final TermVariable rhsArrayTv =
-						(rhsArrayTerm instanceof TermVariable) ? (TermVariable) rhsArrayTerm : null;
+						rhsArrayTerm instanceof TermVariable ? (TermVariable) rhsArrayTerm : null;
 
 				// code for determining which variables are unconstrained ("havocced") in this edge
 				final boolean lhsIsAStore = lhsArrayTerm != aeas.getLhsArray();
@@ -513,7 +515,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 			throw new AssertionError();
 		}
 		final ArrayGroup ag = mEdgeToTermToArrayGroup.get(edgeInfo, term);
-		return mArrayToArrayGroup.values().contains(ag);
+		return mArrayToArrayGroup.containsValue(ag);
 	}
 
 	public ArrayGroup getArrayGroupForArrayPvoc(final IProgramVarOrConst pvoc) {
@@ -712,6 +714,11 @@ class BuildStoreInfos extends NonRecursive {
 			throw new UnsupportedOperationException("not yet implemented: MatchTerm");
 		}
 
+		@Override
+		public void walk(final NonRecursive walker, final LambdaTerm term) {
+			throw new UnsupportedOperationException();
+		}
+
 	}
 
 	private int getNextStoreInfoId() {
@@ -735,8 +742,7 @@ class BuildStoreInfos extends NonRecursive {
 
 		mMgdScript.unlock(this);
 
-		final HeapSepProgramConst result = new HeapSepProgramConst(locLitTerm);
-		return result;
+		return new HeapSepProgramConst(locLitTerm);
 	}
 
 	private String getLocationLitName(final EdgeInfo location, final int storeInfoId) {

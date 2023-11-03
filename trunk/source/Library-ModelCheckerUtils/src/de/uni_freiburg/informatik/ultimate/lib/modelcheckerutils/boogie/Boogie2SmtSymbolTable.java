@@ -64,23 +64,32 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.LocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramFunction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.DeclarableFunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.ISmtDeclarable;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
- * Stores a mapping from Boogie identifiers to BoogieVars and a mapping from TermVariables that are representatives of
- * BoogieVars to these BoogieVars.
+ * Stores a mapping from Boogie identifiers to {@link ProgramVar}s and a mapping
+ * from TermVariables that are representatives of {@link ProgramVar}s to their
+ * {@link ProgramVar}.
  *
- * TODO 2018-09-15 Matthias: This class was build before we had {@link DeclarationInformation} and might be
- * unnecessarily complicated.
+ * TODO 2018-09-15 Matthias: This class was build before we had
+ * {@link DeclarationInformation} and might be unnecessarily complicated.
  *
  * @author Matthias Heizmann
  *
@@ -115,24 +124,24 @@ public class Boogie2SmtSymbolTable
 	private final BoogieDeclarations mBoogieDeclarations;
 	private final ManagedScript mScript;
 	private final TypeSortTranslator mTypeSortTranslator;
-	private final Map<String, BoogieNonOldVar> mGlobals = new HashMap<>();
-	private final Map<String, BoogieOldVar> mOldGlobals = new HashMap<>();
+	private final Map<String, ProgramNonOldVar> mGlobals = new HashMap<>();
+	private final Map<String, ProgramOldVar> mOldGlobals = new HashMap<>();
 	private final Map<String, Map<String, IProgramVar>> mSpecificationInParam = new HashMap<>();
 	private final Map<String, Map<String, IProgramVar>> mSpecificationOutParam = new HashMap<>();
 	private final Map<String, Map<String, IProgramVar>> mImplementationInParam = new HashMap<>();
 	private final Map<String, Map<String, IProgramVar>> mImplementationOutParam = new HashMap<>();
 	private final Map<String, List<ILocalProgramVar>> mProc2InParams = new HashMap<>();
 	private final Map<String, List<ILocalProgramVar>> mProc2OutParams = new HashMap<>();
-	private final Map<String, Map<String, LocalBoogieVar>> mImplementationLocals = new HashMap<>();
-	private final Map<String, BoogieConst> mConstants = new HashMap<>();
+	private final Map<String, Map<String, LocalProgramVar>> mImplementationLocals = new HashMap<>();
+	private final Map<String, ProgramConst> mConstants = new HashMap<>();
 
-	private final Map<TermVariable, IProgramVar> mSmtVar2BoogieVar = new HashMap<>();
-	private final Map<IProgramVar, DeclarationInformation> mBoogieVar2DeclarationInformation = new HashMap<>();
-	private final Map<IProgramVar, BoogieASTNode> mBoogieVar2AstNode = new HashMap<>();
-	private final Map<ApplicationTerm, BoogieConst> mSmtConst2BoogieConst = new HashMap<>();
+	private final Map<TermVariable, IProgramVar> mSmtVar2ProgramVar = new HashMap<>();
+	private final Map<IProgramVar, DeclarationInformation> mProgramVar2DeclarationInformation = new HashMap<>();
+	private final Map<IProgramVar, BoogieASTNode> mProgramVar2AstNode = new HashMap<>();
+	private final Map<ApplicationTerm, ProgramConst> mSmtConst2ProgramConst = new HashMap<>();
 
 	private final Map<String, String> mBoogieFunction2SmtFunction = new HashMap<>();
-	private final Map<String, String> mSmtFunction2BoogieFunction = new HashMap<>();
+	private final NestedMap2<String, IBoogieType, String> mSmtFunction2BoogieFunction = new NestedMap2<>();
 	private final Map<String, Map<String, Expression[]>> mBoogieFunction2Attributes = new HashMap<>();
 
 	private final DefaultIcfgSymbolTable mIcfgSymbolTable = new DefaultIcfgSymbolTable();
@@ -176,14 +185,14 @@ public class Boogie2SmtSymbolTable
 		mScript.unlock(this);
 	}
 
-	private static <T extends IProgramVar> void putNew(final String procId, final String varId, final T bv,
+	private static <T extends IProgramVar> void putNew(final String procId, final String varId, final T pv,
 			final Map<String, Map<String, T>> map) {
-		Map<String, T> varId2BoogieVar = map.get(procId);
-		if (varId2BoogieVar == null) {
-			varId2BoogieVar = new HashMap<>();
-			map.put(procId, varId2BoogieVar);
+		Map<String, T> varId2ProgramVar = map.get(procId);
+		if (varId2ProgramVar == null) {
+			varId2ProgramVar = new HashMap<>();
+			map.put(procId, varId2ProgramVar);
 		}
-		final IProgramVar previousValue = varId2BoogieVar.put(varId, bv);
+		final IProgramVar previousValue = varId2ProgramVar.put(varId, pv);
 		assert previousValue == null : "variable already contained";
 	}
 
@@ -194,11 +203,11 @@ public class Boogie2SmtSymbolTable
 
 	private static <T extends IProgramVar> T get(final String varId, final String procId,
 			final Map<String, Map<String, T>> map) {
-		final Map<String, T> varId2BoogieVar = map.get(procId);
-		if (varId2BoogieVar == null) {
+		final Map<String, T> varId2ProgramVar = map.get(procId);
+		if (varId2ProgramVar == null) {
 			return null;
 		}
-		return varId2BoogieVar.get(varId);
+		return varId2ProgramVar.get(varId);
 	}
 
 	public static boolean isSpecification(final Procedure spec) {
@@ -261,17 +270,16 @@ public class Boogie2SmtSymbolTable
 	}
 
 	@Override
-	public DeclarationInformation getDeclarationInformation(final IProgramVar bv) {
-		return mBoogieVar2DeclarationInformation.get(bv);
+	public DeclarationInformation getDeclarationInformation(final IProgramVar pv) {
+		return mProgramVar2DeclarationInformation.get(pv);
 	}
 
-	public BoogieASTNode getAstNode(final IProgramVar bv) {
-		return mBoogieVar2AstNode.get(bv);
+	public BoogieASTNode getAstNode(final IProgramVar pv) {
+		return mProgramVar2AstNode.get(pv);
 	}
 
 	private void declareConstants(final ConstDeclaration constdecl) {
 		final VarList varlist = constdecl.getVarList();
-		final IBoogieType iType = varlist.getType().getBoogieType();
 		final Map<String, Expression[]> attributes = extractAttributes(constdecl);
 		if (attributes != null) {
 			final String attributeDefinedIdentifier = checkForAttributeDefinedIdentifier(attributes, ID_BUILTIN);
@@ -284,35 +292,36 @@ public class Boogie2SmtSymbolTable
 				final String[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
 				final ApplicationTerm constant =
 						(ApplicationTerm) mScript.term(this, attributeDefinedIdentifier, indices, null);
-				final BoogieConst boogieConst = new BoogieConst(constId, iType, constant, true);
-				final BoogieConst previousValue = mConstants.put(constId, boogieConst);
+				final ProgramConst programConst = new ProgramConst(constId, constant, true);
+				final ProgramConst previousValue = mConstants.put(constId, programConst);
 				assert previousValue == null : "constant already contained";
-				mSmtConst2BoogieConst.put(constant, boogieConst);
-				mIcfgSymbolTable.add(boogieConst);
+				mSmtConst2ProgramConst.put(constant, programConst);
+				mIcfgSymbolTable.add(programConst);
 				return;
 			}
 		}
 		final Sort[] paramTypes = new Sort[0];
+		final IBoogieType iType = varlist.getType().getBoogieType();
 		final Sort sort = mTypeSortTranslator.getSort(iType, varlist);
 		for (final String constId : varlist.getIdentifiers()) {
 			mScript.declareFun(this, constId, paramTypes, sort);
 			final ApplicationTerm constant = (ApplicationTerm) mScript.term(this, constId);
-			final BoogieConst boogieConst = new BoogieConst(constId, iType, constant, false);
-			final BoogieConst previousValue = mConstants.put(constId, boogieConst);
+			final ProgramConst programConst = new ProgramConst(constId, constant, false);
+			final ProgramConst previousValue = mConstants.put(constId, programConst);
 			assert previousValue == null : "constant already contained";
-			mSmtConst2BoogieConst.put(constant, boogieConst);
-			mIcfgSymbolTable.add(boogieConst);
+			mSmtConst2ProgramConst.put(constant, programConst);
+			mIcfgSymbolTable.add(programConst);
 		}
 	}
 
 	@Override
-	public BoogieConst getBoogieConst(final String constId) {
+	public ProgramConst getBoogieConst(final String constId) {
 		return mConstants.get(constId);
 	}
 
 	@Override
-	public BoogieConst getProgramConst(final ApplicationTerm smtConstant) {
-		return (BoogieConst) mIcfgSymbolTable.getProgramConst(smtConstant);
+	public ProgramFunction getProgramFun(final FunctionSymbol smtFunSym) {
+		return (ProgramFunction) mIcfgSymbolTable.getProgramFun(smtFunSym);
 	}
 
 	public Map<String, Expression[]> getAttributes(final String boogieFunctionId) {
@@ -399,6 +408,9 @@ public class Boogie2SmtSymbolTable
 			final DeclarableFunctionSymbol smtFunctionDefinition = DeclarableFunctionSymbol
 					.createFromString(mScript.getScript(), smtID, smtDefinedBody, paramIds, paramSorts, resultSort);
 			smtFunctionDefinition.defineOrDeclare(mScript.getScript());
+			final FunctionSymbol funSymb = mScript.getScript().getFunctionSymbol(smtID);
+			final ProgramFunction progFunc = new ProgramFunction(funSymb);
+			mIcfgSymbolTable.addFun(progFunc);
 		} else {
 			smtID = attributeDefinedIdentifier;
 			if (smtDefinedBody != null) {
@@ -407,7 +419,7 @@ public class Boogie2SmtSymbolTable
 			}
 		}
 		mBoogieFunction2SmtFunction.put(id, smtID);
-		mSmtFunction2BoogieFunction.put(smtID, id);
+		mSmtFunction2BoogieFunction.put(smtID, resultType, id);
 	}
 
 	/**
@@ -478,8 +490,8 @@ public class Boogie2SmtSymbolTable
 	}
 
 	@Override
-	public Map<String, String> getSmtFunction2BoogieFunction() {
-		return Collections.unmodifiableMap(mSmtFunction2BoogieFunction);
+	public String translateToBoogieFunction(final String smtFunctionName, final IBoogieType type) {
+		return mSmtFunction2BoogieFunction.get(smtFunctionName, type);
 	}
 
 	public Map<String, String> getBoogieFunction2SmtFunction() {
@@ -490,9 +502,9 @@ public class Boogie2SmtSymbolTable
 		for (final VarList vl : vardecl.getVariables()) {
 			for (final String id : vl.getIdentifiers()) {
 				final IBoogieType type = vl.getType().getBoogieType();
-				final BoogieNonOldVar global = constructGlobalBoogieVar(id, type, vl);
+				final ProgramNonOldVar global = constructGlobalBoogieVar(id, type, vl);
 				putNew(id, global, mGlobals);
-				final BoogieOldVar oldGlobal = global.getOldVar();
+				final ProgramOldVar oldGlobal = global.getOldVar();
 				putNew(id, oldGlobal, mOldGlobals);
 			}
 		}
@@ -532,7 +544,7 @@ public class Boogie2SmtSymbolTable
 	/**
 	 * Return global constants;
 	 */
-	public Map<String, BoogieConst> getConstsMap() {
+	public Map<String, ProgramConst> getConstsMap() {
 		return Collections.unmodifiableMap(mConstants);
 	}
 
@@ -603,11 +615,11 @@ public class Boogie2SmtSymbolTable
 				throw new IllegalArgumentException("specification and implementation have different param length");
 			}
 			for (int j = 0; j < specIds.length; j++) {
-				final LocalBoogieVar bv =
-						constructLocalBoogieVar(implIds[j], procId, implType, implVl[i], declarationInformation);
-				putNew(procId, implIds[j], bv, implMap);
-				putNew(procId, specIds[j], bv, specMap);
-				params.add(bv);
+				final LocalProgramVar pv =
+						constructLocalProgramVar(implIds[j], procId, implType, implVl[i], declarationInformation);
+				putNew(procId, implIds[j], pv, implMap);
+				putNew(procId, specIds[j], pv, specMap);
+				params.add(pv);
 			}
 		}
 	}
@@ -636,9 +648,9 @@ public class Boogie2SmtSymbolTable
 			final IBoogieType type = vl[i].getType().getBoogieType();
 			final String[] ids = vl[i].getIdentifiers();
 			for (int j = 0; j < ids.length; j++) {
-				final LocalBoogieVar bv = constructLocalBoogieVar(ids[j], procId, type, vl[i], declarationInformation);
-				putNew(procId, ids[j], bv, specMap);
-				params.add(bv);
+				final LocalProgramVar pv = constructLocalProgramVar(ids[j], procId, type, vl[i], declarationInformation);
+				putNew(procId, ids[j], pv, specMap);
+				params.add(pv);
 			}
 		}
 	}
@@ -651,9 +663,9 @@ public class Boogie2SmtSymbolTable
 				for (final VarList vl : vdecl.getVariables()) {
 					for (final String id : vl.getIdentifiers()) {
 						final IBoogieType type = vl.getType().getBoogieType();
-						final LocalBoogieVar bv =
-								constructLocalBoogieVar(id, proc.getIdentifier(), type, vl, declarationInformation);
-						putNew(proc.getIdentifier(), id, bv, mImplementationLocals);
+						final LocalProgramVar pv =
+								constructLocalProgramVar(id, proc.getIdentifier(), type, vl, declarationInformation);
+						putNew(proc.getIdentifier(), id, pv, mImplementationLocals);
 					}
 				}
 			}
@@ -672,7 +684,7 @@ public class Boogie2SmtSymbolTable
 	 *            BoogieASTNode for which errors (e.g., unsupported syntax) are reported
 	 * @param declarationInformation
 	 */
-	public LocalBoogieVar constructLocalBoogieVar(final String identifier, final String procedure,
+	public LocalProgramVar constructLocalProgramVar(final String identifier, final String procedure,
 			final IBoogieType iType, final VarList varList, final DeclarationInformation declarationInformation) {
 		final Sort sort = mTypeSortTranslator.getSort(iType, varList);
 
@@ -683,14 +695,14 @@ public class Boogie2SmtSymbolTable
 		final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mScript, this, sort, name);
 		final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mScript, this, sort, name);
 
-		final LocalBoogieVar bv =
-				new LocalBoogieVar(identifier, procedure, iType, termVariable, defaultConstant, primedConstant);
+		final LocalProgramVar pv =
+				new LocalProgramVar(identifier, procedure, termVariable, defaultConstant, primedConstant);
 
-		mSmtVar2BoogieVar.put(termVariable, bv);
-		mBoogieVar2DeclarationInformation.put(bv, declarationInformation);
-		mBoogieVar2AstNode.put(bv, varList);
-		mIcfgSymbolTable.add(bv);
-		return bv;
+		mSmtVar2ProgramVar.put(termVariable, pv);
+		mProgramVar2DeclarationInformation.put(pv, declarationInformation);
+		mProgramVar2AstNode.put(pv, varList);
+		mIcfgSymbolTable.add(pv);
+		return pv;
 	}
 
 	/**
@@ -700,21 +712,21 @@ public class Boogie2SmtSymbolTable
 	 * @param boogieASTNode
 	 *            BoogieASTNode for which errors (e.g., unsupported syntax) are reported
 	 */
-	private BoogieNonOldVar constructGlobalBoogieVar(final String identifier, final IBoogieType iType,
+	private ProgramNonOldVar constructGlobalBoogieVar(final String identifier, final IBoogieType iType,
 			final VarList varlist) {
 		final Sort sort = mTypeSortTranslator.getSort(iType, varlist);
 		final DeclarationInformation declarationInformation = new DeclarationInformation(StorageClass.GLOBAL, null);
 
-		final BoogieNonOldVar nonOldVar =
+		final ProgramNonOldVar nonOldVar =
 				ProgramVarUtils.constructGlobalProgramVarPair(identifier, sort, mScript, this);
-		mSmtVar2BoogieVar.put(nonOldVar.getTermVariable(), nonOldVar);
-		mBoogieVar2DeclarationInformation.put(nonOldVar, declarationInformation);
-		mBoogieVar2AstNode.put(nonOldVar, varlist);
+		mSmtVar2ProgramVar.put(nonOldVar.getTermVariable(), nonOldVar);
+		mProgramVar2DeclarationInformation.put(nonOldVar, declarationInformation);
+		mProgramVar2AstNode.put(nonOldVar, varlist);
 
-		final BoogieOldVar oldVar = nonOldVar.getOldVar();
-		mSmtVar2BoogieVar.put(oldVar.getTermVariable(), oldVar);
-		mBoogieVar2DeclarationInformation.put(oldVar, declarationInformation);
-		mBoogieVar2AstNode.put(oldVar, varlist);
+		final ProgramOldVar oldVar = nonOldVar.getOldVar();
+		mSmtVar2ProgramVar.put(oldVar.getTermVariable(), oldVar);
+		mProgramVar2DeclarationInformation.put(oldVar, declarationInformation);
+		mProgramVar2AstNode.put(oldVar, varlist);
 
 		mIcfgSymbolTable.add(nonOldVar);
 		return nonOldVar;
@@ -778,4 +790,5 @@ public class Boogie2SmtSymbolTable
 	private static <V, T, K1, K2> Stream<T> getAll(final Map<K1, Map<K2, V>> map, final Function<V, T> fun) {
 		return map.entrySet().stream().flatMap(a -> a.getValue().entrySet().stream()).map(a -> fun.apply(a.getValue()));
 	}
+
 }

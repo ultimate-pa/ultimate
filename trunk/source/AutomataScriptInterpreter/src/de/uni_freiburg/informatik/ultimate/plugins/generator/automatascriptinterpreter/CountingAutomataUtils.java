@@ -221,7 +221,7 @@ public class CountingAutomataUtils {
 
 	private static IAtomicCounterGuard atom2acg(final ManagedScript script, final ILocation loc, final Term atom)
 			throws InterpreterException {
-		final PolynomialRelation polyRel = PolynomialRelation.convert(script.getScript(), atom);
+		final PolynomialRelation polyRel = PolynomialRelation.of(script.getScript(), atom);
 		if (!(polyRel.getPolynomialTerm() instanceof AffineTerm)) {
 			throw new InterpreterException(loc, "Term does not have supported form");
 		}

@@ -1,6 +1,6 @@
 # Configuration file for get-benchexec-overview.py
 #
-# An entry represents a regex for a line in Ultimate's log file
+# An entry represents a substring of a line in Ultimate's log file
 # Each entry in one of the five maps can have the following attributes (see also class MessageClassifier in the script itself)
 #   show_line
 #     Use the line that matches the regex as message (true) or the following line (false)
@@ -106,6 +106,9 @@ known_exceptions:
   "was unable to instantiate class":
   "de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.ParserInitializationException: Parser initialization failed":
   "RESULT: Ultimate could not prove your program: Toolchain returned no result.":
+  "unknown constant":
+  "AssertionError: enhanced interpolant automaton in iteration":
+  "AssertionError: Expected only CPrimitive but got":
 
 known_timeouts:
   "Cannot interrupt operation gracefully because timeout expired. Forcing shutdown":
@@ -118,8 +121,10 @@ known_timeouts:
 
 known_safe:
   "We were not able to verify any specifiation because the program does not contain any specification":
+  "We were not able to verify any specification because the program does not contain any specification":
   "specifications checked. All of them hold":
   "TerminationAnalysisResult: Termination proven":
+  "AllSpecificationsHoldResult: All specifications hold":
 
 known_unsafe:
   "CounterExampleResult":

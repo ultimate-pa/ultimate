@@ -45,12 +45,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.EqNode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.HeapSepProgramConst;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -90,7 +90,7 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 		final Set<IProgramVarOrConst> set = constraint.getPvocs(mFactory.getSymbolTable()).stream()
 				.filter(pvoc -> !(pvoc instanceof IProgramOldVar))
 				.filter(pvoc -> !(pvoc instanceof HeapSepProgramConst))
-				.filter(pvoc -> !(pvoc instanceof BoogieConst))
+				.filter(pvoc -> !(pvoc instanceof ProgramConst))
 				.filter(pvoc -> !mFactory.getEqConstraintFactory().getNonTheoryLiterals().contains(pvoc))
 				.collect(Collectors.toSet());
 		if (!mPvocs.containsAll(set)) {
@@ -182,6 +182,16 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 
 		return mFactory.getEqState(newConstraint, newVariables);
 
+	}
+
+	public EqState widen(final EqState other) {
+		final EqConstraint<EqNode> newConstraint = getConstraint().widen(other.getConstraint());
+
+		final Set<IProgramVarOrConst> newVariables = new HashSet<>();
+		newVariables.addAll(getVariables());
+		newVariables.addAll(other.getVariables());
+
+		return mFactory.getEqState(newConstraint, newVariables);
 	}
 
 	@Override

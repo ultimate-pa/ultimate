@@ -131,8 +131,8 @@ public class TransFormulaConverterCache {
 			substitutionMapping.put(auxVar, auxVarConst);
 		}
 
-		final Substitution subs = new Substitution(mgdScript, substitutionMapping);
-		final Term rcClosed= subs.transform(resultConstraint.getTerm(mgdScript.getScript()));
+		final Term rcClosed = Substitution.apply(mgdScript, substitutionMapping,
+				resultConstraint.getTerm(mgdScript.getScript()));
 
 		assert rcClosed.getFreeVars().length == 0;
 

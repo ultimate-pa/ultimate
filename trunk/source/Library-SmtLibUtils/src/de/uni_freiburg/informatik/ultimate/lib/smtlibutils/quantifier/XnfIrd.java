@@ -29,27 +29,19 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Case;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class XnfIrd extends XjunctPartialQuantifierElimination {
 
@@ -83,13 +75,10 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 				it.remove();
 				continue;
 			}
-			final Term[] withoutTv = irdSimple(mScript, quantifier, result, tv, mLogger);
+			final Term[] withoutTv = irdSimple(mMgdScript, quantifier, result, tv);
 			if (withoutTv != null) {
-				mLogger.debug(new DebugMessage("eliminated quantifier via IRD for {0}", tv));
 				result = withoutTv;
 				it.remove();
-			} else {
-				mLogger.debug(new DebugMessage("not eliminated quantifier via IRD for {0}", tv));
 			}
 		}
 		return result;
@@ -103,9 +92,8 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 	 * and the function symbol is "distinct" and quantifier is ∃ or the function
 	 * symbol is "=" and the quantifier is ∀ 3. param is an inequality
 	 */
-	public static Term[] irdSimple(final Script script, final int quantifier, final Term[] oldParams,
-			final TermVariable tv, final ILogger logger) {
-
+	public static Term[] irdSimple(final ManagedScript mgdScript, final int quantifier, final Term[] oldParams,
+			final TermVariable tv) {
 		final ArrayList<Term> paramsWithoutTv = new ArrayList<>();
 		int numberOfAntiDer = 0;
 		int numberOfUpperBounds = 0;
@@ -117,7 +105,7 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 				if (!SmtSortUtils.isNumericSort(tv.getSort()) && !SmtSortUtils.isBitvecSort(tv.getSort())) {
 					return null;
 				}
-				final SolvedBinaryRelation sbr = solve(script, tv, quantifier, oldParam);
+				final SolvedBinaryRelation sbr = solve(mgdScript, tv, quantifier, oldParam);
 				if (sbr == null) {
 					return null;
 				}
@@ -181,28 +169,15 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 		return paramsWithoutTv.toArray(new Term[paramsWithoutTv.size()]);
 	}
 
-	private static SolvedBinaryRelation solve(final Script script, final TermVariable tv, final int quantifier,
-			final Term term) {
-		final PolynomialRelation polyRel = PolynomialRelation.convert(script, term);
+	private static SolvedBinaryRelation solve(final ManagedScript mgdScript, final TermVariable tv,
+			final int quantifier, final Term term) {
+		final PolynomialRelation polyRel = PolynomialRelation.of(mgdScript.getScript(), term);
 		if (polyRel == null) {
 			// unable to eliminate quantifier
 			return null;
 		}
-		final MultiCaseSolvedBinaryRelation mcsbr = polyRel.solveForSubject(script, tv, Xnf.fromQuantifier(quantifier),
-				Collections.emptySet());
-		if (mcsbr == null) {
-			return null;
-		}
-		final List<Case> cases = mcsbr.getCases();
-		if (cases.size() > 1) {
-			return null;
-		}
-		final Case oneCase = cases.iterator().next();
-		if (!oneCase.getSupportingTerms().isEmpty()) {
-			return null;
-		} else {
-			return oneCase.getSolvedBinaryRelation();
-		}
+		final SolvedBinaryRelation sbr = polyRel.solveForSubject(mgdScript.getScript(), tv);
+		return sbr;
 	}
 
 	private static float underapproximateNumberOfDomainElements(final Sort sort) {

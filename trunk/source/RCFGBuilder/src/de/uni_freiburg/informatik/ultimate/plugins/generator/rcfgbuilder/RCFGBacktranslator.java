@@ -114,7 +114,7 @@ public class RCFGBacktranslator extends
 			if (!(elem instanceof CodeBlock)) {
 				throw new AssertionError("unknown rcfg element");
 			}
-			addCodeBlock(elem, null, null, null, atomicTeList, null);
+			addCodeBlock(elem, null, null, null, null, atomicTeList, null);
 		}
 		final List<BoogieASTNode> result = new ArrayList<>();
 		for (final AtomicTraceElement<BoogieASTNode> ate : atomicTeList) {
@@ -127,8 +127,10 @@ public class RCFGBacktranslator extends
 			final List<AtomicTraceElement<BoogieASTNode>> trace, final Map<TermVariable, Boolean> branchEncoders) {
 		final IIcfgTransition<IcfgLocation> cb = ate.getTraceElement();
 		final IRelevanceInformation relevanceInformation = ate.getRelevanceInformation();
-		addCodeBlock(cb, relevanceInformation, ate.hasThreadId() ? ate.getThreadId() : null,
-				ate.getStepInfo().contains(StepInfo.FORK) ? ate.getForkedThreadId() : null, trace, branchEncoders);
+		final Integer forkedThreadId = ate.getStepInfo().contains(StepInfo.FORK) ? ate.getForkedThreadId() : null;
+		final Integer joinedThreadId = ate.getStepInfo().contains(StepInfo.JOIN) ? ate.getJoinedThreadId() : null;
+		addCodeBlock(cb, relevanceInformation, ate.hasThreadId() ? ate.getThreadId() : null, forkedThreadId,
+				joinedThreadId, trace, branchEncoders);
 	}
 
 	/**
@@ -146,8 +148,8 @@ public class RCFGBacktranslator extends
 	 * </ul>
 	 */
 	private void addCodeBlock(final IIcfgTransition<IcfgLocation> cb, final IRelevanceInformation relevanceInformation,
-			final Integer threadId, final Integer forkedThreadId, final List<AtomicTraceElement<BoogieASTNode>> trace,
-			final Map<TermVariable, Boolean> branchEncoders) {
+			final Integer threadId, final Integer forkedThreadId, final Integer joinedThreadId,
+			final List<AtomicTraceElement<BoogieASTNode>> trace, final Map<TermVariable, Boolean> branchEncoders) {
 
 		final AtomicTraceElementBuilder<BoogieASTNode> ateBuilder = new AtomicTraceElementBuilder<>();
 		ateBuilder.setRelevanceInformation(relevanceInformation);
@@ -157,6 +159,9 @@ public class RCFGBacktranslator extends
 		}
 		if (forkedThreadId != null) {
 			ateBuilder.setForkedThreadId(forkedThreadId);
+		}
+		if (joinedThreadId != null) {
+			ateBuilder.setJoinedThreadId(joinedThreadId);
 		}
 		ateBuilder.setProcedures(cb.getPrecedingProcedure(), cb.getSucceedingProcedure());
 		if (cb instanceof Call) {
@@ -206,7 +211,8 @@ public class RCFGBacktranslator extends
 		} else if (cb instanceof SequentialComposition) {
 			final SequentialComposition seqComp = (SequentialComposition) cb;
 			for (final CodeBlock sccb : seqComp.getCodeBlocks()) {
-				addCodeBlock(sccb, relevanceInformation, threadId, forkedThreadId, trace, branchEncoders);
+				addCodeBlock(sccb, relevanceInformation, threadId, forkedThreadId, joinedThreadId, trace,
+						branchEncoders);
 			}
 			return;
 		} else if (cb instanceof ParallelComposition) {
@@ -214,7 +220,8 @@ public class RCFGBacktranslator extends
 			final Map<TermVariable, CodeBlock> bi2cb = parComp.getBranchIndicator2CodeBlock();
 			if (branchEncoders == null) {
 				final CodeBlock someBranch = bi2cb.entrySet().iterator().next().getValue();
-				addCodeBlock(someBranch, relevanceInformation, threadId, forkedThreadId, trace, branchEncoders);
+				addCodeBlock(someBranch, relevanceInformation, threadId, forkedThreadId, joinedThreadId, trace,
+						branchEncoders);
 				final ILocation loc = ILocation.getAnnotation(cb.getSource());
 				mLogger.warn("You are using large block encoding together with an algorithm for which the "
 						+ "backtranslation into program statements is not yet implemented.");
@@ -228,8 +235,8 @@ public class RCFGBacktranslator extends
 			for (final Entry<TermVariable, CodeBlock> entry : bi2cb.entrySet()) {
 				final boolean taken = branchEncoders.get(entry.getKey());
 				if (taken) {
-					addCodeBlock(entry.getValue(), relevanceInformation, threadId, forkedThreadId, trace,
-							branchEncoders);
+					addCodeBlock(entry.getValue(), relevanceInformation, threadId, forkedThreadId, joinedThreadId,
+							trace, branchEncoders);
 					return;
 				}
 			}

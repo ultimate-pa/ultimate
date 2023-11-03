@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.SolveForS
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
@@ -50,6 +51,12 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class TermClassifier extends NonRecursive {
 
+	/**
+	 * Follow the current (rather questionable) definition of SMT-LIB logics where
+	 * `div` and `mod` must not occur in *LIA logics.
+	 */
+	private static final boolean DIV_MOD_NEVER_LINEAR = false;
+
 	private Set<Term> mTermsInWhichWeAlreadyDescended;
 
 	private final Set<String> mOccuringSortNames;
@@ -59,7 +66,6 @@ public class TermClassifier extends NonRecursive {
 	private boolean mHasNonlinearArithmetic;
 
 	public TermClassifier() {
-		super();
 		mOccuringSortNames = new HashSet<>();
 		mOccuringFunctionNames = new HashSet<>();
 		mOccuringQuantifiers = new HashSet<>();
@@ -119,15 +125,13 @@ public class TermClassifier extends NonRecursive {
 							mHasNonlinearArithmetic = true;
 						}
 					}
-					if (appTerm.getFunction().getName().equals("mod")) {
-						if (!(appTerm.getParameters()[1] instanceof ConstantTerm)) {
-							mHasNonlinearArithmetic = true;
-						}
+					if (appTerm.getFunction().getName().equals("mod")
+							&& (DIV_MOD_NEVER_LINEAR || !(appTerm.getParameters()[1] instanceof ConstantTerm))) {
+						mHasNonlinearArithmetic = true;
 					}
-					if (appTerm.getFunction().getName().equals("div")) {
-						if (!(SolveForSubjectUtils.tailIsConstant(Arrays.asList(appTerm.getParameters())))) {
-							mHasNonlinearArithmetic = true;
-						}
+					if (appTerm.getFunction().getName().equals("div") && (DIV_MOD_NEVER_LINEAR
+							|| !SolveForSubjectUtils.tailIsConstant(Arrays.asList(appTerm.getParameters())))) {
+						mHasNonlinearArithmetic = true;
 					}
 				}
 				super.walk(walker);
@@ -179,5 +183,11 @@ public class TermClassifier extends NonRecursive {
 		public void walk(final NonRecursive walker, final MatchTerm term) {
 			throw new UnsupportedOperationException("not yet implemented: MatchTerm");
 		}
+
+		@Override
+		public void walk(final NonRecursive walker, final LambdaTerm term) {
+			throw new UnsupportedOperationException();
+		}
+
 	}
 }

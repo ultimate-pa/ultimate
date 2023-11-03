@@ -164,9 +164,8 @@ public final class ConstantArrayUtil {
 		 * "~RB~" stands for "right bracket", "~RC~" stands for "right curly brace", "~COM~" stands for "comma", "~COL~"
 		 * stands for "colon", if there is a nicer naming that still avoids name clashes, that naming should be used.
 		 */
-		final String sanitizedTypeName =
-				boogieArrayType.toString().replaceAll(":", "~COL~").replaceAll(", ", "~COM~").replaceAll("\\{ ", "~LC~")
-						.replaceAll(" \\}", "~RC~").replaceAll("\\]", "~RB~").replaceAll("\\[", "~LB~");
+		final String sanitizedTypeName = boogieArrayType.toString().replace(":", "~COL~").replace(", ", "~COM~")
+				.replace("{ ", "~LC~").replace(" }", "~RC~").replace("]", "~RB~").replace("[", "~LB~");
 		return SFO.AUXILIARY_FUNCTION_PREFIX + "const~array~" + sanitizedTypeName + suffix;
 	}
 }

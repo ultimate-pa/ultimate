@@ -1,0 +1,191 @@
+// Example that demonstates how we can use Büchi (nested word) automata in
+// this automata library.
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2013-04-28
+
+
+// Büchi automata accept infinite words. We do not support arbitrary infinite
+// words. We support only these infinite words that have a finite
+// representation given by a pair of words;
+// - a finite prefix called stem,
+// - an infinitely often repeated word called loop.
+// We call an infinite word given by the pair of stem and loop a lasso word.
+// E.g., the following lasso word represents the infinite word 
+// a b a a a b b b b b b b b b b b b b b b b b...
+NestedLassoWord lasso1 = [a b a a a, b];
+
+
+// Büchi (nested word) automata and finite (nested word) automata have the same
+// syntax but are different in their semantics (the acceptance criteria). We 
+// use the same data structures for Büchi automata and finite automata, but
+// different operation names.
+assert(buchiAccepts(finitelyManyA, lasso1));
+NestedWordAutomaton finitelyManyA = (
+    callAlphabet = { },    
+	internalAlphabet = {a b},
+	returnAlphabet = { },
+	states = {q0 q1},
+	initialStates = {q0},
+	finalStates = {q1},
+	callTransitions = { },
+	internalTransitions = { 
+		(q0 a q0)
+		(q0 b q0)
+		(q0 b q1)
+		(q1 b q1)
+	}, 
+	returnTransitions = { }
+);
+
+
+// We support several operations for complementing Buchi automata.
+
+// The following operation (presented by Xiaolin Wu in his masters thesis
+// http://omnibus.uni-freiburg.de/%7Emh740/swt/Xiaolin_Wu-thesis-2011-10-21-fix.pdf )
+// extended the rank-based complementation of Friedgut, Kupferman, and Vardi 
+// to Büchi Nested Word automata. To the best of our knowledge this is the first
+// implementation of a complementation for Büchi nested word automata.
+NestedWordAutomaton complementFKV = buchiComplementFKV(finitelyManyA);
+assert(!buchiAccepts(complementFKV, lasso1));
+print(numberOfStates(complementFKV));
+
+
+// The following operation (implemented by Fabian Reiter) implements the 
+// Ramsey-based  Büchi complementation of Sistla, Vardi and Wolper. Furthermore
+// the implementation uses optimizations  described in the following 
+// publication.
+// 2012FOSSACS - Breuers,Löding,Olschewski - Improved Ramsey-Based Büchi Complementation
+NestedWordAutomaton complementSVW = buchiComplementSVW(finitelyManyA);
+assert(!buchiAccepts(complementSVW, lasso1));
+print(numberOfStates(complementSVW));
+// Fabian extended this algorithm in his master team project to Büchi nested
+// word automata. This extension is not (yet) implemented.
+
+
+// If the Büchi automaton is deterministic, we can apply the follwing "simple"
+// complementation.
+NestedWordAutomaton complementDET = buchiComplementDeterministic(infinitelyManyA);
+assert(buchiAccepts(complementDET, lasso1));
+print(numberOfStates(complementDET));
+NestedWordAutomaton infinitelyManyA = (
+	callAlphabet = { },
+	internalAlphabet = {a b},
+	returnAlphabet = { },
+	states = {q0 q1},
+	initialStates = {q0},
+	finalStates = {q1},
+	callTransitions = { },
+	internalTransitions = {
+		(q0 a q1)
+		(q0 b q0)
+		(q1 a q1)
+		(q1 b q0)
+	}, 
+	returnTransitions = { }
+);
+
+
+
+
+
+ 
+// The following automaton accepts infinite nested words that contains
+// infinitely often a the subsequence "r r" such that
+// - "r" occurs only at return positions
+// - there is a "c" at the corresponding call position.
+NestedWordAutomaton doubleR = (
+	callAlphabet = { a c r },    
+	internalAlphabet = { a c r},
+	returnAlphabet = { a c r },
+	states = {q0 q1},
+	initialStates = {q0},
+	finalStates = {q1},
+	callTransitions = {
+		(q0 c q0)
+	},
+	internalTransitions = { 
+		(q0 a q0)
+	}, 
+	returnTransitions = {
+		(q0 q0 r q1)
+		(q1 q0 r q0)
+	}
+);
+// E.g., the following lasso word is accepted by this automaton.
+NestedLassoWord lasso2 = [ , c< c< >r >r ];
+assert(buchiAccepts(doubleR, lasso2));
+
+// The following operation (developed and implemented by Xiaolin Wu) checks if
+// the language of a Büchi nested word automaton is empty.
+assert(!buchiIsEmpty(doubleR));
+// If the language of the automaton is not empty we can obtain a nested lasso
+// word that is accepted by the automaton.
+NestedLassoWord lasso3 = getAcceptedLassoWord(doubleR);
+print(lasso3);
+
+
+// Given two Büchi nested word automata bnwa1 and bnwa2, the intersection of 
+// their languages is recognized by the automaton that is returned by the 
+// following operation (developed by Xiaolin Wu in his master thesis
+// http://omnibus.uni-freiburg.de/%7Emh740/swt/Xiaolin_Wu-thesis-2011-10-21-fix.pdf )
+NestedWordAutomaton intersection = buchiIntersect(doubleR,infinitelyManyA_withCR);
+assert(!buchiAccepts(intersection, lasso2));
+
+NestedWordAutomaton infinitelyManyA_withCR = (
+	callAlphabet = { a c r },
+	internalAlphabet = { a c r },
+	returnAlphabet = { a c r },
+	states = {q0 q1},
+	initialStates = {q0},
+	finalStates = {q1},
+	callTransitions = {
+		(q0 c q0)
+		(q1 c q1)
+	},
+	internalTransitions = {
+		(q0 a q1)
+		(q1 a q1)
+	}, 
+	returnTransitions = {
+		(q0 q0 r q0)
+		(q1 q0 r q0)
+		(q0 q1 r q0)
+		(q1 q1 r q0)
+	}
+);
+
+
+
+
+// The following Büchi automaton accepts the same language as the Büchi
+// automaton finitelyManyA but has three states.
+NestedWordAutomaton unnecessaryq2= (
+	callAlphabet = { },	
+	internalAlphabet = {a b},
+	returnAlphabet = { },
+	states = {q0 q1 q2},
+	initialStates = {q0},
+	finalStates = {q1},
+	callTransitions = { },
+	internalTransitions = { 
+		(q0 a q0)
+		(q0 b q0)
+		(q0 b q1)
+		(q1 b q2)
+		(q2 b q1)
+	}, 
+	returnTransitions = { }
+);
+
+// The following operation reduces the number of states by merging the state
+// q1 with the state q2.
+// This operation (implemented by Alex Saukh and Markus Lindenmann) is an 
+// implementation of
+// 2005SIAMCOMP - Etessami,Wilke,Schuller - Fair Simulation Relations, Parity Games, and State Space Reduction for Buchi Automata
+NestedWordAutomaton reduced = buchiReduce(unnecessaryq2);
+assert(numberOfStates(reduced)<numberOfStates(unnecessaryq2));
+
+// Using complement, intersect, and an emptiness test we can verify that the
+// reduced automaton accepts the same language than the original.
+assert(buchiIsEmpty(buchiIntersect(reduced,buchiComplementFKV(unnecessaryq2))));
+assert(buchiIsEmpty(buchiIntersect(unnecessaryq2,buchiComplementFKV(reduced))));

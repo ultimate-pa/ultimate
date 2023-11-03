@@ -1,0 +1,113 @@
+#content {
+  overflow: auto;
+}
+
+.ace_content {
+  position: absolute;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  min-width: 100%;
+}
+
+
+.form-check-label {
+  white-space: nowrap;
+}
+
+#messages {
+  overflow: auto;
+  flex-flow: column;
+  flex-shrink: 1;
+  flex-grow: 0;
+  flex-basis: 30%;
+  z-index: 4;
+}
+
+.oi{
+  top: 0;
+}
+
+.mr-1 {
+  margin-right: .5rem !important;
+}
+
+.number{
+  width: 4em;
+}
+
+.messages-actions {
+  cursor: pointer;
+}
+
+.top-shaddow{
+  -webkit-box-shadow: 0 -2px 9px 0 rgba(0,0,0,0.75);
+  -moz-box-shadow:    0 -2px 9px 0 rgba(0,0,0,0.75);
+  box-shadow:         0 -2px 9px 0 rgba(0,0,0,0.75);
+}
+
+.color-pop-animation {
+  position: absolute;
+  opacity: 0;
+
+  -webkit-animation: color-pop 2s forwards;
+  -moz-animation: color-pop 2s forwards;
+  -ms-animation: color-pop 2s forwards;
+  -o-animation: color-pop 2s forwards;
+  animation: color-pop 2s forwards;
+}
+
+.color-pop-animation {
+  background-color: #6FFF9D;
+}
+
+.color-pop-animation.error {
+  background-color: #FF6F90;
+}
+
+.color-pop-animation.warning {
+  background-color: #FFC66F;
+}
+
+.color-pop-animation.info {
+  background-color: #6F92FF;
+}
+
+
+/*____________________________ Color Popping Keyframes _____________________________*/
+@-webkit-keyframes color-pop {
+  0%   { opacity: 0; }
+  5%   { opacity: .4; }
+  35%  { opacity: .4; }
+  100% { opacity: 0; }
+}
+@-khtml-keyframes color-pop {
+  0%   { opacity: 0; }
+  5%   { opacity: .4; }
+  35%  { opacity: .4; }
+  100% { opacity: 0; }
+}
+@-moz-keyframes color-pop {
+  0%   { opacity: 0; }
+  5%   { opacity: .4; }
+  35%  { opacity: .4; }
+  100% { opacity: 0; }
+}
+@-ms-keyframes color-pop {
+  0%   { opacity: 0; }
+  5%   { opacity: .4; }
+  35%  { opacity: .4; }
+  100% { opacity: 0; }
+}
+@-o-keyframes color-pop {
+  0%   { opacity: 0; }
+  5%   { opacity: .4; }
+  35%  { opacity: .4; }
+  100% { opacity: 0; }
+}
+@keyframes color-pop {
+  0%   { opacity: 0; }
+  5%   { opacity: .4; }
+  35%  { opacity: .4; }
+  100% { opacity: 0; }
+}

@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -44,8 +47,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IcfgDuplicator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SmtFreePredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncoder;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences;
@@ -92,7 +98,7 @@ public class AcyclicSubgraphMerger {
 				final BlockEncodingBacktranslator backtranslator =
 						new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
 				final BasicIcfg<IcfgLocation> newCfg = new IcfgDuplicator(mLogger, mServices,
-						icfg.getCfgSmtToolkit().getManagedScript(), backtranslator).copy(icfg);
+						icfg.getCfgSmtToolkit().getManagedScript(), backtranslator).copy(icfg, false);
 				final Map<IcfgLocation, IcfgLocation> newLoc2oldLoc = backtranslator.getLocationMapping();
 				initialCopyWithOldStartLoc = new Subgraph(initialSubgraph, newCfg, newLoc2oldLoc);
 				final Map<IcfgEdge, IcfgEdge> newEdge2oldEdge = (Map) backtranslator.getEdgeMapping();
@@ -242,7 +248,11 @@ public class AcyclicSubgraphMerger {
 
 		@Override
 		public String toString() {
-			return CFG2NestedWordAutomaton.printIcfg(mServices, mIcfg);
+			final VpAlphabet<?> vpAlphabet = Cfg2Automaton.extractVpAlphabet(mIcfg, false);
+			final INestedWordAutomaton<?, IPredicate> nwa = Cfg2Automaton.constructAutomatonWithDebugPredicates(
+					mServices, mIcfg, new PredicateFactoryResultChecking(new SmtFreePredicateFactory()),
+					Collections.emptySet(), true, vpAlphabet, null);
+			return nwa.toString();
 		}
 
 	}

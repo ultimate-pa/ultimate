@@ -43,19 +43,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.DeclarableFunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 
 /**
  *
@@ -87,6 +88,12 @@ public class QuantifierEliminationTest {
 	private static final LogLevel LOG_LEVEL_SOLVER = LogLevel.INFO;
 	private static final String SOLVER_COMMAND =
 			String.format("z3 SMTLIB2_COMPLIANT=true -t:%s -memory:2024 -smt2 -in", TEST_TIMEOUT_MILLISECONDS);
+	/**
+	 * If set to true we run the test not only for the given formula but also for
+	 * its negation. This allows us to test existential quantification and universal
+	 * quantification within a single test.
+	 */
+	private static final boolean CHECK_ALSO_NEGATED_INPUTS = false;
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
@@ -135,6 +142,12 @@ public class QuantifierEliminationTest {
 				SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script), SmtSortUtils.getIntSort(script)));
 	}
 
+	public static Sort getArrayIntIntIntIntSort(final Script script) {
+		return SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script), SmtSortUtils.getArraySort(script,
+				SmtSortUtils.getIntSort(script),
+				SmtSortUtils.getArraySort(script, SmtSortUtils.getIntSort(script), SmtSortUtils.getIntSort(script))));
+	}
+
 	@BeforeClass
 	public static void beforeAllTests() {
 		mCsvWriter = new QuantifierEliminationTestCsvWriter(QuantifierEliminationTest.class.getSimpleName());
@@ -164,6 +177,7 @@ public class QuantifierEliminationTest {
 		} else {
 			mScript = solverInstance;
 		}
+		mScript = new StatisticsScript(mScript);
 
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
@@ -208,7 +222,8 @@ public class QuantifierEliminationTest {
 				"(exists ((v_a (Array Int (Array Int Int)))) " + "(= a (store v_a i ((as const (Array Int Int)) 0))))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		// mLogger.info("Input: " + formulaAsTerm.toStringDirect());
-		final Term result = elim(formulaAsTerm);
+		final Term result = PartialQuantifierElimination.eliminate(mServices, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.SIMPLIFY_DDA);
 		mLogger.info("Result: " + result.toStringDirect());
 		Assert.assertTrue(!(result instanceof QuantifiedFormula));
 	}
@@ -246,65 +261,97 @@ public class QuantifierEliminationTest {
 		final LBool isDistinct = SmtUtils.checkSatTerm(mScript, mScript.term("distinct", formulaAsTerm, inlined));
 		mLogger.info("isDistinct     : " + isDistinct);
 		Assert.assertTrue(isDistinct == LBool.UNSAT);
-		final Term result = elim(inlined);
+		final Term result = PartialQuantifierElimination.eliminate(mServices, mMgdScript, inlined,
+				SimplificationTechnique.SIMPLIFY_DDA);
 		mLogger.info("Result         : " + result.toStringDirect());
 		Assert.assertTrue(!(result instanceof QuantifiedFormula));
 	}
 
 	static void runQuantifierEliminationTest(final FunDecl[] funDecls, final String eliminationInputAsString,
-			final String expectedResultAsString, final boolean checkResultIsQuantifierFree,
+			final String expectedResultAsString, final boolean expectQuantifierFreeResult,
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
 			final QuantifierEliminationTestCsvWriter csvWriter) {
+		final Term preprocessedInput = prepareTestInput(funDecls, eliminationInputAsString, services, mgdScript);
+		final Term expectedResultAsTerm;
+		if (expectedResultAsString == null) {
+			expectedResultAsTerm = null;
+		} else {
+			expectedResultAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), expectedResultAsString);
+		}
+		final String testId = ReflectionUtil.getCallerMethodName(3);
+		runQuantifierEliminationTest(preprocessedInput, expectedResultAsTerm, expectQuantifierFreeResult, testId,
+				services, logger, mgdScript, csvWriter);
+		if (CHECK_ALSO_NEGATED_INPUTS) {
+			final Term negatedInput = NnfTransformer.apply(services, mgdScript, QuantifierHandling.KEEP,
+					SmtUtils.not(mgdScript.getScript(), preprocessedInput));
+			final Term negatedExpectedResult;
+			if (expectedResultAsString == null) {
+				negatedExpectedResult = null;
+			} else {
+				negatedExpectedResult = NnfTransformer.apply(services, mgdScript, QuantifierHandling.KEEP,
+						SmtUtils.not(mgdScript.getScript(), expectedResultAsTerm));
+			}
+			runQuantifierEliminationTest(negatedInput, negatedExpectedResult, expectQuantifierFreeResult,
+					testId + "_negated", services, logger, mgdScript, csvWriter);
+		}
+	}
+
+	private static Term prepareTestInput(final FunDecl[] funDecls, final String eliminationInputAsString,
+			final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		for (final FunDecl funDecl : funDecls) {
 			funDecl.declareFuns(mgdScript.getScript());
 		}
-		runQuantifierEliminationTest(eliminationInputAsString, expectedResultAsString, checkResultIsQuantifierFree,
-				services, logger, mgdScript, csvWriter);
+		final Term preprocessedInput;
+		{
+			final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
+			final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
+			final Term unf = UnfTransformer.apply(mgdScript.getScript(), letFree);
+			preprocessedInput = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(unf);
+		}
+		return preprocessedInput;
 	}
 
-	/**
-	 * @deprecated use instead method with argument "FunDecl[] funDecls"
-	 */
-	@Deprecated
-	private static void runQuantifierEliminationTest(final String eliminationInputAsString,
-			final String expectedResultAsString, final boolean checkResultIsQuantifierFree,
+	private static void runQuantifierEliminationTest(final Term preprocessedInput,
+			final Term expectedResult, final boolean expectQuantifierFreeResult, final String testId,
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
 			final QuantifierEliminationTestCsvWriter csvWriter) {
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
-		Term letFree = new FormulaUnLet().transform(formulaAsTerm);
-		letFree = new CommuhashNormalForm(services, mgdScript.getScript()).transform(letFree);
-		letFree = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(letFree);
-		csvWriter.reportEliminationBegin(letFree);
-		final Term result = PartialQuantifierElimination.eliminate(services, mgdScript, letFree,
+
+		csvWriter.reportEliminationBegin(preprocessedInput, testId);
+		final Term result = PartialQuantifierElimination.eliminate(services, mgdScript, preprocessedInput,
 				SimplificationTechnique.SIMPLIFY_DDA);
-		logger.info("Result: " + result);
-		if (!Arrays.asList(result.getFreeVars()).isEmpty()) {
-			throw new AssertionError("Result contains free vars: " + Arrays.toString(result.getFreeVars()));
+		logger.info("Elimination output: " + result);
+		if (Arrays.asList(preprocessedInput.getFreeVars()).isEmpty()
+				&& !Arrays.asList(result.getFreeVars()).isEmpty()) {
+			throw new AssertionError(
+					"Elimination output contains free vars, but elimination input did not had free vars: "
+							+ Arrays.toString(result.getFreeVars()));
 		}
 		if (CHECK_SIMPLIFICATION_POSSIBILITY) {
 			final ExtendedSimplificationResult esr =
 					SmtUtils.simplifyWithStatistics(mgdScript, result, services, SimplificationTechnique.SIMPLIFY_DDA);
-			logger.info("Simplified result: " + esr.getSimplifiedTerm());
+			logger.info("Simplified elimination output: " + esr.getSimplifiedTerm());
 			logger.info(esr.buildSizeReductionMessage());
 			if (esr.getReductionOfTreeSize() > 0) {
-				throw new AssertionError("Reduction " + esr.getReductionOfTreeSize());
+				throw new AssertionError(String.format(
+						"Elimination output is not simplified (enough) the size could be reduced by %s percent.",
+						esr.getReductionOfTreeSize()));
 			}
 		}
-		if (checkResultIsQuantifierFree) {
-			final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
-			Assert.assertTrue("Not quantifier-free ", resultIsQuantifierFree);
+		final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
+		if (expectQuantifierFreeResult) {
+			Assert.assertTrue("Elimination output is not quantifier-free ", resultIsQuantifierFree);
+		} else {
+			Assert.assertTrue("Elimination output is quantifier-free ", !resultIsQuantifierFree);
 		}
-		if (expectedResultAsString != null) {
-			checkLogicalEquivalence(mgdScript.getScript(), result, expectedResultAsString);
+		if (expectedResult != null) {
+			checkLogicalEquivalence(mgdScript.getScript(), result, expectedResult);
 		}
-		csvWriter.reportEliminationSuccess(result);
+		csvWriter.reportEliminationSuccess(result, testId, (StatisticsScript) mgdScript.getScript());
 	}
 
-	private static void checkLogicalEquivalence(final Script script, final Term result,
-			final String expectedResultAsString) {
-		final Term expectedResultAsTerm = TermParseUtils.parseTerm(script, expectedResultAsString);
+	private static void checkLogicalEquivalence(final Script script, final Term result, final Term expectedResult) {
 		script.echo(new QuotedObject("Start correctness check for quantifier elimination."));
-		final LBool lbool = SmtUtils.checkEquivalence(result, expectedResultAsTerm, script);
+		final LBool lbool = SmtUtils.checkEquivalence(result, expectedResult, script);
 		script.echo(new QuotedObject("Finished correctness check for quantifier elimination. Result: " + lbool));
 		final String errorMessage;
 		switch (lbool) {
@@ -341,14 +388,50 @@ public class QuantifierEliminationTest {
 		final String formulaAsString =
 				"(store |v_#memory_int_BEFORE_CALL_2| nonMain_~dst~0.base (store (store (select |v_#memory_int_BEFORE_CALL_2| nonMain_~dst~0.base) (+ |v_#Ultimate.C_memcpy_#t~loopctr6_8| |#Ultimate.C_memcpy_dest.offset|) v_prenex_1) (+ |v_#Ultimate.C_memcpy_#t~loopctr6_9| |#Ultimate.C_memcpy_dest.offset|) |#Ultimate.C_memcpy_#t~mem7|))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.convert(mScript, formulaAsTerm);
+		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.of(formulaAsTerm);
 		Assert.assertTrue(mdns.getDimension() == 2);
 	}
 
-	@Deprecated
-	private Term elim(final Term quantFormula) {
-		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, quantFormula,
-				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+	/**
+	 * Revealed bug that lead to unsound loop acceleration results. The
+	 * variable `i` occurs quantified and free. The `i` in the critical
+	 * constraint was not quantified while descending into the subformula
+	 * with the quantified `i`.
+	 */
+	@Test
+	public void avdiivkaOriginal() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"),
+		};
+		final String formulaAsString = "(exists ((i Int)) (and (exists ((v_i_16 Int)) (and (<= v_i_16 0) (forall ((v_idx_1 Int)) (or (< i (+ v_idx_1 1)) (< v_idx_1 v_i_16) (= (select a v_idx_1) 42))))) (<= 1000000 i)))";
+		final Term formulaAsTerm = prepareTestInput(funDecls, formulaAsString, mServices, mMgdScript);
+		final Script script = mMgdScript.getScript();
+		// (= i 1048)
+		final Term eq = SmtUtils.equality(script, script.variable("i", SmtSortUtils.getIntSort(mMgdScript)),
+				SmtUtils.constructIntegerValue(script, SmtSortUtils.getIntSort(mMgdScript), BigInteger.valueOf(1048)));
+		final Term eliminationInput = SmtUtils.and(script, formulaAsTerm, eq);
+		// No elimination possible
+		final Term expectedResult = eliminationInput;
+		final String testId = ReflectionUtil.getCallerMethodName(2);
+		QuantifierEliminationTest.runQuantifierEliminationTest(eliminationInput, expectedResult, false, testId ,mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void avdiivkaSimplified() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a", "b"),
+		};
+		final String formulaAsString = "(exists ((i Int)) (and (<= i 2023) (forall ((k Int)) (or (<= i k) (= (select a k) 42)))))";
+		final Term formulaAsTerm = prepareTestInput(funDecls, formulaAsString, mServices, mMgdScript);
+		final Script script = mMgdScript.getScript();
+		// (= i 1048)
+		final Term eq = SmtUtils.equality(script, script.variable("i", SmtSortUtils.getIntSort(mMgdScript)),
+				SmtUtils.constructIntegerValue(script, SmtSortUtils.getIntSort(mMgdScript), BigInteger.valueOf(1048)));
+		final Term eliminationInput = SmtUtils.and(script, formulaAsTerm, eq);
+		// No elimination possible
+		final Term expectedResult = eliminationInput;
+		final String testId = ReflectionUtil.getCallerMethodName(2);
+		QuantifierEliminationTest.runQuantifierEliminationTest(eliminationInput, expectedResult, false, testId ,mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 }

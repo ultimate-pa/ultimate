@@ -35,7 +35,7 @@ public class BooleanVarAtom extends DPLLAtom {
 	}
 
 	@Override
-	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
+	public Term getSMTFormula(Theory smtTheory) {
 		return mVariable;
 	}
 

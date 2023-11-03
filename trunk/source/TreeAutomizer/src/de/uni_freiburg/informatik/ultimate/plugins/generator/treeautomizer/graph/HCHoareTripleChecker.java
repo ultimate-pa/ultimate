@@ -40,10 +40,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -100,7 +100,7 @@ public class HCHoareTripleChecker {
 				subs.put(headVar.getTermVariable(), bodyArg);
 			}
 
-			final Term preCondConjunct = new Substitution(mManagedScript, subs).transform(currentPre.getFormula());
+			final Term preCondConjunct = PureSubstitution.apply(mManagedScript, subs, currentPre.getFormula());
 			final Term closedPreCondConjunct = close(preCondConjunct);
 			mManagedScript.assertTerm(this, closedPreCondConjunct);
 		}
@@ -165,7 +165,7 @@ public class HCHoareTripleChecker {
 			substitution.put(fv, pv.getDefaultConstant());
 		}
 
-		return new Substitution(mManagedScript, substitution).transform(term);
+		return PureSubstitution.apply(mManagedScript, substitution, term);
 	}
 
 	public Validity check(final TreeAutomatonRule<HornClause, IPredicate> rule) {

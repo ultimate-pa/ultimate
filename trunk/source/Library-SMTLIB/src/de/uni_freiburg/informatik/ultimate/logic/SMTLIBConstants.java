@@ -36,6 +36,7 @@ public interface SMTLIBConstants {
 	public static final String ITE = "ite";
 	public static final String TRUE = "true";
 	public static final String FALSE = "false";
+	public static final String FUNC = "->";
 
 	// Arithmetic
 	public static final String INT = "Int";
@@ -61,6 +62,10 @@ public interface SMTLIBConstants {
 	public static final String STORE = "store";
 	public static final String SELECT = "select";
 	public static final String CONST = "const";
+	public static final String ARRAYOF = ".arrayof";
+
+	// Datatypes
+	public static final String IS = "is";
 
 	// Bitvector
 	public static final String BITVEC = "BitVec";

@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -118,13 +119,14 @@ public class UltimateStarter implements IController<RunDefinition> {
 	}
 
 	@Override
-	public ISource selectParser(final Collection<ISource> parser) {
+	public ISource selectParser(final IToolchain<RunDefinition> toolchain, final Collection<ISource> parser) {
 		mLogger.fatal("UltimateStarter does not support the selection of parsers by the user!");
 		return null;
 	}
 
 	@Override
-	public IToolchainData<RunDefinition> selectTools(final List<ITool> tools) {
+	public IToolchainData<RunDefinition> selectTools(final IToolchain<RunDefinition> toolchain,
+			final List<ITool> tools) {
 		try {
 			final IToolchainData<RunDefinition> tc =
 					mCurrentCore.createToolchainData(mUltimateRunDefinition.getToolchain().getAbsolutePath());
@@ -140,19 +142,19 @@ public class UltimateStarter implements IController<RunDefinition> {
 	}
 
 	@Override
-	public List<String> selectModel(final List<String> modelNames) {
+	public List<String> selectModel(final IToolchain<RunDefinition> toolchain, final List<String> modelNames) {
 		mLogger.fatal("UltimateStarter does not support the selection of models by the user!");
 		return null;
 	}
 
 	@Override
-	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
+	public void displayToolchainResults(final IToolchain<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
 
 	}
 
 	@Override
-	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
+	public void displayException(final IToolchain<RunDefinition> toolchain, final String description,
 			final Throwable ex) {
 		mLogger.fatal("Exception during Ultimate run: ", ex);
 
@@ -167,7 +169,8 @@ public class UltimateStarter implements IController<RunDefinition> {
 	}
 
 	@Override
-	public IToolchainData<RunDefinition> prerun(final IToolchainData<RunDefinition> tcData) {
+	public IToolchainData<RunDefinition> prerun(final IToolchain<RunDefinition> toolchain) {
+		final IToolchainData<RunDefinition> tcData = toolchain.getCurrentToolchainData();
 		if (mServicesCallback != null) {
 			final IUltimateServiceProvider newServices = mServicesCallback.apply(tcData.getServices());
 			return tcData.replaceServices(newServices);

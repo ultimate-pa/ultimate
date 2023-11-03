@@ -18,6 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.dpll;
 
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
@@ -33,14 +34,14 @@ public abstract class DPLLAtom extends Literal {
 		}
 
 		@Override
-		public Term getSMTFormula(Theory smtTheory, boolean quoted) {
+		public Term getSMTFormula(final Theory smtTheory) {
 			return smtTheory.mTrue;
 		}
 
 	}
 
 	public static class NegLiteral extends Literal {
-		public NegLiteral(DPLLAtom atom) {
+		public NegLiteral(final DPLLAtom atom) {
 			super(~atom.hashCode());//TODO is bit-flipping a good hash???
 			mAtom = atom;
 			mNegated = atom;
@@ -54,8 +55,8 @@ public abstract class DPLLAtom extends Literal {
 			return mAtom.toStringNegated();
 		}
 		@Override
-		public Term getSMTFormula(Theory smtTheory, boolean quoted) {
-			return mAtom.getNegatedSMTFormula(smtTheory, quoted);
+		public Term getSMTFormula(final Theory smtTheory) {
+			return mAtom.getNegatedSMTFormula(smtTheory);
 		}
 	}
 
@@ -68,19 +69,21 @@ public abstract class DPLLAtom extends Literal {
 	Clause.WatchList mBacktrackWatchers = new Clause.WatchList();
 	int mAtomQueueIndex = -1;
 	final int mAssertionstacklevel;
+	boolean mPreferredStatusIsLocked;
 
-	public DPLLAtom(int hash, int assertionstacklevel) {
+	public DPLLAtom(final int hash, final int assertionstacklevel) {
 		super(hash);
 		mAtom = this;
 		mNegated = new NegLiteral(this);
 		mAssertionstacklevel = assertionstacklevel;
 		mLastStatus = mNegated;
+		mPreferredStatusIsLocked = false;
 	}
 
 	/**
 	 * Compares two atoms with respect to their activity. Do not override!
 	 */
-	public final int compareActivityTo(DPLLAtom other) {
+	public final int compareActivityTo(final DPLLAtom other) {
 		return mActivity < other.mActivity ? 1
 				: mActivity == other.mActivity ? 0 : -1;
 	}
@@ -96,7 +99,7 @@ public abstract class DPLLAtom extends Literal {
 	/**
 	 * The decide level of the atom. This is the number of atoms that were decided before this atom got its truth value.
 	 * It is -1 if the atom is currently unset.
-	 * 
+	 *
 	 * @return the decide level of the literal.
 	 */
 	public final int getDecideLevel() {
@@ -106,7 +109,7 @@ public abstract class DPLLAtom extends Literal {
 	/**
 	 * The stack position. This is the position in the DPLL stack that contains the current atom (or negated atom). It
 	 * is -1 if the atom is currently unset.
-	 * 
+	 *
 	 * @return the stack position.
 	 */
 	public final int getStackPosition() {
@@ -125,8 +128,8 @@ public abstract class DPLLAtom extends Literal {
 	 * Returns a SMT formula representing the negated atoms.
 	 * Subclasses may overwrite this for pretty output.
 	 */
-	public final Term getNegatedSMTFormula(Theory smtTheory, boolean useAuxVars) {
-		return smtTheory.not(getSMTFormula(smtTheory, useAuxVars));
+	public final Term getNegatedSMTFormula(final Theory smtTheory) {
+		return smtTheory.not(getSMTFormula(smtTheory));
 	}
 
 	/**
@@ -143,7 +146,22 @@ public abstract class DPLLAtom extends Literal {
 		return mAssertionstacklevel;
 	}
 
-	public void setPreferredStatus(Literal status) {
+	public boolean preferredStatusIsLocked() {
+		return mPreferredStatusIsLocked;
+	}
+
+	public void lockPreferredStatus() {
+		mPreferredStatusIsLocked = true;
+	}
+
+	public void unlockPreferredStatus() {
+		mPreferredStatusIsLocked = false;
+	}
+
+	public void setPreferredStatus(final Literal status) {
+		if (mPreferredStatusIsLocked) {
+			throw new SMTLIBException("PreferredStatus must not be changed, since it is locked!");
+		}
 		mLastStatus = status;
 //		activity += 1.0;
 	}

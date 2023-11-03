@@ -530,8 +530,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 				// construct L cup {l}
 				final Set<SetConstraint<NODE>> newLiteralSet = mManager.getCcManager().getSetConstraintManager().join(
-						mCongruenceClosure.getLiteralSetConstraints(), containsConstraint,
-						Collections.singleton(mManager.getCcManager().getSetConstraintManager()
+						containsConstraint, Collections.singleton(mManager.getCcManager().getSetConstraintManager()
 								.buildSetConstraint(Collections.singleton(constantArrayConstant))));
 
 				mCongruenceClosure.reportContainsConstraint(aI, newLiteralSet);
@@ -1005,7 +1004,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			return false;
 		}
 
-		if (!mManager.isStrongerThan(this.mCongruenceClosure, other.mCongruenceClosure)) {
+		if (!mManager.isStrongerThan(mCongruenceClosure, other.mCongruenceClosure)) {
 			return false;
 		}
 
@@ -1381,9 +1380,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			// there is a literal set constraint on a[q]
 
 			// construct L cup {l}
-			final Set<SetConstraint<NODE>> newLiteralSet = mManager.getCcManager().getSetConstraintManager().join(
-					mCongruenceClosure.getLiteralSetConstraints(), containsConstraint,
-					Collections.singleton(mManager.getCcManager().getSetConstraintManager()
+			final Set<SetConstraint<NODE>> newLiteralSet = mManager.getCcManager().getSetConstraintManager()
+					.join(containsConstraint, Collections.singleton(mManager.getCcManager().getSetConstraintManager()
 							.buildSetConstraint(Collections.singleton(constantArrayConstant))));
 
 			// do propagation
@@ -1482,6 +1480,18 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		final WeqCongruenceClosure<NODE> result =
 				mManager.getWeqCongruenceClosure(mManager.join(mCongruenceClosure, other.mCongruenceClosure, true),
+						mManager.join(getWeakEquivalenceGraph(), other.getWeakEquivalenceGraph(), true), true);
+
+		return result;
+	}
+
+	WeqCongruenceClosure<NODE> widen(final WeqCongruenceClosure<NODE> other) {
+		assert this.isClosed() && other.isClosed();
+		assert !this.isInconsistent(false) && !other.isInconsistent(false) && !this.isTautological()
+				&& !other.isTautological() : "catch this case in WeqCcManager";
+
+		final WeqCongruenceClosure<NODE> result =
+				mManager.getWeqCongruenceClosure(mManager.widen(mCongruenceClosure, other.mCongruenceClosure, true),
 						mManager.join(getWeakEquivalenceGraph(), other.getWeakEquivalenceGraph(), true), true);
 
 		return result;

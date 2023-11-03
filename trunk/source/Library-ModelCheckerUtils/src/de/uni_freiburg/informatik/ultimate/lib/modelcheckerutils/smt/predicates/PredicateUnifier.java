@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
@@ -45,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator.PredicateUnifierStatisticsType;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.ContainsQuantifier;
@@ -79,7 +80,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  */
 public class PredicateUnifier implements IPredicateUnifier {
 
-	protected final ManagedScript mMgnScript;
+	protected final ManagedScript mMgdScript;
 	private final BasicPredicateFactory mPredicateFactory;
 	private final Map<Term, IPredicate> mTerm2Predicates;
 	private final LinkedHashSet<IPredicate> mKnownPredicates = new LinkedHashSet<>();
@@ -105,13 +106,13 @@ public class PredicateUnifier implements IPredicateUnifier {
 		mPredicateUnifierBenchmarkGenerator = new PredicateUnifierStatisticsGenerator();
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		mMgnScript = mgdScript;
+		mMgdScript = mgdScript;
 		mPredicateFactory = predicateFactory;
 		mScript = mgdScript.getScript();
 		mSymbolTable = symbolTable;
 		mServices = services;
 		mLogger = logger;
-		mImplicationChecker = new MonolithicImplicationChecker(mServices, mMgnScript);
+		mImplicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
 		mTerm2Predicates = new HashMap<>();
 		final Term trueTerm = mScript.term("true");
 		IPredicate truePredicate = null;
@@ -187,8 +188,9 @@ public class PredicateUnifier implements IPredicateUnifier {
 				mLogger.fatal("Want " + predicate);
 				throw new AssertionError("There is already an" + " equivalent predicate");
 			}
-		} else if (pc.isEquivalentToExistingPredicateWithGtQuantifiers()) {
-			if (pc.getEquivalantGtQuantifiedPredicate() != predicate) {
+		} else if (pc.isEquivalentToExistingPredicatesWithGtQuantifiers()) {
+			if (pc.getEquivalantGtQuantifiedPredicates().size() != 1
+					|| !pc.getEquivalantGtQuantifiedPredicates().contains(predicate)) {
 				throw new AssertionError("There is already an" + " equivalent predicate");
 			}
 		} else {
@@ -205,7 +207,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	@Override
 	public IPredicate getOrConstructPredicateForConjunction(final Collection<IPredicate> conjunction) {
 		final Set<IPredicate> minimalSubset =
-				PosetUtils.filterMinimalElements(conjunction, mCoverageRelation.getPartialComperator())
+				PosetUtils.filterMinimalElements(conjunction, mCoverageRelation.getPartialComparator())
 						.collect(Collectors.toSet());
 		if (minimalSubset.size() == 1) {
 			return minimalSubset.iterator().next();
@@ -226,7 +228,9 @@ public class PredicateUnifier implements IPredicateUnifier {
 				expliedPredicates.put(noncoverer, Validity.INVALID);
 			}
 		}
-		return getOrConstructPredicateForConjunction(minimalSubset, impliedPredicates, expliedPredicates);
+		final IPredicate and = mPredicateFactory.and(minimalSubset);
+		return getOrConstructPredicate(and.getFormula(), impliedPredicates, expliedPredicates, and,
+				x -> postProcessPredicateForConjunction(x, minimalSubset));
 	}
 
 	/**
@@ -236,7 +240,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	@Override
 	public IPredicate getOrConstructPredicateForDisjunction(final Collection<IPredicate> disjunction) {
 		final Set<IPredicate> minimalSubset =
-				PosetUtils.filterMaximalElements(disjunction, mCoverageRelation.getPartialComperator())
+				PosetUtils.filterMaximalElements(disjunction, mCoverageRelation.getPartialComparator())
 						.collect(Collectors.toSet());
 		if (minimalSubset.size() == 1) {
 			return minimalSubset.iterator().next();
@@ -263,7 +267,9 @@ public class PredicateUnifier implements IPredicateUnifier {
 				}
 			}
 		}
-		return getOrConstructPredicateForDisjunction(minimalSubset, impliedPredicates, expliedPredicates);
+		final IPredicate or = mPredicateFactory.or(minimalSubset);
+		return getOrConstructPredicate(or.getFormula(), impliedPredicates, expliedPredicates, or,
+				x -> postProcessPredicateForDisjunction(x, minimalSubset));
 	}
 
 	/**
@@ -289,7 +295,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 		if (mKnownPredicates.contains(predicate)) {
 			return predicate;
 		}
-		return getOrConstructPredicate(predicate.getFormula(), null, null, predicate);
+		return getOrConstructPredicate(predicate.getFormula(), null, null, predicate, x -> x);
 	}
 
 	/**
@@ -302,16 +308,27 @@ public class PredicateUnifier implements IPredicateUnifier {
 	 */
 	@Override
 	public IPredicate getOrConstructPredicate(final Term term) {
-		return getOrConstructPredicate(term, null, null, null);
+		return getOrConstructPredicate(term, null, null, null, x -> x);
+	}
+
+	protected IPredicate postProcessPredicateForConjunction(final IPredicate unified,
+			final Set<IPredicate> conjunctPredicates) {
+		return unified;
+	}
+
+	protected IPredicate postProcessPredicateForDisjunction(final IPredicate unified,
+			final Set<IPredicate> disjunctPredicates) {
+		return unified;
 	}
 
 	/**
 	 * Variant of getOrConstruct methods where we can provide information about implied/explied predicates.
 	 */
 	private IPredicate getOrConstructPredicate(final Term term, final HashMap<IPredicate, Validity> impliedPredicates,
-			final HashMap<IPredicate, Validity> expliedPredicates, final IPredicate originalPredicate) {
+			final HashMap<IPredicate, Validity> expliedPredicates, final IPredicate originalPredicate,
+			final UnaryOperator<IPredicate> predicatePostProcessor) {
 
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, mScript, mSymbolTable);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, mMgdScript, mSymbolTable);
 		mPredicateUnifierBenchmarkGenerator.continueTime();
 		mPredicateUnifierBenchmarkGenerator.incrementGetRequests();
 		assert varsIsSupersetOfFreeTermVariables(term, tvp.getVars());
@@ -348,7 +365,6 @@ public class PredicateUnifier implements IPredicateUnifier {
 			mPredicateUnifierBenchmarkGenerator.stopTime();
 			return pc.getEquivalantLeqQuantifiedPredicate();
 		}
-		final IPredicate result;
 		assert !SmtUtils.isTrueLiteral(commuNF) : "illegal predicate: true";
 		assert !SmtUtils.isFalseLiteral(commuNF) : "illegal predicate: false";
 		assert !mTerm2Predicates.containsKey(commuNF);
@@ -357,16 +373,19 @@ public class PredicateUnifier implements IPredicateUnifier {
 			simplifiedTerm = commuNF;
 		} else {
 			try {
-				final Term tmp = SmtUtils.simplify(mMgnScript, commuNF, mServices, mSimplificationTechnique);
+				final Term tmp = SmtUtils.simplify(mMgdScript, commuNF, mServices, mSimplificationTechnique);
 				simplifiedTerm = new CommuhashNormalForm(mServices, mScript).transform(tmp);
 			} catch (final ToolchainCanceledException tce) {
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), "unifying predicates"));
 				throw tce;
 			}
 		}
-		result = constructNewPredicate(simplifiedTerm, originalPredicate);
-		if (pc.isEquivalentToExistingPredicateWithGtQuantifiers()) {
-			mDeprecatedPredicates.put(pc.getEquivalantGtQuantifiedPredicate(), result);
+		final IPredicate result =
+				predicatePostProcessor.apply(constructNewPredicate(simplifiedTerm, originalPredicate));
+		if (pc.isEquivalentToExistingPredicatesWithGtQuantifiers()) {
+			for (final IPredicate equivalentGtQuantifierPredicate : pc.getEquivalantGtQuantifiedPredicates()) {
+				mDeprecatedPredicates.put(equivalentGtQuantifierPredicate, result);
+			}
 			mPredicateUnifierBenchmarkGenerator.incrementDeprecatedPredicates();
 		}
 		addNewPredicate(result, term, simplifiedTerm, pc.getImpliedPredicates(), pc.getExpliedPredicates());
@@ -381,34 +400,15 @@ public class PredicateUnifier implements IPredicateUnifier {
 		return mPredicateFactory.newPredicate(term);
 	}
 
-	protected IPredicate getOrConstructPredicateForConjunction(final Set<IPredicate> minimalSubset,
-			final HashMap<IPredicate, Validity> impliedPredicates,
-			final HashMap<IPredicate, Validity> expliedPredicates) {
-		final IPredicate and = mPredicateFactory.and(minimalSubset);
-		return getOrConstructPredicate(and.getFormula(), impliedPredicates, expliedPredicates, and);
-	}
-
-	protected IPredicate getOrConstructPredicateForDisjunction(final Set<IPredicate> minimalSubset,
-			final HashMap<IPredicate, Validity> impliedPredicates,
-			final HashMap<IPredicate, Validity> expliedPredicates) {
-		final IPredicate or = mPredicateFactory.or(minimalSubset);
-		return getOrConstructPredicate(or.getFormula(), impliedPredicates, expliedPredicates, or);
-	}
-
 	private static Term stripAnnotation(final Term term) {
 		final Term withoutAnnotation;
 		if (term instanceof AnnotatedTerm) {
 			final AnnotatedTerm annotatedTerm = (AnnotatedTerm) term;
 			final Annotation[] annotations = annotatedTerm.getAnnotations();
-			if (annotations.length == 1) {
-				if (":quoted".equals(annotations[0].getKey())) {
-					withoutAnnotation = annotatedTerm.getSubterm();
-				} else {
-					throw new UnsupportedOperationException();
-				}
-			} else {
+			if ((annotations.length != 1) || !":quoted".equals(annotations[0].getKey())) {
 				throw new UnsupportedOperationException();
 			}
+			withoutAnnotation = annotatedTerm.getSubterm();
 		} else {
 			withoutAnnotation = term;
 		}
@@ -472,7 +472,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	 */
 	@Override
 	public Set<IPredicate> cannibalize(final boolean splitNumericEqualities, final Term term) {
-		final Term[] conjuncts = SmtUtils.cannibalize(mMgnScript, mServices, splitNumericEqualities, term);
+		final Term[] conjuncts = SmtUtils.cannibalize(mMgdScript, mServices, splitNumericEqualities, term);
 		final Set<IPredicate> result = new HashSet<>();
 		for (final Term conjunct : conjuncts) {
 			final IPredicate predicate = getOrConstructPredicate(conjunct);
@@ -634,7 +634,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 		}
 
 		@Override
-		public IPartialComparator<IPredicate> getPartialComperator() {
+		public IPartialComparator<IPredicate> getPartialComparator() {
 			return (o1, o2) -> {
 				if (o1.equals(o2)) {
 					return ComparisonResult.EQUAL;
@@ -683,7 +683,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 		}
 	}
 
-	public class CoverageRelationStatistics {
+	public static class CoverageRelationStatistics {
 		private final int mValidCoverageRelations;
 		private final int mInvalidCoverageRelations;
 		private final int mUnknownCoverageRelations;
@@ -744,7 +744,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 		private final HashMap<IPredicate, Validity> mImpliedPredicates;
 		private final HashMap<IPredicate, Validity> mExpliedPredicates;
 		private final IPredicate mEquivalentLeqQuantifiedPredicate;
-		private IPredicate mEquivalentGtQuantifiedPredicate;
+		private final Set<IPredicate> mEquivalentGtQuantifiedPredicates;
 		private boolean mIsIntricatePredicate;
 
 		/**
@@ -766,8 +766,9 @@ public class PredicateUnifier implements IPredicateUnifier {
 				mExpliedPredicates = expliedPredicates;
 			}
 			mTerm = term;
-			mClosedTerm = PredicateUtils.computeClosedFormula(term, vars, mScript);
+			mClosedTerm = PredicateUtils.computeClosedFormula(term, vars, mMgdScript);
 			mTermContainsQuantifiers = new ContainsQuantifier().containsQuantifier(term);
+			mEquivalentGtQuantifiedPredicates = new HashSet<>();
 
 			mScript.echo(new QuotedObject("begin unification"));
 			mEquivalentLeqQuantifiedPredicate = compare();
@@ -802,11 +803,11 @@ public class PredicateUnifier implements IPredicateUnifier {
 			return mEquivalentLeqQuantifiedPredicate;
 		}
 
-		public IPredicate getEquivalantGtQuantifiedPredicate() {
-			if (mEquivalentGtQuantifiedPredicate == null) {
+		public Set<IPredicate> getEquivalantGtQuantifiedPredicates() {
+			if (mEquivalentGtQuantifiedPredicates.isEmpty()) {
 				throw new IllegalAccessError("accessible only if equivalent to existing predicate");
 			}
-			return mEquivalentGtQuantifiedPredicate;
+			return mEquivalentGtQuantifiedPredicates;
 		}
 
 		public boolean isIntricatePredicate() {
@@ -820,8 +821,8 @@ public class PredicateUnifier implements IPredicateUnifier {
 			return mEquivalentLeqQuantifiedPredicate != null;
 		}
 
-		public boolean isEquivalentToExistingPredicateWithGtQuantifiers() {
-			return mEquivalentGtQuantifiedPredicate != null;
+		public boolean isEquivalentToExistingPredicatesWithGtQuantifiers() {
+			return !mEquivalentGtQuantifiedPredicates.isEmpty();
 		}
 
 		private IPredicate compare() {
@@ -974,11 +975,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 							&& !thisIsLessQuantifiedThanOther(mClosedTerm, otherClosedTerm)) {
 						return other;
 					}
-					if (mEquivalentGtQuantifiedPredicate == null) {
-						mEquivalentGtQuantifiedPredicate = other;
-					} else {
-						throw new AssertionError("at most one deprecated predicate");
-					}
+					mEquivalentGtQuantifiedPredicates.add(other);
 				}
 			}
 			// no predicate was equivalent
@@ -995,9 +992,9 @@ public class PredicateUnifier implements IPredicateUnifier {
 
 		private String generateQuantifierInformation(final Term closedTerm) {
 			final String result;
-			final Term pnf = new PrenexNormalForm(mMgnScript).transform(closedTerm);
+			final Term pnf = new PrenexNormalForm(mMgdScript).transform(closedTerm);
 			if (pnf instanceof QuantifiedFormula) {
-				final QuantifierSequence qs = new QuantifierSequence(mScript, pnf);
+				final QuantifierSequence qs = new QuantifierSequence(mMgdScript, pnf);
 				result = "quantified with " + (qs.getNumberOfQuantifierBlocks() - 1) + "quantifier alternations";
 			} else {
 				result = "quantifier-free";

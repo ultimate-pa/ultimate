@@ -42,9 +42,9 @@ public abstract class CondisTermTransducer<E> extends TermTransducer<E> {
 
 	protected abstract E transduceAtom(Term term);
 
-	protected abstract E transduceConjunction(List<E> transducedArguments);
+	protected abstract E transduceConjunction(ApplicationTerm originalTerm, List<E> transducedArguments);
 
-	protected abstract E transduceDisjunction(List<E> transducedArguments);
+	protected abstract E transduceDisjunction(ApplicationTerm originalTerm, List<E> transducedArguments);
 
 	private static boolean isConjunction(final Term term) {
 		return (term instanceof ApplicationTerm) && ((ApplicationTerm) term).getFunction().getName().equals("and");
@@ -70,12 +70,12 @@ public abstract class CondisTermTransducer<E> extends TermTransducer<E> {
 	}
 
 	@Override
-	protected E transduce(final ApplicationTerm appTerm, final List<E> transducedArguments) {
+	protected E transduce(final ApplicationTerm originalTerm, final List<E> transducedArguments) {
 		E result;
-		if (isConjunction(appTerm)) {
-			result = transduceConjunction(transducedArguments);
-		} else if (isDisjuntion(appTerm)) {
-			result = transduceDisjunction(transducedArguments);
+		if (isConjunction(originalTerm)) {
+			result = transduceConjunction(originalTerm, transducedArguments);
+		} else if (isDisjuntion(originalTerm)) {
+			result = transduceDisjunction(originalTerm, transducedArguments);
 		} else {
 			throw new AssertionError("neither conjunction nor disjunction");
 		}

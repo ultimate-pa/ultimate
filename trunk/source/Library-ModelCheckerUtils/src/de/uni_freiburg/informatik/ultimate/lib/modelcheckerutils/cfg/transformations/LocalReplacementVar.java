@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.LocalBoogieVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.LocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class LocalReplacementVar extends LocalBoogieVar implements IReplacementVar  {
+public class LocalReplacementVar extends LocalProgramVar implements IReplacementVar  {
 
 	private static final long serialVersionUID = 8758509461003371994L;
 	private final Term mDefinition;
@@ -44,7 +44,7 @@ public class LocalReplacementVar extends LocalBoogieVar implements IReplacementV
 	public LocalReplacementVar(final String identifier, final String proc, 
 			final TermVariable tv, final ApplicationTerm defaultConstant,
 			final ApplicationTerm primedContant, final Term definition) {
-		super(identifier, proc, null, tv, defaultConstant, primedContant);
+		super(identifier, proc, tv, defaultConstant, primedContant);
 		mDefinition = definition;
 	}
 

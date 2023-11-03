@@ -18,22 +18,19 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 
 	private final NestedMap2<Set<ELEM>, Set<ELEM>, SetConstraint<ELEM>> mLiteralsToNonLiteralsToSetConstraint;
 	private final SetConstraint<ELEM> mInconsistentSetConstraint;
-//	private final SetConstraintComparator<ELEM> mSetConstraintComparator;
+	// private final SetConstraintComparator<ELEM> mSetConstraintComparator;
 	private final IPartialComparator<SetConstraint<ELEM>> mSetConstraintComparator;
 	private final CcManager<ELEM> mCcManager;
 
 	public SetConstraintManager(final CcManager<ELEM> ccMan) {
 		mLiteralsToNonLiteralsToSetConstraint = new NestedMap2<>();
 		mInconsistentSetConstraint = new SetConstraint<>(true);
-		mSetConstraintComparator = CcSettings.USE_CACHE_FOR_SETCONSTRAINTS ?
-				new CachingSetConstraintComparator<>(this) :
-				new SetConstraintComparator<>(this);
+		mSetConstraintComparator = CcSettings.USE_CACHE_FOR_SETCONSTRAINTS ? new CachingSetConstraintComparator<>(this)
+				: new SetConstraintComparator<>(this);
 		mCcManager = ccMan;
 	}
 
-	public SetConstraint<ELEM> buildSetConstraint(
-			final Set<ELEM> literals,
-			final Set<ELEM> nonLiterals) {
+	public SetConstraint<ELEM> buildSetConstraint(final Set<ELEM> literals, final Set<ELEM> nonLiterals) {
 		assert literals.stream().allMatch(ELEM::isLiteral);
 		assert !nonLiterals.stream().anyMatch(ELEM::isLiteral);
 
@@ -53,8 +50,7 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return mInconsistentSetConstraint;
 	}
 
-	public SetConstraint<ELEM> buildSetConstraint(
-			final Collection<ELEM> unsortedElements) {
+	public SetConstraint<ELEM> buildSetConstraint(final Collection<ELEM> unsortedElements) {
 		final Set<ELEM> literals = new HashSet<>();
 		final Set<ELEM> nonLiterals = new HashSet<>();
 		for (final ELEM el : unsortedElements) {
@@ -64,16 +60,13 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 				nonLiterals.add(el);
 			}
 		}
-		return buildSetConstraint(
-				literals, nonLiterals);
-//				unsortedElements.stream().filter(ELEM::isLiteral).collect(Collectors.toSet()),
-//				unsortedElements.stream().filter(e -> !e.isLiteral()).collect(Collectors.toSet()));
+		return buildSetConstraint(literals, nonLiterals);
+		// unsortedElements.stream().filter(ELEM::isLiteral).collect(Collectors.toSet()),
+		// unsortedElements.stream().filter(e -> !e.isLiteral()).collect(Collectors.toSet()));
 	}
 
-
-	//	public void updateOnChangedRepresentative(final ELEM elem1OldRep, final ELEM elem2OldRep, final ELEM newRep) {
-	public  SetConstraint<ELEM>
-				updateOnChangedRepresentative(final SetConstraint<ELEM> oldSetConstraint,
+	// public void updateOnChangedRepresentative(final ELEM elem1OldRep, final ELEM elem2OldRep, final ELEM newRep) {
+	public SetConstraint<ELEM> updateOnChangedRepresentative(final SetConstraint<ELEM> oldSetConstraint,
 			final ELEM elem1OldRep, final ELEM elem2OldRep, final ELEM newRep) {
 
 		final Set<ELEM> oldElements = oldSetConstraint.getElementSet();
@@ -103,8 +96,8 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return buildSetConstraint(newLiterals, newNonLiterals);
 	}
 
-	public  SetConstraint<ELEM>
-	 		updateOnChangedRepresentative(final SetConstraint<ELEM> oldSetConstraint, final ELEM oldRep, final ELEM newRep) {
+	public SetConstraint<ELEM> updateOnChangedRepresentative(final SetConstraint<ELEM> oldSetConstraint,
+			final ELEM oldRep, final ELEM newRep) {
 
 		final Set<ELEM> oldElements = oldSetConstraint.getElementSet();
 		if (!oldElements.contains(oldRep)) {
@@ -149,11 +142,10 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return buildSetConstraint(newLiterals, newNonLiterals);
 	}
 
-	public  SetConstraint<ELEM>
-			filterWithDisequality(final SetConstraint<ELEM> constraint, final ELEM elem) {
-//		assert mSurroundingScConjunction.getCongruenceClosure().isRepresentative(elem);
-//		mLiterals.remove(elem);
-//		mNonLiterals.remove(elem);
+	public SetConstraint<ELEM> filterWithDisequality(final SetConstraint<ELEM> constraint, final ELEM elem) {
+		// assert mSurroundingScConjunction.getCongruenceClosure().isRepresentative(elem);
+		// mLiterals.remove(elem);
+		// mNonLiterals.remove(elem);
 
 		if (!constraint.getLiterals().contains(elem) && !constraint.getNonLiterals().contains(elem)) {
 			return constraint;
@@ -166,11 +158,10 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return buildSetConstraint(newLiterals, newNonLiterals);
 	}
 
-
-	public  SetConstraint<ELEM>
-			transformElements(final SetConstraint<ELEM> constraint, final Function<ELEM, ELEM> elemTransformer) {
-		//	public void transformElements(final Function<ELEM, ELEM> elemTransformer) {
-//		for (final ELEM l : new HashSet<>(mLiterals)) {
+	public SetConstraint<ELEM> transformElements(final SetConstraint<ELEM> constraint,
+			final Function<ELEM, ELEM> elemTransformer) {
+		// public void transformElements(final Function<ELEM, ELEM> elemTransformer) {
+		// for (final ELEM l : new HashSet<>(mLiterals)) {
 		final Set<ELEM> newLiterals = new HashSet<>();
 		final Set<ELEM> newNonLiterals = new HashSet<>();
 		for (final ELEM e : constraint.getElementSet()) {
@@ -181,33 +172,30 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 				newNonLiterals.add(transformed);
 			}
 		}
-//		for (final ELEM l : constraint.mLiterals) {
-////			if (mLiterals.remove(l)) {
-////				mLiterals.add(elemTransformer.apply(l));
-////			}
-//			newLiterals.add(elemTransformer.apply(l));
-//		}
-////		for (final ELEM l : new HashSet<>(mNonLiterals)) {
-//		for (final ELEM l : constraint.mNonLiterals) {
-////			if (mNonLiterals.remove(l)) {
-////				mNonLiterals.add(elemTransformer.apply(l));
-////			}
-//			newNonLiterals.add(elemTransformer.apply(l));
-//		}
-//		assert sanityCheck();
+		// for (final ELEM l : constraint.mLiterals) {
+		//// if (mLiterals.remove(l)) {
+		//// mLiterals.add(elemTransformer.apply(l));
+		//// }
+		// newLiterals.add(elemTransformer.apply(l));
+		// }
+		//// for (final ELEM l : new HashSet<>(mNonLiterals)) {
+		// for (final ELEM l : constraint.mNonLiterals) {
+		//// if (mNonLiterals.remove(l)) {
+		//// mNonLiterals.add(elemTransformer.apply(l));
+		//// }
+		// newNonLiterals.add(elemTransformer.apply(l));
+		// }
+		// assert sanityCheck();
 		return buildSetConstraint(newLiterals, newNonLiterals);
 	}
 
-
 	/**
-	 * Apply propagation rule
-	 *  e in L /\ e != l --> e in L\{l}
+	 * Apply propagation rule e in L /\ e != l --> e in L\{l}
 	 *
 	 * Work inplace except if constraint becomes inconsistent or a singleton
 	 */
-	public  SetConstraint<ELEM>
-			filterWithDisequalities(final SetConstraint<ELEM> oldConstraint, final ELEM constrainedElement,
-					final CongruenceClosure<ELEM> congruenceClosure) {
+	public SetConstraint<ELEM> filterWithDisequalities(final SetConstraint<ELEM> oldConstraint,
+			final ELEM constrainedElement, final CongruenceClosure<ELEM> congruenceClosure) {
 
 		boolean madeChanges = false;
 
@@ -243,9 +231,7 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return buildSetConstraint(newLiterals, newNonLiterals);
 	}
 
-
-	public  boolean isStrongerThan(
-			final SetConstraint<ELEM> lhsConjunct, final SetConstraint<ELEM> rhsConjunct) {
+	public boolean isStrongerThan(final SetConstraint<ELEM> lhsConjunct, final SetConstraint<ELEM> rhsConjunct) {
 		if (!rhsConjunct.getLiterals().containsAll(lhsConjunct.getLiterals())) {
 			return false;
 		}
@@ -255,7 +241,6 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return true;
 	}
 
-
 	/**
 	 * note this constructs "some" meet over the input constraints
 	 *
@@ -264,8 +249,7 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 	 * @param scs
 	 * @return
 	 */
-	public  SetConstraint<ELEM> meet(
-			final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
+	public SetConstraint<ELEM> meet(final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
 			final Collection<SetConstraint<ELEM>> scs) {
 		if (scs.isEmpty()) {
 			// empty meet --> "Top" constraint --> represented by "null"
@@ -291,28 +275,23 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 			}
 			literals = newLiterals;
 
-
 			nonLiterals.addAll(current.getNonLiterals());
 		}
 
-//		final SetConstraintConjunction<ELEM> surroundingSetCc = firstSc.mSurroundingScConjunction;
-//		final CCLiteralSetConstraints<ELEM> surroundingSetCc =
-//				firstSc.mSurroundingScConjunction.mSurroundingCCSetConstraints;
-		return buildSetConstraint(//surroundingSetConstraints,
+		// final SetConstraintConjunction<ELEM> surroundingSetCc = firstSc.mSurroundingScConjunction;
+		// final CCLiteralSetConstraints<ELEM> surroundingSetCc =
+		// firstSc.mSurroundingScConjunction.mSurroundingCCSetConstraints;
+		return buildSetConstraint(// surroundingSetConstraints,
 				literals, nonLiterals);
 	}
 
-
-
-	public  SetConstraint<ELEM> join(
-			final SetConstraint<ELEM> sc1, final SetConstraint<ELEM> sc2) {
-		return buildSetConstraint(
-				DataStructureUtils.union(sc1.getLiterals(), sc2.getLiterals()),
+	public SetConstraint<ELEM> join(final SetConstraint<ELEM> sc1, final SetConstraint<ELEM> sc2) {
+		return buildSetConstraint(DataStructureUtils.union(sc1.getLiterals(), sc2.getLiterals()),
 				DataStructureUtils.union(sc1.getNonLiterals(), sc2.getNonLiterals()));
 	}
 
-	public SetConstraint<ELEM>
-		expandNonLiteral(final SetConstraint<ELEM> oldSc, final ELEM e, final Set<ELEM> expansion) {
+	public SetConstraint<ELEM> expandNonLiteral(final SetConstraint<ELEM> oldSc, final ELEM e,
+			final Set<ELEM> expansion) {
 		assert oldSc.getNonLiterals().contains(e);
 		final Set<ELEM> newLiterals = new HashSet<>(oldSc.getLiterals());
 		final Set<ELEM> newNonLiterals = new HashSet<>(oldSc.getNonLiterals());
@@ -321,12 +300,10 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return buildSetConstraint(newLiterals, newNonLiterals);
 	}
 
-
 	//////////////////////////////////////////////
 
-	public  Set<SetConstraint<ELEM>> updateOnChangedRepresentative(
-			final Set<SetConstraint<ELEM>> setConstraints, final ELEM oldRep,
-			final ELEM newRep) {
+	public Set<SetConstraint<ELEM>> updateOnChangedRepresentative(final Set<SetConstraint<ELEM>> setConstraints,
+			final ELEM oldRep, final ELEM newRep) {
 		final Set<SetConstraint<ELEM>> result = new HashSet<>();
 		for (final SetConstraint<ELEM> setConstraint : setConstraints) {
 			result.add(updateOnChangedRepresentative(setConstraint, oldRep, newRep));
@@ -334,9 +311,8 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return result;
 	}
 
-	public  Set<SetConstraint<ELEM>> updateOnChangedRepresentative(
-			final Set<SetConstraint<ELEM>> setConstraints, final ELEM elem1OldRep, final ELEM elem2OldRep,
-			final ELEM newRep) {
+	public Set<SetConstraint<ELEM>> updateOnChangedRepresentative(final Set<SetConstraint<ELEM>> setConstraints,
+			final ELEM elem1OldRep, final ELEM elem2OldRep, final ELEM newRep) {
 		final Set<SetConstraint<ELEM>> result = new HashSet<>();
 		boolean madeChanges = false;
 		for (final SetConstraint<ELEM> setConstraint : setConstraints) {
@@ -351,8 +327,8 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return result;
 	}
 
-	public  Set<SetConstraint<ELEM>> transformElements(
-			final Set<SetConstraint<ELEM>> setConstraints, final Function<ELEM, ELEM> elemTransformer) {
+	public Set<SetConstraint<ELEM>> transformElements(final Set<SetConstraint<ELEM>> setConstraints,
+			final Function<ELEM, ELEM> elemTransformer) {
 		final Set<SetConstraint<ELEM>> result = new HashSet<>();
 		for (final SetConstraint<ELEM> setConstraint : setConstraints) {
 			result.add(transformElements(setConstraint, elemTransformer));
@@ -369,8 +345,7 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 	 * @param constraintConjunction2
 	 * @return
 	 */
-	public  Set<SetConstraint<ELEM>> meet(
-			final CCLiteralSetConstraints<ELEM> surroundingConstraint,
+	public Set<SetConstraint<ELEM>> meet(final CCLiteralSetConstraints<ELEM> surroundingConstraint,
 			final Set<SetConstraint<ELEM>> constraintConjunction1,
 			final Set<SetConstraint<ELEM>> constraintConjunction2) {
 		if (isTautological(constraintConjunction1)) {
@@ -386,16 +361,16 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 			return getInconsistentSetConstraintConjunction();
 		}
 
-		final Collection<SetConstraint<ELEM>> newSetConstraints = DataStructureUtils.union(constraintConjunction1,
-				constraintConjunction2);
+		final Collection<SetConstraint<ELEM>> newSetConstraints =
+				DataStructureUtils.union(constraintConjunction1, constraintConjunction2);
 
 		return surroundingConstraint.getCongruenceClosure().getManager()
 				.normalizeSetConstraintConjunction(surroundingConstraint, newSetConstraints);
 	}
 
 	/**
-	 * Check if the two constraints would contradict "if they were about the same
-	 * element". (Used in getEqualityStatus..)
+	 * Check if the two constraints would contradict "if they were about the same element". (Used in
+	 * getEqualityStatus..)
 	 *
 	 * assumes (like all methods of this kind) that the SetConstraints are aligned in terms of representatives
 	 *
@@ -403,13 +378,10 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 	 * @param litConstraint2
 	 * @return
 	 */
-	public boolean meetIsInconsistent(
-			final CCLiteralSetConstraints<ELEM> surroundingConstraint,
-			final Set<SetConstraint<ELEM>> litConstraint1,
-			final Set<SetConstraint<ELEM>> litConstraint2) {
+	public boolean meetIsInconsistent(final CCLiteralSetConstraints<ELEM> surroundingConstraint,
+			final Set<SetConstraint<ELEM>> litConstraint1, final Set<SetConstraint<ELEM>> litConstraint2) {
 
 		mCcManager.bmStart(CcBmNames.MEET_IS_INCONSISTENT);
-
 
 		SetConstraint<ELEM> lits1 = null;
 		for (final SetConstraint<ELEM> sc : litConstraint1) {
@@ -434,34 +406,34 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 			return false;
 		}
 
-//		final SetConstraint<ELEM> lits1;
-//		{
-//			final Stream<SetConstraint<ELEM>> onlyLits1 = litConstraint1.stream().filter(sc -> sc.hasOnlyLiterals());
-//			assert onlyLits1.collect(Collectors.toList()).size() <= 1 : "not normalized correctly";
-//			try {
-//				lits1 = onlyLits1.findAny().get();
-//			} catch (final NoSuchElementException ex) {
-//				mCcManager.bmEnd(CcBmNames.MEET_IS_INCONSISTENT);
-//				return false;
-//			}
-//		}
-//		final SetConstraint<ELEM> lits2;
-//		{
-//			final Stream<SetConstraint<ELEM>> onlyLits2 = litConstraint1.stream().filter(sc -> sc.hasOnlyLiterals());
-//			assert onlyLits2.collect(Collectors.toList()).size() <= 1 : "not normalized correctly";
-//			try {
-//				lits2 = onlyLits2.findAny().get();
-//			} catch (final NoSuchElementException ex) {
-//				mCcManager.bmEnd(CcBmNames.MEET_IS_INCONSISTENT);
-//				return false;
-//			}
-//		}
-//		final boolean result = DataStructureUtils.intersection(lits1.getLiterals(), lits2.getLiterals()).isEmpty();
+		// final SetConstraint<ELEM> lits1;
+		// {
+		// final Stream<SetConstraint<ELEM>> onlyLits1 = litConstraint1.stream().filter(sc -> sc.hasOnlyLiterals());
+		// assert onlyLits1.collect(Collectors.toList()).size() <= 1 : "not normalized correctly";
+		// try {
+		// lits1 = onlyLits1.findAny().get();
+		// } catch (final NoSuchElementException ex) {
+		// mCcManager.bmEnd(CcBmNames.MEET_IS_INCONSISTENT);
+		// return false;
+		// }
+		// }
+		// final SetConstraint<ELEM> lits2;
+		// {
+		// final Stream<SetConstraint<ELEM>> onlyLits2 = litConstraint1.stream().filter(sc -> sc.hasOnlyLiterals());
+		// assert onlyLits2.collect(Collectors.toList()).size() <= 1 : "not normalized correctly";
+		// try {
+		// lits2 = onlyLits2.findAny().get();
+		// } catch (final NoSuchElementException ex) {
+		// mCcManager.bmEnd(CcBmNames.MEET_IS_INCONSISTENT);
+		// return false;
+		// }
+		// }
+		// final boolean result = DataStructureUtils.intersection(lits1.getLiterals(), lits2.getLiterals()).isEmpty();
 		final boolean result = !DataStructureUtils.haveNonEmptyIntersection(lits1.getLiterals(), lits2.getLiterals());
 
-//		final Collection<SetConstraint<ELEM>> meet = meet(surroundingConstraint, litConstraint1,
-//				litConstraint2);
-//		final boolean result = isInconsistent(meet);
+		// final Collection<SetConstraint<ELEM>> meet = meet(surroundingConstraint, litConstraint1,
+		// litConstraint2);
+		// final boolean result = isInconsistent(meet);
 		mCcManager.bmEnd(CcBmNames.MEET_IS_INCONSISTENT);
 		return result;
 	}
@@ -469,24 +441,18 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 	/**
 	 * Can deal with "null" arguments (which represent the "Top" value).
 	 *
-	 * Basic law for this:
-	 *  |= A /\ B --> C /\ D
-	 *    iff
-	 *   |= A /\ B --> C
-	 *     and
-	 *   |= A /\ B --> D
+	 * Basic law for this: |= A /\ B --> C /\ D iff |= A /\ B --> C and |= A /\ B --> D
 	 *
 	 * That means we can build the meet of the input SetCcs in any detail we want, involving the usual power set
-	 * construction, and perhaps filtering, or we can assume this has been done (should be the case, at the moment,
-	 * as the Set<SetConstraint<ELEM>> come from SetConstraintConjunction<ELEM>, which have that property).
-	 * Then we check one by one for inclusion of the set constraints.
+	 * construction, and perhaps filtering, or we can assume this has been done (should be the case, at the moment, as
+	 * the Set<SetConstraint<ELEM>> come from SetConstraintConjunction<ELEM>, which have that property). Then we check
+	 * one by one for inclusion of the set constraints.
 	 *
 	 * @param constraintConjunction1
 	 * @param constraintConjunction2
 	 * @return
 	 */
-	public  boolean isStrongerThan(
-			final Set<SetConstraint<ELEM>> constraintConjunction1,
+	public boolean isStrongerThan(final Set<SetConstraint<ELEM>> constraintConjunction1,
 			final Set<SetConstraint<ELEM>> constraintConjunction2) {
 		if (isTautological(constraintConjunction1)) {
 			// cc2 = Top
@@ -525,17 +491,15 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return true;
 	}
 
-	public  Set<SetConstraint<ELEM>> getInconsistentSetConstraintConjunction() {
+	public Set<SetConstraint<ELEM>> getInconsistentSetConstraintConjunction() {
 		return Collections.singleton(SetConstraint.getInconsistentSetConstraint());
 	}
 
-	public  Set<SetConstraint<ELEM>> getTautologicalSetConstraintConjunction() {
+	public Set<SetConstraint<ELEM>> getTautologicalSetConstraintConjunction() {
 		return Collections.emptySet();
 	}
 
-	public  Set<SetConstraint<ELEM>> join(
-			final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
-			final Set<SetConstraint<ELEM>> constraintConjunction1,
+	public Set<SetConstraint<ELEM>> join(final Set<SetConstraint<ELEM>> constraintConjunction1,
 			final Set<SetConstraint<ELEM>> constraintConjunction2) {
 		if (isTautological(constraintConjunction1)) {
 			return getTautologicalSetConstraintConjunction();
@@ -560,14 +524,31 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return newSetConstraints;
 	}
 
+	public Set<SetConstraint<ELEM>> widen(final Set<SetConstraint<ELEM>> constraintConjunction1,
+			final Set<SetConstraint<ELEM>> constraintConjunction2) {
+		if (isTautological(constraintConjunction1)) {
+			return getTautologicalSetConstraintConjunction();
+		}
+		if (isTautological(constraintConjunction2)) {
+			return getTautologicalSetConstraintConjunction();
+		}
+		if (isInconsistent(constraintConjunction1)) {
+			return constraintConjunction2;
+		}
+		if (isInconsistent(constraintConjunction2)) {
+			return constraintConjunction1;
+		}
+		return DataStructureUtils.intersection(constraintConjunction1, constraintConjunction2);
+	}
+
 	/**
 	 * assumes that representatives are resolved..
 	 *
 	 * @param constraints
 	 * @return
 	 */
-	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean isTautological(
-			final Set<SetConstraint<ELEM>> constraints) {
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean
+			isTautological(final Set<SetConstraint<ELEM>> constraints) {
 		if (constraints == null) {
 			return true;
 		}
@@ -587,10 +568,10 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 			}
 		}
 		return false;
-//		return constraints.stream().anyMatch(sc -> sc.isInconsistent());
+		// return constraints.stream().anyMatch(sc -> sc.isInconsistent());
 	}
 
-	public  Set<ELEM> getSingletonValues(final Set<SetConstraint<ELEM>> constraints) {
+	public Set<ELEM> getSingletonValues(final Set<SetConstraint<ELEM>> constraints) {
 		final Set<ELEM> result = new HashSet<>();
 		for (final SetConstraint<ELEM> sc : constraints) {
 			if (sc.isSingleton()) {
@@ -598,19 +579,18 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 			}
 		}
 		return result;
-//		return constraints.stream().filter(sc -> sc.isSingleton())
-//				.map(sc -> sc.getSingletonValue())
-//				.collect(Collectors.toSet());
+		// return constraints.stream().filter(sc -> sc.isSingleton())
+		// .map(sc -> sc.getSingletonValue())
+		// .collect(Collectors.toSet());
 	}
 
-	public  Set<SetConstraint<ELEM>> filterWithDisequalities(
-			final CongruenceClosure<ELEM> congruenceClosure, final ELEM constrainedElement,
-			final Set<SetConstraint<ELEM>> constraints) {
+	public Set<SetConstraint<ELEM>> filterWithDisequalities(final CongruenceClosure<ELEM> congruenceClosure,
+			final ELEM constrainedElement, final Set<SetConstraint<ELEM>> constraints) {
 		final Set<SetConstraint<ELEM>> result = new HashSet<>();
 		boolean madeChanges = false;
 		for (final SetConstraint<ELEM> setConstraint : constraints) {
-			final SetConstraint<ELEM> filtered = filterWithDisequalities(setConstraint,
-					constrainedElement, congruenceClosure);
+			final SetConstraint<ELEM> filtered =
+					filterWithDisequalities(setConstraint, constrainedElement, congruenceClosure);
 			madeChanges |= filtered != setConstraint;
 			result.add(filtered);
 		}
@@ -620,8 +600,8 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return result;
 	}
 
-	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean isTautological(
-			final SetConstraintConjunction<ELEM> newConstraint) {
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean
+			isTautological(final SetConstraintConjunction<ELEM> newConstraint) {
 		if (newConstraint == null) {
 			return true;
 		}
@@ -631,8 +611,8 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return false;
 	}
 
-	public  Set<SetConstraint<ELEM>>
-			filterWithDisequality(final Set<SetConstraint<ELEM>> setConstraints, final ELEM elem) {
+	public Set<SetConstraint<ELEM>> filterWithDisequality(final Set<SetConstraint<ELEM>> setConstraints,
+			final ELEM elem) {
 		final Set<SetConstraint<ELEM>> result = new HashSet<>();
 		boolean madeChanges = false;
 		for (final SetConstraint<ELEM> sc : setConstraints) {
@@ -647,7 +627,7 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 	}
 
 	public Set<SetConstraint<ELEM>> updateOnChangedRepresentative(final Set<SetConstraint<ELEM>> oldConstraint,
-					final CongruenceClosure<ELEM> newCc) {
+			final CongruenceClosure<ELEM> newCc) {
 		if (oldConstraint == null) {
 			return null;
 		}
@@ -671,24 +651,23 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 		return mSetConstraintComparator;
 	}
 
-//	public boolean hasOnlyLiterals(final Set<SetConstraint<ELEM>> litConstraint2) {
-//		if (litConstraint2 == null || litConstraint2.isEmpty()) {
-//			return false;
-//		}
-//		return litConstraint2.stream().allMatch(sc -> sc.hasOnlyLiterals());
-//	}
-
+	// public boolean hasOnlyLiterals(final Set<SetConstraint<ELEM>> litConstraint2) {
+	// if (litConstraint2 == null || litConstraint2.isEmpty()) {
+	// return false;
+	// }
+	// return litConstraint2.stream().allMatch(sc -> sc.hasOnlyLiterals());
+	// }
 
 	/**
-	 * Detect if a conjunction of SetConstraints constraints to be only in a set of literals.
-	 * If that is the case return that set, otherwise return null.
+	 * Detect if a conjunction of SetConstraints constraints to be only in a set of literals. If that is the case return
+	 * that set, otherwise return null.
 	 *
 	 * @param scs
 	 * @return
 	 */
 	public Set<ELEM> getLiteralSet(final Set<SetConstraint<ELEM>> scs) {
-		assert scs.stream().filter(SetConstraint::hasOnlyLiterals).collect(Collectors.toList()).size() <= 1 :
-			"not normalized?";
+		assert scs.stream().filter(SetConstraint::hasOnlyLiterals).collect(Collectors.toList())
+				.size() <= 1 : "not normalized?";
 		for (final SetConstraint<ELEM> sc : scs) {
 			if (sc.hasOnlyLiterals()) {
 				return sc.getLiterals();
@@ -699,15 +678,15 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 
 	/**
 	 * Use this when we first bring together an element and the conjunction of SetConstraints that it is supposed to be
-	 * contained in.
-	 * The combination is tautological if the element is contained in all SetConstraints (or if the set is empty)
+	 * contained in. The combination is tautological if the element is contained in all SetConstraints (or if the set is
+	 * empty)
 	 *
 	 * @param elem
 	 * @param constraint
 	 * @return
 	 */
-	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean isTautologicalWrtElement(
-			final ELEM elem, final Set<SetConstraint<ELEM>> constraint) {
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean isTautologicalWrtElement(final ELEM elem,
+			final Set<SetConstraint<ELEM>> constraint) {
 		if (isTautological(constraint)) {
 			// constraint is tautological by itself (i.e. null or an empty conjunction)
 			return true;

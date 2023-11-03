@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -70,13 +69,6 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	private final int mNontrivialCoverQueries = 0;
 
 	private long mSatCheckTime = 0;
-
-	/**
-	 * Whenever you do an edge check with the old method (not edge checker), test if the dataflow checks deliver a
-	 * compatible result. Set this only to true if you can guarantee that only an IPredicate whose formula is true is
-	 * equivalent to true.
-	 */
-	private static final boolean DEBUG_TEST_DATAFLOW = false;
 
 	public MonolithicHoareTripleChecker(final CfgSmtToolkit csToolkit) {
 		mCsToolkit = csToolkit;
@@ -215,9 +207,6 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 					+ ps2.getFormula().toStringDirect() + "Not inductive!";
 		}
 		mSatCheckTime += System.nanoTime() - startTime;
-		if (DEBUG_TEST_DATAFLOW) {
-			testMyInternalDataflowCheck(ps1, ta, ps2, result);
-		}
 		mManagedScript.unlock(this);
 		return result;
 	}
@@ -278,9 +267,6 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			assert result == Script.LBool.UNSAT || result == Script.LBool.UNKNOWN : "call statement not inductive";
 		}
 		mSatCheckTime += System.nanoTime() - startTime;
-		if (DEBUG_TEST_DATAFLOW) {
-			testMyCallDataflowCheck(ps1, ta, ps2, result);
-		}
 		mManagedScript.unlock(this);
 		return result;
 	}
@@ -339,7 +325,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		// not modifiable globals get index 0
 		// other variables get index 1
 		final Set<IProgramVar> modifiableGlobalsAssignedOnReturn = new HashSet<>();
-		for (final IProgramVar assignedVar : tfReturn.getAssignedVars()) {
+		for (final IProgramVar assignedVar : tfReturn.getOutVars().keySet()) {
 			if (modifiableGlobalsCallee.contains(assignedVar)) {
 				modifiableGlobalsAssignedOnReturn.add(assignedVar);
 			}
@@ -373,9 +359,6 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 
 		}
 		mSatCheckTime += System.nanoTime() - startTime;
-		if (DEBUG_TEST_DATAFLOW) {
-			testMyReturnDataflowCheck(ps1, psk, ta, ps2, result);
-		}
 		mManagedScript.unlock(this);
 		return result;
 	}
@@ -425,79 +408,4 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		// avoid proper implementation if not needed
 		return false;
 	}
-
-	// FIXME: remove once enough tested
-	private void testMyReturnDataflowCheck(final IPredicate ps1, final IPredicate psk, final IReturnAction ta,
-			final IPredicate ps2, final LBool result) {
-		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
-			return;
-		}
-		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
-		final Validity testRes = sdhtch.sdecReturn(ps1, psk, ta, ps2);
-		if (testRes != null) {
-			// assert testRes == result : "my return dataflow check failed";
-			if (testRes != IncrementalPlicationChecker.convertLBool2Validity(result)) {
-				sdhtch.sdecReturn(ps1, psk, ta, ps2);
-			}
-		}
-	}
-
-	// FIXME: remove once enough tested
-	private void testMyCallDataflowCheck(final IPredicate ps1, final ICallAction ta, final IPredicate ps2,
-			final LBool result) {
-		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
-			return;
-		}
-		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
-		final Validity testRes = sdhtch.sdecCall(ps1, ta, ps2);
-		if (testRes != null) {
-			assert testRes == IncrementalPlicationChecker
-					.convertLBool2Validity(result) : "my call dataflow check failed";
-			// if (testRes != result) {
-			// sdhtch.sdecReturn(ps1, psk, ta, ps2);
-			// }
-		}
-	}
-
-	// FIXME: remove once enough tested
-	private void testMyInternalDataflowCheck(final IPredicate ps1, final IInternalAction ta, final IPredicate ps2,
-			final LBool result) {
-		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
-			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
-			final Validity testRes = sdhtch.sdecInternalToFalse(ps1, ta);
-			if (testRes != null) {
-				assert testRes == IncrementalPlicationChecker.convertLBool2Validity(result)
-						|| testRes == IncrementalPlicationChecker.convertLBool2Validity(LBool.UNKNOWN)
-								&& result == LBool.SAT : "my internal dataflow check failed";
-				// if (testRes != result) {
-				// sdhtch.sdecInternalToFalse(ps1, ta);
-				// }
-			}
-			return;
-		}
-		if (ps1 == ps2) {
-			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
-			final Validity testRes = sdhtch.sdecInternalSelfloop(ps1, ta);
-			if (testRes != null) {
-				assert testRes == IncrementalPlicationChecker
-						.convertLBool2Validity(result) : "my internal dataflow check failed";
-				// if (testRes != result) {
-				// sdhtch.sdecReturn(ps1, psk, ta, ps2);
-				// }
-			}
-		}
-		if (ta.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
-			return;
-		}
-		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
-		final Validity testRes = sdhtch.sdecInternal(ps1, ta, ps2);
-		if (testRes != null) {
-			assert testRes == IncrementalPlicationChecker
-					.convertLBool2Validity(result) : "my internal dataflow check failed";
-			// if (testRes != result) {
-			// sdhtch.sdecReturn(ps1, psk, ta, ps2);
-			// }
-		}
-	}
-
 }

@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
@@ -115,9 +116,8 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 	}
 
 	@Override
-	public IProgramConst getProgramConst(final ApplicationTerm at) {
-		// TODO Auto-generated method stub
-		return null;
+	public IProgramConst getProgramFun(final FunctionSymbol funSym) {
+		throw new UnsupportedOperationException("Not yet implemented");
 	}
 
 	@Override

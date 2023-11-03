@@ -28,8 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates;
 
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.Collections;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -37,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbol
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -52,7 +50,7 @@ public class PredicateFactory extends BasicPredicateFactory {
 			final Map<Integer, Term> history) {
 		final TermVarsProc tvp = constructTermVarsProc(term);
 		final PredicateWithHistory pred = new PredicateWithHistory(pp, constructFreshSerialNumber(),
-				tvp.getProcedures(), tvp.getFormula(), tvp.getVars(), tvp.getClosedFormula(), history);
+				tvp.getProcedures(), tvp.getFormula(), tvp.getVars(), tvp.getFuns(), tvp.getClosedFormula(), history);
 		return pred;
 	}
 
@@ -63,20 +61,22 @@ public class PredicateFactory extends BasicPredicateFactory {
 
 	SPredicate newSPredicate(final IcfgLocation pp, final TermVarsProc termVarsProc) {
 		final SPredicate pred = new SPredicate(pp, constructFreshSerialNumber(), termVarsProc.getProcedures(),
-				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
+				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getFuns(),
+				termVarsProc.getClosedFormula());
 		return pred;
 	}
 
 	public ISLPredicate newEmptyStackPredicate() {
 		final IcfgLocation pp = new IcfgLocation(NoCallerDebugIdentifier.INSTANCE, "noCaller");
-		return newSPredicate(pp, new TermVarsProc(mEmptyStackTerm, EMPTY_VARS, NO_PROCEDURE, mEmptyStackTerm));
+		return newSPredicate(pp,
+				new TermVarsProc(mEmptyStackTerm, EMPTY_VARS, Collections.emptySet(), NO_PROCEDURE, mEmptyStackTerm));
 	}
 
 	public MLPredicate newMLPredicate(final IcfgLocation[] programPoints, final Term term) {
 		final TermVarsProc termVarsProc = constructTermVarsProc(term);
-		final MLPredicate predicate =
-				new MLPredicate(programPoints, constructFreshSerialNumber(), termVarsProc.getProcedures(),
-						termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
+		final MLPredicate predicate = new MLPredicate(programPoints, constructFreshSerialNumber(),
+				termVarsProc.getProcedures(), termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getFuns(),
+				termVarsProc.getClosedFormula());
 		return predicate;
 	}
 
@@ -86,21 +86,12 @@ public class PredicateFactory extends BasicPredicateFactory {
 	}
 
 	public MLPredicate newMLDontCarePredicate(final IcfgLocation[] programPoints) {
-		final TermVarsProc termVarsProc = constructTermVarsProc(mDontCareTerm);
-		final MLPredicate predicate =
-				new MLPredicate(programPoints, constructFreshSerialNumber(), termVarsProc.getProcedures(),
-						termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
-		return predicate;
-	}
-
-	public ProdState getNewProdState(final List<IPredicate> programPoints) {
-		return new ProdState(constructFreshSerialNumber(), programPoints, mScript.term("true"),
-				new HashSet<IProgramVar>(0));
+		return newMLPredicate(programPoints, mDontCareTerm);
 	}
 
 	public HoareAnnotation getNewHoareAnnotation(final IcfgLocation pp,
 			final ModifiableGlobalsTable modifiableGlobalsTable) {
-		return new HoareAnnotation(pp, constructFreshSerialNumber(), this, mScript);
+		return new HoareAnnotation(pp, constructFreshSerialNumber(), this, mMgdScript);
 	}
 
 	private static final class NoCallerDebugIdentifier extends DebugIdentifier {

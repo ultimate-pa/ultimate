@@ -10,7 +10,7 @@
 (assert (or (not (or p q)) r))
 (assert p)
 (assert (not r))
-;(@tautology (! (or (! (or p q) :quoted) (not p)) :or-))
+;(@tautology (! (or (or p q) (not p)) :or+))
 
 (check-sat)
 (set-option :print-terms-cse false)

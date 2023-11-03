@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
@@ -98,17 +98,16 @@ public class Durations {
 		final BigInteger a = iter.next();
 		final BigInteger b = iter.next();
 		BigInteger gcd = Rational.gcd(a, b);
-		BigInteger mul = a.multiply(b);
+		BigInteger lcm = a.multiply(b).abs().divide(gcd);
 		while (iter.hasNext()) {
 			final BigInteger next = iter.next();
-			gcd = Rational.gcd(gcd, next);
-			mul = mul.multiply(next);
+			gcd = Rational.gcd(lcm, next);
+			lcm = lcm.multiply(next).abs().divide(gcd);
 		}
-		final BigInteger lcm = mul.abs().divide(gcd);
 		return Rational.valueOf(lcm, BigInteger.ONE);
 	}
 
-	public void addInitPattern(final InitializationPattern init) {
+	public void addInitPattern(final DeclarationPattern init) {
 		if (init.getCategory() != VariableCategory.CONST) {
 			return;
 		}
@@ -132,7 +131,7 @@ public class Durations {
 
 	}
 
-	private Rational tryParse(final InitializationPattern init, final Expression expr) {
+	private Rational tryParse(final DeclarationPattern init, final Expression expr) {
 		final Optional<Rational> val = LiteralUtils.toRational(expr);
 		if (val.isEmpty()) {
 			error(init, "Cannot convert expression " + BoogiePrettyPrinter.print(expr) + " to Rational");

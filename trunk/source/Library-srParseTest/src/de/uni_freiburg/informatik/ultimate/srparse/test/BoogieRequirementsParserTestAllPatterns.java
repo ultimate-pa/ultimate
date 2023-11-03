@@ -88,10 +88,10 @@ public class BoogieRequirementsParserTestAllPatterns {
 				"it is always the case that if \"y >= 5\" holds, then \"y <= 5\" holds for at least 2000 time units",
 				"it is always the case that after \"y >= 5\" holds for at least 2000 time units, then \"y <= 5\" holds",
 				"it is always the case that if \"y <= 5\" holds then \"y >= 5\" holds as well" };
-		final String[] patternNames = new String[] { "BndInvariancePattern", "InstAbsPattern", "UniversalityPattern",
-				"BndExistencePattern", "PrecedencePattern", "MinDurationPattern", "MaxDurationPattern",
-				"BndRecurrencePattern", "BndResponsePatternUT", "BndInvariancePattern", "BndEntryConditionPattern",
-				"InvariantPattern" };
+		final String[] patternNames = new String[] { "InvarianceBoundL2Pattern", "AbsencePattern", "UniversalityPattern",
+				"ExistenceBoundUPattern", "PrecedencePattern", "DurationBoundLPattern", "DurationBoundUPattern",
+				"ReccurrenceBoundLPattern", "ResponseDelayPattern", "InvarianceBoundL2Pattern", "BndEntryConditionPattern",
+				"InvariancePattern" };
 
 		for (int i = 0; i < scope.length; i++) {
 			for (int j = 0; j < pattern.length; j++) {

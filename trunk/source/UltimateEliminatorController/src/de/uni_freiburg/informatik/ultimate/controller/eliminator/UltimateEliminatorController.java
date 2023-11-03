@@ -111,7 +111,8 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 			if (param[paramctr].equals("--")) {
 				paramctr++;
 				break;
-			} else if (param[paramctr].equals("-no-success")) {
+			}
+			if (param[paramctr].equals("-no-success")) {
 				options.set(":print-success", false);
 			} else if (param[paramctr].equals("-v")) {
 				options.set(":verbosity", LogProxy.LOGLEVEL_DEBUG);
@@ -174,7 +175,8 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 
 		String filename = null;
 		if (paramctr < param.length) {
-			filename = param[paramctr++];
+			filename = param[paramctr];
+			paramctr++;
 		}
 		if (paramctr != param.length) {
 			usage();
@@ -252,9 +254,9 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 		mLogger.info("Version is " + RcpUtils.getVersion(Activator.PLUGIN_ID));
 		mLogger.info("Maximal heap size is set to "
 				+ CoreUtil.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true));
-		final String[] sysProps = new String[] { "java.version", "java.specification.name", "java.specification.vendor",
-				"java.specification.version", "java.runtime.version", "java.vm.name", "java.vm.vendor",
-				"java.vm.version", };
+		final String[] sysProps =
+				{ "java.version", "java.specification.name", "java.specification.vendor", "java.specification.version",
+						"java.runtime.version", "java.vm.name", "java.vm.vendor", "java.vm.version", };
 
 		for (final String sysProp : sysProps) {
 			String value = System.getProperty(sysProp);
@@ -271,7 +273,7 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 	}
 
 	@Override
-	public ISource selectParser(final Collection<ISource> parser) {
+	public ISource selectParser(final IToolchain<RunDefinition> toolchain, final Collection<ISource> parser) {
 		throw new UnsupportedOperationException("Interactively selecting parsers is not supported in CLI mode");
 	}
 
@@ -286,17 +288,18 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 	}
 
 	@Override
-	public IToolchainData<RunDefinition> selectTools(final List<ITool> tools) {
+	public IToolchainData<RunDefinition> selectTools(final IToolchain<RunDefinition> toolchain,
+			final List<ITool> tools) {
 		return mToolchain;
 	}
 
 	@Override
-	public List<String> selectModel(final List<String> modelNames) {
+	public List<String> selectModel(final IToolchain<RunDefinition> toolchain, final List<String> modelNames) {
 		throw new UnsupportedOperationException("Interactively selecting models is not supported in CLI mode");
 	}
 
 	@Override
-	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
+	public void displayToolchainResults(final IToolchain<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
 		final ResultSummarizer summarizer = new ResultSummarizer(results);
 		switch (summarizer.getResultSummary()) {
@@ -313,7 +316,7 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 	}
 
 	@Override
-	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
+	public void displayException(final IToolchain<RunDefinition> toolchain, final String description,
 			final Throwable ex) {
 		mLogger.fatal("RESULT: An exception occured during the execution of Ultimate: " + description, ex);
 	}
@@ -324,8 +327,8 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 	}
 
 	@Override
-	public IToolchainData<RunDefinition> prerun(final IToolchainData<RunDefinition> tcData) {
-		return tcData;
+	public IToolchainData<RunDefinition> prerun(final IToolchain<RunDefinition> toolchain) {
+		return toolchain.getCurrentToolchainData();
 	}
 
 	private static final class SigIntTrap implements Runnable {

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopacc
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPR;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRCore;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -37,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 
 /**
+ * A loop accelerator used in accelerated inteprolation using the {@link FastUPR} method of acceleration.
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class represents the loop accelerator needed for
  *         {@link AcceleratedInterpolation}
@@ -46,8 +48,21 @@ public class AcceleratorFastUPR implements IAccelerator {
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
 	private boolean mFoundAcceleration;
+	private final boolean mIsOverapprox;
 	private final IIcfgSymbolTable mSymbolTable;
 
+	/**
+	 * Construct a new loop accelerator using {@link FastUPR}.
+	 *
+	 * @param logger
+	 *            A {@link ILogger}
+	 * @param managedScript
+	 *            A {@link ManagedScript}
+	 * @param services
+	 *            {@link IUltimateServiceProvider}
+	 * @param symbolTable
+	 *            {@link IIcfgSymbolTable}
+	 */
 	public AcceleratorFastUPR(final ILogger logger, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final IIcfgSymbolTable symbolTable) {
 		mLogger = logger;
@@ -55,6 +70,7 @@ public class AcceleratorFastUPR implements IAccelerator {
 		mServices = services;
 		mFoundAcceleration = false;
 		mSymbolTable = symbolTable;
+		mIsOverapprox = false;
 	}
 
 	/**
@@ -89,5 +105,10 @@ public class AcceleratorFastUPR implements IAccelerator {
 	@Override
 	public boolean accelerationFinishedCorrectly() {
 		return mFoundAcceleration;
+	}
+
+	@Override
+	public boolean isOverapprox() {
+		return mIsOverapprox;
 	}
 }

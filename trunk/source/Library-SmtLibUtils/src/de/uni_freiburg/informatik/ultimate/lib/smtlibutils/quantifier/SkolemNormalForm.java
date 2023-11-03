@@ -49,7 +49,7 @@ public class SkolemNormalForm  {
 
 		mMgdScript.lock(this);
 
-		final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), inputFormula);
+		final QuantifierSequence qs = new QuantifierSequence(mMgdScript, inputFormula);
 
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 
@@ -85,7 +85,7 @@ public class SkolemNormalForm  {
 			}
 		}
 
-		final Term newInnerTerm = new Substitution(mMgdScript, substitutionMapping).transform(qs.getInnerTerm());
+		final Term newInnerTerm = Substitution.apply(mMgdScript, substitutionMapping, qs.getInnerTerm());
 
 		if (universalQuantifiersInScope.getVariables().isEmpty()) {
 			mResult = newInnerTerm;

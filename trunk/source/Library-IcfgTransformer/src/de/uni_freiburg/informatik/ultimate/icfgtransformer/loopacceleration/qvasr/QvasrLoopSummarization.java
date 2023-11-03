@@ -30,13 +30,15 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.qva
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
 /**
  *
- * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) A loop summarization class based on rational vector
- *         addition systems with resets (Q-VASR).
+ * A loop summarization class based on rational vector addition systems with resets (Q-VASR).
  *
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  */
 
 public class QvasrLoopSummarization {
@@ -44,30 +46,51 @@ public class QvasrLoopSummarization {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mScript;
+	private final IPredicateUnifier mPredUnifier;
+	private boolean mIsOverapprox;
 
 	/**
 	 * Construct a new Qvasr-Loopsummarizer.
 	 *
 	 * @param logger
+	 *            A {@link ILogger}
 	 * @param services
+	 *            {@link IUltimateServiceProvider}
 	 * @param script
+	 *            {@link ManagedScript}
+	 * @param predUnifier
+	 *            A {@link IPredicateUnifier}
 	 */
 	public QvasrLoopSummarization(final ILogger logger, final IUltimateServiceProvider services,
-			final ManagedScript script) {
+			final ManagedScript script, final IPredicateUnifier predUnifier) {
 		mLogger = logger;
 		mServices = services;
 		mScript = script;
+		mPredUnifier = predUnifier;
+		mIsOverapprox = false;
 	}
 
 	/**
 	 * Compute a Q-VASR summary of a ({@link UnmodifiableTransFormula}) representing a loop in an error trace.
 	 *
 	 * @param loopTransitionFormula
-	 * @return
+	 *            A {@link UnmodifiableTransFormula} representing changes to variables in a loop.
+	 * @return A loop acceleration computed using Qvasr in form of a{@link UnmodifiableTransFormula}
 	 */
 	public UnmodifiableTransFormula getQvasrAcceleration(final UnmodifiableTransFormula loopTransitionFormula) {
+
+		if (!SmtUtils.isArrayFree(loopTransitionFormula.getFormula())) {
+			throw new UnsupportedOperationException("Qvasr do not support arrays.");
+		}
+
 		final QvasrSummarizer qvasrSummarizer = new QvasrSummarizer(mLogger, mServices, mScript);
-		return qvasrSummarizer.summarizeLoop(loopTransitionFormula);
+		final UnmodifiableTransFormula loopSummary = qvasrSummarizer.summarizeLoop(loopTransitionFormula);
+		mIsOverapprox = qvasrSummarizer.isOverapprox();
+		return loopSummary;
+	}
+
+	public boolean isOverapprox() {
+		return mIsOverapprox;
 	}
 
 }

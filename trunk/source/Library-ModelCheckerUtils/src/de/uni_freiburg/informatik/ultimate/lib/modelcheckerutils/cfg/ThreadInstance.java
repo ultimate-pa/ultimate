@@ -41,15 +41,13 @@ public class ThreadInstance {
 	private final String mThreadTemplateName;
 
 	private final IProgramNonOldVar[] mIdVars;
-	private final IProgramNonOldVar mInUseVar;
 
 	public ThreadInstance(final String threadInstanceName, final String threadTemplateName,
-			final IProgramNonOldVar[] idVars, final IProgramNonOldVar inUseVar) {
+			final IProgramNonOldVar[] idVars) {
 		super();
 		mThreadInstanceName = threadInstanceName;
 		mThreadTemplateName = threadTemplateName;
 		mIdVars = idVars;
-		mInUseVar = inUseVar;
 	}
 
 	public String getThreadInstanceName() {

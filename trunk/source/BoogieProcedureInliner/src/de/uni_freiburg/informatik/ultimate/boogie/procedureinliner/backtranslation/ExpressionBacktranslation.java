@@ -140,7 +140,7 @@ public class ExpressionBacktranslation extends BoogieTransformer {
 			final String translatedId = mapping.getVarId();
 			Expression newExpr = new IdentifierExpression(location, type, translatedId, translatedDeclInfo);
 			ModelUtils.copyAnnotations(expr, newExpr);
-			if (mapping.getInOldExprOfProc() != null) {
+			if (mapping.getGlobalInOldExprOfProc() != null) {
 				newExpr = new UnaryExpression(location, type, Operator.OLD, idExpr);
 			}
 			if (translatedDeclInfo.getStorageClass() == GLOBAL || translatedDeclInfo.getStorageClass() == QUANTIFIED

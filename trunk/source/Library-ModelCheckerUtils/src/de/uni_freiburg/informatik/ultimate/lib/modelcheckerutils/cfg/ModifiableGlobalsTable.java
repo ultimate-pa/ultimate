@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -98,7 +99,7 @@ public class ModifiableGlobalsTable {
 		final IProgramOldVar oldVar = bv.getOldVar();
 		final Term nonOldConstant = (primed ? bv.getPrimedConstant() : bv.getDefaultConstant());
 		final Term oldConstant = (primed ? oldVar.getPrimedConstant() : oldVar.getDefaultConstant());
-		return script.term("=", oldConstant, nonOldConstant);
+		return SmtUtils.binaryEquality(script, oldConstant, nonOldConstant);
 	}
 
 

@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -73,15 +73,19 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation.Race;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
 public final class DataRaceChecker {
 	private static final boolean SUPPORT_ARRAY_STRUCT_LHS = true;
+
+	private static final String UNSUPPORTED_MSG =
+			"Race detection currently only supports simple variables and data on heap. "
+					+ "Structs and arrays are not yet supported (unless they are on the heap).";
 
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final MemoryHandler mMemoryHandler;
@@ -107,6 +111,15 @@ public final class DataRaceChecker {
 		mIsPreRun = isPreRun;
 	}
 
+	/**
+	 * Adds a data race check appropriate for read accesses.
+	 *
+	 * @param erb
+	 *            An {@link ExpressionResultBuilder} to which the data race check statements are added
+	 * @param loc
+	 * @param lrVal
+	 *            The value being read
+	 */
 	public void checkOnRead(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
 		if (mProcedureManager.isGlobalScope()) {
 			// TODO find a cleaner way to fix this
@@ -123,9 +136,7 @@ public final class DataRaceChecker {
 				return;
 			}
 			// should be moved to heap in main run
-			throw new UnsupportedOperationException(
-					"Race detection currently only supports simple variables and data on heap. "
-							+ "Structs and arrays are not yet supported (unless they are on the heap).");
+			throw new UnsupportedOperationException(UNSUPPORTED_MSG);
 		}
 
 		final Expression raceValue = createRaceRead();
@@ -145,6 +156,15 @@ public final class DataRaceChecker {
 		return mMemoryHandler.getBooleanArrayHelper().constructFalse();
 	}
 
+	/**
+	 * Adds a data race check appropriate for write accesses.
+	 *
+	 * @param erb
+	 *            An {@link ExpressionResultBuilder} to which the data race check statements and declarations are added
+	 * @param loc
+	 * @param lrVal
+	 *            The value being written
+	 */
 	public void checkOnWrite(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
 		if (mProcedureManager.isGlobalScope()) {
 			// TODO find a cleaner way to fix this
@@ -161,9 +181,7 @@ public final class DataRaceChecker {
 				return;
 			}
 			// should be moved to heap in main run
-			throw new UnsupportedOperationException(
-					"Race detection currently only supports simple variables and data on heap. "
-							+ "Structs and arrays are not yet supported (unless they are on the heap).");
+			throw new UnsupportedOperationException(UNSUPPORTED_MSG);
 		}
 
 		// TODO For better performance, make the statements created by #createRaceWrite and #updateRaceIndicator atomic.
@@ -304,9 +322,8 @@ public final class DataRaceChecker {
 	}
 
 	private int getTypeSize(final ILocation loc, final CType type) {
-		final Expression operandTypeByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, type, null);
-		return mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), null)
-				.intValueExact();
+		final Expression operandTypeByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, type);
+		return mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT()).intValueExact();
 	}
 
 	private LeftHandSide getRaceIndicatorLhs(final ILocation loc, final LocalLValue lval) {
@@ -326,9 +343,7 @@ public final class DataRaceChecker {
 		}
 
 		if (!SUPPORT_ARRAY_STRUCT_LHS) {
-			throw new UnsupportedOperationException(
-					"Race detection currently only supports simple variables and data on heap. "
-							+ "Structs and arrays are not yet supported (unless they are on the heap).");
+			throw new UnsupportedOperationException(UNSUPPORTED_MSG);
 		}
 
 		if (lhs instanceof ArrayLHS) {

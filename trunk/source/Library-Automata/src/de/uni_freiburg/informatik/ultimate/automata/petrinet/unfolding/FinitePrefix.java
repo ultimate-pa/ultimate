@@ -32,14 +32,12 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * A finite prefix.
@@ -50,7 +48,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            place content type
  */
-public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER, STATE, IPetriNet2FiniteAutomatonStateFactory<STATE>> {
+public final class FinitePrefix<LETTER, STATE>
+		extends UnaryNetOperation<LETTER, STATE, IPetriNet2FiniteAutomatonStateFactory<STATE>> {
 	private final IPetriNetSuccessorProvider<LETTER, STATE> mOperand;
 
 	private final BranchingProcess<LETTER, STATE> mResult;
@@ -69,17 +68,17 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 			final boolean sameTransitionCutOff) throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
-	
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		final PetriNetUnfolder<LETTER, STATE> unf = new PetriNetUnfolder<>(mServices,
-				operand, EventOrderEnum.ERV, sameTransitionCutOff, false);
+		final PetriNetUnfolder<LETTER, STATE> unf =
+				new PetriNetUnfolder<>(mServices, operand, EventOrderEnum.ERV, sameTransitionCutOff, false);
 		mUnf = unf;
 		mAcceptingRun = unf.getAcceptingRun();
 		mUnfoldingStatistics = unf.getUnfoldingStatistics();
 		mResult = unf.getFinitePrefix();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
@@ -118,15 +117,17 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 	public BranchingProcess<LETTER, STATE> getResult() {
 		return mResult;
 	}
-	
+
 	public PetriNetRun<LETTER, STATE> getAcceptingRun() {
 		return mAcceptingRun;
 	}
-	
+
 	@Override
-	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
 		return mUnf.checkResult(stateFactory);
 	}
+
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();

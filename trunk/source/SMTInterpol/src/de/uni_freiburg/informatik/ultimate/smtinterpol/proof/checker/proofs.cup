@@ -1,0 +1,904 @@
+/*
+ * Copyright (C) 2022 University of Freiburg
+ *
+ * This file is part of SMTInterpol.
+ *
+ * SMTInterpol is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * SMTInterpol is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
+ */
+/* CUP specification for proofs */
+
+package de.uni_freiburg.informatik.ultimate.smtinterpol.proof.checker;
+import de.uni_freiburg.informatik.ultimate.logic.*;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofLiteral;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofRules;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
+import java.math.BigInteger;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import com.github.jhoenicke.javacup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.SimpleSymbolFactory;
+
+parser ProofParser;
+option symbols = ProofSymbols;
+option java15, compact_red, newpositions;
+
+parser code {:
+	String mFilename;
+	Script mScript;
+	ProofRules mProofRules;
+
+	public static final Sort[] EMPTY_SORT_ARRAY = {};
+
+	public Script getScript() {
+		return mScript;
+	}
+
+	public ProofRules getProofRules() {
+		return mProofRules;
+	}
+
+	public void report_error(String s, Object sym) {
+		String location;
+		if (sym instanceof SimpleSymbolFactory.LineColumnSymbol) {
+			SimpleSymbolFactory.LineColumnSymbol bsym = (SimpleSymbolFactory.LineColumnSymbol) sym;
+			location = bsym.getLocation();
+		} else if ((sym instanceof Symbol)
+				   && ((Symbol)sym).sym == ProofSymbols.EOF) {
+			location = "EOF";
+		} else
+			location = "UNKNOWN";
+
+		action_obj.setError(mFilename+":"+location+": "+s);
+	}
+
+	public void report_error(String s) {
+		report_error(s, cur_token);
+	}
+
+	public void syntax_error(Symbol sym) {
+		report_error("Syntax Error", sym);
+		System.err.println(action_obj.getError());
+	}
+
+	public void setFileName(String filename) {
+		mFilename = filename;
+	}
+
+	public void setScript(Script script) {
+		mScript = script;
+		mProofRules = new ProofRules(script.getTheory());
+	}
+:}
+
+action code {:
+	ScopedHashMap<String,Term> localVars =
+		new ScopedHashMap<String, Term>(false);
+	Sort[] mSortParams = null;
+	static Sort[] emptySortArray = new Sort[0];
+	Sort mMatchSort = null;
+
+	static class Binding {
+		TermVariable mVar;
+		Term mTerm;
+		public Binding(TermVariable var, Term term) {
+			mVar = var;
+			mTerm = term;
+		}
+		TermVariable getVar() {
+			return mVar;
+		}
+		Term getTerm() {
+			return mTerm;
+		}
+	}
+
+	static class IndexedIdentifier {
+		String mName;
+		String[] mIndices;
+		public IndexedIdentifier(String name, String[] indices) {
+			mName = name;
+			mIndices = indices;
+		}
+		public String getName() {
+			return mName;
+		}
+		public String[] getIndices() {
+			return mIndices;
+		}
+
+		public String toString() {
+			if (mIndices == null)
+				return mName;
+			return "(_ "+mName+" "+Arrays.toString(mIndices)+")";
+		}
+	}
+
+	static class QualIdentifier {
+		String mName;
+		String[] mIndices;
+		Sort mSort;
+		public QualIdentifier(IndexedIdentifier id, Sort sort) {
+			mName = id.getName();
+			mIndices = id.getIndices();
+			mSort = sort;
+		}
+		public String getIdentifier() {
+			return mName;
+		}
+		public String[] getIndices() {
+			return mIndices;
+		}
+		public Sort getSort() {
+			return mSort;
+		}
+
+		public String toString() {
+			String indexedId;
+			if (mIndices == null)
+				indexedId = mName;
+			else
+				indexedId = "(_ "+mName+" "+Arrays.toString(mIndices)+")";
+			if (mSort == null)
+				return indexedId;
+			return "(as " + indexedId + " " + mSort + ")";
+		}
+	}
+
+	static class SelectorDec {
+		String mSelector;
+		Sort mArgumentSort;
+		public SelectorDec(String selector, Sort argumentSort) {
+			mSelector = selector;
+			mArgumentSort = argumentSort; 
+		}
+		public String getSelector() {
+			return mSelector;
+		}
+		public Sort getArgumentSort() {
+			return mArgumentSort;
+		}
+		public String toString() {
+			return "(" + mSelector + " " + mArgumentSort + ")";
+		}
+	}
+
+	static class ParametricConstructors {
+		final DataType.Constructor[] mConstructors;
+		final Sort[] mSortParams;
+		public ParametricConstructors(DataType.Constructor[] constructors) {
+			mConstructors = constructors;
+			mSortParams = null;
+		}
+		public ParametricConstructors(DataType.Constructor[] constructors, Sort[] sortparams) {
+			mConstructors = constructors;
+			mSortParams = sortparams;
+		}
+		public DataType.Constructor[] getConstructors() {
+			return mConstructors;
+		}
+		public Sort[] getSortParams() {
+			return mSortParams;
+		}
+	}
+
+	class Pattern {
+		DataType.Constructor mConstructor;
+		TermVariable[] mVars;
+		Sort[] mSorts;
+
+		public Pattern(String constructor, String[] vars) {
+			for (int i = 0; i < vars.length; i++) {
+				for (int j = 0; j < i; j++) {
+					if (vars[j].equals(vars[i])) {
+						throw new SMTLIBException("Variables must all be distinct.");
+					}
+				}
+			}
+
+			DataType dataType = (DataType) mMatchSort.getSortSymbol();
+			mConstructor = dataType.findConstructor(constructor);
+			if (mConstructor == null) {
+				throw new SMTLIBException("Constructor not found.");
+			}
+			mSorts = mConstructor.getArgumentSorts();
+			mVars = new TermVariable[vars.length];
+			if (mSorts.length != mVars.length) {
+				throw new SMTLIBException("Number of constructor arguments does not match.");
+			}
+
+			for (int i = 0; i < vars.length; i++) {
+				Sort sort = mSorts[i].mapSort(mMatchSort.getArguments());
+				mVars[i] = createTermVariable(vars[i], sort);
+			}
+		}
+
+		public Pattern(String constructor) {
+			mConstructor = ((DataType) mMatchSort.getSortSymbol()).findConstructor(constructor);
+			if (mConstructor == null) {
+				mVars = new TermVariable[1];
+				mVars[0] = createTermVariable(constructor, mMatchSort);
+			} else {
+				mVars = new TermVariable[0];
+				if (mConstructor.getArgumentSorts().length != 0) {
+					throw new SMTLIBException("Number of constructor arguments does not match.");
+				}
+			}
+		}
+
+		public TermVariable[] getVars() {
+			return mVars;
+		}
+
+		public DataType.Constructor getConstructor() {
+			return mConstructor;
+		}
+
+		public String toString() {
+			if (mConstructor == null) {
+				return mVars[0].toString();
+			} else {
+				StringBuilder sb = new StringBuilder();
+				sb.append('('). append(mConstructor.getName());
+				for (TermVariable tv : mVars) {
+					sb.append(' ').append(tv);
+				}
+				sb.append(')');
+				return sb.toString();
+			}
+		}
+	}
+
+	static class MatchCase {
+		Pattern mPattern;
+		Term mCase;
+
+		public MatchCase(Pattern pattern, Term caseTerm) {
+			mPattern = pattern;
+			mCase = caseTerm;
+		}
+
+		public Pattern getPattern() {
+			return mPattern;
+		}
+
+		public Term getCase() {
+			return mCase;
+		}
+
+		public String toString() {
+			return "(" + mPattern + " " + mCase + ")";
+		}
+	}
+
+	static class CoeffTerm {
+		BigInteger mCoeff;
+		Term mTerm;
+		public CoeffTerm(BigInteger coeff, Term term) {
+			mCoeff = coeff;
+			mTerm = term;
+		}
+		BigInteger getCoeff() {
+			return mCoeff;
+		}
+		Term getTerm() {
+			return mTerm;
+		}
+	}
+
+	Term createMatchTerm (Symbol sym, Term dataArg, MatchCase[] matchCases) {
+		/* first check if some argument is null.  In this case we already reported an error and should return null. */
+		if (mMatchSort == null) {
+			return null;
+		}
+		for (MatchCase matchCase : matchCases) {
+			if (matchCase == null) {
+				return null;
+			}
+		}
+		DataType matchDatatype = (DataType) mMatchSort.getSortSymbol();
+		if (!checkPatterns(matchDatatype, matchCases)) {
+			parser.report_error("Either match term contains a pattern consisting of a variable or all constructors must occur in one of the patterns.", sym);
+			return null;
+		}
+		TermVariable[][] vars = new TermVariable[matchCases.length][];
+		Term[] cases = new Term[matchCases.length];
+		DataType.Constructor[] constructors = new DataType.Constructor[matchCases.length];
+		for (int i = 0; i < matchCases.length; i++) {
+			vars[i] = matchCases[i].getPattern().getVars();
+			cases[i] = matchCases[i].getCase();
+			constructors[i] = matchCases[i].getPattern().getConstructor();
+		}
+		return parser.getScript().match(dataArg, vars, cases, constructors);
+	}
+
+	// Function to check that either match term contains a pattern consisting of a variable
+	// or all constructors must occur in one of the patterns.
+	public boolean checkPatterns(DataType matchDatatype, MatchCase[] matchCases) {
+		for (int i = 0; i < matchCases.length; i++) {
+			if (matchCases[i].getPattern().getConstructor() == null) {
+				return true;
+			}
+		}
+		DataType.Constructor[] allConstrs = matchDatatype.getConstructors();
+		for (int i = 0; i < allConstrs.length; i++) {
+			boolean constrFound = false;
+			for (int j = 0; j < matchCases.length; j++) {
+				if (matchCases[j].getPattern().getConstructor().getName().equals(allConstrs[i].getName())) {
+					constrFound = true;
+				}
+			}
+			if (!constrFound) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	String errorMessage;
+	public void setError(String message) {
+		if (errorMessage == null)
+			errorMessage = message;
+	}
+	public boolean hasError() {
+		return errorMessage != null;
+	}
+	public String getError() {
+		String result = errorMessage;
+		errorMessage = null;
+		return result;
+	}
+
+	public Sort lookupSort(Symbol sym, IndexedIdentifier id, Sort[] args) {
+		for (Sort s: args) {
+			if (s == null) return null;
+		}
+		String name = id.getName();
+		if (args.length == 0 && id.getIndices() == null && mSortParams != null) {
+			for (Sort s: mSortParams) {
+				if (s.getName().equals(name))
+					return s;
+			}
+		}
+		try {
+			return parser.getScript().sort(name, id.getIndices(), args);
+		} catch (SMTLIBException se) {
+			parser.report_error("Undeclared sort ("+id+" "+args.length+")", sym);
+		}
+		return null;
+	}
+
+	public Term createTerm(Symbol fsym, String name, String[] indices, Sort resultSort, Term[] param) {
+		// check if there was an error when creating the child term.
+		for (Term p : param) {
+			if (p == null)
+				return null;
+		}
+		try {
+			return parser.getScript().term(name, indices, resultSort, param);
+		} catch (SMTLIBException se) {
+			parser.report_error(se.getMessage(), fsym);
+		}
+		return null;
+	}
+
+	public TermVariable createTermVariable(String name, Sort sort) {
+		if (sort == null)
+			return null;
+		try {
+			TermVariable tv = parser.getScript().variable(name, sort);
+			localVars.put(tv.getName(), tv);
+			return tv;
+		} catch (SMTLIBException cannotHappen) {}
+		// Actually unreachable
+		throw new AssertionError();
+	}
+
+	public TermVariable createTermVariableBinding(String name, Term term) {
+		if (term == null)
+			return null;
+		try {
+			TermVariable tv = parser.getScript().variable(name, term.getSort());
+			localVars.put(tv.getName(), term);
+			return tv;
+		} catch (SMTLIBException cannotHappen) {}
+		// Actually unreachable
+		throw new AssertionError();
+	}
+
+	private Term getTermVariable(String name) {
+		return localVars.get(name);
+	}
+
+	public Term annotateTerm(Term term, Annotation[] annots) {
+		if (term == null)
+			return null;
+		try {
+			return parser.getScript().getTheory().annotatedTerm(annots, term);
+		} catch (SMTLIBException se) {
+			parser.report_error(se.getMessage());
+		}
+		return null;
+	}
+
+	public void beginFunction(String funcName, Sort[] paramSorts, Sort resultSort) {
+		parser.getScript().push(1);
+		parser.getScript().getTheory().declareInternalFunction(funcName, paramSorts, resultSort, 0);
+	}
+
+	public Term defineFun(String funcName, TermVariable[] vars, Term definition, Term subProof) {
+		Theory theory = parser.getScript().getTheory();
+		FunctionSymbol funcSym = theory.getFunctionSymbol(funcName);
+		parser.getScript().pop(1);
+		return parser.getProofRules().defineFun(funcSym, theory.lambda(vars, definition), subProof);
+	}
+
+	public Term declareFun(String funcName, Sort[] paramSorts, Sort resultSort, Term subProof) {
+		Theory theory = parser.getScript().getTheory();
+		FunctionSymbol funcSym = theory.getFunctionSymbol(funcName);
+		parser.getScript().pop(1);
+		return parser.getProofRules().declareFun(funcSym, subProof);
+	}
+
+	public FunctionSymbol checkCongFunction(final QualIdentifier fun1, final Term[] args1, final QualIdentifier fun2, final Term[] args2) {
+		if (!fun1.toString().equals(fun2.toString()) || args1.length != args2.length) {
+			parser.report_error("congruence needs same function symbol");
+			return null;
+		}
+		final Sort[] paramSorts = new Sort[args1.length];
+		for (int i = 0; i < args1.length; i++) {
+			paramSorts[i] = args1[i].getSort();
+			if (paramSorts[i] != args2[i].getSort()) {
+				parser.report_error("congruence doesn't type check");
+				return null;
+			}
+		}
+		return parser.getScript().getTheory().getFunctionWithResult(fun1.getIdentifier(), fun1.getIndices(), fun1.getSort(), paramSorts);
+	}
+:}
+
+/*init with {: getScanner().init(); :} */
+scan with {: return getScanner().next_token(); :}
+
+
+/* Predefined Symbols */
+terminal String UNDERSCORE, BANG,
+         AS, CHOOSE, EXISTS, FORALL, LET, MATCH,
+         PLUS, MINUS,
+         ASSUME, RES, LETPROOF, ORACLE, DECLAREFUN, DEFINEFUN, PAR,
+         FALSEE, TRUEI, NOTI, NOTE, ORI, ORE, ANDI, ANDE, IMPI, IMPE,
+         IFFI1, IFFI2, IFFE1, IFFE2, XORI, XORE, FORALLI, FORALLE, EXISTSI, EXISTSE,
+         EQI, EQE, DISTINCTI, DISTINCTE, ITE1, ITE2, REFL, SYMM, TRANS, CONG, EXPAND, DELANNOT,
+         DIVISIBLEDEF, GTDEF, GEQDEF, TRICHOTOMY, TOTAL, TOTALINT, FARKAS, TOINTHIGH, TOINTLOW,
+         MINUSDEF, DIVIDEDEF, POLYADD, POLYMUL, TOREALDEF, DIVLOW, DIVHIGH, MODDEF,
+         SELECTSTORE1, SELECTSTORE2, EXTDIFF, CONST,
+         DT_PROJECT, DT_CONS, DT_TESTI, DT_TESTE, DT_EXHAUST, DT_ACYCLIC, DT_MATCH;
+
+/* Predefined Keywords */
+terminal String /* attribute */
+         CNAMED, CPATTERN;
+terminal String SYMBOL, KEYWORD;
+terminal BigInteger NUMERAL;
+terminal BigDecimal DECIMAL;
+terminal String HEXADECIMAL, BINARY, STRING;
+terminal LPAR, RPAR;
+
+non terminal BigInteger integer;
+non terminal String keyword, symbol, symbol_not_axiom, allsymbol;
+non terminal String keywordAttr;
+non terminal String keywordNoAttr;
+non terminal String index;
+non terminal IndexedIdentifier identifier, identifierIndexed;
+non terminal Object specConstant;
+non terminal Object sExpr;
+non terminal QuotedObject string;
+non terminal CoeffTerm coeffTerm;
+
+non terminal Sort sort;
+non terminal Object attributeValue;
+non terminal Annotation attribute;
+non terminal QualIdentifier qualIdentifier;
+non terminal Binding varBinding, varBindingProof;
+non terminal Binding[] letfront;
+non terminal TermVariable sortedVar;
+non terminal Pattern pattern;
+non terminal MatchCase matchCase;
+non terminal Term constantTerm, term, proof, axiom;
+non terminal ProofLiteral literal;
+non terminal Term goal;
+
+goal ::= proof:p {: RESULT = p; :};
+
+string ::= STRING:n {: RESULT = new QuotedObject(n, true); :};
+
+specConstant ::= NUMERAL
+             | DECIMAL
+             | HEXADECIMAL
+             | BINARY
+             | string;
+sExpr ::= specConstant
+        | allsymbol
+        | KEYWORD
+        | LPAR sExpr*:s RPAR {: RESULT = s; :};
+
+constantTerm ::= NUMERAL:n
+                {: try {
+                       RESULT = parser.getScript().numeral(n);
+                   } catch (SMTLIBException se) {
+                       parser.report_error(se.getMessage());
+                       RESULT = null;
+                   } :}
+             | DECIMAL:n
+                 {: try {
+                        RESULT = parser.getScript().decimal(n);
+                    } catch (SMTLIBException se) {
+                        parser.report_error(se.getMessage());
+                        RESULT = null;
+                    } :}
+             | HEXADECIMAL:n {: try {
+                        RESULT = parser.getScript().hexadecimal(n);
+                    } catch (SMTLIBException se) {
+                        parser.report_error(se.getMessage());
+                        RESULT = null;
+                    }  :}
+             | BINARY:n {: try {
+                        RESULT = parser.getScript().binary(n);
+                    } catch (SMTLIBException se) {
+                        parser.report_error(se.getMessage());
+                        RESULT = null;
+                    } :}
+             | string:n {: try {
+                        RESULT = parser.getScript().string(n);
+                    } catch (SMTLIBException se) {
+                        parser.report_error(se.getMessage());
+                        RESULT = null;
+                    } :};
+index ::= NUMERAL:n {: RESULT = n.toString(); :} | symbol | HEXADECIMAL | BINARY;
+identifierIndexed ::= LPAR UNDERSCORE symbol:id index+:indices RPAR
+             {: RESULT = new IndexedIdentifier(id, indices); :};
+identifier ::= symbol:s {: RESULT = new IndexedIdentifier(s, null); :}
+           | identifierIndexed;
+
+sort ::= identifier:id {: RESULT = lookupSort(id$, id, emptySortArray); :}
+       | LPAR identifier:id sort+:sorts RPAR
+         {: RESULT = lookupSort(id$, id, sorts); :};
+attribute ::= keywordNoAttr:k attributeValue?:v {: RESULT = new Annotation(k, v); :}
+        | CNAMED:k symbol:v {: RESULT = new Annotation(k, v); :}
+        | CPATTERN:k LPAR term*:t RPAR {: RESULT = new Annotation(k, t); :};
+attributeValue ::= specConstant
+        | symbol
+        | LPAR sExpr*:s RPAR {: RESULT = s; :};
+
+qualIdentifier ::= identifier:i
+         {: RESULT = new QualIdentifier(i, null); :}
+       | LPAR AS identifier:i sort:s RPAR
+         {: RESULT = new QualIdentifier(i, s); :};
+varBinding ::= LPAR symbol:sym term:t RPAR
+         {: if (hasError()) {
+                RESULT = null;
+            } else {
+                TermVariable tv = createTermVariableBinding(sym, t);
+                RESULT = new Binding(tv, t);
+            }
+          :};
+sortedVar ::= LPAR symbol:sym sort:s RPAR
+         {: RESULT = createTermVariable(sym, s); :};
+pattern ::= symbol:sym
+         {: if (mMatchSort == null) {
+                RESULT = null;
+            } else {
+                try {
+                    RESULT = new Pattern(sym);
+                } catch (SMTLIBException ex) {
+                    parser.report_error(ex.getMessage(), sym$);
+                    RESULT = null;
+                }
+            }
+         :}
+       | LPAR symbol:constr symbol+:vars RPAR
+         {: if (mMatchSort == null) {
+                RESULT = null;
+            } else {
+                try {
+                    RESULT = new Pattern(constr, vars);
+                } catch (SMTLIBException ex) {
+                    parser.report_error(ex.getMessage(), constr$);
+                    RESULT = null;
+                }
+            }
+         :};
+matchCase ::= LPAR {: localVars.beginScope(); :} pattern:p term:t RPAR
+         {:
+            localVars.endScope();
+            if (p != null && t != null) {
+                RESULT = new MatchCase(p, t);
+            }
+         :};
+term ::= constantTerm
+       | qualIdentifier:fun
+         {: RESULT = fun.getIndices() == null && fun.getSort() == null ? getTermVariable(fun.getIdentifier()) : null;
+            if (RESULT == null)
+                RESULT = createTerm(fun$, fun.getIdentifier(), fun.getIndices(), fun.getSort(), new Term[0]); :}
+       | LPAR qualIdentifier:fun term+:args RPAR
+         {: RESULT = createTerm(fun$, fun.getIdentifier(), fun.getIndices(), fun.getSort(), args); :}
+       | LPAR LET {: localVars.beginScope(); :}
+                  LPAR varBinding+:bindings RPAR term:t RPAR
+         {: TermVariable[] vars = new TermVariable[bindings.length];
+            Term[] terms = new Term[bindings.length];
+            for (int i = 0; i < bindings.length; i++) {
+                if (bindings[i] != null) {
+                    vars[i] = bindings[i].getVar();
+                    terms[i] = bindings[i].getTerm();
+                }
+            }
+            localVars.endScope();
+            if (hasError())
+                RESULT = null;
+            else
+                RESULT = parser.getScript().let(vars, terms, t); :}
+       | LPAR CHOOSE:sym {: localVars.beginScope(); :}
+              sortedVar:var term:t RPAR
+         {: localVars.endScope();
+               RESULT = null;
+            try {
+                if (!hasError())
+                    RESULT = parser.getProofRules().choose(var, t);
+            } catch (SMTLIBException se) {
+                parser.report_error(se.getMessage(), sym$);
+            } :}
+       | LPAR FORALL:sym {: localVars.beginScope(); :}
+              LPAR sortedVar+:vars RPAR term:t RPAR
+         {: localVars.endScope();
+               RESULT = null;
+            try {
+                if (!hasError())
+                    RESULT = parser.getScript().quantifier(Script.FORALL, vars, t);
+            } catch (SMTLIBException se) {
+                parser.report_error(se.getMessage(), sym$);
+            } :}
+       | LPAR EXISTS:sym {: localVars.beginScope(); :}
+              LPAR sortedVar+:vars RPAR term:t RPAR
+         {: localVars.endScope();
+               RESULT = null;
+            try {
+                if (!hasError()) {
+                    RESULT = parser.getScript().quantifier(Script.EXISTS, vars, t);
+                }
+            } catch (SMTLIBException se) {
+                parser.report_error(se.getMessage(), sym$);
+            } :}
+       | LPAR MATCH:sym 
+            term:dataArg
+         {:
+            if (dataArg != null) {
+                mMatchSort = dataArg.getSort();
+                if (!mMatchSort.getSortSymbol().isDatatype()) {
+                    parser.report_error("Match term must be of a datatype sort.", sym$);
+                    mMatchSort = null;
+                }
+            } :}
+            LPAR matchCase+:matchCases RPAR RPAR
+         {:
+            RESULT = createMatchTerm(sym$, dataArg, matchCases);
+            mMatchSort = null;
+         :}
+       | LPAR BANG term:t attribute+:attr RPAR
+         {: RESULT = annotateTerm(t, attr); :};
+
+varBindingProof ::= LPAR symbol:sym proof:t RPAR
+         {: if (hasError()) {
+                RESULT = null;
+            } else {
+                TermVariable tv = createTermVariableBinding(sym, t);
+                RESULT = new Binding(tv, t);
+            }
+          :};
+
+coeffTerm ::= NUMERAL:coeff term:t {: RESULT = new CoeffTerm(coeff, t); :};
+integer ::= NUMERAL:n
+          | LPAR MINUS NUMERAL:n RPAR {: RESULT = n.negate(); :};
+
+axiom ::= FALSEE {: RESULT = parser.getProofRules().falseElim(); :}
+        | TRUEI {: RESULT = parser.getProofRules().trueIntro(); :}
+        | LPAR NOTI term:t RPAR {: RESULT = parser.getProofRules().notIntro(t); :}
+        | LPAR NOTE term:t RPAR {: RESULT = parser.getProofRules().notElim(t); :}
+        | LPAR ORI NUMERAL:n term:t RPAR {: RESULT = parser.getProofRules().orIntro(n.intValue(), t); :}
+        | LPAR ORE term:t RPAR {: RESULT = parser.getProofRules().orElim(t); :}
+        | LPAR IMPI NUMERAL:n term:t RPAR {: RESULT = parser.getProofRules().impIntro(n.intValue(), t); :}
+        | LPAR IMPE term:t RPAR {: RESULT = parser.getProofRules().impElim(t); :}
+        | LPAR ANDI term:t RPAR {: RESULT = parser.getProofRules().andIntro(t); :}
+        | LPAR ANDE NUMERAL:n term:t RPAR {: RESULT = parser.getProofRules().andElim(n.intValue(), t); :}
+        | LPAR IFFI1 term:t RPAR {: RESULT = parser.getProofRules().iffIntro1(t); :}
+        | LPAR IFFI2 term:t RPAR {: RESULT = parser.getProofRules().iffIntro2(t); :}
+        | LPAR IFFE1 term:t RPAR {: RESULT = parser.getProofRules().iffElim1(t); :}
+        | LPAR IFFE2 term:t RPAR {: RESULT = parser.getProofRules().iffElim2(t); :}
+        | LPAR XORI LPAR term*:ts1 RPAR LPAR term*:ts2 RPAR LPAR term*:ts3 RPAR RPAR
+          {: RESULT = parser.getProofRules().xorIntro(ts1, ts2, ts3); :}
+        | LPAR XORE LPAR term*:ts1 RPAR LPAR term*:ts2 RPAR LPAR term*:ts3 RPAR RPAR
+          {: RESULT = parser.getProofRules().xorElim(ts1, ts2, ts3); :}
+        | LPAR FORALLI term:t RPAR
+          {: RESULT = parser.getProofRules().forallIntro((QuantifiedFormula) t); :}
+        | LPAR FORALLE LPAR term*:terms RPAR term:t RPAR
+          {: RESULT = parser.getProofRules().forallElim(terms, (QuantifiedFormula) t); :}
+        | LPAR EXISTSI LPAR term*:terms RPAR term:t RPAR
+          {: RESULT = parser.getProofRules().existsIntro(terms, (QuantifiedFormula) t); :}
+        | LPAR EXISTSE term:t RPAR
+          {: RESULT = parser.getProofRules().existsElim((QuantifiedFormula) t); :}
+        | LPAR EQI term:t RPAR {: RESULT = parser.getProofRules().equalsIntro(t); :}
+        | LPAR EQE NUMERAL:i NUMERAL:j term:t RPAR
+          {: RESULT = parser.getProofRules().equalsElim(i.intValue(), j.intValue(), t); :}
+        | LPAR DISTINCTI term:t RPAR {: RESULT = parser.getProofRules().distinctIntro(t); :}
+        | LPAR DISTINCTE NUMERAL:i NUMERAL:j term:t RPAR
+          {: RESULT = parser.getProofRules().distinctElim(i.intValue(), j.intValue(), t); :}
+        | LPAR REFL term:t RPAR
+          {: RESULT = parser.getProofRules().refl(t); :}
+        | LPAR SYMM term:t1 term:t2 RPAR
+          {: RESULT = parser.getProofRules().symm(t1, t2); :}
+        | LPAR TRANS term*:ts RPAR
+          {: RESULT = parser.getProofRules().trans(ts); :}
+        | LPAR CONG LPAR qualIdentifier:fun1 term+:args1 RPAR LPAR qualIdentifier:fun2 term+:args2 RPAR RPAR
+          {: FunctionSymbol fsym = checkCongFunction(fun1, args1, fun2, args2);
+             RESULT = parser.getProofRules().cong(fsym, args1, args2); :}
+        | LPAR EXPAND term:t RPAR
+          {: RESULT = parser.getProofRules().expand(t); :}
+        | LPAR ITE1 term:t RPAR {: RESULT = parser.getProofRules().ite1(t); :}
+        | LPAR ITE2 term:t RPAR {: RESULT = parser.getProofRules().ite2(t); :}
+        | LPAR DELANNOT term:t RPAR
+          {: RESULT = parser.getProofRules().delAnnot((AnnotatedTerm) t); :}
+        | LPAR DIVISIBLEDEF NUMERAL:d term:t RPAR
+          {: RESULT = parser.getProofRules().divisible(d, t); :}
+        | LPAR GTDEF term:t1 term:t2 RPAR
+          {: RESULT = parser.getProofRules().gtDef(parser.getScript().term(SMTLIBConstants.GT, t1, t2)); :}
+        | LPAR GEQDEF term:t1 term:t2 RPAR
+          {: RESULT = parser.getProofRules().geqDef(parser.getScript().term(SMTLIBConstants.GEQ, t1, t2)); :}
+        | LPAR TRICHOTOMY term:t1 term:t2 RPAR
+          {: RESULT = parser.getProofRules().trichotomy(t1, t2); :}
+        | LPAR TOTAL term:t1 term:t2 RPAR
+          {: RESULT = parser.getProofRules().total(t1, t2); :}
+        | LPAR TOTALINT term:t1 integer:c2 RPAR
+          {: RESULT = parser.getProofRules().totalInt(t1, c2); :}
+        | LPAR FARKAS coeffTerm*:coeffTerms RPAR
+          {: BigInteger[] coeffs = new BigInteger[coeffTerms.length];
+             Term[] terms = new Term[coeffTerms.length];
+             for (int i = 0; i < coeffTerms.length; i++) {
+                 coeffs[i] = coeffTerms[i].getCoeff();
+                 terms[i] = coeffTerms[i].getTerm();
+             }
+             RESULT = parser.getProofRules().farkas(terms, coeffs); :}
+        | LPAR POLYADD term:plusTerm term:result RPAR
+          {: RESULT = parser.getProofRules().polyAdd(plusTerm, result); :}
+        | LPAR POLYMUL term:mulTerm term:result RPAR
+          {: RESULT = parser.getProofRules().polyMul(mulTerm, result); :}
+        | LPAR TOREALDEF term:t RPAR
+          {: RESULT = parser.getProofRules().toRealDef(parser.getScript().term(SMTLIBConstants.TO_REAL, t)); :}
+        | LPAR DIVIDEDEF term*:ts RPAR
+          {: RESULT = parser.getProofRules().divideDef(parser.getScript().term(SMTLIBConstants.DIVIDE, ts)); :}
+        | LPAR MINUSDEF term*:ts RPAR
+          {: RESULT = parser.getProofRules().minusDef(parser.getScript().term(SMTLIBConstants.MINUS, ts)); :}
+        | LPAR TOINTLOW term:t RPAR
+          {: RESULT = parser.getProofRules().toIntLow(t); :}
+        | LPAR TOINTHIGH term:t RPAR
+          {: RESULT = parser.getProofRules().toIntHigh(t); :}
+        | LPAR DIVLOW term:t1 term:t2 RPAR
+          {: RESULT = parser.getProofRules().divLow(t1, t2); :}
+        | LPAR DIVHIGH term:t1 term:t2 RPAR
+          {: RESULT = parser.getProofRules().divHigh(t1, t2); :}
+        | LPAR MODDEF term:t1 term:t2 RPAR
+          {: RESULT = parser.getProofRules().modDef(t1, t2); :}
+        | LPAR SELECTSTORE1 term:a term:i term:v RPAR
+          {: RESULT = parser.getProofRules().selectStore1(a, i, v); :}
+        | LPAR SELECTSTORE2 term:a term:i term:v term:j RPAR
+          {: RESULT = parser.getProofRules().selectStore2(a, i, v, j); :}
+        | LPAR EXTDIFF term:a term:b RPAR
+          {: RESULT = parser.getProofRules().extDiff(a, b); :}
+        | LPAR CONST term:v term:i RPAR
+          {: RESULT = parser.getProofRules().constArray(v, i); :}
+        | LPAR DT_PROJECT term:t RPAR
+          {: RESULT = parser.getProofRules().dtProject(t); :}
+        | LPAR DT_CONS term:t RPAR
+          {: RESULT = parser.getProofRules().dtCons(t); :}
+        | LPAR DT_TESTI term:t RPAR
+          {: RESULT = parser.getProofRules().dtTestI(t); :}
+        | LPAR DT_TESTE symbol:ocons term:t RPAR
+          {: RESULT = parser.getProofRules().dtTestE(ocons, t); :}
+        | LPAR DT_EXHAUST term:t RPAR
+          {: RESULT = parser.getProofRules().dtExhaust(t); :}
+        | LPAR DT_ACYCLIC term:t LPAR NUMERAL*:argpos RPAR RPAR
+          {: int[] intpos = new int[argpos.length];
+             for (int i = 0; i < argpos.length; i++) {
+                 intpos[i] = argpos[i].intValue();
+             }
+             RESULT = parser.getProofRules().dtAcyclic(t, intpos); :}
+        | LPAR DT_MATCH term:t RPAR
+          {: RESULT = parser.getProofRules().dtMatch(t); :}
+        | LPAR BANG proof:p attribute+:attr RPAR
+          {: RESULT = p; :}
+        ;
+
+literal ::= PLUS term:t {: RESULT = new ProofLiteral(t, true); :}
+          | MINUS term:t {: RESULT = new ProofLiteral(t, false); :};
+
+letfront ::= LPAR LET {: localVars.beginScope(); :}
+                  LPAR varBinding+:bindings RPAR
+                  {: RESULT = bindings; :}
+          | LPAR LETPROOF {: localVars.beginScope(); :}
+                  LPAR varBindingProof+:bindings RPAR
+                  {: RESULT = bindings; :};
+
+proof ::= axiom:ax {: RESULT = ax; :}
+        | LPAR ASSUME term:assertion RPAR {: RESULT = parser.getProofRules().asserted(assertion); :}
+        | LPAR RES term:pivot proof:lhs proof:rhs RPAR
+          {: RESULT = parser.getProofRules().resolutionRule(pivot, lhs, rhs); :}
+        | symbol_not_axiom:var
+         {: RESULT = getTermVariable(var);
+            if (RESULT == null) {
+                parser.report_error("Undeclared proof variable");
+            }
+          :}
+        | letfront:bindings proof:t RPAR
+         {: TermVariable[] vars = new TermVariable[bindings.length];
+            Term[] terms = new Term[bindings.length];
+            for (int i = 0; i < bindings.length; i++) {
+                if (bindings[i] != null) {
+                    vars[i] = bindings[i].getVar();
+                    terms[i] = bindings[i].getTerm();
+                }
+            }
+            localVars.endScope();
+            if (hasError())
+                RESULT = null;
+            else
+                RESULT = parser.getScript().let(vars, terms, t); :}
+        | LPAR LPAR DEFINEFUN symbol:fun LPAR sortedVar*:vars RPAR term:definition RPAR
+          {: Sort[] varSorts = new Sort[vars.length];
+             for (int i = 0; i < vars.length; i++) {
+                 varSorts[i] = vars[i].getSort();
+             }
+             beginFunction(fun, varSorts, definition.getSort()); :}
+             proof:subproof RPAR
+          {: RESULT = defineFun(fun, vars, definition, subproof); :}
+        | LPAR LPAR DECLAREFUN symbol:fun LPAR sort*:param RPAR sort:result RPAR
+          {: beginFunction(fun, param, result); :}
+             proof:subproof RPAR
+          {: RESULT = declareFun(fun, param, result, subproof); :}
+        | LPAR ORACLE LPAR literal*:lits RPAR attribute*:attribs RPAR
+          {: RESULT = parser.getProofRules().oracle(lits, attribs); :};
+
+symbol ::= SYMBOL
+         | PLUS | MINUS
+         | ASSUME | RES | LETPROOF | ORACLE | DECLAREFUN | DEFINEFUN
+         | FALSEE | TRUEI | NOTI | NOTE | ORI | ORE | ANDI | ANDE | IMPI | IMPE
+         | IFFI1 | IFFI2 | IFFE1 | IFFE2 | XORI | XORE | FORALLI | FORALLE | EXISTSI | EXISTSE
+         | EQI | EQE | DISTINCTI | DISTINCTE | ITE1 | ITE2 | REFL | SYMM | TRANS | CONG | EXPAND | DELANNOT
+         | DIVISIBLEDEF | GTDEF | GEQDEF | TRICHOTOMY | TOTAL | TOTALINT | FARKAS | TOINTHIGH | TOINTLOW
+         | MINUSDEF | DIVIDEDEF | POLYADD | POLYMUL | TOREALDEF | DIVLOW | DIVHIGH | MODDEF
+         | SELECTSTORE1 | SELECTSTORE2 | EXTDIFF | CONST
+         | DT_PROJECT | DT_CONS | DT_TESTI | DT_TESTE | DT_EXHAUST | DT_ACYCLIC | DT_MATCH;
+
+symbol_not_axiom ::= SYMBOL
+         | PLUS | MINUS
+         | ASSUME | RES | LETPROOF | ORACLE | DECLAREFUN | DEFINEFUN
+         | NOTI | NOTE | ORI | ORE | ANDI | ANDE | IMPI | IMPE
+         | IFFI1 | IFFI2 | IFFE1 | IFFE2 | XORI | XORE | FORALLI | FORALLE | EXISTSI | EXISTSE
+         | EQI | EQE | DISTINCTI | DISTINCTE | ITE1 | ITE2 | REFL | SYMM | TRANS | CONG | EXPAND | DELANNOT
+         | DIVISIBLEDEF | GTDEF | GEQDEF | TRICHOTOMY | TOTAL | TOTALINT | FARKAS | TOINTHIGH | TOINTLOW
+         | MINUSDEF | DIVIDEDEF | POLYADD | POLYMUL | TOREALDEF | DIVLOW | DIVHIGH | MODDEF
+         | SELECTSTORE1 | SELECTSTORE2 | EXTDIFF | CONST
+         | DT_PROJECT | DT_CONS | DT_TESTI | DT_TESTE | DT_EXHAUST | DT_ACYCLIC | DT_MATCH;
+
+/* The following are reserved words and are only allowed in sexpr. */
+allsymbol ::= symbol | PAR | UNDERSCORE | AS | BANG | CHOOSE | LET | FORALL | EXISTS | MATCH;
+
+keywordAttr   ::= CPATTERN | CNAMED;
+keywordNoAttr ::= KEYWORD;
+keyword ::= KEYWORD | keywordAttr;

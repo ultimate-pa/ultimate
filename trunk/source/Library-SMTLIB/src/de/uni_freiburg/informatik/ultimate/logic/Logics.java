@@ -25,9 +25,9 @@ package de.uni_freiburg.informatik.ultimate.logic;
 public enum Logics {
 	CORE(0),// Pure Boolean logic
 	ALL       (Features.QU + Features.NA + Features.IA + Features.RA +
-			   Features.BV + Features.UF + Features.AX + Features.FP),
+			Features.BV + Features.UF + Features.AX + Features.FP + Features.DT + Features.S),
 	HORN      (Features.QU + Features.NA + Features.IA + Features.RA +
-			   Features.BV + Features.UF + Features.AX + Features.FP),
+			Features.BV + Features.UF + Features.AX + Features.FP + Features.DT + Features.S),
 	QF_ABV    (Features.AX + Features.BV),
 	QF_ABVFP  (Features.AX + Features.BV + Features.FP),
 	QF_ABVFPLRA (Features.AX + Features.BV + Features.FP + Features.LA + Features.RA),
@@ -214,7 +214,7 @@ public enum Logics {
 	}
 	/**
 	 * Is this logic restricted to linear arithmetic?
-	 * @return <code>true</code> if and only if this logic is restricted to linear arithmetic. 
+	 * @return <code>true</code> if and only if this logic is restricted to linear arithmetic.
 	 */
 	public boolean isLinearArithmetic() {
 		return (mFeatures & (Features.LA | Features.DL)) != 0;

@@ -36,6 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
@@ -49,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Totalize;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.performance.SinkMergeIntersectStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.DisjointSets;
 
 /**
@@ -85,10 +87,16 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 	 * @param tree
 	 */
 	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE>> Minimize(
-			final AutomataLibraryServices services, final SF factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
+			final AutomataLibraryServices services, final SF factory, final ITreeAutomatonBU<LETTER, STATE> tree)
+			throws AutomataOperationCanceledException {
 		super(services);
 		this.mOperand = tree;
-		mTreeAutomaton = (TreeAutomatonBU<LETTER, STATE>) new Totalize<>(services, factory, tree).getResult();
+		try {
+			mTreeAutomaton = (TreeAutomatonBU<LETTER, STATE>) new Totalize<>(services, factory, tree).getResult();
+		} catch (final AutomataOperationCanceledException e) {
+			e.addRunningTaskInfo(new RunningTaskInfo(getClass(), "minimizing tree automaton"));
+			throw e;
+		}
 		mStateFactory = new SinkMergeIntersectStateFactory<>(factory, factory, factory);
 		mMinimizedStates = new HashMap<>();
 		mResult = computeResult();

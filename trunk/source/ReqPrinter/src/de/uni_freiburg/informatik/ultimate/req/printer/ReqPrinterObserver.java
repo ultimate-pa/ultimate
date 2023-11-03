@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PatternContainer;
 import de.uni_freiburg.informatik.ultimate.req.printer.preferences.PreferenceInitializer;
@@ -94,10 +94,10 @@ public class ReqPrinterObserver implements IUnmanagedObserver {
 
 			@Override
 			public int compare(final PatternType o1, final PatternType o2) {
-				if (o1 instanceof InitializationPattern) {
-					if (o2 instanceof InitializationPattern) {
-						final VariableCategory o1cat = ((InitializationPattern) o1).getCategory();
-						final VariableCategory o2cat = ((InitializationPattern) o2).getCategory();
+				if (o1 instanceof DeclarationPattern) {
+					if (o2 instanceof DeclarationPattern) {
+						final VariableCategory o1cat = ((DeclarationPattern) o1).getCategory();
+						final VariableCategory o2cat = ((DeclarationPattern) o2).getCategory();
 						if (o1cat == VariableCategory.CONST && o2cat != VariableCategory.CONST) {
 							return -1;
 						} else if (o2cat == VariableCategory.CONST && o1cat != VariableCategory.CONST) {
@@ -106,7 +106,7 @@ public class ReqPrinterObserver implements IUnmanagedObserver {
 					} else {
 						return -1;
 					}
-				} else if (o2 instanceof InitializationPattern) {
+				} else if (o2 instanceof DeclarationPattern) {
 					return 1;
 				}
 				return o1.getId().compareToIgnoreCase(o2.getId());

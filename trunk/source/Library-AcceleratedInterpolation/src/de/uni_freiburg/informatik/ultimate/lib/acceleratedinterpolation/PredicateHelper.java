@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -56,6 +57,14 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
+/**
+ * Class containing various functions helping with {@link IPredicate} transformation.
+ *
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
+ *
+ * @param <LETTER>
+ *            Class of transition.
+ */
 public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 	private final IPredicateUnifier mPredicateUnifier;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredTransformer;
@@ -63,6 +72,20 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
 
+	/**
+	 * Construct a fresh {@link PredicateHelper}
+	 *
+	 * @param predicateUnifier
+	 *            A {@link PredicateUnifier}
+	 * @param predTransformer
+	 *            A {@link PredicateTransformer}
+	 * @param logger
+	 *            A {@link ILogger}
+	 * @param script
+	 *            A {@link ManagedScript}
+	 * @param services
+	 *            {@link IUltimateServiceProvider}
+	 */
 	public PredicateHelper(final IPredicateUnifier predicateUnifier,
 			final PredicateTransformer<Term, IPredicate, TransFormula> predTransformer, final ILogger logger,
 			final ManagedScript script, final IUltimateServiceProvider services) {
@@ -73,6 +96,13 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 		mServices = services;
 	}
 
+	/**
+	 * Convert a trace, given as a list of letters to a {@link UnmodifiableTransFormula}
+	 *
+	 * @param trace
+	 *            The input trace to be converted.
+	 * @return The trace as {@link UnmodifiableTransFormula}
+	 */
 	public UnmodifiableTransFormula traceToTf(final List<LETTER> trace) {
 		final List<UnmodifiableTransFormula> tfs = new ArrayList<>();
 		for (final LETTER l : trace) {
@@ -82,6 +112,13 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA, tfs);
 	}
 
+	/**
+	 * Convert a program trace into a list of singular transitions in form of {@link UnmodifiableTransFormula}
+	 *
+	 * @param trace
+	 *            The trace to be converted.
+	 * @return A list of transitions.
+	 */
 	public List<UnmodifiableTransFormula> traceToListOfTfs(final List<LETTER> trace) {
 		final List<UnmodifiableTransFormula> tfs = new ArrayList<>();
 		for (final LETTER l : trace) {
@@ -91,10 +128,11 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 	}
 
 	/**
-	 * replace variables in term with its default termvariables, needed for {@link IPredicate} creation
+	 * Replace variables in term with its default termvariables, needed for {@link IPredicate} creation
 	 *
 	 * @param t
-	 * @return
+	 *            {@link UnmodifiableTransFormula} to be transformed.
+	 * @return A {@link UnmodifiableTransFormula} where each Variable has been substituted by its default.
 	 */
 	public Term normalizeTerm(final UnmodifiableTransFormula t) {
 		final HashMap<Term, Term> subMap = new HashMap<>();
@@ -111,16 +149,19 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 			subMap.put(inVar.getValue(), inVar.getKey().getTermVariable());
 			inVars.put(inVar.getKey(), inVar.getKey().getTermVariable());
 		}
-		final Substitution sub = new Substitution(mScript, subMap);
-		final Term newTerm = sub.transform(tTerm);
-		return newTerm;
+		return Substitution.apply(mScript, subMap, tTerm);
 	}
 
 	/**
-	 * replace variables in term with its default termvariables, needed for {@link IPredicate} creation
+	 * Replace variables in term with its default termvariables, needed for {@link IPredicate} creation
 	 *
+	 * @param t
+	 *            A transformulas term.
+	 * @param fresh
+	 *            Are fresh variable instances needed.
 	 * @param tf
-	 * @return
+	 *            {@link UnmodifiableTransFormula} to be transformed.
+	 * @return A {@link UnmodifiableTransFormula} where each Variable has been substituted by its default.
 	 */
 	public UnmodifiableTransFormula normalizeTerm(final Term t, final UnmodifiableTransFormula tf,
 			final Boolean fresh) {
@@ -146,8 +187,7 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 				subMap.put(inVar.getValue(), newTV);
 				inVars.put(inVar.getKey(), newTV);
 			}
-			final Substitution sub = new Substitution(mScript, subMap);
-			newTerm = sub.transform(tTerm);
+			newTerm = Substitution.apply(mScript, subMap, tTerm);
 		} else {
 			inVars = new HashMap<>(tf.getInVars());
 			outVars = new HashMap<>(tf.getOutVars());
@@ -164,26 +204,43 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 	/**
 	 * To make a given loopacceleration reflexive, create disjunction of acceleration and conjunction of equalities
 	 * between in and out vars
+	 * FIXME 20220925 Matthias:
+	 *  <li> We do not have an ourvar for each invar
+	 *  <li> Here we accidentally omit IProgramVars that occur only as outVar but not as invar
 	 *
 	 * @param t
+	 *            A {@link Term}
 	 * @param acceleration
-	 * @return
+	 *            A {@link UnmodifiableTransFormula} representing a loopacceleration.
+	 * @return A reflexive loopacceleration.
 	 */
-	public Term makeReflexive(final Term t, final UnmodifiableTransFormula acceleration) {
-		final Map<IProgramVar, TermVariable> invars = acceleration.getInVars();
-		final Map<IProgramVar, TermVariable> outvars = acceleration.getOutVars();
+	public Term makeReflexive(final Term t, final UnmodifiableTransFormula transitionFormula) {
+		final Map<IProgramVar, TermVariable> invars = transitionFormula.getInVars();
+		final Map<IProgramVar, TermVariable> outvars = transitionFormula.getOutVars();
 		final List<Term> equalities = new ArrayList<>();
 		for (final Entry<IProgramVar, TermVariable> invar : invars.entrySet()) {
 			final IProgramVar var = invar.getKey();
 			final TermVariable invarTV = invar.getValue();
 			final TermVariable outvarTV = outvars.get(var);
-			final Term equality = SmtUtils.binaryEquality(mScript.getScript(), invarTV, outvarTV);
+			final Term equality = mScript.getScript().term("=", invarTV, outvarTV);
 			equalities.add(equality);
 		}
+		/*
+		 * TODO: empty conjunction = true!
+		 */
 		final Term conjunct = SmtUtils.and(mScript.getScript(), equalities);
 		return SmtUtils.or(mScript.getScript(), t, conjunct);
 	}
 
+	/**
+	 * Check if an {@link IPredicate} contains vars from a {@link UnmodifiableTransFormula}
+	 *
+	 * @param predicate
+	 *            The {@link IPredicate}
+	 * @param tf
+	 *            The {@link UnmodifiableTransFormula}
+	 * @return true if the predicate contains vars, else false.
+	 */
 	public boolean predContainsTfVar(final IPredicate predicate, final UnmodifiableTransFormula tf) {
 		final Set<IProgramVar> predVars = predicate.getVars();
 		final Set<IProgramVar> tfInVars = tf.getInVars().keySet();

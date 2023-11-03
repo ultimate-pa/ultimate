@@ -28,11 +28,12 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -45,21 +46,21 @@ public class SimplePredicateFactory {
 
 	private static final String[] PROCEDURES = new String[0];
 
-	private final Script mScript;
+	private final ManagedScript mMgdScript;
 	private final Function<TermVariable, IProgramVar> mFunTermVar2ProgVar;
 
 	private int mId;
 
 	public SimplePredicateFactory(final ManagedScript mgdScript,
 			final Function<TermVariable, IProgramVar> funTermVar2ProgVar) {
-		mScript = mgdScript.getScript();
+		mMgdScript = mgdScript;
 		mFunTermVar2ProgVar = funTermVar2ProgVar;
 	}
 
 	public BasicPredicate newPredicate(final Term term) {
 		final TermVarsProc termVarsProc = constructTermVarsProc(term);
 		return new BasicPredicate(constructFreshSerialNumber(), PROCEDURES, termVarsProc.getFormula(),
-				termVarsProc.getVars(), termVarsProc.getClosedFormula());
+				termVarsProc.getVars(), termVarsProc.getFuns(), termVarsProc.getClosedFormula());
 	}
 
 	private int constructFreshSerialNumber() {
@@ -68,7 +69,8 @@ public class SimplePredicateFactory {
 	}
 
 	private TermVarsProc constructTermVarsProc(final Term term) {
-		return TermVarsProc.computeTermVarsProc(term, mScript, mFunTermVar2ProgVar);
+		final Function<FunctionSymbol, IProgramFunction> funcSymb2ProgramFunc = (x -> null);
+		return TermVarsProc.computeTermVarsProc(term, mMgdScript, mFunTermVar2ProgVar, funcSymb2ProgramFunc);
 	}
 
 }

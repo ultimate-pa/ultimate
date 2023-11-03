@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
@@ -37,7 +38,28 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
  */
 public interface IAccelerator {
 
+	/**
+	 * Compute a loop acceleration.
+	 *
+	 * @param loop
+	 *            The loop's {@link UnmodifiableTransFormula}
+	 * @param loopHead
+	 *            The location in the program's {@link IIcfg} where the loop begins.
+	 * @return A loop acceleration in form of a {@link UnmodifiableTransFormula}
+	 */
 	UnmodifiableTransFormula accelerateLoop(UnmodifiableTransFormula loop, final IcfgLocation loopHead);
 
+	/**
+	 * Signals the correct exit of the acceleration method.
+	 *
+	 * @return True when the acceleration method successfully compute an adequate loop acceleration.
+	 */
 	boolean accelerationFinishedCorrectly();
+
+	/**
+	 * Signals whether the computed acceleration is an overapproximation.
+	 *
+	 * @return
+	 */
+	boolean isOverapprox();
 }

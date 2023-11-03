@@ -107,7 +107,7 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 	Term mFlatTerm;
 
 	int mHashCode;
-	
+
 	final int mAge;
 
 	static class TermPairMergeInfo {
@@ -405,7 +405,8 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 			if (dest.mSharedTerm == null) {
 				dest.mSharedTerm = src.mSharedTerm;
 			} else {
-				final CCEquality cceq = engine.createEquality(src.mSharedTerm, dest.mSharedTerm, true);
+				final boolean createInLA = dest.mSharedTerm.mFlatTerm.getSort().isNumericSort();
+				final CCEquality cceq = engine.createEquality(src.mSharedTerm, dest.mSharedTerm, createInLA);
 				/* If cceq cannot be created this is a conflict like merging x+1 and x */
 				sharedTermConflict = (cceq == null);
 				/*
@@ -576,7 +577,7 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 							}
 							for (final CCTerm appTerm : appTerms) {
 								for (final ReverseTrigger trigger : srcParentInfo.mReverseTriggers) {
-									trigger.activate((CCAppTerm) appTerm);
+									trigger.activate((CCAppTerm) appTerm, false);
 								}
 							}
 						}
@@ -592,7 +593,7 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 							}
 							for (final CCTerm appTerm : appTerms) {
 								for (final ReverseTrigger trigger : destParentInfo.mReverseTriggers) {
-									trigger.activate((CCAppTerm) appTerm);
+									trigger.activate((CCAppTerm) appTerm, false);
 								}
 							}
 						}

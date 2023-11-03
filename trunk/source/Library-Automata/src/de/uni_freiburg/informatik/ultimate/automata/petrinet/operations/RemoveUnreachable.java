@@ -37,11 +37,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
@@ -49,20 +49,18 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 
 /**
- * Removes unreachable nodes of a Petri Net preserving its behavior.
- * Nodes are either transitions or places.
+ * Removes unreachable nodes of a Petri Net preserving its behavior. Nodes are either transitions or places.
  * <p>
- * A transition is unreachable iff it can never fire
- * (because there is no reachable marking covering all of its preceding places).
+ * A transition is unreachable iff it can never fire (because there is no reachable marking covering all of its
+ * preceding places).
  * <p>
  * A place is unreachable iff it is not covered by any reachable marking.
  * <p>
- * This operation may also remove some of the reachable places if they are not needed.
- * Required are only
+ * This operation may also remove some of the reachable places if they are not needed. Required are only
  * <ul>
- *   <li> places with a reachable successor transition,
- *   <li> or accepting-places with a reachable predecessor transition,
- *   <li> or at most one accepting initial place without a reachable successor transition.
+ * <li>places with a reachable successor transition,
+ * <li>or accepting-places with a reachable predecessor transition,
+ * <li>or at most one accepting initial place without a reachable successor transition.
  * </ul>
  *
  * @author schaetzc@tf.uni-freiburg.de
@@ -74,8 +72,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
  * @param <CRSF>
  *            Type of factory needed to check the result of this operation in {@link #checkResult(CRSF)}
  */
-public class RemoveUnreachable<LETTER, PLACE, CRSF extends
-		IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
+public class RemoveUnreachable<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 		extends UnaryNetOperation<LETTER, PLACE, CRSF> {
 
 	private static final boolean DEBUG_COMPUTE_REMOVED_TRANSITIONS = false;
@@ -85,7 +82,7 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 	/** {@link #mOperand} with only reachable transitions and required places. */
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 
-	private final Set<ITransition<LETTER, PLACE>> mReachableTransitions;
+	private final Set<Transition<LETTER, PLACE>> mReachableTransitions;
 
 	public RemoveUnreachable(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
@@ -96,17 +93,18 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 	 * Copies the reachable parts of a net.
 	 *
 	 * @param operand
-	 *     Petri net to be copied such that only reachable nodes remain.
+	 *            Petri net to be copied such that only reachable nodes remain.
 	 * @param reachableTransitions
-	 *     The reachable transitions (or a superset) of {@code operand}.
-	 *     Can be computed from an existing finite prefix using {@link #reachableTransitions(BranchingProcess)}
-	 *     or automatically when using {@link #RemoveUnreachable(AutomataLibraryServices, BoundedPetriNet)}.
+	 *            The reachable transitions (or a superset) of {@code operand}. Can be computed from an existing finite
+	 *            prefix using {@link #reachableTransitions(BranchingProcess)} or automatically when using
+	 *            {@link #RemoveUnreachable(AutomataLibraryServices, BoundedPetriNet)}.
 	 *
-	 * @throws AutomataOperationCanceledException The operation was canceled
+	 * @throws AutomataOperationCanceledException
+	 *             The operation was canceled
 	 * @throws PetriNetNot1SafeException
 	 */
 	public RemoveUnreachable(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand,
-			final Set<ITransition<LETTER, PLACE>> reachableTransitions)
+			final Set<Transition<LETTER, PLACE>> reachableTransitions)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
@@ -114,10 +112,10 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		mReachableTransitions = (reachableTransitions == null ? computeReachableTransitions() : reachableTransitions);
 		if (DEBUG_COMPUTE_REMOVED_TRANSITIONS) {
-			final Set<ITransition<LETTER, PLACE>> removedTransitions = operand.getTransitions().stream()
+			final Set<Transition<LETTER, PLACE>> removedTransitions = operand.getTransitions().stream()
 					.filter(x -> !mReachableTransitions.contains(x)).collect(Collectors.toSet());
 			if (!removedTransitions.isEmpty()) {
 				mLogger.info("Removed transitions: " + removedTransitions);
@@ -144,7 +142,7 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 		return sb.toString();
 	}
 
-	private Set<ITransition<LETTER, PLACE>> computeReachableTransitions()
+	private Set<Transition<LETTER, PLACE>> computeReachableTransitions()
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		try {
 			final BranchingProcess<LETTER, PLACE> finPre = new FinitePrefix<>(mServices, mOperand).getResult();
@@ -158,17 +156,18 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 	}
 
 	/**
-	 * From a complete finite prefix compute the reachable transitions of the original Petri net.
-	 * A transition t is reachable iff there is a reachable marking enabling t.
-	 * @param finPre complete finite Prefix of a Petri net N
+	 * From a complete finite prefix compute the reachable transitions of the original Petri net. A transition t is
+	 * reachable iff there is a reachable marking enabling t.
+	 *
+	 * @param finPre
+	 *            complete finite Prefix of a Petri net N
 	 * @return reachable transitions in N
 	 */
-	public static <LETTER, PLACE> Set<ITransition<LETTER, PLACE>> reachableTransitions(
-			final BranchingProcess<LETTER, PLACE> finPre) {
+	public static <LETTER, PLACE> Set<Transition<LETTER, PLACE>>
+			reachableTransitions(final BranchingProcess<LETTER, PLACE> finPre) {
 		return finPre.getEvents().stream().map(Event::getTransition)
 				// finPre contains dummy root-event which does not correspond to any transition
-				.filter(Objects::nonNull)
-				.collect(Collectors.toSet());
+				.filter(Objects::nonNull).collect(Collectors.toSet());
 	}
 
 	@Override
@@ -209,26 +208,16 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();
 
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_REMOVED_PLACES , computeRemovedPlaces());
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_REMOVED_TRANSITIONS, computeRemovedTransitions());
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_REMOVED_FLOW, computeRemovedFlow());
+		statistics.addKeyValuePair(StatisticsType.PETRI_REMOVED_PLACES, computeRemovedPlaces());
+		statistics.addKeyValuePair(StatisticsType.PETRI_REMOVED_TRANSITIONS, computeRemovedTransitions());
+		statistics.addKeyValuePair(StatisticsType.PETRI_REMOVED_FLOW, computeRemovedFlow());
 
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_ALPHABET, mResult.getAlphabet().size());
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_PLACES , mResult.getPlaces().size());
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_TRANSITIONS, mResult.getTransitions().size());
-		statistics.addKeyValuePair(
-				StatisticsType.PETRI_FLOW, mResult.flowSize());
+		statistics.addKeyValuePair(StatisticsType.PETRI_ALPHABET, mResult.getAlphabet().size());
+		statistics.addKeyValuePair(StatisticsType.PETRI_PLACES, mResult.getPlaces().size());
+		statistics.addKeyValuePair(StatisticsType.PETRI_TRANSITIONS, mResult.getTransitions().size());
+		statistics.addKeyValuePair(StatisticsType.PETRI_FLOW, mResult.flowSize());
 
 		return statistics;
 	}
 
 }
-
-
-

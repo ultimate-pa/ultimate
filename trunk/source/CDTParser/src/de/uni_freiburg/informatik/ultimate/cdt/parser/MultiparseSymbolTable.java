@@ -280,6 +280,6 @@ public class MultiparseSymbolTable extends ASTVisitor {
 	}
 
 	public String normalizeCDTFilename(final String filePath) {
-		return CDTParser.normalizeCDTFilename(mCdtPProjectHierachyFlag, filePath);
+		return CDTParser.normalizeCdtFilename(mCdtPProjectHierachyFlag, filePath);
 	}
 }

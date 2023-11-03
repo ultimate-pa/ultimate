@@ -65,6 +65,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.LocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramFunction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -165,6 +170,11 @@ public final class MappedTerm2Expression implements Serializable {
 			params[i] = translate(termParams[i], variableRewriteMap, alternateOldNames);
 		}
 		final IBoogieType type = mTypeSortTranslator.getType(symb.getReturnSort());
+		final Expression symbResult =
+				translateWithSymbolTable(symb, type, termParams, variableRewriteMap, alternateOldNames);
+		if (symbResult != null) {
+			return symbResult;
+		}
 		if (symb.getParameterSorts().length == 0) {
 			if (SmtUtils.isTrueLiteral(term)) {
 				final IBoogieType booleanType = mTypeSortTranslator.getType(SmtSortUtils.getBoolSort(mScript));
@@ -174,13 +184,11 @@ public final class MappedTerm2Expression implements Serializable {
 				final IBoogieType booleanType = mTypeSortTranslator.getType(SmtSortUtils.getBoolSort(mScript));
 				return new BooleanLiteral(null, booleanType, false);
 			}
-			final BoogieConst boogieConst = mBoogie2SmtSymbolTable.getProgramConst(term);
-			if (boogieConst != null) {
+			final ProgramFunction programFun = mBoogie2SmtSymbolTable.getProgramFun(term.getFunction());
+			if (programFun instanceof ProgramConst) {
 				return new IdentifierExpression(null, mTypeSortTranslator.getType(term.getSort()),
-						boogieConst.getIdentifier(), new DeclarationInformation(StorageClass.GLOBAL, null));
-			}
-			if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
-				return translateWithSymbolTable(symb, type, termParams, variableRewriteMap, alternateOldNames);
+						((ProgramConst) programFun).getIdentifier(),
+						new DeclarationInformation(StorageClass.GLOBAL, null));
 			}
 			throw new IllegalArgumentException();
 		} else if ("ite".equals(symb.getName())) {
@@ -192,8 +200,6 @@ public final class MappedTerm2Expression implements Serializable {
 					&& !"=".equals(symb.getName()) && !"distinct".equals(symb.getName())) {
 				if ("extract".equals(symb.getName())) {
 					return translateBitvectorAccess(type, term, variableRewriteMap, alternateOldNames);
-				} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
-					return translateWithSymbolTable(symb, type, termParams, variableRewriteMap, alternateOldNames);
 				} else {
 					throw new UnsupportedOperationException(
 							"translation of " + symb + " not yet implemented, please contact Matthias");
@@ -228,12 +234,9 @@ public final class MappedTerm2Expression implements Serializable {
 							"don't know symbol" + " which is neither leftAssoc, rightAssoc, chainable, or pairwise.");
 				}
 			}
-		} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
-			return translateWithSymbolTable(symb, type, termParams, variableRewriteMap, alternateOldNames);
-		} else {
-			throw new UnsupportedOperationException(
-					"translation of " + symb + " not yet implemented, please contact Matthias");
 		}
+		throw new UnsupportedOperationException(
+				"translation of " + symb + " not yet implemented, please contact Matthias");
 	}
 
 	private Expression translateBitvectorAccess(final IBoogieType type, final ApplicationTerm term,
@@ -256,7 +259,10 @@ public final class MappedTerm2Expression implements Serializable {
 	private Expression translateWithSymbolTable(final FunctionSymbol symb, final IBoogieType type,
 			final Term[] termParams, final Set<TermVariable> variableNameRetainment,
 			final Map<TermVariable, String> alternateOldNames) {
-		final String identifier = mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().get(symb.getName());
+		final String identifier = mBoogie2SmtSymbolTable.translateToBoogieFunction(symb.getName(), type);
+		if (identifier == null) {
+			return null;
+		}
 		final Expression[] arguments = new Expression[termParams.length];
 		for (int i = 0; i < termParams.length; i++) {
 			arguments[i] = translate(termParams[i], variableNameRetainment, alternateOldNames);
@@ -467,20 +473,20 @@ public final class MappedTerm2Expression implements Serializable {
 				assert astNode != null : "There is no AstNode for the IProgramVar " + pv;
 				final ILocation loc = astNode.getLocation();
 				final DeclarationInformation declInfo = mBoogie2SmtSymbolTable.getDeclarationInformation(pv);
-				if (pv instanceof LocalBoogieVar) {
+				if (pv instanceof LocalProgramVar) {
 					result = new IdentifierExpression(loc, type,
-							translateIdentifier(((LocalBoogieVar) pv).getIdentifier()), declInfo);
-				} else if (pv instanceof BoogieNonOldVar) {
+							translateIdentifier(((LocalProgramVar) pv).getIdentifier()), declInfo);
+				} else if (pv instanceof ProgramNonOldVar) {
 					result = new IdentifierExpression(loc, type,
-							translateIdentifier(((BoogieNonOldVar) pv).getIdentifier()), declInfo);
-				} else if (pv instanceof BoogieOldVar) {
+							translateIdentifier(((ProgramNonOldVar) pv).getIdentifier()), declInfo);
+				} else if (pv instanceof ProgramOldVar) {
 					assert pv.isGlobal();
 					final Expression nonOldExpression = new IdentifierExpression(loc, type,
-							translateIdentifier(((BoogieOldVar) pv).getIdentifierOfNonOldVar()), declInfo);
+							translateIdentifier(((ProgramOldVar) pv).getIdentifierOfNonOldVar()), declInfo);
 					result = new UnaryExpression(loc, type, UnaryExpression.Operator.OLD, nonOldExpression);
-				} else if (pv instanceof BoogieConst) {
+				} else if (pv instanceof ProgramConst) {
 					result = new IdentifierExpression(loc, type,
-							translateIdentifier(((BoogieConst) pv).getIdentifier()), declInfo);
+							translateIdentifier(((ProgramConst) pv).getIdentifier()), declInfo);
 				} else {
 					throw new AssertionError("unsupported kind of variable " + pv.getClass().getSimpleName());
 				}

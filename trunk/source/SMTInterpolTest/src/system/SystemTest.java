@@ -22,11 +22,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.eclipse.core.runtime.FileLocator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,10 +37,10 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SMTInterpolOptions;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SMTInterpolConstants;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
-import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol.ProofMode;
 
 @RunWith(Parameterized.class)
 public class SystemTest {
@@ -54,13 +54,14 @@ public class SystemTest {
 		final TestEnvironment testEnv = new TestEnvironment(solver, options);
 		if (!f.getAbsolutePath().contains("epr")) {
 			solver.setOption(":proof-check-mode", true);
-			if (!f.getAbsolutePath().contains("quant") && !f.getAbsolutePath().contains("datatype")) {
+			solver.setOption(":proof-level", ProofMode.LOWLEVEL);
+			if (!f.getAbsolutePath().contains("quant")) {
 				solver.setOption(":model-check-mode", true);
 			}
 			solver.setOption(":interpolant-check-mode", true);
 		}
 		if (f.getAbsolutePath().contains("test" + File.separatorChar + "epr")) {
-			solver.setOption(SMTInterpolOptions.EPR, true);
+			solver.setOption(SMTInterpolConstants.EPR, true);
 		}
 		testEnv.parseStream(new FileReader(f), f.getName());
 		testEnv.checkExpected();
@@ -90,6 +91,8 @@ public class SystemTest {
 			return false;
 		} else if (f.getParent().contains("test" + separator + "datatype" + separator + "quantified")) {
 			return false;
+		} else if (f.getParent().endsWith("timeout")) {
+			return false;
 		}
 		return true;
 	}
@@ -98,7 +101,9 @@ public class SystemTest {
 	public static Collection<File> testFiles() throws URISyntaxException, FileNotFoundException {
 		final Collection<File> testFiles = new ArrayList<>();
 
-		final File f = ReflectionUtil.getClassFolder(SystemTest.class, FileLocator::toFileURL);
+		final String name = SystemTest.class.getPackage().getName();
+		final URL url = SystemTest.class.getClassLoader().getResource(name);
+		final File f = new File(url.toURI());
 		final File testDir = new File(f.getParentFile().getParentFile(), "test");
 		assert testDir.exists();
 		final ArrayDeque<File> todo = new ArrayDeque<>();

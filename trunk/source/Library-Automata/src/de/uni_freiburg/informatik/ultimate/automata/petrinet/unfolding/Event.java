@@ -37,15 +37,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
- * Event of a {@link BranchingProcess}.
- * Each event corresponds to a {@link ITransition} of a {@link IPetriNet}.
+ * Event of a {@link BranchingProcess}. Each event corresponds to a {@link Transition} of a {@link IPetriNet}.
  *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -57,11 +56,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 public final class Event<LETTER, PLACE> implements Serializable {
 	private static final long serialVersionUID = 7162664880110047121L;
 
+	// See https://github.com/ultimate-pa/ultimate/pull/595 for discussion
+	private static final boolean USE_HASH_JENKINS = false;
+	private static final int HASH_PRIME = 89;
 
 	/**
-	 * Use the optimization that is outlined in observation B17 in the following
-	 * issue. https://github.com/ultimate-pa/ultimate/issues/448
-	 * Omit order check in cut-off check.
+	 * Use the optimization that is outlined in observation B17 in the following issue.
+	 * https://github.com/ultimate-pa/ultimate/issues/448 Omit order check in cut-off check.
 	 */
 	private static final boolean BUMBLEBEE_B17_OPTIMIZAION = true;
 	private int mSerialNumber = -1;
@@ -70,17 +71,15 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	private final Set<Condition<LETTER, PLACE>> mPredecessors;
 	private final Set<Condition<LETTER, PLACE>> mSuccessors;
 	private final Configuration<LETTER, PLACE> mLocalConfiguration;
-	// private final Event<LETTER, PLACE>[] mLocalConfiguration;
-	// private final ArrayList<Event<LETTER, PLACE>> mLocalConfiguration;
-	private final Marking<LETTER, PLACE> mMark;
+	private final Marking<PLACE> mMark;
 	private final ConditionMarking<LETTER, PLACE> mConditionMark;
 
 	private Event<LETTER, PLACE> mCompanion;
-	private final ITransition<LETTER, PLACE> mTransition;
+	private final Transition<LETTER, PLACE> mTransition;
 	private final Map<PLACE, Set<PLACE>> mPlaceCorelationMap;
 	private int mDepth;
-
-
+	private boolean mIsCompanion = false;
+	private final Set<Event<LETTER, PLACE>> mIsCompanionToCutoffEventsSet = new HashSet<>();
 
 	/**
 	 * Creates an Event from its predecessor conditions and the transition from the net system it is mapped to by the
@@ -92,28 +91,31 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 * @param transition
 	 *            homomorphism transition
 	 */
-	public Event(final Collection<Condition<LETTER, PLACE>> predecessors, final ITransition<LETTER, PLACE> transition,
+	// TODO Frank 2022-08-23: Providing the hashCode in the constructor does not seem like a good idea...
+	public Event(final Collection<Condition<LETTER, PLACE>> predecessors, final Transition<LETTER, PLACE> transition,
 			final BranchingProcess<LETTER, PLACE> bp, final int hashCode) throws PetriNetNot1SafeException {
 		assert conditionToPlaceEqual(predecessors,
-				bp.getNet().getPredecessors(transition)) : "An event was created with inappropriate predecessors.\n  "
+				transition.getPredecessors()) : "An event was created with inappropriate predecessors.\n  "
 						+ "transition: " + transition.toString() + "\n  events predecessors: " + predecessors.toString()
-						+ "\n  " + "transitions predecessors:" + bp.getNet().getPredecessors(transition);
+						+ "\n  " + "transitions predecessors:" + transition.getPredecessors();
 		mPredecessors = new HashSet<>(predecessors);
-		// HashSet<Event<LETTER, PLACE>> localConfiguration = new HashSet<Event<LETTER, PLACE>>();
-
 
 		mTransition = transition;
-		mSuccessors = new HashSet<>();
-		for (final PLACE p : bp.getNet().getSuccessors(transition)) {
-			mSuccessors.add(bp.constructCondition(this, p));
+		mSuccessors = transition.getSuccessors().stream().map(p -> bp.constructCondition(this, p))
+				.collect(Collectors.toSet());
+
+		if (USE_HASH_JENKINS) {
+			mHashCode = HashUtils.hashJenkins(HASH_PRIME, hashCode);
+		} else {
+			mHashCode = hashCode;
 		}
-		mHashCode = hashCode;
 
 		final Set<Condition<LETTER, PLACE>> conditionMarkSet = new HashSet<>();
 		mDepth = 0;
-		final Set<Event<LETTER, PLACE>> predecessorEvents = predecessors.stream().map(c -> c.getPredecessorEvent()).collect(Collectors.toSet());
+		final Set<Event<LETTER, PLACE>> predecessorEvents =
+				predecessors.stream().map(c -> c.getPredecessorEvent()).collect(Collectors.toSet());
 		final Set<Event<LETTER, PLACE>> localConfigurationsEvents = new HashSet<>();
-		for (final Event<LETTER, PLACE> predEvent:  predecessorEvents) {
+		for (final Event<LETTER, PLACE> predEvent : predecessorEvents) {
 			for (final Event<LETTER, PLACE> e : predEvent.mLocalConfiguration) {
 				localConfigurationsEvents.add(e);
 			}
@@ -134,7 +136,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 			computePlaceCorelationMap(bp);
 		}
 	}
-	
+
 	@Deprecated
 	public void setSerialNumber(final int serialNumber) {
 		mSerialNumber = serialNumber;
@@ -152,18 +154,15 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 */
 	public Event(final BranchingProcess<LETTER, PLACE> bp) {
 		mTransition = null;
-		mLocalConfiguration = new Configuration<>(new HashSet<Event<LETTER, PLACE>>(),0);
+		mLocalConfiguration = new Configuration<>(new HashSet<Event<LETTER, PLACE>>(), 0);
 		mMark = new Marking<>(ImmutableSet.of(bp.getNet().getInitialPlaces()));
+
 		final Set<Condition<LETTER, PLACE>> conditionMarkSet = new HashSet<>();
 		mConditionMark = new ConditionMarking<>(conditionMarkSet);
 		mPredecessors = new HashSet<>();
-		mSuccessors = new HashSet<>();
-		for (final PLACE p : mMark) {
-			final Condition<LETTER, PLACE> c = bp.constructCondition(this, p);
-			mSuccessors.add(c);
-			conditionMarkSet.add(c);
-		}
-		mHashCode = 0;
+		mSuccessors = mMark.stream().map(p -> bp.constructCondition(this, p)).collect(Collectors.toSet());
+		conditionMarkSet.addAll(mSuccessors);
+		mHashCode = HashUtils.hashJenkins(HASH_PRIME, 0);
 		mPlaceCorelationMap = new HashMap<>();
 		if (bp.getNewFiniteComprehensivePrefixMode()) {
 			computePlaceCorelationMap(bp);
@@ -178,40 +177,6 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		final HashSet<Event<LETTER, PLACE>> result = new HashSet<>();
 		for (final Condition<LETTER, PLACE> c : getSuccessorConditions()) {
 			result.addAll(c.getSuccessorEvents());
-		}
-		return result;
-	}
-
-	/**
-	 * @param events
-	 *            A set of events.
-	 * @param <LETTER>
-	 *            symbol type
-	 * @param <PLACE>
-	 *            place content type
-	 * @return The Set of all successor events of all successor conditions of {@code events}.
-	 */
-	public static <LETTER, PLACE> Set<Event<LETTER, PLACE>> getSuccessorEvents(final Set<Event<LETTER, PLACE>> events) {
-		final HashSet<Event<LETTER, PLACE>> result = new HashSet<>();
-		for (final Event<LETTER, PLACE> e : events) {
-			result.addAll(e.getSuccessorEvents());
-		}
-		return result;
-	}
-
-	/**
-	 * @param events
-	 *            A set of events.
-	 * @param <LETTER>
-	 *            symbol type
-	 * @param <PLACE>
-	 *            place content type
-	 * @return The Set of all predecessor events of all predecessor conditions of {@code events}.
-	 */
-	public static <LETTER, PLACE> Set<Event<LETTER, PLACE>> getPredecessorEvents(final Set<Event<LETTER, PLACE>> events) {
-		final HashSet<Event<LETTER, PLACE>> result = new HashSet<>();
-		for (final Event<LETTER, PLACE> e : events) {
-			result.addAll(e.getPredecessorEvents());
 		}
 		return result;
 	}
@@ -253,13 +218,15 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	public Set<Condition<LETTER, PLACE>> getPredecessorConditions() {
 		return mPredecessors;
 	}
-	public Map<PLACE, Set<PLACE>> getPlaceCorelationMap(){
-		return  mPlaceCorelationMap;
+
+	public Map<PLACE, Set<PLACE>> getPlaceCorelationMap() {
+		return mPlaceCorelationMap;
 	}
+
 	/**
 	 * @return marking of the local configuration of this.
 	 */
-	public Marking<LETTER, PLACE> getMark() {
+	public Marking<PLACE> getMark() {
 		return mMark;
 	}
 
@@ -289,12 +256,10 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 */
 	public boolean checkCutOffAndSetCompanion(final Event<LETTER, PLACE> event,
 			final Comparator<Event<LETTER, PLACE>> order, final boolean sameTransitionCutOff) {
-		if (sameTransitionCutOff) {
-			// additional requirement for cut-off events.
-			// TODO: tests to compare prefix sizes.
-			if (!getTransition().equals(event.getTransition())) {
-				return false;
-			}
+		// additional requirement for cut-off events.
+		// TODO: tests to compare prefix sizes.
+		if (sameTransitionCutOff && !getTransition().equals(event.getTransition())) {
+			return false;
 		}
 		if (!getMark().equals(event.getMark())) {
 			return false;
@@ -312,21 +277,19 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 * #Backfolding
 	 */
 	public boolean checkCutOffAndSetCompanionForComprehensivePrefix(final Event<LETTER, PLACE> companionCandidate,
-			final Comparator<Event<LETTER, PLACE>> order, final BranchingProcess<LETTER, PLACE> bp,
-			final boolean sameTransitionCutOff) {
-		//by comparing the hashmaps we check simultaneously if they have the same marking (set of keys of the map)
-		if (sameTransitionCutOff) {
-			if (!getTransition().equals(companionCandidate.getTransition())) {
-				return false;
-			}
+			final Comparator<Event<LETTER, PLACE>> order, final boolean sameTransitionCutOff) {
+		// by comparing the hashmaps we check simultaneously if they have the same marking (set of keys of the map)
+		if (sameTransitionCutOff && !getTransition().equals(companionCandidate.getTransition())) {
+			return false;
 		}
 
 		if (order.compare(companionCandidate, this) >= 0) {
 			return false;
 		}
 
-		if (!companionCandidate.getPlaceCorelationMap().equals(getPlaceCorelationMap()))
+		if (!companionCandidate.getPlaceCorelationMap().equals(getPlaceCorelationMap())) {
 			return false;
+		}
 
 		setCompanion(companionCandidate);
 		return true;
@@ -335,17 +298,14 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	/**
 	 * #Backfolding
 	 * <p>
-	 * Map m such that for each {@link Condition} c in the local configuration of
-	 * this {@link Event} the map contains the pair
-	 * (c.getPlace(),bp.getCoRelatedPlaces(c)). </ p> TODO Find a nice name for this
-	 * map or find a view that is easy to understand
+	 * Map m such that for each {@link Condition} c in the local configuration of this {@link Event} the map contains
+	 * the pair (c.getPlace(),bp.getCoRelatedPlaces(c)). </ p> TODO Find a nice name for this map or find a view that is
+	 * easy to understand
 	 */
-	public void computePlaceCorelationMap(
-			final BranchingProcess<LETTER, PLACE> bp) {
-			for (final Condition<LETTER,PLACE> c:  getConditionMark())
-			{
-				mPlaceCorelationMap.put(c.getPlace(), bp.computeCoRelatedPlaces(c));
-			}
+	public void computePlaceCorelationMap(final BranchingProcess<LETTER, PLACE> bp) {
+		for (final Condition<LETTER, PLACE> c : getConditionMark()) {
+			mPlaceCorelationMap.put(c.getPlace(), bp.computeCoRelatedPlaces(c));
+		}
 	}
 
 	/**
@@ -355,9 +315,23 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		assert mCompanion == null;
 		if (event.getCompanion() == null) {
 			mCompanion = event;
+			event.makeCompanionOf(this);
 		} else {
 			setCompanion(event.getCompanion());
 		}
+	}
+
+	public void makeCompanionOf(final Event<LETTER, PLACE> event) {
+		mIsCompanion = true;
+		mIsCompanionToCutoffEventsSet.add(event);
+	}
+
+	public boolean isCompanion() {
+		return mIsCompanion;
+	}
+
+	public Set<Event<LETTER, PLACE>> getCutoffEventsThisIsCompanionTo() {
+		return mIsCompanionToCutoffEventsSet;
 	}
 
 	/**
@@ -382,6 +356,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	public Configuration<LETTER, PLACE> getLocalConfiguration() {
 		return mLocalConfiguration;
 	}
+
 	public boolean conditionMarkContains(final Condition<LETTER, PLACE> c) {
 		return mConditionMark.contains(c);
 	}
@@ -390,40 +365,37 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		return mCompanion;
 	}
 
-	public ITransition<LETTER, PLACE> getTransition() {
+	public Transition<LETTER, PLACE> getTransition() {
 		return mTransition;
 	}
-	
+
 	public int getSerialNumber() {
 		return mSerialNumber;
 	}
 
 	public int getTotalOrderId() {
-		if (mTransition instanceof Transition) {
-			return ((Transition<LETTER, PLACE>) mTransition).getTotalOrderId();
-		} else {
-			throw new UnsupportedOperationException("transition does not provide ID");
-		}
+		return mTransition.getTotalOrderId();
 	}
-
 
 	@Override
 	public String toString() {
-		return mSerialNumber + ":" + + mLocalConfiguration.size() + "A:" + getTransition().toString();
-	}
-
-	private int computeHashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mPredecessors == null) ? 0 : mPredecessors.hashCode());
-		// TODO remove successors from here later since they're not needed.
-		result = prime * result + ((mSuccessors == null) ? 0 : mSuccessors.hashCode());
-		result = prime * result + ((mTransition == null) ? 0 : mTransition.hashCode());
-		return result;
+		if (mSerialNumber == 0) {
+			return "Dummy event whose successors are the initial conditions of the branching process";
+		} else {
+			return mSerialNumber + ":" + +mLocalConfiguration.size() + "A:" + getTransition().toString();
+		}
 	}
 
 	@Override
 	public int hashCode() {
 		return mHashCode;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		// We intentionally use reference equality here:
+		// - An efficient equality check is crucial for unfolding performance; comparing sets of conditions is too slow.
+		// - The unfolding should never create two instances representing "equal" events.
+		return this == obj;
 	}
 }

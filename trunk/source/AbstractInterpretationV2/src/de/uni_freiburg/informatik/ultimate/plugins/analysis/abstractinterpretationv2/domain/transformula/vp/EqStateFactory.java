@@ -149,8 +149,9 @@ public class EqStateFactory {
 
 	public EqPredicate termToPredicate(final Term spPrecise,
 			final IPredicate postConstraint) {
-		return new EqPredicate(spPrecise, ImmutableSet.copyOf(postConstraint.getVars()), postConstraint.getProcedures(),
-				mSymbolTable, mMgdScript, mEqNodeAndFunctionFactory, mEqConstraintFactory);
+		return new EqPredicate(spPrecise, ImmutableSet.copyOf(postConstraint.getVars()),
+				ImmutableSet.copyOf(postConstraint.getFuns()), postConstraint.getProcedures(), mSymbolTable, mMgdScript,
+				mEqNodeAndFunctionFactory, mEqConstraintFactory);
 
 	}
 

@@ -10,13 +10,15 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol.HornClauseDontCarePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol.HornClauseTruePredicateSymbol;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.ITerm2ExpressionSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -80,7 +82,6 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	 *            table (directly or inside an object) should be transferred to this script.
 	 */
 	public HcSymbolTable(final Script hornClauseParserScript, final ManagedScript mgdScript) {
-		super();
 		mNameToSortsToHornClausePredicateSymbol = new NestedMap2<>();
 		mManagedScript = mgdScript;
 
@@ -261,13 +262,14 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		return result;
 	}
 
-	public HcHeadVar getOrConstructHeadVar(final HcPredicateSymbol predSym, final int index, final Sort sort) {
+	public HcHeadVar getOrConstructHeadVar(final HcPredicateSymbol predSym, final int index, final Sort sort,
+			final Object identfier) {
 		final Sort transferredSort = transferSort(sort);
 		HcHeadVar result = mPredSymNameToIndexToSortToHcHeadVar.get(predSym, index, transferredSort);
 		if (result == null) {
 
 			final String globallyUniqueId = HornUtilConstants.computeNameForHcVar(HornUtilConstants.HEADVARPREFIX,
-					predSym, index, sort.toString());
+					predSym, index, identfier.toString());
 
 			mManagedScript.lock(this);
 			result = new HcHeadVar(globallyUniqueId, predSym, index, transferredSort, mManagedScript, this);
@@ -278,12 +280,20 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		return result;
 	}
 
-	public HcBodyVar getOrConstructBodyVar(final HcPredicateSymbol predSym, final int index, final Sort sort) {
+	public HcHeadVar getOrConstructHeadVar(final HcPredicateSymbol predSym, final int index,
+			final IProgramVarOrConst pv) {
+		return getOrConstructHeadVar(predSym, index, pv.getSort(), pv);
+	}
+
+	public HcBodyVar getOrConstructBodyVar(final HcPredicateSymbol predSym, final int index, final Sort sort,
+			final Object identfier) {
 		final Sort transferredSort = transferSort(sort);
+		// TODO: Can we use anything other than index as unique identifier for the map?
+		// HcBodyVar itself does not need it, getIndex could be moved to HcHeadVar
 		HcBodyVar result = mPredSymNameToIndexToSortToHcBodyVar.get(predSym, index, transferredSort);
 		if (result == null) {
 			final String globallyUniqueId = HornUtilConstants.computeNameForHcVar(HornUtilConstants.BODYVARPREFIX,
-					predSym, index, sort.toString());
+					predSym, index, identfier.toString());
 
 			mManagedScript.lock(this);
 			result = new HcBodyVar(globallyUniqueId, predSym, index, transferredSort, mManagedScript, this);
@@ -292,6 +302,11 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 			mTermVarToProgramVar.put(result.getTermVariable(), result);
 		}
 		return result;
+	}
+
+	public HcBodyVar getOrConstructBodyVar(final HcPredicateSymbol predSym, final int index,
+			final IProgramVarOrConst pv) {
+		return getOrConstructBodyVar(predSym, index, pv.getSort(), pv);
 	}
 
 	public HcBodyAuxVar getOrConstructBodyAuxVar(final TermVariable tv, final Object lockOwner) {
@@ -333,13 +348,13 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	// }
 
 	@Override
-	public BoogieConst getProgramConst(final ApplicationTerm term) {
+	public IProgramFunction getProgramFun(final FunctionSymbol funSym) {
 		throw new AssertionError();
 	}
 
 	@Override
-	public Map<String, String> getSmtFunction2BoogieFunction() {
-		return mSmtFunction2BoogieFunction;
+	public String translateToBoogieFunction(final String boogieFunction, final IBoogieType type) {
+		return mSmtFunction2BoogieFunction.get(boogieFunction);
 	}
 
 	@Override
@@ -379,9 +394,9 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 			final boolean constructIfNecessary) {
 		final List<HcHeadVar> result = new ArrayList<>();
 		for (int i = 0; i < bodySymbol.getArity(); i++) {
-			final HcHeadVar hv =
-					constructIfNecessary ? getOrConstructHeadVar(bodySymbol, i, bodySymbol.getParameterSorts().get(i))
-							: getHeadVar(bodySymbol, i, bodySymbol.getParameterSorts().get(i));
+			final Sort sort = bodySymbol.getParameterSorts().get(i);
+			final HcHeadVar hv = constructIfNecessary ? getOrConstructHeadVar(bodySymbol, i, sort, sort)
+					: getHeadVar(bodySymbol, i, sort);
 			result.add(hv);
 		}
 		return result;

@@ -39,7 +39,7 @@ public class BoogieRequirementsParserTest {
 	}
 
 	/**
-	 * Test if single Requirement with comparison and . operator is korrectly parsed
+	 * Test if single Requirement with comparison and . operator is correctly parsed
 	 *
 	 * @throws Exception
 	 */
@@ -69,7 +69,7 @@ public class BoogieRequirementsParserTest {
 	public void testGlobalInvariantBoogieComplexExpression() throws Exception {
 		final String testString =
 				"id: Globally, it is always the case that \"(A >= B &&" + " C + 3 == D -3) || E \" holds";
-		check(testString, "((A >= B ∧ (C + 3 == D - 3 ∨ E)) ∨ E)");
+		check(testString, "((A >= B && (C + 3 == D - 3 || E)) || E)");
 	}
 
 	@Test
@@ -107,7 +107,7 @@ public class BoogieRequirementsParserTest {
 	public void orAndNested() throws Exception {
 		final String testString =
 				"id: Globally, it is always the case that \"A == 0 && (B == 0 || !C || B == 1)\" holds";
-		check(testString, "(A == 0 ∧ (B == 0 ∨ (B == 1 ∨ !C)))");
+		check(testString, "(A == 0 && (B == 0 || (B == 1 || !C)))");
 	}
 
 	private void check(final String testString, final String cddCheck) throws Exception {

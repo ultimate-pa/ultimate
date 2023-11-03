@@ -65,7 +65,7 @@ public interface IController<T> extends IUltimatePlugin {
 	 *            providing parsers
 	 * @return what parser should be used null if the toolchain should be interrupted
 	 */
-	ISource selectParser(Collection<ISource> parser);
+	ISource selectParser(IToolchain<T> toolchain, Collection<ISource> parser);
 
 	/**
 	 * Here the controller tells the caller what toolchain to use.
@@ -74,7 +74,7 @@ public interface IController<T> extends IUltimatePlugin {
 	 *            available tools
 	 * @return the desired toolchain as instance of Toolchain
 	 */
-	IToolchainData<T> selectTools(List<ITool> tools);
+	IToolchainData<T> selectTools(IToolchain<T> toolchain, List<ITool> tools);
 
 	/**
 	 * Here the controller tells the caller (usually the core) what model out of a set of model ids the user has chosen.
@@ -82,17 +82,17 @@ public interface IController<T> extends IUltimatePlugin {
 	 * @param modelNames
 	 * @return string with model id
 	 */
-	List<String> selectModel(List<String> modelNames);
+	List<String> selectModel(IToolchain<T> toolchain, List<String> modelNames);
 
 	/**
-	 * {@link IController#prerun(IToolchainData)} is called just before the selected toolchain is executed by the core.
-	 * This allows the controller to modify {@link IToolchainStorage} or to abort toolchain execution with an exception.
+	 * {@link IController#prerun(IToolchainData)} is called after initialisation. This allows the controller to modify
+	 * {@link IToolchainStorage} or to abort the toolchain execution with an exception.
 	 *
 	 * @param tcData
 	 *            The toolchain that is about to be executed.
 	 * @return A possibly modified toolchain
 	 */
-	IToolchainData<T> prerun(IToolchainData<T> tcData);
+	IToolchainData<T> prerun(IToolchain<T> toolchain);
 
 	/**
 	 * After a toolchain is executed, {@link ICore} calls this method so that the controller may display the results of
@@ -103,7 +103,7 @@ public interface IController<T> extends IUltimatePlugin {
 	 * @param results
 	 *            The actual results.
 	 */
-	void displayToolchainResults(IToolchainData<T> toolchain, Map<String, List<IResult>> results);
+	void displayToolchainResults(IToolchain<T> toolchain, Map<String, List<IResult>> results);
 
 	/**
 	 * If during the execution of a toolchain an exception occurs, {@link ICore} calls this method so that the
@@ -116,6 +116,6 @@ public interface IController<T> extends IUltimatePlugin {
 	 * @param ex
 	 *            The exception itself.
 	 */
-	void displayException(IToolchainData<T> toolchain, String description, Throwable ex);
+	void displayException(IToolchain<T> toolchain, String description, Throwable ex);
 
 }

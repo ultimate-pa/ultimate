@@ -2,11 +2,10 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.Comparator;
 
-
 /**
  * Order presented by Esparza, Römer, Vogler in 1996 TACAS,
- * <a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.1.9584"> An
- * improvement of McMillan's unfolding algorithm</a>, definition 4.1.
+ * <a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.1.9584"> An improvement of McMillan's unfolding
+ * algorithm</a>, definition 4.1.
  *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -21,6 +20,7 @@ import java.util.Comparator;
 public class EsparzaRoemerVoglerOrder<LETTER, PLACE> extends ConfigurationOrder<LETTER, PLACE> {
 	final Comparator<Event<LETTER, PLACE>> mIdComparator = new IdComparator();
 	int mFotateNormalFormComparisons = 0;
+
 	@Override
 	public int compare(final Configuration<LETTER, PLACE> c1, final Configuration<LETTER, PLACE> c2) {
 		// we compare first the sizes of C1 and C2; if they are equal, we compare ϕ(C1)
@@ -38,15 +38,15 @@ public class EsparzaRoemerVoglerOrder<LETTER, PLACE> extends ConfigurationOrder<
 		c1.computeFoataNormalForm();
 		c2.computeFoataNormalForm();
 		mFotateNormalFormComparisons++;
-		int maxDepth = Math.max(c1.getDepth(), c2.getDepth());
+		final int maxDepth = Math.max(c1.getDepth(), c2.getDepth());
 
-		for (int depth = 1; depth < maxDepth +1; depth ++) {
+		for (int depth = 1; depth < maxDepth + 1; depth++) {
 			result = c1.compareMin(c2, depth, mIdComparator);
-			if (result != 0){
+			if (result != 0) {
 				return result;
 			}
 		}
-		assert false: "the Order is total";
+		assert false : "the Order is total";
 		return 0;
 	}
 
@@ -54,7 +54,8 @@ public class EsparzaRoemerVoglerOrder<LETTER, PLACE> extends ConfigurationOrder<
 	public boolean isTotal() {
 		return true;
 	}
-	
+
+	@Override
 	public int getFotateNormalFormComparisons() {
 		return mFotateNormalFormComparisons;
 	}
@@ -62,7 +63,7 @@ public class EsparzaRoemerVoglerOrder<LETTER, PLACE> extends ConfigurationOrder<
 	class IdComparator implements Comparator<Event<LETTER, PLACE>> {
 		@Override
 		public int compare(final Event<LETTER, PLACE> e1, final Event<LETTER, PLACE> e2) {
-			 return e1.getTotalOrderId() - e2.getTotalOrderId();
+			return e1.getTotalOrderId() - e2.getTotalOrderId();
 		}
 	}
 }

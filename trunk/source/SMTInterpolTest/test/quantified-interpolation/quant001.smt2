@@ -1,0 +1,32 @@
+(set-option :print-success false)
+;(set-option :produce-proofs true)
+(set-option :interpolant-check-mode true)
+(set-option :produce-interpolants true)
+(set-info :source |
+   Simple example from Christ and Hoenicke, Instantiation Based Interpolation.
+   Example3: A: ALL x. f(g(x)) = a, f(s) != a  B: g(b) = s
+|)
+(set-option :print-terms-cse false)
+(set-option :verbosity 5)
+(set-logic UF)
+(declare-sort U 0)
+(set-info :status unsat)
+(declare-fun a () U)
+(declare-fun b () U)
+(declare-fun s () U)
+(declare-fun f (U) U)
+(declare-fun g (U) U)
+
+(assert (! (forall ((x U)) (= (f (g x)) a)) :named A1))
+(assert (! (not (= (f s) a)) :named A2))
+(assert (! (= (g b) s) :named B))
+
+(check-sat)
+(get-interpolants (and A1 A2) B)
+(get-interpolants A1 A2 B)
+(get-interpolants A2 A1 B)
+(get-interpolants A2 (A1) B)
+(get-interpolants B A1 A2)
+(get-interpolants B (A2) A1)
+(get-interpolants A2 B A1)
+(exit)

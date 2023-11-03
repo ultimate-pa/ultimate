@@ -139,14 +139,16 @@ public class HoareAnnotationComposer {
 				}
 				conjuncts.add(precondImpliesInvariant);
 			}
-			Term conjunction = SmtUtils.and(mCsToolkit.getManagedScript().getScript(), conjuncts);
+			final Term conjunction = SmtUtils.and(mCsToolkit.getManagedScript().getScript(), conjuncts);
 
-			final Set<IProgramVar> vars = TermVarsProc.computeTermVarsProc(conjunction,
-					mCsToolkit.getManagedScript().getScript(), mCsToolkit.getSymbolTable()).getVars();
+			final Set<IProgramVar> vars = TermVarsProc
+					.computeTermVarsProc(conjunction, mCsToolkit.getManagedScript(), mCsToolkit.getSymbolTable())
+					.getVars();
 
-			// TODO (2020-09-03 Dominik) Functionality below is probably necessary. Make it work with IPredicate instead of IcfgLocation.
-			//conjunction = TraceAbstractionUtils.substituteOldVarsOfNonModifiableGlobals(loc.getProcedure(), vars,
-			//		conjunction, mCsToolkit.getModifiableGlobalsTable(), mCsToolkit.getManagedScript().getScript());
+			// TODO (2020-09-03 Dominik) Functionality below is probably necessary. Make it work with IPredicate instead
+			// of IcfgLocation.
+			// conjunction = TraceAbstractionUtils.substituteOldVarsOfNonModifiableGlobals(loc.getProcedure(), vars,
+			// conjunction, mCsToolkit.getModifiableGlobalsTable(), mCsToolkit.getManagedScript());
 
 			final ExtendedSimplificationResult simplificationResult = SmtUtils.simplifyWithStatistics(
 					mCsToolkit.getManagedScript(), conjunction, mServices, SimplificationTechnique.SIMPLIFY_DDA);

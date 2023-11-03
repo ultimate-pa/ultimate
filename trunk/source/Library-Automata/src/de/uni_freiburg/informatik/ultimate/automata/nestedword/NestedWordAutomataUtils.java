@@ -292,8 +292,7 @@ public final class NestedWordAutomataUtils {
 	 *            state type
 	 * @return {@code true} iff both the call alphabet and the return alphabet is empty.
 	 */
-	public static <LETTER, STATE> boolean
-			isFiniteAutomaton(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
+	public static <LETTER, STATE> boolean isFiniteAutomaton(final INwaBasis<LETTER, STATE> nwa) {
 		return nwa.getVpAlphabet().getCallAlphabet().isEmpty() && nwa.getVpAlphabet().getReturnAlphabet().isEmpty();
 	}
 

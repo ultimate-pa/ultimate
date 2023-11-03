@@ -34,17 +34,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
+import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
@@ -66,22 +64,26 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationResultReporter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -114,11 +116,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.CheckMessageProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -132,6 +134,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class StandardFunctionHandler {
+
+	/**
+	 * If we construct an auxvar that models a nondeterministic input, we havoc that auxvar afterwards to ensure that we
+	 * get a new nondeterministic value even if the variable occurs in a loop. If this constant is set, we havoc the
+	 * variable also before the nondeterministic assignment. If the auxvar is also havoced before, it is only
+	 * backward-live to the havoc, otherwise it would be backward-live until the beginning of the procedure.
+	 */
+	private static final boolean HAVOC_NONDET_AUXVARS_ALSO_BEFORE = true;
 
 	private final LocationFactory mLocationFactory;
 
@@ -167,9 +177,9 @@ public class StandardFunctionHandler {
 
 	private final ThreadIdManager mThreadIdManager;
 
-	private final ILogger mLogger;
+	private final DataRaceChecker mDataRaceChecker;
 
-	private final Set<String> mOverwrittenFunctionNames;
+	private final ILogger mLogger;
 
 	public StandardFunctionHandler(final ILogger logger, final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
@@ -178,7 +188,7 @@ public class StandardFunctionHandler {
 			final CTranslationResultReporter reporter, final TypeSizes typeSizes, final FlatSymbolTable symboltable,
 			final TranslationSettings settings, final ExpressionResultTransformer expressionResultTransformer,
 			final LocationFactory locationFactory, final ITypeHandler typeHandler,
-			final CExpressionTranslator cEpressionTranslator) {
+			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
 		mLogger = logger;
 		mExpressionTranslation = expressionTranslation;
 		mMemoryHandler = memoryHandler;
@@ -196,9 +206,9 @@ public class StandardFunctionHandler {
 		mTypeHandler = typeHandler;
 		mCEpressionTranslator = cEpressionTranslator;
 		mFunctionModels = getFunctionModels();
-		mOverwrittenFunctionNames = getOverwrittenFunctionNames(settings);
 		mThreadIdManager = new ThreadIdManager(mAuxVarInfoBuilder, mExprResultTransformer, mExpressionTranslation,
 				mMemoryHandler, mTypeHandler, mTypeSizes, null /* TODO */, symboltable);
+		mDataRaceChecker = dataRaceChecker;
 	}
 
 	/**
@@ -224,27 +234,17 @@ public class StandardFunctionHandler {
 			final IASTNode funDecl = mFunctionTable.get(transformedName);
 			if (funDecl instanceof IASTFunctionDefinition) {
 				// it is a function that already has a body
-				if (!mOverwrittenFunctionNames.contains(transformedName)) {
+				if (!mSettings.checkErrorFunction() || !"reach_error".equals(transformedName)) {
 					return null;
 				}
 				mLogger.warn(String.format(
 						"Function %s is already implemented but we override the implementation for the call at %s",
 						transformedName, node.getFileLocation()));
 			}
-			final ILocation loc = getLoc(main, node);
+			final ILocation loc = mLocationFactory.createCLocation(node);
 			return functionModel.handleFunction(main, node, loc, name);
 		}
 		return null;
-	}
-
-	private static Set<String> getOverwrittenFunctionNames(final TranslationSettings settings) {
-		if (!settings.isSvcompMode()) {
-			return Collections.emptySet();
-		}
-
-		final Set<String> rtr = new HashSet<>();
-		rtr.add("reach_error");
-		return rtr;
 	}
 
 	private Map<String, IFunctionModelHandler> getFunctionModels() {
@@ -295,17 +295,23 @@ public class StandardFunctionHandler {
 		// unsound and because we consider wchars as chars.
 		fill(map, "wprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 
-		// TODO 20211106 Matthias: Set to "die" by Dominik because scanf caused
-		// unoundness in datarace benchmarks
-		fill(map, "scanf", die);
+		fill(map, "snprintf", (main, node, loc, name) -> handleSnPrintF(main, node, loc));
 
-		// TODO 20211105 Matthias: Unsound because depending on its first argument,
-		// the *scanf functions manipulate memory addressed by the other arguments.
-		// see https://en.cppreference.com/w/c/io/fscanf and https://en.cppreference.com/w/c/io/fwscanf
-		fill(map, "sscanf", (main, node, loc, name) -> constructUnsoundOverapproximationForFunctionCall(loc,
-				new CPrimitive(CPrimitive.CPrimitives.INT)));
-		fill(map, "swscanf", (main, node, loc, name) -> constructUnsoundOverapproximationForFunctionCall(loc,
-				new CPrimitive(CPrimitive.CPrimitives.INT)));
+		// https://en.cppreference.com/w/c/io/fscanf
+		fill(map, "scanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1));
+		fill(map, "scanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1));
+		fill(map, "fscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
+		fill(map, "fscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
+		fill(map, "sscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
+		fill(map, "sscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
+
+		// https://en.cppreference.com/w/c/io/fwscanf
+		fill(map, "wscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1));
+		fill(map, "wscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1));
+		fill(map, "fwscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
+		fill(map, "fwscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
+		fill(map, "swscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
+		fill(map, "swscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
 
 		fill(map, "__builtin_memcpy", this::handleMemcpy);
 		fill(map, "__memcpy", this::handleMemcpy);
@@ -391,8 +397,6 @@ public class StandardFunctionHandler {
 		 * value
 		 */
 		fill(map, "__builtin_prefetch", skip);
-		fill(map, "__builtin_va_start", skip);
-		fill(map, "__builtin_va_end", skip);
 
 		fill(map, "__builtin_expect", this::handleBuiltinExpect);
 		fill(map, "__builtin_unreachable", (main, node, loc, name) -> handleBuiltinUnreachable(loc));
@@ -548,7 +552,15 @@ public class StandardFunctionHandler {
 		fill(map, "fdimf", this::handleBinaryFloatFunction);
 		fill(map, "fdiml", this::handleBinaryFloatFunction);
 
-		/** SV-COMP and modelling functions **/
+		// 7.16 Variable arguments https://en.cppreference.com/w/c/variadic
+		fill(map, "va_start", this::handleVaStart);
+		fill(map, "__builtin_va_start", this::handleVaStart);
+		fill(map, "va_end", this::handleVaEnd);
+		fill(map, "__builtin_va_end", this::handleVaEnd);
+		fill(map, "va_copy", this::handleVaCopy);
+		fill(map, "__builtin_va_copy", this::handleVaCopy);
+
+		/** SV-COMP and modeling functions **/
 		fill(map, "__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
 		fill(map, "__VERIFIER_error", this::handleErrorFunction);
 		fill(map, "reach_error", this::handleErrorFunction);
@@ -573,6 +585,10 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.INT)));
 		fill(map, "__VERIFIER_nondet_long",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
+		fill(map, "__VERIFIER_nondet_longlong",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONGLONG)));
+		fill(map, "__VERIFIER_nondet_int128",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.INT128)));
 		fill(map, "__VERIFIER_nondet_loff_t",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
 		fill(map, "__VERIFIER_nondet_short",
@@ -587,12 +603,23 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT)));
 		fill(map, "__VERIFIER_nondet_ulong",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "__VERIFIER_nondet_ulonglong",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONGLONG)));
+		fill(map, "__VERIFIER_nondet_uint128",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT128)));
 		fill(map, "__VERIFIER_nondet_ushort",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.USHORT)));
 
 		/** from assert.h */
+		/** C standard library functions (from assert.h) to define the 'assert' macro */
 		fill(map, "__assert_fail", this::handleAssertFail);
-		// fill(map, "assert", this::handleAssert);
+		fill(map, "__assert_func", this::handleAssertFail);
+		// TODO: This should not occur in the preprocessed file, but we handle it for now
+		fill(map, "assert", this::handleAssert);
+		/** C11 static assertion (C language keyword, deprecated in C23) */
+		fill(map, "_Static_assert", this::handleStaticAssert);
+		/** C23 static assertion (C language keyword) */
+		fill(map, "static_assert", this::handleStaticAssert);
 
 		/** from fenv.h */
 		fill(map, "fegetround", this::handleBuiltinFegetround);
@@ -711,7 +738,7 @@ public class StandardFunctionHandler {
 		fill(map, "atexit", die);
 		fill(map, "at_quick_exit", die);
 		fill(map, "_Exit", die);
-		fill(map, "getenv", die);
+		fill(map, "getenv", (main, node, loc, name) -> handleGetenv(main, node, loc));
 		fill(map, "quick_exit", die);
 		fill(map, "system", die);
 
@@ -736,9 +763,13 @@ public class StandardFunctionHandler {
 		 * 7.22.6.2 The div, ldiv, and lldiv functions
 		 * @formatter:on
 		 */
-		fill(map, "abs", die);
-		fill(map, "labs", die);
-		fill(map, "llabs", die);
+		fill(map, "abs", (main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.INT)));
+		fill(map, "labs",
+				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONG)));
+		fill(map, "llabs",
+				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONGLONG)));
+		fill(map, "imaxabs",
+				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONGLONG)));
 		fill(map, "div", die);
 		fill(map, "ldiv", die);
 		fill(map, "lldiv", die);
@@ -798,6 +829,350 @@ public class StandardFunctionHandler {
 		if (!declNotSupp.isEmpty()) {
 			throw new IllegalStateException("A supported float function is not declared: " + declNotSupp);
 		}
+	}
+
+	private Result handleGetenv(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
+		final var builder = new ExpressionResultBuilder();
+
+		// dispatch the argument (unless it's a string literal, then we don't need it)
+		assert node.getArguments().length == 1 : "unexpected number of arguments to getenv";
+		final var arg = node.getArguments()[0];
+		if (!isStringLiteral(arg)) {
+			final var argRes = (ExpressionResult) main.dispatch(arg);
+			builder.addAllExceptLrValue(argRes);
+		}
+
+		final var nondetString = getNondetStringOrNull(loc);
+		builder.addAllExceptLrValue(nondetString).setLrValue(nondetString.getLrValue());
+
+		return builder.build();
+	}
+
+	private ExpressionResult getNondetStringOrNull(final ILocation loc) {
+		final var charType = new CPrimitive(CPrimitives.CHAR);
+		final var sizeT = mTypeSizes.getSizeT();
+		final var resultType = new CPointer(charType);
+		final var builder = new ExpressionResultBuilder();
+
+		final AuxVarInfo retvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
+		builder.addDeclaration(retvar.getVarDec());
+		builder.addAuxVar(retvar);
+		builder.setLrValue(new LocalLValue(retvar.getLhs(), resultType, null));
+
+		// one possible return value: NULL
+		final var setPtrToNull = StatementFactory.constructSingleAssignmentStatement(loc, retvar.getLhs(),
+				mExpressionTranslation.constructNullPointer(loc));
+
+		// alternative option: return a nondeterministic string of nondeterministic length
+		final AuxVarInfo len = mAuxVarInfoBuilder.constructAuxVarInfo(loc, sizeT, SFO.AUXVAR.NONDET);
+		builder.addDeclaration(len.getVarDec());
+		builder.addAuxVar(len);
+
+		// allocate memory for a string and end it with a null-char as terminator
+		final var body = new ArrayList<Statement>();
+		body.add(new HavocStatement(loc, new VariableLHS[] { len.getLhs() }));
+		body.add(new AssumeStatement(loc,
+				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_greaterThan,
+						len.getExp(), sizeT, mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ZERO),
+						sizeT)));
+		body.add(mMemoryHandler.getUltimateMemAllocCall(len.getExp(), retvar.getLhs(), loc, MemoryArea.HEAP));
+		final var nullChar = mTypeSizes.constructLiteralForIntegerType(loc, charType, BigInteger.ZERO);
+		final var lenMinusOne = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
+				IASTBinaryExpression.op_minus, len.getExp(), sizeT,
+				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ONE), sizeT);
+		final var lastChar = MemoryHandler.constructPointerFromBaseAndOffset(
+				MemoryHandler.getPointerBaseAddress(retvar.getExp(), loc), lenMinusOne, loc);
+		body.addAll(mMemoryHandler.getWriteCall(loc,
+				LRValueFactory.constructHeapLValue(mTypeHandler, lastChar, charType, null), nullChar, charType, false));
+
+		final var stmt = StatementFactory.constructIfStatement(loc, new WildcardExpression(loc),
+				new Statement[] { setPtrToNull }, body.toArray(Statement[]::new));
+		builder.addStatement(stmt);
+
+		return builder.build();
+	}
+
+	private List<Statement> makeVarargAssignment(final ILocation loc, final LRValue lhs, final Expression rhs) {
+		if (lhs instanceof LocalLValue) {
+			return List.of(StatementFactory.constructSingleAssignmentStatement(loc, ((LocalLValue) lhs).getLhs(), rhs));
+		} else if (lhs instanceof HeapLValue) {
+			return mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, rhs, lhs.getCType(), false);
+		} else if (lhs instanceof RValue) {
+			final RValue rValue = (RValue) lhs;
+			return makeVarargAssignment(loc, new HeapLValue(rValue.getValue(), rValue.getCType(), null), rhs);
+		} else {
+			throw new UnsupportedOperationException("Unsupported type " + lhs.getClass().getSimpleName());
+		}
+	}
+
+	private Result handleVaStart(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult arg0 = (ExpressionResult) main.dispatch(arguments[0]);
+		builder.addAllExceptLrValue(arg0);
+		// The second argument of va_start has to be the rightmost fixed parameter
+		// (according to the C standard section 7.16.1.3.4). Therefore we simply dispatch it here.
+		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[1]));
+		final String procedure = mProcedureManager.getCurrentProcedureID();
+		final IdentifierExpression rhs = new IdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), SFO.VARARGS,
+				new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procedure));
+		return builder.addStatements(makeVarargAssignment(loc, arg0.getLrValue(), rhs)).build();
+	}
+
+	private Result handleVaEnd(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+
+		final ExpressionResult pRex =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+
+		final ExpressionResultBuilder resultBuilder =
+				new ExpressionResultBuilder().addAllExceptLrValue(pRex).setLrValue(pRex.getLrValue());
+
+		// Translate va_end(valist) to ULTIMATE.dealloc({ base: valist!base, offset: 0 }) to ensure the memory to be
+		// freed
+		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+		final Expression pointerWithoutOffset = MemoryHandler.constructPointerFromBaseAndOffset(
+				MemoryHandler.getPointerBaseAddress(pRex.getLrValue().getValue(), loc), zero, loc);
+		final RValue value = new RValue(pointerWithoutOffset, pRex.getCType());
+
+		/*
+		 * Add checks for validity of the to be freed pointer if required.
+		 */
+		resultBuilder.addStatements(mMemoryHandler.getChecksForFreeCall(loc, value));
+
+		/*
+		 * Add a call to our internal deallocation procedure Ultimate.dealloc
+		 */
+		final CallStatement deallocCall = mMemoryHandler.getDeallocCall(value, loc);
+		resultBuilder.addStatement(deallocCall);
+
+		return resultBuilder.build();
+	}
+
+	/**
+	 * Translate va_copy(dst, src) to a simple overapproximation that simply havocs dst (and annotates it with
+	 * "overapproximation")
+	 */
+	private Result handleVaCopy(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult dst = (ExpressionResult) main.dispatch(arguments[0]);
+		builder.addAllExceptLrValue(dst);
+		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[1]));
+		final AuxVarInfo auxVarInfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
+				new CPointer(new CPrimitive(CPrimitives.CHAR)), AUXVAR.NONDET);
+		builder.addAuxVar(auxVarInfo);
+		builder.addDeclaration(auxVarInfo.getVarDec());
+		final List<Statement> writes = makeVarargAssignment(loc, dst.getLrValue(), auxVarInfo.getExp());
+		writes.forEach(new Overapprox(name, loc)::annotate);
+		return builder.addStatements(writes).build();
+	}
+
+	private Result handleAbs(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name, final CPrimitive resultType) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult argResult =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(argResult);
+		final Expression expr = argResult.getLrValue().getValue();
+		// abs(MIN_INT) does overflow, so add an assertion for overflow checking
+		if (mSettings.checkSignedIntegerBounds() && resultType.isIntegerType() && !mTypeSizes.isUnsigned(resultType)) {
+			final Expression minInt = mTypeSizes.constructLiteralForIntegerType(loc, resultType,
+					mTypeSizes.getMinValueOfPrimitiveType(resultType));
+			final Expression biggerMinInt = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+					IASTBinaryExpression.op_greaterThan, expr, resultType, minInt, resultType);
+			final AssertStatement biggerMinIntStmt = new AssertStatement(loc, biggerMinInt);
+			new Check(Spec.INTEGER_OVERFLOW).annotate(biggerMinIntStmt);
+			builder.addStatement(biggerMinIntStmt);
+		}
+		// Construct if x > 0 then x else -x as LrValue for abs(x)
+		final Expression positive = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_greaterThan, expr, resultType,
+				mTypeSizes.constructLiteralForIntegerType(loc, resultType, BigInteger.ZERO), resultType);
+		final Expression negated =
+				mExpressionTranslation.constructUnaryExpression(loc, IASTUnaryExpression.op_minus, expr, resultType);
+		final Expression iteExpression = ExpressionFactory.constructIfThenElseExpression(loc, positive, expr, negated);
+		return builder.setLrValue(new RValue(iteExpression, resultType)).build();
+	}
+
+	// Overapproximates snprintf as follows:
+	// ctr:=0; while (*) { assume ctr < len; havoc aux; *(ptr+ctr) := aux; ctr := ctr + 1; }
+	private Result handleSnPrintF(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		assert arguments.length >= 2 : "insufficient arguments to snprintf";
+		final var builder = new ExpressionResultBuilder();
+
+		final Overapprox overAppFlag = new Overapprox("snprintf", loc);
+		builder.addOverapprox(overAppFlag);
+
+		// first argument is ptr
+		final var ptr = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(ptr);
+
+		// second argument is len
+		final var len = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc, arguments[1],
+				mExpressionTranslation.getCTypeOfPointerComponents());
+		builder.addAllExceptLrValue(len);
+
+		// dispatch remaining arguments (except for string literals)
+		for (int i = 2; i < arguments.length; ++i) {
+			if (isStringLiteral(arguments[i])) {
+				continue;
+			}
+			final ExpressionResult argRes =
+					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]);
+			builder.addAllExceptLrValue(argRes);
+		}
+
+		// declare loop counter ctr
+		final AuxVarInfo ctr = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), SFO.AUXVAR.LOOPCTR);
+		builder.addDeclaration(ctr.getVarDec());
+		builder.addAuxVar(ctr);
+
+		// declare nondet aux var
+		final AuxVarInfo auxvar =
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.CHAR), SFO.AUXVAR.NONDET);
+		builder.addDeclaration(auxvar.getVarDec());
+		builder.addAuxVar(auxvar);
+
+		// ctr := 0
+		final var zero = mTypeSizes.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+		final var initCtr = StatementFactory.constructSingleAssignmentStatement(loc, ctr.getLhs(), zero);
+		builder.addStatement(initCtr);
+
+		final var body = new ArrayList<Statement>();
+
+		// assume ctr < len;
+		final var assumeInRange = new AssumeStatement(loc,
+				mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_lessThan,
+						ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents(), len.getLrValue().getValue(),
+						mExpressionTranslation.getCTypeOfPointerComponents()));
+		body.add(assumeInRange);
+
+		// havoc aux;
+		final var havocNondet = new HavocStatement(loc, new VariableLHS[] { auxvar.getLhs() });
+		body.add(havocNondet);
+
+		// *(ptr + ctr) := aux
+		final var ptrOffset = MemoryHandler.getPointerOffset(ptr.getLrValue().getValue(), loc);
+		final Expression newOffset = mExpressionTranslation.constructArithmeticExpression(loc,
+				IASTBinaryExpression.op_plus, ptrOffset, mExpressionTranslation.getCTypeOfPointerComponents(),
+				ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents());
+		final var ptrPlusCtr = MemoryHandler.constructPointerFromBaseAndOffset(
+				MemoryHandler.getPointerBaseAddress(ptr.getLrValue().getValue(), loc), newOffset, loc);
+		final var ptrPlusCtrHlv = LRValueFactory.constructHeapLValue(mTypeHandler, ptrPlusCtr, ptr.getCType(), null);
+		final var writeToMem = mMemoryHandler.getWriteCall(loc, ptrPlusCtrHlv, auxvar.getExp(),
+				new CPrimitive(CPrimitives.CHAR), false);
+		for (final var write : writeToMem) {
+			overAppFlag.annotate(write);
+		}
+		body.addAll(writeToMem);
+		if (mDataRaceChecker != null) {
+			mDataRaceChecker.checkOnWrite(builder, loc, ptrPlusCtrHlv);
+		}
+
+		// ctr := ctr + 1
+		final var incrementCtr = StatementFactory.constructSingleAssignmentStatement(loc, ctr.getLhs(),
+				mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_plus,
+						ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents(),
+						mTypeSizes.constructLiteralForIntegerType(loc,
+								mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE),
+						mExpressionTranslation.getCTypeOfPointerComponents()));
+		body.add(incrementCtr);
+
+		final var loop = new WhileStatement(loc, new WildcardExpression(loc), new LoopInvariantSpecification[0],
+				body.toArray(Statement[]::new));
+		builder.addStatement(loop);
+
+		final var ret =
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.CHAR), SFO.AUXVAR.RETURNED);
+		builder.addAuxVar(ret);
+		builder.addDeclaration(ret.getVarDec());
+		builder.setLrValue(new LocalLValue(ret.getLhs(), new CPrimitive(CPrimitives.CHAR), null));
+
+		return builder.build();
+	}
+
+	/**
+	 * Handles all derivates of *scanf as an overapproximation by writing non-deterministic values to all arguments
+	 * starting from {@code firstArgumentToWrite}.
+	 */
+	// TODO Frank 2022-11-14: In general this is unsound since scanf can write multiple bytes. E.g. for the format %2c
+	// we would need two writes, for the format %s even non-determinstically many writes! Determining whether this
+	// occurs in the format, is only possible if the format is a literal (it can be any expression in general).
+	private Result handleScanf(final String name, final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final int firstArgumentToWrite) {
+		// The application is only marked as an overapproximation, if we read from a string.
+		final boolean markAsOverapproximation = name.startsWith("sscanf") || name.startsWith("swscanf");
+		final IASTInitializerClause[] arguments = node.getArguments();
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+
+		for (int i = 0; i < arguments.length; i++) {
+			if (i < firstArgumentToWrite && isStringLiteral(arguments[i])) {
+				// Don't dispatch string literals
+				continue;
+			}
+			final ExpressionResult arg =
+					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]);
+			builder.addAllExceptLrValue(arg);
+			if (i < firstArgumentToWrite) {
+				continue;
+			}
+
+			final CType type = ((CPointer) arg.getCType()).getPointsToType();
+			final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
+			builder.addDeclaration(auxvar.getVarDec());
+			builder.addAuxVar(auxvar);
+
+			// Write a non-deterministic value to the given address, but make sure the value is in range
+			final var lValue =
+					LRValueFactory.constructHeapLValue(mTypeHandler, arg.getLrValue().getValue(), type, null);
+			mExpressionTranslation.addAssumeValueInRangeStatements(loc, auxvar.getExp(), type, builder);
+			final List<Statement> writes = mMemoryHandler.getWriteCall(loc, lValue, auxvar.getExp(), type, false);
+			if (markAsOverapproximation) {
+				writes.forEach(new Overapprox(name, loc)::annotate);
+			}
+			builder.addStatements(writes);
+
+			if (mDataRaceChecker != null) {
+				mDataRaceChecker.checkOnWrite(builder, loc, lValue);
+			}
+		}
+
+		// The number of arguments to which sth should be written is returned.
+		// Therefore we create a fresh variable and assume that it is in the desired range
+		// (0 to the number of variables written to)
+		final CPrimitive retValueType = new CPrimitive(CPrimitives.LONG);
+		final AuxVarInfo returnAuxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, retValueType, SFO.AUXVAR.NONDET);
+		builder.addAuxVar(returnAuxVar);
+		builder.addDeclaration(returnAuxVar.getVarDec());
+		final var minValue = mExpressionTranslation.constructLiteralForIntegerType(loc, retValueType, BigInteger.ZERO);
+		final var retVal = returnAuxVar.getExp();
+		final var greaterMin = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessEqual, minValue, retValueType, retVal, retValueType);
+		final int writtenArgs = arguments.length - firstArgumentToWrite;
+		final var maxValue = mExpressionTranslation.constructLiteralForIntegerType(loc, retValueType,
+				BigInteger.valueOf(writtenArgs));
+		final var smallerMax = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessEqual, retVal, retValueType, maxValue, retValueType);
+		builder.addStatement(new AssumeStatement(loc, ExpressionFactory.and(loc, List.of(greaterMin, smallerMax))));
+		builder.setLrValue(new RValue(retVal, retValueType));
+		if (markAsOverapproximation) {
+			builder.addOverapprox(new Overapprox(name, loc));
+		}
+
+		return builder.build();
 	}
 
 	private Result handleStrCmp(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -1200,8 +1575,7 @@ public class StandardFunctionHandler {
 				heapLValue = LRValueFactory.constructHeapLValue(mTypeHandler, argAddressOfResultPointerLr.getValue(),
 						cType, false, null);
 			}
-			final List<Statement> wc =
-					mMemoryHandler.getWriteCall(loc, heapLValue, auxvarinfo.getExp(), cType, false, node);
+			final List<Statement> wc = mMemoryHandler.getWriteCall(loc, heapLValue, auxvarinfo.getExp(), cType, false);
 			builder.addStatements(wc);
 		}
 		// we assume that this function is always successful and returns 0
@@ -1450,11 +1824,68 @@ public class StandardFunctionHandler {
 		}
 
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults);
-		if (mSettings.isSvcompMode()) {
-			final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
-			return erb.addStatement(new AssumeStatement(loc, falseLiteral)).build();
+		return erb.addStatement(createAnnotatedAssertOrAssume(loc, name, mSettings.checkAssertions(), Spec.ASSERT,
+				ExpressionFactory.createBooleanLiteral(loc, false))).build();
+	}
+
+	private Result handleAssert(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+
+		final ExpressionResult result = mExprResultTransformer
+				.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[0]), loc, node);
+		return new ExpressionResultBuilder().addAllExceptLrValue(result).addStatement(createAnnotatedAssertOrAssume(loc,
+				name, mSettings.checkAssertions(), Spec.ASSERT, result.getLrValue().getValue())).build();
+	}
+
+	/**
+	 * Handle C11 or C23 static assertions with or without an explicit message.
+	 * 
+	 * @param main
+	 *            the current dispatcher
+	 * @param node
+	 *            the static assert expression
+	 * @param loc
+	 *            the location of the static assert
+	 * @param name
+	 *            the name of the method
+	 * 
+	 * @return {@link ExpressionResult} representing the static assertion
+	 */
+	private Result handleStaticAssert(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+
+		final IASTInitializerClause[] arguments = node.getArguments();
+		final int numAssertArgs = arguments.length;
+
+		/* check if signature of assertion is of form 'static_assert(expr)' or 'static_assert(expr, msg)' */
+		if (numAssertArgs == 2) {
+			/* static C11 or C23 assertion with two arguments (expr and msg) */
+			checkArguments(loc, 2, name, arguments);
+
+			if (isStringLiteral(arguments[1])) {
+				/* extract string literal value for custom error message */
+				final String errorMsg = String.valueOf(((IASTLiteralExpression) arguments[1]).getValue());
+
+				final ExpressionResult result = mExprResultTransformer
+						.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[0]), loc, node);
+				return new ExpressionResultBuilder().addAllExceptLrValue(result)
+						.addStatement(createAnnotatedAssertOrAssume(loc, name, mSettings.checkAssertions(),
+								Spec.ASSERT, result.getLrValue().getValue(), errorMsg))
+						.build();
+			} else {
+				/* WARNING: this case should be never reached since the msg should be always a string literal */
+				throw new IncorrectSyntaxException(loc, "Message parameter of static assert is not a string literal");
+			}
+		} else {
+			/* static C11 or C23 assertion with one argument (expr) */
+			checkArguments(loc, 1, name, arguments);
+
+			/* handle as regular assertion */
+			return handleAssert(main, node, loc, name);
 		}
-		return erb.addStatement(createReachabilityAssert(loc, name)).build();
 	}
 
 	private Result handleBuiltinFegetround(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1711,7 +2142,9 @@ public class StandardFunctionHandler {
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
 		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
 		resultBuilder.addAuxVar(auxvarinfo);
-
+		if (HAVOC_NONDET_AUXVARS_ALSO_BEFORE) {
+			resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
+		}
 		final LRValue returnValue = new RValue(auxvarinfo.getExp(), cType);
 		resultBuilder.setLrValue(returnValue);
 		mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(),
@@ -1724,7 +2157,7 @@ public class StandardFunctionHandler {
 
 	private Result handleRand(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
-		checkArguments(loc, 0, name, node);
+		checkArguments(loc, 0, name, node.getArguments());
 
 		final CPrimitive cType = new CPrimitive(CPrimitives.INT);
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
@@ -1959,17 +2392,25 @@ public class StandardFunctionHandler {
 		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
 		resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
 
-		final LRValue returnValue = new RValue(auxvarinfo.getExp(), null);
+		final LRValue returnValue = new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.INT));
 		resultBuilder.setLrValue(returnValue);
 
 		// dispatch all arguments
 		for (final IASTInitializerClause arg : node.getArguments()) {
+			if (isStringLiteral(arg)) {
+				continue;
+			}
 			final ExpressionResult argRes =
 					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arg);
 			resultBuilder.addAllExceptLrValue(argRes);
 		}
 
 		return resultBuilder.build();
+	}
+
+	private boolean isStringLiteral(final IASTInitializerClause expr) {
+		return expr instanceof IASTLiteralExpression
+				&& ((IASTLiteralExpression) expr).getKind() == IASTLiteralExpression.lk_string_literal;
 	}
 
 	private Result handleMemcpy(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -2021,22 +2462,61 @@ public class StandardFunctionHandler {
 
 	private Result handleErrorFunction(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		final Statement st = createReachabilityAssert(loc, name);
+		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
+		final Statement st = createAnnotatedAssertOrAssume(loc, name, mSettings.checkErrorFunction(),
+				Spec.ERROR_FUNCTION, falseLiteral);
 		return new ExpressionResult(Collections.singletonList(st), null);
 	}
 
 	/**
-	 * Create assert false or assume false statement for usage in reachability specifications, depending on the
-	 * settings. If we want to check reachability, an assert false will be generated. If not, (e.g., if we only want to
-	 * check memsafety), an assume false will be generated.
+	 * Create an assertion or assumption statement annotated with a {@link Check} annotation.
+	 * 
+	 * @param loc
+	 *            location of the assertion or assumption node.
+	 * @param functionName
+	 *            name of the function for the assertion statement and {@link Check} annotation.
+	 * @param checkProperty
+	 *            enables creation of an assertion to check {@code expr}, otherwise an assumption is made.
+	 * @param spec
+	 *            type of {@link Check} for assertion or assumption statement annotation.
+	 * @param expr
+	 *            expression for assertion or assumption statement.
+	 * 
+	 * @see {@link #createAnnotatedAssertOrAssume(ILocation, String, boolean, Spec, Expression, String)}
 	 */
-	private Statement createReachabilityAssert(final ILocation loc, final String functionName) {
-		final boolean checkSvcompErrorfunction = mSettings.checkSvcompErrorFunction();
+	private Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
+			final boolean checkProperty, final Spec spec, final Expression expr) {
+		return createAnnotatedAssertOrAssume(loc, functionName, checkProperty, spec, expr, null);
+	}
+
+	/**
+	 * Create an assertion or assumption statement annotated with a {@link Check} annotation.
+	 * 
+	 * Create an {@code assert expr} or {@code assume expr} depending on the settings. If {@code checkProperty} is
+	 * {@code true} (i.e. the check is enabled), an {@code assert expr} will be generated, otherwise an
+	 * {@code assume expr} will be generated.
+	 * 
+	 * @param loc
+	 *            location of the assertion or assumption node.
+	 * @param functionName
+	 *            name of the function for the assertion statement and {@link Check} annotation.
+	 * @param checkProperty
+	 *            enables creation of an assertion to check {@code expr}, otherwise an assumption is made.
+	 * @param spec
+	 *            type of {@link Check} for assertion or assumption statement annotation.
+	 * @param expr
+	 *            expression for assertion or assumption statement.
+	 * @param errorMsg
+	 *            error message for a negative check result of an assertion.
+	 * 
+	 * @return {@link Statement} annotated with a {@link Check} annotation.
+	 */
+	private Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
+			final boolean checkProperty, final Spec spec, final Expression expr, final String errorMsg) {
 		final boolean checkMemoryleakInMain = mSettings.checkMemoryLeakInMain()
 				&& mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired();
-		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
-		if (!checkSvcompErrorfunction && !checkMemoryleakInMain) {
-			return new AssumeStatement(loc, falseLiteral);
+		if (!checkProperty && !checkMemoryleakInMain) {
+			return new AssumeStatement(loc, expr);
 		}
 
 		// TODO 2017-11-26 Matthias: Workaround for memcleanup property.
@@ -2048,24 +2528,25 @@ public class StandardFunctionHandler {
 		// need separate arrays for stack and heap.
 		// https://github.com/sosy-lab/sv-benchmarks/pull/1001
 		final Check check;
-		if (checkSvcompErrorfunction) {
-			final Function<Spec, String> funPosMessage =
-					s -> s == Spec.ERROR_FUNCTION ? "call to " + functionName + " is unreachable"
-							: Check.getDefaultPositiveMessage(s);
-			final Function<Spec, String> funNegMessage =
-					s -> s == Spec.ERROR_FUNCTION ? "a call to " + functionName + " is reachable"
-							: Check.getDefaultNegativeMessage(s);
+		if (checkProperty) {
+			final CheckMessageProvider msgProvider = new CheckMessageProvider();
+
+			/* customize result message for error function specifications with function name */
+			msgProvider.registerSpecificationErrorFunctionName(functionName);
+			/* customize result message for specifications with error messages */
+			msgProvider.registerSpecificationErrorMessage(spec, errorMsg);
+
 			if (checkMemoryleakInMain) {
-				check = new Check(EnumSet.of(Spec.ERROR_FUNCTION, Spec.MEMORY_LEAK), funPosMessage, funNegMessage);
+				check = new Check(EnumSet.of(spec, Spec.MEMORY_LEAK), msgProvider);
 			} else {
-				check = new Check(Spec.ERROR_FUNCTION, funPosMessage, funNegMessage);
+				check = new Check(spec, msgProvider);
 			}
 		} else {
 			check = new Check(EnumSet.of(Spec.MEMORY_LEAK));
 		}
 		final Statement st = new AssertStatement(loc, new NamedAttribute[] { new NamedAttribute(loc, "reach",
 				new Expression[] { new StringLiteral(loc, check.toString()), new StringLiteral(loc, functionName) }) },
-				falseLiteral);
+				expr);
 		check.annotate(st);
 		if (checkMemoryleakInMain && mSettings.isSvcompMemtrackCompatibilityMode()) {
 			new Overapprox("memtrack", loc).annotate(st);
@@ -2075,9 +2556,9 @@ public class StandardFunctionHandler {
 
 	private static Result handleLtlStep(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc) {
-		final LTLStepAnnotation ltlStep = new LTLStepAnnotation();
-		final AssumeStatement assumeStmt = new AssumeStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true));
-		ltlStep.annotate(assumeStmt);
+		final NamedAttribute ltlAttribute = new NamedAttribute(loc, "ltl_step", new Expression[] {});
+		final AssumeStatement assumeStmt = new AssumeStatement(loc, new NamedAttribute[] { ltlAttribute },
+				ExpressionFactory.createBooleanLiteral(loc, true));
 		return new ExpressionResult(Collections.singletonList(assumeStmt), null);
 	}
 
@@ -2097,7 +2578,8 @@ public class StandardFunctionHandler {
 
 	/**
 	 * Handle a function call by dispatching all arguments and then calling a function with no arguments that has the
-	 * name of the function and is marked with the {@link Overapprox} annotation.
+	 * name of the function and is marked with the {@link Overapprox} annotation. Additionally it is assumed that the
+	 * result is in range of the given type.
 	 *
 	 * @param main
 	 *            the current dispatcher
@@ -2117,15 +2599,16 @@ public class StandardFunctionHandler {
 			final ILocation loc, final String methodName, final int numberOfArgs, final CType resultType) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, numberOfArgs, methodName, arguments);
-		final List<ExpressionResult> results = new ArrayList<>();
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		for (final IASTInitializerClause argument : arguments) {
-			results.add((ExpressionResult) main.dispatch(argument));
+			builder.addAllExceptLrValue((ExpressionResult) main.dispatch(argument));
 		}
 
 		final ExpressionResult overapproxCall = constructOverapproximationForFunctionCall(loc, methodName, resultType);
-		results.add(overapproxCall);
-		return new ExpressionResultBuilder().addAllExceptLrValue(results).setLrValue(overapproxCall.getLrValue())
-				.build();
+		builder.addAllExceptLrValue(overapproxCall);
+		mExpressionTranslation.addAssumeValueInRangeStatements(loc, overapproxCall.getLrValue().getValue(), resultType,
+				builder);
+		return builder.setLrValue(overapproxCall.getLrValue()).build();
 	}
 
 	/**
@@ -2168,15 +2651,6 @@ public class StandardFunctionHandler {
 		return buildFunctionCall(loc, resultType).addOverapprox(new Overapprox(functionName, loc)).build();
 	}
 
-	/**
-	 * Construct an auxiliary variable that will be use as a substitute for a function call. The result will **NOT** be
-	 * marked as an overapproximation, which is always unsound.
-	 */
-	private ExpressionResult constructUnsoundOverapproximationForFunctionCall(final ILocation loc,
-			final CType resultType) {
-		return buildFunctionCall(loc, resultType).build();
-	}
-
 	private ExpressionResultBuilder buildFunctionCall(final ILocation loc, final CType resultType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
@@ -2194,23 +2668,11 @@ public class StandardFunctionHandler {
 		}
 	}
 
-	private static void checkArguments(final ILocation loc, final int expectedArgs, final String name,
-			final IASTFunctionCallExpression call) {
-		checkArguments(loc, 0, name, call.getArguments());
-	}
-
 	private static <K, V> void fill(final Map<K, V> map, final K key, final V value) {
 		final V old = map.put(key, value);
 		if (old != null) {
 			throw new AssertionError("Accidentally overwrote definition for " + key);
 		}
-	}
-
-	private ILocation getLoc(final IDispatcher main, final IASTFunctionCallExpression node) {
-		if (mSettings.isSvcompMode()) {
-			return mLocationFactory.createCLocation(node, new Check(Check.Spec.PRE_CONDITION));
-		}
-		return mLocationFactory.createCLocation(node);
 	}
 
 	/**

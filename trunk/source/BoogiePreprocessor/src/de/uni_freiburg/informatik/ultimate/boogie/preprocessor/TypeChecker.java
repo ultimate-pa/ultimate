@@ -400,6 +400,9 @@ public class TypeChecker extends BaseObserver {
 	}
 
 	private void typecheckAttributes(final Attribute[] attributes) {
+		if (attributes == null) {
+			return;
+		}
 		for (final Attribute attr : attributes) {
 			Expression[] exprs;
 			if (attr instanceof Trigger) {
@@ -666,11 +669,13 @@ public class TypeChecker extends BaseObserver {
 			if (!t.equals(BoogieType.TYPE_BOOL) && !t.equals(BoogieType.TYPE_ERROR)) {
 				typeError(statement, "Assume is not boolean: " + statement);
 			}
+			typecheckAttributes(((AssumeStatement) statement).getAttributes());
 		} else if (statement instanceof AssertStatement) {
 			final BoogieType t = typecheckExpression(((AssertStatement) statement).getFormula());
 			if (!t.equals(BoogieType.TYPE_BOOL) && !t.equals(BoogieType.TYPE_ERROR)) {
 				typeError(statement, "Assert is not boolean: " + statement);
 			}
+			typecheckAttributes(((AssertStatement) statement).getAttributes());
 		} else if (statement instanceof BreakStatement) {
 			final String label = ((BreakStatement) statement).getLabel();
 			if (!outer.contains(label == null ? "*" : label)) {

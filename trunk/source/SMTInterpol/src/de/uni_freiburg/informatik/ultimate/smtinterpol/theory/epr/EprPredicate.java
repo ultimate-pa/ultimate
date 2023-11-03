@@ -19,7 +19,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
@@ -93,7 +92,7 @@ public class EprPredicate {
 					mEprTheory.getTheory().createFreshTermVariable(tvName, fs.getParameterSorts()[i]));
 
 		}
-		mSignature = Collections.unmodifiableSortedSet(tva);
+		mSignature = tva;
 		mCurrentDecision = mEprTheory.getDawgFactory().createConstantDawg(mSignature, EprTheory.TriBool.UNKNOWN);
 	}
 
@@ -176,8 +175,8 @@ public class EprPredicate {
 		assert point.getFreeVars().size() == 0 : "Use getAtomForTermTuple, if tt is quantified";
 		EprGroundPredicateAtom result = mPointToAtom.get(point);
 		if (result == null) {
-			final ApplicationTerm newTerm = mTheory.term(mFunctionSymbol, point.terms);
-			int hash = newTerm.hashCode();
+			final ApplicationTerm newTerm = (ApplicationTerm) mTheory.term(mFunctionSymbol, point.terms);
+			final int hash = newTerm.hashCode();
 			if (this instanceof EprEqualityPredicate) {
 				result = new EprGroundEqualityAtom(newTerm, hash,
 					assertionStackLevel,
@@ -212,7 +211,7 @@ public class EprPredicate {
 		EprQuantifiedPredicateAtom result = mTermTupleToAtom.get(tt);
 
 		if (result == null) {
-			final ApplicationTerm newTerm = mTheory.term(mFunctionSymbol, tt.terms);
+			final ApplicationTerm newTerm = (ApplicationTerm) mTheory.term(mFunctionSymbol, tt.terms);
 			if (this instanceof EprEqualityPredicate) {
 					result = new EprQuantifiedEqualityAtom(newTerm,
 						0,
@@ -245,7 +244,7 @@ public class EprPredicate {
 
 		final String res = "EprPred: " + mFunctionSymbol.getName();
 		if (res.contains("AUX")) {
-			return "EprPred: (AUX " + this.hashCode() + ")";
+			return "EprPred: (AUX " + hashCode() + ")";
 		}
 		return res;
 	}

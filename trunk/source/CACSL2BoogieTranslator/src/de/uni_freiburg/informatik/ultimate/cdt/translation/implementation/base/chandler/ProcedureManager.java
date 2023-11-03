@@ -78,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.TransitiveClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.LinkedHashRelation;
@@ -269,8 +270,8 @@ public class ProcedureManager {
 				final Expression vIe = memoryHandler.getValidArray(loc);
 
 				final int nrSpec = newSpec.length;
-				final Check check = new Check(Check.Spec.MEMORY_LEAK);
-				final ILocation ensLoc = LocationFactory.createLocation(loc, check);
+				final Check check = new Check(Spec.MEMORY_LEAK);
+				final ILocation ensLoc = LocationFactory.createLocation(loc);
 				newSpecWithExtraEnsuresClauses = Arrays.copyOf(newSpec, nrSpec + 1);
 				newSpecWithExtraEnsuresClauses[nrSpec] = new EnsuresSpecification(ensLoc, false,
 						ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, vIe,

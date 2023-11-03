@@ -35,7 +35,6 @@ import java.util.Queue;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 
 /**
@@ -63,7 +62,7 @@ public class PetriNetToUltimateModel<LETTER, PLACE> {
 		final Set<PLACE> initialStates = net.getInitialPlaces();
 
 		final Map<PLACE, PlaceNode> place2placeNode = new HashMap<>();
-		final Map<ITransition<LETTER, PLACE>, TransitionNode> transition2transitionNode = new HashMap<>();
+		final Map<Transition<LETTER, PLACE>, TransitionNode> transition2transitionNode = new HashMap<>();
 
 		final Queue<Object> queue = new LinkedList<>();
 
@@ -78,9 +77,9 @@ public class PetriNetToUltimateModel<LETTER, PLACE> {
 		while (!queue.isEmpty()) {
 			final Object node = queue.remove();
 
-			if (node instanceof ITransition) {
+			if (node instanceof Transition) {
 				transitionHandling(acceptingMarkings, place2placeNode, transition2transitionNode, queue,
-						(ITransition<LETTER, PLACE>) node, net);
+						(Transition<LETTER, PLACE>) node);
 			} else {
 				placeHandling(net, place2placeNode, transition2transitionNode, queue, (PLACE) node);
 			}
@@ -89,13 +88,13 @@ public class PetriNetToUltimateModel<LETTER, PLACE> {
 	}
 
 	private void placeHandling(final IPetriNet<LETTER, PLACE> net, final Map<PLACE, PlaceNode> place2placeNode,
-			final Map<ITransition<LETTER, PLACE>, TransitionNode> transition2transitionNode, final Queue<Object> queue,
+			final Map<Transition<LETTER, PLACE>, TransitionNode> transition2transitionNode, final Queue<Object> queue,
 			final PLACE place) {
 		final PlaceNode placeNode = place2placeNode.get(place);
-		for (final ITransition<LETTER, PLACE> transition : net.getSuccessors(place)) {
+		for (final Transition<LETTER, PLACE> transition : net.getSuccessors(place)) {
 			TransitionNode transNode = transition2transitionNode.get(transition);
 			if (transNode == null) {
-				transNode = new TransitionNode((Transition<?, ?>) transition);
+				transNode = new TransitionNode(transition);
 				transition2transitionNode.put(transition, transNode);
 				queue.add(transition);
 			}
@@ -116,10 +115,10 @@ public class PetriNetToUltimateModel<LETTER, PLACE> {
 
 	private void transitionHandling(final Collection<Collection<PLACE>> acceptingMarkings,
 			final Map<PLACE, PlaceNode> place2placeNode,
-			final Map<ITransition<LETTER, PLACE>, TransitionNode> transition2transitionNode, final Queue<Object> queue,
-			final ITransition<LETTER, PLACE> transition, final IPetriNet<LETTER, PLACE> net) {
+			final Map<Transition<LETTER, PLACE>, TransitionNode> transition2transitionNode, final Queue<Object> queue,
+			final Transition<LETTER, PLACE> transition) {
 		final TransitionNode transitionNode = transition2transitionNode.get(transition);
-		for (final PLACE place : net.getSuccessors(transition)) {
+		for (final PLACE place : transition.getSuccessors()) {
 			PlaceNode placeNode = place2placeNode.get(place);
 			if (placeNode == null) {
 				placeNode = new PlaceNode(place, participatedAcceptingMarkings(place, acceptingMarkings));

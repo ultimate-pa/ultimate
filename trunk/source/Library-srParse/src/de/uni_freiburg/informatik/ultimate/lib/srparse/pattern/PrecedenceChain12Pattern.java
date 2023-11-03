@@ -49,7 +49,7 @@ public class PrecedenceChain12Pattern extends PatternType<PrecedenceChain12Patte
 
 	public PrecedenceChain12Pattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
-		super(scope, id, cdds, durations,durationNames);
+		super(scope, id, cdds, durations, durationNames);
 	}
 
 	@Override

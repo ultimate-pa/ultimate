@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
@@ -43,9 +44,9 @@ public class SPredicateWithWitnessNode extends SPredicate {
 	private final Integer mStutteringSteps;
 
 	protected SPredicateWithWitnessNode(final IcfgLocation programPoint, final int serialNumber,
-			final String[] procedures, final Term term, final Set<IProgramVar> vars, final Term closedFormula,
-			final WitnessNode witnessNode, final Integer stutteringSteps) {
-		super(programPoint, serialNumber, procedures, term, vars, closedFormula);
+			final String[] procedures, final Term term, final Set<IProgramVar> vars, final Set<IProgramFunction> funs,
+			final Term closedFormula, final WitnessNode witnessNode, final Integer stutteringSteps) {
+		super(programPoint, serialNumber, procedures, term, vars, funs, closedFormula);
 		mWitnessNode = witnessNode;
 		mStutteringSteps = stutteringSteps;
 	}
@@ -55,7 +56,7 @@ public class SPredicateWithWitnessNode extends SPredicate {
 		return fac.construct((serial, script) -> {
 			final Term trueTerm = script.term("true");
 			return new SPredicateWithWitnessNode(programPoint, serial, new String[0], trueTerm, Collections.emptySet(),
-					trueTerm, witnessNode, stutteringSteps);
+					Collections.emptySet(), trueTerm, witnessNode, stutteringSteps);
 		});
 	}
 

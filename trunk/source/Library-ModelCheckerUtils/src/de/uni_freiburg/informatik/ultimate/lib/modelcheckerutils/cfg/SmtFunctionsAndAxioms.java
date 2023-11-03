@@ -31,17 +31,20 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.DeclarableFunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.ISmtDeclarable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.NonDeclaringTermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -49,11 +52,19 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
 /**
- * {@link SmtFunctionsAndAxioms} contains axioms and SMT function symbols created throughout a toolchain.
+ * {@link SmtFunctionsAndAxioms} contains axioms and SMT function symbols
+ * created throughout a toolchain.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
- *         TODO: Extend {@link HistoryRecordingScript} to be able to create a nicer term transferrer
+ *         TODO: Extend {@link HistoryRecordingScript} to be able to create a
+ *         nicer term transferrer
+ *
+ *         TODO 20220401 Matthias: It does not make sense to store axioms and
+ *         SMT function symbols that are created throughout a toolchain in the
+ *         ICFG. Each algorithm should store the function symbol that it
+ *         utilizes. FunctionSymbols that are utilized by the ICFG should be
+ *         stored in the symbol table of the ICFG.
  *
  */
 public class SmtFunctionsAndAxioms {
@@ -76,24 +87,22 @@ public class SmtFunctionsAndAxioms {
 	 *            {@link SmtFunctionsAndAxioms} instance belongs.
 	 */
 	public SmtFunctionsAndAxioms(final ManagedScript mgdScript) {
-		this(mgdScript.getScript().term("true"), new String[0], mgdScript);
+		this(mgdScript.getScript().term("true"), Collections.emptySet(), mgdScript);
 	}
 
 	/**
-	 * Create a {@link SmtFunctionsAndAxioms} instance with axioms defined by a {@link Term} and a number of defining
-	 * procedures (or none).
+	 * Create a {@link SmtFunctionsAndAxioms} instance with axioms defined by a
+	 * {@link Term} and a set of {@link IProgramFunction}s.
 	 *
-	 * @param axioms
-	 *            Axioms given as {@link Term}.
-	 * @param defininingProcedures
-	 *            The procedures from which the axioms come or null.
-	 * @param script
-	 *            A {@link ManagedScript} instance that was used to build the axioms term and the ICFG to which this
-	 *            {@link SmtFunctionsAndAxioms} instance belongs.
+	 * @param axioms Axioms given as {@link Term}.
+	 * @param funs   The procedures from which the axioms come or null.
+	 * @param script A {@link ManagedScript} instance that was used to build the
+	 *               axioms term and the ICFG to which this
+	 *               {@link SmtFunctionsAndAxioms} instance belongs.
 	 */
-	public SmtFunctionsAndAxioms(final Term axioms, final String[] defininingProcedures,
+	public SmtFunctionsAndAxioms(final Term axioms, final Set<IProgramFunction> funs,
 			final ManagedScript mgdScript) {
-		this(new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, defininingProcedures, axioms, Collections.emptySet(),
+		this(new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, new String[0], axioms, Collections.emptySet(), funs,
 				axioms), mgdScript);
 	}
 
@@ -120,15 +129,17 @@ public class SmtFunctionsAndAxioms {
 	/**
 	 * Create a new {@link SmtFunctionsAndAxioms} instance with an additional axiom without corresponding procedure.
 	 * Also asserts the new axiom in the underlying script.
+	 * @param symbolTable
 	 */
-	public SmtFunctionsAndAxioms addAxiom(final Term additionalAxioms) {
+	public SmtFunctionsAndAxioms addAxiom(final Term additionalAxioms, final IIcfgSymbolTable symbolTable) {
 		final Term newAxioms = SmtUtils.and(mScript, mAxioms.getClosedFormula(), additionalAxioms);
 		final LBool quickCheckAxioms = mScript.assertTerm(additionalAxioms);
 		// TODO: Use an Ultimate result to report inconsistent axioms; we do not want to disallow inconsistent axioms,
 		// we just want to be informed about them.
 		assert quickCheckAxioms != LBool.UNSAT : "Axioms are inconsistent";
-		final IPredicate newAxiomsPred = new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, new String[0],
-				additionalAxioms, Collections.emptySet(), newAxioms);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(newAxioms, mMgdScript, symbolTable);
+		final IPredicate newAxiomsPred = new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, tvp.getProcedures(),
+				tvp.getFormula(), tvp.getVars(), tvp.getFuns(), tvp.getClosedFormula());
 		return new SmtFunctionsAndAxioms(newAxiomsPred, mMgdScript);
 	}
 
@@ -231,7 +242,7 @@ public class SmtFunctionsAndAxioms {
 				}
 				substitutionMapping.put(paramVar, newArgs[i]);
 			}
-			setResult(new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(body));
+			setResult(Substitution.apply(mMgdScript, substitutionMapping, body));
 		}
 	}
 

@@ -152,7 +152,7 @@ public class BlockEncodingBacktranslator extends
 		}
 
 		final Map<Integer, ProgramState<Term>> newValuesMap = new HashMap<>();
-		newValuesMap.put(-1, oldIcfgPe.getInitialProgramState());
+		newValuesMap.put(-1, translateProgramState(oldIcfgPe.getInitialProgramState()));
 		for (int i = 0; i < newValues.size(); ++i) {
 			newValuesMap.put(i, newValues.get(i));
 		}

@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public class StatementFactory {
 
-
 	public static AssignmentStatement constructSingleAssignmentStatement(final ILocation loc, final LeftHandSide lhs,
 			final Expression rhs) {
 		return constructAssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { rhs });
@@ -71,7 +70,6 @@ public class StatementFactory {
 
 		return new AssignmentStatement(loc, lhs, rhs);
 	}
-
 
 	public static CallStatement constructCallStatement(final ILocation loc, final boolean isForall,
 			final VariableLHS[] variableLHSs, final String methodName, final Expression[] arguments) {

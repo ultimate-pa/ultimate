@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -331,7 +330,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 			mBenchmarkGenerator.incrementUsefullRunGeq2();
 			final int additionalInterpolants = addInterpolants(run.getStateSequence(), tc.getInterpolants());
 			mBenchmarkGenerator.reportAdditionalInterpolants(additionalInterpolants);
-			addTransitions(run.getStateSequence(), tc);
+			addTransitions(tc);
 		} else {
 			mBenchmarkGenerator.incrementUselessRunGeq2();
 		}
@@ -361,7 +360,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		return null;
 	}
 
-	private void addTransitions(final ArrayList<IPredicate> stateSequence, final InterpolatingTraceCheck<LETTER> tc) {
+	private void addTransitions(final InterpolatingTraceCheck<LETTER> tc) {
 		final TracePredicates ipp = new TracePredicates(tc);
 		final NestedWord<LETTER> nw = TraceCheckUtils.toNestedWord(tc.getTrace());
 		for (int i = 0; i < nw.length(); i++) {

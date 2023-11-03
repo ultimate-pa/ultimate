@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2022 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2022 University of Freiburg
  *
  * This file is part of the ULTIMATE BuchiAutomizer plug-in.
  *
@@ -35,39 +36,34 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheck;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineSubtermNormalizer;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
+/**
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ */
 public class BinaryStatePredicateManager {
 
 	private static final boolean SIMPLIFY_SUPPORTING_INVARIANTS = true;
@@ -75,145 +71,33 @@ public class BinaryStatePredicateManager {
 
 	private final Script mScript;
 	private final ManagedScript mManagedScript;
-	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final IProgramNonOldVar mUnseededVariable;
 	private final IProgramNonOldVar[] mOldRankVariables;
 
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
-
-	/**
-	 * True if predicates have been computed. False if predicates have been cleared or predicates have never been
-	 * computed so far.
-	 */
-	private boolean mProvidesPredicates;
-
-	private IPredicate mStemPrecondition;
-	private IPredicate mStemPostcondition;
-	private IPredicate mSiConjunction;
-	private IPredicate mHonda;
-	private Set<IProgramNonOldVar> mModifiableGlobalsAtHonda;
-	private IPredicate mRankEqualityAndSi;
 	private IPredicate mRankEquality;
 	private IPredicate mRankDecreaseAndBound;
-
-	private TerminationArgument mTerminationArgument;
 
 	private Term[] mLexTerms;
 	private IPredicate[] mLexEquality;
 	private IPredicate[] mLexDecrease;
 
-	/**
-	 * Is the loop also terminating without the stem?
-	 */
-	private Boolean mLoopTermination;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
 	public BinaryStatePredicateManager(final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IProgramNonOldVar unseededVariable, final IProgramNonOldVar[] oldRankVariables,
-			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mScript = csToolkit.getManagedScript().getScript();
 		mPredicateFactory = predicateFactory;
 		mManagedScript = csToolkit.getManagedScript();
-		mCsToolkit = csToolkit;
 
 		mUnseededVariable = unseededVariable;
 		mOldRankVariables = oldRankVariables;
-	}
-
-	public boolean providesPredicates() {
-		return mProvidesPredicates;
-	}
-
-	public boolean isLoopWithoutStemTerminating() {
-		assert mProvidesPredicates;
-		return mLoopTermination;
-	}
-
-	public TerminationArgument getTerminationArgument() {
-		assert mProvidesPredicates;
-		return mTerminationArgument;
-	}
-
-	/**
-	 * Compute IPredicate that states that the current value of the ranking function f is smaller than or equal to the
-	 * value of oldrank. I.e., (f_0,...f_n) <=_lex (oldrk_0,...,oldrk_n)
-	 */
-	public IPredicate getRankEquality() {
-		return mRankEquality;
-	}
-
-	/**
-	 * Compute IPredicate that states that the current value of the ranking function f is strictly smaller than the
-	 * value of oldrank and bounded from below. We use a formula similar to (f_0,...f_n) <_lex (oldrk_0,...,oldrk_n)
-	 * with the additional constraint that for the decreasing component oldrk_i>=0 holds.
-	 */
-	public IPredicate getRankDecreaseAndBound() {
-		return mRankDecreaseAndBound;
-	}
-
-	public IPredicate getStemPrecondition() {
-		assert mProvidesPredicates;
-		return mStemPrecondition;
-	}
-
-	public IPredicate getStemPostcondition() {
-		assert mProvidesPredicates;
-		return mStemPostcondition;
-	}
-
-	public IPredicate getSiConjunction() {
-		assert mProvidesPredicates;
-		return mSiConjunction;
-	}
-
-	@Deprecated
-	public IPredicate getHondaPredicate() {
-		assert mProvidesPredicates;
-		return mHonda;
-	}
-
-	@Deprecated
-	public IPredicate getRankEqAndSi() {
-		assert mProvidesPredicates;
-		return mRankEqualityAndSi;
-	}
-
-	public IProgramNonOldVar getUnseededVariable() {
-		assert mProvidesPredicates;
-		return mUnseededVariable;
-	}
-
-	public IProgramNonOldVar[] getOldRankVariables() {
-		assert mProvidesPredicates;
-		return mOldRankVariables;
-	}
-
-	public void clearPredicates() {
-		if (!mProvidesPredicates) {
-			throw new AssertionError("no predicates provided cannot clear");
-		}
-		mLoopTermination = null;
-		mTerminationArgument = null;
-		mStemPrecondition = null;
-		mStemPostcondition = null;
-		mSiConjunction = null;
-		mHonda = null;
-		mRankEqualityAndSi = null;
-		mRankEquality = null;
-		mRankDecreaseAndBound = null;
-		mProvidesPredicates = false;
-		mLexDecrease = null;
-		mLexEquality = null;
-		mLexTerms = null;
-		mModifiableGlobalsAtHonda = null;
 	}
 
 	/**
@@ -229,57 +113,32 @@ public class BinaryStatePredicateManager {
 	 * @param loop
 	 * @param stem
 	 */
-	public void computePredicates(final boolean loopTermination, final TerminationArgument termArg,
+	public BspmResult computePredicates(final TerminationArgument termArg,
 			final boolean removeSuperfluousSupportingInvariants, final UnmodifiableTransFormula stemTf,
 			final UnmodifiableTransFormula loopTf, final Set<IProgramNonOldVar> modifiableGlobals) {
-		assert mLoopTermination == null;
-		assert mTerminationArgument == null;
-		assert mStemPrecondition == null;
-		assert mStemPostcondition == null;
-		assert mHonda == null;
-		assert mRankEqualityAndSi == null;
-		assert mRankEquality == null;
-		assert mRankDecreaseAndBound == null;
-		assert mLexDecrease == null;
-		assert mLexEquality == null;
-		assert mLexTerms == null;
-		assert mModifiableGlobalsAtHonda == null;
-		// assert modifiableGlobalsAtHonda.contains(mUnseededVariable) : "unseeded var may be modified by each
-		// procedure";
-		mLoopTermination = loopTermination;
-		mTerminationArgument = termArg;
 		final IPredicate unseededPredicate = unseededPredicate();
-		mStemPrecondition = unseededPredicate;
-		mModifiableGlobalsAtHonda = modifiableGlobals;
 
-		final RankingFunction rf = mTerminationArgument.getRankingFunction();
-		decodeLex(rf);
-		mRankEquality = computeRankEquality();
+		decodeLex(termArg.getRankingFunction());
+		mRankEquality = mPredicateFactory.and(mLexEquality);
 		mRankDecreaseAndBound = computeRankDecreaseAndBound();
-		mSiConjunction = computeSiConjunction(mTerminationArgument.getSupportingInvariants(),
-				mTerminationArgument.getArrayIndexSupportingInvariants(), removeSuperfluousSupportingInvariants, stemTf,
-				loopTf, modifiableGlobals);
-		final boolean siConjunctionIsTrue = isTrue(mSiConjunction);
-		if (siConjunctionIsTrue) {
-			mStemPostcondition = unseededPredicate;
+		final IPredicate siConjunction =
+				computeSiConjunction(termArg.getSupportingInvariants(), termArg.getArrayIndexSupportingInvariants(),
+						removeSuperfluousSupportingInvariants, stemTf, loopTf, modifiableGlobals);
+		final IPredicate unseededOrRankDecrease = mPredicateFactory.or(unseededPredicate, mRankDecreaseAndBound);
+		IPredicate stemPostcondition;
+		IPredicate rankEqualityAndSi;
+		IPredicate honda;
+		if (SmtUtils.isTrueLiteral(siConjunction.getFormula())) {
+			stemPostcondition = unseededPredicate;
+			rankEqualityAndSi = mRankEquality;
+			honda = unseededOrRankDecrease;
 		} else {
-			mStemPostcondition = mPredicateFactory.and(unseededPredicate, mSiConjunction);
+			stemPostcondition = mPredicateFactory.and(unseededPredicate, siConjunction);
+			rankEqualityAndSi = mPredicateFactory.and(mRankEquality, siConjunction);
+			honda = mPredicateFactory.and(siConjunction, unseededOrRankDecrease);
 		}
-		if (siConjunctionIsTrue) {
-			mRankEqualityAndSi = mRankEquality;
-		} else {
-			mRankEqualityAndSi = mPredicateFactory.and(mRankEquality, mSiConjunction);
-		}
-		IPredicate unseededOrRankDecrease;
-
-		unseededOrRankDecrease = mPredicateFactory.or(unseededPredicate, mRankDecreaseAndBound);
-
-		if (siConjunctionIsTrue) {
-			mHonda = unseededOrRankDecrease;
-		} else {
-			mHonda = mPredicateFactory.and(mSiConjunction, unseededOrRankDecrease);
-		}
-		mProvidesPredicates = true;
+		return new BspmResult(termArg, mRankEquality, mRankDecreaseAndBound, unseededPredicate, stemPostcondition,
+				siConjunction, honda, rankEqualityAndSi, mOldRankVariables);
 	}
 
 	private List<Term> removeSuperfluousSupportingInvariants(final List<Term> siTerms,
@@ -353,7 +212,7 @@ public class BinaryStatePredicateManager {
 	 *
 	 * @return
 	 */
-	static Term[] startingFromIPlusList(final List<Term> list, final int i, final List<Term> additionalList) {
+	private static Term[] startingFromIPlusList(final List<Term> list, final int i, final List<Term> additionalList) {
 		final List<Term> result = new ArrayList<>(list.size() + i + list.size());
 		for (int j = i; j < list.size(); j++) {
 			result.add(list.get(j));
@@ -432,16 +291,16 @@ public class BinaryStatePredicateManager {
 		return sat == LBool.UNSAT;
 	}
 
-	public IPredicate supportingInvariant2Predicate(final SupportingInvariant si) {
-		Term formula = si.asTerm(mManagedScript.getScript());
-		formula = SmtUtils.simplify(mManagedScript, formula, mServices, mSimplificationTechnique);
-		return term2Predicate(formula);
-	}
-
-	public IPredicate term2Predicate(final Term term) {
-		final IPredicate result = mPredicateFactory.newPredicate(term);
-		return result;
-	}
+	// public IPredicate supportingInvariant2Predicate(final SupportingInvariant si) {
+	// Term formula = si.asTerm(mManagedScript.getScript());
+	// formula = SmtUtils.simplify(mManagedScript, formula, mServices, mSimplificationTechnique);
+	// return term2Predicate(formula);
+	// }
+	//
+	// public IPredicate term2Predicate(final Term term) {
+	// final IPredicate result = mPredicateFactory.newPredicate(term);
+	// return result;
+	// }
 
 	/**
 	 * Given a RankingFunction with lex terms (f_0, ..., f_n), initialize the array mLexEquality with the terms
@@ -468,11 +327,6 @@ public class BinaryStatePredicateManager {
 				mLexTerms[i] = mScript.annotate(mLexTerms[i], annot);
 			}
 		}
-	}
-
-	private IPredicate computeRankEquality() {
-		final IPredicate result = mPredicateFactory.and(mLexEquality);
-		return result;
 	}
 
 	private IPredicate computeRankDecreaseAndBound() {
@@ -507,54 +361,107 @@ public class BinaryStatePredicateManager {
 		return geq;
 	}
 
-	public boolean checkSupportingInvariant(IPredicate siPredicate, final NestedWord<? extends IIcfgTransition<?>> stem,
-			final NestedWord<? extends IAction> loop, final ModifiableGlobalsTable modifiableGlobalsTable) {
-		boolean result = true;
-		final IPredicate truePredicate = mPredicateFactory.newPredicate(mManagedScript.getScript().term("true"));
-		if (isTrue(siPredicate)) {
-			siPredicate = truePredicate;
+	// public boolean checkSupportingInvariant(IPredicate siPredicate, final NestedWord<? extends IIcfgTransition<?>>
+	// stem,
+	// final NestedWord<? extends IIcfgTransition<?>> loop) {
+	// final IPredicate truePredicate = mPredicateFactory.newPredicate(mManagedScript.getScript().term("true"));
+	// if (isTrue(siPredicate)) {
+	// siPredicate = truePredicate;
+	// }
+	// final LBool stemCheck = createTraceCheck(truePredicate, siPredicate, stem).isCorrect();
+	// if (stemCheck != LBool.UNSAT) {
+	// return false;
+	// }
+	// final LBool loopCheck = createTraceCheck(siPredicate, siPredicate, loop).isCorrect();
+	// if (loopCheck != LBool.UNSAT) {
+	// return false;
+	// }
+	// return true;
+	// }
+	//
+	// public boolean checkRankDecrease(final NestedWord<? extends IIcfgTransition<?>> loop) {
+	// // TODO: This creates a new predicate, since rankEqualityAndSi is no member anymore
+	// // Is this an issue? This method is only called within assertions.
+	// final IPredicate rankEqualityAndSi = mPredicateFactory.and(mRankEquality, mSiConjunction);
+	// return createTraceCheck(rankEqualityAndSi, mRankDecreaseAndBound, loop).isCorrect() == LBool.UNSAT;
+	// }
+	//
+	// private ITraceCheck<?> createTraceCheck(final IPredicate preCond, final IPredicate postCond,
+	// final NestedWord<? extends IIcfgTransition<?>> trace) {
+	// return new TraceCheck<>(preCond, postCond, new TreeMap<>(), trace, mServices, mCsToolkit,
+	// AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false);
+	//
+	// }
+
+	public static class BspmResult {
+		private final TerminationArgument mTerminationArgument;
+		private final IPredicate mRankEquality;
+		private final IPredicate mRankDecreaseAndBound;
+		private final IPredicate mStemPrecondition;
+		private final IPredicate mStemPostcondition;
+		private final IPredicate mSiConjunction;
+		private final IPredicate mHonda;
+		private final IPredicate mRankEqualityAndSi;
+		private final IProgramNonOldVar[] mOldRankVariables;
+
+		public BspmResult(final TerminationArgument terminationArgument, final IPredicate rankEquality,
+				final IPredicate rankDecreaseAndBound, final IPredicate stemPrecondition,
+				final IPredicate stemPostcondition, final IPredicate siConjunction, final IPredicate honda,
+				final IPredicate rankEqualityAndSi, final IProgramNonOldVar[] oldRankVariables) {
+			mTerminationArgument = terminationArgument;
+			mRankEquality = rankEquality;
+			mRankDecreaseAndBound = rankDecreaseAndBound;
+			mStemPrecondition = stemPrecondition;
+			mStemPostcondition = stemPostcondition;
+			mSiConjunction = siConjunction;
+			mHonda = honda;
+			mRankEqualityAndSi = rankEqualityAndSi;
+			mOldRankVariables = oldRankVariables;
 		}
-		final LBool stemCheck = createTraceCheck(truePredicate, siPredicate, stem).isCorrect();
-		if (stemCheck != LBool.UNSAT) {
-			result = false;
+
+		public TerminationArgument getTerminationArgument() {
+			return mTerminationArgument;
 		}
-		final LBool loopCheck = createTraceCheck(siPredicate, siPredicate, stem).isCorrect();
-		if (loopCheck != LBool.UNSAT) {
-			result = false;
+
+		/**
+		 * Compute IPredicate that states that the current value of the ranking function f is smaller than or equal to
+		 * the value of oldrank. I.e., (f_0,...f_n) <=_lex (oldrk_0,...,oldrk_n)
+		 */
+		public IPredicate getRankEquality() {
+			return mRankEquality;
 		}
-		return result;
-	}
 
-	public boolean checkRankDecrease(final NestedWord<? extends IIcfgTransition<?>> loop,
-			final ModifiableGlobalsTable modifiableGlobalsTable) {
-		return createTraceCheck(mRankEqualityAndSi, mRankDecreaseAndBound, loop).isCorrect() == LBool.UNSAT;
-	}
-
-	private ITraceCheck createTraceCheck(final IPredicate preCond, final IPredicate postCond,
-			final NestedWord<? extends IIcfgTransition<?>> trace) {
-		return new TraceCheck<>(preCond, postCond, new TreeMap<Integer, IPredicate>(), trace, mServices, mCsToolkit,
-				AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false);
-
-	}
-
-	private static boolean isTrue(final IPredicate pred) {
-		final Term term = pred.getFormula();
-		if (term instanceof ApplicationTerm) {
-			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (appTerm.getFunction().getName().equals("true")) {
-				return true;
-			}
+		/**
+		 * Compute IPredicate that states that the current value of the ranking function f is strictly smaller than the
+		 * value of oldrank and bounded from below. We use a formula similar to (f_0,...f_n) <_lex (oldrk_0,...,oldrk_n)
+		 * with the additional constraint that for the decreasing component oldrk_i>=0 holds.
+		 */
+		public IPredicate getRankDecreaseAndBound() {
+			return mRankDecreaseAndBound;
 		}
-		return false;
-	}
 
-	public boolean containsOldRankVariable(final IPredicate pred) {
-		for (final IProgramVar rankVariable : getOldRankVariables()) {
-			if (pred.getVars().contains(rankVariable)) {
-				return true;
-			}
+		public IPredicate getStemPrecondition() {
+			return mStemPrecondition;
 		}
-		return false;
-	}
 
+		public IPredicate getStemPostcondition() {
+			return mStemPostcondition;
+		}
+
+		public IPredicate getSiConjunction() {
+			return mSiConjunction;
+		}
+
+		public IPredicate getHondaPredicate() {
+			return mHonda;
+		}
+
+		public IPredicate getRankEqAndSi() {
+			return mRankEqualityAndSi;
+		}
+
+		public IProgramNonOldVar[] getOldRankVariables() {
+			return mOldRankVariables;
+		}
+	}
 }

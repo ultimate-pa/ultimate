@@ -5,8 +5,10 @@
 //        operators and checks if a value is (un)equal to zero)
 //  - before conversions to signed data types, 
 //  - before casts to unsigned data types if the resulting data type has a 
-//        larger size, and
-//  - before division and modulo operations.
+//        larger size,
+//  - before division and modulo operations,
+//  - before array declarations, and
+//  - before calls to C library functions.
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 2015-08-31
 

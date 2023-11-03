@@ -38,13 +38,19 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.AutomatonFreeRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule.IpAbStrategyModuleResult;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 
 /**
@@ -61,7 +67,7 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 		implements IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> {
 
 	private final ILogger mLogger;
-	private final IRefinementStrategy<L> mStrategy;
+	private final ITARefinementStrategy<L> mStrategy;
 
 	private NestedWordAutomaton<L, IPredicate> mInterpolantAutomaton;
 	private List<QualifiedTracePredicates> mUsedTracePredicates;
@@ -69,7 +75,7 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 	private final RefinementEngineStatisticsGenerator mAfeStatistics;
 
 	public TraceAbstractionRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
-			final IRefinementStrategy<L> strategy) {
+			final ITARefinementStrategy<L> strategy) {
 		mLogger = logger;
 		mStrategy = strategy;
 		final AutomatonFreeRefinementEngine<L> afEngine =
@@ -120,6 +126,18 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 		return new BasicRefinementEngineResult<>(mAfeResult.getCounterexampleFeasibility(), mInterpolantAutomaton,
 				mAfeResult.getIcfgProgramExecution(), mAfeResult.somePerfectSequenceFound(), mUsedTracePredicates,
 				new Lazy<>(mAfeResult::getHoareTripleChecker), new Lazy<>(mAfeResult::getPredicateUnifier));
+	}
+
+	/**
+	 * 
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 */
+	public interface ITARefinementStrategy<L extends IAction> extends IRefinementStrategy<L> {
+		/**
+		 * @return the {@link IIpAbStrategyModule} that should be used to build an interpolant automaton from the
+		 *         collected interpolant sequences.
+		 */
+		IIpAbStrategyModule<L> getInterpolantAutomatonBuilder();
 	}
 
 }

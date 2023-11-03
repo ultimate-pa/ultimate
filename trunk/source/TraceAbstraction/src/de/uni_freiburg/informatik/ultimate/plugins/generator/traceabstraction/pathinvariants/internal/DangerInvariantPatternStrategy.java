@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.xnf.Dnf;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -97,8 +98,8 @@ public class DangerInvariantPatternStrategy extends LocationIndependentLinearIne
 			conjuncts.add(pattern1);
 			conjuncts.add(pattern2);
 			final Term primedCoefficient = pattern1.getCoefficientForOutVar(havocedVar);
-			solver.assertTerm(
-					solver.term("=", primedCoefficient, Rational.ONE.toTerm(solver.sort(SmtSortUtils.REAL_SORT))));
+			solver.assertTerm(SmtUtils.binaryEquality(solver, primedCoefficient,
+					Rational.ONE.toTerm(solver.sort(SmtSortUtils.REAL_SORT))));
 			for (final Term coefficient : pattern1.getCoefficients()) {
 				mIntegerCoefficients.get(transition).add(coefficient);
 			}

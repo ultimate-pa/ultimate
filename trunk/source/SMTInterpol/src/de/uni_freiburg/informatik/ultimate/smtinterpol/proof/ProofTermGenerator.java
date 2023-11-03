@@ -29,47 +29,55 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode.Antecedent;
 
 /**
- * A non-recursive proof tree printer.  This class tries to avoid a stack
+ * A non-recursive proof tree printer. This class tries to avoid a stack
  * overflow by using an explicit stack that contains different visitors.
+ *
  * @author Juergen Christ
  */
 public class ProofTermGenerator extends NonRecursive {
-
 	private static class GenerateTerm implements Walker {
 		private final Clause mCls;
+
 		public GenerateTerm(final Clause cls) {
 			assert cls.getProof() instanceof ResolutionNode;
 			mCls = cls;
 		}
+
 		@Override
 		public void walk(final NonRecursive nr) {
 			final ProofTermGenerator engine = (ProofTermGenerator) nr;
 			final Theory t = engine.getTheory();
-			final Antecedent[] antes = ((ResolutionNode) mCls.getProof()).
-					getAntecedents();
-			final Term[] args = new Term[1 + antes.length];
-			args[0] = engine.getConverted();
+			final Antecedent[] antes = ((ResolutionNode) mCls.getProof()).getAntecedents();
+			Term proof = engine.getConverted();
 			for (int i = 0; i < antes.length; ++i) {
-				args[i + 1] = t.annotatedTerm(
-						new Annotation[] {
-							new Annotation(":pivot",
-									antes[i].mPivot.getSMTFormula(t, true))},
-									engine.getConverted());
+				final Literal pivot = antes[i].mPivot;
+				final Term proofAnte = engine.getConverted();
+				final boolean anteIsPositive = pivot.getSign() > 0;
+				proof = engine.mProofRules.resolutionRule(pivot.getAtom().getSMTFormula(t),
+						anteIsPositive ? proofAnte : proof, anteIsPositive ? proof : proofAnte);
 			}
-			final Term res = t.term(ProofConstants.FN_RES, args);
-			engine.setResult(mCls, res);
-			engine.pushConverted(res);
+			final Object[] clause = ProofRules.convertProofLiteralsToAnnotation(mCls.toProofLiterals(engine.mProofRules));
+			final Annotation[] clauseAnnotation = new Annotation[] {
+					new Annotation(ProofConstants.ANNOTKEY_PROVES, clause),
+					new Annotation(ProofConstants.ANNOTKEY_RUP, null)
+			};
+			proof = t.annotatedTerm(clauseAnnotation, proof);
+			engine.setResult(mCls, proof);
+			engine.pushConverted(proof);
 		}
 	}
 
 	private static class Expander implements Walker {
 		private final Clause mCls;
+
 		public Expander(final Clause cls) {
 			mCls = cls;
 		}
+
 		@Override
 		public void walk(final NonRecursive nr) {
 			final ProofTermGenerator engine = (ProofTermGenerator) nr;
@@ -86,9 +94,9 @@ public class ProofTermGenerator extends NonRecursive {
 				final IAnnotation annot = ln.getTheoryAnnotation();
 				if (annot == null) {
 					assert ln.getLeafKind() == LeafNode.ASSUMPTION;
-					res = t.term(ProofConstants.FN_ASSUMPTION, mCls.toTerm(t));
+					res = engine.mProofRules.asserted(mCls.toTerm(t));
 				} else {
-					res = annot.toTerm(mCls, t);
+					res = annot.toTerm(mCls, engine.mProofRules);
 				}
 				engine.setResult(mCls, res);
 				engine.pushConverted(res);
@@ -103,27 +111,33 @@ public class ProofTermGenerator extends NonRecursive {
 			}
 		}
 	}
+
 	/**
 	 * Stack of recently produced antecedent names.
 	 */
 	private final Deque<Term> mConverted = new ArrayDeque<Term>();
 	/**
-	 * Theory used in sexpr conversion.
-	 */
-	private final Theory mTheory;
-	/**
 	 * Mapping from clauses to terms representing the corresponding proof node.
 	 */
 	private final Map<Clause, Term> mNodes = new HashMap<Clause, Term>();
+
+	/**
+	 * The proof rule creator.
+	 */
+	ProofRules mProofRules;
+
 	/**
 	 * Initialize the generator with a theory.
-	 * @param t   The theory.
+	 *
+	 * @param t
+	 *            The theory.
 	 */
-	public ProofTermGenerator(final Theory t) {
-		mTheory = t;
+	public ProofTermGenerator(final ProofRules proofRules) {
+		mProofRules = proofRules;
 	}
+
 	public Theory getTheory() {
-		return mTheory;
+		return mProofRules.getTheory();
 	}
 
 	Term getTerm(final Clause cls) {
@@ -135,7 +149,7 @@ public class ProofTermGenerator extends NonRecursive {
 	}
 
 	void pushConverted(final Term res) {
-		assert res.getSort().getName().equals(ProofConstants.SORT_PROOF);
+		assert ProofRules.isProof(res);
 		mConverted.push(res);
 	}
 
@@ -147,6 +161,6 @@ public class ProofTermGenerator extends NonRecursive {
 		assert cls.getProof() != null;
 		run(new Expander(cls));
 		final Term res = mConverted.pop();
-		return new FixResolutionProof().fix(res);
+		return res;
 	}
 }

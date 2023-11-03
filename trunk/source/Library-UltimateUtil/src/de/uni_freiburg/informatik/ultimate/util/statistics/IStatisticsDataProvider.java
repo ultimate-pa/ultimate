@@ -36,6 +36,9 @@ import java.util.Collection;
  */
 public interface IStatisticsDataProvider {
 
+	/**
+	 * @return all keys under which single metrics are retrievable
+	 */
 	default Collection<String> getKeys() {
 		return getBenchmarkType().getKeys();
 	}

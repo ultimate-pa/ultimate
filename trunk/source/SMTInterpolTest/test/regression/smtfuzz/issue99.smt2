@@ -1,5 +1,3 @@
-(set-info :expect-errors 1) ; problem with quantifier since we turn on model-check-mode
-(set-option :produce-models true)
 (set-logic AUFNIRA)
 (declare-const v0 Bool)
 (declare-const v1 Bool)

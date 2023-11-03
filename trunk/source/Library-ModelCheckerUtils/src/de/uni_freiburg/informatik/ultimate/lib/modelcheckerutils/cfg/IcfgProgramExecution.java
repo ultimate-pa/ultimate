@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NoBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.ProgramExecutionFormatter;
@@ -81,8 +82,25 @@ public class IcfgProgramExecution<L extends IAction> implements IProgramExecutio
 		mIsConcurrent = isConcurrent;
 		mTrace = trace;
 		mPartialProgramStateMapping = partialProgramStateMapping;
+		assert isProgramStateMappingInRange(trace, partialProgramStateMapping);
 		mBranchEncoders = branchEncoders;
 		mTransitionClazz = transitionClazz;
+	}
+
+	private boolean isProgramStateMappingInRange(final List<AtomicTraceElement<L>> trace,
+			final Map<Integer, ProgramState<Term>> partialProgramStateMapping) {
+		for (final Entry<Integer, ProgramState<Term>> entry : partialProgramStateMapping.entrySet()) {
+			if (entry.getKey() < -1) {
+				assert false : "Position of state below -1: " + entry;
+				return false;
+			} else if (entry.getKey() >= trace.size()) {
+				assert false : "Position of state above end of trace: " + entry;
+				return false;
+			}
+			// other positions are fine
+		}
+		// no violations, every entry is in range
+		return true;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -255,6 +273,12 @@ public class IcfgProgramExecution<L extends IAction> implements IProgramExecutio
 				ateBuilder.setStepInfo(StepInfo.FORK);
 				assert threadIdMap != null;
 			} else if (te instanceof IIcfgJoinTransitionThreadOther<?>) {
+				final IIcfgTransition<?> teTrans = (IIcfgTransition<?>) te;
+				if (threadIdMap != null) {
+					final Integer joinedThreadId = threadIdMap.get(teTrans.getSource().getProcedure());
+					assert joinedThreadId != null;
+					ateBuilder.setJoinedThreadId(joinedThreadId);
+				}
 				ateBuilder.setStepInfo(StepInfo.JOIN);
 				assert threadIdMap != null;
 			} else if (te instanceof IIcfgJoinTransitionThreadCurrent<?>) {

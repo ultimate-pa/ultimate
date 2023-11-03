@@ -31,46 +31,22 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * Objects of this class represent binary equals relations (i.e. terms of the
- * form (= a b)) and their negations (i.e. terms of the form
- * (not (= a b)) resp. (distinct a b)).
- * @author Matthias Heizmann
+ * form (= a b)) and their negations (i.e. terms of the form (not (= a b)) resp.
+ * (distinct a b)).
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class BinaryEqualityRelation extends BinaryRelation {
-
-	public BinaryEqualityRelation(final Term term)
-			throws NoRelationOfThisKindException {
-		super(term);
-	}
 
 	private BinaryEqualityRelation(final RelationSymbol relSymb, final Term lhs, final Term rhs) {
 		super(relSymb, lhs, rhs);
 	}
 
-	@Override
-	protected void checkSort(final Term[] params)
-			throws NoRelationOfThisKindException {
-		// do nothing, every Sort is ok
-	}
-
-	@Override
-	protected RelationSymbol getRelationSymbol(final String functionSymbolName,
-			final boolean isNegated) throws NoRelationOfThisKindException {
-		RelationSymbol symb = null;
-		if (functionSymbolName.equals("=")) {
-			symb = RelationSymbol.valueOf("EQ");
-		} else if (functionSymbolName.equals("distinct")) {
-			symb = RelationSymbol.valueOf("DISTINCT");
-		} else {
-			throw new NoRelationOfThisKindException(
-					"no equality relation symbol");
-		}
-		final RelationSymbol symb1 = symb;
-		symb = isNegated ? symb1.negate() : symb;
-		return symb;
-	}
-
-
+	/**
+	 * Return a representation of a given {@link Term} as a
+	 * {@link BinaryEqualityRelation}, return null if no such representation exists.
+	 */
 	public static BinaryEqualityRelation convert(final Term term) {
 		if (!(term instanceof ApplicationTerm)) {
 			return null;

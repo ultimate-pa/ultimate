@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransf
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
@@ -106,7 +107,7 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 
 	private void computeResult() {
 		final Term formulaInNnf =
-				new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH).transform(mFormula);
+				new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP).transform(mFormula);
 
 		final StoreChainSquisher scs = new StoreChainSquisher(mMgdScript);
 		final List<Term> conjunction = new ArrayList<>();
@@ -153,7 +154,7 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 		public void walk(final NonRecursive walker, final ApplicationTerm term) {
 			if ("=".equals(term.getFunction().getName())) {
 				handleXquality(term.getParameters()[0], term.getParameters()[1], true);
-			} else if ("distinct".equals(term.getFunction().getName())) {
+			} else if (List.of("distinct", ">", "<").contains(term.getFunction().getName())) {
 				handleXquality(term.getParameters()[0], term.getParameters()[1], false);
 			} else if ("not".equals(term.getFunction().getName())
 					&& SmtUtils.isFunctionApplication(term.getParameters()[0], "=")) {
@@ -177,13 +178,9 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 
 			} else if ("false".equals(term.getFunction().getName())) {
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.emptySet()));
-			} else if ("true".equals(term.getFunction().getName())) {
-				mResultStack.push(mEqConstraintFactory.getEmptyDisjunctiveConstraint(INPLACE_CONJUNCTIONS));
 			} else {
-				// we don't recognize this function symbol -- overapproximating its effects by
-				// "top"
-				// TODO: perhaps we could make some checks here if it is trivially bottom or
-				// something like that..
+				if ("true".equals(term.getFunction().getName())) {
+				}
 				mResultStack.push(mEqConstraintFactory.getEmptyDisjunctiveConstraint(INPLACE_CONJUNCTIONS));
 			}
 
@@ -260,19 +257,17 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 						newConstraint = mEqConstraintFactory.addEquality(selectEqNode, storeValue,
 								intermediateConstraint, INPLACE_CONJUNCTIONS);
 					}
+				} else if (storeTerm == null) {
+					newConstraint = mEqConstraintFactory.addDisequality(simpleArray, otherSimpleArray,
+							mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
 				} else {
-					if (storeTerm == null) {
-						newConstraint = mEqConstraintFactory.addDisequality(simpleArray, otherSimpleArray,
-								mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
-					} else {
-						/*
-						 * the best approximation for the negation of a weak equivalence that we can express is a
-						 * disequality on the arrays. i.e. not ( a -- i -- b ) ~~> a != b However, here we need to
-						 * negate a -- i -- b /\ a[i] = x, thus we would need to return two EqConstraints --> TODO
-						 * postponing this, overapproximating to "true"..
-						 */
-						newConstraint = mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS);
-					}
+					/*
+					 * the best approximation for the negation of a weak equivalence that we can express is a
+					 * disequality on the arrays. i.e. not ( a -- i -- b ) ~~> a != b However, here we need to negate a
+					 * -- i -- b /\ a[i] = x, thus we would need to return two EqConstraints --> TODO postponing this,
+					 * overapproximating to "true"..
+					 */
+					newConstraint = mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS);
 				}
 
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
@@ -296,7 +291,6 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 						mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
 			}
 			mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
-			return;
 		}
 
 		private boolean isElementTracked(final Term term) {
@@ -318,8 +312,8 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 
 		@Override
 		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
-			throw new UnsupportedOperationException(
-					"quantifiers in Transformulas are currently not supported in the" + " equality domain");
+			// Overapproximate quantifiers
+			mResultStack.push(mEqConstraintFactory.getEmptyDisjunctiveConstraint(INPLACE_CONJUNCTIONS));
 		}
 
 		@Override
@@ -335,6 +329,12 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 		public void walk(final NonRecursive walker, final MatchTerm term) {
 			throw new UnsupportedOperationException("not yet implemented: MatchTerm");
 		}
+
+		@Override
+		public void walk(final NonRecursive walker, final LambdaTerm term) {
+			throw new UnsupportedOperationException();
+		}
+
 	}
 
 	class MakeDisjunctionWalker implements Walker {
@@ -443,6 +443,9 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 				enqueueWalker(new SquishFirstOfTwoArgumentStoresWalker((ApplicationTerm) term));
 				assert ((ApplicationTerm) term).getParameters().length == 2;
 				pushTerms(((ApplicationTerm) term).getParameters());
+			} else if (term instanceof QuantifiedFormula) {
+				// Don't process quantified formulas
+				setResult(term);
 			} else {
 				super.convert(term);
 			}

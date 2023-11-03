@@ -85,7 +85,7 @@ public class IcfgTransformerSequence<INLOC extends IcfgLocation, OUTLOC extends 
 	 */
 	public IcfgTransformerSequence(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFacFirst, final ILocationFactory<OUTLOC, OUTLOC> funLocFacRest,
-			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass,
+			final IcfgTransformationBacktranslator backtranslationTracker, final Class<OUTLOC> outLocationClass,
 			final String newIcfgIdentifier, final List<ITransformulaTransformer> transformers) {
 		mLogger = Objects.requireNonNull(logger);
 		mIdentifier = newIcfgIdentifier;
@@ -104,8 +104,9 @@ public class IcfgTransformerSequence<INLOC extends IcfgLocation, OUTLOC extends 
 	}
 
 	private BasicIcfg<OUTLOC> transformRest(final BasicIcfg<OUTLOC> outIcfg,
-			final ILocationFactory<OUTLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
-			final Class<OUTLOC> outLocationClass, final Iterator<ITransformulaTransformer> transformerIter) {
+			final ILocationFactory<OUTLOC, OUTLOC> funLocFac,
+			final IcfgTransformationBacktranslator backtranslationTracker, final Class<OUTLOC> outLocationClass,
+			final Iterator<ITransformulaTransformer> transformerIter) {
 		BasicIcfg<OUTLOC> currentIcfg = outIcfg;
 		int iteration = 1;
 		while (transformerIter.hasNext()) {
@@ -119,7 +120,7 @@ public class IcfgTransformerSequence<INLOC extends IcfgLocation, OUTLOC extends 
 
 	private static <IN extends IcfgLocation, OUT extends IcfgLocation> BasicIcfg<OUT> transform(final ILogger logger,
 			final IIcfg<IN> originalIcfg, final ILocationFactory<IN, OUT> funLocFac,
-			final IBacktranslationTracker backtranslationTracker, final Class<OUT> outLocationClass,
+			final IcfgTransformationBacktranslator backtranslationTracker, final Class<OUT> outLocationClass,
 			final String newIcfgIdentifier, final ITransformulaTransformer transformer) {
 		transformer.preprocessIcfg(originalIcfg);
 		final BasicIcfg<OUT> resultIcfg =

@@ -5,7 +5,7 @@
 	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.2.2</version>
+		<version>0.2.3</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
@@ -56,6 +56,14 @@
 								<java jar="${flexBinary}" fork="true" dir="${dimacsDir}">
 									<arg value="dimacs.flex" />
 								</java>
+
+								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
+								dir="${proofsDir}" failonerror="true">
+								<arg value="proofs.cup" />
+								</java>
+								<java jar="${flexBinary}" fork="true" dir="${proofsDir}">
+									<arg value="proofs.flex" />
+								</java>
 							</target>
 						</configuration>
 						<goals>
@@ -96,6 +104,15 @@
 								<include>LexerSymbols.java</include>
 							</includes>
 						</fileset>
+						<fileset>
+							<directory>${proofsDir}</directory>
+							<includes>
+								<include>ProofParser.java</include>
+								<include>ProofLexer.java</include>
+								<include>ProofLexer.java~</include>
+								<include>ProofSymbols.java</include>
+							</includes>
+						</fileset>
 					</filesets>
 				</configuration>
 			</plugin>
@@ -103,7 +120,3 @@
 	</build>
 
 </project>
-
-
-
-

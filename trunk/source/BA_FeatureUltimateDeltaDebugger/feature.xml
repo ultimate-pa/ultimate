@@ -2,10 +2,9 @@
 <feature
       id="BA_FeatureUltimateDeltaDebugger"
       label="BA_FeatureUltimateDeltaDebugger"
-      version="0.2.2">
+      version="0.2.3">
 
    <requires>
-      <import feature="BA_FeatureDependenciesCommandlineE4"/>
       <import feature="BA_FeatureDependenciesCommon"/>
       <import feature="BA_FeatureUltimateCommon"/>
    </requires>

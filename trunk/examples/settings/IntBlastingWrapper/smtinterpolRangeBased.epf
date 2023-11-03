@@ -1,0 +1,8 @@
+#Sat May 18 19:41:01 CEST 2019
+\!/instance/de.uni_freiburg.informatik.ultimate.source.smtparser=
+/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/SmtParser\ Mode=IntBlastingWrapper
+/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/Command\ for\ external\ solver=
+/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/SMT\ solver=External_DefaultMode
+/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/IntBlasting\ translation\ mode=RangeBased
+@de.uni_freiburg.informatik.ultimate.source.smtparser=0.1.24
+file_export_version=3.0

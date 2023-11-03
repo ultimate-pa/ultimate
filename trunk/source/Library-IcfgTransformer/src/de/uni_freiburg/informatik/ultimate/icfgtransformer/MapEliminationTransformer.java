@@ -101,7 +101,7 @@ public class MapEliminationTransformer implements ITransformulaTransformer {
 		final EqualityAnalysisResult equalityAnalysisAfter =
 				mEqualityProvider.getAnalysisResult(mTargetLocations.get(transformula), mMapEliminator.getDoubletons());
 		final ModifiableTransFormula newTf =
-				mMapEliminator.getRewrittenTransFormula(modifiable, equalityAnalysisBefore, equalityAnalysisAfter);
+				mMapEliminator.eliminateMaps(modifiable, equalityAnalysisBefore, equalityAnalysisAfter);
 		// TODO: How can we decide whether the transformation is an overapproximation or not?
 		return new TransformulaTransformationResult(TransFormulaBuilder.constructCopy(mManagedScript, newTf,
 				Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()), true);

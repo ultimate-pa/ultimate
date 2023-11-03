@@ -100,7 +100,7 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 	@Override
 	public String getShortDescription() {
 		if (mCheckedSpecification == null) {
-			return "some specification holds - ERROR (information lost during translation process)";
+			return "some specification is violated - ERROR (information lost during translation process)";
 		}
 		return mCheckedSpecification.getNegativeMessage();
 	}

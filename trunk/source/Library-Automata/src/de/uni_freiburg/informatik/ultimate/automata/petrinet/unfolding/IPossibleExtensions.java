@@ -64,10 +64,10 @@ public interface IPossibleExtensions<LETTER, PLACE> {
 	 * @return {@code true} iff there is no extension.
 	 */
 	boolean isEmpy();
-	
-	public int getUsefulExtensionCandidates();
 
-	public int getUselessExtensionCandidates();
+	int getUsefulExtensionCandidates();
 
-	public int getMaximalSize();
+	int getUselessExtensionCandidates();
+
+	int getMaximalSize();
 }

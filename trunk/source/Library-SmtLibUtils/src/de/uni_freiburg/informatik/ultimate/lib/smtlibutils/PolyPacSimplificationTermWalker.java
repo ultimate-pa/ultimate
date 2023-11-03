@@ -27,18 +27,23 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Context.CcTransformation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context.CcTransformation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -70,7 +75,14 @@ import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
-
+	/**
+	 * Replace terms of the form `x = l ∧ φ(x)` by `x = l ∧ φ(l)` and replace terms
+	 * of the form `x ≠ l ∨ φ(x)` by `x ≠ l ∨ φ(l)`, where l is a literal (of sort
+	 * Real, Int, or BitVec) and x is a variable in a {@link PolynomialRelation}
+	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a
+	 * select term `(select a k)`.)
+	 */
+	private static final boolean APPLY_CONSTANT_FOLDING = true;
 	private static final boolean DEBUG_CHECK_RESULT = false;
 
 	private PolyPacSimplificationTermWalker(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
@@ -80,20 +92,21 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	}
 
 	@Override
-	Term constructContextForApplicationTerm(final Term context, final FunctionSymbol symb, final List<Term> allParams,
-			final int selectedParam) {
+	protected Term constructContextForApplicationTerm(final Term context, final FunctionSymbol symb,
+			final List<Term> allParams, final int selectedParam) {
 		return Context.buildCriticalConstraintForConDis(mServices, mMgdScript, context, symb, allParams, selectedParam,
 				CcTransformation.TO_NNF);
 	}
 
 	@Override
-	Term constructContextForQuantifiedFormula(final Term context, final int quant, final List<TermVariable> vars) {
+	protected Term constructContextForQuantifiedFormula(final Term context, final int quant,
+			final List<TermVariable> vars) {
 		return Context.buildCriticalContraintForQuantifiedFormula(mMgdScript.getScript(), context, vars,
 				CcTransformation.TO_NNF);
 	}
 
 	@Override
-	DescendResult convert(final Term context, final Term term) {
+	protected DescendResult convert(final Term context, final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			if (appTerm.getFunction().getName().equals("and") || appTerm.getFunction().getName().equals("or")) {
@@ -117,11 +130,50 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 		} else if (term instanceof QuantifiedFormula) {
 			return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 		}
+		if (APPLY_CONSTANT_FOLDING) {
+			final Term tmp = applyConstantFolding(mMgdScript, context, term);
+			if (tmp != term) {
+				return new TermContextTransformationEngine.FinalResultForAscend(tmp);
+			}
+		}
 		return new TermContextTransformationEngine.FinalResultForAscend(term);
 	}
 
+	/**
+	 * Use equalities of the form `x=l` (where x is a constant symbol or variable
+	 * and l is a number) to substitute all occurrences of x by the number l.
+	 *
+	 * @param context Term that we check for equalities. This term is not added to
+	 *                the result. E.g., in the
+	 *                {@link PolyPacSimplificationTermWalker} this is the critical
+	 *                constraint.
+	 * @param term    Term in which we apply the substitution.
+	 */
+	public static Term applyConstantFolding(final ManagedScript mgdScript, final Term context, final Term term) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final Term conjunct : SmtUtils.getConjuncts(context)) {
+			if (!SmtUtils.isFunctionApplication(conjunct, "=")) {
+				continue;
+			}
+			final PolynomialRelation polyRel = PolynomialRelation.of(mgdScript.getScript(), conjunct);
+			if (polyRel != null) {
+				final SolvedBinaryRelation sbr = polyRel.isSimpleEquality(mgdScript.getScript());
+				if (sbr != null) {
+					substitutionMapping.put(sbr.getLeftHandSide(), sbr.getRightHandSide());
+				}
+			}
+		}
+		final Term result;
+		if (!substitutionMapping.isEmpty()) {
+			result = Substitution.apply(mgdScript, substitutionMapping, term);
+		} else {
+			result = term;
+		}
+		return result;
+	}
+
 	@Override
-	Term constructResultForApplicationTerm(final Term context, final ApplicationTerm originalApplicationTerm,
+	protected Term constructResultForApplicationTerm(final Term context, final ApplicationTerm originalApplicationTerm,
 			final Term[] resultParams) {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			final CondisDepthCode contextCdc = CondisDepthCode.of(context);
@@ -148,12 +200,13 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 		return result;
 	}
 
-	public static Term simplify(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term context,
-			final Term term) {
+	public static Term simplify(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final Term context, final Term term) {
 		final Term result;
 		try {
-			result = TermContextTransformationEngine
-			.transform(new PolyPacSimplificationTermWalker(services, mgdScript), context, term);
+			final Comparator<Term> siblingOrder = null;
+			result = TermContextTransformationEngine.transform(new PolyPacSimplificationTermWalker(services, mgdScript),
+					siblingOrder, context, term);
 		} catch (final ToolchainCanceledException tce) {
 			final CondisDepthCode termCdc = CondisDepthCode.of(term);
 			final String taskDescription = String.format("simplifying a %s term", termCdc);
@@ -164,19 +217,19 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	}
 
 	@Override
-	Term constructResultForQuantifiedFormula(final Term context, final QuantifiedFormula originalQuantifiedFormula,
-			final Term resultSubformula) {
+	protected Term constructResultForQuantifiedFormula(final Term context,
+			final QuantifiedFormula originalQuantifiedFormula, final Term resultSubformula) {
 		return SmtUtils.quantifier(mMgdScript.getScript(), originalQuantifiedFormula.getQuantifier(),
 				Arrays.asList(originalQuantifiedFormula.getVariables()), resultSubformula);
 	}
 
 	@Override
-	boolean applyRepeatedlyUntilNoChange() {
+	protected boolean applyRepeatedlyUntilNoChange() {
 		return true;
 	}
 
 	@Override
-	void checkIntermediateResult(final Term context, final Term input, final Term output) {
+	protected void checkIntermediateResult(final Term context, final Term input, final Term output) {
 		final LBool lBool = SmtUtils.checkEquivalenceUnderAssumption(input, output, context, mMgdScript.getScript());
 		switch (lBool) {
 		case SAT:

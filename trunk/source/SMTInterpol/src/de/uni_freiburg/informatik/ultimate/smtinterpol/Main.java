@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2012 University of Freiburg
+ * Copyright (C) 2022 University of Freiburg
  *
  * This file is part of SMTInterpol.
  *
@@ -18,10 +18,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.aiger.AIGERFrontEnd;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dimacs.DIMACSParser;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusEnumerationScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib.SMTLIBParser;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ErrorCallback;
@@ -34,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTLIB2Parser;
  * @author Juergen Christ
  */
 public final class Main {
-
 	private Main() {
 		// Hide constructor
 	}
@@ -64,9 +67,11 @@ public final class Main {
 	/**
 	 * @param param Command line arguments.
 	 */
-	public static void main(String[] param) throws Exception {
+	public static void main(final String[] param) throws Exception {
 		final DefaultLogger logger = new DefaultLogger();
 		final OptionMap options = new OptionMap(logger, true);
+		final Deque<Option> optionList = new ArrayDeque<>();
+		boolean useRemus = false;
 		ErrorCallback errorCallback = null;
 		IParser parser = new SMTLIB2Parser();
 		Script solver = null;
@@ -88,24 +93,26 @@ public final class Main {
 			} else if (param[paramctr].equals("-ddfriendly")) {
 				errorCallback = new ErrorCallback() {
 					@Override
-					public void notifyError(ErrorReason reason) {
+					public void notifyError(final ErrorReason reason) {
 						System.exit(reason.ordinal() + 1);
 					}
 				};
+			} else if (param[paramctr].equals("-remus")) {
+				useRemus = true;
 			} else if (param[paramctr].equals("-no-success")) {
-				options.set(":print-success", false);
+				optionList.add(new Option(":print-success", false));
 			} else if (param[paramctr].equals("-v")) {
-				options.set(":verbosity", LogProxy.LOGLEVEL_DEBUG);
+				optionList.add(new Option(":verbosity", LogProxy.LOGLEVEL_DEBUG));
 			} else if (param[paramctr].equals("-w")) {
-				options.set(":verbosity", LogProxy.LOGLEVEL_WARN);
+				optionList.add(new Option(":verbosity", LogProxy.LOGLEVEL_WARN));
 			} else if (param[paramctr].equals("-q")) {
-				options.set(":verbosity", LogProxy.LOGLEVEL_ERROR);
+				optionList.add(new Option(":verbosity", LogProxy.LOGLEVEL_ERROR));
 			} else if (param[paramctr].equals("-t")
 					&& ++paramctr < param.length) {
-				options.set(":timeout", param[paramctr]);
+				optionList.add(new Option(":timeout", param[paramctr]));
 			} else if (param[paramctr].equals("-r")
 					&& ++paramctr < param.length) {
-				options.set(":random-seed", param[paramctr]);
+				optionList.add(new Option(":random-seed", param[paramctr]));
 			} else if (param[paramctr].equals("-o")
 					&& paramctr + 1 < param.length) {
 				paramctr++;
@@ -121,7 +128,7 @@ public final class Main {
 					value = opt.substring(eq + 1);
 				}
 				try {
-					options.set(":" + name, value);
+					optionList.add(new Option(":" + name, value));
 				} catch (final UnsupportedOperationException ex) {
 					System.err.println("Unknown option :" + name + ".");
 					return;
@@ -138,7 +145,7 @@ public final class Main {
 			} else if (param[paramctr].equals("-a")) {
 				parser = new AIGERFrontEnd();
 			} else if (param[paramctr].equals("-trace")) {
-				options.set(":verbosity", LogProxy.LOGLEVEL_TRACE);
+				optionList.add(new Option(":verbosity", LogProxy.LOGLEVEL_TRACE));
 			} else if (param[paramctr].equals("-version")) {
 				version();
 				return;
@@ -156,14 +163,42 @@ public final class Main {
 			usage();
 			return;
 		}
-		options.started();
 		if (solver == null) {
 			final SMTInterpol smtinterpol = new SMTInterpol(null, options);
 			smtinterpol.setErrorCallback(errorCallback);
 			solver = smtinterpol;
+			if (useRemus) {
+				solver = new MusEnumerationScript(smtinterpol);
+			}
 		}
+		for (final Option opt : optionList) {
+			solver.setOption(opt.getName(), opt.getValue());
+		}
+		options.started();
 		final int exitCode = parser.run(solver, filename, options);
 		System.exit(exitCode);
 	}
 
+	/**
+	 * Class to store an option name value pair.
+	 *
+	 * @author Jochen Hoenicke
+	 */
+	private static class Option {
+		String mName;
+		Object mValue;
+
+		public Option(final String name, final Object value) {
+			mName = name;
+			mValue = value;
+		}
+
+		public String getName() {
+			return mName;
+		}
+
+		public Object getValue() {
+			return mValue;
+		}
+	}
 }

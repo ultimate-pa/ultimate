@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2012 University of Freiburg
+ * Copyright (C) 2009-2022 University of Freiburg
  *
  * This file is part of SMTInterpol.
  *
@@ -21,8 +21,8 @@ package de.uni_freiburg.informatik.ultimate.logic;
 import java.util.ArrayDeque;
 
 /**
- * This is the base class for representing SMTLIB 2 terms.
- * You can assume that every term is one of the following sub-classes:
+ * This is the base class for representing SMTLIB 2 terms. You can assume that
+ * every term is one of the following sub-classes:
  * <ul>
  * <li>{@link ApplicationTerm} represents a function application
  * <code>(name ...)</code>.</li>
@@ -30,11 +30,15 @@ import java.util.ArrayDeque;
  * <code>(! term ...)</code>.</li>
  * <li>{@link ConstantTerm} represents a numeral, decimal, bit vector, or string
  * literal.</li>
+ * <li>{@link LambdaTerm} represents a lambda term
+ * <code>(lambda ((var sort)...) term)</code>.</li>
  * <li>{@link LetTerm} represents a let term
  * <code>(let ((var term)...) term)</code>.</li>
+ * <li>{@link MatchTerm} represents a datatype match term
+ * <code>(match d (cases...))</code>.</li>
  * <li>{@link TermVariable} represents a term variable <code>var</code> used in
- * quantifier or let term.
- * 	    Note that constants are represented by ApplicationTerm.</li>
+ * quantifier or let term. Note that constants are represented by
+ * ApplicationTerm.</li>
  * <li>{@link QuantifiedFormula} represents a quantified formula
  * <code>(exists/forall ...)</code>.</li>
  * </ul>
@@ -60,7 +64,7 @@ public abstract class Term {
 	 * Create a term.
 	 * @param hash the hash code of the term.  This should be stable.
 	 */
-	protected Term(int hash) {
+	protected Term(final int hash) {
 		mHash = hash;
 	}
 
@@ -76,7 +80,7 @@ public abstract class Term {
 	 */
 	public TermVariable[] getFreeVars() {
 		if (mFreeVars == null) {
-			new NonRecursive().run(new ComputeFreeVariables(this));
+			new ComputeFreeVariables().transform(this);
 		}
 		return mFreeVars;
 	}

@@ -30,10 +30,10 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
 
 /**
- * This class is used to explain a conflict clause found by the LA solver.
- * When proofs are generated, this class builds the corresponding LAAnnotation.
- * It also determines which literals are necessary to occur in the conflict
- * clause.
+ * This class is used to explain a unit or conflict clause found by the LA
+ * solver. When proofs are generated, this class builds the corresponding
+ * LAAnnotation. It also determines which literals are necessary to occur in the
+ * conflict clause.
  *
  * @author Jochen Hoenicke
  */
@@ -101,7 +101,6 @@ public class Explainer {
 		LAAnnotation annot = mSubReasons.get(reason);
 		if (annot == null) {
 			annot = new LAAnnotation(reason);
-			mSubReasons.put(reason, annot);
 			if (mAnnotationStack != null) {
 				mAnnotationStack.addLast(annot);
 			}
@@ -109,6 +108,12 @@ public class Explainer {
 					sign);
 			if (mAnnotationStack != null) {
 				mAnnotationStack.removeLast();
+			}
+			// it may happen that during the explanation step addEQAnnotation is called
+			// which creates the real sub reason. Only store the reason if it wasn't already
+			// added.
+			if (!mSubReasons.containsKey(reason)) {
+				mSubReasons.put(reason, annot);
 			}
 		}
 		if (mAnnotationStack != null) {
@@ -123,15 +128,11 @@ public class Explainer {
 		LAAnnotation annot = mSubReasons.get(reason);
 		if (annot == null) {
 			annot = new LAAnnotation(reason);
-			mSubReasons.put(reason, annot);
 			mAnnotationStack.addLast(annot);
-			if (reason.getOldReason() instanceof LiteralReason) {
-				reason.getOldReason().explain(this, reason.getVar().getEpsilon(), sign);
-			} else {
-				addAnnotation(reason.getOldReason(), sign);
-			}
+			addAnnotation(reason.getOldReason(), sign);
 			addLiteral(reason.getLiteral().negate(), sign);
 			mAnnotationStack.removeLast();
+			mSubReasons.put(reason, annot);
 		}
 		mAnnotationStack.getLast().addFarkas(annot, coeff);
 	}

@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.util.PushPopChecker;
 
 /**
  * Simplify formulas, but keep their Boolean structure. Replace subformulas by true or false if this replacement leads
@@ -661,7 +660,7 @@ public class SimplifyDDA extends NonRecursive {
 	 * @return term if each subterm of term is neither NON_CONSTRAINING nor NON_RELAXING. Otherwise return a copy of
 	 *         term, where each NON_CONSTRAINING subterm is replaced by true and each NON_RELAXING subterm is replaced
 	 *         by false
-	 * @param mTerm
+	 * @param term
 	 *            whose Sort is Boolean
 	 */
 	public Term getSimplifiedTerm(final Term inputTerm) throws SMTLIBException {

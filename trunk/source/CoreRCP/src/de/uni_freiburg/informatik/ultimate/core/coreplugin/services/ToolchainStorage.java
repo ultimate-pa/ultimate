@@ -207,11 +207,10 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	@Override
 	public IUltimateServiceProvider registerPreferenceLayer(final Class<?> creator, final String... pluginIds) {
 		synchronized (mLock) {
-
-			final Map<String, PreferenceLayer> newLayers = new HashMap<>(mPreferenceLayers);
 			if (pluginIds == null || pluginIds.length == 0) {
 				return this;
 			}
+			final Map<String, PreferenceLayer> newLayers = new HashMap<>(mPreferenceLayers);
 			for (final String pluginId : pluginIds) {
 				final PreferenceLayer existingLayer = newLayers.get(pluginId);
 				final PreferenceLayer newLayer;

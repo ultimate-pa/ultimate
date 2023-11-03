@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 
@@ -37,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
  */
 public interface ICACSL2BoogieBacktranslatorMapping {
 
-	void putVar(String boogieId, String cId, CType cType);
+	void putVar(String boogieId, String cId, CType cType, DeclarationInformation decInfo);
 
-	void putInVar(String boogieId, String cId, CType cType);
+	void putInVar(String boogieId, String cId, CType cType, DeclarationInformation decInfo);
 
 	void putTempVar(String boogieId, AUXVAR purpose, CType cType);
 

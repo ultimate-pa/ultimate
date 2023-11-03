@@ -172,7 +172,7 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 	}
 
 	@Override
-	public IPredicate getContentOnPetriNet2FiniteAutomaton(final Marking<?, IPredicate> marking) {
+	public IPredicate getContentOnPetriNet2FiniteAutomaton(final Marking<IPredicate> marking) {
 		final ArrayList<IcfgLocation> programPoints = new ArrayList<>(marking.size());
 		final ArrayList<Term> terms = new ArrayList<>();
 		for (final IPredicate pred : marking) {

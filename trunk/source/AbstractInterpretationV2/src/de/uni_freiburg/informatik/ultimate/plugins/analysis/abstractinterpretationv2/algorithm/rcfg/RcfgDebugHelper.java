@@ -18,8 +18,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IDebugHelper;
@@ -87,9 +87,9 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE>, ACTION extends
 
 	private IPredicate createPredicateFromState(final DisjunctiveAbstractState<STATE> state) {
 		final Term acc = state.getTerm(mMgdScript.getScript());
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mMgdScript.getScript(), mSymbolTable);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mMgdScript, mSymbolTable);
 		return new AbsIntPredicate<>(new BasicPredicate(getIllegalPredicateId(), tvp.getProcedures(), acc,
-				tvp.getVars(), tvp.getClosedFormula()), state);
+				tvp.getVars(), tvp.getFuns(), tvp.getClosedFormula()), state);
 	}
 
 	private static int getIllegalPredicateId() {

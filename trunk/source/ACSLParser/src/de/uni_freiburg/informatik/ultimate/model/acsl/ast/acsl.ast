@@ -21,13 +21,22 @@ CodeForBehavior ::=
 	codeStmt : CodeStatement;
 
 CodeStatement ::=
-	formula : Expression
-	( { Assertion } 
-	| { CodeInvariant } 
-	);
-
-	
-
+ 	{ Assertion }
+		formula : Expression
+ 	| { CodeInvariant }
+		formula : Expression
+ 	| { GhostDeclaration }
+		type : ACSLType
+		identifier : String
+		expr : Expression
+	| { GlobalGhostDeclaration }
+		type : ACSLType
+		identifier : String
+		expr : Expression
+	| { GhostUpdate }
+		identifier : String
+		expr : Expression
+ 	;
 
 /**
  * LoopAnnotation
@@ -158,7 +167,8 @@ Expression ::=
 		operator : Operator { LOGICIFF, LOGICIMPLIES, LOGICAND, LOGICOR, LOGICXOR,
 						   COMPLT, COMPGT, COMPLEQ, COMPGEQ, COMPEQ, COMPNEQ, COMPPO,
 						   BITVECCONCAT, ARITHPLUS, ARITHMINUS, ARITHMUL, ARITHDIV, ARITHMOD,
-						   BITAND, BITOR, BITIMPLIES, BITIFF, BITXOR, LTLUNTIL, LTLRELEASE, LTLWEAKUNTIL }
+						   BITAND, BITOR, BITIMPLIES, BITIFF, BITXOR, BITSHIFTLEFT, BITSHIFTRIGHT,
+						   LTLUNTIL, LTLRELEASE, LTLWEAKUNTIL }
 		left  : Expression
 		right : Expression
 	| { NotDefinedExpression }

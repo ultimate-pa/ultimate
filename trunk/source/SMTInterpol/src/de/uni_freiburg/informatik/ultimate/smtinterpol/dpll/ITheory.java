@@ -134,8 +134,16 @@ public interface ITheory {
 	public void decreasedDecideLevel(int currentDecideLevel);
 
 	/**
-	 * Notification that a conflict was completely resolved.  The theory
-	 * may perform cleanups.
+	 * Notification that we are starting to resolve a conflict. The theory may
+	 * forget pending propagations.
+	 */
+	public void backtrackStart();
+
+	/**
+	 * Notification that a conflict was completely resolved. The theory may perform
+	 * cleanups. It also may need to re-propagate lemmas for terms created before
+	 * backtracking and it may even find new conflicts.
+	 *
 	 * @return a conflict clause or null if no more obvious conflicts.
 	 */
 	public Clause backtrackComplete();

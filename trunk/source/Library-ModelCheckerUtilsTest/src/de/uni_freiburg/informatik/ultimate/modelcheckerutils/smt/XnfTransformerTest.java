@@ -88,7 +88,7 @@ public class XnfTransformerTest {
 
 	private Term toPnf(final Term t) {
 		mLogger.info("ORG: " + t);
-		final Term nnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP, true).transform(t);
+		final Term nnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP).transform(t);
 		mLogger.info("NNF:" + nnf);
 		final Term pnf = new PrenexNormalForm(mMgdScript).transform(nnf);
 		mLogger.info("PNF:" + pnf);

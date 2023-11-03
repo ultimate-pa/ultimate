@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -231,10 +232,7 @@ public class TypeHandler implements ITypeHandler {
 			final CPrimitive cvar = new CPrimitive(node);
 			return (new TypesResult(null, false, true, cvar));
 		}
-		case IASTSimpleDeclSpecifier.t_unspecified: {
-			final String msg = "unspecified type, defaulting to int";
-			mReporter.warn(loc, msg);
-		}
+		case IASTSimpleDeclSpecifier.t_unspecified:
 		case IASTSimpleDeclSpecifier.t_bool:
 		case IASTSimpleDeclSpecifier.t_char:
 		case IASTSimpleDeclSpecifier.t_int: {
@@ -245,7 +243,8 @@ public class TypeHandler implements ITypeHandler {
 			return (new TypesResult(cPrimitive2AstType(loc, cvar), node.isConst(), false, cvar));
 		}
 		case IASTSimpleDeclSpecifier.t_double:
-		case IASTSimpleDeclSpecifier.t_float: {
+		case IASTSimpleDeclSpecifier.t_float:
+		case IASTSimpleDeclSpecifier.t_float128: {
 			// floating point number are not supported by Ultimate,
 			// somehow we treat it here as REALs
 			final CPrimitive cvar = new CPrimitive(node);
@@ -265,7 +264,11 @@ public class TypeHandler implements ITypeHandler {
 				final CType cType = ((ExpressionResult) opRes).getLrValue().getCType();
 				return new TypesResult(cType2AstType(loc, cType), node.isConst(), false, cType);
 			} else if (opRes instanceof DeclaratorResult) {
-				final CType cType = ((DeclaratorResult) opRes).getDeclaration().getType();
+				final var declResult = (DeclaratorResult) opRes;
+				if (!declResult.hasNoSideEffects()) {
+					throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
+				}
+				final CType cType = declResult.getDeclaration().getType();
 				return new TypesResult(cType2AstType(loc, cType), node.isConst(), false, cType);
 			}
 		}
@@ -338,30 +341,31 @@ public class TypeHandler implements ITypeHandler {
 		// values of enum have type int
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final String enumId = mNameHandler.getUniqueIdentifier(node, node.getName().toString(),
-				mSymboltable.getCScopeId(node), false, intType);
+				mSymboltable.getCScopeId(node), false, intType, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		final int nrFields = node.getEnumerators().length;
 		final String[] fNames = new String[nrFields];
 		Expression valueOfPrecedingEnumConstant = null;
 
-		final Expression[] fValues = new Expression[nrFields];
 		final List<Pair<ConstDeclaration, Axiom>> constDecls = new ArrayList<>();
 
 		for (int i = 0; i < nrFields; i++) {
 			final IASTEnumerator e = node.getEnumerators()[i];
 			fNames[i] = e.getName().toString();
+			final Expression specifiedValue;
 			if (e.getValue() != null) {
 				final ExpressionResult rex = (ExpressionResult) main.dispatch(e.getValue());
-				fValues[i] = rex.getLrValue().getValue();
+				// TODO Frank 2022-11-22: rex might contain statements (e.g. overflow-assertions), but they are ignored
+				// here! We should probably crash instead. But we could try to remove trivial assertions additionally.
+				specifiedValue = rex.getLrValue().getValue();
 			} else {
-				fValues[i] = null;
+				specifiedValue = null;
 			}
-			final Expression specifiedValue = fValues[i];
-			final Expression value = constructEnumValue(loc, specifiedValue, valueOfPrecedingEnumConstant, node);
+			final Expression value = constructEnumValue(loc, specifiedValue, valueOfPrecedingEnumConstant);
 			final Pair<ConstDeclaration, Axiom> cd = handleEnumerationConstant(loc, enumId, fNames[i], value, node);
 			constDecls.add(cd);
 			valueOfPrecedingEnumConstant = value;
 		}
-		final CEnum cEnum = new CEnum(enumId, fNames, fValues);
+		final CEnum cEnum = new CEnum(enumId, fNames);
 		final ASTType at = cPrimitive2AstType(loc, intType);
 		final TypesResult result = new TypesResult(at, false, false, cEnum);
 		for (int i = 0; i < nrFields; i++) {
@@ -549,8 +553,9 @@ public class TypeHandler implements ITypeHandler {
 		final CDeclaration newCDecl = new CDeclaration(newDefiningType, oldCDecl.getName(),
 				oldCDecl.getIASTInitializer(), oldCDecl.getInitializer(), oldCDecl.isOnHeap(),
 				oldCDecl.getStorageClass(), oldCDecl.getBitfieldSize());
-		final SymbolTableValue val = new SymbolTableValue(oldStv.getBoogieName(), oldStv.getBoogieDecl(), newCDecl,
-				oldStv.getDeclarationInformation(), oldStv.getDeclarationNode(), oldStv.isIntFromPointer());
+		final SymbolTableValue val = new SymbolTableValue(oldStv.getBoogieName(), oldStv.getBoogieDecl(),
+				oldStv.getAstType(), newCDecl, oldStv.getDeclarationInformation(), oldStv.getDeclarationNode(),
+				oldStv.isIntFromPointer());
 		mSymboltable.storeCSymbol(hook, name, val);
 		alreadyRedirected.add(name);
 		return newDefiningType;
@@ -846,7 +851,7 @@ public class TypeHandler implements ITypeHandler {
 				ExpressionFactory.constructIdentifierExpression(loc, getBoogieTypeForBoogieASTType(enumAstType),
 						boogieId, new DeclarationInformation(StorageClass.GLOBAL, null));
 		mSymboltable.storeCSymbol(node, enumConstId,
-				new SymbolTableValue(boogieId, cd,
+				new SymbolTableValue(boogieId, cd, enumAstType,
 						new CDeclaration(typeOfEnumIdentifiers, enumConstId,
 								CHandler.scConstant2StorageClass(node.getStorageClass())),
 						DeclarationInformation.DECLARATIONINFO_GLOBAL, node, false, value));
@@ -861,48 +866,36 @@ public class TypeHandler implements ITypeHandler {
 	 * value of the preceding enumeration constant in the list of this enumeration specifier.
 	 */
 	private Expression constructEnumValue(final ILocation loc, final Expression specifiedValue,
-			final Expression valueOfPrecedingEnumConstant, final IASTEnumerationSpecifier node) {
-		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
-		final Expression value;
+			final Expression valueOfPrecedingEnumConstant) {
+		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitives.INT);
 		if (specifiedValue != null) {
-			// case where the value of the enumeration constant is explicitly defined by an
-			// integer constant expression
+			// case where the value of the enumeration constant is explicitly defined by an integer constant expression
 			if (specifiedValue instanceof IntegerLiteral) {
-				value = specifiedValue;
-			} else {
-				final BigInteger expressionIntegerValue =
-						mTypeSizes.extractIntegerValue(specifiedValue, typeOfEnumIdentifiers, node);
-				if (expressionIntegerValue == null) {
-					throw new AssertionError("not an integer constant: " + specifiedValue);
-				}
-				value = mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
-						BigInteger.valueOf(expressionIntegerValue.intValue()));
+				return specifiedValue;
 			}
-
-			// }
-		} else {
-			// case where the value of the enumeration constant is not explicitly defined by
-			// an integer constant expression and hence the value of the preceding
-			// enumeration constant in the list defines the value of this enumeration
-			// constant (see C11 6.7.2.2.3)
-			if (valueOfPrecedingEnumConstant == null) {
-				// case where this is the first enumeration constant in the list
-				final Expression zero =
-						mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers, BigInteger.ZERO);
-				value = zero;
+			final BigInteger intValue;
+			if (specifiedValue instanceof BooleanLiteral) {
+				intValue = ((BooleanLiteral) specifiedValue).getValue() ? BigInteger.ONE : BigInteger.ZERO;
 			} else {
-				final BigInteger bi =
-						mTypeSizes.extractIntegerValue(valueOfPrecedingEnumConstant, typeOfEnumIdentifiers, node);
-				if (bi == null) {
-					throw new AssertionError("not an integer constant: " + specifiedValue);
-				}
-				final int valueOfPrecedingEnumConstantAsInt = bi.intValue();
-				final int valueAsInt = valueOfPrecedingEnumConstantAsInt + 1;
-				value = mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
-						BigInteger.valueOf(valueAsInt));
+				intValue = mTypeSizes.extractIntegerValue(specifiedValue, typeOfEnumIdentifiers);
 			}
+			if (intValue == null) {
+				throw new AssertionError("not an integer constant: " + specifiedValue);
+			}
+			return mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers, intValue);
 		}
-		return value;
+		// case where the value of the enumeration constant is not explicitly defined by an integer constant expression
+		// and hence the value of the preceding enumeration constant in the list defines the value of this enumeration
+		// constant (see C11 6.7.2.2.3)
+		if (valueOfPrecedingEnumConstant == null) {
+			// case where this is the first enumeration constant in the list
+			return mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers, BigInteger.ZERO);
+		}
+		final BigInteger intValue = mTypeSizes.extractIntegerValue(valueOfPrecedingEnumConstant, typeOfEnumIdentifiers);
+		if (intValue == null) {
+			throw new AssertionError("not an integer constant: " + valueOfPrecedingEnumConstant);
+		}
+		return mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers, intValue.add(BigInteger.ONE));
 	}
 
 	/**

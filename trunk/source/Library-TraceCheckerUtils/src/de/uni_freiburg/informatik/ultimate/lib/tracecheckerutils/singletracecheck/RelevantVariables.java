@@ -35,10 +35,10 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.GlobalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
@@ -122,14 +122,14 @@ public class RelevantVariables<L extends IAction> {
 
 		public boolean occurs(final IProgramVar bv, final int start, final int end) {
 			boolean result = false;
-			final TreeSet<Integer> inSet = (TreeSet<Integer>) inRelation.getImage(bv);
+			final TreeSet<Integer> inSet = inRelation.getImage(bv);
 			if (inSet != null) {
 				result = result || containsNumberBetween(start + 1, end, inSet);
 				if (result) {
 					return result;
 				}
 			}
-			final TreeSet<Integer> outSet = (TreeSet<Integer>) outRelation.getImage(bv);
+			final TreeSet<Integer> outSet = outRelation.getImage(bv);
 			if (outSet != null) {
 				result = result || containsNumberBetween(start, end - 1, outSet);
 			}
@@ -138,14 +138,14 @@ public class RelevantVariables<L extends IAction> {
 
 		public boolean occursAfter(final IProgramVar bv, final int start) {
 			boolean result = false;
-			final TreeSet<Integer> inSet = (TreeSet<Integer>) inRelation.getImage(bv);
+			final TreeSet<Integer> inSet = inRelation.getImage(bv);
 			if (inSet != null) {
 				result = result || inSet.ceiling(start + 1) != null;
 				if (result) {
 					return result;
 				}
 			}
-			final TreeSet<Integer> outSet = (TreeSet<Integer>) outRelation.getImage(bv);
+			final TreeSet<Integer> outSet = outRelation.getImage(bv);
 			if (outSet != null) {
 				result = result || outSet.ceiling(start) != null;
 			}
@@ -154,14 +154,14 @@ public class RelevantVariables<L extends IAction> {
 
 		public boolean occursBefore(final IProgramVar bv, final int end) {
 			boolean result = false;
-			final TreeSet<Integer> inSet = (TreeSet<Integer>) inRelation.getImage(bv);
+			final TreeSet<Integer> inSet = inRelation.getImage(bv);
 			if (inSet != null) {
 				result = result || inSet.floor(end) != null;
 				if (result) {
 					return result;
 				}
 			}
-			final TreeSet<Integer> outSet = (TreeSet<Integer>) outRelation.getImage(bv);
+			final TreeSet<Integer> outSet = outRelation.getImage(bv);
 			if (outSet != null) {
 				result = result || outSet.ceiling(end - 1) != null;
 			}
@@ -594,7 +594,7 @@ public class RelevantVariables<L extends IAction> {
 		// mNestedConstraintAnalysis.getFormulaFromNonCallPos(posOfCorrespondingReturn);
 		// remove all that were reassigned
 		// either explicitly by the return or implicitly as modifiable global
-		alternativeResult.removeAll(returnTF.getAssignedVars());
+		alternativeResult.removeAll(returnTF.getOutVars().keySet());
 		final ConstraintAnalysis globalVarAssignmentCa = mNestedConstraintAnalysis.getGlobalVarAssignment(posOfCall);
 		alternativeResult.removeAll(globalVarAssignmentCa.getUnconstraintOut());
 
@@ -611,7 +611,7 @@ public class RelevantVariables<L extends IAction> {
 
 		final Set<IProgramVar> result = new HashSet<>();
 		for (final IProgramVar bv : returnPredRv) {
-			if (!returnTF.getAssignedVars().contains(bv) && !globalVarAssignment.getAssignedVars().contains(bv)) {
+			if (!returnTF.getOutVars().keySet().contains(bv) && !globalVarAssignment.getAssignedVars().contains(bv)) {
 				result.add(bv);
 			}
 		}
@@ -683,7 +683,7 @@ public class RelevantVariables<L extends IAction> {
 			}
 		}
 		// remove all of these that were assigned on return
-		alternativeResult.removeAll(returnTf.getAssignedVars());
+		alternativeResult.removeAll(returnTf.getOutVars().keySet());
 
 		// add all parameters (needed e.g., for summaries)
 		final ConstraintAnalysis localVarAssignmentCa =
@@ -738,7 +738,7 @@ public class RelevantVariables<L extends IAction> {
 
 	private static boolean isHavoced(final UnmodifiableTransFormula globalVarAssignment,
 			final UnmodifiableTransFormula oldVarAssignment, final IProgramVar bv) {
-		if (bv instanceof GlobalBoogieVar) {
+		if (bv instanceof GlobalProgramVar) {
 			boolean result;
 			if (bv instanceof IProgramOldVar) {
 				result = oldVarAssignment.isHavocedOut(bv);

@@ -34,10 +34,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -58,6 +59,7 @@ public class TransFormulaUnification {
 	private final Set<IProgramVar> mAssignedVars = new HashSet<>();
 	private final List<Map<Term, Term>> mSubstitutions = new ArrayList<>();
 	private final Set<TermVariable> mAuxVars = new HashSet<>();
+	private final Set<IProgramConst> mNonTheoryConsts = new HashSet<>();
 
 	/**
 	 * Unify the given transition formulas.
@@ -73,6 +75,7 @@ public class TransFormulaUnification {
 		mUnifiedFormulas = new Term[transFormulas.length];
 
 		computeJointInOutVars();
+		collectNonTheoryConsts();
 		computeSubstitutions();
 		computeUnifiedFormulas();
 	}
@@ -87,6 +90,10 @@ public class TransFormulaUnification {
 
 	public Set<TermVariable> getAuxVars() {
 		return mAuxVars;
+	}
+
+	public Set<IProgramConst> getNonTheoryConsts() {
+		return mNonTheoryConsts;
 	}
 
 	/**
@@ -144,6 +151,12 @@ public class TransFormulaUnification {
 		// See comment above: Overwrite the outVars, if assigned in at least one branch.
 		for (final IProgramVar pv : mAssignedVars) {
 			addFreshTermVariable(mOutVars, pv, "Out");
+		}
+	}
+
+	private void collectNonTheoryConsts() {
+		for (final UnmodifiableTransFormula tf : mTransFormulas) {
+			mNonTheoryConsts.addAll(tf.getNonTheoryConsts());
 		}
 	}
 
@@ -216,8 +229,7 @@ public class TransFormulaUnification {
 	 * @return A term for the unified transition formula.
 	 */
 	private Term computeUnifiedFormula(final UnmodifiableTransFormula tf, final Map<Term, Term> substitution) {
-		final Term renamedFormula =
-				new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(tf.getFormula());
+		final Term renamedFormula = Substitution.apply(mMgdScript, substitution, tf.getFormula());
 		final Term equalities = generateExplicitEqualities(tf);
 		return SmtUtils.and(mMgdScript.getScript(), renamedFormula, equalities);
 	}
@@ -244,7 +256,7 @@ public class TransFormulaUnification {
 				final TermVariable termOutVar = mOutVars.get(pv);
 				assert termOutVar != null;
 
-				equalities.add(mMgdScript.getScript().term("=", termInVar, termOutVar));
+				equalities.add(SmtUtils.binaryEquality(mMgdScript.getScript(), termInVar, termOutVar));
 			}
 		}
 		return SmtUtils.and(mMgdScript.getScript(), equalities);

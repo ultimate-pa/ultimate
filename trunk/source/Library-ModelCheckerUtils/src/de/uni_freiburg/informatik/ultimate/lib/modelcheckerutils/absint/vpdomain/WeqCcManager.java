@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -100,7 +101,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @param settings
 	 * @param debugMode
 	 * @param nonTheoryLiteralNodes
-	 * 			must be added to each state upon creation
+	 *            must be added to each state upon creation
 	 */
 	public WeqCcManager(final ILogger logger, final IPartialComparator<WeqCongruenceClosure<NODE>> weqCcComparator,
 			final IPartialComparator<CongruenceClosure<NODE>> ccComparator, final ManagedScript mgdScript,
@@ -127,7 +128,6 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		} else {
 			mBenchmark = null;
 		}
-
 
 		mTautologicalWeqCc = new WeqCongruenceClosure<>(this);
 		nonTheoryLiteralNodes.forEach(mTautologicalWeqCc::addElementRec);
@@ -179,8 +179,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public CongruenceClosure<NODE> addNode(final NODE node, final CongruenceClosure<NODE> congruenceClosure,
-			final WeqCongruenceClosure<NODE> newEqualityTarget,
-			final boolean inplace, final boolean omitSanityChecks) {
+			final WeqCongruenceClosure<NODE> newEqualityTarget, final boolean inplace, final boolean omitSanityChecks) {
 		return mCcManager.addElement(congruenceClosure, node, newEqualityTarget, inplace, omitSanityChecks);
 	}
 
@@ -193,7 +192,6 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		bmEnd(WeqCcBmNames.UNFREEZE);
 		return result;
 	}
-
 
 	void bmStart(final WeqCcBmNames watch) {
 		if (!mBenchmarkMode) {
@@ -210,16 +208,14 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		mBenchmark.pauseWatch(watch.name());
 	}
 
-	public  WeakEquivalenceEdgeLabel<NODE> filterRedundantICcs(
-			final WeakEquivalenceEdgeLabel<NODE> label) {
+	public WeakEquivalenceEdgeLabel<NODE> filterRedundantICcs(final WeakEquivalenceEdgeLabel<NODE> label) {
 		final WeakEquivalenceEdgeLabel<NODE> result =
 				new WeakEquivalenceEdgeLabel<>(label.getWeqGraph(), filterRedundantCcs(label.getDisjuncts()));
-//		assert !result.isTautological() || result.getDisjuncts().size() == 1;
+		// assert !result.isTautological() || result.getDisjuncts().size() == 1;
 		return result;
 	}
 
-	public WeakEquivalenceEdgeLabel<NODE> filterRedundantCcs(
-			final WeakEquivalenceEdgeLabel<NODE> label) {
+	public WeakEquivalenceEdgeLabel<NODE> filterRedundantCcs(final WeakEquivalenceEdgeLabel<NODE> label) {
 		final Set<CongruenceClosure<NODE>> filtered = mCcManager.filterRedundantCcs(label.getDisjuncts());
 		return new WeakEquivalenceEdgeLabel<>(label.getWeqGraph(), filtered);
 	}
@@ -266,8 +262,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	private CongruenceClosure<NODE> reportEquality(final CongruenceClosure<NODE> origCc, final NODE node1,
 			final NODE node2, final boolean inplace) {
 		final CongruenceClosure<NODE> result = mCcManager.reportEquality(node1, node2, origCc, inplace);
-		assert checkReportEqualityResult(origCc, node1, node2, result,
-					getNonTheoryLiteralDisequalitiesIfNecessary());
+		assert checkReportEqualityResult(origCc, node1, node2, result, getNonTheoryLiteralDisequalitiesIfNecessary());
 		return result;
 	}
 
@@ -291,9 +286,10 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public WeqCongruenceClosure<NODE> reportWeakEquivalence(final WeqCongruenceClosure<NODE> origWeqCc,
 			final NODE array1, final NODE array2, final NODE storeIndex, final boolean inplace) {
-//		updateTrackingStatusOnReporWeq(array1, array2);
+		// updateTrackingStatusOnReporWeq(array1, array2);
 
-		if (mSettings.isDeactivateWeakEquivalences() || array1.dependsOnUntrackedArray() || array2.dependsOnUntrackedArray()) {
+		if (mSettings.isDeactivateWeakEquivalences() || array1.dependsOnUntrackedArray()
+				|| array2.dependsOnUntrackedArray()) {
 			assert origWeqCc.getWeakEquivalenceGraph().getNumberOfEdgesStatistic() == 0;
 			return origWeqCc;
 		}
@@ -313,8 +309,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public WeqCongruenceClosure<NODE> reportContainsConstraint(final NODE elem, final Set<NODE> literalSet,
-			final WeqCongruenceClosure<NODE> origWeqCc,
-			final boolean inplace) {
+			final WeqCongruenceClosure<NODE> origWeqCc, final boolean inplace) {
 		bmStart(WeqCcBmNames.REPORTCONTAINS);
 		if (inplace) {
 			origWeqCc.reportContainsConstraint(elem, literalSet);
@@ -324,21 +319,20 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
 			unfrozen.reportContainsConstraint(elem, literalSet);
 			unfrozen.freezeAndClose();
-//			assert checkReportDisequalityResult(origWeqCc, node1, node2, unfrozen,
-//					getNonTheoryLiteralDisequalitiesIfNecessary());
+			// assert checkReportDisequalityResult(origWeqCc, node1, node2, unfrozen,
+			// getNonTheoryLiteralDisequalitiesIfNecessary());
 			bmEnd(WeqCcBmNames.REPORTCONTAINS);
 			return unfrozen;
 		}
 	}
 
 	public WeqCongruenceClosure<NODE> reportContainsConstraint(final NODE elem,
-			final Collection<SetConstraint<NODE>> containsConstraint,
-			final WeqCongruenceClosure<NODE> origWeqCc,
+			final Collection<SetConstraint<NODE>> containsConstraint, final WeqCongruenceClosure<NODE> origWeqCc,
 			final boolean inplace) {
 
-//		// we are reporting this SetCc into a possibly new constraint --> remove surrounding constraint
-//		final SetConstraintConjunction<NODE> containsConstraint =
-//				new SetConstraintConjunction<>(null, containsConstraintRaw);
+		// // we are reporting this SetCc into a possibly new constraint --> remove surrounding constraint
+		// final SetConstraintConjunction<NODE> containsConstraint =
+		// new SetConstraintConjunction<>(null, containsConstraintRaw);
 
 		bmStart(WeqCcBmNames.REPORTCONTAINS);
 		if (inplace) {
@@ -349,8 +343,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
 			unfrozen.reportContainsConstraint(elem, containsConstraint);
 			unfrozen.freezeAndClose();
-//			assert checkReportDisequalityResult(origWeqCc, node1, node2, unfrozen,
-//					getNonTheoryLiteralDisequalitiesIfNecessary());
+			// assert checkReportDisequalityResult(origWeqCc, node1, node2, unfrozen,
+			// getNonTheoryLiteralDisequalitiesIfNecessary());
 			bmEnd(WeqCcBmNames.REPORTCONTAINS);
 			return unfrozen;
 		}
@@ -359,8 +353,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	public WeqCongruenceClosure<NODE> projectAway(final WeqCongruenceClosure<NODE> origWeqCc, final NODE node) {
 		bmStart(WeqCcBmNames.PROJECTAWAY);
 		// TODO: unsure about this freezing -- is there a more efficient solution?
-//		origWeqCc.freezeIfNecessary(true);
-//		origWeqCc.extAndTriangleClosure(false);
+		// origWeqCc.freezeIfNecessary(true);
+		// origWeqCc.extAndTriangleClosure(false);
 		final WeqCongruenceClosure<NODE> closed = closeIfNecessary(origWeqCc);
 
 		final WeqCongruenceClosure<NODE> unfrozen = unfreezeIfNecessary(closed);
@@ -369,8 +363,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 		RemoveWeqCcElement.removeSimpleElement(unfrozen, node);
 		unfrozen.freezeAndClose();
-		assert checkProjectAwayResult(origWeqCc, node, unfrozen,
-					getNonTheoryLiteralDisequalitiesIfNecessary());
+		assert checkProjectAwayResult(origWeqCc, node, unfrozen, getNonTheoryLiteralDisequalitiesIfNecessary());
 		bmEnd(WeqCcBmNames.PROJECTAWAY);
 		return unfrozen;
 	}
@@ -410,8 +403,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			}
 			weqcc1.meet(weqcc2);
 			if (mDebug) {
-				assert checkMeetResult(weqcc1_old, weqcc2, weqcc1,
-						getNonTheoryLiteralDisequalitiesIfNecessary());
+				assert checkMeetResult(weqcc1_old, weqcc2, weqcc1, getNonTheoryLiteralDisequalitiesIfNecessary());
 			}
 			bmEnd(WeqCcBmNames.MEET);
 			return weqcc1;
@@ -433,7 +425,6 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			return result;
 		}
 	}
-
 
 	public CongruenceClosure<NODE> meet(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2,
 			final boolean inplace) {
@@ -467,8 +458,27 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
+	public CongruenceClosure<NODE> widen(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2,
+			final boolean modifiable) {
+		// (just passing it through to CcManager)
+		final CongruenceClosure<NODE> result = mCcManager.widen(cc1, cc2, modifiable);
+		assert checkJoinResult(cc1, cc2, result, getNonTheoryLiteralDisequalitiesIfNecessary());
+		return result;
+	}
+
 	public WeqCongruenceClosure<NODE> join(final WeqCongruenceClosure<NODE> weqcc1Raw,
 			final WeqCongruenceClosure<NODE> weqcc2Raw, final boolean modifiable) {
+		return merge(weqcc1Raw, weqcc2Raw, modifiable, WeqCongruenceClosure::join);
+	}
+
+	public WeqCongruenceClosure<NODE> widen(final WeqCongruenceClosure<NODE> weqcc1Raw,
+			final WeqCongruenceClosure<NODE> weqcc2Raw, final boolean modifiable) {
+		return merge(weqcc1Raw, weqcc2Raw, modifiable, WeqCongruenceClosure::widen);
+	}
+
+	private WeqCongruenceClosure<NODE> merge(final WeqCongruenceClosure<NODE> weqcc1Raw,
+			final WeqCongruenceClosure<NODE> weqcc2Raw, final boolean modifiable,
+			final BinaryOperator<WeqCongruenceClosure<NODE>> mergeOperator) {
 		bmStart(WeqCcBmNames.JOIN);
 
 		final WeqCongruenceClosure<NODE> weqcc1 = closeIfNecessary(weqcc1Raw);
@@ -490,7 +500,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			return getEmptyWeqCc(modifiable);
 		}
 
-		final WeqCongruenceClosure<NODE> result = weqcc1.join(weqcc2);
+		final WeqCongruenceClosure<NODE> result = mergeOperator.apply(weqcc1, weqcc2);
 		assert result != weqcc1 && result != weqcc2 : "join should construct a new object";
 		if (!modifiable) {
 			result.freezeAndClose();
@@ -547,7 +557,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			WeqCongruenceClosure<NODE> weqcc1CopyClosed = closeIfNecessary(weqcc1Copy);
 			WeqCongruenceClosure<NODE> weqcc2CopyClosed = closeIfNecessary(weqcc2Copy);
 
-			//TODO: not that happy with this loop
+			// TODO: not that happy with this loop
 			int counter = 0;
 			while (!weqcc1Copy.getAllElements().equals(weqcc2Copy.getAllElements())) {
 				if (++counter > 2) {
@@ -574,7 +584,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		if (inplace) {
 			bmStart(WeqCcBmNames.ALIGN_ELEMENTS);
 
-			/* this single call is not enough for aligning because constant arrays may introduce elements when other
+			/*
+			 * this single call is not enough for aligning because constant arrays may introduce elements when other
 			 * elements are added based on equalities in that constraint
 			 */
 			while (!cc1.getAllElements().containsAll(cc2.getAllElements())
@@ -593,8 +604,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final WeqCongruenceClosure<NODE> cc1Aligned = copyWeqCc(cc1, true);
 			final WeqCongruenceClosure<NODE> cc2Aligned = copyWeqCc(cc2, true);
 
-
-			/* this single call is not enough for aligning because constant arrays may introduce elements when other
+			/*
+			 * this single call is not enough for aligning because constant arrays may introduce elements when other
 			 * elements are added based on equalities in that constraint
 			 */
 			while (!cc1Aligned.getAllElements().containsAll(cc2Aligned.getAllElements())
@@ -616,8 +627,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return mCcManager.getEmptyCc(modifiable);
 	}
 
-	public  WeakEquivalenceEdgeLabel<NODE> getSingletonEdgeLabel(
-			final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
+	public WeakEquivalenceEdgeLabel<NODE> getSingletonEdgeLabel(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
 			final CongruenceClosure<NODE> disjunct) {
 		return new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph, Collections.singleton(disjunct));
 	}
@@ -703,9 +713,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final CongruenceClosure<NODE> result, final Term literalDisequalities) {
 		return checkReportEqualityResult(
 				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), origCc, literalDisequalities),
-				node1.getTerm(), node2.getTerm(),
-				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), result,
-						literalDisequalities));
+				node1.getTerm(), node2.getTerm(), CongruenceClosureSmtUtils
+						.congruenceClosureToTerm(mMgdScript.getScript(), result, literalDisequalities));
 	}
 
 	private boolean checkReportEqualityResult(final WeqCongruenceClosure<NODE> origCc, final NODE node1,
@@ -732,18 +741,14 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final NODE node2, final CongruenceClosure<NODE> result, final Term literalDisequalities) {
 		return checkReportDisequalityResult(
 				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), origCc, literalDisequalities),
-				node1.getTerm(),
-				node2.getTerm(),
-				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), result, literalDisequalities));
+				node1.getTerm(), node2.getTerm(), CongruenceClosureSmtUtils
+						.congruenceClosureToTerm(mMgdScript.getScript(), result, literalDisequalities));
 	}
 
 	private boolean checkReportDisequalityResult(final WeqCongruenceClosure<NODE> origCc, final NODE node1,
 			final NODE node2, final WeqCongruenceClosure<NODE> result, final Term literalDisequalities) {
-		return checkReportDisequalityResult(
-				weqCcToTerm(mMgdScript.getScript(), origCc, literalDisequalities),
-				node1.getTerm(),
-				node2.getTerm(),
-				weqCcToTerm(mMgdScript.getScript(), result, literalDisequalities));
+		return checkReportDisequalityResult(weqCcToTerm(mMgdScript.getScript(), origCc, literalDisequalities),
+				node1.getTerm(), node2.getTerm(), weqCcToTerm(mMgdScript.getScript(), result, literalDisequalities));
 	}
 
 	private boolean checkReportDisequalityResult(final Term original, final Term node1, final Term node2,
@@ -752,8 +757,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		mMgdScript.lock(this);
 		final Script script = mMgdScript.getScript();
 
-		final Term originalAndEquality = SmtUtils.and(script, original,
-				mMgdScript.term(this, "distinct", node1, node2));
+		final Term originalAndEquality =
+				SmtUtils.and(script, original, mMgdScript.term(this, "distinct", node1, node2));
 
 		final boolean res = checkImplicationHolds(script, originalAndEquality, result)
 				&& checkImplicationHolds(script, result, originalAndEquality);
@@ -763,10 +768,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private boolean checkProjectAwayResult(final WeqCongruenceClosure<NODE> original, final NODE nodeToProjectAway,
 			final WeqCongruenceClosure<NODE> result, final Term literalDisequalities) {
-		return checkProjectAwayResult(
-				weqCcToTerm(mMgdScript.getScript(), original, literalDisequalities),
-				nodeToProjectAway.getTerm(),
-				weqCcToTerm(mMgdScript.getScript(), result, literalDisequalities));
+		return checkProjectAwayResult(weqCcToTerm(mMgdScript.getScript(), original, literalDisequalities),
+				nodeToProjectAway.getTerm(), weqCcToTerm(mMgdScript.getScript(), result, literalDisequalities));
 	}
 
 	private boolean checkProjectAwayResult(final Term original, final Term projectedVar, final Term result) {
@@ -780,7 +783,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 					Collections.singleton((TermVariable) projectedVar), original);
 		} else {
 			// do nothing??
-//			throw new AssertionError("this actually occurs?.. just omit quantification then?");
+			// throw new AssertionError("this actually occurs?.. just omit quantification then?");
 			originalProjected = original;
 		}
 
@@ -794,14 +797,13 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return checkMeetResult(
 				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), cc1, literalDisequalities),
 				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), cc2, literalDisequalities),
-				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), result, literalDisequalities)
-				);
+				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), result,
+						literalDisequalities));
 	}
 
 	boolean checkMeetResult(final WeqCongruenceClosure<NODE> weqcc1, final WeqCongruenceClosure<NODE> weqcc2,
 			final WeqCongruenceClosure<NODE> result, final Term literalDisequalities) {
-		return checkMeetResult(
-				weqCcToTerm(mMgdScript.getScript(), weqcc1, literalDisequalities),
+		return checkMeetResult(weqCcToTerm(mMgdScript.getScript(), weqcc1, literalDisequalities),
 				weqCcToTerm(mMgdScript.getScript(), weqcc2, literalDisequalities),
 				weqCcToTerm(mMgdScript.getScript(), result, literalDisequalities));
 	}
@@ -822,14 +824,13 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return checkJoinResult(
 				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), cc1, literalDisequalities),
 				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), cc2, literalDisequalities),
-				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), result, literalDisequalities)
-				);
+				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), result,
+						literalDisequalities));
 	}
 
 	private boolean checkJoinResult(final WeqCongruenceClosure<NODE> weqcc1, final WeqCongruenceClosure<NODE> weqcc2,
 			final WeqCongruenceClosure<NODE> result, final Term literalDisequalities) {
-		return checkJoinResult(
-				weqCcToTerm(mMgdScript.getScript(), weqcc1, literalDisequalities),
+		return checkJoinResult(weqCcToTerm(mMgdScript.getScript(), weqcc1, literalDisequalities),
 				weqCcToTerm(mMgdScript.getScript(), weqcc2, literalDisequalities),
 				weqCcToTerm(mMgdScript.getScript(), result, literalDisequalities));
 	}
@@ -850,6 +851,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	/**
 	 * like isStrongerThan(..Term..) but used for assertions
+	 *
 	 * @param script
 	 * @param ante
 	 * @param succ
@@ -891,26 +893,24 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			subsMap.put(fv, cons);
 		}
 
-		final Substitution substitution = new Substitution(mMgdScript, subsMap);
-
 		/*
 		 * check the implication
 		 */
-		mMgdScript.assertTerm(this, substitution.transform(ante));
+		mMgdScript.assertTerm(this, Substitution.apply(mMgdScript, subsMap, ante));
 
-		mMgdScript.assertTerm(this, SmtUtils.not(script, substitution.transform(succ)));
+		mMgdScript.assertTerm(this, SmtUtils.not(script, Substitution.apply(mMgdScript, subsMap, succ)));
 
 		final LBool satResult = mMgdScript.checkSat(this);
 
 		mMgdScript.pop(this, 1);
 
-//		assert satResult == LBool.UNSAT;
-//		assert satResult != LBool.UNKNOWN;
-//		return satResult == LBool.UNSAT;
+		// assert satResult == LBool.UNSAT;
+		// assert satResult != LBool.UNKNOWN;
+		// return satResult == LBool.UNSAT;
 		return satResult;
 	}
 
-	private  boolean checkFilterDisjunctionResult(final Set<CongruenceClosure<NODE>> input,
+	private boolean checkFilterDisjunctionResult(final Set<CongruenceClosure<NODE>> input,
 			final Set<CongruenceClosure<NODE>> result, final Term literalDisequalities) {
 
 		{
@@ -950,16 +950,14 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	}
 
-	private static <NODE extends IEqNodeIdentifier<NODE>>
-			Term disjunctionToTerm(final Script script, final Set<CongruenceClosure<NODE>> ccs,
-					final Term literalDisequalities) {
+	private static <NODE extends IEqNodeIdentifier<NODE>> Term disjunctionToTerm(final Script script,
+			final Set<CongruenceClosure<NODE>> ccs, final Term literalDisequalities) {
 		if (ccs.isEmpty()) {
 			return script.term("false");
 		}
 		final Set<Term> disjunctTerms = new HashSet<>();
 		for (final CongruenceClosure<NODE> cc : ccs) {
-			disjunctTerms.add(CongruenceClosureSmtUtils.congruenceClosureToTerm(script,
-					cc, literalDisequalities));
+			disjunctTerms.add(CongruenceClosureSmtUtils.congruenceClosureToTerm(script, cc, literalDisequalities));
 		}
 		return SmtUtils.or(script, disjunctTerms);
 	}
@@ -974,14 +972,13 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		allConjuncts.addAll(CongruenceClosureSmtUtils.congruenceClosureToCube(script, weqCc.getCongruenceClosure(),
 				literalDisequalities));
 
-		final List<Term> weakEqConstraints = weqCc.getWeakEquivalenceGraph()
-				.getWeakEquivalenceConstraintsAsTerms(script);
+		final List<Term> weakEqConstraints =
+				weqCc.getWeakEquivalenceGraph().getWeakEquivalenceConstraintsAsTerms(script);
 		allConjuncts.addAll(weakEqConstraints);
 
 		final Term result = SmtUtils.and(script, allConjuncts.toArray(new Term[allConjuncts.size()]));
-		assert weqCc.getManager().getSettings().omitSanitycheckFineGrained1() ||
-			weqCc.getManager().getAllWeqVariables().stream()
-				.allMatch(weqvar -> !Arrays.asList(result.getFreeVars()).contains(weqvar));
+		assert weqCc.getManager().getSettings().omitSanitycheckFineGrained1() || weqCc.getManager().getAllWeqVariables()
+				.stream().allMatch(weqvar -> !Arrays.asList(result.getFreeVars()).contains(weqvar));
 		return result;
 	}
 
@@ -1000,13 +997,13 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
-	public  CongruenceClosure<NODE> getSingleEqualityCc(final NODE node1, final NODE node2,
-			final boolean modifiable, final CongruenceClosure<NODE> dummyDisjunct) {
+	public CongruenceClosure<NODE> getSingleEqualityCc(final NODE node1, final NODE node2, final boolean modifiable,
+			final CongruenceClosure<NODE> dummyDisjunct) {
 		return mCcManager.getSingleEqualityCc(node1, node2, modifiable);
 	}
 
-	public  CongruenceClosure<NODE> getSingleDisequalityCc(final NODE node1,
-			final NODE node2, final boolean modifiable, final CongruenceClosure<NODE> dummyDisjunct) {
+	public CongruenceClosure<NODE> getSingleDisequalityCc(final NODE node1, final NODE node2, final boolean modifiable,
+			final CongruenceClosure<NODE> dummyDisjunct) {
 		return mCcManager.getSingleDisequalityCc(node1, node2, modifiable);
 	}
 
@@ -1014,7 +1011,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return mCcManager.getSingleEqualityCc(node1, node2, modifiable);
 	}
 
-	public CongruenceClosure<NODE> getSingleDisequalityCc(final NODE node1, final NODE node2, final boolean modifiable) {
+	public CongruenceClosure<NODE> getSingleDisequalityCc(final NODE node1, final NODE node2,
+			final boolean modifiable) {
 		return mCcManager.getSingleDisequalityCc(node1, node2, modifiable);
 	}
 
@@ -1045,8 +1043,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
-	public WeqCongruenceClosure<NODE> addAllElements(final WeqCongruenceClosure<NODE> weqcc,
-			final Set<NODE> nodesToAdd, final IRemovalInfo<NODE> remInfo, final boolean inplace) {
+	public WeqCongruenceClosure<NODE> addAllElements(final WeqCongruenceClosure<NODE> weqcc, final Set<NODE> nodesToAdd,
+			final IRemovalInfo<NODE> remInfo, final boolean inplace) {
 		bmStart(WeqCcBmNames.ADDALLNODES);
 		if (inplace) {
 			for (final NODE e : nodesToAdd) {
@@ -1071,18 +1069,16 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
-	public CongruenceClosure<NODE> addAllElementsCc(final CongruenceClosure<NODE> cc,
-			final Set<NODE> elemsToAdd, final IRemovalInfo<NODE> remInfo, final boolean inplace) {
+	public CongruenceClosure<NODE> addAllElementsCc(final CongruenceClosure<NODE> cc, final Set<NODE> elemsToAdd,
+			final IRemovalInfo<NODE> remInfo, final boolean inplace) {
 		return mCcManager.addAllElements(cc, elemsToAdd, remInfo, inplace);
 	}
 
 	/**
-	 * Given a (multidimensional) index, compute the corresponding annotation for a
-	 * weak equivalence edge.
+	 * Given a (multidimensional) index, compute the corresponding annotation for a weak equivalence edge.
 	 *
-	 * Example: for (i1, .., in), this should return (q1 = i1, ..., qn = in) as a
-	 * list of CongruenceClosures. (where qi is the variable returned by
-	 * getWeqVariableForDimension(i))
+	 * Example: for (i1, .., in), this should return (q1 = i1, ..., qn = in) as a list of CongruenceClosures. (where qi
+	 * is the variable returned by getWeqVariableForDimension(i))
 	 *
 	 * Always returns a frozen constraint (as of now..).
 	 *
@@ -1109,15 +1105,13 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @param storeIndex
 	 * @return
 	 */
-	public WeakEquivalenceEdgeLabel<NODE> getEdgeLabelForIndex(
-			final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
+	public WeakEquivalenceEdgeLabel<NODE> getEdgeLabelForIndex(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
 			final NODE storeIndex) {
 		return getSingletonEdgeLabel(weakEquivalenceGraph,
 				computeWeqConstraintForIndex(Collections.singletonList(storeIndex), !weakEquivalenceGraph.isFrozen()));
 	}
 
-	public  WeakEquivalenceEdgeLabel<NODE>
-		meetEdgeLabels( final WeakEquivalenceEdgeLabel<NODE> l1,
+	public WeakEquivalenceEdgeLabel<NODE> meetEdgeLabels(final WeakEquivalenceEdgeLabel<NODE> l1,
 			final WeakEquivalenceEdgeLabel<NODE> l2, final boolean inplace) {
 		bmStart(WeqCcBmNames.MEETEDGELABELS);
 
@@ -1133,18 +1127,16 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	/**
-	 * Checks if "(l1 /\ l2) <-> result)" holds.
-	 * (Simply takes the ground formulas of the weq labels, which should be what we want..)
+	 * Checks if "(l1 /\ l2) <-> result)" holds. (Simply takes the ground formulas of the weq labels, which should be
+	 * what we want..)
 	 *
 	 * @param l1
 	 * @param l2
 	 * @param result
 	 * @return
 	 */
-	 boolean checkMeetWeqLabels(
-					final WeakEquivalenceEdgeLabel<NODE> l1,
-					final WeakEquivalenceEdgeLabel<NODE> l2,
-					final WeakEquivalenceEdgeLabel<NODE> result) {
+	boolean checkMeetWeqLabels(final WeakEquivalenceEdgeLabel<NODE> l1, final WeakEquivalenceEdgeLabel<NODE> l2,
+			final WeakEquivalenceEdgeLabel<NODE> result) {
 
 		final Script script = mMgdScript.getScript();
 
@@ -1177,15 +1169,13 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	/**
-	 * rule:  Disjunction A isStrongerThan disjunction B
-	 *     iff
-	 *   forall ai exists bi. ai subseteq bi
+	 * rule: Disjunction A isStrongerThan disjunction B iff forall ai exists bi. ai subseteq bi
+	 *
 	 * @param ccPoCache
 	 * @param value
 	 * @return
 	 */
-	public  boolean isStrongerThan(
-			final WeakEquivalenceEdgeLabel<NODE> label1,
+	public boolean isStrongerThan(final WeakEquivalenceEdgeLabel<NODE> label1,
 			final WeakEquivalenceEdgeLabel<NODE> label2) {
 		final boolean result;
 		if (mSettings.isPreciseWeqLabelComparison()) {
@@ -1197,8 +1187,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
-	 boolean isStrongerThanPrecise(
-			final WeakEquivalenceEdgeLabel<NODE> label1,
+	boolean isStrongerThanPrecise(final WeakEquivalenceEdgeLabel<NODE> label1,
 			final WeakEquivalenceEdgeLabel<NODE> label2) {
 		final Script script = mMgdScript.getScript();
 
@@ -1218,8 +1207,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return implicationHolds;
 	}
 
-	private  boolean checkIsStrongerThanResult(
-			final WeakEquivalenceEdgeLabel<NODE> label1,
+	private boolean checkIsStrongerThanResult(final WeakEquivalenceEdgeLabel<NODE> label1,
 			final WeakEquivalenceEdgeLabel<NODE> label2, final boolean impCheckResult) {
 
 		if (mSkipSolverChecks) {
@@ -1244,24 +1232,23 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		final boolean implicationHolds = satResult == LBool.UNSAT;
 
 		final boolean result;
-//		if (label2.getDisjuncts().size() <= 1) {
-//			// special case where our implication check is conceptually precise
-//			result = implicationHolds == impCheckResult;
-//			assert result;
-//		} else {
-			/*
-			 * in general our implication check approximates: If its says the implication holds, it holds, but it may
-			 *  not detect a valid implication  in all cases.
-			 */
-			result = !impCheckResult || implicationHolds;
-			assert result;
-//		}
+		// if (label2.getDisjuncts().size() <= 1) {
+		// // special case where our implication check is conceptually precise
+		// result = implicationHolds == impCheckResult;
+		// assert result;
+		// } else {
+		/*
+		 * in general our implication check approximates: If its says the implication holds, it holds, but it may not
+		 * detect a valid implication in all cases.
+		 */
+		result = !impCheckResult || implicationHolds;
+		assert result;
+		// }
 
 		return result;
 	}
 
-	public  boolean isStrongerThan(
-			final WeakEquivalenceEdgeLabel<NODE> label1,
+	public boolean isStrongerThan(final WeakEquivalenceEdgeLabel<NODE> label1,
 			final WeakEquivalenceEdgeLabel<NODE> label2,
 			final BiPredicate<CongruenceClosure<NODE>, CongruenceClosure<NODE>> lowerOrEqual) {
 		bmStart(WeqCcBmNames.ISLABELSTRONGERTHAN);
@@ -1291,8 +1278,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return isStrongerThan(label1, label2) && isStrongerThan(label2, label1);
 	}
 
-	public  boolean isStrongerThan(
-			final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
+	public boolean isStrongerThan(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
 			final WeakEquivalenceGraph<NODE> weakEquivalenceGraph2) {
 		bmStart(WeqCcBmNames.ISWEQGRAPHSTRONGERTHAN);
 
@@ -1303,8 +1289,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
-	private  void freezeIfNecessary(
-			final WeakEquivalenceGraph<NODE> weakEquivalenceGraph) {
+	private void freezeIfNecessary(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph) {
 		if (!weakEquivalenceGraph.isFrozen()) {
 			weakEquivalenceGraph.freeze();
 		}
@@ -1319,10 +1304,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @param modifiable
 	 * @return
 	 */
-	public  WeakEquivalenceGraph<NODE> join(
-			final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
-			final WeakEquivalenceGraph<NODE> weakEquivalenceGraph2,
-			final boolean modifiable) {
+	public WeakEquivalenceGraph<NODE> join(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
+			final WeakEquivalenceGraph<NODE> weakEquivalenceGraph2, final boolean modifiable) {
 		bmStart(WeqCcBmNames.WEQGRAPHJOIN);
 		freezeIfNecessary(weakEquivalenceGraph);
 		freezeIfNecessary(weakEquivalenceGraph2);
@@ -1349,14 +1332,13 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return mCcManager.getCopy(icc, modifiable);
 	}
 
-	public  WeakEquivalenceEdgeLabel<NODE>
-			copy(final WeakEquivalenceEdgeLabel<NODE> original, final boolean omitSanityCheck,
-					final boolean modifiable) {
+	public WeakEquivalenceEdgeLabel<NODE> copy(final WeakEquivalenceEdgeLabel<NODE> original,
+			final boolean omitSanityCheck, final boolean modifiable) {
 		return copy(original, original.getWeqGraph(), omitSanityCheck, modifiable);
 	}
 
-	public  WeakEquivalenceEdgeLabel<NODE>
-			copy(final WeakEquivalenceEdgeLabel<NODE> original, final boolean modifiable) {
+	public WeakEquivalenceEdgeLabel<NODE> copy(final WeakEquivalenceEdgeLabel<NODE> original,
+			final boolean modifiable) {
 		return copy(original, original.getWeqGraph(), modifiable);
 	}
 
@@ -1368,43 +1350,34 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
-
-	public  WeakEquivalenceEdgeLabel<NODE> copy(
-			final WeakEquivalenceEdgeLabel<NODE> value,
-			final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
-			final boolean modifiable) {
+	public WeakEquivalenceEdgeLabel<NODE> copy(final WeakEquivalenceEdgeLabel<NODE> value,
+			final WeakEquivalenceGraph<NODE> weakEquivalenceGraph, final boolean modifiable) {
 		return copy(value, weakEquivalenceGraph, false, modifiable);
 	}
 
-
-	public  WeakEquivalenceEdgeLabel<NODE> copy(
-			final WeakEquivalenceEdgeLabel<NODE> value,
-			final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
-			final boolean omitSanityCheck,
+	public WeakEquivalenceEdgeLabel<NODE> copy(final WeakEquivalenceEdgeLabel<NODE> value,
+			final WeakEquivalenceGraph<NODE> weakEquivalenceGraph, final boolean omitSanityCheck,
 			final boolean modifiable) {
-		final WeakEquivalenceEdgeLabel<NODE> result = new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph,
-				value, omitSanityCheck);
+		final WeakEquivalenceEdgeLabel<NODE> result =
+				new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph, value, omitSanityCheck);
 		if (!modifiable) {
 			result.freeze();
 		}
 		return result;
 	}
 
-
-	public  WeakEquivalenceGraph<NODE> unfreeze(
-			final WeakEquivalenceGraph<NODE> weqGraph) {
+	public WeakEquivalenceGraph<NODE> unfreeze(final WeakEquivalenceGraph<NODE> weqGraph) {
 		return new WeakEquivalenceGraph<>(weqGraph.getBaseWeqCc(), weqGraph);
 	}
 
-	public  WeakEquivalenceEdgeLabel<NODE>
-			unfreeze(final WeakEquivalenceEdgeLabel<NODE> value) {
+	public WeakEquivalenceEdgeLabel<NODE> unfreeze(final WeakEquivalenceEdgeLabel<NODE> value) {
 		return copy(value, true);
 	}
-
 
 	/**
 	 * Solution from StackOverflow (apparently quoting http://docs.oracle.com/javase/1.4.2/docs/guide/lang/assert.html)
 	 * to detect if asserts are enabled.
+	 *
 	 * @return true iff Java is running with assertions enabled
 	 */
 	public static boolean areAssertsEnabled() {
@@ -1413,18 +1386,15 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return assertsEnabled;
 	}
 
-	public boolean checkEquivalence(final WeqCongruenceClosure<NODE> weqcc1,
-			final WeqCongruenceClosure<NODE> weqcc2) {
+	public boolean checkEquivalence(final WeqCongruenceClosure<NODE> weqcc1, final WeqCongruenceClosure<NODE> weqcc2) {
 		if (mSkipSolverChecks) {
 			return true;
 		}
 
 		mMgdScript.lock(this);
 
-		final Term term1 = weqCcToTerm(mMgdScript.getScript(), weqcc1,
-				getNonTheoryLiteralDisequalitiesIfNecessary());
-		final Term term2 = weqCcToTerm(mMgdScript.getScript(), weqcc2,
-				getNonTheoryLiteralDisequalitiesIfNecessary());
+		final Term term1 = weqCcToTerm(mMgdScript.getScript(), weqcc1, getNonTheoryLiteralDisequalitiesIfNecessary());
+		final Term term2 = weqCcToTerm(mMgdScript.getScript(), weqcc2, getNonTheoryLiteralDisequalitiesIfNecessary());
 
 		final boolean oneImpliesTwo = checkImplicationHolds(mMgdScript.getScript(), term1, term2);
 		assert oneImpliesTwo;
@@ -1468,10 +1438,9 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	static enum WeqCcBmNames {
 
-		FILTERREDUNDANT, UNFREEZE, COPY, MEET, JOIN, ISSTRONGERTHAN, ADDNODE, REPORTEQUALITY,
-		REPORTDISEQUALITY, REPORTWEQ, REPORTCONTAINS, PROJECTAWAY, RENAMEVARS, ADDALLNODES,
-		MEETEDGELABELS, ISLABELSTRONGERTHAN, ISWEQGRAPHSTRONGERTHAN, WEQGRAPHJOIN, FREEZE_AND_CLOSE, FREEZEONLY,
-		EXT_AND_TRIANGLE_CLOSURE, ALIGN_ELEMENTS;
+		FILTERREDUNDANT, UNFREEZE, COPY, MEET, JOIN, ISSTRONGERTHAN, ADDNODE, REPORTEQUALITY, REPORTDISEQUALITY,
+		REPORTWEQ, REPORTCONTAINS, PROJECTAWAY, RENAMEVARS, ADDALLNODES, MEETEDGELABELS, ISLABELSTRONGERTHAN,
+		ISWEQGRAPHSTRONGERTHAN, WEQGRAPHJOIN, FREEZE_AND_CLOSE, FREEZEONLY, EXT_AND_TRIANGLE_CLOSURE, ALIGN_ELEMENTS;
 
 		static String[] getNames() {
 			final String[] result = new String[values().length];
@@ -1482,14 +1451,13 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
-	public  void replaceElement(final WeakEquivalenceEdgeLabel<NODE> aToB, final NODE replacer, final NODE replacee) {
+	public void replaceElement(final WeakEquivalenceEdgeLabel<NODE> aToB, final NODE replacer, final NODE replacee) {
 		final Function<NODE, NODE> transformer = n -> n.equals(replacee) ? replacer : n;
 		aToB.transformElements(transformer);
 	}
 
-	public  WeakEquivalenceEdgeLabel<NODE> reportEquality(
-			final WeakEquivalenceEdgeLabel<NODE> label, final NODE n1, final NODE n2,
-			final boolean inplace) {
+	public WeakEquivalenceEdgeLabel<NODE> reportEquality(final WeakEquivalenceEdgeLabel<NODE> label, final NODE n1,
+			final NODE n2, final boolean inplace) {
 		if (inplace) {
 			for (final CongruenceClosure<NODE> d : label.getDisjuncts()) {
 				reportEquality(d, n1, n2, true);

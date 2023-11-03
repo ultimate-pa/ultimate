@@ -30,6 +30,7 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
@@ -52,6 +53,8 @@ public final class IcfgForkThreadCurrentTransition extends AbstractIcfgTransitio
 		mTransFormula = Objects.requireNonNull(transFormula, "A transformula is missing");
 		mForkSmtArguments = Objects.requireNonNull(forkSmtArguments, "A forkSmtArguments is missing");
 		mNameOfForkedProcedure = Objects.requireNonNull(nameOfForkedProcedure, "forked procedure is missing");
+
+		assert TransFormulaUtils.hasInternalNormalForm(mTransFormula) : "Expected TF in internal normal form";
 	}
 
 	@Override

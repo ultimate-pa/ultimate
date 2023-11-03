@@ -36,7 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -121,11 +121,9 @@ public class XnfPlr extends XjunctPartialQuantifierElimination {
 		// TODO: why does removing variables in DER work, but not here?
 		// eliminatees.removeAll(substitutionMapping.keySet());
 
-		final SubstitutionWithLocalSimplification subst =
-				new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
 		final Term[] rtr = dualJuncts.clone();
 		for (int i = 0; i < dualJuncts.length; ++i) {
-			rtr[i] = subst.transform(dualJuncts[i]);
+			rtr[i] = Substitution.apply(mMgdScript, substitutionMapping, dualJuncts[i]);
 		}
 		return rtr;
 	}

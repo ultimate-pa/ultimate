@@ -63,8 +63,9 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 /**
  *
  * An {@link IHoareTripleChecker} that chains different {@link IHoareTripleChecker}s together. It queries the first
- * checker, and if the answer is different from {@link Validity#UNKNOWN}, it is returned. If it is
- * {@link Validity#UNKNOWN}, the next checker is queried, until no checker remains.
+ * checker, and if the answer is different from {@link Validity#UNKNOWN} and {@link Validity#NOT_CHECKED}, it is
+ * returned. If it is {@link Validity#UNKNOWN} or {@link Validity#NOT_CHECKED}, the next checker is queried, until no
+ * checker remains.
  *
  * Benefits as opposed to other {@link IHoareTripleChecker}s include automatic statistics, protection, and review.
  *
@@ -160,6 +161,10 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 	 */
 	public static ChainingHoareTripleChecker with(final ILogger logger, final IHoareTripleChecker htc) {
 		return new ChainingHoareTripleChecker(logger).andThen(htc);
+	}
+
+	public static ChainingHoareTripleChecker empty(final ILogger logger) {
+		return new ChainingHoareTripleChecker(logger);
 	}
 
 	/**

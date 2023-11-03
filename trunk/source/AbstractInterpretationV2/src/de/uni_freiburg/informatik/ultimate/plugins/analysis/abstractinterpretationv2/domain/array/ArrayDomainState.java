@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -814,9 +813,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 
 	private Term project(final IProgramVar newVar, final IProgramVar oldVar, final Term baseTerm) {
 		final TermVariable newTv = newVar.getTermVariable();
-		final Term substituted =
-				new Substitution(mToolkit.getManagedScript(), Collections.singletonMap(oldVar.getTermVariable(), newTv))
-						.transform(baseTerm);
+		final Term substituted = Substitution.apply(mToolkit.getManagedScript(),
+				Collections.singletonMap(oldVar.getTermVariable(), newTv), baseTerm);
 		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(substituted.getFreeVars()));
 		freeVars.remove(newTv);
 		final Term quantified =
@@ -1115,8 +1113,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				conjuncts.add(SmtUtils.or(script, disjuncts));
 			}
 		}
-		final Term body = new SubstitutionWithLocalSimplification(managedScript, substitution)
-				.transform(SmtUtils.and(script, conjuncts));
+		final Term body = Substitution.apply(managedScript, substitution, SmtUtils.and(script, conjuncts));
 		final Term existsTerm = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, body);
 		return SmtUtils.quantifier(script, QuantifiedFormula.FORALL, bounds, mToolkit.eliminateQuantifier(existsTerm));
 	}

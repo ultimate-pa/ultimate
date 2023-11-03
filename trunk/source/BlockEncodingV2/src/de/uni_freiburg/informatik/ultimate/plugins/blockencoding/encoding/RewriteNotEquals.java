@@ -26,34 +26,26 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.NNF;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RemoveNegation;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteDisequality;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteIte;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TransitionPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
@@ -74,50 +66,40 @@ public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 	protected BasicIcfg<IcfgLocation> createResult(final BasicIcfg<IcfgLocation> icfg) {
 		final IcfgEdgeIterator iter = new IcfgEdgeIterator(icfg);
 		final Set<IcfgEdge> toRemove = new HashSet<>();
-		final CfgSmtToolkit toolkit = icfg.getCfgSmtToolkit();
-		final ManagedScript mgScript = toolkit.getManagedScript();
-		final ReplacementVarFactory repVarFac = new ReplacementVarFactory(toolkit, false);
-		final List<TransitionPreprocessor> transformer = new ArrayList<>();
-		transformer.add(new RewriteIte());
-		transformer.add(new NNF(mServices));
-		transformer.add(new RemoveNegation());
-		transformer.add(new RewriteDisequality());
-		transformer.add(new NNF(mServices));
-		transformer.add(new RemoveNegation());
+		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 
 		while (iter.hasNext()) {
 			final IcfgEdge edge = iter.next();
 			if (!(edge instanceof IIcfgInternalTransition<?>) || edge instanceof Summary) {
 				continue;
 			}
+			final UnmodifiableTransFormula oldTransFormula = edge.getTransformula();
+			final Term newTerm;
+			{
+				final Term withoutIte = new IteRemover(mgdScript).transform(oldTransFormula.getFormula());
+				final Term inNnf = new NnfTransformer(mgdScript, mServices, QuantifierHandling.KEEP)
+						.transform(withoutIte);
+				newTerm = new RewriteDisequality.RewriteDisequalityTransformer(mgdScript.getScript()).transform(inNnf);
+			}
 
-			final ModifiableTransFormula mtf =
-					ModifiableTransFormulaUtils.buildTransFormula(IcfgUtils.getTransformula(edge), repVarFac, mgScript);
-			final ModifiableTransFormula rewrittenMtf = rewrite(transformer, mtf, mgScript);
-			if (mtf.getFormula().equals(rewrittenMtf.getFormula())) {
-				// nothing to do
+			if (newTerm == oldTransFormula.getFormula()) {
+				// formula unchanged, do not change edge
 				continue;
 			}
+
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Rewrote ");
-				mLogger.debug(mtf.getFormula());
-				mLogger.debug(rewrittenMtf.getFormula());
+				mLogger.debug(oldTransFormula.getFormula());
+				mLogger.debug(newTerm);
 			}
 			if (!toRemove.add(edge)) {
 				continue;
 			}
-			final IcfgEdge newEdge = mEdgeBuilder.constructInternalTransition(edge, edge.getSource(), edge.getTarget(),
-					TransFormulaBuilder.constructCopy(mgScript, rewrittenMtf, Collections.emptySet(),
-							Collections.emptySet(), Collections.emptyMap()));
+			final UnmodifiableTransFormula newTransFormula = constructNewTransFormula(mgdScript, oldTransFormula,
+					newTerm);
+			final IcfgEdge newEdge = mEdgeBuilder.constructAndConnectInternalTransition(edge, edge.getSource(),
+					edge.getTarget(), newTransFormula);
 			rememberEdgeMapping(newEdge, edge);
-		}
-
-		if (!repVarFac.isUnused()) {
-			final CfgSmtToolkit newToolkit = new CfgSmtToolkit(repVarFac.constructModifiableGlobalsTable(), mgScript,
-					repVarFac.constructIIcfgSymbolTable(), toolkit.getProcedures(), toolkit.getInParams(),
-					toolkit.getOutParams(), toolkit.getIcfgEdgeFactory(), toolkit.getConcurrencyInformation(),
-					toolkit.getSmtFunctionsAndAxioms());
-			icfg.setCfgSmtToolkit(newToolkit);
 		}
 
 		toRemove.stream().forEach(a -> {
@@ -128,17 +110,16 @@ public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 		return icfg;
 	}
 
-	private static ModifiableTransFormula rewrite(final List<TransitionPreprocessor> transformers,
-			final ModifiableTransFormula mtf, final ManagedScript mgdScript) {
-		ModifiableTransFormula rtr = mtf;
-		for (final TransitionPreprocessor transformer : transformers) {
-			try {
-				rtr = transformer.process(mgdScript, rtr);
-			} catch (final TermException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		return rtr;
+	private UnmodifiableTransFormula constructNewTransFormula(final ManagedScript mgScript,
+			final UnmodifiableTransFormula oldTransFormula, final Term newTerm) {
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(oldTransFormula.getInVars(),
+				oldTransFormula.getOutVars(), oldTransFormula.getNonTheoryConsts().isEmpty(),
+				oldTransFormula.getNonTheoryConsts(), oldTransFormula.getBranchEncoders().isEmpty(),
+				oldTransFormula.getBranchEncoders(), oldTransFormula.getAuxVars().isEmpty());
+		tfb.setFormula(newTerm);
+		tfb.addAuxVarsButRenameToFreshCopies(oldTransFormula.getAuxVars(), mgScript);
+		tfb.setInfeasibility(oldTransFormula.isInfeasible());
+		return tfb.finishConstruction(mgScript);
 	}
 
 	@Override

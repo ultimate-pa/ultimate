@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunction
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -67,7 +66,7 @@ public class AddSymbols extends TransitionPreprocessor {
 		mAxioms = SmtUtils.getConjuncts(axioms);
 		for (final Term axiom : mAxioms) {
 			// TODO: Check if the boolean parameter is correct; it was necessary to restore the build
-			mConstants.addAll(new ConstantFinder().findConstants(axiom, false));
+			mConstants.addAll(SmtUtils.extractConstants(axiom, false));
 		}
 	}
 
@@ -82,8 +81,7 @@ public class AddSymbols extends TransitionPreprocessor {
 			tf.addOutVar(repVar, repVar.getTermVariable());
 			substitutionMapping.put(constVar, repVar.getTermVariable());
 		}
-		final Term axioms =
-				new Substitution(script, substitutionMapping).transform(SmtUtils.and(script.getScript(), mAxioms));
+		final Term axioms = Substitution.apply(script, substitutionMapping, SmtUtils.and(script.getScript(), mAxioms));
 		Term formula = tf.getFormula();
 		formula = SmtUtils.and(script.getScript(), formula, axioms);
 		tf.setFormula(formula);

@@ -37,13 +37,15 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -83,7 +85,7 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 		mLocToTruePred = new HashMap<>();
 
 		mDontCareLocationPredicate = newPredicate(symbolTable.getDontCareHornClausePredicateSymbol(),
-				super.getDontCareTerm(), Collections.emptyList());
+				super.getDontCareTerm(), Collections.emptyList(), Collections.emptyList());
 		mFalseLocationPredicate = getTruePredicateWithLocation(symbolTable.getFalseHornClausePredicateSymbol());
 		mTrueLocationPredicate = getTruePredicateWithLocation(symbolTable.getTrueHornClausePredicateSymbol());
 	}
@@ -99,7 +101,8 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 		HCPredicate result = mLocToTruePred.get(headPredicate);
 		if (result == null) {
 			mMgdScript.lock(this);
-			result = newPredicate(headPredicate, mMgdScript.term(this, "true"), Collections.emptyList());
+			result = newPredicate(headPredicate, mMgdScript.term(this, "true"), Collections.emptyList(),
+					Collections.emptyList());
 			mMgdScript.unlock(this);
 			mLocToTruePred.put(headPredicate, result);
 		}
@@ -119,16 +122,17 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 	}
 
 	public HCPredicate newPredicate(final HcPredicateSymbol loc, final Term term,
-			final List<TermVariable> vars) {
-		return newPredicate(Collections.singleton(loc), term, vars);
+			final List<TermVariable> vars, final List<FunctionSymbol> funs) {
+		return newPredicate(Collections.singleton(loc), term, vars, funs);
 	}
 
-	public HCPredicate newPredicate(final Set<HcPredicateSymbol> loc, final Term term, final List<TermVariable> vars) {
-		final ComputeHcOutVarsAndNormalizeTerm chovant = new ComputeHcOutVarsAndNormalizeTerm(term, vars);
+	public HCPredicate newPredicate(final Set<HcPredicateSymbol> loc, final Term term, final List<TermVariable> vars,
+			final List<FunctionSymbol> funs) {
+		final ComputeHcOutVarsAndNormalizeTerm chovant = new ComputeHcOutVarsAndNormalizeTerm(term, vars, funs);
 
 		final int finalSerialNumber = constructFreshSerialNumber();
 		return new HCPredicate(loc, finalSerialNumber, chovant.getNormalizedTerm(), chovant.getProgramVars(),
-				computeClosedFormula(chovant.getNormalizedTerm()), vars);
+				chovant.getProgramFuns(), computeClosedFormula(chovant.getNormalizedTerm()), vars);
 	}
 
 	/***
@@ -161,7 +165,7 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 			final ApplicationTerm defaultConstantForFv = mSymbolTable.getProgramVar(fv).getDefaultConstant();
 			substitutionMapping.put(fv, defaultConstantForFv);
 		}
-		return new Substitution(mMgdScript, substitutionMapping).transform(formula);
+		return PureSubstitution.apply(mMgdScript, substitutionMapping, formula);
 	}
 
 	/**
@@ -174,11 +178,14 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 	class ComputeHcOutVarsAndNormalizeTerm {
 		private final Term mNormalizedTerm;
 		private final Set<IProgramVar> mProgramVars;
+		private final Set<IProgramFunction> mProgramFuns;
 
-		public ComputeHcOutVarsAndNormalizeTerm(final Term formula, final List<TermVariable> variables) {
+		public ComputeHcOutVarsAndNormalizeTerm(final Term formula, final List<TermVariable> variables,
+				final List<FunctionSymbol> functions) {
 			if (isDontCare(formula)) {
 				mNormalizedTerm = formula;
 				mProgramVars = Collections.emptySet();
+				mProgramFuns = Collections.emptySet();
 			} else {
 //				final Map<Term, Term> normalizingSubstitution = new HashMap<>();
 //				final Set<IProgramVar> hcOutVars = new HashSet<>();
@@ -196,6 +203,8 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 				mNormalizedTerm = formula;
 				mProgramVars = variables.stream().map(tv -> mHCSymbolTable.getProgramVar(tv))
 						.collect(Collectors.toSet());
+				mProgramFuns = functions.stream().map(tv -> mHCSymbolTable.getProgramFun(tv))
+						.collect(Collectors.toSet());
 			}
 		}
 
@@ -206,5 +215,11 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 		public Set<IProgramVar> getProgramVars() {
 			return mProgramVars;
 		}
+
+		public Set<IProgramFunction> getProgramFuns() {
+			return mProgramFuns;
+		}
+
+
 	}
 }

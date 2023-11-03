@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -35,29 +37,29 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpgStrategyModule;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner.AbsIntInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpTcStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpgStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.ITraceCheckStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class TaipanRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
-	public TaipanRefinementStrategy(final StrategyModuleFactory<L> factory,
+	public TaipanRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory, createModules(factory), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
 	private static final <L extends IIcfgTransition<?>> StrategyModules<L>
-			createModules(final StrategyModuleFactory<L> factory) {
+			createModules(final StrategyFactory<L>.StrategyModuleFactory factory) {
 
 		final AssertCodeBlockOrder[] order = { AssertCodeBlockOrder.NOT_INCREMENTALLY,
 				new AssertCodeBlockOrder(AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST2),
@@ -88,8 +90,7 @@ public class TaipanRefinementStrategy<L extends IIcfgTransition<?>> extends Basi
 
 	@Override
 	public IHoareTripleChecker getHoareTripleChecker(final IRefinementEngine<L, ?> engine) {
-		if (engine.getResult().getUsedTracePredicates().stream().map(QualifiedTracePredicates::getOrigin)
-				.allMatch(AbsIntInterpolantGenerator.class::isAssignableFrom)) {
+		if (engine.getResult().getUsedTracePredicates().stream().allMatch(this::isAbsIntPredicate)) {
 			// rather hacky: we now that the absint module is in position 2
 			return getInterpolantGeneratorModules()[2].getHoareTripleChecker();
 		}
@@ -98,11 +99,28 @@ public class TaipanRefinementStrategy<L extends IIcfgTransition<?>> extends Basi
 
 	@Override
 	public IPredicateUnifier getPredicateUnifier(final IRefinementEngine<L, ?> engine) {
-		if (engine.getResult().getUsedTracePredicates().stream().map(QualifiedTracePredicates::getOrigin)
-				.allMatch(AbsIntInterpolantGenerator.class::isAssignableFrom)) {
+		if (engine.getResult().getUsedTracePredicates().stream().allMatch(this::isAbsIntPredicate)) {
 			// rather hacky: we know that the absint module is in position 2
 			return getInterpolantGeneratorModules()[2].getPredicateUnifier();
 		}
 		return super.getPredicateUnifier(engine);
+	}
+
+	private boolean isAbsIntPredicate(final QualifiedTracePredicates qtp) {
+		return qtp.getOrigin().isAssignableFrom(AbsIntInterpolantGenerator.class);
+	}
+
+	@Override
+	public List<QualifiedTracePredicates> mergeInterpolants(final List<QualifiedTracePredicates> perfectIpps,
+			final List<QualifiedTracePredicates> imperfectIpps) {
+		final List<QualifiedTracePredicates> perfectAbsIntIpps =
+				perfectIpps.stream().filter(this::isAbsIntPredicate).collect(Collectors.toList());
+		// If we have perfect interpolants from AbsInt, we use them
+		if (!perfectAbsIntIpps.isEmpty()) {
+			return perfectAbsIntIpps;
+		}
+		// Otherwise we use all interpolants that are not provided by AbsInt
+		return Stream.concat(perfectIpps.stream(), imperfectIpps.stream()).filter(x -> !isAbsIntPredicate(x))
+				.collect(Collectors.toList());
 	}
 }

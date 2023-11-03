@@ -40,9 +40,12 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.CopySubnet;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -178,20 +181,19 @@ public class LiptonReduction<L, P> {
 	 * @return new Petri net, where the choice rule has been performed.
 	 */
 	private BoundedPetriNet<L, P> choiceRule(final BoundedPetriNet<L, P> petriNet) {
-		final Collection<ITransition<L, P>> transitions = petriNet.getTransitions();
+		final Collection<Transition<L, P>> transitions = petriNet.getTransitions();
 
-		final Set<Triple<L, ITransition<L, P>, ITransition<L, P>>> pendingCompositions = new HashSet<>();
-		final Set<ITransition<L, P>> composedTransitions = new HashSet<>();
+		final Set<Triple<L, Transition<L, P>, Transition<L, P>>> pendingCompositions = new HashSet<>();
+		final Set<Transition<L, P>> composedTransitions = new HashSet<>();
 
-		for (final ITransition<L, P> t1 : transitions) {
-			for (final ITransition<L, P> t2 : transitions) {
+		for (final Transition<L, P> t1 : transitions) {
+			for (final Transition<L, P> t2 : transitions) {
 				if (t1.equals(t2)) {
 					continue;
 				}
 
 				// Check if Pre- and Postset are identical for t1 and t2.
-				if (petriNet.getPredecessors(t1).equals(petriNet.getPredecessors(t2))
-						&& petriNet.getSuccessors(t1).equals(petriNet.getSuccessors(t2))
+				if (t1.getPredecessors().equals(t2.getPredecessors()) && t1.getSuccessors().equals(t2.getSuccessors())
 						&& mCompositionFactory.isComposable(t1.getSymbol())
 						&& mCompositionFactory.isComposable(t2.getSymbol())) {
 
@@ -220,14 +222,14 @@ public class LiptonReduction<L, P> {
 				copyPetriNetWithModification(petriNet, pendingCompositions, composedTransitions);
 
 		// update information for composed transition
-		for (final Triple<L, ITransition<L, P>, ITransition<L, P>> composition : pendingCompositions) {
+		for (final Triple<L, Transition<L, P>, Transition<L, P>> composition : pendingCompositions) {
 			mCoEnabledRelation.copyRelationships(composition.getSecond().getSymbol(), composition.getFirst());
 			transferMoverProperties(composition.getFirst(), composition.getSecond().getSymbol(),
 					composition.getThird().getSymbol());
 		}
 
 		// delete obsolete information
-		for (final ITransition<L, P> t : composedTransitions) {
+		for (final Transition<L, P> t : composedTransitions) {
 			mCoEnabledRelation.deleteElement(t.getSymbol());
 			removeMoverProperties(t.getSymbol());
 		}
@@ -245,19 +247,19 @@ public class LiptonReduction<L, P> {
 	 * @return new Petri net, where the sequence rule has been performed.
 	 */
 	private BoundedPetriNet<L, P> sequenceRule(final BoundedPetriNet<L, P> petriNet) {
-		final Collection<ITransition<L, P>> transitions = petriNet.getTransitions();
+		final Collection<Transition<L, P>> transitions = petriNet.getTransitions();
 
-		final Set<ITransition<L, P>> obsoleteTransitions = new HashSet<>();
-		final Set<ITransition<L, P>> composedTransitions = new HashSet<>();
-		final Set<Triple<L, ITransition<L, P>, ITransition<L, P>>> pendingCompositions = new HashSet<>();
+		final Set<Transition<L, P>> obsoleteTransitions = new HashSet<>();
+		final Set<Transition<L, P>> composedTransitions = new HashSet<>();
+		final Set<Triple<L, Transition<L, P>, Transition<L, P>>> pendingCompositions = new HashSet<>();
 
-		for (final ITransition<L, P> t1 : transitions) {
+		for (final Transition<L, P> t1 : transitions) {
 			if (composedTransitions.contains(t1)) {
 				continue;
 			}
 
-			final Set<P> t1PostSet = petriNet.getSuccessors(t1);
-			final Set<P> t1PreSet = petriNet.getPredecessors(t1);
+			final Set<P> t1PostSet = t1.getSuccessors();
+			final Set<P> t1PreSet = t1.getPredecessors();
 
 			if (t1PostSet.size() != 1) {
 				// TODO: this isn't relevant for Y-V, is it?
@@ -273,7 +275,7 @@ public class LiptonReduction<L, P> {
 				boolean completeComposition = true;
 				boolean composed = false;
 
-				for (final ITransition<L, P> t2 : petriNet.getPredecessors(prePlace)) {
+				for (final Transition<L, P> t2 : petriNet.getPredecessors(prePlace)) {
 					final boolean canCompose =
 							!composedTransitions.contains(t2) && sequenceRuleCheck(t2, t1, prePlace, petriNet);
 					completeComposition = completeComposition && canCompose;
@@ -305,7 +307,7 @@ public class LiptonReduction<L, P> {
 				boolean completeComposition = true;
 				boolean composed = false;
 
-				for (final ITransition<L, P> t2 : petriNet.getSuccessors(postPlace)) {
+				for (final Transition<L, P> t2 : petriNet.getSuccessors(postPlace)) {
 					final boolean canCompose =
 							!composedTransitions.contains(t2) && sequenceRuleCheck(t1, t2, postPlace, petriNet);
 					completeComposition = completeComposition && canCompose;
@@ -339,7 +341,7 @@ public class LiptonReduction<L, P> {
 				copyPetriNetWithModification(petriNet, pendingCompositions, obsoleteTransitions);
 
 		// update information for composed transition
-		for (final Triple<L, ITransition<L, P>, ITransition<L, P>> composition : pendingCompositions) {
+		for (final Triple<L, Transition<L, P>, Transition<L, P>> composition : pendingCompositions) {
 			mCoEnabledRelation.copyRelationships(composition.getSecond().getSymbol(), composition.getFirst());
 			updateSequentialCompositions(composition.getFirst(), composition.getSecond().getSymbol(),
 					composition.getThird().getSymbol());
@@ -348,7 +350,7 @@ public class LiptonReduction<L, P> {
 		}
 
 		// delete obsolete information
-		for (final ITransition<L, P> t : obsoleteTransitions) {
+		for (final Transition<L, P> t : obsoleteTransitions) {
 			mCoEnabledRelation.deleteElement(t.getSymbol());
 			removeMoverProperties(t.getSymbol());
 			mSequentialCompositions.remove(t.getSymbol());
@@ -398,13 +400,12 @@ public class LiptonReduction<L, P> {
 	 *            The Petri Net.
 	 * @return true iff the sequence rule can be performed.
 	 */
-	private boolean sequenceRuleCheck(final ITransition<L, P> t1, final ITransition<L, P> t2, final P place,
+	private boolean sequenceRuleCheck(final Transition<L, P> t1, final Transition<L, P> t2, final P place,
 			final BoundedPetriNet<L, P> petriNet) {
 
 		final boolean composable =
 				mCompositionFactory.isComposable(t1.getSymbol()) && mCompositionFactory.isComposable(t2.getSymbol());
-		final boolean structurallyCorrect =
-				petriNet.getPredecessors(t2).size() == 1 && !petriNet.getSuccessors(t2).contains(place);
+		final boolean structurallyCorrect = t2.getPredecessors().size() == 1 && !t2.getSuccessors().contains(place);
 		final boolean moverProperties = isRightMover(t1) || isLeftMover(t2);
 
 		return composable && structurallyCorrect && moverProperties;
@@ -423,16 +424,16 @@ public class LiptonReduction<L, P> {
 	 * @return a new Petri Net with composed edges and without the edges that are not needed anymore.
 	 */
 	private BoundedPetriNet<L, P> copyPetriNetWithModification(final BoundedPetriNet<L, P> petriNet,
-			final Set<Triple<L, ITransition<L, P>, ITransition<L, P>>> pendingCompositions,
-			final Set<ITransition<L, P>> obsoleteTransitions) {
+			final Set<Triple<L, Transition<L, P>, Transition<L, P>>> pendingCompositions,
+			final Set<Transition<L, P>> obsoleteTransitions) {
 
-		for (final Triple<L, ITransition<L, P>, ITransition<L, P>> triplet : pendingCompositions) {
+		for (final Triple<L, Transition<L, P>, Transition<L, P>> triplet : pendingCompositions) {
 			petriNet.getAlphabet().add(triplet.getFirst());
-			petriNet.addTransition(triplet.getFirst(), petriNet.getPredecessors(triplet.getSecond()),
-					petriNet.getSuccessors(triplet.getThird()));
+			petriNet.addTransition(triplet.getFirst(), triplet.getSecond().getPredecessors(),
+					triplet.getThird().getSuccessors());
 		}
 
-		final Set<ITransition<L, P>> transitionsToKeep = new HashSet<>(petriNet.getTransitions());
+		final Set<Transition<L, P>> transitionsToKeep = new HashSet<>(petriNet.getTransitions());
 		transitionsToKeep.removeAll(obsoleteTransitions);
 
 		// Create new net
@@ -446,10 +447,11 @@ public class LiptonReduction<L, P> {
 	 *            A transition of the Petri Net.
 	 * @return true iff t1 is left mover.
 	 */
-	private boolean isLeftMover(final ITransition<L, P> t1) {
+	private boolean isLeftMover(final Transition<L, P> t1) {
 		final Set<L> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
 		mStatistics.reportMoverChecks(coEnabledTransitions.size());
-		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t2, t1.getSymbol()));
+		return coEnabledTransitions.stream()
+				.allMatch(t2 -> mMoverCheck.isIndependent(null, t2, t1.getSymbol()) == Dependence.INDEPENDENT);
 	}
 
 	/**
@@ -459,10 +461,11 @@ public class LiptonReduction<L, P> {
 	 *            A transition of the Petri Net.
 	 * @return true iff t1 is right mover.
 	 */
-	private boolean isRightMover(final ITransition<L, P> t1) {
+	private boolean isRightMover(final Transition<L, P> t1) {
 		final Set<L> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
 		mStatistics.reportMoverChecks(coEnabledTransitions.size());
-		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t1.getSymbol(), t2));
+		return coEnabledTransitions.stream()
+				.allMatch(t2 -> mMoverCheck.isIndependent(null, t1.getSymbol(), t2) == Dependence.INDEPENDENT);
 	}
 
 	public BoundedPetriNet<L, P> getResult() {

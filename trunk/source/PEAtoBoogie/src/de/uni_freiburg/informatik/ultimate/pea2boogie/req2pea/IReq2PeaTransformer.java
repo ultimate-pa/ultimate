@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea;
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 
 /**
@@ -38,6 +38,6 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
  */
 public interface IReq2PeaTransformer {
 
-	IReq2Pea transform(IReq2Pea req2pea, final List<InitializationPattern> init,
+	IReq2Pea transform(IReq2Pea req2pea, final List<DeclarationPattern> init,
 			final List<PatternType<?>> requirements);
 }

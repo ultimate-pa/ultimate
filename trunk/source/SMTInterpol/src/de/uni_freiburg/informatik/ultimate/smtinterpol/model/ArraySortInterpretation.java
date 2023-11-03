@@ -28,6 +28,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -59,7 +60,8 @@ public class ArraySortInterpretation implements SortInterpretation {
 
 	private Term createArray(final Map<Term, Term> mapping, final Term defaultValue, final Sort arraySort) {
 		final Theory theory = defaultValue.getTheory();
-		final FunctionSymbol constFunc = theory.getFunctionWithResult("const", null, arraySort, defaultValue.getSort());
+		final FunctionSymbol constFunc = theory.getFunctionWithResult(SMTLIBConstants.CONST, null, arraySort,
+				defaultValue.getSort());
 		Term result = theory.term(constFunc, defaultValue);
 		final ArrayDeque<Term> keys = new ArrayDeque<>(mapping.keySet());
 		// build the store term from back to front
@@ -80,7 +82,7 @@ public class ArraySortInterpretation implements SortInterpretation {
 			}
 			arrayTerm = (ApplicationTerm) arrayTerm.getParameters()[0];
 		}
-		assert arrayTerm.getFunction().getName() == "const";
+		assert arrayTerm.getFunction().getName() == SMTLIBConstants.CONST;
 		final Term defaultValue = arrayTerm.getParameters()[0];
 		for (final Iterator<Entry<Term, Term>> entryIterator = map.entrySet().iterator(); entryIterator.hasNext();) {
 			final Entry<Term, Term> entry = entryIterator.next();
@@ -149,7 +151,7 @@ public class ArraySortInterpretation implements SortInterpretation {
 			secondValues.put(index, arrayTerm.getParameters()[2]);
 			arrayTerm = (ApplicationTerm) arrayTerm.getParameters()[0];
 		}
-		assert arrayTerm.getFunction().getName() == "const";
+		assert arrayTerm.getFunction().getName() == SMTLIBConstants.CONST;
 		final Term secondDefault = arrayTerm.getParameters()[0];
 
 		// check each entry in the first array term, whether it differs.
@@ -166,7 +168,7 @@ public class ArraySortInterpretation implements SortInterpretation {
 			}
 			arrayTerm = (ApplicationTerm) arrayTerm.getParameters()[0];
 		}
-		assert arrayTerm.getFunction().getName() == "const";
+		assert arrayTerm.getFunction().getName() == SMTLIBConstants.CONST;
 		// they must differ on default value, so just return a fresh value.
 		assert secondDefault != arrayTerm.getParameters()[0];
 		final Term diffIndex = mIndexSort.extendFresh(indexSort);
@@ -181,5 +183,9 @@ public class ArraySortInterpretation implements SortInterpretation {
 
 	public SortInterpretation getValueInterpretation() {
 		return mValueSort;
+	}
+
+	@Override
+	public void register(final Term t) {
 	}
 }

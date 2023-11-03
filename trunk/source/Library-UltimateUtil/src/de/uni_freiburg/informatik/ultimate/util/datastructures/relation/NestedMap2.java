@@ -102,12 +102,20 @@ public class NestedMap2<K1, K2, V> {
 		return mK1ToK2ToV.containsKey(arg0);
 	}
 
+	public boolean containsKey(final K1 k1, final K2 k2) {
+		final Map<K2, V> k2toV = mK1ToK2ToV.get(k1);
+		if (k2toV == null) {
+			return false;
+		}
+		return k2toV.containsKey(k2);
+	}
+
 	public Set<K1> keySet() {
 		return mK1ToK2ToV.keySet();
 	}
 
 	public Iterable<Pair<K1, K2>> keys2() {
-		return () -> new Iterator<Pair<K1, K2>>() {
+		return () -> new Iterator<>() {
 			private Iterator<Entry<K1, Map<K2, V>>> mIterator1;
 			private Entry<K1, Map<K2, V>> mIterator1Object;
 			private Iterator<K2> mIterator2;
@@ -157,9 +165,8 @@ public class NestedMap2<K1, K2, V> {
 		final Function<Entry<K1, Map<K2, V>>, Iterator<Entry<K2, V>>> nextOuterIteratorProvider =
 				x -> x.getValue().entrySet().iterator();
 		final Function<Entry<K1, Map<K2, V>>, Function<Entry<K2, V>, Triple<K1, K2, V>>> resultProvider =
-				x -> y -> new Triple<K1, K2, V>(x.getKey(), y.getKey(), y.getValue());
-		return () -> new NestedIterator<Entry<K1, Map<K2, V>>, Entry<K2, V>, Triple<K1, K2, V>>(innerIterator,
-				nextOuterIteratorProvider, resultProvider);
+				x -> y -> new Triple<>(x.getKey(), y.getKey(), y.getValue());
+		return () -> new NestedIterator<>(innerIterator, nextOuterIteratorProvider, resultProvider);
 	}
 
 	/**
@@ -170,9 +177,8 @@ public class NestedMap2<K1, K2, V> {
 		if (k2ToV == null) {
 			return Collections.emptySet();
 		}
-		final Function<Entry<K2, V>, Triple<K1, K2, V>> transformer =
-				x -> new Triple<K1, K2, V>(k1, x.getKey(), x.getValue());
-		return () -> new TransformIterator<Entry<K2, V>, Triple<K1, K2, V>>(k2ToV.entrySet().iterator(), transformer);
+		final Function<Entry<K2, V>, Triple<K1, K2, V>> transformer = x -> new Triple<>(k1, x.getKey(), x.getValue());
+		return () -> new TransformIterator<>(k2ToV.entrySet().iterator(), transformer);
 	}
 
 	public void addAll(final NestedMap2<K1, K2, V> nestedMap) {

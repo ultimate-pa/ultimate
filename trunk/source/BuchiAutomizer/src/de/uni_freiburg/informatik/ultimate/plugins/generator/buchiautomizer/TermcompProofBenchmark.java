@@ -56,27 +56,27 @@ public class TermcompProofBenchmark implements ICsvProviderProvider<Double> {
 		mServices = services;
 	}
 
-	void reportFiniteModule(final Integer iteration,
+	public void reportFiniteModule(final Integer iteration,
 			final INwaOutgoingLetterAndTransitionProvider<?, IPredicate> automaton) {
 		final String stringRepresentation = (AutomatonDefinitionPrinter.toString(new AutomataLibraryServices(mServices),
 				"finiteAutomatonIteration" + iteration, automaton));
 		mModuleFinite.put(iteration, stringRepresentation);
 	}
 
-	void reportBuchiModule(final Integer iteration,
+	public void reportBuchiModule(final Integer iteration,
 			final INwaOutgoingLetterAndTransitionProvider<?, IPredicate> automaton) {
 		final String stringRepresentation = (AutomatonDefinitionPrinter.toString(new AutomataLibraryServices(mServices),
 				"buchiAutomatonIteration" + iteration, automaton));
 		mModuleBuchi.put(iteration, stringRepresentation);
 	}
 
-	void reportRemainderModule(final boolean nonterminationKnown) {
+	public void reportRemainderModule(final boolean nonterminationKnown) {
 		assert mHasRemainderModule == null : "remainder module already reported";
 		mHasRemainderModule = true;
 		mRemainderModuleNonterminationKnown = nonterminationKnown;
 	}
 
-	void reportNoRemainderModule() {
+	public void reportNoRemainderModule() {
 		assert mHasRemainderModule == null : "remainder module already reported";
 		mHasRemainderModule = false;
 	}

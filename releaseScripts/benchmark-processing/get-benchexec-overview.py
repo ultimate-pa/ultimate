@@ -9,6 +9,7 @@ import re
 import signal
 import sys
 import xml.etree.ElementTree as ET
+from enum import Enum
 from functools import lru_cache
 from pathlib import Path
 from typing import (
@@ -23,6 +24,9 @@ from typing import (
     TypeVar,
 )
 
+import mmap
+import math
+import contextlib
 import yaml
 from tqdm import tqdm
 
@@ -30,6 +34,32 @@ from tqdm import tqdm
 # first is category, second is message
 Classification = Tuple[str, str]
 T = TypeVar("T", bound=Any)
+
+
+class InterestingSets(Enum):
+    disabled = "Disabled"
+    smt_comp = "SMT-COMP"
+
+
+class EnumAction(argparse.Action):
+    """
+    Argparse action for handling Enums
+    """
+
+    def __init__(self, **kwargs):
+        enum_type = kwargs.pop("type", None)
+        if enum_type is None:
+            raise ValueError("type must be assigned an Enum when using EnumAction")
+        if not issubclass(enum_type, Enum):
+            raise TypeError("type must be an Enum when using EnumAction")
+
+        kwargs.setdefault("choices", tuple(e.value for e in enum_type))
+        super(EnumAction, self).__init__(**kwargs)
+        self._enum = enum_type
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        value = self._enum(values)
+        setattr(namespace, self.dest, value)
 
 
 class UnsupportedLogFile(ValueError):
@@ -86,6 +116,8 @@ class Run:
     status: str
     category: str
     options: str
+    properties: str
+    name: str
 
     def __init__(self, xml_run: ET.Element, logfile_basename: str) -> None:
         self.logfile_basename = logfile_basename
@@ -95,6 +127,10 @@ class Run:
         self.cputime = Run.__time_to_float(Run.__get_column_value(xml_run, "cputime"))
         self.walltime = Run.__time_to_float(Run.__get_column_value(xml_run, "walltime"))
         self.memory = Run.__byte_to_int(Run.__get_column_value(xml_run, "memory"))
+        self.properties = (
+            xml_run.attrib["properties"] if "properties" in xml_run.attrib else ""
+        )
+        self.name = xml_run.attrib.get("name", "")
 
     def is_timeout(self) -> bool:
         return self.status == "TIMEOUT"
@@ -114,7 +150,7 @@ class Run:
 
     @staticmethod
     def __time_to_float(val: str) -> float:
-        """Remove second unit from benchexec time and convert to float """
+        """Remove second unit from benchexec time and convert to float"""
         num, unit = Run.split_number_and_unit(val)
         if not unit or unit == "s":
             return float(num) if val else None
@@ -123,7 +159,7 @@ class Run:
 
     @staticmethod
     def __byte_to_int(val: str) -> int:
-        """Remove byte unit from benchexec time and convert to float """
+        """Remove byte unit from benchexec time and convert to float"""
         return int(val[:-1]) if val else None
 
     @staticmethod
@@ -258,7 +294,7 @@ def trace(msg: str) -> None:
 def parse_args() -> argparse.Namespace:
     try:
         parser = argparse.ArgumentParser(
-            description="Scan Ultimate log file for exception results"
+            description="Scan Ultimate log file(s) (and benchexec result XML files) for results types and print statistics for those."
         )
         parser.add_argument(
             "-i",
@@ -266,7 +302,7 @@ def parse_args() -> argparse.Namespace:
             metavar="<dir>",
             required=True,
             type=is_file,
-            help="Specify directory containing Ultimate log files or single log file",
+            help="Specify directory containing Benchexec XML files, Ultimate log files, or a single log file.",
         )
         parser.add_argument(
             "--fastest-n",
@@ -284,11 +320,25 @@ def parse_args() -> argparse.Namespace:
             help="The size of the result class that should be grouped separately at the bottom."
             "Default: 10",
         )
+        parser.add_argument(
+            "--generate-interesting-set",
+            type=InterestingSets,
+            action=EnumAction,
+            default=InterestingSets.disabled,
+            help="Instead of generating overviews, generate a .set file from the input based on some heuristics.",
+        )
 
         return parser.parse_args()
     except argparse.ArgumentError as exc:
         print(exc.message + "\n" + exc.argument)
         sys.exit(1)
+
+
+def match_version(line: str):
+    version_match = version_matcher.findall(line)
+    if version_match:
+        return version_match[0]
+    return "Unknown"
 
 
 def scan_line(
@@ -387,7 +437,7 @@ def process_wrapper_script_log(file: str) -> List[Result]:
                     call += [line]
             else:
                 if line.startswith("This is Ultimate"):
-                    new_version = version_matcher.findall(line)[0]
+                    new_version = match_version(line)
                     if version and not new_version == version:
                         raise ValueError(
                             "Found different Ultimate versions in one log file. First was {} and second was {}".format(
@@ -440,7 +490,7 @@ def process_direct_call_log(file: str) -> List[Result]:
                 call = line
                 debug("Found Ultimate call {}".format(call))
             elif line.startswith("This is Ultimate"):
-                version = version_matcher.findall(line)[0]
+                version = match_version(line)
                 debug("Found Ultimate version {}".format(version))
             else:
                 result = scan_line(line, result, lines)
@@ -679,7 +729,9 @@ def parse_benchexec_xmls(input_dir: str) -> Tuple[Dict[str, Run], bool]:
         return {}, False
 
     rtr = {}
-    for xml in list_xml_filepaths(input_dir):
+    pbar = tqdm(list(list_xml_filepaths(input_dir)))
+    for xml in pbar:
+        pbar.set_description(f"Parsing benchexec xml {xml[-100:]:100.100}")
         root = ET.parse(xml).getroot()
         result = root.find(".")
         name_attr = result.attrib.get("name", None)
@@ -688,8 +740,12 @@ def parse_benchexec_xmls(input_dir: str) -> Tuple[Dict[str, Run], bool]:
                 f"Run in xml file {xml} has no name! Cannot detect toolname, ignoring .xml"
             )
             continue
-        name = name_attr.split(".")
-        tool_name = name[0]
+        block_attr = result.attrib.get("block", None)
+        if block_attr is not None and name_attr.endswith("." + block_attr):
+            # Remove the suffix consisting of "." and the block
+            tool_name = name_attr[: -len(block_attr) - 1]
+        else:
+            tool_name = name_attr
         for elem in root.findall(".//run"):
             # files = elem.attrib["files"]
             yml = elem.attrib["name"]
@@ -750,6 +806,64 @@ def main() -> None:
 
     read_yaml_files()
     runs, benchexec_xml = parse_benchexec_xmls(args.input)
+
+    # we should generate interesting sets, lets do that
+    if args.generate_interesting_set != InterestingSets.disabled:
+        if not benchexec_xml:
+            print(
+                f"{args.generate_interesting_set} requires benchexec XMLs, but there are none"
+            )
+            sys.exit(1)
+
+        # get all logs with status timeout and property unreach-call
+        interesting_runs = {
+            k: v
+            for k, v in runs.items()
+            if v.is_timeout() and v.properties == "unreach-call"
+        }
+
+        # collect all that did not change to bitvector mode and did not die due to loop unrolling
+        pbar = tqdm(list(list_logfile_paths_in_dir(args.input)))
+        ymls = []
+
+        regex_has_bv_run = re.compile(
+            r"Retrying with bit-precise analysis".encode("utf-8")
+        )
+        regex_reached_trace_abstraction = re.compile(
+            r"------------------------TraceAbstraction----------------------------".encode(
+                "utf-8"
+            )
+        )
+        regex_trace_histograms = re.compile(r"trace histogram \[(.*)\]".encode("utf-8"))
+        for logfile in pbar:
+            basename = ntpath.basename(logfile)
+            pbar.set_description(f"Processing {basename[-100:]:100.100}")
+            run = interesting_runs.get(basename, None)
+            if not run:
+                continue
+
+            with open(logfile, "r", encoding="utf-8") as f:
+                # open file memory mapped for performance reasons
+                mm = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_COPY)
+                with contextlib.closing(mm) as txt:
+                    if regex_has_bv_run.search(txt):
+                        continue
+                    if not regex_reached_trace_abstraction.search(txt):
+                        continue
+                    trace_histograms = regex_trace_histograms.findall(txt)
+                    if len(trace_histograms) > 3 and all(
+                        int(h.split(",".encode("utf-8"))[0]) > 1
+                        for h in trace_histograms[-3:]
+                    ):
+                        continue
+                    ymls += [run.name]
+
+        # print the ones that made it
+        for yml in ymls:
+            print(yml)
+
+        return
+
     log_file_count, results = process_input_dir(args.input, runs)
 
     if log_file_count > len(results):

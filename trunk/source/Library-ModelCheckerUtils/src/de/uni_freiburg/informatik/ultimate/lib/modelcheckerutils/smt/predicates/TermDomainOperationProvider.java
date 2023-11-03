@@ -34,10 +34,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -79,8 +77,7 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 
 	@Override
 	public Term renameVariables(final Map<Term, Term> substitutionForTransFormula, final Term constraint) {
-		final Term renamedTransFormula =
-				new SubstitutionWithLocalSimplification(mMgdScript, substitutionForTransFormula).transform(constraint);
+		final Term renamedTransFormula = Substitution.apply(mMgdScript, substitutionForTransFormula, constraint);
 		return renamedTransFormula;
 	}
 
@@ -112,9 +109,7 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 	private Term constructQuantifiedFormula(final int quantifier, final Set<TermVariable> varsToQuantify,
 			final Term term) {
 		final Term quantified = SmtUtils.quantifier(mMgdScript.getScript(), quantifier, varsToQuantify, term);
-		final Term pushed = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript, false,
-				PqeTechniques.ONLY_DER, SimplificationTechnique.NONE, quantified);
-		return pushed;
+		return PartialQuantifierElimination.eliminateLight(mServices, mMgdScript, quantified);
 	}
 
 }

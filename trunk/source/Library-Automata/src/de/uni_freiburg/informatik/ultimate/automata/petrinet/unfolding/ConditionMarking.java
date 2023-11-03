@@ -53,9 +53,6 @@ public class ConditionMarking<LETTER, PLACE> implements Iterable<Condition<LETTE
 
 	private final Set<Condition<LETTER, PLACE>> mConditions;
 
-	public Set<Condition<LETTER, PLACE>> getConditions(){
-		return mConditions;
-	}
 	/**
 	 * Constructor.
 	 *
@@ -65,7 +62,9 @@ public class ConditionMarking<LETTER, PLACE> implements Iterable<Condition<LETTE
 	public ConditionMarking(final Set<Condition<LETTER, PLACE>> conditions) {
 		mConditions = conditions;
 	}
-
+	public Set<Condition<LETTER, PLACE>> getConditions(){
+		return mConditions;
+	}
 	/**
 	 * @param condition
 	 *            A condition.
@@ -174,7 +173,7 @@ public class ConditionMarking<LETTER, PLACE> implements Iterable<Condition<LETTE
 	/**
 	 * @return A new marking containing the places corresponding to the conditionMarkings Conditions.
 	 */
-	public Marking<LETTER, PLACE> getMarking() throws PetriNetNot1SafeException {
+	public Marking<PLACE> getMarking() throws PetriNetNot1SafeException {
 		final HashSet<PLACE> mark = new HashSet<>();
 		for (final Condition<LETTER, PLACE> c : mConditions) {
 			final boolean wasAddedForTheFirstTime = mark.add(c.getPlace());

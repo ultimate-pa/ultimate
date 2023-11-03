@@ -16,5 +16,5 @@
        VAL   [a=0.5, b=1.0, c=2.0, d=1.414199948310852, e=16777216, f=16777216, g=NaN, h=-1.0]
 [L10]        float i = -1.4142;
        VAL   [a=0.5, b=1.0, c=2.0, d=1.414199948310852, e=16777216, f=16777216, g=NaN, h=-1.0, i=-1.414199948310852]
-[L11]        CodeAnnotStmt[Assertion]
+[L11]        CodeAnnotStmt[Assertion[BinaryExpression[COMPNEQ,IdentifierExpression[e],IdentifierExpression[f]]]]
        VAL   [a=0.5, b=1.0, c=2.0, d=1.414199948310852, e=16777216, f=16777216, g=NaN, h=-1.0, i=-1.414199948310852]

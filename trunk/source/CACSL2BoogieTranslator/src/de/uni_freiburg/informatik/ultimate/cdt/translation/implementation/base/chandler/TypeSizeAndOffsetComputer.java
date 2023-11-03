@@ -35,7 +35,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -50,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -117,8 +117,8 @@ public class TypeSizeAndOffsetComputer {
 	 *         using the {@link TypeSizeAndOffsetComputer#getConstants()} and
 	 *         {@link TypeSizeAndOffsetComputer#getAxioms()} methods.
 	 */
-	public Expression constructBytesizeExpression(final ILocation loc, final CType cType, final IASTNode hook) {
-		final SizeTValue value = computeSize(loc, cType, hook);
+	public Expression constructBytesizeExpression(final ILocation loc, final CType cType) {
+		final SizeTValue value = computeSize(loc, cType);
 		return value.asExpression(loc);
 	}
 
@@ -126,21 +126,19 @@ public class TypeSizeAndOffsetComputer {
 	 * @return An Expression that represents the offset (in bytes) at which a certain field of a stuct is stored (on the
 	 *         heap).
 	 */
-	public Offset constructOffsetForField(final ILocation loc, final CStructOrUnion cStruct, final int fieldIndex,
-			final IASTNode hook) {
+	public Offset constructOffsetForField(final ILocation loc, final CStructOrUnion cStruct, final int fieldIndex) {
 		if (!mTypeSizeCache.containsKey(cStruct)) {
 			assert !mStructOffsets.containsKey(cStruct) : "both or none";
-			computeSize(loc, cStruct, hook);
+			computeSize(loc, cStruct);
 		}
 		final Offset[] offsets = mStructOffsets.get(cStruct);
 		assert offsets.length == cStruct.getFieldCount() : "inconsistent struct";
 		return offsets[fieldIndex];
 	}
 
-	public Offset constructOffsetForField(final ILocation loc, final CStructOrUnion cStruct, final String fieldId,
-			final IASTNode hook) {
+	public Offset constructOffsetForField(final ILocation loc, final CStructOrUnion cStruct, final String fieldId) {
 		final int fieldIndex = Arrays.asList(cStruct.getFieldIds()).indexOf(fieldId);
-		return constructOffsetForField(loc, cStruct, fieldIndex, hook);
+		return constructOffsetForField(loc, cStruct, fieldIndex);
 	}
 
 	private Expression constructTypeSizeConstant(final ILocation loc, final CType cType) {
@@ -182,7 +180,7 @@ public class TypeSizeAndOffsetComputer {
 		mConstants.add(decl);
 	}
 
-	private SizeTValue computeSize(final ILocation loc, final CType cType, final IASTNode hook) {
+	private SizeTValue computeSize(final ILocation loc, final CType cType) {
 		final CType underlyingType = cType.getUnderlyingType();
 		if (underlyingType instanceof CPointer) {
 			if (mTypeSizePointer == null) {
@@ -191,16 +189,19 @@ public class TypeSizeAndOffsetComputer {
 			return mTypeSizePointer;
 		} else if (underlyingType instanceof CEnum) {
 			// an Enum contains constants of type int
-			return computeSize(loc, new CPrimitive(CPrimitives.INT), hook);
+			return computeSize(loc, new CPrimitive(CPrimitives.INT));
 		} else {
 			SizeTValue sizeTValue = mTypeSizeCache.get(underlyingType);
 			if (sizeTValue == null) {
 				if (underlyingType instanceof CPrimitive) {
 					sizeTValue = constructSizeTValue_Primitive(loc, (CPrimitive) underlyingType);
 				} else if (underlyingType instanceof CArray) {
-					sizeTValue = constructSizeTValue_Array(loc, (CArray) underlyingType, hook);
+					sizeTValue = constructSizeTValue_Array(loc, (CArray) underlyingType);
 				} else if (underlyingType instanceof CStructOrUnion) {
-					sizeTValue = constructSizeTValueAndOffsets_StructAndUnion(loc, (CStructOrUnion) underlyingType, hook);
+					sizeTValue = constructSizeTValueAndOffsets_StructAndUnion(loc, (CStructOrUnion) underlyingType);
+				} else if (underlyingType instanceof CFunction) {
+					// https://gcc.gnu.org/onlinedocs/gcc/Pointer-Arith.html
+					sizeTValue = new SizeTValue_Integer(BigInteger.ONE);
 				} else {
 					throw new UnsupportedOperationException("Unsupported type" + underlyingType);
 				}
@@ -224,10 +225,9 @@ public class TypeSizeAndOffsetComputer {
 		return result;
 	}
 
-	private SizeTValue constructSizeTValue_Array(final ILocation loc, final CArray cArray, final IASTNode hook) {
-
-		final SizeTValue valueSize = computeSize(loc, cArray.getValueType(), hook);
-		final SizeTValue factor = extractSizeTValue(cArray.getBound(), hook);
+	private SizeTValue constructSizeTValue_Array(final ILocation loc, final CArray cArray) {
+		final SizeTValue valueSize = computeSize(loc, cArray.getValueType());
+		final SizeTValue factor = extractSizeTValue(cArray.getBound());
 
 		final SizeTValue size = (new SizeTValueAggregator_Multiply()).aggregate(loc,
 				Arrays.asList(new SizeTValue[] { valueSize, factor }));
@@ -246,11 +246,10 @@ public class TypeSizeAndOffsetComputer {
 	}
 
 	/**
-	 * Returns the size of a CStructOrUnion and as a side-effects computes the
-	 * {@link Offset}s for each member to the {@code mStructOffsets} array.
+	 * Returns the size of a CStructOrUnion and as a side-effects computes the {@link Offset}s for each member to the
+	 * {@code mStructOffsets} array.
 	 */
-	private SizeTValue constructSizeTValueAndOffsets_StructAndUnion(final ILocation loc, final CStructOrUnion cStruct,
-			final IASTNode hook) {
+	private SizeTValue constructSizeTValueAndOffsets_StructAndUnion(final ILocation loc, final CStructOrUnion cStruct) {
 		if (cStruct.isIncomplete()) {
 			// according to C11 6.5.3.4.1
 			throw new IllegalArgumentException("cannot determine size of incomplete type");
@@ -281,7 +280,7 @@ public class TypeSizeAndOffsetComputer {
 						startBit = 0;
 					}
 					offsets[i] = new Offset(new SizeTValue_Integer(BigInteger.ZERO), startBit, bitsize);
-					fieldTypeSizes[i] = computeOffsetOfNextByte(offsets[i], fieldType, loc, hook);
+					fieldTypeSizes[i] = computeOffsetOfNextByte(offsets[i], fieldType, loc);
 				}
 				result = new SizeTValueAggregator_Max().aggregate(loc, Arrays.asList(fieldTypeSizes));
 			} else {
@@ -302,11 +301,11 @@ public class TypeSizeAndOffsetComputer {
 						offsets[i] = new Offset(new SizeTValue_Integer(BigInteger.ZERO), startBit, bitsize);
 					} else {
 						offsets[i] = computeMemberOffset(offsets[i - 1], cStruct.getFieldTypes()[i - 1], bitsize,
-								loc, hook);
+								loc);
 					}
 				}
 				final int lastPosition = cStruct.getFieldCount()-1;
-				result = computeOffsetOfNextByte(offsets[lastPosition], cStruct.getFieldTypes()[lastPosition], loc, hook);
+				result = computeOffsetOfNextByte(offsets[lastPosition], cStruct.getFieldTypes()[lastPosition], loc);
 			}
 		}
 		mTypeSizeCache.put(cStruct, result);
@@ -335,8 +334,8 @@ public class TypeSizeAndOffsetComputer {
 		return axiom;
 	}
 
-	private SizeTValue extractSizeTValue(final RValue rvalue, final IASTNode hook) {
-		final BigInteger value = mTypeSizes.extractIntegerValue(rvalue, hook);
+	private SizeTValue extractSizeTValue(final RValue rvalue) {
+		final BigInteger value = mTypeSizes.extractIntegerValue(rvalue);
 		if (value != null) {
 			return new SizeTValue_Integer(value);
 		}
@@ -345,11 +344,6 @@ public class TypeSizeAndOffsetComputer {
 
 	/**
 	 * Get the CType that represents <em> size_t </em>.
-	 *
-	 * TODO: Currently hard-coded to int. Should probably be a setting. This is unsound, but in the integer translation
-	 * more efficient than uint (no wraparound).
-	 *
-	 * TODO: maybe this class is not the right place.
 	 */
 	public CPrimitive getSizeT() {
 		return mTypeSizes.getSizeT();
@@ -521,6 +515,7 @@ public class TypeSizeAndOffsetComputer {
 		private final SizeTValue_Integer mAddressOffset;
 		private final int mStartBit;
 		private final int mBitsize;
+
 		public Offset(final SizeTValue_Integer addressOffset, final int startBit, final int bitsize) {
 			super();
 			mAddressOffset = addressOffset;
@@ -528,21 +523,27 @@ public class TypeSizeAndOffsetComputer {
 			mBitsize = bitsize;
 			assert (startBit == -1 && bitsize == -1) || (startBit >= 0 && bitsize >= 0);
 		}
+
 		public Expression getAddressOffsetAsExpression(final ILocation loc) {
 			return mAddressOffset.asExpression(loc);
 		}
+
 		public SizeTValue_Integer getAddressOffset() {
 			return mAddressOffset;
 		}
+
 		public int getStartBit() {
 			return mStartBit;
 		}
+
 		public int getBitFieldSize() {
 			return mBitsize;
 		}
+
 		public boolean isBitfieldOffset() {
 			return getStartBit() != -1;
 		}
+
 		@Override
 		public String toString() {
 			if (!isBitfieldOffset()) {
@@ -555,7 +556,7 @@ public class TypeSizeAndOffsetComputer {
 	}
 
 	private Offset computeMemberOffset(final Offset precedingMemberOffset, final CType precedingMemberType,
-			final int bitfieldSize, final ILocation loc, final IASTNode hook) {
+			final int bitfieldSize, final ILocation loc) {
 		final boolean precedingMemberIsBitfield = precedingMemberOffset.isBitfieldOffset();
 		final boolean currentMemberIsBitfield = (bitfieldSize != -1);
 		final Offset result;
@@ -571,8 +572,8 @@ public class TypeSizeAndOffsetComputer {
 						.add(BigInteger.valueOf(completelyOccupiedBytes))), newStartBit, bitfieldSize);
 			} else {
 				// !currentMemberIsBitfield
-				final SizeTValue_Integer nextAddress = (SizeTValue_Integer) computeOffsetOfNextByte(
-						precedingMemberOffset, precedingMemberType, loc, hook);
+				final SizeTValue_Integer nextAddress =
+						(SizeTValue_Integer) computeOffsetOfNextByte(precedingMemberOffset, precedingMemberType, loc);
 				result = new Offset(nextAddress, -1, -1);
 			}
 		} else {
@@ -581,7 +582,7 @@ public class TypeSizeAndOffsetComputer {
 				result = new Offset(precedingMemberOffset.getAddressOffset(), 0, bitfieldSize);
 			} else {
 				// !currentMemberIsBitfield
-				final SizeTValue size = computeSize(loc, precedingMemberType, hook);
+				final SizeTValue size = computeSize(loc, precedingMemberType);
 				if (!(size instanceof SizeTValue_Integer)) {
 					throw new AssertionError("only flexible array member at the end can have non-constant size");
 				}
@@ -592,18 +593,20 @@ public class TypeSizeAndOffsetComputer {
 		return result;
 	}
 
-
-	private SizeTValue computeOffsetOfNextByte(final Offset offset, final CType precedingMemberType, final ILocation loc, final IASTNode hook) {
+	private SizeTValue computeOffsetOfNextByte(final Offset offset, final CType precedingMemberType,
+			final ILocation loc) {
 		if (offset.getStartBit() == -1) {
-			final SizeTValue precedingTypeSize = computeSize(loc, precedingMemberType, hook);
-			return new SizeTValueAggregator_Add().aggregate(loc, Arrays.asList(offset.getAddressOffset(), precedingTypeSize));
+			final SizeTValue precedingTypeSize = computeSize(loc, precedingMemberType);
+			return new SizeTValueAggregator_Add().aggregate(loc,
+					Arrays.asList(offset.getAddressOffset(), precedingTypeSize));
 		}
 		if (offset.getBitFieldSize() == 0) {
 			return new SizeTValue_Integer(offset.getAddressOffset().getInteger().add(BigInteger.ONE));
 		} else {
 			final int lastOccupiedBit = offset.getStartBit() + offset.getBitFieldSize();
 			final int additionalByes = (lastOccupiedBit / 8) + 1;
-			return new SizeTValue_Integer(offset.getAddressOffset().getInteger().add(BigInteger.valueOf(additionalByes)));
+			return new SizeTValue_Integer(
+					offset.getAddressOffset().getInteger().add(BigInteger.valueOf(additionalByes)));
 		}
 
 	}

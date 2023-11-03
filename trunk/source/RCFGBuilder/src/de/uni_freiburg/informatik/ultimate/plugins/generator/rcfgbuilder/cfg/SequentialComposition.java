@@ -89,6 +89,11 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 				services, codeBlocks, xnfConversionTechnique, simplificationTechnique);
 		mTransitionFormulaWithBranchEncoders = getInterproceduralTransFormula(csToolkit, simplify, extPqe,
 				transformToCNF, true, mLogger, services, codeBlocks, xnfConversionTechnique, simplificationTechnique);
+
+		assert mCallsWithoutReturns > 0
+				|| TransFormulaUtils.hasInternalNormalForm(mTransitionFormula) : "Expected TF in internal normal form";
+		assert mCallsWithoutReturns > 0 || TransFormulaUtils
+				.hasInternalNormalForm(mTransitionFormulaWithBranchEncoders) : "Expected TF in internal normal form";
 	}
 
 	private Deque<Call> getCheckedOpenCalls(final List<CodeBlock> codeBlocks) {

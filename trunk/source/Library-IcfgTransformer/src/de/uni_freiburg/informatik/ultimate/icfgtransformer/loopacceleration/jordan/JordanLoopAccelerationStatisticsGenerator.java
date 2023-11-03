@@ -37,22 +37,26 @@ public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDat
 	private final int mNumberOfAssignedVariables;
 	private final int mNumberOfHavocedVariables;
 	private final int mNumberOfReadonlyVariables;
+	private final int mNumberOfArrayWrites;
 	private final NestedMap2<Integer, Integer, Integer> mEigenvalues;
 	private int mSequentialAcceleration;
 	private int mQuantifierFreeResult;
 	private int mAlternatingAcceleration;
+	private final String mErrorMessage;
 
 	public JordanLoopAccelerationStatisticsGenerator(final int numberOfAssignedVariables,
-			final int numberOfHavocedVariables, final int numberOfReadonlyVariables,
-			final NestedMap2<Integer, Integer, Integer> eigenvalues) {
+			final int numberOfHavocedVariables, final int numberOfArrayWrites, final int numberOfReadonlyVariables,
+			final NestedMap2<Integer, Integer, Integer> eigenvalues, final String errorMessage) {
 		super();
 		mNumberOfAssignedVariables = numberOfAssignedVariables;
 		mNumberOfHavocedVariables = numberOfHavocedVariables;
 		mNumberOfReadonlyVariables = numberOfReadonlyVariables;
+		mNumberOfArrayWrites = numberOfArrayWrites;
 		mEigenvalues = eigenvalues;
 		mSequentialAcceleration = 0;
 		mQuantifierFreeResult = 0;
 		mAlternatingAcceleration = 0;
+		mErrorMessage = errorMessage;
 	}
 
 	@Override
@@ -65,6 +69,8 @@ public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDat
 			return mNumberOfHavocedVariables;
 		case ReadonlyVariables:
 			return mNumberOfReadonlyVariables;
+		case ArrayWrites:
+			return mNumberOfArrayWrites;
 		case Eigenvalues:
 			return mEigenvalues;
 		case SequentialAcceleration:
@@ -73,6 +79,8 @@ public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDat
 			return mQuantifierFreeResult;
 		case AlternatingAcceleration:
 			return mAlternatingAcceleration;
+		case ErrorMessage:
+			return mErrorMessage;
 		default:
 			throw new AssertionError("unknown data");
 		}

@@ -113,7 +113,7 @@ public class EprClause {
 		for (final Literal lit : lits) {
 			variables.addAll(Arrays.asList(lit.getAtom().getSMTFormula(mEprTheory.getTheory()).getFreeVars()));
 		}
-		mVariables = Collections.unmodifiableSortedSet(variables);
+		mVariables = variables;
 		mLiterals = Collections.unmodifiableList(createClauseLiterals(lits));
 
 		mIsGround = mVariables.isEmpty();
