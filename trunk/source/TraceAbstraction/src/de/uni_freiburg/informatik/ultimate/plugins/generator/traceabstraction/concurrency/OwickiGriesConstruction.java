@@ -36,8 +36,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -59,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -84,7 +84,7 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	private final BasicPredicateFactory mFactory;
 
 	private final IPetriNet<LETTER, PLACE> mNet;
-	private final Map<Marking<LETTER, PLACE>, IPredicate> mFloydHoareAnnotation;
+	private final Map<Marking<PLACE>, IPredicate> mFloydHoareAnnotation;
 	private final List<IRefinementEngineResult<LETTER, ?>> mRefinementEngines;
 	private final DefaultIcfgSymbolTable mSymbolTable;
 
@@ -97,7 +97,7 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	private final OwickiGriesAnnotation<LETTER, PLACE> mAnnotation;
 
 	public OwickiGriesConstruction(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final IPetriNet<LETTER, PLACE> net, final Map<Marking<LETTER, PLACE>, IPredicate> floydHoare,
+			final IPetriNet<LETTER, PLACE> net, final Map<Marking<PLACE>, IPredicate> floydHoare,
 			final List<IRefinementEngineResult<LETTER, ?>> refinementEngines, final boolean useHittingSets) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
@@ -113,7 +113,7 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 		mGhostVariables = getGhostVariables();
 		mHittingSet = useHittingSets ? getHittingSet() : null;
 		final Map<PLACE, IPredicate> formulaMapping = getFormulaMapping();
-		final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping = getAssignmentMapping();
+		final Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping = getAssignmentMapping();
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
 
 		mAnnotation = new OwickiGriesAnnotation<>(formulaMapping, assignmentMapping,
@@ -128,7 +128,7 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	 */
 	private Map<PLACE, IPredicate> getFormulaMapping() {
 		final Map<PLACE, IPredicate> mapping = new HashMap<>();
-		final Set<Marking<LETTER, PLACE>> reachableMarkings = mFloydHoareAnnotation.keySet();
+		final Set<Marking<PLACE>> reachableMarkings = mFloydHoareAnnotation.keySet();
 		for (final PLACE place : mNet.getPlaces()) {
 			final Set<Term> clauses = reachableMarkings.stream().filter(m -> m.contains(place))
 					.map(this::getMarkingPredicate).collect(Collectors.toSet());
@@ -144,7 +144,7 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	 * @param marking
 	 * @return Predicate with conjunction of Ghost variables and predicate of marking
 	 */
-	private Term getMarkingPredicate(final Marking<LETTER, PLACE> marking) {
+	private Term getMarkingPredicate(final Marking<PLACE> marking) {
 		final Set<Term> terms = new HashSet<>();
 		Set<PLACE> posPlaces = marking.stream().collect(Collectors.toSet());
 		if (mHittingSet != null) {
@@ -168,7 +168,7 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	 * @param marking
 	 * @return Formula MethodA:Predicate with GhostVariables of all other places not in marking
 	 */
-	private Set<Term> getAllNotMarking(final Marking<LETTER, PLACE> marking) {
+	private Set<Term> getAllNotMarking(final Marking<PLACE> marking) {
 		final Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet());
 		final Set<PLACE> notMarking = DataStructureUtils.difference(new HashSet<>(mNet.getPlaces()), markPlaces);
 		final Set<Term> predicates = new HashSet<>();
@@ -184,7 +184,7 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	 * @param marking
 	 * @return Formula MethodB:Predicate with GhostVariables of hitting set of other places not in marking
 	 */
-	private Set<Term> getHitNotMarking(final Marking<LETTER, PLACE> marking) {
+	private Set<Term> getHitNotMarking(final Marking<PLACE> marking) {
 		// TODO: remove places from hittingSet than are in current marking.
 		final Set<PLACE> notMarking =
 				DataStructureUtils.difference(mHittingSet, marking.stream().collect(Collectors.toSet()));
@@ -198,7 +198,7 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 
 	private Set<PLACE> getHittingSet() {
 		final Set<Set<PLACE>> reachableMarkings = new HashSet<>();
-		for (final Marking<LETTER, PLACE> mark : mFloydHoareAnnotation.keySet()) {
+		for (final Marking<PLACE> mark : mFloydHoareAnnotation.keySet()) {
 			reachableMarkings.add(mark.stream().collect(Collectors.toSet()));
 		}
 		final HittingSet<PLACE> hitSet = new HittingSet<>(reachableMarkings);
@@ -210,11 +210,11 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	 * @param marking
 	 * @return Formula MethodA: GhostVariables if marking is subset of other marking
 	 */
-	private Set<Term> getSubsetMarking(final Marking<LETTER, PLACE> marking) {
+	private Set<Term> getSubsetMarking(final Marking<PLACE> marking) {
 		final Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet());
-		final Set<Marking<LETTER, PLACE>> markings = mFloydHoareAnnotation.keySet();
+		final Set<Marking<PLACE>> markings = mFloydHoareAnnotation.keySet();
 		final Set<PLACE> notInMarking = new HashSet<>();
-		for (final Marking<LETTER, PLACE> otherMarking : markings) {
+		for (final Marking<PLACE> otherMarking : markings) {
 			notInMarking.addAll(getSupPlaces(otherMarking, markPlaces));
 		}
 		final Set<Term> predicates = new HashSet<>();
@@ -225,7 +225,7 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 		return predicates;
 	}
 
-	private Set<PLACE> getSupPlaces(final Marking<LETTER, PLACE> otherMarking, final Set<PLACE> markPlaces) {
+	private Set<PLACE> getSupPlaces(final Marking<PLACE> otherMarking, final Set<PLACE> markPlaces) {
 		Set<PLACE> subPlaces = new HashSet<>();
 		final Set<PLACE> otherPlaces = otherMarking.stream().collect(Collectors.toSet());
 		if (otherPlaces.containsAll(markPlaces)) {
@@ -290,9 +290,9 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	 * @return Map of Places' Ghost Variables assignments to Transitions
 	 *
 	 */
-	private Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> getAssignmentMapping() {
-		final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping = new HashMap<>();
-		for (final ITransition<LETTER, PLACE> transition : mNet.getTransitions()) {
+	private Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> getAssignmentMapping() {
+		final Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping = new HashMap<>();
+		for (final Transition<LETTER, PLACE> transition : mNet.getTransitions()) {
 			assignmentMapping.put(transition, getTransitionAssignment(transition));
 		}
 		return assignmentMapping;
@@ -304,10 +304,10 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	 * @return TransFormula of sequential compositions of GhostVariables assignments. GhostVariables of Predecessors
 	 *         Places are assign to false, GhostVariables of Successors Places are assign to true.
 	 */
-	private UnmodifiableTransFormula getTransitionAssignment(final ITransition<LETTER, PLACE> transition) {
+	private UnmodifiableTransFormula getTransitionAssignment(final Transition<LETTER, PLACE> transition) {
 		final List<UnmodifiableTransFormula> assignments = new ArrayList<>();
-		Set<PLACE> predecesors = mNet.getPredecessors(transition);
-		Set<PLACE> successors = mNet.getSuccessors(transition);
+		Set<PLACE> predecesors = transition.getPredecessors();
+		Set<PLACE> successors = transition.getSuccessors();
 		if (mHittingSet != null) {
 			predecesors = DataStructureUtils.intersection(predecesors, mHittingSet);
 			successors = DataStructureUtils.intersection(successors, mHittingSet);
@@ -326,13 +326,13 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 		return mAnnotation;
 	}
 
-	public HashRelation<ITransition<LETTER, PLACE>, PLACE> getCoMarkedPlaces() {
-		final HashRelation<ITransition<LETTER, PLACE>, PLACE> relation = new HashRelation<>();
-		for (final ITransition<LETTER, PLACE> transition : mNet.getTransitions()) {
-			final Set<PLACE> predecessors = mNet.getPredecessors(transition);
-			final Set<Marking<LETTER, PLACE>> enabledMarkings = mFloydHoareAnnotation.keySet().stream()
+	public HashRelation<Transition<LETTER, PLACE>, PLACE> getCoMarkedPlaces() {
+		final HashRelation<Transition<LETTER, PLACE>, PLACE> relation = new HashRelation<>();
+		for (final Transition<LETTER, PLACE> transition : mNet.getTransitions()) {
+			final Set<PLACE> predecessors = transition.getPredecessors();
+			final Set<Marking<PLACE>> enabledMarkings = mFloydHoareAnnotation.keySet().stream()
 					.filter(marking -> marking.containsAll(predecessors)).collect(Collectors.toSet());
-			for (final Marking<LETTER, PLACE> marking : enabledMarkings) {
+			for (final Marking<PLACE> marking : enabledMarkings) {
 				for (final PLACE place : marking) {
 					// places that are not predecessors of transition
 					if (!predecessors.contains(place)) {

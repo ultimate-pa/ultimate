@@ -48,9 +48,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfg
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
@@ -92,7 +92,7 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	private final Set<ImmutableSet<PLACE>> mReach;
 	private final Set<ImmutableSet<Condition<LETTER, PLACE>>> mMarkingCosets = new HashSet<>();
 
-	private final Map<Marking<LETTER, PLACE>, IPredicate> mFloydHoareAnnotation;
+	private final Map<Marking<PLACE>, IPredicate> mFloydHoareAnnotation;
 
 	/**
 	 * @TODO: assertion, places are IPredicate
@@ -166,10 +166,10 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	/**
 	 * Annotation with MaximalCosets computation
 	 */
-	private Map<Marking<LETTER, PLACE>, IPredicate> getMaximalAnnotation() {
-		final Map<Marking<LETTER, PLACE>, IPredicate> mapping = new HashMap<>();
+	private Map<Marking<PLACE>, IPredicate> getMaximalAnnotation() {
+		final Map<Marking<PLACE>, IPredicate> mapping = new HashMap<>();
 		for (final ImmutableSet<PLACE> marking : mReach) {
-			mapping.put(new Marking<LETTER, PLACE>(marking), getMarkingAssertion(marking));
+			mapping.put(new Marking<>(marking), getMarkingAssertion(marking));
 		}
 		return mapping;
 	}
@@ -177,8 +177,8 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	/**
 	 * Cuts computation from "greedy" algorithm With simplification
 	 */
-	private Map<Marking<LETTER, PLACE>, IPredicate> getCosetAnnotation() {
-		final Map<Marking<LETTER, PLACE>, IPredicate> mapping = new HashMap<>();
+	private Map<Marking<PLACE>, IPredicate> getCosetAnnotation() {
+		final Map<Marking<PLACE>, IPredicate> mapping = new HashMap<>();
 		final Set<Set<Condition<LETTER, PLACE>>> markingCosets = getCosets(new HashSet<Condition<LETTER, PLACE>>(),
 				new HashSet<Condition<LETTER, PLACE>>(), mOrigConditions, new HashSet<Set<Condition<LETTER, PLACE>>>());
 		for (final Set<Condition<LETTER, PLACE>> markCoset : markingCosets) {
@@ -193,7 +193,7 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 				}
 				markAssertPlaces.add(cosetPredicates);
 			}
-			mapping.put(new Marking<LETTER, PLACE>(markPlaces), getMarkingAssertion(markPlaces, markAssertPlaces));
+			mapping.put(new Marking<>(markPlaces), getMarkingAssertion(markPlaces, markAssertPlaces));
 		}
 		return mapping;
 	}
@@ -413,11 +413,11 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 		return cuts;
 	}
 
-	public Map<Marking<LETTER, PLACE>, IPredicate> getResult() {
+	public Map<Marking<PLACE>, IPredicate> getResult() {
 		return mFloydHoareAnnotation;
 	}
 
-	public IPredicate getAssertion(final Marking<LETTER, PLACE> marking) {
+	public IPredicate getAssertion(final Marking<PLACE> marking) {
 		return mFloydHoareAnnotation.get(marking);
 	}
 

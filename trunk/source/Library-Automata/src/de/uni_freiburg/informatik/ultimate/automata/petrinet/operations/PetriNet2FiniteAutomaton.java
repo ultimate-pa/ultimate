@@ -208,7 +208,7 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE>
 		return mResult;
 	}
 
-	public Map<Marking<LETTER, PLACE>, PLACE> getStateMap() {
+	public Map<Marking<PLACE>, PLACE> getStateMap() {
 		return mMarking2State;
 	}
 

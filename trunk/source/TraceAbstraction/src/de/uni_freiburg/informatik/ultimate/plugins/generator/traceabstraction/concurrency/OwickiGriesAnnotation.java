@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -69,7 +69,7 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 	/**
 	 * "gamma" - annotates transitions with assignments of ghost variables.
 	 */
-	private final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> mAssignmentMapping;
+	private final Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> mAssignmentMapping;
 
 	/**
 	 * Set of ghost variables used by the annotation.
@@ -98,7 +98,7 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 	 *            A symbol table for the annotation.
 	 */
 	public OwickiGriesAnnotation(final Map<PLACE, IPredicate> formulaMapping,
-			final Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping,
+			final Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping,
 			final Set<IProgramVar> ghostVariables, final Map<IProgramVar, Term> ghostInitAssignment,
 			final IPetriNet<LETTER, PLACE> net, final IIcfgSymbolTable symbolTable) {
 
@@ -125,7 +125,7 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 		return mFormulaMapping;
 	}
 
-	public Map<ITransition<LETTER, PLACE>, UnmodifiableTransFormula> getAssignmentMapping() {
+	public Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> getAssignmentMapping() {
 		return mAssignmentMapping;
 	}
 

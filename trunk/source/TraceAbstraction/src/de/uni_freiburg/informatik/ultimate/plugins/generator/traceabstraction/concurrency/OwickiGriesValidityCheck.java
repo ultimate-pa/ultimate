@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -73,14 +73,14 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	private final boolean mIsInterferenceFree;
 	private final boolean mIsProgramSafe;
 	private final OwickiGriesAnnotation<LETTER, PLACE> mAnnotation;
-	private final Collection<ITransition<LETTER, PLACE>> mTransitions;
+	private final Collection<Transition<LETTER, PLACE>> mTransitions;
 	private final IHoareTripleChecker mHoareTripleChecker;
 	private final BasicPredicateFactory mPredicateFactory;
-	private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mCoMarkedPlaces;
+	private final HashRelation<Transition<LETTER, PLACE>, PLACE> mCoMarkedPlaces;
 
 	public OwickiGriesValidityCheck(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final OwickiGriesAnnotation<LETTER, PLACE> annotation,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> coMarkedPlaces) {
+			final HashRelation<Transition<LETTER, PLACE>, PLACE> coMarkedPlaces) {
 
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(OwickiGriesValidityCheck.class);
@@ -99,7 +99,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	}
 
 	private boolean checkInductivity() {
-		for (final ITransition<LETTER, PLACE> transition : mTransitions) {
+		for (final Transition<LETTER, PLACE> transition : mTransitions) {
 			if (!getTransitionInductivity(transition)) {
 				return false;
 			}
@@ -107,14 +107,14 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		return true;
 	}
 
-	private boolean getTransitionInductivity(final ITransition<LETTER, PLACE> Transition) {
-		final Set<PLACE> predecessors = mAnnotation.getPetriNet().getPredecessors(Transition);
+	private boolean getTransitionInductivity(final Transition<LETTER, PLACE> transition) {
+		final Set<PLACE> predecessors = transition.getPredecessors();
 		for (final PLACE pre : predecessors) {
 			mLogger.info(getPlacePredicate(pre));
 		}
 		final IPredicate precondition = getConjunctionPredicate(predecessors);
-		final IPredicate postcondition = getConjunctionPredicate(mAnnotation.getPetriNet().getSuccessors(Transition));
-		return mHoareTripleChecker.checkInternal(precondition, getTransitionSeqAction(Transition),
+		final IPredicate postcondition = getConjunctionPredicate(transition.getSuccessors());
+		return mHoareTripleChecker.checkInternal(precondition, getTransitionSeqAction(transition),
 				postcondition) == Validity.VALID;
 	}
 
@@ -126,9 +126,9 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		return mPredicateFactory.and(predicates);
 	}
 
-	private IInternalAction getTransitionSeqAction(final ITransition<LETTER, PLACE> Transition) {
-		final List<UnmodifiableTransFormula> actions = Arrays.asList(Transition.getSymbol().getTransformula(),
-				mAnnotation.getAssignmentMapping().get(Transition));
+	private IInternalAction getTransitionSeqAction(final Transition<LETTER, PLACE> transition) {
+		final List<UnmodifiableTransFormula> actions = Arrays.asList(transition.getSymbol().getTransformula(),
+				mAnnotation.getAssignmentMapping().get(transition));
 		return new BasicInternalAction(null, null, TransFormulaUtils.sequentialComposition(mLogger, mServices,
 				mManagedScript, false, false, false, null, null, actions));
 	}
@@ -138,7 +138,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	}
 
 	private boolean checkInterference() {
-		for (final ITransition<LETTER, PLACE> transition : mTransitions) {
+		for (final Transition<LETTER, PLACE> transition : mTransitions) {
 			if (!getTransitionInterFree(transition)) {
 				return false;
 			}
@@ -146,11 +146,10 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		return true;
 	}
 
-	private boolean getTransitionInterFree(final ITransition<LETTER, PLACE> Transition) {
-		final IPredicate predecessorsPred =
-				getConjunctionPredicate(mAnnotation.getPetriNet().getPredecessors(Transition));
-		final IInternalAction action = getTransitionSeqAction(Transition);
-		final Set<PLACE> coMarked = getComarkedPlaces(Transition);
+	private boolean getTransitionInterFree(final Transition<LETTER, PLACE> transition) {
+		final IPredicate predecessorsPred = getConjunctionPredicate(transition.getPredecessors());
+		final IInternalAction action = getTransitionSeqAction(transition);
+		final Set<PLACE> coMarked = getComarkedPlaces(transition);
 		for (final PLACE place : coMarked) {
 			if (!getInterferenceFreeTriple(predecessorsPred, action, place)) {
 				return false;
@@ -159,7 +158,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		return true;
 	}
 
-	private Set<PLACE> getComarkedPlaces(final ITransition<LETTER, PLACE> transition) {
+	private Set<PLACE> getComarkedPlaces(final Transition<LETTER, PLACE> transition) {
 		return mCoMarkedPlaces.getImage(transition);
 	}
 
