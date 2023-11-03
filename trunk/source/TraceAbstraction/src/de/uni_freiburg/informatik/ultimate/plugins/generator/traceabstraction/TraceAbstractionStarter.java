@@ -166,7 +166,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		if (IcfgUtils.isConcurrent(icfg)) {
 			results = analyseConcurrentProgram(icfg);
 		} else {
-			results = analyseConcurrentProgram(icfg);
+			results = analyseSequentialProgram(icfg);
 		}
 
 		mLogger.info("Computing trace abstraction results");

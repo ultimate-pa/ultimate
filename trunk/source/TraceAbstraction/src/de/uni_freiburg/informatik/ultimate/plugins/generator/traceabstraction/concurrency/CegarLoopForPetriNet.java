@@ -130,9 +130,10 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 	public int mCoRelationQueries = 0;
 	/**
 	 * Alternative measure to {@link CegarLoopStatisticsDefinitions#BiggestAbstraction} which currently counts the
-	 * number of places. TODO 20220821 Matthias: Find out whether counting transitions instead of places is helpful. An
-	 * alternative might be to count flow. In the long run the most suitable measure should be utilized in the
-	 * statistics.
+	 * number of places.
+	 *
+	 * TODO 20220821 Matthias: Find out whether counting transitions instead of places is helpful. An alternative might
+	 * be to count flow. In the long run the most suitable measure should be utilized in the statistics.
 	 */
 	public int mBiggestAbstractionTransitions;
 	/**
