@@ -183,8 +183,13 @@ public final class SmtTestGenerationUtils {
 		sb.append("\t").append("@Test").append(System.lineSeparator());
 		sb.append("\t").append("public void ").append(methodName).append("() {").append(System.lineSeparator());
 		sb.append(generateStringForTestfile(input));
-		sb.append("\t\t").append("final String expectedResult = ").append('\"').append(expectedResult).append("\";")
-				.append(System.lineSeparator());
+		sb.append("\t\t").append("final String expectedResult = ");
+		if (expectedResult != null) {
+			sb.append('\"').append(expectedResult).append('\"');
+		} else {
+			sb.append(expectedResult);
+		}
+		sb.append(";").append(System.lineSeparator());
 		sb.append("\t\t").append(
 				"QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);")
 				.append(System.lineSeparator());
