@@ -1035,6 +1035,11 @@ public class InitializationHandler {
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
 			return 1;
 		}
+		if (cType.isIncomplete()) {
+			// TODO: What should we return here? This can happen, if there is an incomplete array inside of a struct.
+			// The actual return value is not "that" important, it is just used for the const array heuristics.
+			return 0;
+		}
 		if (cType instanceof CStructOrUnion) {
 			if (CStructOrUnion.isUnion(cType)) {
 				return 1;
