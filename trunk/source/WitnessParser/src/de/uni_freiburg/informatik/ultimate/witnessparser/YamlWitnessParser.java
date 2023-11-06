@@ -33,6 +33,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -95,7 +97,13 @@ public class YamlWitnessParser {
 	private static Metadata parseMetadata(final Map<String, Object> metadata) {
 		final FormatVersion formatVersion = FormatVersion.fromString(metadata.get("format_version").toString());
 		final UUID uuid = UUID.fromString((String) metadata.get("uuid"));
-		final OffsetDateTime creationTime = OffsetDateTime.parse((String) metadata.get("creation_time"));
+		final Object rawDate = metadata.get("creation_time");
+		final OffsetDateTime creationTime;
+		if (rawDate instanceof Date) {
+			creationTime = OffsetDateTime.ofInstant(((Date) rawDate).toInstant(), ZoneId.systemDefault());
+		} else {
+			creationTime = OffsetDateTime.parse((String) rawDate);
+		}
 		final Producer producer = parseProducer((Map<String, String>) metadata.get("producer"));
 		final Task task = parseTask((Map<String, Object>) metadata.get("task"));
 		return new Metadata(formatVersion, uuid, creationTime, producer, task);
