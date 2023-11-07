@@ -990,7 +990,7 @@ public class CACSL2BoogieBacktranslator
 				if (expression instanceof IdentifierExpression) {
 					final IdentifierExpression orgidexp = (IdentifierExpression) expression;
 					final TranslatedVariable origName = translateIdentifierExpression(orgidexp);
-					if (origName != null) {
+					if (origName != null && origName.getVarType() != VariableType.POINTER_BASE) {
 						return new FakeExpression(cnode, origName.toString(), origName.getCType());
 					}
 				}
@@ -1006,7 +1006,7 @@ public class CACSL2BoogieBacktranslator
 				if (expression instanceof IdentifierExpression) {
 					final IdentifierExpression iexpr = (IdentifierExpression) expression;
 					final TranslatedVariable origName = translateIdentifierExpression(iexpr);
-					if (origName != null) {
+					if (origName != null && origName.getVarType() != VariableType.POINTER_BASE) {
 						return new FakeExpression(cnode, origName.getName(), origName.getCType());
 					}
 				}
@@ -1039,9 +1039,8 @@ public class CACSL2BoogieBacktranslator
 				return new FakeExpression(String.format("(%s & %d)", bv, (1L << end) - 1));
 			}
 			return new FakeExpression(String.format("((%s >> %d) & %d)", bv, start, (1L << (end - start)) - 1));
-		} else if (expression instanceof ArrayAccessExpression) {
-			return translateArrayAccessExpression((ArrayAccessExpression) expression, cType, hook);
 		}
+		// TODO: Translate ArrayAccessExpressions
 		// TODO: Translate quantifiers if ALLOW_ACSL_FEATURES=true
 		reportUnfinishedBacktranslation(expression);
 		return null;
@@ -1515,7 +1514,7 @@ public class CACSL2BoogieBacktranslator
 		if (decls.getDeclarators().length == 1) {
 			final IdentifierExpression orgidexp = (IdentifierExpression) expression;
 			final TranslatedVariable origName = translateIdentifierExpression(orgidexp);
-			if (origName == null) {
+			if (origName == null || origName.getVarType() == VariableType.POINTER_BASE) {
 				return null;
 			}
 			return new FakeExpression(decls, decls.getDeclarators()[0].getName().getRawSignature(),
@@ -1525,7 +1524,7 @@ public class CACSL2BoogieBacktranslator
 		// our backtranslation map to get the real name
 		final IdentifierExpression orgidexp = (IdentifierExpression) expression;
 		final TranslatedVariable origName = translateIdentifierExpression(orgidexp);
-		if (origName == null) {
+		if (origName == null || origName.getVarType() == VariableType.POINTER_BASE) {
 			return null;
 		}
 		for (final IASTDeclarator decl : decls.getDeclarators()) {
@@ -1748,7 +1747,11 @@ public class CACSL2BoogieBacktranslator
 		public IASTExpression translate() {
 			if (mBase instanceof IdentifierExpression) {
 				// its a declaration or an access
-				return translateExpression(mBase);
+				final TranslatedVariable variable = translateIdentifierExpression((IdentifierExpression) mBase);
+				if (variable == null) {
+					return null;
+				}
+				return new FakeExpression(null, variable.toString(), variable.getCType());
 			}
 			// some kind of value
 			final IASTExpression base = translateExpression(mBase);
@@ -1792,6 +1795,10 @@ public class CACSL2BoogieBacktranslator
 
 		public CType getCType() {
 			return mCType;
+		}
+
+		public VariableType getVarType() {
+			return mVarType;
 		}
 
 		@Override
