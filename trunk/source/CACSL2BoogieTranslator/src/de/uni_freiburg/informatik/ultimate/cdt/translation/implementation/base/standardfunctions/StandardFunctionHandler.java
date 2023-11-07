@@ -799,6 +799,13 @@ public class StandardFunctionHandler {
 		fill(map, "mbstowcs", die);
 		fill(map, "wcstombs", die);
 
+		// longjmp https://en.cppreference.com/w/c/program/longjmp
+		// We cannot handle restoring the environment, so we just crash
+		fill(map, "longjmp", die);
+
+		// setjmp https://en.cppreference.com/w/c/program/setjmp
+		// We can just ignore safely ignore setjmp, if we crash on longjmp
+
 		/** End <stdlib.h> functions according to 7.22 General utilities <stdlib.h> **/
 
 		checkFloatSupport(map, dieFloat);
