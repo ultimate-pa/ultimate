@@ -1842,7 +1842,7 @@ public class StandardFunctionHandler {
 
 	/**
 	 * Handle C11 or C23 static assertions with or without an explicit message.
-	 * 
+	 *
 	 * @param main
 	 *            the current dispatcher
 	 * @param node
@@ -1851,7 +1851,7 @@ public class StandardFunctionHandler {
 	 *            the location of the static assert
 	 * @param name
 	 *            the name of the method
-	 * 
+	 *
 	 * @return {@link ExpressionResult} representing the static assertion
 	 */
 	private Result handleStaticAssert(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1871,9 +1871,9 @@ public class StandardFunctionHandler {
 
 				final ExpressionResult result = mExprResultTransformer
 						.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[0]), loc, node);
-				return new ExpressionResultBuilder().addAllExceptLrValue(result)
-						.addStatement(createAnnotatedAssertOrAssume(loc, name, mSettings.checkAssertions(),
-								Spec.ASSERT, result.getLrValue().getValue(), errorMsg))
+				return new ExpressionResultBuilder()
+						.addAllExceptLrValue(result).addStatement(createAnnotatedAssertOrAssume(loc, name,
+								mSettings.checkAssertions(), Spec.ASSERT, result.getLrValue().getValue(), errorMsg))
 						.build();
 			} else {
 				/* WARNING: this case should be never reached since the msg should be always a string literal */
@@ -2470,7 +2470,7 @@ public class StandardFunctionHandler {
 
 	/**
 	 * Create an assertion or assumption statement annotated with a {@link Check} annotation.
-	 * 
+	 *
 	 * @param loc
 	 *            location of the assertion or assumption node.
 	 * @param functionName
@@ -2481,7 +2481,7 @@ public class StandardFunctionHandler {
 	 *            type of {@link Check} for assertion or assumption statement annotation.
 	 * @param expr
 	 *            expression for assertion or assumption statement.
-	 * 
+	 *
 	 * @see {@link #createAnnotatedAssertOrAssume(ILocation, String, boolean, Spec, Expression, String)}
 	 */
 	private Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
@@ -2491,11 +2491,11 @@ public class StandardFunctionHandler {
 
 	/**
 	 * Create an assertion or assumption statement annotated with a {@link Check} annotation.
-	 * 
+	 *
 	 * Create an {@code assert expr} or {@code assume expr} depending on the settings. If {@code checkProperty} is
 	 * {@code true} (i.e. the check is enabled), an {@code assert expr} will be generated, otherwise an
 	 * {@code assume expr} will be generated.
-	 * 
+	 *
 	 * @param loc
 	 *            location of the assertion or assumption node.
 	 * @param functionName
@@ -2508,7 +2508,7 @@ public class StandardFunctionHandler {
 	 *            expression for assertion or assumption statement.
 	 * @param errorMsg
 	 *            error message for a negative check result of an assertion.
-	 * 
+	 *
 	 * @return {@link Statement} annotated with a {@link Check} annotation.
 	 */
 	private Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
