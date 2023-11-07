@@ -472,5 +472,34 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void derPreprocessorBug_orig() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "dim1arr"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "mem"),
+				new FunDecl(SmtSortUtils::getIntSort, "base"),
+		};
+		final String formulaAsString = "(forall ((â (Array Int Int))) (or (not (= 4 (select â 8))) (not (= (select (store (store |mem| base dim1arr) 3 (store (store â 8 4) 4 4)) base) â)) (not (= (store (store â 4 0) 8 4) (select |mem| base))) (not (= (select â 4) 0))))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	/**
+	 * Looks rather like a self-update bug. Cannot replace by fresh variable
+	 * because the dimension would be higher. Solve probably by resolving
+	 * select-over-store.
+	 */
+	@Test
+	public void derPreprocessorBug() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "dim1arr"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "mem"),
+				new FunDecl(SmtSortUtils::getIntSort, "base"),
+		};
+		final String formulaAsString = "(exists ((â (Array Int Int))) (= (select (store mem 3 (store â 4 4)) base) â))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	//@formatter:on
 }
