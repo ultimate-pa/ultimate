@@ -804,7 +804,8 @@ public class StandardFunctionHandler {
 		fill(map, "longjmp", die);
 
 		// setjmp https://en.cppreference.com/w/c/program/setjmp
-		// We can just ignore safely ignore setjmp, if we crash on longjmp
+		fill(map, "_setjmp", this::handleSetjmp);
+		fill(map, "setjmp", this::handleSetjmp);
 
 		/** End <stdlib.h> functions according to 7.22 General utilities <stdlib.h> **/
 
@@ -1009,6 +1010,14 @@ public class StandardFunctionHandler {
 				mExpressionTranslation.constructUnaryExpression(loc, IASTUnaryExpression.op_minus, expr, resultType);
 		final Expression iteExpression = ExpressionFactory.constructIfThenElseExpression(loc, positive, expr, negated);
 		return builder.setLrValue(new RValue(iteExpression, resultType)).build();
+	}
+
+	// For now we do not handle setjmp properly. We crash on longjmp, so it is sufficient to always return 0 for setjmp.
+	private Result handleSetjmp(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
+		return new ExpressionResult(new RValue(
+				mExpressionTranslation.constructLiteralForIntegerType(loc, returnType, BigInteger.ZERO), returnType));
 	}
 
 	// Overapproximates snprintf as follows:
