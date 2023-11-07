@@ -461,7 +461,7 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void SelfUpdateBug_4ca571b2_Size417() {
+	public void selfUpdateBug_4ca571b2_Size417() {
 		final FunDecl[] funDecls = new FunDecl[] {
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "v_DerPreprocessor_3", "v_DerPreprocessor_2", "v_ArrVal_175"),
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base", "#memory_$Pointer$.offset"),
