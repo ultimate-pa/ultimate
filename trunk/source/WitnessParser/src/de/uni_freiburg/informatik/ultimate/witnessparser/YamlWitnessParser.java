@@ -46,6 +46,7 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Invariant;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.InvariantSet;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
@@ -68,34 +69,64 @@ public class YamlWitnessParser {
 	// The default is just 3MB, but this is not sufficient for us.
 	private static final int MAXIMAL_SIZE = 30 * 1024 * 1024;
 
+	// TODO: Make this a map instead with functions as values (i.e. what to do with this versions)
+	private static final List<FormatVersion> SUPPORTED_VERSIONS =
+			List.of(new FormatVersion(0, 1), new FormatVersion(0, 2));
+
 	public static Witness parseWitness(final File yamlInput) throws IOException {
 		final LoaderOptions loaderOptions = new LoaderOptions();
 		loaderOptions.setCodePointLimit(MAXIMAL_SIZE);
 		final List<Map<String, Object>> res =
 				new Yaml(new SafeConstructor(loaderOptions)).load(new FileInputStream(yamlInput));
-		return new Witness(res.stream().map(YamlWitnessParser::parseWitnessEntry).collect(Collectors.toList()));
+		return new Witness(res.stream().flatMap(x -> parseWitnessEntry(x).stream()).collect(Collectors.toList()));
 	}
 
-	private static WitnessEntry parseWitnessEntry(final Map<String, Object> entry) {
+	private static List<WitnessEntry> parseWitnessEntry(final Map<String, Object> entry) {
 		final Metadata metadata = parseMetadata((Map<String, Object>) entry.get("metadata"));
 		switch ((String) entry.get("entry_type")) {
 		case LocationInvariant.NAME: {
 			final Location location = parseLocation((Map<String, Object>) entry.get("location"));
 			final Invariant locationInvariant = parseInvariant((Map<String, String>) entry.get(LocationInvariant.NAME));
-			return new LocationInvariant(metadata, location, locationInvariant);
+			return List.of(new LocationInvariant(metadata, location, locationInvariant));
 		}
 		case LoopInvariant.NAME: {
 			final Location location = parseLocation((Map<String, Object>) entry.get("location"));
 			final Invariant loopInvariant = parseInvariant((Map<String, String>) entry.get(LoopInvariant.NAME));
-			return new LoopInvariant(metadata, location, loopInvariant);
+			return List.of(new LoopInvariant(metadata, location, loopInvariant));
 		}
+		case InvariantSet.NAME:
+			// TODO: This just transforms the "new" format to the "old" format, maybe change this in the future
+			final List<Map<String, Map<String, Object>>> content =
+					(List<Map<String, Map<String, Object>>>) entry.get("content");
+			return content.stream().map(x -> mapToSingleEntries(x.get("invariant"), metadata))
+					.collect(Collectors.toList());
 		default:
-			throw new UnsupportedOperationException("Unknown entry type");
+			throw new UnsupportedOperationException("Unknown entry type " + entry.get("entry_type"));
+		}
+	}
+
+	private static WitnessEntry mapToSingleEntries(final Map<String, Object> entry, final Metadata metadata) {
+		// Create new metadata with a fresh UUID (because we rely on it as a unique identifier)
+		final Metadata newMetadata = new Metadata(metadata.getFormatVersion(), UUID.randomUUID(),
+				metadata.getCreationTime(), metadata.getProducer(), metadata.getTask());
+		final Location location = parseLocation((Map<String, Object>) entry.get("location"));
+		final Invariant invariant =
+				new Invariant((String) entry.get("value"), "assertion", (String) entry.get("format"));
+		switch ((String) entry.get("type")) {
+		case LocationInvariant.NAME:
+			return new LocationInvariant(newMetadata, location, invariant);
+		case LoopInvariant.NAME:
+			return new LocationInvariant(newMetadata, location, invariant);
+		default:
+			throw new UnsupportedOperationException("Unknown entry type " + entry.get("type"));
 		}
 	}
 
 	private static Metadata parseMetadata(final Map<String, Object> metadata) {
 		final FormatVersion formatVersion = FormatVersion.fromString(metadata.get("format_version").toString());
+		if (!SUPPORTED_VERSIONS.contains(formatVersion)) {
+			throw new UnsupportedOperationException("Unsupported format version " + formatVersion);
+		}
 		final UUID uuid = UUID.fromString((String) metadata.get("uuid"));
 		final Object rawDate = metadata.get("creation_time");
 		final OffsetDateTime creationTime;

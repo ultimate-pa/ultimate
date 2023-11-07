@@ -71,6 +71,10 @@ public class Metadata implements IMapSerializable {
 		return mProducer;
 	}
 
+	public Task getTask() {
+		return mTask;
+	}
+
 	@Override
 	public Map<String, Object> toMap() {
 		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
