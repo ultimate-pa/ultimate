@@ -57,6 +57,15 @@ public class Witness extends BasePayloadContainer {
 		return mEntries.toString();
 	}
 
+	public Witness toInvariantSet() {
+		if (mEntries.isEmpty()) {
+			return this;
+		}
+		final InvariantSet set = new InvariantSet(mEntries.get(0).getMetadata(),
+				mEntries.stream().map(x -> x.toInvariantSetEntry()).collect(Collectors.toList()));
+		return new Witness(List.of(set));
+	}
+
 	public String toYamlString() {
 		final DumperOptions options = new DumperOptions();
 		options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);

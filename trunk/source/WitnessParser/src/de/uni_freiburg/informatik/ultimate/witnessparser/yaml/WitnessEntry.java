@@ -54,6 +54,10 @@ public abstract class WitnessEntry implements IMapSerializable {
 		return mMetadata;
 	}
 
+	public InvariantSetEntry toInvariantSetEntry() {
+		throw new UnsupportedOperationException("Unable to convert " + this);
+	}
+
 	@Override
 	public String toString() {
 		return getName();

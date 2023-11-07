@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.Preference
 
 public class YamlCorrectnessWitnessGenerator {
 	private static final String[] ACSL_SUBSTRING = new String[] { "\\old", "\\result", "exists", "forall" };
+	private static final FormatVersion FORMAT_VERSION = new FormatVersion(0, 2);
 
 	private final ILogger mLogger;
 	private final IBacktranslatedCFG<?, ?> mTranslatedCFG;
@@ -46,7 +47,7 @@ public class YamlCorrectnessWitnessGenerator {
 		mIsACSLForbidden = mPreferences.getBoolean(PreferenceInitializer.LABEL_DO_NOT_USE_ACSL);
 	}
 
-	public String makeYamlString() {
+	private Witness getWitness() {
 		final var roots = mTranslatedCFG.getCFGs();
 		if (roots.size() != 1) {
 			throw new UnsupportedOperationException("Cannot generate correctness witnesses in library mode");
@@ -62,10 +63,9 @@ public class YamlCorrectnessWitnessGenerator {
 		final String spec = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_SPECIFICATION);
 		final String arch = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_ARCHITECTURE);
 		final String version = new UltimateCore().getUltimateVersionString();
-		final String format = mIsACSLForbidden ? "C" : "ACSL";
+		final String format = getExpressionFormat();
 		final String filename = mTranslatedCFG.getFilename();
-		// TODO: Do not hardcode FormatVersion
-		final Supplier<Metadata> metadataSupplier = () -> new Metadata(new FormatVersion(0, 1), UUID.randomUUID(),
+		final Supplier<Metadata> metadataSupplier = () -> new Metadata(FORMAT_VERSION, UUID.randomUUID(),
 				OffsetDateTime.now(), new Producer(producer, version),
 				new Task(List.of(filename), Map.of(filename, hash), spec, arch, "C"));
 
@@ -100,7 +100,33 @@ public class YamlCorrectnessWitnessGenerator {
 						new Invariant(invariant, "assertion", format)));
 			}
 		}
-		return new Witness(entries).toYamlString();
+		final Witness witness = new Witness(entries);
+		switch (FORMAT_VERSION.toString()) {
+		case "0.1":
+			return witness;
+		case "0.2":
+			return witness.toInvariantSet();
+		default:
+			throw new UnsupportedOperationException("Unknown format version " + FORMAT_VERSION);
+		}
+	}
+
+	public String makeYamlString() {
+		return getWitness().toYamlString();
+	}
+
+	private String getExpressionFormat() {
+		if (!mIsACSLForbidden) {
+			throw new UnsupportedOperationException("ACSL is not supported in witnesses yet");
+		}
+		switch (FORMAT_VERSION.toString()) {
+		case "0.1":
+			return "C";
+		case "0.2":
+			return "c_expression";
+		default:
+			throw new UnsupportedOperationException("Unknown format version " + FORMAT_VERSION);
+		}
 	}
 
 	private String filterInvariant(final IExplicitEdgesMultigraph<?, ?, ?, ?, ?> node) {
