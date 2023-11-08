@@ -1,0 +1,56 @@
+// Simplest case of Owicki-Gries annotation: a sequential program.
+// ---------------------------------------------------------------
+
+// The following line specifies the program variables.
+//
+//@ variables (x Int)
+
+// The following lines define the semantics of program statements.
+// Each line consists of the prefix '//@ semantics ', followed by
+// - a statement id in [ ],
+// - a set of modifiable program variables in { },
+// - and an SMT-LIB formula defining the transition formula.
+// For every modifiable variable x, the transition formula uses "x" to refer to the new value after the statement,
+// while "|old(x)|" refers to the value of x before the statement is executed.
+//
+//@ semantics [1] {x} (= x 0)
+//@ semantics [2] {x} (= x (+ |old(x)| 1))
+//@ semantics [3] { } (< x 0)
+
+// The PetriNet named "program" defines the Petri program for which an Owicki-Gries annotation is computed.
+//
+PetriNet program = (
+  alphabet    = { "[1]" "[2]" "[3]" },
+  places      = { "l0" "l1" "l2" "e" },
+  transitions = {
+    ({ "l0" } "[1]" { "l1" })
+    ({ "l1" } "[2]" { "l2" })
+    ({ "l2" } "[3]" { "e" })
+  },
+  initialMarking = { "l0" },
+  acceptingPlaces = { "e" }
+);
+
+// Finite automata whose name starts with "proof" are used to refine the Petri program.
+// The states of such automata must be SMT-LIB formulae.
+// Each transition must correspond to a valid Hoare triple, the initial state must be "true", the accepting state "false".
+// The accepting state must have a self-loop for every letter in the alphabet.
+//
+FiniteAutomaton proof = (
+     alphabet      = { "[1]" "[2]" "[3]" },
+     states        = { "true" "(>= x 0)" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+         ("true"     "[1]" "(>= x 0)")
+         ("true"     "[2]" "true")
+         ("true"     "[3]" "true")
+         ("(>= x 0)" "[1]" "(>= x 0)")
+         ("(>= x 0)" "[2]" "(>= x 0)")
+         ("(>= x 0)" "[3]" "false")
+         ("false"    "[1]" "false")
+         ("false"    "[2]" "false")
+         ("false"    "[3]" "false")
+     }
+);
+

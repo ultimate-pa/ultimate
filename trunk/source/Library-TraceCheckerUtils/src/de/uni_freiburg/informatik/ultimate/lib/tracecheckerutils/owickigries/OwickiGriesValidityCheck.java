@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
@@ -81,16 +82,29 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	public OwickiGriesValidityCheck(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final OwickiGriesAnnotation<LETTER, PLACE> annotation,
 			final HashRelation<Transition<LETTER, PLACE>, PLACE> coMarkedPlaces) {
+		this(services, csToolkit.getManagedScript(), new MonolithicHoareTripleChecker(csToolkit), annotation,
+				coMarkedPlaces);
+	}
 
+	public OwickiGriesValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final ModifiableGlobalsTable modifiableGlobals, final OwickiGriesAnnotation<LETTER, PLACE> annotation,
+			final HashRelation<Transition<LETTER, PLACE>, PLACE> coMarkedPlaces) {
+		this(services, mgdScript, new MonolithicHoareTripleChecker(mgdScript, modifiableGlobals), annotation,
+				coMarkedPlaces);
+	}
+
+	private OwickiGriesValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final IHoareTripleChecker htc, final OwickiGriesAnnotation<LETTER, PLACE> annotation,
+			final HashRelation<Transition<LETTER, PLACE>, PLACE> coMarkedPlaces) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(OwickiGriesValidityCheck.class);
-		mManagedScript = csToolkit.getManagedScript();
-		mScript = csToolkit.getManagedScript().getScript();
+		mManagedScript = mgdScript;
+		mScript = mgdScript.getScript();
 		mAnnotation = annotation;
 		mPredicateFactory = new BasicPredicateFactory(services, mManagedScript, annotation.getSymbolTable());
 		mCoMarkedPlaces = coMarkedPlaces;
 
-		mHoareTripleChecker = new MonolithicHoareTripleChecker(csToolkit);
+		mHoareTripleChecker = htc;
 		mTransitions = mAnnotation.getPetriNet().getTransitions();
 
 		mIsInductive = checkInductivity();
