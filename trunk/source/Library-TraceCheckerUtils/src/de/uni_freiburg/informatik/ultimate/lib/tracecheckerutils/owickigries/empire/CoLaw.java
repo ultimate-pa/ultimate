@@ -1,71 +1,91 @@
+/*
+ * Copyright (C) 2020 University of Freiburg
+ *
+ * This file is part of the ULTIMATE TraceCheckerUtils Library.
+ *
+ * The ULTIMATE TraceCheckerUtils Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE TraceCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE TraceCheckerUtils Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
-import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
-public final class CoLaw<PLACE,LETTER> {
+public final class CoLaw<PLACE, LETTER> {
 
-	private final ICoRelation<LETTER,PLACE> mCoRelation;
+	private final ICoRelation<LETTER, PLACE> mCoRelation;
 	private final KingdomLaw<PLACE, LETTER> mLaw;
-	private final Condition<LETTER,PLACE> mCondition;
-	
+	private final Condition<LETTER, PLACE> mCondition;
+
 	/**
 	 * Subset of Law's condition that are corelated to specified condition;
 	 */
 	private final Set<Condition<LETTER, PLACE>> mPosLaw;
-	
+
 	/**
 	 * Subset of Law's condition that are not corelated to mCondition;
 	 */
-	private final Set<Condition<LETTER,PLACE>> mNegLaw;
-	
+	private final Set<Condition<LETTER, PLACE>> mNegLaw;
+
 	/**
 	 * Corelation type of condition wrt. Law.
 	 */
 	private final CoRelationType mCoRel;
-	
-	//TODO: keep both classes (CoRealm and CoLaw) or merge into one?
-	//		issue: neg & partial corelationtype conflict.(one for each?)
-	public CoLaw(KingdomLaw<PLACE,LETTER> law, Condition<LETTER, PLACE> condition, 
-			BranchingProcess<LETTER,PLACE> bp) {
+
+	// TODO: keep both classes (CoRealm and CoLaw) or merge into one?
+	// issue: neg & partial corelationtype conflict.(one for each?)
+	public CoLaw(final KingdomLaw<PLACE, LETTER> law, final Condition<LETTER, PLACE> condition,
+			final BranchingProcess<LETTER, PLACE> bp) {
 		mCoRelation = bp.getCoRelation();
 		mLaw = law;
 		mCondition = condition;
 		mPosLaw = getPosLaw();
 		mNegLaw = DataStructureUtils.difference(mLaw.getConditions(), mPosLaw);
-		mCoRel = getCoRelType();		
+		mCoRel = getCoRelType();
 	}
-	
+
 	/**
 	 * @return Subset of Law's conditions corelated to CoLaw's condition.
 	 */
-	private final Set<Condition<LETTER,PLACE>> getPosLaw(){
-		return DataStructureUtils.intersection(mLaw.getConditions(), 
-				mCoRelation.computeCoRelatatedConditions(mCondition)); 			
+	private final Set<Condition<LETTER, PLACE>> getPosLaw() {
+		return DataStructureUtils.intersection(mLaw.getConditions(),
+				mCoRelation.computeCoRelatatedConditions(mCondition));
 	}
-	
+
 	/**
 	 * @return CoRelation type of Law wrt. specified condition.
 	 */
 	private final CoRelationType getCoRelType() {
-		if(mLaw.getConditions().equals(mPosLaw)) {
+		if (mLaw.getConditions().equals(mPosLaw)) {
 			return CoRelationType.POSITIVE;
-		}
-		else if(mNegLaw.size() == 1) {
+		} else if (mNegLaw.size() == 1) {
 			return CoRelationType.PARTIAL;
-		}
-		else {
+		} else {
 			return CoRelationType.NEGATIVE;
 		}
 	}
-	
+
 	public CoRelationType getCoRelation() {
 		return mCoRel;
 	}
