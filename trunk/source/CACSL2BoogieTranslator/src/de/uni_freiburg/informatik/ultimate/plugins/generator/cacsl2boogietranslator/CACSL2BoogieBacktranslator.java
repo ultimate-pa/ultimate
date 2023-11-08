@@ -978,9 +978,11 @@ public class CACSL2BoogieBacktranslator
 				return null;
 			}
 
-			if (cnode instanceof IASTExpression) {
-				return (IASTExpression) cnode;
-			} else if (cnode instanceof CASTTranslationUnit) {
+			// TODO: This seems problematic, because we mainly use the backtranslated expression to be printed.
+			// if (cnode instanceof IASTExpression) {
+			// return (IASTExpression) cnode;
+			// } else
+			if (cnode instanceof CASTTranslationUnit) {
 				// expressions that map to CASTTranslationUnit dont need to
 				// be backtranslated
 				return null;
@@ -1010,13 +1012,13 @@ public class CACSL2BoogieBacktranslator
 						return new FakeExpression(cnode, origName.getName(), origName.getCType());
 					}
 				}
-				reportUnfinishedBacktranslation("Expression " + BoogiePrettyPrinter.print(expression)
-						+ " has a C AST node but it is no IASTExpression: " + cnode.getClass());
-				return null;
-			} else {
-				reportUnfinishedBacktranslation("Expression " + BoogiePrettyPrinter.print(expression)
-						+ " has a C AST node but it is no IASTExpression: " + cnode.getClass());
-				return null;
+				// reportUnfinishedBacktranslation("Expression " + BoogiePrettyPrinter.print(expression)
+				// + " has a C AST node but it is no IASTExpression: " + cnode.getClass());
+				// return null;
+				// } else {
+				// reportUnfinishedBacktranslation("Expression " + BoogiePrettyPrinter.print(expression)
+				// + " has a C AST node but it is no IASTExpression: " + cnode.getClass());
+				// return null;
 			}
 		} else if (expression instanceof BinaryExpression) {
 			return translateBinaryExpression(cType, (BinaryExpression) expression, hook);
