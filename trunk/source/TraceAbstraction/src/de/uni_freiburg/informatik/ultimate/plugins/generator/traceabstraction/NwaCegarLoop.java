@@ -608,7 +608,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		}
 
 		final OwickiGriesConstruction<IPredicate, L> construction =
-				new OwickiGriesConstruction<>(getServices(), mCsToolkit, mPetriNet, petriFloydHoare, null, false);
+				new OwickiGriesConstruction<>(getServices(), mCsToolkit, mPetriNet, petriFloydHoare, false);
 		// TODO: simplify
 		final long constructionTime = System.nanoTime();
 		mLogger.info("Computed Owicki-Gries annotation of size " + construction.getResult().size() + " in "

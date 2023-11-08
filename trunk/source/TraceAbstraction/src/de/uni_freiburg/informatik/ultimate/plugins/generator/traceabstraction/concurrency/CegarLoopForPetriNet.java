@@ -87,8 +87,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesConstruction;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriFloydHoare;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesValidityCheck;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriFloydHoare;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -638,7 +638,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		// }
 
 		final OwickiGriesConstruction<IPredicate, L> construction = new OwickiGriesConstruction<>(getServices(),
-				mCsToolkit, mInitialNet, petriFloydHoare, mRefinementEngines, mPref.owickiGriesHittingSets());
+				mCsToolkit, mInitialNet, petriFloydHoare, mPref.owickiGriesHittingSets());
 		// TODO: simplify
 		final long constructionTime = System.nanoTime();
 		mLogger.info("Computed Owicki-Gries annotation of size " + construction.getResult().size() + " in "

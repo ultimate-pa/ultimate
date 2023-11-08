@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -65,18 +64,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.HittingSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Constructs an Owicki/Gries annotation for a Petri program from a Floyd/Hoare annotation of the reachability graph of
+ * Constructs an Owicki-Gries annotation for a Petri program from a Floyd/Hoare annotation of the reachability graph of
  * the Petri net, by introducing a boolean ghost variable for each place in the Petri net.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
  *
- * @param <PLACE>
+ * @param <P>
  *            The type of places in the Petri program
- * @param <LETTER>
+ * @param <L>
  *            The type of statements in the Petri program
  */
-public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
+public class OwickiGriesConstruction<P, L> {
+	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
+	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
+			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -84,37 +86,37 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	private final Script mScript;
 	private final BasicPredicateFactory mFactory;
 
-	private final IPetriNet<LETTER, PLACE> mNet;
-	private final Map<Marking<PLACE>, IPredicate> mFloydHoareAnnotation;
-	private final List<IRefinementEngineResult<LETTER, ?>> mRefinementEngines;
+	private final IPetriNet<L, P> mNet;
+	private final Map<Marking<P>, IPredicate> mFloydHoareAnnotation;
 	private final DefaultIcfgSymbolTable mSymbolTable;
 
-	private static final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-	private static final XnfConversionTechnique mXnfConversionTechnique =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
-
-	private final Set<PLACE> mHittingSet;
-	private final Map<PLACE, IProgramVar> mGhostVariables;
-	private final OwickiGriesAnnotation<LETTER, PLACE> mAnnotation;
+	private final Set<P> mHittingSet;
+	private final Map<P, IProgramVar> mGhostVariables;
+	private final OwickiGriesAnnotation<L, P> mAnnotation;
 
 	public OwickiGriesConstruction(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final IPetriNet<LETTER, PLACE> net, final Map<Marking<PLACE>, IPredicate> floydHoare,
-			final List<IRefinementEngineResult<LETTER, ?>> refinementEngines, final boolean useHittingSets) {
+			final IPetriNet<L, P> net, final Map<Marking<P>, IPredicate> floydHoare, final boolean useHittingSets) {
+		this(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), csToolkit.getProcedures(), net,
+				floydHoare, useHittingSets);
+	}
+
+	public OwickiGriesConstruction(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final IIcfgSymbolTable symbolTable, final Set<String> procedures, final IPetriNet<L, P> net,
+			final Map<Marking<P>, IPredicate> floydHoare, final boolean useHittingSets) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
-		mManagedScript = csToolkit.getManagedScript();
+		mManagedScript = mgdScript;
 		mScript = mManagedScript.getScript();
 
 		mNet = net;
 		mFloydHoareAnnotation = floydHoare;
-		mRefinementEngines = refinementEngines;
-		mSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
+		mSymbolTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
 		mFactory = new BasicPredicateFactory(mServices, mManagedScript, mSymbolTable);
 
 		mGhostVariables = getGhostVariables();
 		mHittingSet = useHittingSets ? getHittingSet() : null;
-		final Map<PLACE, IPredicate> formulaMapping = getFormulaMapping();
-		final Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping = getAssignmentMapping();
+		final Map<P, IPredicate> formulaMapping = getFormulaMapping();
+		final Map<Transition<L, P>, UnmodifiableTransFormula> assignmentMapping = getAssignmentMapping();
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
 
 		mAnnotation = new OwickiGriesAnnotation<>(formulaMapping, assignmentMapping,
@@ -127,10 +129,10 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	 *
 	 * @return a map with a predicate for each place in the Petri net
 	 */
-	private Map<PLACE, IPredicate> getFormulaMapping() {
-		final Map<PLACE, IPredicate> mapping = new HashMap<>();
-		final Set<Marking<PLACE>> reachableMarkings = mFloydHoareAnnotation.keySet();
-		for (final PLACE place : mNet.getPlaces()) {
+	private Map<P, IPredicate> getFormulaMapping() {
+		final Map<P, IPredicate> mapping = new HashMap<>();
+		final Set<Marking<P>> reachableMarkings = mFloydHoareAnnotation.keySet();
+		for (final P place : mNet.getPlaces()) {
 			final Set<Term> clauses = reachableMarkings.stream().filter(m -> m.contains(place))
 					.map(this::getMarkingPredicate).collect(Collectors.toSet());
 			final Term disjunction = SmtUtils.or(mScript, clauses);
@@ -145,13 +147,13 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	 * @param marking
 	 * @return Predicate with conjunction of Ghost variables and predicate of marking
 	 */
-	private Term getMarkingPredicate(final Marking<PLACE> marking) {
+	private Term getMarkingPredicate(final Marking<P> marking) {
 		final Set<Term> terms = new HashSet<>();
-		Set<PLACE> posPlaces = marking.stream().collect(Collectors.toSet());
+		Set<P> posPlaces = marking.stream().collect(Collectors.toSet());
 		if (mHittingSet != null) {
 			posPlaces = DataStructureUtils.intersection(mHittingSet, posPlaces);
 		}
-		for (final PLACE otherPlace : posPlaces) {
+		for (final P otherPlace : posPlaces) {
 			final Term ghost = mGhostVariables.get(otherPlace).getTerm();
 			terms.add(ghost);
 		}
@@ -169,11 +171,11 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	 * @param marking
 	 * @return Formula MethodA:Predicate with GhostVariables of all other places not in marking
 	 */
-	private Set<Term> getAllNotMarking(final Marking<PLACE> marking) {
-		final Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet());
-		final Set<PLACE> notMarking = DataStructureUtils.difference(new HashSet<>(mNet.getPlaces()), markPlaces);
+	private Set<Term> getAllNotMarking(final Marking<P> marking) {
+		final Set<P> markPlaces = marking.stream().collect(Collectors.toSet());
+		final Set<P> notMarking = DataStructureUtils.difference(new HashSet<>(mNet.getPlaces()), markPlaces);
 		final Set<Term> predicates = new HashSet<>();
-		for (final PLACE place : notMarking) {
+		for (final P place : notMarking) {
 			final Term ghost = mGhostVariables.get(place).getTerm();
 			predicates.add(SmtUtils.not(mScript, ghost));
 		}
@@ -185,24 +187,24 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	 * @param marking
 	 * @return Formula MethodB:Predicate with GhostVariables of hitting set of other places not in marking
 	 */
-	private Set<Term> getHitNotMarking(final Marking<PLACE> marking) {
+	private Set<Term> getHitNotMarking(final Marking<P> marking) {
 		// TODO: remove places from hittingSet than are in current marking.
-		final Set<PLACE> notMarking =
+		final Set<P> notMarking =
 				DataStructureUtils.difference(mHittingSet, marking.stream().collect(Collectors.toSet()));
 		final Set<Term> predicates = new HashSet<>();
-		for (final PLACE place : notMarking) {
+		for (final P place : notMarking) {
 			final Term ghost = mGhostVariables.get(place).getTerm();
 			predicates.add(SmtUtils.not(mScript, ghost));
 		}
 		return predicates;
 	}
 
-	private Set<PLACE> getHittingSet() {
-		final Set<Set<PLACE>> reachableMarkings = new HashSet<>();
-		for (final Marking<PLACE> mark : mFloydHoareAnnotation.keySet()) {
+	private Set<P> getHittingSet() {
+		final Set<Set<P>> reachableMarkings = new HashSet<>();
+		for (final Marking<P> mark : mFloydHoareAnnotation.keySet()) {
 			reachableMarkings.add(mark.stream().collect(Collectors.toSet()));
 		}
-		final HittingSet<PLACE> hitSet = new HittingSet<>(reachableMarkings);
+		final HittingSet<P> hitSet = new HittingSet<>(reachableMarkings);
 		return hitSet.getSymmHittingSet();
 	}
 
@@ -211,24 +213,24 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	 * @param marking
 	 * @return Formula MethodA: GhostVariables if marking is subset of other marking
 	 */
-	private Set<Term> getSubsetMarking(final Marking<PLACE> marking) {
-		final Set<PLACE> markPlaces = marking.stream().collect(Collectors.toSet());
-		final Set<Marking<PLACE>> markings = mFloydHoareAnnotation.keySet();
-		final Set<PLACE> notInMarking = new HashSet<>();
-		for (final Marking<PLACE> otherMarking : markings) {
+	private Set<Term> getSubsetMarking(final Marking<P> marking) {
+		final Set<P> markPlaces = marking.stream().collect(Collectors.toSet());
+		final Set<Marking<P>> markings = mFloydHoareAnnotation.keySet();
+		final Set<P> notInMarking = new HashSet<>();
+		for (final Marking<P> otherMarking : markings) {
 			notInMarking.addAll(getSupPlaces(otherMarking, markPlaces));
 		}
 		final Set<Term> predicates = new HashSet<>();
-		for (final PLACE place : notInMarking) {
+		for (final P place : notInMarking) {
 			final Term ghost = mGhostVariables.get(place).getTerm();
 			predicates.add(SmtUtils.not(mScript, ghost));
 		}
 		return predicates;
 	}
 
-	private Set<PLACE> getSupPlaces(final Marking<PLACE> otherMarking, final Set<PLACE> markPlaces) {
-		Set<PLACE> subPlaces = new HashSet<>();
-		final Set<PLACE> otherPlaces = otherMarking.stream().collect(Collectors.toSet());
+	private Set<P> getSupPlaces(final Marking<P> otherMarking, final Set<P> markPlaces) {
+		Set<P> subPlaces = new HashSet<>();
+		final Set<P> otherPlaces = otherMarking.stream().collect(Collectors.toSet());
 		if (otherPlaces.containsAll(markPlaces)) {
 			subPlaces = DataStructureUtils.difference(otherPlaces, markPlaces);
 		}
@@ -238,13 +240,13 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	/**
 	 * @return map of places to ghost variables
 	 */
-	private Map<PLACE, IProgramVar> getGhostVariables() {
-		final Map<PLACE, IProgramVar> ghostVars = new HashMap<>();
+	private Map<P, IProgramVar> getGhostVariables() {
+		final Map<P, IProgramVar> ghostVars = new HashMap<>();
 		int i = 0;
-		final Collection<PLACE> places = mNet.getPlaces();
+		final Collection<P> places = mNet.getPlaces();
 		mManagedScript.lock(this);
 		try {
-			for (final PLACE place : places) {
+			for (final P place : places) {
 				// TODO (Dominik 2021-01-27) Name ghost variables by place for easier debugging
 				final TermVariable tVar =
 						mManagedScript.constructFreshTermVariable("np" + i, SmtSortUtils.getBoolSort(mManagedScript));
@@ -265,7 +267,7 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	 */
 	private Map<IProgramVar, Term> getGhostInitAssignment() {
 		final HashMap<IProgramVar, Term> initAssignments = new HashMap<>();
-		for (final PLACE place : mNet.getInitialPlaces()) {
+		for (final P place : mNet.getInitialPlaces()) {
 			initAssignments.put(mGhostVariables.get(place), mScript.term("true"));
 		}
 		final Set<IProgramVar> notInitGhostVariables =
@@ -291,9 +293,9 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	 * @return Map of Places' Ghost Variables assignments to Transitions
 	 *
 	 */
-	private Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> getAssignmentMapping() {
-		final Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping = new HashMap<>();
-		for (final Transition<LETTER, PLACE> transition : mNet.getTransitions()) {
+	private Map<Transition<L, P>, UnmodifiableTransFormula> getAssignmentMapping() {
+		final Map<Transition<L, P>, UnmodifiableTransFormula> assignmentMapping = new HashMap<>();
+		for (final Transition<L, P> transition : mNet.getTransitions()) {
 			assignmentMapping.put(transition, getTransitionAssignment(transition));
 		}
 		return assignmentMapping;
@@ -305,36 +307,36 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 	 * @return TransFormula of sequential compositions of GhostVariables assignments. GhostVariables of Predecessors
 	 *         Places are assign to false, GhostVariables of Successors Places are assign to true.
 	 */
-	private UnmodifiableTransFormula getTransitionAssignment(final Transition<LETTER, PLACE> transition) {
+	private UnmodifiableTransFormula getTransitionAssignment(final Transition<L, P> transition) {
 		final List<UnmodifiableTransFormula> assignments = new ArrayList<>();
-		Set<PLACE> predecesors = transition.getPredecessors();
-		Set<PLACE> successors = transition.getSuccessors();
+		Set<P> predecesors = transition.getPredecessors();
+		Set<P> successors = transition.getSuccessors();
 		if (mHittingSet != null) {
 			predecesors = DataStructureUtils.intersection(predecesors, mHittingSet);
 			successors = DataStructureUtils.intersection(successors, mHittingSet);
 		}
-		for (final PLACE place : predecesors) {
+		for (final P place : predecesors) {
 			assignments.add(getGhostAssignment(Collections.nCopies(1, mGhostVariables.get(place)), "false"));
 		}
-		for (final PLACE place : successors) {
+		for (final P place : successors) {
 			assignments.add(getGhostAssignment(Collections.nCopies(1, mGhostVariables.get(place)), "true"));
 		}
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, false, false,
-				mXnfConversionTechnique, mSimplificationTechnique, assignments);
+				XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, assignments);
 	}
 
-	public OwickiGriesAnnotation<LETTER, PLACE> getResult() {
+	public OwickiGriesAnnotation<L, P> getResult() {
 		return mAnnotation;
 	}
 
-	public HashRelation<Transition<LETTER, PLACE>, PLACE> getCoMarkedPlaces() {
-		final HashRelation<Transition<LETTER, PLACE>, PLACE> relation = new HashRelation<>();
-		for (final Transition<LETTER, PLACE> transition : mNet.getTransitions()) {
-			final Set<PLACE> predecessors = transition.getPredecessors();
-			final Set<Marking<PLACE>> enabledMarkings = mFloydHoareAnnotation.keySet().stream()
+	public HashRelation<Transition<L, P>, P> getCoMarkedPlaces() {
+		final HashRelation<Transition<L, P>, P> relation = new HashRelation<>();
+		for (final Transition<L, P> transition : mNet.getTransitions()) {
+			final Set<P> predecessors = transition.getPredecessors();
+			final Set<Marking<P>> enabledMarkings = mFloydHoareAnnotation.keySet().stream()
 					.filter(marking -> marking.containsAll(predecessors)).collect(Collectors.toSet());
-			for (final Marking<PLACE> marking : enabledMarkings) {
-				for (final PLACE place : marking) {
+			for (final Marking<P> marking : enabledMarkings) {
+				for (final P place : marking) {
 					// places that are not predecessors of transition
 					if (!predecessors.contains(place)) {
 						relation.addPair(transition, place);
@@ -344,5 +346,4 @@ public class OwickiGriesConstruction<PLACE, LETTER extends IIcfgTransition<?>> {
 		}
 		return relation;
 	}
-
 }
