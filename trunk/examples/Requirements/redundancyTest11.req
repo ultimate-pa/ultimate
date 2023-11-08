@@ -1,0 +1,12 @@
+Input A is bool
+Input B is bool
+Input C is bool
+Input D is bool
+Input Z is bool 
+
+ID000: Globally, it is always the case that if "A" holds, then "B || C" holds after at most "5" time units
+ID001: Globally, it is always the case that if "C" holds, then "B && D" holds after at most "5" time units
+ID002: Globally, it is always the case that "!A && !C" holds
+ID003: Globally, it is always the case that "Z" holds
+
+

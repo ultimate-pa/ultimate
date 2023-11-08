@@ -1,0 +1,9 @@
+
+Input state IS int
+Input R IS bool
+Input S IS bool
+Input U IS bool
+Input V IS bool
+
+ID003: After "state == 1 "  until "state != 1 " , it is always the case that if "R" holds, then "S" holds after at most "5" time units
+ID004: After "state == 2 " until "state != 2", it is always the case that if "U" holds, then "V" holds after at most "5" time units 
