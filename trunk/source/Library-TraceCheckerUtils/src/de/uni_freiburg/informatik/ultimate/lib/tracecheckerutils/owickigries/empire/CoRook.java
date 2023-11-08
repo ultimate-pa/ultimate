@@ -58,7 +58,7 @@ public final class CoRook<PLACE, LETTER> {
 		mLegislation = getLegislationStrategy();
 	}
 
-	private final ColonizationType getColonizationStrategy() {
+	private ColonizationType getColonizationStrategy() {
 		if (mIsColonizer) {
 			if (mCoKingdom.getCoRelation() == CoRelationType.POSITIVE
 					&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
@@ -77,7 +77,7 @@ public final class CoRook<PLACE, LETTER> {
 		return ColonizationType.NULL;
 	}
 
-	private final LegislationType getLegislationStrategy() {
+	private LegislationType getLegislationStrategy() {
 		if (!mIsColonizer) {
 			if (mCoKingdom.getCoRelation() == CoRelationType.POSITIVE
 					&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {

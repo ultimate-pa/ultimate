@@ -68,7 +68,7 @@ public final class CoLaw<PLACE, LETTER> {
 	/**
 	 * @return Subset of Law's conditions corelated to CoLaw's condition.
 	 */
-	private final Set<Condition<LETTER, PLACE>> getPosLaw() {
+	private Set<Condition<LETTER, PLACE>> getPosLaw() {
 		return DataStructureUtils.intersection(mLaw.getConditions(),
 				mCoRelation.computeCoRelatatedConditions(mCondition));
 	}
@@ -76,7 +76,7 @@ public final class CoLaw<PLACE, LETTER> {
 	/**
 	 * @return CoRelation type of Law wrt. specified condition.
 	 */
-	private final CoRelationType getCoRelType() {
+	private CoRelationType getCoRelType() {
 		if (mLaw.getConditions().equals(mPosLaw)) {
 			return CoRelationType.POSITIVE;
 		} else if (mNegLaw.size() == 1) {

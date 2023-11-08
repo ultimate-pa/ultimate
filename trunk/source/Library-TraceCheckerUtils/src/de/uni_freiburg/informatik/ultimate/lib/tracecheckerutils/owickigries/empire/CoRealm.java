@@ -66,7 +66,7 @@ public final class CoRealm<PLACE, LETTER> {
 	/**
 	 * @return Subset of Realm's conditions corelated to CoRealm' condition.
 	 */
-	private final Set<Condition<LETTER, PLACE>> getPosRealm() {
+	private Set<Condition<LETTER, PLACE>> getPosRealm() {
 		return DataStructureUtils.intersection(mRealm.getConditions(),
 				mCoRelation.computeCoRelatatedConditions(mCondition));
 	}
@@ -75,7 +75,7 @@ public final class CoRealm<PLACE, LETTER> {
 	 * @return CoRelation type of Realm wrt. specified condition.
 	 */
 
-	private final CoRelationType getCoRelType() {
+	private CoRelationType getCoRelType() {
 		if (mRealm.getConditions().equals(mPosRealm)) {
 			return CoRelationType.POSITIVE;
 		} else if (mRealm.getConditions().equals(mNegRealm)) {
@@ -86,7 +86,7 @@ public final class CoRealm<PLACE, LETTER> {
 
 	}
 
-	public final CoRelationType getCoRelation() {
+	public CoRelationType getCoRelation() {
 		return mCoRel;
 	}
 

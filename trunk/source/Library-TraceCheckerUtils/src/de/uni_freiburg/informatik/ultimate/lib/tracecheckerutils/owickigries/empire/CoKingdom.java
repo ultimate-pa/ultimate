@@ -75,7 +75,7 @@ public final class CoKingdom<PLACE, LETTER> {
 	 *
 	 * @param bp
 	 */
-	private final void getCoKingdoms(final BranchingProcess<LETTER, PLACE> bp) {
+	private void getCoKingdoms(final BranchingProcess<LETTER, PLACE> bp) {
 		for (final Realm<PLACE, LETTER> realm : mKingdom.getRealms()) {
 			final CoRealm<PLACE, LETTER> coRealm = new CoRealm(realm, mCondition, bp);
 			switch (coRealm.getCoRelation()) {
@@ -94,7 +94,7 @@ public final class CoKingdom<PLACE, LETTER> {
 	/**
 	 * @return CoRelation type pf Kingdom according to the corelation time of the kingdom's realms.
 	 */
-	private final CoRelationType getCoRelType() {
+	private CoRelationType getCoRelType() {
 		if (mKingdom.equals(mPosKingdom)) {
 			return CoRelationType.POSITIVE;
 		} else if (mNegKingdom.size() == 1
@@ -108,11 +108,11 @@ public final class CoKingdom<PLACE, LETTER> {
 		}
 	}
 
-	public final CoRelationType getCoRelation() {
+	public CoRelationType getCoRelation() {
 		return mCoRel;
 	}
 
-	private final boolean getConflictFreedom() {
+	private boolean getConflictFreedom() {
 		return true;
 	}
 

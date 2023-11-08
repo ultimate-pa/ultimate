@@ -23,7 +23,8 @@
  * containing parts covered by the terms of the Eclipse Public License, the
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
- */package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
+ */
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
 import java.util.Set;
 
@@ -61,7 +62,7 @@ public interface IIcfgSymbolTable {
 	 *            {@link IProgramConst}
 	 * @return {@link IProgramConst} such that parameter at is {@link IProgramConst#getDefaultConstant()}
 	 */
-	public IProgramFunction getProgramFun(final FunctionSymbol funSym);
+	IProgramFunction getProgramFun(final FunctionSymbol funSym);
 
 	/**
 	 * @return Set of all global (non-old) variables that occur in the ICFG.
