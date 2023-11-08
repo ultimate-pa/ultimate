@@ -8,6 +8,8 @@ Export-Package:
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction,
+ de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries,
+ de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction,

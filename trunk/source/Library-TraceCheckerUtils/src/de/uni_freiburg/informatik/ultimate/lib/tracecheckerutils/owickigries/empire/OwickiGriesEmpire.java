@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.owickigries;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
 import java.util.Map;
 import java.util.Set;
