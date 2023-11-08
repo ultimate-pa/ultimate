@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.yaml.YamlCorrectnessWi
  */
 public class WitnessPrinter implements IOutput {
 	private static final String GRAPHML = ".graphml";
-	private static final String YAML = ".yaml";
+	private static final String YAML = ".yml";
 
 	private ILogger mLogger;
 	private IUltimateServiceProvider mServices;
