@@ -32,7 +32,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -40,59 +39,58 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
- * Constructs an Floyd Hoare annotation from a Branching process of the Final refined Petri Net.
+ * Constructs an Floyd-Hoare annotation from a branching process of the final refined Petri Net.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
  *
- * @param <PLACE>
+ * @param <P>
  *            The type of places in the Petri program
- * @param <LETTER>
+ * @param <L>
  *            The type of statements in the Petri program
  */
-
-public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcfgTransition<?>> {
-
+public class PetriFloydHoare<P extends IPredicate, L> {
 	private final IUltimateServiceProvider mServices;
-	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
-	private final Script mScript;
 	private final DefaultIcfgSymbolTable mSymbolTable;
 	private final BasicPredicateFactory mFactory;
-	private final Function<PLACE, IPredicate> mPlace2Predicate;
-	private final List<IRefinementEngineResult<LETTER, ?>> mRefinementEngines;
+	private final List<IPredicateUnifier> mPredicateUnifiers;
 	private final boolean mCoveringSimplification;
 
-	private final BranchingProcess<LETTER, PLACE> mBp;
-	private final IPetriNet<LETTER, PLACE> mNet;
+	private final BranchingProcess<L, P> mBp;
 
-	private final Set<Condition<LETTER, PLACE>> mConditions;
-	private final Set<Condition<LETTER, PLACE>> mOrigConditions;
-	private final Set<Condition<LETTER, PLACE>> mAssertConditions;
+	private final Set<Condition<L, P>> mConditions;
+	private final Set<Condition<L, P>> mOriginalConditions;
+	private final Set<Condition<L, P>> mAssertionConditions;
+	private final Set<ImmutableSet<P>> mCuts;
 
-	private final Set<ImmutableSet<PLACE>> mCuts;
-	private final Set<PLACE> mPlaces;
-	private final Set<PLACE> mAssertPlaces;
-	private final Set<PLACE> mOrigPlaces;
-	private final Set<ImmutableSet<PLACE>> mReach;
-	private final Set<ImmutableSet<Condition<LETTER, PLACE>>> mMarkingCosets = new HashSet<>();
+	private final IPetriNet<L, P> mNet;
 
-	private final Map<Marking<PLACE>, IPredicate> mFloydHoareAnnotation;
+	private final Set<P> mPlaces;
+	private final Set<P> mOriginalPlaces;
+	private final Set<P> mAssertionPlaces;
+	private final Set<ImmutableSet<P>> mReach;
+
+	private final Map<Marking<P>, IPredicate> mFloydHoareAnnotation;
+
+	public PetriFloydHoare(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
+			final BranchingProcess<L, P> bp, final IPetriNet<L, P> net, final List<IPredicateUnifier> predicateUnifiers,
+			final boolean iterativeCosets, final boolean coveringSimplification) {
+		this(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), csToolkit.getProcedures(), bp, net,
+				predicateUnifiers, iterativeCosets, coveringSimplification);
+	}
 
 	/**
 	 * @TODO: assertion, places are IPredicate
@@ -101,33 +99,28 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	 * @param bp
 	 * @param assertion
 	 */
-	public OwickiGriesFloydHoare(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final BranchingProcess<LETTER, PLACE> bp, final IPetriNet<LETTER, PLACE> net,
-			final Function<PLACE, IPredicate> place2Predicate,
-			final List<IRefinementEngineResult<LETTER, ?>> refinementEngines, final boolean iterativeCosets,
+	public PetriFloydHoare(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final IIcfgSymbolTable symbolTable, final Set<String> procedures, final BranchingProcess<L, P> bp,
+			final IPetriNet<L, P> net, final List<IPredicateUnifier> predicateUnifiers, final boolean iterativeCosets,
 			final boolean coveringSimplification) {
-
 		mServices = services;
-		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
-		mManagedScript = csToolkit.getManagedScript();
-		mScript = mManagedScript.getScript();
-		mSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
+		mManagedScript = mgdScript;
+		mSymbolTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
 		mFactory = new BasicPredicateFactory(mServices, mManagedScript, mSymbolTable);
-		mPlace2Predicate = place2Predicate;
-		mRefinementEngines = refinementEngines;
+		mPredicateUnifiers = predicateUnifiers;
 
 		mBp = bp;
 		mNet = net;
 
 		mCuts = computeMaximalCosets(mBp);
 
-		mOrigPlaces = new HashSet<>(mNet.getPlaces());
+		mOriginalPlaces = new HashSet<>(mNet.getPlaces());
 		mConditions = mBp.getConditions().stream().collect(Collectors.toSet());
-		mOrigConditions = getOrigConditions();
-		mAssertConditions = DataStructureUtils.difference(mConditions, mOrigConditions);
+		mOriginalConditions = getOrigConditions();
+		mAssertionConditions = DataStructureUtils.difference(mConditions, mOriginalConditions);
 
 		mPlaces = getPlaces(mCuts);
-		mAssertPlaces = getAssertPlaces(mPlaces, mOrigPlaces);
+		mAssertionPlaces = getAssertPlaces(mPlaces, mOriginalPlaces);
 		mReach = getReach(mCuts);
 
 		if (iterativeCosets) {
@@ -166,9 +159,9 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	/**
 	 * Annotation with MaximalCosets computation
 	 */
-	private Map<Marking<PLACE>, IPredicate> getMaximalAnnotation() {
-		final Map<Marking<PLACE>, IPredicate> mapping = new HashMap<>();
-		for (final ImmutableSet<PLACE> marking : mReach) {
+	private Map<Marking<P>, IPredicate> getMaximalAnnotation() {
+		final Map<Marking<P>, IPredicate> mapping = new HashMap<>();
+		for (final ImmutableSet<P> marking : mReach) {
 			mapping.put(new Marking<>(marking), getMarkingAssertion(marking));
 		}
 		return mapping;
@@ -177,16 +170,16 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	/**
 	 * Cuts computation from "greedy" algorithm With simplification
 	 */
-	private Map<Marking<PLACE>, IPredicate> getCosetAnnotation() {
-		final Map<Marking<PLACE>, IPredicate> mapping = new HashMap<>();
-		final Set<Set<Condition<LETTER, PLACE>>> markingCosets = getCosets(new HashSet<Condition<LETTER, PLACE>>(),
-				new HashSet<Condition<LETTER, PLACE>>(), mOrigConditions, new HashSet<Set<Condition<LETTER, PLACE>>>());
-		for (final Set<Condition<LETTER, PLACE>> markCoset : markingCosets) {
-			final ImmutableSet<PLACE> markPlaces = getCosetPlaces(markCoset);
-			final Set<Set<Condition<LETTER, PLACE>>> assertConds = getCosets(new HashSet<Condition<LETTER, PLACE>>(),
-					markCoset, mAssertConditions, new HashSet<Set<Condition<LETTER, PLACE>>>());
+	private Map<Marking<P>, IPredicate> getCosetAnnotation() {
+		final Map<Marking<P>, IPredicate> mapping = new HashMap<>();
+		final Set<Set<Condition<L, P>>> markingCosets = getCosets(new HashSet<Condition<L, P>>(),
+				new HashSet<Condition<L, P>>(), mOriginalConditions, new HashSet<Set<Condition<L, P>>>());
+		for (final Set<Condition<L, P>> markCoset : markingCosets) {
+			final ImmutableSet<P> markPlaces = getCosetPlaces(markCoset);
+			final Set<Set<Condition<L, P>>> assertConds = getCosets(new HashSet<Condition<L, P>>(), markCoset,
+					mAssertionConditions, new HashSet<Set<Condition<L, P>>>());
 			final Set<Set<IPredicate>> markAssertPlaces = new HashSet<>();
-			for (final Set<Condition<LETTER, PLACE>> assertCond : assertConds) {
+			for (final Set<Condition<L, P>> assertCond : assertConds) {
 				Set<IPredicate> cosetPredicates = getCosetPredicates(assertCond);
 				if (mCoveringSimplification) {
 					cosetPredicates = simplifyAssertions(cosetPredicates);
@@ -198,18 +191,18 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 		return mapping;
 	}
 
-	private ImmutableSet<PLACE> getCosetPlaces(final Set<Condition<LETTER, PLACE>> coset) {
-		final Set<PLACE> placeCoset = new HashSet<>();
-		for (final Condition<LETTER, PLACE> condition : coset) {
+	private ImmutableSet<P> getCosetPlaces(final Set<Condition<L, P>> coset) {
+		final Set<P> placeCoset = new HashSet<>();
+		for (final Condition<L, P> condition : coset) {
 			placeCoset.add(condition.getPlace());
 		}
 		return ImmutableSet.of(placeCoset);
 
 	}
 
-	private Set<IPredicate> getCosetPredicates(final Set<Condition<LETTER, PLACE>> coset) {
+	private Set<IPredicate> getCosetPredicates(final Set<Condition<L, P>> coset) {
 		final Set<IPredicate> predCoset = new HashSet<>();
-		for (final Condition<LETTER, PLACE> condition : coset) {
+		for (final Condition<L, P> condition : coset) {
 			predCoset.add(condition.getPlace());
 		}
 		return predCoset;
@@ -234,9 +227,9 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	private Set<IPredicate> getWeakerConditions(final IPredicate condition, Set<IPredicate> assertConditions) {
 		final Set<IPredicate> condImplications = new HashSet<>();
 		assertConditions = DataStructureUtils.difference(assertConditions, Collections.singleton(condition));
-		for (final IRefinementEngineResult<?, ?> refEngine : mRefinementEngines) {
+		for (final var predUnifier : mPredicateUnifiers) {
 			condImplications.addAll(DataStructureUtils.intersection(assertConditions,
-					refEngine.getPredicateUnifier().getCoverageRelation().getCoveringPredicates(condition)));
+					predUnifier.getCoverageRelation().getCoveringPredicates(condition)));
 		}
 		return condImplications;
 	}
@@ -252,9 +245,8 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	private boolean thereIsStronger(final IPredicate condition, final Set<IPredicate> assertConditions) {
 		final Set<IPredicate> assertPredicates =
 				DataStructureUtils.difference(assertConditions, Collections.singleton(condition));
-		for (final IRefinementEngineResult<?, ?> refEngine : mRefinementEngines) {
-			final Set<IPredicate> coveredPlaces =
-					refEngine.getPredicateUnifier().getCoverageRelation().getCoveredPredicates(condition);
+		for (final var predUnifier : mPredicateUnifiers) {
+			final Set<IPredicate> coveredPlaces = predUnifier.getCoverageRelation().getCoveredPredicates(condition);
 			if (!DataStructureUtils.intersection(coveredPlaces, assertPredicates).isEmpty()) {
 				return true;
 			}
@@ -268,20 +260,18 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	 * @param cuts
 	 * @return set successor maximal cosets from given coset
 	 */
-	private Set<Set<Condition<LETTER, PLACE>>> getCosets(final Set<Condition<LETTER, PLACE>> coset,
-			final Set<Condition<LETTER, PLACE>> compCoset, final Set<Condition<LETTER, PLACE>> conditions,
-			Set<Set<Condition<LETTER, PLACE>>> cuts) {
-		final Set<Condition<LETTER, PLACE>> toAdd = DataStructureUtils.difference(conditions, coset);
-		final Set<Set<Condition<LETTER, PLACE>>> cosets = new HashSet<>();
-		for (final Condition<LETTER, PLACE> cond : toAdd) {
+	private Set<Set<Condition<L, P>>> getCosets(final Set<Condition<L, P>> coset, final Set<Condition<L, P>> compCoset,
+			final Set<Condition<L, P>> conditions, Set<Set<Condition<L, P>>> cuts) {
+		final Set<Condition<L, P>> toAdd = DataStructureUtils.difference(conditions, coset);
+		final Set<Set<Condition<L, P>>> cosets = new HashSet<>();
+		for (final Condition<L, P> cond : toAdd) {
 			if (mBp.getCoRelation().isCoset(compCoset, cond) & mBp.getCoRelation().isCoset(coset, cond)) {
-				final Set<Condition<LETTER, PLACE>> imCoset =
-						DataStructureUtils.union(coset, DataStructureUtils.toSet(cond));
+				final Set<Condition<L, P>> imCoset = DataStructureUtils.union(coset, DataStructureUtils.toSet(cond));
 				cosets.add(imCoset);
 			}
 		}
 		if (!cosets.isEmpty()) {
-			for (final Set<Condition<LETTER, PLACE>> imcoset : cosets) {
+			for (final Set<Condition<L, P>> imcoset : cosets) {
 				cuts = DataStructureUtils.union(cuts, getCosets(imcoset, compCoset, conditions, cuts));
 			}
 		} else {
@@ -290,25 +280,25 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 		return cuts;
 	}
 
-	private Set<Condition<LETTER, PLACE>> getOrigConditions() {
-		final Set<Condition<LETTER, PLACE>> conditions = new HashSet<>();
-		for (final Condition<LETTER, PLACE> cond : mBp.getConditions()) {
-			if (mOrigPlaces.contains(cond.getPlace())) {
+	private Set<Condition<L, P>> getOrigConditions() {
+		final Set<Condition<L, P>> conditions = new HashSet<>();
+		for (final Condition<L, P> cond : mBp.getConditions()) {
+			if (mOriginalPlaces.contains(cond.getPlace())) {
 				conditions.add(cond);
 			}
 		}
 		return conditions;
 	}
 
-	private IPredicate getMarkingAssertion(final Set<PLACE> marking) {
+	private IPredicate getMarkingAssertion(final Set<P> marking) {
 		final Set<IPredicate> predicates = new HashSet<>();
-		for (final Set<PLACE> cut : getCuts(marking)) {
+		for (final Set<P> cut : getCuts(marking)) {
 			predicates.add(getCutAssertion(cut, getAssertPlaces(cut)));
 		}
 		return mFactory.or(predicates);
 	}
 
-	private IPredicate getCutAssertion(final Set<PLACE> cut, final Set<PLACE> assertPlaces) {
+	private IPredicate getCutAssertion(final Set<P> cut, final Set<P> assertPlaces) {
 		final Set<IPredicate> predicates = new HashSet<>();
 		for (final IPredicate place : assertPlaces) {
 			predicates.add(place);
@@ -317,7 +307,7 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	}
 
 	// Call this for simple and "greedy" cuts Annotation
-	private IPredicate getMarkingAssertion(final Set<PLACE> marking, final Set<Set<IPredicate>> cuts) {
+	private IPredicate getMarkingAssertion(final Set<P> marking, final Set<Set<IPredicate>> cuts) {
 		final Set<IPredicate> predicates = new HashSet<>();
 		for (final Set<IPredicate> cut : cuts) {
 			predicates.add(getCutAssertion(cut));
@@ -338,9 +328,9 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	 * @param cuts
 	 * @return set of all places in Petri Net* TODO: or get it as parameter from Net.getPlaces()
 	 */
-	private Set<PLACE> getPlaces(final Set<ImmutableSet<PLACE>> cuts) {
-		final Set<PLACE> places = new HashSet<>();
-		for (final Set<PLACE> cut : cuts) {
+	private Set<P> getPlaces(final Set<ImmutableSet<P>> cuts) {
+		final Set<P> places = new HashSet<>();
+		for (final Set<P> cut : cuts) {
 			places.addAll(cut);
 		}
 		return places;
@@ -354,7 +344,7 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	 * @TODO: with Parameters or not?
 	 * @TODO: Get original places from Petri Net?
 	 */
-	private Set<PLACE> getAssertPlaces(final Set<PLACE> places, final Set<PLACE> origPlaces) {
+	private Set<P> getAssertPlaces(final Set<P> places, final Set<P> origPlaces) {
 		return DataStructureUtils.difference(places, origPlaces);
 	}
 
@@ -362,10 +352,10 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	 * @param cut
 	 * @return mark, set of original places in cut
 	 */
-	private ImmutableSet<PLACE> getCutMarking(final Set<PLACE> cut) {
-		final Set<PLACE> mark = new HashSet<>();
-		for (final PLACE place : cut) {
-			if (mOrigPlaces.contains(place)) {
+	private ImmutableSet<P> getCutMarking(final Set<P> cut) {
+		final Set<P> mark = new HashSet<>();
+		for (final P place : cut) {
+			if (mOriginalPlaces.contains(place)) {
 				mark.add(place);
 			}
 		}
@@ -376,10 +366,10 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	 * @param cut
 	 * @return set of all assertion places in cut
 	 */
-	private Set<PLACE> getAssertPlaces(final Set<PLACE> cut) {
-		final Set<PLACE> places = new HashSet<>();
-		for (final PLACE place : cut) {
-			if (mAssertPlaces.contains(place)) {
+	private Set<P> getAssertPlaces(final Set<P> cut) {
+		final Set<P> places = new HashSet<>();
+		for (final P place : cut) {
+			if (mAssertionPlaces.contains(place)) {
 				places.add(place);
 			}
 		}
@@ -391,9 +381,9 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	 * @return set of all markings (set of original places)
 	 * @TODO: Set<Marking<LETTER, PLACE>> or Set<Set<PLACE>>?
 	 */
-	private Set<ImmutableSet<PLACE>> getReach(final Set<ImmutableSet<PLACE>> Cuts) {
-		final Set<ImmutableSet<PLACE>> markings = new HashSet<>();
-		for (final ImmutableSet<PLACE> cut : Cuts) {
+	private Set<ImmutableSet<P>> getReach(final Set<ImmutableSet<P>> Cuts) {
+		final Set<ImmutableSet<P>> markings = new HashSet<>();
+		for (final ImmutableSet<P> cut : Cuts) {
 			markings.add(getCutMarking(cut));
 		}
 		return markings;
@@ -403,9 +393,9 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 	 * @param marking
 	 * @return set of cuts that have marking as original marking
 	 */
-	private Set<Set<PLACE>> getCuts(final Set<PLACE> marking) {
-		final Set<Set<PLACE>> cuts = new HashSet<>();
-		for (final Set<PLACE> cut : mCuts) {
+	private Set<Set<P>> getCuts(final Set<P> marking) {
+		final Set<Set<P>> cuts = new HashSet<>();
+		for (final Set<P> cut : mCuts) {
 			if (marking.equals(getCutMarking(cut))) {
 				cuts.add(cut);
 			}
@@ -413,12 +403,11 @@ public class OwickiGriesFloydHoare<PLACE extends IPredicate, LETTER extends IIcf
 		return cuts;
 	}
 
-	public Map<Marking<PLACE>, IPredicate> getResult() {
+	public Map<Marking<P>, IPredicate> getResult() {
 		return mFloydHoareAnnotation;
 	}
 
-	public IPredicate getAssertion(final Marking<PLACE> marking) {
+	public IPredicate getAssertion(final Marking<P> marking) {
 		return mFloydHoareAnnotation.get(marking);
 	}
-
 }

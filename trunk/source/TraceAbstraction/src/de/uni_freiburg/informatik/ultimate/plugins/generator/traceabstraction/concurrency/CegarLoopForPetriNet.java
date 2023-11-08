@@ -87,7 +87,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesConstruction;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesFloydHoare;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriFloydHoare;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesValidityCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -608,9 +608,11 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		}
 
 		final long startTime = System.nanoTime();
-		final OwickiGriesFloydHoare<IPredicate, L> floydHoare = new OwickiGriesFloydHoare<>(getServices(), mCsToolkit,
-				mFinPrefix, mInitialNet, x -> x, mRefinementEngines, mPref.owickiGriesIterativeCosets(),
-				mPref.owickiGriesCoveringSimplification());
+		final var predicateUnifiers = mRefinementEngines.stream().map(IRefinementEngineResult::getPredicateUnifier)
+				.collect(Collectors.toList());
+		final PetriFloydHoare<IPredicate, L> floydHoare =
+				new PetriFloydHoare<>(getServices(), mCsToolkit, mFinPrefix, mInitialNet, predicateUnifiers,
+						mPref.owickiGriesIterativeCosets(), mPref.owickiGriesCoveringSimplification());
 		final Map<Marking<IPredicate>, IPredicate> petriFloydHoare = floydHoare.getResult();
 
 		// final var htc = new MonolithicHoareTripleChecker(mCsToolkit);
