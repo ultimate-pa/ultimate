@@ -65,7 +65,7 @@ public class SpaceExParser implements ISource {
 	private final List<String> mFileNames;
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
-	private ITranslator<IcfgEdge, IcfgEdge, Term, Term, String, String> mBacktranslator;
+	private ITranslator<IcfgEdge, IcfgEdge, Term, Term, String, String, ?> mBacktranslator;
 
 	/**
 	 * Constructor of the SpaceEx Parser plugin.

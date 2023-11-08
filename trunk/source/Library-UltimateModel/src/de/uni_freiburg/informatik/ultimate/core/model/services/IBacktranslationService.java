@@ -47,7 +47,7 @@ public interface IBacktranslationService {
 	 *
 	 * @param translator
 	 */
-	<STE, TTE, SE, TE, SVL, TVL> void addTranslator(ITranslator<STE, TTE, SE, TE, SVL, TVL> translator);
+	<STE, TTE, SE, TE, SVL, TVL, LOC> void addTranslator(ITranslator<STE, TTE, SE, TE, SVL, TVL, LOC> translator);
 
 	<SE, TE> TE translateExpression(SE expression, Class<SE> sourceExpressionClass);
 
@@ -59,6 +59,8 @@ public interface IBacktranslationService {
 	 * @return
 	 */
 	<SE> String translateExpressionToString(SE expression, Class<SE> clazz);
+
+	<SE, CTX> String translateExpressionWithContextToString(SE expression, CTX context, Class<SE> clazz);
 
 	<STE> List<?> translateTrace(List<STE> trace, Class<STE> clazz);
 

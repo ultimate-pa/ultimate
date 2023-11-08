@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.BackTransValu
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.InlineVersionTransformer;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -64,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IToString;
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class InlinerBacktranslator
-		extends DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression, String, String> {
+		extends DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression, String, String, ILocation> {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;

@@ -51,7 +51,8 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	}
 
 	@Override
-	public <STE, TTE, SE, TE, SVL, TVL> void addTranslator(final ITranslator<STE, TTE, SE, TE, SVL, TVL> translator) {
+	public <STE, TTE, SE, TE, SVL, TVL, LOC> void
+			addTranslator(final ITranslator<STE, TTE, SE, TE, SVL, TVL, LOC> translator) {
 		mTranslatorSequence.addTranslator(translator);
 	}
 
@@ -70,15 +71,14 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 			translateProgramExecution(final IProgramExecution<STE, SE> programExecution) {
 		return mTranslatorSequence.translateProgramExecution(programExecution);
 	}
-	
+
 	@Override
-	public <SE> ProgramState<?>
-			translateProgramState(final ProgramState<SE> programState) {
+	public <SE> ProgramState<?> translateProgramState(final ProgramState<SE> programState) {
 		return mTranslatorSequence.translateProgramState(programState);
 	}
-	
+
 	@Override
-	public <SE> String translateProgramStateToString(ProgramState<SE> programState) {
+	public <SE> String translateProgramStateToString(final ProgramState<SE> programState) {
 		return mTranslatorSequence.translateProgramStateToString(programState);
 	}
 
@@ -90,6 +90,12 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	@Override
 	public <SE> String translateExpressionToString(final SE expression, final Class<SE> clazz) {
 		return mTranslatorSequence.translateExpressionToString(expression, clazz);
+	}
+
+	@Override
+	public <SE, CTX> String translateExpressionWithContextToString(final SE expression, final CTX context,
+			final Class<SE> clazz) {
+		return mTranslatorSequence.translateExpressionWithContextToString(expression, context, clazz);
 	}
 
 	@Override

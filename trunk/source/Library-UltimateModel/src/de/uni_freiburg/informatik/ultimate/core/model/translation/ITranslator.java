@@ -57,12 +57,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
  * @param <TVL>
  *            Target vertex label.
  */
-public interface ITranslator<STE, TTE, SE, TE, SVL, TVL> {
+public interface ITranslator<STE, TTE, SE, TE, SVL, TVL, CTX> {
 
 	/**
 	 * Note: Does not need to preserve instances
 	 */
 	TE translateExpression(SE expression);
+
+	TE translateExpressionWithContext(SE expression, CTX context);
 
 	ProgramState<TE> translateProgramState(ProgramState<SE> programState);
 

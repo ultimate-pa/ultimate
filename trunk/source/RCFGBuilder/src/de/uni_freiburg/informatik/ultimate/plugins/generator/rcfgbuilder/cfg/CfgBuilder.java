@@ -488,15 +488,14 @@ public class CfgBuilder {
 		return errorLocNode;
 	}
 
-	public ITranslator<IIcfgTransition<IcfgLocation>, BoogieASTNode, Term, Expression, IcfgLocation, String>
+	public ITranslator<IIcfgTransition<IcfgLocation>, BoogieASTNode, Term, Expression, IcfgLocation, String, ILocation>
 			getBacktranslator() {
 		return mRcfgBacktranslator;
 	}
 
 	/**
-	 * Check it this statement is a plain <code>assume true</code> statement, i.e. whether
-	 * * it has an empty list of attributes or no attributes at all, and
-	 * * it is not annotated with an LTLStepAnnotation.
+	 * Check it this statement is a plain <code>assume true</code> statement, i.e. whether * it has an empty list of
+	 * attributes or no attributes at all, and * it is not annotated with an LTLStepAnnotation.
 	 */
 	private static boolean isPlainAssumeTrueStatement(final Statement st) {
 		if (st instanceof AssumeStatement) {
@@ -1104,9 +1103,9 @@ public class CfgBuilder {
 			mNameCache.put(startLine, value);
 			final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(stmt);
 			if (lea != null && lea.getLoopEntryType() == LoopEntryType.WHILE) {
-				return new LoopEntryDebugIdentifier(startLine, value.intValue());
+				return new LoopEntryDebugIdentifier(startLine, value);
 			}
-			return new OrdinaryDebugIdentifier(startLine, value.intValue());
+			return new OrdinaryDebugIdentifier(startLine, value);
 		}
 
 		/**
@@ -1567,18 +1566,18 @@ public class CfgBuilder {
 		}
 
 		/**
-		 * Merge one LocNode into another. The oldLocNode will be merged into the
-		 * newLocNode. The newLocNode gets connected to all incoming/outgoing
-		 * transitions of the oldLocNode. The oldLocNode looses connections to all
-		 * incoming/outgoing transitions. If the oldLocNode was representative for a
-		 * Label the new location will from now on be the representative of this Label.
+		 * Merge one LocNode into another. The oldLocNode will be merged into the newLocNode. The newLocNode gets
+		 * connected to all incoming/outgoing transitions of the oldLocNode. The oldLocNode looses connections to all
+		 * incoming/outgoing transitions. If the oldLocNode was representative for a Label the new location will from
+		 * now on be the representative of this Label.
 		 *
-		 * @param oldLocNode         LocNode that gets merged into the newLocNode. Must
-		 *                           not represent an error location.
-		 * @param newLocNode         LocNode that absorbes the oldLocNode.
-		 * @param copyAllAnnotations If `true` then we copy all annotations from the old
-		 *                           node to the new node, if `false` we copy all
-		 *                           annotations by the {@link ILocation}.
+		 * @param oldLocNode
+		 *            LocNode that gets merged into the newLocNode. Must not represent an error location.
+		 * @param newLocNode
+		 *            LocNode that absorbes the oldLocNode.
+		 * @param copyAllAnnotations
+		 *            If `true` then we copy all annotations from the old node to the new node, if `false` we copy all
+		 *            annotations by the {@link ILocation}.
 		 */
 		private void mergeLocNodes(final BoogieIcfgLocation oldLocNode, final BoogieIcfgLocation newLocNode,
 				final boolean copyAllAnnotations) {
