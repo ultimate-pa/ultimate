@@ -19,7 +19,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class PEAComplement {
 
-	public static String DIVIDER = "_";
 	public static String TOTAL_POSTFIX = "_total";
 	public static String COMPLEMENT_POSTFIX = "_complement";
 	public static String SINK_NAME = "sink";
