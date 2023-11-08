@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -78,47 +79,46 @@ public class YamlWitnessParser {
 		loaderOptions.setCodePointLimit(MAXIMAL_SIZE);
 		final List<Map<String, Object>> res =
 				new Yaml(new SafeConstructor(loaderOptions)).load(new FileInputStream(yamlInput));
-		return new Witness(res.stream().flatMap(x -> parseWitnessEntry(x).stream()).collect(Collectors.toList()));
+		return new Witness(res.stream().flatMap(YamlWitnessParser::parseWitnessEntry).collect(Collectors.toList()));
 	}
 
-	private static List<WitnessEntry> parseWitnessEntry(final Map<String, Object> entry) {
+	private static Stream<WitnessEntry> parseWitnessEntry(final Map<String, Object> entry) {
 		final Metadata metadata = parseMetadata((Map<String, Object>) entry.get("metadata"));
 		switch ((String) entry.get("entry_type")) {
 		case LocationInvariant.NAME: {
 			final Location location = parseLocation((Map<String, Object>) entry.get("location"));
 			final Invariant locationInvariant = parseInvariant((Map<String, String>) entry.get(LocationInvariant.NAME));
-			return List.of(new LocationInvariant(metadata, location, locationInvariant));
+			return Stream.of(new LocationInvariant(metadata, location, locationInvariant));
 		}
 		case LoopInvariant.NAME: {
 			final Location location = parseLocation((Map<String, Object>) entry.get("location"));
 			final Invariant loopInvariant = parseInvariant((Map<String, String>) entry.get(LoopInvariant.NAME));
-			return List.of(new LoopInvariant(metadata, location, loopInvariant));
+			return Stream.of(new LoopInvariant(metadata, location, loopInvariant));
 		}
 		case InvariantSet.NAME:
 			// TODO: This just transforms the "new" format to the "old" format, maybe change this in the future
 			final List<Map<String, Map<String, Object>>> content =
 					(List<Map<String, Map<String, Object>>>) entry.get("content");
-			return content.stream().map(x -> mapToSingleEntries(x.get("invariant"), metadata))
-					.collect(Collectors.toList());
+			return content.stream().map(x -> parseAsSingleEntry(x.get("invariant"), metadata));
 		default:
 			throw new UnsupportedOperationException("Unknown entry type " + entry.get("entry_type"));
 		}
 	}
 
-	private static WitnessEntry mapToSingleEntries(final Map<String, Object> entry, final Metadata metadata) {
+	private static WitnessEntry parseAsSingleEntry(final Map<String, Object> setEntry, final Metadata metadata) {
 		// Create new metadata with a fresh UUID (because we rely on it as a unique identifier)
 		final Metadata newMetadata = new Metadata(metadata.getFormatVersion(), UUID.randomUUID(),
 				metadata.getCreationTime(), metadata.getProducer(), metadata.getTask());
-		final Location location = parseLocation((Map<String, Object>) entry.get("location"));
+		final Location location = parseLocation((Map<String, Object>) setEntry.get("location"));
 		final Invariant invariant =
-				new Invariant((String) entry.get("value"), "assertion", (String) entry.get("format"));
-		switch ((String) entry.get("type")) {
+				new Invariant((String) setEntry.get("value"), "assertion", (String) setEntry.get("format"));
+		switch ((String) setEntry.get("type")) {
 		case LocationInvariant.NAME:
 			return new LocationInvariant(newMetadata, location, invariant);
 		case LoopInvariant.NAME:
 			return new LocationInvariant(newMetadata, location, invariant);
 		default:
-			throw new UnsupportedOperationException("Unknown entry type " + entry.get("type"));
+			throw new UnsupportedOperationException("Unknown entry type " + setEntry.get("type"));
 		}
 	}
 
