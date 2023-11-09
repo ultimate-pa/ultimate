@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.test.util;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,11 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.amihaiemil.eoyaml.Yaml;
-import com.amihaiemil.eoyaml.YamlInput;
-import com.amihaiemil.eoyaml.YamlMapping;
-import com.amihaiemil.eoyaml.YamlNode;
-import com.amihaiemil.eoyaml.YamlSequence;
+import org.yaml.snakeyaml.Yaml;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -386,33 +383,35 @@ public final class UltimateRunDefinitionGenerator {
 		return result;
 	}
 
+	@SuppressWarnings("unchecked")
 	private static Pair<File, SvcompArchitecture> getInputFileFromYamlFile(final File yamlFile,
 			final String propertyFile, final Boolean expectedResult) throws IOException {
-		final YamlInput yamlInput = Yaml.createYamlInput(yamlFile);
-		final YamlMapping rootMapping = yamlInput.readYamlMapping();
+		final Object parsed = new Yaml().load(new FileInputStream(yamlFile));
+		if (!(parsed instanceof Map)) {
+			return null;
+		}
+		final Map<Object, Object> rootMapping = (Map<Object, Object>) parsed;
 		if (hasProperty(rootMapping, propertyFile, expectedResult)) {
-			final String cFilename = rootMapping.string("input_files");
+			final String cFilename = (String) rootMapping.get("input_files");
 			final String filename = yamlFile.getParent() + System.getProperty("file.separator") + cFilename;
-			final YamlMapping optionsMapping = rootMapping.yamlMapping("options");
-			final String architectureString = optionsMapping.string("data_model");
+			final String architectureString = ((Map<?, String>) rootMapping.get("options")).get("data_model");
 			final SvcompArchitecture architecture = SvcompArchitecture.valueOf(architectureString);
 			return new Pair<>(new File(filename), architecture);
 		}
 		return null;
 	}
 
-	private static boolean hasProperty(final YamlMapping rootMapping, final String propertyFile,
+	@SuppressWarnings("unchecked")
+	private static boolean hasProperty(final Map<Object, Object> rootMapping, final String propertyFile,
 			final Boolean expectedResult) {
-		final YamlSequence propertySequence = rootMapping.yamlSequence("properties");
-		for (final YamlNode propertyNode : propertySequence) {
-			final YamlMapping yamlMapForPropery = propertyNode.asMapping();
-			final String prp = yamlMapForPropery.string("property_file");
+		final List<Map<String, Object>> properties = (List<Map<String, Object>>) rootMapping.get("properties");
+		for (final Map<String, Object> property : properties) {
+			final String prp = (String) property.get("property_file");
 			if (prp.endsWith(propertyFile)) {
 				if (expectedResult == null) {
 					return true;
 				}
-				final String expectedVerdict = yamlMapForPropery.string("expected_verdict");
-				return (Boolean.valueOf(expectedVerdict) == expectedResult);
+				return expectedResult.equals(property.get("expected_verdict"));
 			}
 		}
 		return false;

@@ -27,17 +27,15 @@
 package de.uni_freiburg.informatik.ultimate.test.decider.expectedresult;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.amihaiemil.eoyaml.Yaml;
-import com.amihaiemil.eoyaml.YamlInput;
-import com.amihaiemil.eoyaml.YamlMapping;
-import com.amihaiemil.eoyaml.YamlNode;
-import com.amihaiemil.eoyaml.YamlSequence;
+import org.yaml.snakeyaml.Yaml;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -100,29 +98,28 @@ public class YamlBasedExpectedResultFinder<OVERALL_RESULT> extends AbstractExpec
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private OVERALL_RESULT extractResultForPropertyFile(final File yamlFile, final String propertyFile)
 			throws IOException {
-		final YamlInput yamlInput = Yaml.createYamlInput(yamlFile);
-		final YamlMapping rootMapping = yamlInput.readYamlMapping();
-		final YamlSequence propertySequence = rootMapping.yamlSequence("properties");
-		for (final YamlNode propertyNode : propertySequence) {
-			final YamlMapping yamlMapForPropery = propertyNode.asMapping();
-			final String test = yamlMapForPropery.string("property_file");
+		final Map<String, Object> rootMapping = new Yaml().load(new FileInputStream(yamlFile));
+		final List<Map<String, Object>> properties = (List<Map<String, Object>>) rootMapping.get("properties");
+		for (final Map<String, Object> property : properties) {
+			final String test = (String) property.get("property_file");
 			if (test.endsWith(propertyFile)) {
-				final String expectedVerdict = yamlMapForPropery.string("expected_verdict");
-				if (Boolean.valueOf(expectedVerdict) == null) {
+				final Boolean expectedVerdict = (Boolean) property.get("expected_verdict");
+				if (expectedVerdict == null) {
 					throw new IllegalArgumentException("expected_verdict has to be either true or false");
 				}
-				if (Boolean.valueOf(expectedVerdict)) {
+				if (expectedVerdict) {
 					return mResultMap.get(propertyFile, String.valueOf(true));
 				} else {
-					assert !Boolean.valueOf(expectedVerdict);
+					assert !expectedVerdict;
 					final Map<String, OVERALL_RESULT> map = mResultMap.get(propertyFile);
 					if (map.containsKey(String.valueOf(false))) {
 						// there are no subproperties for this property
 						return mResultMap.get(propertyFile, String.valueOf(false));
 					} else {
-						final String subproperty = yamlMapForPropery.string("subproperty");
+						final String subproperty = (String) property.get("subproperty");
 						if (subproperty == null) {
 							throw new UnsupportedOperationException("Cannot understand YAML file");
 						} else {
