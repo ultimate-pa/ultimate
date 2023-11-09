@@ -90,7 +90,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocat
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
@@ -1606,8 +1605,7 @@ public class CACSL2BoogieBacktranslator
 		if (context == null || !(context instanceof CLocation)) {
 			return true;
 		}
-		final SymbolTableValue sym = mSymbolTable.findCSymbol(((CLocation) context).getNode(), cId);
-		return sym != null;
+		return mSymbolTable.containsCSymbol(((CLocation) context).getNode(), cId);
 	}
 
 	private static IRelevanceInformation mergeRelevaneInformation(final IRelevanceInformation... relInfos) {
