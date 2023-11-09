@@ -1219,6 +1219,10 @@ public class CACSL2BoogieBacktranslator
 		case "bvsge":
 		case "bvuge":
 			return new FakeExpression(String.format("(%s >= %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvudiv":
+			return new FakeExpression(String.format("(%s / %s)", translatedArguments[0], translatedArguments[1]));
+		case "bvurem":
+			return new FakeExpression(String.format("(%s %% %s)", translatedArguments[0], translatedArguments[1]));
 		case "bvneg":
 			return new FakeExpression(String.format("-(%s)", translatedArguments[0]));
 		case "bvnot":
