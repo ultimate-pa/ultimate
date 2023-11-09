@@ -29,8 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 
 /**
@@ -39,18 +37,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
  *
  * @author Matthias Heizmann
  */
-public class InvariantResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM>
-		implements IResultWithLocation {
+public class InvariantResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM> {
+	private final String mInvariant;
 
-	private final E mInvariant;
-
+	@SuppressWarnings("unchecked")
 	public InvariantResult(final String plugin, final ELEM element, final IBacktranslationService translatorSequence,
 			final E invariant) {
 		super(element, plugin, translatorSequence);
-		this.mInvariant = invariant;
+		mInvariant = translatorSequence.translateExpressionWithContextToString(invariant, getLocation(),
+				(Class<E>) invariant.getClass());
 	}
 
-	public E getInvariant() {
+	public String getInvariant() {
 		return mInvariant;
 	}
 
@@ -59,13 +57,8 @@ public class InvariantResult<ELEM extends IElement, E> extends AbstractResultAtE
 		return "Loop Invariant";
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public String getLongDescription() {
-		final StringBuffer sb = new StringBuffer();
-		sb.append("Derived loop invariant: ");
-		sb.append(mTranslatorSequence.translateExpressionWithContextToString(mInvariant,
-				ILocation.getAnnotation(getElement()), (Class<E>) mInvariant.getClass()));
-		return sb.toString();
+		return "Derived loop invariant: " + mInvariant;
 	}
 }

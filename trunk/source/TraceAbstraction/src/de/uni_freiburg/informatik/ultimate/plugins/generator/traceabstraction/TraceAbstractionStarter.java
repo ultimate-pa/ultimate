@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractRes
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
@@ -458,13 +457,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			if (formula.equals(trueterm)) {
 				continue;
 			}
-			final String inv = backTranslatorService.translateExpressionWithContextToString(formula,
-					ILocation.getAnnotation(locNode), Term.class);
-			if (inv == "NULL") {
-				mLogger.error("Failed to backtranslate " + formula);
-			} else {
-				new WitnessInvariant(inv).annotate(locNode);
-			}
+			new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
 		}
 	}
 

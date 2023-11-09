@@ -168,7 +168,7 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL, CTX>
 	@Override
 	public String targetExpressionToString(final TE expression) {
 		if (expression == null) {
-			return "NULL";
+			return null;
 		}
 		return expression.toString();
 	}
