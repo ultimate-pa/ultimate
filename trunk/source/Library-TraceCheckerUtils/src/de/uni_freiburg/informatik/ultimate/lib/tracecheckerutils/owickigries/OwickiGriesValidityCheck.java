@@ -93,7 +93,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 				coMarkedPlaces);
 	}
 
-	private OwickiGriesValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+	public OwickiGriesValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IHoareTripleChecker htc, final OwickiGriesAnnotation<LETTER, PLACE> annotation,
 			final HashRelation<Transition<LETTER, PLACE>, PLACE> coMarkedPlaces) {
 		mServices = services;

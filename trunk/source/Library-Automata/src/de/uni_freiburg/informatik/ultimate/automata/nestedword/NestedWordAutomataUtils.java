@@ -492,4 +492,30 @@ public final class NestedWordAutomataUtils {
 
 	}
 
+	public static <LETTER, STATE> boolean isSinkState(final INestedWordAutomaton<LETTER, STATE> automaton,
+			final STATE state) {
+		final var alphabet = automaton.getVpAlphabet();
+		for (final var letter : alphabet.getInternalAlphabet()) {
+			for (final var transition : automaton.internalSuccessors(state, letter)) {
+				if (!state.equals(transition.getSucc())) {
+					return false;
+				}
+			}
+		}
+		for (final var letter : alphabet.getCallAlphabet()) {
+			for (final var transition : automaton.callSuccessors(state, letter)) {
+				if (!state.equals(transition.getSucc())) {
+					return false;
+				}
+			}
+		}
+		for (final var letter : alphabet.getReturnAlphabet()) {
+			for (final var transition : automaton.returnSuccessors(state, letter)) {
+				if (!state.equals(transition.getSucc())) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 }

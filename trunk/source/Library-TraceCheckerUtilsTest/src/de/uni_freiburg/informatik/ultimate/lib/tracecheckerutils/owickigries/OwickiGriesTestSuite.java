@@ -50,8 +50,12 @@ import org.junit.runner.RunWith;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsTotal;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
@@ -65,13 +69,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtParserUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -80,6 +86,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttrans
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -121,6 +128,7 @@ public class OwickiGriesTestSuite implements IMessagePrinter {
 	protected IIcfgSymbolTable mSymbolTable;
 	protected BasicPredicateFactory mPredicateFactory;
 	protected PredicateUnifier mUnifier;
+	protected IHoareTripleChecker mHtc;
 
 	@TestFactory
 	public Iterable<OwickiGriesTestCase> createTests() throws IOException {
@@ -155,12 +163,7 @@ public class OwickiGriesTestSuite implements IMessagePrinter {
 		final var annotation = construction.getResult();
 
 		// check validity of annotation
-		final var modifiesRelation = new HashRelation<String, IProgramNonOldVar>();
-		for (final var pv : mSymbolTable.getGlobals()) {
-			modifiesRelation.addPair(SimpleAction.PROCEDURE, pv);
-		}
-		final var modifiableGlobals = new ModifiableGlobalsTable(modifiesRelation);
-		final var check = new OwickiGriesValidityCheck<>(mServices, mMgdScript, modifiableGlobals, annotation,
+		final var check = new OwickiGriesValidityCheck<>(mServices, mMgdScript, mHtc, annotation,
 				construction.getCoMarkedPlaces());
 
 		if (!check.isValid()) {
@@ -174,6 +177,13 @@ public class OwickiGriesTestSuite implements IMessagePrinter {
 		mPredicateFactory = new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable);
 		mUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mPredicateFactory, mSymbolTable,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+
+		final var modifiesRelation = new HashRelation<String, IProgramNonOldVar>();
+		for (final var pv : mSymbolTable.getGlobals()) {
+			modifiesRelation.addPair(SimpleAction.PROCEDURE, pv);
+		}
+		final var modifiableGlobals = new ModifiableGlobalsTable(modifiesRelation);
+		mHtc = new MonolithicHoareTripleChecker(mMgdScript, modifiableGlobals);
 
 		final AutomataTestFileAST parsed = parse(path);
 
@@ -208,7 +218,10 @@ public class OwickiGriesTestSuite implements IMessagePrinter {
 		final var proofs =
 				automata.stream().map(aut -> replaceActionsAndStates(id2Action, aut)).collect(Collectors.toList());
 
-		// TODO check proofs are well-formed: inductivity, false is sink, true is initial, deterministic
+		// check proofs
+		for (final var proof : proofs) {
+			checkProof(proof);
+		}
 
 		// compute difference of program and proofs
 		DifferencePetriNet<SimpleAction, IPredicate> difference = null;
@@ -223,6 +236,26 @@ public class OwickiGriesTestSuite implements IMessagePrinter {
 		final var constructedDifference = difference.getYetConstructedPetriNet();
 
 		runTest(path, parsed, program, constructedDifference, bp);
+	}
+
+	private void checkProof(final INestedWordAutomaton<SimpleAction, IPredicate> proof)
+			throws AutomataLibraryException {
+		assert NestedWordAutomataUtils.isFiniteAutomaton(proof) : "Proof must not have call or return transitions";
+		assert new IsDeterministic<>(mAutomataServices, proof).getResult() : "Proof must be deterministic";
+		assert new IsTotal<>(mAutomataServices, proof).getResult() : "Proof must be total";
+
+		for (final var initial : proof.getInitialStates()) {
+			assert "true".equals(
+					initial.getFormula().toString()) : "Initial state of proof automaton must be labeled 'true'";
+		}
+
+		for (final var accepting : proof.getFinalStates()) {
+			assert "false".equals(
+					accepting.getFormula().toString()) : "Accepting state of proof automaton must be labeled 'false'";
+			assert NestedWordAutomataUtils.isSinkState(proof, accepting) : "State 'false' should be a sink";
+		}
+
+		assert new InductivityCheck<>(mServices, proof, false, true, mHtc).getResult();
 	}
 
 	private IIcfgSymbolTable setupSymbolTable(final Path path) throws IOException {
@@ -417,7 +450,7 @@ public class OwickiGriesTestSuite implements IMessagePrinter {
 		}
 	}
 
-	private static final class SimpleAction implements IAction {
+	private static final class SimpleAction implements IInternalAction {
 		private static final String PROCEDURE = "Main";
 
 		private final int mId;
