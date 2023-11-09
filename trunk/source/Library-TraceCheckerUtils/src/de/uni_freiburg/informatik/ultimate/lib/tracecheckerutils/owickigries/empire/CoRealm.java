@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
@@ -48,10 +49,16 @@ public final class CoRealm<PLACE, LETTER> {
 	 */
 	private final Set<Condition<LETTER, PLACE>> mNegRealm;
 
+	private final Set<Condition<LETTER, PLACE>> mConflictingConditions;
+
+	private final Set<Condition<LETTER, PLACE>> mConflictFreeConditions;
+
 	/**
 	 * Corelation type of condition wrt. Realm.
 	 */
 	private final CoRelationType mCoRel;
+
+	private final ConflictType mConflictType;
 
 	public CoRealm(final Realm<PLACE, LETTER> realm, final Condition<LETTER, PLACE> condition,
 			final BranchingProcess<LETTER, PLACE> bp) {
@@ -61,6 +68,9 @@ public final class CoRealm<PLACE, LETTER> {
 		mPosRealm = getPosRealm();
 		mNegRealm = DataStructureUtils.difference(mRealm.getConditions(), mPosRealm);
 		mCoRel = getCoRelType();
+		mConflictingConditions = getConflictingConditions(null);
+		mConflictFreeConditions = DataStructureUtils.difference(mRealm.getConditions(), mConflictingConditions);
+		mConflictType = getConflictType();
 	}
 
 	/**
@@ -69,6 +79,33 @@ public final class CoRealm<PLACE, LETTER> {
 	private Set<Condition<LETTER, PLACE>> getPosRealm() {
 		return DataStructureUtils.intersection(mRealm.getConditions(),
 				mCoRelation.computeCoRelatatedConditions(mCondition));
+	}
+
+	/**
+	 * @param placesCoRelation
+	 *            Object which was initialized with the bp we want to create a proof for
+	 * @return Subset of Realm's conditions for which their places are not corelated to the place of condition.
+	 */
+	private Set<Condition<LETTER, PLACE>> getConflictingConditions(PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+		Set<Condition<LETTER, PLACE>> conflictingConditions = new HashSet<>();
+		PLACE originalPlace = mCondition.getPlace();
+		for (Condition<LETTER, PLACE> condition : mRealm.getConditions()) {
+			if (placesCoRelation.getPlacesCorelation(originalPlace, condition.getPlace())) {
+				conflictingConditions.add(condition);
+			}
+		}
+		return conflictingConditions;
+	}
+
+	/**
+	 * 
+	 * @return The conflict type of the realm wrt. condition
+	 */
+	private ConflictType getConflictType() {
+		if (mRealm.getConditions().size() == mConflictFreeConditions.size()) {
+			return ConflictType.CONFLICT_FREE;
+		}
+		return ConflictType.CONFLICTING;
 	}
 
 	/**
@@ -88,6 +125,18 @@ public final class CoRealm<PLACE, LETTER> {
 
 	public CoRelationType getCoRelation() {
 		return mCoRel;
+	}
+
+	public ConflictType getConflict() {
+		return mConflictType;
+	}
+
+	public Set<Condition<LETTER, PLACE>> getConflictingSet() {
+		return mConflictingConditions;
+	}
+
+	public Set<Condition<LETTER, PLACE>> getConflictFreeSet() {
+		return mConflictFreeConditions;
 	}
 
 }
