@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.yaml.snakeyaml.DumperOptions;
@@ -57,13 +58,9 @@ public class Witness extends BasePayloadContainer {
 		return mEntries.toString();
 	}
 
-	public Witness toInvariantSet() {
-		if (mEntries.isEmpty()) {
-			return this;
-		}
-		final InvariantSet set = new InvariantSet(mEntries.get(0).getMetadata(),
+	public InvariantSet toInvariantSet(final Supplier<Metadata> metadataSupplier) {
+		return new InvariantSet(metadataSupplier.get(),
 				mEntries.stream().map(x -> x.toInvariantSetEntry()).collect(Collectors.toList()));
-		return new Witness(List.of(set));
 	}
 
 	public String toYamlString() {

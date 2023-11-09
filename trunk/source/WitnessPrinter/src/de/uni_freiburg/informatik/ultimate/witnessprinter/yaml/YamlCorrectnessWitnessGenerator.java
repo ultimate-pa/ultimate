@@ -105,7 +105,7 @@ public class YamlCorrectnessWitnessGenerator {
 		case "0.1":
 			return witness;
 		case "0.2":
-			return witness.toInvariantSet();
+			return new Witness(List.of(witness.toInvariantSet(metadataSupplier)));
 		default:
 			throw new UnsupportedOperationException("Unknown format version " + FORMAT_VERSION);
 		}
