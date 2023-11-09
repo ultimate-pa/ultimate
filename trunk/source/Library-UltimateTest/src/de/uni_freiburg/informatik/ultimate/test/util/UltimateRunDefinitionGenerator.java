@@ -52,7 +52,9 @@ public final class UltimateRunDefinitionGenerator {
 	private static final String SETTINGS_PATH = "examples/settings/";
 	private static final String TOOLCHAIN_PATH = "examples/toolchains/";
 
-	private enum SvcompArchitecture { ILP32, LP64 };
+	private enum SvcompArchitecture {
+		ILP32, LP64
+	}
 
 	private UltimateRunDefinitionGenerator() {
 		// do not instantiate utility class
@@ -391,14 +393,14 @@ public final class UltimateRunDefinitionGenerator {
 			return null;
 		}
 		final Map<Object, Object> rootMapping = (Map<Object, Object>) parsed;
-		if (hasProperty(rootMapping, propertyFile, expectedResult)) {
-			final String cFilename = (String) rootMapping.get("input_files");
-			final String filename = yamlFile.getParent() + System.getProperty("file.separator") + cFilename;
-			final String architectureString = ((Map<?, String>) rootMapping.get("options")).get("data_model");
-			final SvcompArchitecture architecture = SvcompArchitecture.valueOf(architectureString);
-			return new Pair<>(new File(filename), architecture);
+		if (!hasProperty(rootMapping, propertyFile, expectedResult)) {
+			return null;
 		}
-		return null;
+		final String cFilename = (String) rootMapping.get("input_files");
+		final String filename = yamlFile.getParent() + System.getProperty("file.separator") + cFilename;
+		final String architectureString = ((Map<?, String>) rootMapping.get("options")).get("data_model");
+		final SvcompArchitecture architecture = SvcompArchitecture.valueOf(architectureString);
+		return new Pair<>(new File(filename), architecture);
 	}
 
 	@SuppressWarnings("unchecked")
