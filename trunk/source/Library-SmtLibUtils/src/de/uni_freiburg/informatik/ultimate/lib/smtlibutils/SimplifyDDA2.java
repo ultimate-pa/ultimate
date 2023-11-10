@@ -94,6 +94,15 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private static final boolean OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT = true;
 	private static final boolean SIMPLIFY_REPEATEDLY = true;
 	private static final CheckedNodes CHECKED_NODES = CheckedNodes.ONLY_LEAVES;
+	/**
+	 * Do some overapproximation of quantifiers in the succedent of implications. We
+	 * implement implication checks as satisfiability checks. If this variable is
+	 * set to true, we overapproximate universally quantified formulas. (We keep
+	 * existentially quantified formulas because SMT solver can handle them easily
+	 * via Skolemization. <br>
+	 * This option has no effect if check only leaves.
+	 */
+	private static final boolean OVERAPPROXIMATE_DIFFCULT_QUANTIFIERS_IN_NODES = false;
 
 	/**
 	 * Options for which nodes to check for redundancy. To check redundancy, we
@@ -247,24 +256,40 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 */
 	private DescendResult checkRedundancy(final Term term) {
 		final Term result;
-		final long timeBeforeConstrainigcheck = System.nanoTime();
-		mNumberOfCheckSatCommands++;
-		final LBool isNonConstraining = Util.checkSat(mMgdScript.getScript(),
-				SmtUtils.not(mMgdScript.getScript(), term));
-		mCheckSatTime += (System.nanoTime() - timeBeforeConstrainigcheck);
-		if (isNonConstraining == LBool.UNSAT) {
-			mNonConstrainingNodes++;
-			result = mMgdScript.getScript().term("true");
-			return new TermContextTransformationEngine.FinalResultForAscend(result);
+		{
+			final long timeBeforeConstrainigcheck = System.nanoTime();
+			mNumberOfCheckSatCommands++;
+			final Term rhs;
+			if (OVERAPPROXIMATE_DIFFCULT_QUANTIFIERS_IN_NODES) {
+				rhs = replaceExistentialQuantifiersByFalse(mMgdScript, term);
+			} else {
+				rhs = term;
+			}
+			final LBool isNonConstraining = Util.checkSat(mMgdScript.getScript(),
+					SmtUtils.not(mMgdScript.getScript(), rhs));
+			mCheckSatTime += (System.nanoTime() - timeBeforeConstrainigcheck);
+			if (isNonConstraining == LBool.UNSAT) {
+				mNonConstrainingNodes++;
+				result = mMgdScript.getScript().term("true");
+				return new TermContextTransformationEngine.FinalResultForAscend(result);
+			}
 		}
-		mNumberOfCheckSatCommands++;
-		final long timeBeforeRelaxingcheck = System.nanoTime();
-		final LBool isNonRelaxing = Util.checkSat(mMgdScript.getScript(), term);
-		mCheckSatTime += (System.nanoTime() - timeBeforeRelaxingcheck);
-		if (isNonRelaxing == LBool.UNSAT) {
-			mNonRelaxingNodes++;
-			result = mMgdScript.getScript().term("false");
-			return new TermContextTransformationEngine.FinalResultForAscend(result);
+		{
+			mNumberOfCheckSatCommands++;
+			final long timeBeforeRelaxingcheck = System.nanoTime();
+			final Term rhs;
+			if (OVERAPPROXIMATE_DIFFCULT_QUANTIFIERS_IN_NODES) {
+				rhs = replaceUniversalQuantifiersByTrue(mMgdScript, term);
+			} else {
+				rhs = term;
+			}
+			final LBool isNonRelaxing = Util.checkSat(mMgdScript.getScript(), rhs);
+			mCheckSatTime += (System.nanoTime() - timeBeforeRelaxingcheck);
+			if (isNonRelaxing == LBool.UNSAT) {
+				mNonRelaxingNodes++;
+				result = mMgdScript.getScript().term("false");
+				return new TermContextTransformationEngine.FinalResultForAscend(result);
+			}
 		}
 		return null;
 	}
