@@ -162,9 +162,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 					// Replace universally quantified subformula by true.
 					// We keep existentially quantified formulas, they are harmless and handled by
 					// SMT solver via Skolemizations.
-					tmp = QuantifierOverapproximator.apply(mMgdScript.getScript(),
-							EnumSet.of(Quantifier.FORALL),
-							mMgdScript.getScript().term("true"), otherParam);
+					tmp = replaceUniversalQuantifiersByTrue(mMgdScript, otherParam);
 				} else {
 					tmp = otherParam;
 				}
@@ -180,9 +178,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 					// As above we want to replace universally quantified subformulas by true.
 					// Since we negate the otherParam, we replace instead existentially quantified
 					// subformulas by false.
-					tmp = QuantifierOverapproximator.apply(mMgdScript.getScript(),
-							EnumSet.of(Quantifier.EXISTS),
-							mMgdScript.getScript().term("false"), otherParam);
+					tmp = replaceExistentialQuantifiersByFalse(mMgdScript, otherParam);
 				} else {
 					tmp = otherParam;
 				}
@@ -191,6 +187,16 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			}
 		}
 		return SmtUtils.and(mMgdScript.getScript(), newParams);
+	}
+
+	private Term replaceUniversalQuantifiersByTrue(final ManagedScript mgdScipt, final Term otherParam) {
+		return QuantifierOverapproximator.apply(mgdScipt.getScript(), EnumSet.of(Quantifier.FORALL),
+				mgdScipt.getScript().term("true"), otherParam);
+	}
+
+	private Term replaceExistentialQuantifiersByFalse(final ManagedScript mgdScipt, final Term otherParam) {
+		return QuantifierOverapproximator.apply(mgdScipt.getScript(), EnumSet.of(Quantifier.EXISTS),
+				mgdScipt.getScript().term("false"), otherParam);
 	}
 
 	@Override
