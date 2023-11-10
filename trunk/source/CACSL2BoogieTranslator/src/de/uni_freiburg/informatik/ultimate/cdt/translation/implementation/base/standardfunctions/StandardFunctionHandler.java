@@ -2644,6 +2644,24 @@ public class StandardFunctionHandler {
 		return new ExpressionResultBuilder().addAllExceptLrValue(results).build();
 	}
 
+	/**
+	 * Overapproximate the reachability of unsupported functions by translating them to while(true) assert false; where
+	 * the assert is labeled with an overapproximation
+	 */
+	private Result handleUnsupportedFunctionByOverapproximation(final IDispatcher main, final ILocation loc,
+			final String name, final CType returnType) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final Statement unreach = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
+		new Overapprox(name, loc).annotate(unreach);
+		new Check(Spec.UNKNOWN).annotate(unreach);
+		builder.addStatement(new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
+				new LoopInvariantSpecification[0], new Statement[] { unreach }));
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, AUXVAR.NONDET);
+		builder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
+		builder.setLrValue(new RValue(auxVar.getExp(), returnType));
+		return builder.build();
+	}
+
 	private Result handleUnsoundByOverapproximationWithoutDispatch(final IDispatcher main,
 			final IASTFunctionCallExpression node, final ILocation loc, final String methodName, final int numberOfArgs,
 			final CType resultType) {
