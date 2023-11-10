@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -52,7 +53,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Polynomia
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context.CcTransformation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierOverapproximator;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierOverapproximator.Quantifier;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -155,19 +157,37 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final List<Term> newParams = new ArrayList<>();
 		if (symb.getName().equals("and")) {
 			for (final Term otherParam : otherParams) {
-				if (!OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT || QuantifierUtils.isQuantifierFree(otherParam)) {
-					mMgdScript.getScript().assertTerm(otherParam);
-					newParams.add(otherParam);
+				final Term tmp;
+				if (OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT) {
+					// Replace universally quantified subformula by true.
+					// We keep existentially quantified formulas, they are harmless and handled by
+					// SMT solver via Skolemizations.
+					tmp = QuantifierOverapproximator.apply(mMgdScript.getScript(),
+							EnumSet.of(Quantifier.FORALL),
+							mMgdScript.getScript().term("true"), otherParam);
+				} else {
+					tmp = otherParam;
 				}
+				mMgdScript.getScript().assertTerm(tmp);
+				newParams.add(tmp);
 			}
 		}
 
 		if (symb.getName().equals("or")) {
 			for (final Term otherParam : otherParams) {
-				if (!OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT || QuantifierUtils.isQuantifierFree(otherParam)) {
-					mMgdScript.getScript().assertTerm(SmtUtils.not(mMgdScript.getScript(), otherParam));
-					newParams.add(SmtUtils.not(mMgdScript.getScript(), otherParam));
+				final Term tmp;
+				if (OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT) {
+					// As above we want to replace universally quantified subformulas by true.
+					// Since we negate the otherParam, we replace instead existentially quantified
+					// subformulas by false.
+					tmp = QuantifierOverapproximator.apply(mMgdScript.getScript(),
+							EnumSet.of(Quantifier.EXISTS),
+							mMgdScript.getScript().term("false"), otherParam);
+				} else {
+					tmp = otherParam;
 				}
+				mMgdScript.getScript().assertTerm(SmtUtils.not(mMgdScript.getScript(), tmp));
+				newParams.add(SmtUtils.not(mMgdScript.getScript(), tmp));
 			}
 		}
 		return SmtUtils.and(mMgdScript.getScript(), newParams);
