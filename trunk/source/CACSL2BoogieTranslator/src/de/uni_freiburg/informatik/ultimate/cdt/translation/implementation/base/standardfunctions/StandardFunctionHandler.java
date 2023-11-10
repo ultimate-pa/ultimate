@@ -800,8 +800,10 @@ public class StandardFunctionHandler {
 		fill(map, "wcstombs", die);
 
 		// longjmp https://en.cppreference.com/w/c/program/longjmp
-		// We cannot handle restoring the environment, so we just crash
-		fill(map, "longjmp", die);
+		// We cannot handle restoring the environment, so we just check if the function is reachable and create an
+		// overraproximation for that case
+		fill(map, "longjmp", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPrimitive(CPrimitives.INT)));
 
 		// setjmp https://en.cppreference.com/w/c/program/setjmp
 		fill(map, "_setjmp", this::handleSetjmp);
