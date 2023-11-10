@@ -328,9 +328,9 @@ public class StandardFunctionHandler {
 		/*
 		 * See https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html
 		 */
-		fill(map, "__builtin_popcount", this::handlePopcount);
-		fill(map, "__builtin_popcountl", this::handlePopcount);
-		fill(map, "__builtin_popcountll", this::handlePopcount);
+		fill(map, "__builtin_popcount", die);
+		fill(map, "__builtin_popcountl", die);
+		fill(map, "__builtin_popcountll", die);
 
 		/*
 		 * The GNU C online documentation at https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html on 09 Nov 2016 says:
@@ -1012,33 +1012,6 @@ public class StandardFunctionHandler {
 				mExpressionTranslation.constructUnaryExpression(loc, IASTUnaryExpression.op_minus, expr, resultType);
 		final Expression iteExpression = ExpressionFactory.constructIfThenElseExpression(loc, positive, expr, negated);
 		return builder.setLrValue(new RValue(iteExpression, resultType)).build();
-	}
-
-	/**
-	 * Count the number of ones in the argument. __builtin_popcountl(x) is currently just overapproximated with some
-	 * result, where result >= 0 and result <= x
-	 */
-	private Result handlePopcount(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
-			final String name) {
-		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final ExpressionResult argResult =
-				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
-		builder.addAllExceptLrValue(argResult);
-		final CPrimitive retType = new CPrimitive(CPrimitives.INT);
-		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, retType, AUXVAR.NONDET);
-		builder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
-		// TODO: Consider argResult for a better overapproximation
-		final Expression nonNegative = mExpressionTranslation.constructBinaryComparisonExpression(loc,
-				IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), retType,
-				mExpressionTranslation.constructLiteralForIntegerType(loc, retType, BigInteger.ZERO), retType);
-		final Expression smallerTypeSize =
-				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual,
-						auxVar.getExp(), retType, argResult.getLrValue().getValue(), retType);
-		final Expression assumption = ExpressionFactory.and(loc, List.of(nonNegative, smallerTypeSize));
-		builder.addStatement(new AssumeStatement(loc, assumption)).addOverapprox(new Overapprox(name, loc));
-		return builder.setLrValue(new RValue(auxVar.getExp(), retType)).build();
 	}
 
 	// For now we do not handle setjmp properly. We crash on longjmp, so it is sufficient to always return 0 for setjmp.
