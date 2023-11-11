@@ -696,7 +696,7 @@ public class CfgBuilder {
 				final boolean currentStatementIsControlFlowDead = statementIsControlFlowDead(
 						precedingStatementWasControlFlowDead, precedingStatement, st, mAllGotoTargets);
 				if (!currentStatementIsControlFlowDead || st instanceof AtomicStatement) {
-					processStatement(procName, st, precedingStatement);
+					processStatement(procName, st, precedingStatement, false);
 				}
 				precedingStatementWasControlFlowDead = currentStatementIsControlFlowDead;
 				precedingStatement = st;
@@ -794,23 +794,22 @@ public class CfgBuilder {
 			return reachable;
 		}
 
-		private void processStatement(final String procName, final Statement st, final Statement precedingSt) {
+		private void processStatement(final String procName, final Statement st, final Statement precedingSt,
+				final boolean isChildOfAtomicBlock) {
 			if (st instanceof Label) {
 				if (mCurrent instanceof BoogieIcfgLocation) {
 					assert mCurrent == mIcfg.getProcedureEntryNodes().get(procName)
-							|| precedingSt instanceof Label : "If st is Label"
-									+ " and mcurrent is LocNode lastSt is Label";
+							|| precedingSt instanceof Label : "If st is Label and mCurrent is LocNode, lastSt is Label";
 					mLogger.debug("Two Labels in a row: " + mCurrent + " and " + ((Label) st).getName() + "."
-							+ " I am expecting that at least one was" + " introduced by the user (or vcc). In the"
-							+ " CFG only the first label of those two (or" + " more) will be used");
+							+ " I am expecting that at least one was introduced by the user (or vcc)."
+							+ " In the CFG only the first label of those two (or more) will be used");
 				}
 				if (mCurrent instanceof CodeBlock) {
 					assert precedingSt instanceof AssumeStatement || precedingSt instanceof AssignmentStatement
 							|| precedingSt instanceof HavocStatement || precedingSt instanceof AssertStatement
 							|| precedingSt instanceof CallStatement || precedingSt instanceof AtomicStatement
-							|| precedingSt == null : "If st is a Label and the last constructed node"
-									+ " was a TransEdge, then the last" + " Statement must not be a Label, Return or"
-									+ " Goto";
+							|| precedingSt == null : "If st is a Label and the last constructed node was a TransEdge,"
+									+ " then the last Statement must not be a Label, Return or Goto";
 					mLogger.warn("Label in the middle of a codeblock.");
 				}
 
@@ -820,24 +819,24 @@ public class CfgBuilder {
 			else if (st instanceof AssumeStatement || st instanceof AssignmentStatement
 					|| st instanceof HavocStatement) {
 				if (mCurrent instanceof CodeBlock) {
-					assert precedingSt instanceof AssumeStatement || precedingSt instanceof AssignmentStatement
-							|| precedingSt instanceof HavocStatement || precedingSt instanceof AssertStatement
-							|| precedingSt instanceof CallStatement || precedingSt instanceof AtomicStatement : "If the"
-									+ " last constructed node is a TransEdge, then"
-									+ " the last Statement must not be a Label,"
-									+ " Return or Goto. (i.e. this is not the first" + " Statement of the block)";
+					assert isChildOfAtomicBlock || precedingSt instanceof AssumeStatement
+							|| precedingSt instanceof AssignmentStatement || precedingSt instanceof HavocStatement
+							|| precedingSt instanceof AssertStatement || precedingSt instanceof CallStatement
+							|| precedingSt instanceof AtomicStatement : "If the last constructed node is a TransEdge,"
+									+ " then the last Statement must not be a Label, Return or Goto."
+									+ " (i.e. this is not the first Statement of the block)";
 				}
 				processAssuAssiHavoStatement(st, Origin.IMPLEMENTATION);
 			}
 
 			else if (st instanceof AssertStatement) {
 				if (mCurrent instanceof CodeBlock) {
-					assert precedingSt instanceof AssumeStatement || precedingSt instanceof AssignmentStatement
-							|| precedingSt instanceof HavocStatement || precedingSt instanceof AssertStatement
-							|| precedingSt instanceof CallStatement || precedingSt instanceof AtomicStatement : "If the"
-									+ " last constructed node is a TransEdge, then"
-									+ " the last Statement must not be a Label,"
-									+ " Return or Goto. (i.e. this is not the first" + " Statement of the block)";
+					assert isChildOfAtomicBlock || precedingSt instanceof AssumeStatement
+							|| precedingSt instanceof AssignmentStatement || precedingSt instanceof HavocStatement
+							|| precedingSt instanceof AssertStatement || precedingSt instanceof CallStatement
+							|| precedingSt instanceof AtomicStatement : "If the last constructed node is a TransEdge,"
+									+ " then the last Statement must not be a Label, Return or Goto."
+									+ " (i.e. this is not the first Statement of the block)";
 				}
 				processAssertStatement((AssertStatement) st);
 			}
@@ -854,18 +853,18 @@ public class CfgBuilder {
 
 			else if (st instanceof CallStatement) {
 				if (mCurrent instanceof CodeBlock) {
-					assert precedingSt instanceof AssumeStatement || precedingSt instanceof AssignmentStatement
-							|| precedingSt instanceof HavocStatement || precedingSt instanceof AssertStatement
-							|| precedingSt instanceof CallStatement
-							|| precedingSt instanceof AtomicStatement : "If mCurrent is a TransEdge, then lastSt"
-									+ " must not be a Label, Return or Goto." + " (i.e. this is not the first Statement"
-									+ " of the block)";
+					assert isChildOfAtomicBlock || precedingSt instanceof AssumeStatement
+							|| precedingSt instanceof AssignmentStatement || precedingSt instanceof HavocStatement
+							|| precedingSt instanceof AssertStatement
+							|| precedingSt instanceof CallStatement : "If the last constructed node is a TransEdge,"
+									+ " then the last Statement must not be a Label, Return or Goto."
+									+ " (i.e. this is not the first Statement of the block)";
 				}
 				if (mCurrent instanceof BoogieIcfgLocation) {
 					assert precedingSt instanceof Label || precedingSt instanceof CallStatement
 							|| precedingSt instanceof ForkStatement || precedingSt instanceof JoinStatement
-							|| precedingSt instanceof AtomicStatement : "If mCurrent is LocNode, then st is first "
-									+ "statement of a block; first statement after a call, fork, or join;"
+							|| precedingSt instanceof AtomicStatement : "If mCurrent is LocNode, then st is"
+									+ " first statement of a block; first statement after a call, fork, or join;"
 									+ " or follows an atomic block";
 				}
 				processCallStatement((CallStatement) st);
@@ -880,8 +879,8 @@ public class CfgBuilder {
 			} else if (st instanceof AtomicStatement) {
 				processAtomicStatement(procName, (AtomicStatement) st, precedingSt);
 			} else {
-				throw new UnsupportedOperationException("At the moment"
-						+ " only Labels, Assert, Assume, Assignment, Havoc" + " and Goto statements are supported");
+				throw new UnsupportedOperationException("At the moment,"
+						+ " only Labels, Assert, Assume, Assignment, Havoc and Goto statements are supported");
 			}
 		}
 
@@ -1583,7 +1582,7 @@ public class CfgBuilder {
 			for (int i = 0; i < atomicStatement.getBody().length; i++) {
 				final Statement st = atomicStatement.getBody()[i];
 				final Statement prevStmt = i == 0 ? precedingSt : atomicStatement.getBody()[i - 1];
-				processStatement(procName, st, prevStmt);
+				processStatement(procName, st, prevStmt, true);
 			}
 
 			endAtomicBlock(atomicStatement);
