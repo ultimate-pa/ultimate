@@ -53,12 +53,14 @@ public final class CoKingdom<PLACE, LETTER> {
 	 */
 	public Set<Realm<PLACE, LETTER>> mNegKingdom;
 
+	private final Set<Condition<LETTER, PLACE>> mConflictFreeConditions;
+
 	/**
 	 * Corelation type of condition wrt. Realm.
 	 */
 	private final CoRelationType mCoRel;
 
-	private final boolean mConflictFree;
+	private boolean mConflictFree;
 
 	public CoKingdom(final Kingdom<PLACE, LETTER> kingdom, final Condition<LETTER, PLACE> condition,
 			final BranchingProcess<LETTER, PLACE> bp) {
@@ -67,7 +69,7 @@ public final class CoKingdom<PLACE, LETTER> {
 		mCondition = condition;
 		getCoKingdoms(bp);
 		mCoRel = getCoRelType();
-		mConflictFree = getConflictFreedom(); // TODO: complete conflict freedom computation
+		mConflictFreeConditions = getConflictFreeConditions(bp);
 	}
 
 	/**
@@ -112,8 +114,11 @@ public final class CoKingdom<PLACE, LETTER> {
 		return mCoRel;
 	}
 
-	private boolean getConflictFreedom() {
-		return true;
+	private Set<Condition<LETTER, PLACE>> getConflictFreeConditions(final BranchingProcess<LETTER, PLACE> bp) {
+		Realm<PLACE, LETTER> negativeRealm = mNegKingdom.iterator().next();
+		CoRealm<PLACE, LETTER> negativeCoRealm = negativeRealm.getCoRealm(mCondition, bp);
+		mConflictFree = negativeCoRealm.getConflict() == ConflictType.CONFLICT_FREE;
+		return negativeCoRealm.getConflictFreeSet();
 	}
 
 	public boolean getConflictFree() {
@@ -126,5 +131,9 @@ public final class CoKingdom<PLACE, LETTER> {
 
 	public Set<Realm<PLACE, LETTER>> getPosKingdom() {
 		return mPosKingdom;
+	}
+
+	public Set<Condition<LETTER, PLACE>> getConflictFreeConditions() {
+		return mConflictFreeConditions;
 	}
 }

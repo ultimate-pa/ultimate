@@ -88,5 +88,4 @@ public final class Kingdom<PLACE, LETTER> {
 			final BranchingProcess<LETTER, PLACE> bp) {
 		return new CoKingdom<>(this, condition, bp);
 	}
-
 }

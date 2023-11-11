@@ -60,8 +60,8 @@ public final class CrownConstruction<PLACE, LETTER> {
 		mPreCrown = new Crown<>(mBp);
 		mOrigConds = origConds;
 		mAssertConds = assertConds;
+		settlements();
 		// TODO: Check/ensure that the sets are disjoint
-		// settlements
 		// colonization
 		// legislation
 		// Kindred search and cleaning
@@ -70,6 +70,18 @@ public final class CrownConstruction<PLACE, LETTER> {
 	private void settlements() {
 		// Create a new rook for each original condition.
 		// Add a to crown a new rook with "capital" and one corelated assertion condition
+		for (Condition<LETTER, PLACE> originalCondition : mOrigConds) {
+			Realm<PLACE, LETTER> realm = new Realm<>(Set.of(originalCondition));
+			Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(Set.of(realm));
+			for (Condition<LETTER, PLACE> assertionCondition : mAssertConds) {
+				CoKingdom<PLACE, LETTER> coKingdom = new CoKingdom<>(kingdom, assertionCondition, mBp);
+				if (coKingdom.getCoRelation() == CoRelationType.POSITIVE) {
+					KingdomLaw<PLACE, LETTER> kingdomLaw = new KingdomLaw<>(Set.of(assertionCondition));
+					Rook<PLACE, LETTER> rook = new Rook<>(kingdom, kingdomLaw);
+					mCrown.addRook(rook);
+				}
+			}
+		}
 	}
 
 	private void colonization() {
@@ -141,8 +153,10 @@ public final class CrownConstruction<PLACE, LETTER> {
 		final Rook<PLACE, LETTER> rook = coRook.getRook();
 		final Set<Realm<PLACE, LETTER>> newRealms = rook.getKingdom().getRealms();
 		newRealms.remove(getNegKingdom(coRook));
-		// TODO: newRealm = conflict free realm + condition
-		// TODO:Add new Realm to newRealms
+		Set<Condition<LETTER, PLACE>> conflictFreeConditions = coRook.getCoKingdom().getConflictFreeConditions();
+		conflictFreeConditions.add(coRook.getCondition());
+		Realm<PLACE, LETTER> newRealm = new Realm<>(conflictFreeConditions);
+		newRealms.add(newRealm);
 		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(newRealms);
 		mCrown.addRook(new Rook<>(kingdom, rook.getLaw()));
 	}
@@ -170,6 +184,10 @@ public final class CrownConstruction<PLACE, LETTER> {
 
 	private Realm<PLACE, LETTER> getNegKingdom(final CoRook<PLACE, LETTER> coRook) {
 		return coRook.getCoKingdom().getNegKingdom().iterator().next();
+	}
+
+	public Crown<PLACE, LETTER> getCrown() {
+		return mCrown;
 	}
 
 }
