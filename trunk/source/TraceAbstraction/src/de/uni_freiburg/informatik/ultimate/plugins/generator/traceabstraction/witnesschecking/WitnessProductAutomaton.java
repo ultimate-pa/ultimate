@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
@@ -429,9 +430,16 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		} else if (cb instanceof Summary) {
 			final Summary sum = (Summary) cb;
 			return isCompatible(sum.getCallStatement(), we);
+		} else if (cb instanceof GotoEdge) {
+			final GotoEdge gotoEdge = (GotoEdge) cb;
+			return isCompatible(gotoEdge, we);
 		} else {
 			throw new AssertionError("unknown type of LETTER");
 		}
+	}
+
+	boolean isCompatible(final GotoEdge gotoEdge, final WitnessEdge we) {
+		return isCompatible(ILocation.getAnnotation(gotoEdge), we);
 	}
 
 	boolean isCompatible(final Call call, final WitnessEdge we) {
