@@ -474,6 +474,14 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 
 	public static Term simplify(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final Term context, final Term term) {
+		if (SmtUtils.isFalseLiteral(context)) {
+			// Handle this special case immediately. If the context is `false`, the
+			// simplification may return any term, we choose false.
+			// We want to handle this special case here since the later algorithm has the
+			// invariant that the context is never `false`. (Probably this is only an
+			// invariant under certain assumption that have to be determined.)
+			return context;
+		}
 		final SimplifyDDA2 simplifyDDA2 = new SimplifyDDA2(services, mgdScript);
 		// do initial push
 		mgdScript.getScript().push(1);
