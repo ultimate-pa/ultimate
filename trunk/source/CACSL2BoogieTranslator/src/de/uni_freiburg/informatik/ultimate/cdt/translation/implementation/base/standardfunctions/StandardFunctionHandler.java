@@ -289,6 +289,17 @@ public class StandardFunctionHandler {
 		// further unsupported pthread functions
 		fill(map, "pthread_rwlock_init", die);
 
+		/** Semaphores https://pubs.opengroup.org/onlinepubs/7908799/xsh/semaphore.h.html **/
+		fill(map, "sem_close", die);
+		fill(map, "sem_destroy", die);
+		fill(map, "sem_getvalue", die);
+		fill(map, "sem_init", die);
+		fill(map, "sem_open", die);
+		fill(map, "sem_post", die);
+		fill(map, "sem_trywait", die);
+		fill(map, "sem_unlink", die);
+		fill(map, "sem_wait", die);
+
 		fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 
 		// TODO 20211105 Matthias: Unsound because our implementation of printf is
