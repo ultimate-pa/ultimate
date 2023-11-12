@@ -51,8 +51,6 @@ public final class CrownConstruction<PLACE, LETTER> {
 
 	private final Set<Condition<LETTER, PLACE>> mAssertConds;
 
-	// TODO: add original and assertion conditions sets variables
-
 	public CrownConstruction(final BranchingProcess<LETTER, PLACE> bp, final Set<Condition<LETTER, PLACE>> origConds,
 			final Set<Condition<LETTER, PLACE>> assertConds) {
 		mBp = bp;
@@ -61,6 +59,8 @@ public final class CrownConstruction<PLACE, LETTER> {
 		mOrigConds = origConds;
 		mAssertConds = assertConds;
 		settlements();
+		colonization();
+		legislation();
 		// TODO: Check/ensure that the sets are disjoint
 		// colonization
 		// legislation
@@ -85,52 +85,68 @@ public final class CrownConstruction<PLACE, LETTER> {
 	}
 
 	private void colonization() {
-		// TODO: for each original condition colonize(condition....)
+		for (Condition<LETTER, PLACE> condition : mOrigConds) {
+			Set<Rook<PLACE, LETTER>> rooks = new HashSet<>(mCrown.getRooks());
+			for (Rook<PLACE, LETTER> rook : rooks) {
+				colonize(condition, rook);
+			}
+		}
+	}
+
+	private void legislation() {
+		for (Condition<LETTER, PLACE> condition : mAssertConds) {
+			Set<Rook<PLACE, LETTER>> rooks = new HashSet<>(mCrown.getRooks());
+			for (Rook<PLACE, LETTER> rook : rooks) {
+				legislate(condition, rook);
+			}
+		}
 	}
 
 	private boolean colonize(final Condition<LETTER, PLACE> condition, final Rook<PLACE, LETTER> rook) {
 		final boolean colonizer = isColonizer(condition);
-		if (colonizer) {// TODO: ensure that condition is colonizer.
-			final CoRook<PLACE, LETTER> coRook = new CoRook<>(condition, rook, mBp, colonizer);
-			switch (coRook.getColonization()) {
-			case EXPANSION:
-				break;
-			case IMMIGRATION:
-				break;
-			case FOUNDATION:
-				break;
-			default:
-
-				break;
-			}
-			return true;
-			// Call respective expansion strategy
-			// TODO: Next is to define the series of expansion strategies,
-			/// new and modification to existing one with CoROok as parameter.
+		final CoRook<PLACE, LETTER> coRook = new CoRook<>(condition, rook, mBp, colonizer);
+		switch (coRook.getColonization()) {
+		case EXPANSION:
+			expand(coRook);
+			break;
+		case IMMIGRATION:
+			immigrate(coRook);
+			break;
+		case FOUNDATION:
+			founding(coRook);
+			break;
+		case DEFEAT:
+			break;
+		default:
+			return false;
 		}
-		return false;
+		return true;
+		// Call respective expansion strategy
+		// TODO: Next is to define the series of expansion strategies,
+		/// new and modification to existing one with CoROok as parameter.
 	}
 
 	private boolean legislate(final Condition<LETTER, PLACE> condition, final Rook<PLACE, LETTER> rook) {
 		final boolean colonizer = isColonizer(condition);
-		if (!colonizer) {// TODO: ensure that condition is not colonizer
-			final CoRook<PLACE, LETTER> coRook = new CoRook<>(condition, rook, mBp, colonizer);
-			switch (coRook.getLegislation()) {
-			case APPROVAL:
-				break;
-			case ENACTMENT:
-				break;
-			case RATIFICATION:
-				break;
-			default:
-				break;
-			}
-			return true;
+		final CoRook<PLACE, LETTER> coRook = new CoRook<>(condition, rook, mBp, colonizer);
+		switch (coRook.getLegislation()) {
+		case APPROVAL:
+			approve(coRook);
+			break;
+		case ENACTMENT:
+			enactment(coRook);
+			break;
+		case RATIFICATION:
+			ratify(coRook);
+			break;
+		case REJECTION:
+			break;
+		default:
+			return false;
 		}
-		return false;
+		return true;
 	}
 
-	// TODO: depends on how the conditions types are computed at the end
 	private boolean isColonizer(final Condition<LETTER, PLACE> condition) {
 		return mOrigConds.contains(condition);
 	}
@@ -168,7 +184,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 		mCrown.addRook(rook);
 	}
 
-	private void enactment(final CoRook<PLACE, LETTER> coRook) {
+	private void ratify(final CoRook<PLACE, LETTER> coRook) {
 		final Rook<PLACE, LETTER> rook = coRook.getRook();
 		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(coRook.getCoKingdom().getPosKingdom());
 		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(new HashSet<Condition<LETTER, PLACE>>());
@@ -176,7 +192,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 		mCrown.addRook(new Rook<>(kingdom, law));
 	}
 
-	private void ratify(final CoRook<PLACE, LETTER> coRook) {
+	private void enactment(final CoRook<PLACE, LETTER> coRook) {
 		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(new HashSet<Condition<LETTER, PLACE>>());
 		law.addCondition(coRook.getCondition());
 		mCrown.addRook(new Rook<>(coRook.getRook().getKingdom(), law));

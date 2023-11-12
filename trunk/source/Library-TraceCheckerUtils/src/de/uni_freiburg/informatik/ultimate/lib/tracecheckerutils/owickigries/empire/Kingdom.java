@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
@@ -38,6 +39,22 @@ public final class Kingdom<PLACE, LETTER> {
 
 	public Kingdom(final Set<Realm<PLACE, LETTER>> kingdom) {
 		mKingdom = kingdom;
+	}
+
+	private void getAllCosets(Set<Realm<PLACE, LETTER>> remainingKingdom, Set<Condition<LETTER, PLACE>> currentCoset,
+			Set<Set<Condition<LETTER, PLACE>>> treaty) {
+		if (remainingKingdom.isEmpty()) {
+			treaty.add(new HashSet<>(currentCoset));
+			return;
+		}
+		Realm<PLACE, LETTER> currentRealm = remainingKingdom.iterator().next();
+		remainingKingdom.remove(currentRealm);
+
+		for (Condition<LETTER, PLACE> condition : currentRealm.getConditions()) {
+			currentCoset.add(condition);
+			getAllCosets(remainingKingdom, currentCoset, treaty);
+			currentCoset.remove(condition);
+		}
 	}
 
 	/**
@@ -87,5 +104,17 @@ public final class Kingdom<PLACE, LETTER> {
 	public CoKingdom<PLACE, LETTER> getCoKingdom(final Condition<LETTER, PLACE> condition,
 			final BranchingProcess<LETTER, PLACE> bp) {
 		return new CoKingdom<>(this, condition, bp);
+	}
+
+	/**
+	 * Calculate the treaty by creating a set of cosets picking one condition per realm.
+	 * 
+	 * @return Treaty of the Kingdom.
+	 */
+	public Set<Set<Condition<LETTER, PLACE>>> getTreaty() {
+		Set<Set<Condition<LETTER, PLACE>>> treatySet = new HashSet<>();
+		Set<Realm<PLACE, LETTER>> kingdomRealms = new HashSet<>(getRealms());
+		getAllCosets(kingdomRealms, new HashSet<>(), treatySet);
+		return treatySet;
 	}
 }

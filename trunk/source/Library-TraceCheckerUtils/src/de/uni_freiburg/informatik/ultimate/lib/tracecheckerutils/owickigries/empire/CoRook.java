@@ -83,7 +83,7 @@ public final class CoRook<PLACE, LETTER> {
 					&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
 				return LegislationType.APPROVAL;
 			} else if (mCoKingdom.getCoRelation() == CoRelationType.POSITIVE
-					&& mCoLaw.getCoRelation() == CoRelationType.PARTIAL) {
+					&& mCoLaw.getCoRelation() == CoRelationType.NEGATIVE) {
 				return LegislationType.ENACTMENT;
 			} else if (mCoKingdom.getCoRelation() == CoRelationType.PARTIAL
 					&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
