@@ -70,14 +70,14 @@ public final class CrownConstruction<PLACE, LETTER> {
 	private void settlements() {
 		// Create a new rook for each original condition.
 		// Add a to crown a new rook with "capital" and one corelated assertion condition
-		for (Condition<LETTER, PLACE> originalCondition : mOrigConds) {
-			Realm<PLACE, LETTER> realm = new Realm<>(Set.of(originalCondition));
-			Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(Set.of(realm));
-			for (Condition<LETTER, PLACE> assertionCondition : mAssertConds) {
-				CoKingdom<PLACE, LETTER> coKingdom = new CoKingdom<>(kingdom, assertionCondition, mBp);
+		for (final Condition<LETTER, PLACE> originalCondition : mOrigConds) {
+			final Realm<PLACE, LETTER> realm = new Realm<>(Set.of(originalCondition));
+			final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(Set.of(realm));
+			for (final Condition<LETTER, PLACE> assertionCondition : mAssertConds) {
+				final CoKingdom<PLACE, LETTER> coKingdom = new CoKingdom<>(kingdom, assertionCondition, mBp);
 				if (coKingdom.getCoRelation() == CoRelationType.POSITIVE) {
-					KingdomLaw<PLACE, LETTER> kingdomLaw = new KingdomLaw<>(Set.of(assertionCondition));
-					Rook<PLACE, LETTER> rook = new Rook<>(kingdom, kingdomLaw);
+					final KingdomLaw<PLACE, LETTER> kingdomLaw = new KingdomLaw<>(Set.of(assertionCondition));
+					final Rook<PLACE, LETTER> rook = new Rook<>(kingdom, kingdomLaw);
 					mCrown.addRook(rook);
 				}
 			}
@@ -85,18 +85,18 @@ public final class CrownConstruction<PLACE, LETTER> {
 	}
 
 	private void colonization() {
-		for (Condition<LETTER, PLACE> condition : mOrigConds) {
-			Set<Rook<PLACE, LETTER>> rooks = new HashSet<>(mCrown.getRooks());
-			for (Rook<PLACE, LETTER> rook : rooks) {
+		for (final Condition<LETTER, PLACE> condition : mOrigConds) {
+			final Set<Rook<PLACE, LETTER>> rooks = new HashSet<>(mCrown.getRooks());
+			for (final Rook<PLACE, LETTER> rook : rooks) {
 				colonize(condition, rook);
 			}
 		}
 	}
 
 	private void legislation() {
-		for (Condition<LETTER, PLACE> condition : mAssertConds) {
-			Set<Rook<PLACE, LETTER>> rooks = new HashSet<>(mCrown.getRooks());
-			for (Rook<PLACE, LETTER> rook : rooks) {
+		for (final Condition<LETTER, PLACE> condition : mAssertConds) {
+			final Set<Rook<PLACE, LETTER>> rooks = new HashSet<>(mCrown.getRooks());
+			for (final Rook<PLACE, LETTER> rook : rooks) {
 				legislate(condition, rook);
 			}
 		}
@@ -169,9 +169,9 @@ public final class CrownConstruction<PLACE, LETTER> {
 		final Rook<PLACE, LETTER> rook = coRook.getRook();
 		final Set<Realm<PLACE, LETTER>> newRealms = rook.getKingdom().getRealms();
 		newRealms.remove(getNegKingdom(coRook));
-		Set<Condition<LETTER, PLACE>> conflictFreeConditions = coRook.getCoKingdom().getConflictFreeConditions();
+		final Set<Condition<LETTER, PLACE>> conflictFreeConditions = coRook.getCoKingdom().getConflictFreeConditions();
 		conflictFreeConditions.add(coRook.getCondition());
-		Realm<PLACE, LETTER> newRealm = new Realm<>(conflictFreeConditions);
+		final Realm<PLACE, LETTER> newRealm = new Realm<>(conflictFreeConditions);
 		newRealms.add(newRealm);
 		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(newRealms);
 		mCrown.addRook(new Rook<>(kingdom, rook.getLaw()));

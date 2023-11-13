@@ -63,7 +63,7 @@ public class PetriOwickiGries<LETTER, PLACE> {
 	}
 
 	private Crown<PLACE, LETTER> getCrown() {
-		CrownConstruction<PLACE, LETTER> crownConstruction =
+		final CrownConstruction<PLACE, LETTER> crownConstruction =
 				new CrownConstruction<>(mBp, mOriginalConditions, mAssertionConditions);
 		return crownConstruction.getCrown();
 	}
