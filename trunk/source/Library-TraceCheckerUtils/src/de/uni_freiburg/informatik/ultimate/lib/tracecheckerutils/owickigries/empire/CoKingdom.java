@@ -115,8 +115,8 @@ public final class CoKingdom<PLACE, LETTER> {
 	}
 
 	private Set<Condition<LETTER, PLACE>> getConflictFreeConditions(final BranchingProcess<LETTER, PLACE> bp) {
-		Realm<PLACE, LETTER> negativeRealm = mNegKingdom.iterator().next();
-		CoRealm<PLACE, LETTER> negativeCoRealm = negativeRealm.getCoRealm(mCondition, bp);
+		final Realm<PLACE, LETTER> negativeRealm = mNegKingdom.iterator().next();
+		final CoRealm<PLACE, LETTER> negativeCoRealm = negativeRealm.getCoRealm(mCondition, bp);
 		mConflictFree = negativeCoRealm.getConflict() == ConflictType.CONFLICT_FREE;
 		return negativeCoRealm.getConflictFreeSet();
 	}

@@ -123,27 +123,27 @@ public final class Rook<PLACE, LETTER> {
 	}
 
 	public Set<SubterrElement<LETTER, PLACE>> getSubterritory() {
-		Set<Set<Condition<LETTER, PLACE>>> treaty = getKingdom().getTreaty();
-		Set<SubterrElement<LETTER, PLACE>> subterr = new HashSet<>();
-		for (Set<Condition<LETTER, PLACE>> set : treaty) {
-			SubterrElement<LETTER, PLACE> subterrElement = new SubterrElement<>(set);
+		final Set<Set<Condition<LETTER, PLACE>>> treaty = getKingdom().getTreaty();
+		final Set<SubterrElement<LETTER, PLACE>> subterr = new HashSet<>();
+		for (final Set<Condition<LETTER, PLACE>> set : treaty) {
+			final SubterrElement<LETTER, PLACE> subterrElement = new SubterrElement<>(set);
 			subterr.add(subterrElement);
 		}
 		return subterr;
 	}
 
 	/**
-	 * 
+	 *
 	 * @param subterr
 	 *            A subterritory of a rook.
 	 * @param marking
 	 *            The marking we want to get all corresponding cosets of.
 	 * @return All cosets in subterr which label to the marking.
 	 */
-	public Set<Set<Condition<LETTER, PLACE>>> getSubkingdom(Set<SubterrElement<LETTER, PLACE>> subterr,
-			Set<PLACE> marking) {
-		Set<Set<Condition<LETTER, PLACE>>> subkingdom = new HashSet<>();
-		for (SubterrElement<LETTER, PLACE> subterrElement : subterr) {
+	public Set<Set<Condition<LETTER, PLACE>>> getSubkingdom(final Set<SubterrElement<LETTER, PLACE>> subterr,
+			final Set<PLACE> marking) {
+		final Set<Set<Condition<LETTER, PLACE>>> subkingdom = new HashSet<>();
+		for (final SubterrElement<LETTER, PLACE> subterrElement : subterr) {
 			if (subterrElement.getMarking().containsAll(marking)) {
 				subkingdom.add(subterrElement.mCoSet);
 			}

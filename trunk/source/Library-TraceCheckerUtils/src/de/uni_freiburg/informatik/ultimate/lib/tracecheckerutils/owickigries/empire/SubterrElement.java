@@ -9,14 +9,14 @@ public class SubterrElement<LETTER, PLACE> {
 	Set<PLACE> mMarking;
 	Set<Condition<LETTER, PLACE>> mCoSet;
 
-	public SubterrElement(Set<Condition<LETTER, PLACE>> coSet) {
+	public SubterrElement(final Set<Condition<LETTER, PLACE>> coSet) {
 		mCoSet = coSet;
 		mMarking = calculateMarking();
 	}
 
 	private Set<PLACE> calculateMarking() {
-		Set<PLACE> marking = new HashSet<>();
-		for (Condition<LETTER, PLACE> condition : mCoSet) {
+		final Set<PLACE> marking = new HashSet<>();
+		for (final Condition<LETTER, PLACE> condition : mCoSet) {
 			marking.add(condition.getPlace());
 		}
 		return marking;

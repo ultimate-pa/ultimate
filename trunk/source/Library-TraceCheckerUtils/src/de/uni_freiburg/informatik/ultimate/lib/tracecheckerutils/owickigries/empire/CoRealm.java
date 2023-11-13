@@ -86,10 +86,11 @@ public final class CoRealm<PLACE, LETTER> {
 	 *            Object which was initialized with the bp we want to create a proof for
 	 * @return Subset of Realm's conditions for which their places are not corelated to the place of condition.
 	 */
-	private Set<Condition<LETTER, PLACE>> getConflictingConditions(PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
-		Set<Condition<LETTER, PLACE>> conflictingConditions = new HashSet<>();
-		PLACE originalPlace = mCondition.getPlace();
-		for (Condition<LETTER, PLACE> condition : mRealm.getConditions()) {
+	private Set<Condition<LETTER, PLACE>>
+			getConflictingConditions(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+		final Set<Condition<LETTER, PLACE>> conflictingConditions = new HashSet<>();
+		final PLACE originalPlace = mCondition.getPlace();
+		for (final Condition<LETTER, PLACE> condition : mRealm.getConditions()) {
 			if (placesCoRelation.getPlacesCorelation(originalPlace, condition.getPlace())) {
 				conflictingConditions.add(condition);
 			}
@@ -98,7 +99,7 @@ public final class CoRealm<PLACE, LETTER> {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return The conflict type of the realm wrt. condition
 	 */
 	private ConflictType getConflictType() {
