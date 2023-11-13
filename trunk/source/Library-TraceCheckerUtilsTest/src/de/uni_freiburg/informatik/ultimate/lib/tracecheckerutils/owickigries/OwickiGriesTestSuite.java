@@ -46,7 +46,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
-import org.junit.runner.RunWith;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -56,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsTotal;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePetriNet;
@@ -101,7 +99,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestMethod;
-import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.TestFactory;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
@@ -114,8 +111,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  */
-@RunWith(FactoryTestRunner.class)
-public class OwickiGriesTestSuite implements IMessagePrinter {
+public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 
@@ -150,26 +146,10 @@ public class OwickiGriesTestSuite implements IMessagePrinter {
 		mMgdScript = new ManagedScript(mServices, script);
 	}
 
-	public void runTest(final Path path, final AutomataTestFileAST ast,
+	protected abstract void runTest(final Path path, final AutomataTestFileAST ast,
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
-			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException {
-		// construct Owicki-Gries annotation
-		final var floydHoare = new PetriFloydHoare<>(mServices, mMgdScript, mSymbolTable,
-				Set.of(SimpleAction.PROCEDURE), unfolding, program, List.of(mUnifier), true, true);
-		final Map<Marking<IPredicate>, IPredicate> petriFloydHoare = floydHoare.getResult();
-		final var construction = new OwickiGriesConstruction<>(mServices, mMgdScript, mSymbolTable,
-				Set.of(SimpleAction.PROCEDURE), program, petriFloydHoare, true);
-		final var annotation = construction.getResult();
-
-		// check validity of annotation
-		final var check = new OwickiGriesValidityCheck<>(mServices, mMgdScript, mHtc, annotation,
-				construction.getCoMarkedPlaces());
-
-		if (!check.isValid()) {
-			throw new AssertionError("Invalid Owicki-Gries annotation");
-		}
-	}
+			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException;
 
 	private void runTestInternal(final Path path) throws IOException, AutomataLibraryException {
 		mSymbolTable = setupSymbolTable(path);
@@ -450,8 +430,8 @@ public class OwickiGriesTestSuite implements IMessagePrinter {
 		}
 	}
 
-	private static final class SimpleAction implements IInternalAction {
-		private static final String PROCEDURE = "Main";
+	protected static final class SimpleAction implements IInternalAction {
+		public static final String PROCEDURE = "Main";
 
 		private final int mId;
 		private final UnmodifiableTransFormula mTransFormula;
