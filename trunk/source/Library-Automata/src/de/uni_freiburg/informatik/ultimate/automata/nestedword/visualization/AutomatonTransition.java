@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
@@ -104,9 +106,14 @@ public final class AutomatonTransition
 			mName = mName + " " + hierPred;
 		}
 
+		final IAnnotations symbolAnnotation;
 		if (transitionLabel instanceof IAnnotations) {
-			getPayload().getAnnotations().put("Symbol", (IAnnotations) transitionLabel);
+			symbolAnnotation = (IAnnotations) transitionLabel;
+		} else {
+			symbolAnnotation = new SymbolAnnotation(transitionLabel);
 		}
+		getPayload().getAnnotations().put("Symbol", symbolAnnotation);
+
 		state.addOutgoing(this);
 		succState.addIncoming(this);
 	}
@@ -119,5 +126,23 @@ public final class AutomatonTransition
 	@Override
 	public AutomatonTransition getLabel() {
 		return this;
+	}
+
+	private static class SymbolAnnotation implements IAnnotations {
+		private final Object mSymbol;
+
+		public SymbolAnnotation(final Object symbol) {
+			mSymbol = symbol;
+		}
+
+		@Override
+		public Map<String, Object> getAnnotationsAsMap() {
+			return Map.of(mSymbol.getClass().getSimpleName(), mSymbol);
+		}
+
+		@Override
+		public String toString() {
+			return mSymbol.toString();
+		}
 	}
 }
