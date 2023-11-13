@@ -45,6 +45,13 @@ public class PetriOwickiGries<LETTER, PLACE> {
 	private final IPetriNet<LETTER, PLACE> mNet;
 	private final Crown<PLACE, LETTER> mCrown;
 
+	/**
+	 *
+	 * @param bp
+	 *            finite prefix of unfolding for the refined net
+	 * @param net
+	 *            the original Petri program
+	 */
 	public PetriOwickiGries(final BranchingProcess<LETTER, PLACE> bp, final IPetriNet<LETTER, PLACE> net) {
 		mBp = bp;
 		mNet = net;
