@@ -92,7 +92,8 @@ public abstract class ExtractedWitnessInvariant implements IExtractedWitnessEntr
 			checkForQuantifiers(mInvariant);
 			acslNode = Parser.parseComment("lstart\n assert " + mInvariant + ";", getStartline(), 1);
 		} catch (final ACSLSyntaxErrorException e) {
-			throw new UnsupportedSyntaxException(loc, e.getMessageText());
+			throw new UnsupportedSyntaxException(loc,
+					String.format("Unable to instrument \"%s\" at %s (%s)", mInvariant, loc, e.getMessageText()));
 		} catch (final Exception e) {
 			throw new AssertionError(e);
 		}

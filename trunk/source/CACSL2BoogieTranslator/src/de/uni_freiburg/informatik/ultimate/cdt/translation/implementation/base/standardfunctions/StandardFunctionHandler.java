@@ -328,9 +328,9 @@ public class StandardFunctionHandler {
 		/*
 		 * See https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html
 		 */
-		fill(map, "__builtin_popcount", die);
-		fill(map, "__builtin_popcountl", die);
-		fill(map, "__builtin_popcountll", die);
+		fill(map, "__builtin_popcount", this::handlePopcount);
+		fill(map, "__builtin_popcountl", this::handlePopcount);
+		fill(map, "__builtin_popcountll", this::handlePopcount);
 
 		/*
 		 * The GNU C online documentation at https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html on 09 Nov 2016 says:
@@ -799,6 +799,16 @@ public class StandardFunctionHandler {
 		fill(map, "mbstowcs", die);
 		fill(map, "wcstombs", die);
 
+		// longjmp https://en.cppreference.com/w/c/program/longjmp
+		// We cannot handle restoring the environment, so we just check if the function is reachable and create an
+		// overraproximation for that case
+		fill(map, "longjmp", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPrimitive(CPrimitives.INT)));
+
+		// setjmp https://en.cppreference.com/w/c/program/setjmp
+		fill(map, "_setjmp", this::handleSetjmp);
+		fill(map, "setjmp", this::handleSetjmp);
+
 		/** End <stdlib.h> functions according to 7.22 General utilities <stdlib.h> **/
 
 		checkFloatSupport(map, dieFloat);
@@ -1002,6 +1012,41 @@ public class StandardFunctionHandler {
 				mExpressionTranslation.constructUnaryExpression(loc, IASTUnaryExpression.op_minus, expr, resultType);
 		final Expression iteExpression = ExpressionFactory.constructIfThenElseExpression(loc, positive, expr, negated);
 		return builder.setLrValue(new RValue(iteExpression, resultType)).build();
+	}
+
+	/**
+	 * Count the number of ones in the argument. __builtin_popcountl(x) is currently just overapproximated with some
+	 * result, where result >= 0 and result <= x
+	 */
+	private Result handlePopcount(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult argResult =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(argResult);
+		final CPrimitive retType = new CPrimitive(CPrimitives.INT);
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, retType, AUXVAR.NONDET);
+		builder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
+		// TODO: Consider argResult for a better overapproximation
+		final Expression nonNegative = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), retType,
+				mExpressionTranslation.constructLiteralForIntegerType(loc, retType, BigInteger.ZERO), retType);
+		final Expression smallerTypeSize =
+				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual,
+						auxVar.getExp(), retType, argResult.getLrValue().getValue(), retType);
+		final Expression assumption = ExpressionFactory.and(loc, List.of(nonNegative, smallerTypeSize));
+		builder.addStatement(new AssumeStatement(loc, assumption)).addOverapprox(new Overapprox(name, loc));
+		return builder.setLrValue(new RValue(auxVar.getExp(), retType)).build();
+	}
+
+	// For now we do not handle setjmp properly. We crash on longjmp, so it is sufficient to always return 0 for setjmp.
+	private Result handleSetjmp(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
+		return new ExpressionResult(new RValue(
+				mExpressionTranslation.constructLiteralForIntegerType(loc, returnType, BigInteger.ZERO), returnType));
 	}
 
 	// Overapproximates snprintf as follows:
@@ -1842,7 +1887,7 @@ public class StandardFunctionHandler {
 
 	/**
 	 * Handle C11 or C23 static assertions with or without an explicit message.
-	 * 
+	 *
 	 * @param main
 	 *            the current dispatcher
 	 * @param node
@@ -1851,7 +1896,7 @@ public class StandardFunctionHandler {
 	 *            the location of the static assert
 	 * @param name
 	 *            the name of the method
-	 * 
+	 *
 	 * @return {@link ExpressionResult} representing the static assertion
 	 */
 	private Result handleStaticAssert(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1871,9 +1916,9 @@ public class StandardFunctionHandler {
 
 				final ExpressionResult result = mExprResultTransformer
 						.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[0]), loc, node);
-				return new ExpressionResultBuilder().addAllExceptLrValue(result)
-						.addStatement(createAnnotatedAssertOrAssume(loc, name, mSettings.checkAssertions(),
-								Spec.ASSERT, result.getLrValue().getValue(), errorMsg))
+				return new ExpressionResultBuilder()
+						.addAllExceptLrValue(result).addStatement(createAnnotatedAssertOrAssume(loc, name,
+								mSettings.checkAssertions(), Spec.ASSERT, result.getLrValue().getValue(), errorMsg))
 						.build();
 			} else {
 				/* WARNING: this case should be never reached since the msg should be always a string literal */
@@ -2470,7 +2515,7 @@ public class StandardFunctionHandler {
 
 	/**
 	 * Create an assertion or assumption statement annotated with a {@link Check} annotation.
-	 * 
+	 *
 	 * @param loc
 	 *            location of the assertion or assumption node.
 	 * @param functionName
@@ -2481,7 +2526,7 @@ public class StandardFunctionHandler {
 	 *            type of {@link Check} for assertion or assumption statement annotation.
 	 * @param expr
 	 *            expression for assertion or assumption statement.
-	 * 
+	 *
 	 * @see {@link #createAnnotatedAssertOrAssume(ILocation, String, boolean, Spec, Expression, String)}
 	 */
 	private Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
@@ -2491,11 +2536,11 @@ public class StandardFunctionHandler {
 
 	/**
 	 * Create an assertion or assumption statement annotated with a {@link Check} annotation.
-	 * 
+	 *
 	 * Create an {@code assert expr} or {@code assume expr} depending on the settings. If {@code checkProperty} is
 	 * {@code true} (i.e. the check is enabled), an {@code assert expr} will be generated, otherwise an
 	 * {@code assume expr} will be generated.
-	 * 
+	 *
 	 * @param loc
 	 *            location of the assertion or assumption node.
 	 * @param functionName
@@ -2508,7 +2553,7 @@ public class StandardFunctionHandler {
 	 *            expression for assertion or assumption statement.
 	 * @param errorMsg
 	 *            error message for a negative check result of an assertion.
-	 * 
+	 *
 	 * @return {@link Statement} annotated with a {@link Check} annotation.
 	 */
 	private Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
@@ -2626,6 +2671,24 @@ public class StandardFunctionHandler {
 			results.add((ExpressionResult) main.dispatch(argument));
 		}
 		return new ExpressionResultBuilder().addAllExceptLrValue(results).build();
+	}
+
+	/**
+	 * Overapproximate the reachability of unsupported functions by translating them to while(true) assert false; where
+	 * the assert is labeled with an overapproximation
+	 */
+	private Result handleUnsupportedFunctionByOverapproximation(final IDispatcher main, final ILocation loc,
+			final String name, final CType returnType) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final Statement unreach = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
+		new Overapprox(name, loc).annotate(unreach);
+		new Check(Spec.UNKNOWN).annotate(unreach);
+		builder.addStatement(new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
+				new LoopInvariantSpecification[0], new Statement[] { unreach }));
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, AUXVAR.NONDET);
+		builder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
+		builder.setLrValue(new RValue(auxVar.getExp(), returnType));
+		return builder.build();
 	}
 
 	private Result handleUnsoundByOverapproximationWithoutDispatch(final IDispatcher main,

@@ -451,12 +451,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			if (formula.equals(trueterm)) {
 				continue;
 			}
-			final String inv = backTranslatorService.translateExpressionToString(formula, Term.class);
-			if (inv == "NULL") {
-				mLogger.error("Failed to backtranslate " + formula);
-			} else {
-				new WitnessInvariant(inv).annotate(locNode);
-			}
+			new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
 		}
 	}
 

@@ -522,7 +522,7 @@ public class ExpressionResultTransformer {
 		if (underlyingType instanceof CPrimitive) {
 			resultEx = mExprTrans.constructBinaryEqualityExpression(loc, IASTBinaryExpression.op_notequals,
 					rVal.getValue(), rVal.getCType(), zero, underlyingType);
-		} else if (underlyingType instanceof CPointer) {
+		} else if (underlyingType instanceof CPointer || underlyingType instanceof CArray) {
 			resultEx = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, rVal.getValue(),
 					zero);
 		} else {

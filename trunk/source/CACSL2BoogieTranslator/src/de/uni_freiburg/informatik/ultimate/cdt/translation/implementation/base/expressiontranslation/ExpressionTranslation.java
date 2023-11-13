@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -382,7 +383,7 @@ public abstract class ExpressionTranslation {
 			default:
 				throw new AssertionError("illegal type");
 			}
-		} else if (cType instanceof CPointer) {
+		} else if (cType instanceof CPointer || cType instanceof CArray) {
 			result = constructNullPointer(loc);
 		} else {
 			throw new UnsupportedSyntaxException(loc, "don't know 0 value for type " + cType);

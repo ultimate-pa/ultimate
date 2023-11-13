@@ -338,8 +338,7 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 			if (formula.equals(trueterm)) {
 				continue;
 			}
-			final String inv = backTranslatorService.translateExpressionToString(formula, Term.class);
-			new WitnessInvariant(inv).annotate(locNode);
+			new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
 		}
 	}
 

@@ -1192,6 +1192,25 @@ public class SimplificationTest {
 				mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void quantifierTest01() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "a"), };
+		final String formulaAsString = "(and (exists ((x Int)) (>= (+ a (* x x)) 0)) (>= a 0))";
+		final String expectedResultAsString = "(<= 0 a)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.SIMPLIFY_DDA2,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void quantifierTest02() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "a"), };
+		final String formulaAsString = "(and (exists ((x Int)) (and (= x 7) (= x a))) (>= a 7))";
+		final String expectedResultAsString = "(exists ((x Int)) (and (= 7 x) (= 7 a)))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.SIMPLIFY_DDA2,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
 	static void runSimplificationTest(final FunDecl[] funDecls, final String eliminationInputAsString,
 			final String expectedResultAsString, final SimplificationTechnique simplificationTechnique,
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,

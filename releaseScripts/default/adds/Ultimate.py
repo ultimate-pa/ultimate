@@ -29,7 +29,7 @@ ultimatedir = os.path.dirname(os.path.realpath(__file__))
 configdir = os.path.join(ultimatedir, "config")
 datadir = os.path.join(ultimatedir, "data")
 witnessdir = ultimatedir
-witnessname = "witness.graphml"
+witnessname = "witness"
 enable_assertions = False
 
 # special strings in ultimate output

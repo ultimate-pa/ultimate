@@ -382,7 +382,7 @@
 	<tasks name="SVCOMP-Concurrency-SafeDeref">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 
-		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+		<option name="--cacsl2boogietranslator.check.unreachability.of.reach_error.function">false</option>
 		<option name="--cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference">ASSERTandASSUME</option>
 		<option name="--cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference">ASSERTandASSUME</option>
 		<option name="--cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap">ASSERTandASSUME</option>
@@ -396,7 +396,7 @@
 	<tasks name="SVCOMP-Concurrency-NoDataRace">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 
-		<option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+		<option name="--cacsl2boogietranslator.check.unreachability.of.reach_error.function">false</option>
 		<option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
 
 		<includesfile>../../../trunk/examples/concurrency-quick-nodatarace.set</includesfile>

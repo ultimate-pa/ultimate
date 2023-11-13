@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -52,7 +53,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Polynomia
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context.CcTransformation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierOverapproximator;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierOverapproximator.Quantifier;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -92,6 +94,15 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private static final boolean OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT = true;
 	private static final boolean SIMPLIFY_REPEATEDLY = true;
 	private static final CheckedNodes CHECKED_NODES = CheckedNodes.ONLY_LEAVES;
+	/**
+	 * Do some overapproximation of quantifiers in the succedent of implications. We
+	 * implement implication checks as satisfiability checks. If this variable is
+	 * set to true, we overapproximate universally quantified formulas. (We keep
+	 * existentially quantified formulas because SMT solver can handle them easily
+	 * via Skolemization. <br>
+	 * This option has no effect if check only leaves.
+	 */
+	private static final boolean OVERAPPROXIMATE_DIFFCULT_QUANTIFIERS_IN_NODES = false;
 
 	/**
 	 * Options for which nodes to check for redundancy. To check redundancy, we
@@ -155,22 +166,46 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final List<Term> newParams = new ArrayList<>();
 		if (symb.getName().equals("and")) {
 			for (final Term otherParam : otherParams) {
-				if (!OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT || QuantifierUtils.isQuantifierFree(otherParam)) {
-					mMgdScript.getScript().assertTerm(otherParam);
-					newParams.add(otherParam);
+				final Term tmp;
+				if (OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT) {
+					// Replace universally quantified subformula by true.
+					// We keep existentially quantified formulas, they are harmless and handled by
+					// SMT solver via Skolemizations.
+					tmp = replaceUniversalQuantifiersByTrue(mMgdScript, otherParam);
+				} else {
+					tmp = otherParam;
 				}
+				mMgdScript.getScript().assertTerm(tmp);
+				newParams.add(tmp);
 			}
 		}
 
 		if (symb.getName().equals("or")) {
 			for (final Term otherParam : otherParams) {
-				if (!OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT || QuantifierUtils.isQuantifierFree(otherParam)) {
-					mMgdScript.getScript().assertTerm(SmtUtils.not(mMgdScript.getScript(), otherParam));
-					newParams.add(SmtUtils.not(mMgdScript.getScript(), otherParam));
+				final Term tmp;
+				if (OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT) {
+					// As above we want to replace universally quantified subformulas by true.
+					// Since we negate the otherParam, we replace instead existentially quantified
+					// subformulas by false.
+					tmp = replaceExistentialQuantifiersByFalse(mMgdScript, otherParam);
+				} else {
+					tmp = otherParam;
 				}
+				mMgdScript.getScript().assertTerm(SmtUtils.not(mMgdScript.getScript(), tmp));
+				newParams.add(SmtUtils.not(mMgdScript.getScript(), tmp));
 			}
 		}
 		return SmtUtils.and(mMgdScript.getScript(), newParams);
+	}
+
+	private Term replaceUniversalQuantifiersByTrue(final ManagedScript mgdScipt, final Term otherParam) {
+		return QuantifierOverapproximator.apply(mgdScipt.getScript(), EnumSet.of(Quantifier.FORALL),
+				mgdScipt.getScript().term("true"), otherParam);
+	}
+
+	private Term replaceExistentialQuantifiersByFalse(final ManagedScript mgdScipt, final Term otherParam) {
+		return QuantifierOverapproximator.apply(mgdScipt.getScript(), EnumSet.of(Quantifier.EXISTS),
+				mgdScipt.getScript().term("false"), otherParam);
 	}
 
 	@Override
@@ -221,24 +256,40 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 */
 	private DescendResult checkRedundancy(final Term term) {
 		final Term result;
-		final long timeBeforeConstrainigcheck = System.nanoTime();
-		mNumberOfCheckSatCommands++;
-		final LBool isNonConstraining = Util.checkSat(mMgdScript.getScript(),
-				SmtUtils.not(mMgdScript.getScript(), term));
-		mCheckSatTime += (System.nanoTime() - timeBeforeConstrainigcheck);
-		if (isNonConstraining == LBool.UNSAT) {
-			mNonConstrainingNodes++;
-			result = mMgdScript.getScript().term("true");
-			return new TermContextTransformationEngine.FinalResultForAscend(result);
+		{
+			final long timeBeforeConstrainigcheck = System.nanoTime();
+			mNumberOfCheckSatCommands++;
+			final Term rhs;
+			if (OVERAPPROXIMATE_DIFFCULT_QUANTIFIERS_IN_NODES) {
+				rhs = replaceExistentialQuantifiersByFalse(mMgdScript, term);
+			} else {
+				rhs = term;
+			}
+			final LBool isNonConstraining = Util.checkSat(mMgdScript.getScript(),
+					SmtUtils.not(mMgdScript.getScript(), rhs));
+			mCheckSatTime += (System.nanoTime() - timeBeforeConstrainigcheck);
+			if (isNonConstraining == LBool.UNSAT) {
+				mNonConstrainingNodes++;
+				result = mMgdScript.getScript().term("true");
+				return new TermContextTransformationEngine.FinalResultForAscend(result);
+			}
 		}
-		mNumberOfCheckSatCommands++;
-		final long timeBeforeRelaxingcheck = System.nanoTime();
-		final LBool isNonRelaxing = Util.checkSat(mMgdScript.getScript(), term);
-		mCheckSatTime += (System.nanoTime() - timeBeforeRelaxingcheck);
-		if (isNonRelaxing == LBool.UNSAT) {
-			mNonRelaxingNodes++;
-			result = mMgdScript.getScript().term("false");
-			return new TermContextTransformationEngine.FinalResultForAscend(result);
+		{
+			mNumberOfCheckSatCommands++;
+			final long timeBeforeRelaxingcheck = System.nanoTime();
+			final Term rhs;
+			if (OVERAPPROXIMATE_DIFFCULT_QUANTIFIERS_IN_NODES) {
+				rhs = replaceUniversalQuantifiersByTrue(mMgdScript, term);
+			} else {
+				rhs = term;
+			}
+			final LBool isNonRelaxing = Util.checkSat(mMgdScript.getScript(), rhs);
+			mCheckSatTime += (System.nanoTime() - timeBeforeRelaxingcheck);
+			if (isNonRelaxing == LBool.UNSAT) {
+				mNonRelaxingNodes++;
+				result = mMgdScript.getScript().term("false");
+				return new TermContextTransformationEngine.FinalResultForAscend(result);
+			}
 		}
 		return null;
 	}
@@ -423,6 +474,14 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 
 	public static Term simplify(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final Term context, final Term term) {
+		if (SmtUtils.isFalseLiteral(context)) {
+			// Handle this special case immediately. If the context is `false`, the
+			// simplification may return any term, we choose false.
+			// We want to handle this special case here since the later algorithm has the
+			// invariant that the context is never `false`. (Probably this is only an
+			// invariant under certain assumption that have to be determined.)
+			return context;
+		}
 		final SimplifyDDA2 simplifyDDA2 = new SimplifyDDA2(services, mgdScript);
 		// do initial push
 		mgdScript.getScript().push(1);

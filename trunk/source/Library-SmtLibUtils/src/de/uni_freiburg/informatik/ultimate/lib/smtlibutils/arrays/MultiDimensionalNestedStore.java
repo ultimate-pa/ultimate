@@ -97,6 +97,45 @@ public class MultiDimensionalNestedStore implements ITermProvider {
 		return new MultiDimensionalStore(mArray, mIndices.get(0), mValues.get(0));
 	}
 
+	/**
+	 * Get a only a part of this {@link MultiDimensionalNestedStore}. This part is
+	 * only a {@link MultiDimensionalStore} the array of the result is the array of
+	 * the input. The index of the result is a restriction of the input's innermost
+	 * store to its i-highest dimensions. The value of the result is what is written
+	 * to the restricted input. <br />
+	 * In the special case where the restriction to the i highest dimension
+	 * coincides for all indices coincides, the output is only a different
+	 * representation of the input.
+	 *
+	 * @param i Number of highest dimension that are extracted from the innermost
+	 *          index.
+	 */
+	public MultiDimensionalStore extractDowngradeToHigherDimensions(final Script script, final int i) {
+		assert (i >= 1 && i < getDimension());
+		// take outer index and reduce to chosen dimension
+		// new array is the outer array that we find a this reduced index
+		final ArrayIndex reducedOuterIndex = mIndices.get(0).getFirst(i);
+		final Term newArray = new MultiDimensionalSelect(mArray, reducedOuterIndex).toTerm(script);
+		final List<ArrayIndex> newIndices = new ArrayList<>();
+		for (final ArrayIndex ai : mIndices) {
+			// if several of the nested stores indices coincide on the outer dimensions, the
+			// result has several nested stores
+			final ArrayIndex outer = ai.getFirst(i);
+			if (outer.equals(reducedOuterIndex)) {
+				final ArrayIndex inner = ai.getLast(getDimension() - i);
+				newIndices.add(inner);
+			} else {
+				// if the first index is different the remaining corresponding stores are not
+				// part of the result
+				break;
+			}
+		}
+		final List<Term> newValues = mValues.stream().limit(newIndices.size()).collect(Collectors.toList());
+		final MultiDimensionalNestedStore innerMds = new MultiDimensionalNestedStore(newArray, newIndices, newValues);
+		return new MultiDimensionalStore(mArray, reducedOuterIndex, innerMds.toTerm(script));
+	}
+
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -109,28 +148,37 @@ public class MultiDimensionalNestedStore implements ITermProvider {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final MultiDimensionalNestedStore other = (MultiDimensionalNestedStore) obj;
 		if (mArray == null) {
-			if (other.mArray != null)
+			if (other.mArray != null) {
 				return false;
-		} else if (!mArray.equals(other.mArray))
+			}
+		} else if (!mArray.equals(other.mArray)) {
 			return false;
+		}
 		if (mIndices == null) {
-			if (other.mIndices != null)
+			if (other.mIndices != null) {
 				return false;
-		} else if (!mIndices.equals(other.mIndices))
+			}
+		} else if (!mIndices.equals(other.mIndices)) {
 			return false;
+		}
 		if (mValues == null) {
-			if (other.mValues != null)
+			if (other.mValues != null) {
 				return false;
-		} else if (!mValues.equals(other.mValues))
+			}
+		} else if (!mValues.equals(other.mValues)) {
 			return false;
+		}
 		return true;
 	}
 

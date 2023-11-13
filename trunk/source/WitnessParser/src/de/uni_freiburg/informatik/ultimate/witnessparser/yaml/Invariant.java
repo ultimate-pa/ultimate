@@ -27,13 +27,15 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-import com.amihaiemil.eoyaml.Yaml;
-import com.amihaiemil.eoyaml.YamlNode;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness.IMapSerializable;
 
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
-public class Invariant implements IYamlProvider {
+public class Invariant implements IMapSerializable {
 
 	private final String mExpression;
 	private final String mType;
@@ -63,8 +65,11 @@ public class Invariant implements IYamlProvider {
 	}
 
 	@Override
-	public YamlNode toYaml() {
-		return Yaml.createYamlMappingBuilder().add("string", mExpression).add("type", mType).add("format", mFormat)
-				.build();
+	public Map<String, Object> toMap() {
+		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
+		result.put("string", mExpression);
+		result.put("type", mType);
+		result.put("format", mFormat);
+		return result;
 	}
 }

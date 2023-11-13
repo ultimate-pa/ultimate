@@ -737,8 +737,9 @@ public class CHandler {
 		}
 		case IASTBinaryExpression.op_equals:
 		case IASTBinaryExpression.op_notequals: {
-			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
-			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
+			final ExpressionResult rl = mExprResultTransformer.transformDecaySwitchRexBoolToInt(leftOperand, loc, node);
+			final ExpressionResult rr =
+					mExprResultTransformer.transformDecaySwitchRexBoolToInt(rightOperand, loc, node);
 			return mCExpressionTranslator.handleEqualityOperators(loc, node.getOperator(), rl, rr);
 		}
 		case IASTBinaryExpression.op_greaterEqual:

@@ -173,12 +173,23 @@ public final class SmtTestGenerationUtils {
 		return false;
 	}
 
-	public static String generateQuantifierEliminationTest(final String methodName, final Term term) {
+	public static String generateQuantifierEliminationTest(final String methodName, final Term input) {
+		return generateQuantifierEliminationTest(methodName, input, null);
+	}
+
+	public static String generateQuantifierEliminationTest(final String methodName, final Term input,
+			final Term expectedResult) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("\t").append("@Test").append(System.lineSeparator());
 		sb.append("\t").append("public void ").append(methodName).append("() {").append(System.lineSeparator());
-		sb.append(generateStringForTestfile(term));
-		sb.append("\t\t").append("final String expectedResult = null;").append(System.lineSeparator());
+		sb.append(generateStringForTestfile(input));
+		sb.append("\t\t").append("final String expectedResult = ");
+		if (expectedResult != null) {
+			sb.append('\"').append(expectedResult).append('\"');
+		} else {
+			sb.append(expectedResult);
+		}
+		sb.append(";").append(System.lineSeparator());
 		sb.append("\t\t").append(
 				"QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);")
 				.append(System.lineSeparator());
@@ -186,5 +197,4 @@ public final class SmtTestGenerationUtils {
 		sb.append(System.lineSeparator());
 		return sb.toString();
 	}
-
 }

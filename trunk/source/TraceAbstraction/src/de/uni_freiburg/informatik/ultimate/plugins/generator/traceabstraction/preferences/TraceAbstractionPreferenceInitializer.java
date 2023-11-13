@@ -835,7 +835,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 * Hoare annotation position.
 	 */
 	public enum HoareAnnotationPositions {
-		All, LoopsAndPotentialCycles,
+		All, LoopHeads, LoopsAndPotentialCycles,
 	}
 
 	/**

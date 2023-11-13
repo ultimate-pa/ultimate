@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -50,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  */
 public class IcfgTransformationBacktranslator extends
-		DefaultTranslator<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>, Term, Term, String, String> {
+		DefaultTranslator<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>, Term, Term, String, String, ILocation> {
 
 	private final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> mEdgeMapping;
 	private final ILogger mLogger;
@@ -140,9 +141,5 @@ public class IcfgTransformationBacktranslator extends
 	public Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> getEdgeMapping() {
 		return Collections.unmodifiableMap(mEdgeMapping);
 	}
-
-
-
-
 
 }

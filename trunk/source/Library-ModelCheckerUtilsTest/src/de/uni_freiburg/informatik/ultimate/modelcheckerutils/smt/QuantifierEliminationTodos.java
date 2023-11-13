@@ -460,5 +460,46 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void selfUpdateBug_4ca571b2_Size417() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "v_DerPreprocessor_3", "v_DerPreprocessor_2", "v_ArrVal_175"),
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base", "#memory_$Pointer$.offset"),
+			new FunDecl(SmtSortUtils::getIntSort, "v_prenex_6", "v_prenex_7", "v_prenex_4", "v_prenex_5", "v_ArrVal_167", "mutex_lock_ldv_list_add_~new#1.base", "v_prenex_2", "v_prenex_3", "__ldv_list_add_~next.base", "v_prenex_1", "__ldv_list_add_~next.offset", "mutex_lock_#in~m#1.base"),
+		};
+		final String formulaAsString = "(exists ((|v_#memory_$Pointer$.base_BEFORE_CALL_2| (Array Int (Array Int Int)))) (and (= |mutex_lock_#in~m#1.base| (select (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| |mutex_lock_ldv_list_add_~new#1.base|) 0)) (or (and (or (and (= (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3 (store (store (store (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3) (+ __ldv_list_add_~next.offset 4) 3) 4 v_ArrVal_167) 8 3) 0 3)) |#memory_$Pointer$.base|) (= (select (select |#memory_$Pointer$.offset| 3) 0) 4)) (and (= |#memory_$Pointer$.base| (store (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| __ldv_list_add_~next.base (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| __ldv_list_add_~next.base) (+ v_prenex_1 4) 3)) 3 (store (store (store (select (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| __ldv_list_add_~next.base (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| __ldv_list_add_~next.base) (+ v_prenex_1 4) 3)) 3) 4 (select (select |#memory_$Pointer$.base| 3) 4)) 8 3) 0 3))) (= (select |#memory_$Pointer$.offset| 3) (store v_ArrVal_175 0 4)) (not (= __ldv_list_add_~next.base 3)))) (= |mutex_lock_ldv_list_add_~new#1.base| 3)) (and (not (= |mutex_lock_ldv_list_add_~new#1.base| 3)) (or (and (= (store (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| |mutex_lock_ldv_list_add_~new#1.base| (store (store (select (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3) (+ v_prenex_7 4) |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base|) 4 v_prenex_5) 8 3)) 3 (store (select (store (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3) (+ v_prenex_7 4) |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base| (store (store (select (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3) (+ v_prenex_7 4) |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base|) 4 v_prenex_5) 8 3)) 3) 0 |mutex_lock_ldv_list_add_~new#1.base|)) |#memory_$Pointer$.base|) (not (= (+ v_prenex_7 4) 0)) (= (select (select |#memory_$Pointer$.offset| 3) 0) 4)) (and (= |#memory_$Pointer$.base| (store (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| |mutex_lock_ldv_list_add_~new#1.base| (store (store (select (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3) 0 |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base|) 4 v_prenex_2) 8 3)) 3 (store (select (store (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3) 0 |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base| (store (store (select (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3) 0 |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base|) 4 v_prenex_2) 8 3)) 3) 0 |mutex_lock_ldv_list_add_~new#1.base|))) (= (select (select |#memory_$Pointer$.offset| 3) 0) 4)) (and (= |#memory_$Pointer$.base| (store (store (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| v_prenex_6 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| v_prenex_6) (+ v_prenex_3 4) |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base| (store (store (select (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| v_prenex_6 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| v_prenex_6) (+ v_prenex_3 4) |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base|) 4 (select (select |#memory_$Pointer$.base| |mutex_lock_ldv_list_add_~new#1.base|) 4)) 8 3)) 3 (store (select (store (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| v_prenex_6 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| v_prenex_6) (+ v_prenex_3 4) |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base| (store (store (select (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| v_prenex_6 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| v_prenex_6) (+ v_prenex_3 4) |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base|) 4 (select (select |#memory_$Pointer$.base| |mutex_lock_ldv_list_add_~new#1.base|) 4)) 8 3)) 3) 0 |mutex_lock_ldv_list_add_~new#1.base|))) (not (= |mutex_lock_ldv_list_add_~new#1.base| v_prenex_6)) (not (= 3 v_prenex_6)) (= (store (select (store (store (store |#memory_$Pointer$.offset| 3 v_DerPreprocessor_2) v_prenex_6 v_DerPreprocessor_3) |mutex_lock_ldv_list_add_~new#1.base| (select |#memory_$Pointer$.offset| |mutex_lock_ldv_list_add_~new#1.base|)) 3) 0 4) (select |#memory_$Pointer$.offset| 3))) (and (= |#memory_$Pointer$.base| (store (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| |mutex_lock_ldv_list_add_~new#1.base| (store (store (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| |mutex_lock_ldv_list_add_~new#1.base|) (+ v_prenex_4 4) |mutex_lock_ldv_list_add_~new#1.base|) 4 (select (select |#memory_$Pointer$.base| |mutex_lock_ldv_list_add_~new#1.base|) 4)) 8 3)) 3 (store (select (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| |mutex_lock_ldv_list_add_~new#1.base| (store (store (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| |mutex_lock_ldv_list_add_~new#1.base|) (+ v_prenex_4 4) |mutex_lock_ldv_list_add_~new#1.base|) 4 (select (select |#memory_$Pointer$.base| |mutex_lock_ldv_list_add_~new#1.base|) 4)) 8 3)) 3) 0 |mutex_lock_ldv_list_add_~new#1.base|))) (= (select (select |#memory_$Pointer$.offset| 3) 0) 4)))))))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void derPreprocessorBug_orig() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "dim1arr"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "mem"),
+				new FunDecl(SmtSortUtils::getIntSort, "base"),
+		};
+		final String formulaAsString = "(forall ((â (Array Int Int))) (or (not (= 4 (select â 8))) (not (= (select (store (store |mem| base dim1arr) 3 (store (store â 8 4) 4 4)) base) â)) (not (= (store (store â 4 0) 8 4) (select |mem| base))) (not (= (select â 4) 0))))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	/**
+	 * Looks rather like a self-update bug. Cannot replace by fresh variable
+	 * because the dimension would be higher. Solve probably by resolving
+	 * select-over-store.
+	 */
+	@Test
+	public void derPreprocessorBug() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "dim1arr"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "mem"),
+				new FunDecl(SmtSortUtils::getIntSort, "base"),
+		};
+		final String formulaAsString = "(exists ((â (Array Int Int))) (= (select (store mem 3 (store â 4 4)) base) â))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	//@formatter:on
 }

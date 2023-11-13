@@ -51,18 +51,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
  *            Target Expression. Type of expression in the target program model.
  * @param <SVL>
  *            Source vertex label. Type of the vertex label of a {@link IBacktranslatedCFG} in the source program model.
- * @param <TVL>
- *            Target vertex label. Type of the vertex label of a {@link IBacktranslatedCFG} in the target program model.
+ * @param <TVL
+ *            ,LOC> Target vertex label. Type of the vertex label of a {@link IBacktranslatedCFG} in the target program
+ *            model.
  */
-public class TranslatorConcatenation<STE, ITE, TTE, SE, IE, TE, SVL, IVL, TVL>
-		implements ITranslator<STE, TTE, SE, TE, SVL, TVL> {
+public class TranslatorConcatenation<STE, ITE, TTE, SE, IE, TE, SVL, IVL, TVL, LOC>
+		implements ITranslator<STE, TTE, SE, TE, SVL, TVL, LOC> {
 
-	private final ITranslator<STE, ITE, SE, IE, SVL, IVL> mSource2IntermediateTranslator;
-	private final ITranslator<ITE, TTE, IE, TE, IVL, TVL> mIntermediate2TargetTranslator;
+	private final ITranslator<STE, ITE, SE, IE, SVL, IVL, LOC> mSource2IntermediateTranslator;
+	private final ITranslator<ITE, TTE, IE, TE, IVL, TVL, LOC> mIntermediate2TargetTranslator;
 
-	public TranslatorConcatenation(final ITranslator<STE, ITE, SE, IE, SVL, IVL> source2IntermediateTranslator,
-			final ITranslator<ITE, TTE, IE, TE, IVL, TVL> intermediate2TargetTranslator) {
-		super();
+	public TranslatorConcatenation(final ITranslator<STE, ITE, SE, IE, SVL, IVL, LOC> source2IntermediateTranslator,
+			final ITranslator<ITE, TTE, IE, TE, IVL, TVL, LOC> intermediate2TargetTranslator) {
 		mSource2IntermediateTranslator = source2IntermediateTranslator;
 		mIntermediate2TargetTranslator = intermediate2TargetTranslator;
 	}
@@ -101,6 +101,12 @@ public class TranslatorConcatenation<STE, ITE, TTE, SE, IE, TE, SVL, IVL, TVL>
 	public TE translateExpression(final SE expression) {
 		return mIntermediate2TargetTranslator
 				.translateExpression(mSource2IntermediateTranslator.translateExpression(expression));
+	}
+
+	@Override
+	public TE translateExpressionWithContext(final SE expression, final LOC context) {
+		return mIntermediate2TargetTranslator.translateExpressionWithContext(
+				mSource2IntermediateTranslator.translateExpressionWithContext(expression, context), context);
 	}
 
 	@Override

@@ -90,7 +90,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
  *
  */
 public class BoogiePreprocessorBacktranslator
-		extends DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression, String, String> {
+		extends DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression, String, String, ILocation> {
 
 	private final ILogger mLogger;
 	/**

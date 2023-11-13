@@ -27,27 +27,23 @@
 package de.uni_freiburg.informatik.ultimate.test.decider.expectedresult;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.amihaiemil.eoyaml.Yaml;
-import com.amihaiemil.eoyaml.YamlInput;
-import com.amihaiemil.eoyaml.YamlMapping;
-import com.amihaiemil.eoyaml.YamlNode;
-import com.amihaiemil.eoyaml.YamlSequence;
+import org.yaml.snakeyaml.Yaml;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
- * Find the expected result for an SV-COMP benchmark. Starting from SV-COMP 2020
- * the expected results are given by YAML files. This class does not use a
- * proper YAML parser and is a hack that should work for the YAML files that are
- * currently in the competition repository.
- * https://github.com/sosy-lab/sv-benchmarks/
+ * Find the expected result for an SV-COMP benchmark. Starting from SV-COMP 2020 the expected results are given by YAML
+ * files. This class does not use a proper YAML parser and is a hack that should work for the YAML files that are
+ * currently in the competition repository. https://github.com/sosy-lab/sv-benchmarks/
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -56,7 +52,6 @@ public class YamlBasedExpectedResultFinder<OVERALL_RESULT> extends AbstractExpec
 	private final NestedMap2<String, String, OVERALL_RESULT> mResultMap;
 
 	public YamlBasedExpectedResultFinder(final NestedMap2<String, String, OVERALL_RESULT> resultMap) {
-		super();
 		mResultMap = resultMap;
 	}
 
@@ -88,7 +83,8 @@ public class YamlBasedExpectedResultFinder<OVERALL_RESULT> extends AbstractExpec
 		if (expectedResult.isEmpty()) {
 			super.mExpectedResult = null;
 			super.mEvaluationStatus = ExpectedResultFinderStatus.NO_EXPECTED_RESULT_FOUND;
-			super.mExpectedResultEvaluation = "Neither filename nor path nor first line contains a keyword that defines the expected result";
+			super.mExpectedResultEvaluation =
+					"Neither filename nor path nor first line contains a keyword that defines the expected result";
 		} else if (expectedResult.size() == 1) {
 			super.mExpectedResult = expectedResult.iterator().next();
 			super.mEvaluationStatus = ExpectedResultFinderStatus.EXPECTED_RESULT_FOUND;
@@ -100,38 +96,34 @@ public class YamlBasedExpectedResultFinder<OVERALL_RESULT> extends AbstractExpec
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private OVERALL_RESULT extractResultForPropertyFile(final File yamlFile, final String propertyFile)
 			throws IOException {
-		final YamlInput yamlInput = Yaml.createYamlInput(yamlFile);
-		final YamlMapping rootMapping = yamlInput.readYamlMapping();
-		final YamlSequence propertySequence = rootMapping.yamlSequence("properties");
-		for (final YamlNode propertyNode : propertySequence) {
-			final YamlMapping yamlMapForPropery = propertyNode.asMapping();
-			final String test = yamlMapForPropery.string("property_file");
-			if (test.endsWith(propertyFile)) {
-				final String expectedVerdict = yamlMapForPropery.string("expected_verdict");
-				if (Boolean.valueOf(expectedVerdict) == null) {
-					throw new IllegalArgumentException("expected_verdict has to be either true or false");
-				}
-				if (Boolean.valueOf(expectedVerdict)) {
-					return mResultMap.get(propertyFile, String.valueOf(true));
-				} else {
-					assert !Boolean.valueOf(expectedVerdict);
-					final Map<String, OVERALL_RESULT> map = mResultMap.get(propertyFile);
-					if (map.containsKey(String.valueOf(false))) {
-						// there are no subproperties for this property
-						return mResultMap.get(propertyFile, String.valueOf(false));
-					} else {
-						final String subproperty = yamlMapForPropery.string("subproperty");
-						if (subproperty == null) {
-							throw new UnsupportedOperationException("Cannot understand YAML file");
-						} else {
-							return mResultMap.get(propertyFile, subproperty);
-						}
-					}
-				}
+		final Map<String, Object> rootMapping = new Yaml().load(new FileInputStream(yamlFile));
+		final List<Map<String, Object>> properties = (List<Map<String, Object>>) rootMapping.get("properties");
+		for (final Map<String, Object> property : properties) {
+			final String test = (String) property.get("property_file");
+			if (!test.endsWith(propertyFile)) {
+				continue;
 			}
-
+			final Boolean expectedVerdict = (Boolean) property.get("expected_verdict");
+			if (expectedVerdict == null) {
+				throw new IllegalArgumentException("expected_verdict has to be either true or false");
+			}
+			if (expectedVerdict) {
+				return mResultMap.get(propertyFile, String.valueOf(true));
+			}
+			assert !expectedVerdict;
+			final Map<String, OVERALL_RESULT> map = mResultMap.get(propertyFile);
+			if (map.containsKey(String.valueOf(false))) {
+				// there are no subproperties for this property
+				return mResultMap.get(propertyFile, String.valueOf(false));
+			}
+			final String subproperty = (String) property.get("subproperty");
+			if (subproperty == null) {
+				throw new UnsupportedOperationException("Cannot understand YAML file");
+			}
+			return mResultMap.get(propertyFile, subproperty);
 		}
 		return null;
 	}
