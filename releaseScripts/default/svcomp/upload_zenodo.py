@@ -17,6 +17,8 @@ from zenodo_client import Creator, Metadata, Zenodo
 from zenodo_client.api import Data, Paths
 import pystow
 
+import ruamel.yaml
+
 # note
 # tested the following API wrappers 1.11.2023:
 # zenodo_client: extremely crappy, but seems like the best of the bunch
@@ -56,6 +58,20 @@ def parse_args():
         type=bool,
         help="Should we use Zenodo's sandbox instead of the real Zenodo? Default: Yes",
     )
+    parser.add_argument(
+        "--fm-tools-repo",
+        dest="fmtools_path",
+        metavar="<dir>",
+        help="Update YAML files with new Zenodo DOI. Default: None",
+    )
+    parser.add_argument(
+        "--svcomp",
+        dest="year",
+        metavar="<year>",
+        help=f"Which SVCOMP version should be updated in the YAML files. Default: {datetime.datetime.today().year+1}",
+        default=str(datetime.datetime.today().year + 1),
+    )
+
     args = parser.parse_args()
 
     global ACCESS_TOKEN
@@ -334,6 +350,7 @@ def upload_tools(args, tools):
     version = m.groups(1)[0]
     logger.info(f"Found Ultimate version '{version}'")
     logger.info("--")
+    tool_to_doi = {}
     for tool, path in tools.items():
         if not os.path.exists(path):
             logger.warning(f"File {path} for {tool} does not exist, skipping")
@@ -357,9 +374,11 @@ def upload_tools(args, tools):
                 logger.info(
                     f"Success: DOI for {tool} with version {version} is {doi} at {url}"
                 )
+                tool_to_doi[tool] = doi = data["doi"]
             logger.debug(pformat(data))
         os.rename(new_path, path)
         logger.info("--")
+    return tool_to_doi
 
 
 def create_metadata(toolname: str, version: str) -> Metadata:
@@ -403,4 +422,46 @@ tools = {
     "Taipan": "../UltimateTaipan-linux.zip",
     "GemCutter": "../UltimateGemCutter-linux.zip",
 }
-upload_tools(args, tools)
+yaml_files = {
+    "Automizer": "data/uautomizer.yml",
+    "Kojak": "data/ukojak.yml",
+    "Taipan": "data/utaipan.yml",
+    "GemCutter": "data/ugemcutter.yml",
+}
+tool_to_doi = upload_tools(args, tools)
+
+if args.fmtools_path:
+    p = Path(args.fmtools_path)
+    if p.is_dir() and p.exists():
+        for tool, f in yaml_files.items():
+            if tool not in tool_to_doi:
+                logger.error(f"No DOI for {tool}, skipping")
+                continue
+            yaml_file = p / Path(f)
+            if not yaml_file.is_file() or not yaml_file.exists():
+                logger.error(f"{yaml_file} for {tool} does not exist, skipping")
+                continue
+            content = None
+            with open(yaml_file, "r") as file:
+                content = ruamel.yaml.load(file, Loader=ruamel.yaml.RoundTripLoader)
+            if content["name"][1:].lower() != tool.lower():
+                logger.error(
+                    f"{yaml_file} for {tool} is actually for {content['name']}, skipping"
+                )
+                continue
+            if "versions" not in content:
+                logger.error(f"{yaml_file} for {tool} does not have 'versions' section")
+                continue
+
+            def replace_if_matching(version):
+                if version["version"] == f"svcomp{args.year[:2]}":
+                    new = version["version"]
+                    new["doi"] = tool_to_doi[tool]
+                    return new
+                return version
+
+            content["versions"] = [replace_if_matching(c) for c in content["versions"]]
+
+            with open(yaml_file, "w") as f:
+                ruamel.yaml.dump(content, f, Dumper=ruamel.yaml.RoundTripDumper)
+                logger.info(f"Updated {yaml_file} for {tool} with new DOI")
