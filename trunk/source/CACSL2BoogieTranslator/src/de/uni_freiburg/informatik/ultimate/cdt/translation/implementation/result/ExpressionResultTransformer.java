@@ -444,16 +444,21 @@ public class ExpressionResultTransformer {
 					"we need to generalize this to nested and/or variable length arrays");
 		}
 
-		final BigInteger boundBigInteger =
-				mTypeSizes.extractIntegerValue(arrayType.getBound(), arrayType.getBoundType());
-		if (boundBigInteger == null) {
-			throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
-		}
-		final int bound = boundBigInteger.intValue();
 		final AuxVarInfo newArrayAuxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, arrayType, SFO.AUXVAR.ARRAYCOPY);
-		final LRValue resultValue = new RValue(newArrayAuxvar.getExp(), arrayType);
 		ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addAuxVarWithDeclaration(newArrayAuxvar);
+		builder.setLrValue(new RValue(newArrayAuxvar.getExp(), arrayType));
+
+		if (arrayType.isIncomplete()) {
+			// TODO Frank 2023-11-14: This is just a workaround! We just return a non-deterministic value here, because
+			// we need it for structs with flexible arrays. The value is not used, we just need to be type-consistent
+			// and should not crash.
+			return builder.build();
+		}
+
+		final BigInteger boundBigInteger =
+				mTypeSizes.extractIntegerValue(arrayType.getBound(), arrayType.getBoundType());
+		final int bound = boundBigInteger.intValue();
 
 		final Expression valueTypeSize = mMemoryHandler.calculateSizeOf(loc, arrayValueType);
 		final int typeSize =
@@ -484,7 +489,6 @@ public class ExpressionResultTransformer {
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(assRex).setLrValue(assRex.getLrValue());
 
 		}
-		builder.setOrResetLrValue(resultValue);
 		return builder.build();
 	}
 
