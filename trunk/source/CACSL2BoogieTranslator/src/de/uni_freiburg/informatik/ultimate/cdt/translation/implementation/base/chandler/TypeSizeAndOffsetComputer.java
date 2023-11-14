@@ -235,7 +235,7 @@ public class TypeSizeAndOffsetComputer {
 		if (mStructOffsets.containsKey(cStruct)) {
 			throw new AssertionError("must not be computed");
 		}
-		int fieldCount = cStruct.getFieldCount();
+		final int fieldCount = cStruct.getFieldCount();
 		final Offset[] offsets = new Offset[fieldCount];
 		mStructOffsets.put(cStruct, offsets);
 		if (fieldCount == 0) {
@@ -262,12 +262,6 @@ public class TypeSizeAndOffsetComputer {
 			}
 			return new SizeTValueAggregatorMax().aggregate(loc, Arrays.asList(fieldTypeSizes));
 		}
-		// If the last member of a struct is a flexible (i.e. incomplete) array, ignore it for sizeof.
-		// See https://en.cppreference.com/w/c/language/struct
-		final CType lastType = cStruct.getFieldTypes()[fieldCount - 1];
-		if (lastType instanceof CArray && lastType.isIncomplete()) {
-			fieldCount--;
-		}
 		for (int i = 0; i < fieldCount; i++) {
 			final int bitsize;
 			if (mBitPreciseBitfields) {
@@ -287,7 +281,15 @@ public class TypeSizeAndOffsetComputer {
 				offsets[i] = computeMemberOffset(offsets[i - 1], cStruct.getFieldTypes()[i - 1], bitsize, loc);
 			}
 		}
-		final int lastPosition = fieldCount - 1;
+		// If the last member of a struct is a flexible (i.e. incomplete) array, ignore it for sizeof.
+		// See https://en.cppreference.com/w/c/language/struct
+		final int lastPosition;
+		final CType lastType = cStruct.getFieldTypes()[fieldCount - 1];
+		if (lastType instanceof CArray && lastType.isIncomplete()) {
+			lastPosition = fieldCount - 2;
+		} else {
+			lastPosition = fieldCount - 1;
+		}
 		return computeOffsetOfNextByte(offsets[lastPosition], cStruct.getFieldTypes()[lastPosition], loc);
 	}
 
