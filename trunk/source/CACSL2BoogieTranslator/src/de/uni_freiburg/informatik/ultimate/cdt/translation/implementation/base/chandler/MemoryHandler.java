@@ -2601,6 +2601,10 @@ public class MemoryHandler {
 			final Expression newStartAddressBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
 			final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
 			final CType fieldType = valueType.getFieldType(fieldId);
+			if (fieldType instanceof CArray && fieldType.isIncomplete()) {
+				// Assignment of structs ignores flexible arrays, https://en.cppreference.com/w/c/language/struct
+				continue;
+			}
 			final StructAccessExpression sae = ExpressionFactory.constructStructAccessExpression(loc, value, fieldId);
 			final Offset fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, valueType, fieldId);
 			if (fieldOffset.isBitfieldOffset()) {
