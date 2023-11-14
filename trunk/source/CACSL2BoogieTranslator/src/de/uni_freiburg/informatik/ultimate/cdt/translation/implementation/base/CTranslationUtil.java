@@ -70,7 +70,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -96,7 +95,7 @@ public class CTranslationUtil {
 		CArray currentArrayType = cArrayType;
 
 		for (int i = 0; i < arrayIndex.size(); i++) {
-			final CPrimitive currentIndexType = (CPrimitive) cArrayType.getBound().getCType().getUnderlyingType();
+			final CPrimitive currentIndexType = (CPrimitive) cArrayType.getBoundType().getUnderlyingType();
 			index[i] = typeSizes.constructLiteralForIntegerType(loc, currentIndexType,
 					new BigInteger(arrayIndex.get(i).toString()));
 
@@ -117,7 +116,7 @@ public class CTranslationUtil {
 			final Integer arrayIndex, final TypeSizes typeSizes) {
 		final CArray cArrayType = (CArray) arrayLhsToInitialize.getCType().getUnderlyingType();
 
-		final CPrimitive currentIndexType = (CPrimitive) cArrayType.getBound().getCType();
+		final CPrimitive currentIndexType = (CPrimitive) cArrayType.getBoundType();
 		final Expression index =
 				typeSizes.constructLiteralForIntegerType(loc, currentIndexType, new BigInteger(arrayIndex.toString()));
 
@@ -132,7 +131,7 @@ public class CTranslationUtil {
 	public static boolean isVarlengthArray(final CArray cArrayType, final TypeSizes typeSizes) {
 		CArray currentArrayType = cArrayType;
 		while (true) {
-			if (typeSizes.extractIntegerValue(currentArrayType.getBound()) == null) {
+			if (typeSizes.extractIntegerValue(currentArrayType.getBound(), currentArrayType.getValueType()) == null) {
 				// found a variable length bound
 				return true;
 			}
@@ -147,7 +146,7 @@ public class CTranslationUtil {
 	}
 
 	public static boolean isToplevelVarlengthArray(final CArray cArrayType, final TypeSizes typeSizes) {
-		return typeSizes.extractIntegerValue(cArrayType.getBound()) == null;
+		return typeSizes.extractIntegerValue(cArrayType.getBound(), cArrayType.getBoundType()) == null;
 	}
 
 	public static List<Integer> getConstantDimensionsOfArray(final CArray cArrayType, final TypeSizes typeSizes) {
@@ -158,8 +157,8 @@ public class CTranslationUtil {
 
 		final List<Integer> result = new ArrayList<>();
 		while (true) {
-			result.add(Integer
-					.parseUnsignedInt(typeSizes.extractIntegerValue(currentArrayType.getBound()).toString()));
+			result.add(Integer.parseUnsignedInt(typeSizes
+					.extractIntegerValue(currentArrayType.getBound(), currentArrayType.getBoundType()).toString()));
 
 			final CType valueType = currentArrayType.getValueType().getUnderlyingType();
 			if (valueType instanceof CArray) {
@@ -193,19 +192,14 @@ public class CTranslationUtil {
 	}
 
 	public static int getConstantFirstDimensionOfArray(final CArray cArrayType, final TypeSizes typeSizes) {
-		final RValue dimRVal = cArrayType.getBound();
-
-		final BigInteger extracted = typeSizes.extractIntegerValue(dimRVal);
+		if (cArrayType.isIncomplete()) {
+			throw new IllegalArgumentException("This array type is incomplete! Cannot extract actual dimensions.");
+		}
+		final BigInteger extracted = typeSizes.extractIntegerValue(cArrayType.getBound(), cArrayType.getBoundType());
 		if (extracted == null) {
 			throw new IllegalArgumentException("only call this for non-varlength first dimension types");
 		}
-
-		if (extracted.equals(BigInteger.valueOf(CArray.INCOMPLETE_ARRY_MAGIC_NUMBER))) {
-			throw new IllegalArgumentException("This array type is incomplete! Cannot extract actual dimensions.");
-		}
-
-		final int dimInt = Integer.parseUnsignedInt(extracted.toString());
-		return dimInt;
+		return Integer.parseUnsignedInt(extracted.toString());
 	}
 
 	/**

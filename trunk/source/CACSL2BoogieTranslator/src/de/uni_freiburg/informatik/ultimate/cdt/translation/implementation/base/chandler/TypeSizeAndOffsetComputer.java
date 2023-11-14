@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -207,7 +206,7 @@ public class TypeSizeAndOffsetComputer {
 
 	private SizeTValue constructSizeTValueArray(final ILocation loc, final CArray cArray) {
 		final SizeTValue valueSize = computeSize(loc, cArray.getValueType());
-		final SizeTValue factor = extractSizeTValue(cArray.getBound());
+		final SizeTValue factor = extractSizeTValue(cArray.getBound(), cArray.getBoundType());
 
 		final SizeTValue size = (new SizeTValueAggregatorMultiply()).aggregate(loc,
 				Arrays.asList(new SizeTValue[] { valueSize, factor }));
@@ -312,12 +311,12 @@ public class TypeSizeAndOffsetComputer {
 		return new Axiom(loc, new Attribute[0], isNonNegative);
 	}
 
-	private SizeTValue extractSizeTValue(final RValue rvalue) {
-		final BigInteger value = mTypeSizes.extractIntegerValue(rvalue);
+	private SizeTValue extractSizeTValue(final Expression bound, final CType boundType) {
+		final BigInteger value = mTypeSizes.extractIntegerValue(bound, boundType);
 		if (value != null) {
 			return new SizeTValueInteger(value);
 		}
-		return new SizeTValueExpression(rvalue.getValue());
+		return new SizeTValueExpression(bound);
 	}
 
 	/**

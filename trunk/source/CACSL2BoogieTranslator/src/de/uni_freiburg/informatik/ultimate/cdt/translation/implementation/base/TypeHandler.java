@@ -553,9 +553,9 @@ public class TypeHandler implements ITypeHandler {
 		final CDeclaration newCDecl = new CDeclaration(newDefiningType, oldCDecl.getName(),
 				oldCDecl.getIASTInitializer(), oldCDecl.getInitializer(), oldCDecl.isOnHeap(),
 				oldCDecl.getStorageClass(), oldCDecl.getBitfieldSize());
-		final SymbolTableValue val = new SymbolTableValue(oldStv.getBoogieName(), oldStv.getBoogieDecl(),
-				oldStv.getAstType(), newCDecl, oldStv.getDeclarationInformation(), oldStv.getDeclarationNode(),
-				oldStv.isIntFromPointer());
+		final SymbolTableValue val =
+				new SymbolTableValue(oldStv.getBoogieName(), oldStv.getBoogieDecl(), oldStv.getAstType(), newCDecl,
+						oldStv.getDeclarationInformation(), oldStv.getDeclarationNode(), oldStv.isIntFromPointer());
 		mSymboltable.storeCSymbol(hook, name, val);
 		alreadyRedirected.add(name);
 		return newDefiningType;
@@ -591,7 +591,7 @@ public class TypeHandler implements ITypeHandler {
 			 * one-element array for the index types
 			 */
 			final CArray cArrayType = (CArray) cType;
-			final ASTType indexType = cType2AstType(loc, cArrayType.getBound().getCType());
+			final ASTType indexType = cType2AstType(loc, cArrayType.getBoundType());
 			final ASTType valueType = cType2AstType(loc, cArrayType.getValueType());
 			final BoogieArrayType boogieType =
 					BoogieType.createArrayType(0, new BoogieType[] { (BoogieType) indexType.getBoogieType() },
@@ -788,8 +788,8 @@ public class TypeHandler implements ITypeHandler {
 		} else if (cType instanceof CEnum) {
 			return getBoogieTypeForCType(new CPrimitive(CPrimitives.INT));
 		} else if (cType instanceof CArray) {
-			final BoogieType[] indexTypes = new BoogieType[] {
-					getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents()) };
+			final BoogieType[] indexTypes =
+					new BoogieType[] { getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents()) };
 			final BoogieType valueType = getBoogieTypeForCType(((CArray) cType).getValueType());
 			return BoogieType.createArrayType(0, indexTypes, valueType);
 		} else if (cType instanceof CFunction) {
@@ -1087,7 +1087,10 @@ public class TypeHandler implements ITypeHandler {
 	private static boolean areMatchingTypes(final CArray type1, final CArray type2,
 			final SymmetricHashRelation<CType> visitedPairs) {
 		// if dimensions dont match, array dont match
-		if (!type1.getBound().toString().equals(type2.getBound().toString())) {
+		if (type1.isIncomplete() != type2.isIncomplete()) {
+			return false;
+		}
+		if (!type1.isIncomplete() && !type1.getBound().toString().equals(type2.getBound().toString())) {
 			return false;
 		}
 		// compare value types

@@ -456,7 +456,8 @@ public class ExpressionResultTransformer {
 					"we need to generalize this to nested and/or variable length arrays");
 		}
 
-		final BigInteger boundBigInteger = mTypeSizes.extractIntegerValue(arrayType.getBound());
+		final BigInteger boundBigInteger =
+				mTypeSizes.extractIntegerValue(arrayType.getBound(), arrayType.getBoundType());
 		if (boundBigInteger == null) {
 			throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
 		}

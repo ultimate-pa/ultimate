@@ -1052,7 +1052,7 @@ public class InitializationHandler {
 			}
 			final CArray cArray = (CArray) cType;
 			final long innerCount = countNumberOfPrimitiveElementInType(cArray.getValueType(), hook);
-			final BigInteger boundBig = mTypeSizes.extractIntegerValue(cArray.getBound());
+			final BigInteger boundBig = mTypeSizes.extractIntegerValue(cArray.getBound(), cArray.getBoundType());
 			final long bound = boundBig.longValueExact();
 			return innerCount * bound;
 		}

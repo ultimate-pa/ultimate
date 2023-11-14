@@ -1175,6 +1175,8 @@ public class CHandler {
 			// the innermost type is the value type..
 			CType arrayType = resType.getCType();
 
+			final CPrimitive arrayIndexCtype = mTypeSizes.getSizeT();
+
 			// expression results of from array modifiers
 			final ArrayList<ExpressionResult> expressionResults = new ArrayList<>();
 
@@ -1182,7 +1184,8 @@ public class CHandler {
 					Arrays.asList(arrDecl.getArrayModifiers()).listIterator(arrDecl.getArrayModifiers().length);
 			while (it.hasPrevious()) {
 				final IASTArrayModifier am = it.previous();
-				final RValue sizeFactor;
+				final Expression bound;
+				final CType boundType;
 				if (am.getConstantExpression() != null) {
 					// case where we have a number between the brackets,
 					// e.g., a[23] or a[n+1]
@@ -1191,7 +1194,9 @@ public class CHandler {
 					final ExpressionResult converted =
 							mExpressionTranslation.convertIntToInt(loc, switched, mTypeSizes.getSizeT());
 					expressionResults.add(converted);
-					sizeFactor = (RValue) converted.getLrValue();
+					final RValue rValue = (RValue) converted.getLrValue();
+					bound = rValue.getValue();
+					boundType = rValue.getCType();
 				} else if (am.getConstantExpression() == null
 						&& arrDecl.getArrayModifiers()[arrDecl.getArrayModifiers().length - 1] == am) {
 					// the innermost array modifier may be empty, if there is an initializer; like
@@ -1202,6 +1207,9 @@ public class CHandler {
 							throw new UnsupportedOperationException("expected IASTEqualsInitializer");
 						}
 						intSizeFactor = computeSizeOfInitializer((IASTEqualsInitializer) arrDecl.getInitializer());
+						bound = mTypeSizes.constructLiteralForIntegerType(loc, arrayIndexCtype,
+								BigInteger.valueOf(intSizeFactor));
+						boundType = arrayIndexCtype;
 					} else if (resType.getCType() instanceof CFunction) {
 						// if we have an array of function pointers,
 						// the initializer is stored in the parent node
@@ -1214,26 +1222,20 @@ public class CHandler {
 							throw new UnsupportedOperationException("expected initializer");
 						}
 						intSizeFactor = computeSizeOfInitializer((IASTEqualsInitializer) fundecl.getInitializer());
+						bound = mTypeSizes.constructLiteralForIntegerType(loc, arrayIndexCtype,
+								BigInteger.valueOf(intSizeFactor));
+						boundType = arrayIndexCtype;
 					} else {
 						// we have an incomplete array type without an initializer --
-						// this may happen in a function parameter..
-						intSizeFactor = CArray.INCOMPLETE_ARRY_MAGIC_NUMBER;
+						// this may happen in a function parameter or as a flexible array in structs
+						bound = null;
+						boundType = arrayIndexCtype;
 					}
-					// Index type of the array. All C expressions that access the array are
-					// converted to this type.
-					// In the past we wanted a type that is large enough for the
-					// CArray.INCOMPLETE_ARRY_MAGIC_NUMBER.
-					// If we work with an unsigned type for pointer components we have to rethink
-					// the use of the magic number.
-					final CPrimitive arrayIndexCtype = mTypeSizes.getSizeT();
-					final Expression sizeExpression = mTypeSizes.constructLiteralForIntegerType(loc, arrayIndexCtype,
-							BigInteger.valueOf(intSizeFactor));
-					sizeFactor = new RValue(sizeExpression, arrayIndexCtype, false, false);
 
 				} else {
 					throw new IncorrectSyntaxException(loc, "wrong array type in declaration");
 				}
-				arrayType = new CArray(sizeFactor, arrayType);
+				arrayType = new CArray(bound, boundType, arrayType);
 			}
 			final ExpressionResult allResults = new ExpressionResultBuilder()
 					.addAllExceptLrValue(expressionResults.toArray(new ExpressionResult[expressionResults.size()]))
@@ -1963,8 +1965,8 @@ public class CHandler {
 		final Expression sizeInBytesExpr = mTypeSizes.constructLiteralForIntegerType(actualLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(sizeInBytes));
 
-		final RValue dimension = new RValue(sizeInBytesExpr, mExpressionTranslation.getCTypeOfPointerComponents());
-		final CArray arrayType = new CArray(dimension, new CPrimitive(CPrimitives.CHAR));
+		final CArray arrayType = new CArray(sizeInBytesExpr, mExpressionTranslation.getCTypeOfPointerComponents(),
+				new CPrimitive(CPrimitives.CHAR));
 		final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 
 		final AuxVarInfo auxvar;

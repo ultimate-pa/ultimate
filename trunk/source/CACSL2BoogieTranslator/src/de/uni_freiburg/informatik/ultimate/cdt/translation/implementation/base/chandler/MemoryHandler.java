@@ -2548,7 +2548,7 @@ public class MemoryHandler {
 					"we need to generalize this to nested and/or variable length arrays");
 		}
 
-		final BigInteger dimBigInteger = mTypeSizes.extractIntegerValue(valueType.getBound());
+		final BigInteger dimBigInteger = mTypeSizes.extractIntegerValue(valueType.getBound(), valueType.getBoundType());
 		if (dimBigInteger == null) {
 			throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
 		}

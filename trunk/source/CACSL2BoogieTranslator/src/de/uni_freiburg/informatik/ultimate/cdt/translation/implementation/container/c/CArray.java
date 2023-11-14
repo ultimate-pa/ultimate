@@ -31,7 +31,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
-import java.math.BigInteger;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 
 /**
  * @author Markus Lindenmann
@@ -48,17 +47,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
 public class CArray extends CType {
-
-	/**
-	 * Size that we use to indicate that an array has a variable length.
-	 */
-	public static final int INCOMPLETE_ARRY_MAGIC_NUMBER = -1234567;
-
 	/**
 	 * Array bound. Note that we use nesting of array types for multidimensional array types
 	 */
-	private final RValue mBound;
-
+	private final Expression mBound;
+	private final CType mBoundType;
 	private final CType mValueType;
 
 	/**
@@ -71,18 +64,23 @@ public class CArray extends CType {
 	 * @param cDeclSpec
 	 *            the C declaration used.
 	 */
-	public CArray(final RValue bound, final CType valueType) {
+	public CArray(final Expression bound, final CType boundType, final CType valueType) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
 		super(false, false, false, false, false);
 		mBound = bound;
+		mBoundType = boundType;
 		mValueType = valueType;
 	}
 
 	/**
 	 * @return the dimensions
 	 */
-	public RValue getBound() {
+	public Expression getBound() {
 		return mBound;
+	}
+
+	public CType getBoundType() {
+		return mBoundType;
 	}
 
 	/**
@@ -97,7 +95,7 @@ public class CArray extends CType {
 		final StringBuilder id = new StringBuilder("ARRAY#");
 		final StringBuilder dimString = new StringBuilder("_");
 
-		final Expression dim = mBound.getValue();
+		final Expression dim = mBound;
 		if (dim instanceof BinaryExpression || dim instanceof UnaryExpression) {
 			// 2015-11-08 Matthias: Use C representation or introduce a factory
 			// for types.
@@ -127,59 +125,32 @@ public class CArray extends CType {
 		if (o instanceof CPrimitive && ((CPrimitive) o).getType() == CPrimitives.VOID) {
 			return true;
 		}
-
-		final CType oType = o.getUnderlyingType();
-		if (!(oType instanceof CArray)) {
-			return false;
-		}
-
-		final CArray oArr = (CArray) oType;
-		if (!mValueType.isCompatibleWith(oArr.mValueType)) {
-			return false;
-		}
-		if (!mBound.equals(oArr.mBound)) {
-			return false;
-		}
-
-		return true;
+		return equals(o.getUnderlyingType());
 	}
 
 	@Override
 	public boolean isIncomplete() {
-		final BigInteger boundValue = CTranslationUtil.extractIntegerValue(mBound.getValue());
-		if (boundValue == null) {
-			return true;
-		}
-		return BigInteger.valueOf(INCOMPLETE_ARRY_MAGIC_NUMBER).equals(boundValue);
+		return mBound == null || CTranslationUtil.extractIntegerValue(mBound) == null;
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((mBound == null) ? 0 : mBound.hashCode());
-		result = prime * result + ((mValueType == null) ? 0 : mValueType.hashCode());
+		result = prime * result + Objects.hash(mBound, mBoundType, mValueType);
 		return result;
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (!(o instanceof CType)) {
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!super.equals(obj) || getClass() != obj.getClass()) {
 			return false;
 		}
-		final CType oType = ((CType) o).getUnderlyingType();
-		if (!(oType instanceof CArray)) {
-			return false;
-		}
-
-		final CArray oArr = (CArray) oType;
-		if (!mValueType.equals(oArr.mValueType)) {
-			return false;
-		}
-		if (!mBound.equals(oArr.mBound)) {
-			return false;
-		}
-
-		return true;
+		final CArray other = (CArray) obj;
+		return Objects.equals(mBound, other.mBound) && Objects.equals(mBoundType, other.mBoundType)
+				&& Objects.equals(mValueType, other.mValueType);
 	}
 }
