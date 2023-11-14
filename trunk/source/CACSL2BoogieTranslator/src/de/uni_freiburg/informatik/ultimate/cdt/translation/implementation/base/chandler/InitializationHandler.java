@@ -414,6 +414,10 @@ public class InitializationHandler {
 				obtainLhsToInitialize(loc, lhsIfAny, cStructType, onHeap, initialization);
 
 		for (int i = 0; i < cStructType.getFieldCount(); i++) {
+			final CType currentFieldUnderlyingType = cStructType.getFieldTypes()[i].getUnderlyingType();
+			if (currentFieldUnderlyingType instanceof CArray && currentFieldUnderlyingType.isIncomplete()) {
+				continue;
+			}
 
 			if (CStructOrUnion.isUnion(cStructType) && onHeap && !initInfo.hasInitInfoForIndex(i)) {
 				// in on-heap case: skip assignments to fields of unions except for the one that is really written
@@ -433,7 +437,6 @@ public class InitializationHandler {
 
 			final ExpressionResult currentFieldInitialization;
 			{
-				final CType currentFieldUnderlyingType = cStructType.getFieldTypes()[i].getUnderlyingType();
 				final InitializerInfo currentFieldInitializerRawIfAny =
 						initInfo.hasInitInfoForIndex(i) ? initInfo.getInitInfoForIndex(i) : null;
 
