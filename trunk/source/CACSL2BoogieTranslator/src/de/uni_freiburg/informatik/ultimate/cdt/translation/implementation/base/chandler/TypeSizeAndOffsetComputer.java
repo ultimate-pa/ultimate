@@ -235,7 +235,7 @@ public class TypeSizeAndOffsetComputer {
 		if (mStructOffsets.containsKey(cStruct)) {
 			throw new AssertionError("must not be computed");
 		}
-		final int fieldCount = cStruct.getFieldCount();
+		int fieldCount = cStruct.getFieldCount();
 		final Offset[] offsets = new Offset[fieldCount];
 		mStructOffsets.put(cStruct, offsets);
 		if (fieldCount == 0) {
@@ -261,6 +261,12 @@ public class TypeSizeAndOffsetComputer {
 				fieldTypeSizes[i] = computeOffsetOfNextByte(offsets[i], fieldType, loc);
 			}
 			return new SizeTValueAggregatorMax().aggregate(loc, Arrays.asList(fieldTypeSizes));
+		}
+		// If the last member of a struct is a flexible (i.e. incomplete) array, ignore it for sizeof.
+		// See https://en.cppreference.com/w/c/language/struct
+		final CType lastType = cStruct.getFieldTypes()[fieldCount - 1];
+		if (lastType instanceof CArray && lastType.isIncomplete()) {
+			fieldCount--;
 		}
 		for (int i = 0; i < fieldCount; i++) {
 			final int bitsize;
