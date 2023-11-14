@@ -1030,7 +1030,7 @@ public class InitializationHandler {
 				return BigInteger.ZERO;
 			}
 			final BigInteger innerCount = countNumberOfPrimitiveElementInType(cArray.getValueType(), hook);
-			final BigInteger bound = mTypeSizes.extractIntegerValue(cArray.getBound());
+			final BigInteger bound = mTypeSizes.extractIntegerValue(cArray.getBound(), cArray.getBoundType());
 			return innerCount.multiply(bound);
 		}
 		throw new AssertionError("Cannot count the primitive elements in type " + cType.getClass().getSimpleName());

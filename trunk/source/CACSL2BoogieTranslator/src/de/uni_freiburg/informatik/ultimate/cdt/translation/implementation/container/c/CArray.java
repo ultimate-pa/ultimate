@@ -31,7 +31,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
-import java.math.BigInteger;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -40,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 
 /**
  * Array type (see C11 6.2.5.20.1)
@@ -50,17 +48,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
 public final class CArray implements ICType {
-
-	/**
-	 * Size that we use to indicate that an array has a variable length.
-	 */
-	public static final int INCOMPLETE_ARRY_MAGIC_NUMBER = -1234567;
-
 	/**
 	 * Array bound. Note that we use nesting of array types for multidimensional array types
 	 */
-	private final RValue mBound;
-
+	private final Expression mBound;
+	private final ICType mBoundType;
 	private final ICType mValueType;
 
 	/**
@@ -71,16 +63,21 @@ public final class CArray implements ICType {
 	 * @param valueType
 	 *            the type of the array.
 	 */
-	public CArray(final RValue bound, final ICType valueType) {
+	public CArray(final Expression bound, final ICType boundType, final ICType valueType) {
 		mBound = bound;
+		mBoundType = boundType;
 		mValueType = valueType;
 	}
 
 	/**
 	 * @return the dimensions
 	 */
-	public RValue getBound() {
+	public Expression getBound() {
 		return mBound;
+	}
+
+	public ICType getBoundType() {
+		return mBoundType;
 	}
 
 	/**
@@ -95,7 +92,7 @@ public final class CArray implements ICType {
 		final StringBuilder id = new StringBuilder("ARRAY#");
 		final StringBuilder dimString = new StringBuilder("_");
 
-		final Expression dim = mBound.getValue();
+		final Expression dim = mBound;
 		if (dim instanceof BinaryExpression || dim instanceof UnaryExpression) {
 			// 2015-11-08 Matthias: Use C representation or introduce a factory
 			// for types.
@@ -122,16 +119,12 @@ public final class CArray implements ICType {
 
 	@Override
 	public boolean isIncomplete() {
-		final BigInteger boundValue = CTranslationUtil.extractIntegerValue(mBound.getValue());
-		if (boundValue == null) {
-			return true;
-		}
-		return BigInteger.valueOf(INCOMPLETE_ARRY_MAGIC_NUMBER).equals(boundValue);
+		return mBound == null || CTranslationUtil.extractIntegerValue(mBound) == null;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mBound, mValueType);
+		return Objects.hash(mBound, mBoundType, mValueType);
 	}
 
 	@Override
@@ -139,11 +132,12 @@ public final class CArray implements ICType {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null || getClass() != obj.getClass()) {
+		if (!super.equals(obj) || getClass() != obj.getClass()) {
 			return false;
 		}
 		final CArray other = (CArray) obj;
-		return Objects.equals(mBound, other.mBound) && Objects.equals(mValueType, other.mValueType);
+		return Objects.equals(mBound, other.mBound) && Objects.equals(mBoundType, other.mBoundType)
+				&& Objects.equals(mValueType, other.mValueType);
 	}
 
 	@Override

@@ -553,7 +553,7 @@ public class TypeHandler implements ITypeHandler {
 			 * note: we are using nested Boogie array types (thus the Boogie ArrayType we use will always have a
 			 * one-element array for the index types
 			 */
-			final ASTType indexType = cType2AstType(loc, cArrayType.getBound().getCType());
+			final ASTType indexType = cType2AstType(loc, cArrayType.getBoundType());
 			final ASTType valueType = cType2AstType(loc, cArrayType.getValueType());
 			final BoogieArrayType boogieType =
 					BoogieType.createArrayType(0, new BoogieType[] { (BoogieType) indexType.getBoogieType() },

@@ -182,13 +182,14 @@ public class ArrayHandler {
 			// current index.
 			final LeftHandSide oldInnerArrayLHS = ((LocalLValue) leftlrValue).getLhs();
 
-			final RValue bound = lhsArrayType.getBound();
+			final Expression bound = lhsArrayType.getBound();
+			final ICType boundType = lhsArrayType.getBoundType();
 
 			// The following is not in the standard, since there everything
 			// is defined via pointers. However, we have to make the subscript
 			// compatible to the type of the dimension of the array
 			final ExpressionResult convertedSubscript =
-					mExpressionTranslation.convertIntToInt(loc, subscript, (CPrimitive) bound.getCType());
+					mExpressionTranslation.convertIntToInt(loc, subscript, (CPrimitive) boundType);
 			final RValue index = (RValue) convertedSubscript.getLrValue();
 			final ArrayLHS newInnerArrayLHS;
 			if (oldInnerArrayLHS instanceof ArrayLHS) {
@@ -207,7 +208,7 @@ public class ArrayHandler {
 			final LocalLValue lValue = new LocalLValue(newInnerArrayLHS, resultCType, false, false, null);
 			result.addAllExceptLrValue(array, convertedSubscript);
 			result.setLrValue(lValue);
-			addArrayBoundsCheckForCurrentIndex(loc, index, bound, result);
+			addArrayBoundsCheckForCurrentIndex(loc, index, bound, boundType, result);
 			return result.build();
 		}
 		if (leftlrValue instanceof RValue) {
@@ -242,11 +243,13 @@ public class ArrayHandler {
 	 *            {@link Expression} that represents the dimension that corresponds to the index
 	 */
 	private void addArrayBoundsCheckForCurrentIndex(final ILocation loc, final RValue currentIndex,
-			final RValue currentDimension, final ExpressionResultBuilder exprResult) {
+			final Expression currentDimension, final ICType currentBoundType,
+			final ExpressionResultBuilder exprResult) {
 		if (mSettings.checkPointerDerefValidity() == CheckMode.IGNORE) {
 			// do not check anything
 			return;
 		}
+
 		final Expression inRange;
 		// 2015-09-21 Matthias:
 		// This check will fail in the bitvector translation if the typesize
@@ -260,8 +263,8 @@ public class ArrayHandler {
 		final Expression nonNegative = mExpressionTranslation.constructBinaryComparisonExpression(loc,
 				IASTBinaryExpression.op_lessEqual, zero, indexType, currentIndex.getValue(), indexType);
 		final Expression notTooBig = mExpressionTranslation.constructBinaryComparisonExpression(loc,
-				IASTBinaryExpression.op_lessThan, currentIndex.getValue(), indexType, currentDimension.getValue(),
-				(CPrimitive) currentDimension.getCType().getUnderlyingType());
+				IASTBinaryExpression.op_lessThan, currentIndex.getValue(), indexType, currentDimension,
+				(CPrimitive) currentBoundType.getUnderlyingType());
 		inRange = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, nonNegative, notTooBig);
 		switch (mSettings.checkPointerDerefValidity()) {
 		case CHECK:
