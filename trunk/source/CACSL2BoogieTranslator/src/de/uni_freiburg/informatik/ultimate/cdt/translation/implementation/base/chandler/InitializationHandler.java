@@ -1035,11 +1035,6 @@ public class InitializationHandler {
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
 			return 1;
 		}
-		if (cType.isIncomplete()) {
-			// TODO: What should we return here? This can happen, if there is an incomplete array inside of a struct.
-			// The actual return value is not "that" important, it is just used for the const array heuristics.
-			return 0;
-		}
 		if (cType instanceof CStructOrUnion) {
 			if (CStructOrUnion.isUnion(cType)) {
 				return 1;
@@ -1048,6 +1043,10 @@ public class InitializationHandler {
 					.mapToLong(t -> countNumberOfPrimitiveElementInType(t, hook)).sum();
 		}
 		if (cType instanceof CArray) {
+			if (cType.isIncomplete()) {
+				// An incomplete array can be the last member of a struct. It is not copied, so we return 0 here.
+				return 0;
+			}
 			final CArray cArray = (CArray) cType;
 			final long innerCount = countNumberOfPrimitiveElementInType(cArray.getValueType(), hook);
 			final BigInteger boundBig = mTypeSizes.extractIntegerValue(cArray.getBound());
