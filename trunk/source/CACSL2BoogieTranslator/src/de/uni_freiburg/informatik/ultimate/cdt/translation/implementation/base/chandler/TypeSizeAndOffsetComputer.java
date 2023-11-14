@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
@@ -43,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -144,33 +144,15 @@ public class TypeSizeAndOffsetComputer {
 	private Expression constructTypeSizeConstant(final ILocation loc, final CType cType) {
 		final String id = SFO.SIZEOF + cType.toString();
 		declareConstant(loc, id);
-		final IdentifierExpression idexpr = // new IdentifierExpression(loc, id);
-				ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, id,
-						DeclarationInformation.DECLARATIONINFO_GLOBAL);
-		return idexpr;
+		return ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, id,
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 	private Expression constructTypeSizeConstant_Pointer(final ILocation loc) {
 		final String id = SFO.SIZEOF + SFO.POINTER;
 		declareConstant(loc, id);
-		final IdentifierExpression idexpr = // new IdentifierExpression(loc, id);
-				ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, id,
-						DeclarationInformation.DECLARATIONINFO_GLOBAL);
-		return idexpr;
-	}
-
-	/**
-	 * Construct Expression that represents the field of a struct or union.
-	 */
-	private Expression constructTypeSizeConstantForStructField(final ILocation loc, final CStructOrUnion cStruct,
-			final int fieldNumber) {
-		final String fieldId = cStruct.getFieldIds()[fieldNumber];
-		final String resultId = SFO.OFFSET + cStruct.toString() + "~" + fieldId;
-		declareConstant(loc, resultId);
-		final Expression result = // new IdentifierExpression(loc, resultId);
-				ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, resultId,
-						DeclarationInformation.DECLARATIONINFO_GLOBAL);
-		return result;
+		return ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, id,
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 	private void declareConstant(final ILocation loc, final String id) {
@@ -184,64 +166,60 @@ public class TypeSizeAndOffsetComputer {
 		final CType underlyingType = cType.getUnderlyingType();
 		if (underlyingType instanceof CPointer) {
 			if (mTypeSizePointer == null) {
-				mTypeSizePointer = constructSizeTValue_Pointer(loc);
+				mTypeSizePointer = constructSizeTValuePointer(loc);
 			}
 			return mTypeSizePointer;
-		} else if (underlyingType instanceof CEnum) {
+		}
+		if (underlyingType instanceof CEnum) {
 			// an Enum contains constants of type int
 			return computeSize(loc, new CPrimitive(CPrimitives.INT));
-		} else {
-			SizeTValue sizeTValue = mTypeSizeCache.get(underlyingType);
-			if (sizeTValue == null) {
-				if (underlyingType instanceof CPrimitive) {
-					sizeTValue = constructSizeTValue_Primitive(loc, (CPrimitive) underlyingType);
-				} else if (underlyingType instanceof CArray) {
-					sizeTValue = constructSizeTValue_Array(loc, (CArray) underlyingType);
-				} else if (underlyingType instanceof CStructOrUnion) {
-					sizeTValue = constructSizeTValueAndOffsets_StructAndUnion(loc, (CStructOrUnion) underlyingType);
-				} else if (underlyingType instanceof CFunction) {
-					// https://gcc.gnu.org/onlinedocs/gcc/Pointer-Arith.html
-					sizeTValue = new SizeTValue_Integer(BigInteger.ONE);
-				} else {
-					throw new UnsupportedOperationException("Unsupported type" + underlyingType);
-				}
-				mTypeSizeCache.put(underlyingType, sizeTValue);
-			}
-			return sizeTValue;
 		}
+		SizeTValue sizeTValue = mTypeSizeCache.get(underlyingType);
+		if (sizeTValue == null) {
+			if (underlyingType instanceof CPrimitive) {
+				sizeTValue = constructSizeTValuePrimitive(loc, (CPrimitive) underlyingType);
+			} else if (underlyingType instanceof CArray) {
+				sizeTValue = constructSizeTValueArray(loc, (CArray) underlyingType);
+			} else if (underlyingType instanceof CStructOrUnion) {
+				sizeTValue = constructSizeTValueAndOffsetsStructAndUnion(loc, (CStructOrUnion) underlyingType);
+			} else if (underlyingType instanceof CFunction) {
+				// https://gcc.gnu.org/onlinedocs/gcc/Pointer-Arith.html
+				sizeTValue = new SizeTValueInteger(BigInteger.ONE);
+			} else {
+				throw new UnsupportedOperationException("Unsupported type" + underlyingType);
+			}
+			mTypeSizeCache.put(underlyingType, sizeTValue);
+		}
+		return sizeTValue;
 	}
 
-	private SizeTValue constructSizeTValue_Primitive(final ILocation loc, final CPrimitive cPrimitive) {
-		final SizeTValue result;
+	private SizeTValue constructSizeTValuePrimitive(final ILocation loc, final CPrimitive cPrimitive) {
 		if (mTypeSizes.useFixedTypeSizes()) {
 			final int size = mTypeSizes.getSize(cPrimitive.getType());
-			result = new SizeTValue_Integer(BigInteger.valueOf(size));
-		} else {
-			final Expression sizeConstant = constructTypeSizeConstant(loc, cPrimitive);
-			result = new SizeTValue_Expression(sizeConstant);
-			final Axiom axiom = constructNonNegativeAxiom(loc, sizeConstant);
-			mAxioms.add(axiom);
+			return new SizeTValueInteger(BigInteger.valueOf(size));
 		}
+		final Expression sizeConstant = constructTypeSizeConstant(loc, cPrimitive);
+		final SizeTValue result = new SizeTValueExpression(sizeConstant);
+		final Axiom axiom = constructNonNegativeAxiom(loc, sizeConstant);
+		mAxioms.add(axiom);
 		return result;
 	}
 
-	private SizeTValue constructSizeTValue_Array(final ILocation loc, final CArray cArray) {
+	private SizeTValue constructSizeTValueArray(final ILocation loc, final CArray cArray) {
 		final SizeTValue valueSize = computeSize(loc, cArray.getValueType());
 		final SizeTValue factor = extractSizeTValue(cArray.getBound());
 
-		final SizeTValue size = (new SizeTValueAggregator_Multiply()).aggregate(loc,
+		final SizeTValue size = (new SizeTValueAggregatorMultiply()).aggregate(loc,
 				Arrays.asList(new SizeTValue[] { valueSize, factor }));
-		final SizeTValue result;
-		if (mPreferConstantsOverValues) {
-			final Expression sizeConstant = constructTypeSizeConstant(loc, cArray);
-			result = new SizeTValue_Expression(sizeConstant);
-			final Expression equality = mExpressionTranslation.constructBinaryComparisonExpression(loc,
-					IASTBinaryExpression.op_equals, sizeConstant, getSizeT(), size.asExpression(loc), getSizeT());
-			final Axiom axiom = new Axiom(loc, new Attribute[0], equality);
-			mAxioms.add(axiom);
-		} else {
-			result = size;
+		if (!mPreferConstantsOverValues) {
+			return size;
 		}
+		final Expression sizeConstant = constructTypeSizeConstant(loc, cArray);
+		final SizeTValue result = new SizeTValueExpression(sizeConstant);
+		final Expression equality = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_equals, sizeConstant, getSizeT(), size.asExpression(loc), getSizeT());
+		final Axiom axiom = new Axiom(loc, new Attribute[0], equality);
+		mAxioms.add(axiom);
 		return result;
 	}
 
@@ -249,7 +227,7 @@ public class TypeSizeAndOffsetComputer {
 	 * Returns the size of a CStructOrUnion and as a side-effects computes the {@link Offset}s for each member to the
 	 * {@code mStructOffsets} array.
 	 */
-	private SizeTValue constructSizeTValueAndOffsets_StructAndUnion(final ILocation loc, final CStructOrUnion cStruct) {
+	private SizeTValue constructSizeTValueAndOffsetsStructAndUnion(final ILocation loc, final CStructOrUnion cStruct) {
 		if (cStruct.isIncomplete()) {
 			// according to C11 6.5.3.4.1
 			throw new IllegalArgumentException("cannot determine size of incomplete type");
@@ -257,72 +235,65 @@ public class TypeSizeAndOffsetComputer {
 		if (mStructOffsets.containsKey(cStruct)) {
 			throw new AssertionError("must not be computed");
 		}
-		final Offset[] offsets = new Offset[cStruct.getFieldCount()];
+		final int fieldCount = cStruct.getFieldCount();
+		final Offset[] offsets = new Offset[fieldCount];
 		mStructOffsets.put(cStruct, offsets);
-		final SizeTValue result;
-		if (cStruct.getFieldCount() == 0) {
-			result = new SizeTValue_Integer(BigInteger.ZERO);
-		} else {
-			if (cStruct.isStructOrUnion() == StructOrUnion.UNION) {
-				final SizeTValue[] fieldTypeSizes = new SizeTValue[cStruct.getFieldCount()];
-				for (int i = 0; i < cStruct.getFieldCount(); i++) {
-					final CType fieldType = cStruct.getFieldTypes()[i];
-					final int bitsize;
-					if (mBitPreciseBitfields) {
-						bitsize = cStruct.getBitFieldWidths().get(i);
-					} else {
-						bitsize = -1;
-					}
-					final int startBit;
-					if (bitsize == -1) {
-						startBit = -1;
-					} else {
-						startBit = 0;
-					}
-					offsets[i] = new Offset(new SizeTValue_Integer(BigInteger.ZERO), startBit, bitsize);
-					fieldTypeSizes[i] = computeOffsetOfNextByte(offsets[i], fieldType, loc);
+		if (fieldCount == 0) {
+			return new SizeTValueInteger(BigInteger.ZERO);
+		}
+		if (cStruct.isStructOrUnion() == StructOrUnion.UNION) {
+			final SizeTValue[] fieldTypeSizes = new SizeTValue[fieldCount];
+			for (int i = 0; i < fieldCount; i++) {
+				final CType fieldType = cStruct.getFieldTypes()[i];
+				final int bitsize;
+				if (mBitPreciseBitfields) {
+					bitsize = cStruct.getBitFieldWidths().get(i);
+				} else {
+					bitsize = -1;
 				}
-				result = new SizeTValueAggregator_Max().aggregate(loc, Arrays.asList(fieldTypeSizes));
+				final int startBit;
+				if (bitsize == -1) {
+					startBit = -1;
+				} else {
+					startBit = 0;
+				}
+				offsets[i] = new Offset(new SizeTValueInteger(BigInteger.ZERO), startBit, bitsize);
+				fieldTypeSizes[i] = computeOffsetOfNextByte(offsets[i], fieldType, loc);
+			}
+			return new SizeTValueAggregatorMax().aggregate(loc, Arrays.asList(fieldTypeSizes));
+		}
+		for (int i = 0; i < fieldCount; i++) {
+			final int bitsize;
+			if (mBitPreciseBitfields) {
+				bitsize = cStruct.getBitFieldWidths().get(i);
 			} else {
-				for (int i = 0; i < cStruct.getFieldCount(); i++) {
-					final int bitsize;
-					if (mBitPreciseBitfields) {
-						bitsize = cStruct.getBitFieldWidths().get(i);
-					} else {
-						bitsize = -1;
-					}
-					final int startBit;
-					if (i == 0) {
-						if (bitsize == -1) {
-							startBit = -1;
-						} else {
-							startBit = 0;
-						}
-						offsets[i] = new Offset(new SizeTValue_Integer(BigInteger.ZERO), startBit, bitsize);
-					} else {
-						offsets[i] = computeMemberOffset(offsets[i - 1], cStruct.getFieldTypes()[i - 1], bitsize,
-								loc);
-					}
+				bitsize = -1;
+			}
+			final int startBit;
+			if (i == 0) {
+				if (bitsize == -1) {
+					startBit = -1;
+				} else {
+					startBit = 0;
 				}
-				final int lastPosition = cStruct.getFieldCount()-1;
-				result = computeOffsetOfNextByte(offsets[lastPosition], cStruct.getFieldTypes()[lastPosition], loc);
+				offsets[i] = new Offset(new SizeTValueInteger(BigInteger.ZERO), startBit, bitsize);
+			} else {
+				offsets[i] = computeMemberOffset(offsets[i - 1], cStruct.getFieldTypes()[i - 1], bitsize, loc);
 			}
 		}
-		mTypeSizeCache.put(cStruct, result);
-		return result;
+		final int lastPosition = fieldCount - 1;
+		return computeOffsetOfNextByte(offsets[lastPosition], cStruct.getFieldTypes()[lastPosition], loc);
 	}
 
-	private SizeTValue constructSizeTValue_Pointer(final ILocation loc) {
-		final SizeTValue result;
+	private SizeTValue constructSizeTValuePointer(final ILocation loc) {
 		if (mTypeSizes.useFixedTypeSizes()) {
 			final int size = mTypeSizes.getSizeOfPointer();
-			result = new SizeTValue_Integer(BigInteger.valueOf(size));
-		} else {
-			final Expression sizeConstant = constructTypeSizeConstant_Pointer(loc);
-			result = new SizeTValue_Expression(sizeConstant);
-			final Axiom axiom = constructNonNegativeAxiom(loc, sizeConstant);
-			mAxioms.add(axiom);
+			return new SizeTValueInteger(BigInteger.valueOf(size));
 		}
+		final Expression sizeConstant = constructTypeSizeConstant_Pointer(loc);
+		final SizeTValue result = new SizeTValueExpression(sizeConstant);
+		final Axiom axiom = constructNonNegativeAxiom(loc, sizeConstant);
+		mAxioms.add(axiom);
 		return result;
 	}
 
@@ -330,16 +301,15 @@ public class TypeSizeAndOffsetComputer {
 		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc, getSizeT(), BigInteger.ZERO);
 		final Expression isNonNegative = mExpressionTranslation.constructBinaryComparisonExpression(loc,
 				IASTBinaryExpression.op_greaterEqual, sizeConstant, getSizeT(), zero, getSizeT());
-		final Axiom axiom = new Axiom(loc, new Attribute[0], isNonNegative);
-		return axiom;
+		return new Axiom(loc, new Attribute[0], isNonNegative);
 	}
 
 	private SizeTValue extractSizeTValue(final RValue rvalue) {
 		final BigInteger value = mTypeSizes.extractIntegerValue(rvalue);
 		if (value != null) {
-			return new SizeTValue_Integer(value);
+			return new SizeTValueInteger(value);
 		}
-		return new SizeTValue_Expression(rvalue.getValue());
+		return new SizeTValueExpression(rvalue.getValue());
 	}
 
 	/**
@@ -349,11 +319,11 @@ public class TypeSizeAndOffsetComputer {
 		return mTypeSizes.getSizeT();
 	}
 
-	public LinkedHashSet<ConstDeclaration> getConstants() {
+	public Set<ConstDeclaration> getConstants() {
 		return mConstants;
 	}
 
-	public LinkedHashSet<Axiom> getAxioms() {
+	public Set<Axiom> getAxioms() {
 		return mAxioms;
 	}
 
@@ -361,15 +331,15 @@ public class TypeSizeAndOffsetComputer {
 
 		public SizeTValue aggregate(final ILocation loc, final List<SizeTValue> values) {
 			if (values.isEmpty()) {
-				return new SizeTValue_Integer(resultForZeroOperandCase());
+				return new SizeTValueInteger(resultForZeroOperandCase());
 			}
 			final LinkedList<SizeTValue> tmpValues = new LinkedList<>(values);
 			BigInteger aggregatedIntegers = null;
 			final Iterator<SizeTValue> it = tmpValues.iterator();
 			while (it.hasNext()) {
 				final SizeTValue current = it.next();
-				if (current instanceof SizeTValue_Integer) {
-					final BigInteger currentInteger = ((SizeTValue_Integer) current).getInteger();
+				if (current instanceof SizeTValueInteger) {
+					final BigInteger currentInteger = ((SizeTValueInteger) current).getInteger();
 					if (aggregatedIntegers == null) {
 						aggregatedIntegers = currentInteger;
 					} else {
@@ -379,10 +349,10 @@ public class TypeSizeAndOffsetComputer {
 				}
 			}
 			if (tmpValues.isEmpty()) {
-				return new SizeTValue_Integer(aggregatedIntegers);
+				return new SizeTValueInteger(aggregatedIntegers);
 			}
 			if (aggregatedIntegers != null) {
-				tmpValues.add(new SizeTValue_Integer(aggregatedIntegers));
+				tmpValues.add(new SizeTValueInteger(aggregatedIntegers));
 			}
 			if (tmpValues.size() == 1) {
 				return tmpValues.getFirst();
@@ -398,7 +368,7 @@ public class TypeSizeAndOffsetComputer {
 				final Expression expr = value.asExpression(loc);
 				aggregatedExpressions = aggregateExpressions(loc, aggregatedExpressions, expr);
 			}
-			return new SizeTValue_Expression(aggregatedExpressions);
+			return new SizeTValueExpression(aggregatedExpressions);
 		}
 
 		protected abstract Expression aggregateExpressions(ILocation loc, Expression op1, Expression op2);
@@ -408,7 +378,7 @@ public class TypeSizeAndOffsetComputer {
 		protected abstract BigInteger resultForZeroOperandCase();
 	}
 
-	private class SizeTValueAggregator_Add extends SizeTValueAggregator {
+	private class SizeTValueAggregatorAdd extends SizeTValueAggregator {
 
 		@Override
 		protected Expression aggregateExpressions(final ILocation loc, final Expression op1, final Expression op2) {
@@ -427,7 +397,7 @@ public class TypeSizeAndOffsetComputer {
 		}
 	}
 
-	private class SizeTValueAggregator_Multiply extends SizeTValueAggregator {
+	private class SizeTValueAggregatorMultiply extends SizeTValueAggregator {
 
 		@Override
 		protected Expression aggregateExpressions(final ILocation loc, final Expression op1, final Expression op2) {
@@ -446,14 +416,13 @@ public class TypeSizeAndOffsetComputer {
 		}
 	}
 
-	private class SizeTValueAggregator_Max extends SizeTValueAggregator {
+	private class SizeTValueAggregatorMax extends SizeTValueAggregator {
 
 		@Override
 		protected Expression aggregateExpressions(final ILocation loc, final Expression op1, final Expression op2) {
 			final Expression firstIsGreater = mExpressionTranslation.constructBinaryComparisonExpression(loc,
 					IASTBinaryExpression.op_greaterEqual, op1, getSizeT(), op2, getSizeT());
-			final Expression result = ExpressionFactory.constructIfThenElseExpression(loc, firstIsGreater, op1, op2);
-			return result;
+			return ExpressionFactory.constructIfThenElseExpression(loc, firstIsGreater, op1, op2);
 		}
 
 		@Override
@@ -467,14 +436,14 @@ public class TypeSizeAndOffsetComputer {
 		}
 	}
 
-	private abstract class SizeTValue {
-		public abstract Expression asExpression(ILocation loc);
+	private interface SizeTValue {
+		Expression asExpression(ILocation loc);
 	}
 
-	private class SizeTValue_Integer extends SizeTValue {
+	private class SizeTValueInteger implements SizeTValue {
 		private final BigInteger mValue;
 
-		public SizeTValue_Integer(final BigInteger value) {
+		public SizeTValueInteger(final BigInteger value) {
 			mValue = value;
 		}
 
@@ -493,10 +462,10 @@ public class TypeSizeAndOffsetComputer {
 		}
 	}
 
-	private class SizeTValue_Expression extends SizeTValue {
+	private class SizeTValueExpression implements SizeTValue {
 		private final Expression mValue;
 
-		public SizeTValue_Expression(final Expression value) {
+		public SizeTValueExpression(final Expression value) {
 			mValue = value;
 		}
 
@@ -512,12 +481,11 @@ public class TypeSizeAndOffsetComputer {
 	}
 
 	public class Offset {
-		private final SizeTValue_Integer mAddressOffset;
+		private final SizeTValueInteger mAddressOffset;
 		private final int mStartBit;
 		private final int mBitsize;
 
-		public Offset(final SizeTValue_Integer addressOffset, final int startBit, final int bitsize) {
-			super();
+		public Offset(final SizeTValueInteger addressOffset, final int startBit, final int bitsize) {
 			mAddressOffset = addressOffset;
 			mStartBit = startBit;
 			mBitsize = bitsize;
@@ -528,7 +496,7 @@ public class TypeSizeAndOffsetComputer {
 			return mAddressOffset.asExpression(loc);
 		}
 
-		public SizeTValue_Integer getAddressOffset() {
+		public SizeTValueInteger getAddressOffset() {
 			return mAddressOffset;
 		}
 
@@ -548,19 +516,15 @@ public class TypeSizeAndOffsetComputer {
 		public String toString() {
 			if (!isBitfieldOffset()) {
 				return getAddressOffset() + "bytes";
-			} else {
-				return getAddressOffset() + "bytes+bit" + getStartBit() + "to"
-						+ (getStartBit() + getBitFieldSize() - 1);
 			}
+			return getAddressOffset() + "bytes+bit" + getStartBit() + "to" + (getStartBit() + getBitFieldSize() - 1);
 		}
 	}
 
 	private Offset computeMemberOffset(final Offset precedingMemberOffset, final CType precedingMemberType,
 			final int bitfieldSize, final ILocation loc) {
-		final boolean precedingMemberIsBitfield = precedingMemberOffset.isBitfieldOffset();
 		final boolean currentMemberIsBitfield = (bitfieldSize != -1);
-		final Offset result;
-		if (precedingMemberIsBitfield) {
+		if (precedingMemberOffset.isBitfieldOffset()) {
 			if (precedingMemberOffset.getBitFieldSize() == 0) {
 				throw new UnsupportedOperationException("Bitfields: case that previous is zero not yet implemented.");
 			}
@@ -568,47 +532,40 @@ public class TypeSizeAndOffsetComputer {
 				final int occupiedSize = precedingMemberOffset.getStartBit() + precedingMemberOffset.getBitFieldSize();
 				final int completelyOccupiedBytes = occupiedSize / 2;
 				final int newStartBit = occupiedSize % 8;
-				result = new Offset(new SizeTValue_Integer(precedingMemberOffset.getAddressOffset().getInteger()
+				return new Offset(new SizeTValueInteger(precedingMemberOffset.getAddressOffset().getInteger()
 						.add(BigInteger.valueOf(completelyOccupiedBytes))), newStartBit, bitfieldSize);
-			} else {
-				// !currentMemberIsBitfield
-				final SizeTValue_Integer nextAddress =
-						(SizeTValue_Integer) computeOffsetOfNextByte(precedingMemberOffset, precedingMemberType, loc);
-				result = new Offset(nextAddress, -1, -1);
 			}
-		} else {
-			// !previousMemberIsBitfield
-			if (currentMemberIsBitfield) {
-				result = new Offset(precedingMemberOffset.getAddressOffset(), 0, bitfieldSize);
-			} else {
-				// !currentMemberIsBitfield
-				final SizeTValue size = computeSize(loc, precedingMemberType);
-				if (!(size instanceof SizeTValue_Integer)) {
-					throw new AssertionError("only flexible array member at the end can have non-constant size");
-				}
-				result = new Offset(new SizeTValue_Integer(precedingMemberOffset.getAddressOffset().getInteger()
-						.add(((SizeTValue_Integer) size).getInteger())), -1, -1);
-			}
+			// !currentMemberIsBitfield
+			final SizeTValueInteger nextAddress =
+					(SizeTValueInteger) computeOffsetOfNextByte(precedingMemberOffset, precedingMemberType, loc);
+			return new Offset(nextAddress, -1, -1);
 		}
-		return result;
+		// !previousMemberIsBitfield
+		if (currentMemberIsBitfield) {
+			return new Offset(precedingMemberOffset.getAddressOffset(), 0, bitfieldSize);
+		}
+		// !currentMemberIsBitfield
+		final SizeTValue size = computeSize(loc, precedingMemberType);
+		if (!(size instanceof SizeTValueInteger)) {
+			throw new AssertionError("only flexible array member at the end can have non-constant size");
+		}
+		return new Offset(new SizeTValueInteger(
+				precedingMemberOffset.getAddressOffset().getInteger().add(((SizeTValueInteger) size).getInteger())), -1,
+				-1);
 	}
 
 	private SizeTValue computeOffsetOfNextByte(final Offset offset, final CType precedingMemberType,
 			final ILocation loc) {
 		if (offset.getStartBit() == -1) {
 			final SizeTValue precedingTypeSize = computeSize(loc, precedingMemberType);
-			return new SizeTValueAggregator_Add().aggregate(loc,
+			return new SizeTValueAggregatorAdd().aggregate(loc,
 					Arrays.asList(offset.getAddressOffset(), precedingTypeSize));
 		}
 		if (offset.getBitFieldSize() == 0) {
-			return new SizeTValue_Integer(offset.getAddressOffset().getInteger().add(BigInteger.ONE));
-		} else {
-			final int lastOccupiedBit = offset.getStartBit() + offset.getBitFieldSize();
-			final int additionalByes = (lastOccupiedBit / 8) + 1;
-			return new SizeTValue_Integer(
-					offset.getAddressOffset().getInteger().add(BigInteger.valueOf(additionalByes)));
+			return new SizeTValueInteger(offset.getAddressOffset().getInteger().add(BigInteger.ONE));
 		}
-
+		final int lastOccupiedBit = offset.getStartBit() + offset.getBitFieldSize();
+		final int additionalByes = (lastOccupiedBit / 8) + 1;
+		return new SizeTValueInteger(offset.getAddressOffset().getInteger().add(BigInteger.valueOf(additionalByes)));
 	}
-
 }
