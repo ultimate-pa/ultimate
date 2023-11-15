@@ -29,55 +29,36 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter;
 import java.math.BigInteger;
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class PointerEquivalenceInfo {
-	private final HashRelation<PointerBase, CallStatement> mPointerBaseToAllocations;
-//	HashRelation<String, CallStatement> mSegmentToAllocation;
 	private final UnionFind<PointerBase> mPointerBases;
-
-
-
-	public PointerEquivalenceInfo(final HashRelation<PointerBase, CallStatement> pointerBaseToAllocations,
-			final UnionFind<PointerBase> pointerBases) {
-		super();
-		mPointerBaseToAllocations = pointerBaseToAllocations;
-		mPointerBases = pointerBases;
-	}
 
 	public PointerEquivalenceInfo(final UnionFind<PointerBase> pointerBases) {
 		super();
-		mPointerBaseToAllocations = null;
 		mPointerBases = pointerBases;
 	}
 
 
 	public PointerEquivalenceInfo union(final PointerEquivalenceInfo other) {
-		return new PointerEquivalenceInfo(null, UnionFind.unionPartitionBlocks(mPointerBases, other.getPointerBases()));
+		return new PointerEquivalenceInfo(UnionFind.unionPartitionBlocks(mPointerBases, other.getPointerBases()));
 	}
 
 	public PointerEquivalenceInfo assignment(final PointerBase lhs, final PointerBase rhs) {
 		final PointerBase rhsRep = mPointerBases.find(rhs);
-		if (rhsRep == null) {
-			throw new AssertionError("unknown pointer" + rhs);
-		}
-		final UnionFind<PointerBase> resultUf;
 		final PointerBase lhsRep = mPointerBases.find(lhs);
-		if (lhsRep == null) {
-			resultUf = mPointerBases.clone();
-			resultUf.makeEquivalenceClass(lhs);
-			resultUf.union(lhs, rhs);
-		} else {
-			if (lhsRep == rhsRep) {
-				resultUf = mPointerBases;
-			} else {
-				resultUf = mPointerBases.clone();
-				resultUf.union(lhs, rhs);
-			}
+		if (rhsRep == lhsRep && rhsRep != null) {
+			return new PointerEquivalenceInfo(mPointerBases);
 		}
-		return new PointerEquivalenceInfo(mPointerBaseToAllocations, resultUf);
+		final UnionFind<PointerBase> resultUf = mPointerBases.clone();
+		if (rhsRep == null) {
+			resultUf.makeEquivalenceClass(rhs);
+		}
+		if (lhsRep == null) {
+			resultUf.makeEquivalenceClass(lhs);
+		}
+		resultUf.union(lhs, rhs);
+		return new PointerEquivalenceInfo(resultUf);
 	}
 
 	public PointerEquivalenceInfo announce(final PointerBase pb) {
@@ -95,13 +76,6 @@ public class PointerEquivalenceInfo {
 		return assignment(lhs, rhs);
 	}
 
-
-
-
- 	public HashRelation<PointerBase, CallStatement> getPointerBaseToAllocations() {
-		return mPointerBaseToAllocations;
-	}
-
 	public UnionFind<PointerBase> getPointerBases() {
 		return mPointerBases;
 	}
@@ -110,6 +84,35 @@ public class PointerEquivalenceInfo {
 	public String toString() {
 		return mPointerBases.toString();
 	}
+
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mPointerBases == null) ? 0 : mPointerBases.hashCode());
+		return result;
+	}
+
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final PointerEquivalenceInfo other = (PointerEquivalenceInfo) obj;
+		if (mPointerBases == null) {
+			if (other.mPointerBases != null)
+				return false;
+		} else if (!mPointerBases.equals(other.mPointerBases))
+			return false;
+		return true;
+	}
+
+
 
 
 

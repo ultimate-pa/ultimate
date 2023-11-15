@@ -64,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class HeapSplitter implements IUnmanagedObserver {
@@ -118,7 +117,7 @@ public class HeapSplitter implements IUnmanagedObserver {
 			}
 		}
 		final PointerEquivalenceInfo[] peis = new PointerEquivalenceInfo[body.getBlock().length + 1];
-		peis[0] = new PointerEquivalenceInfo(new HashRelation<>(), new UnionFind<>());
+		peis[0] = new PointerEquivalenceInfo(new UnionFind<>());
 		final ArrayDeque<Integer> worklist = new ArrayDeque<>();
 		worklist.add(0);
 		while (!worklist.isEmpty()) {
