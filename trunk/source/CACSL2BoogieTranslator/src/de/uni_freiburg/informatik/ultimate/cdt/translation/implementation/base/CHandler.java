@@ -2076,8 +2076,8 @@ public class CHandler {
 			}
 			return new SkipResult();
 		}
-		final String msg = "Syntax error (declaration problem) in C program: " + node.getProblem().getMessage();
-		throw new IncorrectSyntaxException(loc, msg);
+		throw new IncorrectSyntaxException(loc, String.format(
+				"Syntax error (declaration problem) in C program: %s (%s)", node.getProblem().getMessage(), signature));
 	}
 
 	public Result visit(final IDispatcher main, final IASTProblemExpression node) {
