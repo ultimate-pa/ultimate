@@ -31,24 +31,24 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
-public class PointerEquivalenceInfo {
+public class MayAlias {
 	private final UnionFind<PointerBase> mPointerBases;
 
-	public PointerEquivalenceInfo(final UnionFind<PointerBase> pointerBases) {
+	public MayAlias(final UnionFind<PointerBase> pointerBases) {
 		super();
 		mPointerBases = pointerBases;
 	}
 
 
-	public PointerEquivalenceInfo union(final PointerEquivalenceInfo other) {
-		return new PointerEquivalenceInfo(UnionFind.unionPartitionBlocks(mPointerBases, other.getPointerBases()));
+	public MayAlias union(final MayAlias other) {
+		return new MayAlias(UnionFind.unionPartitionBlocks(mPointerBases, other.getPointerBases()));
 	}
 
-	public PointerEquivalenceInfo assignment(final PointerBase lhs, final PointerBase rhs) {
+	public MayAlias assignment(final PointerBase lhs, final PointerBase rhs) {
 		final PointerBase rhsRep = mPointerBases.find(rhs);
 		final PointerBase lhsRep = mPointerBases.find(lhs);
 		if (rhsRep == lhsRep && rhsRep != null) {
-			return new PointerEquivalenceInfo(mPointerBases);
+			return new MayAlias(mPointerBases);
 		}
 		final UnionFind<PointerBase> resultUf = mPointerBases.clone();
 		if (rhsRep == null) {
@@ -58,21 +58,21 @@ public class PointerEquivalenceInfo {
 			resultUf.makeEquivalenceClass(lhs);
 		}
 		resultUf.union(lhs, rhs);
-		return new PointerEquivalenceInfo(resultUf);
+		return new MayAlias(resultUf);
 	}
 
-	public PointerEquivalenceInfo announce(final PointerBase pb) {
+	public MayAlias announce(final PointerBase pb) {
 		final PointerBase pbRep = mPointerBases.find(pb);
 		if (pbRep == null) {
 			final UnionFind<PointerBase> resultUf = mPointerBases.clone();
 			resultUf.makeEquivalenceClass(pb);
-			return new PointerEquivalenceInfo(resultUf);
+			return new MayAlias(resultUf);
 		} else {
-			return new PointerEquivalenceInfo(mPointerBases);
+			return new MayAlias(mPointerBases);
 		}
 	}
 
-	public PointerEquivalenceInfo addEquivalence(final PointerBase lhs, final PointerBase rhs) {
+	public MayAlias addEquivalence(final PointerBase lhs, final PointerBase rhs) {
 		return assignment(lhs, rhs);
 	}
 
@@ -103,7 +103,7 @@ public class PointerEquivalenceInfo {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		final PointerEquivalenceInfo other = (PointerEquivalenceInfo) obj;
+		final MayAlias other = (MayAlias) obj;
 		if (mPointerBases == null) {
 			if (other.mPointerBases != null)
 				return false;
@@ -243,12 +243,12 @@ public class PointerEquivalenceInfo {
 		}
  	}
 
-	public PointerEquivalenceInfo addPointerBase(final PointerBase pb) {
+	public MayAlias addPointerBase(final PointerBase pb) {
 		final PointerBase rep = mPointerBases.find(pb);
 		if (rep == null) {
 			final UnionFind<PointerBase> newuf = mPointerBases.clone();
 			newuf.makeEquivalenceClass(pb);
-			return new PointerEquivalenceInfo(newuf);
+			return new MayAlias(newuf);
 		} else {
 			return this;
 		}

@@ -55,10 +55,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.BoogiePreprocessorBacktranslator;
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter.PointerEquivalenceInfo.PointerBase;
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter.PointerEquivalenceInfo.PointerBaseIntLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter.PointerEquivalenceInfo.PointerBaseVariable;
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter.PointerEquivalenceInfo.PointerBasesOnHeap;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter.MayAlias.PointerBase;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter.MayAlias.PointerBaseIntLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter.MayAlias.PointerBaseVariable;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter.MayAlias.PointerBasesOnHeap;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
@@ -116,13 +116,13 @@ public class HeapSplitter implements IUnmanagedObserver {
 				labelMapping.put(l.getName(), i);
 			}
 		}
-		final PointerEquivalenceInfo[] peis = new PointerEquivalenceInfo[body.getBlock().length + 1];
-		peis[0] = new PointerEquivalenceInfo(new UnionFind<>());
+		final MayAlias[] peis = new MayAlias[body.getBlock().length + 1];
+		peis[0] = new MayAlias(new UnionFind<>());
 		final ArrayDeque<Integer> worklist = new ArrayDeque<>();
 		worklist.add(0);
 		while (!worklist.isEmpty()) {
 			final Integer item = worklist.removeFirst();
-			final PointerEquivalenceInfo currentPei = peis[item];
+			final MayAlias currentPei = peis[item];
 			assert currentPei != null;
 			final Statement st = body.getBlock()[item];
 			if (st instanceof GotoStatement) {
@@ -133,28 +133,28 @@ public class HeapSplitter implements IUnmanagedObserver {
 			} else if (st instanceof Label) {
 				update(peis, worklist, item + 1, currentPei);
 			} else if (st instanceof CallStatement) {
-				final PointerEquivalenceInfo succPei = processCallStatement(currentPei, (CallStatement) st);
+				final MayAlias succPei = processCallStatement(currentPei, (CallStatement) st);
 				assert succPei != null;
 				update(peis, worklist, item + 1, succPei);
 			} else if (st instanceof AssignmentStatement) {
-				final PointerEquivalenceInfo succPei = processAssignmentStatement(currentPei, (AssignmentStatement) st);
+				final MayAlias succPei = processAssignmentStatement(currentPei, (AssignmentStatement) st);
 				assert succPei != null;
 				update(peis, worklist, item + 1, succPei);
 			} else if (st instanceof AssumeStatement) {
-				final PointerEquivalenceInfo succPei = processAssumeStatement(currentPei, (AssumeStatement) st);
+				final MayAlias succPei = processAssumeStatement(currentPei, (AssumeStatement) st);
 				assert succPei != null;
 				update(peis, worklist, item + 1, succPei);
 				assert succPei != null;
 			} else if (st instanceof AssertStatement) {
-				final PointerEquivalenceInfo succPei = processAssertStatement(currentPei, (AssertStatement) st);
+				final MayAlias succPei = processAssertStatement(currentPei, (AssertStatement) st);
 				assert succPei != null;
 				update(peis, worklist, item + 1, succPei);
 			} else if (st instanceof HavocStatement) {
-				final PointerEquivalenceInfo succPei = processHavocStatement(currentPei, (HavocStatement) st);
+				final MayAlias succPei = processHavocStatement(currentPei, (HavocStatement) st);
 				assert succPei != null;
 				update(peis, worklist, item + 1, succPei);
 			} else if (st instanceof ReturnStatement) {
-				final PointerEquivalenceInfo succPei = currentPei;
+				final MayAlias succPei = currentPei;
 				if (peis[item + 1] == null) {
 					peis[item + 1] = succPei;
 				} else {
@@ -164,7 +164,7 @@ public class HeapSplitter implements IUnmanagedObserver {
 				throw new AssertionError("Unsuppored " + st);
 			}
 		}
-		PointerEquivalenceInfo res = peis[0];
+		MayAlias res = peis[0];
 		for (int i = 1; i < peis.length; i++) {
 			if (peis[i] != null) {
 				res = res.union(peis[i]);
@@ -173,22 +173,22 @@ public class HeapSplitter implements IUnmanagedObserver {
 		peis.toString();
 	}
 
-	private PointerEquivalenceInfo processHavocStatement(final PointerEquivalenceInfo currentState,
+	private MayAlias processHavocStatement(final MayAlias currentState,
 			final HavocStatement st) {
 		return currentState;
 	}
 
-	private PointerEquivalenceInfo processAssertStatement(final PointerEquivalenceInfo currentState,
+	private MayAlias processAssertStatement(final MayAlias currentState,
 			final AssertStatement st) {
 		return currentState;
 	}
 
-	private PointerEquivalenceInfo processAssumeStatement(final PointerEquivalenceInfo currentState,
+	private MayAlias processAssumeStatement(final MayAlias currentState,
 			final AssumeStatement st) {
 		return currentState;
 	}
 
-	private PointerEquivalenceInfo processAssignmentStatement(final PointerEquivalenceInfo currentState,
+	private MayAlias processAssignmentStatement(final MayAlias currentState,
 			final AssignmentStatement st) {
 		final Map<PointerBase, PointerBase> variableUpdate = new HashMap<>();
 		final Map<PointerBase, PointerBase> pointerArrayUpdate = new HashMap<>();
@@ -213,7 +213,7 @@ public class HeapSplitter implements IUnmanagedObserver {
 			assert currentState != null;
 			return currentState;
 		} else {
-			PointerEquivalenceInfo res = currentState;
+			MayAlias res = currentState;
 			for (final Entry<PointerBase, PointerBase> entry : variableUpdate.entrySet()) {
 				if (isNullPointer(entry.getValue())) {
 					res = res.announce(entry.getKey());
@@ -263,7 +263,7 @@ public class HeapSplitter implements IUnmanagedObserver {
 		}
 	}
 
-	private PointerEquivalenceInfo processCallStatement(final PointerEquivalenceInfo currentState,
+	private MayAlias processCallStatement(final MayAlias currentState,
 			final CallStatement st) {
 		if (st.getMethodName().equals("#Ultimate.allocInit")) {
 			assert st.getArguments().length == 2;
@@ -310,8 +310,8 @@ public class HeapSplitter implements IUnmanagedObserver {
 		return currentState;
 	}
 
-	private void update(final PointerEquivalenceInfo[] states, final ArrayDeque<Integer> worklist, final int targetI,
-			final PointerEquivalenceInfo currentState) {
+	private void update(final MayAlias[] states, final ArrayDeque<Integer> worklist, final int targetI,
+			final MayAlias currentState) {
 		assert (currentState != null);
 		if (states[targetI] == null) {
 			states[targetI] = currentState;
