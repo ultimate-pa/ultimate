@@ -24,9 +24,53 @@
  * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
+package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter;
+
 /**
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter;
+public class PointerBaseVariable extends PointerBase {
+	private final String mIdentifier;
+
+	public PointerBaseVariable(final String identifier) {
+		super();
+		mIdentifier = identifier;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mIdentifier == null) ? 0 : mIdentifier.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final PointerBaseVariable other = (PointerBaseVariable) obj;
+		if (mIdentifier == null) {
+			if (other.mIdentifier != null) {
+				return false;
+			}
+		} else if (!mIdentifier.equals(other.mIdentifier)) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return mIdentifier;
+	}
+}

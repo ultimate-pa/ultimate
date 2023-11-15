@@ -24,9 +24,6 @@
  * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
-/**
- * Class that handles expanding of structs into normal variables.
- */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter;
 
 import java.math.BigInteger;
@@ -55,23 +52,26 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.BoogiePreprocessorBacktranslator;
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter.MayAlias.PointerBase;
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter.MayAlias.PointerBaseIntLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter.MayAlias.PointerBaseVariable;
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter.MayAlias.PointerBasesOnHeap;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
 public class HeapSplitter implements IUnmanagedObserver {
 
 	private final BoogiePreprocessorBacktranslator mTranslator;
 
+	private final AddressStoreFactory mAsfac;
+
 	public HeapSplitter(final BoogiePreprocessorBacktranslator translator, final ILogger logger) {
 		mTranslator = translator;
+		mAsfac = new AddressStoreFactory();
 	}
 
 	@Override
@@ -116,80 +116,76 @@ public class HeapSplitter implements IUnmanagedObserver {
 				labelMapping.put(l.getName(), i);
 			}
 		}
-		final MayAlias[] peis = new MayAlias[body.getBlock().length + 1];
-		peis[0] = new MayAlias(new UnionFind<>());
+		final MayAlias[] mas = new MayAlias[body.getBlock().length + 1];
+		mas[0] = new MayAlias();
 		final ArrayDeque<Integer> worklist = new ArrayDeque<>();
 		worklist.add(0);
 		while (!worklist.isEmpty()) {
 			final Integer item = worklist.removeFirst();
-			final MayAlias currentPei = peis[item];
-			assert currentPei != null;
+			final MayAlias currentMa = mas[item];
+			assert currentMa != null;
 			final Statement st = body.getBlock()[item];
 			if (st instanceof GotoStatement) {
 				for (final String label : ((GotoStatement) st).getLabels()) {
 					final int targetI = labelMapping.get(label);
-					update(peis, worklist, targetI, currentPei);
+					update(mas, worklist, targetI, currentMa);
 				}
 			} else if (st instanceof Label) {
-				update(peis, worklist, item + 1, currentPei);
+				update(mas, worklist, item + 1, currentMa);
 			} else if (st instanceof CallStatement) {
-				final MayAlias succPei = processCallStatement(currentPei, (CallStatement) st);
-				assert succPei != null;
-				update(peis, worklist, item + 1, succPei);
+				final MayAlias succMa = processCallStatement(currentMa, (CallStatement) st);
+				assert succMa != null;
+				update(mas, worklist, item + 1, succMa);
 			} else if (st instanceof AssignmentStatement) {
-				final MayAlias succPei = processAssignmentStatement(currentPei, (AssignmentStatement) st);
+				final MayAlias succPei = processAssignmentStatement(currentMa, (AssignmentStatement) st);
 				assert succPei != null;
-				update(peis, worklist, item + 1, succPei);
+				update(mas, worklist, item + 1, succPei);
 			} else if (st instanceof AssumeStatement) {
-				final MayAlias succPei = processAssumeStatement(currentPei, (AssumeStatement) st);
+				final MayAlias succPei = processAssumeStatement(currentMa, (AssumeStatement) st);
 				assert succPei != null;
-				update(peis, worklist, item + 1, succPei);
+				update(mas, worklist, item + 1, succPei);
 				assert succPei != null;
 			} else if (st instanceof AssertStatement) {
-				final MayAlias succPei = processAssertStatement(currentPei, (AssertStatement) st);
+				final MayAlias succPei = processAssertStatement(currentMa, (AssertStatement) st);
 				assert succPei != null;
-				update(peis, worklist, item + 1, succPei);
+				update(mas, worklist, item + 1, succPei);
 			} else if (st instanceof HavocStatement) {
-				final MayAlias succPei = processHavocStatement(currentPei, (HavocStatement) st);
+				final MayAlias succPei = processHavocStatement(currentMa, (HavocStatement) st);
 				assert succPei != null;
-				update(peis, worklist, item + 1, succPei);
+				update(mas, worklist, item + 1, succPei);
 			} else if (st instanceof ReturnStatement) {
-				final MayAlias succPei = currentPei;
-				if (peis[item + 1] == null) {
-					peis[item + 1] = succPei;
+				final MayAlias succPei = currentMa;
+				if (mas[item + 1] == null) {
+					mas[item + 1] = succPei;
 				} else {
-					peis[item + 1] = peis[item + 1].union(succPei);
+					mas[item + 1] = mas[item + 1].join(succPei);
 				}
 			} else {
 				throw new AssertionError("Unsuppored " + st);
 			}
 		}
-		MayAlias res = peis[0];
-		for (int i = 1; i < peis.length; i++) {
-			if (peis[i] != null) {
-				res = res.union(peis[i]);
+		MayAlias res = mas[0];
+		for (int i = 1; i < mas.length; i++) {
+			if (mas[i] != null) {
+				res = res.join(mas[i]);
 			}
 		}
-		peis.toString();
+		mas.toString();
 	}
 
-	private MayAlias processHavocStatement(final MayAlias currentState,
-			final HavocStatement st) {
+	private MayAlias processHavocStatement(final MayAlias currentState, final HavocStatement st) {
 		return currentState;
 	}
 
-	private MayAlias processAssertStatement(final MayAlias currentState,
-			final AssertStatement st) {
+	private MayAlias processAssertStatement(final MayAlias currentState, final AssertStatement st) {
 		return currentState;
 	}
 
-	private MayAlias processAssumeStatement(final MayAlias currentState,
-			final AssumeStatement st) {
+	private MayAlias processAssumeStatement(final MayAlias currentState, final AssumeStatement st) {
 		return currentState;
 	}
 
-	private MayAlias processAssignmentStatement(final MayAlias currentState,
-			final AssignmentStatement st) {
+	private MayAlias processAssignmentStatement(final MayAlias currentState, final AssignmentStatement st) {
 		final Map<PointerBase, PointerBase> variableUpdate = new HashMap<>();
 		final Map<PointerBase, PointerBase> pointerArrayUpdate = new HashMap<>();
 		final LeftHandSide[] lhs = st.getLhs();
@@ -203,8 +199,10 @@ public class HeapSplitter implements IUnmanagedObserver {
 						throw new AssertionError("we have to do something");
 					}
 				} else if (isPointer(vlhs.getIdentifier())) {
-					final PointerBase pbLhs = new PointerBaseVariable(vlhs.getIdentifier());
-					final PointerBase pbRhs = extractPointerBase(st.getRhs()[i]);
+					mAsfac.getPointerBase(vlhs.getIdentifier(), vlhs.getDeclarationInformation());
+					final PointerBase pbLhs = mAsfac.getPointerBase(vlhs.getIdentifier(),
+							vlhs.getDeclarationInformation());
+					final PointerBase pbRhs = extractPointerBase(mAsfac, st.getRhs()[i]);
 					variableUpdate.put(pbLhs, pbRhs);
 				}
 			}
@@ -216,9 +214,9 @@ public class HeapSplitter implements IUnmanagedObserver {
 			MayAlias res = currentState;
 			for (final Entry<PointerBase, PointerBase> entry : variableUpdate.entrySet()) {
 				if (isNullPointer(entry.getValue())) {
-					res = res.announce(entry.getKey());
+					res = res.addPointerBase(mAsfac, entry.getKey());
 				} else {
-					res = res.assignment(entry.getKey(), entry.getValue());
+					res = res.reportEquivalence(mAsfac, entry.getKey(), entry.getValue());
 				}
 			}
 			assert res != null;
@@ -244,61 +242,59 @@ public class HeapSplitter implements IUnmanagedObserver {
 				throw new AssertionError("Not pointerBase array!");
 			}
 			final Expression indexExpr = ase.getIndices()[0];
-			final PointerBase index = extractPointerBase(indexExpr);
+			final PointerBase index = extractPointerBase(mAsfac, indexExpr);
 			final Expression valueExpr = ase.getValue();
-			final PointerBase value = extractPointerBase(valueExpr);
+			final PointerBase value = extractPointerBase(mAsfac, valueExpr);
 			return new Pair<>(index, value);
 		}
 	}
 
-	private PointerBase extractPointerBase(final Expression expression) {
+	private PointerBase extractPointerBase(final AddressStoreFactory mAsfac, final Expression expression) {
 		if (expression instanceof IntegerLiteral) {
-			return new PointerBaseIntLiteral(new BigInteger(((IntegerLiteral) expression).getValue()));
+			final BigInteger value = new BigInteger(((IntegerLiteral) expression).getValue());
+			return mAsfac.getPointerBase(value);
 		} else if (expression instanceof IdentifierExpression) {
-			return new PointerBaseVariable(((IdentifierExpression) expression).getIdentifier());
-//		} else if (expression instanceof ArrayStoreExpression) {
-//			expression.toString();
+			final IdentifierExpression ie = (IdentifierExpression) expression;
+			return mAsfac.getPointerBase(ie.getIdentifier(), ie.getDeclarationInformation());
 		} else {
 			throw new AssertionError("unknown PointerBase " + expression);
 		}
 	}
 
-	private MayAlias processCallStatement(final MayAlias currentState,
-			final CallStatement st) {
+	private MayAlias processCallStatement(final MayAlias currentState, final CallStatement st) {
 		if (st.getMethodName().equals("#Ultimate.allocInit")) {
 			assert st.getArguments().length == 2;
 			final Expression tmp = st.getArguments()[1];
-			if (tmp instanceof IntegerLiteral) {
-				final IntegerLiteral il = (IntegerLiteral) tmp;
-				final PointerBase pb = new PointerBaseVariable(il.getValue());
-				return currentState.addPointerBase(pb);
-			} else {
-				throw new AssertionError("unsupported expression");
-			}
+			final PointerBase pb = extractPointerBase(mAsfac, tmp);
+			return currentState.addPointerBase(mAsfac, pb);
 		} else if (st.getMethodName().equals("#Ultimate.allocOnHeap")
 				|| st.getMethodName().equals("#Ultimate.allocOnStack")) {
 			assert st.getLhs().length == 2;
-			final PointerBase pb = new PointerBaseVariable(st.getLhs()[0].getIdentifier());
-			return currentState.addPointerBase(pb);
+			final PointerBase pb = mAsfac.getPointerBase(st.getLhs()[0].getIdentifier(),
+					st.getLhs()[0].getDeclarationInformation());
+			return currentState.addPointerBase(mAsfac, pb);
 		} else if (st.getMethodName().equals("write~$Pointer$")) {
 			assert st.getArguments().length == 5;
 			final Expression baseOfValueExpr = st.getArguments()[0];
 			final Expression baseOfIndexExpr = st.getArguments()[2];
-			final PointerBase baseOfValue = extractPointerBase(baseOfValueExpr);
-			final PointerBase baseOfIndex = extractPointerBase(baseOfIndexExpr);
+			final PointerBase baseOfValue = extractPointerBase(mAsfac, baseOfValueExpr);
+			final PointerBase baseOfIndex = extractPointerBase(mAsfac, baseOfIndexExpr);
 			if (isNullPointer(baseOfValue)) {
 				// do nothing
 				return currentState;
 			} else {
-				return currentState.addEquivalence(new PointerBasesOnHeap(baseOfIndex), baseOfValue);
+				final MemorySegment ms = mAsfac.getMemorySegment(baseOfIndex);
+				return currentState.reportEquivalence(mAsfac, ms, baseOfValue);
 			}
 		} else if (st.getMethodName().equals("read~$Pointer$")) {
 			assert st.getArguments().length == 3;
 			assert st.getLhs().length == 2;
 			final Expression baseOfIndexExpr = st.getArguments()[0];
-			final PointerBase baseOfIndex = extractPointerBase(baseOfIndexExpr);
-			final PointerBase baseOfLhs = new PointerBaseVariable(st.getLhs()[0].getIdentifier());
-			return currentState.assignment(baseOfLhs, new PointerBasesOnHeap(baseOfIndex));
+			final PointerBase baseOfIndex = extractPointerBase(mAsfac, baseOfIndexExpr);
+			final PointerBase baseOfLhs = mAsfac.getPointerBase(st.getLhs()[0].getIdentifier(),
+					st.getLhs()[0].getDeclarationInformation());
+			final MemorySegment ms = mAsfac.getMemorySegment(baseOfIndex);
+			return currentState.reportEquivalence(mAsfac, baseOfLhs, ms);
 		} else if (st.getMethodName().equals("write~init~int")) {
 		} else if (st.getMethodName().equals("write~init~$Pointer$")) {
 		} else if (st.getMethodName().equals("write~int")) {
@@ -317,7 +313,7 @@ public class HeapSplitter implements IUnmanagedObserver {
 			states[targetI] = currentState;
 			worklist.add(targetI);
 		} else if (!states[targetI].equals(currentState)) {
-			states[targetI] = states[targetI].union(currentState);
+			states[targetI] = states[targetI].join(currentState);
 			worklist.add(targetI);
 		} else {
 			// no change, no need to add something to worklist

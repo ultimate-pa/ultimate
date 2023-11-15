@@ -24,9 +24,55 @@
  * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
+package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter;
+
+import java.math.BigInteger;
+
 /**
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter;
+public class PointerBaseIntLiteral extends PointerBase {
+	private final BigInteger mValue;
+
+	public PointerBaseIntLiteral(final BigInteger value) {
+		super();
+		mValue = value;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mValue == null) ? 0 : mValue.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final PointerBaseIntLiteral other = (PointerBaseIntLiteral) obj;
+		if (mValue == null) {
+			if (other.mValue != null) {
+				return false;
+			}
+		} else if (!mValue.equals(other.mValue)) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return mValue.toString();
+	}
+}

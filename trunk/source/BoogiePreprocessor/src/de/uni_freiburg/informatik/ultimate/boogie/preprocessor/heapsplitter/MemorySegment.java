@@ -24,9 +24,49 @@
  * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
+package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter;
+
+import java.util.Objects;
+
 /**
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter;
+public class MemorySegment extends AddressStore {
+	private final PointerBase mPointerBase;
+
+	public MemorySegment(final PointerBase mAddressBase) {
+		super();
+		this.mPointerBase = mAddressBase;
+	}
+
+	public PointerBase getPointerBase() {
+		return mPointerBase;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(mPointerBase);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final MemorySegment other = (MemorySegment) obj;
+		return Objects.equals(mPointerBase, other.mPointerBase);
+	}
+
+	@Override
+	public String toString() {
+		return "#memory_$Pointer$.base[" + mPointerBase.toString() + "]";
+	}
+}

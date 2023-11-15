@@ -24,9 +24,38 @@
  * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
+package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter;
+
+import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+
 /**
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter;
+public class AddressStoreFactory {
+	private final Map<BigInteger, PointerBaseIntLiteral> mInt = new HashMap<>();
+	private final NestedMap2<String, DeclarationInformation, PointerBaseVariable> mVariable = new NestedMap2<>();
+	private final Map<PointerBase, MemorySegment> mSegment = new HashMap<>();
+
+	public PointerBaseIntLiteral getPointerBase(final BigInteger bi) {
+		return mInt.computeIfAbsent(bi, x -> new PointerBaseIntLiteral(x));
+	}
+
+	public PointerBaseVariable getPointerBase(final String id, final DeclarationInformation delcInfo) {
+		final Function<String, Function<? super DeclarationInformation, ? extends PointerBaseVariable>> func = (x -> (y -> new PointerBaseVariable(
+				x)));
+		return mVariable.computeIfAbsent(id, delcInfo, func);
+	}
+
+	public MemorySegment getMemorySegment(final PointerBase pointerBase) {
+		return mSegment.computeIfAbsent(pointerBase, x -> new MemorySegment(pointerBase));
+	}
+
+}

@@ -26,232 +26,169 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter;
 
-import java.math.BigInteger;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
+/**
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
 public class MayAlias {
-	private final UnionFind<PointerBase> mPointerBases;
+	private final UnionFind<AddressStore> mAddressStores;
+	private final Map<PointerBase, MemorySegment> mPointerBaseToMemorySegment;
 
-	public MayAlias(final UnionFind<PointerBase> pointerBases) {
+	public MayAlias() {
+		mAddressStores = new UnionFind<>();
+		mPointerBaseToMemorySegment = new HashMap<>();
+	}
+
+	public MayAlias(final UnionFind<AddressStore> pointerBases,
+			final Map<PointerBase, MemorySegment> pointerBaseToMemorySegment) {
 		super();
-		mPointerBases = pointerBases;
+		mAddressStores = pointerBases;
+		mPointerBaseToMemorySegment = pointerBaseToMemorySegment;
 	}
 
-
-	public MayAlias union(final MayAlias other) {
-		return new MayAlias(UnionFind.unionPartitionBlocks(mPointerBases, other.getPointerBases()));
+	public MayAlias join(final MayAlias other) {
+		final Map<PointerBase, MemorySegment> newPointerBaseToMemorySegment = new HashMap<>(
+				mPointerBaseToMemorySegment);
+		newPointerBaseToMemorySegment.putAll(other.getPointerBaseToMemorySegment());
+		final UnionFind<AddressStore> newAddressStores = UnionFind.unionPartitionBlocks(mAddressStores,
+				other.getAddressStores());
+		// TODO apply Congruence
+//		for (final Set<AddressStore> eq : newAddressStores.getAllEquivalenceClasses()) {
+//			appl
+//		}
+		return new MayAlias(newAddressStores, newPointerBaseToMemorySegment);
 	}
 
-	public MayAlias assignment(final PointerBase lhs, final PointerBase rhs) {
-		final PointerBase rhsRep = mPointerBases.find(rhs);
-		final PointerBase lhsRep = mPointerBases.find(lhs);
+	public MayAlias reportEquivalence(final AddressStoreFactory asFac, final AddressStore lhs, final AddressStore rhs) {
+		final AddressStore rhsRep = mAddressStores.find(rhs);
+		final AddressStore lhsRep = mAddressStores.find(lhs);
 		if (rhsRep == lhsRep && rhsRep != null) {
-			return new MayAlias(mPointerBases);
+			return new MayAlias(mAddressStores, mPointerBaseToMemorySegment);
 		}
-		final UnionFind<PointerBase> resultUf = mPointerBases.clone();
+		final UnionFind<AddressStore> resultUf = mAddressStores.clone();
+		final Map<PointerBase, MemorySegment> newPointerBaseToMemorySegment = new HashMap<>(
+				mPointerBaseToMemorySegment);
 		if (rhsRep == null) {
 			resultUf.makeEquivalenceClass(rhs);
+			if (rhs instanceof PointerBase) {
+				final MemorySegment ms = asFac.getMemorySegment((PointerBase) rhs);
+				newPointerBaseToMemorySegment.put((PointerBase) rhs, ms);
+				final AddressStore rhsMsRep = resultUf.find(ms);
+				if (rhsMsRep == null) {
+					resultUf.makeEquivalenceClass(ms);
+				}
+			}
 		}
 		if (lhsRep == null) {
 			resultUf.makeEquivalenceClass(lhs);
+			if (lhs instanceof PointerBase) {
+				final MemorySegment ms = asFac.getMemorySegment((PointerBase) lhs);
+				newPointerBaseToMemorySegment.put((PointerBase) lhs, ms);
+				final AddressStore lhsMsRep = resultUf.find(ms);
+				if (lhsMsRep == null) {
+					resultUf.makeEquivalenceClass(ms);
+				}
+			}
 		}
 		resultUf.union(lhs, rhs);
-		return new MayAlias(resultUf);
+		{
+			final AddressStore rep = resultUf.find(lhs);
+			final Set<AddressStore> newEquivalenceClass = resultUf.getEquivalenceClassMembers(rep);
+			// TODO: apply congruence repeatedly
+			applyCongruence(asFac, resultUf, newEquivalenceClass);
+		}
+		return new MayAlias(resultUf, newPointerBaseToMemorySegment);
 	}
 
-	public MayAlias announce(final PointerBase pb) {
-		final PointerBase pbRep = mPointerBases.find(pb);
-		if (pbRep == null) {
-			final UnionFind<PointerBase> resultUf = mPointerBases.clone();
-			resultUf.makeEquivalenceClass(pb);
-			return new MayAlias(resultUf);
-		} else {
-			return new MayAlias(mPointerBases);
+	private void applyCongruence(final AddressStoreFactory asFac, final UnionFind<AddressStore> resultUf,
+			final Set<AddressStore> newEquivalenceClass) {
+		final List<PointerBase> pointerBases = new ArrayList<>();
+		for (final AddressStore mem : newEquivalenceClass) {
+			if (mem instanceof PointerBase) {
+				pointerBases.add((PointerBase) mem);
+			}
+		}
+		if (!pointerBases.isEmpty()) {
+			final MemorySegment ms0 = asFac.getMemorySegment(pointerBases.get(0));
+			for (int i = 1; i < pointerBases.size(); i++) {
+				final MemorySegment ms = asFac.getMemorySegment(pointerBases.get(i));
+				resultUf.union(ms0, ms);
+			}
 		}
 	}
 
-	public MayAlias addEquivalence(final PointerBase lhs, final PointerBase rhs) {
-		return assignment(lhs, rhs);
+	public MayAlias addPointerBase(final AddressStoreFactory asFac, final PointerBase pb) {
+		final AddressStore rep = mAddressStores.find(pb);
+		final MemorySegment ms = asFac.getMemorySegment(pb);
+		final AddressStore msRep = mAddressStores.find(ms);
+		if (rep != null && msRep != null) {
+			// nothing new was added
+			return this;
+		} else {
+			final UnionFind<AddressStore> newuf = mAddressStores.clone();
+			final Map<PointerBase, MemorySegment> newPointerBaseToMemorySegment = new HashMap<>(
+					mPointerBaseToMemorySegment);
+			newPointerBaseToMemorySegment.put(pb, ms);
+			if (rep == null) {
+				newuf.makeEquivalenceClass(pb);
+			}
+			if (msRep == null) {
+				newuf.makeEquivalenceClass(ms);
+			}
+			return new MayAlias(newuf, newPointerBaseToMemorySegment);
+		}
 	}
 
-	public UnionFind<PointerBase> getPointerBases() {
-		return mPointerBases;
+	private UnionFind<AddressStore> getAddressStores() {
+		return mAddressStores;
+	}
+
+	public Map<PointerBase, MemorySegment> getPointerBaseToMemorySegment() {
+		return mPointerBaseToMemorySegment;
 	}
 
 	@Override
 	public String toString() {
-		return mPointerBases.toString();
+		return mAddressStores.toString();
 	}
-
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((mPointerBases == null) ? 0 : mPointerBases.hashCode());
+		result = prime * result + ((mAddressStores == null) ? 0 : mAddressStores.hashCode());
 		return result;
 	}
 
-
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final MayAlias other = (MayAlias) obj;
-		if (mPointerBases == null) {
-			if (other.mPointerBases != null)
+		if (mAddressStores == null) {
+			if (other.mAddressStores != null) {
 				return false;
-		} else if (!mPointerBases.equals(other.mPointerBases))
+			}
+		} else if (!mAddressStores.equals(other.mAddressStores)) {
 			return false;
+		}
 		return true;
-	}
-
-
-
-
-
-
-	public abstract static class PointerBase {
-
- 	}
-
- 	public static class PointerBaseVariable extends PointerBase {
- 		private final String mIdentifier;
-
-		public PointerBaseVariable(final String identifier) {
-			super();
-			mIdentifier = identifier;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((mIdentifier == null) ? 0 : mIdentifier.hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			final PointerBaseVariable other = (PointerBaseVariable) obj;
-			if (mIdentifier == null) {
-				if (other.mIdentifier != null) {
-					return false;
-				}
-			} else if (!mIdentifier.equals(other.mIdentifier)) {
-				return false;
-			}
-			return true;
-		}
-
-		@Override
-		public String toString() {
-			return mIdentifier;
-		}
- 	}
-
- 	public static class PointerBaseIntLiteral extends PointerBase {
- 		private final BigInteger mValue;
-
-		public PointerBaseIntLiteral(final BigInteger value) {
-			super();
-			mValue = value;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((mValue == null) ? 0 : mValue.hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			final PointerBaseIntLiteral other = (PointerBaseIntLiteral) obj;
-			if (mValue == null) {
-				if (other.mValue != null) {
-					return false;
-				}
-			} else if (!mValue.equals(other.mValue)) {
-				return false;
-			}
-			return true;
-		}
-
-		@Override
-		public String toString() {
-			return mValue.toString();
-		}
- 	}
-
- 	public static class PointerBasesOnHeap extends PointerBase {
- 		private final PointerBase mAddressBase;
-
-		public PointerBasesOnHeap(final PointerBase mAddressBase) {
-			super();
-			this.mAddressBase = mAddressBase;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(mAddressBase);
-		}
-
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			final PointerBasesOnHeap other = (PointerBasesOnHeap) obj;
-			return Objects.equals(mAddressBase, other.mAddressBase);
-		}
-
-		@Override
-		public String toString() {
-			return "#memory_$Pointer$.base[" + mAddressBase.toString() + "]";
-		}
- 	}
-
-	public MayAlias addPointerBase(final PointerBase pb) {
-		final PointerBase rep = mPointerBases.find(pb);
-		if (rep == null) {
-			final UnionFind<PointerBase> newuf = mPointerBases.clone();
-			newuf.makeEquivalenceClass(pb);
-			return new MayAlias(newuf);
-		} else {
-			return this;
-		}
 	}
 
 }

@@ -24,9 +24,13 @@
  * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
+package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter;
+
 /**
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter;
+public abstract class PointerBase extends AddressStore {
+
+}
