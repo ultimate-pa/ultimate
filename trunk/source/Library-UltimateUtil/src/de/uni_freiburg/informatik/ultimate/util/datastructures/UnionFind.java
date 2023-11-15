@@ -648,4 +648,37 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 		}
 		return true;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mEquivalenceClass == null) ? 0 : mEquivalenceClass.hashCode());
+		result = prime * result + ((mRepresentative == null) ? 0 : mRepresentative.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final UnionFind other = (UnionFind) obj;
+		if (mEquivalenceClass == null) {
+			if (other.mEquivalenceClass != null)
+				return false;
+		} else if (!mEquivalenceClass.equals(other.mEquivalenceClass))
+			return false;
+		if (mRepresentative == null) {
+			if (other.mRepresentative != null)
+				return false;
+		} else if (!mRepresentative.equals(other.mRepresentative))
+			return false;
+		return true;
+	}
+
+
 }
