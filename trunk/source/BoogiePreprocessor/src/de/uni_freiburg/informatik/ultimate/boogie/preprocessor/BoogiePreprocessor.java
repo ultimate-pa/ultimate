@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter.HeapSplitter;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTableConstructor;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -118,7 +117,6 @@ public class BoogiePreprocessor implements IAnalysis {
 		if (useSimplifier) {
 			observers.add(new Simplifier(backTranslator));
 		}
-		observers.add(new HeapSplitter(backTranslator, logger));
 		observers.add(symb);
 		return observers;
 	}
