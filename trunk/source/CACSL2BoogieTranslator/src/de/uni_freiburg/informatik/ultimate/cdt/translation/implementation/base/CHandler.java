@@ -372,7 +372,7 @@ public class CHandler {
 	private final boolean mIsInLibraryMode;
 
 	private boolean mIsConcurrent;
-	private boolean mHashThreadLocalVars;
+	private boolean mHasThreadLocalVars;
 
 	/**
 	 * Constructor for CHandler in pre-run mode.
@@ -1476,7 +1476,7 @@ public class CHandler {
 			if ("pthread_create".equals(((IASTIdExpression) functionName).getName().toString())) {
 				mIsConcurrent = true;
 				// Only crash for thread local variable in concurrent programs
-				if (mHashThreadLocalVars) {
+				if (mHasThreadLocalVars) {
 					throw new UnsupportedSyntaxException(loc, "Thread local variables are not supported yet.");
 				}
 			}
@@ -2069,7 +2069,7 @@ public class CHandler {
 		}
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		if (signature.equals("thread_local") || signature.equals("__thread")) {
-			mHashThreadLocalVars = true;
+			mHasThreadLocalVars = true;
 			// Only crash for thread local variable in concurrent programs
 			if (mIsConcurrent) {
 				throw new UnsupportedSyntaxException(loc, "Thread local variables are not supported yet.");
