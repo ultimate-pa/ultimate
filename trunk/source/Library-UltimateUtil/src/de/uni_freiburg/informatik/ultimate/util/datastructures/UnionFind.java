@@ -527,24 +527,40 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	public static <E> UnionFind<E> unionPartitionBlocks(final UnionFind<E> uf1, final UnionFind<E> uf2) {
 		assert uf1.mElementComparator == uf2.mElementComparator;
 
-		final UnionFind<E> result = new UnionFind<>(uf1.mElementComparator);
+		final UnionFind<E> result;
+		if (uf1.mElementComparator == null) {
+			result = new UnionFind<>();
+		} else {
+			result = new UnionFind<>(uf1.mElementComparator);
+		}
 		final HashSet<E> todo = new HashSet<>(uf1.getAllElements());
+		todo.addAll(uf2.getAllElements());
 		while (!todo.isEmpty()) {
-			final E tver1El = todo.iterator().next();
+			final E elem = todo.iterator().next();
 
-			final E uf1Rep = uf1.find(tver1El);
-			final E uf2Rep = uf2.find(tver1El);
+			final E uf1Rep = uf1.find(elem);
+			final E uf2Rep = uf2.find(elem);
 
 			final E newBlockRep;
-			if (uf1.mElementComparator == null) {
-				// it does not matter which representative we choose
+			final Set<E> newBlock;
+			if (uf1Rep == null) {
+				newBlockRep = uf2Rep;
+				newBlock = uf2.getEquivalenceClassMembers(elem);
+			} else if (uf2Rep == null) {
 				newBlockRep = uf1Rep;
+				newBlock = uf1.getEquivalenceClassMembers(elem);
 			} else {
-				newBlockRep = uf1.mElementComparator.compare(uf1Rep, uf2Rep) < 0 ? uf1Rep : uf2Rep;
+				assert uf1Rep != null && uf2Rep != null;
+				if (uf1.mElementComparator == null) {
+					// it does not matter which representative we choose
+					newBlockRep = uf1Rep;
+				} else {
+					newBlockRep = uf1.mElementComparator.compare(uf1Rep, uf2Rep) < 0 ? uf1Rep : uf2Rep;
+				}
+				newBlock = DataStructureUtils.union(uf1.getEquivalenceClassMembers(elem),
+						uf2.getEquivalenceClassMembers(elem));
 			}
 
-			final Set<E> newBlock = DataStructureUtils.union(uf1.getEquivalenceClassMembers(tver1El),
-					uf2.getEquivalenceClassMembers(tver1El));
 			result.addEquivalenceClass(ImmutableSet.of(newBlock), newBlockRep);
 			todo.removeAll(newBlock);
 		}
