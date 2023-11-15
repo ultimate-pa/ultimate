@@ -371,6 +371,9 @@ public class CHandler {
 
 	private final boolean mIsInLibraryMode;
 
+	private boolean mIsConcurrent;
+	private boolean mHashThreadLocalVars;
+
 	/**
 	 * Constructor for CHandler in pre-run mode.
 	 *
@@ -1468,14 +1471,21 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTFunctionCallExpression node) {
 		final IASTExpression functionName = node.getFunctionNameExpression();
+		final ILocation loc = mLocationFactory.createCLocation(node);
 		if (functionName instanceof IASTIdExpression) {
+			if ("pthread_create".equals(((IASTIdExpression) functionName).getName().toString())) {
+				mIsConcurrent = true;
+				// Only crash for thread local variable in concurrent programs
+				if (mHashThreadLocalVars) {
+					throw new UnsupportedSyntaxException(loc, "Thread local variables are not supported yet.");
+				}
+			}
 			final Result standardFunction =
 					mStandardFunctionHandler.translateStandardFunction(main, node, (IASTIdExpression) functionName);
 			if (standardFunction != null) {
 				return standardFunction;
 			}
 		}
-		final ILocation loc = mLocationFactory.createCLocation(node);
 		return mFunctionHandler.handleFunctionCallExpression(main, loc, functionName, node.getArguments(),
 				mMemoryHandler);
 	}
@@ -2049,16 +2059,25 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTProblemDeclaration node) {
-		if (node.getRawSignature().equals("_Noreturn") || node.getRawSignature().equals("noreturn")) {
+		final String signature = node.getRawSignature();
+		if (signature.equals("_Noreturn") || signature.equals("noreturn")) {
 			// Matthias 20230309: It seems like the parser does not support die _Noreturn
 			// function specifier. It considers this as a IASTProblemDeclaration that is a
 			// direct child of the translation unit. As a workaround, we skip this node.
 			return new SkipResult();
-		} else {
-			final ILocation loc = mLocationFactory.createCLocation(node);
-			final String msg = "Syntax error (declaration problem) in C program: " + node.getProblem().getMessage();
-			throw new IncorrectSyntaxException(loc, msg);
+
 		}
+		final ILocation loc = mLocationFactory.createCLocation(node);
+		if (signature.equals("thread_local") || signature.equals("__thread")) {
+			mHashThreadLocalVars = true;
+			// Only crash for thread local variable in concurrent programs
+			if (mIsConcurrent) {
+				throw new UnsupportedSyntaxException(loc, "Thread local variables are not supported yet.");
+			}
+			return new SkipResult();
+		}
+		final String msg = "Syntax error (declaration problem) in C program: " + node.getProblem().getMessage();
+		throw new IncorrectSyntaxException(loc, msg);
 	}
 
 	public Result visit(final IDispatcher main, final IASTProblemExpression node) {
