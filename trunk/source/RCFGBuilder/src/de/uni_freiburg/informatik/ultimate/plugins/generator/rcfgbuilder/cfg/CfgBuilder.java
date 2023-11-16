@@ -330,8 +330,11 @@ public class CfgBuilder {
 					+ edge + "). Is there illegal control flow (e.g. loops) within an atomic block?");
 		}
 
+		// If the edge is neither the start nor the end of an atomic block, everything is fine.
 		if (!AtomicBlockInfo.isStartOfAtomicBlock(edge)) {
-			// If the edge is neither the start nor the end of an atomic block, everything is fine.
+			// Edge may be marked as complete atomic block.
+			// If so, remove the annotation as it is only for internal use.
+			AtomicBlockInfo.removeAnnotation(edge);
 			return;
 		}
 
@@ -1566,6 +1569,7 @@ public class CfgBuilder {
 			if (AtomicBlockInfo.isStartOfAtomicBlock(mCurrent)) {
 				// if current edge is both start and end of an atomic block, it is already atomic -- nothing else to do
 				AtomicBlockInfo.removeAnnotation(mCurrent);
+				AtomicBlockInfo.addCompleteAnnotation(mCurrent);
 			} else {
 				// mark current edge as end of atomic block
 				AtomicBlockInfo.addEndAnnotation(mCurrent);
@@ -1827,6 +1831,7 @@ public class CfgBuilder {
 						// When completing an edge from beginning to end of an atomic block, remove the annotations
 						ModelUtils.copyAnnotationsFiltered(incoming, comp, ann -> !(ann instanceof AtomicBlockInfo));
 						ModelUtils.copyAnnotationsFiltered(outgoing, comp, ann -> !(ann instanceof AtomicBlockInfo));
+						AtomicBlockInfo.addCompleteAnnotation(comp);
 					} else {
 						ModelUtils.copyAnnotations(incoming, comp);
 						ModelUtils.copyAnnotations(outgoing, comp);

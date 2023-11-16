@@ -44,7 +44,7 @@ public final class AtomicBlockInfo extends ModernAnnotations {
 	private static final long serialVersionUID = -8370873908642083605L;
 
 	private enum Type {
-		START, END
+		START, END, COMPLETE
 	}
 
 	private final Type mType;
@@ -67,39 +67,40 @@ public final class AtomicBlockInfo extends ModernAnnotations {
 	}
 
 	/**
-	 * Determines if the given element (resp., edge) is annotated as start of an atomic block.
+	 * Determines if the given element (an edge) is annotated as start of an atomic block.
 	 *
-	 * Note that an edge can either be the start of an atomic block or the end, but not both.
+	 * Note that an edge can be the start of an atomic block or the end, but not both.
 	 *
 	 * @param element
 	 *            The element whose annotation is examined.
 	 * @return true if there is an {@link AtomicBlockInfo} annotation that marks the beginning of an atomic block.
 	 */
 	public static boolean isStartOfAtomicBlock(final IElement element) {
-		final AtomicBlockInfo annotation =
-				ModelUtils.getAnnotation(element, AtomicBlockInfo.class.getName(), AtomicBlockInfo.class::cast);
-		if (annotation != null) {
-			return annotation.mType == Type.START;
-		}
-		return false;
+		return annotationHasType(element, Type.START);
 	}
 
 	/**
-	 * Determines if the given element (resp., edge) is annotated as end of an atomic block.
+	 * Determines if the given element (an edge) is annotated as end of an atomic block.
 	 *
-	 * Note that an edge can either be the start of an atomic block or the end, but not both.
+	 * Note that an edge can be the start of an atomic block or the end, but not both.
 	 *
 	 * @param element
 	 *            The element whose annotation is examined.
 	 * @return true if there is an {@link AtomicBlockInfo} annotation that marks the end of an atomic block.
 	 */
 	public static boolean isEndOfAtomicBlock(final IElement element) {
-		final AtomicBlockInfo annotation =
-				ModelUtils.getAnnotation(element, AtomicBlockInfo.class.getName(), AtomicBlockInfo.class::cast);
-		if (annotation != null) {
-			return annotation.mType == Type.END;
-		}
-		return false;
+		return annotationHasType(element, Type.END);
+	}
+
+	/**
+	 * Determines if the given element (an edge) is annotated as the result of a complete atomic block composition.
+	 *
+	 * @param element
+	 *            The element whose annotation is examined.
+	 * @return true if there is an {@link AtomicBlockInfo} annotation that marks a complete atomic block.
+	 */
+	public static boolean isCompleteAtomicBlock(final IElement element) {
+		return annotationHasType(element, Type.COMPLETE);
 	}
 
 	/**
@@ -109,11 +110,7 @@ public final class AtomicBlockInfo extends ModernAnnotations {
 	 *            The edge to be marked.
 	 */
 	public static void addBeginAnnotation(final IElement element) {
-		final boolean isEnd = isEndOfAtomicBlock(element);
-		if (isEnd) {
-			throw new UnsupportedOperationException("Edge cannot be both start and end of an atomic block");
-		}
-		element.getPayload().getAnnotations().put(AtomicBlockInfo.class.getName(), new AtomicBlockInfo(Type.START));
+		addAnnotation(element, Type.START);
 	}
 
 	/**
@@ -123,14 +120,43 @@ public final class AtomicBlockInfo extends ModernAnnotations {
 	 *            The edge to be marked.
 	 */
 	public static void addEndAnnotation(final IElement element) {
-		final boolean isBegin = isStartOfAtomicBlock(element);
-		if (isBegin) {
-			throw new UnsupportedOperationException("Edge cannot be both start and end of an atomic block");
-		}
-		element.getPayload().getAnnotations().put(AtomicBlockInfo.class.getName(), new AtomicBlockInfo(Type.END));
+		addAnnotation(element, Type.END);
 	}
 
+	/**
+	 * Marks the given element (an edge) as the result of a complete atomic block composition.
+	 *
+	 * @param element
+	 *            The edge to be marked.
+	 */
+	public static void addCompleteAnnotation(final IElement element) {
+		addAnnotation(element, Type.COMPLETE);
+	}
+
+	/**
+	 * Removes any {@link AtomicBlockInfo} annotation, if present.
+	 *
+	 * @param element
+	 *            The edge from which annotations shall be removed
+	 */
 	public static void removeAnnotation(final IElement element) {
 		element.getPayload().getAnnotations().remove(AtomicBlockInfo.class.getName());
+	}
+
+	private static boolean annotationHasType(final IElement element, final Type type) {
+		final AtomicBlockInfo annotation = ModelUtils.getAnnotation(element, AtomicBlockInfo.class);
+		if (annotation != null) {
+			return annotation.mType == type;
+		}
+		return false;
+	}
+
+	private static void addAnnotation(final IElement element, final Type type) {
+		final var previous = ModelUtils.getAnnotation(element, AtomicBlockInfo.class);
+		if (previous != null) {
+			throw new UnsupportedOperationException(
+					"Incompatible atomic block annotation: " + previous.mType + " and " + type);
+		}
+		element.getPayload().getAnnotations().put(AtomicBlockInfo.class.getName(), new AtomicBlockInfo(type));
 	}
 }
