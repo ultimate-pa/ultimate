@@ -15,9 +15,9 @@ Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 This archive also contains binaries for the following theorem provers.
 * Z3 (<https://github.com/Z3Prover/z3>)
   * Linux (z3)
-    Z3 version 4.12.0 - 64 bit build from master 689af3b4d (2022-11-12)
+    Z3 version 4.12.2 - 64 bit build from master 5b9fdcf46 (2023-11-15)
   * Windows (z3.exe)
-    Z3 version 4.12.0 - 64 bit build from master 689af3b4d (2022-11-12)
+    Z3 version 4.12.2 - 64 bit build from master 5b9fdcf46 (2023-11-15)
 
 * CVC4 (<http://cvc4.cs.nyu.edu/>)
   * Linux
@@ -41,16 +41,23 @@ This archive also contains binaries for the following theorem provers.
       Note that this version does not output the git hash, but it should be
       the same as the Linux version.
 
+* CVC5 (https://github.com/cvc5/cvc5)
+  * Linux (cvc5)
+    cvc5 version 1.0.8 from f867bfa
+  * Windows (cvc5.exe)
+    cvc5 version 1.0.8 from f867bfa
+
 * MathSAT5 (<http://mathsat.fbk.eu>)  
   * Linux (mathsat)
     MathSAT5 version 5.6.10 (9293adc746be) (May 31 2023 12:38:06, gmp 6.2.0, gcc 7.5.0, 64-bit, reentrant)
   * Windows (mathsat.exe, mpir.dll, mathsat.dll)
     MathSAT5 version 5.6.10 (953b604e7ca7) (May 31 2023 12:36:26, gmp 6.0.0/mpir 3.0.0, msvc 19.12, 64-bit)
 
-For each of these theorem provers, a corresponding license file (z3-LICENSE, cvc4-LICENSE, 
-mathsat-LICENSE) can be found in our archive. Please consult these files for additional 
-restrictions regarding your application. If these restrictions apply, you must delete 
-the corresponding binaries. This might not necessarily affect your application. 
+For each of these theorem provers, a corresponding license file (z3-LICENSE,
+cvc4-LICENSE, cvc5-license, mathsat-LICENSE) can be found in our archive. Please 
+consult these files for additional restrictions regarding your application. If these
+restrictions apply, you must delete the corresponding binaries. This might not
+necessarily affect your application.
 
 -------------------------------------------------------------------------------
 
