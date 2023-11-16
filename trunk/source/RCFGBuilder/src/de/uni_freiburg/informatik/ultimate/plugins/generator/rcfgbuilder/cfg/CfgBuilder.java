@@ -2019,6 +2019,8 @@ public class CfgBuilder {
 			switch (mInternalLbeMode) {
 			case ALL:
 				return true;
+			case ALL_EXCEPT_ATOMIC_BOUNDARIES:
+				return !isAtomicBegin(pp);
 			case ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS:
 				// TODO #FaultLocalization
 				throw new UnsupportedOperationException();
@@ -2035,6 +2037,8 @@ public class CfgBuilder {
 			switch (mInternalLbeMode) {
 			case ALL:
 				return true;
+			case ALL_EXCEPT_ATOMIC_BOUNDARIES:
+				return !isAtomicEnd(pp);
 			case ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS:
 				// TODO #FaultLocalization
 				throw new UnsupportedOperationException();
