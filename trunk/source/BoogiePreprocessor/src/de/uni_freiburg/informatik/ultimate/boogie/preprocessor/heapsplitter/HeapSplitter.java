@@ -28,7 +28,10 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.heapsplitter;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -40,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
@@ -50,12 +54,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.BoogiePreprocessorBacktranslator;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -94,21 +102,101 @@ public class HeapSplitter implements IUnmanagedObserver {
 	 */
 	@Override
 	public boolean process(final IElement root) {
+		final MayAlias ma = aliasAnalysis(root);
+		final Map<AddressStore, String> repToArray = new HashMap<>();
+		{
+			final UnionFind<AddressStore> uf = ma.getAddressStores();
+			int ctr = 0;
+			for (final AddressStore rep : uf.getAllRepresentatives()) {
+				final String array = "#memory_int" + ctr;
+				ctr++;
+				repToArray.put(rep, array);
+			}
+		}
+		if (root instanceof Unit) {
+			final Unit unit = (Unit) root;
+			final Collection<String> newHeapVarIds = repToArray.values();
+			final ArrayDeque<Declaration> newDecls = new ArrayDeque<>();
+			final HeapArrayReplacer har = new HeapArrayReplacer(mAsfac, ma, repToArray);
+			for (final Declaration d : unit.getDeclarations()) {
+				final List<VariableDeclaration> newHeapVarDecls = isHeapVarDecls(newHeapVarIds, d);
+				if (newHeapVarDecls == null) {
+					newDecls.add(d);
+				} else {
+					newDecls.addAll(newHeapVarDecls);
+				}
+				if (d instanceof Procedure) {
+					final Procedure p = (Procedure) d;
+					if (p.getBody() != null) {
+						final MayAlias mas1 = processBody(p.getBody());
+						final MayAlias mas2 = processBody2(p.getBody());
+						final boolean same = mas1.equals(mas2);
+						mas1.toString();
+					}
+				}
+			}
+			unit.setDeclarations(newDecls.toArray(new Declaration[newDecls.size()]));
+			return false;
+		}
+		return true;
+	}
+
+	public List<VariableDeclaration> isHeapVarDecls(final Collection<String> newHeapVarIds,
+			final Declaration d) {
+		if (d instanceof VariableDeclaration) {
+			final VariableDeclaration varDecl = (VariableDeclaration) d;
+			if (varDecl.getVariables().length == 1) {
+				final VarList varList = varDecl.getVariables()[0];
+				final String[] ids = varList.getIdentifiers();
+				if (ids.length == 1) {
+					if (ids[0].equals("#memory_int")) {
+						return constructNewHeapVarDecls(varDecl, newHeapVarIds);
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	public List<VariableDeclaration> constructNewHeapVarDecls(final VariableDeclaration varDecl,
+			final Collection<String> newHeapVarIds) {
+		final List<VariableDeclaration> newHeapVarDecls = new ArrayList<>();
+		for (final String newHeapArray : newHeapVarIds) {
+			newHeapVarDecls.add(constructNewHeapVarDecl(varDecl, newHeapArray));
+		}
+		return newHeapVarDecls;
+	}
+
+	public VariableDeclaration constructNewHeapVarDecl(final VariableDeclaration varDecl, final String newHeapArray) {
+		assert varDecl.getVariables().length == 1;
+		final VarList varList = varDecl.getVariables()[0];
+		final VarList newVarList = new VarList(varList.getLoc(), new String[] { newHeapArray }, varList.getType(),
+				varList.getWhereClause());
+		ModelUtils.copyAnnotations(varList, newVarList);
+		final VarList[] variables = new VarList[] { newVarList };
+		final VariableDeclaration newVarDecl = new VariableDeclaration(varDecl.getLoc(), varDecl.getAttributes(),
+				variables);
+		ModelUtils.copyAnnotations(varDecl, newVarDecl);
+		return newVarDecl;
+	}
+
+	private MayAlias aliasAnalysis(final IElement root) {
 		if (root instanceof Unit) {
 			final Unit unit = (Unit) root;
 			for (final Declaration d : unit.getDeclarations()) {
 				if (d instanceof Procedure) {
 					final Procedure p = (Procedure) d;
 					if (p.getBody() != null) {
-						processBody(p.getBody());
+						final MayAlias mas2 = processBody2(p.getBody());
+						return mas2;
 					}
 				}
 			}
 		}
-		return true;
+		throw new AssertionError("Analysis failed");
 	}
 
-	private void processBody(final Body body) {
+	private MayAlias processBody(final Body body) {
 		final Map<String, Integer> labelMapping = new HashMap<>();
 		for (int i = 0; i < body.getBlock().length; i++) {
 			if (body.getBlock()[i] instanceof Label) {
@@ -170,7 +258,33 @@ public class HeapSplitter implements IUnmanagedObserver {
 				res = res.join(mas[i]);
 			}
 		}
-		mas.toString();
+		return res;
+	}
+
+	private MayAlias processBody2(final Body body) {
+		MayAlias mas = new MayAlias();
+		for (final Statement st : body.getBlock()) {
+			if (st instanceof GotoStatement) {
+				// do nothing
+			} else if (st instanceof Label) {
+				// do nothing
+			} else if (st instanceof CallStatement) {
+				mas = processCallStatement(mas, (CallStatement) st);
+			} else if (st instanceof AssignmentStatement) {
+				mas = processAssignmentStatement(mas, (AssignmentStatement) st);
+			} else if (st instanceof AssumeStatement) {
+				mas = processAssumeStatement(mas, (AssumeStatement) st);
+			} else if (st instanceof AssertStatement) {
+				mas = processAssertStatement(mas, (AssertStatement) st);
+			} else if (st instanceof HavocStatement) {
+				mas = processHavocStatement(mas, (HavocStatement) st);
+			} else if (st instanceof ReturnStatement) {
+				// do nothing
+			} else {
+				throw new AssertionError("Unsuppored " + st);
+			}
+		}
+		return mas;
 	}
 
 	private MayAlias processHavocStatement(final MayAlias currentState, final HavocStatement st) {
@@ -226,6 +340,16 @@ public class HeapSplitter implements IUnmanagedObserver {
 	}
 
 	private Pair<PointerBase, PointerBase> extractPointerBaseUpdate(final Expression expression) {
+		if (expression instanceof FunctionApplication) {
+			final FunctionApplication fa = (FunctionApplication) expression;
+			if (fa.getIdentifier().equals("~initToZeroAtPointerBaseAddress~$Pointer$.base")) {
+				assert fa.getArguments().length == 3;
+				assert isBaseArray(((IdentifierExpression) fa.getArguments()[0]).getIdentifier());
+				final PointerBase index = extractPointerBase(mAsfac, fa.getArguments()[2]);
+				final PointerBase value = mAsfac.getPointerBase(BigInteger.ZERO);
+				return new Pair<>(index, value);
+			}
+		}
 		if (!(expression instanceof ArrayStoreExpression)) {
 			throw new AssertionError("No array!");
 		} else {
@@ -249,7 +373,7 @@ public class HeapSplitter implements IUnmanagedObserver {
 		}
 	}
 
-	private PointerBase extractPointerBase(final AddressStoreFactory mAsfac, final Expression expression) {
+	public static PointerBase extractPointerBase(final AddressStoreFactory mAsfac, final Expression expression) {
 		if (expression instanceof IntegerLiteral) {
 			final BigInteger value = new BigInteger(((IntegerLiteral) expression).getValue());
 			return mAsfac.getPointerBase(value);
@@ -300,6 +424,11 @@ public class HeapSplitter implements IUnmanagedObserver {
 		} else if (st.getMethodName().equals("write~int")) {
 		} else if (st.getMethodName().equals("read~int")) {
 		} else if (st.getMethodName().equals("ULTIMATE.dealloc")) {
+		} else if (st.getMethodName().equals("read~unchecked~int")) {
+		} else if (st.getMethodName().equals("write~unchecked~int")) {
+		// TODO handle properly!
+		} else if (st.getMethodName().equals("read~unchecked~$Pointer$")) {
+		} else if (st.getMethodName().equals("write~unchecked~$Pointer$")) {
 		} else {
 			throw new AssertionError("unsupported method " + st.getMethodName());
 		}
@@ -332,5 +461,6 @@ public class HeapSplitter implements IUnmanagedObserver {
 	private boolean isBaseArray(final String identifier) {
 		return identifier.equals("#memory_$Pointer$.base");
 	}
+
 
 }

@@ -148,7 +148,7 @@ public class MayAlias {
 		}
 	}
 
-	private UnionFind<AddressStore> getAddressStores() {
+	public UnionFind<AddressStore> getAddressStores() {
 		return mAddressStores;
 	}
 
