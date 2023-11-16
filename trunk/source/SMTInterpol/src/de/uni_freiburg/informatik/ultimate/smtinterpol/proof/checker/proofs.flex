@@ -169,6 +169,7 @@ Keyword = ":" {SMTLetterDigit}+
   "total"                { return symbol(ProofSymbols.TOTAL, yytext()); }
   "total-int"            { return symbol(ProofSymbols.TOTALINT, yytext()); }
   "farkas"               { return symbol(ProofSymbols.FARKAS, yytext()); }
+  "mulpos"               { return symbol(ProofSymbols.MULPOS, yytext()); }
   "to_int-high"          { return symbol(ProofSymbols.TOINTHIGH, yytext()); }
   "to_int-low"           { return symbol(ProofSymbols.TOINTLOW, yytext()); }
   "-def"                 { return symbol(ProofSymbols.MINUSDEF, yytext()); }

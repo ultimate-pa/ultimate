@@ -36,7 +36,7 @@ public final class Main {
     }
 
 	private static void usage() {
-		System.err.println("USAGE smtinterpol [-q] [-v] [-t <num>] [-r <num>] [file.smt2]");
+		System.err.println("USAGE smtinterpol [-q] [-v] [-t <num>] [-l <num>] [-r <num>] [file.smt2]");
 	}
 
 	public static void main(String[] param) throws IOException, InterruptedException {
@@ -80,6 +80,22 @@ public final class Main {
 					}
 				} catch (final NumberFormatException enfe) {
 					logger.error("Cannot parse timeout "
+							+ "argument: Not a number");
+				}
+				paramctr++;
+			} else if (param[paramctr].equals("-l")
+					&& ++paramctr < param.length) {
+				try {
+					final int limit = Integer.parseInt(param[paramctr]);
+					if (limit < 0) {
+						logger.error("Cannot parse reproducible resource limit "
+								+ "argument: Negative number");
+					} else {
+						benchmark.setOption(":reproducible-resource-limit",
+								BigInteger.valueOf(limit));
+					}
+				} catch (final NumberFormatException enfe) {
+					logger.error("Cannot parse reproducible resource limit "
 							+ "argument: Not a number");
 				}
 				paramctr++;

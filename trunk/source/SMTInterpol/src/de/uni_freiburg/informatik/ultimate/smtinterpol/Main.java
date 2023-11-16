@@ -53,6 +53,7 @@ public final class Main {
 		System.err.println("  -w                   Don't print statistics and models.");
 		System.err.println("  -v                   Print debugging messages.");
 		System.err.println("  -t <num>             Set the timeout per check-sat call to <num> milliseconds.");
+		System.err.println("  -l <num>             Set the reproducible resource limit per check-sat call to <num>.");
 		System.err.println("  -r <num>             Use a different random seed.");
 		System.err.println("  -smt2                Parse input as SMTLIB 2 script.");
 		System.err.println("  -smt                 Parse input as SMTLIB 1 benchmark.");
@@ -110,6 +111,9 @@ public final class Main {
 			} else if (param[paramctr].equals("-t")
 					&& ++paramctr < param.length) {
 				optionList.add(new Option(":timeout", param[paramctr]));
+			} else if (param[paramctr].equals("-l")
+					&& ++paramctr < param.length) {
+				optionList.add(new Option(":reproducible-resource-limit", param[paramctr]));
 			} else if (param[paramctr].equals("-r")
 					&& ++paramctr < param.length) {
 				optionList.add(new Option(":random-seed", param[paramctr]));

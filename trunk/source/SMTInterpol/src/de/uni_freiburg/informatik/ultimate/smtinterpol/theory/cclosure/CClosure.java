@@ -1332,9 +1332,6 @@ public class CClosure implements ITheory {
 			final CCTermPairHash.Info info = t.mPairInfos.iterator().next().getInfo();
 			mPairHash.removePairInfo(info);
 		}
-		if (t.mSharedTerm != null) {
-			t.mSharedTerm = null;
-		}
 		if (t instanceof CCAppTerm) {
 			final CCAppTerm at = (CCAppTerm) t;
 			at.unlinkParentInfos();
