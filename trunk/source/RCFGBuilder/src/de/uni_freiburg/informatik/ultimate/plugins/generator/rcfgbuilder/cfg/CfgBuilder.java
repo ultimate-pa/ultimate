@@ -1948,13 +1948,27 @@ public class CfgBuilder {
 		}
 
 		private boolean isAtomicBoundary(final BoogieIcfgLocation loc) {
+			return isAtomicBegin(loc) || isAtomicEnd(loc);
+		}
+
+		private boolean isAtomicBegin(final BoogieIcfgLocation loc) {
 			// points inside atomic blocks cannot be on the boundary
 			if (mAtomicPoints.contains(loc)) {
 				return false;
 			}
 
-			return loc.getOutgoingEdges().stream().anyMatch(e -> AtomicBlockInfo.isStartOfAtomicBlock(e)
-					|| AtomicBlockInfo.isEndOfAtomicBlock(e) || AtomicBlockInfo.isCompleteAtomicBlock(e));
+			return loc.getOutgoingEdges().stream()
+					.anyMatch(e -> AtomicBlockInfo.isStartOfAtomicBlock(e) || AtomicBlockInfo.isCompleteAtomicBlock(e));
+		}
+
+		private boolean isAtomicEnd(final BoogieIcfgLocation loc) {
+			// points inside atomic blocks cannot be on the boundary
+			if (mAtomicPoints.contains(loc)) {
+				return false;
+			}
+
+			return loc.getIncomingEdges().stream()
+					.anyMatch(e -> AtomicBlockInfo.isEndOfAtomicBlock(e) || AtomicBlockInfo.isCompleteAtomicBlock(e));
 		}
 
 		private boolean isComposableEdge(final IcfgEdge edge) {
