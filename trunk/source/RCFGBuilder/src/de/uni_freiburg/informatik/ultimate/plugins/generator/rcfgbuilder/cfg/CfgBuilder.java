@@ -288,6 +288,7 @@ public class CfgBuilder {
 		default:
 			throw new AssertionError("unknown value: " + mCodeBlockSize);
 		}
+		ensureAtomicCompositionComplete();
 
 		final Set<BoogieIcfgLocation> initialNodes = icfg.getProcedureEntryNodes().entrySet().stream()
 				.filter(a -> a.getKey().equals(ULTIMATE_START)).map(Entry::getValue).collect(Collectors.toSet());
@@ -301,8 +302,6 @@ public class CfgBuilder {
 		}
 		ModelUtils.copyAnnotations(unit, icfg);
 		mLogger.info("Removed " + mRemovedAssumeTrueStatements + " assume(true) statements.");
-
-		ensureAtomicCompositionComplete();
 
 		return icfg;
 	}
