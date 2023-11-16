@@ -54,7 +54,7 @@ public class ReqGraphAnnotation extends ModernAnnotations {
 	}
 
 	public static ReqGraphAnnotation getAnnotation(final IElement node) {
-		return ModelUtils.getAnnotation(node, ReqGraphAnnotation.class.getName(), a -> (ReqGraphAnnotation) a);
+		return ModelUtils.getAnnotation(node, ReqGraphAnnotation.class);
 	}
 
 	@Override

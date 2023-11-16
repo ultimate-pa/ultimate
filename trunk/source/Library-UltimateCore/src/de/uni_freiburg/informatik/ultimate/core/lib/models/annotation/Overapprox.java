@@ -115,7 +115,7 @@ public class Overapprox extends ModernAnnotations {
 	}
 
 	public static Overapprox getAnnotation(final IElement node) {
-		return ModelUtils.getAnnotation(node, Overapprox.class.getName(), a -> (Overapprox) a);
+		return ModelUtils.getAnnotation(node, Overapprox.class);
 	}
 
 	@Override

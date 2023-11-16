@@ -34,8 +34,7 @@ public class PeaLocationAnnotation extends ModernAnnotations {
 	}
 
 	public static PeaLocationAnnotation getAnnotation(final IElement node) {
-		return ModelUtils.getAnnotation(node, PeaLocationAnnotation.class.getName(),
-				a-> (PeaLocationAnnotation) a);
+		return ModelUtils.getAnnotation(node, PeaLocationAnnotation.class);
 	}
 
 	@Override
