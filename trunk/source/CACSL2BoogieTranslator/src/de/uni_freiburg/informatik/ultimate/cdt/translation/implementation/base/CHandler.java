@@ -2068,7 +2068,7 @@ public class CHandler {
 
 		}
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		if (signature.contains("thread_local") || signature.contains("__thread")) {
+		if (signature.equals("thread_local") || signature.equals("__thread")) {
 			mHasThreadLocalVars = true;
 			// Only crash for thread local variable in concurrent programs
 			if (mIsConcurrent) {
