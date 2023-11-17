@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -483,29 +484,39 @@ public class MemoryHandler {
 		return constructCall(MemoryModelDeclarations.C_MEMSET, loc, resVar, pointer, value, amount);
 	}
 
-	public CallStatement constructPthreadMutexLockCall(final ILocation loc, final Expression pointer,
-			final VariableLHS variableLHS) {
-		return constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK, loc, variableLHS, pointer);
+	// calls to functions for locks should be atomic, for sound data race detection
+	private static AtomicStatement makeAtomic(final ILocation loc, final Statement statement) {
+		return new AtomicStatement(loc, new Statement[] { statement });
 	}
 
-	public CallStatement constructPthreadMutexTryLockCall(final ILocation loc, final Expression pointer,
+	public Statement constructPthreadMutexLockCall(final ILocation loc, final Expression pointer,
 			final VariableLHS variableLHS) {
-		return constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_TRYLOCK, loc, variableLHS, pointer);
+		return makeAtomic(loc,
+				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK, loc, variableLHS, pointer));
 	}
 
-	public CallStatement constructPthreadRwLockReadLockCall(final ILocation loc, final Expression pointer,
+	public Statement constructPthreadMutexTryLockCall(final ILocation loc, final Expression pointer,
 			final VariableLHS variableLHS) {
-		return constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_READLOCK, loc, variableLHS, pointer);
+		return makeAtomic(loc,
+				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_TRYLOCK, loc, variableLHS, pointer));
 	}
 
-	public CallStatement constructPthreadRwLockWriteLockCall(final ILocation loc, final Expression pointer,
+	public Statement constructPthreadRwLockReadLockCall(final ILocation loc, final Expression pointer,
 			final VariableLHS variableLHS) {
-		return constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_WRITELOCK, loc, variableLHS, pointer);
+		return makeAtomic(loc,
+				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_READLOCK, loc, variableLHS, pointer));
 	}
 
-	public CallStatement constructPthreadRwLockUnlockCall(final ILocation loc, final Expression pointer,
+	public Statement constructPthreadRwLockWriteLockCall(final ILocation loc, final Expression pointer,
 			final VariableLHS variableLHS) {
-		return constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_UNLOCK, loc, variableLHS, pointer);
+		return makeAtomic(loc,
+				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_WRITELOCK, loc, variableLHS, pointer));
+	}
+
+	public Statement constructPthreadRwLockUnlockCall(final ILocation loc, final Expression pointer,
+			final VariableLHS variableLHS) {
+		return makeAtomic(loc,
+				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_UNLOCK, loc, variableLHS, pointer));
 	}
 
 	private CallStatement constructCall(final MemoryModelDeclarations decl, final ILocation loc,

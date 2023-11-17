@@ -1727,7 +1727,7 @@ public class StandardFunctionHandler {
 	}
 
 	private interface ILockCallFactory {
-		CallStatement apply(ILocation loc, Expression index, VariableLHS lhs);
+		Statement apply(ILocation loc, Expression index, VariableLHS lhs);
 	}
 
 	/**
