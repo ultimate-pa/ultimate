@@ -78,7 +78,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class HeapSplitter implements IUnmanagedObserver {
 
 	public static final String MEMORY_INT = "#memory_int";
-	public static final String INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS = "~initToZeroAtPointerBaseAddress~$Pointer$.base";
+	public static final String INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS_POINTER = "~initToZeroAtPointerBaseAddress~$Pointer$.base";
+	public static final String INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS_INT = "~initToZeroAtPointerBaseAddress~int";
 	public static final String WRITE_UNCHECKED_POINTER = "write~unchecked~$Pointer$";
 	public static final String READ_UNCHECKED_POINTER = "read~unchecked~$Pointer$";
 	public static final String WRITE_UNCHECKED_INT = "write~unchecked~int";
@@ -161,6 +162,8 @@ public class HeapSplitter implements IUnmanagedObserver {
 						final Declaration newDecl = har.processDeclaration(proc);
 						newDecls.add(newDecl);
 					}
+				} else {
+					newDecls.add(d);
 				}
 //				if (d instanceof Procedure) {
 //					final Procedure p = (Procedure) d;
@@ -472,7 +475,7 @@ public class HeapSplitter implements IUnmanagedObserver {
 	private Pair<PointerBase, PointerBase> extractPointerBaseUpdate(final Expression expression) {
 		if (expression instanceof FunctionApplication) {
 			final FunctionApplication fa = (FunctionApplication) expression;
-			if (fa.getIdentifier().equals(INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS)) {
+			if (fa.getIdentifier().equals(INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS_POINTER)) {
 				assert fa.getArguments().length == 3;
 				assert isBaseArray(((IdentifierExpression) fa.getArguments()[0]).getIdentifier());
 				final PointerBase index = extractPointerBase(mAsfac, fa.getArguments()[2]);

@@ -94,29 +94,52 @@ public class IdentifierReplacer extends BoogieTransformer {
 
 	@Override
 	protected LeftHandSide processLeftHandSide(final LeftHandSide lhs) {
+		final String oldMemId = mOldId;
+		final String newMemId = mNewId;
+		final VariableLHS replacement = replaceLeftHandSide(lhs, oldMemId, newMemId);
+		if (replacement != null) {
+			return replacement;
+		}
+		return super.processLeftHandSide(lhs);
+	}
+
+	public static VariableLHS replaceLeftHandSide(final LeftHandSide lhs, final String oldMemId,
+			final String newMemId) {
 		if (lhs instanceof VariableLHS) {
 			final VariableLHS vlhs = (VariableLHS) lhs;
-			if (vlhs.getIdentifier().equals(mOldId)) {
-				final VariableLHS result = new VariableLHS(lhs.getLoc(), lhs.getType(), mNewId,
+			if (vlhs.getIdentifier().equals(oldMemId)) {
+				final VariableLHS result = new VariableLHS(lhs.getLoc(), lhs.getType(), newMemId,
 						vlhs.getDeclarationInformation());
 				ModelUtils.copyAnnotations(lhs, result);
 				return result;
 			}
 		}
-		return super.processLeftHandSide(lhs);
+		return null;
 	}
 
 	@Override
 	protected Expression processExpression(final Expression expr) {
+		final String oldMemId = mOldId;
+		final String newMemId = mNewId;
+		final IdentifierExpression replacement = replaceIdentifierExpression(expr, oldMemId, newMemId);
+		if (replacement != null) {
+			return replacement;
+		}
+		return super.processExpression(expr);
+	}
+
+	public static IdentifierExpression replaceIdentifierExpression(final Expression expr, final String oldMemId,
+			final String newMemId) {
 		if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression ie = (IdentifierExpression) expr;
-			if (ie.getIdentifier().equals(mOldId)) {
-				final IdentifierExpression result = new IdentifierExpression(ie.getLoc(), mNewId);
+			if (ie.getIdentifier().equals(oldMemId)) {
+				final IdentifierExpression result = new IdentifierExpression(ie.getLoc(), ie.getType(), newMemId,
+						ie.getDeclarationInformation());
 				ModelUtils.copyAnnotations(expr, result);
 				return result;
 			}
 		}
-		return super.processExpression(expr);
+		return null;
 	}
 
 }

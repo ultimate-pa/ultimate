@@ -30,12 +30,17 @@ import java.util.Map;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
@@ -113,7 +118,48 @@ public class HeapArrayReplacer extends BoogieTransformer {
 				return result;
 			}
 		}
+		if (statement instanceof AssignmentStatement) {
+			final AssignmentStatement as = (AssignmentStatement) statement;
+			final AssignmentStatement tmp = handleInitToZeroForInt(as);
+			if (tmp != null) {
+				return tmp;
+			}
+
+		}
 		return super.processStatement(statement);
+	}
+
+	private AssignmentStatement handleInitToZeroForInt(final AssignmentStatement as) {
+		if (as.getLhs().length != 1) {
+			return null;
+		}
+		final LeftHandSide oldLhs = as.getLhs()[0];
+		if (!(oldLhs instanceof VariableLHS)) {
+			return null;
+		}
+		if (!(as.getRhs()[0] instanceof FunctionApplication)) {
+			return null;
+		}
+		final FunctionApplication oldFa = (FunctionApplication) as.getRhs()[0];
+		if (!oldFa.getIdentifier().equals(HeapSplitter.INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS_INT)) {
+			return null;
+		}
+		final Expression pointerExpr = oldFa.getArguments()[1];
+		final int suff = getSuffix(pointerExpr);
+		final String suffi = HeapSplitter.constructHeapSliceSuffix(suff);
+		final String oldMemId = HeapSplitter.MEMORY_INT;
+		final String newMemId = HeapSplitter.MEMORY_INT + suffi;
+		final VariableLHS newVlhs = IdentifierReplacer.replaceLeftHandSide(oldLhs, oldMemId, newMemId);
+		final IdentifierExpression newId = IdentifierReplacer.replaceIdentifierExpression(oldFa.getArguments()[0],
+				oldMemId, newMemId);
+		final Expression[] args = new Expression[] { newId, pointerExpr };
+		final FunctionApplication newFa = new FunctionApplication(oldFa.getLoc(), oldFa.getType(),
+				oldFa.getIdentifier(), args);
+		ModelUtils.copyAnnotations(oldFa, newFa);
+		final AssignmentStatement result = new AssignmentStatement(as.getLocation(), new LeftHandSide[] { newVlhs },
+				new Expression[] { newFa });
+		ModelUtils.copyAnnotations(as, result);
+		return result;
 	}
 
 	private int getSuffix(final Expression pointerBaseExpr) {
