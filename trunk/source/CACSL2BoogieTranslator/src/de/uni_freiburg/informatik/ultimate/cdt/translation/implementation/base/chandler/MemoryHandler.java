@@ -438,6 +438,11 @@ public class MemoryHandler {
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
+				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_UNLOCK)) {
+			decl.addAll(declarePthreadMutexUnlock(main, mTypeHandler, tuLoc));
+		}
+
+		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_TRYLOCK)) {
 			decl.addAll(declarePthreadMutexTryLock(main, mTypeHandler, tuLoc));
 		}
@@ -493,6 +498,12 @@ public class MemoryHandler {
 			final VariableLHS variableLHS) {
 		return makeAtomic(loc,
 				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK, loc, variableLHS, pointer));
+	}
+
+	public Statement constructPthreadMutexUnlockCall(final ILocation loc, final Expression pointer,
+			final VariableLHS variableLHS) {
+		return makeAtomic(loc,
+				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_UNLOCK, loc, variableLHS, pointer));
 	}
 
 	public Statement constructPthreadMutexTryLockCall(final ILocation loc, final Expression pointer,
@@ -2766,6 +2777,32 @@ public class MemoryHandler {
 										.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(mutexArray))),
 						// we assume that function is always successful and returns 0
 						ensuresSuccess(tuLoc, res) });
+
+		return new ArrayList<>();
+	}
+
+	/**
+	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we unlock a mutex that has never been
+	 * locked, the behavior is undefined. We use a semantics where unlocking a non-locked mutex is a no-op.
+	 *
+	 * For the return value we follow what GCC did in my experiments. It produced code that returned 0 even if we
+	 * unlocked a non-locked mutex.
+	 */
+	private ArrayList<Declaration> declarePthreadMutexUnlock(final CHandler main, final ITypeHandler typeHandler,
+			final ILocation tuLoc) {
+		final Expression mutexArray = constructMutexArrayIdentifierExpression(tuLoc);
+		final Expression bLFalse = mBooleanArrayHelper.constructFalse();
+
+		declareProcedureWithPointerParam(main, typeHandler, tuLoc,
+				MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_UNLOCK.getName(), (inputPtr,
+						res) -> new Specification[] {
+								// #PthreadsMutex == old(#PthreadsMutex)[#ptr := false]
+								mProcedureManager.constructEnsuresSpecification(tuLoc, true,
+										ensuresArrayUpdate(tuLoc, bLFalse, inputPtr, mutexArray),
+										Collections.singleton(
+												(VariableLHS) CTranslationUtil.convertExpressionToLHS(mutexArray))),
+								// we assume that function is always successful and returns 0
+								ensuresSuccess(tuLoc, res) });
 
 		return new ArrayList<>();
 	}

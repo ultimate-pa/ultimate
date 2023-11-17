@@ -1675,6 +1675,17 @@ public class StandardFunctionHandler {
 		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadMutexLockCall);
 	}
 
+	/**
+	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we unlock a mutex that has never been
+	 * locked, the behavior is undefined. We use a semantics where unlocking a non-locked mutex is a no-op. For the
+	 * return value we follow what GCC did in my experiments. It produced code that returned 0 even if we unlocked a
+	 * non-locked mutex.
+	 */
+	private Result handlePthread_mutex_unlock(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadMutexUnlockCall);
+	}
+
 	private Result handlePthread_mutex_trylock(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadMutexTryLockCall);
@@ -1698,6 +1709,12 @@ public class StandardFunctionHandler {
 	private ExpressionResult createPthread_mutex_lock(final IDispatcher main, final ILocation loc,
 			final IASTInitializerClause mutex) {
 		return handleLockCall(main, loc, "pthread_mutex_lock", mutex, mMemoryHandler::constructPthreadMutexLockCall);
+	}
+
+	private ExpressionResult createPthread_mutex_unlock(final IDispatcher main, final ILocation loc,
+			final IASTInitializerClause mutex) {
+		return handleLockCall(main, loc, "pthread_mutex_unlock", mutex,
+				mMemoryHandler::constructPthreadMutexUnlockCall);
 	}
 
 	private ExpressionResult handleLockCall(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1728,39 +1745,6 @@ public class StandardFunctionHandler {
 
 	private interface ILockCallFactory {
 		Statement apply(ILocation loc, Expression index, VariableLHS lhs);
-	}
-
-	/**
-	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we unlock a mutex that has never been
-	 * locked, the behavior is undefined. We use a semantics where unlocking a non-locked mutex is a no-op. For the
-	 * return value we follow what GCC did in my experiments. It produced code that returned 0 even if we unlocked a
-	 * non-locked mutex.
-	 */
-	private Result handlePthread_mutex_unlock(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name) {
-		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
-
-		return createPthread_mutex_unlock(main, loc, arguments[0]);
-	}
-
-	private ExpressionResult createPthread_mutex_unlock(final IDispatcher main, final ILocation loc,
-			final IASTInitializerClause mutex) {
-		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
-
-		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
-
-		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
-		// we assume that function is always successful and returns 0
-		final BigInteger value = BigInteger.ZERO;
-		final Expression index = arg.getLrValue().getValue();
-		final AssignmentStatement unlockMutex = mMemoryHandler.constructMutexArrayAssignment(loc, index, false);
-		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
-		erb.addAllExceptLrValue(arg);
-		erb.addStatement(unlockMutex);
-		erb.setLrValue(new RValue(mTypeSizes.constructLiteralForIntegerType(loc, returnType, value),
-				new CPrimitive(CPrimitives.INT)));
-		return erb.build();
 	}
 
 	private Result handlePthread_mutex_init(final IDispatcher main, final IASTFunctionCallExpression node,
