@@ -25,33 +25,32 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public final class CoKingdom<PLACE, LETTER> {
 
-	private final ICoRelation<LETTER, PLACE> mCoRelation;
 	private final Kingdom<PLACE, LETTER> mKingdom;
 	private final Condition<LETTER, PLACE> mCondition;
 
 	/**
 	 * Subset of Realms in Kingdom that have positive corelation wrt. specified condition;
 	 */
-	public Set<Realm<PLACE, LETTER>> mPosKingdom;
+	private Set<Realm<PLACE, LETTER>> mPosKingdom;
 
 	/**
 	 * Subset of Realms in Kingdom that have partial corelation wrt. specified condition;
 	 */
-	public Set<Realm<PLACE, LETTER>> mParKingdom;
+	private Set<Realm<PLACE, LETTER>> mParKingdom;
 
 	/**
 	 * Subset of Realms in Kigmdom that are have negative corelation wrt. specified condition
 	 */
-	public Set<Realm<PLACE, LETTER>> mNegKingdom;
+	private Set<Realm<PLACE, LETTER>> mNegKingdom;
 
 	private final Set<Condition<LETTER, PLACE>> mConflictFreeConditions;
 
@@ -62,14 +61,25 @@ public final class CoKingdom<PLACE, LETTER> {
 
 	private boolean mConflictFree;
 
+	/**
+	 * Calculates the different corelation and conflict sets and sets them.
+	 *
+	 * @param kingdom
+	 *            Kingdom of which the corelation to condition shall be checked
+	 * @param condition
+	 *            Condition for checking the corelation to kingdom
+	 * @param bp
+	 *            Complete finite prefix of the refined Petri net
+	 * @param placesCoRelation
+	 *            Objects which stores the corelation for the original Places of bp
+	 */
 	public CoKingdom(final Kingdom<PLACE, LETTER> kingdom, final Condition<LETTER, PLACE> condition,
-			final BranchingProcess<LETTER, PLACE> bp) {
-		mCoRelation = bp.getCoRelation();
+			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
 		mKingdom = kingdom;
 		mCondition = condition;
-		getCoKingdoms(bp);
-		mCoRel = getCoRelType();
-		mConflictFreeConditions = getConflictFreeConditions(bp);
+		final boolean success = getCoKingdoms(bp, placesCoRelation);
+		mCoRel = getCoRelType(success);
+		mConflictFreeConditions = getConflictFreeConditions(bp, placesCoRelation);
 	}
 
 	/**
@@ -77,9 +87,16 @@ public final class CoKingdom<PLACE, LETTER> {
 	 *
 	 * @param bp
 	 */
-	private void getCoKingdoms(final BranchingProcess<LETTER, PLACE> bp) {
+	private boolean getCoKingdoms(final BranchingProcess<LETTER, PLACE> bp,
+			final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+		mPosKingdom = new HashSet<>();
+		mNegKingdom = new HashSet<>();
+		mParKingdom = new HashSet<>();
 		for (final Realm<PLACE, LETTER> realm : mKingdom.getRealms()) {
-			final CoRealm<PLACE, LETTER> coRealm = new CoRealm(realm, mCondition, bp);
+			if (realm.contains(mCondition)) {
+				return false;
+			}
+			final CoRealm<PLACE, LETTER> coRealm = new CoRealm<>(realm, mCondition, bp, placesCoRelation);
 			switch (coRealm.getCoRelation()) {
 			case POSITIVE:
 				mPosKingdom.add(realm);
@@ -91,16 +108,21 @@ public final class CoKingdom<PLACE, LETTER> {
 				mParKingdom.add(realm);
 			}
 		}
+		return true;
 	}
 
 	/**
 	 * @return CoRelation type pf Kingdom according to the corelation time of the kingdom's realms.
 	 */
-	private CoRelationType getCoRelType() {
-		if (mKingdom.equals(mPosKingdom)) {
+	private CoRelationType getCoRelType(final boolean success) {
+		if (!success) {
+			return CoRelationType.CONTAINS;
+		}
+		if (mKingdom.getRealms().size() == mPosKingdom.size()) {
 			return CoRelationType.POSITIVE;
 		} else if (mNegKingdom.size() == 1
-				&& mPosKingdom.containsAll(DataStructureUtils.difference(mKingdom.getRealms(), mNegKingdom))) {
+				&& mPosKingdom.containsAll(DataStructureUtils.difference(mKingdom.getRealms(), mNegKingdom))
+				&& !mPosKingdom.isEmpty()) {
 			return CoRelationType.PARTIAL;
 		} else if (mParKingdom.size() == 1
 				&& mPosKingdom.containsAll(DataStructureUtils.difference(mKingdom.getRealms(), mParKingdom))) {
@@ -114,9 +136,13 @@ public final class CoKingdom<PLACE, LETTER> {
 		return mCoRel;
 	}
 
-	private Set<Condition<LETTER, PLACE>> getConflictFreeConditions(final BranchingProcess<LETTER, PLACE> bp) {
+	private Set<Condition<LETTER, PLACE>> getConflictFreeConditions(final BranchingProcess<LETTER, PLACE> bp,
+			final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+		if (mNegKingdom.isEmpty()) {
+			return new HashSet<>();
+		}
 		final Realm<PLACE, LETTER> negativeRealm = mNegKingdom.iterator().next();
-		final CoRealm<PLACE, LETTER> negativeCoRealm = negativeRealm.getCoRealm(mCondition, bp);
+		final CoRealm<PLACE, LETTER> negativeCoRealm = negativeRealm.getCoRealm(mCondition, bp, placesCoRelation);
 		mConflictFree = negativeCoRealm.getConflict() == ConflictType.CONFLICT_FREE;
 		return negativeCoRealm.getConflictFreeSet();
 	}
@@ -131,6 +157,10 @@ public final class CoKingdom<PLACE, LETTER> {
 
 	public Set<Realm<PLACE, LETTER>> getPosKingdom() {
 		return mPosKingdom;
+	}
+
+	public Set<Realm<PLACE, LETTER>> getParKingdom() {
+		return mParKingdom;
 	}
 
 	public Set<Condition<LETTER, PLACE>> getConflictFreeConditions() {

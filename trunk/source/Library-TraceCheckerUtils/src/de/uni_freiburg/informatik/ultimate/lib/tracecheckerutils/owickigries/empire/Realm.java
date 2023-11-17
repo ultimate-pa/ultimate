@@ -125,8 +125,17 @@ public final class Realm<PLACE, LETTER> {
 	 * @return CoRealm with CoRelationType, Positive and Negative corelated conditions.
 	 */
 	public CoRealm<PLACE, LETTER> getCoRealm(final Condition<LETTER, PLACE> condition,
-			final BranchingProcess<LETTER, PLACE> bp) {
-		return new CoRealm<>(this, condition, bp);
+			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+		return new CoRealm<>(this, condition, bp, placesCoRelation);
 	}
 
+	/**
+	 *
+	 * @param condition
+	 *            Condition whose presence in the realm is to be tested
+	 * @return true if the realm contains condition
+	 */
+	public boolean contains(final Condition<LETTER, PLACE> condition) {
+		return mRealm.contains(condition);
+	}
 }

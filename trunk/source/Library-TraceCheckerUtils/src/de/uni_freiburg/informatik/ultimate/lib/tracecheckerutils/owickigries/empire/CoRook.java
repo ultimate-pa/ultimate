@@ -48,11 +48,12 @@ public final class CoRook<PLACE, LETTER> {
 	private final boolean mIsColonizer;
 
 	public CoRook(final Condition<LETTER, PLACE> condition, final Rook<PLACE, LETTER> rook,
-			final BranchingProcess<LETTER, PLACE> bp, final boolean isColonizer) {
+			final BranchingProcess<LETTER, PLACE> bp, final boolean isColonizer,
+			final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
 		mRook = rook;
 		mCondition = condition;
 		mIsColonizer = isColonizer;
-		mCoKingdom = new CoKingdom<>(mRook.getKingdom(), condition, bp);
+		mCoKingdom = new CoKingdom<>(mRook.getKingdom(), condition, bp, placesCoRelation);
 		mCoLaw = new CoLaw<>(mRook.getLaw(), condition, bp);
 		mColonization = getColonizationStrategy();
 		mLegislation = getLegislationStrategy();

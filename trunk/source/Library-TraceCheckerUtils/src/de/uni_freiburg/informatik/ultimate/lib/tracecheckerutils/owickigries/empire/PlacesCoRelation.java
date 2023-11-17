@@ -43,7 +43,7 @@ public final class PlacesCoRelation<PLACE, LETTER> {
 	 * @param bp
 	 *            Branching process for which the co-relation should be checked.
 	 * @param net
-	 *            Petri net corresponding to bp.
+	 *            Original Petri net.
 	 */
 	public PlacesCoRelation(final BranchingProcess<LETTER, PLACE> bp, final IPetriNet<LETTER, PLACE> net) {
 		mCoRelation = bp.getCoRelation();
@@ -58,6 +58,7 @@ public final class PlacesCoRelation<PLACE, LETTER> {
 			for (final PLACE place2 : originalPlaces) {
 				if (!place.equals(place2) && placesCoRelation(place, place2, bp)) {
 					coPlacesHashtable.addPair(place, place2);
+					coPlacesHashtable.addPair(place2, place);
 				}
 			}
 		}
@@ -66,9 +67,6 @@ public final class PlacesCoRelation<PLACE, LETTER> {
 
 	private final boolean placesCoRelation(final PLACE firstPlace, final PLACE secondPlace,
 			final BranchingProcess<LETTER, PLACE> bp) {
-		if (mCoRelatedPlaces.containsPair(secondPlace, firstPlace)) {
-			return true;
-		}
 		final Set<Condition<LETTER, PLACE>> firstPlaceConditions = bp.getConditions(firstPlace);
 		final Set<Condition<LETTER, PLACE>> secondPlaceConditions = bp.getConditions(secondPlace);
 		for (final Condition<LETTER, PLACE> condition1 : firstPlaceConditions) {

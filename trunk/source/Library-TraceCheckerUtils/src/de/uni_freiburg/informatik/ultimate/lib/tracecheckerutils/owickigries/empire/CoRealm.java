@@ -61,14 +61,14 @@ public final class CoRealm<PLACE, LETTER> {
 	private final ConflictType mConflictType;
 
 	public CoRealm(final Realm<PLACE, LETTER> realm, final Condition<LETTER, PLACE> condition,
-			final BranchingProcess<LETTER, PLACE> bp) {
+			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
 		mCoRelation = bp.getCoRelation();
 		mRealm = realm;
 		mCondition = condition;
 		mPosRealm = getPosRealm();
 		mNegRealm = DataStructureUtils.difference(mRealm.getConditions(), mPosRealm);
 		mCoRel = getCoRelType();
-		mConflictingConditions = getConflictingConditions(null);
+		mConflictingConditions = getConflictingConditions(placesCoRelation);
 		mConflictFreeConditions = DataStructureUtils.difference(mRealm.getConditions(), mConflictingConditions);
 		mConflictType = getConflictType();
 	}

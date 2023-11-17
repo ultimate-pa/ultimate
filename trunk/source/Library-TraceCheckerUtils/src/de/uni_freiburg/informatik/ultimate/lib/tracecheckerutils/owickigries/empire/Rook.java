@@ -29,7 +29,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -52,9 +54,34 @@ public final class Rook<PLACE, LETTER> {
 	 */
 	private final KingdomLaw<PLACE, LETTER> mLaw;
 
-	public Rook(final Kingdom kingdom, final KingdomLaw<PLACE, LETTER> law) {
+	public Rook(final Kingdom<PLACE, LETTER> kingdom, final KingdomLaw<PLACE, LETTER> law) {
 		mKingdom = kingdom;
 		mLaw = law;
+	}
+
+	private boolean isCut(final Set<Condition<LETTER, PLACE>> coSet, final BranchingProcess<LETTER, PLACE> bp) {
+		final Set<Condition<LETTER, PLACE>> allConditions = new HashSet<>(bp.getConditions());
+		final Set<Condition<LETTER, PLACE>> possibleCut = DataStructureUtils.union(coSet, mLaw.getConditions());
+		final Set<Condition<LETTER, PLACE>> missingConditions =
+				DataStructureUtils.difference(allConditions, possibleCut);
+		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
+		for (final Condition<LETTER, PLACE> condition : missingConditions) {
+			final Set<Condition<LETTER, PLACE>> coConditions = coRelation.computeCoRelatatedConditions(condition);
+			if (coConditions.containsAll(possibleCut)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public boolean containsNonCut(final BranchingProcess<LETTER, PLACE> bp) {
+		final Set<Set<Condition<LETTER, PLACE>>> treaty = mKingdom.getTreaty();
+		for (final Set<Condition<LETTER, PLACE>> coSet : treaty) {
+			if (!isCut(coSet, bp)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -102,16 +129,6 @@ public final class Rook<PLACE, LETTER> {
 			coSets.add(DataStructureUtils.union(realm.getConditions(), mLaw.getConditions()));
 		}
 		return coSets;
-	}
-
-	/**
-	 * TODO: compute if it is maximal/cut.??
-	 *
-	 * @param coSet
-	 * @return true if coSet is a cut/maximal coset.
-	 */
-	public boolean isCut(final Collection<Condition<LETTER, PLACE>> coSet) {
-		return true;
 	}
 
 	public Kingdom<PLACE, LETTER> getKingdom() {

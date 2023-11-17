@@ -102,8 +102,8 @@ public final class Kingdom<PLACE, LETTER> {
 	 *         condition.
 	 */
 	public CoKingdom<PLACE, LETTER> getCoKingdom(final Condition<LETTER, PLACE> condition,
-			final BranchingProcess<LETTER, PLACE> bp) {
-		return new CoKingdom<>(this, condition, bp);
+			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+		return new CoKingdom<>(this, condition, bp, placesCoRelation);
 	}
 
 	/**
