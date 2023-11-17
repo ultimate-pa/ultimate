@@ -917,6 +917,16 @@ public class FunctionHandler {
 				ASTType type = inparamVarList.getType();
 				final CType cvar = mSymboltable.findCSymbol(paramDec, inparamCId).getCType();
 
+				// TODO: This is a workaround for the command line arguments of the main function
+				// The main function can only take arguments of type int and char** or char*[]
+				// Since we do not support command line arguments, we just do not add the as a parameter
+				// Therefore we crash, if they are actually used (the variable is not declared in that case).
+				if ("main".equals(mProcedureManager.getCurrentProcedureInfo().getProcedureName())
+						&& (cvar instanceof CPointer || cvar instanceof CArray)) {
+					mSymboltable.removeCSymbol(paramDec, inparamCId);
+					continue;
+				}
+
 				// onHeap case for a function parameter means the parameter is
 				// addressoffed in the function body
 				boolean isOnHeap = false;
