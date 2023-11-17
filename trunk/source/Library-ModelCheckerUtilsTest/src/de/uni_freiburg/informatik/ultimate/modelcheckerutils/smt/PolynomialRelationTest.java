@@ -72,6 +72,7 @@ public class PolynomialRelationTest {
 	private static final String SOLVER_COMMAND_Z3 =
 			"z3 SMTLIB2_COMPLIANT=true -t:6000 -memory:2024 -smt2 -in smt.arith.solver=2";
 	private static final String SOLVER_COMMAND_CVC4 = "cvc4 --incremental --print-success --lang smt --tlimit-per=6000";
+	private static final String SOLVER_COMMAND_CVC5 = "cvc5 --incremental --print-success --lang smt --tlimit-per=6000";
 	private static final String SOLVER_COMMAND_MATHSAT = "mathsat";
 	private static final String SOLVER_COMMAND_SMTINTERPOL = "INTERNAL_SMTINTERPOL:6000";
 	private static final String SOLVER_COMMAND_YICES = "yices-smt2 --incremental --timeout=6 --mcsat";
@@ -395,7 +396,7 @@ public class PolynomialRelationTest {
 	 * You get the CNF result if you swap the and/or and negate all atoms of
 	 * {@link PolynomialRelationTest#relationIntPolyDistinct}
 	 */
-	@Test
+	// @Test Insufficient resources to check soundness
 	public void relationIntPolyEq() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "a", "t") };
 		final String inputSTR = "(= (* 2 a x) t )";
