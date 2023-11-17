@@ -55,8 +55,6 @@ public class IdentifierReplacer extends BoogieTransformer {
 		return super.processSpecifications(specs);
 	}
 
-
-
 //	@Override
 //	protected Specification processSpecification(final Specification spec) {
 //		if (spec instanceof ModifiesSpecification) {
@@ -66,8 +64,6 @@ public class IdentifierReplacer extends BoogieTransformer {
 //		// TODO Auto-generated method stub
 //		return super.processSpecification(spec);
 //	}
-
-
 
 //	@Override
 //	protected VarList processVarList(final VarList vl) {

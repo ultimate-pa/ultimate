@@ -201,8 +201,8 @@ public class HeapSplitter implements IUnmanagedObserver {
 		return result;
 	}
 
-	public static ModifiesSpecification reviseModifiesSpec(final String memoryInt, final Collection<Integer> heapSliceIds,
-			final ModifiesSpecification oldMs) {
+	public static ModifiesSpecification reviseModifiesSpec(final String memoryInt,
+			final Collection<Integer> heapSliceIds, final ModifiesSpecification oldMs) {
 		final VariableLHS[] oldIds = oldMs.getIdentifiers();
 		final List<VariableLHS> newIds = new ArrayList<>();
 		for (final VariableLHS oldId : oldIds) {

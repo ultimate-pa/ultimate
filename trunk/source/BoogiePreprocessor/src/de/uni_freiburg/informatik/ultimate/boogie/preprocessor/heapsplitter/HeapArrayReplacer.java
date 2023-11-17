@@ -69,17 +69,11 @@ public class HeapArrayReplacer extends BoogieTransformer {
 		return mAccessCounter;
 	}
 
-
 	@Override
 	protected Declaration processDeclaration(final Declaration decl) {
 		// TODO Auto-generated method stub
 		return super.processDeclaration(decl);
 	}
-
-
-
-
-
 
 	@Override
 	protected Specification processSpecification(final Specification spec) {
@@ -122,8 +116,6 @@ public class HeapArrayReplacer extends BoogieTransformer {
 		return super.processStatement(statement);
 	}
 
-
-
 	private int getSuffix(final Expression pointerBaseExpr) {
 		final PointerBase pointerBase = HeapSplitter.extractPointerBase(mAsFac, pointerBaseExpr);
 		final AddressStore rep = mUf.find(pointerBase);
@@ -132,8 +124,6 @@ public class HeapArrayReplacer extends BoogieTransformer {
 		Objects.requireNonNull(number);
 		return number;
 	}
-
-
 
 //	@Override
 //	protected Expression processExpression(final Expression expr) {
