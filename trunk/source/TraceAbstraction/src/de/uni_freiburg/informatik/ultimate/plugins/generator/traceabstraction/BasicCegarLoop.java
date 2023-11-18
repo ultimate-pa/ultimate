@@ -37,14 +37,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -88,12 +87,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.Mon
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtParserUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
@@ -174,7 +173,6 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 
 	protected final RelevanceAnalysisMode mFaultLocalizationMode;
 	private final boolean mFaultLocalizationAngelic;
-	private final Set<IPredicate> mHoareAnnotationStates = new HashSet<>();
 	private final StrategyFactory<L> mStrategyFactory;
 	private final PathProgramDumpController<L> mPathProgramDumpController;
 	private final boolean mStoreFloydHoareAutomata;
@@ -202,23 +200,16 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			interpolation = InterpolationTechnique.ForwardPredicates;
 		}
 
+		final Set<IPredicate> hoareAnnotationStates;
 		if (initialAbstraction instanceof INestedWordAutomaton<?, ?>) {
 			final var nwa = (INestedWordAutomaton<?, IPredicate>) initialAbstraction;
-			for (final IPredicate pred : nwa.getStates()) {
-				if (pred instanceof ISLPredicate) {
-					final ISLPredicate locPred = (ISLPredicate) pred;
-					if (hoareAnnotationLocs.contains(locPred.getProgramPoint())) {
-						mHoareAnnotationStates.add(locPred);
-					}
-				} else if (pred instanceof IMLPredicate) {
-					final IMLPredicate locPred = (IMLPredicate) pred;
-					if (Arrays.stream(locPred.getProgramPoints()).anyMatch(hoareAnnotationLocs::contains)) {
-						mHoareAnnotationStates.add(locPred);
-					}
-				}
-			}
+			hoareAnnotationStates = nwa.getStates().stream()
+					.filter(p -> PredicateUtils.getLocations(p).anyMatch(hoareAnnotationLocs::contains))
+					.collect(Collectors.toSet());
+		} else {
+			hoareAnnotationStates = Set.of();
 		}
-		mHaf = new HoareAnnotationFragments<>(mLogger, mHoareAnnotationStates, mPref.getHoareAnnotationPositions());
+		mHaf = new HoareAnnotationFragments<>(mLogger, hoareAnnotationStates, mPref.getHoareAnnotationPositions());
 
 		mStoreFloydHoareAutomata = taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE;
 		mStateFactoryForRefinement = stateFactoryForRefinement;
