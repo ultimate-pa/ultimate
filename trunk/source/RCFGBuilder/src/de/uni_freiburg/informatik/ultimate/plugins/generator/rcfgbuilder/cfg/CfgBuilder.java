@@ -1655,7 +1655,7 @@ public class CfgBuilder {
 	}
 
 	private enum SequentialCompositionType {
-		NONE, STRAIGHTLINE, Y2V
+		NONE, STRAIGHTLINE, COMPLEX
 	}
 
 	private class LargeBlockEncoding {
@@ -1685,14 +1685,15 @@ public class CfgBuilder {
 			getAllLocations().forEach(pp -> considerCompositionCandidate(pp, true));
 
 			// We distinguish 3 types of compositions: straight-line sequential compositions, parallel compositions, and
-			// Y-to-V sequential compositions. We employ Y-to-V compositions extremely sparingly, as they can lead to
-			// the creation of an exponential number of edges for complex branching code. Often, all these edges are
-			// later reduced through parallel composition to very few edges (but a timeout occurs before this happens).
+			// complex sequential compositions.
+			// We employ complex compositions extremely sparingly, as they can lead to the creation of an exponential
+			// number of edges for code with a lot of branching. Often, all these edges are later reduced through
+			// parallel composition to very few edges (but a timeout occurs before this happens).
 			while (!mSequentialQueue.isEmpty() || !mParallelQueue.isEmpty() || !mComplexSequentialQueue.isEmpty()) {
 				while (mSequentialQueue.isEmpty() && mParallelQueue.isEmpty() && !mComplexSequentialQueue.isEmpty()) {
 					final BoogieIcfgLocation superfluousPP = mComplexSequentialQueue.pollFirst();
 					composeSequential(superfluousPP);
-					mLogger.debug("Y2V composition at %s", superfluousPP);
+					mLogger.debug("Complex sequential composition at %s", superfluousPP);
 				}
 
 				while (mSequentialQueue.isEmpty() && !mParallelQueue.isEmpty()) {
@@ -1763,7 +1764,7 @@ public class CfgBuilder {
 		 * Determines if the given node is a composition candidate. If so, it is placed in the appropriate queue,
 		 * depending on what kind of composition is to be performed.
 		 */
-		private void considerCompositionCandidate(final BoogieIcfgLocation pp, final boolean allowY2V) {
+		private void considerCompositionCandidate(final BoogieIcfgLocation pp, final boolean allowComplex) {
 			final SequentialCompositionType seq = classifySequentialCompositionNode(pp);
 			if (seq == SequentialCompositionType.STRAIGHTLINE) {
 				mSequentialQueue.offerLast(pp);
@@ -1774,7 +1775,7 @@ public class CfgBuilder {
 			final List<CodeBlock> list = computeOutgoingCandidatesForParallelComposition(pp);
 			if (list != null) {
 				mParallelQueue.put(pp, list);
-			} else if (seq == SequentialCompositionType.Y2V && allowY2V) {
+			} else if (seq == SequentialCompositionType.COMPLEX && allowComplex) {
 				mComplexSequentialQueue.offerLast(pp);
 			}
 		}
@@ -1888,7 +1889,7 @@ public class CfgBuilder {
 					// Y-V currently unsupported outside atomic blocks (implementation cannot handle loops properly)
 					// TODO (Dominik 2020-09-16) Check if above comment still holds after Y-to-V fix, may work now (as
 					// loop entry is reverse Y-to-V).
-					return SequentialCompositionType.Y2V;
+					return SequentialCompositionType.COMPLEX;
 				}
 				return SequentialCompositionType.NONE;
 			case ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS:
@@ -1901,7 +1902,7 @@ public class CfgBuilder {
 				} else if (isStraightline) {
 					return SequentialCompositionType.STRAIGHTLINE;
 				} else {
-					return SequentialCompositionType.Y2V;
+					return SequentialCompositionType.COMPLEX;
 				}
 			default:
 				throw new AssertionError("unknown value " + mInternalLbeMode);
