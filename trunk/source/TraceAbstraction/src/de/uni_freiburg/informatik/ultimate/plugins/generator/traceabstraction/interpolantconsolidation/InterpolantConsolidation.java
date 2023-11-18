@@ -164,7 +164,7 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 			// finite automaton (from step 3)
 			final Difference<LETTER, IPredicate> diff = new Difference<>(new AutomataLibraryServices(mServices),
 					pfconsol /* PredicateFactory for Refinement */, pathprogramautomaton,
-					interpolantAutomatonDeterminized, psd2, false /* explointSigmaStarConcatOfIA */ );
+					interpolantAutomatonDeterminized, psd2, false /* exploitSigmaStarConcatOfIA */ );
 			if (PRINT_DIFFERENCE_AUTOMATA) {
 				// Needed for debug
 				final AutomataLibraryServices services = new AutomataLibraryServices(mServices);
