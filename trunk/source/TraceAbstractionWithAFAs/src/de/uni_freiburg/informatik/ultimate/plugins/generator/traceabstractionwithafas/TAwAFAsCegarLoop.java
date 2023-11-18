@@ -466,7 +466,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 		mStateFactoryForRefinement.setIteration(super.mIteration);
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-		final boolean explointSigmaStarConcatOfIA = !mComputeHoareAnnotation;
+		final boolean exploitSigmaStarConcatOfIA = !mComputeHoareAnnotation;
 
 		final INestedWordAutomaton<L, IPredicate> oldAbstraction = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
 		final IHoareTripleChecker htc = getEfficientHoareTripleChecker(); // change to CegarLoopConcurrentAutomata
@@ -488,7 +488,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 					oldAbstraction, determinized, psd2, false);
 		} else {
 			diff = new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
-					oldAbstraction, determinized, psd2, explointSigmaStarConcatOfIA);
+					oldAbstraction, determinized, psd2, exploitSigmaStarConcatOfIA);
 		}
 		assert !mCsToolkit.getManagedScript().isLocked();
 		assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,

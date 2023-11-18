@@ -145,7 +145,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends N
 		// howDifferentAreInterpolants(mInterpolAutomaton.getStates());
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-		final boolean explointSigmaStarConcatOfIA = !mComputeHoareAnnotation;
+		final boolean exploitSigmaStarConcatOfIA = !mComputeHoareAnnotation;
 
 		final INestedWordAutomaton<L, IPredicate> oldAbstraction = mAbstraction;
 		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
@@ -173,7 +173,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends N
 					oldAbstraction, determinized, psd2, false);
 		} else {
 			diff = new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
-					oldAbstraction, determinized, psd2, explointSigmaStarConcatOfIA);
+					oldAbstraction, determinized, psd2, exploitSigmaStarConcatOfIA);
 		}
 		determinized.switchToReadonlyMode();
 		assert !mCsToolkit.getManagedScript().isLocked();
