@@ -1792,6 +1792,12 @@ public class CfgBuilder {
 			final List<IcfgEdge> outgoingEdges = new ArrayList<>(pp.getOutgoingEdges());
 			final List<IcfgEdge> newEdges = new ArrayList<>();
 
+			if (incomingEdges.size() > 1 && outgoingEdges.size() > 1) {
+				mLogger.warn("Complex %d:%d sequential composition. "
+						+ "Such compositions can cause exponential blowup and should not occur in structured programs.",
+						incomingEdges.size(), outgoingEdges.size());
+			}
+
 			for (final IcfgEdge incoming : incomingEdges) {
 				for (final IcfgEdge outgoing : outgoingEdges) {
 					final BoogieIcfgLocation predecessor = (BoogieIcfgLocation) incoming.getSource();
