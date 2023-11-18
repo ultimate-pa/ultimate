@@ -1776,7 +1776,22 @@ public class CfgBuilder {
 			if (list != null) {
 				mParallelQueue.put(pp, list);
 			} else if (seq == SequentialCompositionType.COMPLEX && allowComplex) {
-				mComplexSequentialQueue.offerLast(pp);
+				// An upside-down Y-to-V composition is called "unavoidable" if it has multiple distinct successor
+				// nodes, and at least one of them is terminal.
+				// The primary case where this happens are assert statements, as the error location is terminal.
+				// In such cases, other compositions cannot avoid the need for a complex sequential composition
+				// (e.g. parallel composition of the outgoing edges is impossible).
+				final boolean isUnavoidable = pp.getIncomingEdges().size() == 1
+						&& pp.getOutgoingNodes().stream().anyMatch(s -> s.getOutgoingEdges().isEmpty())
+						&& pp.getOutgoingNodes().stream().distinct().count() > 1;
+
+				// We prioritize unavoidable upside-down Y-to-V compositions since they must occur at some point anyway,
+				// and they might in turn enable other, more preferable compositions.
+				if (isUnavoidable) {
+					mComplexSequentialQueue.offerFirst(pp);
+				} else {
+					mComplexSequentialQueue.offerLast(pp);
+				}
 			}
 		}
 
