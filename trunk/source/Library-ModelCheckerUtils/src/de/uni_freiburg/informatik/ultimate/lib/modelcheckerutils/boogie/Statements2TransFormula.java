@@ -272,7 +272,9 @@ public class Statements2TransFormula {
 			final String name = vlhs.getIdentifier();
 			final DeclarationInformation declInfo = vlhs.getDeclarationInformation();
 			final IProgramVar boogieVar = getModifiableBoogieVar(name, declInfo);
-			assert boogieVar != null;
+			if (boogieVar == null) {
+				throw new AssertionError("Undeclared variable: " + name);
+			}
 			getOrConstuctCurrentRepresentative(boogieVar);
 			if (mTransFormulaBuilder.containsInVar(boogieVar)) {
 				final TermVariable tv = mTransFormulaBuilder.getInVar(boogieVar);
