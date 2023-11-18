@@ -116,6 +116,16 @@ public class HeapArrayReplacer extends BoogieTransformer {
 				mAccessCounter++;
 				mSliceAccessCounter[heapSliceNumber]++;
 				return result;
+			} else if (cs.getMethodName().equals(HeapSplitter.WRITE_POINTER)) {
+				final Expression pointerBaseExpr = cs.getArguments()[2];
+				final int heapSliceNumber = getSuffix(pointerBaseExpr);
+				final String suffix = HeapSplitter.constructHeapSliceSuffix(heapSliceNumber);
+				final CallStatement result = new CallStatement(cs.getLoc(), cs.getAttributes(), cs.isForall(),
+						cs.getLhs(), cs.getMethodName() + suffix, cs.getArguments());
+				ModelUtils.copyAnnotations(statement, result);
+				mAccessCounter++;
+				mSliceAccessCounter[heapSliceNumber]++;
+				return result;
 			}
 		}
 		if (statement instanceof AssignmentStatement) {

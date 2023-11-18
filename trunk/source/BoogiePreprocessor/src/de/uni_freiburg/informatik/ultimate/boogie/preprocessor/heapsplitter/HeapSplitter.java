@@ -147,14 +147,14 @@ public class HeapSplitter implements IUnmanagedObserver {
 					newDecls.addAll(newHeapVarDecls);
 				} else if (d instanceof Procedure) {
 					final Procedure proc = (Procedure) d;
-					if (toList(READ_INT, READ_UNCHECKED_INT, WRITE_INT, WRITE_INIT_INT)
+					if (toList(READ_INT, READ_UNCHECKED_INT, WRITE_INT, WRITE_INIT_INT, WRITE_POINTER)
 							.contains(proc.getIdentifier())) {
 						final List<Procedure> duplicates = duplicateProcedure(MEMORY_INT, newHeapSliceIds,
 								(Procedure) d);
 						newDecls.addAll(duplicates);
-					} else if (proc.getIdentifier().equals(WRITE_POINTER)) {
-						final Procedure result = reviseWritePointer(newHeapSliceIds, proc);
-						newDecls.add(result);
+//					} else if (proc.getIdentifier().equals(WRITE_POINTER)) {
+//						final Procedure result = reviseWritePointer(newHeapSliceIds, proc);
+//						newDecls.add(result);
 //					} else if (proc.getBody() == null) {
 //						// procedures without implementation
 //						newDecls.add(d);
