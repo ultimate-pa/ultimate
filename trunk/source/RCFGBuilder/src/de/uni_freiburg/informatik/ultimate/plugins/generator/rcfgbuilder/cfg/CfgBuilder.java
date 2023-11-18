@@ -129,6 +129,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 
 /**
  * This class generates a recursive control flow graph (in the style of POPL'10 - Heizmann, Hoenicke, Podelski - Nested
@@ -1664,10 +1665,10 @@ public class CfgBuilder {
 		private final Set<BoogieIcfgLocation> mEntryNodes;
 
 		// straight-line sequential composition points
-		private final Set<BoogieIcfgLocation> mSequentialQueue = new HashSet<>();
+		private final HashDeque<BoogieIcfgLocation> mSequentialQueue = new HashDeque<>();
 
 		// Y-to-V and upside-down Y-to-V composition points
-		private final Set<BoogieIcfgLocation> mComplexSequentialQueue = new HashSet<>();
+		private final HashDeque<BoogieIcfgLocation> mComplexSequentialQueue = new HashDeque<>();
 
 		private final Map<BoogieIcfgLocation, List<CodeBlock>> mParallelQueue = new HashMap<>();
 
@@ -1689,8 +1690,7 @@ public class CfgBuilder {
 			// later reduced through parallel composition to very few edges (but a timeout occurs before this happens).
 			while (!mSequentialQueue.isEmpty() || !mParallelQueue.isEmpty() || !mComplexSequentialQueue.isEmpty()) {
 				while (mSequentialQueue.isEmpty() && mParallelQueue.isEmpty() && !mComplexSequentialQueue.isEmpty()) {
-					final BoogieIcfgLocation superfluousPP = mComplexSequentialQueue.iterator().next();
-					mComplexSequentialQueue.remove(superfluousPP);
+					final BoogieIcfgLocation superfluousPP = mComplexSequentialQueue.pollFirst();
 					composeSequential(superfluousPP);
 					mLogger.debug("Y2V composition at %s", superfluousPP);
 				}
@@ -1706,8 +1706,7 @@ public class CfgBuilder {
 				}
 
 				while (!mSequentialQueue.isEmpty()) {
-					final BoogieIcfgLocation superfluousPP = mSequentialQueue.iterator().next();
-					mSequentialQueue.remove(superfluousPP);
+					final BoogieIcfgLocation superfluousPP = mSequentialQueue.pollFirst();
 					composeSequential(superfluousPP);
 					mLogger.debug("sequential composition at %s", superfluousPP);
 				}
@@ -1767,7 +1766,7 @@ public class CfgBuilder {
 		private void considerCompositionCandidate(final BoogieIcfgLocation pp, final boolean allowY2V) {
 			final SequentialCompositionType seq = classifySequentialCompositionNode(pp);
 			if (seq == SequentialCompositionType.STRAIGHTLINE) {
-				mSequentialQueue.add(pp);
+				mSequentialQueue.offerLast(pp);
 				return;
 			}
 
@@ -1776,7 +1775,7 @@ public class CfgBuilder {
 			if (list != null) {
 				mParallelQueue.put(pp, list);
 			} else if (seq == SequentialCompositionType.Y2V && allowY2V) {
-				mComplexSequentialQueue.add(pp);
+				mComplexSequentialQueue.offerLast(pp);
 			}
 		}
 
