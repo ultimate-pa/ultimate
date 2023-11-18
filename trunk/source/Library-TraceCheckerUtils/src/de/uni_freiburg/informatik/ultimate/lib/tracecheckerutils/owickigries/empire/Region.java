@@ -26,8 +26,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 
 public class Region<PLACE, LETTER> {
 
@@ -39,6 +41,16 @@ public class Region<PLACE, LETTER> {
 
 	public Region(final Set<PLACE> region) {
 		mRegion = region;
+	}
+
+	public Region(final Realm<PLACE, LETTER> realm) {
+		mRegion = getRealmPlaces(realm);
+	}
+
+	private Set<PLACE> getRealmPlaces(final Realm<PLACE, LETTER> realm) {
+		final Set<PLACE> realmPlaces =
+				realm.getConditions().stream().map(Condition::getPlace).collect(Collectors.toSet());
+		return realmPlaces;
 	}
 
 	/**
@@ -84,5 +96,23 @@ public class Region<PLACE, LETTER> {
 	 */
 	public boolean checkCorelation(final IPetriNet<LETTER, PLACE> petriNet) {
 		return true;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		final Region<PLACE, LETTER> other = (Region<PLACE, LETTER>) obj;
+		return mRegion.equals(other.getPlaces());
+	}
+
+	@Override
+	public int hashCode() {
+		return mRegion.hashCode();
 	}
 }

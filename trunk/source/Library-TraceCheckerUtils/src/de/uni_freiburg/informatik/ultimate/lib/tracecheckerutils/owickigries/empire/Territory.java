@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
@@ -41,16 +42,26 @@ public final class Territory<PLACE, LETTER> {
 	/**
 	 * Set of regions in Territory.
 	 */
-	private final Set<Region> mTerritory;
+	private final Set<Region<PLACE, LETTER>> mTerritory;
 
-	public Territory(final Set<Region> regions) {
+	public Territory(final Set<Region<PLACE, LETTER>> regions) {
 		mTerritory = regions;
+	}
+
+	public Territory(final Kingdom<PLACE, LETTER> kingdom) {
+		mTerritory = getKingdomRegions(kingdom);
+	}
+
+	private Set<Region<PLACE, LETTER>> getKingdomRegions(final Kingdom<PLACE, LETTER> kingdom) {
+		final Set<Region<PLACE, LETTER>> kingdomRegions =
+				kingdom.getRealms().stream().map(realm -> new Region(realm)).collect(Collectors.toSet());
+		return kingdomRegions;
 	}
 
 	/**
 	 * @return Set of regions in Territory.
 	 */
-	public Set<Region> getRegions() {
+	public Set<Region<PLACE, LETTER>> getRegions() {
 		return mTerritory;
 	}
 
@@ -60,7 +71,7 @@ public final class Territory<PLACE, LETTER> {
 	 * @param Set
 	 *            of regions
 	 */
-	public void addRegion(final Set<Region> regions) {
+	public void addRegion(final Set<Region<PLACE, LETTER>> regions) {
 		mTerritory.addAll(regions);
 	}
 
@@ -69,10 +80,26 @@ public final class Territory<PLACE, LETTER> {
 	 *
 	 * @param region
 	 */
-	public void addRegion(final Region region) {
+	public void addRegion(final Region<PLACE, LETTER> region) {
 		mTerritory.add(region);
 	}
 
-	// Corelation at level of places call
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		final Territory<PLACE, LETTER> other = (Territory<PLACE, LETTER>) obj;
+		return mTerritory.equals(other.getRegions());
+	}
+
+	@Override
+	public int hashCode() {
+		return mTerritory.hashCode();
+	}
 
 }

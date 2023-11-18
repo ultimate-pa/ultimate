@@ -29,10 +29,12 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
@@ -158,13 +160,28 @@ public final class Rook<PLACE, LETTER> {
 	 * @return All cosets in subterr which label to the marking.
 	 */
 	public Set<Set<Condition<LETTER, PLACE>>> getSubkingdom(final Set<SubterrElement<LETTER, PLACE>> subterr,
-			final Set<PLACE> marking) {
+			final Marking<PLACE> marking) {
 		final Set<Set<Condition<LETTER, PLACE>>> subkingdom = new HashSet<>();
 		for (final SubterrElement<LETTER, PLACE> subterrElement : subterr) {
-			if (subterrElement.getMarking().containsAll(marking)) {
-				subkingdom.add(subterrElement.mCoSet);
+			if (subterrElement.getMarking().equals(marking)) {
+				subkingdom.add(subterrElement.getCoSet());
 			}
 		}
 		return subkingdom;
+	}
+
+	/**
+	 * Get Places and corresponding Conditions of the Rook.
+	 *
+	 * @return HashRelation containing all (PLACE, Condition)-pairs of the Rook.
+	 */
+	public HashRelation<PLACE, Condition<LETTER, PLACE>> getPlacesToConditions() {
+		final HashRelation<PLACE, Condition<LETTER, PLACE>> placesToConditions = new HashRelation<>();
+		for (final Realm<PLACE, LETTER> realm : mKingdom.getRealms()) {
+			for (final Condition<LETTER, PLACE> condition : realm.getConditions()) {
+				placesToConditions.addPair(condition.getPlace(), condition);
+			}
+		}
+		return placesToConditions;
 	}
 }

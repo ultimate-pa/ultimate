@@ -100,6 +100,8 @@ public final class CrownConstruction<PLACE, LETTER> {
 		for (final Rook<PLACE, LETTER> rook : colonizedRooks) {
 			colonizedRooks = crownExpansion(rook, new ArrayList<>(mAssertConds), colonizedRooks, false);
 		}
+		final Set<Rook<PLACE, LETTER>> colonizedpreRooks = computePreRooks(colonizedRooks);
+		colonizedRooks = DataStructureUtils.difference(colonizedRooks, colonizedpreRooks);
 		return colonizedRooks;
 	}
 
@@ -119,11 +121,10 @@ public final class CrownConstruction<PLACE, LETTER> {
 			} else {
 				final List<Condition<LETTER, PLACE>> ntroops =
 						conditions.stream().filter(cond -> !cond.equals(condition)).collect(Collectors.toList());
-				final Set<Rook<PLACE, LETTER>> expandedRooks =
-						crownExpansion(colonyRook, ntroops, crownRooks, colonizer);
+				Set<Rook<PLACE, LETTER>> expandedRooks = crownExpansion(colonyRook, ntroops, crownRooks, colonizer);
 				final Set<Rook<PLACE, LETTER>> preRooks = computePreRooks(expandedRooks);
+				expandedRooks = DataStructureUtils.difference(expandedRooks, preRooks);
 				crownRooks = DataStructureUtils.union(crownRooks, expandedRooks);
-				crownRooks = DataStructureUtils.difference(crownRooks, preRooks);
 			}
 		}
 		return crownRooks;
