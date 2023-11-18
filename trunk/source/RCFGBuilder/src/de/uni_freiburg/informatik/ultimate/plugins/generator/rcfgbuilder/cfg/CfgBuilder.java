@@ -1963,11 +1963,7 @@ public class CfgBuilder {
 					final CodeBlock cb = (CodeBlock) edge;
 					final BoogieIcfgLocation succ = (BoogieIcfgLocation) cb.getTarget();
 					if (canBeSuccessorOfParallelComposition(succ)) {
-						List<CodeBlock> edges = succ2edge.get(succ);
-						if (edges == null) {
-							edges = new ArrayList<>();
-							succ2edge.put(succ, edges);
-						}
+						final List<CodeBlock> edges = succ2edge.computeIfAbsent(succ, x -> new ArrayList<>());
 						edges.add(cb);
 						if (result == null && edges.size() > 1) {
 							result = edges;
