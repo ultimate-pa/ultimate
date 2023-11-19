@@ -39,6 +39,7 @@ public final class PlacesCoRelation<PLACE, LETTER> {
 	private final ICoRelation<LETTER, PLACE> mCoRelation;
 
 	/**
+	 * Store the pairwise corelation for all original Places of bp.
 	 *
 	 * @param bp
 	 *            Branching process for which the co-relation should be checked.

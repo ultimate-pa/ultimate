@@ -37,6 +37,12 @@ public class SubterrElement<LETTER, PLACE> {
 	private final Marking<PLACE> mMarking;
 	private final Set<Condition<LETTER, PLACE>> mCoSet;
 
+	/**
+	 * Element of a subterritory which holds a marking and the corresponding coset
+	 *
+	 * @param coSet
+	 *            Coset of the subterritory
+	 */
 	public SubterrElement(final Set<Condition<LETTER, PLACE>> coSet) {
 		mCoSet = coSet;
 		mMarking = new Marking<>(calculateMarking());

@@ -44,17 +44,29 @@ public final class Territory<PLACE, LETTER> {
 	 */
 	private final Set<Region<PLACE, LETTER>> mTerritory;
 
+	/**
+	 * Data structure which contains the different Regions of a Territory.
+	 *
+	 * @param regions
+	 *            Set of regions for which a Territory should be created.
+	 */
 	public Territory(final Set<Region<PLACE, LETTER>> regions) {
 		mTerritory = regions;
 	}
 
+	/**
+	 * Create a Kingdoms territory.
+	 *
+	 * @param kingdom
+	 *            Kingdom for which a corresponding Territory should be created.
+	 */
 	public Territory(final Kingdom<PLACE, LETTER> kingdom) {
 		mTerritory = getKingdomRegions(kingdom);
 	}
 
 	private Set<Region<PLACE, LETTER>> getKingdomRegions(final Kingdom<PLACE, LETTER> kingdom) {
 		final Set<Region<PLACE, LETTER>> kingdomRegions =
-				kingdom.getRealms().stream().map(realm -> new Region(realm)).collect(Collectors.toSet());
+				kingdom.getRealms().stream().map(realm -> new Region<PLACE, LETTER>(realm)).collect(Collectors.toSet());
 		return kingdomRegions;
 	}
 
@@ -68,8 +80,8 @@ public final class Territory<PLACE, LETTER> {
 	/**
 	 * Adds the specified set of regions into the territory.
 	 *
-	 * @param Set
-	 *            of regions
+	 * @param regions
+	 *            Set of regions to be added.
 	 */
 	public void addRegion(final Set<Region<PLACE, LETTER>> regions) {
 		mTerritory.addAll(regions);
@@ -79,6 +91,7 @@ public final class Territory<PLACE, LETTER> {
 	 * Adds the specified region of places into territory.
 	 *
 	 * @param region
+	 *            Single region to be added.
 	 */
 	public void addRegion(final Region<PLACE, LETTER> region) {
 		mTerritory.add(region);

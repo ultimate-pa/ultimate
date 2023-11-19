@@ -55,4 +55,22 @@ public final class KingdomLaw<PLACE, LETTER> {
 		return mLaw;
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		final KingdomLaw<PLACE, LETTER> other = (KingdomLaw<PLACE, LETTER>) obj;
+		return mLaw.equals(other.getConditions());
+	}
+
+	@Override
+	public int hashCode() {
+		return mLaw.hashCode();
+	}
+
 }

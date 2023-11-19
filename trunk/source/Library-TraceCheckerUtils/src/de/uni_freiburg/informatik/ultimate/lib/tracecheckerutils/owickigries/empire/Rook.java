@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.em
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -67,15 +68,24 @@ public final class Rook<PLACE, LETTER> {
 		final Set<Condition<LETTER, PLACE>> missingConditions =
 				DataStructureUtils.difference(allConditions, possibleCut);
 		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
+		// Check for all conditions not in coSet if any is corelated to all conditions in coSet
 		for (final Condition<LETTER, PLACE> condition : missingConditions) {
 			final Set<Condition<LETTER, PLACE>> coConditions = coRelation.computeCoRelatatedConditions(condition);
 			if (coConditions.containsAll(possibleCut)) {
+				// If condition is corelated to all elements of coSet, it is not a cut
 				return false;
 			}
 		}
 		return true;
 	}
 
+	/**
+	 * Check if treaty(Rook) contains any non-maximal coset
+	 *
+	 * @param bp
+	 *            Branching process of the refined Petri net
+	 * @return True if the Rook contains a non cut.
+	 */
 	public boolean containsNonCut(final BranchingProcess<LETTER, PLACE> bp) {
 		final Set<Set<Condition<LETTER, PLACE>>> treaty = mKingdom.getTreaty();
 		for (final Set<Condition<LETTER, PLACE>> coSet : treaty) {
@@ -121,10 +131,6 @@ public final class Rook<PLACE, LETTER> {
 		mLaw.addCondition(condition);
 	}
 
-	/**
-	 * TODO: Kindred check and immigration TODO: Coset/rook check
-	 */
-
 	public Set<Collection<Condition<LETTER, PLACE>>> census() {
 		final Set<Collection<Condition<LETTER, PLACE>>> coSets = new HashSet<>();
 		for (final Realm<PLACE, LETTER> realm : mKingdom.getRealms()) {
@@ -152,6 +158,7 @@ public final class Rook<PLACE, LETTER> {
 	}
 
 	/**
+	 * Get the cosets corresponding to marking in the Rook.
 	 *
 	 * @param subterr
 	 *            A subterritory of a rook.
@@ -183,5 +190,23 @@ public final class Rook<PLACE, LETTER> {
 			}
 		}
 		return placesToConditions;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		final Rook<PLACE, LETTER> other = (Rook<PLACE, LETTER>) obj;
+		return mKingdom.equals(other.getKingdom()) && mLaw.equals(other.getLaw());
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(mKingdom.hashCode() + mLaw.hashCode());
 	}
 }

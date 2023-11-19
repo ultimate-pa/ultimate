@@ -53,6 +53,7 @@ public final class Realm<PLACE, LETTER> {
 	 * * Adds the specified condition into the set of conditions in the realm.
 	 *
 	 * @param condition
+	 *            Condition to be added.
 	 */
 	public void addCondition(final Condition<LETTER, PLACE> condition) {
 		mRealm.add(condition);
@@ -62,6 +63,7 @@ public final class Realm<PLACE, LETTER> {
 	 * Add the specified set of conditions to the realm.
 	 *
 	 * @param conditions
+	 *            Set of conditions to be added.
 	 */
 	public void addCondition(final Set<Condition<LETTER, PLACE>> conditions) {
 		mRealm.addAll(conditions);
@@ -71,6 +73,7 @@ public final class Realm<PLACE, LETTER> {
 	 * Removes the specified condition from the realm.
 	 *
 	 * @param condition
+	 *            Condition to be removed.
 	 */
 	public void removeCondition(final Condition<PLACE, LETTER> condition) {
 		if (mRealm.contains(condition)) {
@@ -79,6 +82,8 @@ public final class Realm<PLACE, LETTER> {
 	}
 
 	/**
+	 * Check if a condition can be added to the realm without violation the corelation restrictions.
+	 *
 	 * @param bp
 	 *            branching process over which corelation is checked.
 	 * @return true if condition is NOT corelated to all conditions in the region. TODO: itself?? / intersection or
@@ -93,10 +98,8 @@ public final class Realm<PLACE, LETTER> {
 		// to any of the conditions in the realm and hence can be added.
 		if (DataStructureUtils.haveEmptyIntersection(coConditions, mRealm)) {
 			return true;
-		} else {
-			return false;
 		}
-
+		return false;
 	}
 
 	/**
@@ -114,9 +117,8 @@ public final class Realm<PLACE, LETTER> {
 		// to any of the conditions in the realm and hence can be added.
 		if (coConditions.containsAll(mRealm)) {
 			return true;
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 	/**
@@ -137,5 +139,23 @@ public final class Realm<PLACE, LETTER> {
 	 */
 	public boolean contains(final Condition<LETTER, PLACE> condition) {
 		return mRealm.contains(condition);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		final Realm<PLACE, LETTER> other = (Realm<PLACE, LETTER>) obj;
+		return mRealm.equals(other.getConditions());
+	}
+
+	@Override
+	public int hashCode() {
+		return mRealm.hashCode();
 	}
 }

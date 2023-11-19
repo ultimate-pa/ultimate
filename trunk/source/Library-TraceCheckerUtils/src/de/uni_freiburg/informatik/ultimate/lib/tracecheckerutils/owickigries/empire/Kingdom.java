@@ -52,7 +52,7 @@ public final class Kingdom<PLACE, LETTER> {
 
 		for (final Condition<LETTER, PLACE> condition : currentRealm.getConditions()) {
 			currentCoset.add(condition);
-			getAllCosets(remainingKingdom, currentCoset, treaty);
+			getAllCosets(new HashSet<>(remainingKingdom), new HashSet<>(currentCoset), treaty);
 			currentCoset.remove(condition);
 		}
 	}
@@ -95,6 +95,16 @@ public final class Kingdom<PLACE, LETTER> {
 		return false;
 	}
 
+	public boolean removeRealm(final Set<Realm<PLACE, LETTER>> realms) {
+		boolean removalSuccess = true;
+		for (final Realm<PLACE, LETTER> realm : realms) {
+			if (!removeRealm(realm)) {
+				removalSuccess = false;
+			}
+		}
+		return removalSuccess;
+	}
+
 	/**
 	 * @param condition
 	 * @param bp
@@ -116,5 +126,23 @@ public final class Kingdom<PLACE, LETTER> {
 		final Set<Realm<PLACE, LETTER>> kingdomRealms = new HashSet<>(getRealms());
 		getAllCosets(kingdomRealms, new HashSet<>(), treatySet);
 		return treatySet;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		final Kingdom<PLACE, LETTER> other = (Kingdom<PLACE, LETTER>) obj;
+		return mKingdom.equals(other.getRealms());
+	}
+
+	@Override
+	public int hashCode() {
+		return mKingdom.hashCode();
 	}
 }

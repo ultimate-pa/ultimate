@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -68,7 +69,8 @@ public final class CrownConstruction<PLACE, LETTER> {
 		mPlacesCoRelation = new PlacesCoRelation<>(bp, net);
 		settlements();
 		mCrown.addRook(crownComputation());
-		// Kindred search and cleaning
+		crownRefurbishment();
+		mCrown.toString();
 	}
 
 	private void settlements() {
@@ -103,6 +105,45 @@ public final class CrownConstruction<PLACE, LETTER> {
 		final Set<Rook<PLACE, LETTER>> colonizedpreRooks = computePreRooks(colonizedRooks);
 		colonizedRooks = DataStructureUtils.difference(colonizedRooks, colonizedpreRooks);
 		return colonizedRooks;
+	}
+
+	private void crownRefurbishment() {
+		final Kindred<PLACE, LETTER> kindred = new Kindred<>(mCrown);
+		final List<Rook<PLACE, LETTER>> crownRooks = new ArrayList<>(mCrown.getRooks());
+		for (final Rook<PLACE, LETTER> rook : crownRooks) {
+			final Set<Marking<PLACE>> kindredMarkings = kindred.getKindredMarkings(rook);
+			if (kindredMarkings.isEmpty()) {
+				continue;
+			}
+			final Set<Marking<PLACE>> splitMarkings = new HashSet<>();
+			for (final Marking<PLACE> marking : kindredMarkings) {
+				final Set<Rook<PLACE, LETTER>> kindredRooks = kindred.getKindredRooks(marking);
+				if (!getRooksTerritoryEquality(kindredRooks)) {
+					splitMarkings.add(marking);
+				}
+			}
+			final Set<Condition<LETTER, PLACE>> allKindredConditions =
+					kindred.getKindredConditions(splitMarkings, rook);
+			final Set<Realm<PLACE, LETTER>> kindredRealms = kindred.getKindredRealms(allKindredConditions, rook);
+			final Kingdom<PLACE, LETTER> firstKingdom =
+					new Kingdom<>(DataStructureUtils.difference(rook.getKingdom().getRealms(), kindredRealms));
+			for (final Realm<PLACE, LETTER> realm : kindredRealms) {
+				final Set<Condition<LETTER, PLACE>> newRealmConditions =
+						DataStructureUtils.difference(realm.getConditions(), allKindredConditions);
+				firstKingdom.addRealm(new Realm<>(newRealmConditions));
+			}
+			mCrown.removeRook(rook);
+			mCrown.addRook(new Rook<>(firstKingdom, rook.getLaw()));
+			for (final Marking<PLACE> marking : splitMarkings) {
+				final Set<Condition<LETTER, PLACE>> markingKindredConds = kindred.getKindredConditions(marking, rook);
+				final Kingdom<PLACE, LETTER> secondKingdom =
+						new Kingdom<>(DataStructureUtils.difference(rook.getKingdom().getRealms(), kindredRealms));
+				for (final Condition<LETTER, PLACE> condition : markingKindredConds) {
+					secondKingdom.addRealm(new Realm<>(new HashSet<>(Set.of(condition))));
+				}
+				mCrown.addRook(new Rook<>(secondKingdom, rook.getLaw()));
+			}
+		}
 	}
 
 	private Set<Rook<PLACE, LETTER>> crownExpansion(final Rook<PLACE, LETTER> rook,
@@ -225,6 +266,12 @@ public final class CrownConstruction<PLACE, LETTER> {
 		final Set<Rook<PLACE, LETTER>> preRooks =
 				rooks.stream().filter(rook -> rook.containsNonCut(mBp)).collect(Collectors.toSet());
 		return preRooks;
+	}
+
+	private boolean getRooksTerritoryEquality(final Set<Rook<PLACE, LETTER>> rooks) {
+		final Set<Territory<PLACE, LETTER>> rookTerritories =
+				rooks.stream().map(rook -> new Territory<PLACE, LETTER>(rook.getKingdom())).collect(Collectors.toSet());
+		return (rookTerritories.size() == 1);
 	}
 
 	public Crown<PLACE, LETTER> getCrown() {
