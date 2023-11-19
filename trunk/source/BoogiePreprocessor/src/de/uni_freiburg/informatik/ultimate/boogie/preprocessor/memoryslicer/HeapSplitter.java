@@ -26,40 +26,24 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.memoryslicer;
 
-import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -71,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -111,18 +94,27 @@ public class HeapSplitter implements IUnmanagedObserver {
 	 */
 	@Override
 	public boolean process(final IElement root) {
-		final MayAlias ma = aliasAnalysis(root);
-		final Map<AddressStore, Integer> repToArray = new HashMap<>();
-		{
-			final UnionFind<AddressStore> uf = ma.getAddressStores();
-			int ctr = 0;
-			for (final AddressStore rep : uf.getAllRepresentatives()) {
-				repToArray.put(rep, ctr);
-				ctr++;
-			}
-		}
+
 		if (root instanceof Unit) {
 			final Unit unit = (Unit) root;
+
+			final AliasAnalysis aa = new AliasAnalysis(mAsfac);
+			final MayAlias ma = aa.aliasAnalysis(unit);
+			final Map<AddressStore, Integer> repToArray = new HashMap<>();
+			{
+				final UnionFind<AddressStore> uf = ma.getAddressStores();
+				int ctr = 0;
+				final Set<AddressStore> representativesOfAccesses = new HashSet<>();
+				for (final PointerBase tmp : aa.getAccessAddresses()) {
+					final AddressStore rep = uf.find(tmp);
+					assert rep != null;
+					representativesOfAccesses.add(rep);
+				}
+				for (final AddressStore rep : representativesOfAccesses) {
+					repToArray.put(rep, ctr);
+					ctr++;
+				}
+			}
 			final Collection<Integer> newHeapSliceIds = repToArray.values();
 			final Collection<String> memorySliceSuffixes = new ArrayList<>();
 			for (final Integer memorySliceId : repToArray.values()) {
@@ -141,9 +133,9 @@ public class HeapSplitter implements IUnmanagedObserver {
 					newDecls.addAll(newHeapVarDecls);
 				} else if (d instanceof Procedure) {
 					final Procedure proc = (Procedure) d;
-					if (toList(MemorySliceUtils.READ_INT, MemorySliceUtils.READ_UNCHECKED_INT, MemorySliceUtils.WRITE_INT,
-							MemorySliceUtils.WRITE_INIT_INT, MemorySliceUtils.READ_POINTER, MemorySliceUtils.WRITE_POINTER)
-							.contains(proc.getIdentifier())) {
+					if (toList(MemorySliceUtils.READ_INT, MemorySliceUtils.READ_UNCHECKED_INT,
+							MemorySliceUtils.WRITE_INT, MemorySliceUtils.WRITE_INIT_INT, MemorySliceUtils.READ_POINTER,
+							MemorySliceUtils.WRITE_POINTER).contains(proc.getIdentifier())) {
 						final List<Procedure> duplicates = duplicateProcedure(memoryArrays, memorySliceSuffixes,
 								(Procedure) d);
 						newDecls.addAll(duplicates);
@@ -329,286 +321,5 @@ public class HeapSplitter implements IUnmanagedObserver {
 		return newVarDecl;
 	}
 
-	private MayAlias aliasAnalysis(final IElement root) {
-		if (root instanceof Unit) {
-			final Unit unit = (Unit) root;
-			for (final Declaration d : unit.getDeclarations()) {
-				if (d instanceof Procedure) {
-					final Procedure p = (Procedure) d;
-					if (p.getBody() != null) {
-						final MayAlias mas2 = processBody2(p.getBody());
-						return mas2;
-					}
-				}
-			}
-		}
-		throw new AssertionError("Analysis failed");
-	}
-
-	private MayAlias processBody(final Body body) {
-		final Map<String, Integer> labelMapping = new HashMap<>();
-		for (int i = 0; i < body.getBlock().length; i++) {
-			if (body.getBlock()[i] instanceof Label) {
-				final Label l = (Label) body.getBlock()[i];
-				labelMapping.put(l.getName(), i);
-			}
-		}
-		final MayAlias[] mas = new MayAlias[body.getBlock().length + 1];
-		mas[0] = new MayAlias();
-		final ArrayDeque<Integer> worklist = new ArrayDeque<>();
-		worklist.add(0);
-		while (!worklist.isEmpty()) {
-			final Integer item = worklist.removeFirst();
-			final MayAlias currentMa = mas[item];
-			assert currentMa != null;
-			final Statement st = body.getBlock()[item];
-			if (st instanceof GotoStatement) {
-				for (final String label : ((GotoStatement) st).getLabels()) {
-					final int targetI = labelMapping.get(label);
-					update(mas, worklist, targetI, currentMa);
-				}
-			} else if (st instanceof Label) {
-				update(mas, worklist, item + 1, currentMa);
-			} else if (st instanceof CallStatement) {
-				final MayAlias succMa = processCallStatement(currentMa, (CallStatement) st);
-				assert succMa != null;
-				update(mas, worklist, item + 1, succMa);
-			} else if (st instanceof AssignmentStatement) {
-				final MayAlias succPei = processAssignmentStatement(currentMa, (AssignmentStatement) st);
-				assert succPei != null;
-				update(mas, worklist, item + 1, succPei);
-			} else if (st instanceof AssumeStatement) {
-				final MayAlias succPei = processAssumeStatement(currentMa, (AssumeStatement) st);
-				assert succPei != null;
-				update(mas, worklist, item + 1, succPei);
-				assert succPei != null;
-			} else if (st instanceof AssertStatement) {
-				final MayAlias succPei = processAssertStatement(currentMa, (AssertStatement) st);
-				assert succPei != null;
-				update(mas, worklist, item + 1, succPei);
-			} else if (st instanceof HavocStatement) {
-				final MayAlias succPei = processHavocStatement(currentMa, (HavocStatement) st);
-				assert succPei != null;
-				update(mas, worklist, item + 1, succPei);
-			} else if (st instanceof ReturnStatement) {
-				final MayAlias succPei = currentMa;
-				if (mas[item + 1] == null) {
-					mas[item + 1] = succPei;
-				} else {
-					mas[item + 1] = mas[item + 1].join(succPei);
-				}
-			} else {
-				throw new AssertionError("Unsuppored " + st);
-			}
-		}
-		MayAlias res = mas[0];
-		for (int i = 1; i < mas.length; i++) {
-			if (mas[i] != null) {
-				res = res.join(mas[i]);
-			}
-		}
-		return res;
-	}
-
-	private MayAlias processBody2(final Body body) {
-		MayAlias mas = new MayAlias();
-		for (final Statement st : body.getBlock()) {
-			if (st instanceof GotoStatement) {
-				// do nothing
-			} else if (st instanceof Label) {
-				// do nothing
-			} else if (st instanceof CallStatement) {
-				mas = processCallStatement(mas, (CallStatement) st);
-			} else if (st instanceof AssignmentStatement) {
-				mas = processAssignmentStatement(mas, (AssignmentStatement) st);
-			} else if (st instanceof AssumeStatement) {
-				mas = processAssumeStatement(mas, (AssumeStatement) st);
-			} else if (st instanceof AssertStatement) {
-				mas = processAssertStatement(mas, (AssertStatement) st);
-			} else if (st instanceof HavocStatement) {
-				mas = processHavocStatement(mas, (HavocStatement) st);
-			} else if (st instanceof ReturnStatement) {
-				// do nothing
-			} else {
-				throw new AssertionError("Unsuppored " + st);
-			}
-		}
-		return mas;
-	}
-
-	private MayAlias processHavocStatement(final MayAlias currentState, final HavocStatement st) {
-		return currentState;
-	}
-
-	private MayAlias processAssertStatement(final MayAlias currentState, final AssertStatement st) {
-		return currentState;
-	}
-
-	private MayAlias processAssumeStatement(final MayAlias currentState, final AssumeStatement st) {
-		return currentState;
-	}
-
-	private MayAlias processAssignmentStatement(final MayAlias currentState, final AssignmentStatement st) {
-		final Map<PointerBase, PointerBase> variableUpdate = new HashMap<>();
-		final Map<PointerBase, PointerBase> pointerArrayUpdate = new HashMap<>();
-		final LeftHandSide[] lhs = st.getLhs();
-		for (int i = 0; i < lhs.length; i++) {
-			if (lhs[i] instanceof VariableLHS) {
-				final VariableLHS vlhs = (VariableLHS) lhs[i];
-				if (isBaseArray(vlhs.getIdentifier())) {
-					final Pair<PointerBase, PointerBase> pair = extractPointerBaseUpdate(st.getRhs()[i]);
-					pointerArrayUpdate.put(pair.getFirst(), pair.getSecond());
-					if (!isNullPointer(pair.getSecond())) {
-						throw new AssertionError("we have to do something");
-					}
-				} else if (isPointer(vlhs.getIdentifier())) {
-					mAsfac.getPointerBase(vlhs.getIdentifier(), vlhs.getDeclarationInformation());
-					final PointerBase pbLhs = mAsfac.getPointerBase(vlhs.getIdentifier(),
-							vlhs.getDeclarationInformation());
-					final PointerBase pbRhs = extractPointerBase(mAsfac, st.getRhs()[i]);
-					variableUpdate.put(pbLhs, pbRhs);
-				}
-			}
-		}
-		if (variableUpdate.isEmpty()) {
-			assert currentState != null;
-			return currentState;
-		} else {
-			MayAlias res = currentState;
-			for (final Entry<PointerBase, PointerBase> entry : variableUpdate.entrySet()) {
-				if (isNullPointer(entry.getValue())) {
-					res = res.addPointerBase(mAsfac, entry.getKey());
-				} else {
-					res = res.reportEquivalence(mAsfac, entry.getKey(), entry.getValue());
-				}
-			}
-			assert res != null;
-			return res;
-		}
-
-	}
-
-	private Pair<PointerBase, PointerBase> extractPointerBaseUpdate(final Expression expression) {
-		if (expression instanceof FunctionApplication) {
-			final FunctionApplication fa = (FunctionApplication) expression;
-			if (fa.getIdentifier().equals(MemorySliceUtils.INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS_POINTER)) {
-				assert fa.getArguments().length == 3;
-				assert isBaseArray(((IdentifierExpression) fa.getArguments()[0]).getIdentifier());
-				final PointerBase index = extractPointerBase(mAsfac, fa.getArguments()[2]);
-				final PointerBase value = mAsfac.getPointerBase(BigInteger.ZERO);
-				return new Pair<>(index, value);
-			}
-		}
-		if (!(expression instanceof ArrayStoreExpression)) {
-			throw new AssertionError("No array!");
-		} else {
-			final ArrayStoreExpression ase = (ArrayStoreExpression) expression;
-			final Expression arr = ase.getArray();
-			if (!(arr instanceof IdentifierExpression)) {
-				throw new AssertionError("Not pointerBase array!");
-			}
-			final IdentifierExpression ie = (IdentifierExpression) arr;
-			if (!isBaseArray(ie.getIdentifier())) {
-				throw new AssertionError("Not pointerBase array!");
-			}
-			if (ase.getIndices().length != 2) {
-				throw new AssertionError("Not pointerBase array!");
-			}
-			final Expression indexExpr = ase.getIndices()[0];
-			final PointerBase index = extractPointerBase(mAsfac, indexExpr);
-			final Expression valueExpr = ase.getValue();
-			final PointerBase value = extractPointerBase(mAsfac, valueExpr);
-			return new Pair<>(index, value);
-		}
-	}
-
-	public static PointerBase extractPointerBase(final AddressStoreFactory mAsfac, final Expression expression) {
-		if (expression instanceof IntegerLiteral) {
-			final BigInteger value = new BigInteger(((IntegerLiteral) expression).getValue());
-			return mAsfac.getPointerBase(value);
-		} else if (expression instanceof IdentifierExpression) {
-			final IdentifierExpression ie = (IdentifierExpression) expression;
-			return mAsfac.getPointerBase(ie.getIdentifier(), ie.getDeclarationInformation());
-		} else {
-			throw new AssertionError("unknown PointerBase " + expression);
-		}
-	}
-
-	private MayAlias processCallStatement(final MayAlias currentState, final CallStatement st) {
-		if (st.getMethodName().equals(MemorySliceUtils.ALLOC_INIT)) {
-			assert st.getArguments().length == 2;
-			final Expression tmp = st.getArguments()[1];
-			final PointerBase pb = extractPointerBase(mAsfac, tmp);
-			return currentState.addPointerBase(mAsfac, pb);
-		} else if (st.getMethodName().equals(MemorySliceUtils.ALLOC_ON_HEAP)
-				|| st.getMethodName().equals(MemorySliceUtils.ALLOC_ON_STACK)) {
-			assert st.getLhs().length == 2;
-			final PointerBase pb = mAsfac.getPointerBase(st.getLhs()[0].getIdentifier(),
-					st.getLhs()[0].getDeclarationInformation());
-			return currentState.addPointerBase(mAsfac, pb);
-		} else if (st.getMethodName().equals(MemorySliceUtils.WRITE_POINTER)) {
-			assert st.getArguments().length == 5;
-			final Expression baseOfValueExpr = st.getArguments()[0];
-			final Expression baseOfIndexExpr = st.getArguments()[2];
-			final PointerBase baseOfValue = extractPointerBase(mAsfac, baseOfValueExpr);
-			final PointerBase baseOfIndex = extractPointerBase(mAsfac, baseOfIndexExpr);
-			if (isNullPointer(baseOfValue)) {
-				// do nothing
-				return currentState;
-			} else {
-				final MemorySegment ms = mAsfac.getMemorySegment(baseOfIndex);
-				return currentState.reportEquivalence(mAsfac, ms, baseOfValue);
-			}
-		} else if (st.getMethodName().equals(MemorySliceUtils.READ_POINTER)) {
-			assert st.getArguments().length == 3;
-			assert st.getLhs().length == 2;
-			final Expression baseOfIndexExpr = st.getArguments()[0];
-			final PointerBase baseOfIndex = extractPointerBase(mAsfac, baseOfIndexExpr);
-			final PointerBase baseOfLhs = mAsfac.getPointerBase(st.getLhs()[0].getIdentifier(),
-					st.getLhs()[0].getDeclarationInformation());
-			final MemorySegment ms = mAsfac.getMemorySegment(baseOfIndex);
-			return currentState.reportEquivalence(mAsfac, baseOfLhs, ms);
-		} else if (st.getMethodName().equals(MemorySliceUtils.WRITE_INIT_INT)) {
-		} else if (st.getMethodName().equals(MemorySliceUtils.WRITE_INIT_POINTER)) {
-		} else if (st.getMethodName().equals(MemorySliceUtils.WRITE_INT)) {
-		} else if (st.getMethodName().equals(MemorySliceUtils.READ_INT)) {
-		} else if (st.getMethodName().equals(MemorySliceUtils.ULTIMATE_DEALLOC)) {
-		} else if (st.getMethodName().equals(MemorySliceUtils.READ_UNCHECKED_INT)) {
-		} else if (st.getMethodName().equals(MemorySliceUtils.WRITE_UNCHECKED_INT)) {
-			// TODO handle properly!
-		} else if (st.getMethodName().equals(MemorySliceUtils.READ_UNCHECKED_POINTER)) {
-		} else if (st.getMethodName().equals(MemorySliceUtils.WRITE_UNCHECKED_POINTER)) {
-		} else {
-			throw new AssertionError("unsupported method " + st.getMethodName());
-		}
-		return currentState;
-	}
-
-	private void update(final MayAlias[] states, final ArrayDeque<Integer> worklist, final int targetI,
-			final MayAlias currentState) {
-		assert (currentState != null);
-		if (states[targetI] == null) {
-			states[targetI] = currentState;
-			worklist.add(targetI);
-		} else if (!states[targetI].equals(currentState)) {
-			states[targetI] = states[targetI].join(currentState);
-			worklist.add(targetI);
-		} else {
-			// no change, no need to add something to worklist
-		}
-
-	}
-
-	private boolean isPointer(final String identifier) {
-		return identifier.endsWith(".base");
-	}
-
-	private boolean isNullPointer(final PointerBase pbRhs) {
-		return (pbRhs.toString().equals("0"));
-	}
-
-	private boolean isBaseArray(final String identifier) {
-		return identifier.equals("#memory_$Pointer$.base");
-	}
 
 }

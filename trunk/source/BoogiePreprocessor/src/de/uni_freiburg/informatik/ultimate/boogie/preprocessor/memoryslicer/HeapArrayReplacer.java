@@ -146,6 +146,7 @@ public class HeapArrayReplacer extends BoogieTransformer {
 			if (tmp != null) {
 				return tmp;
 			}
+//			if (as.get)
 
 		}
 		return super.processStatement(statement);
@@ -215,7 +216,7 @@ public class HeapArrayReplacer extends BoogieTransformer {
 	}
 
 	private int getMemorySliceNumber(final Expression pointerBaseExpr) {
-		final PointerBase pointerBase = HeapSplitter.extractPointerBase(mAsFac, pointerBaseExpr);
+		final PointerBase pointerBase = AliasAnalysis.extractPointerBase(mAsFac, pointerBaseExpr);
 		final AddressStore rep = mUf.find(pointerBase);
 		Objects.requireNonNull(rep);
 		final Integer number = mRepToNewHeapArray.get(rep);
