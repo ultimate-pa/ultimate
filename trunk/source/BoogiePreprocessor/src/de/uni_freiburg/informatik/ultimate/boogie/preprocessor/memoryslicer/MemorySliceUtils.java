@@ -39,9 +39,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class MemorySlicUtils {
+public class MemorySliceUtils {
 
 	public static final String MEMORY_INT = "#memory_int";
+	public static final String MEMORY_POINTER_BASE = "#memory_$Pointer$.base";
+	public static final String MEMORY_POINTER_OFFSET = "#memory_$Pointer$.offset";
 	public static final String INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS_POINTER = "~initToZeroAtPointerBaseAddress~$Pointer$.base";
 	public static final String INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS_INT = "~initToZeroAtPointerBaseAddress~int";
 	public static final String WRITE_UNCHECKED_POINTER = "write~unchecked~$Pointer$";
@@ -59,7 +61,7 @@ public class MemorySlicUtils {
 	public static final String ALLOC_ON_HEAP = "#Ultimate.allocOnHeap";
 	public static final String ALLOC_INIT = "#Ultimate.allocInit";
 
-	private MemorySlicUtils() {
+	private MemorySliceUtils() {
 		// do not instantiate
 	}
 
@@ -96,6 +98,10 @@ public class MemorySlicUtils {
 			}
 		}
 		return null;
+	}
+
+	public static String constructMemorySliceSuffix(final int i) {
+		return "#" + i;
 	}
 
 }

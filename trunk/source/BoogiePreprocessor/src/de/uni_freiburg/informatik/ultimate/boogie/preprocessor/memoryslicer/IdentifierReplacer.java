@@ -93,7 +93,7 @@ public class IdentifierReplacer extends BoogieTransformer {
 
 	@Override
 	protected LeftHandSide processLeftHandSide(final LeftHandSide lhs) {
-		final VariableLHS replacement = MemorySlicUtils.replaceLeftHandSide(lhs, mOldIdToNewId);
+		final VariableLHS replacement = MemorySliceUtils.replaceLeftHandSide(lhs, mOldIdToNewId);
 		if (replacement != null) {
 			return replacement;
 		}
@@ -104,7 +104,7 @@ public class IdentifierReplacer extends BoogieTransformer {
 
 	@Override
 	protected Expression processExpression(final Expression expr) {
-		final IdentifierExpression replacement = MemorySlicUtils.replaceIdentifierExpression(expr, mOldIdToNewId);
+		final IdentifierExpression replacement = MemorySliceUtils.replaceIdentifierExpression(expr, mOldIdToNewId);
 		if (replacement != null) {
 			return replacement;
 		}
