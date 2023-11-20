@@ -1850,9 +1850,11 @@ public class StandardFunctionHandler {
 
 	private ExpressionResult handleLockCall(final IDispatcher main, final ILocation loc, final String name,
 			final IASTInitializerClause lock, final ILockCallFactory callFactory) {
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+
 		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, lock);
 		final Expression index = arg.getLrValue().getValue();
-		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+		erb.addAllExceptLrValue(arg);
 
 		// auxvar for procedure's return value
 		final CType cType = new CPrimitive(CPrimitives.INT);
