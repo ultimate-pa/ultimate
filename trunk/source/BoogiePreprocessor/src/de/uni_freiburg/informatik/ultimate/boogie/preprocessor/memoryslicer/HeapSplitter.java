@@ -30,17 +30,16 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
@@ -107,7 +106,7 @@ public class HeapSplitter implements IUnmanagedObserver {
 				final Set<AddressStore> representativesOfAccesses = new HashSet<>();
 				for (final PointerBase tmp : aa.getAccessAddresses()) {
 					final AddressStore rep = uf.find(tmp);
-					assert rep != null;
+					Objects.requireNonNull(rep, "Cannot find pointer: " + tmp);
 					representativesOfAccesses.add(rep);
 				}
 				for (final AddressStore rep : representativesOfAccesses) {
@@ -125,42 +124,38 @@ public class HeapSplitter implements IUnmanagedObserver {
 			final ArrayDeque<Declaration> newDecls = new ArrayDeque<>();
 			final HeapArrayReplacer har = new HeapArrayReplacer(mAsfac, ma, repToArray);
 			for (final Declaration d : unit.getDeclarations()) {
-				final List<String> memoryArrays = Arrays.asList(new String[] { MemorySliceUtils.MEMORY_INT,
-						MemorySliceUtils.MEMORY_POINTER_BASE, MemorySliceUtils.MEMORY_POINTER_OFFSET });
+				final List<String> memoryArrays = Arrays.asList(new String[] { MemorySliceUtils.MEMORY_POINTER,
+						MemorySliceUtils.MEMORY_INT, MemorySliceUtils.MEMORY_REAL });
 				final List<VariableDeclaration> newHeapVarDecls = duplicateMemoryArrayVarDecl(memoryArrays,
 						memorySliceSuffixes, d);
 				if (newHeapVarDecls != null) {
 					newDecls.addAll(newHeapVarDecls);
 				} else if (d instanceof Procedure) {
 					final Procedure proc = (Procedure) d;
-					if (toList(MemorySliceUtils.READ_INT, MemorySliceUtils.READ_UNCHECKED_INT,
-							MemorySliceUtils.WRITE_INT, MemorySliceUtils.WRITE_INIT_INT, MemorySliceUtils.READ_POINTER,
-							MemorySliceUtils.WRITE_POINTER).contains(proc.getIdentifier())) {
+					if (isUltimateMemoryReadWriteProcedure(proc)) {
 						final List<Procedure> duplicates = duplicateProcedure(memoryArrays, memorySliceSuffixes,
 								(Procedure) d);
 						newDecls.addAll(duplicates);
-//					} else if (proc.getIdentifier().equals(WRITE_POINTER)) {
-//						final Procedure result = reviseWritePointer(newHeapSliceIds, proc);
-//						newDecls.add(result);
-//					} else if (proc.getBody() == null) {
-//						// procedures without implementation
-//						newDecls.add(d);
+					} else if (isUltimateMemoryAllocationProcedure(proc)) {
+						// nothing has to be changed here
+						newDecls.add(proc);
 					} else {
+						if (proc.getSpecification() != null) {
+							final Specification[] specs = proc.getSpecification();
+							for (final Specification spec : specs) {
+								if (!(spec instanceof ModifiesSpecification)) {
+									throw new AssertionError(String.format(
+											"Unsupported: Procedure %s is not part of the Ultimate memory model but has specification other that is not a ModifiesSpecification",
+											proc.getIdentifier()));
+								}
+							}
+						}
 						final Declaration newDecl = har.processDeclaration(proc);
 						newDecls.add(newDecl);
 					}
 				} else {
 					newDecls.add(d);
 				}
-//				if (d instanceof Procedure) {
-//					final Procedure p = (Procedure) d;
-//					if (p.getBody() != null) {
-//						final MayAlias mas1 = processBody(p.getBody());
-//						final MayAlias mas2 = processBody2(p.getBody());
-//						final boolean same = mas1.equals(mas2);
-//						mas1.toString();
-//					}
-//				}
 			}
 			final String logMessage = constructLogMessage(har.getAccessCounter(), har.getSliceAccessCounter());
 			mLogger.info(logMessage);
@@ -170,26 +165,32 @@ public class HeapSplitter implements IUnmanagedObserver {
 		return true;
 	}
 
-	private Procedure reviseWritePointer(final Collection<Integer> heapSliceIds, final Procedure proc) {
-		// assuming that we have two specifications, first ensures, then modifies
-		assert proc.getSpecification().length == 2;
-		final EnsuresSpecification es = (EnsuresSpecification) proc.getSpecification()[0];
-		final ModifiesSpecification ms = (ModifiesSpecification) proc.getSpecification()[1];
-		final List<Specification> newSpecs = new ArrayList<>();
-		for (final Integer heapSliceId : heapSliceIds) {
-			final String heapSliceSuffix = MemorySliceUtils.constructMemorySliceSuffix(heapSliceId);
-			final IdentifierReplacer ir = new IdentifierReplacer(
-					Collections.singletonMap(MemorySliceUtils.MEMORY_INT, MemorySliceUtils.MEMORY_INT + heapSliceSuffix));
-			final EnsuresSpecification newEs = (EnsuresSpecification) ir.processSpecification(es);
-			newSpecs.add(newEs);
+	private static boolean isUltimateMemoryReadWriteProcedure(final Procedure proc) {
+		final List<String> ultimateMemoryModifyingProcedures = toList(MemorySliceUtils.WRITE_POINTER,
+				MemorySliceUtils.WRITE_INT, MemorySliceUtils.WRITE_REAL, MemorySliceUtils.WRITE_INIT_POINTER,
+				MemorySliceUtils.WRITE_INIT_INT, MemorySliceUtils.WRITE_INIT_REAL,
+				MemorySliceUtils.WRITE_UNCHECKED_POINTER, MemorySliceUtils.WRITE_UNCHECKED_INT,
+				MemorySliceUtils.WRITE_UNCHECKED_REAL, MemorySliceUtils.READ_POINTER, MemorySliceUtils.READ_INT,
+				MemorySliceUtils.READ_REAL, MemorySliceUtils.READ_UNCHECKED_POINTER,
+				MemorySliceUtils.READ_UNCHECKED_INT, MemorySliceUtils.READ_UNCHECKED_REAL);
+		assert ultimateMemoryModifyingProcedures.size() == 15;
+		for (final String ummp : ultimateMemoryModifyingProcedures) {
+			if (proc.getIdentifier().startsWith(ummp)) {
+				return true;
+			}
 		}
-		final ModifiesSpecification newMs = reviseModifiesSpec(heapSliceIds, ms, MemorySliceUtils.MEMORY_INT);
-		newSpecs.add(newMs);
-		final Procedure result = new Procedure(proc.getLoc(), proc.getAttributes(), proc.getIdentifier(),
-				proc.getTypeParams(), proc.getInParams(), proc.getOutParams(),
-				newSpecs.toArray(new Specification[newSpecs.size()]), null);
-		ModelUtils.copyAnnotations(proc, result);
-		return result;
+		return false;
+	}
+
+	private static boolean isUltimateMemoryAllocationProcedure(final Procedure proc) {
+		final List<String> ultimateMemoryAllocationProcedures = toList(MemorySliceUtils.ALLOC_INIT,
+				MemorySliceUtils.ALLOC_ON_HEAP, MemorySliceUtils.ALLOC_ON_STACK, MemorySliceUtils.ULTIMATE_DEALLOC);
+		for (final String umap : ultimateMemoryAllocationProcedures) {
+			if (proc.getIdentifier().startsWith(umap)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static ModifiesSpecification reviseModifiesSpec(final Collection<Integer> heapSliceIds,
@@ -224,18 +225,6 @@ public class HeapSplitter implements IUnmanagedObserver {
 				sliceAccessCounter.length, Arrays.toString(sliceAccessCounter));
 	}
 
-//	private String constructLogMessage()
-
-	public boolean isProcedure(final Declaration d, final String... identifiers) {
-		if (d instanceof Procedure) {
-			final Procedure proc = (Procedure) d;
-			if (Arrays.asList(identifiers).contains(proc.getIdentifier())) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	private static List<Procedure> duplicateProcedure(final List<String> memoryArrays,
 			final Collection<String> memorySliceSuffixes, final Procedure p) {
 		final List<Procedure> res = new ArrayList<>(memorySliceSuffixes.size());
@@ -266,17 +255,16 @@ public class HeapSplitter implements IUnmanagedObserver {
 			final VariableDeclaration varDecl = (VariableDeclaration) d;
 			if (varDecl.getVariables().length == 1) {
 				final VarList varList = varDecl.getVariables()[0];
+				if (isSingleIdList(MemorySliceUtils.MEMORY_POINTER, varList)) {
+					return duplicateMemoryArrayVarDecl(varDecl, new String[] { MemorySliceUtils.MEMORY_POINTER },
+							memorySliceSuffixes);
+				}
 				if (isSingleIdList(MemorySliceUtils.MEMORY_INT, varList)) {
 					return duplicateMemoryArrayVarDecl(varDecl, new String[] { MemorySliceUtils.MEMORY_INT },
 							memorySliceSuffixes);
 				}
-			} else if (varDecl.getVariables().length == 2) {
-				final VarList varList0 = varDecl.getVariables()[0];
-				final VarList varList1 = varDecl.getVariables()[1];
-				if (isSingleIdList(MemorySliceUtils.MEMORY_POINTER_BASE, varList0)
-						&& isSingleIdList(MemorySliceUtils.MEMORY_POINTER_OFFSET, varList1)) {
-					return duplicateMemoryArrayVarDecl(varDecl,
-							new String[] { MemorySliceUtils.MEMORY_POINTER_BASE, MemorySliceUtils.MEMORY_POINTER_OFFSET },
+				if (isSingleIdList(MemorySliceUtils.MEMORY_REAL, varList)) {
+					return duplicateMemoryArrayVarDecl(varDecl, new String[] { MemorySliceUtils.MEMORY_REAL },
 							memorySliceSuffixes);
 				}
 
@@ -302,8 +290,8 @@ public class HeapSplitter implements IUnmanagedObserver {
 		return newHeapVarDecls;
 	}
 
-	private static VariableDeclaration renameMemoryArray(final VariableDeclaration oldVarDecl, final String[] memoryArrayIds,
-			final String memorySliceSuffix) {
+	private static VariableDeclaration renameMemoryArray(final VariableDeclaration oldVarDecl,
+			final String[] memoryArrayIds, final String memorySliceSuffix) {
 		assert oldVarDecl.getVariables().length == memoryArrayIds.length;
 		final VarList[] variables = new VarList[oldVarDecl.getVariables().length];
 		for (int i = 0; i < oldVarDecl.getVariables().length; i++) {
@@ -320,6 +308,5 @@ public class HeapSplitter implements IUnmanagedObserver {
 		ModelUtils.copyAnnotations(oldVarDecl, newVarDecl);
 		return newVarDecl;
 	}
-
 
 }

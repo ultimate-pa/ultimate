@@ -67,6 +67,6 @@ public class MemorySegment extends AddressStore {
 
 	@Override
 	public String toString() {
-		return "#memory_$Pointer$.base[" + mPointerBase.toString() + "]";
+		return MemorySliceUtils.MEMORY_POINTER + "[" + mPointerBase.toString() + "]";
 	}
 }

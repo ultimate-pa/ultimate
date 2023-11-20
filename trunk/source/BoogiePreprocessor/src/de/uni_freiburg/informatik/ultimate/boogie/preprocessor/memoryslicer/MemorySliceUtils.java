@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.memoryslicer;
 
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
@@ -41,25 +42,35 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
  */
 public class MemorySliceUtils {
 
+	public static final String MEMORY_POINTER = "#memory_$Pointer$";
 	public static final String MEMORY_INT = "#memory_int";
-	public static final String MEMORY_POINTER_BASE = "#memory_$Pointer$.base";
-	public static final String MEMORY_POINTER_OFFSET = "#memory_$Pointer$.offset";
-	public static final String INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS_POINTER = "~initToZeroAtPointerBaseAddress~$Pointer$.base";
+	public static final String MEMORY_REAL = "#memory_real";
+
+	public static final String INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS_POINTER = "~initToZeroAtPointerBaseAddress~$Pointer$";
 	public static final String INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS_INT = "~initToZeroAtPointerBaseAddress~int";
-	public static final String WRITE_UNCHECKED_POINTER = "write~unchecked~$Pointer$";
-	public static final String READ_UNCHECKED_POINTER = "read~unchecked~$Pointer$";
-	public static final String WRITE_UNCHECKED_INT = "write~unchecked~int";
-	public static final String READ_UNCHECKED_INT = "read~unchecked~int";
-	public static final String ULTIMATE_DEALLOC = "ULTIMATE.dealloc";
-	public static final String READ_INT = "read~int";
-	public static final String WRITE_INT = "write~int";
-	public static final String WRITE_INIT_POINTER = "write~init~$Pointer$";
-	public static final String WRITE_INIT_INT = "write~init~int";
-	public static final String READ_POINTER = "read~$Pointer$";
+
 	public static final String WRITE_POINTER = "write~$Pointer$";
+	public static final String WRITE_UNCHECKED_POINTER = "write~unchecked~$Pointer$";
+	public static final String WRITE_INIT_POINTER = "write~init~$Pointer$";
+	public static final String READ_POINTER = "read~$Pointer$";
+	public static final String READ_UNCHECKED_POINTER = "read~unchecked~$Pointer$";
+
+	public static final String WRITE_INT = "write~int";
+	public static final String WRITE_UNCHECKED_INT = "write~unchecked~int";
+	public static final String WRITE_INIT_INT = "write~init~int";
+	public static final String READ_INT = "read~int";
+	public static final String READ_UNCHECKED_INT = "read~unchecked~int";
+
+	public static final String WRITE_REAL = "write~real";
+	public static final String WRITE_UNCHECKED_REAL = "write~unchecked~real";
+	public static final String WRITE_INIT_REAL = "write~init~real";
+	public static final String READ_REAL = "read~real";
+	public static final String READ_UNCHECKED_REAL = "read~unchecked~real";
+
 	public static final String ALLOC_ON_STACK = "#Ultimate.allocOnStack";
 	public static final String ALLOC_ON_HEAP = "#Ultimate.allocOnHeap";
 	public static final String ALLOC_INIT = "#Ultimate.allocInit";
+	public static final String ULTIMATE_DEALLOC = "ULTIMATE.dealloc";
 
 	private MemorySliceUtils() {
 		// do not instantiate
@@ -102,6 +113,41 @@ public class MemorySliceUtils {
 
 	public static String constructMemorySliceSuffix(final int i) {
 		return "#" + i;
+	}
+
+	public static boolean isPointerArray(final LeftHandSide array) {
+		if (array instanceof VariableLHS) {
+			final VariableLHS va = (VariableLHS) array;
+			if (va.getIdentifier().equals(MemorySliceUtils.MEMORY_POINTER)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static boolean isIntArray(final LeftHandSide array) {
+		if (array instanceof VariableLHS) {
+			final VariableLHS va = (VariableLHS) array;
+			if (va.getIdentifier().equals(MemorySliceUtils.MEMORY_INT)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static boolean isRealArray(final LeftHandSide array) {
+		if (array instanceof VariableLHS) {
+			final VariableLHS va = (VariableLHS) array;
+			if (va.getIdentifier().equals(MemorySliceUtils.MEMORY_REAL)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static boolean containsMemoryArrays(final BoogieASTNode node) {
+		final String string = node.toString();
+		return (string.contains(MEMORY_POINTER) || string.contains(MEMORY_INT) || string.contains(MEMORY_REAL));
 	}
 
 }

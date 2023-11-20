@@ -41,6 +41,10 @@ public class PointerBaseIntLiteral extends PointerBase {
 		mValue = value;
 	}
 
+	public BigInteger getValue() {
+		return mValue;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;

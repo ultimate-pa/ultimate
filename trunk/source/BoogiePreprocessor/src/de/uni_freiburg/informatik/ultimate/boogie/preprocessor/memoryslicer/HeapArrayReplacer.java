@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -77,7 +78,6 @@ public class HeapArrayReplacer extends BoogieTransformer {
 
 	@Override
 	protected Declaration processDeclaration(final Declaration decl) {
-		// TODO Auto-generated method stub
 		return super.processDeclaration(decl);
 	}
 
@@ -85,8 +85,8 @@ public class HeapArrayReplacer extends BoogieTransformer {
 	protected Specification processSpecification(final Specification spec) {
 		if (spec instanceof ModifiesSpecification) {
 			final ModifiesSpecification ms = (ModifiesSpecification) spec;
-			return HeapSplitter.reviseModifiesSpec(mRepToNewHeapArray.values(), ms, MemorySliceUtils.MEMORY_INT,
-					MemorySliceUtils.MEMORY_POINTER_BASE, MemorySliceUtils.MEMORY_POINTER_OFFSET);
+			return HeapSplitter.reviseModifiesSpec(mRepToNewHeapArray.values(), ms, MemorySliceUtils.MEMORY_POINTER,
+					MemorySliceUtils.MEMORY_INT, MemorySliceUtils.MEMORY_REAL);
 		} else {
 			return super.processSpecification(spec);
 		}
@@ -96,10 +96,12 @@ public class HeapArrayReplacer extends BoogieTransformer {
 	protected Statement processStatement(final Statement statement) {
 		if (statement instanceof CallStatement) {
 			final CallStatement cs = (CallStatement) statement;
-			if (cs.getMethodName().equals(MemorySliceUtils.READ_INT)
-					|| cs.getMethodName().equals(MemorySliceUtils.READ_UNCHECKED_INT)) {
+			if (cs.getMethodName().startsWith(MemorySliceUtils.READ_INT)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.READ_UNCHECKED_INT)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.READ_REAL)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.READ_UNCHECKED_REAL)) {
 				final Expression pointerBaseExpr = cs.getArguments()[0];
-				final int heapSliceNumber = getMemorySliceNumber(pointerBaseExpr);
+				final int heapSliceNumber = getMemorySliceNumberFromPointer(pointerBaseExpr);
 				final String suffix = MemorySliceUtils.constructMemorySliceSuffix(heapSliceNumber);
 				final CallStatement result = new CallStatement(cs.getLoc(), cs.getAttributes(), cs.isForall(),
 						cs.getLhs(), cs.getMethodName() + suffix, cs.getArguments());
@@ -107,10 +109,14 @@ public class HeapArrayReplacer extends BoogieTransformer {
 				mAccessCounter++;
 				mSliceAccessCounter[heapSliceNumber]++;
 				return result;
-			} else if (cs.getMethodName().equals(MemorySliceUtils.WRITE_INIT_INT)
-					|| cs.getMethodName().equals(MemorySliceUtils.WRITE_INT)) {
+			} else if (cs.getMethodName().startsWith(MemorySliceUtils.WRITE_INIT_INT)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.WRITE_INT)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.WRITE_UNCHECKED_INT)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.WRITE_INIT_REAL)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.WRITE_REAL)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.WRITE_UNCHECKED_REAL)) {
 				final Expression pointerBaseExpr = cs.getArguments()[1];
-				final int heapSliceNumber = getMemorySliceNumber(pointerBaseExpr);
+				final int heapSliceNumber = getMemorySliceNumberFromPointer(pointerBaseExpr);
 				final String suffix = MemorySliceUtils.constructMemorySliceSuffix(heapSliceNumber);
 				final CallStatement result = new CallStatement(cs.getLoc(), cs.getAttributes(), cs.isForall(),
 						cs.getLhs(), cs.getMethodName() + suffix, cs.getArguments());
@@ -118,9 +124,10 @@ public class HeapArrayReplacer extends BoogieTransformer {
 				mAccessCounter++;
 				mSliceAccessCounter[heapSliceNumber]++;
 				return result;
-			} else if (cs.getMethodName().equals(MemorySliceUtils.READ_POINTER)) {
+			} else if (cs.getMethodName().equals(MemorySliceUtils.READ_POINTER)
+					|| cs.getMethodName().equals(MemorySliceUtils.READ_UNCHECKED_POINTER)) {
 				final Expression pointerBaseExpr = cs.getArguments()[0];
-				final int heapSliceNumber = getMemorySliceNumber(pointerBaseExpr);
+				final int heapSliceNumber = getMemorySliceNumberFromPointer(pointerBaseExpr);
 				final String suffix = MemorySliceUtils.constructMemorySliceSuffix(heapSliceNumber);
 				final CallStatement result = new CallStatement(cs.getLoc(), cs.getAttributes(), cs.isForall(),
 						cs.getLhs(), cs.getMethodName() + suffix, cs.getArguments());
@@ -128,9 +135,12 @@ public class HeapArrayReplacer extends BoogieTransformer {
 				mAccessCounter++;
 				mSliceAccessCounter[heapSliceNumber]++;
 				return result;
-			} else if (cs.getMethodName().equals(MemorySliceUtils.WRITE_POINTER)) {
-				final Expression pointerBaseExpr = cs.getArguments()[2];
-				final int heapSliceNumber = getMemorySliceNumber(pointerBaseExpr);
+			} else if (cs.getMethodName().equals(MemorySliceUtils.WRITE_POINTER)
+					|| (cs.getMethodName().equals(MemorySliceUtils.WRITE_INIT_POINTER))
+					|| (cs.getMethodName().equals(MemorySliceUtils.WRITE_UNCHECKED_POINTER))) {
+				assert cs.getArguments().length == 3;
+				final Expression pointerBaseExpr = cs.getArguments()[1];
+				final int heapSliceNumber = getMemorySliceNumberFromPointer(pointerBaseExpr);
 				final String suffix = MemorySliceUtils.constructMemorySliceSuffix(heapSliceNumber);
 				final CallStatement result = new CallStatement(cs.getLoc(), cs.getAttributes(), cs.isForall(),
 						cs.getLhs(), cs.getMethodName() + suffix, cs.getArguments());
@@ -138,85 +148,113 @@ public class HeapArrayReplacer extends BoogieTransformer {
 				mAccessCounter++;
 				mSliceAccessCounter[heapSliceNumber]++;
 				return result;
+			} else if (cs.getMethodName().startsWith(MemorySliceUtils.ALLOC_INIT)) {
+				// do nothing
+			} else if (cs.getMethodName().startsWith(MemorySliceUtils.ALLOC_ON_STACK)) {
+				// do nothing
+			} else if (cs.getMethodName().startsWith(MemorySliceUtils.ALLOC_ON_HEAP)) {
+				// do nothing
+			} else if (cs.getMethodName().startsWith(MemorySliceUtils.ULTIMATE_DEALLOC)) {
+				// do nothing
+			} else {
+				// do nothing
+//				statement.toString();
 			}
 		}
 		if (statement instanceof AssignmentStatement) {
 			final AssignmentStatement as = (AssignmentStatement) statement;
-			final AssignmentStatement tmp = handleInitToZero(as);
-			if (tmp != null) {
-				return tmp;
+			final AssignmentStatement tmp1 = handleInitToZero(as);
+			if (tmp1 != null) {
+				return tmp1;
 			}
-//			if (as.get)
-
+			final AssignmentStatement tmp2 = handleArrayWrite(as);
+			if (tmp2 != null) {
+				return tmp2;
+			}
+			if (MemorySliceUtils.containsMemoryArrays(statement)) {
+				throw new AssertionError("Statement contains memory arrays " + statement);
+			}
 		}
 		return super.processStatement(statement);
 	}
 
+	private AssignmentStatement handleArrayWrite(final AssignmentStatement as) {
+		if (as.getLhs().length != 1) {
+			return null;
+		}
+		final LeftHandSide oldLhs = as.getLhs()[0];
+		if (!(oldLhs instanceof ArrayLHS)) {
+			return null;
+		}
+		final ArrayLHS arr = (ArrayLHS) oldLhs;
+		if (MemorySliceUtils.isPointerArray(arr.getArray()) || MemorySliceUtils.isIntArray(arr.getArray())
+				|| MemorySliceUtils.isRealArray(arr.getArray())) {
+			if (arr.getIndices().length != 1) {
+				return null;
+			}
+			final Expression pointerBaseExpr = arr.getIndices()[0];
+			final String suffix = getMemorySliceSuffixFromPointer(pointerBaseExpr);
+
+			final String oldMemArrayId = ((VariableLHS) arr.getArray()).getIdentifier();
+			final String newMemArrayId = oldMemArrayId + suffix;
+
+			final IdentifierReplacer ir = new IdentifierReplacer(
+					Collections.singletonMap(oldMemArrayId, newMemArrayId));
+
+			final LeftHandSide newLhs = ir.processLeftHandSide(oldLhs);
+			// value is unchanged
+			final Expression value = as.getRhs()[0];
+			if (MemorySliceUtils.containsMemoryArrays(value)) {
+				throw new AssertionError("Contains mem arrays " + value);
+			}
+			final AssignmentStatement result = new AssignmentStatement(as.getLocation(), new LeftHandSide[] { newLhs },
+					new Expression[] { value });
+			ModelUtils.copyAnnotations(as, result);
+			return result;
+		}
+		return null;
+	}
+
 	private AssignmentStatement handleInitToZero(final AssignmentStatement as) {
-//		if (as.getLhs().length != 1) {
-//			return null;
-//		}
-//		final LeftHandSide oldLhs = as.getLhs()[0];
-//		if (!(oldLhs instanceof VariableLHS)) {
-//			return null;
-//		}
+		if (as.getLhs().length != 1) {
+			return null;
+		}
+		final LeftHandSide oldLhs = as.getLhs()[0];
+		if (!(oldLhs instanceof VariableLHS)) {
+			return null;
+		}
 		if (!(as.getRhs()[0] instanceof FunctionApplication)) {
 			return null;
 		}
 		final FunctionApplication fa0 = (FunctionApplication) as.getRhs()[0];
-		final LeftHandSide[] newLhs;
-		final Expression[] newRhs;
+		final String oldMemoryArrayId;
 		if (fa0.getIdentifier().equals(MemorySliceUtils.INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS_INT)) {
-			final FunctionApplication oldFa = (FunctionApplication) as.getRhs()[0];
-			final Expression pointerExpr = oldFa.getArguments()[1];
-			final String suffix = getMemorySliceSuffix(pointerExpr);
-			final LeftHandSide oldLhs = as.getLhs()[0];
-			final String oldMemoryArrayId = MemorySliceUtils.MEMORY_INT;
-			final String newMemoryArrayId = oldMemoryArrayId + suffix;
-			final VariableLHS newVlhs = MemorySliceUtils.replaceLeftHandSide(oldLhs,
-					Collections.singletonMap(oldMemoryArrayId, newMemoryArrayId));
-			final IdentifierExpression newId = MemorySliceUtils.replaceIdentifierExpression(oldFa.getArguments()[0],
-					Collections.singletonMap(oldMemoryArrayId, newMemoryArrayId));
-			final Expression[] args = new Expression[] { newId, pointerExpr };
-			final FunctionApplication newFa = new FunctionApplication(oldFa.getLoc(), oldFa.getType(),
-					oldFa.getIdentifier(), args);
-			ModelUtils.copyAnnotations(oldFa, newFa);
-			newLhs = new LeftHandSide[] { newVlhs };
-			newRhs = new Expression[] { newFa };
+			oldMemoryArrayId = MemorySliceUtils.MEMORY_INT;
 		} else if (fa0.getIdentifier().equals(MemorySliceUtils.INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS_POINTER)) {
-			final Expression pointerExpr = fa0.getArguments()[2];
-			final String suffix = getMemorySliceSuffix(pointerExpr);
-			final String[] oldMemoryArrayId = new String[] { MemorySliceUtils.MEMORY_POINTER_BASE,
-					MemorySliceUtils.MEMORY_POINTER_OFFSET };
-			final String[] newMemoryArrayId = new String[] { MemorySliceUtils.MEMORY_POINTER_BASE + suffix,
-					MemorySliceUtils.MEMORY_POINTER_OFFSET + suffix };
-			newLhs = new LeftHandSide[2];
-			newRhs = new Expression[2];
-			for (int i = 0; i<2; i++) {
-				final FunctionApplication oldFa = (FunctionApplication) as.getRhs()[i];
-				final LeftHandSide oldLhs = as.getLhs()[i];
-				final VariableLHS newVlhs = MemorySliceUtils.replaceLeftHandSide(oldLhs,
-						Collections.singletonMap(oldMemoryArrayId[i], newMemoryArrayId[i]));
-				final IdentifierExpression newIdBase = MemorySliceUtils.replaceIdentifierExpression(oldFa.getArguments()[0],
-						Collections.singletonMap(oldMemoryArrayId[0], newMemoryArrayId[0]));
-				final IdentifierExpression newIdOffset = MemorySliceUtils.replaceIdentifierExpression(oldFa.getArguments()[1],
-						Collections.singletonMap(oldMemoryArrayId[1], newMemoryArrayId[1]));
-				final Expression[] args = new Expression[] { newIdBase, newIdOffset, pointerExpr };
-				final FunctionApplication newFa = new FunctionApplication(oldFa.getLoc(), oldFa.getType(),
-						oldFa.getIdentifier(), args);
-				newLhs[i] = newVlhs;
-				newRhs[i] = newFa;
-			}
+			oldMemoryArrayId = MemorySliceUtils.MEMORY_POINTER;
 		} else {
 			return null;
 		}
-		final AssignmentStatement result = new AssignmentStatement(as.getLocation(), newLhs , newRhs);
+		final FunctionApplication oldFa = (FunctionApplication) as.getRhs()[0];
+		final Expression pointerExpr = oldFa.getArguments()[1];
+		final String suffix = getMemorySliceSuffixFromBase(pointerExpr);
+		final String newMemoryArrayId = oldMemoryArrayId + suffix;
+		final VariableLHS newVlhs = MemorySliceUtils.replaceLeftHandSide(oldLhs,
+				Collections.singletonMap(oldMemoryArrayId, newMemoryArrayId));
+		final IdentifierExpression newId = MemorySliceUtils.replaceIdentifierExpression(oldFa.getArguments()[0],
+				Collections.singletonMap(oldMemoryArrayId, newMemoryArrayId));
+		final Expression[] args = new Expression[] { newId, pointerExpr };
+		final FunctionApplication newFa = new FunctionApplication(oldFa.getLoc(), oldFa.getType(),
+				oldFa.getIdentifier(), args);
+		ModelUtils.copyAnnotations(oldFa, newFa);
+		final AssignmentStatement result = new AssignmentStatement(as.getLocation(), new LeftHandSide[] { newVlhs },
+				new Expression[] { newFa });
 		ModelUtils.copyAnnotations(as, result);
 		return result;
 	}
 
-	private int getMemorySliceNumber(final Expression pointerBaseExpr) {
-		final PointerBase pointerBase = AliasAnalysis.extractPointerBase(mAsFac, pointerBaseExpr);
+	private int getMemorySliceNumberFromBase(final Expression pointerBaseExpr) {
+		final PointerBase pointerBase = AliasAnalysis.extractPointerBaseFromBase(mAsFac, pointerBaseExpr);
 		final AddressStore rep = mUf.find(pointerBase);
 		Objects.requireNonNull(rep);
 		final Integer number = mRepToNewHeapArray.get(rep);
@@ -224,12 +262,24 @@ public class HeapArrayReplacer extends BoogieTransformer {
 		return number;
 	}
 
-	private String getMemorySliceSuffix(final Expression pointerBaseExpr) {
-		final int number = getMemorySliceNumber(pointerBaseExpr);
+	private int getMemorySliceNumberFromPointer(final Expression pointerBaseExpr) {
+		final PointerBase pointerBase = AliasAnalysis.extractPointerBaseFromPointer(mAsFac, pointerBaseExpr);
+		final AddressStore rep = mUf.find(pointerBase);
+		Objects.requireNonNull(rep);
+		final Integer number = mRepToNewHeapArray.get(rep);
+		Objects.requireNonNull(number);
+		return number;
+	}
+
+	private String getMemorySliceSuffixFromBase(final Expression pointerBaseExpr) {
+		final int number = getMemorySliceNumberFromBase(pointerBaseExpr);
 		return MemorySliceUtils.constructMemorySliceSuffix(number);
 	}
 
-
+	private String getMemorySliceSuffixFromPointer(final Expression pointerBaseExpr) {
+		final int number = getMemorySliceNumberFromPointer(pointerBaseExpr);
+		return MemorySliceUtils.constructMemorySliceSuffix(number);
+	}
 
 //	@Override
 //	protected Expression processExpression(final Expression expr) {
@@ -260,9 +310,5 @@ public class HeapArrayReplacer extends BoogieTransformer {
 //		}
 //		return super.processExpression(expr);
 //	}
-
-	private boolean isHeap(final String identifier) {
-		return identifier.equals("#memory_int");
-	}
 
 }
