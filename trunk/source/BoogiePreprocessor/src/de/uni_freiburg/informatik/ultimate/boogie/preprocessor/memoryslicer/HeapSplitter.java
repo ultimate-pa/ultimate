@@ -102,6 +102,14 @@ public class HeapSplitter implements IUnmanagedObserver {
 			final Map<AddressStore, Integer> repToArray = new HashMap<>();
 			{
 				final UnionFind<AddressStore> uf = ma.getAddressStores();
+				for (final AddressStore elem : uf.getAllElements()) {
+					if (elem instanceof PointerBase) {
+						assert !AliasAnalysis.isNullPointer((PointerBase) elem);
+					} else if (elem instanceof MemorySegment) {
+						final MemorySegment ms = (MemorySegment) elem;
+						assert !AliasAnalysis.isNullPointer(ms.getPointerBase());
+					}
+				}
 				int ctr = 0;
 				final Set<AddressStore> representativesOfAccesses = new HashSet<>();
 				for (final PointerBase tmp : aa.getAccessAddresses()) {
@@ -137,6 +145,9 @@ public class HeapSplitter implements IUnmanagedObserver {
 								(Procedure) d);
 						newDecls.addAll(duplicates);
 					} else if (isUltimateMemoryAllocationProcedure(proc)) {
+						// nothing has to be changed here
+						newDecls.add(proc);
+					} else if (isUltimateMemoryConcurrencyProcedure(proc)) {
 						// nothing has to be changed here
 						newDecls.add(proc);
 					} else {
@@ -185,6 +196,16 @@ public class HeapSplitter implements IUnmanagedObserver {
 	private static boolean isUltimateMemoryAllocationProcedure(final Procedure proc) {
 		final List<String> ultimateMemoryAllocationProcedures = toList(MemorySliceUtils.ALLOC_INIT,
 				MemorySliceUtils.ALLOC_ON_HEAP, MemorySliceUtils.ALLOC_ON_STACK, MemorySliceUtils.ULTIMATE_DEALLOC);
+		for (final String umap : ultimateMemoryAllocationProcedures) {
+			if (proc.getIdentifier().startsWith(umap)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean isUltimateMemoryConcurrencyProcedure(final Procedure proc) {
+		final List<String> ultimateMemoryAllocationProcedures = toList(MemorySliceUtils.PTHREADS_MUTEX_LOCK);
 		for (final String umap : ultimateMemoryAllocationProcedures) {
 			if (proc.getIdentifier().startsWith(umap)) {
 				return true;

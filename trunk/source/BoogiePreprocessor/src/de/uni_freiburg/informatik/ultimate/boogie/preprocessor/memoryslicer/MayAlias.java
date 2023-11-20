@@ -99,27 +99,42 @@ public class MayAlias {
 		mAddressStores.union(lhs, rhs);
 		{
 			final AddressStore rep = mAddressStores.find(lhs);
-			final Set<AddressStore> newEquivalenceClass = mAddressStores.getEquivalenceClassMembers(rep);
-			// TODO: apply congruence repeatedly
-			applyCongruence(asFac, mAddressStores, newEquivalenceClass);
+			applyCongruenceExhaustively(asFac, mAddressStores, rep);
 		}
 	}
 
-	private void applyCongruence(final AddressStoreFactory asFac, final UnionFind<AddressStore> resultUf,
+	private void applyCongruenceExhaustively(final AddressStoreFactory asFac, final UnionFind<AddressStore> resultUf,
+			final AddressStore someElement) {
+		while (true) {
+			final Set<AddressStore> equivalenceClass = mAddressStores.getEquivalenceClassMembers(someElement);
+			final boolean someModification = applyCongruence(asFac, resultUf, equivalenceClass);
+			if (!someModification) {
+				return;
+			}
+		}
+
+
+	}
+
+	private boolean applyCongruence(final AddressStoreFactory asFac, final UnionFind<AddressStore> resultUf,
 			final Set<AddressStore> newEquivalenceClass) {
+		// filter PointerBases
 		final List<PointerBase> pointerBases = new ArrayList<>();
 		for (final AddressStore mem : newEquivalenceClass) {
 			if (mem instanceof PointerBase) {
 				pointerBases.add((PointerBase) mem);
 			}
 		}
+		// merge equivalence classes of corresponding memory segments
+		boolean someModification = false;
 		if (!pointerBases.isEmpty()) {
 			final MemorySegment ms0 = asFac.getMemorySegment(pointerBases.get(0));
 			for (int i = 1; i < pointerBases.size(); i++) {
 				final MemorySegment ms = asFac.getMemorySegment(pointerBases.get(i));
-				resultUf.union(ms0, ms);
+				someModification |= resultUf.union(ms0, ms);
 			}
 		}
+		return someModification;
 	}
 
 	public void addPointerBase(final AddressStoreFactory asFac, final PointerBase pb) {

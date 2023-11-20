@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.memoryslicer.NonMemoryArrayStore.ArrayOrStruct;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -43,6 +44,9 @@ public class AddressStoreFactory {
 	private final Map<BigInteger, PointerBaseIntLiteral> mInt = new HashMap<>();
 	private final NestedMap2<String, DeclarationInformation, PointerBaseVariable> mVariable = new NestedMap2<>();
 	private final Map<PointerBase, MemorySegment> mSegment = new HashMap<>();
+
+	private final NonMemoryArrayStore mArray = new NonMemoryArrayStore(ArrayOrStruct.ARRAY);
+	private final NonMemoryArrayStore mStruct = new NonMemoryArrayStore(ArrayOrStruct.STRUCT);
 
 	public PointerBaseIntLiteral getPointerBase(final BigInteger bi) {
 		return mInt.computeIfAbsent(bi, x -> new PointerBaseIntLiteral(x));
@@ -57,5 +61,15 @@ public class AddressStoreFactory {
 	public MemorySegment getMemorySegment(final PointerBase pointerBase) {
 		return mSegment.computeIfAbsent(pointerBase, x -> new MemorySegment(pointerBase));
 	}
+
+	public NonMemoryArrayStore getArray() {
+		return mArray;
+	}
+
+	public NonMemoryArrayStore getStruct() {
+		return mStruct;
+	}
+
+
 
 }

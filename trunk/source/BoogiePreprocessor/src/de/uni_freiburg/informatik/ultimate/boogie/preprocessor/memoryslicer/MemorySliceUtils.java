@@ -72,6 +72,8 @@ public class MemorySliceUtils {
 	public static final String ALLOC_INIT = "#Ultimate.allocInit";
 	public static final String ULTIMATE_DEALLOC = "ULTIMATE.dealloc";
 
+	public static final String PTHREADS_MUTEX_LOCK = "#PthreadsMutexLock";
+
 	private MemorySliceUtils() {
 		// do not instantiate
 	}
