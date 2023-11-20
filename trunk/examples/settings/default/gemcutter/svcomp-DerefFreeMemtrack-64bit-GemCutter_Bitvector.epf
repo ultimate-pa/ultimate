@@ -33,6 +33,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=External_DefaultMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Logic\ for\ external\ solver=ALL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ SMT\ script\ to\ file=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Only\ consider\ context\ switches\ at\ boundaries\ of\ atomic\ blocks=true
 
 
 #Thu Nov 06 16:26:23 CET 2014

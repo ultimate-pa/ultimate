@@ -46,8 +46,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ exception\ blacklist=DEPENDING
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Automaton\ type\ used\ in\ concurrency\ analysis=PETRI_NET
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Apply\ one-shot\ large\ block\ encoding\ in\ concurrent\ analysis=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Independence\ relation\ used\ for\ large\ block\ encoding\ in\ concurrent\ analysis=SYNTACTIC
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Apply\ one-shot\ large\ block\ encoding\ in\ concurrent\ analysis=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Looper\ check\ in\ Petri\ net\ analysis=SEMANTIC
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Order\ on\ configurations\ for\ Petri\ net\ unfoldings=DBO
 
