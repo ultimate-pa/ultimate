@@ -37,7 +37,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -533,16 +532,16 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	private void redirectNamedType(final Set<String> names, final CStructOrUnion completeStruct, final IASTNode hook) {
-		final Set<String> alreadyRedirected = new HashSet<>();
+		final Map<String, CType> alreadyRedirected = new HashMap<>();
 		for (final String name : names) {
 			constructUpdatedCNamedAndAddToSymbolTable(name, completeStruct, alreadyRedirected, hook);
 		}
 	}
 
 	private CType constructUpdatedCNamedAndAddToSymbolTable(final String name, final CStructOrUnion completeStruct,
-			final Set<String> alreadyRedirected, final IASTNode hook) {
-		if (alreadyRedirected.contains(name)) {
-			return null;
+			final Map<String, CType> alreadyRedirected, final IASTNode hook) {
+		if (alreadyRedirected.containsKey(name)) {
+			return alreadyRedirected.get(name);
 		}
 		final SymbolTableValue oldStv = mSymboltable.findCSymbol(hook, name);
 
@@ -564,7 +563,7 @@ public class TypeHandler implements ITypeHandler {
 				new SymbolTableValue(oldStv.getBoogieName(), oldStv.getBoogieDecl(), oldStv.getAstType(), newCDecl,
 						oldStv.getDeclarationInformation(), oldStv.getDeclarationNode(), oldStv.isIntFromPointer());
 		mSymboltable.storeCSymbol(hook, name, val);
-		alreadyRedirected.add(name);
+		alreadyRedirected.put(name, newDefiningType);
 		return newDefiningType;
 	}
 
