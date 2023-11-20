@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -85,7 +86,7 @@ public class TestExporter {
 	}
 
 	// TODO split exportation and creation of the testvectors. Means
-	final Document createXML(final LinkedList<String> inputs) throws ParserConfigurationException {
+	final Document createXML(final ArrayList<String> inputs) throws ParserConfigurationException {
 
 		// instance of a DocumentBuilderFactory
 		final DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -153,10 +154,10 @@ public class TestExporter {
 
 class TestVector {
 
-	final LinkedList<String> values = new LinkedList<>();
-	final LinkedList<String> values64Bit = new LinkedList<>();
-	final LinkedList<String> valuesWithNegativeIndices = new LinkedList<>();
-	final LinkedList<String> valuesWithPositiveIndices = new LinkedList<>();
+	final ArrayList<String> values = new ArrayList<>();
+	final ArrayList<String> values64Bit = new ArrayList<>();
+	final ArrayList<String> valuesWithNegativeIndices = new ArrayList<>();
+	final ArrayList<String> valuesWithPositiveIndices = new ArrayList<>();
 	int countNonDets = 0;
 	boolean need64Bit = false;
 
@@ -178,8 +179,8 @@ class TestVector {
 
 	private void addToLinkedList64Bit(final Integer index, final Term valueTerm, final String type) {
 		need64Bit = false;
-		if (values64Bit.size() < index) {
-			for (int i = values64Bit.size(); i < index; i = i + 1) {
+		if (values64Bit.size() <= index) {
+			for (int i = values64Bit.size(); i <= index; i = i + 1) {
 				values64Bit.add(null);
 			}
 		}
@@ -295,13 +296,13 @@ class TestVector {
 		}
 		}
 
-		values64Bit.add(index, valueInRange);
+		values64Bit.set(index, valueInRange);
 
 	}
 
 	private void addToLinkedList(final Integer index, final Term valueTerm, final String type) {
-		if (values.size() < index) {
-			for (int i = values.size(); i < index; i = i + 1) {
+		if (values.size() <= index) {
+			for (int i = values.size(); i <= index; i = i + 1) {
 				values.add(null);
 			}
 		}
@@ -504,7 +505,7 @@ class TestVector {
 		}
 		}
 
-		values.add(index, valueInRange);
+		values.set(index, valueInRange);
 
 	}
 
