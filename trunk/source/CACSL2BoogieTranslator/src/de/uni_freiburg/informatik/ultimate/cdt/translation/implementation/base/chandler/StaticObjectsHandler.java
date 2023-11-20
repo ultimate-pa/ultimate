@@ -154,27 +154,26 @@ public class StaticObjectsHandler {
 				.map(trip -> new Pair<>(trip.getFirst(), trip.getSecond())).collect(Collectors.toList());
 	}
 
-	private Triple<VariableDeclaration, CDeclaration, Integer>
+	private static Triple<VariableDeclaration, CDeclaration, Integer>
 			computeSuitableVarDecl(final Set<Triple<VariableDeclaration, CDeclaration, Integer>> decls) {
 		if (decls.size() == 1) {
 			return decls.iterator().next();
-		} else {
-			Triple<VariableDeclaration, CDeclaration, Integer> suiteableDecl = null;
-			for (final Triple<VariableDeclaration, CDeclaration, Integer> pair : decls) {
-				if (pair.getSecond().getInitializer() != null) {
-					if (suiteableDecl == null) {
-						suiteableDecl = pair;
-					} else {
-						throw new AssertionError("Two decls with initializer " + pair.getSecond().getName());
-					}
+		}
+		Triple<VariableDeclaration, CDeclaration, Integer> suiteableDecl = null;
+		for (final Triple<VariableDeclaration, CDeclaration, Integer> pair : decls) {
+			if (pair.getSecond().getInitializer() != null) {
+				if (suiteableDecl == null) {
+					suiteableDecl = pair;
+				} else {
+					throw new AssertionError("Two decls with initializer " + pair.getSecond().getName());
 				}
 			}
-			if (suiteableDecl == null) {
-				// no declaration has an initializer, pick some
-				suiteableDecl = decls.iterator().next();
-			}
-			return suiteableDecl;
 		}
+		if (suiteableDecl == null) {
+			// no declaration has an initializer, pick some
+			suiteableDecl = decls.iterator().next();
+		}
+		return suiteableDecl;
 	}
 
 	public void addGlobalConstDeclaration(final ConstDeclaration cd, final CDeclaration cDeclaration,
