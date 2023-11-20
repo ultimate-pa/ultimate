@@ -36,9 +36,11 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
@@ -128,7 +130,7 @@ public class TypeHandler implements ITypeHandler {
 	 */
 	private final LinkedHashSet<String> mIncompleteType;
 
-	private final HashRelation<String, CStructOrUnion> mIncompleteCStructOrUnionObjects = new HashRelation<>();
+	private final Map<String, CStructOrUnion> mIncompleteCStructOrUnionObjects = new HashMap<>();
 	private final HashRelation<String, CEnum> mIncompleteCEnumObjects = new HashRelation<>();
 
 	/**
@@ -426,10 +428,10 @@ public class TypeHandler implements ITypeHandler {
 			CType ctype;
 			if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
 				ctype = new CStructOrUnion(StructOrUnion.STRUCT, type);
-				mIncompleteCStructOrUnionObjects.addPair(rslvName, (CStructOrUnion) ctype);
+				addIncompleteStructOrUnion(rslvName, (CStructOrUnion) ctype);
 			} else if (node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
 				ctype = new CStructOrUnion(StructOrUnion.UNION, type);
-				mIncompleteCStructOrUnionObjects.addPair(rslvName, (CStructOrUnion) ctype);
+				addIncompleteStructOrUnion(rslvName, (CStructOrUnion) ctype);
 			} else {
 				ctype = new CEnum(type);
 				mIncompleteCEnumObjects.addPair(rslvName, (CEnum) ctype);
@@ -443,6 +445,14 @@ public class TypeHandler implements ITypeHandler {
 		}
 		final String msg = "Not yet implemented: Spec [" + node.getKind() + "] of " + node.getClass();
 		throw new UnsupportedSyntaxException(loc, msg);
+	}
+
+	private void addIncompleteStructOrUnion(final String name, final CStructOrUnion structOrUnion) {
+		final var existing = mIncompleteCStructOrUnionObjects.get(name);
+		if (existing != null && !existing.equals(structOrUnion)) {
+			throw new AssertionError("too many types");
+		}
+		mIncompleteCStructOrUnionObjects.put(name, structOrUnion);
 	}
 
 	@Override
@@ -481,21 +491,19 @@ public class TypeHandler implements ITypeHandler {
 
 		final String identifier = CStructOrUnion.getPrefix(isStructOrUnion) + rslvName;
 
-		if (mIncompleteCStructOrUnionObjects.getDomain().contains(rslvName)) {
-			final Set<CStructOrUnion> objects = mIncompleteCStructOrUnionObjects.getImage(rslvName);
-			assert objects.size() == 1 : "too many types";
-			for (final CStructOrUnion structOrUnion : objects) {
-				structOrUnion.complete(fNames.toArray(new String[fNames.size()]),
-						fTypes.toArray(new CType[fTypes.size()]), bitFieldWidths);
-				mStaticObjectsHandler.completeTypeDeclaration(structOrUnion.getName(), structOrUnion, this);
-				final TypesResult typeResult = mDefinedTypes.get(rslvName);
-				mDefinedTypes.put(rslvName, TypesResult.create(typeResult, structOrUnion));
-				if (mNamedIncompleteTypes.getDomain().contains(structOrUnion.getName())) {
-					redirectNamedType(mNamedIncompleteTypes.getImage(structOrUnion.getName()), structOrUnion,
-							node.getParent());
-				}
+		if (mIncompleteCStructOrUnionObjects.containsKey(rslvName)) {
+			final CStructOrUnion structOrUnion = mIncompleteCStructOrUnionObjects.get(rslvName);
+			structOrUnion.complete(fNames.toArray(new String[fNames.size()]), fTypes.toArray(new CType[fTypes.size()]),
+					bitFieldWidths);
+			mStaticObjectsHandler.completeTypeDeclaration(structOrUnion.getName(), structOrUnion, this);
+			final TypesResult typeResult = mDefinedTypes.get(rslvName);
+			mDefinedTypes.put(rslvName, TypesResult.create(typeResult, structOrUnion));
+			if (mNamedIncompleteTypes.getDomain().contains(structOrUnion.getName())) {
+				redirectNamedType(mNamedIncompleteTypes.getImage(structOrUnion.getName()), structOrUnion,
+						node.getParent());
 			}
-			mIncompleteCStructOrUnionObjects.removeDomainElement(rslvName);
+
+			mIncompleteCStructOrUnionObjects.remove(rslvName);
 		}
 
 		final CStructOrUnion cvar = new CStructOrUnion(isStructOrUnion, rslvName,
