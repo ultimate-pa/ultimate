@@ -109,6 +109,8 @@ known_exceptions:
   "unknown constant":
   "AssertionError: enhanced interpolant automaton in iteration":
   "AssertionError: Expected only CPrimitive but got":
+  "UnsupportedOperationException: Incomplete atomic composition (dangling start of atomic block:":
+  "UnsupportedOperationException: Incomplete atomic composition (dangling end of atomic block:":
 
 known_timeouts:
   "Cannot interrupt operation gracefully because timeout expired. Forcing shutdown":
