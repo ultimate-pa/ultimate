@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
@@ -158,6 +159,8 @@ public class AliasAnalysis {
 				processForkStatement(ma, (ForkStatement) st);
 			} else if (st instanceof JoinStatement) {
 				processJoinStatement(ma, (JoinStatement) st);
+			} else if (st instanceof AtomicStatement) {
+				processStatementList(ma, ((AtomicStatement) st).getBody());
 			} else {
 				throw new MemorySliceException("Unsuppored " + st);
 			}
