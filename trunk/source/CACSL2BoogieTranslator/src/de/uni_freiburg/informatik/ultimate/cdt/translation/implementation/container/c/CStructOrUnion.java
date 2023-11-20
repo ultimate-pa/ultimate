@@ -79,6 +79,11 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	 * @param cDeclSpec
 	 *            the C declaration used.
 	 */
+	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final List<String> fNames,
+			final List<CType> fTypes, final List<Integer> bitFieldWidths) {
+		this(isStructOrUnion, name, fNames.toArray(String[]::new), fTypes.toArray(CType[]::new), bitFieldWidths);
+	}
+
 	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final String[] fNames,
 			final CType[] fTypes, final List<Integer> bitFieldWidths) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
@@ -195,10 +200,11 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 				cvar.getBitFieldWidths());
 	}
 
-	public void complete(final String[] memberNames, final CType[] memberTypes, final List<Integer> bitfieldWidth) {
-		assert memberNames.length == bitfieldWidth.size();
-		mFieldNames = memberNames;
-		mFieldTypes = memberTypes;
+	public void complete(final List<String> memberNames, final List<CType> memberTypes,
+			final List<Integer> bitfieldWidth) {
+		assert memberNames.size() == bitfieldWidth.size();
+		mFieldNames = memberNames.toArray(String[]::new);
+		mFieldTypes = memberTypes.toArray(CType[]::new);
 		mBitFieldWidths = bitfieldWidth;
 		mIsComplete = true;
 	}
@@ -272,7 +278,6 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		// reproducible hash codes, but object equality
 		return this == o;
 	}
-
 
 	public static String getPrefix(final StructOrUnion structOrUnion) {
 		switch (structOrUnion) {

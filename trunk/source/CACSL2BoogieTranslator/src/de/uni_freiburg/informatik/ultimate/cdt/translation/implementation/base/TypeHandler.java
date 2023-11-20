@@ -493,8 +493,7 @@ public class TypeHandler implements ITypeHandler {
 
 		if (mIncompleteCStructOrUnionObjects.containsKey(rslvName)) {
 			final CStructOrUnion structOrUnion = mIncompleteCStructOrUnionObjects.get(rslvName);
-			structOrUnion.complete(fNames.toArray(new String[fNames.size()]), fTypes.toArray(new CType[fTypes.size()]),
-					bitFieldWidths);
+			structOrUnion.complete(fNames, fTypes, bitFieldWidths);
 			mStaticObjectsHandler.completeTypeDeclaration(structOrUnion.getName(), structOrUnion, this);
 			final TypesResult typeResult = mDefinedTypes.get(rslvName);
 			mDefinedTypes.put(rslvName, TypesResult.create(typeResult, structOrUnion));
@@ -506,8 +505,7 @@ public class TypeHandler implements ITypeHandler {
 			mIncompleteCStructOrUnionObjects.remove(rslvName);
 		}
 
-		final CStructOrUnion cvar = new CStructOrUnion(isStructOrUnion, rslvName,
-				fNames.toArray(new String[fNames.size()]), fTypes.toArray(new CType[fTypes.size()]), bitFieldWidths);
+		final CStructOrUnion cvar = new CStructOrUnion(isStructOrUnion, rslvName, fNames, fTypes, bitFieldWidths);
 
 		// TODO : boogie type
 		final NamedType namedType = new NamedType(loc, BoogieType.TYPE_ERROR, identifier, new ASTType[0]);
