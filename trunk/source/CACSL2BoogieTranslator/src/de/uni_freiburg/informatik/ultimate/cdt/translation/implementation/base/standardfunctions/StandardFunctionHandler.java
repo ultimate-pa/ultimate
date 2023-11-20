@@ -260,6 +260,10 @@ public class StandardFunctionHandler {
 		for (final String unsupportedFloatFunction : FloatSupportInUltimate.getUnsupportedFloatOperations()) {
 			fill(map, unsupportedFloatFunction, dieFloat);
 		}
+		for (final var overapprox : FloatSupportInUltimate.getOverapproximatedUnaryFunctions().entrySet()) {
+			fill(map, overapprox.getKey(), (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
+					1, new CPrimitive(overapprox.getValue())));
+		}
 
 		/** functions of pthread library **/
 		fill(map, "pthread_create", this::handlePthread_create);
@@ -482,13 +486,6 @@ public class StandardFunctionHandler {
 		// see 7.12.3.5 or http://en.cppreference.com/w/c/numeric/math/isnormal
 		fill(map, "isnormal", this::handleUnaryFloatFunction);
 
-		// see 7.12.3.6 or http://en.cppreference.com/w/c/numeric/math/signbit
-		fill(map, "signbit", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.INT)));
-		fill(map, "__signbit", this::handleUnaryFloatFunction); // ??
-		fill(map, "__signbitl", this::handleUnaryFloatFunction); // ??
-		fill(map, "__signbitf", this::handleUnaryFloatFunction); // ??
-
 		// see 7.12.7.5 or http://en.cppreference.com/w/c/numeric/math/sqrt
 		fill(map, "sqrt", this::handleUnaryFloatFunction);
 		fill(map, "sqrtf", this::handleUnaryFloatFunction);
@@ -525,126 +522,6 @@ public class StandardFunctionHandler {
 		fill(map, "ceil", this::handleUnaryFloatFunction);
 		fill(map, "ceilf", this::handleUnaryFloatFunction);
 		fill(map, "ceill", this::handleUnaryFloatFunction);
-
-		// see 7.12.4.6 or http://en.cppreference.com/w/c/numeric/math/sin
-		fill(map, "sin", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.DOUBLE)));
-		fill(map, "sinf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.FLOAT)));
-		fill(map, "sinl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.LONGDOUBLE)));
-
-		// https://en.cppreference.com/w/c/numeric/math/exp
-		fill(map, "exp", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.DOUBLE)));
-		fill(map, "expf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.FLOAT)));
-		fill(map, "expl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.LONGDOUBLE)));
-
-		// https://en.cppreference.com/w/c/numeric/math/expm1
-		fill(map, "expm1", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.DOUBLE)));
-		fill(map, "expm1f", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.FLOAT)));
-		fill(map, "expm1l", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.LONGDOUBLE)));
-
-		// https://en.cppreference.com/w/c/numeric/math/tanh
-		fill(map, "tanh", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.DOUBLE)));
-		fill(map, "tanhf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.FLOAT)));
-		fill(map, "tanhl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.LONGDOUBLE)));
-
-		// https://en.cppreference.com/w/c/numeric/math/erf
-		fill(map, "erf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.DOUBLE)));
-		fill(map, "erff", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.FLOAT)));
-		fill(map, "erfl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.LONGDOUBLE)));
-
-		// https://en.cppreference.com/w/c/numeric/math/log
-		fill(map, "log", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.DOUBLE)));
-		fill(map, "logf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.FLOAT)));
-		fill(map, "logl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.LONGDOUBLE)));
-
-		// https://en.cppreference.com/w/c/numeric/math/cos
-		fill(map, "cos", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.DOUBLE)));
-		fill(map, "cosf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.FLOAT)));
-		fill(map, "cosl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.LONGDOUBLE)));
-
-		// https://en.cppreference.com/w/c/numeric/math/log1p
-		fill(map, "log1p", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.DOUBLE)));
-		fill(map, "log1pf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.FLOAT)));
-		fill(map, "log1pl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.LONGDOUBLE)));
-
-		// https://en.cppreference.com/w/c/numeric/math/rint
-		fill(map, "rint", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.DOUBLE)));
-		fill(map, "rintf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.FLOAT)));
-		fill(map, "rintl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.LONGDOUBLE)));
-
-		// https://en.cppreference.com/w/c/numeric/math/rint
-		fill(map, "rint", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.DOUBLE)));
-		fill(map, "rintf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.FLOAT)));
-		fill(map, "rintl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.LONGDOUBLE)));
-
-		// https://en.cppreference.com/w/c/numeric/math/atanh
-		fill(map, "atanh", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.DOUBLE)));
-		fill(map, "atanhf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.FLOAT)));
-		fill(map, "atanhl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.LONGDOUBLE)));
-
-		// https://en.cppreference.com/w/c/numeric/math/asin
-		fill(map, "asin", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.DOUBLE)));
-		fill(map, "asinf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.FLOAT)));
-		fill(map, "asinl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.LONGDOUBLE)));
-
-		// https://en.cppreference.com/w/c/numeric/math/acos
-		fill(map, "acos", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.DOUBLE)));
-		fill(map, "acosf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.FLOAT)));
-		fill(map, "acosl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.LONGDOUBLE)));
-
-		// https://en.cppreference.com/w/c/numeric/math/nearbyint
-		fill(map, "nearbyint", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.DOUBLE)));
-		fill(map, "nearbyintf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.FLOAT)));
-		fill(map, "nearbyintl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.LONGDOUBLE)));
-
-		// https://en.cppreference.com/w/c/numeric/math/modf
-		fill(map, "modf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.DOUBLE)));
-		fill(map, "modff", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.FLOAT)));
-		fill(map, "modf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.LONGDOUBLE)));
 
 		// see 7.12.12.2 or http://en.cppreference.com/w/c/numeric/math/fmax
 		// NaN arguments are treated as missing data: if one argument is a NaN and the
