@@ -212,7 +212,14 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		}
 		assert difference != null : "Difference can only be null if there no proofs, this is checked above";
 
-		final var bp = new FinitePrefix<>(mAutomataServices, difference).getResult();
+		final var finPrefix = new FinitePrefix<>(mAutomataServices, difference);
+		final var ctex = finPrefix.getAcceptingRun();
+		if (ctex != null) {
+			mLogger.warn("Unproven counterexample: %s", ctex);
+		}
+		assert ctex == null : "Proof is insufficient";
+
+		final var bp = finPrefix.getResult();
 		final var constructedDifference = difference.getYetConstructedPetriNet();
 
 		runTest(path, parsed, program, constructedDifference, bp);
