@@ -328,7 +328,7 @@ public class TypeHandler implements ITypeHandler {
 				final boolean isConstant = false;
 				final boolean isVoid = false;
 				return new TypesResult(new NamedType(loc, boogieType, bId, new ASTType[0]), isConstant, isVoid,
-						new CNamed(mSymboltable.getCIdForBoogieId(bId), cType));
+						new CNamed(bId, cType));
 			}
 		}
 		final String msg = "Unknown or unsupported type! " + node.getClass();
