@@ -2934,15 +2934,16 @@ public class CHandler {
 
 			mTypeHandler.addDefinedType(bId, new TypesResult(new NamedType(loc, boogieType, cDec.getName(), null),
 					false, false, cDec.getType()));
-			if (cDec.getType().getUnderlyingType().isIncomplete() && !cDec.getType().getUnderlyingType().isVoidType()) {
+			final CType cType = cDec.getType();
+			if (cType.isIncomplete() && !cType.isVoidType()) {
+				final CType underlying = cType.getUnderlyingType();
 				final String identifier;
-				if (cDec.getType().getUnderlyingType() instanceof CStructOrUnion) {
-					identifier = ((CStructOrUnion) cDec.getType().getUnderlyingType()).getName();
-				} else if (cDec.getType().getUnderlyingType() instanceof CEnum) {
-					identifier = ((CEnum) cDec.getType().getUnderlyingType()).getName();
+				if (underlying instanceof CStructOrUnion) {
+					identifier = ((CStructOrUnion) underlying).getName();
+				} else if (underlying instanceof CEnum) {
+					identifier = ((CEnum) underlying).getName();
 				} else {
-					throw new AssertionError(
-							"missing support for global incomplete " + cDec.getType().getUnderlyingType());
+					throw new AssertionError("missing support for global incomplete " + cType);
 				}
 				mTypeHandler.registerNamedIncompleteType(identifier, cDec.getName());
 			}

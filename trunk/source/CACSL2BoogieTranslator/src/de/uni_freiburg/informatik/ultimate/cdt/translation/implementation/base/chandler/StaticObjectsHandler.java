@@ -121,7 +121,7 @@ public class StaticObjectsHandler {
 		assert boogieDec != null && cDec != null : "Part of global type declaration is null";
 		mTypeDeclarationToCDeclaration.put(boogieDec, cDec);
 		final CType cType = cDec.getType();
-		if (cType.isIncomplete() && !cDec.getType().getUnderlyingType().isVoidType()) {
+		if (cType.isIncomplete() && !cDec.getType().isVoidType()) {
 			if (cType instanceof CStructOrUnion) {
 				mIncompleteType2TypeDecl.put(((CStructOrUnion) cType).getName(), boogieDec);
 			} else if (cType instanceof CEnum) {
