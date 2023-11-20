@@ -207,6 +207,6 @@ public final class Rook<PLACE, LETTER> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mKingdom.hashCode() + mLaw.hashCode());
+		return Objects.hash(mKingdom, mLaw);
 	}
 }
