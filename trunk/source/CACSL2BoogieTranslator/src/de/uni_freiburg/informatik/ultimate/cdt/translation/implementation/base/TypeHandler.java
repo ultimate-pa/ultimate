@@ -156,8 +156,8 @@ public class TypeHandler implements ITypeHandler {
 	private final StaticObjectsHandler mStaticObjectsHandler;
 
 	/**
-	 * If there is an incomplete type X that has not yet been completed and occurs in a statement of the form typedef X
-	 * Y, then the pair (X,Y) is in this relation.
+	 * If there is an incomplete type X that has not yet been completed and occurs in a statement of the form
+	 * <code>typedef X Y</code>, then the pair (X,Y) is in this relation.
 	 */
 	private final HashRelation<String, String> mNamedIncompleteTypes = new HashRelation<>();
 
@@ -554,9 +554,9 @@ public class TypeHandler implements ITypeHandler {
 		final CDeclaration newCDecl = new CDeclaration(newDefiningType, oldCDecl.getName(),
 				oldCDecl.getIASTInitializer(), oldCDecl.getInitializer(), oldCDecl.isOnHeap(),
 				oldCDecl.getStorageClass(), oldCDecl.getBitfieldSize());
-		final SymbolTableValue val = new SymbolTableValue(oldStv.getBoogieName(), oldStv.getBoogieDecl(),
-				oldStv.getAstType(), newCDecl, oldStv.getDeclarationInformation(), oldStv.getDeclarationNode(),
-				oldStv.isIntFromPointer());
+		final SymbolTableValue val =
+				new SymbolTableValue(oldStv.getBoogieName(), oldStv.getBoogieDecl(), oldStv.getAstType(), newCDecl,
+						oldStv.getDeclarationInformation(), oldStv.getDeclarationNode(), oldStv.isIntFromPointer());
 		mSymboltable.storeCSymbol(hook, name, val);
 		alreadyRedirected.add(name);
 		return newDefiningType;
@@ -789,8 +789,8 @@ public class TypeHandler implements ITypeHandler {
 		} else if (cType instanceof CEnum) {
 			return getBoogieTypeForCType(new CPrimitive(CPrimitives.INT));
 		} else if (cType instanceof CArray) {
-			final BoogieType[] indexTypes = new BoogieType[] {
-					getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents()) };
+			final BoogieType[] indexTypes =
+					new BoogieType[] { getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents()) };
 			final BoogieType valueType = getBoogieTypeForCType(((CArray) cType).getValueType());
 			return BoogieType.createArrayType(0, indexTypes, valueType);
 		} else if (cType instanceof CFunction) {
