@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -126,6 +127,8 @@ public class StaticObjectsHandler {
 				mIncompleteType2TypeDecl.put(((CStructOrUnion) cType).getName(), boogieDec);
 			} else if (cType instanceof CEnum) {
 				mIncompleteType2TypeDecl.put(((CEnum) cType).getName(), boogieDec);
+			} else if (cType instanceof CNamed) {
+				// do nothing, this is handled by TypeHandler::redirectNamedType
 			} else {
 				throw new AssertionError("missing support for global incomplete " + cType);
 			}
