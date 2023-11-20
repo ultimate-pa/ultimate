@@ -421,17 +421,20 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	}
 
 	/**
-	 * Merge the equivalence classes of the elements e1 and e2. (e1 and e2 do not have to be the representatives of this
-	 * equivalence classes).
+	 * Merge the equivalence classes of the elements e1 and e2. (e1 and e2 do not
+	 * have to be the representatives of this equivalence classes).
 	 *
-	 * @param elem1
-	 *            first element
-	 * @param elem2
-	 *            second element
+	 * @param elem1 first element
+	 * @param elem2 second element
+	 * @return true iff two equivalence classes were merged
 	 */
-	public void union(final E elem1, final E elem2) {
+	public boolean union(final E elem1, final E elem2) {
 		final ImmutableSet<E> set1 = mEquivalenceClass.get(elem1);
 		final ImmutableSet<E> set2 = mEquivalenceClass.get(elem2);
+		if (set1 == set2) {
+			// already in same equivalence class
+			return false;
+		}
 
 		final boolean set1IsLarger = set1.size() > set2.size();
 
@@ -456,6 +459,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 		}
 		mRepresentative.put(union, newRep);
 		assert representativesAreMinimal();
+		return true;
 	}
 
 	/**
