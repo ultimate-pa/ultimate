@@ -96,84 +96,109 @@ public class HeapSplitter implements IUnmanagedObserver {
 
 		if (root instanceof Unit) {
 			final Unit unit = (Unit) root;
+			final Map<String, Procedure> map = constructIdToImplementation(unit.getDeclarations());
 
-			final AliasAnalysis aa = new AliasAnalysis(mAsfac);
-			final MayAlias ma = aa.aliasAnalysis(unit);
-			final Map<AddressStore, Integer> repToArray = new HashMap<>();
-			{
-				final UnionFind<AddressStore> uf = ma.getAddressStores();
-				for (final AddressStore elem : uf.getAllElements()) {
-					if (elem instanceof PointerBase) {
-						assert !AliasAnalysis.isNullPointer((PointerBase) elem);
-					} else if (elem instanceof MemorySegment) {
-						final MemorySegment ms = (MemorySegment) elem;
-						assert !AliasAnalysis.isNullPointer(ms.getPointerBase());
-					}
-				}
-				int ctr = 0;
-				final Set<AddressStore> representativesOfAccesses = new HashSet<>();
-				for (final PointerBase tmp : aa.getAccessAddresses()) {
-					final AddressStore rep = uf.find(tmp);
-					Objects.requireNonNull(rep, "Cannot find pointer: " + tmp);
-					representativesOfAccesses.add(rep);
-				}
-				for (final AddressStore rep : representativesOfAccesses) {
-					repToArray.put(rep, ctr);
-					ctr++;
-				}
+			try {
+				final ArrayDeque<Declaration> newDecls = tryToSliceMemory(unit, map);
+				unit.setDeclarations(newDecls.toArray(new Declaration[newDecls.size()]));
+			} catch (final MemorySliceException e) {
+				// memory slicing failed, do not change anything
+				mLogger.warn("Omit memory slicing because it failed with the following exception: " + e.getMessage());
 			}
-			final Collection<Integer> newHeapSliceIds = repToArray.values();
-			final Collection<String> memorySliceSuffixes = new ArrayList<>();
-			for (final Integer memorySliceId : repToArray.values()) {
-				final String memorySliceSuffix = MemorySliceUtils.constructMemorySliceSuffix(memorySliceId);
-				memorySliceSuffixes.add(memorySliceSuffix);
-			}
-
-			final ArrayDeque<Declaration> newDecls = new ArrayDeque<>();
-			final HeapArrayReplacer har = new HeapArrayReplacer(mAsfac, ma, repToArray);
-			for (final Declaration d : unit.getDeclarations()) {
-				final List<String> memoryArrays = Arrays.asList(new String[] { MemorySliceUtils.MEMORY_POINTER,
-						MemorySliceUtils.MEMORY_INT, MemorySliceUtils.MEMORY_REAL });
-				final List<VariableDeclaration> newHeapVarDecls = duplicateMemoryArrayVarDecl(memoryArrays,
-						memorySliceSuffixes, d);
-				if (newHeapVarDecls != null) {
-					newDecls.addAll(newHeapVarDecls);
-				} else if (d instanceof Procedure) {
-					final Procedure proc = (Procedure) d;
-					if (isUltimateMemoryReadWriteProcedure(proc)) {
-						final List<Procedure> duplicates = duplicateProcedure(memoryArrays, memorySliceSuffixes,
-								(Procedure) d);
-						newDecls.addAll(duplicates);
-					} else if (isUltimateMemoryAllocationProcedure(proc)) {
-						// nothing has to be changed here
-						newDecls.add(proc);
-					} else if (isUltimateMemoryConcurrencyProcedure(proc)) {
-						// nothing has to be changed here
-						newDecls.add(proc);
-					} else {
-						if (proc.getSpecification() != null) {
-							final Specification[] specs = proc.getSpecification();
-							for (final Specification spec : specs) {
-								if (!(spec instanceof ModifiesSpecification)) {
-									throw new AssertionError(String.format(
-											"Unsupported: Procedure %s is not part of the Ultimate memory model but has specification other that is not a ModifiesSpecification",
-											proc.getIdentifier()));
-								}
-							}
-						}
-						final Declaration newDecl = har.processDeclaration(proc);
-						newDecls.add(newDecl);
-					}
-				} else {
-					newDecls.add(d);
-				}
-			}
-			final String logMessage = constructLogMessage(har.getAccessCounter(), har.getSliceAccessCounter());
-			mLogger.info(logMessage);
-			unit.setDeclarations(newDecls.toArray(new Declaration[newDecls.size()]));
 			return false;
 		}
 		return true;
+	}
+
+	private ArrayDeque<Declaration> tryToSliceMemory(final Unit unit, final Map<String, Procedure> map)
+			throws AssertionError {
+		final AliasAnalysis aa = new AliasAnalysis(mAsfac, map);
+		final MayAlias ma = aa.aliasAnalysis(unit);
+		final Map<AddressStore, Integer> repToArray = new HashMap<>();
+		{
+			final UnionFind<AddressStore> uf = ma.getAddressStores();
+			for (final AddressStore elem : uf.getAllElements()) {
+				if (elem instanceof PointerBase) {
+					assert !AliasAnalysis.isNullPointer((PointerBase) elem);
+				} else if (elem instanceof MemorySegment) {
+					final MemorySegment ms = (MemorySegment) elem;
+					assert !AliasAnalysis.isNullPointer(ms.getPointerBase());
+				}
+			}
+			int ctr = 0;
+			final Set<AddressStore> representativesOfAccesses = new HashSet<>();
+			for (final PointerBase tmp : aa.getAccessAddresses()) {
+				final AddressStore rep = uf.find(tmp);
+				Objects.requireNonNull(rep, "Cannot find pointer: " + tmp);
+				representativesOfAccesses.add(rep);
+			}
+			for (final AddressStore rep : representativesOfAccesses) {
+				repToArray.put(rep, ctr);
+				ctr++;
+			}
+		}
+		final Collection<Integer> newHeapSliceIds = repToArray.values();
+		final Collection<String> memorySliceSuffixes = new ArrayList<>();
+		for (final Integer memorySliceId : repToArray.values()) {
+			final String memorySliceSuffix = MemorySliceUtils.constructMemorySliceSuffix(memorySliceId);
+			memorySliceSuffixes.add(memorySliceSuffix);
+		}
+
+		final ArrayDeque<Declaration> newDecls = new ArrayDeque<>();
+		final HeapArrayReplacer har = new HeapArrayReplacer(mAsfac, ma, repToArray);
+		for (final Declaration d : unit.getDeclarations()) {
+			final List<String> memoryArrays = Arrays.asList(new String[] { MemorySliceUtils.MEMORY_POINTER,
+					MemorySliceUtils.MEMORY_INT, MemorySliceUtils.MEMORY_REAL });
+			final List<VariableDeclaration> newHeapVarDecls = duplicateMemoryArrayVarDecl(memoryArrays,
+					memorySliceSuffixes, d);
+			if (newHeapVarDecls != null) {
+				newDecls.addAll(newHeapVarDecls);
+			} else if (d instanceof Procedure) {
+				final Procedure proc = (Procedure) d;
+				if (isUltimateMemoryReadWriteProcedure(proc)) {
+					final List<Procedure> duplicates = duplicateProcedure(memoryArrays, memorySliceSuffixes,
+							(Procedure) d);
+					newDecls.addAll(duplicates);
+				} else if (isUltimateMemoryAllocationProcedure(proc)) {
+					// nothing has to be changed here
+					newDecls.add(proc);
+				} else if (isUltimateMemoryConcurrencyProcedure(proc)) {
+					// nothing has to be changed here
+					newDecls.add(proc);
+				} else {
+					if (proc.getSpecification() != null) {
+						final Specification[] specs = proc.getSpecification();
+						for (final Specification spec : specs) {
+							if (!(spec instanceof ModifiesSpecification)) {
+								throw new MemorySliceException(String.format(
+										"Unsupported: Procedure %s is not part of the Ultimate memory model but has specification other that is not a ModifiesSpecification",
+										proc.getIdentifier()));
+							}
+						}
+					}
+					final Declaration newDecl = har.processDeclaration(proc);
+					newDecls.add(newDecl);
+				}
+			} else {
+				newDecls.add(d);
+			}
+		}
+		final String logMessage = constructLogMessage(har.getAccessCounter(), har.getSliceAccessCounter());
+		mLogger.info(logMessage);
+		return newDecls;
+	}
+
+	private Map<String, Procedure> constructIdToImplementation(final Declaration[] declarations) {
+		final Map<String, Procedure> result = new HashMap<>();
+		for (final Declaration decl : declarations) {
+			if (decl instanceof Procedure) {
+				final Procedure p = (Procedure) decl;
+				if (p.getBody() != null) {
+					result.put(p.getIdentifier(), p);
+				}
+			}
+		}
+		return result;
 	}
 
 	private static boolean isUltimateMemoryReadWriteProcedure(final Procedure proc) {
@@ -205,7 +230,11 @@ public class HeapSplitter implements IUnmanagedObserver {
 	}
 
 	private static boolean isUltimateMemoryConcurrencyProcedure(final Procedure proc) {
-		final List<String> ultimateMemoryAllocationProcedures = toList(MemorySliceUtils.PTHREADS_MUTEX_LOCK);
+		final List<String> ultimateMemoryAllocationProcedures = toList(MemorySliceUtils.PTHREADS_FORK_COUNT,
+				MemorySliceUtils.PTHREADS_MUTEX, MemorySliceUtils.PTHREADS_MUTEX_LOCK,
+				MemorySliceUtils.PTHREADS_MUTEX_UNLOCK, MemorySliceUtils.PTHREADS_MUTEX_TRYLOCK,
+				MemorySliceUtils.PTHREADS_RWLOCK, MemorySliceUtils.PTHREADS_RWLOCK_READLOCK,
+				MemorySliceUtils.PTHREADS_RWLOCK_WRITELOCK, MemorySliceUtils.PTHREADS_RWLOCK_UNLOCK);
 		for (final String umap : ultimateMemoryAllocationProcedures) {
 			if (proc.getIdentifier().startsWith(umap)) {
 				return true;

@@ -69,6 +69,12 @@ public class MayAlias {
 //	}
 
 	public void reportEquivalence(final AddressStoreFactory asFac, final AddressStore lhs, final AddressStore rhs) {
+		if ((lhs instanceof PointerBase) && AliasAnalysis.isNullPointer((PointerBase) lhs)) {
+			throw new MemorySliceException("Must not add nullpointer");
+		}
+		if ((rhs instanceof PointerBase) && AliasAnalysis.isNullPointer((PointerBase) rhs)) {
+			throw new MemorySliceException("Must not add nullpointer");
+		}
 		final AddressStore rhsRep = mAddressStores.find(rhs);
 		final AddressStore lhsRep = mAddressStores.find(lhs);
 		if (rhsRep == lhsRep && rhsRep != null) {
@@ -138,6 +144,9 @@ public class MayAlias {
 	}
 
 	public void addPointerBase(final AddressStoreFactory asFac, final PointerBase pb) {
+		if (AliasAnalysis.isNullPointer(pb)) {
+			throw new MemorySliceException("Must not add nullpointer");
+		}
 		final AddressStore rep = mAddressStores.find(pb);
 		final MemorySegment ms = asFac.getMemorySegment(pb);
 		final AddressStore msRep = mAddressStores.find(ms);

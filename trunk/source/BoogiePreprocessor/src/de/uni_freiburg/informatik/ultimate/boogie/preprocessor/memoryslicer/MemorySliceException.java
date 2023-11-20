@@ -26,48 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.memoryslicer;
 
-import java.util.Objects;
-
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-
 /**
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class PointerBaseVariable extends PointerBase {
-	private final String mIdentifier;
-	private final DeclarationInformation mDeclarationInformation;
+public class MemorySliceException extends RuntimeException {
 
-	public PointerBaseVariable(final String identifier, final DeclarationInformation declarationInformation) {
-		super();
-		mIdentifier = identifier;
-		mDeclarationInformation = declarationInformation;
+	private static final long serialVersionUID = 7973516400286737027L;
+
+	public MemorySliceException(final String message) {
+		super(message);
 	}
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(mDeclarationInformation, mIdentifier);
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final PointerBaseVariable other = (PointerBaseVariable) obj;
-		return Objects.equals(mDeclarationInformation, other.mDeclarationInformation)
-				&& Objects.equals(mIdentifier, other.mIdentifier);
-	}
-
-	@Override
-	public String toString() {
-		return mIdentifier;
-	}
 }

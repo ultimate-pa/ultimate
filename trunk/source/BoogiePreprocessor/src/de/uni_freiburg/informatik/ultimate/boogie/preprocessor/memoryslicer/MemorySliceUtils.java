@@ -72,7 +72,15 @@ public class MemorySliceUtils {
 	public static final String ALLOC_INIT = "#Ultimate.allocInit";
 	public static final String ULTIMATE_DEALLOC = "ULTIMATE.dealloc";
 
+	public static final String PTHREADS_FORK_COUNT = "#PthreadsForkCount";
+	public static final String PTHREADS_MUTEX = "#PthreadsMutex";
 	public static final String PTHREADS_MUTEX_LOCK = "#PthreadsMutexLock";
+	public static final String PTHREADS_MUTEX_UNLOCK = "#PthreadsMutexUnlock";
+	public static final String PTHREADS_MUTEX_TRYLOCK = "#PthreadsMutexTryLock";
+	public static final String PTHREADS_RWLOCK = "#PthreadsRwLock";
+	public static final String PTHREADS_RWLOCK_READLOCK = "#PthreadsRwLockReadLock";
+	public static final String PTHREADS_RWLOCK_WRITELOCK = "#PthreadsRwLockWriteLock";
+	public static final String PTHREADS_RWLOCK_UNLOCK = "#PthreadsRwLockUnlock";
 
 	private MemorySliceUtils() {
 		// do not instantiate

@@ -172,7 +172,7 @@ public class HeapArrayReplacer extends BoogieTransformer {
 				return tmp2;
 			}
 			if (MemorySliceUtils.containsMemoryArrays(statement)) {
-				throw new AssertionError("Statement contains memory arrays " + statement);
+				throw new MemorySliceException("Statement contains memory arrays " + statement);
 			}
 		}
 		return super.processStatement(statement);
@@ -205,7 +205,7 @@ public class HeapArrayReplacer extends BoogieTransformer {
 			// value is unchanged
 			final Expression value = as.getRhs()[0];
 			if (MemorySliceUtils.containsMemoryArrays(value)) {
-				throw new AssertionError("Contains mem arrays " + value);
+				throw new MemorySliceException("Contains mem arrays " + value);
 			}
 			final AssignmentStatement result = new AssignmentStatement(as.getLocation(), new LeftHandSide[] { newLhs },
 					new Expression[] { value });
@@ -284,11 +284,11 @@ public class HeapArrayReplacer extends BoogieTransformer {
 //	@Override
 //	protected Expression processExpression(final Expression expr) {
 //		if (expr instanceof ArrayStoreExpression) {
-//			throw new AssertionError("ArrayStoreExpression");
+//			throw new MemorySliceException("ArrayStoreExpression");
 //		}
 //		if (expr instanceof ArrayAccessExpression) {
 //			if (!expr.toString().equals("ArrayAccessExpression[IdentifierExpression[#valid,GLOBAL],[IntegerLiteral[0]]]")) {
-//				throw new AssertionError("ArrayStoreExpression");
+//				throw new MemorySliceException("ArrayStoreExpression");
 //			}
 ////			final ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
 ////			final Expression arr = processExpression(aaexpr.getArray());
