@@ -125,6 +125,9 @@ public class FloatSupportInUltimate {
 
 	private final static String[] UNSUPPORTED_FLOAT_OPERATIONS_ARRAY = new String[] {
 			// from math.h
+			"frexp",
+			"ldexp",
+			"pow",
 			"hypot",
 			"cbrt",
 			"drem",
@@ -150,6 +153,9 @@ public class FloatSupportInUltimate {
 			"llrint",
 			"fma",
 			"scalb",
+			"frexpf",
+			"ldexpf",
+			"powf",
 			"hypotf",
 			"cbrtf",
 			"dremf",
@@ -175,6 +181,9 @@ public class FloatSupportInUltimate {
 			"llrintf",
 			"fmaf",
 			"scalbf",
+			"frexpl",
+			"ldexpl",
+			"powl",
 			"hypotl",
 			"cbrtl",
 			"dreml",
@@ -328,16 +337,6 @@ public class FloatSupportInUltimate {
 		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("asinhf", CPrimitives.FLOAT);
 		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("asinhl", CPrimitives.LONGDOUBLE);
 
-		// http://en.cppreference.com/w/c/numeric/math/frexp
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("frexp", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("frexpf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("frexpl", CPrimitives.LONGDOUBLE);
-
-		// http://en.cppreference.com/w/c/numeric/math/ldexp
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("ldexp", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("ldexpf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("ldexpl", CPrimitives.LONGDOUBLE);
-
 		// http://en.cppreference.com/w/c/numeric/math/log10
 		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log10", CPrimitives.DOUBLE);
 		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log10f", CPrimitives.FLOAT);
@@ -357,11 +356,6 @@ public class FloatSupportInUltimate {
 		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log2", CPrimitives.DOUBLE);
 		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log2f", CPrimitives.FLOAT);
 		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log2l", CPrimitives.LONGDOUBLE);
-
-		// http://en.cppreference.com/w/c/numeric/math/pow
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("pow", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("powf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("powl", CPrimitives.LONGDOUBLE);
 	}
 
 	private final static Set<String> SUPPORTED_FLOAT_OPERATIONS =
