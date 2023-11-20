@@ -1473,6 +1473,8 @@ public class CHandler {
 		final IASTExpression functionName = node.getFunctionNameExpression();
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		if (functionName instanceof IASTIdExpression) {
+			// TODO: This is just a workaround for now to crash when thread local variables are used in a concurrent
+			// program
 			if ("pthread_create".equals(((IASTIdExpression) functionName).getName().toString())) {
 				mIsConcurrent = true;
 				// Only crash for thread local variable in concurrent programs
@@ -2068,14 +2070,6 @@ public class CHandler {
 
 		}
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		if (signature.equals("thread_local") || signature.equals("__thread")) {
-			mHasThreadLocalVars = true;
-			// Only crash for thread local variable in concurrent programs
-			if (mIsConcurrent) {
-				throw new UnsupportedSyntaxException(loc, "Thread local variables are not supported yet.");
-			}
-			return new SkipResult();
-		}
 		throw new IncorrectSyntaxException(loc, String.format(
 				"Syntax error (declaration problem) in C program: %s (%s)", node.getProblem().getMessage(), signature));
 	}
@@ -2132,6 +2126,15 @@ public class CHandler {
 			final String msg = "This statement can be removed!";
 			mReporter.warn(loc, msg);
 			return new SkipResult();
+		}
+		// TODO: This is just a workaround for now to crash when thread local variables are used in a concurrent program
+		if (Arrays.stream(node.getDeclSpecifier().getAttributes()).map(x -> String.valueOf(x.getName()))
+				.anyMatch("thread"::equals)) {
+			mHasThreadLocalVars = true;
+			// Only crash for thread local variable in concurrent programs
+			if (mIsConcurrent) {
+				throw new UnsupportedSyntaxException(loc, "Thread local variables are not supported yet.");
+			}
 		}
 
 		// we have an enum declaration
