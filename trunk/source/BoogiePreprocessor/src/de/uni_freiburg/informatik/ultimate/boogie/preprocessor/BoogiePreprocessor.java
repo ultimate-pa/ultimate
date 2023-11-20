@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.memoryslicer.HeapSplitter;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTableConstructor;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -98,8 +99,11 @@ public class BoogiePreprocessor implements IAnalysis {
 	public List<IObserver> getObservers() {
 		final BoogiePreprocessorBacktranslator backTranslator = new BoogiePreprocessorBacktranslator(mServices);
 		mServices.getBacktranslationService().addTranslator(backTranslator);
-		final boolean useSimplifier =
-				mServices.getPreferenceProvider(getPluginID()).getBoolean(PreferenceInitializer.LABEL_USE_SIMPLIFIER);
+		final boolean useSimplifier = mServices.getPreferenceProvider(getPluginID())
+				.getBoolean(PreferenceInitializer.LABEL_USE_SIMPLIFIER);
+		final boolean useMemorySlicer = mServices.getPreferenceProvider(getPluginID())
+				.getBoolean(PreferenceInitializer.LABEL_USE_MEMORY_SLICER);
+
 		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		final BoogieSymbolTableConstructor symb = new BoogieSymbolTableConstructor(logger);
@@ -109,6 +113,9 @@ public class BoogiePreprocessor implements IAnalysis {
 		observers.add(new EnsureBoogieModelObserver());
 		// You can use the DebugObserver here if needed
 		observers.add(new TypeChecker(mServices));
+		if (useMemorySlicer) {
+			observers.add(new HeapSplitter(backTranslator, logger));
+		}
 		observers.add(new ConstExpander(backTranslator));
 		observers.add(new StructExpander(backTranslator, logger));
 		observers.add(new UnstructureCode(backTranslator));
