@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.witnessprinter.graphml;
 
 import java.math.BigDecimal;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
@@ -115,11 +116,13 @@ public class GeneratedWitnessEdge<TE, E> {
 		}
 
 		final StringBuilder sb = new StringBuilder();
-		for (final E var : mState.getVariables()) {
-			for (final E val : mState.getValues(var)) {
-				appendValidExpression(var, val, sb);
-			}
+
+		boolean isFirstVariable = true;
+		for (final E variable : mState.getVariables()) {
+			final boolean hasValues = appendValueEqualities(sb, variable, !isFirstVariable);
+			isFirstVariable = isFirstVariable && !hasValues;
 		}
+
 		if (sb.length() > 0) {
 			return sb.toString();
 		}
@@ -174,29 +177,58 @@ public class GeneratedWitnessEdge<TE, E> {
 		return sb.toString();
 	}
 
-	private void appendValidExpression(final E var, final E val, final StringBuilder sb) {
-		final String varStr = mStringProvider.getStringFromExpression(var);
-
-		if (varStr.contains("\\") || varStr.contains("&")) {
-			// is something like read, old, etc.
-			return;
+	private boolean appendValueEqualities(final StringBuilder sb, final E variable, final boolean addConjunction) {
+		if (mStringProvider.containsProcedureCall(variable)) {
+			return false;
 		}
 
-		final String valStr = mStringProvider.getStringFromExpression(val);
+		final String varStr = mStringProvider.getStringFromExpression(variable);
+		if (varStr.contains("\\") || varStr.contains("&")) {
+			// is something like read, old, etc.
+			return false;
+		}
+
+		final var valStrings = mState.getValues(variable).stream().map(this::getValueString).filter(Objects::nonNull)
+				.collect(Collectors.toList());
+		if (valStrings.isEmpty()) {
+			return false;
+		}
+
+		// conjunction with possible values of other variables
+		if (addConjunction) {
+			sb.append(" && ");
+		}
+
+		sb.append('(');
+		boolean isFirstValue = true;
+		for (final var valStr : valStrings) {
+			// disjunction with other possible values for the same variable
+			if (!isFirstValue) {
+				sb.append(" || ");
+			}
+
+			sb.append(varStr);
+			sb.append("==");
+			sb.append(valStr);
+
+			isFirstValue = false;
+		}
+		sb.append(')');
+		return true;
+	}
+
+	private String getValueString(final E value) {
+		final String valStr = mStringProvider.getStringFromExpression(value);
 		try {
 			new BigDecimal(valStr);
-		} catch (final Exception ex) {
+		} catch (final NumberFormatException ex) {
 			// this is no valid number literal, maybe its true or false?
 			if (!"true".equalsIgnoreCase(valStr) && !"false".equalsIgnoreCase(valStr)) {
 				// nope, give up
-				return;
+				return null;
 			}
 		}
-
-		sb.append(varStr);
-		sb.append("==");
-		sb.append(valStr);
-		sb.append(";");
+		return valStr;
 	}
 
 	public String getOriginFileName() {
@@ -224,5 +256,4 @@ public class GeneratedWitnessEdge<TE, E> {
 		}
 		return null;
 	}
-
 }
