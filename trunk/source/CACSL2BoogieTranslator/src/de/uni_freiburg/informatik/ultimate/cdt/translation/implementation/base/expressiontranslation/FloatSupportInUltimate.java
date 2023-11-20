@@ -328,8 +328,7 @@ public class FloatSupportInUltimate {
 		// https://en.cppreference.com/w/c/numeric/math/modf
 		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("modf", CPrimitives.DOUBLE);
 		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("modff", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("modf", CPrimitives.LONGDOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("signbit", CPrimitives.LONGDOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("modfl", CPrimitives.LONGDOUBLE);
 
 		// http://en.cppreference.com/w/c/numeric/math/signbit
 		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("signbit", CPrimitives.INT);
