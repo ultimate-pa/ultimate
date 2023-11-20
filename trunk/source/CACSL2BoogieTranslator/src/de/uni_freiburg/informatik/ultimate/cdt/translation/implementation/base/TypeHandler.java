@@ -235,7 +235,8 @@ public class TypeHandler implements ITypeHandler {
 		case IASTSimpleDeclSpecifier.t_unspecified:
 		case IASTSimpleDeclSpecifier.t_bool:
 		case IASTSimpleDeclSpecifier.t_char:
-		case IASTSimpleDeclSpecifier.t_int: {
+		case IASTSimpleDeclSpecifier.t_int:
+		case IASTSimpleDeclSpecifier.t_int128: {
 			// so int is also a primitive type
 			// NOTE: in a extended implementation we should
 			// handle here different types of int (short, long,...)
@@ -281,7 +282,7 @@ public class TypeHandler implements ITypeHandler {
 						cvar));
 			}
 			// if we do not find a type we cancel with Exception
-			final String msg = "TypeHandler: We do not support this type!" + node.getType();
+			final String msg = "TypeHandler: We do not support this type: " + node.getType() + "!";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 	}
