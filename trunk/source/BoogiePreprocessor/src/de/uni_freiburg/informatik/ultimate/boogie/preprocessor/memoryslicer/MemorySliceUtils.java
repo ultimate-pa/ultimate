@@ -93,16 +93,16 @@ public class MemorySliceUtils {
 	/**
 	 * Replace {@link VariableLHS} if it has one of the given IDs.
 	 *
-	 * @param newProcId
+	 * @param suffix
 	 * @param oldProcId
 	 */
 	public static VariableLHS replaceLeftHandSide(final LeftHandSide lhs, final Map<String, String> oldIdToNewId,
-			final String oldProcId, final String newProcId) {
+			final String oldProcId, final String suffix) {
 		if (lhs instanceof VariableLHS) {
 			final VariableLHS vlhs = (VariableLHS) lhs;
 			final String newId = oldIdToNewId.get(vlhs.getIdentifier());
 			final DeclarationInformation newDeclInfo = updateDeclarationInformation(vlhs.getDeclarationInformation(),
-					oldProcId, newProcId);
+					oldProcId, suffix);
 			if (newId != null) {
 				final VariableLHS result = new VariableLHS(lhs.getLoc(), lhs.getType(), newId, newDeclInfo);
 				ModelUtils.copyAnnotations(lhs, result);
@@ -122,12 +122,12 @@ public class MemorySliceUtils {
 	 * Replace {@link IdentifierExpression} if it has one of the given IDs.
 	 */
 	public static IdentifierExpression replaceIdentifierExpression(final Expression expr,
-			final Map<String, String> oldIdToNewId, final String oldProcId, final String newProcId) {
+			final Map<String, String> oldIdToNewId, final String oldProcId, final String suffix) {
 		if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression ie = (IdentifierExpression) expr;
 			final String newId = oldIdToNewId.get(ie.getIdentifier());
 			final DeclarationInformation newDeclInfo = updateDeclarationInformation(ie.getDeclarationInformation(),
-					oldProcId, newProcId);
+					oldProcId, suffix);
 			if (newId != null) {
 				final IdentifierExpression result = new IdentifierExpression(ie.getLoc(), ie.getType(), newId,
 						newDeclInfo);
@@ -145,14 +145,15 @@ public class MemorySliceUtils {
 	}
 
 	private static DeclarationInformation updateDeclarationInformation(final DeclarationInformation declInfo,
-			final String oldProcId, final String newProcId) {
-		if (oldProcId == null && newProcId == null) {
+			final String oldProcId, final String suffix) {
+		if (oldProcId == null && suffix == null) {
 			return declInfo;
 		}
 		if (declInfo.getProcedure() == null) {
 			// does not have procedure
 			return declInfo;
 		}
+		final String newProcId = oldProcId + suffix;
 		if (!declInfo.getProcedure().equals(oldProcId)) {
 			throw new AssertionError(String.format("No match! Existing procId %s, oldProcId %s, newProcId %s",
 					declInfo.getProcedure(), oldProcId, newProcId));
