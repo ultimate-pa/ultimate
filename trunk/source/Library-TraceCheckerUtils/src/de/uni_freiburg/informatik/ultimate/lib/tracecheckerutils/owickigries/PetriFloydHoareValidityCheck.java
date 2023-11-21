@@ -94,7 +94,7 @@ public class PetriFloydHoareValidityCheck<L extends IAction, P> {
 				final var markPost = markPre.fireTransition(trans);
 
 				final var check = checkInductivity(markPre, pre, trans, markPost);
-				result = and(result, check);
+				result = result.and(check);
 				if (result == Validity.INVALID) {
 					return result;
 				}
@@ -133,23 +133,5 @@ public class PetriFloydHoareValidityCheck<L extends IAction, P> {
 
 	public Validity isValid() {
 		return mResult;
-	}
-
-	private static Validity and(final Validity left, final Validity right) {
-		if (right == Validity.NOT_CHECKED) {
-			throw new UnsupportedOperationException("Unexpected validity " + right);
-		}
-
-		switch (left) {
-		case INVALID:
-			return Validity.INVALID;
-		case UNKNOWN:
-			return right == Validity.INVALID ? right : left;
-		case VALID:
-			return right;
-		case NOT_CHECKED:
-		default:
-			throw new UnsupportedOperationException("Unexpected validity " + left);
-		}
 	}
 }

@@ -117,7 +117,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		Validity result = Validity.VALID;
 		for (final Transition<LETTER, PLACE> transition : mTransitions) {
 			final var check = isInductive(transition);
-			result = and(result, check);
+			result = result.and(check);
 
 			if (result == Validity.INVALID) {
 				break;
@@ -147,7 +147,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 
 		for (final Transition<LETTER, PLACE> transition : mTransitions) {
 			final var check = isInterferenceFree(transition);
-			result = and(result, check);
+			result = result.and(check);
 
 			if (result == Validity.INVALID) {
 				break;
@@ -163,7 +163,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		Validity result = Validity.VALID;
 		for (final PLACE place : getComarkedPlaces(transition)) {
 			final var check = isInterferenceFreeForPlace(transition, precondition, composedAction, place);
-			result = and(result, check);
+			result = result.and(check);
 
 			if (result == Validity.INVALID) {
 				break;
@@ -213,7 +213,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 			return preImpliesInitial;
 		}
 
-		return and(preImpliesInitial, checkAcceptFormula());
+		return preImpliesInitial.and(checkAcceptFormula());
 	}
 
 	private Validity checkInitImplication() {
@@ -224,7 +224,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		for (final PLACE place : mAnnotation.getPetriNet().getInitialPlaces()) {
 			final var predicate = getPlacePredicate(place);
 			final var check = checker.checkImplication(initFormula, false, predicate, false);
-			result = and(result, check);
+			result = result.and(check);
 
 			if (result == Validity.INVALID) {
 				mLogger.warn("Annotation %s of initial place %s not implied by ghost variable initialization %s",
@@ -250,7 +250,7 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 			final var predicate = getPlacePredicate(place);
 			final var check = IncrementalPlicationChecker
 					.convertLBool2Validity(SmtUtils.checkSatTerm(mScript, predicate.getFormula()));
-			result = and(result, check);
+			result = result.and(check);
 
 			if (result == Validity.INVALID) {
 				mLogger.warn("Annotation %s of error place %s is satisfiable", predicate, place);
@@ -261,24 +261,6 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	}
 
 	public Validity isValid() {
-		return and(and(mIsInductive, mIsInterferenceFree), mIsProgramSafe);
-	}
-
-	private static Validity and(final Validity left, final Validity right) {
-		if (right == Validity.NOT_CHECKED) {
-			throw new UnsupportedOperationException("Unexpected validity " + right);
-		}
-
-		switch (left) {
-		case INVALID:
-			return Validity.INVALID;
-		case UNKNOWN:
-			return right == Validity.INVALID ? right : left;
-		case VALID:
-			return right;
-		case NOT_CHECKED:
-		default:
-			throw new UnsupportedOperationException("Unexpected validity " + left);
-		}
+		return mIsInductive.and(mIsInterferenceFree).and(mIsProgramSafe);
 	}
 }
