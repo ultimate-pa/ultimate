@@ -668,12 +668,14 @@ public class Statements2TransFormula {
 		eliminationCandidates.addAll(newAuxVars);
 		if (eliminationCandidates.isEmpty()) {
 			mAssumes = SmtUtils.and(mScript, mAssumes, newConjunct);
-			return;
+			mAuxVars.addAll(newAuxVars);
 		} else {
 			final Term tmpAssumes = SmtUtils.and(mScript, mAssumes, newConjunct);
 			final XnfDer xnfDer = new XnfDer(mMgdScript, mServices);
 			mAssumes = SmtUtils.and(mScript, xnfDer.tryToEliminate(QuantifiedFormula.EXISTS,
 					SmtUtils.getConjuncts(tmpAssumes), eliminationCandidates));
+			mAuxVars.addAll(newAuxVars);
+			mAuxVars.retainAll(new HashSet<>(Arrays.asList(mAssumes.getFreeVars())));
 		}
 	}
 
