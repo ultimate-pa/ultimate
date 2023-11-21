@@ -222,7 +222,8 @@ public class HeapSplitter implements IUnmanagedObserver {
 
 	private static boolean isUltimateMemoryReadWriteProcedureWithImplementation(final Procedure proc) {
 		final List<String> ultimateMemoryModifyingProcedures = toList(MemorySliceUtils.ULTIMATE_C_MEMSET,
-				MemorySliceUtils.ULTIMATE_C_MEMCPY, MemorySliceUtils.ULTIMATE_C_MEMMOVE);
+				MemorySliceUtils.ULTIMATE_C_MEMCPY, MemorySliceUtils.ULTIMATE_C_MEMMOVE,
+				MemorySliceUtils.ULTIMATE_C_STRCPY);
 		for (final String ummp : ultimateMemoryModifyingProcedures) {
 			if (proc.getIdentifier().startsWith(ummp)) {
 				return true;

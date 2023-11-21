@@ -153,7 +153,8 @@ public class HeapArrayReplacer extends BoogieTransformer {
 				return result;
 			} else if (cs.getMethodName().equals(MemorySliceUtils.ULTIMATE_C_MEMSET)
 					|| cs.getMethodName().equals(MemorySliceUtils.ULTIMATE_C_MEMCPY)
-					|| cs.getMethodName().equals(MemorySliceUtils.ULTIMATE_C_MEMMOVE)) {
+					|| cs.getMethodName().equals(MemorySliceUtils.ULTIMATE_C_MEMMOVE)
+					|| cs.getMethodName().equals(MemorySliceUtils.ULTIMATE_C_STRCPY)) {
 				// have different arguments, but for both functions the first is a pointer
 				final Expression pointerBaseExpr = cs.getArguments()[0];
 				final int heapSliceNumber = getMemorySliceNumberFromPointer(pointerBaseExpr);
