@@ -98,10 +98,11 @@ public class Req2ModifySymbolTablePea implements IReq2Pea {
 
 	@Override
 	public void transform(IReq2Pea req2pea) {
-		final StateRecoverabilityVerificationConditionContainer vec = getVerificationExpression(req2pea);
-		
 		final List<ReqPeas> simplePeas = req2pea.getReqPeas();
 		final IReqSymbolTable oldSymbolTable = req2pea.getSymboltable();
+		
+		final StateRecoverabilityVerificationConditionContainer vec = getVerificationExpression(req2pea);
+		
 		stRecGen = new StateRecoverabilityGenerator(mLogger, mServices, oldSymbolTable);
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger, oldSymbolTable);
 		

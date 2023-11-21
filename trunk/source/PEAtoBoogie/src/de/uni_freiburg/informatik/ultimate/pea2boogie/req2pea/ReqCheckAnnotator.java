@@ -96,7 +96,7 @@ import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer
 public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 	private static final boolean DEBUG_ONLY_FIRST_NON_TRIVIAL_RT_INCONSISTENCY = false;
-	private static final boolean PRINT_PEA_DOT = true;
+	private static final boolean PRINT_PEA_DOT = false;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;

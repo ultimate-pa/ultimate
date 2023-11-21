@@ -376,4 +376,10 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 		return null;
 	}
 
+	@Override
+	public Map<String, BoogieType> getId2Type() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

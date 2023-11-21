@@ -555,6 +555,11 @@ public class ReqSymboltableBuilder {
 		public String getHistoryVarId(final String name) {
 			return ReqSymboltableBuilder.getHistoryVarId(name);
 		}
+		
+		@Override
+		public  Map<String, BoogieType> getId2Type() {
+			return mId2Type;
+		}
 
 		@Override
 		public Collection<Declaration> getDeclarations() {

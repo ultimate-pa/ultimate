@@ -38,6 +38,7 @@ import javax.management.RuntimeErrorException;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
@@ -100,8 +101,13 @@ public class StateRecoverabilityVerificationConditionContainer {
 				String sValue = m.group(grpValue);
 				String dataType = mVariableDataTypeMap.get(sVariable);
 				if (dataType == null) {
-					throw new IllegalArgumentException(
-							getClass().getName() + " could not find data type for " + sVariable);
+					BoogieType boogieType =  mReq2pea.getSymboltable().getId2Type().get(sVariable);
+					dataType = boogieType.toString();
+					if(dataType == null) {
+						throw new IllegalArgumentException(
+								getClass().getName() + " could not find data type for " + sVariable);
+					}
+					
 				}
 				veList.add(new StateRecoverabilityVerificationCondition(new String[] { sVariable, sOperator, sValue }, dataType));
 			}
