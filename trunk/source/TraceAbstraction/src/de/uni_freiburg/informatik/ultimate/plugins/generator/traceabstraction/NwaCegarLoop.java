@@ -570,6 +570,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	protected void computeOwickiGriesAnnotation() {
 		assert IcfgUtils.isConcurrent(mIcfg) : "Cannot compute Owicki-Gries for sequential program.";
 		if (mPref.applyOneShotLbe()) {
+			// TODO this should be moved somewhere else, it's not the responsibility of this CEGAR loop
 			throw new AssertionError("Owicki-Gries does currently not support Petri net LBE.");
 		}
 
@@ -577,6 +578,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		final Map<IPredicate, IPredicate> floydHoare = computeHoareAnnotationComposer().getLoc2hoare();
 
 		final Map<Marking<IPredicate>, IPredicate> petriFloydHoare = new HashMap<>();
+		// FIXME mMarking2State is always null here; restore this functionality!
 		for (final Map.Entry<Marking<IPredicate>, IPredicate> entry : mMarking2State.entrySet()) {
 			final Marking<IPredicate> marking = entry.getKey();
 			final IPredicate state = entry.getValue();
