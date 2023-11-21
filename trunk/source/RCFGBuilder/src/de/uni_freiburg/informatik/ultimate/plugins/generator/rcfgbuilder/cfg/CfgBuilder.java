@@ -91,6 +91,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2S
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ConcurrencyInformation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
@@ -2020,7 +2021,7 @@ public class CfgBuilder {
 			case ALL:
 				return true;
 			case ALL_EXCEPT_ATOMIC_BOUNDARIES:
-				return !isAtomicBegin(pp);
+				return (IcfgUtils.isConcurrent(mIcfg) && !isAtomicBegin(pp)) || mAtomicPoints.contains(pp);
 			case ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS:
 				// TODO #FaultLocalization
 				throw new UnsupportedOperationException();
@@ -2038,7 +2039,7 @@ public class CfgBuilder {
 			case ALL:
 				return true;
 			case ALL_EXCEPT_ATOMIC_BOUNDARIES:
-				return !isAtomicEnd(pp);
+				return (IcfgUtils.isConcurrent(mIcfg) && !isAtomicEnd(pp)) || mAtomicPoints.contains(pp);
 			case ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS:
 				// TODO #FaultLocalization
 				throw new UnsupportedOperationException();
