@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -94,9 +93,12 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 
 	@Override
 	public Term[] tryToEliminate(final int quantifier, final Term[] dualJuncts, final Set<TermVariable> eliminatees) {
-		final ArrayList<TermVariable> eliminateesBefore = new ArrayList<>(eliminatees);
-		final HashSet<TermVariable> copyOfeliminatees = new HashSet<>(eliminatees);
-		final Term[] resultAtoms = tryToEliminate_EqInfoBased(quantifier, dualJuncts, copyOfeliminatees);
+		final ArrayList<TermVariable> eliminateesBefore;
+		if (EXTENDED_DEBUG_OUTPUT) {
+			eliminateesBefore = new ArrayList<>(eliminatees);
+		}
+//		final HashSet<TermVariable> copyOfeliminatees = new HashSet<>(eliminatees);
+//		final Term[] resultAtoms = tryToEliminate_EqInfoBased(quantifier, dualJuncts, copyOfeliminatees);
 		final Term[] resultAtomsSbr_Based = tryToEliminate_SbrBased(quantifier, dualJuncts, eliminatees);
 //		assert (eliminatees.equals(copyOfeliminatees)) : "old " + eliminatees + " new " + copyOfeliminatees;
 		if (EXTENDED_DEBUG_OUTPUT) {
