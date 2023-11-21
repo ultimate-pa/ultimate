@@ -512,7 +512,8 @@ public class AliasAnalysis {
 			assert st.getLhs().length == 1;
 			final PointerBase returnedIndex = extractPointerBaseFromVariableLhs(mAsfac, st.getLhs()[0]);
 			ma.reportEquivalence(mAsfac, baseOfIndex, returnedIndex);
-		} else if (st.getMethodName().equals(MemorySliceUtils.ULTIMATE_C_MEMCPY)) {
+		} else if (st.getMethodName().equals(MemorySliceUtils.ULTIMATE_C_MEMCPY)
+				|| st.getMethodName().equals(MemorySliceUtils.ULTIMATE_C_MEMMOVE)) {
 			assert st.getArguments().length == 3;
 			final PointerBase destIndex = extractPointerBaseFromPointer(mAsfac, st.getArguments()[0]);
 			final PointerBase srcIndex = extractPointerBaseFromPointer(mAsfac, st.getArguments()[1]);

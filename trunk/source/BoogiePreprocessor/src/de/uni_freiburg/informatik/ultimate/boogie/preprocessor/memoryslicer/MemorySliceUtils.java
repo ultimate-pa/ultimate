@@ -84,6 +84,7 @@ public class MemorySliceUtils {
 	public static final String PTHREADS_RWLOCK_UNLOCK = "#PthreadsRwLockUnlock";
 
 	public static final String ULTIMATE_C_MEMCPY = "#Ultimate.C_memcpy";
+	public static final String ULTIMATE_C_MEMMOVE = "#Ultimate.C_memmove";
 	public static final String ULTIMATE_C_MEMSET = "#Ultimate.C_memset";
 
 	private MemorySliceUtils() {

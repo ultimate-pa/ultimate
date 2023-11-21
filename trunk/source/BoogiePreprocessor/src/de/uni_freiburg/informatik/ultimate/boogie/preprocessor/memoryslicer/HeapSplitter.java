@@ -63,10 +63,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  */
 public class HeapSplitter implements IUnmanagedObserver {
 
-	private static final String ULTIMATE_C_MEMCPY = "#Ultimate.C_memcpy";
-
-	private static final String ULTIMATE_C_MEMSET = "#Ultimate.C_memset";
-
 	private final BoogiePreprocessorBacktranslator mTranslator;
 
 	private final AddressStoreFactory mAsfac;
@@ -160,8 +156,8 @@ public class HeapSplitter implements IUnmanagedObserver {
 				newDecls.addAll(newHeapVarDecls);
 			} else if (d instanceof Procedure) {
 				final Procedure proc = (Procedure) d;
-				if (isUltimateMemoryReadWriteProcedure(proc) || proc.getIdentifier().equals(ULTIMATE_C_MEMSET)
-						|| proc.getIdentifier().equals(ULTIMATE_C_MEMCPY)) {
+				if (isUltimateBasicMemoryReadWriteProcedure(proc)
+						|| isUltimateMemoryReadWriteProcedureWithImplementation(proc)) {
 					final List<Procedure> duplicates = duplicateProcedure(memoryArrays, memorySliceSuffixes,
 							(Procedure) d);
 					newDecls.addAll(duplicates);
@@ -207,7 +203,7 @@ public class HeapSplitter implements IUnmanagedObserver {
 		return result;
 	}
 
-	private static boolean isUltimateMemoryReadWriteProcedure(final Procedure proc) {
+	private static boolean isUltimateBasicMemoryReadWriteProcedure(final Procedure proc) {
 		final List<String> ultimateMemoryModifyingProcedures = toList(MemorySliceUtils.WRITE_POINTER,
 				MemorySliceUtils.WRITE_INT, MemorySliceUtils.WRITE_REAL, MemorySliceUtils.WRITE_INIT_POINTER,
 				MemorySliceUtils.WRITE_INIT_INT, MemorySliceUtils.WRITE_INIT_REAL,
@@ -216,6 +212,17 @@ public class HeapSplitter implements IUnmanagedObserver {
 				MemorySliceUtils.READ_REAL, MemorySliceUtils.READ_UNCHECKED_POINTER,
 				MemorySliceUtils.READ_UNCHECKED_INT, MemorySliceUtils.READ_UNCHECKED_REAL);
 		assert ultimateMemoryModifyingProcedures.size() == 15;
+		for (final String ummp : ultimateMemoryModifyingProcedures) {
+			if (proc.getIdentifier().startsWith(ummp)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean isUltimateMemoryReadWriteProcedureWithImplementation(final Procedure proc) {
+		final List<String> ultimateMemoryModifyingProcedures = toList(MemorySliceUtils.ULTIMATE_C_MEMSET,
+				MemorySliceUtils.ULTIMATE_C_MEMCPY, MemorySliceUtils.ULTIMATE_C_MEMMOVE);
 		for (final String ummp : ultimateMemoryModifyingProcedures) {
 			if (proc.getIdentifier().startsWith(ummp)) {
 				return true;
