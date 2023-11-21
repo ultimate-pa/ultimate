@@ -72,7 +72,7 @@ public class YamlWitnessParser {
 
 	// TODO: Make this a map instead with functions as values (i.e. what to do with this versions)
 	private static final List<FormatVersion> SUPPORTED_VERSIONS =
-			List.of(new FormatVersion(0, 1), new FormatVersion(0, 2));
+			List.of(new FormatVersion(0, 1), new FormatVersion(0, 2), new FormatVersion(2, 0));
 
 	public static Witness parseWitness(final File yamlInput) throws IOException {
 		final LoaderOptions loaderOptions = new LoaderOptions();
