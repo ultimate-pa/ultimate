@@ -50,8 +50,8 @@ public class NaiveOwickiGriesTestSuite extends OwickiGriesTestSuite {
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
 			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException {
 		// construct Owicki-Gries annotation
-		final var floydHoare = new PetriFloydHoare<>(mServices, mMgdScript, mSymbolTable,
-				Set.of(SimpleAction.PROCEDURE), unfolding, program, List.of(mUnifier), true, true);
+		final var floydHoare = new PetriFloydHoare<>(mServices, mMgdScript, mSymbolTable, unfolding, program,
+				List.of(mUnifier), true, true);
 		final Map<Marking<IPredicate>, IPredicate> petriFloydHoare = floydHoare.getResult();
 		final var construction = new OwickiGriesConstruction<>(mServices, mMgdScript, mSymbolTable,
 				Set.of(SimpleAction.PROCEDURE), program, petriFloydHoare, true);

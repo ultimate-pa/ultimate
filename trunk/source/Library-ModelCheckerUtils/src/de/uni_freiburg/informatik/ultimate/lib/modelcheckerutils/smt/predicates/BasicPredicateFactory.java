@@ -114,11 +114,11 @@ public class BasicPredicateFactory extends SmtFreePredicateFactory {
 		return and(st, Arrays.asList(preds));
 	}
 
-	public IPredicate and(final Collection<IPredicate> preds) {
+	public IPredicate and(final Collection<? extends IPredicate> preds) {
 		return and(SimplificationTechnique.NONE, preds);
 	}
 
-	public IPredicate and(final SimplificationTechnique st, final Collection<IPredicate> preds) {
+	public IPredicate and(final SimplificationTechnique st, final Collection<? extends IPredicate> preds) {
 		return newPredicate(andTermFromPreds(preds, st));
 	}
 
@@ -130,11 +130,11 @@ public class BasicPredicateFactory extends SmtFreePredicateFactory {
 		return or(st, Arrays.asList(preds));
 	}
 
-	public IPredicate or(final Collection<IPredicate> preds) {
+	public IPredicate or(final Collection<? extends IPredicate> preds) {
 		return or(SimplificationTechnique.NONE, preds);
 	}
 
-	public IPredicate or(final SimplificationTechnique st, final Collection<IPredicate> preds) {
+	public IPredicate or(final SimplificationTechnique st, final Collection<? extends IPredicate> preds) {
 		return newPredicate(orTermFromPreds(preds, st));
 	}
 
@@ -174,15 +174,15 @@ public class BasicPredicateFactory extends SmtFreePredicateFactory {
 		return newPredicate(orTerm(terms, st));
 	}
 
-	private Term orTermFromPreds(final Collection<IPredicate> preds, final SimplificationTechnique st) {
+	private Term orTermFromPreds(final Collection<? extends IPredicate> preds, final SimplificationTechnique st) {
 		return xJunctTermFromPreds(preds, st, SmtUtils::or, this::getFalse);
 	}
 
-	private Term andTermFromPreds(final Collection<IPredicate> preds, final SimplificationTechnique st) {
+	private Term andTermFromPreds(final Collection<? extends IPredicate> preds, final SimplificationTechnique st) {
 		return xJunctTermFromPreds(preds, st, SmtUtils::and, this::getTrue);
 	}
 
-	private Term xJunctTermFromPreds(final Collection<IPredicate> preds, final SimplificationTechnique st,
+	private Term xJunctTermFromPreds(final Collection<? extends IPredicate> preds, final SimplificationTechnique st,
 			final BiFunction<Script, Collection<Term>, Term> funCreateXJunct,
 			final Supplier<Term> funGetNeutralElement) {
 		final List<Term> terms = preds.stream().map(IPredicate::getFormula).collect(Collectors.toList());

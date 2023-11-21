@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -51,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
- * Constructs an Floyd-Hoare annotation from a branching process of the final refined Petri Net.
+ * Constructs an Floyd-Hoare annotation of a Petri program from a branching process of the final refined Petri Net.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
@@ -64,64 +62,54 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 public class PetriFloydHoare<P extends IPredicate, L> {
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
-	private final DefaultIcfgSymbolTable mSymbolTable;
 	private final BasicPredicateFactory mFactory;
 	private final List<IPredicateUnifier> mPredicateUnifiers;
+
 	private final boolean mCoveringSimplification;
 
-	private final BranchingProcess<L, P> mBp;
-
-	private final Set<Condition<L, P>> mConditions;
+	private final BranchingProcess<L, P> mRefinedUnfolding;
 	private final Set<Condition<L, P>> mOriginalConditions;
 	private final Set<Condition<L, P>> mAssertionConditions;
-	private final Set<ImmutableSet<P>> mCuts;
 
-	private final IPetriNet<L, P> mNet;
-
-	private final Set<P> mPlaces;
-	private final Set<P> mOriginalPlaces;
+	private final Set<Marking<P>> mRefinedReach;
 	private final Set<P> mAssertionPlaces;
-	private final Set<ImmutableSet<P>> mReach;
+
+	private final IPetriNet<L, P> mOriginalProgram;
+	private final Set<Marking<P>> mOriginalReach;
+	private final Set<P> mOriginalPlaces;
 
 	private final Map<Marking<P>, IPredicate> mFloydHoareAnnotation;
 
 	public PetriFloydHoare(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final BranchingProcess<L, P> bp, final IPetriNet<L, P> net, final List<IPredicateUnifier> predicateUnifiers,
 			final boolean iterativeCosets, final boolean coveringSimplification) {
-		this(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), csToolkit.getProcedures(), bp, net,
-				predicateUnifiers, iterativeCosets, coveringSimplification);
+		this(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), bp, net, predicateUnifiers,
+				iterativeCosets, coveringSimplification);
 	}
 
-	/**
-	 * @TODO: assertion, places are IPredicate
-	 * @param services
-	 * @param csToolkit
-	 * @param bp
-	 * @param assertion
-	 */
 	public PetriFloydHoare(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final IIcfgSymbolTable symbolTable, final Set<String> procedures, final BranchingProcess<L, P> bp,
-			final IPetriNet<L, P> net, final List<IPredicateUnifier> predicateUnifiers, final boolean iterativeCosets,
+			final IIcfgSymbolTable symbolTable, final BranchingProcess<L, P> bp, final IPetriNet<L, P> net,
+			final List<IPredicateUnifier> predicateUnifiers, final boolean iterativeCosets,
 			final boolean coveringSimplification) {
 		mServices = services;
 		mManagedScript = mgdScript;
-		mSymbolTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
-		mFactory = new BasicPredicateFactory(mServices, mManagedScript, mSymbolTable);
 		mPredicateUnifiers = predicateUnifiers;
+		mFactory = new BasicPredicateFactory(mServices, mManagedScript, symbolTable);
 
-		mBp = bp;
-		mNet = net;
+		mOriginalProgram = net;
+		mRefinedUnfolding = bp;
 
-		mCuts = computeMaximalCosets(mBp);
+		final var refinedReachablePlaces =
+				mRefinedUnfolding.getConditions().stream().map(Condition::getPlace).collect(Collectors.toSet());
+		mRefinedReach = computeReachableMarkings(mRefinedUnfolding);
 
-		mOriginalPlaces = new HashSet<>(mNet.getPlaces());
-		mConditions = mBp.getConditions().stream().collect(Collectors.toSet());
-		mOriginalConditions = getOrigConditions();
-		mAssertionConditions = DataStructureUtils.difference(mConditions, mOriginalConditions);
+		mOriginalPlaces = Collections.unmodifiableSet(mOriginalProgram.getPlaces());
+		mOriginalConditions = getOriginalConditions();
+		mAssertionConditions =
+				DataStructureUtils.difference(Set.copyOf(mRefinedUnfolding.getConditions()), mOriginalConditions);
 
-		mPlaces = getPlaces(mCuts);
-		mAssertionPlaces = getAssertPlaces(mPlaces, mOriginalPlaces);
-		mReach = getReach(mCuts);
+		mAssertionPlaces = DataStructureUtils.difference(refinedReachablePlaces, mOriginalPlaces);
+		mOriginalReach = mRefinedReach.stream().map(this::projectToOriginal).collect(Collectors.toSet());
 
 		if (iterativeCosets) {
 			mFloydHoareAnnotation = getCosetAnnotation();
@@ -132,28 +120,12 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 
 	}
 
-	// public static <LETTER> OwickiGriesFloydHoare<IPredicate, LETTER> create(final IUltimateServiceProvider services,
-	// final CfgSmtToolkit csToolkit, final BranchingProcess<LETTER, IPredicate> bp,
-	// final IPetriNet<LETTER, IPredicate> net,
-	// ArrayList <IRefinementEngine<LETTER, NestedWordAutomaton<LETTER, IPredicate>>> refinementEngines) {
-	// return new OwickiGriesFloydHoare<>(services, csToolkit, bp, net, x -> x, refinementEngines);
-	// }
-
-	/**
-	 * @param branching
-	 *            process
-	 * @return set of all maximal co-set (cuts)
-	 */
-	private static <LETTER, PLACE> Set<ImmutableSet<PLACE>>
-			computeMaximalCosets(final BranchingProcess<LETTER, PLACE> bp) {
-		final Set<ImmutableSet<PLACE>> maximalCoSets = new LinkedHashSet<>();
-		for (final Event<LETTER, PLACE> event : bp.getEvents()) {
-			// small optimization, cut-off event has same condition mark as companion
-			// if (!event.isCutoffEvent()) {
-			maximalCoSets.add(event.getMark().stream().collect(ImmutableSet.collector()));
-			// }
-		}
-		return maximalCoSets;
+	// computes the reachable markings of the refined net
+	private static <L, P> Set<Marking<P>> computeReachableMarkings(final BranchingProcess<L, P> bp) {
+		return bp.getEvents().stream()
+				// small optimization, cut-off event has same condition mark as companion
+				// .filter(e -> !e.isCutoffEvent())
+				.map(Event::getMark).collect(Collectors.toSet());
 	}
 
 	/**
@@ -161,8 +133,8 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 	 */
 	private Map<Marking<P>, IPredicate> getMaximalAnnotation() {
 		final Map<Marking<P>, IPredicate> mapping = new HashMap<>();
-		for (final ImmutableSet<P> marking : mReach) {
-			mapping.put(new Marking<>(marking), getMarkingAssertion(marking));
+		for (final Marking<P> marking : mOriginalReach) {
+			mapping.put(marking, getMarkingAssertion(marking));
 		}
 		return mapping;
 	}
@@ -192,21 +164,11 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 	}
 
 	private ImmutableSet<P> getCosetPlaces(final Set<Condition<L, P>> coset) {
-		final Set<P> placeCoset = new HashSet<>();
-		for (final Condition<L, P> condition : coset) {
-			placeCoset.add(condition.getPlace());
-		}
-		return ImmutableSet.of(placeCoset);
-
+		return coset.stream().map(Condition::getPlace).collect(ImmutableSet.collector());
 	}
 
 	private Set<IPredicate> getCosetPredicates(final Set<Condition<L, P>> coset) {
-		final Set<IPredicate> predCoset = new HashSet<>();
-		for (final Condition<L, P> condition : coset) {
-			predCoset.add(condition.getPlace());
-		}
-		return predCoset;
-
+		return coset.stream().map(Condition::getPlace).collect(Collectors.toSet());
 	}
 
 	// Set of conditions to set of places
@@ -234,7 +196,7 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 		return condImplications;
 	}
 
-	private Set<IPredicate> cleanWeakConditions(Set<IPredicate> assertConditions,
+	private static Set<IPredicate> cleanWeakConditions(Set<IPredicate> assertConditions,
 			final Set<IPredicate> condImplications) {
 		if (!condImplications.isEmpty()) {
 			assertConditions = DataStructureUtils.difference(assertConditions, condImplications);
@@ -265,7 +227,8 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 		final Set<Condition<L, P>> toAdd = DataStructureUtils.difference(conditions, coset);
 		final Set<Set<Condition<L, P>>> cosets = new HashSet<>();
 		for (final Condition<L, P> cond : toAdd) {
-			if (mBp.getCoRelation().isCoset(compCoset, cond) & mBp.getCoRelation().isCoset(coset, cond)) {
+			if (mRefinedUnfolding.getCoRelation().isCoset(compCoset, cond)
+					& mRefinedUnfolding.getCoRelation().isCoset(coset, cond)) {
 				final Set<Condition<L, P>> imCoset = DataStructureUtils.union(coset, DataStructureUtils.toSet(cond));
 				cosets.add(imCoset);
 			}
@@ -280,30 +243,17 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 		return cuts;
 	}
 
-	private Set<Condition<L, P>> getOrigConditions() {
-		final Set<Condition<L, P>> conditions = new HashSet<>();
-		for (final Condition<L, P> cond : mBp.getConditions()) {
-			if (mOriginalPlaces.contains(cond.getPlace())) {
-				conditions.add(cond);
-			}
-		}
-		return conditions;
+	private Set<Condition<L, P>> getOriginalConditions() {
+		return mRefinedUnfolding.getConditions().stream().filter(cond -> mOriginalPlaces.contains(cond.getPlace()))
+				.collect(Collectors.toSet());
 	}
 
-	private IPredicate getMarkingAssertion(final Set<P> marking) {
-		final Set<IPredicate> predicates = new HashSet<>();
-		for (final Set<P> cut : getCuts(marking)) {
-			predicates.add(getCutAssertion(cut, getAssertPlaces(cut)));
+	private IPredicate getMarkingAssertion(final Marking<P> originalMarking) {
+		final Set<IPredicate> disjuncts = new HashSet<>();
+		for (final Marking<P> refinedMarking : getRefinedMarkingsForOriginal(originalMarking)) {
+			disjuncts.add(mFactory.and(getAssertPlaces(refinedMarking)));
 		}
-		return mFactory.or(predicates);
-	}
-
-	private IPredicate getCutAssertion(final Set<P> cut, final Set<P> assertPlaces) {
-		final Set<IPredicate> predicates = new HashSet<>();
-		for (final IPredicate place : assertPlaces) {
-			predicates.add(place);
-		}
-		return mFactory.and(predicates);
+		return mFactory.or(disjuncts);
 	}
 
 	// Call this for simple and "greedy" cuts Annotation
@@ -315,7 +265,7 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 		return mFactory.or(predicates);
 	}
 
-	// phi(d) = conjuct(assert(p)) for each p in z(d) (assertion places) -> Cut assertion
+	// phi(d) = conjunction(assert(p)) for each p in z(d) (assertion places) -> Cut assertion
 	private IPredicate getCutAssertion(final Set<IPredicate> cut) {
 		final Set<IPredicate> predicates = new HashSet<>();
 		for (final IPredicate place : cut) {
@@ -324,84 +274,21 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 		return mFactory.and(predicates);
 	}
 
-	/**
-	 * @param cuts
-	 * @return set of all places in Petri Net* TODO: or get it as parameter from Net.getPlaces()
-	 */
-	private Set<P> getPlaces(final Set<ImmutableSet<P>> cuts) {
-		final Set<P> places = new HashSet<>();
-		for (final Set<P> cut : cuts) {
-			places.addAll(cut);
-		}
-		return places;
+	private Marking<P> projectToOriginal(final Marking<P> cut) {
+		return new Marking<>(cut.stream().filter(mOriginalPlaces::contains).collect(ImmutableSet.collector()));
 	}
 
-	/**
-	 * @param places
-	 * @param assertPlaces
-	 * @return set of original places
-	 * @TODO: remove p_block? Is in any cut? No, right?
-	 * @TODO: with Parameters or not?
-	 * @TODO: Get original places from Petri Net?
-	 */
-	private Set<P> getAssertPlaces(final Set<P> places, final Set<P> origPlaces) {
-		return DataStructureUtils.difference(places, origPlaces);
+	private Set<Marking<P>> getRefinedMarkingsForOriginal(final Marking<P> originalMarking) {
+		return mRefinedReach.stream().filter(m -> originalMarking.equals(projectToOriginal(m)))
+				.collect(Collectors.toSet());
 	}
 
-	/**
-	 * @param cut
-	 * @return mark, set of original places in cut
-	 */
-	private ImmutableSet<P> getCutMarking(final Set<P> cut) {
-		final Set<P> mark = new HashSet<>();
-		for (final P place : cut) {
-			if (mOriginalPlaces.contains(place)) {
-				mark.add(place);
-			}
-		}
-		return ImmutableSet.of(mark);
+	private Set<P> getAssertPlaces(final Marking<P> refinedMarking) {
+		return DataStructureUtils.intersection(refinedMarking.getPlaces(), mAssertionPlaces);
 	}
 
-	/**
-	 * @param cut
-	 * @return set of all assertion places in cut
-	 */
-	private Set<P> getAssertPlaces(final Set<P> cut) {
-		final Set<P> places = new HashSet<>();
-		for (final P place : cut) {
-			if (mAssertionPlaces.contains(place)) {
-				places.add(place);
-			}
-		}
-		return places;
-	}
-
-	/**
-	 * @param Cuts
-	 * @return set of all markings (set of original places)
-	 * @TODO: Set<Marking<LETTER, PLACE>> or Set<Set<PLACE>>?
-	 */
-	private Set<ImmutableSet<P>> getReach(final Set<ImmutableSet<P>> Cuts) {
-		final Set<ImmutableSet<P>> markings = new HashSet<>();
-		for (final ImmutableSet<P> cut : Cuts) {
-			markings.add(getCutMarking(cut));
-		}
-		return markings;
-	}
-
-	/**
-	 * @param marking
-	 * @return set of cuts that have marking as original marking
-	 */
-	private Set<Set<P>> getCuts(final Set<P> marking) {
-		final Set<Set<P>> cuts = new HashSet<>();
-		for (final Set<P> cut : mCuts) {
-			if (marking.equals(getCutMarking(cut))) {
-				cuts.add(cut);
-			}
-		}
-		return cuts;
-	}
+	// output methods
+	// --------------
 
 	public Map<Marking<P>, IPredicate> getResult() {
 		return mFloydHoareAnnotation;

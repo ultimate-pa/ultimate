@@ -189,4 +189,8 @@ public class Marking<PLACE> implements Iterable<PLACE>, Serializable {
 	public Stream<PLACE> stream() {
 		return mPlaces.stream();
 	}
+
+	public ImmutableSet<PLACE> getPlaces() {
+		return mPlaces;
+	}
 }
