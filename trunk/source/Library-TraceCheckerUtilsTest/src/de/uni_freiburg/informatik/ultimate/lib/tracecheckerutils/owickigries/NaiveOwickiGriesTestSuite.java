@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
 
@@ -60,7 +61,7 @@ public class NaiveOwickiGriesTestSuite extends OwickiGriesTestSuite {
 		final var check = new OwickiGriesValidityCheck<>(mServices, mMgdScript, mHtc, annotation,
 				construction.getCoMarkedPlaces());
 
-		if (!check.isValid()) {
+		if (check.isValid() == Validity.INVALID) {
 			throw new AssertionError("Invalid Owicki-Gries annotation");
 		}
 	}

@@ -87,6 +87,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
@@ -620,8 +621,12 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		mLogger.info("Checked inductivity and non-interference of Owicki-Gries annotation in "
 				+ (endTime - constructionTime) + "ns");
 
-		if (!check.isValid()) {
+		final var result = check.isValid();
+		if (result == Validity.INVALID) {
 			throw new AssertionError("Invalid Owicki-Gries annotation");
+		}
+		if (result == Validity.UNKNOWN) {
+			mLogger.warn("Could not confirm validity of Owicki-Gries annotation.");
 		}
 	}
 

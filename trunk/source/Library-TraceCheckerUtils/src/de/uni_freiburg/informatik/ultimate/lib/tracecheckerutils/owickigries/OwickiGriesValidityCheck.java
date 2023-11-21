@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -48,11 +48,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.Mon
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -70,9 +70,10 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
 
-	private final boolean mIsInductive;
-	private final boolean mIsInterferenceFree;
-	private final boolean mIsProgramSafe;
+	private final Validity mIsInductive;
+	private final Validity mIsInterferenceFree;
+	private final Validity mIsProgramSafe;
+
 	private final OwickiGriesAnnotation<LETTER, PLACE> mAnnotation;
 	private final Collection<Transition<LETTER, PLACE>> mTransitions;
 	private final IHoareTripleChecker mHoareTripleChecker;
@@ -108,36 +109,91 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		mTransitions = mAnnotation.getPetriNet().getTransitions();
 
 		mIsInductive = checkInductivity();
-		mIsInterferenceFree = checkInterference();
-		mIsProgramSafe = getCfgSafety();
+		mIsInterferenceFree = checkNonInterference();
+		mIsProgramSafe = checkSafety();
 	}
 
-	private boolean checkInductivity() {
+	private Validity checkInductivity() {
+		Validity result = Validity.VALID;
 		for (final Transition<LETTER, PLACE> transition : mTransitions) {
-			if (!getTransitionInductivity(transition)) {
-				return false;
+			final var check = isInductive(transition);
+			result = and(result, check);
+
+			if (result == Validity.INVALID) {
+				break;
 			}
 		}
-		return true;
+		return result;
 	}
 
-	private boolean getTransitionInductivity(final Transition<LETTER, PLACE> transition) {
-		final Set<PLACE> predecessors = transition.getPredecessors();
-		for (final PLACE pre : predecessors) {
-			mLogger.info(getPlacePredicate(pre));
+	private Validity isInductive(final Transition<LETTER, PLACE> transition) {
+		final var precondition = getConjunctionPredicate(transition.getPredecessors());
+		final var postcondition = getConjunctionPredicate(transition.getSuccessors());
+		final var composedAction = getTransitionSeqAction(transition);
+
+		final var inductivity = mHoareTripleChecker.checkInternal(precondition, composedAction, postcondition);
+		if (inductivity == Validity.INVALID) {
+			mLogger.warn(
+					"Non-inductive transition %s. Invalid Hoare triple:\n"
+							+ "\tprecondition %s\n\ttransition %s\n\tpostcondition %s",
+					transition, precondition, composedAction, postcondition);
 		}
-		final IPredicate precondition = getConjunctionPredicate(predecessors);
-		final IPredicate postcondition = getConjunctionPredicate(transition.getSuccessors());
-		return mHoareTripleChecker.checkInternal(precondition, getTransitionSeqAction(transition),
-				postcondition) == Validity.VALID;
+
+		return inductivity;
+	}
+
+	private Validity checkNonInterference() {
+		Validity result = Validity.VALID;
+
+		for (final Transition<LETTER, PLACE> transition : mTransitions) {
+			final var check = isInterferenceFree(transition);
+			result = and(result, check);
+
+			if (result == Validity.INVALID) {
+				break;
+			}
+		}
+		return result;
+	}
+
+	private Validity isInterferenceFree(final Transition<LETTER, PLACE> transition) {
+		final var precondition = getConjunctionPredicate(transition.getPredecessors());
+		final var composedAction = getTransitionSeqAction(transition);
+
+		Validity result = Validity.VALID;
+		for (final PLACE place : getComarkedPlaces(transition)) {
+			final var check = isInterferenceFreeForPlace(transition, precondition, composedAction, place);
+			result = and(result, check);
+
+			if (result == Validity.INVALID) {
+				break;
+			}
+		}
+		return result;
+	}
+
+	private Validity isInterferenceFreeForPlace(final Transition<LETTER, PLACE> transition,
+			final IPredicate precondition, final IInternalAction action, final PLACE place) {
+		final IPredicate placePred = getPlacePredicate(place);
+		final List<IPredicate> predicate = Arrays.asList(precondition, placePred);
+
+		final var result = mHoareTripleChecker.checkInternal(mPredicateFactory.and(predicate), action, placePred);
+		if (result == Validity.INVALID) {
+			mLogger.warn(
+					"Transition %s interferes with annotation of place %s. Invalid Hoare triple:\n"
+							+ "\tprecondition %s\n\ttransition %s\n\tpostcondition %s",
+					transition, place, precondition, action, predicate);
+		}
+
+		return result;
 	}
 
 	private IPredicate getConjunctionPredicate(final Set<PLACE> places) {
-		final Collection<IPredicate> predicates = new HashSet<>();
-		for (final PLACE place : places) {
-			predicates.add(getPlacePredicate(place));
-		}
-		return mPredicateFactory.and(predicates);
+		return mPredicateFactory.and(places.stream().map(this::getPlacePredicate).collect(Collectors.toSet()));
+	}
+
+	private IPredicate getPlacePredicate(final PLACE place) {
+		return mAnnotation.getFormulaMapping().get(place);
 	}
 
 	private IInternalAction getTransitionSeqAction(final Transition<LETTER, PLACE> transition) {
@@ -147,65 +203,36 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 				mManagedScript, false, false, false, null, null, actions));
 	}
 
-	private IPredicate getPlacePredicate(final PLACE Place) {
-		return mAnnotation.getFormulaMapping().get(Place);
-	}
-
-	private boolean checkInterference() {
-		for (final Transition<LETTER, PLACE> transition : mTransitions) {
-			if (!getTransitionInterFree(transition)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private boolean getTransitionInterFree(final Transition<LETTER, PLACE> transition) {
-		final IPredicate predecessorsPred = getConjunctionPredicate(transition.getPredecessors());
-		final IInternalAction action = getTransitionSeqAction(transition);
-		final Set<PLACE> coMarked = getComarkedPlaces(transition);
-		for (final PLACE place : coMarked) {
-			if (!getInterferenceFreeTriple(predecessorsPred, action, place)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
 	private Set<PLACE> getComarkedPlaces(final Transition<LETTER, PLACE> transition) {
 		return mCoMarkedPlaces.getImage(transition);
 	}
 
-	/**
-	 *
-	 * @param Pred
-	 * @param Action
-	 * @param place
-	 * @return Validity of Interference Freedom of Transition wrt co-marked place
-	 */
-	private boolean getInterferenceFreeTriple(final IPredicate Pred, final IInternalAction Action, final PLACE place) {
-		final IPredicate placePred = getPlacePredicate(place);
-		final List<IPredicate> predicate = Arrays.asList(Pred, placePred);
-		return mHoareTripleChecker.checkInternal(mPredicateFactory.and(predicate), Action, placePred) == Validity.VALID;
-	}
-
-	// TODO:find better name
-	private boolean getCfgSafety() {
-		if (!getInitImplication() || !getAcceptFormula()) {
-			return false;
+	private Validity checkSafety() {
+		final var preImpliesInitial = checkInitImplication();
+		if (preImpliesInitial == Validity.INVALID) {
+			return preImpliesInitial;
 		}
-		return true;
+
+		return and(preImpliesInitial, checkAcceptFormula());
 	}
 
-	private boolean getInitImplication() {
+	private Validity checkInitImplication() {
 		final IPredicate initFormula = getInitFormula();
 		final MonolithicImplicationChecker checker = new MonolithicImplicationChecker(mServices, mManagedScript);
+
+		Validity result = Validity.VALID;
 		for (final PLACE place : mAnnotation.getPetriNet().getInitialPlaces()) {
-			if (Validity.VALID != checker.checkImplication(initFormula, false, getPlacePredicate(place), false)) {
-				return false;
+			final var predicate = getPlacePredicate(place);
+			final var check = checker.checkImplication(initFormula, false, predicate, false);
+			result = and(result, check);
+
+			if (result == Validity.INVALID) {
+				mLogger.warn("Annotation %s of initial place %s not implied by ghost variable initialization %s",
+						predicate, place, initFormula);
+				break;
 			}
 		}
-		return true;
+		return result;
 	}
 
 	private IPredicate getInitFormula() {
@@ -217,17 +244,41 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 		return mPredicateFactory.and(terms);
 	}
 
-	private boolean getAcceptFormula() {
+	private Validity checkAcceptFormula() {
+		Validity result = Validity.VALID;
 		for (final PLACE place : mAnnotation.getPetriNet().getAcceptingPlaces()) {
-			// TODO: Ask about this or checkSatEquivalence
-			if (LBool.UNSAT != SmtUtils.checkSatTerm(mScript, getPlacePredicate(place).getFormula())) {
-				return false;
+			final var predicate = getPlacePredicate(place);
+			final var check = IncrementalPlicationChecker
+					.convertLBool2Validity(SmtUtils.checkSatTerm(mScript, predicate.getFormula()));
+			result = and(result, check);
+
+			if (result == Validity.INVALID) {
+				mLogger.warn("Annotation %s of error place %s is satisfiable", predicate, place);
+				break;
 			}
 		}
-		return true;
+		return result;
 	}
 
-	public boolean isValid() {
-		return mIsInductive && mIsInterferenceFree && mIsProgramSafe;
+	public Validity isValid() {
+		return and(and(mIsInductive, mIsInterferenceFree), mIsProgramSafe);
+	}
+
+	private static Validity and(final Validity left, final Validity right) {
+		if (right == Validity.NOT_CHECKED) {
+			throw new UnsupportedOperationException("Unexpected validity " + right);
+		}
+
+		switch (left) {
+		case INVALID:
+			return Validity.INVALID;
+		case UNKNOWN:
+			return right == Validity.INVALID ? right : left;
+		case VALID:
+			return right;
+		case NOT_CHECKED:
+		default:
+			throw new UnsupportedOperationException("Unexpected validity " + left);
+		}
 	}
 }
