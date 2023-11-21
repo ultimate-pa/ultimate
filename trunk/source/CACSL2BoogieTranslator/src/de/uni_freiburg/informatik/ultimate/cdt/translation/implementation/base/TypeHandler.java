@@ -551,8 +551,11 @@ public class TypeHandler implements ITypeHandler {
 		CType newDefiningType;
 		if ((oldStv.getCType() instanceof CNamed)) {
 			// end of chain not yet reached
-			final CType definingTypeOfDefiningType = constructUpdatedCNamedAndAddToSymbolTable(
-					((CNamed) oldStv.getCType()).getName(), completeStruct, alreadyRedirected, hook);
+			final var boogieId = ((CNamed) oldStv.getCType()).getName();
+			final var cId = mSymboltable.getCIdForBoogieId(boogieId);
+
+			final CType definingTypeOfDefiningType =
+					constructUpdatedCNamedAndAddToSymbolTable(cId, completeStruct, alreadyRedirected, hook);
 			newDefiningType = new CNamed(name, definingTypeOfDefiningType);
 		} else {
 			newDefiningType = completeStruct;
