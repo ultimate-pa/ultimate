@@ -171,29 +171,30 @@ public class AliasAnalysis {
 		for (final Expression arg : st.getThreadID()) {
 			analyzeExpression(ma, arg);
 		}
-		assert st.getLhs().length == 1;
-		if (isPointerType(st.getLhs()[0].getType())) {
-			final PointerBase returnOfJoin = extractPointerBaseFromVariableLhs(mAsfac, st.getLhs()[0]);
-			ma.addPointerBase(mAsfac, returnOfJoin);
-			mAccessAddresses.add(returnOfJoin);
-			mWriteAddresses.add(returnOfJoin);
-			// return value of join could potentially alias with the return values of all
-			// procedures that have matching out params (one outParam which is a pointer)
-			for (final Entry<String, Procedure> entry : mProcedureToImplementation.entrySet()) {
-				final Procedure proc = entry.getValue();
-				final VarList[] outParams = proc.getOutParams();
-				if (outParams.length == 1) {
-					final VarList outParam = outParams[0];
-					if (isPointerType(outParam.getType().getBoogieType())) {
-						final StorageClass sc;
-						if (proc.getSpecification() == null) {
-							sc = StorageClass.IMPLEMENTATION_OUTPARAM;
-						} else {
-							sc = StorageClass.PROC_FUNC_OUTPARAM;
+		if (st.getLhs().length != 0) {
+			if (isPointerType(st.getLhs()[0].getType())) {
+				final PointerBase returnOfJoin = extractPointerBaseFromVariableLhs(mAsfac, st.getLhs()[0]);
+				ma.addPointerBase(mAsfac, returnOfJoin);
+				mAccessAddresses.add(returnOfJoin);
+				mWriteAddresses.add(returnOfJoin);
+				// return value of join could potentially alias with the return values of all
+				// procedures that have matching out params (one outParam which is a pointer)
+				for (final Entry<String, Procedure> entry : mProcedureToImplementation.entrySet()) {
+					final Procedure proc = entry.getValue();
+					final VarList[] outParams = proc.getOutParams();
+					if (outParams.length == 1) {
+						final VarList outParam = outParams[0];
+						if (isPointerType(outParam.getType().getBoogieType())) {
+							final StorageClass sc;
+							if (proc.getSpecification() == null) {
+								sc = StorageClass.IMPLEMENTATION_OUTPARAM;
+							} else {
+								sc = StorageClass.PROC_FUNC_OUTPARAM;
+							}
+							final PointerBase outParamPointer = extractPointerBaseFromVarlist(mAsfac, outParam,
+									new DeclarationInformation(sc, proc.getIdentifier()));
+							ma.reportEquivalence(mAsfac, returnOfJoin, outParamPointer);
 						}
-						final PointerBase outParamPointer = extractPointerBaseFromVarlist(mAsfac, outParam,
-								new DeclarationInformation(sc, proc.getIdentifier()));
-						ma.reportEquivalence(mAsfac, returnOfJoin, outParamPointer);
 					}
 				}
 			}
