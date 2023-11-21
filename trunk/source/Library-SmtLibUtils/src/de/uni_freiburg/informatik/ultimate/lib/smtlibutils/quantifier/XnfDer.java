@@ -303,10 +303,14 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		final Term[] resultAtoms;
 		final EqualityInformation eqInfo = EqualityInformation.getEqinfo(script, tv, inputAtoms, null, quantifier);
 		if (eqInfo == null) {
-			logger.debug(new DebugMessage("not eliminated quantifier via DER for {0}", tv));
+			if (logger.isDebugEnabled()) {
+				logger.debug(new DebugMessage("not eliminated quantifier via DER for {0}", tv));
+			}
 			resultAtoms = null;
 		} else {
-			logger.debug(new DebugMessage("eliminated quantifier via DER for {0}", tv));
+			if (logger.isDebugEnabled()) {
+				logger.debug(new DebugMessage("eliminated quantifier via DER for {0}", tv));
+			}
 			resultAtoms = new Term[inputAtoms.length - 1];
 			final Map<Term, Term> substitutionMapping =
 					Collections.singletonMap(eqInfo.getGivenTerm(), eqInfo.getRelatedTerm());
