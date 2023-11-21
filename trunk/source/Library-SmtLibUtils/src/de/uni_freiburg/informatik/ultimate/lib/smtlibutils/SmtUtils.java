@@ -2521,7 +2521,11 @@ public final class SmtUtils {
 	}
 
 	public static boolean isSubterm(final Term term, final Term subterm) {
-		return new SubtermPropertyChecker(x -> x.equals(subterm)).isSatisfiedBySomeSubterm(term);
+		if (subterm instanceof TermVariable) {
+			return Arrays.asList(term.getFreeVars()).contains(subterm);
+		} else {
+			return new SubtermPropertyChecker(x -> x.equals(subterm)).isSatisfiedBySomeSubterm(term);
+		}
 	}
 
 	public static Rational toRational(final long val) {
