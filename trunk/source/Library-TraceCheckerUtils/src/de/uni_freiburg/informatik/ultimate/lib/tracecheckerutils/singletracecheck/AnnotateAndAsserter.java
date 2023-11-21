@@ -31,13 +31,17 @@ import java.util.Collection;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.VarAssignmentReuseAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * TODO: use quick check
@@ -59,6 +63,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 	protected final AnnotateAndAssertCodeBlocks<L> mAnnotateAndAssertCodeBlocks;
 
 	protected final TraceCheckStatisticsGenerator mTcbg;
+
+	public boolean mSucessfulReuse = false;
 
 	public AnnotateAndAsserter(final ManagedScript mgdScriptTc, final NestedFormulas<L, Term, Term> nestedSSA,
 			final AnnotateAndAssertCodeBlocks<L> aaacb, final TraceCheckStatisticsGenerator tcbg,
@@ -108,6 +114,9 @@ public class AnnotateAndAsserter<L extends IAction> {
 		// number that the pending context. The first pending context has
 		// number -1, the second -2, ...
 		int pendingContextCode = -1 - mSSA.getTrace().getPendingReturns().size();
+		final boolean reuseVarAssignmentsOfReachableErrorLocatiosn = true;
+		ArrayList<Pair<Term, Term>> varAssignmentPair = new ArrayList<Pair<Term, Term>>();
+
 		for (final Integer positionOfPendingReturn : mSSA.getTrace().getPendingReturns().keySet()) {
 			assert mTrace.isPendingReturn(positionOfPendingReturn);
 			{
@@ -126,9 +135,109 @@ public class AnnotateAndAsserter<L extends IAction> {
 				mAnnotSSA.setOldVarAssignmentAtPos(positionOfPendingReturn, annotated);
 			}
 			pendingContextCode++;
+			if (reuseVarAssignmentsOfReachableErrorLocatiosn) {
+				System.out.println(mSSA.getTrace().getSymbol(positionOfPendingReturn));
+			}
 		}
-		mSatisfiable = mMgdScriptTc.getScript().checkSat();
 
+		if (reuseVarAssignmentsOfReachableErrorLocatiosn) {
+			// final IPredicate errorStatePredecessor =
+			// (IPredicate) mSSA.getTrace().getSymbol(mSSA.getTrace().length() - 2);
+			// final ISLPredicate test = (ISLPredicate) errorStatePredecessor;
+
+			boolean reuse = false;
+			VarAssignmentReuseAnnotation vaAnnotation = null;
+			// TODO check mSSA.getTrace().length() - 1 > 0
+			if (mSSA.getTrace().length() - 1 > 0) {
+				for (int i = 0; i < mSSA.getTrace().length() - 1; i++) { // dont check current testgoal for va
+					if (mSSA.getTrace().getSymbol(i) instanceof StatementSequence) {
+						final StatementSequence statementBranch = (StatementSequence) mSSA.getTrace().getSymbol(i);
+						if (statementBranch.getPayload().getAnnotations()
+								.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
+							vaAnnotation = (VarAssignmentReuseAnnotation) statementBranch.getPayload().getAnnotations()
+									.get(VarAssignmentReuseAnnotation.class.getName());
+							varAssignmentPair = vaAnnotation.mVarAssignmentPair;
+							if (!vaAnnotation.mVarAssignmentPair.isEmpty()) {
+								reuse = true;
+							} else {
+								// TODO muss so sein wenn wir schlüsse auf else branch schließen wollen.
+								// Weil das ist die garantie, dass keine termination dazwischen stattfinden kann
+								// Wichtig dass wir nicht auf false setzten wenn wir hier das aktuelle testgoal lesen
+								reuse = false;
+							}
+						}
+						// if new input in trace. Set value for input and assert it.
+						// Create testcase with this value and the rest of the VA
+					}
+				}
+			}
+			if (reuse && vaAnnotation != null) { // ensure arraylist not empty
+				mMgdScriptTc.getScript().push(1); // Push und pop muss wo anders passieren, sonst ist das model weg
+													// in
+													// einem
+				final ArrayList<Term> andVa = new ArrayList<Term>();
+				for (int i = 0; i < varAssignmentPair.size(); i++) {
+					varAssignmentPair.get(i);
+					if (mMgdScriptTc.getScript().getTheory()
+							.getFunction(varAssignmentPair.get(i).getFirst().toStringDirect().substring(1,
+									varAssignmentPair.get(i).getFirst().toStringDirect().length() - 1)) == null) {
+						System.out.println("TODO" + varAssignmentPair.get(i).getFirst().toStringDirect());
+						System.out.println(mMgdScriptTc.getScript().getTheory()
+								.getFunction(varAssignmentPair.get(i).getFirst().toStringDirect().substring(1,
+										varAssignmentPair.get(i).getFirst().toStringDirect().length() - 1)));
+						reuse = false;
+					} else {
+
+						final Term nondetVar = SmtUtils.unfTerm(mMgdScriptTc.getScript(),
+								mMgdScriptTc.getScript().getTheory()
+										.getFunction(varAssignmentPair.get(i).getFirst().toStringDirect().substring(1,
+												varAssignmentPair.get(i).getFirst().toStringDirect().length() - 1)));
+						andVa.add(SmtUtils.binaryEquality(mMgdScriptTc.getScript(), nondetVar,
+								varAssignmentPair.get(i).getSecond()));
+					}
+				}
+
+				Term varAssignmentConjunction = SmtUtils.and(mMgdScriptTc.getScript(), andVa);
+				if (vaAnnotation.mIsNegated && !andVa.isEmpty()) {
+					varAssignmentConjunction = SmtUtils.not(mMgdScriptTc.getScript(), varAssignmentConjunction);
+					// TODO evaluate if negated reuse is helpfull
+					mAnnotateAndAssertCodeBlocks.annotateAndAssertTerm(varAssignmentConjunction, "Int");
+					System.out.println("REUSE: " + varAssignmentConjunction);
+				} else {
+					mAnnotateAndAssertCodeBlocks.annotateAndAssertTerm(varAssignmentConjunction, "Int");
+					System.out.println("REUSE: " + varAssignmentConjunction);
+				}
+
+			}
+			mSatisfiable = mMgdScriptTc.getScript().checkSat();
+			if (!reuse) {
+				System.out.println("NO REUSE");
+			} else {
+				System.out.println("REUSE");
+			}
+			if (mSatisfiable == LBool.UNSAT) {
+				if (reuse) {
+					// register "other branch" as reached by VA
+					// new VA will be added in trace check
+					System.out.println("REUSE UNSAT");
+					vaAnnotation.mVAofOppositeBranch.removeCheck();
+					vaAnnotation.negateVa();
+					mMgdScriptTc.getScript().pop(1);
+				}
+				// Hier oder vor der IF
+				mSatisfiable = mMgdScriptTc.getScript().checkSat();
+			} else if (reuse) {
+				// register "other branch" as not reachable with this VA. Add negated VA to other branch test goal
+				System.out.println("REUSE SUCCESSFULL");
+				vaAnnotation.mVAofOppositeBranch.negateVa();
+				mSucessfulReuse = true;
+			}
+		} else {
+			mSatisfiable = mMgdScriptTc.getScript().checkSat();
+		}
+		if (mSatisfiable == LBool.UNKNOWN) {
+			System.out.println("UNKNOWN");
+		}
 		// Report benchmarks
 		mTcbg.reportNewCheckSat();
 		mTcbg.reportNewCodeBlocks(mTrace.length());
@@ -143,5 +252,4 @@ public class AnnotateAndAsserter<L extends IAction> {
 	public NestedFormulas<L, Term, Term> getAnnotatedSsa() {
 		return mAnnotSSA;
 	}
-
 }

@@ -80,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.VarAssignmentReuseAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -855,6 +856,14 @@ public class CExpressionTranslator {
 					chk.annotate(assertFalseElse);
 					resultBuilder.addStatement(assertFalseElse);
 
+					// Annotations needed for variable assignment reuse
+					final VarAssignmentReuseAnnotation varAssignmentAnnoThen = new VarAssignmentReuseAnnotation();
+					varAssignmentAnnoThen.annotate(assertFalseThen);
+					final VarAssignmentReuseAnnotation varAssignmentAnnoElse = new VarAssignmentReuseAnnotation();
+					varAssignmentAnnoElse.annotate(assertFalseElse);
+					varAssignmentAnnoThen.setOppositeAnno(varAssignmentAnnoElse);
+					varAssignmentAnnoElse.setOppositeAnno(varAssignmentAnnoThen);
+
 					final Expression ite =
 							ExpressionFactory.constructIfThenElseExpression(loc, opCondition.getLrValue().getValue(),
 									opPositive.getLrValue().getValue(), opNegative.getLrValue().getValue());
@@ -896,6 +905,7 @@ public class CExpressionTranslator {
 
 				rtrStatement = addTestGoalsToConditionalOperator(loc, opCondition, ifStatements, elseStatements,
 						secondArgIsVoid, thirdArgIsVoid, hook);
+				throw new IllegalArgumentException("Unexpected Test Goal location");
 			} else {
 				rtrStatement = new IfStatement(loc, opCondition.getLrValue().getValue(),
 						ifStatements.toArray(new Statement[ifStatements.size()]),

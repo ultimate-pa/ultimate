@@ -225,6 +225,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.VarAssignmentReuseAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -1768,6 +1769,14 @@ public class CHandler {
 			chk.annotate(assertFalseElse);
 			elseArray.add(assertFalseElse);
 			elseArray.addAll(elseStmt);
+
+			// Annotations needed for variable assignment reuse
+			final VarAssignmentReuseAnnotation varAssignmentAnnoThen = new VarAssignmentReuseAnnotation();
+			varAssignmentAnnoThen.annotate(assertFalseThen);
+			final VarAssignmentReuseAnnotation varAssignmentAnnoElse = new VarAssignmentReuseAnnotation();
+			varAssignmentAnnoElse.annotate(assertFalseElse);
+			varAssignmentAnnoThen.setOppositeAnno(varAssignmentAnnoElse);
+			varAssignmentAnnoElse.setOppositeAnno(varAssignmentAnnoThen);
 
 			ifStmt = new IfStatement(loc, cond.getValue(), thenArray.toArray(new Statement[thenArray.size()]),
 					elseArray.toArray(new Statement[elseArray.size()]));
@@ -3711,6 +3720,13 @@ public class CHandler {
 			chk.annotate(assertFalseElse);
 			elseArray.add(assertFalseElse);
 			elseArray.addAll(elseStmt);
+
+			final VarAssignmentReuseAnnotation varAssignmentAnnoThen = new VarAssignmentReuseAnnotation();
+			varAssignmentAnnoThen.annotate(assertFalseThen);
+			final VarAssignmentReuseAnnotation varAssignmentAnnoElse = new VarAssignmentReuseAnnotation();
+			varAssignmentAnnoElse.annotate(assertFalseElse);
+			varAssignmentAnnoThen.setOppositeAnno(varAssignmentAnnoElse);
+			varAssignmentAnnoElse.setOppositeAnno(varAssignmentAnnoThen);
 
 			ifStmt = new IfStatement(loc, cond, thenArray.toArray(new Statement[thenArray.size()]),
 					elseArray.toArray(new Statement[elseArray.size()]));

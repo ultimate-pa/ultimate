@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.VarAssignmentReuseAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -68,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Check if a trace fulfills a specification. Provides an execution (that violates the specification) if the check was
@@ -304,7 +308,9 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.SsaConstructionTime.toString());
 
 		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
-		if (mAssertCodeBlockOrder.getAssertCodeBlockOrderType() != AssertCodeBlockOrderType.NOT_INCREMENTALLY) {
+		if (mAssertCodeBlockOrder.getAssertCodeBlockOrderType() != AssertCodeBlockOrderType.NOT_INCREMENTALLY)
+
+		{
 			mAAA = new AnnotateAndAsserterWithStmtOrderPrioritization<>(mTcSmtManager, ssa,
 					getAnnotateAndAsserterCodeBlocks(ssa), mTraceCheckBenchmarkGenerator, mAssertCodeBlockOrder,
 					mServices);
@@ -457,6 +463,9 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	private TestVector extractTestVector(final NestedSsaBuilder<L> nsb, final Function<Term, Term> funGetValue,
 			final IcfgProgramExecutionBuilder<L> rpeb) {
 		final TestVector testV = new TestVector();
+		final ArrayList<Term> varAssignment = new ArrayList<Term>();
+		final ArrayList<Pair<Term, Term>> varAssignmentPair = new ArrayList<Pair<Term, Term>>();
+
 		for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
 			final IProgramVar bv = entry.getKey();
 			final Map<Integer, Term> indexedRepresentatives = entry.getValue();
@@ -481,9 +490,24 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 										if (stsq.getPayload().toString().contains("nondet")) {
 											final String type =
 													testV.getNonDetTypeFromName(stsq.getPayload().toString());
-											testV.addValueAssignment(valueT, index, type); // Only if nondetINT!!}
+											testV.addValueAssignment(valueT, index, type);
+											final TermTransferrer test = new TermTransferrer(
+													mCfgManagedScript.getScript(), mTcSmtManager.getScript());
+
+											final Term varEqValue = SmtUtils.binaryEquality(mTcSmtManager.getScript(),
+													test.transform(indexedVar), test.transform(valueT));
+											final Pair<Term, Term> varValuePair = new Pair<Term, Term>(
+													test.transform(indexedVar), test.transform(valueT));
+											varAssignmentPair.add(varValuePair);
+											varAssignment.add(varEqValue);
+											// System.out.println(varEqValue);
+											// NEW annotate Variabel Assignment to test goal helper state for reuse
+											// later
+
 										}
 									}
+								} else {
+									System.out.println("unexpected Index for nondet");
 								}
 								evenRepresentative = !evenRepresentative;
 							} else {
@@ -494,6 +518,21 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
 
 				}
+			}
+		}
+		final boolean vaReuse = true;
+		if (vaReuse) {
+
+			// TODO Add empty annotation to unreachable test goals? to prevent a reuse Not sure if needed
+			final IElement statementBranch = (IElement) nsb.mSsa.getTrace().getSymbol(nsb.mSsa.getTrace().length() - 1);
+			if (statementBranch.getPayload().getAnnotations()
+					.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
+				final VarAssignmentReuseAnnotation vaReuseAnno = (VarAssignmentReuseAnnotation) statementBranch
+						.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
+				vaReuseAnno.setVa(varAssignmentPair);
+
+			} else {
+				assert false;// TODO
 			}
 		}
 		return testV;
@@ -579,6 +618,10 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 
 	protected void cleanupAndUnlockSolver() {
 		mTcSmtManager.echo(mTraceCheckLock, new QuotedObject("finished trace check"));
+		if (mAAA.mSucessfulReuse) {
+			mTcSmtManager.pop(mTraceCheckLock, 1);
+		}
+		mAAA.mSucessfulReuse = false;
 		mTcSmtManager.pop(mTraceCheckLock, 1);
 		mTcSmtManager.unlock(mTraceCheckLock);
 	}

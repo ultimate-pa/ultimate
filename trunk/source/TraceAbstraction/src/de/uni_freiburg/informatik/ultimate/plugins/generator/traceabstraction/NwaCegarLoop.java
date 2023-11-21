@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledExcep
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.VarAssignmentReuseAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -191,7 +192,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		}
 	}
 
-	private NestedRun<L, IPredicate> longTraceRun(final INestedWordAutomaton<L, IPredicate> abstraction,
+	private NestedRun<L, IPredicate> runWithModifiedGoalSet(final INestedWordAutomaton<L, IPredicate> abstraction,
 			final Set<IPredicate> possibleEndPoints) throws AutomataOperationCanceledException {
 		return new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, abstraction.getInitialStates(),
 				Collections.emptySet(), possibleEndPoints).getNestedRun();
@@ -283,7 +284,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				if (!mTestGeneration.equals(TestGenerationMode.NaiveMultiGoal)) {
 					mTestGoalWorkingSet.clear(); // If Skips Unsat Long Traces activated
 				}
-				mCounterexample = longTraceRun(mAbstraction, longTraceGoalStates);
+				mCounterexample = runWithModifiedGoalSet(mAbstraction, longTraceGoalStates);
 				if (mCounterexample == null) { // mTestGoalTodoStack can be not Empty but mCounterexample can be null
 					// If more testgoals than iterations
 					if (mTestGeneration.equals(TestGenerationMode.NaiveMultiGoal)) {
@@ -304,12 +305,34 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 				assert checkIsEmptyHeuristic(abstraction) : "IsEmptyHeuristic did not match IsEmpty";
 			} else {
-				mLogger.info("TestGen, Time spent Search-MultiGoal Preprocess: " + mLongTraceTime / 1000000000 + "s");
-				mLogger.info("TestGen, Coverage during Optimization: " + CoveredLongTrace / mErrorLocs.size());
+				if (mTestGeneration.equals(TestGenerationMode.Standard)) {
+					mLogger.info(
+							"TestGen, Time spent Search-MultiGoal Preprocess: " + mLongTraceTime / 1000000000 + "s");
+					mLogger.info("TestGen, Coverage during Optimization: " + CoveredLongTrace / mErrorLocs.size());
 
-				mCounterexample =
-						new IsEmpty<>(new AutomataLibraryServices(getServices()), abstraction, mSearchStrategy)
-								.getNestedRun();
+					final Set<IPredicate> newGoalSet = new HashSet<>();
+					newGoalSet.addAll(mAbstraction.getFinalStates());
+					for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
+						final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
+						if (testGoalISL.getProgramPoint().getPayload().getAnnotations()
+								.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
+							final VarAssignmentReuseAnnotation pLocAnno =
+									(VarAssignmentReuseAnnotation) testGoalISL.getProgramPoint().getPayload()
+											.getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
+
+							if (!pLocAnno.mIsActiveTestGoal) {
+								newGoalSet.remove(testGoal);
+							}
+						}
+
+					}
+					mCounterexample = runWithModifiedGoalSet(mAbstraction, newGoalSet);
+				} else {
+
+					mCounterexample =
+							new IsEmpty<>(new AutomataLibraryServices(getServices()), abstraction, mSearchStrategy)
+									.getNestedRun();
+				}
 			}
 		} finally {
 			if (mWriteEvaluationToFile) {

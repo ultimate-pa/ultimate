@@ -2,22 +2,22 @@
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  * length two or summary.
  * <p>
  * By default, the reachability graph is obtained by traversing the automaton in a BFS manner.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -74,7 +74,7 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	/**
 	 * Search strategy.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	public enum SearchStrategy {
@@ -202,20 +202,21 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	/**
 	 * Default constructor. Here we search a run from the initial states of the automaton to the final states of the
 	 * automaton.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
 	 *            input NWA
 	 */
-	public IsEmpty(final AutomataLibraryServices services, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
+	public IsEmpty(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		this(services, operand, SearchStrategy.BFS);
 	}
 
 	/**
 	 * Default constructor with option to set search strategy.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -224,17 +225,18 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 *            search strategy
 	 * @see #IsEmpty(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider)
 	 */
-	public IsEmpty(final AutomataLibraryServices services, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
-			final SearchStrategy strategy) throws AutomataOperationCanceledException {
-		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), Collections.emptySet(), null, true,
-				strategy);
+	public IsEmpty(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final SearchStrategy strategy)
+			throws AutomataOperationCanceledException {
+		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), Collections.emptySet(), null,
+				true, strategy);
 	}
 
 	/**
 	 * Constructor that is not restricted to emptiness checks. The set of startStates defines where the run that we
 	 * search has to start. The set of forbiddenStates defines states that the run must not visit. The set of goalStates
 	 * defines where the run that we search has to end.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -254,10 +256,10 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		assert operand.getStates().containsAll(goalStates) : "unknown states";
 	}
 
-	private IsEmpty(final AutomataLibraryServices services, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
-			final Set<STATE> startStates, final Set<STATE> forbiddenStates, final Set<STATE> goalStates,
-			final boolean goalStateIsAcceptingState, final SearchStrategy strategy)
-			throws AutomataOperationCanceledException {
+	private IsEmpty(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
+			final Set<STATE> forbiddenStates, final Set<STATE> goalStates, final boolean goalStateIsAcceptingState,
+			final SearchStrategy strategy) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mDummyEmptyStackState = mOperand.getEmptyStackState();
@@ -315,11 +317,11 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		markVisited(state, callPred);
 	}
 
-	//  The following implementation of dequeue is faster but leads to unsound
-	//	results. See BugBfsEmptinessLowPriorityCallQueue.fat for details.
-	//  Alternative workaround (where we may still use the low priority call queue):
-	//  When final state is reached, process the whole call queue before
-	//  computation of accepting run.
+	// The following implementation of dequeue is faster but leads to unsound
+	// results. See BugBfsEmptinessLowPriorityCallQueue.fat for details.
+	// Alternative workaround (where we may still use the low priority call queue):
+	// When final state is reached, process the whole call queue before
+	// computation of accepting run.
 	/*
 	/**
 	 * Dequeue a state pair. If available take a state pair that has been
@@ -344,20 +346,20 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 */
 	private DoubleDecker<STATE> dequeue() {
 		switch (mStrategy) {
-			case BFS:
-				/*
-				 * If available take a state pair that has been discovered by taking a call transition. If not take a
-				 * state pair that has been discovered by taking an internal or a return transition or a summary.
-				 */
-				return dequeueGivenQueues(mQueueCall, mQueue);
-			case DFS:
-				/*
-				 * If available take a state pair that has been discovered by taking an internal or a return transition
-				 * or a summary. If not take a state pair that has been discovered by taking a call transition.
-				 */
-				return dequeueGivenQueues(mQueue, mQueueCall);
-			default:
-				throw new IllegalArgumentException("Unknown search strategy.");
+		case BFS:
+			/*
+			 * If available take a state pair that has been discovered by taking a call transition. If not take a
+			 * state pair that has been discovered by taking an internal or a return transition or a summary.
+			 */
+			return dequeueGivenQueues(mQueueCall, mQueue);
+		case DFS:
+			/*
+			 * If available take a state pair that has been discovered by taking an internal or a return transition
+			 * or a summary. If not take a state pair that has been discovered by taking a call transition.
+			 */
+			return dequeueGivenQueues(mQueue, mQueueCall);
+		default:
+			throw new IllegalArgumentException("Unknown search strategy.");
 		}
 	}
 
@@ -459,7 +461,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
 			if (!mForbiddenStates.contains(succ)) {
-				//add these information even in already visited
+				// add these information even in already visited
 				addRunInformationCall(succ, state, symbol, state, stateK);
 				if (!wasVisited(succ, state)) {
 					enqueueAndMarkVisitedCall(succ, state);
@@ -513,7 +515,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 * Store for a state pair (succ,succK) in the reachability graph information about the predecessor (state,stateK)
 	 * under an internal transition and a run of length two from state to succ.
 	 * <p>
-	 * 
+	 *
 	 * @param stateK
 	 *            TODO Christian 2016-09-04: The parameter 'stateK' is not used. Is this intended?
 	 */
@@ -624,7 +626,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 			succ2ReturnSymbol = new HashMap<>();
 			mSummaryReturnSymbol.put(stateBeforeCall, succ2ReturnSymbol);
 		}
-		//update only if there is not already an entry
+		// update only if there is not already an entry
 		if (!succ2ReturnPred.containsKey(stateAfterReturn)) {
 			succ2ReturnPred.put(stateAfterReturn, stateBeforeReturn);
 			assert !succ2ReturnSymbol.containsKey(stateAfterReturn);
