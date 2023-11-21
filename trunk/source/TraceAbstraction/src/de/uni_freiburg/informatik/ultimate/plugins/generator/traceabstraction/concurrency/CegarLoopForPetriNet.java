@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
@@ -91,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesConstruction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriFloydHoare;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -639,36 +639,28 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		final long startTime = System.nanoTime();
 		final var predicateUnifiers = mRefinementEngines.stream().map(IRefinementEngineResult::getPredicateUnifier)
 				.collect(Collectors.toList());
-		final PetriFloydHoare<IPredicate, L> floydHoare =
-				new PetriFloydHoare<>(getServices(), mCsToolkit, mFinPrefix, mInitialNet, predicateUnifiers,
-						mPref.owickiGriesIterativeCosets(), mPref.owickiGriesCoveringSimplification());
-		final Map<Marking<IPredicate>, IPredicate> petriFloydHoare = floydHoare.getResult();
 
-		// final var htc = new MonolithicHoareTripleChecker(mCsToolkit);
-		// for (final var entry : petriFloydHoare.entrySet()) {
-		// final var markPre = entry.getKey();
-		// final var pre = entry.getValue();
-		// for (final var trans : mInitialNet.getTransitions()) {
-		// if (markPre.isTransitionEnabled(trans, mInitialNet)) {
-		// Marking<L, IPredicate> markPost;
-		// try {
-		// markPost = markPre.fireTransition(trans, mInitialNet);
-		// final var post = petriFloydHoare.getOrDefault(markPost, mPredicateFactory.or());
-		// final Validity valid = htc.checkInternal(pre, (IInternalAction) trans.getSymbol(), post);
-		// if (valid != Validity.VALID) {
-		// throw new IllegalStateException("");
-		// }
-		// } catch (final PetriNetNot1SafeException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
-		// }
-		// }
-		// }
+		final var floydHoare =
+				new PetriFloydHoare<>(getServices(), mCsToolkit, mFinPrefix, mInitialNet, predicateUnifiers,
+						mPref.owickiGriesIterativeCosets(), mPref.owickiGriesCoveringSimplification()).getResult();
+
+		try {
+			mLogger.warn("Checking inductivity of Floyd-Hoare annotation for initial Petri net");
+			final var fhValid = new PetriFloydHoareValidityCheck<>(mServices, mCsToolkit.getManagedScript(),
+					mCsToolkit.getSymbolTable(), mCsToolkit.getModifiableGlobalsTable(), mInitialNet, floydHoare)
+							.isValid();
+			if (fhValid == Validity.INVALID) {
+				throw new AssertionError("Invalid Floyd-Hoare annotation of Petri net");
+			}
+		} catch (final PetriNetNot1SafeException e) {
+			throw new AssertionError("Petri net must be one-safe", e);
+		}
 
 		final OwickiGriesConstruction<IPredicate, L> construction = new OwickiGriesConstruction<>(getServices(),
-				mCsToolkit, mInitialNet, petriFloydHoare, mPref.owickiGriesHittingSets());
-		// TODO: simplify
+				mCsToolkit, mInitialNet, floydHoare, mPref.owickiGriesHittingSets());
+
+		// TODO: simplify the annotation
+
 		final long constructionTime = System.nanoTime();
 		mLogger.info("Computed Owicki-Gries annotation of size " + construction.getResult().size() + " in "
 				+ (constructionTime - startTime) + "ns");
