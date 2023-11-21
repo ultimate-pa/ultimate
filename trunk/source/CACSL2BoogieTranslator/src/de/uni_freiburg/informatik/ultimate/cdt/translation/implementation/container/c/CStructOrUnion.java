@@ -35,6 +35,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
@@ -58,10 +59,6 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	 */
 	private CType[] mFieldTypes;
 
-	/**
-	 * Indicates if this represents an incomplete type. If 'this' is complete, this String is empty, otherwise it holds
-	 * the name of the incomplete struct.
-	 */
 	private final String mStructName;
 
 	private List<Integer> mBitFieldWidths;
@@ -94,7 +91,7 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		mFieldNames = fNames;
 		mFieldTypes = fTypes;
 		mBitFieldWidths = Collections.unmodifiableList(bitFieldWidths);
-		mStructName = name;
+		mStructName = Objects.requireNonNull(name);
 		mIsComplete = true;
 	}
 
@@ -106,7 +103,7 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		mFieldNames = new String[0];
 		mFieldTypes = new CType[0];
 		mBitFieldWidths = Collections.emptyList();
-		mStructName = name;
+		mStructName = Objects.requireNonNull(name);
 		mIsComplete = false;
 	}
 
