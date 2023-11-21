@@ -29,6 +29,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -186,6 +188,13 @@ public class Statements2TransFormula {
 
 	private UnmodifiableTransFormula constructTransFormula(final boolean feasibilityKnown,
 			final SimplificationTechnique simplicationTechnique) {
+		{
+			// Try once more to eliminate auxVars. Due to changes of the formula structure
+			// this might help in rare cases.
+			final XnfDer xnfDer = new XnfDer(mMgdScript, mServices);
+			mAssumes = SmtUtils.and(mScript,
+					xnfDer.tryToEliminate(QuantifiedFormula.EXISTS, SmtUtils.getConjuncts(mAssumes), mAuxVars));
+		}
 		Term formula;
 		if (mSimplePartialSkolemization) {
 			formula = skolemize(mAssumes, mAuxVars);
@@ -284,20 +293,22 @@ public class Statements2TransFormula {
 		}
 		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 
+		final List<Term> newConjuncts = new ArrayList<>();
+		final Set<TermVariable> newAuxVars = new HashSet<>();
 		for (final TermVariable tv : addedEqualities.keySet()) {
 
 			final SingleTermResult tlres = mExpression2Term.translateToTerm(its, addedEqualities.get(tv));
-			mAuxVars.addAll(tlres.getAuxiliaryVars());
+			newAuxVars.addAll(tlres.getAuxiliaryVars());
 			mOverapproximations.putAll(tlres.getOverappoximations());
 			final Term rhsTerm = tlres.getTerm();
 			final Term eq = SmtUtils.binaryEquality(mScript, tv, rhsTerm);
 
-			mAssumes = SmtUtils.and(mScript, eq, mAssumes);
+			newConjuncts.add(eq);
 			if (COMPUTE_ASSERTS) {
 				mAsserts = Util.implies(mScript, eq, mAsserts);
 			}
 		}
-		eliminateAuxVarsViaDer();
+		eliminateAuxVarsAndAddNewAssumes(SmtUtils.and(mScript, newConjuncts), newAuxVars);
 	}
 
 	private void addHavoc(final HavocStatement havoc) {
@@ -318,15 +329,13 @@ public class Statements2TransFormula {
 		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 
 		final SingleTermResult tlres = mExpression2Term.translateToTerm(its, assume.getFormula());
-		mAuxVars.addAll(tlres.getAuxiliaryVars());
 		mOverapproximations.putAll(tlres.getOverappoximations());
 		final Term f = tlres.getTerm();
 
-		mAssumes = SmtUtils.and(mScript, f, mAssumes);
 		if (COMPUTE_ASSERTS) {
 			mAsserts = Util.implies(mScript, f, mAsserts);
 		}
-		eliminateAuxVarsViaDer();
+		eliminateAuxVarsAndAddNewAssumes(f, tlres.getAuxiliaryVars());
 	}
 
 	@SuppressWarnings("unused")
@@ -336,14 +345,10 @@ public class Statements2TransFormula {
 		}
 		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 		final SingleTermResult tlres = mExpression2Term.translateToTerm(its, assertstmt.getFormula());
-		mAuxVars.addAll(tlres.getAuxiliaryVars());
 		mOverapproximations.putAll(tlres.getOverappoximations());
 		final Term f = tlres.getTerm();
 
-		mAssumes = SmtUtils.and(mScript, f, mAssumes);
-		eliminateAuxVarsViaDer();
-
-		mAsserts = SmtUtils.and(mScript, f, mAsserts);
+		eliminateAuxVarsAndAddNewAssumes(f, tlres.getAuxiliaryVars());
 		assert assertTermContainsNoNull(mAssumes);
 	}
 
@@ -407,11 +412,13 @@ public class Statements2TransFormula {
 			}
 		}
 
+		final List<Term> newConjuncts = new ArrayList<>();
+		final Set<TermVariable> newAuxVars = new HashSet<>();
 		Term[] argumentTerms;
 		{
 			final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 			final MultiTermResult tlres = mExpression2Term.translateToTerms(its, arguments);
-			mAuxVars.addAll(tlres.getAuxiliaryVars());
+			newAuxVars.addAll(tlres.getAuxiliaryVars());
 			mOverapproximations.putAll(tlres.getOverappoximations());
 			argumentTerms = tlres.getTerms();
 		}
@@ -434,10 +441,10 @@ public class Statements2TransFormula {
 			if (spec instanceof EnsuresSpecification) {
 				final Expression post = ((EnsuresSpecification) spec).getFormula();
 				final SingleTermResult tlres = mExpression2Term.translateToTerm(ensIts, post);
-				mAuxVars.addAll(tlres.getAuxiliaryVars());
+				newAuxVars.addAll(tlres.getAuxiliaryVars());
 				mOverapproximations.putAll(tlres.getOverappoximations());
 				final Term f = tlres.getTerm();
-				mAssumes = SmtUtils.and(mScript, f, mAssumes);
+				newConjuncts.add(f);
 				if (COMPUTE_ASSERTS) {
 					if (spec.isFree()) {
 						mAsserts = Util.implies(mScript, f, mAsserts);
@@ -456,10 +463,10 @@ public class Statements2TransFormula {
 			if (spec instanceof RequiresSpecification) {
 				final Expression pre = ((RequiresSpecification) spec).getFormula();
 				final SingleTermResult tlres = mExpression2Term.translateToTerm(reqIts, pre);
-				mAuxVars.addAll(tlres.getAuxiliaryVars());
+				newAuxVars.addAll(tlres.getAuxiliaryVars());
 				mOverapproximations.putAll(tlres.getOverappoximations());
 				final Term f = tlres.getTerm();
-				mAssumes = SmtUtils.and(mScript, f, mAssumes);
+				newConjuncts.add(f);
 				if (COMPUTE_ASSERTS) {
 					if (spec.isFree()) {
 						mAsserts = Util.implies(mScript, f, mAsserts);
@@ -469,7 +476,7 @@ public class Statements2TransFormula {
 				}
 			}
 		}
-		eliminateAuxVarsViaDer();
+		eliminateAuxVarsAndAddNewAssumes(SmtUtils.and(mScript, newConjuncts), newAuxVars);
 	}
 
 	private void addForkCurrentThread(final ForkStatement fork) {
@@ -649,18 +656,25 @@ public class Statements2TransFormula {
 		}
 	}
 
-	/**
-	 * Eliminate auxVars from input if possible. Let {x_1,...,x_n} be a subset of auxVars. Returns a term that is
-	 * equivalent to ∃x_1,...,∃x_n input and remove {x_1,...,x_n} from auxVars. The set {x_1,...,x_n} is determined by
-	 * Destructive Equality Resolution {@link XnfDer}.
-	 */
-	private void eliminateAuxVarsViaDer() {
-		if (mAuxVars.isEmpty()) {
-			return;
+	private void eliminateAuxVarsAndAddNewAssumes(final Term newConjunct, final Collection<TermVariable> newAuxVars) {
+		// candidates for elimination are the newAuxVars and existing auxvars that occur
+		// in the new conjuncts
+		final Set<TermVariable> eliminationCandidates = new HashSet<>();
+		for (final TermVariable tv : Arrays.asList(newConjunct.getFreeVars())) {
+			if (mAuxVars.contains(tv)) {
+				eliminationCandidates.add(tv);
+			}
 		}
-		final XnfDer xnfDer = new XnfDer(mMgdScript, mServices);
-		mAssumes = SmtUtils.and(mScript,
-				xnfDer.tryToEliminate(QuantifiedFormula.EXISTS, SmtUtils.getConjuncts(mAssumes), mAuxVars));
+		eliminationCandidates.addAll(newAuxVars);
+		if (eliminationCandidates.isEmpty()) {
+			mAssumes = SmtUtils.and(mScript, mAssumes, newConjunct);
+			return;
+		} else {
+			final Term tmpAssumes = SmtUtils.and(mScript, mAssumes, newConjunct);
+			final XnfDer xnfDer = new XnfDer(mMgdScript, mServices);
+			mAssumes = SmtUtils.and(mScript, xnfDer.tryToEliminate(QuantifiedFormula.EXISTS,
+					SmtUtils.getConjuncts(tmpAssumes), eliminationCandidates));
+		}
 	}
 
 	/**
@@ -781,7 +795,6 @@ public class Statements2TransFormula {
 		}
 		assert arguments.length == offset;
 		mAssumes = SmtUtils.and(mScript, assignments);
-		eliminateAuxVarsViaDer();
 		return getTransFormula(true, SimplificationTechnique.NONE);
 	}
 
@@ -812,7 +825,6 @@ public class Statements2TransFormula {
 			offset++;
 		}
 		mAssumes = SmtUtils.and(mScript, assignments);
-		eliminateAuxVarsViaDer();
 		return getTransFormula(true, SimplificationTechnique.NONE);
 	}
 
@@ -841,7 +853,6 @@ public class Statements2TransFormula {
 			offset++;
 		}
 		mAssumes = SmtUtils.and(mScript, assignments);
-		eliminateAuxVarsViaDer();
 		return getTransFormula(true, SimplificationTechnique.NONE);
 	}
 
@@ -878,7 +889,6 @@ public class Statements2TransFormula {
 		}
 		assert st.getLhs().length == offset;
 		mAssumes = SmtUtils.and(mScript, assignments);
-		eliminateAuxVarsViaDer();
 		return getTransFormula(true, SimplificationTechnique.NONE);
 	}
 
@@ -909,7 +919,6 @@ public class Statements2TransFormula {
 		}
 		assert st.getLhs().length == offset;
 		mAssumes = SmtUtils.and(mScript, assignments);
-		eliminateAuxVarsViaDer();
 		return getTransFormula(true, SimplificationTechnique.NONE);
 	}
 
