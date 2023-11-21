@@ -544,6 +544,9 @@ public class TypeHandler implements ITypeHandler {
 			return alreadyRedirected.get(name);
 		}
 		final SymbolTableValue oldStv = mSymboltable.findCSymbol(hook, name);
+		if (oldStv == null) {
+			throw new AssertionError("Unable to locate " + name + " in the symbol table");
+		}
 
 		CType newDefiningType;
 		if ((oldStv.getCType() instanceof CNamed)) {
