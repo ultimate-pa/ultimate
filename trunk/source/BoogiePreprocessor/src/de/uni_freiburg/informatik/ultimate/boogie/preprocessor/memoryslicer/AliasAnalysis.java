@@ -502,6 +502,26 @@ public class AliasAnalysis {
 			final PointerBase baseOfIndex = extractPointerBaseFromPointer(mAsfac, pointerBaseExpr);
 			ma.addPointerBase(mAsfac, baseOfIndex);
 			mAccessAddresses.add(baseOfIndex);
+		} else if (st.getMethodName().equals(MemorySliceUtils.ULTIMATE_C_MEMSET)) {
+			assert st.getArguments().length == 3;
+			final Expression pointerBaseExpr = st.getArguments()[0];
+			final PointerBase baseOfIndex = extractPointerBaseFromPointer(mAsfac, pointerBaseExpr);
+			mWriteAddresses.add(baseOfIndex);
+			mAccessAddresses.add(baseOfIndex);
+			assert st.getLhs().length == 1;
+			final PointerBase returnedIndex = extractPointerBaseFromVariableLhs(mAsfac, st.getLhs()[0]);
+			ma.reportEquivalence(mAsfac, baseOfIndex, returnedIndex);
+		} else if (st.getMethodName().equals(MemorySliceUtils.ULTIMATE_C_MEMCPY)) {
+			assert st.getArguments().length == 3;
+			final PointerBase destIndex = extractPointerBaseFromPointer(mAsfac, st.getArguments()[0]);
+			final PointerBase srcIndex = extractPointerBaseFromPointer(mAsfac, st.getArguments()[1]);
+			mWriteAddresses.add(destIndex);
+			mAccessAddresses.add(destIndex);
+			mAccessAddresses.add(srcIndex);
+			ma.reportEquivalence(mAsfac, destIndex, srcIndex);
+			assert st.getLhs().length == 1;
+			final PointerBase returnedIndex = extractPointerBaseFromVariableLhs(mAsfac, st.getLhs()[0]);
+			ma.reportEquivalence(mAsfac, destIndex, returnedIndex);
 		} else if (st.getMethodName().equals(MemorySliceUtils.ULTIMATE_DEALLOC)) {
 			// do nothing
 		} else if (mProcedureToImplementation.containsKey(st.getMethodName())) {

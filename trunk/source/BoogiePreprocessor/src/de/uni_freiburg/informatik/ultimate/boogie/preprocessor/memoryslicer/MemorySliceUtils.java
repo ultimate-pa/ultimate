@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.memoryslicer;
 
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
@@ -82,20 +83,34 @@ public class MemorySliceUtils {
 	public static final String PTHREADS_RWLOCK_WRITELOCK = "#PthreadsRwLockWriteLock";
 	public static final String PTHREADS_RWLOCK_UNLOCK = "#PthreadsRwLockUnlock";
 
+	public static final String ULTIMATE_C_MEMCPY = "#Ultimate.C_memcpy";
+	public static final String ULTIMATE_C_MEMSET = "#Ultimate.C_memset";
+
 	private MemorySliceUtils() {
 		// do not instantiate
 	}
 
 	/**
 	 * Replace {@link VariableLHS} if it has one of the given IDs.
+	 *
+	 * @param newProcId
+	 * @param oldProcId
 	 */
-	public static VariableLHS replaceLeftHandSide(final LeftHandSide lhs, final Map<String, String> oldIdToNewId) {
+	public static VariableLHS replaceLeftHandSide(final LeftHandSide lhs, final Map<String, String> oldIdToNewId,
+			final String oldProcId, final String newProcId) {
 		if (lhs instanceof VariableLHS) {
 			final VariableLHS vlhs = (VariableLHS) lhs;
 			final String newId = oldIdToNewId.get(vlhs.getIdentifier());
+			final DeclarationInformation newDeclInfo = updateDeclarationInformation(vlhs.getDeclarationInformation(),
+					oldProcId, newProcId);
 			if (newId != null) {
-				final VariableLHS result = new VariableLHS(lhs.getLoc(), lhs.getType(), newId,
-						vlhs.getDeclarationInformation());
+				final VariableLHS result = new VariableLHS(lhs.getLoc(), lhs.getType(), newId, newDeclInfo);
+				ModelUtils.copyAnnotations(lhs, result);
+				return result;
+			} else if (newDeclInfo != vlhs.getDeclarationInformation()) {
+				// no ID update but update DeclarationInformation
+				final VariableLHS result = new VariableLHS(lhs.getLoc(), lhs.getType(), vlhs.getIdentifier(),
+						newDeclInfo);
 				ModelUtils.copyAnnotations(lhs, result);
 				return result;
 			}
@@ -107,18 +122,42 @@ public class MemorySliceUtils {
 	 * Replace {@link IdentifierExpression} if it has one of the given IDs.
 	 */
 	public static IdentifierExpression replaceIdentifierExpression(final Expression expr,
-			final Map<String, String> oldIdToNewId) {
+			final Map<String, String> oldIdToNewId, final String oldProcId, final String newProcId) {
 		if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression ie = (IdentifierExpression) expr;
 			final String newId = oldIdToNewId.get(ie.getIdentifier());
+			final DeclarationInformation newDeclInfo = updateDeclarationInformation(ie.getDeclarationInformation(),
+					oldProcId, newProcId);
 			if (newId != null) {
 				final IdentifierExpression result = new IdentifierExpression(ie.getLoc(), ie.getType(), newId,
-						ie.getDeclarationInformation());
+						newDeclInfo);
+				ModelUtils.copyAnnotations(expr, result);
+				return result;
+			} else if (newDeclInfo != ie.getDeclarationInformation()) {
+				// no ID update but update DeclarationInformation
+				final IdentifierExpression result = new IdentifierExpression(ie.getLoc(), ie.getType(),
+						ie.getIdentifier(), newDeclInfo);
 				ModelUtils.copyAnnotations(expr, result);
 				return result;
 			}
 		}
 		return null;
+	}
+
+	private static DeclarationInformation updateDeclarationInformation(final DeclarationInformation declInfo,
+			final String oldProcId, final String newProcId) {
+		if (oldProcId == null && newProcId == null) {
+			return declInfo;
+		}
+		if (declInfo.getProcedure() == null) {
+			// does not have procedure
+			return declInfo;
+		}
+		if (!declInfo.getProcedure().equals(oldProcId)) {
+			throw new AssertionError(String.format("No match! Existing procId %s, oldProcId %s, newProcId %s",
+					declInfo.getProcedure(), oldProcId, newProcId));
+		}
+		return new DeclarationInformation(declInfo.getStorageClass(), newProcId);
 	}
 
 	public static String constructMemorySliceSuffix(final int i) {

@@ -151,6 +151,18 @@ public class HeapArrayReplacer extends BoogieTransformer {
 				mAccessCounter++;
 				mSliceAccessCounter[heapSliceNumber]++;
 				return result;
+			} else if (cs.getMethodName().equals(MemorySliceUtils.ULTIMATE_C_MEMSET)
+					|| cs.getMethodName().equals(MemorySliceUtils.ULTIMATE_C_MEMCPY)) {
+				// have different arguments, but for both functions the first is a pointer
+				final Expression pointerBaseExpr = cs.getArguments()[0];
+				final int heapSliceNumber = getMemorySliceNumberFromPointer(pointerBaseExpr);
+				final String suffix = MemorySliceUtils.constructMemorySliceSuffix(heapSliceNumber);
+				final CallStatement result = new CallStatement(cs.getLoc(), cs.getAttributes(), cs.isForall(),
+						cs.getLhs(), cs.getMethodName() + suffix, cs.getArguments());
+				ModelUtils.copyAnnotations(statement, result);
+				mAccessCounter++;
+				mSliceAccessCounter[heapSliceNumber]++;
+				return result;
 			} else if (cs.getMethodName().startsWith(MemorySliceUtils.ALLOC_INIT)) {
 				// do nothing
 			} else if (cs.getMethodName().startsWith(MemorySliceUtils.ALLOC_ON_STACK)) {
@@ -201,8 +213,8 @@ public class HeapArrayReplacer extends BoogieTransformer {
 			final String oldMemArrayId = ((VariableLHS) arr.getArray()).getIdentifier();
 			final String newMemArrayId = oldMemArrayId + suffix;
 
-			final IdentifierReplacer ir = new IdentifierReplacer(
-					Collections.singletonMap(oldMemArrayId, newMemArrayId));
+			final IdentifierReplacer ir = new IdentifierReplacer(Collections.singletonMap(oldMemArrayId, newMemArrayId),
+					null, null);
 
 			final LeftHandSide newLhs = ir.processLeftHandSide(oldLhs);
 			// value is unchanged
@@ -243,9 +255,9 @@ public class HeapArrayReplacer extends BoogieTransformer {
 		final String suffix = getMemorySliceSuffixFromBase(pointerExpr);
 		final String newMemoryArrayId = oldMemoryArrayId + suffix;
 		final VariableLHS newVlhs = MemorySliceUtils.replaceLeftHandSide(oldLhs,
-				Collections.singletonMap(oldMemoryArrayId, newMemoryArrayId));
+				Collections.singletonMap(oldMemoryArrayId, newMemoryArrayId), null, null);
 		final IdentifierExpression newId = MemorySliceUtils.replaceIdentifierExpression(oldFa.getArguments()[0],
-				Collections.singletonMap(oldMemoryArrayId, newMemoryArrayId));
+				Collections.singletonMap(oldMemoryArrayId, newMemoryArrayId), null, null);
 		final Expression[] args = new Expression[] { newId, pointerExpr };
 		final FunctionApplication newFa = new FunctionApplication(oldFa.getLoc(), oldFa.getType(),
 				oldFa.getIdentifier(), args);

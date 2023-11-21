@@ -29,11 +29,15 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.memoryslicer;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 /**
  *
@@ -42,11 +46,20 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
  */
 public class IdentifierReplacer extends BoogieTransformer {
 
-	final Map<String, String> mOldIdToNewId;
+	private final Map<String, String> mOldIdToNewId;
+	private final String mOldProcId;
+	private final String mSuffix;
 
-	public IdentifierReplacer(final Map<String, String> oldIdToNewId) {
+	public IdentifierReplacer(final Map<String, String> oldIdToNewId, final String oldProcId, final String suffix) {
 		super();
 		mOldIdToNewId = oldIdToNewId;
+		mOldProcId = oldProcId;
+		mSuffix = suffix;
+	}
+
+	@Override
+	protected Body processBody(final Body body) {
+		return super.processBody(body);
 	}
 
 	@Override
@@ -93,24 +106,62 @@ public class IdentifierReplacer extends BoogieTransformer {
 
 	@Override
 	protected LeftHandSide processLeftHandSide(final LeftHandSide lhs) {
-		final VariableLHS replacement = MemorySliceUtils.replaceLeftHandSide(lhs, mOldIdToNewId);
+		final VariableLHS replacement = MemorySliceUtils.replaceLeftHandSide(lhs, mOldIdToNewId, mOldProcId,
+				mOldProcId + mSuffix);
 		if (replacement != null) {
 			return replacement;
 		}
 		return super.processLeftHandSide(lhs);
 	}
 
-
-
 	@Override
 	protected Expression processExpression(final Expression expr) {
-		final IdentifierExpression replacement = MemorySliceUtils.replaceIdentifierExpression(expr, mOldIdToNewId);
+		final IdentifierExpression replacement = MemorySliceUtils.replaceIdentifierExpression(expr, mOldIdToNewId,
+				mOldProcId, mOldProcId + mSuffix);
 		if (replacement != null) {
 			return replacement;
 		}
 		return super.processExpression(expr);
 	}
 
+	@Override
+	protected Statement processStatement(final Statement statement) {
+		// For C_memcpy we also have to rename `read~unchecked~int` and `write~unchecked~int`
+		if (statement instanceof CallStatement) {
+			final CallStatement cs = (CallStatement) statement;
+			if (cs.getMethodName().startsWith(MemorySliceUtils.READ_INT)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.READ_UNCHECKED_INT)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.READ_REAL)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.READ_UNCHECKED_REAL)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.READ_POINTER)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.READ_UNCHECKED_POINTER)) {
+				assert cs.getArguments().length == 2;
+				final VariableLHS[] newLeftHandSides = processVariableLHSs(cs.getLhs());
+				final Expression[] newArguments = processExpressions(cs.getArguments());
+				final CallStatement result = new CallStatement(cs.getLoc(), cs.getAttributes(), cs.isForall(),
+						newLeftHandSides, cs.getMethodName() + mSuffix, newArguments);
+				ModelUtils.copyAnnotations(statement, result);
+				return result;
+			} else if (cs.getMethodName().startsWith(MemorySliceUtils.WRITE_INIT_INT)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.WRITE_INT)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.WRITE_UNCHECKED_INT)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.WRITE_INIT_REAL)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.WRITE_REAL)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.WRITE_UNCHECKED_REAL)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.WRITE_INIT_POINTER)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.WRITE_POINTER)
+					|| cs.getMethodName().startsWith(MemorySliceUtils.WRITE_UNCHECKED_POINTER)) {
+				assert cs.getArguments().length == 3;
+				final VariableLHS[] newLeftHandSides = processVariableLHSs(cs.getLhs());
+				final Expression[] newArguments = processExpressions(cs.getArguments());
+				final CallStatement result = new CallStatement(cs.getLoc(), cs.getAttributes(), cs.isForall(),
+						newLeftHandSides, cs.getMethodName() + mSuffix, newArguments);
+				ModelUtils.copyAnnotations(statement, result);
+				return result;
+			}
+		}
 
+		return super.processStatement(statement);
+	}
 
 }

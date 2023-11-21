@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
@@ -61,6 +62,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  *
  */
 public class HeapSplitter implements IUnmanagedObserver {
+
+	private static final String ULTIMATE_C_MEMCPY = "#Ultimate.C_memcpy";
+
+	private static final String ULTIMATE_C_MEMSET = "#Ultimate.C_memset";
 
 	private final BoogiePreprocessorBacktranslator mTranslator;
 
@@ -155,7 +160,8 @@ public class HeapSplitter implements IUnmanagedObserver {
 				newDecls.addAll(newHeapVarDecls);
 			} else if (d instanceof Procedure) {
 				final Procedure proc = (Procedure) d;
-				if (isUltimateMemoryReadWriteProcedure(proc)) {
+				if (isUltimateMemoryReadWriteProcedure(proc) || proc.getIdentifier().equals(ULTIMATE_C_MEMSET)
+						|| proc.getIdentifier().equals(ULTIMATE_C_MEMCPY)) {
 					final List<Procedure> duplicates = duplicateProcedure(memoryArrays, memorySliceSuffixes,
 							(Procedure) d);
 					newDecls.addAll(duplicates);
@@ -288,13 +294,21 @@ public class HeapSplitter implements IUnmanagedObserver {
 
 	private static Procedure renameSpecification(final Map<String, String> oldIdToNewId, final String memorySliceSuffix,
 			final Procedure p) {
-		if (p.getBody() != null) {
-			throw new AssertionError("Method not meant for Procedures with implementation");
+		final IdentifierReplacer ir = new IdentifierReplacer(oldIdToNewId, p.getIdentifier(), memorySliceSuffix);
+		final Body newBody;
+		if (p.getBody() == null) {
+			newBody = null;
+		} else {
+			newBody = ir.processBody(p.getBody());
 		}
-		final IdentifierReplacer ir = new IdentifierReplacer(oldIdToNewId);
-		final Specification[] newSpec = ir.processSpecifications(p.getSpecification());
+		final Specification[] newSpecs;
+		if (p.getSpecification() == null) {
+			newSpecs = null;
+		} else {
+			newSpecs = ir.processSpecifications(p.getSpecification());
+		}
 		final Procedure res = new Procedure(p.getLoc(), p.getAttributes(), p.getIdentifier() + memorySliceSuffix,
-				p.getTypeParams(), p.getInParams(), p.getOutParams(), newSpec, null);
+				p.getTypeParams(), p.getInParams(), p.getOutParams(), newSpecs, newBody);
 		ModelUtils.copyAnnotations(p, res);
 		return res;
 	}
