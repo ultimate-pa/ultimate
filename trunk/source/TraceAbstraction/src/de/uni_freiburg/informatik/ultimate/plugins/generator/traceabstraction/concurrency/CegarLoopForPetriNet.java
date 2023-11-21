@@ -633,6 +633,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 	@Override
 	protected void computeOwickiGriesAnnotation() {
 		if (mPref.applyOneShotLbe()) {
+			// TODO this should be moved somewhere else, it's not the responsibility of this CEGAR loop
 			throw new AssertionError("Owicki-Gries does currently not support Petri net LBE.");
 		}
 
