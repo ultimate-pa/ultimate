@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -113,6 +114,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 	public enum SizeReduction {
 		REMOVE_DEAD, REMOVE_REDUNDANT_FLOW
 	}
+
+	private static final boolean DUMP_OWICKI_GRIES_TEST = true;
+	private final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mProofAutomata = new ArrayList<>();
 
 	private static final boolean USE_ON_DEMAND_RESULT = true;
 
@@ -204,6 +208,27 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			mFinPrefix = finPrefix;
 		}
 		if (mCounterexample == null) {
+			if (DUMP_OWICKI_GRIES_TEST) {
+				final var symbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
+				final String variablesComment = "//@ variables " + Stream
+						.concat(mIcfg.getCfgSmtToolkit().getProcedures().stream()
+								.flatMap(p -> symbolTable.getLocals(p).stream()), symbolTable.getGlobals().stream())
+						.map(pv -> "(" + pv.getTermVariable().getName() + " " + pv.getTermVariable().getSort() + ")")
+						.collect(Collectors.joining(" "));
+
+				final var automata = new ArrayList<NamedAutomaton<L, IPredicate>>();
+				automata.add(new NamedAutomaton<>("program", mInitialNet));
+
+				int i = 1;
+				for (final var proofAut : mProofAutomata) {
+					automata.add(new NamedAutomaton<>("proof" + i, proofAut));
+					i++;
+				}
+
+				writeAutomataToFile("owicki-gries-test.ats", "", variablesComment,
+						automata.toArray(NamedAutomaton[]::new));
+			}
+
 			return true;
 		}
 		if (mPref.dumpAutomata()) {
@@ -547,6 +572,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		if (mPref.dumpAutomata()) {
 			final String filename = "InterpolantAutomatonDeterminized_Iteration" + mIteration;
 			writeAutomatonToFile(dia, filename);
+		}
+		if (DUMP_OWICKI_GRIES_TEST) {
+			mProofAutomata.add(dia);
 		}
 		// assert accepts(mServices, dia, mCounterexample.getWord(),
 		// true) : "Counterexample not accepted by determinized interpolant automaton: "
