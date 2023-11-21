@@ -100,6 +100,7 @@ public class HeapArrayReplacer extends BoogieTransformer {
 					|| cs.getMethodName().startsWith(MemorySliceUtils.READ_UNCHECKED_INT)
 					|| cs.getMethodName().startsWith(MemorySliceUtils.READ_REAL)
 					|| cs.getMethodName().startsWith(MemorySliceUtils.READ_UNCHECKED_REAL)) {
+				assert cs.getArguments().length == 2;
 				final Expression pointerBaseExpr = cs.getArguments()[0];
 				final int heapSliceNumber = getMemorySliceNumberFromPointer(pointerBaseExpr);
 				final String suffix = MemorySliceUtils.constructMemorySliceSuffix(heapSliceNumber);
@@ -115,6 +116,7 @@ public class HeapArrayReplacer extends BoogieTransformer {
 					|| cs.getMethodName().startsWith(MemorySliceUtils.WRITE_INIT_REAL)
 					|| cs.getMethodName().startsWith(MemorySliceUtils.WRITE_REAL)
 					|| cs.getMethodName().startsWith(MemorySliceUtils.WRITE_UNCHECKED_REAL)) {
+				assert cs.getArguments().length == 3;
 				final Expression pointerBaseExpr = cs.getArguments()[1];
 				final int heapSliceNumber = getMemorySliceNumberFromPointer(pointerBaseExpr);
 				final String suffix = MemorySliceUtils.constructMemorySliceSuffix(heapSliceNumber);
@@ -126,6 +128,7 @@ public class HeapArrayReplacer extends BoogieTransformer {
 				return result;
 			} else if (cs.getMethodName().equals(MemorySliceUtils.READ_POINTER)
 					|| cs.getMethodName().equals(MemorySliceUtils.READ_UNCHECKED_POINTER)) {
+				assert cs.getArguments().length == 2;
 				final Expression pointerBaseExpr = cs.getArguments()[0];
 				final int heapSliceNumber = getMemorySliceNumberFromPointer(pointerBaseExpr);
 				final String suffix = MemorySliceUtils.constructMemorySliceSuffix(heapSliceNumber);
