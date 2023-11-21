@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -67,16 +68,13 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 
 	private final boolean mCoveringSimplification;
 
-	private final BranchingProcess<L, P> mRefinedUnfolding;
-	private final Set<Condition<L, P>> mOriginalConditions;
-	private final Set<Condition<L, P>> mAssertionConditions;
-
-	private final Set<Marking<P>> mRefinedReach;
-	private final Set<P> mAssertionPlaces;
-
 	private final IPetriNet<L, P> mOriginalProgram;
 	private final Set<Marking<P>> mOriginalReach;
 	private final Set<P> mOriginalPlaces;
+
+	private final BranchingProcess<L, P> mRefinedUnfolding;
+	private final Set<Marking<P>> mRefinedReach;
+	private final Set<P> mAssertionPlaces;
 
 	private final Map<Marking<P>, IPredicate> mFloydHoareAnnotation;
 
@@ -101,23 +99,18 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 
 		final var refinedReachablePlaces =
 				mRefinedUnfolding.getConditions().stream().map(Condition::getPlace).collect(Collectors.toSet());
-		mRefinedReach = computeReachableMarkings(mRefinedUnfolding);
-
 		mOriginalPlaces = Collections.unmodifiableSet(mOriginalProgram.getPlaces());
-		mOriginalConditions = getOriginalConditions();
-		mAssertionConditions =
-				DataStructureUtils.difference(Set.copyOf(mRefinedUnfolding.getConditions()), mOriginalConditions);
-
 		mAssertionPlaces = DataStructureUtils.difference(refinedReachablePlaces, mOriginalPlaces);
+
+		mRefinedReach = computeReachableMarkings(mRefinedUnfolding);
 		mOriginalReach = mRefinedReach.stream().map(this::projectToOriginal).collect(Collectors.toSet());
 
+		mCoveringSimplification = coveringSimplification;
 		if (iterativeCosets) {
 			mFloydHoareAnnotation = getCosetAnnotation();
 		} else {
 			mFloydHoareAnnotation = getMaximalAnnotation();
 		}
-		mCoveringSimplification = coveringSimplification;
-
 	}
 
 	// computes the reachable markings of the refined net
@@ -128,28 +121,63 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 				.map(Event::getMark).collect(Collectors.toSet());
 	}
 
+	// ------------------
+	// maximal annotation
+	// ------------------
+
 	/**
 	 * Annotation with MaximalCosets computation
 	 */
 	private Map<Marking<P>, IPredicate> getMaximalAnnotation() {
-		final Map<Marking<P>, IPredicate> mapping = new HashMap<>();
-		for (final Marking<P> marking : mOriginalReach) {
-			mapping.put(marking, getMarkingAssertion(marking));
-		}
-		return mapping;
+		return mOriginalReach.stream().collect(Collectors.toMap(Function.identity(), this::getMarkingAssertion));
 	}
+
+	private IPredicate getMarkingAssertion(final Marking<P> originalMarking) {
+		final Set<IPredicate> disjuncts = new HashSet<>();
+		for (final Marking<P> refinedMarking : getRefinedMarkingsForOriginal(originalMarking)) {
+			disjuncts.add(mFactory.and(getAssertPlaces(refinedMarking)));
+		}
+		return mFactory.or(disjuncts);
+	}
+
+	private Marking<P> projectToOriginal(final Marking<P> refinedMarking) {
+		return new Marking<>(
+				refinedMarking.stream().filter(mOriginalPlaces::contains).collect(ImmutableSet.collector()));
+	}
+
+	private Set<Marking<P>> getRefinedMarkingsForOriginal(final Marking<P> originalMarking) {
+		return mRefinedReach.stream().filter(m -> originalMarking.equals(projectToOriginal(m)))
+				.collect(Collectors.toSet());
+	}
+
+	private Set<? extends IPredicate> getAssertPlaces(final Marking<P> refinedMarking) {
+		final var assertPlaces = DataStructureUtils.intersection(refinedMarking.getPlaces(), mAssertionPlaces);
+		if (mCoveringSimplification) {
+			return simplifyAssertions((Set) assertPlaces);
+		}
+		return assertPlaces;
+	}
+
+	// ---------------------------
+	// Iterative co-set annotation
+	// ---------------------------
 
 	/**
 	 * Cuts computation from "greedy" algorithm With simplification
 	 */
 	private Map<Marking<P>, IPredicate> getCosetAnnotation() {
+		final var originalConditions = getOriginalConditions();
+		final var assertionConditions =
+				DataStructureUtils.difference(Set.copyOf(mRefinedUnfolding.getConditions()), originalConditions);
+
 		final Map<Marking<P>, IPredicate> mapping = new HashMap<>();
-		final Set<Set<Condition<L, P>>> markingCosets = getCosets(new HashSet<Condition<L, P>>(),
-				new HashSet<Condition<L, P>>(), mOriginalConditions, new HashSet<Set<Condition<L, P>>>());
+
+		// compute maximal co-sets consisting only of original conditions
+		// Note: these are not cuts of the unfolding, as there might be co-related assertion conditions.
+		final Set<Set<Condition<L, P>>> markingCosets = collectCoSets(Collections.emptySet(), originalConditions);
+
 		for (final Set<Condition<L, P>> markCoset : markingCosets) {
-			final ImmutableSet<P> markPlaces = getCosetPlaces(markCoset);
-			final Set<Set<Condition<L, P>>> assertConds = getCosets(new HashSet<Condition<L, P>>(), markCoset,
-					mAssertionConditions, new HashSet<Set<Condition<L, P>>>());
+			final Set<Set<Condition<L, P>>> assertConds = collectCoSets(markCoset, assertionConditions);
 			final Set<Set<IPredicate>> markAssertPlaces = new HashSet<>();
 			for (final Set<Condition<L, P>> assertCond : assertConds) {
 				Set<IPredicate> cosetPredicates = getCosetPredicates(assertCond);
@@ -158,26 +186,90 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 				}
 				markAssertPlaces.add(cosetPredicates);
 			}
-			mapping.put(new Marking<>(markPlaces), getMarkingAssertion(markPlaces, markAssertPlaces));
+			mapping.put(toMarking(markCoset), getMarkingAssertion(markAssertPlaces));
 		}
 		return mapping;
 	}
 
-	private ImmutableSet<P> getCosetPlaces(final Set<Condition<L, P>> coset) {
-		return coset.stream().map(Condition::getPlace).collect(ImmutableSet.collector());
+	private Marking<P> toMarking(final Set<Condition<L, P>> coset) {
+		return new Marking<>(coset.stream().map(Condition::getPlace).collect(ImmutableSet.collector()));
 	}
 
 	private Set<IPredicate> getCosetPredicates(final Set<Condition<L, P>> coset) {
 		return coset.stream().map(Condition::getPlace).collect(Collectors.toSet());
 	}
 
+	private Set<Set<Condition<L, P>>> collectCoSets(final Set<Condition<L, P>> compCoset,
+			final Set<Condition<L, P>> conditions) {
+		final var result = new HashSet<Set<Condition<L, P>>>();
+		collectCoSets(Collections.emptySet(), compCoset, conditions, result);
+		return result;
+	}
+
+	/**
+	 * @param coSet
+	 * @param conditions
+	 * @param maximalCoSets
+	 * @return The set of all cosets which are supersets of the given coset, only contain the given conditions, and are
+	 *         maximal wrt these constraints
+	 */
+	private void collectCoSets(final Set<Condition<L, P>> coSet, final Set<Condition<L, P>> compCoset,
+			final Set<Condition<L, P>> conditions, final Set<Set<Condition<L, P>>> maximalCoSets) {
+		final Set<Set<Condition<L, P>>> largerCoSets = new HashSet<>();
+
+		final Set<Condition<L, P>> remainingConditions = DataStructureUtils.difference(conditions, coSet);
+		for (final Condition<L, P> cond : remainingConditions) {
+			if (mRefinedUnfolding.getCoRelation().isCoset(compCoset, cond)
+					&& mRefinedUnfolding.getCoRelation().isCoset(coSet, cond)) {
+				final var enlargedCoSet = DataStructureUtils.union(coSet, DataStructureUtils.toSet(cond));
+				largerCoSets.add(enlargedCoSet);
+			}
+		}
+
+		if (largerCoSets.isEmpty()) {
+			// the coSet is already maximal
+			maximalCoSets.add(coSet);
+		} else {
+			for (final Set<Condition<L, P>> largerCoSet : largerCoSets) {
+				collectCoSets(largerCoSet, compCoset, remainingConditions, maximalCoSets);
+			}
+		}
+	}
+
+	private Set<Condition<L, P>> getOriginalConditions() {
+		return mRefinedUnfolding.getConditions().stream().filter(cond -> mOriginalPlaces.contains(cond.getPlace()))
+				.collect(Collectors.toSet());
+	}
+
+	// Call this for simple and "greedy" cuts Annotation
+	private IPredicate getMarkingAssertion(final Set<Set<IPredicate>> predicatesForCuts) {
+		final Set<IPredicate> predicates = new HashSet<>();
+		for (final var predicatesForCut : predicatesForCuts) {
+			predicates.add(getCutAssertion(predicatesForCut));
+		}
+		return mFactory.or(predicates);
+	}
+
+	// phi(d) = conjunction(assert(p)) for each p in z(d) (assertion places) -> Cut assertion
+	private IPredicate getCutAssertion(final Set<IPredicate> predicatesForCut) {
+		var predicates = predicatesForCut;
+		if (mCoveringSimplification) {
+			predicates = simplifyAssertions(predicates);
+		}
+		return mFactory.and(predicates);
+	}
+
+	// ------------------------
+	// assertion simplification
+	// ------------------------
+
 	// Set of conditions to set of places
-	private Set<IPredicate> simplifyAssertions(final Set<IPredicate> assertConds) {
-		Set<IPredicate> simpleAssertions = assertConds;
+	private Set<IPredicate> simplifyAssertions(final Set<IPredicate> assertions) {
+		Set<IPredicate> simpleAssertions = assertions;
 		// Check if equiv to false, set all to false;
-		for (final IPredicate cond : assertConds) {
+		for (final IPredicate cond : assertions) {
 			if (!thereIsStronger(cond, simpleAssertions)) {
-				final Set<IPredicate> weakerConditions = getWeakerConditions(cond, assertConds);
+				final Set<IPredicate> weakerConditions = getWeakerConditions(cond, assertions);
 				simpleAssertions = cleanWeakConditions(simpleAssertions, weakerConditions);
 			} else {
 				simpleAssertions = DataStructureUtils.difference(simpleAssertions, Collections.singleton(cond));
@@ -209,84 +301,14 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 				DataStructureUtils.difference(assertConditions, Collections.singleton(condition));
 		for (final var predUnifier : mPredicateUnifiers) {
 			final Set<IPredicate> coveredPlaces = predUnifier.getCoverageRelation().getCoveredPredicates(condition);
-			if (!DataStructureUtils.intersection(coveredPlaces, assertPredicates).isEmpty()) {
+			if (DataStructureUtils.haveNonEmptyIntersection(coveredPlaces, assertPredicates)) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	/**
-	 * @param coset
-	 * @param conditions
-	 * @param cuts
-	 * @return set successor maximal cosets from given coset
-	 */
-	private Set<Set<Condition<L, P>>> getCosets(final Set<Condition<L, P>> coset, final Set<Condition<L, P>> compCoset,
-			final Set<Condition<L, P>> conditions, Set<Set<Condition<L, P>>> cuts) {
-		final Set<Condition<L, P>> toAdd = DataStructureUtils.difference(conditions, coset);
-		final Set<Set<Condition<L, P>>> cosets = new HashSet<>();
-		for (final Condition<L, P> cond : toAdd) {
-			if (mRefinedUnfolding.getCoRelation().isCoset(compCoset, cond)
-					& mRefinedUnfolding.getCoRelation().isCoset(coset, cond)) {
-				final Set<Condition<L, P>> imCoset = DataStructureUtils.union(coset, DataStructureUtils.toSet(cond));
-				cosets.add(imCoset);
-			}
-		}
-		if (!cosets.isEmpty()) {
-			for (final Set<Condition<L, P>> imcoset : cosets) {
-				cuts = DataStructureUtils.union(cuts, getCosets(imcoset, compCoset, conditions, cuts));
-			}
-		} else {
-			cuts.add(coset);
-		}
-		return cuts;
-	}
-
-	private Set<Condition<L, P>> getOriginalConditions() {
-		return mRefinedUnfolding.getConditions().stream().filter(cond -> mOriginalPlaces.contains(cond.getPlace()))
-				.collect(Collectors.toSet());
-	}
-
-	private IPredicate getMarkingAssertion(final Marking<P> originalMarking) {
-		final Set<IPredicate> disjuncts = new HashSet<>();
-		for (final Marking<P> refinedMarking : getRefinedMarkingsForOriginal(originalMarking)) {
-			disjuncts.add(mFactory.and(getAssertPlaces(refinedMarking)));
-		}
-		return mFactory.or(disjuncts);
-	}
-
-	// Call this for simple and "greedy" cuts Annotation
-	private IPredicate getMarkingAssertion(final Set<P> marking, final Set<Set<IPredicate>> cuts) {
-		final Set<IPredicate> predicates = new HashSet<>();
-		for (final Set<IPredicate> cut : cuts) {
-			predicates.add(getCutAssertion(cut));
-		}
-		return mFactory.or(predicates);
-	}
-
-	// phi(d) = conjunction(assert(p)) for each p in z(d) (assertion places) -> Cut assertion
-	private IPredicate getCutAssertion(final Set<IPredicate> cut) {
-		final Set<IPredicate> predicates = new HashSet<>();
-		for (final IPredicate place : cut) {
-			predicates.add(place);
-		}
-		return mFactory.and(predicates);
-	}
-
-	private Marking<P> projectToOriginal(final Marking<P> cut) {
-		return new Marking<>(cut.stream().filter(mOriginalPlaces::contains).collect(ImmutableSet.collector()));
-	}
-
-	private Set<Marking<P>> getRefinedMarkingsForOriginal(final Marking<P> originalMarking) {
-		return mRefinedReach.stream().filter(m -> originalMarking.equals(projectToOriginal(m)))
-				.collect(Collectors.toSet());
-	}
-
-	private Set<P> getAssertPlaces(final Marking<P> refinedMarking) {
-		return DataStructureUtils.intersection(refinedMarking.getPlaces(), mAssertionPlaces);
-	}
-
+	// --------------
 	// output methods
 	// --------------
 
