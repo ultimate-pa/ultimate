@@ -77,6 +77,20 @@ public class MayAlias {
 		}
 		final AddressStore rhsRep = mAddressStores.find(rhs);
 		final AddressStore lhsRep = mAddressStores.find(lhs);
+		if (rhs == lhs) {
+			// add element if needed
+			if (rhs instanceof PointerBase) {
+				final PointerBase pb = (PointerBase) rhs;
+				addPointerBase(asFac, pb);
+			} else if (rhs instanceof MemorySegment) {
+				final MemorySegment ms = (MemorySegment) rhs;
+				final PointerBase pb = ms.getPointerBase();
+				addPointerBase(asFac, pb);
+			} else {
+				throw new MemorySliceException("Expect that each AddressStore is either PointerBase or MemorySegment");
+			}
+			return;
+		}
 		if (rhsRep == lhsRep && rhsRep != null) {
 			return;
 		}
