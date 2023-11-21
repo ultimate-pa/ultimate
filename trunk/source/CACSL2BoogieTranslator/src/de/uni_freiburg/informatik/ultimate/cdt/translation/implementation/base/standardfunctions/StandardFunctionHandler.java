@@ -119,6 +119,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -2407,8 +2408,14 @@ public class StandardFunctionHandler {
 	private Result handleErrorFunction(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
-		final Statement st =
-				createReachabilityAssert(loc, name, mSettings.checkErrorFunction(), Spec.ERROR_FUNCTION, falseLiteral);
+		final boolean testCaseGeneration = true;
+		final Statement st;
+		if (!testCaseGeneration) {
+			st = createReachabilityAssert(loc, name, mSettings.checkErrorFunction(), Spec.ERROR_FUNCTION, falseLiteral);
+		} else {
+			st = createReachabilityAssert(loc, name, mSettings.checkErrorFunction(), Spec.TEST_GOAL_ANNOTATION,
+					falseLiteral);
+		}
 		return new ExpressionResult(Collections.singletonList(st), null);
 	}
 
@@ -2453,6 +2460,12 @@ public class StandardFunctionHandler {
 				new Expression[] { new StringLiteral(loc, check.toString()), new StringLiteral(loc, functionName) }) },
 				expr);
 		check.annotate(st);
+		final boolean testcasegen = true;
+		if (testcasegen) {
+			final TestGoalAnnotation tg = new TestGoalAnnotation(1);
+			tg.annotate(st);
+		}
+
 		if (checkMemoryleakInMain && mSettings.isSvcompMemtrackCompatibilityMode()) {
 			new Overapprox("memtrack", loc).annotate(st);
 		}
