@@ -185,8 +185,7 @@ public class MemorySlicer implements IUnmanagedObserver {
 				newDecls.add(d);
 			}
 		}
-		final String logMessage = constructLogMessage(har.getAccessCounter(), har.getSliceAccessCounter());
-		mLogger.info(logMessage);
+		mLogger.info(har.generateLogMessage());
 		return newDecls;
 	}
 
@@ -282,11 +281,6 @@ public class MemorySlicer implements IUnmanagedObserver {
 
 	private static List<String> toList(final String... identifiers) {
 		return Arrays.asList(identifiers);
-	}
-
-	private String constructLogMessage(final int accessCounter, final int[] sliceAccessCounter) {
-		return String.format("Split %s memory accesses to %s slices as follows %s", accessCounter,
-				sliceAccessCounter.length, Arrays.toString(sliceAccessCounter));
 	}
 
 	private static List<Procedure> duplicateProcedure(final List<String> memoryArrays,
