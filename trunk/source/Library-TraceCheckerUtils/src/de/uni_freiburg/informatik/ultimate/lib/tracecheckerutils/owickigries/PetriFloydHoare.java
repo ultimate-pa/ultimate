@@ -25,6 +25,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,7 +50,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Constructs an Floyd-Hoare annotation of a Petri program from a branching process of the final refined Petri Net.
@@ -73,7 +78,7 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 	private final Set<P> mOriginalPlaces;
 
 	private final BranchingProcess<L, P> mRefinedUnfolding;
-	private final Set<Marking<P>> mRefinedReach;
+	private final List<Marking<P>> mRefinedReach;
 	private final Set<P> mAssertionPlaces;
 
 	private final Map<Marking<P>, IPredicate> mFloydHoareAnnotation;
@@ -102,11 +107,12 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 		mOriginalPlaces = Collections.unmodifiableSet(mOriginalProgram.getPlaces());
 		mAssertionPlaces = DataStructureUtils.difference(refinedReachablePlaces, mOriginalPlaces);
 
-		mRefinedReach = computeReachableMarkings(mRefinedUnfolding);
+		mRefinedReach = computeReachableMarkings2(mRefinedUnfolding);
 		mOriginalReach = mRefinedReach.stream().map(this::projectToOriginal).collect(Collectors.toSet());
 
 		mCoveringSimplification = coveringSimplification;
 		if (iterativeCosets) {
+			// TODO this algorithm is very similar to computeReachableMarkings2. Should we remove it?
 			mFloydHoareAnnotation = getCosetAnnotation();
 		} else {
 			mFloydHoareAnnotation = getMaximalAnnotation();
@@ -114,11 +120,71 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 	}
 
 	// computes the reachable markings of the refined net
-	private static <L, P> Set<Marking<P>> computeReachableMarkings(final BranchingProcess<L, P> bp) {
+	// FIXME This only collects markings represented by local configurations of an event, which does not cover all
+	// reachable markings. This results in unsound annotations.
+	@Deprecated
+	private static <L, P> List<Marking<P>> computeReachableMarkings(final BranchingProcess<L, P> bp) {
 		return bp.getEvents().stream()
 				// small optimization, cut-off event has same condition mark as companion
 				// .filter(e -> !e.isCutoffEvent())
-				.map(Event::getMark).collect(Collectors.toSet());
+				.map(Event::getMark).collect(Collectors.toList());
+	}
+
+	private static <L, P> List<Marking<P>> computeReachableMarkings2(final BranchingProcess<L, P> bp) {
+		final var corelation = bp.getCoRelation();
+
+		final Condition<L, P>[] conditions = bp.getConditions().toArray(Condition[]::new);
+		final var markings = new ArrayList<Marking<P>>();
+
+		// worklist entries have the form Pair<ImmutableList<Condition>, int>(coset, minIndex)
+		// Each pair in the worklist consists of a co-set (as list) and an index which identifies a suffix of the
+		// conditions array. The suffix describes all conditions which may yet be added to the co-set.
+		final var worklist = new ArrayDeque<Pair<ImmutableList<Condition<L, P>>, Integer>>();
+		worklist.add(new Pair<>(ImmutableList.empty(), 0));
+
+		while (!worklist.isEmpty()) {
+			final var pair = worklist.pop();
+			final var coset = pair.getFirst();
+			final int minIndex = pair.getSecond();
+			boolean isMaximal = true;
+
+			ImmutableList<Condition<L, P>> extendedCoset = null;
+
+			// See if any of the remaining candidates in conditions[minIndex..] can be added to the co-set.
+			// If so, add them and push the result on the worklist.
+			for (int i = minIndex; i < conditions.length; ++i) {
+				final Condition<L, P> candidate = conditions[i];
+				final boolean acceptCandidate = corelation.isCoset(coset, candidate);
+				if (acceptCandidate) {
+					// As an optimization, we do not push the extended co-set onto the worklist immediately.
+					// By postponing, we avoid re-checking the co-relation wrt the next few conditions which
+					// can already not be added to coset, let alone extendedCoset.
+					if (extendedCoset != null) {
+						worklist.push(new Pair<>(extendedCoset, i));
+					}
+
+					isMaximal = false;
+					extendedCoset = new ImmutableList<>(candidate, coset);
+				}
+			}
+			if (extendedCoset != null) {
+				worklist.push(new Pair<>(extendedCoset, conditions.length));
+			}
+
+			// See if any condition in conditions[0..minIndex-1] can be added to the coset.
+			// If so, the current co-set is not maximal.
+			// We do not add the extended co-set to the worklist in this case; the algorithm should have done so before.
+			for (int i = 0; isMaximal && i < minIndex; ++i) {
+				isMaximal &= coset.contains(conditions[i]) || !corelation.isCoset(coset, conditions[i]);
+			}
+
+			// If the current coset is maximal, add its marking to the results.
+			if (isMaximal) {
+				markings.add(toMarking(coset));
+			}
+		}
+
+		return markings;
 	}
 
 	// ------------------
@@ -191,7 +257,7 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 		return mapping;
 	}
 
-	private Marking<P> toMarking(final Set<Condition<L, P>> coset) {
+	private static <L, P> Marking<P> toMarking(final Collection<Condition<L, P>> coset) {
 		return new Marking<>(coset.stream().map(Condition::getPlace).collect(ImmutableSet.collector()));
 	}
 
