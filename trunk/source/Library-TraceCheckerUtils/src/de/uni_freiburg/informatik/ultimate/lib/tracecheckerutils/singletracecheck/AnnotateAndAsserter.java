@@ -186,6 +186,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 								.getFunction(varAssignmentPair.get(i).getFirst().toStringDirect().substring(1,
 										varAssignmentPair.get(i).getFirst().toStringDirect().length() - 1)));
 						reuse = false;
+						mMgdScriptTc.getScript().pop(1);
+						break;
 					} else {
 
 						final Term nondetVar = SmtUtils.unfTerm(mMgdScriptTc.getScript(),

@@ -901,11 +901,9 @@ public class CExpressionTranslator {
 			assignAuxVar(loc, opPositive, resultBuilder, auxvar, ifStatements, secondArgIsVoid);
 			assignAuxVar(loc, opNegative, resultBuilder, auxvar, elseStatements, thirdArgIsVoid);
 			final Statement rtrStatement;
-			if (mTestGenerationBranchCoverage) {
-
+			if (mTestGenerationBranchCoverage) { // Setting is given by CHandler atm
 				rtrStatement = addTestGoalsToConditionalOperator(loc, opCondition, ifStatements, elseStatements,
 						secondArgIsVoid, thirdArgIsVoid, hook);
-				throw new IllegalArgumentException("Unexpected Test Goal location");
 			} else {
 				rtrStatement = new IfStatement(loc, opCondition.getLrValue().getValue(),
 						ifStatements.toArray(new Statement[ifStatements.size()]),
@@ -1236,22 +1234,28 @@ public class CExpressionTranslator {
 					new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 			final TestGoalAnnotation tg1 = new TestGoalAnnotation(mTestGoalCount);
 			mTestGoalCount += 1;
-			thenArray.add(assertFalseThen);
-
 			tg1.annotate(assertFalseThen);
 			chk.annotate(assertFalseThen);
+
+			// TODO problem when one arg is void. Until fix we do not set oppositeanno
+			final VarAssignmentReuseAnnotation varAssignmentAnnoThen = new VarAssignmentReuseAnnotation();
+			varAssignmentAnnoThen.annotate(assertFalseThen);
+			thenArray.add(assertFalseThen);
 		}
 		thenArray.addAll(ifStatements);
 		if (!thirdArgIsVoid) { // TODO do we need a test goal either way?
 			final Statement assertFalseElse =
 					new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
-
 			final TestGoalAnnotation tg2 = new TestGoalAnnotation(mTestGoalCount);
 			mTestGoalCount += 1;
 			tg2.annotate(assertFalseElse);
 			chk.annotate(assertFalseElse);
-			elseArray.add(assertFalseElse);
 
+			// TODO problem when one arg is void. Until fix we do not set oppositeanno
+			final VarAssignmentReuseAnnotation varAssignmentAnnoElse = new VarAssignmentReuseAnnotation();
+			varAssignmentAnnoElse.annotate(assertFalseElse);
+
+			elseArray.add(assertFalseElse);
 		}
 		elseArray.addAll(elseStatements);
 		return new IfStatement(loc, opCondition.getLrValue().getValue(),
@@ -1262,8 +1266,9 @@ public class CExpressionTranslator {
 		return mTestGoalCount;
 	}
 
-	public void setTestGoalCountAndFactory(final int testGoalCount, final LocationFactory locationFactory) {
-		mTestGenerationBranchCoverage = true;
+	public void setTestGoalCountAndFactory(final int testGoalCount, final LocationFactory locationFactory,
+			final boolean testGenerationBranchCoverage) {
+		mTestGenerationBranchCoverage = testGenerationBranchCoverage;
 		mLocationFactory = locationFactory;
 		mTestGoalCount = testGoalCount;
 	}

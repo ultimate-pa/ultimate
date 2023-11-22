@@ -1145,7 +1145,8 @@ public class CHandler {
 		ExpressionResult opNegative = (ExpressionResult) main.dispatch(node.getNegativeResultExpression());
 		opNegative = mExprResultTransformer.switchToRValue(opNegative, loc, node);
 		if (mTestGenerationBranchCoverage) {
-			mCExpressionTranslator.setTestGoalCountAndFactory(mTestGoalCount, mLocationFactory);
+			mCExpressionTranslator.setTestGoalCountAndFactory(mTestGoalCount, mLocationFactory,
+					mTestGenerationBranchCoverage);
 			final ExpressionResult result =
 					mCExpressionTranslator.handleConditionalOperator(loc, opCondition, opPositive, opNegative, node);
 			mTestGoalCount = mCExpressionTranslator.getTestGoalCount();
