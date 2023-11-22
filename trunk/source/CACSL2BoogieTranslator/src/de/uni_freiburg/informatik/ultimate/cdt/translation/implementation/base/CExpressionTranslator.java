@@ -1229,6 +1229,10 @@ public class CExpressionTranslator {
 		final ArrayList<Statement> thenArray = new ArrayList<Statement>();
 		final ArrayList<Statement> elseArray = new ArrayList<Statement>();
 		final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
+		final VarAssignmentReuseAnnotation varAssignmentAnnoElse = new VarAssignmentReuseAnnotation();
+		final VarAssignmentReuseAnnotation varAssignmentAnnoThen = new VarAssignmentReuseAnnotation();
+		varAssignmentAnnoElse.setOppositeAnno(varAssignmentAnnoThen);
+		varAssignmentAnnoThen.setOppositeAnno(varAssignmentAnnoElse);
 		if (!secondArgIsVoid) { // TODO do we need a test goal either way?
 			final Statement assertFalseThen =
 					new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
@@ -1238,7 +1242,7 @@ public class CExpressionTranslator {
 			chk.annotate(assertFalseThen);
 
 			// TODO problem when one arg is void. Until fix we do not set oppositeanno
-			final VarAssignmentReuseAnnotation varAssignmentAnnoThen = new VarAssignmentReuseAnnotation();
+
 			varAssignmentAnnoThen.annotate(assertFalseThen);
 			thenArray.add(assertFalseThen);
 		}
@@ -1252,7 +1256,6 @@ public class CExpressionTranslator {
 			chk.annotate(assertFalseElse);
 
 			// TODO problem when one arg is void. Until fix we do not set oppositeanno
-			final VarAssignmentReuseAnnotation varAssignmentAnnoElse = new VarAssignmentReuseAnnotation();
 			varAssignmentAnnoElse.annotate(assertFalseElse);
 
 			elseArray.add(assertFalseElse);
