@@ -84,12 +84,14 @@ public class Svcomp24FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 		new SvcompFolderSubset("examples/svcomp/locks/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new SvcompFolderSubset("examples/svcomp/ntdrivers/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new SvcompFolderSubset("examples/svcomp/openssl/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/memory-model/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/unsignedintegeroverflow-sas23/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/longjmp/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ReachSafety-ReachSafety-ECA ***/
 		new SvcompFolderSubset("examples/svcomp/eca-rers2012/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/psyco/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		// new in 2020
 		new SvcompFolderSubset("examples/svcomp/eca-rers2018/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/psyco/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new SvcompFolderSubset("examples/svcomp/eca-programs/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory    ReachSafety-Floats ***/
@@ -99,6 +101,13 @@ public class Svcomp24FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 		new SvcompFolderSubset("examples/svcomp/floats-esbmc-regression/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new SvcompFolderSubset("examples/svcomp/float-newlib/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new SvcompFolderSubset("examples/svcomp/loop-floats-scientific-comp/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/neural-networks/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+
+		/*** Subcategory   ??? ***/
+		new SvcompFolderSubset("examples/svcomp/fuzzle-programs/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+
+		/*** Subcategory   ??? ***/
+		new SvcompFolderSubset("examples/svcomp/hardness-nfm22/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ReachSafety-Hardware.set ***/
 		new SvcompFolderSubset("examples/svcomp/hardware-verification-array/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
@@ -112,7 +121,6 @@ public class Svcomp24FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 		new SvcompFolderSubset("examples/svcomp/forester-heap/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new SvcompFolderSubset("examples/svcomp/list-ext-properties/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new SvcompFolderSubset("examples/svcomp/list-ext2-properties/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		// new in 2020
 		new SvcompFolderSubset("examples/svcomp/ldv-sets/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new SvcompFolderSubset("examples/svcomp/list-simple/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new SvcompFolderSubset("examples/svcomp/heap-data/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
@@ -131,6 +139,7 @@ public class Svcomp24FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 		new SvcompFolderSubset("examples/svcomp/loop-zilu/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new SvcompFolderSubset("examples/svcomp/verifythis/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new SvcompFolderSubset("examples/svcomp/nla-digbench/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/nla-digbench-scaling/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ReachSafety-ProductLines ***/
 		new SvcompFolderSubset("examples/svcomp/product-lines/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
@@ -139,6 +148,10 @@ public class Svcomp24FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 		new SvcompFolderSubset("examples/svcomp/recursive/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new SvcompFolderSubset("examples/svcomp/recursive-simple/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new SvcompFolderSubset("examples/svcomp/recursive-with-pointer/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/recursified_loop-crafted/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/recursified_loop-invariants/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/recursified_loop-simple/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/recursified_nla-digbench/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ReachSafety-Sequentialized ***/
 		new SvcompFolderSubset("examples/svcomp/systemc/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
@@ -154,22 +167,24 @@ public class Svcomp24FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 
 		new SvcompFolderSubset("examples/svcomp/busybox-1.22.0/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
+		new SvcompFolderSubset("examples/svcomp/goblint-coreutils/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+
 		/*** Subcategory  Systems_DeviceDriversLinux64_ReachSafety ***/
 		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.0/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.4-simple/", PROPERTY, null, FILE_OFFSET, FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.7.3/", PROPERTY, null, FILE_OFFSET, FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-commit-tester/", PROPERTY, null, FILE_OFFSET, FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-consumption/", PROPERTY, null, FILE_OFFSET, FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.12-rc1/", PROPERTY, null, FILE_OFFSET, FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.16-rc1/", PROPERTY, null, FILE_OFFSET, FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-validator-v0.6/", PROPERTY, null, FILE_OFFSET, FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-validator-v0.8/", PROPERTY, null, FILE_OFFSET, FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-linux-4.2-rc1/", PROPERTY, null, FILE_OFFSET, FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.14/", PROPERTY, null, FILE_OFFSET, FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-challenges/", PROPERTY, null, FILE_OFFSET, FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-linux-4.0-rc1-mav/", PROPERTY, null, FILE_OFFSET, FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.4-simple/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.7.3/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-commit-tester/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-consumption/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.12-rc1/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.16-rc1/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-validator-v0.6/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-validator-v0.8/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-linux-4.2-rc1/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.14/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-challenges/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-linux-4.0-rc1-mav/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
-		new SvcompFolderSubset("examples/svcomp/uthash-2.0.2", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/uthash-2.0.2/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 	};
 
@@ -189,7 +204,8 @@ public class Svcomp24FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 	private static final Pair[] SETTINGS = {
 			new Pair<>("default/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "default/automizer/svcomp-Reach-64bit-Automizer_Default.epf"),
 			new Pair<>("default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf", "default/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf"),
-//			new Pair<>("automizer/acceleratedInterpolation/acceleratedTraceCheck_32.epf", "automizer/acceleratedInterpolation/acceleratedTraceCheck_32.epf"),
+//			new Pair<>("automizer/acceleratedInterpolation/acceleratedTraceCheck_32.epf", "automizer/acceleratedInterpolation/acceleratedTraceCheck_64.epf"),
+//			new Pair<>("default/automizer/svcomp-Reach-32bit-Automizer_Default-FullInlining.epf", "default/automizer/svcomp-Reach-64bit-Automizer_Default-FullInlining.epf"),
 	};
 
 
