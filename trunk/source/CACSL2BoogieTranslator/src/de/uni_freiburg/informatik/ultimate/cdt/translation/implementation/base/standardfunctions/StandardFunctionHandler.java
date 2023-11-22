@@ -370,6 +370,8 @@ public class StandardFunctionHandler {
 		fill(map, "__builtin_return_address", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
 				name, 1, new CPointer(new CPrimitive(CPrimitives.VOID))));
 
+		fill(map, "__builtin_bswap16", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.USHORT)));
 		fill(map, "__builtin_bswap32", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.UINT)));
 		fill(map, "__builtin_bswap64", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
@@ -446,6 +448,11 @@ public class StandardFunctionHandler {
 				loc, name, IASTBinaryExpression.op_lessEqual));
 		fill(map, "__builtin_isunordered", this::handleFloatBuiltinIsUnordered);
 		fill(map, "__builtin_islessgreater", this::handleFloatBuiltinIsLessGreater);
+		fill(map, "__builtin_constant_p", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_isinf_sign", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+		fill(map, "__builtin_isnan", (main, node, loc, name) -> handleUnaryFloatFunction(main, node, loc, "isnan"));
 
 		/** math.h float functions **/
 		// see 7.12.3.1 or http://en.cppreference.com/w/c/numeric/math/fpclassify
