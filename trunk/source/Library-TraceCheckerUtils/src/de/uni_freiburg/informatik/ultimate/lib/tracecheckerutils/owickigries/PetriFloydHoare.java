@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,6 +40,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
@@ -78,7 +80,7 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 	private final Set<P> mOriginalPlaces;
 
 	private final BranchingProcess<L, P> mRefinedUnfolding;
-	private final List<Marking<P>> mRefinedReach;
+	private final Collection<Marking<P>> mRefinedReach;
 	private final Set<P> mAssertionPlaces;
 
 	private final Map<Marking<P>, IPredicate> mFloydHoareAnnotation;
@@ -107,7 +109,7 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 		mOriginalPlaces = Collections.unmodifiableSet(mOriginalProgram.getPlaces());
 		mAssertionPlaces = DataStructureUtils.difference(refinedReachablePlaces, mOriginalPlaces);
 
-		mRefinedReach = computeReachableMarkings2(mRefinedUnfolding);
+		mRefinedReach = computeReachableMarkings3(mRefinedUnfolding);
 		mOriginalReach = mRefinedReach.stream().map(this::projectToOriginal).collect(Collectors.toSet());
 
 		mCoveringSimplification = coveringSimplification;
@@ -130,6 +132,8 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 				.map(Event::getMark).collect(Collectors.toList());
 	}
 
+	// TODO This method can be modified to compute cuts (just omit toMarking() calls), but there are much more efficient
+	// ways to compute the reachable markings.
 	private static <L, P> List<Marking<P>> computeReachableMarkings2(final BranchingProcess<L, P> bp) {
 		final var corelation = bp.getCoRelation();
 
@@ -185,6 +189,39 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 		}
 
 		return markings;
+	}
+
+	// a simple depth-first search of the reachability graph
+	private static <L, P> Collection<Marking<P>> computeReachableMarkings3(final BranchingProcess<L, P> bp) {
+		final var net = bp.getNet();
+
+		final var result = new LinkedHashSet<Marking<P>>();
+		final var worklist = new ArrayDeque<Marking<P>>();
+
+		final var initialMarking = new Marking<>(ImmutableSet.of(net.getInitialPlaces()));
+		worklist.push(initialMarking);
+
+		while (!worklist.isEmpty()) {
+			final var marking = worklist.pop();
+			if (!result.add(marking)) {
+				continue;
+			}
+
+			final var places = marking.getPlaces();
+			for (final var transitionProvider : net.getSuccessorTransitionProviders(places, places)) {
+				for (final var transition : transitionProvider.getTransitions()) {
+					assert marking.isTransitionEnabled(transition);
+					try {
+						final Marking<P> successor = marking.fireTransition(transition);
+						worklist.add(successor);
+					} catch (final PetriNetNot1SafeException e) {
+						throw new AssertionError("Petri net must be 1-safe", e);
+					}
+				}
+			}
+		}
+
+		return result;
 	}
 
 	// ------------------
