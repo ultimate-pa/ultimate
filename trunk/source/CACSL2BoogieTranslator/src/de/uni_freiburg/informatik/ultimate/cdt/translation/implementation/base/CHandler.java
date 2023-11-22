@@ -2343,25 +2343,13 @@ public class CHandler {
 					resultBuilder.addDeclarations(res.getDeclarations());
 					resultBuilder.addAuxVars(res.getAuxVars());
 					resultBuilder.addOverapprox(res.getOverapprs());
-					for (final Statement s : res.getStatements()) {
-						if (s instanceof BreakStatement) {
-							ifBlock.add(new GotoStatement(locC, new String[] { breakLabelName }));
-						} else {
-							ifBlock.add(s);
-						}
-					}
+					ifBlock.addAll(replaceBreaksWithGotos(locC, res.getStatements(), breakLabelName));
 				}
 				if (r.getNode() != null && r.getNode() instanceof Body) {
 					// we already have a unique naming for variables! -> unfold
 					final Body b = (Body) r.getNode();
 					resultBuilder.addDeclarations(Arrays.asList(b.getLocalVars()));
-					for (final Statement s : b.getBlock()) {
-						if (s instanceof BreakStatement) {
-							ifBlock.add(new GotoStatement(locC, new String[] { breakLabelName }));
-						} else {
-							ifBlock.add(s);
-						}
-					}
+					ifBlock.addAll(replaceBreaksWithGotos(locC, Arrays.asList(b.getBlock()), breakLabelName));
 				}
 			}
 		}
@@ -2399,6 +2387,27 @@ public class CHandler {
 
 		assert resultBuilder.getLrValue() == null;
 		return resultBuilder.build();
+	}
+
+	private static List<Statement> replaceBreaksWithGotos(final ILocation loc, final Collection<Statement> statements,
+			final String label) {
+		final List<Statement> result = new ArrayList<>(statements.size());
+		for (final Statement st : statements) {
+			if (st instanceof BreakStatement) {
+				result.add(new GotoStatement(loc, new String[] { label }));
+			} else if (st instanceof IfStatement) {
+				final IfStatement ifSt = (IfStatement) st;
+				final Statement[] newThen =
+						replaceBreaksWithGotos(loc, Arrays.asList(ifSt.getThenPart()), label).toArray(Statement[]::new);
+				final Statement[] newElse =
+						replaceBreaksWithGotos(loc, Arrays.asList(ifSt.getElsePart()), label).toArray(Statement[]::new);
+				result.add(new IfStatement(loc, ifSt.getCondition(), newThen, newElse));
+			} else {
+				// TODO: Are there any other statements, where breaks should be replaced?
+				result.add(st);
+			}
+		}
+		return result;
 	}
 
 	public Result visit(final IDispatcher main, final IASTTranslationUnit node) {
@@ -3698,5 +3707,4 @@ public class CHandler {
 		}
 		return main.transformWithWitness(node, result);
 	}
-
 }
