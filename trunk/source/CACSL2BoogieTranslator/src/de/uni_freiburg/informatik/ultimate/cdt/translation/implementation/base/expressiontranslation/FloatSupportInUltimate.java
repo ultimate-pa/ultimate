@@ -45,7 +45,6 @@ public class FloatSupportInUltimate {
 
 	private final static String[] SUPPORTED_FLOAT_OPERATIONS_ARRAY = new String[] {
 			"sqrt",
-			"signbit",
 			"__isinf",
 			"__finite",
 			"isinf",
@@ -54,7 +53,6 @@ public class FloatSupportInUltimate {
 			"__isnan",
 			"isnan",
 			"__fpclassify",
-			"__signbit",
 			"sqrtf",
 			"__isinff",
 			"isinff",
@@ -64,7 +62,6 @@ public class FloatSupportInUltimate {
 			"__isnanf",
 			"isnanf",
 			"__fpclassifyf",
-			"__signbitf",
 			"sqrtl",
 			"__isinfl",
 			"__finitel",
@@ -74,7 +71,6 @@ public class FloatSupportInUltimate {
 			"__isnanl",
 			"isnanl",
 			"__fpclassifyl",
-			"__signbitl",
 			"fabs",
 			"fabsf",
 			"fabsl",
