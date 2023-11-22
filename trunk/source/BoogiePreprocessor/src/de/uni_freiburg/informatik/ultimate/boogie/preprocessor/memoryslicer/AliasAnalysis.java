@@ -462,14 +462,14 @@ public class AliasAnalysis {
 			final Expression baseOfIndexExpr = st.getArguments()[1];
 			final List<PointerBase> basesOfValue = extractPointerBasesFromPointer(mAsfac, baseOfValueExpr);
 			final PointerBase baseOfIndex = extractPointerBaseFromPointer(mAsfac, baseOfIndexExpr);
+			ma.addPointerBase(mAsfac, baseOfIndex);
+			mWriteAddresses.add(baseOfIndex);
+			mAccessAddresses.add(baseOfIndex);
 			for (final PointerBase baseOfValue : basesOfValue) {
-				ma.addPointerBase(mAsfac, baseOfIndex);
 				if (!isNullPointer(baseOfValue)) {
 					ma.addPointerBase(mAsfac, baseOfIndex);
 					final MemorySegment ms = mAsfac.getMemorySegment(baseOfIndex);
 					ma.reportEquivalence(mAsfac, ms, baseOfValue);
-					mWriteAddresses.add(baseOfIndex);
-					mAccessAddresses.add(baseOfIndex);
 				}
 			}
 		} else if (st.getMethodName().startsWith(MemorySliceUtils.READ_POINTER)
