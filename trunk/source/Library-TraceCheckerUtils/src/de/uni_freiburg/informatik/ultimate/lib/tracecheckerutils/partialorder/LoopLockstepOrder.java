@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder.RoundRobinComparator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * A DFS order that aims to place context switches between threads whenever (and only when) a loop head is reached.
@@ -109,7 +110,7 @@ public class LoopLockstepOrder<L extends IIcfgTransition<?>> implements IDfsOrde
 		private final String mMaxThread;
 		private final Set<? extends IcfgLocation> mLoopHeads;
 
-		private final Map<IPredicate, Map<String, IPredicate>> mKnownStates = new HashMap<>();
+		private final Map<Pair<IPredicate, String>, IPredicate> mKnownStates = new HashMap<>();
 
 		private WrapperAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton,
 				final String maxThread, final Set<? extends IcfgLocation> loopHeads) {
@@ -211,9 +212,8 @@ public class LoopLockstepOrder<L extends IIcfgTransition<?>> implements IDfsOrde
 		}
 
 		private IPredicate getOrCreateState(final IPredicate underlying, final String lastThread) {
-			final Map<String, IPredicate> thread2State = mKnownStates.computeIfAbsent(underlying, x -> new HashMap<>());
-			return thread2State.computeIfAbsent(lastThread,
-					x -> new PredicateWithLastThread((IMLPredicate) underlying, lastThread));
+			return mKnownStates.computeIfAbsent(new Pair<>(underlying, lastThread),
+					p -> new PredicateWithLastThread((IMLPredicate) p.getFirst(), p.getSecond()));
 		}
 	}
 
