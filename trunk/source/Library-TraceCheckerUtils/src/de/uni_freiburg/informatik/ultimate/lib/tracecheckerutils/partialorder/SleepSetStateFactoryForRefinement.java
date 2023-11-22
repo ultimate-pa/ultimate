@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * An implementation of an {@link ISleepSetStateFactory} for {@link IPredicate} states. Currently only works with
@@ -51,7 +52,7 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	private final IPredicate mEmptyStack;
 
 	// Can we get rid of this entirely? [Requires reference equality to be replaced with #equals() everywhere.]
-	private final Map<IPredicate, Map<ImmutableSet<L>, IPredicate>> mKnownStates = new HashMap<>();
+	private final Map<Pair<IPredicate, ImmutableSet<L>>, IPredicate> mKnownStates = new HashMap<>();
 
 	/**
 	 * Creates a new instance from a predicate factory.
@@ -70,8 +71,8 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 
 	@Override
 	public IPredicate createSleepSetState(final IPredicate state, final ImmutableSet<L> sleepset) {
-		final Map<ImmutableSet<L>, IPredicate> sleep2State = mKnownStates.computeIfAbsent(state, x -> new HashMap<>());
-		return sleep2State.computeIfAbsent(sleepset, x -> createFreshCopy(state, sleepset));
+		return mKnownStates.computeIfAbsent(new Pair<>(state, sleepset),
+				p -> createFreshCopy(p.getFirst(), p.getSecond()));
 	}
 
 	/**
@@ -106,7 +107,7 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 		mKnownStates.clear();
 	}
 
-	private IPredicate createFreshCopy(final IPredicate original, final ImmutableSet<L> sleepset) {
+	private static <L> IPredicate createFreshCopy(final IPredicate original, final ImmutableSet<L> sleepset) {
 		if (!(original instanceof IMLPredicate)) {
 			throw new IllegalArgumentException("Unexpected type of predicate: " + original.getClass());
 		}
