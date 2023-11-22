@@ -50,6 +50,10 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
+// TODO use InductivityCheck with LazyPetriNet2FiniteAutomaton instead
+// TODO For this to work, let InductivityCheck take Function<S, IPredicate> instead of fixing type
+// TODO also add (optional) checks for "initial true" and "accepting false" to InductivityCheck
+// TODO clean up code of InductivityCheck and add logging like here
 public class PetriFloydHoareValidityCheck<L extends IAction, P> {
 	private final ILogger mLogger;
 	private final IHoareTripleChecker mHtc;

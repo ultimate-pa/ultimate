@@ -192,6 +192,8 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 	}
 
 	// a simple depth-first search of the reachability graph
+	// TODO reduce code duplication: this computes the reachable states of LazyPetriNet2FiniteAutomaton
+	// TODO For that to work, generalize LazyPetriNet2FiniteAutomaton to IPetriNetSuccessorProviders
 	private static <L, P> Collection<Marking<P>> computeReachableMarkings3(final BranchingProcess<L, P> bp) {
 		final var net = bp.getNet();
 
