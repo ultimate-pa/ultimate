@@ -61,14 +61,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class HeapSplitter implements IUnmanagedObserver {
+public class MemorySlicer implements IUnmanagedObserver {
 
 	private final BoogiePreprocessorBacktranslator mTranslator;
 
 	private final AddressStoreFactory mAsfac;
 	private final ILogger mLogger;
 
-	public HeapSplitter(final BoogiePreprocessorBacktranslator translator, final ILogger logger) {
+	public MemorySlicer(final BoogiePreprocessorBacktranslator translator, final ILogger logger) {
 		mTranslator = translator;
 		mAsfac = new AddressStoreFactory();
 		mLogger = logger;
@@ -146,7 +146,7 @@ public class HeapSplitter implements IUnmanagedObserver {
 		}
 
 		final ArrayDeque<Declaration> newDecls = new ArrayDeque<>();
-		final HeapArrayReplacer har = new HeapArrayReplacer(mAsfac, ma, repToArray);
+		final MemoryArrayReplacer har = new MemoryArrayReplacer(mAsfac, ma, repToArray);
 		for (final Declaration d : unit.getDeclarations()) {
 			final List<String> memoryArrays = Arrays.asList(new String[] { MemorySliceUtils.MEMORY_POINTER,
 					MemorySliceUtils.MEMORY_INT, MemorySliceUtils.MEMORY_REAL });

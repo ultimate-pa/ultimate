@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.memoryslicer.HeapSplitter;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.memoryslicer.MemorySlicer;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTableConstructor;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -114,7 +114,7 @@ public class BoogiePreprocessor implements IAnalysis {
 		// You can use the DebugObserver here if needed
 		observers.add(new TypeChecker(mServices));
 		if (useMemorySlicer) {
-			observers.add(new HeapSplitter(backTranslator, logger));
+			observers.add(new MemorySlicer(backTranslator, logger));
 		}
 		observers.add(new ConstExpander(backTranslator));
 		observers.add(new StructExpander(backTranslator, logger));

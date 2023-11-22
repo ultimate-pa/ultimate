@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class HeapArrayReplacer extends BoogieTransformer {
+public class MemoryArrayReplacer extends BoogieTransformer {
 
 	private final AddressStoreFactory mAsFac;
 	private final UnionFind<AddressStore> mUf;
@@ -59,7 +59,7 @@ public class HeapArrayReplacer extends BoogieTransformer {
 	private final int[] mSliceAccessCounter;
 	private int mAccessCounter;
 
-	public HeapArrayReplacer(final AddressStoreFactory asfac, final MayAlias ma,
+	public MemoryArrayReplacer(final AddressStoreFactory asfac, final MayAlias ma,
 			final Map<AddressStore, Integer> repToArray) {
 		mAsFac = asfac;
 		mUf = ma.getAddressStores();
@@ -85,7 +85,7 @@ public class HeapArrayReplacer extends BoogieTransformer {
 	protected Specification processSpecification(final Specification spec) {
 		if (spec instanceof ModifiesSpecification) {
 			final ModifiesSpecification ms = (ModifiesSpecification) spec;
-			return HeapSplitter.reviseModifiesSpec(mRepToNewHeapArray.values(), ms, MemorySliceUtils.MEMORY_POINTER,
+			return MemorySlicer.reviseModifiesSpec(mRepToNewHeapArray.values(), ms, MemorySliceUtils.MEMORY_POINTER,
 					MemorySliceUtils.MEMORY_INT, MemorySliceUtils.MEMORY_REAL);
 		} else {
 			return super.processSpecification(spec);
